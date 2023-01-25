@@ -12,13 +12,9 @@ data class Live(
     val label: String,
     @ColumnInfo(name = "cover")
     val cover: String? = null,
-    @ColumnInfo(name = "state")
-    val state: LiveState = LiveState.Offline,
+    @ColumnInfo(name = "subscriptionId")
+    val subscriptionId: Int,
     @PrimaryKey(autoGenerate = true)
     @ColumnInfo(name = "id")
     val id: Int = 0
 )
-
-enum class LiveState {
-    Online, Offline
-}
