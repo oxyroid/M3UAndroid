@@ -9,11 +9,13 @@ import com.m3u.features.live.navigation.liveScreen
 import com.m3u.features.main.navgation.mainNavigationRoute
 import com.m3u.features.main.navgation.mainScreen
 import com.m3u.features.setting.navigation.settingScreen
+import com.m3u.subscription.navigation.subscriptionScreen
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun M3UNavHost(
     navController: NavHostController,
+    navigateToDestination: (Destination) -> Unit,
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier,
     startDestination: String = mainNavigationRoute
@@ -27,8 +29,19 @@ fun M3UNavHost(
         popEnterTransition = { fadeIn() },
         popExitTransition = { fadeOut() }
     ) {
-        mainScreen()
-        liveScreen()
+        // TopLevel
+        mainScreen(
+            navigateToSubscription = {
+                navigateToDestination(Destination.Subscription(it))
+            }
+        )
         settingScreen()
+
+        liveScreen()
+        subscriptionScreen(
+            navigateToLive = {
+                navigateToDestination(Destination.Live(it))
+            }
+        )
     }
 }
