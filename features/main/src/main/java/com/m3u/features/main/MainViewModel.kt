@@ -4,7 +4,7 @@ import androidx.lifecycle.viewModelScope
 import com.m3u.core.BaseViewModel
 import com.m3u.data.repository.LiveRepository
 import com.m3u.data.repository.SubscriptionRepository
-import com.m3u.features.main.vo.SubscriptionState
+import com.m3u.features.main.vo.SubscriptionDetail
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.*
@@ -22,7 +22,7 @@ class MainViewModel @Inject constructor(
         job = subscriptionRepository.observeAllSubscriptions()
             .map { subscriptions ->
                 subscriptions.map {
-                    SubscriptionState(it, liveRepository.getCountBySubscriptionId(it.id))
+                    SubscriptionDetail(it, liveRepository.getCountBySubscriptionId(it.id))
                 }
             }
             .distinctUntilChanged()
