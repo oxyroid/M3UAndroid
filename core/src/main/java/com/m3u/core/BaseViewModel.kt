@@ -7,6 +7,9 @@ import kotlinx.coroutines.flow.asStateFlow
 
 abstract class BaseViewModel<S, E>(emptyState: S) : ViewModel() {
     protected val writable: MutableStateFlow<S> = MutableStateFlow(emptyState)
+
     val readable: StateFlow<S> = writable.asStateFlow()
+
     abstract fun onEvent(event: E)
+
 }

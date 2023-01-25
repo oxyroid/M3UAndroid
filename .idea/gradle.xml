@@ -18,6 +18,7 @@
             <option value="$PROJECT_DIR$/features/live" />
             <option value="$PROJECT_DIR$/features/main" />
             <option value="$PROJECT_DIR$/features/setting" />
+            <option value="$PROJECT_DIR$/features/subscription" />
             <option value="$PROJECT_DIR$/ui" />
           </set>
         </option>

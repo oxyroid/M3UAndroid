@@ -4,10 +4,8 @@ import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Settings
-import androidx.compose.material.icons.outlined.Videocam
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.Settings
-import androidx.compose.material.icons.rounded.Videocam
 import com.m3u.R
 import com.m3u.core.icon.Icon
 
@@ -22,12 +20,6 @@ enum class TopLevelDestination(
         unselectedIcon = Icon.ImageVectorIcon(Icons.Outlined.Home),
         iconTextId = R.string.destination_main,
         titleTextId = R.string.app_name
-    ),
-    LIVE(
-        selectedIcon = Icon.ImageVectorIcon(Icons.Rounded.Videocam),
-        unselectedIcon = Icon.ImageVectorIcon(Icons.Outlined.Videocam),
-        iconTextId = R.string.destination_live,
-        titleTextId = R.string.title_live
     ),
     SETTING(
         selectedIcon = Icon.ImageVectorIcon(Icons.Rounded.Settings),
