@@ -14,8 +14,12 @@ fun NavController.navigateToMain(navOptions: NavOptions? = null) {
 }
 
 @OptIn(ExperimentalAnimationApi::class)
-fun NavGraphBuilder.mainScreen() {
+fun NavGraphBuilder.mainScreen(
+    navigateToSubscription: (Int) -> Unit
+) {
     composable(mainNavigationRoute) {
-        MainRoute()
+        MainRoute(
+            navigateToSubscription = navigateToSubscription
+        )
     }
 }

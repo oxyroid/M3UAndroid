@@ -14,7 +14,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hierarchy
@@ -27,9 +26,11 @@ import com.m3u.ui.local.LocalTheme
 import com.m3u.ui.model.GradientColors
 import com.m3u.ui.model.LocalGradientColors
 
-@OptIn(ExperimentalComposeUiApi::class, ExperimentalLayoutApi::class)
+@OptIn(
+    ExperimentalComposeUiApi::class,
+    ExperimentalLayoutApi::class
+)
 @Composable
-@Preview
 fun M3UApp(
     appState: M3UAppState = rememberM3UAppState()
 ) {
@@ -45,6 +46,7 @@ fun M3UApp(
                 }
             ) {
                 val snackbarHostState = remember { SnackbarHostState() }
+                val isSystemBarVisibility = appState.isSystemBarVisibility
                 Scaffold(
                     modifier = Modifier.semantics {
                         testTagsAsResourceId = true
@@ -53,12 +55,14 @@ fun M3UApp(
                     contentColor = LocalTheme.current.onBackground,
                     snackbarHost = { SnackbarHost(snackbarHostState) },
                     bottomBar = {
-                        M3UBottomBar(
-                            destination = appState.topLevelDestinations,
-                            onNavigateToDestination = appState::navigateToTopLevelDestination,
-                            currentDestination = appState.currentDestination,
-                            modifier = Modifier.testTag("M3UBottomBar")
-                        )
+                        if (isSystemBarVisibility) {
+                            M3UBottomBar(
+                                destination = appState.topLevelDestinations,
+                                onNavigateToDestination = appState::navigateToTopLevelDestination,
+                                currentDestination = appState.currentDestination,
+                                modifier = Modifier.testTag("M3UBottomBar")
+                            )
+                        }
                     }) { padding ->
                     Row(
                         modifier = Modifier
@@ -80,6 +84,7 @@ fun M3UApp(
                                     ?.titleTextId
                                     ?.let { stringResource(it) }
                                     .orEmpty(),
+                                visible = isSystemBarVisibility,
                                 actions = {
                                     IconButton(
                                         onClick = { /*TODO*/ }
@@ -93,6 +98,7 @@ fun M3UApp(
                             ) { padding ->
                                 M3UNavHost(
                                     navController = appState.navController,
+                                    navigateToDestination = appState::navigateToDestination,
                                     onBackClick = appState::onBackClick,
                                     modifier = Modifier.padding(padding)
                                 )

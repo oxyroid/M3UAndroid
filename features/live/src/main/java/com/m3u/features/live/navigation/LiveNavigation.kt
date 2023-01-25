@@ -1,27 +1,35 @@
 package com.m3u.features.live.navigation
 
 import androidx.compose.animation.ExperimentalAnimationApi
-import androidx.navigation.NavController
-import androidx.navigation.NavGraphBuilder
-import androidx.navigation.NavOptions
+import androidx.navigation.*
 import com.google.accompanist.navigation.animation.composable
-import com.m3u.data.entity.Live
 import com.m3u.features.live.LiveRoute
 
-const val liveNavigationRoute = "live_route"
+const val liveRoute = "live_route"
+private const val liveIdTypeArg = "id"
+private val liveRouteWithArgs = "$liveRoute/{$liveIdTypeArg}"
+private fun createLiveRoute(id: Int) = "$liveRoute/$id"
 
-fun NavController.navigateToLive(navOptions: NavOptions? = null) {
-    this.navigate(liveNavigationRoute, navOptions)
+fun NavController.navigateToLive(id: Int, navOptions: NavOptions? = null) {
+    val route = createLiveRoute(id)
+    this.navigate(route, navOptions)
 }
 
 @OptIn(ExperimentalAnimationApi::class)
 fun NavGraphBuilder.liveScreen() {
-    composable(liveNavigationRoute) {
-        LiveRoute(
-            live = Live(
-                url = "rtsp://wowzaec2demo.streamlock.net/vod/mp4:BigBuckBunny_115k.mp4",
-                label = "Test"
-            )
+    composable(
+        route = "$liveRoute/{$liveIdTypeArg}",
+        arguments = listOf(
+            navArgument(liveIdTypeArg) {
+                type = NavType.IntType
+                nullable = false
+            }
         )
+    ) { navBackStackEntry ->
+        val id = navBackStackEntry
+            .arguments
+            ?.getInt(liveIdTypeArg)
+            ?: return@composable
+        LiveRoute(id = id)
     }
 }

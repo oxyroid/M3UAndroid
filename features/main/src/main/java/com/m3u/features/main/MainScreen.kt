@@ -22,7 +22,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.core.util.toast
-import com.m3u.features.main.vo.SubscriptionState
+import com.m3u.features.main.vo.SubscriptionDetail
 import com.m3u.ui.components.basic.M3UBackground
 import com.m3u.ui.components.basic.M3URow
 import com.m3u.ui.local.LocalSpacing
@@ -38,7 +38,7 @@ internal fun MainRoute(
 ) {
     val context = LocalContext.current
     val state: MainState by viewModel.readable.collectAsStateWithLifecycle()
-    val subscriptions: List<SubscriptionState> = state.subscriptions
+    val subscriptions: List<SubscriptionDetail> = state.subscriptions
 
     LaunchedEffect(state.message) {
         state.message.handle {
@@ -47,14 +47,14 @@ internal fun MainRoute(
     }
     MainScreen(
         modifier = modifier,
-        subscriptionStates = subscriptions,
+        subscriptionDetails = subscriptions,
         navigateToSubscription = navigateToSubscription
     )
 }
 
 @Composable
 private fun MainScreen(
-    subscriptionStates: List<SubscriptionState>,
+    subscriptionDetails: List<SubscriptionDetail>,
     navigateToSubscription: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -74,7 +74,7 @@ private fun MainScreen(
                     LocalSpacing.current.small,
                 )
             ) {
-                items(subscriptionStates) { subscriptionWithNumber ->
+                items(subscriptionDetails) { subscriptionWithNumber ->
                     SubscriptionItem(
                         label = subscriptionWithNumber.subscription.title,
                         number = subscriptionWithNumber.number,
