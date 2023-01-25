@@ -1,6 +1,8 @@
 package com.m3u.ui.components
 
 import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.Divider
 import androidx.compose.material.MaterialTheme
@@ -15,12 +17,15 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.m3u.ui.local.LocalDuration
 import com.m3u.ui.local.LocalSpacing
 
 @Composable
 fun M3UTopBar(
     modifier: Modifier = Modifier,
     text: String,
+    visible: Boolean,
     actions: @Composable RowScope.() -> Unit = {},
     content: @Composable (PaddingValues) -> Unit
 ) {
@@ -51,21 +56,31 @@ fun M3UTopBar(
             )
     ) {
         val density = LocalDensity.current
-        val paddingBottomDp by remember {
+        val paddingTopDp by remember {
             derivedStateOf {
                 with(density) { offsetHeightPx.toDp() }
             }
         }
+        val contentPaddingTop by animateDpAsState(
+            if (!visible) 0.dp
+            else topBarHeight + paddingTopDp,
+            animationSpec = tween(
+                durationMillis = if (visible) 0
+                else LocalDuration.current.fast
+            )
+        )
         content(
             PaddingValues(
                 start = 0.dp,
-                top = topBarHeight + paddingBottomDp,
+                top = contentPaddingTop,
                 end = 0.dp,
                 bottom = 0.dp
             )
         )
         Column(
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(contentPaddingTop)
         ) {
             Crossfade(
                 targetState = minimize,
@@ -76,20 +91,22 @@ fun M3UTopBar(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(topBarHeight + paddingBottomDp),
+                            .height(topBarHeight + paddingTopDp),
                         horizontalArrangement = Arrangement.Center,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
                             text = text,
-                            style = MaterialTheme.typography.subtitle1
+                            style = MaterialTheme.typography.h6.copy(
+                                fontSize = 16.sp
+                            )
                         )
                     }
                 } else {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(topBarHeight + paddingBottomDp),
+                            .height(topBarHeight + paddingTopDp),
                         horizontalArrangement = Arrangement.End,
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
@@ -101,7 +118,6 @@ fun M3UTopBar(
                         )
                         actions()
                     }
-
                 }
             }
             Divider()
