@@ -2,29 +2,43 @@ package com.m3u.features.main
 
 import androidx.lifecycle.viewModelScope
 import com.m3u.core.BaseViewModel
+import com.m3u.data.repository.LiveRepository
 import com.m3u.data.repository.SubscriptionRepository
-import com.m3u.features.main.vo.toViewObject
+import com.m3u.features.main.vo.SubscriptionState
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.*
 import javax.inject.Inject
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
-    subscriptionRepository: SubscriptionRepository
-) : BaseViewModel<MainState, MainEvent>(MainState.Loading) {
+    subscriptionRepository: SubscriptionRepository,
+    liveRepository: LiveRepository
+) : BaseViewModel<MainState, MainEvent>(MainState()) {
+    private var job: Job? = null
+
     init {
-        subscriptionRepository.observeAllSubscriptions()
+        job?.cancel()
+        job = subscriptionRepository.observeAllSubscriptions()
+            .map { subscriptions ->
+                subscriptions.map {
+                    SubscriptionState(it, liveRepository.getCountBySubscriptionId(it.id))
+                }
+            }
+            .distinctUntilChanged()
             .onEach { subscriptions ->
                 writable.update {
-                    val vos = subscriptions.map { it.toViewObject() }
-                    MainState.Success(
-                        subscriptions = vos
+                    it.copy(
+                        subscriptions = subscriptions
                     )
                 }
             }
             .launchIn(viewModelScope)
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        job?.cancel()
     }
 
     override fun onEvent(event: MainEvent) {

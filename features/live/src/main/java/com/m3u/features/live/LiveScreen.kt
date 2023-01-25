@@ -8,32 +8,40 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.m3u.data.entity.Live
+import com.m3u.core.util.toast
 import com.m3u.ui.components.LivePlayer
 
 @Composable
 internal fun LiveRoute(
     modifier: Modifier = Modifier,
     viewModel: LiveViewModel = hiltViewModel(),
-    live: Live
+    id: Int
 ) {
-    LaunchedEffect(live) {
-        viewModel.onEvent(LiveEvent.Init(live))
-    }
+
+    val context = LocalContext.current
     val state: LiveState by viewModel.readable.collectAsStateWithLifecycle()
+    LaunchedEffect(state.message) {
+        state.message.handle {
+            context.toast(it)
+        }
+    }
+    LaunchedEffect(id) {
+        viewModel.onEvent(LiveEvent.Init(id))
+    }
     LiveScreen(
         modifier = modifier,
-        url = live.url
+        url = state.live?.url
     )
 }
 
 @Composable
 private fun LiveScreen(
     modifier: Modifier = Modifier,
-    url: String
+    url: String?
 ) {
     Column(
         modifier = modifier
@@ -43,7 +51,7 @@ private fun LiveScreen(
     ) {
         LivePlayer(
             url = url,
-            useController = true,
+            useController = false,
             modifier = Modifier.fillMaxSize()
         )
     }

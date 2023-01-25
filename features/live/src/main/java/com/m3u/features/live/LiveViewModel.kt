@@ -1,35 +1,36 @@
 package com.m3u.features.live
 
+import androidx.lifecycle.viewModelScope
 import com.m3u.core.BaseViewModel
-import com.m3u.data.entity.Live
+import com.m3u.data.repository.LiveRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import javax.inject.Inject
 
 @HiltViewModel
 class LiveViewModel @Inject constructor(
-
-) : BaseViewModel<LiveState, LiveEvent>(LiveState.Loading()) {
+    private val liveRepository: LiveRepository
+) : BaseViewModel<LiveState, LiveEvent>(LiveState()) {
     override fun onEvent(event: LiveEvent) {
         when (event) {
-            is LiveEvent.Init -> init(event.live)
+            is LiveEvent.Init -> init(event.liveId)
         }
     }
 
-    private fun init(live: Live) {
-        writable.update { pre ->
-            when (pre) {
-                is LiveState.Loading -> {
-                    pre.copy(
-                        live = live
-                    )
-                }
-                is LiveState.Result -> {
-                    LiveState.Loading(
+    private var initJob: Job? = null
+    private fun init(id: Int) {
+        initJob?.cancel()
+        initJob = liveRepository.observe(id)
+            .onEach { live ->
+                writable.update {
+                    it.copy(
                         live = live
                     )
                 }
             }
-        }
+            .launchIn(viewModelScope)
     }
 }
