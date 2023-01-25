@@ -21,47 +21,52 @@ import androidx.media3.ui.PlayerView
 @Composable
 @OptIn(UnstableApi::class)
 fun LivePlayer(
-    url: String,
+    url: String?,
     modifier: Modifier = Modifier,
     useController: Boolean,
     resizeMode: Int = AspectRatioFrameLayout.RESIZE_MODE_FIT
 ) {
     val context = LocalContext.current
     val mediaItem = remember(url) {
-        MediaItem.fromUri(url)
+        url?.let { MediaItem.fromUri(it) }
     }
 
     val player = remember(url) {
-        ExoPlayer.Builder(context)
-            .build()
-            .apply {
-                playWhenReady = true
-                setMediaItem(mediaItem)
-                videoScalingMode = C.VIDEO_SCALING_MODE_SCALE_TO_FIT_WITH_CROPPING
-                repeatMode = Player.REPEAT_MODE_ONE
-            }
+        mediaItem?.let {
+            ExoPlayer.Builder(context)
+                .build()
+                .apply {
+                    playWhenReady = true
+                    setMediaItem(it)
+                    videoScalingMode = C.VIDEO_SCALING_MODE_SCALE_TO_FIT_WITH_CROPPING
+                    repeatMode = Player.REPEAT_MODE_ONE
+                }
+        }
     }
     PlayerBackground(modifier) {
-        AndroidView(
-            factory = {
-                PlayerView(it).apply {
-                    hideController()
-                    setUseController(useController)
-                    setResizeMode(resizeMode)
-                    setPlayer(player)
-                    layoutParams = ViewGroup.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.MATCH_PARENT
-                    )
+        player?.also {
+            AndroidView(
+                factory = { context ->
+                    PlayerView(context).apply {
+                        hideController()
+                        setUseController(useController)
+                        setResizeMode(resizeMode)
+                        setPlayer(it)
+                        layoutParams = ViewGroup.LayoutParams(
+                            ViewGroup.LayoutParams.MATCH_PARENT,
+                            ViewGroup.LayoutParams.MATCH_PARENT
+                        )
+                    }
+                }
+            )
+            DisposableEffect(it) {
+                it.prepare()
+                onDispose {
+                    it.release()
                 }
             }
-        )
-        DisposableEffect(url) {
-            player.prepare()
-            onDispose {
-                player.release()
-            }
         }
+
     }
 }
 
