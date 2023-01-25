@@ -1,7 +1,9 @@
 package com.m3u.ui.components.basic
 
+import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import com.m3u.ui.model.Typography
 
 @Composable
 fun M3ULocalProvider(content: @Composable () -> Unit) {
@@ -10,6 +12,9 @@ fun M3ULocalProvider(content: @Composable () -> Unit) {
 //            fontFamily = FontFamily(Font(R.font.standard))
 //        )
     ) {
-        content()
+        MaterialTheme(
+            typography = Typography,
+            content = content
+        )
     }
 }
