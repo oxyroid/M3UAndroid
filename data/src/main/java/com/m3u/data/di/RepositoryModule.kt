@@ -1,5 +1,7 @@
 package com.m3u.data.di
 
+import com.m3u.data.repository.LiveRepository
+import com.m3u.data.repository.LiveRepositoryImpl
 import com.m3u.data.repository.SubscriptionRepository
 import com.m3u.data.repository.SubscriptionRepositoryImpl
 import dagger.Binds
@@ -16,4 +18,10 @@ interface RepositoryModule {
     fun bindSubscriptionRepository(
         subscriptionRepository: SubscriptionRepositoryImpl
     ): SubscriptionRepository
+
+    @Binds
+    @Singleton
+    fun bindLiveRepository(
+        liveRepository: LiveRepositoryImpl
+    ): LiveRepository
 }
