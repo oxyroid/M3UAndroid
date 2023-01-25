@@ -113,7 +113,7 @@ fun M3UTextButton(
         )
     ) {
         Text(
-            style = MaterialTheme.typography.h3,
+            style = MaterialTheme.typography.button,
             text = text,
             fontSize = 14.sp
         )
