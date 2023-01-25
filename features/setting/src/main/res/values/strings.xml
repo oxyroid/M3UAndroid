@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="url_placeholder">订阅链接</string>
+    <string name="app_version_pre">应用版本：</string>
+    <string name="subscribe">订阅</string>
 </resources>
