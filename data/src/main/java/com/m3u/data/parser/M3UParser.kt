@@ -1,6 +1,5 @@
 package com.m3u.data.parser
 
-import com.m3u.core.collection.loopIn
 import com.m3u.core.util.loadLine
 import com.m3u.core.util.trimBrackets
 import com.m3u.data.model.M3U
@@ -29,12 +28,13 @@ class M3UParser internal constructor() : Parser<List<M3U>> {
                             }
                             block = M3U().setContent(line)
                         }
-                        else -> block = block?.setUrl(line)
+                        else -> {
+                            block = block?.setUrl(line)
+                            block?.let { list.add(it) }
+                            block = null
+                        }
                     }
                 }
-        }
-        block?.let {
-            list.add(it)
         }
     }
 
@@ -48,11 +48,31 @@ class M3UParser internal constructor() : Parser<List<M3U>> {
     private fun M3U.setUrl(url: String): M3U = copy(url = url)
 
     private fun M3U.setContent(content: String): M3U {
-        val value = content.split(" ")
+        fun String.isLegal(): Boolean {
+            return startsWith(M3U_TVG_ID_MARK) ||
+                    startsWith(M3U_TVG_LOGO_MARK) ||
+                    startsWith(M3U_TVG_NAME_MARK) ||
+                    startsWith(M3U_GROUP_TITLE_MARK)
+        }
+
         val properties = Properties()
 
-        value.loopIn(1 until value.size) {
-            properties.loadLine(it)
+        val parts = content.split(" ")
+        // Check each part
+        var unLegalPart: String? = null
+
+        for (part in parts.reversed()) {
+            if (part.startsWith(M3U_INFO_MARK)) continue
+            val p = part + unLegalPart.orEmpty()
+            unLegalPart = if (p.isLegal()) {
+                properties.loadLine(p)
+                null
+            } else {
+                p + unLegalPart.orEmpty()
+            }
+        }
+        if (unLegalPart != null) {
+            error("illegal m3u content: $content")
         }
 
         val id = properties.getProperty(M3U_TVG_ID_MARK, "")
@@ -62,6 +82,8 @@ class M3UParser internal constructor() : Parser<List<M3U>> {
         val (group, title) = properties.getProperty(M3U_GROUP_TITLE_MARK, ",").split(",")
 
         return this.copy(
+            id = id.trimBrackets(),
+            name = name.trimBrackets(),
             group = group.trimBrackets(),
             title = title.trimBrackets(),
             logo = logo.trimBrackets()
