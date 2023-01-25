@@ -17,8 +17,7 @@ include ":app"
 include ":features:main"
 include ':features:setting'
 include ":features:live"
-include ':features:setting'
-include ":features:main"
+include ':features:subscription'
 include ":ui"
 include ":data"
 include ':core'
