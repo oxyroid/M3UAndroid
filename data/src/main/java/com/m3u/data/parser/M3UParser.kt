@@ -48,13 +48,34 @@ class M3UParser internal constructor() : Parser<List<M3U>> {
     private fun M3U.setUrl(url: String): M3U = copy(url = url)
 
     private fun M3U.setContent(content: String): M3U {
-        fun String.isLegal(): Boolean {
-            return startsWith(M3U_TVG_ID_MARK) ||
-                    startsWith(M3U_TVG_LOGO_MARK) ||
-                    startsWith(M3U_TVG_NAME_MARK) ||
-                    startsWith(M3U_GROUP_TITLE_MARK)
-        }
 
+        val properties = makeProperties(content)
+
+        val id = properties.getProperty(M3U_TVG_ID_MARK, "")
+        val name = properties.getProperty(M3U_TVG_NAME_MARK, "")
+        val logo = properties.getProperty(M3U_TVG_LOGO_MARK, "")
+
+        val (group, title) = properties.getProperty(M3U_GROUP_TITLE_MARK, ",").split(",")
+
+        return this.copy(
+            id = id.trimBrackets(),
+            name = name.trimBrackets(),
+            group = group.trimBrackets(),
+            title = title.trimBrackets(),
+            logo = logo.trimBrackets()
+        )
+    }
+
+    private fun String.isLegal(): Boolean {
+        return startsWith(M3U_TVG_ID_MARK) ||
+                startsWith(M3U_TVG_LOGO_MARK) ||
+                startsWith(M3U_TVG_NAME_MARK) ||
+                startsWith(M3U_GROUP_TITLE_MARK)
+    }
+
+    private fun makeProperties(
+        content: String
+    ): Properties {
         val properties = Properties()
 
         val parts = content.split(" ")
@@ -74,21 +95,9 @@ class M3UParser internal constructor() : Parser<List<M3U>> {
         if (illegalPart != null) {
             error("illegal m3u content: $content")
         }
-
-        val id = properties.getProperty(M3U_TVG_ID_MARK, "")
-        val name = properties.getProperty(M3U_TVG_NAME_MARK, "")
-        val logo = properties.getProperty(M3U_TVG_LOGO_MARK, "")
-
-        val (group, title) = properties.getProperty(M3U_GROUP_TITLE_MARK, ",").split(",")
-
-        return this.copy(
-            id = id.trimBrackets(),
-            name = name.trimBrackets(),
-            group = group.trimBrackets(),
-            title = title.trimBrackets(),
-            logo = logo.trimBrackets()
-        )
+        return properties
     }
+
 }
 
 private const val M3U_HEADER_MARK = "#EXTM3U"
