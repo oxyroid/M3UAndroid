@@ -5,7 +5,7 @@ Feature List:
 
 - [x] M3U and M3U8 file.
 - [x] HTTPS and RTMP steam.
-- [ ] Script Paster.
+- [ ] Script Parser.
 
 Technology stack:
 - Jetpack Compose
