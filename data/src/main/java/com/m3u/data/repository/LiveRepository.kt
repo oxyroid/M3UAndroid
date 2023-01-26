@@ -8,7 +8,7 @@ import javax.inject.Inject
 interface LiveRepository {
     fun observe(id: Int): Flow<Live?>
     fun observeBySubscriptionId(id: Int): Flow<List<Live>>
-    suspend fun getCountBySubscriptionId(id: Int): Int
+    suspend fun getBySubscriptionId(id: Int): List<Live>
 }
 
 class LiveRepositoryImpl @Inject constructor(
@@ -18,8 +18,7 @@ class LiveRepositoryImpl @Inject constructor(
     override fun observe(id: Int): Flow<Live?> = liveDao.observeById(id)
 
     override fun observeBySubscriptionId(id: Int): Flow<List<Live>> =
-        liveDao.observeAllBySubscriptionId(id)
+        liveDao.observeBySubscriptionId(id)
 
-
-    override suspend fun getCountBySubscriptionId(id: Int): Int = liveDao.getAll().count()
+    override suspend fun getBySubscriptionId(id: Int): List<Live> = liveDao.getBySubscriptionId(id)
 }

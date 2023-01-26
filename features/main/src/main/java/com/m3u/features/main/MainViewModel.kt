@@ -22,7 +22,7 @@ class MainViewModel @Inject constructor(
         job = subscriptionRepository.observeAllSubscriptions()
             .map { subscriptions ->
                 subscriptions.map {
-                    SubscriptionDetail(it, liveRepository.getCountBySubscriptionId(it.id))
+                    SubscriptionDetail(it, liveRepository.getBySubscriptionId(it.id).count())
                 }
             }
             .distinctUntilChanged()
