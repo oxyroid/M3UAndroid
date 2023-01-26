@@ -78,8 +78,7 @@ private fun PlayerBackground(
     Surface(
         color = Color.Black,
         contentColor = Color.White,
-        modifier = modifier
-    ) {
-        content()
-    }
+        modifier = modifier,
+        content = content
+    )
 }
