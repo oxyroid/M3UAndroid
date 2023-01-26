@@ -23,6 +23,7 @@ import com.m3u.ui.components.basic.M3UTextButton
 import com.m3u.ui.components.basic.M3UTextField
 import com.m3u.ui.local.LocalSpacing
 import com.m3u.ui.local.LocalTheme
+import com.m3u.ui.util.EventEffect
 
 @Composable
 internal fun SettingRoute(
@@ -31,11 +32,11 @@ internal fun SettingRoute(
 ) {
     val state by viewModel.readable.collectAsStateWithLifecycle()
     val context = LocalContext.current
-    LaunchedEffect(state.message) {
-        state.message.handle {
-            context.toast(it)
-        }
+
+    EventEffect(state.message) {
+        context.toast(it)
     }
+
     SettingScreen(
         addEnabled = !state.adding,
         onParseUrl = { viewModel.onEvent(SettingEvent.OnUrlSubmit(it)) },

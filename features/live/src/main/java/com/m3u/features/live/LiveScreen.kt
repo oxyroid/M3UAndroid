@@ -14,6 +14,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.core.util.toast
 import com.m3u.ui.components.LivePlayer
+import com.m3u.ui.util.EventEffect
 
 @Composable
 internal fun LiveRoute(
@@ -24,11 +25,11 @@ internal fun LiveRoute(
 
     val context = LocalContext.current
     val state: LiveState by viewModel.readable.collectAsStateWithLifecycle()
-    LaunchedEffect(state.message) {
-        state.message.handle {
-            context.toast(it)
-        }
+
+    EventEffect(state.message) {
+        context.toast(it)
     }
+
     LaunchedEffect(id) {
         viewModel.onEvent(LiveEvent.Init(id))
     }
