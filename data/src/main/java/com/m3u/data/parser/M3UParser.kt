@@ -59,19 +59,19 @@ class M3UParser internal constructor() : Parser<List<M3U>> {
 
         val parts = content.split(" ")
         // Check each part
-        var unLegalPart: String? = null
+        var illegalPart: String? = null
 
         for (part in parts.reversed()) {
             if (part.startsWith(M3U_INFO_MARK)) continue
-            val p = part + unLegalPart.orEmpty()
-            unLegalPart = if (p.isLegal()) {
+            val p = part + illegalPart.orEmpty()
+            illegalPart = if (p.isLegal()) {
                 properties.loadLine(p)
                 null
             } else {
-                p + unLegalPart.orEmpty()
+                p + illegalPart.orEmpty()
             }
         }
-        if (unLegalPart != null) {
+        if (illegalPart != null) {
             error("illegal m3u content: $content")
         }
 
