@@ -2,6 +2,7 @@ package com.m3u.ui.components
 
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.Divider
@@ -11,6 +12,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -51,6 +53,7 @@ fun M3UTopBar(
     }
     Box(
         modifier = modifier
+            .fillMaxSize()
             .nestedScroll(
                 connection = connection
             )
@@ -65,8 +68,8 @@ fun M3UTopBar(
             if (!visible) 0.dp
             else topBarHeight + paddingTopDp,
             animationSpec = tween(
-                durationMillis = if (visible) 0
-                else LocalDuration.current.fast
+                durationMillis = if (visible) LocalDuration.current.immediately
+                else LocalDuration.current.immediately
             )
         )
         content(
@@ -77,10 +80,16 @@ fun M3UTopBar(
                 bottom = 0.dp
             )
         )
+        val contentAlpha by animateFloatAsState(
+            if (visible) 1f else 0f
+        )
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(contentPaddingTop)
+                .graphicsLayer {
+                    alpha = contentAlpha
+                }
         ) {
             Crossfade(
                 targetState = minimize,

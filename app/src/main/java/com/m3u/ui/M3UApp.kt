@@ -1,14 +1,18 @@
 package com.m3u.ui
 
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.AccountCircle
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -55,14 +59,6 @@ fun M3UApp(
                     contentColor = LocalTheme.current.onBackground,
                     snackbarHost = { SnackbarHost(snackbarHostState) },
                     bottomBar = {
-                        if (isSystemBarVisibility) {
-                            M3UBottomBar(
-                                destination = appState.topLevelDestinations,
-                                onNavigateToDestination = appState::navigateToTopLevelDestination,
-                                currentDestination = appState.currentDestination,
-                                modifier = Modifier.testTag("M3UBottomBar")
-                            )
-                        }
                     }) { padding ->
                     Row(
                         modifier = Modifier
@@ -96,14 +92,44 @@ fun M3UApp(
                                     }
                                 }
                             ) { padding ->
-                                M3UNavHost(
-                                    navController = appState.navController,
-                                    navigateToDestination = appState::navigateToDestination,
-                                    onBackClick = appState::onBackClick,
-                                    modifier = Modifier.padding(padding)
-                                )
+                                Box(
+                                    contentAlignment = Alignment.BottomCenter
+                                ) {
+                                    val paddingBottom by animateDpAsState(
+                                        if (isSystemBarVisibility) 81.dp
+                                        else 0.dp
+                                    )
+                                    val direction = LocalLayoutDirection.current
+                                    val leftPadding = padding.calculateLeftPadding(direction)
+                                    val topPadding = padding.calculateTopPadding()
+                                    val rightPadding = padding.calculateRightPadding(direction)
+                                    val bottomPadding =
+                                        padding.calculateBottomPadding() + paddingBottom
+                                    M3UNavHost(
+                                        navController = appState.navController,
+                                        navigateToDestination = appState::navigateToDestination,
+                                        onBackClick = appState::onBackClick,
+                                        modifier = Modifier
+                                            .padding(
+                                                PaddingValues(
+                                                    start = leftPadding,
+                                                    top = topPadding,
+                                                    end = rightPadding,
+                                                    bottom = bottomPadding
+                                                )
+                                            )
+                                            .fillMaxSize()
+                                    )
+                                    M3UBottomBar(
+                                        destination = appState.topLevelDestinations,
+                                        onNavigateToDestination = appState::navigateToTopLevelDestination,
+                                        currentDestination = appState.currentDestination,
+                                        modifier = Modifier
+                                            .testTag("M3UBottomBar")
+                                            .height(paddingBottom)
+                                    )
+                                }
                             }
-
                         }
                     }
                 }

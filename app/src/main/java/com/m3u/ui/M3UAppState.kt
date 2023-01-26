@@ -77,14 +77,14 @@ class M3UAppState(
 
     fun navigateToDestination(destination: Destination) {
         val navOptions = navOptions {
-            anim {
-                enter = android.R.anim.slide_in_left
-                exit = android.R.anim.slide_out_right
-            }
+//            anim {
+//                enter = android.R.anim.slide_in_left
+//                exit = android.R.anim.slide_out_right
+//            }
         }
         when (destination) {
             is Destination.Subscription -> navController.navigationToSubscription(
-                destination.id,
+                destination.url,
                 navOptions
             )
             is Destination.Live -> navController.navigateToLive(
