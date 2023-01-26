@@ -12,11 +12,11 @@ interface LiveDao {
     @Delete
     suspend fun delete(live: Live)
 
-    @Query("DELETE FROM lives WHERE subscriptionId = :oldId")
-    suspend fun deleteBySubscriptionId(oldId: Int)
+    @Query("DELETE FROM lives WHERE subscriptionUrl = :subscriptionUrl")
+    suspend fun deleteBySubscriptionUrl(subscriptionUrl: String)
 
-    @Query("SELECT * FROM lives WHERE subscriptionId = :id")
-    suspend fun getBySubscriptionId(id: Int): List<Live>
+    @Query("SELECT * FROM lives WHERE subscriptionUrl = :subscriptionUrl")
+    suspend fun getBySubscriptionId(subscriptionUrl: String): List<Live>
 
     @Query("SELECT * FROM lives WHERE id = :id")
     fun observeById(id: Int): Flow<Live?>
@@ -24,9 +24,6 @@ interface LiveDao {
     @Query("SELECT * FROM lives")
     fun observeAll(): Flow<List<Live>>
 
-    @Query("SELECT COUNT(*) FROM lives WHERE subscriptionId = :id")
-    fun observeCountBySubscriptionId(id: Int): Flow<Int>
-
-    @Query("SELECT * FROM lives WHERE subscriptionId = :id")
-    fun observeBySubscriptionId(id: Int): Flow<List<Live>>
+    @Query("SELECT * FROM lives WHERE subscriptionUrl = :subscriptionUrl")
+    fun observeLivesBySubscriptionUrl(subscriptionUrl: String): Flow<List<Live>>
 }

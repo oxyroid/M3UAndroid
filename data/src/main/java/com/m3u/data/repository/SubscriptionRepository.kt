@@ -1,5 +1,6 @@
 package com.m3u.data.repository
 
+import android.util.Log
 import com.m3u.core.wrapper.Resource
 import com.m3u.data.dao.LiveDao
 import com.m3u.data.dao.SubscriptionDao
@@ -13,16 +14,19 @@ import java.net.URL
 import javax.inject.Inject
 
 interface SubscriptionRepository {
-    fun parseUrlToLocal(url: URL): Flow<Resource<Unit>>
+    fun subscribe(url: URL): Flow<Resource<Unit>>
     fun observeAllSubscriptions(): Flow<List<Subscription>>
-    fun observeDetail(id: Int): Flow<Subscription?>
+    fun observeDetail(url: String): Flow<Subscription?>
 }
 
 class SubscriptionRepositoryImpl @Inject constructor(
     private val subscriptionDao: SubscriptionDao,
     private val liveDao: LiveDao
 ) : SubscriptionRepository {
-    override fun parseUrlToLocal(url: URL): Flow<Resource<Unit>> = flow {
+
+    private val TAG = "SubscriptionRepositoryImpl"
+
+    override fun subscribe(url: URL): Flow<Resource<Unit>> = flow {
         emit(Resource.Loading)
         val path = url.path
         val parser = when {
@@ -38,31 +42,39 @@ class SubscriptionRepositoryImpl @Inject constructor(
             val m3us = parser.get()
             val group = m3us.groupBy { it.group }
 
+            val urlString = url.toString()
             group.keys.forEach { subscriptionTitle ->
-                val subscriptionWithoutId = Subscription(
+                val subscription = Subscription(
                     title = subscriptionTitle,
-                    url = path
+                    url = urlString
                 )
-                val oldId = subscriptionDao.getByUrl(path)?.id
-                val newId = subscriptionDao.insert(subscriptionWithoutId).toInt()
-                oldId?.let { liveDao.deleteBySubscriptionId(it) }
-                val subscription = subscriptionDao.getById(newId)
-                if (subscription != null) {
-                    val lives = m3us.map { it.toLive(subscription.id) }
-                    lives.forEach { liveDao.insert(it) }
-                    emit(Resource.Success(Unit))
-                } else {
-                    emit(Resource.Failure("Cannot save subscription"))
-                }
+                subscriptionDao.delete(subscription)
+                subscriptionDao.insert(subscription)
+
+                val lives = m3us.map { it.toLive(urlString) }
+                liveDao.deleteBySubscriptionUrl(urlString)
+                lives.forEach { liveDao.insert(it) }
+                emit(Resource.Success(Unit))
             }
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e(TAG, "parseUrlToLocal: ", e)
             emit(Resource.Failure(e.message))
         }
     }
 
-    override fun observeAllSubscriptions(): Flow<List<Subscription>> = subscriptionDao.observeAll()
+    override fun observeAllSubscriptions(): Flow<List<Subscription>> = try {
+        subscriptionDao.observeAll()
+    } catch (e: Exception) {
+        Log.e(TAG, "observeAllSubscriptions: ", e)
+        flow { }
+    }
 
-    override fun observeDetail(id: Int): Flow<Subscription?> = subscriptionDao.observeById(id)
+
+    override fun observeDetail(url: String): Flow<Subscription?> = try {
+        subscriptionDao.observeByUrl(url)
+    } catch (e: Exception) {
+        Log.e(TAG, "observeDetail: ", e)
+        flow { }
+    }
 
 }

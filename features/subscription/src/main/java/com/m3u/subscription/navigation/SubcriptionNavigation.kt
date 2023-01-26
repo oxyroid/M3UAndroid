@@ -1,18 +1,18 @@
 package com.m3u.subscription.navigation
 
-import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.*
 import androidx.navigation.*
 import com.google.accompanist.navigation.animation.composable
 import com.m3u.subscription.SubscriptionRoute
 
 
 const val subscriptionRoute = "subscription_route"
-private const val subscriptionIdTypeArg = "id"
-private val subscriptionRouteWithArgs = "$subscriptionRoute/{$subscriptionIdTypeArg}"
-private fun createSubscriptionRoute(id: Int) = "$subscriptionRoute/$id"
+private const val subscriptionStringTypeArg = "id"
+private const val subscriptionRouteWithArgs = "$subscriptionRoute/{$subscriptionStringTypeArg}"
+private fun createSubscriptionRoute(url: String) = "$subscriptionRoute/$url"
 
-fun NavController.navigationToSubscription(id: Int, navOptions: NavOptions? = null) {
-    val route = createSubscriptionRoute(id)
+fun NavController.navigationToSubscription(url: String, navOptions: NavOptions? = null) {
+    val route = createSubscriptionRoute(url.replace("/", "%2F"))
     this.navigate(route, navOptions)
 }
 
@@ -23,18 +23,20 @@ fun NavGraphBuilder.subscriptionScreen(
     composable(
         route = subscriptionRouteWithArgs,
         arguments = listOf(
-            navArgument(subscriptionIdTypeArg) {
-                type = NavType.IntType
-                nullable = false
+            navArgument(subscriptionStringTypeArg) {
+                type = NavType.StringType
             }
-        )
+        ),
+        enterTransition = { fadeIn(initialAlpha = 1f) },
+        exitTransition = { fadeOut(targetAlpha = 0f) },
     ) { navBackStackEntry ->
-        val id = navBackStackEntry
+        val url = navBackStackEntry
             .arguments
-            ?.getInt(subscriptionIdTypeArg)
+            ?.getString(subscriptionStringTypeArg)
+            ?.replace("%2F", "/")
             ?: return@composable
         SubscriptionRoute(
-            id = id,
+            url = url,
             navigateToLive = navigateToLive
         )
     }

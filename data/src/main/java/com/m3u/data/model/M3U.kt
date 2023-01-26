@@ -13,10 +13,10 @@ data class M3U(
 
 
 fun M3U.toLive(
-    subscriptionId: Int
+    subscriptionUrl: String
 ): Live = Live(
     url = url,
     label = title,
     cover = logo,
-    subscriptionId = subscriptionId
+    subscriptionUrl = subscriptionUrl
 )

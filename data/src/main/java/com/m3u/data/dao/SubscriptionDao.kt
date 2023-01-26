@@ -12,15 +12,12 @@ interface SubscriptionDao {
     @Delete
     suspend fun delete(vararg subscription: Subscription)
 
-    @Query("SELECT * FROM subscriptions WHERE id = :id")
-    suspend fun getById(id: Int): Subscription?
-
     @Query("SELECT * FROM subscriptions WHERE url = :url")
     suspend fun getByUrl(url: String): Subscription?
 
     @Query("SELECT * FROM subscriptions")
     fun observeAll(): Flow<List<Subscription>>
 
-    @Query("SELECT * FROM subscriptions WHERE id = :id")
-    fun observeById(id: Int): Flow<Subscription?>
+    @Query("SELECT * FROM subscriptions WHERE url = :url")
+    fun observeByUrl(url: String): Flow<Subscription?>
 }
