@@ -52,7 +52,7 @@ dependencies {
     implementation(project(":core"))
     implementation(project(":ui"))
     implementation(project(":features:main"))
-    implementation implementation(project(':features:setting'))
+    implementation(project(':features:setting'))
     implementation(project(":features:subscription"))
     implementation(project(":features:live"))
 
