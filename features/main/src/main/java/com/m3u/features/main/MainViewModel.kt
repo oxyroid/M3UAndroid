@@ -1,7 +1,9 @@
 package com.m3u.features.main
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.m3u.core.BaseViewModel
+import com.m3u.core.util.createClazzKey
 import com.m3u.data.repository.LiveRepository
 import com.m3u.data.repository.SubscriptionRepository
 import com.m3u.features.main.vo.SubscriptionDetail
@@ -12,9 +14,14 @@ import javax.inject.Inject
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
+    savedStateHandle: SavedStateHandle,
     subscriptionRepository: SubscriptionRepository,
     liveRepository: LiveRepository
-) : BaseViewModel<MainState, MainEvent>(MainState()) {
+) : BaseViewModel<MainState, MainEvent>(
+    emptyState = MainState(),
+    savedStateHandle = savedStateHandle,
+    key = createClazzKey<MainViewModel>()
+) {
     private var job: Job? = null
 
     init {
@@ -22,7 +29,7 @@ class MainViewModel @Inject constructor(
         job = subscriptionRepository.observeAllSubscriptions()
             .map { subscriptions ->
                 subscriptions.map {
-                    SubscriptionDetail(it, liveRepository.getBySubscriptionId(it.id).count())
+                    SubscriptionDetail(it, liveRepository.getBySubscriptionUrl(it.url).count())
                 }
             }
             .distinctUntilChanged()

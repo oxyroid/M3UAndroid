@@ -1,17 +1,17 @@
 package com.m3u.data.entity
 
+import android.os.Parcelable
 import androidx.room.ColumnInfo
 import androidx.room.Entity
-import androidx.room.Index
 import androidx.room.PrimaryKey
+import kotlinx.parcelize.Parcelize
 
-@Entity(tableName = "subscriptions", indices = [Index(value = ["url"], unique = true)])
+@Entity(tableName = "subscriptions")
+@Parcelize
 data class Subscription(
     @ColumnInfo(name = "title")
     val title: String,
+    @PrimaryKey
     @ColumnInfo(name = "url")
-    val url: String,
-    @PrimaryKey(autoGenerate = true)
-    @ColumnInfo(name = "id")
-    val id: Int = 0
-)
+    val url: String
+) : Parcelable

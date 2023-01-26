@@ -1,5 +1,6 @@
 package com.m3u.core.wrapper
 
+
 sealed class Event<out T> private constructor(
     private val data: T? = null
 ) {

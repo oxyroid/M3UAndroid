@@ -1,8 +1,10 @@
 package com.m3u.features.setting
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.m3u.core.BaseViewModel
 import com.m3u.core.BuildConfigProvider
+import com.m3u.core.util.createClazzKey
 import com.m3u.core.wrapper.Resource
 import com.m3u.core.wrapper.eventOf
 import com.m3u.data.repository.SubscriptionRepository
@@ -18,7 +20,12 @@ import javax.inject.Inject
 class SettingViewModel @Inject constructor(
     private val subscriptionRepository: SubscriptionRepository,
     buildConfigProvider: BuildConfigProvider,
-) : BaseViewModel<SettingState, SettingEvent>(SettingState()) {
+    savedStateHandle: SavedStateHandle
+) : BaseViewModel<SettingState, SettingEvent>(
+    emptyState = SettingState(),
+    savedStateHandle = savedStateHandle,
+    key = createClazzKey<SettingViewModel>()
+) {
     init {
         writable.update {
             it.copy(
@@ -41,7 +48,7 @@ class SettingViewModel @Inject constructor(
                     }
                     return
                 }
-                subscriptionRepository.parseUrlToLocal(url)
+                subscriptionRepository.subscribe(url)
                     .onEach { resource ->
                         writable.update {
                             when (resource) {
