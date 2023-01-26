@@ -1,24 +1,24 @@
 package com.m3u.features.main
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Card
 import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.core.util.toast
@@ -114,16 +114,24 @@ private fun SubscriptionItem(
                 maxLines = 1,
                 modifier = Modifier.weight(1f)
             )
-            Surface(
-                color = LocalTheme.current.primary,
-                contentColor = LocalTheme.current.onPrimary,
-                shape = CircleShape,
-                modifier = Modifier.padding(LocalSpacing.current.small)
+            Box(
+                modifier = Modifier
+                    .clip(shape = CircleShape)
+                    .background(color = LocalTheme.current.primary),
+                contentAlignment = Alignment.Center
             ) {
                 Text(
+                    color = LocalTheme.current.onPrimary,
                     text = number.toString(),
                     style = MaterialTheme.typography.subtitle2,
                     maxLines = 1,
+                    modifier = Modifier.padding(
+                        start = LocalSpacing.current.extraSmall,
+                        end = LocalSpacing.current.extraSmall,
+                        bottom = 2.dp,
+                    ),
+                    softWrap = false,
+                    textAlign = TextAlign.Center
                 )
             }
         }
