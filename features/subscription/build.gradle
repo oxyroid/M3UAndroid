@@ -3,6 +3,7 @@ plugins {
     id 'org.jetbrains.kotlin.android'
     id "kotlin-kapt"
     id "com.google.dagger.hilt.android"
+    id "kotlin-parcelize"
 }
 
 android {
@@ -49,7 +50,7 @@ dependencies {
     implementation "androidx.activity:activity-compose:1.6.1"
     implementation "androidx.compose.ui:ui:$compose_ui_version"
     implementation "androidx.compose.ui:ui-tooling-preview:$compose_ui_version"
-    implementation "androidx.compose.material:material:1.3.1"
+    implementation "androidx.compose.material:material:$compose_ui_version"
     debugImplementation "androidx.compose.ui:ui-tooling:$compose_ui_version"
     debugImplementation "androidx.compose.ui:ui-test-manifest:$compose_ui_version"
     implementation "androidx.navigation:navigation-compose:2.5.3"
