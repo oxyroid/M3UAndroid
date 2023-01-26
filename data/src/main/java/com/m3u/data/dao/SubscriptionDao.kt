@@ -12,9 +12,6 @@ interface SubscriptionDao {
     @Delete
     suspend fun delete(vararg subscription: Subscription)
 
-    @Query("SELECT * FROM subscriptions")
-    suspend fun getAll(): List<Subscription>
-
     @Query("SELECT * FROM subscriptions WHERE id = :id")
     suspend fun getById(id: Int): Subscription?
 
