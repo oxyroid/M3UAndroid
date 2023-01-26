@@ -8,7 +8,6 @@ import javax.inject.Inject
 interface LiveRepository {
     fun observe(id: Int): Flow<Live?>
     fun observeBySubscriptionId(id: Int): Flow<List<Live>>
-    fun observeCountBySubscriptionId(id: Int): Flow<Int>
     suspend fun getCountBySubscriptionId(id: Int): Int
 }
 
@@ -21,8 +20,6 @@ class LiveRepositoryImpl @Inject constructor(
     override fun observeBySubscriptionId(id: Int): Flow<List<Live>> =
         liveDao.observeAllBySubscriptionId(id)
 
-    override fun observeCountBySubscriptionId(id: Int): Flow<Int> =
-        liveDao.observeCountBySubscriptionId(id)
 
     override suspend fun getCountBySubscriptionId(id: Int): Int = liveDao.getAll().count()
 }
