@@ -1,5 +1,6 @@
 package com.m3u.features.setting
 
+import android.app.Application
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.m3u.core.BaseViewModel
@@ -20,8 +21,10 @@ import javax.inject.Inject
 class SettingViewModel @Inject constructor(
     private val subscriptionRepository: SubscriptionRepository,
     buildConfigProvider: BuildConfigProvider,
-    savedStateHandle: SavedStateHandle
+    savedStateHandle: SavedStateHandle,
+    application: Application
 ) : BaseViewModel<SettingState, SettingEvent>(
+    application = application,
     emptyState = SettingState(),
     savedStateHandle = savedStateHandle,
     key = createClazzKey<SettingViewModel>()
@@ -29,26 +32,53 @@ class SettingViewModel @Inject constructor(
     init {
         writable.update {
             it.copy(
-                appVersion = buildConfigProvider.version()
+                version = buildConfigProvider.version()
             )
         }
     }
 
     override fun onEvent(event: SettingEvent) {
         when (event) {
-            is SettingEvent.OnUrlSubmit -> {
-                val url = try {
-                    URL(event.url)
-                } catch (e: MalformedURLException) {
+            is SettingEvent.OnTitle -> {
+                writable.update {
+                    it.copy(
+                        title = event.title
+                    )
+                }
+            }
+            is SettingEvent.OnUrl -> {
+                writable.update {
+                    it.copy(
+                        url = event.url
+                    )
+                }
+            }
+            SettingEvent.SubscribeUrl -> {
+                val title = writable.value.title
+                if (title.isEmpty()) {
                     writable.update {
+                        val message = context.getString(R.string.failed_empty_title)
                         it.copy(
                             adding = false,
-                            message = eventOf(e.message.orEmpty())
+                            message = eventOf(message)
                         )
                     }
                     return
                 }
-                subscriptionRepository.subscribe(url)
+                val urlString = readable.value.url
+                val url = try {
+                    URL(urlString)
+                } catch (e: MalformedURLException) {
+                    writable.update {
+                        val message = context.getString(R.string.failed_malformed_url, urlString)
+                        it.copy(
+                            adding = false,
+                            message = eventOf(message)
+                        )
+                    }
+                    return
+                }
+                subscriptionRepository.subscribe(title, url)
                     .onEach { resource ->
                         writable.update {
                             when (resource) {
@@ -58,8 +88,12 @@ class SettingViewModel @Inject constructor(
                                     )
                                 }
                                 is Resource.Success -> {
+                                    val message = context.getString(R.string.success_subscribe)
                                     it.copy(
-                                        adding = false
+                                        adding = false,
+                                        title = "",
+                                        url = "",
+                                        message = eventOf(message)
                                     )
                                 }
                                 is Resource.Failure -> {

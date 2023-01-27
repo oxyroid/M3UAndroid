@@ -1,5 +1,6 @@
 package com.m3u.features.live
 
+import android.app.Application
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.m3u.core.BaseViewModel
@@ -15,8 +16,10 @@ import javax.inject.Inject
 @HiltViewModel
 class LiveViewModel @Inject constructor(
     private val liveRepository: LiveRepository,
-    savedStateHandle: SavedStateHandle
+    savedStateHandle: SavedStateHandle,
+    application: Application
 ) : BaseViewModel<LiveState, LiveEvent>(
+    application = application,
     emptyState = LiveState(),
     savedStateHandle = savedStateHandle,
     key = createClazzKey<LiveViewModel>()

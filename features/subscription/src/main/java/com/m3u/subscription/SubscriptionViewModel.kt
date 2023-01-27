@@ -1,5 +1,6 @@
 package com.m3u.subscription
 
+import android.app.Application
 import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
@@ -14,6 +15,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import java.net.MalformedURLException
 import java.net.URL
 import javax.inject.Inject
@@ -22,8 +24,10 @@ import javax.inject.Inject
 class SubscriptionViewModel @Inject constructor(
     private val liveRepository: LiveRepository,
     private val subscriptionRepository: SubscriptionRepository,
-    savedStateHandle: SavedStateHandle
+    savedStateHandle: SavedStateHandle,
+    application: Application
 ) : BaseViewModel<SubscriptionState, SubscriptionEvent>(
+    application = application,
     emptyState = SubscriptionState(),
     savedStateHandle = savedStateHandle,
     key = createClazzKey<SubscriptionViewModel>()
@@ -71,7 +75,7 @@ class SubscriptionViewModel @Inject constructor(
                     return
                 }
                 subscriptionRepository
-                    .subscribe(url)
+                    .syncLatestSubscription(url)
                     .onEach { resource ->
                         writable.update {
                             when (resource) {
@@ -89,6 +93,12 @@ class SubscriptionViewModel @Inject constructor(
                         }
                     }
                     .launchIn(viewModelScope)
+            }
+            is SubscriptionEvent.AddToFavourite -> {
+                viewModelScope.launch {
+                    val id = event.id
+                    liveRepository.setFavouriteLive(id, true)
+                }
             }
         }
     }
