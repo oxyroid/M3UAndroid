@@ -12,6 +12,8 @@ import kotlinx.coroutines.flow.*
 import java.net.URL
 import javax.inject.Inject
 
+private const val TAG = "SubscriptionRepository"
+
 interface SubscriptionRepository {
     fun subscribe(
         title: String,
@@ -29,9 +31,6 @@ class SubscriptionRepositoryImpl @Inject constructor(
     private val subscriptionDao: SubscriptionDao,
     private val liveDao: LiveDao
 ) : SubscriptionRepository {
-
-    private val TAG = "SubscriptionRepositoryImpl"
-
     override fun subscribe(title: String, url: URL): Flow<Resource<Unit>> = flow {
         emit(Resource.Loading)
         val path = url.path
