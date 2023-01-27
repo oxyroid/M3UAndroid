@@ -38,7 +38,7 @@ fun premiumBrush(
     )
 }
 
-internal object PremiumBrushDefaults {
+object PremiumBrushDefaults {
     val color1 = Color(0xff897fee)
     val color2 = Color(0xffd859a9)
     const val durationMillis: Int = 1600

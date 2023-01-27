@@ -1,8 +1,6 @@
 package com.m3u.ui.components
 
 import androidx.compose.animation.Crossfade
-import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.Divider
 import androidx.compose.material.MaterialTheme
@@ -20,7 +18,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.m3u.ui.local.LocalDuration
 import com.m3u.ui.local.LocalSpacing
 
 @Composable
@@ -67,14 +64,9 @@ fun M3UTopBar(
                 with(density) { offsetHeightPx.toDp() }
             }
         }
-        val contentPaddingTop by animateDpAsState(
-            if (!visible) 0.dp
-            else topBarHeight + paddingTopDp,
-            animationSpec = tween(
-                durationMillis = if (visible) LocalDuration.current.immediately
-                else LocalDuration.current.immediately
-            )
-        )
+        val contentPaddingTop = if (!visible) 0.dp
+        else topBarHeight + paddingTopDp
+
         content(
             PaddingValues(
                 start = 0.dp,
@@ -84,13 +76,13 @@ fun M3UTopBar(
             )
         )
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(contentPaddingTop)
+            modifier = Modifier.align(Alignment.TopCenter)
         ) {
             Crossfade(
                 targetState = minimize,
                 modifier = Modifier
+                    .fillMaxWidth()
+                    .height(contentPaddingTop)
                     .padding(horizontal = LocalSpacing.current.medium)
             ) { minimize ->
                 if (minimize) {
