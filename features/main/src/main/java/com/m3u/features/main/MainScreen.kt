@@ -59,7 +59,7 @@ private fun MainScreen(
         items(subscriptionDetails) { subscriptionWithNumber ->
             SubscriptionItem(
                 label = subscriptionWithNumber.subscription.title,
-                number = subscriptionWithNumber.number,
+                number = subscriptionWithNumber.count,
                 modifier = Modifier.fillParentMaxWidth(),
                 onClick = {
                     navigateToSubscription(subscriptionWithNumber.subscription.url)

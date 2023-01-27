@@ -8,5 +8,5 @@ import kotlinx.parcelize.Parcelize
 @Parcelize
 data class SubscriptionDetail(
     val subscription: Subscription,
-    val number: Int
+    val count: Int
 ) : Parcelable
