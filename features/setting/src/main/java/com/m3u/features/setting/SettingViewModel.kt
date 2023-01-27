@@ -8,6 +8,7 @@ import com.m3u.core.BuildConfigProvider
 import com.m3u.core.util.createClazzKey
 import com.m3u.core.wrapper.Resource
 import com.m3u.core.wrapper.eventOf
+import com.m3u.data.Configuration
 import com.m3u.data.repository.SubscriptionRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.launchIn
@@ -16,13 +17,15 @@ import kotlinx.coroutines.flow.update
 import java.net.MalformedURLException
 import java.net.URL
 import javax.inject.Inject
+import kotlin.properties.Delegates
 
 @HiltViewModel
 class SettingViewModel @Inject constructor(
     private val subscriptionRepository: SubscriptionRepository,
     buildConfigProvider: BuildConfigProvider,
     savedStateHandle: SavedStateHandle,
-    application: Application
+    application: Application,
+    private val configuration: Configuration
 ) : BaseViewModel<SettingState, SettingEvent>(
     application = application,
     emptyState = SettingState(),
@@ -30,9 +33,19 @@ class SettingViewModel @Inject constructor(
     key = createClazzKey<SettingViewModel>()
 ) {
     init {
+        configuration.syncMode
         writable.update {
             it.copy(
                 version = buildConfigProvider.version()
+            )
+        }
+    }
+
+    private var syncMode: Int by Delegates.observable(configuration.syncMode) { _, _, new ->
+        configuration.syncMode = new
+        writable.update {
+            it.copy(
+                syncMode = new
             )
         }
     }
@@ -53,6 +66,11 @@ class SettingViewModel @Inject constructor(
                     )
                 }
             }
+
+            is SettingEvent.OnSyncMode -> {
+                syncMode = event.syncMode
+            }
+
             SettingEvent.SubscribeUrl -> {
                 val title = writable.value.title
                 if (title.isEmpty()) {

@@ -8,4 +8,7 @@
     <string name="failed_empty_title">订阅名称为空</string>
     <string name="placeholder_title">订阅名称</string>
     <string name="label_subscribing">订阅中…</string>
+    <string name="sync_mode_default">所有（默认值）</string>
+    <string name="sync_mode_favourite_except">绕过收藏夹</string>
+    <string name="sync_mode">同步策略</string>
 </resources>
