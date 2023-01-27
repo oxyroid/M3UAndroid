@@ -1,5 +1,7 @@
 package com.m3u.subscription
 
+import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -8,23 +10,30 @@ import androidx.compose.material.*
 import androidx.compose.material.pullrefresh.PullRefreshIndicator
 import androidx.compose.material.pullrefresh.pullRefresh
 import androidx.compose.material.pullrefresh.rememberPullRefreshState
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.core.util.toast
 import com.m3u.data.entity.Live
 import com.m3u.subscription.components.LiveItem
 import com.m3u.ui.components.basic.M3URow
+import com.m3u.ui.components.basic.M3UTextButton
 import com.m3u.ui.components.basic.premiumBrush
+import com.m3u.ui.local.LocalSpacing
 import com.m3u.ui.local.LocalTheme
 import com.m3u.ui.util.EventEffect
 
+sealed class AddToFavouriteState {
+    object None : AddToFavouriteState()
+    data class Prepared(val id: Int) : AddToFavouriteState()
+}
+
+@OptIn(ExperimentalAnimationApi::class)
 @Composable
 internal fun SubscriptionRoute(
     url: String,
@@ -40,6 +49,10 @@ internal fun SubscriptionRoute(
 
     val refreshing = state.syncing
 
+    var addToFavouriteState: AddToFavouriteState by remember {
+        mutableStateOf(AddToFavouriteState.None)
+    }
+
     EventEffect(state.message) {
         context.toast(it)
     }
@@ -54,11 +67,50 @@ internal fun SubscriptionRoute(
         refreshing = refreshing,
         onRefresh = { viewModel.onEvent(SubscriptionEvent.SyncingLatest) },
         navigateToLive = navigateToLive,
+        onLiveAction = {
+            addToFavouriteState = AddToFavouriteState.Prepared(it)
+        },
         modifier = modifier
     )
+
+    if (addToFavouriteState is AddToFavouriteState.Prepared) {
+        AlertDialog(
+            onDismissRequest = { addToFavouriteState = AddToFavouriteState.None },
+            title = {
+                Text(
+                    text = stringResource(R.string.dialog_favourite_title),
+                    style = MaterialTheme.typography.h6,
+                    maxLines = 1
+                )
+            },
+            text = {
+                Text(
+                    text = stringResource(R.string.dialog_favourite_content),
+                    style = MaterialTheme.typography.body1
+                )
+            },
+            confirmButton = {
+                M3UTextButton(textRes = R.string.dialog_favourite_confirm) {
+                    val s = addToFavouriteState
+                    if (s is AddToFavouriteState.Prepared) {
+                        viewModel.onEvent(SubscriptionEvent.AddToFavourite(s.id))
+                    }
+                    addToFavouriteState = AddToFavouriteState.None
+                }
+            },
+            dismissButton = {
+                M3UTextButton(textRes = R.string.dialog_favourite_dismiss) {
+                    addToFavouriteState = AddToFavouriteState.None
+                }
+            },
+            backgroundColor = LocalTheme.current.background,
+            contentColor = LocalTheme.current.onBackground,
+            modifier = Modifier.padding(LocalSpacing.current.medium)
+        )
+    }
 }
 
-@OptIn(ExperimentalMaterialApi::class)
+@OptIn(ExperimentalMaterialApi::class, ExperimentalFoundationApi::class)
 @Composable
 private fun SubscriptionScreen(
     title: String,
@@ -66,6 +118,7 @@ private fun SubscriptionScreen(
     refreshing: Boolean,
     onRefresh: () -> Unit,
     navigateToLive: (Int) -> Unit,
+    onLiveAction: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column {
@@ -91,17 +144,42 @@ private fun SubscriptionScreen(
         Box(
             modifier = Modifier.pullRefresh(state)
         ) {
+            val groups = remember(lives) {
+                lives.groupBy { it.group }
+            }
             LazyColumn(
-                modifier = modifier
-                    .fillMaxSize()
+                modifier = modifier.fillMaxSize()
             ) {
-                items(lives) { live ->
-                    LiveItem(
-                        live = live,
-                        onClick = { navigateToLive(live.id) },
-                        modifier = Modifier.fillParentMaxWidth()
-                    )
+                groups.forEach { (group, lives) ->
+                    stickyHeader {
+                        Box(
+                            modifier = Modifier
+                                .fillParentMaxWidth()
+                                .background(
+                                    color = LocalTheme.current.surface
+                                )
+                                .padding(
+                                    horizontal = LocalSpacing.current.medium,
+                                    vertical = LocalSpacing.current.extraSmall
+                                )
+                        ) {
+                            Text(
+                                text = group,
+                                color = LocalTheme.current.onSurface,
+                                style = MaterialTheme.typography.subtitle2
+                            )
+                        }
+                    }
+                    items(lives) { live ->
+                        LiveItem(
+                            live = live,
+                            onClick = { navigateToLive(live.id) },
+                            onLongClick = { onLiveAction(live.id) },
+                            modifier = Modifier.fillParentMaxWidth()
+                        )
+                    }
                 }
+
             }
             PullRefreshIndicator(
                 refreshing = refreshing,

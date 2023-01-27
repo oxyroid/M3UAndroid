@@ -5,6 +5,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import com.google.accompanist.navigation.animation.AnimatedNavHost
+import com.m3u.favorite.navigation.favouriteScreen
 import com.m3u.features.live.navigation.liveScreen
 import com.m3u.features.main.navgation.mainNavigationRoute
 import com.m3u.features.main.navgation.mainScreen
@@ -35,6 +36,7 @@ fun M3UNavHost(
                 navigateToDestination(Destination.Subscription(it))
             }
         )
+        favouriteScreen()
         settingScreen()
 
         liveScreen()

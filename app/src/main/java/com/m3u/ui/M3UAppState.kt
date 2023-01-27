@@ -9,6 +9,8 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.navOptions
 import com.google.accompanist.navigation.animation.rememberAnimatedNavController
+import com.m3u.favorite.navigation.favouriteNavigationRoute
+import com.m3u.favorite.navigation.navigateToFavourite
 import com.m3u.features.live.navigation.navigateToLive
 import com.m3u.features.main.navgation.mainNavigationRoute
 import com.m3u.features.main.navgation.navigateToMain
@@ -52,6 +54,7 @@ class M3UAppState(
         @Composable get() = when (currentDestination?.route) {
             mainNavigationRoute -> TopLevelDestination.MAIN
             settingNavigationRoute -> TopLevelDestination.SETTING
+            favouriteNavigationRoute -> TopLevelDestination.FAVOURITE
             else -> null
         }
 
@@ -71,6 +74,7 @@ class M3UAppState(
         }
         when (topLevelDestination) {
             TopLevelDestination.MAIN -> navController.navigateToMain(topLevelNavOptions)
+            TopLevelDestination.FAVOURITE -> navController.navigateToFavourite(topLevelNavOptions)
             TopLevelDestination.SETTING -> navController.navigateToSetting(topLevelNavOptions)
         }
     }

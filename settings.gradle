@@ -21,3 +21,4 @@ include ':features:subscription'
 include ":ui"
 include ":data"
 include ':core'
+include ':features:favorite'
