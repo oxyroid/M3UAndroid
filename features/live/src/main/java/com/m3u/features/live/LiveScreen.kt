@@ -22,7 +22,6 @@ internal fun LiveRoute(
     viewModel: LiveViewModel = hiltViewModel(),
     id: Int
 ) {
-
     val context = LocalContext.current
     val state: LiveState by viewModel.readable.collectAsStateWithLifecycle()
 

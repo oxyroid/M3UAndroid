@@ -1,3 +1,4 @@
+@file:Suppress("unused")
 package com.m3u.ui.components.basic
 
 import androidx.annotation.DrawableRes
@@ -137,6 +138,106 @@ fun M3UTextField(
                     innerTextField()
 
                     if (textFieldValue.text.isEmpty()) {
+                        Text(
+                            text = placeholder,
+                            color = contentColor.copy(.35f),
+                            fontSize = fontSize,
+                            maxLines = if (singleLine) 1 else Int.MAX_VALUE,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                }
+            }
+        }
+    )
+}
+
+
+@OptIn(ExperimentalFoundationApi::class, ExperimentalLayoutApi::class)
+@Composable
+fun M3UTextField(
+    text: String,
+    modifier: Modifier = Modifier,
+    background: Color = M3UTextFieldDefaults.backgroundColor(),
+    contentColor: Color = M3UTextFieldDefaults.contentColor(),
+    placeholder: String = "",
+    keyboardType: KeyboardType = KeyboardType.Text,
+    readOnly: Boolean = false,
+    singleLine: Boolean = true,
+    imeAction: ImeAction? = null,
+    enabled: Boolean = true,
+    keyboardActions: KeyboardActions? = null,
+    fontSize: TextUnit = M3UTextFieldDefaults.DefaultFontSize,
+    height: Dp = M3UTextFieldDefaults.DefaultHeight,
+    isError: Boolean = false,
+    onValueChange: (String) -> Unit = {},
+) {
+    val focusManager = LocalFocusManager.current
+    val duration = LocalDuration.current
+    val bringIntoViewRequester = remember { BringIntoViewRequester() }
+    val interactionSource = remember { MutableInteractionSource() }
+    val interactionSourceState by interactionSource.collectIsFocusedAsState()
+    val scope = rememberCoroutineScope()
+
+    val imeVisible = WindowInsets.isImeVisible
+
+    // Bring the composable into view (visible to user).
+    LaunchedEffect(imeVisible, interactionSourceState) {
+        if (imeVisible && interactionSourceState) {
+            scope.launch {
+                delay(duration.fast.toLong())
+                bringIntoViewRequester.bringIntoView()
+            }
+        }
+    }
+
+    BasicTextField(
+        value = text,
+        singleLine = singleLine,
+        enabled = enabled,
+        textStyle = TextStyle(
+            fontFamily = MaterialTheme.typography.body1.fontFamily,
+            fontSize = fontSize,
+            color = contentColor,
+        ),
+        onValueChange = {
+            onValueChange(it)
+        },
+        keyboardActions = keyboardActions ?: KeyboardActions(
+            onDone = { focusManager.clearFocus() },
+            onNext = { focusManager.moveFocus(FocusDirection.Down) },
+            onSearch = { focusManager.clearFocus() }
+        ),
+        keyboardOptions = KeyboardOptions(
+            keyboardType = keyboardType,
+            imeAction = imeAction ?: if (singleLine) ImeAction.Done else ImeAction.Default
+        ),
+        interactionSource = interactionSource,
+        modifier = modifier
+            .bringIntoViewRequester(bringIntoViewRequester)
+            .fillMaxWidth(),
+        readOnly = readOnly,
+        cursorBrush = SolidColor(contentColor.copy(LocalContentAlpha.current)),
+        decorationBox = { innerTextField ->
+            Box(
+                Modifier
+                    .clip(MaterialTheme.shapes.medium)
+                    .background(if (isError) LocalTheme.current.error else background)
+                    .height(height)
+                    .padding(horizontal = 12.dp),
+                contentAlignment = if (singleLine) Alignment.CenterStart else Alignment.TopStart,
+            ) {
+                Box(
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(
+                            top = if (singleLine) 0.dp else 12.5.dp,
+                            bottom = if (singleLine) 2.5.dp else 12.5.dp
+                        )
+                ) {
+                    innerTextField()
+
+                    if (text.isEmpty()) {
                         Text(
                             text = placeholder,
                             color = contentColor.copy(.35f),
@@ -318,7 +419,6 @@ fun M3UPasswordTextField(
         cursorBrush = SolidColor(contentColor.copy(.35f))
     )
 }
-
 
 private object M3UTextFieldDefaults {
     val DefaultFontSize = 16.sp

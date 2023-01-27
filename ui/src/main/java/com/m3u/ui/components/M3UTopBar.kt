@@ -2,7 +2,6 @@ package com.m3u.ui.components
 
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.Divider
@@ -18,6 +17,7 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.m3u.ui.local.LocalDuration
@@ -51,6 +51,9 @@ fun M3UTopBar(
             }
         }
     }
+    val process by remember {
+        derivedStateOf { offsetHeightPx / topBarHeightPx }
+    }
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -80,16 +83,10 @@ fun M3UTopBar(
                 bottom = 0.dp
             )
         )
-        val contentAlpha by animateFloatAsState(
-            if (visible) 1f else 0f
-        )
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(contentPaddingTop)
-                .graphicsLayer {
-                    alpha = contentAlpha
-                }
         ) {
             Crossfade(
                 targetState = minimize,
@@ -115,14 +112,29 @@ fun M3UTopBar(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(topBarHeight + paddingTopDp),
+                            .height(topBarHeight + paddingTopDp)
+                            .graphicsLayer {
+                                alpha = process
+                            },
                         horizontalArrangement = Arrangement.End,
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
+                        val k = 0.35f
+                        val scale by remember {
+                            derivedStateOf { k * process + (1 - k) }
+                        }
                         Text(
                             text = text,
                             style = MaterialTheme.typography.h5,
                             fontWeight = FontWeight.ExtraBold,
+                            textAlign = TextAlign.Start,
+                            modifier = Modifier
+                                .graphicsLayer {
+                                    scaleX = scale
+                                    scaleY = scale
+                                }
+                        )
+                        Spacer(
                             modifier = Modifier.weight(1f)
                         )
                         actions()

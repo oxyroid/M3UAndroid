@@ -1,3 +1,4 @@
+@file:Suppress("unused")
 package com.m3u.ui.components.basic
 
 import androidx.compose.foundation.background
@@ -115,7 +116,8 @@ fun M3UTextButton(
         Text(
             style = MaterialTheme.typography.button,
             text = text,
-            fontSize = 14.sp
+            fontSize = 14.sp,
+            maxLines = 1
         )
     }
 }
@@ -153,7 +155,8 @@ fun M3UBrushButton(
                     verticalAlignment = Alignment.CenterVertically,
                     content = {
                         Text(
-                            text = text
+                            text = text,
+                            maxLines = 1
                         )
                     }
                 )

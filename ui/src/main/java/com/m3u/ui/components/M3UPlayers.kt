@@ -30,7 +30,6 @@ fun LivePlayer(
     val mediaItem = remember(url) {
         url?.let { MediaItem.fromUri(it) }
     }
-
     val player = remember(url) {
         mediaItem?.let {
             ExoPlayer.Builder(context)
@@ -66,7 +65,6 @@ fun LivePlayer(
                 }
             }
         }
-
     }
 }
 

@@ -58,8 +58,8 @@ internal fun SubscriptionItem(
                     style = MaterialTheme.typography.subtitle2,
                     maxLines = 1,
                     modifier = Modifier.padding(
-                        start = LocalSpacing.current.extraSmall,
-                        end = LocalSpacing.current.extraSmall,
+                        start = LocalSpacing.current.small,
+                        end = LocalSpacing.current.small,
                         bottom = 2.dp,
                     ),
                     softWrap = false,
