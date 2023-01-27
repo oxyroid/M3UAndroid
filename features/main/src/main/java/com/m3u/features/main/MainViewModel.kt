@@ -1,10 +1,10 @@
 package com.m3u.features.main
 
 import android.app.Application
-import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.m3u.core.BaseViewModel
+import com.m3u.core.collection.replaceIf
 import com.m3u.core.util.createClazzKey
 import com.m3u.data.repository.LiveRepository
 import com.m3u.data.repository.SubscriptionRepository
@@ -14,7 +14,6 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import javax.inject.Inject
 
-@OptIn(FlowPreview::class)
 @HiltViewModel
 class MainViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
@@ -27,30 +26,41 @@ class MainViewModel @Inject constructor(
     savedStateHandle = savedStateHandle,
     key = createClazzKey<MainViewModel>()
 ) {
-    private val TAG = "MainViewModel"
-    private var allSubscriptionsJob: Job? = null
-
     init {
-        allSubscriptionsJob?.cancel()
-        subscriptionRepository.observeAllSubscriptions()
-            .map { subscriptions ->
-                subscriptions
-                    .asFlow()
-                    .flatMapMerge { subscription ->
-                        liveRepository
-                            .observeLivesBySubscriptionUrl(subscription.url)
-                            .map { SubscriptionDetail(subscription, it.size) }
+        viewModelScope.launch {
+            subscriptionRepository.observeAllSubscriptions()
+//            .map { subscriptions ->
+//                subscriptions
+//                    .asFlow()
+//                    .flatMapMerge { subscription ->
+//                        liveRepository
+//                            .observeLivesBySubscriptionUrl(subscription.url)
+//                            .map { SubscriptionDetail(subscription, it.size) }
+//                    }
+//                    .distinctUntilChanged()
+//                    .toList()
+//            }
+                .map { subscriptions ->
+                    subscriptions.map {
+                        SubscriptionDetail(it, 0)
                     }
-                    .onEach {
-                        Log.d(TAG, "before: $it")
-                    }
-                    .toList()
-                    .also {
-                        Log.d(TAG, "after: $it")
-                    }
-            }
-            .onEach(::deliverSubscriptionDetails)
-            .launchIn(viewModelScope)
+                }
+                .onEach { details ->
+                    details
+                        .asFlow()
+                        .collectLatest { detail ->
+                            val url = detail.subscription.url
+                            liveRepository
+                                .observeLivesBySubscriptionUrl(url)
+                                .map { it.size }
+                                .onEach { count ->
+                                    updateCountByUrl(url, count)
+                                }
+                                .launchIn(this)
+                        }
+                }
+                .collectLatest(::deliverSubscriptionDetails)
+        }
     }
 
     private fun deliverSubscriptionDetails(subscriptions: List<SubscriptionDetail>) {
@@ -61,9 +71,21 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    override fun onCleared() {
-        super.onCleared()
-        allSubscriptionsJob?.cancel()
+    private suspend fun updateCountByUrl(url: String, count: Int) {
+        withContext(Dispatchers.IO) {
+            val subscriptions = readable.value.subscriptions
+                .replaceIf(
+                    predicate = {
+                        it.subscription.url == url
+                    },
+                    transform = {
+                        it.copy(
+                            count = count
+                        )
+                    }
+                )
+            deliverSubscriptionDetails(subscriptions)
+        }
     }
 
     override fun onEvent(event: MainEvent) {
