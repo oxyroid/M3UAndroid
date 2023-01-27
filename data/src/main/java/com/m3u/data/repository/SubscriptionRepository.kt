@@ -8,15 +8,21 @@ import com.m3u.data.entity.Subscription
 import com.m3u.data.model.toLive
 import com.m3u.data.parser.Parser
 import com.m3u.data.parser.parse
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.*
 import java.net.URL
 import javax.inject.Inject
 
 interface SubscriptionRepository {
-    fun subscribe(url: URL): Flow<Resource<Unit>>
+    fun subscribe(
+        title: String,
+        url: URL
+    ): Flow<Resource<Unit>>
+
+    fun syncLatestSubscription(url: URL): Flow<Resource<Unit>>
+
     fun observeAllSubscriptions(): Flow<List<Subscription>>
     fun observeDetail(url: String): Flow<Subscription?>
+    suspend fun getDetail(url: String): Subscription?
 }
 
 class SubscriptionRepositoryImpl @Inject constructor(
@@ -26,7 +32,7 @@ class SubscriptionRepositoryImpl @Inject constructor(
 
     private val TAG = "SubscriptionRepositoryImpl"
 
-    override fun subscribe(url: URL): Flow<Resource<Unit>> = flow {
+    override fun subscribe(title: String, url: URL): Flow<Resource<Unit>> = flow {
         emit(Resource.Loading)
         val path = url.path
         val parser = when {
@@ -40,26 +46,34 @@ class SubscriptionRepositoryImpl @Inject constructor(
         try {
             parser.parse(url)
             val m3us = parser.get()
-            val group = m3us.groupBy { it.group }
-
             val urlString = url.toString()
-            group.keys.forEach { subscriptionTitle ->
-                val subscription = Subscription(
-                    title = subscriptionTitle,
-                    url = urlString
-                )
-                subscriptionDao.delete(subscription)
-                subscriptionDao.insert(subscription)
+            val subscription = Subscription(
+                title = title,
+                url = urlString
+            )
+            subscriptionDao.insert(subscription)
 
-                val lives = m3us.map { it.toLive(urlString) }
-                liveDao.deleteBySubscriptionUrl(urlString)
-                lives.forEach { liveDao.insert(it) }
-                emit(Resource.Success(Unit))
-            }
+            val lives = m3us.map { it.toLive(urlString) }
+            liveDao.deleteBySubscriptionUrl(urlString)
+            lives.forEach { liveDao.insert(it) }
+            emit(Resource.Success(Unit))
         } catch (e: Exception) {
-            Log.e(TAG, "parseUrlToLocal: ", e)
+            Log.e(TAG, "subscribe: ", e)
             emit(Resource.Failure(e.message))
         }
+    }
+
+
+    override fun syncLatestSubscription(url: URL): Flow<Resource<Unit>> = channelFlow {
+        val urlString = url.toString()
+        val subscription = subscriptionDao.getByUrl(urlString)
+        if (subscription == null) {
+            send(Resource.Failure("Cannot find subscription: $url"))
+            return@channelFlow
+        }
+        subscribe(subscription.title, url)
+            .onEach(::send)
+            .launchIn(this)
     }
 
     override fun observeAllSubscriptions(): Flow<List<Subscription>> = try {
@@ -77,4 +91,10 @@ class SubscriptionRepositoryImpl @Inject constructor(
         flow { }
     }
 
+    override suspend fun getDetail(url: String): Subscription? = try {
+        subscriptionDao.getByUrl(url)
+    } catch (e: Exception) {
+        Log.e(TAG, "getDetail: ", e)
+        null
+    }
 }

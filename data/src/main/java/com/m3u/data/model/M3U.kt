@@ -16,7 +16,8 @@ fun M3U.toLive(
     subscriptionUrl: String
 ): Live = Live(
     url = url,
-    label = title,
+    group = group,
+    title = title,
     cover = logo,
     subscriptionUrl = subscriptionUrl
 )

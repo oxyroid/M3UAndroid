@@ -1,7 +1,7 @@
 package com.m3u.subscription.components
 
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
@@ -10,7 +10,6 @@ import androidx.compose.material.Card
 import androidx.compose.material.LocalContentAlpha
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
-import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
@@ -27,10 +26,12 @@ import com.m3u.ui.components.basic.M3UColumn
 import com.m3u.ui.local.LocalSpacing
 import java.net.URI
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 internal fun LiveItem(
     live: Live,
     onClick: () -> Unit,
+    onLongClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -44,10 +45,9 @@ internal fun LiveItem(
         shape = RectangleShape
     ) {
         M3UColumn(
-            modifier = modifier.clickable(
+            modifier = modifier.combinedClickable(
                 onClick = onClick,
-                interactionSource = remember { MutableInteractionSource() },
-                indication = rememberRipple()
+                onLongClick = onLongClick
             )
         ) {
             M3UImage(
@@ -57,13 +57,11 @@ internal fun LiveItem(
                     .fillMaxWidth()
                     .aspectRatio(4 / 3f)
             )
-            Row {
-                Text(
-                    text = live.label,
-                    style = MaterialTheme.typography.body1,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
+            Text(
+                text = live.title,
+                style = MaterialTheme.typography.body1,
+                overflow = TextOverflow.Ellipsis
+            )
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(LocalSpacing.current.extraSmall)

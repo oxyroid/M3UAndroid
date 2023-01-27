@@ -9,8 +9,12 @@ import javax.inject.Inject
 
 interface LiveRepository {
     fun observe(id: Int): Flow<Live?>
+    fun observeAllLives(): Flow<List<Live>>
     fun observeLivesBySubscriptionUrl(subscriptionUrl: String): Flow<List<Live>>
     suspend fun getBySubscriptionUrl(subscriptionUrl: String): List<Live>
+
+    suspend fun getByUrl(url: String): Live?
+    suspend fun setFavouriteLive(id: Int, target: Boolean)
 }
 
 class LiveRepositoryImpl @Inject constructor(
@@ -21,6 +25,13 @@ class LiveRepositoryImpl @Inject constructor(
         liveDao.observeById(id)
     } catch (e: Exception) {
         Log.e(TAG, "observe: ", e)
+        flow {}
+    }
+
+    override fun observeAllLives(): Flow<List<Live>> = try {
+        liveDao.observeAll()
+    } catch (e: Exception) {
+        Log.e(TAG, "observeAllLives: ", e)
         flow {}
     }
 
@@ -36,5 +47,19 @@ class LiveRepositoryImpl @Inject constructor(
     } catch (e: Exception) {
         Log.e(TAG, "getBySubscriptionId: ", e)
         emptyList()
+    }
+
+    override suspend fun getByUrl(url: String): Live? = try {
+        liveDao.getByUrl(url)
+    } catch (e: Exception) {
+        Log.e(TAG, "getByUrl: ", e)
+        null
+    }
+
+    override suspend fun setFavouriteLive(id: Int, target: Boolean) = try {
+        liveDao.setFavouriteLive(id, target)
+    } catch (e: Exception) {
+        Log.e(TAG, "setFavouriteLive: ", e)
+        Unit
     }
 }

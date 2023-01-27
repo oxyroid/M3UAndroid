@@ -15,6 +15,9 @@ interface LiveDao {
     @Query("DELETE FROM lives WHERE subscriptionUrl = :subscriptionUrl")
     suspend fun deleteBySubscriptionUrl(subscriptionUrl: String)
 
+    @Query("SELECT * FROM lives WHERE url = :url")
+    suspend fun getByUrl(url: String): Live?
+
     @Query("SELECT * FROM lives WHERE subscriptionUrl = :subscriptionUrl")
     suspend fun getBySubscriptionId(subscriptionUrl: String): List<Live>
 
@@ -26,4 +29,7 @@ interface LiveDao {
 
     @Query("SELECT * FROM lives WHERE subscriptionUrl = :subscriptionUrl")
     fun observeLivesBySubscriptionUrl(subscriptionUrl: String): Flow<List<Live>>
+
+    @Query("UPDATE lives SET favourite = :target WHERE id = :id")
+    suspend fun setFavouriteLive(id: Int, target: Boolean)
 }

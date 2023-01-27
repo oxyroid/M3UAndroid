@@ -8,6 +8,8 @@ import kotlinx.parcelize.RawValue
 @Parcelize
 data class SettingState(
     val adding: Boolean = false,
+    val title: String = "",
+    val url: String = "",
     val message: @RawValue Event<String> = Event.Handled(),
-    val appVersion: String = ""
+    val version: String = ""
 ) : Parcelable
