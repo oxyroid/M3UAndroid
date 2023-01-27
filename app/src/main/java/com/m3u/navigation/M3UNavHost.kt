@@ -27,8 +27,6 @@ fun M3UNavHost(
         modifier = modifier,
         enterTransition = { fadeIn() },
         exitTransition = { fadeOut() },
-        popEnterTransition = { fadeIn() },
-        popExitTransition = { fadeOut() }
     ) {
         // TopLevel
         mainScreen(

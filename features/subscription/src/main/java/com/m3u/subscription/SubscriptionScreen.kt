@@ -1,12 +1,16 @@
 package com.m3u.subscription
 
-import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.*
+import androidx.compose.material.AlertDialog
+import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Text
 import androidx.compose.material.pullrefresh.PullRefreshIndicator
 import androidx.compose.material.pullrefresh.pullRefresh
 import androidx.compose.material.pullrefresh.rememberPullRefreshState
@@ -23,7 +27,9 @@ import com.m3u.data.entity.Live
 import com.m3u.subscription.components.LiveItem
 import com.m3u.ui.components.basic.M3URow
 import com.m3u.ui.components.basic.M3UTextButton
+import com.m3u.ui.components.basic.PremiumBrushDefaults
 import com.m3u.ui.components.basic.premiumBrush
+import com.m3u.ui.local.LocalDuration
 import com.m3u.ui.local.LocalSpacing
 import com.m3u.ui.local.LocalTheme
 import com.m3u.ui.util.EventEffect
@@ -33,7 +39,6 @@ sealed class AddToFavouriteState {
     data class Prepared(val id: Int) : AddToFavouriteState()
 }
 
-@OptIn(ExperimentalAnimationApi::class)
 @Composable
 internal fun SubscriptionRoute(
     url: String,
@@ -122,17 +127,40 @@ private fun SubscriptionScreen(
     modifier: Modifier = Modifier
 ) {
     Column {
+        var colorState: Boolean by remember {
+            mutableStateOf(false)
+        }
+        val color1 by animateColorAsState(
+            if (colorState) PremiumBrushDefaults.color1
+            else LocalTheme.current.topBar,
+            animationSpec = tween(LocalDuration.current.slow)
+        )
+        val color2 by animateColorAsState(
+            if (colorState) PremiumBrushDefaults.color2
+            else LocalTheme.current.topBar,
+            animationSpec = tween(LocalDuration.current.slow)
+        )
+        val contentColor by animateColorAsState(
+            if (colorState) Color.White
+            else LocalTheme.current.onTopBar
+        )
+        LaunchedEffect(refreshing) {
+            colorState = !refreshing
+        }
         M3URow(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(
-                    brush = premiumBrush()
+                    brush = premiumBrush(
+                        color1 = color1,
+                        color2 = color2
+                    )
                 )
         ) {
             Text(
                 text = title,
                 style = MaterialTheme.typography.h6,
-                color = Color.White
+                color = contentColor
             )
         }
 
@@ -186,7 +214,8 @@ private fun SubscriptionScreen(
                 state = state,
                 modifier = Modifier.align(Alignment.TopCenter),
                 scale = true,
-                contentColor = LocalTheme.current.tint
+                contentColor = LocalTheme.current.onTint,
+                backgroundColor = LocalTheme.current.tint
             )
         }
     }
