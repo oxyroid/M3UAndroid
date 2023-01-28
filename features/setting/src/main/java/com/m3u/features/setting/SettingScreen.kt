@@ -1,6 +1,9 @@
 package com.m3u.features.setting
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.material.MaterialTheme
@@ -8,6 +11,7 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -16,6 +20,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.core.util.toast
 import com.m3u.data.model.SyncMode
@@ -26,18 +31,35 @@ import com.m3u.ui.components.basic.M3UTextButton
 import com.m3u.ui.components.basic.M3UTextField
 import com.m3u.ui.local.LocalSpacing
 import com.m3u.ui.local.LocalTheme
+import com.m3u.ui.model.AppAction
 import com.m3u.ui.util.EventEffect
+import com.m3u.ui.util.LifecycleEffect
 
 @Composable
 internal fun SettingRoute(
     modifier: Modifier = Modifier,
-    viewModel: SettingViewModel = hiltViewModel()
+    viewModel: SettingViewModel = hiltViewModel(),
+    setAppActions: (List<AppAction>) -> Unit,
 ) {
     val state by viewModel.readable.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
     EventEffect(state.message) {
         context.toast(it)
+    }
+
+    val setAppActionsUpdated by rememberUpdatedState(setAppActions)
+    LifecycleEffect { event ->
+        when (event) {
+            Lifecycle.Event.ON_START -> {
+                val actions = listOf<AppAction>()
+                setAppActionsUpdated(actions)
+            }
+            Lifecycle.Event.ON_PAUSE -> {
+                setAppActionsUpdated(emptyList())
+            }
+            else -> {}
+        }
     }
 
     SettingScreen(

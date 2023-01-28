@@ -62,90 +62,95 @@ fun M3UTopBar(
             )
     ) {
         val density = LocalDensity.current
+        val spacing = LocalSpacing.current
         val paddingTopDp by remember {
             derivedStateOf {
                 with(density) { offsetHeightPx.toDp() }
             }
         }
-        val contentPaddingTop by animateDpAsState(
-            if (!visible) LocalSpacing.current.none
-            else topBarHeight + paddingTopDp,
-            animationSpec = tween(
-                if (visible) LocalDuration.current.immediately
-                else LocalDuration.current.slow
-            )
-        )
+        val contentPaddingTop by remember {
+            derivedStateOf {
+                if (!visible) spacing.none
+                else topBarHeight + paddingTopDp
+            }
+        }
         content(
             PaddingValues(
-                start = LocalSpacing.current.none,
+                start = spacing.none,
                 top = contentPaddingTop,
-                end = LocalSpacing.current.none,
-                bottom = LocalSpacing.current.none
+                end = spacing.none,
+                bottom = spacing.none
             )
         )
-        Column(
-            modifier = Modifier.align(Alignment.TopCenter)
-        ) {
-            Crossfade(
-                targetState = minimize,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(contentPaddingTop)
-                    .padding(horizontal = LocalSpacing.current.medium)
-            ) { minimize ->
-                if (minimize) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(topBarHeight + paddingTopDp),
-                        horizontalArrangement = Arrangement.Center,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = text,
-                            style = MaterialTheme.typography.h6.copy(
-                                fontSize = 16.sp
-                            )
-                        )
-                    }
-                } else {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(topBarHeight + paddingTopDp)
-                            .graphicsLayer {
-                                alpha = process
-                            },
-                        horizontalArrangement = Arrangement.End,
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        val scale by remember {
-                            derivedStateOf {
-                                M3UTopBarDefaults.scaleInterpolator(
-                                    curvature = M3UTopBarDefaults.ScaleCurvature,
-                                    process = process
+        if (visible) {
+            Column(
+                modifier = Modifier.align(Alignment.TopCenter)
+            ) {
+                Crossfade(
+                    targetState = minimize,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(contentPaddingTop)
+                        .padding(horizontal = spacing.medium)
+                ) { minimize ->
+                    if (minimize) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(topBarHeight + paddingTopDp),
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = text,
+                                style = MaterialTheme.typography.h6.copy(
+                                    fontSize = 16.sp
                                 )
+                            )
+                        }
+                    } else {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(topBarHeight + paddingTopDp)
+                                .graphicsLayer {
+                                    alpha = process
+                                },
+                            horizontalArrangement = Arrangement.End,
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            val scale by remember {
+                                derivedStateOf {
+                                    M3UTopBarDefaults.scaleInterpolator(
+                                        curvature = M3UTopBarDefaults.ScaleCurvature,
+                                        process = process
+                                    )
+                                }
+                            }
+                            Text(
+                                text = text,
+                                style = MaterialTheme.typography.h5,
+                                fontWeight = FontWeight.ExtraBold,
+                                textAlign = TextAlign.Start,
+                                modifier = Modifier
+                                    .graphicsLayer {
+                                        scaleX = scale
+                                        scaleY = scale
+                                    }
+                            )
+                            Spacer(
+                                modifier = Modifier.weight(1f)
+                            )
+                            AnimatedContent(
+                                targetState = actions
+                            ) {
+                                it()
                             }
                         }
-                        Text(
-                            text = text,
-                            style = MaterialTheme.typography.h5,
-                            fontWeight = FontWeight.ExtraBold,
-                            textAlign = TextAlign.Start,
-                            modifier = Modifier
-                                .graphicsLayer {
-                                    scaleX = scale
-                                    scaleY = scale
-                                }
-                        )
-                        Spacer(
-                            modifier = Modifier.weight(1f)
-                        )
-                        actions()
                     }
                 }
+                Divider()
             }
-            Divider()
         }
     }
 }

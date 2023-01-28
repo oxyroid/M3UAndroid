@@ -4,6 +4,7 @@ import androidx.compose.animation.*
 import androidx.navigation.*
 import com.google.accompanist.navigation.animation.composable
 import com.m3u.subscription.SubscriptionRoute
+import com.m3u.ui.model.AppAction
 
 
 const val subscriptionRoute = "subscription_route"
@@ -18,7 +19,8 @@ fun NavController.navigationToSubscription(url: String, navOptions: NavOptions? 
 
 @OptIn(ExperimentalAnimationApi::class)
 fun NavGraphBuilder.subscriptionScreen(
-    navigateToLive: (Int) -> Unit
+    navigateToLive: (Int, label: String?) -> Unit,
+    setAppActions: (List<AppAction>) -> Unit,
 ) {
     composable(
         route = subscriptionRouteWithArgs,
@@ -37,7 +39,8 @@ fun NavGraphBuilder.subscriptionScreen(
             ?: return@composable
         SubscriptionRoute(
             url = url,
-            navigateToLive = navigateToLive
+            navigateToLive = navigateToLive,
+            setAppActions = setAppActions
         )
     }
 }

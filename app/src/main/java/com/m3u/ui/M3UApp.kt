@@ -86,12 +86,11 @@ fun M3UApp(
                                     .orEmpty(),
                                 visible = isSystemBarVisibility,
                                 actions = {
-                                    IconButton(
-                                        onClick = { /*TODO*/ }
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Rounded.AccountCircle,
-                                            contentDescription = null
+                                    actions.forEach { action ->
+                                        M3UIconButton(
+                                            icon = action.icon,
+                                            contentDescription = action.contentDescription,
+                                            onClick = action.onClick
                                         )
                                     }
                                 }
@@ -112,6 +111,7 @@ fun M3UApp(
                                     M3UNavHost(
                                         navController = appState.navController,
                                         navigateToDestination = appState::navigateToDestination,
+                                        setAppActions = appState::setActions,
                                         onBackClick = appState::onBackClick,
                                         modifier = Modifier
                                             .padding(

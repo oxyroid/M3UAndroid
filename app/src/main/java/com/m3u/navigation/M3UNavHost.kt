@@ -11,12 +11,14 @@ import com.m3u.features.main.navgation.mainNavigationRoute
 import com.m3u.features.main.navgation.mainScreen
 import com.m3u.features.setting.navigation.settingScreen
 import com.m3u.subscription.navigation.subscriptionScreen
+import com.m3u.ui.model.AppAction
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun M3UNavHost(
     navController: NavHostController,
-    navigateToDestination: (Destination) -> Unit,
+    navigateToDestination: (Destination, String?) -> Unit,
+    setAppActions: (List<AppAction>) -> Unit,
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier,
     startDestination: String = mainNavigationRoute
@@ -30,18 +32,27 @@ fun M3UNavHost(
     ) {
         // TopLevel
         mainScreen(
-            navigateToSubscription = {
-                navigateToDestination(Destination.Subscription(it))
-            }
+            navigateToSubscription = { url, label ->
+                navigateToDestination(Destination.Subscription(url), label)
+            },
+            setAppActions = setAppActions
         )
-        favouriteScreen()
-        settingScreen()
+        favouriteScreen(
+            setAppActions = setAppActions
+        )
+        settingScreen(
+            setAppActions = setAppActions
+        )
 
-        liveScreen()
+        liveScreen(
+            setAppActions = setAppActions
+        )
+
         subscriptionScreen(
-            navigateToLive = {
-                navigateToDestination(Destination.Live(it))
-            }
+            navigateToLive = { id, label ->
+                navigateToDestination(Destination.Live(id), label)
+            },
+            setAppActions = setAppActions
         )
     }
 }

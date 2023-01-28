@@ -4,6 +4,7 @@ import androidx.compose.animation.*
 import androidx.navigation.*
 import com.google.accompanist.navigation.animation.composable
 import com.m3u.features.live.LiveRoute
+import com.m3u.ui.model.AppAction
 
 const val liveRoute = "live_route"
 private const val liveIdTypeArg = "id"
@@ -16,7 +17,9 @@ fun NavController.navigateToLive(id: Int, navOptions: NavOptions? = null) {
 }
 
 @OptIn(ExperimentalAnimationApi::class)
-fun NavGraphBuilder.liveScreen() {
+fun NavGraphBuilder.liveScreen(
+    setAppActions: (List<AppAction>) -> Unit,
+) {
     composable(
         route = liveRouteWithArgs,
         arguments = listOf(
@@ -38,6 +41,9 @@ fun NavGraphBuilder.liveScreen() {
             .arguments
             ?.getInt(liveIdTypeArg)
             ?: return@composable
-        LiveRoute(id = id)
+        LiveRoute(
+            id = id,
+            setAppActions = setAppActions
+        )
     }
 }

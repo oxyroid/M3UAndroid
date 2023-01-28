@@ -19,6 +19,7 @@ import com.m3u.features.setting.navigation.settingNavigationRoute
 import com.m3u.navigation.Destination
 import com.m3u.navigation.TopLevelDestination
 import com.m3u.subscription.navigation.navigationToSubscription
+import com.m3u.ui.model.AppAction
 import kotlinx.coroutines.CoroutineScope
 
 @OptIn(ExperimentalAnimationApi::class)
@@ -79,7 +80,20 @@ class M3UAppState(
         }
     }
 
-    fun navigateToDestination(destination: Destination) {
+    private val _destinationLabel: MutableState<String?> = mutableStateOf(null)
+    val destinationLabel: State<String?> get() = _destinationLabel
+
+    private val _appActions: MutableState<List<AppAction>> = mutableStateOf(emptyList())
+    val appActions: State<List<AppAction>> get() = _appActions
+
+    fun setActions(actions: List<AppAction>) {
+        _appActions.value = actions
+    }
+
+    fun navigateToDestination(
+        destination: Destination,
+        label: String?
+    ) {
         val navOptions = navOptions {
 //            anim {
 //                enter = android.R.anim.slide_in_left
@@ -87,14 +101,19 @@ class M3UAppState(
 //            }
         }
         when (destination) {
-            is Destination.Subscription -> navController.navigationToSubscription(
-                destination.url,
-                navOptions
-            )
-            is Destination.Live -> navController.navigateToLive(
-                destination.id,
-                navOptions
-            )
+            is Destination.Subscription -> {
+                _destinationLabel.value = label
+                navController.navigationToSubscription(
+                    destination.url,
+                    navOptions
+                )
+            }
+            is Destination.Live -> {
+                navController.navigateToLive(
+                    destination.id,
+                    navOptions
+                )
+            }
         }
     }
 

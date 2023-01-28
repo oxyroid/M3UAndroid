@@ -1,4 +1,5 @@
 @file:Suppress("unused")
+
 package com.m3u.ui.components.basic
 
 import androidx.compose.foundation.background
@@ -13,10 +14,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.m3u.core.icon.Icon
 import com.m3u.ui.local.LocalTheme
 
 @Composable
@@ -119,6 +122,34 @@ fun M3UTextButton(
             fontSize = 14.sp,
             maxLines = 1
         )
+    }
+}
+
+@Composable
+fun M3UIconButton(
+    icon: Icon,
+    contentDescription: String?,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    IconButton(
+        onClick = onClick,
+        modifier = modifier
+    ) {
+        when (icon) {
+            is Icon.DrawableResourceIcon -> {
+                Icon(
+                    painter = painterResource(icon.id),
+                    contentDescription = contentDescription
+                )
+            }
+            is Icon.ImageVectorIcon -> {
+                Icon(
+                    imageVector = icon.imageVector,
+                    contentDescription = contentDescription
+                )
+            }
+        }
     }
 }
 

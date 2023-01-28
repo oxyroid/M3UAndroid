@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.pullrefresh.PullRefreshIndicator
 import androidx.compose.material.pullrefresh.pullRefresh
 import androidx.compose.material.pullrefresh.rememberPullRefreshState
@@ -22,7 +24,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.m3u.core.icon.Icon
 import com.m3u.core.util.toast
 import com.m3u.data.entity.Live
 import com.m3u.subscription.components.LiveItem
@@ -33,26 +37,42 @@ import com.m3u.ui.components.basic.premiumBrush
 import com.m3u.ui.local.LocalDuration
 import com.m3u.ui.local.LocalSpacing
 import com.m3u.ui.local.LocalTheme
+import com.m3u.ui.model.AppAction
 import com.m3u.ui.util.EventEffect
-import kotlinx.coroutines.delay
-
-sealed class AddToFavouriteState {
-    object None : AddToFavouriteState()
-    data class Prepared(val id: Int) : AddToFavouriteState()
-}
+import com.m3u.ui.util.LifecycleEffect
 
 @Composable
 internal fun SubscriptionRoute(
     url: String,
-    navigateToLive: (Int) -> Unit,
+    navigateToLive: (Int, label: String?) -> Unit,
+    setAppActions: (List<AppAction>) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: SubscriptionViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
     val state by viewModel.readable.collectAsStateWithLifecycle()
 
-    val title = state.title
-    val lives = state.lives
+    val setAppActionsUpdated by rememberUpdatedState(setAppActions)
+    LifecycleEffect { event ->
+        when (event) {
+            Lifecycle.Event.ON_START -> {
+                val actions = listOf(
+                    AppAction(
+                        icon = Icon.ImageVectorIcon(Icons.Rounded.Refresh),
+                        contentDescription = "refresh",
+                        onClick = {
+                            viewModel.onEvent(SubscriptionEvent.SyncingLatest)
+                        }
+                    )
+                )
+                setAppActionsUpdated(actions)
+            }
+            Lifecycle.Event.ON_PAUSE -> {
+                setAppActionsUpdated(emptyList())
+            }
+            else -> {}
+        }
+    }
 
     val refreshing = state.syncing
 
@@ -74,9 +94,7 @@ internal fun SubscriptionRoute(
         refreshing = refreshing,
         onRefresh = { viewModel.onEvent(SubscriptionEvent.SyncingLatest) },
         navigateToLive = navigateToLive,
-        onLiveAction = {
-            addToFavouriteState = AddToFavouriteState.Prepared(it)
-        },
+        onLiveAction = { addToFavourite = AddToFavouriteState.Prepared(it) },
         modifier = modifier
     )
 
