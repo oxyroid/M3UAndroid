@@ -1,6 +1,8 @@
 package com.m3u.favorite
 
+import android.content.res.Configuration
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -10,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
@@ -56,18 +59,41 @@ private fun FavoriteScreen(
     lives: List<LiveWithTitle>,
     modifier: Modifier = Modifier
 ) {
-    LazyColumn(
-        modifier = modifier.fillMaxSize()
-    ) {
-        items(lives) { liveWithTitle ->
-            FavoriteLiveItem(
-                live = liveWithTitle.live,
-                subscriptionTitle = liveWithTitle.title,
-                onClick = {
+    val configuration = LocalConfiguration.current
+    when (configuration.orientation) {
+        Configuration.ORIENTATION_PORTRAIT -> {
+            LazyColumn(
+                modifier = modifier.fillMaxSize()
+            ) {
+                items(lives) { liveWithTitle ->
+                    FavoriteLiveItem(
+                        live = liveWithTitle.live,
+                        subscriptionTitle = liveWithTitle.title,
+                        onClick = {
 
-                },
-                modifier = Modifier.fillParentMaxWidth()
-            )
+                        },
+                        modifier = Modifier.fillParentMaxWidth()
+                    )
+                }
+            }
         }
+        Configuration.ORIENTATION_LANDSCAPE -> {
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(2),
+                modifier = modifier.fillMaxSize()
+            ) {
+                items(lives) { liveWithTitle ->
+                    FavoriteLiveItem(
+                        live = liveWithTitle.live,
+                        subscriptionTitle = liveWithTitle.title,
+                        onClick = {
+
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            }
+        }
+        else -> {}
     }
 }

@@ -11,6 +11,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
@@ -61,29 +62,55 @@ internal fun MainRoute(
 @Composable
 private fun MainScreen(
     subscriptionDetails: List<SubscriptionDetail>,
-    navigateToSubscription: (String) -> Unit,
+    navigateToSubscription: (String, label: String?) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    LazyColumn(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(
-                horizontal = LocalSpacing.current.medium
-            ),
-        contentPadding = PaddingValues(vertical = LocalSpacing.current.medium),
-        verticalArrangement = Arrangement.spacedBy(
-            LocalSpacing.current.small,
-        )
-    ) {
-        items(subscriptionDetails) { subscriptionWithNumber ->
-            SubscriptionItem(
-                label = subscriptionWithNumber.subscription.title,
-                number = subscriptionWithNumber.count,
-                modifier = Modifier.fillParentMaxWidth(),
-                onClick = {
-                    navigateToSubscription(subscriptionWithNumber.subscription.url)
+    val configuration = LocalConfiguration.current
+    when (configuration.orientation) {
+        Configuration.ORIENTATION_PORTRAIT -> {
+            LazyColumn(
+                modifier = modifier.fillMaxSize(),
+                contentPadding = PaddingValues(LocalSpacing.current.medium),
+                verticalArrangement = Arrangement.spacedBy(LocalSpacing.current.small)
+            ) {
+                items(subscriptionDetails) { detail ->
+                    SubscriptionItem(
+                        label = detail.subscription.title,
+                        number = detail.count,
+                        modifier = Modifier.fillParentMaxWidth(),
+                        onClick = {
+                            navigateToSubscription(
+                                detail.subscription.url,
+                                detail.subscription.title
+                            )
+                        }
+                    )
                 }
-            )
+            }
         }
+        Configuration.ORIENTATION_LANDSCAPE -> {
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(2),
+                contentPadding = PaddingValues(LocalSpacing.current.medium),
+                verticalArrangement = Arrangement.spacedBy(LocalSpacing.current.small),
+                horizontalArrangement = Arrangement.spacedBy(LocalSpacing.current.small),
+                modifier = modifier.fillMaxSize()
+            ) {
+                items(subscriptionDetails) { detail ->
+                    SubscriptionItem(
+                        label = detail.subscription.title,
+                        number = detail.count,
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = {
+                            navigateToSubscription(
+                                detail.subscription.url,
+                                detail.subscription.title
+                            )
+                        }
+                    )
+                }
+            }
+        }
+        else -> {}
     }
 }
