@@ -1,5 +1,6 @@
 package com.m3u.subscription.navigation
 
+import android.net.Uri
 import androidx.compose.animation.*
 import androidx.navigation.*
 import com.google.accompanist.navigation.animation.composable
@@ -13,7 +14,7 @@ private const val subscriptionRouteWithArgs = "$subscriptionRoute/{$subscription
 private fun createSubscriptionRoute(url: String) = "$subscriptionRoute/$url"
 
 fun NavController.navigationToSubscription(url: String, navOptions: NavOptions? = null) {
-    val route = createSubscriptionRoute(url.replace("/", "%2F"))
+    val route = createSubscriptionRoute(Uri.encode(url))
     this.navigate(route, navOptions)
 }
 
@@ -29,13 +30,15 @@ fun NavGraphBuilder.subscriptionScreen(
                 type = NavType.StringType
             }
         ),
-        enterTransition = { fadeIn(initialAlpha = 1f) },
-        exitTransition = { fadeOut(targetAlpha = 0f) },
+        enterTransition = { slideInVertically { it } },
+        exitTransition = { fadeOut() },
+        popEnterTransition = { fadeIn() },
+        popExitTransition = { slideOutVertically { it } }
     ) { navBackStackEntry ->
         val url = navBackStackEntry
             .arguments
             ?.getString(subscriptionStringTypeArg)
-            ?.replace("%2F", "/")
+            ?.let(Uri::decode)
             ?: return@composable
         SubscriptionRoute(
             url = url,

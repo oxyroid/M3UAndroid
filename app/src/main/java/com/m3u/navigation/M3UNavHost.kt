@@ -1,6 +1,7 @@
 package com.m3u.navigation
 
 import androidx.compose.animation.*
+import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
@@ -27,8 +28,10 @@ fun M3UNavHost(
         navController = navController,
         startDestination = startDestination,
         modifier = modifier,
-        enterTransition = { fadeIn() },
-        exitTransition = { fadeOut() },
+        enterTransition = { fadeIn(tween(0)) },
+        exitTransition = { fadeOut(tween(0)) },
+        popEnterTransition = { fadeIn(tween(0)) },
+        popExitTransition = { fadeOut(tween(0)) },
     ) {
         // TopLevel
         mainScreen(
