@@ -7,8 +7,9 @@
     <string name="destination_live">直播</string>
     <string name="destination_subscriptions">订阅</string>
 
-    <string name="title_live">正在关注</string>
+    <string name="title_live">正在播放</string>
     <string name="title_setting">设置</string>
     <string name="destination_favourite">喜欢</string>
     <string name="title_favourite">喜欢</string>
+    <string name="title_subscription_placeholder">--</string>
 </resources>
