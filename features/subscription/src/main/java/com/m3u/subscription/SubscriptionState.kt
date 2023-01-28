@@ -8,7 +8,6 @@ import kotlinx.parcelize.RawValue
 
 @Parcelize
 data class SubscriptionState(
-    val title: String = "",
     val url: String = "",
     val lives: List<Live> = emptyList(),
     val syncing: Boolean = false,

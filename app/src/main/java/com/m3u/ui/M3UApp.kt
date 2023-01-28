@@ -4,8 +4,6 @@ import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.AccountCircle
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -23,13 +21,11 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hierarchy
 import com.m3u.core.icon.Icon
+import com.m3u.features.live.navigation.liveRoute
 import com.m3u.navigation.M3UNavHost
 import com.m3u.navigation.TopLevelDestination
 import com.m3u.ui.components.M3UTopBar
-import com.m3u.ui.components.basic.M3UBackground
-import com.m3u.ui.components.basic.M3UGradientBackground
-import com.m3u.ui.components.basic.M3ULocalProvider
-import com.m3u.ui.components.basic.M3UNavigationBar
+import com.m3u.ui.components.basic.*
 import com.m3u.ui.local.LocalTheme
 import com.m3u.ui.model.GradientColors
 import com.m3u.ui.model.LocalGradientColors
@@ -43,7 +39,7 @@ fun M3UApp(
     appState: M3UAppState = rememberM3UAppState()
 ) {
     val shouldShowGradientBackground =
-        appState.currentTopLevelDestination == TopLevelDestination.MAIN
+        appState.currentTopLevelDestination == TopLevelDestination.Main
     M3ULocalProvider {
         M3UBackground {
             M3UGradientBackground(
@@ -62,8 +58,8 @@ fun M3UApp(
                     backgroundColor = Color.Transparent,
                     contentColor = LocalTheme.current.onBackground,
                     snackbarHost = { SnackbarHost(snackbarHostState) },
-                    bottomBar = {
-                    }) { padding ->
+                    bottomBar = {}
+                ) { padding ->
                     Row(
                         modifier = Modifier
                             .fillMaxSize()
@@ -78,13 +74,14 @@ fun M3UApp(
                         Column(
                             modifier = Modifier.fillMaxSize()
                         ) {
-                            val destination = appState.currentTopLevelDestination
+                            val topLevelDestination = appState.currentTopLevelDestination
+                            val destinationLabel by appState.destinationLabel
+                            val actions by appState.appActions
                             M3UTopBar(
-                                text = destination
-                                    ?.titleTextId
+                                text = topLevelDestination?.titleTextId
                                     ?.let { stringResource(it) }
-                                    .orEmpty(),
-                                visible = isSystemBarVisibility,
+                                    ?: destinationLabel.orEmpty(),
+                                visible = !appState.currentNavDestination.isLiveDestination(),
                                 actions = {
                                     actions.forEach { action ->
                                         M3UIconButton(
@@ -127,7 +124,7 @@ fun M3UApp(
                                     M3UBottomBar(
                                         destination = appState.topLevelDestinations,
                                         onNavigateToDestination = appState::navigateToTopLevelDestination,
-                                        currentDestination = appState.currentDestination,
+                                        currentNavDestination = appState.currentNavDestination,
                                         modifier = Modifier
                                             .testTag("M3UBottomBar")
                                             .height(paddingBottom)
@@ -146,7 +143,7 @@ fun M3UApp(
 private fun M3UBottomBar(
     destination: List<TopLevelDestination>,
     onNavigateToDestination: (TopLevelDestination) -> Unit,
-    currentDestination: NavDestination?,
+    currentNavDestination: NavDestination?,
     modifier: Modifier = Modifier
 ) {
     M3UNavigationBar(
@@ -156,7 +153,7 @@ private fun M3UBottomBar(
         elevation = 0.dp
     ) {
         destination.forEach { destination ->
-            val selected = currentDestination.isTopLevelDestinationInHierarchy(destination)
+            val selected = currentNavDestination.isTopLevelDestinationInHierarchy(destination)
             M3UNavigationBarItem(
                 selected = selected,
                 onClick = { onNavigateToDestination(destination) },

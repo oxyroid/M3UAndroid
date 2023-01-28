@@ -45,7 +45,6 @@ class SubscriptionViewModel @Inject constructor(
                     .onEach { subscription ->
                         writable.update {
                             it.copy(
-                                title = subscription?.title.orEmpty(),
                                 url = subscription?.url.orEmpty()
                             )
                         }

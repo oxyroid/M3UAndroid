@@ -1,9 +1,6 @@
 package com.m3u.subscription
 
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.animateOffsetAsState
-import androidx.compose.animation.core.tween
+import android.content.res.Configuration
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -74,9 +71,18 @@ internal fun SubscriptionRoute(
         }
     }
 
-    val refreshing = state.syncing
+    val lives by remember {
+        derivedStateOf {
+            state.lives
+        }
+    }
+    val refreshing by remember {
+        derivedStateOf {
+            state.syncing
+        }
+    }
 
-    var addToFavouriteState: AddToFavouriteState by remember {
+    var addToFavourite: AddToFavouriteState by remember {
         mutableStateOf(AddToFavouriteState.None)
     }
 
@@ -89,18 +95,17 @@ internal fun SubscriptionRoute(
     }
 
     SubscriptionScreen(
-        title = title,
         lives = lives,
         refreshing = refreshing,
-        onRefresh = { viewModel.onEvent(SubscriptionEvent.SyncingLatest) },
+        onSyncingLatest = { viewModel.onEvent(SubscriptionEvent.SyncingLatest) },
         navigateToLive = navigateToLive,
         onLiveAction = { addToFavourite = AddToFavouriteState.Prepared(it) },
         modifier = modifier
     )
 
-    if (addToFavouriteState is AddToFavouriteState.Prepared) {
+    if (addToFavourite is AddToFavouriteState.Prepared) {
         AlertDialog(
-            onDismissRequest = { addToFavouriteState = AddToFavouriteState.None },
+            onDismissRequest = { addToFavourite = AddToFavouriteState.None },
             title = {
                 Text(
                     text = stringResource(R.string.dialog_favourite_title),
@@ -116,16 +121,16 @@ internal fun SubscriptionRoute(
             },
             confirmButton = {
                 M3UTextButton(textRes = R.string.dialog_favourite_confirm) {
-                    val s = addToFavouriteState
+                    val s = addToFavourite
                     if (s is AddToFavouriteState.Prepared) {
                         viewModel.onEvent(SubscriptionEvent.AddToFavourite(s.id))
                     }
-                    addToFavouriteState = AddToFavouriteState.None
+                    addToFavourite = AddToFavouriteState.None
                 }
             },
             dismissButton = {
                 M3UTextButton(textRes = R.string.dialog_favourite_dismiss) {
-                    addToFavouriteState = AddToFavouriteState.None
+                    addToFavourite = AddToFavouriteState.None
                 }
             },
             backgroundColor = LocalTheme.current.background,
@@ -141,8 +146,8 @@ private fun SubscriptionScreen(
     title: String,
     lives: List<Live>,
     refreshing: Boolean,
-    onRefresh: () -> Unit,
-    navigateToLive: (Int) -> Unit,
+    onSyncingLatest: () -> Unit,
+    navigateToLive: (Int, label: String?) -> Unit,
     onLiveAction: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {

@@ -47,15 +47,15 @@ class M3UAppState(
     val navController: NavHostController,
     val coroutineScope: CoroutineScope
 ) {
-    val currentDestination: NavDestination?
+    val currentNavDestination: NavDestination?
         @Composable get() = navController
             .currentBackStackEntryAsState().value?.destination
 
     val currentTopLevelDestination: TopLevelDestination?
-        @Composable get() = when (currentDestination?.route) {
-            mainNavigationRoute -> TopLevelDestination.MAIN
-            settingNavigationRoute -> TopLevelDestination.SETTING
-            favouriteNavigationRoute -> TopLevelDestination.FAVOURITE
+        @Composable get() = when (currentNavDestination?.route) {
+            mainNavigationRoute -> TopLevelDestination.Main
+            settingNavigationRoute -> TopLevelDestination.Setting
+            favouriteNavigationRoute -> TopLevelDestination.Favourite
             else -> null
         }
 
@@ -74,9 +74,9 @@ class M3UAppState(
             restoreState = true
         }
         when (topLevelDestination) {
-            TopLevelDestination.MAIN -> navController.navigateToMain(topLevelNavOptions)
-            TopLevelDestination.FAVOURITE -> navController.navigateToFavourite(topLevelNavOptions)
-            TopLevelDestination.SETTING -> navController.navigateToSetting(topLevelNavOptions)
+            TopLevelDestination.Main -> navController.navigateToMain(topLevelNavOptions)
+            TopLevelDestination.Favourite -> navController.navigateToFavourite(topLevelNavOptions)
+            TopLevelDestination.Setting -> navController.navigateToSetting(topLevelNavOptions)
         }
     }
 

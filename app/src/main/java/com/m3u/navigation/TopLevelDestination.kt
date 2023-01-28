@@ -17,19 +17,19 @@ enum class TopLevelDestination(
     @StringRes val iconTextId: Int,
     @StringRes val titleTextId: Int
 ) {
-    MAIN(
+    Main(
         selectedIcon = Icon.ImageVectorIcon(Icons.Rounded.Home),
         unselectedIcon = Icon.ImageVectorIcon(Icons.Outlined.Home),
         iconTextId = R.string.destination_main,
         titleTextId = R.string.app_name
     ),
-    FAVOURITE(
+    Favourite(
         selectedIcon = Icon.ImageVectorIcon(Icons.Rounded.Favorite),
         unselectedIcon = Icon.ImageVectorIcon(Icons.Outlined.Favorite),
         iconTextId = R.string.destination_favourite,
         titleTextId = R.string.title_favourite
     ),
-    SETTING(
+    Setting(
         selectedIcon = Icon.ImageVectorIcon(Icons.Rounded.Settings),
         unselectedIcon = Icon.ImageVectorIcon(Icons.Outlined.Settings),
         iconTextId = R.string.destination_setting,
