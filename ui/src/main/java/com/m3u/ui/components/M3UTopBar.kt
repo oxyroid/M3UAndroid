@@ -1,6 +1,8 @@
 package com.m3u.ui.components
 
 import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.Divider
 import androidx.compose.material.MaterialTheme
@@ -18,6 +20,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.m3u.ui.local.LocalDuration
 import com.m3u.ui.local.LocalSpacing
 
 @Composable
@@ -28,7 +31,7 @@ fun M3UTopBar(
     actions: @Composable RowScope.() -> Unit = {},
     content: @Composable (PaddingValues) -> Unit
 ) {
-    val topBarHeight = 48.dp
+    val topBarHeight = M3UTopBarDefaults.TopBarHeight
     val topBarHeightPx = with(LocalDensity.current) { topBarHeight.roundToPx().toFloat() }
     var offsetHeightPx by remember { mutableStateOf(topBarHeightPx) }
     var minimize: Boolean by remember {
@@ -64,15 +67,20 @@ fun M3UTopBar(
                 with(density) { offsetHeightPx.toDp() }
             }
         }
-        val contentPaddingTop = if (!visible) 0.dp
-        else topBarHeight + paddingTopDp
-
+        val contentPaddingTop by animateDpAsState(
+            if (!visible) LocalSpacing.current.none
+            else topBarHeight + paddingTopDp,
+            animationSpec = tween(
+                if (visible) LocalDuration.current.immediately
+                else LocalDuration.current.slow
+            )
+        )
         content(
             PaddingValues(
-                start = 0.dp,
+                start = LocalSpacing.current.none,
                 top = contentPaddingTop,
-                end = 0.dp,
-                bottom = 0.dp
+                end = LocalSpacing.current.none,
+                bottom = LocalSpacing.current.none
             )
         )
         Column(
@@ -111,9 +119,13 @@ fun M3UTopBar(
                         horizontalArrangement = Arrangement.End,
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        val k = 0.35f
                         val scale by remember {
-                            derivedStateOf { k * process + (1 - k) }
+                            derivedStateOf {
+                                M3UTopBarDefaults.scaleInterpolator(
+                                    curvature = M3UTopBarDefaults.ScaleCurvature,
+                                    process = process
+                                )
+                            }
                         }
                         Text(
                             text = text,
@@ -135,5 +147,14 @@ fun M3UTopBar(
             }
             Divider()
         }
+    }
+}
+
+internal object M3UTopBarDefaults {
+    val TopBarHeight = 48.dp
+    const val ScaleCurvature = 0.35f
+
+    fun scaleInterpolator(curvature: Float, process: Float): Float {
+        return curvature * (process - 1) + 1
     }
 }

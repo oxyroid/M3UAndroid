@@ -1,24 +1,25 @@
 package com.m3u.subscription
 
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.animateOffsetAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material.AlertDialog
-import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Text
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.material.*
 import androidx.compose.material.pullrefresh.PullRefreshIndicator
 import androidx.compose.material.pullrefresh.pullRefresh
 import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -33,6 +34,7 @@ import com.m3u.ui.local.LocalDuration
 import com.m3u.ui.local.LocalSpacing
 import com.m3u.ui.local.LocalTheme
 import com.m3u.ui.util.EventEffect
+import kotlinx.coroutines.delay
 
 sealed class AddToFavouriteState {
     object None : AddToFavouriteState()
@@ -131,29 +133,55 @@ private fun SubscriptionScreen(
             mutableStateOf(false)
         }
         val color1 by animateColorAsState(
-            if (colorState) PremiumBrushDefaults.color1
+            if (colorState) PremiumBrushDefaults.color1()
             else LocalTheme.current.topBar,
             animationSpec = tween(LocalDuration.current.slow)
         )
         val color2 by animateColorAsState(
-            if (colorState) PremiumBrushDefaults.color2
+            if (colorState) PremiumBrushDefaults.color2()
             else LocalTheme.current.topBar,
             animationSpec = tween(LocalDuration.current.slow)
         )
         val contentColor by animateColorAsState(
-            if (colorState) Color.White
+            if (colorState) PremiumBrushDefaults.contentColor()
             else LocalTheme.current.onTopBar
         )
+        val duration = LocalDuration.current
         LaunchedEffect(refreshing) {
+            delay(duration.medium.toLong())
             colorState = !refreshing
         }
+        val configuration = LocalConfiguration.current
+        val density = LocalDensity.current.density
+
+        val radius by animateFloatAsState(
+            with(configuration) {
+                if (colorState) screenWidthDp * density
+                else screenWidthDp * density / 5
+            },
+            animationSpec = tween(duration.extraSlow)
+        )
+        val offset by animateOffsetAsState(
+            with(configuration) {
+                if (colorState) Offset(
+                    x = screenWidthDp * density / 3 * 2,
+                    y = 0f
+                ) else Offset(
+                    x = screenWidthDp * density / 2,
+                    y = screenWidthDp * density
+                )
+            },
+            animationSpec = tween(duration.medium)
+        )
         M3URow(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(
                     brush = premiumBrush(
                         color1 = color1,
-                        color2 = color2
+                        color2 = color2,
+                        center = offset,
+                        radius = radius
                     )
                 )
         ) {
@@ -163,6 +191,8 @@ private fun SubscriptionScreen(
                 color = contentColor
             )
         }
+
+        Divider()
 
         val state = rememberPullRefreshState(
             refreshing = refreshing,
@@ -198,13 +228,18 @@ private fun SubscriptionScreen(
                             )
                         }
                     }
-                    items(lives) { live ->
+                    itemsIndexed(lives) { index, live ->
                         LiveItem(
                             live = live,
                             onClick = { navigateToLive(live.id) },
                             onLongClick = { onLiveAction(live.id) },
                             modifier = Modifier.fillParentMaxWidth()
                         )
+                        if (index == lives.lastIndex) {
+                            Divider(
+                                modifier = Modifier.height(LocalSpacing.current.extraSmall)
+                            )
+                        }
                     }
                 }
 

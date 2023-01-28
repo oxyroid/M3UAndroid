@@ -30,7 +30,9 @@ internal fun SubscriptionItem(
     modifier: Modifier = Modifier,
 ) {
     Card(
-        shape = RoundedCornerShape(LocalSpacing.current.medium)
+        shape = RoundedCornerShape(LocalSpacing.current.medium),
+        backgroundColor = LocalTheme.current.surface,
+        contentColor = LocalTheme.current.onSurface
     ) {
         M3URow(
             modifier = modifier.clickable(

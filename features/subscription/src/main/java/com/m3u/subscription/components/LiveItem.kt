@@ -24,6 +24,7 @@ import com.m3u.subscription.R
 import com.m3u.ui.components.M3UImage
 import com.m3u.ui.components.basic.M3UColumn
 import com.m3u.ui.local.LocalSpacing
+import com.m3u.ui.local.LocalTheme
 import java.net.URI
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -42,7 +43,9 @@ internal fun LiveItem(
             .uppercase()
     }
     Card(
-        shape = RectangleShape
+        shape = RectangleShape,
+        backgroundColor = LocalTheme.current.surface,
+        contentColor = LocalTheme.current.onSurface
     ) {
         M3UColumn(
             modifier = modifier.combinedClickable(

@@ -7,6 +7,8 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import coil.compose.SubcomposeAsyncImage
@@ -18,11 +20,12 @@ import com.m3u.ui.local.LocalTheme
 fun M3UImage(
     model: Any?,
     modifier: Modifier = Modifier,
+    shape: Shape = RectangleShape,
     contentDescription: String? = null,
     contentScale: ContentScale = ContentScale.Fit
 ) {
     Surface(
-        shape = MaterialTheme.shapes.medium
+        shape = shape
     ) {
         SubcomposeAsyncImage(
             model = model,
@@ -32,7 +35,7 @@ fun M3UImage(
             loading = {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
-                    shape = MaterialTheme.shapes.medium,
+                    shape = shape,
                     color = LocalTheme.current.surface
                 ) {
 
@@ -40,7 +43,7 @@ fun M3UImage(
             },
             error = {
                 Surface(
-                    shape = MaterialTheme.shapes.medium,
+                    shape = shape,
                     color = LocalTheme.current.error,
                 ) {
                     M3UBox(

@@ -39,7 +39,9 @@ internal fun FavoriteLiveItem(
             .uppercase()
     }
     Card(
-        shape = RectangleShape
+        shape = RectangleShape,
+        backgroundColor = LocalTheme.current.surface,
+        contentColor = LocalTheme.current.onSurface
     ) {
         M3UColumn(
             modifier = modifier.clickable(
@@ -49,7 +51,7 @@ internal fun FavoriteLiveItem(
             )
         ) {
             CompositionLocalProvider(
-                LocalContentColor provides LocalTheme.current.tint
+                LocalContentColor provides LocalTheme.current.onSecondary
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -57,8 +59,8 @@ internal fun FavoriteLiveItem(
                 ) {
                     BrightIcon(
                         text = subscriptionTitle,
-                        color = LocalTheme.current.tint,
-                        contentColor = LocalTheme.current.onTint,
+                        color = LocalTheme.current.secondary,
+                        contentColor = LocalTheme.current.onSecondary,
                         icon = {
                             Icon(
                                 imageVector = Icons.Rounded.Link,
@@ -81,7 +83,11 @@ internal fun FavoriteLiveItem(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(LocalSpacing.current.extraSmall)
             ) {
-                BrightIcon(text = scheme)
+                BrightIcon(
+                    text = scheme,
+                    color = LocalTheme.current.primary,
+                    contentColor = LocalTheme.current.onPrimary
+                )
                 CompositionLocalProvider(
                     LocalContentAlpha provides 0.6f
                 ) {

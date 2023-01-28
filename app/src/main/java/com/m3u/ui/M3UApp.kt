@@ -1,6 +1,7 @@
 package com.m3u.ui
 
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
@@ -25,7 +26,10 @@ import com.m3u.core.icon.Icon
 import com.m3u.navigation.M3UNavHost
 import com.m3u.navigation.TopLevelDestination
 import com.m3u.ui.components.M3UTopBar
-import com.m3u.ui.components.basic.*
+import com.m3u.ui.components.basic.M3UBackground
+import com.m3u.ui.components.basic.M3UGradientBackground
+import com.m3u.ui.components.basic.M3ULocalProvider
+import com.m3u.ui.components.basic.M3UNavigationBar
 import com.m3u.ui.local.LocalTheme
 import com.m3u.ui.model.GradientColors
 import com.m3u.ui.model.LocalGradientColors
@@ -147,6 +151,7 @@ private fun M3UBottomBar(
 ) {
     M3UNavigationBar(
         modifier = modifier,
+        containerColor = M3UBottomBarDefaults.navigationBackgroundColor(),
         contentColor = M3UBottomBarDefaults.navigationContentColor(),
         elevation = 0.dp
     ) {
@@ -155,6 +160,7 @@ private fun M3UBottomBar(
             M3UNavigationBarItem(
                 selected = selected,
                 onClick = { onNavigateToDestination(destination) },
+                tint = M3UBottomBarDefaults.navigationSelectedItemColor(),
                 icon = {
                     val icon = if (selected) destination.selectedIcon
                     else destination.unselectedIcon
@@ -174,15 +180,42 @@ private fun M3UBottomBar(
     }
 }
 
+
+@Composable
+private fun M3UNavigationBarItem(
+    selected: Boolean,
+    onClick: () -> Unit,
+    icon: @Composable () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    label: @Composable (() -> Unit)? = null,
+    alwaysShowLabel: Boolean = true,
+    tint: Color
+) {
+    NavigationRailItem(
+        selected = selected,
+        onClick = onClick,
+        icon = icon,
+        modifier = modifier,
+        enabled = enabled,
+        label = label,
+        alwaysShowLabel = alwaysShowLabel,
+        selectedContentColor = tint,
+        interactionSource = remember { MutableInteractionSource() },
+    )
+}
+
+
 object M3UBottomBarDefaults {
     @Composable
-    fun navigationContentColor() = LocalTheme.current.topBar
+    fun navigationBackgroundColor() = LocalTheme.current.topBar
 
     @Composable
-    fun navigationSelectedItemColor() = LocalTheme.current.onTopBar
+    fun navigationContentColor() = LocalTheme.current.onTopBar
 
     @Composable
-    fun navigationIndicatorColor() = LocalTheme.current.onTopBar
+    fun navigationSelectedItemColor() = LocalTheme.current.tint
+
 }
 
 private fun NavDestination?.isTopLevelDestinationInHierarchy(destination: TopLevelDestination) =
