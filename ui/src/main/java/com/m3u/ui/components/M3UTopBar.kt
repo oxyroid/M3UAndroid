@@ -1,8 +1,8 @@
 package com.m3u.ui.components
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.Crossfade
-import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.tween
+import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.Divider
 import androidx.compose.material.MaterialTheme
@@ -20,14 +20,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.m3u.ui.local.LocalDuration
 import com.m3u.ui.local.LocalSpacing
 
+@OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun M3UTopBar(
     modifier: Modifier = Modifier,
     text: String,
     visible: Boolean,
+    windowInsets: WindowInsets = M3UTopBarDefaults.windowInsets,
     actions: @Composable RowScope.() -> Unit = {},
     content: @Composable (PaddingValues) -> Unit
 ) {
@@ -57,6 +58,7 @@ fun M3UTopBar(
     Box(
         modifier = modifier
             .fillMaxSize()
+            .windowInsetsPadding(windowInsets)
             .nestedScroll(
                 connection = connection
             )
@@ -158,6 +160,13 @@ fun M3UTopBar(
 internal object M3UTopBarDefaults {
     val TopBarHeight = 48.dp
     const val ScaleCurvature = 0.35f
+
+    @OptIn(ExperimentalLayoutApi::class)
+    val windowInsets: WindowInsets
+        @Composable
+        get() = WindowInsets.systemBarsIgnoringVisibility
+            .only(WindowInsetsSides.Horizontal + WindowInsetsSides.Top)
+
 
     fun scaleInterpolator(curvature: Float, process: Float): Float {
         return curvature * (process - 1) + 1

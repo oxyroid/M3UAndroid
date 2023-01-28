@@ -219,3 +219,7 @@ private fun NavDestination?.isTopLevelDestinationInHierarchy(destination: TopLev
     this?.hierarchy?.any {
         it.route?.contains(destination.name, true) ?: false
     } ?: false
+
+private fun NavDestination?.isLiveDestination(): Boolean {
+    return this?.route?.startsWith(liveRoute)?: false
+}
