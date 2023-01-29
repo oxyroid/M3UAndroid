@@ -5,6 +5,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -75,13 +76,19 @@ fun M3UApp(
                     Column(
                         modifier = Modifier.fillMaxSize()
                     ) {
-                        val topLevelDestination = appState.currentTopLevelDestination
-                        val destinationLabel by appState.destinationLabel
+                        val topLevelLabel = appState.currentTopLevelDestination
+                            ?.titleTextId
+                            ?.let { stringResource(it) }
+                        val label by appState.label
                         val actions by appState.appActions
+
+                        val text by remember(topLevelLabel) {
+                            derivedStateOf {
+                                topLevelLabel ?: label.orEmpty()
+                            }
+                        }
                         M3UTopBar(
-                            text = topLevelDestination?.titleTextId
-                                ?.let { stringResource(it) }
-                                ?: destinationLabel.orEmpty(),
+                            text = text,
                             visible = !appState.currentNavDestination.isInDestination<Destination.Live>(),
                             actions = {
                                 actions.forEach { action ->

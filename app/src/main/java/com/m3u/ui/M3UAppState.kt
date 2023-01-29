@@ -81,12 +81,12 @@ class M3UAppState(
         }
     }
 
-    private val _destinationLabel: MutableState<String?> = mutableStateOf(null)
-    val destinationLabel: State<String?> get() = _destinationLabel
+    private val _label: MutableState<String?> = mutableStateOf(null)
+    val label: State<String?> get() = _label
 
     fun navigateToDestination(
         destination: Destination,
-        label: String?
+        label: String? = ""
     ) {
         val navOptions = navOptions {
 //            anim {
@@ -96,7 +96,7 @@ class M3UAppState(
         }
         when (destination) {
             is Destination.Subscription -> {
-                _destinationLabel.value = label
+                _label.value = label
                 navController.navigationToSubscription(
                     destination.url,
                     navOptions

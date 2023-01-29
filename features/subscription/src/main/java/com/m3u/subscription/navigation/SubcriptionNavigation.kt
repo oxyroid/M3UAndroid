@@ -20,7 +20,7 @@ fun NavController.navigationToSubscription(url: String, navOptions: NavOptions? 
 
 @OptIn(ExperimentalAnimationApi::class)
 fun NavGraphBuilder.subscriptionScreen(
-    navigateToLive: (Int, label: String?) -> Unit,
+    navigateToLive: (Int) -> Unit,
     setAppActions: (List<AppAction>) -> Unit,
 ) {
     composable(

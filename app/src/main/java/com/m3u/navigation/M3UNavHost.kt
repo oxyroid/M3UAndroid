@@ -52,8 +52,8 @@ fun M3UNavHost(
         )
 
         subscriptionScreen(
-            navigateToLive = { id, label ->
-                navigateToDestination(Destination.Live(id), label)
+            navigateToLive = { id ->
+                navigateToDestination(Destination.Live(id), null)
             },
             setAppActions = setAppActions
         )
