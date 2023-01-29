@@ -4,6 +4,7 @@ package com.m3u.ui.components.basic
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
@@ -60,7 +61,7 @@ fun M3UButton(
         shape = RoundedCornerShape(8.dp),
         onClick = onClick,
         enabled = enabled,
-        modifier = modifier,
+        modifier = modifier.focusable(),
         colors = ButtonDefaults.buttonColors(
             backgroundColor = backgroundColor,
             contentColor = contentColor,

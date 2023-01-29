@@ -10,6 +10,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.*
@@ -114,6 +115,7 @@ fun M3UTextField(
         ),
         interactionSource = interactionSource,
         modifier = modifier
+            .focusable()
             .bringIntoViewRequester(bringIntoViewRequester)
             .fillMaxWidth(),
         readOnly = readOnly,
@@ -214,6 +216,7 @@ fun M3UTextField(
         ),
         interactionSource = interactionSource,
         modifier = modifier
+            .focusable()
             .bringIntoViewRequester(bringIntoViewRequester)
             .fillMaxWidth(),
         readOnly = readOnly,

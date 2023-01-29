@@ -2,6 +2,7 @@ package com.m3u.subscription.components
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
@@ -45,14 +46,15 @@ internal fun LiveItem(
     Card(
         shape = RectangleShape,
         backgroundColor = LocalTheme.current.surface,
-        contentColor = LocalTheme.current.onSurface
-    ) {
-        M3UColumn(
-            modifier = modifier.combinedClickable(
+        contentColor = LocalTheme.current.onSurface,
+        modifier = modifier
+            .focusable()
+            .combinedClickable(
                 onClick = onClick,
                 onLongClick = onLongClick
             )
-        ) {
+    ) {
+        M3UColumn {
             M3UImage(
                 model = live.cover,
                 contentScale = ContentScale.Crop,
