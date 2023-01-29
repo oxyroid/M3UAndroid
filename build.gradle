@@ -1,13 +1,13 @@
 buildscript {
     ext {
-        compose_ui_version = "1.4.0-alpha04"
+        compose_ui_version = "1.4.0-alpha05"
         room_version = "2.5.0"
         hilt_version = "2.44.2"
         media3_version = "1.0.0-beta03"
         accompanist_version = "0.29.0-alpha"
     }
     dependencies {
-        classpath("org.jetbrains.kotlin:kotlin-serialization:1.7.21")
+//        classpath("org.jetbrains.kotlin:kotlin-serialization:1.7.21")
 
     }
 }// Top-level build file where you can add configuration options common to all sub-projects/modules.

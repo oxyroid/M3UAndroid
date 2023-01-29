@@ -22,8 +22,10 @@ import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hierarchy
 import com.m3u.core.icon.Icon
 import com.m3u.features.live.navigation.liveRoute
+import com.m3u.navigation.Destination
 import com.m3u.navigation.M3UNavHost
 import com.m3u.navigation.TopLevelDestination
+import com.m3u.subscription.navigation.subscriptionRoute
 import com.m3u.ui.components.M3UTopBar
 import com.m3u.ui.components.basic.*
 import com.m3u.ui.local.LocalTheme
@@ -40,96 +42,94 @@ fun M3UApp(
 ) {
     val shouldShowGradientBackground =
         appState.currentTopLevelDestination == TopLevelDestination.Main
-    M3ULocalProvider {
-        M3UBackground {
-            M3UGradientBackground(
-                gradientColors = if (shouldShowGradientBackground) {
-                    LocalGradientColors.current
-                } else {
-                    GradientColors()
-                }
-            ) {
-                val snackbarHostState = remember { SnackbarHostState() }
-                val isSystemBarVisibility = appState.isSystemBarVisibility
-                Scaffold(
-                    modifier = Modifier.semantics {
-                        testTagsAsResourceId = true
-                    },
-                    backgroundColor = Color.Transparent,
-                    contentColor = LocalTheme.current.onBackground,
-                    snackbarHost = { SnackbarHost(snackbarHostState) },
-                    bottomBar = {}
-                ) { padding ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(padding)
-                            .consumeWindowInsets(padding)
-                            .windowInsetsPadding(
-                                WindowInsets.safeDrawing.only(
-                                    WindowInsetsSides.Horizontal
-                                )
+    M3UBackground {
+        M3UGradientBackground(
+            gradientColors = if (shouldShowGradientBackground) {
+                LocalGradientColors.current
+            } else {
+                GradientColors()
+            }
+        ) {
+            val snackBarHostState = remember { SnackbarHostState() }
+            val isSystemBarVisibility = appState.isSystemBarVisibility
+            Scaffold(
+                modifier = Modifier.semantics {
+                    testTagsAsResourceId = true
+                },
+                backgroundColor = Color.Transparent,
+                contentColor = LocalTheme.current.onBackground,
+                snackbarHost = { SnackbarHost(snackBarHostState) },
+                bottomBar = {}
+            ) { padding ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(padding)
+                        .consumeWindowInsets(padding)
+                        .windowInsetsPadding(
+                            WindowInsets.safeDrawing.only(
+                                WindowInsetsSides.Horizontal
                             )
+                        )
+                ) {
+                    Column(
+                        modifier = Modifier.fillMaxSize()
                     ) {
-                        Column(
-                            modifier = Modifier.fillMaxSize()
-                        ) {
-                            val topLevelDestination = appState.currentTopLevelDestination
-                            val destinationLabel by appState.destinationLabel
-                            val actions by appState.appActions
-                            M3UTopBar(
-                                text = topLevelDestination?.titleTextId
-                                    ?.let { stringResource(it) }
-                                    ?: destinationLabel.orEmpty(),
-                                visible = !appState.currentNavDestination.isLiveDestination(),
-                                actions = {
-                                    actions.forEach { action ->
-                                        M3UIconButton(
-                                            icon = action.icon,
-                                            contentDescription = action.contentDescription,
-                                            onClick = action.onClick
-                                        )
-                                    }
-                                }
-                            ) { padding ->
-                                Box(
-                                    contentAlignment = Alignment.BottomCenter
-                                ) {
-                                    val paddingBottom by animateDpAsState(
-                                        if (isSystemBarVisibility) 81.dp
-                                        else 0.dp
+                        val topLevelDestination = appState.currentTopLevelDestination
+                        val destinationLabel by appState.destinationLabel
+                        val actions by appState.appActions
+                        M3UTopBar(
+                            text = topLevelDestination?.titleTextId
+                                ?.let { stringResource(it) }
+                                ?: destinationLabel.orEmpty(),
+                            visible = !appState.currentNavDestination.isInDestination<Destination.Live>(),
+                            actions = {
+                                actions.forEach { action ->
+                                    M3UIconButton(
+                                        icon = action.icon,
+                                        contentDescription = action.contentDescription,
+                                        onClick = action.onClick
                                     )
-                                    val direction = LocalLayoutDirection.current
-                                    val leftPadding = padding.calculateLeftPadding(direction)
-                                    val topPadding = padding.calculateTopPadding()
-                                    val rightPadding = padding.calculateRightPadding(direction)
-                                    val bottomPadding =
-                                        padding.calculateBottomPadding() + paddingBottom
-                                    M3UNavHost(
-                                        navController = appState.navController,
-                                        navigateToDestination = appState::navigateToDestination,
-                                        setAppActions = appState::setActions,
-                                        onBackClick = appState::onBackClick,
-                                        modifier = Modifier
-                                            .padding(
-                                                PaddingValues(
-                                                    start = leftPadding,
-                                                    top = topPadding,
-                                                    end = rightPadding,
-                                                    bottom = bottomPadding
-                                                )
+                                }
+                            }
+                        ) { padding ->
+                            Box(
+                                contentAlignment = Alignment.BottomCenter
+                            ) {
+                                val paddingBottom by animateDpAsState(
+                                    if (isSystemBarVisibility) 81.dp
+                                    else 0.dp
+                                )
+                                val direction = LocalLayoutDirection.current
+                                val leftPadding = padding.calculateLeftPadding(direction)
+                                val topPadding = padding.calculateTopPadding()
+                                val rightPadding = padding.calculateRightPadding(direction)
+                                val bottomPadding =
+                                    padding.calculateBottomPadding() + paddingBottom
+                                M3UNavHost(
+                                    navController = appState.navController,
+                                    navigateToDestination = appState::navigateToDestination,
+                                    setAppActions = appState::setActions,
+                                    onBackClick = appState::onBackClick,
+                                    modifier = Modifier
+                                        .padding(
+                                            PaddingValues(
+                                                start = leftPadding,
+                                                top = topPadding,
+                                                end = rightPadding,
+                                                bottom = bottomPadding
                                             )
-                                            .fillMaxSize()
-                                    )
-                                    M3UBottomBar(
-                                        destination = appState.topLevelDestinations,
-                                        onNavigateToDestination = appState::navigateToTopLevelDestination,
-                                        currentNavDestination = appState.currentNavDestination,
-                                        modifier = Modifier
-                                            .testTag("M3UBottomBar")
-                                            .height(paddingBottom)
-                                    )
-                                }
+                                        )
+                                        .fillMaxSize()
+                                )
+                                M3UBottomBar(
+                                    destination = appState.topLevelDestinations,
+                                    onNavigateToDestination = appState::navigateToTopLevelDestination,
+                                    currentNavDestination = appState.currentNavDestination,
+                                    modifier = Modifier
+                                        .testTag("M3UBottomBar")
+                                        .height(paddingBottom)
+                                )
                             }
                         }
                     }
@@ -166,6 +166,7 @@ private fun M3UBottomBar(
                             imageVector = icon.imageVector,
                             contentDescription = null
                         )
+
                         is Icon.DrawableResourceIcon -> Icon(
                             painter = painterResource(icon.id),
                             contentDescription = null
@@ -220,6 +221,12 @@ private fun NavDestination?.isTopLevelDestinationInHierarchy(destination: TopLev
         it.route?.contains(destination.name, true) ?: false
     } ?: false
 
-private fun NavDestination?.isLiveDestination(): Boolean {
-    return this?.route?.startsWith(liveRoute)?: false
+@Composable
+private inline fun <reified D : Destination> NavDestination?.isInDestination(): Boolean {
+    val targetRoute = when (D::class.java.name) {
+        Destination.Live::class.java.name -> liveRoute
+        Destination.Subscription::class.java.name -> subscriptionRoute
+        else -> return false
+    }
+    return (this?.route?.startsWith(targetRoute, ignoreCase = true) ?: false)
 }

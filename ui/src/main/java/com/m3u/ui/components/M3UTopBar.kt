@@ -67,10 +67,12 @@ fun M3UTopBar(
         val spacing = LocalSpacing.current
         val paddingTopDp by remember {
             derivedStateOf {
-                with(density) { offsetHeightPx.toDp() }
+                with(density) {
+                    offsetHeightPx.toDp()
+                }
             }
         }
-        val contentPaddingTop by remember {
+        val contentPaddingTop by remember(visible) {
             derivedStateOf {
                 if (!visible) spacing.none
                 else topBarHeight + paddingTopDp
@@ -84,75 +86,73 @@ fun M3UTopBar(
                 bottom = spacing.none
             )
         )
-        if (visible) {
-            Column(
-                modifier = Modifier.align(Alignment.TopCenter)
-            ) {
-                Crossfade(
-                    targetState = minimize,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(contentPaddingTop)
-                        .padding(horizontal = spacing.medium)
-                ) { minimize ->
-                    if (minimize) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(topBarHeight + paddingTopDp),
-                            horizontalArrangement = Arrangement.Center,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = text,
-                                style = MaterialTheme.typography.h6.copy(
-                                    fontSize = 16.sp
+        Column(
+            modifier = Modifier.align(Alignment.TopCenter)
+        ) {
+            Crossfade(
+                targetState = minimize,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(contentPaddingTop)
+                    .padding(horizontal = spacing.medium)
+            ) { minimize ->
+                if (minimize) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(topBarHeight + paddingTopDp),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = text,
+                            style = MaterialTheme.typography.h6.copy(
+                                fontSize = 16.sp
+                            )
+                        )
+                    }
+                } else {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(topBarHeight + paddingTopDp)
+                            .graphicsLayer {
+                                alpha = process
+                            },
+                        horizontalArrangement = Arrangement.End,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        val scale by remember {
+                            derivedStateOf {
+                                M3UTopBarDefaults.scaleInterpolator(
+                                    curvature = M3UTopBarDefaults.ScaleCurvature,
+                                    process = process
                                 )
-                            )
+                            }
                         }
-                    } else {
-                        Row(
+                        Text(
+                            text = text,
+                            style = MaterialTheme.typography.h5,
+                            fontWeight = FontWeight.ExtraBold,
+                            textAlign = TextAlign.Start,
                             modifier = Modifier
-                                .fillMaxWidth()
-                                .height(topBarHeight + paddingTopDp)
                                 .graphicsLayer {
-                                    alpha = process
-                                },
-                            horizontalArrangement = Arrangement.End,
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            val scale by remember {
-                                derivedStateOf {
-                                    M3UTopBarDefaults.scaleInterpolator(
-                                        curvature = M3UTopBarDefaults.ScaleCurvature,
-                                        process = process
-                                    )
+                                    scaleX = scale
+                                    scaleY = scale
                                 }
-                            }
-                            Text(
-                                text = text,
-                                style = MaterialTheme.typography.h5,
-                                fontWeight = FontWeight.ExtraBold,
-                                textAlign = TextAlign.Start,
-                                modifier = Modifier
-                                    .graphicsLayer {
-                                        scaleX = scale
-                                        scaleY = scale
-                                    }
-                            )
-                            Spacer(
-                                modifier = Modifier.weight(1f)
-                            )
-                            AnimatedContent(
-                                targetState = actions
-                            ) {
-                                it()
-                            }
+                        )
+                        Spacer(
+                            modifier = Modifier.weight(1f)
+                        )
+                        AnimatedContent(
+                            targetState = actions
+                        ) {
+                            it()
                         }
                     }
                 }
-                Divider()
             }
+            Divider()
         }
     }
 }

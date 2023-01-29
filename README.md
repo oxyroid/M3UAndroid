@@ -3,7 +3,7 @@
 
 ### Feature List:
 
-- [x] M3U and M3U8 file.
+- [x] M3U and M3U8 files.
 - [x] HTTPS and RTMP stream.
 - [ ] Script Parser.
 - [ ] Android TV and Car.

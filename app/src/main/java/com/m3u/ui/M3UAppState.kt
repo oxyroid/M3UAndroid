@@ -1,5 +1,6 @@
 package com.m3u.ui
 
+import android.util.Log
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.runtime.*
 import androidx.navigation.NavController
@@ -22,15 +23,15 @@ import com.m3u.subscription.navigation.navigationToSubscription
 import com.m3u.ui.model.AppAction
 import kotlinx.coroutines.CoroutineScope
 
-@OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun rememberM3UAppState(
+    @OptIn(ExperimentalAnimationApi::class)
     navController: NavHostController = rememberAnimatedNavController(),
     coroutineScope: CoroutineScope = rememberCoroutineScope()
 ): M3UAppState {
     DisposableEffect(navController) {
         val listener = NavController.OnDestinationChangedListener { _, destination, _ ->
-
+            Log.d("AppState", "OnDestinationChanged: $destination")
         }
         navController.addOnDestinationChangedListener(listener)
         onDispose {
@@ -83,13 +84,6 @@ class M3UAppState(
     private val _destinationLabel: MutableState<String?> = mutableStateOf(null)
     val destinationLabel: State<String?> get() = _destinationLabel
 
-    private val _appActions: MutableState<List<AppAction>> = mutableStateOf(emptyList())
-    val appActions: State<List<AppAction>> get() = _appActions
-
-    fun setActions(actions: List<AppAction>) {
-        _appActions.value = actions
-    }
-
     fun navigateToDestination(
         destination: Destination,
         label: String?
@@ -108,6 +102,7 @@ class M3UAppState(
                     navOptions
                 )
             }
+
             is Destination.Live -> {
                 navController.navigateToLive(
                     destination.id,
@@ -115,6 +110,14 @@ class M3UAppState(
                 )
             }
         }
+    }
+
+
+    private val _appActions: MutableState<List<AppAction>> = mutableStateOf(emptyList())
+    val appActions: State<List<AppAction>> get() = _appActions
+
+    fun setActions(actions: List<AppAction>) {
+        _appActions.value = actions
     }
 
     fun onBackClick() {
