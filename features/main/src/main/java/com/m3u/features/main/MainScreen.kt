@@ -21,7 +21,7 @@ import com.m3u.features.main.components.SubscriptionItem
 import com.m3u.features.main.vo.SubscriptionDetail
 import com.m3u.ui.local.LocalSpacing
 import com.m3u.ui.model.AppAction
-import com.m3u.ui.util.EventEffect
+import com.m3u.ui.util.EventHandler
 import com.m3u.ui.util.LifecycleEffect
 
 @Composable
@@ -35,7 +35,7 @@ internal fun MainRoute(
     val state: MainState by viewModel.readable.collectAsStateWithLifecycle()
     val subscriptions: List<SubscriptionDetail> = state.subscriptions
 
-    EventEffect(state.message) {
+    EventHandler(state.message) {
         context.toast(it)
     }
     val setAppActionsUpdated by rememberUpdatedState(setAppActions)

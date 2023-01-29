@@ -1,7 +1,11 @@
 package com.m3u.features.setting
 
+import android.content.res.Configuration
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyColumn
@@ -15,6 +19,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
@@ -32,7 +37,7 @@ import com.m3u.ui.components.basic.M3UTextField
 import com.m3u.ui.local.LocalSpacing
 import com.m3u.ui.local.LocalTheme
 import com.m3u.ui.model.AppAction
-import com.m3u.ui.util.EventEffect
+import com.m3u.ui.util.EventHandler
 import com.m3u.ui.util.LifecycleEffect
 
 @Composable
@@ -44,7 +49,7 @@ internal fun SettingRoute(
     val state by viewModel.readable.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
-    EventEffect(state.message) {
+    EventHandler(state.message) {
         context.toast(it)
     }
 
@@ -55,9 +60,11 @@ internal fun SettingRoute(
                 val actions = listOf<AppAction>()
                 setAppActionsUpdated(actions)
             }
+
             Lifecycle.Event.ON_PAUSE -> {
                 setAppActionsUpdated(emptyList())
             }
+
             else -> {}
         }
     }
@@ -95,67 +102,57 @@ private fun SettingScreen(
             .testTag("features:setting"),
         verticalArrangement = Arrangement.spacedBy(LocalSpacing.current.small)
     ) {
-        M3UColumn(
-            verticalArrangement = Arrangement.spacedBy(LocalSpacing.current.small),
-        ) {
-            val focusRequester = remember { FocusRequester() }
-            M3UTextField(
-                text = title,
-                placeholder = stringResource(R.string.placeholder_title),
-                onValueChange = onTitle,
-                keyboardActions = KeyboardActions(
-                    onNext = {
-                        focusRequester.requestFocus()
-                    }
-                ),
-                modifier = Modifier.fillMaxWidth()
-            )
-            M3UTextField(
-                text = url,
-                placeholder = stringResource(R.string.placeholder_url),
-                onValueChange = onUrl,
-                keyboardActions = KeyboardActions(
-                    onDone = {
-                        onSubscribe()
-                    }
-                ),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .focusRequester(focusRequester)
-            )
-            val buttonTextResId = if (subscribeEnable) R.string.label_subscribe
-            else R.string.label_subscribing
-            M3UTextButton(
-                enabled = subscribeEnable,
-                text = stringResource(buttonTextResId),
-                onClick = { onSubscribe() },
-                modifier = Modifier.fillMaxWidth()
-            )
-        }
+        val configuration = LocalConfiguration.current
+        when (configuration.orientation) {
+            Configuration.ORIENTATION_PORTRAIT -> {
+                M3UColumn(
+                    verticalArrangement = Arrangement.spacedBy(LocalSpacing.current.small),
+                ) {
+                    MakeSubscriptionPart(
+                        title = title,
+                        url = url,
+                        subscribeEnable = subscribeEnable,
+                        onTitle = onTitle,
+                        onUrl = onUrl,
+                        onSubscribe = onSubscribe
+                    )
+                }
 
-        LazyColumn(
-            modifier = Modifier.weight(1f)
-        ) {
-            item {
-                TextItem(
-                    title = stringResource(R.string.sync_mode),
-                    enabled = true,
-                    content = when (syncMode) {
-                        SyncMode.DEFAULT -> stringResource(R.string.sync_mode_default)
-                        SyncMode.EXCEPT -> stringResource(R.string.sync_mode_favourite_except)
-                        else -> ""
-                    },
-                    onClick = {
-                        // TODO
-                        val target = when (syncMode) {
-                            SyncMode.DEFAULT -> SyncMode.EXCEPT
-                            else -> SyncMode.DEFAULT
-                        }
-                        onSyncMode(target)
-                    }
+                SettingItemsPart(
+                    syncMode = syncMode,
+                    onSyncMode = onSyncMode,
+                    modifier = Modifier.weight(1f)
                 )
             }
+
+            Configuration.ORIENTATION_LANDSCAPE -> {
+                Row {
+                    MakeSubscriptionPart(
+                        title = title,
+                        url = url,
+                        subscribeEnable = subscribeEnable,
+                        onTitle = onTitle,
+                        onUrl = onUrl,
+                        onSubscribe = onSubscribe,
+                        modifier = Modifier
+                            .fillMaxHeight()
+                            .weight(1f)
+                    )
+                    SettingItemsPart(
+                        syncMode = syncMode,
+                        onSyncMode = onSyncMode,
+                        modifier = Modifier
+                            .fillMaxHeight()
+                            .weight(1f)
+                    )
+                }
+
+            }
+
+            else -> {}
         }
+
+
         M3URow(
             horizontalArrangement = Arrangement.Center,
             modifier = Modifier.fillMaxWidth()
@@ -169,4 +166,90 @@ private fun SettingScreen(
             )
         }
     }
+}
+
+@Composable
+private fun MakeSubscriptionPart(
+    title: String,
+    url: String,
+    subscribeEnable: Boolean,
+    onTitle: (String) -> Unit,
+    onUrl: (String) -> Unit,
+    onSubscribe: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    M3UColumn(
+        verticalArrangement = Arrangement.spacedBy(LocalSpacing.current.small),
+        modifier = modifier
+    ) {
+        val focusRequester = remember { FocusRequester() }
+        M3UTextField(
+            text = title,
+            placeholder = stringResource(R.string.placeholder_title),
+            onValueChange = onTitle,
+            keyboardActions = KeyboardActions(
+                onNext = {
+                    focusRequester.requestFocus()
+                }
+            ),
+            modifier = Modifier.fillMaxWidth()
+        )
+        M3UTextField(
+            text = url,
+            placeholder = stringResource(R.string.placeholder_url),
+            onValueChange = onUrl,
+            keyboardActions = KeyboardActions(
+                onDone = {
+                    onSubscribe()
+                }
+            ),
+            modifier = Modifier
+                .fillMaxWidth()
+                .focusRequester(focusRequester)
+        )
+        val buttonTextResId = if (subscribeEnable) R.string.label_subscribe
+        else R.string.label_subscribing
+        M3UTextButton(
+            enabled = subscribeEnable,
+            text = stringResource(buttonTextResId),
+            onClick = { onSubscribe() },
+            modifier = Modifier.fillMaxWidth()
+        )
+
+    }
+}
+
+@Composable
+private fun SettingItemsPart(
+    syncMode: Int,
+    onSyncMode: (Int) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    LazyColumn(
+        modifier = modifier,
+        contentPadding = PaddingValues(
+            vertical = LocalSpacing.current.medium
+        )
+    ) {
+        item {
+            TextItem(
+                title = stringResource(R.string.sync_mode),
+                enabled = true,
+                content = when (syncMode) {
+                    SyncMode.DEFAULT -> stringResource(R.string.sync_mode_default)
+                    SyncMode.EXCEPT -> stringResource(R.string.sync_mode_favourite_except)
+                    else -> ""
+                },
+                onClick = {
+                    // TODO
+                    val target = when (syncMode) {
+                        SyncMode.DEFAULT -> SyncMode.EXCEPT
+                        else -> SyncMode.DEFAULT
+                    }
+                    onSyncMode(target)
+                }
+            )
+        }
+    }
+
 }

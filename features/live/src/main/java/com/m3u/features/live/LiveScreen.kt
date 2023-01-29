@@ -17,7 +17,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.core.util.toast
 import com.m3u.ui.components.LivePlayer
 import com.m3u.ui.model.AppAction
-import com.m3u.ui.util.EventEffect
+import com.m3u.ui.util.EventHandler
 import com.m3u.ui.util.LifecycleEffect
 
 @Composable
@@ -44,7 +44,7 @@ internal fun LiveRoute(
         }
     }
 
-    EventEffect(state.message) {
+    EventHandler(state.message) {
         context.toast(it)
     }
 

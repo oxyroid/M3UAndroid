@@ -32,13 +32,13 @@ import com.m3u.ui.components.basic.M3UTextButton
 import com.m3u.ui.local.LocalSpacing
 import com.m3u.ui.local.LocalTheme
 import com.m3u.ui.model.AppAction
-import com.m3u.ui.util.EventEffect
+import com.m3u.ui.util.EventHandler
 import com.m3u.ui.util.LifecycleEffect
 
 @Composable
 internal fun SubscriptionRoute(
     url: String,
-    navigateToLive: (Int, label: String?) -> Unit,
+    navigateToLive: (Int) -> Unit,
     setAppActions: (List<AppAction>) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: SubscriptionViewModel = hiltViewModel()
@@ -61,9 +61,11 @@ internal fun SubscriptionRoute(
                 )
                 setAppActionsUpdated(actions)
             }
+
             Lifecycle.Event.ON_PAUSE -> {
                 setAppActionsUpdated(emptyList())
             }
+
             else -> {}
         }
     }
@@ -83,7 +85,7 @@ internal fun SubscriptionRoute(
         mutableStateOf(AddToFavouriteState.None)
     }
 
-    EventEffect(state.message) {
+    EventHandler(state.message) {
         context.toast(it)
     }
 
@@ -143,7 +145,7 @@ private fun SubscriptionScreen(
     lives: List<Live>,
     refreshing: Boolean,
     onSyncingLatest: () -> Unit,
-    navigateToLive: (Int, label: String?) -> Unit,
+    navigateToLive: (Int) -> Unit,
     onLiveAction: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -164,13 +166,14 @@ private fun SubscriptionScreen(
                     items(lives) { live ->
                         LiveItem(
                             live = live,
-                            onClick = { navigateToLive(live.id, live.title) },
+                            onClick = { navigateToLive(live.id) },
                             onLongClick = { onLiveAction(live.id) },
                             modifier = Modifier.fillMaxWidth()
                         )
                     }
                 }
             }
+
             Configuration.ORIENTATION_PORTRAIT -> {
                 val groups = remember(lives) {
                     lives.groupBy { it.group }
@@ -201,7 +204,7 @@ private fun SubscriptionScreen(
                         itemsIndexed(lives) { index, live ->
                             LiveItem(
                                 live = live,
-                                onClick = { navigateToLive(live.id, live.title) },
+                                onClick = { navigateToLive(live.id) },
                                 onLongClick = { onLiveAction(live.id) },
                                 modifier = Modifier.fillParentMaxWidth()
                             )
@@ -214,6 +217,7 @@ private fun SubscriptionScreen(
                     }
                 }
             }
+
             else -> {}
         }
 
