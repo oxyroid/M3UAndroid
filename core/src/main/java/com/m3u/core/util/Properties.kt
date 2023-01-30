@@ -1,6 +1,6 @@
 package com.m3u.core.util
 
-import java.util.*
+import java.util.Properties
 
 fun Properties.loadLine(line: String) {
     val trim = line.trim()

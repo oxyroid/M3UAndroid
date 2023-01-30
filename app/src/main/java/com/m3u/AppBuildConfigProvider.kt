@@ -3,7 +3,7 @@ package com.m3u
 import com.m3u.core.BuildConfigProvider
 import javax.inject.Inject
 
-class AppBuildConfigProvider @Inject constructor(): BuildConfigProvider {
+class AppBuildConfigProvider @Inject constructor() : BuildConfigProvider {
     override fun getName(): String {
         return BuildConfig.APPLICATION_ID
     }

@@ -5,7 +5,7 @@ import com.m3u.core.util.trimBrackets
 import com.m3u.data.model.M3U
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.util.*
+import java.util.Properties
 import java.util.stream.Stream
 import kotlin.streams.asSequence
 
@@ -28,6 +28,7 @@ class M3UParser internal constructor() : Parser<List<M3U>> {
                             }
                             block = M3U().setContent(line)
                         }
+
                         else -> {
                             block = block?.setUrl(line)
                             block?.let { list.add(it) }

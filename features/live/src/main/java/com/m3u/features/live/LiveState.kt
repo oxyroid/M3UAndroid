@@ -10,4 +10,4 @@ import kotlinx.parcelize.RawValue
 data class LiveState(
     val live: Live? = null,
     val message: @RawValue Event<String> = Event.Handled(),
-): Parcelable
+) : Parcelable

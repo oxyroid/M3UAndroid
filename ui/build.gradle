@@ -39,7 +39,7 @@ android {
 
 dependencies {
     implementation(project(":core"))
-    
+
     implementation "androidx.core:core-ktx:$core_version"
     implementation "androidx.activity:activity-compose:$activity_version"
     implementation "androidx.lifecycle:lifecycle-runtime-ktx:$lifecycle_version"

@@ -42,9 +42,11 @@ internal fun FavouriteRoute(
                 val actions = listOf<AppAction>()
                 setAppActionsUpdated(actions)
             }
+
             Lifecycle.Event.ON_PAUSE -> {
                 setAppActionsUpdated(emptyList())
             }
+
             else -> {}
         }
     }
@@ -77,6 +79,7 @@ private fun FavoriteScreen(
                 }
             }
         }
+
         Configuration.ORIENTATION_LANDSCAPE -> {
             LazyVerticalGrid(
                 columns = GridCells.Fixed(2),
@@ -94,6 +97,7 @@ private fun FavoriteScreen(
                 }
             }
         }
+
         else -> {}
     }
 }

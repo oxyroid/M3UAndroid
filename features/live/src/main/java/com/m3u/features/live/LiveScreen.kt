@@ -37,9 +37,11 @@ internal fun LiveRoute(
                 val actions = listOf<AppAction>()
                 setAppActionsUpdated(actions)
             }
+
             Lifecycle.Event.ON_PAUSE -> {
                 setAppActionsUpdated(emptyList())
             }
+
             else -> {}
         }
     }

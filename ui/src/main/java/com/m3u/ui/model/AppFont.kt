@@ -19,6 +19,7 @@ object AppFont {
         Font(R.font.titillium_web_bold_italic, FontWeight.Bold, style = FontStyle.Italic),
     )
 }
+
 val Typography = Typography(
     defaultFontFamily = AppFont.TitilliumWeb,
     h1 = TextStyle(

@@ -60,6 +60,7 @@ class SubscriptionViewModel @Inject constructor(
                     }
                     .launchIn(viewModelScope)
             }
+
             SubscriptionEvent.SyncingLatest -> {
                 val url = try {
                     URL(readable.value.url)
@@ -81,9 +82,11 @@ class SubscriptionViewModel @Inject constructor(
                                 Resource.Loading -> it.copy(
                                     syncing = true
                                 )
+
                                 is Resource.Success -> it.copy(
                                     syncing = false
                                 )
+
                                 is Resource.Failure -> it.copy(
                                     syncing = false,
                                     message = eventOf(resource.message.orEmpty())
@@ -93,6 +96,7 @@ class SubscriptionViewModel @Inject constructor(
                     }
                     .launchIn(viewModelScope)
             }
+
             is SubscriptionEvent.AddToFavourite -> {
                 viewModelScope.launch {
                     val id = event.id

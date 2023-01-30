@@ -1,7 +1,10 @@
 package com.m3u.features.main
 
 import android.content.res.Configuration
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -45,9 +48,11 @@ internal fun MainRoute(
                 val actions = listOf<AppAction>()
                 setAppActionsUpdated(actions)
             }
+
             Lifecycle.Event.ON_PAUSE -> {
                 setAppActionsUpdated(emptyList())
             }
+
             else -> {}
         }
     }
@@ -88,6 +93,7 @@ private fun MainScreen(
                 }
             }
         }
+
         Configuration.ORIENTATION_LANDSCAPE -> {
             LazyVerticalGrid(
                 columns = GridCells.Fixed(2),
@@ -111,6 +117,7 @@ private fun MainScreen(
                 }
             }
         }
+
         else -> {}
     }
 }

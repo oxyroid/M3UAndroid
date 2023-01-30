@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.flow
 import javax.inject.Inject
 
 private const val TAG = "LiveRepository"
+
 interface LiveRepository {
     fun observe(id: Int): Flow<Live?>
     fun observeAllLives(): Flow<List<Live>>

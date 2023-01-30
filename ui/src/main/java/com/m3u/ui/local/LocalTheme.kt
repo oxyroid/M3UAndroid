@@ -6,7 +6,6 @@ import androidx.compose.ui.graphics.Color
 import com.m3u.ui.model.Theme
 
 
-
 val LocalTheme: ProvidableCompositionLocal<Theme> = staticCompositionLocalOf { DayTheme }
 
 val DayTheme = Theme(

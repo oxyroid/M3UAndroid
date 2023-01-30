@@ -8,7 +8,11 @@ import com.m3u.data.entity.Subscription
 import com.m3u.data.model.toLive
 import com.m3u.data.parser.Parser
 import com.m3u.data.parser.parse
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import java.net.URL
 import javax.inject.Inject
 

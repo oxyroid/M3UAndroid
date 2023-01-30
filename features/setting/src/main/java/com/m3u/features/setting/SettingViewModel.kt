@@ -59,6 +59,7 @@ class SettingViewModel @Inject constructor(
                     )
                 }
             }
+
             is SettingEvent.OnUrl -> {
                 writable.update {
                     it.copy(
@@ -105,6 +106,7 @@ class SettingViewModel @Inject constructor(
                                         adding = true
                                     )
                                 }
+
                                 is Resource.Success -> {
                                     val message = context.getString(R.string.success_subscribe)
                                     it.copy(
@@ -114,6 +116,7 @@ class SettingViewModel @Inject constructor(
                                         message = eventOf(message)
                                     )
                                 }
+
                                 is Resource.Failure -> {
                                     it.copy(
                                         adding = false,

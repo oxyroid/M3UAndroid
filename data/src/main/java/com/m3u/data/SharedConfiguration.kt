@@ -16,7 +16,7 @@ interface Configuration {
 
 class SharedConfiguration @Inject constructor(
     @ApplicationContext context: Context
-): Configuration {
+) : Configuration {
     private val sharedPreferences: SharedPreferences =
         context.getSharedPreferences(SHARED_SETTINGS, Context.MODE_PRIVATE)
 
