@@ -60,7 +60,7 @@ fun M3UButton(
         shape = RoundedCornerShape(8.dp),
         onClick = onClick,
         enabled = enabled,
-        modifier = modifier.focusable(),
+        modifier = modifier,
         colors = ButtonDefaults.buttonColors(
             backgroundColor = backgroundColor,
             contentColor = contentColor,
