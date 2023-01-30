@@ -24,13 +24,14 @@ import com.m3u.features.main.components.SubscriptionItem
 import com.m3u.features.main.vo.SubscriptionDetail
 import com.m3u.ui.local.LocalSpacing
 import com.m3u.ui.model.AppAction
+import com.m3u.ui.model.SetActions
 import com.m3u.ui.util.EventHandler
 import com.m3u.ui.util.LifecycleEffect
 
 @Composable
 internal fun MainRoute(
     navigateToSubscription: (String, label: String?) -> Unit,
-    setAppActions: (List<AppAction>) -> Unit,
+    setAppActions: SetActions,
     modifier: Modifier = Modifier,
     viewModel: MainViewModel = hiltViewModel(),
 ) {
@@ -41,16 +42,16 @@ internal fun MainRoute(
     EventHandler(state.message) {
         context.toast(it)
     }
-    val setAppActionsUpdated by rememberUpdatedState(setAppActions)
+    val currentSetAppActions by rememberUpdatedState(setAppActions)
     LifecycleEffect { event ->
         when (event) {
             Lifecycle.Event.ON_START -> {
                 val actions = listOf<AppAction>()
-                setAppActionsUpdated(actions)
+                currentSetAppActions(actions)
             }
 
             Lifecycle.Event.ON_PAUSE -> {
-                setAppActionsUpdated(emptyList())
+                currentSetAppActions(emptyList())
             }
 
             else -> {}
@@ -59,14 +60,14 @@ internal fun MainRoute(
 
     MainScreen(
         modifier = modifier,
-        subscriptionDetails = subscriptions,
+        details = subscriptions,
         navigateToSubscription = navigateToSubscription
     )
 }
 
 @Composable
 private fun MainScreen(
-    subscriptionDetails: List<SubscriptionDetail>,
+    details: List<SubDetail>,
     navigateToSubscription: (String, label: String?) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -78,7 +79,7 @@ private fun MainScreen(
                 contentPadding = PaddingValues(LocalSpacing.current.medium),
                 verticalArrangement = Arrangement.spacedBy(LocalSpacing.current.small)
             ) {
-                items(subscriptionDetails) { detail ->
+                items(details) { detail ->
                     SubscriptionItem(
                         label = detail.subscription.title,
                         number = detail.count,
@@ -102,7 +103,7 @@ private fun MainScreen(
                 horizontalArrangement = Arrangement.spacedBy(LocalSpacing.current.small),
                 modifier = modifier.fillMaxSize()
             ) {
-                items(subscriptionDetails) { detail ->
+                items(details) { detail ->
                     SubscriptionItem(
                         label = detail.subscription.title,
                         number = detail.count,

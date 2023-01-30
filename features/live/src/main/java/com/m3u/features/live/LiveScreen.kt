@@ -17,6 +17,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.core.util.toast
 import com.m3u.ui.components.LivePlayer
 import com.m3u.ui.model.AppAction
+import com.m3u.ui.model.SetActions
 import com.m3u.ui.util.EventHandler
 import com.m3u.ui.util.LifecycleEffect
 
@@ -24,11 +25,11 @@ import com.m3u.ui.util.LifecycleEffect
 internal fun LiveRoute(
     modifier: Modifier = Modifier,
     viewModel: LiveViewModel = hiltViewModel(),
-    setAppActions: (List<AppAction>) -> Unit,
+    setAppActions: SetActions,
     id: Int
 ) {
     val context = LocalContext.current
-    val state: LiveState by viewModel.readable.collectAsStateWithLifecycle()
+    val state: LiveState by viewModel.state.collectAsStateWithLifecycle()
 
     val setAppActionsUpdated by rememberUpdatedState(setAppActions)
     LifecycleEffect { event ->

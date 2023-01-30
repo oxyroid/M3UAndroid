@@ -136,7 +136,7 @@ fun M3UApp(
                                 M3UNavHost(
                                     navController = appState.navController,
                                     navigateToDestination = appState::navigateToDestination,
-                                    setAppActions = appState::setActions,
+                                    setAppActions = appState.setAppActions,
                                     onBackClick = appState::onBackClick,
                                     modifier = Modifier
                                         .padding(

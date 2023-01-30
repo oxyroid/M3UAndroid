@@ -6,7 +6,7 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavOptions
 import com.google.accompanist.navigation.animation.composable
 import com.m3u.features.main.MainRoute
-import com.m3u.ui.model.AppAction
+import com.m3u.ui.model.SetActions
 
 const val mainNavigationRoute = "main_route"
 
@@ -17,7 +17,7 @@ fun NavController.navigateToMain(navOptions: NavOptions? = null) {
 @OptIn(ExperimentalAnimationApi::class)
 fun NavGraphBuilder.mainScreen(
     navigateToSubscription: (String, label: String?) -> Unit,
-    setAppActions: (List<AppAction>) -> Unit
+    setAppActions: SetActions
 ) {
     composable(mainNavigationRoute) {
         MainRoute(

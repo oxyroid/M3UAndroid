@@ -21,6 +21,7 @@ import com.m3u.navigation.Destination
 import com.m3u.navigation.TopLevelDestination
 import com.m3u.subscription.navigation.navigationToSubscription
 import com.m3u.ui.model.AppAction
+import com.m3u.ui.model.SetActions
 import kotlinx.coroutines.CoroutineScope
 
 @Composable
@@ -88,26 +89,14 @@ class M3UAppState(
         destination: Destination,
         label: String? = ""
     ) {
-        val navOptions = navOptions {
-//            anim {
-//                enter = android.R.anim.slide_in_left
-//                exit = android.R.anim.slide_out_right
-//            }
-        }
         when (destination) {
             is Destination.Subscription -> {
                 _label.value = label
-                navController.navigationToSubscription(
-                    destination.url,
-                    navOptions
-                )
+                navController.navigationToSubscription(destination.url)
             }
 
             is Destination.Live -> {
-                navController.navigateToLive(
-                    destination.id,
-                    navOptions
-                )
+                navController.navigateToLive(destination.id)
             }
         }
     }
@@ -116,8 +105,8 @@ class M3UAppState(
     private val _appActions: MutableState<List<AppAction>> = mutableStateOf(emptyList())
     val appActions: State<List<AppAction>> get() = _appActions
 
-    fun setActions(actions: List<AppAction>) {
-        _appActions.value = actions
+    val setAppActions: SetActions = {
+        _appActions.value = it
     }
 
     fun onBackClick() {

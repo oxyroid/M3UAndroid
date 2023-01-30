@@ -47,6 +47,7 @@ import com.m3u.ui.components.M3UTextButton
 import com.m3u.ui.local.LocalSpacing
 import com.m3u.ui.local.LocalTheme
 import com.m3u.ui.model.AppAction
+import com.m3u.ui.model.SetActions
 import com.m3u.ui.util.EventHandler
 import com.m3u.ui.util.LifecycleEffect
 
@@ -54,14 +55,14 @@ import com.m3u.ui.util.LifecycleEffect
 internal fun SubscriptionRoute(
     url: String,
     navigateToLive: (Int) -> Unit,
-    setAppActions: (List<AppAction>) -> Unit,
+    setAppActions: SetActions,
     modifier: Modifier = Modifier,
     viewModel: SubscriptionViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
-    val state by viewModel.readable.collectAsStateWithLifecycle()
+    val state by viewModel.state.collectAsStateWithLifecycle()
 
-    val setAppActionsUpdated by rememberUpdatedState(setAppActions)
+    val currentSetAppActions by rememberUpdatedState(setAppActions)
     LifecycleEffect { event ->
         when (event) {
             Lifecycle.Event.ON_START -> {
@@ -74,11 +75,11 @@ internal fun SubscriptionRoute(
                         }
                     )
                 )
-                setAppActionsUpdated(actions)
+                currentSetAppActions(actions)
             }
 
             Lifecycle.Event.ON_PAUSE -> {
-                setAppActionsUpdated(emptyList())
+                currentSetAppActions(emptyList())
             }
 
             else -> {}

@@ -7,3 +7,5 @@ data class AppAction(
     val contentDescription: String?,
     val onClick: () -> Unit
 )
+
+typealias SetActions = (List<AppAction>) -> Unit

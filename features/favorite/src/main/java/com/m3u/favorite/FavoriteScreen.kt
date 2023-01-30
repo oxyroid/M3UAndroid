@@ -21,6 +21,7 @@ import com.m3u.core.util.toast
 import com.m3u.favorite.components.FavoriteLiveItem
 import com.m3u.favorite.vo.LiveWithTitle
 import com.m3u.ui.model.AppAction
+import com.m3u.ui.model.SetActions
 import com.m3u.ui.util.EventHandler
 import com.m3u.ui.util.LifecycleEffect
 
@@ -28,10 +29,10 @@ import com.m3u.ui.util.LifecycleEffect
 internal fun FavouriteRoute(
     modifier: Modifier = Modifier,
     viewModel: FavouriteViewModel = hiltViewModel(),
-    setAppActions: (List<AppAction>) -> Unit
+    setAppActions: SetActions
 ) {
     val context = LocalContext.current
-    val state by viewModel.readable.collectAsStateWithLifecycle()
+    val state by viewModel.state.collectAsStateWithLifecycle()
     EventHandler(state.message) {
         context.toast(it)
     }

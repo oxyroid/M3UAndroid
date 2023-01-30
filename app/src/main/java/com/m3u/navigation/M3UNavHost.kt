@@ -12,14 +12,14 @@ import com.m3u.features.main.navgation.mainNavigationRoute
 import com.m3u.features.main.navgation.mainScreen
 import com.m3u.features.setting.navigation.settingScreen
 import com.m3u.subscription.navigation.subscriptionScreen
-import com.m3u.ui.model.AppAction
+import com.m3u.ui.model.SetActions
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun M3UNavHost(
     navController: NavHostController,
     navigateToDestination: (Destination, String?) -> Unit,
-    setAppActions: (List<AppAction>) -> Unit,
+    setAppActions: SetActions,
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier,
     startDestination: String = mainNavigationRoute

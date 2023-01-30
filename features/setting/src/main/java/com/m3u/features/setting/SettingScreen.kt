@@ -37,6 +37,7 @@ import com.m3u.ui.components.M3UTextField
 import com.m3u.ui.local.LocalSpacing
 import com.m3u.ui.local.LocalTheme
 import com.m3u.ui.model.AppAction
+import com.m3u.ui.model.SetActions
 import com.m3u.ui.util.EventHandler
 import com.m3u.ui.util.LifecycleEffect
 
@@ -44,9 +45,9 @@ import com.m3u.ui.util.LifecycleEffect
 internal fun SettingRoute(
     modifier: Modifier = Modifier,
     viewModel: SettingViewModel = hiltViewModel(),
-    setAppActions: (List<AppAction>) -> Unit,
+    setAppActions: SetActions
 ) {
-    val state by viewModel.readable.collectAsStateWithLifecycle()
+    val state by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
     EventHandler(state.message) {
