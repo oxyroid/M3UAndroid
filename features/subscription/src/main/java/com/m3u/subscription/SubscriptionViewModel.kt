@@ -63,7 +63,7 @@ class SubscriptionViewModel @Inject constructor(
 
             SubscriptionEvent.SyncingLatest -> {
                 val url = try {
-                    URL(readable.value.url)
+                    URL(readable.url)
                 } catch (e: MalformedURLException) {
                     Log.e("SubscriptionViewModel", "onEvent: ", e)
                     writable.update {

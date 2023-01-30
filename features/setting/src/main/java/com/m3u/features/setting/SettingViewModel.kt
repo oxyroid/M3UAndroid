@@ -84,7 +84,7 @@ class SettingViewModel @Inject constructor(
                     }
                     return
                 }
-                val urlString = readable.value.url
+                val urlString = readable.url
                 val url = try {
                     URL(urlString)
                 } catch (e: MalformedURLException) {

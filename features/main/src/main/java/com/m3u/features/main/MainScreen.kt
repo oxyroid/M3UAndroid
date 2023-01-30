@@ -21,7 +21,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.core.util.toast
 import com.m3u.features.main.components.SubscriptionItem
-import com.m3u.features.main.vo.SubscriptionDetail
+import com.m3u.features.main.model.SubDetail
 import com.m3u.ui.local.LocalSpacing
 import com.m3u.ui.model.AppAction
 import com.m3u.ui.model.SetActions
@@ -36,8 +36,8 @@ internal fun MainRoute(
     viewModel: MainViewModel = hiltViewModel(),
 ) {
     val context = LocalContext.current
-    val state: MainState by viewModel.readable.collectAsStateWithLifecycle()
-    val subscriptions: List<SubscriptionDetail> = state.subscriptions
+    val state: MainState by viewModel.state.collectAsStateWithLifecycle()
+    val subscriptions: List<SubDetail> = state.details
 
     EventHandler(state.message) {
         context.toast(it)

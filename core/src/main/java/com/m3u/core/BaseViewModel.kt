@@ -19,14 +19,15 @@ abstract class BaseViewModel<S : Parcelable, E>(
     protected val writable: MutableStateFlow<S> =
         MutableStateFlow(savedStateHandle[key] ?: emptyState)
 
-    val readable: StateFlow<S> = writable.asStateFlow()
+    val state: StateFlow<S> = writable.asStateFlow()
+    protected val readable: S get() = state.value
 
     abstract fun onEvent(event: E)
 
     @CallSuper
     override fun onCleared() {
         super.onCleared()
-        savedStateHandle[key] = readable.value
+        savedStateHandle[key] = state.value
     }
 
     protected val context: Context get() = getApplication()
