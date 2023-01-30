@@ -6,7 +6,7 @@ package com.m3u.core.collection
  * WARNING! This [loopIn] version may throw an error after block looping
  * if the range is not suitable for your iterable.
  *
- * So make sure to provide a suitable range.
+ * So make sure providing a suitable range.
  * @see Collection.loopIn
  */
 inline fun <E> Iterable<E>.loopIn(range: IntRange, block: (E) -> Unit) {
