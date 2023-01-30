@@ -30,10 +30,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.core.util.toast
 import com.m3u.data.model.SyncMode
 import com.m3u.features.setting.components.TextItem
-import com.m3u.ui.components.basic.M3UColumn
-import com.m3u.ui.components.basic.M3URow
-import com.m3u.ui.components.basic.M3UTextButton
-import com.m3u.ui.components.basic.M3UTextField
+import com.m3u.ui.components.M3UColumn
+import com.m3u.ui.components.M3URow
+import com.m3u.ui.components.M3UTextButton
+import com.m3u.ui.components.M3UTextField
 import com.m3u.ui.local.LocalSpacing
 import com.m3u.ui.local.LocalTheme
 import com.m3u.ui.model.AppAction

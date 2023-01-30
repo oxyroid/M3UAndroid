@@ -1,4 +1,4 @@
-package com.m3u.ui.components.basic
+package com.m3u.ui.components
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.selection.selectableGroup

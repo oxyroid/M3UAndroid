@@ -1,10 +1,9 @@
 @file:Suppress("unused")
 
-package com.m3u.ui.components.basic
+package com.m3u.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
@@ -20,7 +19,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.m3u.core.icon.Icon
+import com.m3u.core.model.Icon
 import com.m3u.ui.local.LocalTheme
 
 @Composable
@@ -144,6 +143,7 @@ fun M3UIconButton(
                     contentDescription = contentDescription
                 )
             }
+
             is Icon.ImageVectorIcon -> {
                 Icon(
                     imageVector = icon.imageVector,

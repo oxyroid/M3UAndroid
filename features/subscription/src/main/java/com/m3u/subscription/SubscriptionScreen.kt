@@ -24,11 +24,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.m3u.core.icon.Icon
+import com.m3u.core.model.Icon
 import com.m3u.core.util.toast
 import com.m3u.data.entity.Live
 import com.m3u.subscription.components.LiveItem
-import com.m3u.ui.components.basic.M3UTextButton
+import com.m3u.ui.components.M3UTextButton
 import com.m3u.ui.local.LocalSpacing
 import com.m3u.ui.local.LocalTheme
 import com.m3u.ui.model.AppAction

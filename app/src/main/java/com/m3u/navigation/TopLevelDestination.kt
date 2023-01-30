@@ -9,7 +9,7 @@ import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.Settings
 import com.m3u.R
-import com.m3u.core.icon.Icon
+import com.m3u.core.model.Icon
 
 enum class TopLevelDestination(
     val selectedIcon: Icon,
