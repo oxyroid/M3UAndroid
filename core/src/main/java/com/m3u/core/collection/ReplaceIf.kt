@@ -14,7 +14,7 @@ inline fun <E> Collection<E>.replaceIf(
     return collection
 }
 
-fun <E> List<E>.replaceIf(
+inline fun <E> List<E>.replaceIf(
     predicate: (E) -> Boolean,
     transform: (E) -> E
 ): List<E> {
