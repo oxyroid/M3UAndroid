@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace 'com.m3u.core'
+    namespace "com.m3u.core"
     compileSdk 33
 
     defaultConfig {
@@ -20,7 +20,7 @@ android {
     buildTypes {
         release {
             minifyEnabled true
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
         }
     }
     compileOptions {
@@ -33,10 +33,9 @@ android {
 }
 
 dependencies {
-    implementation 'androidx.core:core-ktx:1.9.0'
-    implementation 'androidx.appcompat:appcompat:1.6.0'
-    implementation 'com.google.android.material:material:1.8.0'
-    implementation "androidx.compose.ui:ui:$compose_ui_version"
+    implementation "androidx.core:core-ktx:$core_version"
+    implementation "androidx.appcompat:appcompat:$appcompat_version"
+    implementation "androidx.compose.ui:ui:$compose_version"
 
 //    implementation "org.jetbrains.kotlinx:kotlinx-serialization-json:1.4.1"
 }

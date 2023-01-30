@@ -2,7 +2,6 @@ plugins {
     id "com.android.library"
     id "org.jetbrains.kotlin.android"
     id "kotlin-kapt"
-    id "com.google.dagger.hilt.android"
     id "kotlin-parcelize"
 }
 
@@ -36,14 +35,13 @@ android {
 dependencies {
     implementation(project(":core"))
 
-    implementation "androidx.core:core-ktx:1.9.0"
-    implementation "androidx.appcompat:appcompat:1.6.0"
-    implementation "com.google.android.material:material:1.8.0"
+    implementation "androidx.core:core-ktx:$core_version"
+    implementation "androidx.appcompat:appcompat:$appcompat_version"
 
     implementation "androidx.room:room-runtime:$room_version"
     implementation "androidx.room:room-ktx:$room_version"
     kapt "androidx.room:room-compiler:$room_version"
 
-    implementation "com.google.dagger:hilt-android:$hilt_version"
-    kapt "com.google.dagger:hilt-compiler:$hilt_version"
+    implementation "com.google.dagger:hilt-android:$dagger_version"
+    kapt "com.google.dagger:hilt-compiler:$dagger_version"
 }
