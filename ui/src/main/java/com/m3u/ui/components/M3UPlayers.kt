@@ -5,11 +5,15 @@ import androidx.annotation.OptIn
 import androidx.compose.material.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.lifecycle.Lifecycle
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
@@ -17,6 +21,7 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
+import com.m3u.ui.util.LifecycleEffect
 
 @Composable
 @OptIn(UnstableApi::class)
@@ -43,6 +48,12 @@ fun LivePlayer(
         }
     }
     PlayerBackground(modifier) {
+        var lifecycle: Lifecycle.Event by remember {
+            mutableStateOf(Lifecycle.Event.ON_CREATE)
+        }
+        LifecycleEffect {
+            lifecycle = it
+        }
         player?.also {
             AndroidView(
                 factory = { context ->
@@ -55,6 +66,21 @@ fun LivePlayer(
                             ViewGroup.LayoutParams.MATCH_PARENT,
                             ViewGroup.LayoutParams.MATCH_PARENT
                         )
+                    }
+                },
+                update = { view ->
+                    when (lifecycle) {
+                        Lifecycle.Event.ON_RESUME -> {
+                            view.onResume()
+                            view.player?.play()
+                        }
+
+                        Lifecycle.Event.ON_PAUSE -> {
+                            view.onPause()
+                            view.player?.pause()
+                        }
+
+                        else -> {}
                     }
                 }
             )
