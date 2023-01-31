@@ -8,9 +8,7 @@ import com.m3u.ui.local.DayTheme
 import com.m3u.ui.local.LocalTheme
 import com.m3u.ui.local.NightTheme
 import com.m3u.ui.model.Background
-import com.m3u.ui.model.GradientColors
 import com.m3u.ui.model.LocalBackground
-import com.m3u.ui.model.LocalGradientColors
 import com.m3u.ui.model.Typography
 
 @Composable
@@ -22,12 +20,7 @@ fun M3ULocalProvider(content: @Composable () -> Unit) {
     )
     CompositionLocalProvider(
         LocalTheme provides theme,
-        LocalBackground provides background,
-        LocalGradientColors provides GradientColors(
-            top = theme.tint,
-            container = theme.primary,
-            bottom = theme.secondary
-        )
+        LocalBackground provides background
     ) {
         MaterialTheme(
             typography = Typography,
