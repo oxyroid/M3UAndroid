@@ -5,6 +5,7 @@ import androidx.annotation.OptIn
 import androidx.compose.material.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -16,79 +17,114 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.Lifecycle
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
+import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
+import androidx.media3.common.Player.State
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import com.m3u.ui.util.LifecycleEffect
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+
+@Immutable
+data class PlayerState(
+    val url: String,
+    internal val state: MutableStateFlow<@State Int>,
+    internal val exception: MutableStateFlow<PlaybackException?> = MutableStateFlow(null)
+) {
+    val stateSource: Flow<@State Int> get() = state
+    val exceptionSource: Flow<PlaybackException?> get() = exception
+}
+
+@Composable
+fun rememberPlayerState(
+    url: String,
+    state: MutableStateFlow<@State Int> = remember(url) { MutableStateFlow(Player.STATE_IDLE) },
+    exception: MutableStateFlow<PlaybackException?> = remember(url) { MutableStateFlow(null) }
+): PlayerState = remember(url, state, exception) {
+    PlayerState(url, state, exception)
+}
 
 @Composable
 @OptIn(UnstableApi::class)
 fun LivePlayer(
-    url: String?,
+    state: PlayerState,
     modifier: Modifier = Modifier,
-    useController: Boolean,
     resizeMode: Int = AspectRatioFrameLayout.RESIZE_MODE_FIT
 ) {
     val context = LocalContext.current
+    val (url, playerState, exception) = state
     val mediaItem = remember(url) {
-        url?.let { MediaItem.fromUri(it) }
+        MediaItem.fromUri(url)
     }
-    val player = remember(url) {
-        mediaItem?.let {
-            ExoPlayer.Builder(context)
-                .build()
-                .apply {
-                    playWhenReady = true
-                    setMediaItem(it)
-                    videoScalingMode = C.VIDEO_SCALING_MODE_SCALE_TO_FIT_WITH_CROPPING
-                    repeatMode = Player.REPEAT_MODE_ONE
-                }
+    val player = remember(mediaItem) {
+        ExoPlayer.Builder(context)
+            .build()
+            .apply {
+                playWhenReady = true
+                setMediaItem(mediaItem)
+                videoScalingMode = C.VIDEO_SCALING_MODE_SCALE_TO_FIT_WITH_CROPPING
+                repeatMode = Player.REPEAT_MODE_ONE
+            }
+    }
+
+    DisposableEffect(player, playerState, exception) {
+        val listener = object : Player.Listener {
+            override fun onPlaybackStateChanged(playbackState: Int) {
+                super.onPlaybackStateChanged(playbackState)
+                playerState.value = playbackState
+            }
+
+            override fun onPlayerError(error: PlaybackException) {
+                super.onPlayerError(error)
+                exception.value = error
+            }
+        }
+        player.addListener(listener)
+        onDispose {
+            player.removeListener(listener)
         }
     }
+
     PlayerBackground(modifier) {
-        var lifecycle: Lifecycle.Event by remember {
-            mutableStateOf(Lifecycle.Event.ON_CREATE)
-        }
-        LifecycleEffect {
-            lifecycle = it
-        }
-        player?.also {
-            AndroidView(
-                factory = { context ->
-                    PlayerView(context).apply {
-                        hideController()
-                        setUseController(useController)
-                        setResizeMode(resizeMode)
-                        setPlayer(it)
-                        layoutParams = ViewGroup.LayoutParams(
-                            ViewGroup.LayoutParams.MATCH_PARENT,
-                            ViewGroup.LayoutParams.MATCH_PARENT
-                        )
-                    }
-                },
-                update = { view ->
-                    when (lifecycle) {
-                        Lifecycle.Event.ON_RESUME -> {
-                            view.onResume()
-                            view.player?.play()
-                        }
-
-                        Lifecycle.Event.ON_PAUSE -> {
-                            view.onPause()
-                            view.player?.pause()
-                        }
-
-                        else -> {}
-                    }
+        var lifecycle: Lifecycle.Event by remember { mutableStateOf(Lifecycle.Event.ON_CREATE) }
+        LifecycleEffect { lifecycle = it }
+        AndroidView(
+            factory = { context ->
+                PlayerView(context).apply {
+                    useController = false
+                    setResizeMode(resizeMode)
+                    layoutParams = ViewGroup.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.MATCH_PARENT
+                    )
                 }
-            )
-            DisposableEffect(it) {
-                it.prepare()
-                onDispose {
-                    it.release()
+            },
+            update = { view ->
+                view.apply {
+                    setPlayer(player)
                 }
+                when (lifecycle) {
+                    Lifecycle.Event.ON_RESUME -> {
+                        view.player?.play()
+                        view.onResume()
+                    }
+
+                    Lifecycle.Event.ON_PAUSE -> {
+                        view.player?.pause()
+                        view.onPause()
+                    }
+
+                    else -> {}
+                }
+            }
+        )
+        DisposableEffect(player) {
+            player.prepare()
+            onDispose {
+                player.release()
             }
         }
     }
