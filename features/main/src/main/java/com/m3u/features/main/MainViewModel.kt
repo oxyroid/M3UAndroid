@@ -15,7 +15,6 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
@@ -37,30 +36,22 @@ class MainViewModel @Inject constructor(
     key = createClazzKey<MainViewModel>()
 ) {
     init {
-        /**
-         * Use CoroutineScope#launch instead of Flow#launchIn to create job is
-         * on purpose of launching more child jobs which could be cancelled together.
-         */
-        viewModelScope.launch {
-            val jobs = mutableMapOf<String, Job>()
-            observeAllSubscriptions()
-                .map { it.map(Subscription::toDetail) }
-                .onEach { details ->
+        var job: Job? = null
+        observeAllSubscriptions()
+            .map { it.map(Subscription::toDetail) }
+            .onEach(::setAllDetails)
+            .onEach { details ->
+                job?.cancel()
+                job = viewModelScope.launch {
                     details.forEach { detail ->
                         val url = detail.subscription.url
-                        synchronized(jobs) {
-                            jobs.remove(url)?.cancel()
-                            val job = observeSize(url)
-                                .onEach { count ->
-                                    setCountFromExistedDetails(url, count)
-                                }
-                                .launchIn(this)
-                            jobs[url] = job
-                        }
+                        observeSize(url)
+                            .onEach { count -> setCountFromExistedDetails(url, count) }
+                            .launchIn(this)
                     }
                 }
-                .collectLatest(::setAllDetails)
-        }
+            }
+            .launchIn(viewModelScope)
     }
 
     private fun observeAllSubscriptions(): Flow<List<Subscription>> =
@@ -80,12 +71,12 @@ class MainViewModel @Inject constructor(
     }
 
     private suspend fun setCountFromExistedDetails(url: String, count: Int) {
-        val predicate: (SubDetail) -> Boolean = { it.subscription.url == url }
-        val transform: (SubDetail) -> SubDetail = { it.copy(count = count) }
-        val details = withContext(Dispatchers.IO) {
-            readable.details.replaceIf(predicate, transform)
+        withContext(Dispatchers.IO) {
+            val predicate: (SubDetail) -> Boolean = { it.subscription.url == url }
+            val transform: (SubDetail) -> SubDetail = { it.copy(count = count) }
+            val details = readable.details.replaceIf(predicate, transform)
+            setAllDetails(details)
         }
-        setAllDetails(details)
     }
 
     override fun onEvent(event: MainEvent) {
