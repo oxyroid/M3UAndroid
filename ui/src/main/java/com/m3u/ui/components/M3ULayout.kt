@@ -7,17 +7,14 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.Dp
 import com.m3u.ui.local.LocalSpacing
 
 @Composable
-inline fun M3UColumn(
+fun M3UColumn(
     modifier: Modifier = Modifier,
     verticalArrangement: Arrangement.Vertical = Arrangement.spacedBy(LocalSpacing.current.small),
     horizontalAlignment: Alignment.Horizontal = Alignment.Start,
@@ -35,7 +32,7 @@ inline fun M3UColumn(
 }
 
 @Composable
-inline fun M3URow(
+fun M3URow(
     modifier: Modifier = Modifier,
     horizontalArrangement: Arrangement.Horizontal = Arrangement.spacedBy(LocalSpacing.current.small),
     verticalAlignment: Alignment.Vertical = Alignment.Top,
@@ -53,7 +50,7 @@ inline fun M3URow(
 }
 
 @Composable
-inline fun M3UBox(
+fun M3UBox(
     modifier: Modifier = Modifier,
     contentAlignment: Alignment = Alignment.TopStart,
     propagateMinConstraints: Boolean = false,
@@ -68,11 +65,4 @@ inline fun M3UBox(
         propagateMinConstraints = propagateMinConstraints,
         content = content
     )
-}
-
-@Composable
-fun M3USpacer(
-    distance: Dp = LocalSpacing.current.small
-) {
-    Spacer(Modifier.size(distance))
 }
