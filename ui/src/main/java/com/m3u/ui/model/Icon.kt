@@ -1,4 +1,4 @@
-package com.m3u.core.model
+package com.m3u.ui.model
 
 import androidx.annotation.DrawableRes
 import androidx.compose.ui.graphics.vector.ImageVector

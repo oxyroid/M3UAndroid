@@ -1,4 +1,4 @@
-package com.m3u.core.util
+package com.m3u.core.util.context
 
 import android.content.Context
 import android.widget.Toast

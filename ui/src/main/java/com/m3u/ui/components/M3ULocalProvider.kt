@@ -4,9 +4,9 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import com.m3u.ui.local.DayTheme
-import com.m3u.ui.local.LocalTheme
-import com.m3u.ui.local.NightTheme
+import com.m3u.ui.model.DayTheme
+import com.m3u.ui.model.LocalTheme
+import com.m3u.ui.model.NightTheme
 import com.m3u.ui.model.Background
 import com.m3u.ui.model.LocalBackground
 import com.m3u.ui.model.Typography

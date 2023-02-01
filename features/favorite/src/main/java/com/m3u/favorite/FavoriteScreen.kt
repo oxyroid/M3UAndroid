@@ -17,9 +17,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.m3u.core.util.toast
+import com.m3u.core.util.context.toast
 import com.m3u.favorite.components.FavoriteLiveItem
-import com.m3u.favorite.vo.LiveWithTitle
+import com.m3u.favorite.vo.LiveDetail
 import com.m3u.ui.model.AppAction
 import com.m3u.ui.model.SetActions
 import com.m3u.ui.util.EventHandler
@@ -59,7 +59,7 @@ internal fun FavouriteRoute(
 
 @Composable
 private fun FavoriteScreen(
-    lives: List<LiveWithTitle>,
+    lives: List<LiveDetail>,
     modifier: Modifier = Modifier
 ) {
     val configuration = LocalConfiguration.current

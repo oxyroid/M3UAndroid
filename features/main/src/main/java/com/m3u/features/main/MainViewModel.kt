@@ -55,7 +55,7 @@ class MainViewModel @Inject constructor(
     }
 
     private fun observeAllSubscriptions(): Flow<List<Subscription>> =
-        subscriptionRepository.observeAllSubscriptions()
+        subscriptionRepository.observeAll()
 
     private fun observeSize(url: String): Flow<Int> =
         liveRepository

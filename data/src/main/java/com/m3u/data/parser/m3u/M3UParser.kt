@@ -1,8 +1,8 @@
-package com.m3u.data.parser
+package com.m3u.data.parser.m3u
 
-import com.m3u.core.util.loadLine
-import com.m3u.core.util.trimBrackets
-import com.m3u.data.model.M3U
+import com.m3u.core.util.collection.loadLine
+import com.m3u.core.util.basic.trimBrackets
+import com.m3u.data.parser.Parser
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.Properties
@@ -99,12 +99,14 @@ class M3UParser internal constructor() : Parser<List<M3U>> {
         return properties
     }
 
+    companion object {
+        private const val M3U_HEADER_MARK = "#EXTM3U"
+        private const val M3U_INFO_MARK = "#EXTINF:"
+
+        private const val M3U_TVG_LOGO_MARK = "tvg-logo"
+        private const val M3U_TVG_ID_MARK = "tvg-id"
+        private const val M3U_TVG_NAME_MARK = "tvg-name"
+        private const val M3U_GROUP_TITLE_MARK = "group-title"
+    }
+
 }
-
-private const val M3U_HEADER_MARK = "#EXTM3U"
-private const val M3U_INFO_MARK = "#EXTINF:"
-
-private const val M3U_TVG_LOGO_MARK = "tvg-logo"
-private const val M3U_TVG_ID_MARK = "tvg-id"
-private const val M3U_TVG_NAME_MARK = "tvg-name"
-private const val M3U_GROUP_TITLE_MARK = "group-title"

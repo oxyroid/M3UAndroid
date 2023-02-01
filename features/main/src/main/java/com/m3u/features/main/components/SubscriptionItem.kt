@@ -19,8 +19,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.m3u.ui.components.M3URow
-import com.m3u.ui.local.LocalSpacing
-import com.m3u.ui.local.LocalTheme
+import com.m3u.ui.model.LocalSpacing
+import com.m3u.ui.model.LocalTheme
 
 @Composable
 internal fun SubscriptionItem(

@@ -1,4 +1,4 @@
-package com.m3u.data.model
+package com.m3u.core.annotation
 
 import androidx.annotation.IntDef
 
@@ -16,3 +16,5 @@ annotation class SyncMode {
         const val EXCEPT = 1
     }
 }
+
+typealias SetSyncMode = (@SyncMode Int) -> Unit

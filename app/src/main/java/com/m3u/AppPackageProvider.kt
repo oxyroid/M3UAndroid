@@ -1,9 +1,9 @@
 package com.m3u
 
-import com.m3u.core.BuildConfigProvider
+import com.m3u.core.architecture.PackageProvider
 import javax.inject.Inject
 
-class AppBuildConfigProvider @Inject constructor() : BuildConfigProvider {
+class AppPackageProvider @Inject constructor() : PackageProvider {
     override fun getName(): String {
         return BuildConfig.APPLICATION_ID
     }

@@ -1,4 +1,4 @@
-package com.m3u.core.collection
+package com.m3u.core.util.collection
 
 class UnsuitableRangeForIterable(
     iterable: Iterable<Any?>,

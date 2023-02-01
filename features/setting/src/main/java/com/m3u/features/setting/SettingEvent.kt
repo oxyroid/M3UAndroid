@@ -1,6 +1,6 @@
 package com.m3u.features.setting
 
-import com.m3u.data.model.SyncMode
+import com.m3u.core.annotation.SyncMode
 
 sealed interface SettingEvent {
     data class OnTitle(val title: String) : SettingEvent

@@ -1,6 +1,6 @@
 @file:Suppress("unused")
 
-package com.m3u.core.collection
+package com.m3u.core.util.collection
 
 /**
  * WARNING! This [loopIn] version may throw an error after block looping

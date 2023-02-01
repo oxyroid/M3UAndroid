@@ -20,7 +20,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.m3u.ui.local.LocalSpacing
+import com.m3u.ui.model.LocalSpacing
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable

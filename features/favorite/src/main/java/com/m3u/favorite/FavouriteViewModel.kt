@@ -38,8 +38,8 @@ class FavouriteViewModel @Inject constructor(
                 writable.update { state ->
                     state.copy(
                         lives = lives.map {
-                            val subscription = subscriptionRepository.getDetail(it.subscriptionUrl)
-                            LiveWithTitle(
+                            val subscription = subscriptionRepository.get(it.subscriptionUrl)
+                            LiveDetail(
                                 live = it,
                                 title = subscription?.title.orEmpty()
                             )

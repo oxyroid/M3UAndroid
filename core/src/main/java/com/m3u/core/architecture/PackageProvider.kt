@@ -1,6 +1,6 @@
-package com.m3u.core
+package com.m3u.core.architecture
 
-interface BuildConfigProvider {
+interface PackageProvider {
     fun getName(): String
     fun version(): String
     fun isDebug(): Boolean

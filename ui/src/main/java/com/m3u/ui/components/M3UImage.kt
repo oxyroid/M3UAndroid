@@ -13,7 +13,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import coil.compose.SubcomposeAsyncImage
 import com.m3u.ui.R
-import com.m3u.ui.local.LocalTheme
+import com.m3u.ui.model.LocalTheme
 
 @Composable
 fun M3UImage(

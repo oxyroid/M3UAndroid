@@ -27,15 +27,16 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.m3u.core.util.toast
-import com.m3u.data.model.SyncMode
+import com.m3u.core.annotation.SetSyncMode
+import com.m3u.core.util.context.toast
+import com.m3u.core.annotation.SyncMode
 import com.m3u.features.setting.components.TextItem
 import com.m3u.ui.components.M3UColumn
 import com.m3u.ui.components.M3URow
 import com.m3u.ui.components.M3UTextButton
 import com.m3u.ui.components.M3UTextField
-import com.m3u.ui.local.LocalSpacing
-import com.m3u.ui.local.LocalTheme
+import com.m3u.ui.model.LocalSpacing
+import com.m3u.ui.model.LocalTheme
 import com.m3u.ui.model.AppAction
 import com.m3u.ui.model.SetActions
 import com.m3u.ui.util.EventHandler
@@ -94,7 +95,7 @@ private fun SettingScreen(
     onTitle: (String) -> Unit,
     onUrl: (String) -> Unit,
     onSubscribe: () -> Unit,
-    onSyncMode: (@SyncMode Int) -> Unit,
+    onSyncMode: SetSyncMode,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -222,8 +223,8 @@ private fun MakeSubscriptionPart(
 
 @Composable
 private fun SettingItemsPart(
-    syncMode: Int,
-    onSyncMode: (Int) -> Unit,
+    syncMode: @SyncMode Int,
+    onSyncMode: SetSyncMode,
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
@@ -252,5 +253,4 @@ private fun SettingItemsPart(
             )
         }
     }
-
 }

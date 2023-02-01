@@ -41,7 +41,7 @@ class SubscriptionViewModel @Inject constructor(
                 livesJob?.cancel()
                 val subscriptionUrl = event.url
                 subscriptionRepository
-                detailJob = subscriptionRepository.observeDetail(subscriptionUrl)
+                detailJob = subscriptionRepository.observe(subscriptionUrl)
                     .onEach { subscription ->
                         writable.update {
                             it.copy(
@@ -74,8 +74,7 @@ class SubscriptionViewModel @Inject constructor(
                     }
                     return
                 }
-                subscriptionRepository
-                    .syncLatestSubscription(url)
+                subscriptionRepository.syncLatest(url)
                     .onEach { resource ->
                         writable.update {
                             when (resource) {

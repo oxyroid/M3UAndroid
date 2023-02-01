@@ -19,8 +19,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.m3u.core.model.Icon
-import com.m3u.ui.local.LocalTheme
+import com.m3u.ui.model.Icon
+import com.m3u.ui.model.LocalTheme
 
 @Composable
 fun M3UButton(

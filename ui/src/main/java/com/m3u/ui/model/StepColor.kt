@@ -1,4 +1,4 @@
-package com.m3u.core.model
+package com.m3u.ui.model
 
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color

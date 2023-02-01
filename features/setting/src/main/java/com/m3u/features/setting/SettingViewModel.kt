@@ -3,9 +3,8 @@ package com.m3u.features.setting
 import android.app.Application
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
-import com.m3u.core.BaseViewModel
-import com.m3u.core.BuildConfigProvider
-import com.m3u.core.util.createClazzKey
+import com.m3u.core.architecture.BaseViewModel
+import com.m3u.core.architecture.PackageProvider
 import com.m3u.core.wrapper.Resource
 import com.m3u.core.wrapper.eventOf
 import com.m3u.data.Configuration
@@ -22,8 +21,7 @@ import kotlin.properties.Delegates
 @HiltViewModel
 class SettingViewModel @Inject constructor(
     private val subscriptionRepository: SubscriptionRepository,
-    buildConfigProvider: BuildConfigProvider,
-    savedStateHandle: SavedStateHandle,
+    packageProvider: PackageProvider,
     application: Application,
     private val configuration: Configuration
 ) : BaseViewModel<SettingState, SettingEvent>(
@@ -36,7 +34,7 @@ class SettingViewModel @Inject constructor(
         configuration.syncMode
         writable.update {
             it.copy(
-                version = buildConfigProvider.version()
+                version = packageProvider.version()
             )
         }
     }

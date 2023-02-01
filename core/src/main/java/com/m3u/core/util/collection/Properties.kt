@@ -1,4 +1,4 @@
-package com.m3u.core.util
+package com.m3u.core.util.collection
 
 import java.util.Properties
 

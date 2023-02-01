@@ -17,7 +17,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.Player
-import com.m3u.core.util.toast
+import com.m3u.core.util.context.toast
 import com.m3u.ui.components.LivePlayer
 import com.m3u.ui.components.M3UColumn
 import com.m3u.ui.components.rememberPlayerState

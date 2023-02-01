@@ -1,5 +1,6 @@
 package com.m3u.data.parser
 
+import com.m3u.data.parser.m3u.M3UParser
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.InputStream

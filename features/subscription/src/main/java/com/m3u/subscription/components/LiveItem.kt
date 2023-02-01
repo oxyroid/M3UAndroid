@@ -23,8 +23,8 @@ import com.m3u.data.entity.Live
 import com.m3u.subscription.R
 import com.m3u.ui.components.M3UColumn
 import com.m3u.ui.components.M3UImage
-import com.m3u.ui.local.LocalSpacing
-import com.m3u.ui.local.LocalTheme
+import com.m3u.ui.model.LocalSpacing
+import com.m3u.ui.model.LocalTheme
 import java.net.URI
 
 @OptIn(ExperimentalFoundationApi::class)

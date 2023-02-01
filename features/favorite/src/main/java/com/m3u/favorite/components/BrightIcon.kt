@@ -11,8 +11,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import com.m3u.ui.local.LocalSpacing
-import com.m3u.ui.local.LocalTheme
+import com.m3u.ui.model.LocalSpacing
+import com.m3u.ui.model.LocalTheme
 
 @Composable
 internal fun BrightIcon(

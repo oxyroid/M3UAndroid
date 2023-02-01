@@ -25,8 +25,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import com.m3u.data.entity.Live
 import com.m3u.features.favorite.R
 import com.m3u.ui.components.M3UColumn
-import com.m3u.ui.local.LocalSpacing
-import com.m3u.ui.local.LocalTheme
+import com.m3u.ui.model.LocalSpacing
+import com.m3u.ui.model.LocalTheme
 import java.net.URI
 
 @Composable

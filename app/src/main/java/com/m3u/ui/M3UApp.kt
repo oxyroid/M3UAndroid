@@ -38,7 +38,7 @@ import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hierarchy
-import com.m3u.core.model.Icon
+import com.m3u.ui.model.Icon
 import com.m3u.features.live.navigation.liveRoute
 import com.m3u.navigation.Destination
 import com.m3u.navigation.M3UNavHost
@@ -49,7 +49,7 @@ import com.m3u.ui.components.M3UGradientBackground
 import com.m3u.ui.components.M3UIconButton
 import com.m3u.ui.components.M3UNavigationBar
 import com.m3u.ui.components.M3UTopBar
-import com.m3u.ui.local.LocalTheme
+import com.m3u.ui.model.LocalTheme
 import com.m3u.ui.model.GradientColors
 import com.m3u.ui.model.LocalGradientColors
 

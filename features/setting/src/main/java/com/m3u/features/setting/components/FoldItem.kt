@@ -7,7 +7,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import com.m3u.ui.local.LocalTheme
+import com.m3u.ui.model.LocalTheme
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable

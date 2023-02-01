@@ -9,11 +9,12 @@ import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.Settings
 import com.m3u.R
-import com.m3u.core.model.Icon
+import com.m3u.ui.model.Icon
 
 enum class TopLevelDestination(
     val selectedIcon: Icon,
     val unselectedIcon: Icon,
+    @Suppress("unused")
     @StringRes val iconTextId: Int,
     @StringRes val titleTextId: Int
 ) {

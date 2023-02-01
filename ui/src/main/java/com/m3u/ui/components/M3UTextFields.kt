@@ -49,8 +49,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.m3u.ui.local.LocalDuration
-import com.m3u.ui.local.LocalTheme
+import com.m3u.ui.model.LocalTheme
+import com.m3u.ui.model.LocalDuration
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
