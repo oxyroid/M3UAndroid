@@ -18,9 +18,10 @@ buildscript {
         navigation_version = "2.5.3"
     }
     dependencies {
-//        classpath("org.jetbrains.kotlin:kotlin-serialization:1.7.21")
+        // classpath("org.jetbrains.kotlin:kotlin-serialization:1.7.21")
     }
-}// Top-level build file where you can add configuration options common to all sub-projects/modules.
+}
+// Top-level build file where you can add configuration options common to all sub-projects/modules.
 plugins {
     id "com.android.application" version "$android_gradle_plugin_version" apply false
     id "com.android.library" version "$android_gradle_plugin_version" apply false

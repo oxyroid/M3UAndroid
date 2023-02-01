@@ -1,13 +1,10 @@
 package com.m3u.data.entity
 
-import android.os.Parcelable
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import kotlinx.parcelize.Parcelize
 
 @Entity(tableName = "lives")
-@Parcelize
 data class Live(
     @ColumnInfo(name = "url")
     val url: String,
@@ -25,4 +22,4 @@ data class Live(
     // extra fields
     @ColumnInfo(name = "favourite")
     val favourite: Boolean = false
-) : Parcelable
+)
