@@ -1,10 +1,8 @@
 package com.m3u.features.live
 
 import android.app.Application
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
-import com.m3u.core.BaseViewModel
-import com.m3u.core.util.createClazzKey
+import com.m3u.core.architecture.BaseViewModel
 import com.m3u.data.repository.LiveRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
@@ -16,13 +14,10 @@ import javax.inject.Inject
 @HiltViewModel
 class LiveViewModel @Inject constructor(
     private val liveRepository: LiveRepository,
-    savedStateHandle: SavedStateHandle,
     application: Application
 ) : BaseViewModel<LiveState, LiveEvent>(
     application = application,
-    emptyState = LiveState(),
-    savedStateHandle = savedStateHandle,
-    key = createClazzKey<LiveViewModel>()
+    emptyState = LiveState()
 ) {
     override fun onEvent(event: LiveEvent) {
         when (event) {

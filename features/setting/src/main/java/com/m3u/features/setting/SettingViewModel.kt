@@ -1,7 +1,6 @@
 package com.m3u.features.setting
 
 import android.app.Application
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.m3u.core.architecture.BaseViewModel
 import com.m3u.core.architecture.PackageProvider
@@ -26,9 +25,7 @@ class SettingViewModel @Inject constructor(
     private val configuration: Configuration
 ) : BaseViewModel<SettingState, SettingEvent>(
     application = application,
-    emptyState = SettingState(),
-    savedStateHandle = savedStateHandle,
-    key = createClazzKey<SettingViewModel>()
+    emptyState = SettingState()
 ) {
     init {
         configuration.syncMode

@@ -1,11 +1,9 @@
 package com.m3u.features.main
 
 import android.app.Application
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
-import com.m3u.core.BaseViewModel
-import com.m3u.core.collection.replaceIf
-import com.m3u.core.util.createClazzKey
+import com.m3u.core.architecture.BaseViewModel
+import com.m3u.core.util.collection.replaceIf
 import com.m3u.data.entity.Subscription
 import com.m3u.data.repository.LiveRepository
 import com.m3u.data.repository.SubscriptionRepository
@@ -25,15 +23,12 @@ import javax.inject.Inject
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
-    savedStateHandle: SavedStateHandle,
     private val subscriptionRepository: SubscriptionRepository,
     private val liveRepository: LiveRepository,
     application: Application
 ) : BaseViewModel<MainState, MainEvent>(
     application = application,
-    emptyState = MainState(),
-    savedStateHandle = savedStateHandle,
-    key = createClazzKey<MainViewModel>()
+    emptyState = MainState()
 ) {
     init {
         var job: Job? = null

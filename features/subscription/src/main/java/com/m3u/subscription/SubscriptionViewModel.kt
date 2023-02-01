@@ -2,14 +2,13 @@ package com.m3u.subscription
 
 import android.app.Application
 import android.util.Log
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
-import com.m3u.core.BaseViewModel
-import com.m3u.core.util.createClazzKey
+import com.m3u.core.architecture.BaseViewModel
 import com.m3u.core.wrapper.Resource
 import com.m3u.core.wrapper.eventOf
 import com.m3u.data.repository.LiveRepository
 import com.m3u.data.repository.SubscriptionRepository
+import com.m3u.data.repository.syncLatest
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.launchIn
@@ -24,13 +23,10 @@ import javax.inject.Inject
 class SubscriptionViewModel @Inject constructor(
     private val liveRepository: LiveRepository,
     private val subscriptionRepository: SubscriptionRepository,
-    savedStateHandle: SavedStateHandle,
     application: Application
 ) : BaseViewModel<SubscriptionState, SubscriptionEvent>(
     application = application,
-    emptyState = SubscriptionState(),
-    savedStateHandle = savedStateHandle,
-    key = createClazzKey<SubscriptionViewModel>()
+    emptyState = SubscriptionState()
 ) {
     private var detailJob: Job? = null
     private var livesJob: Job? = null

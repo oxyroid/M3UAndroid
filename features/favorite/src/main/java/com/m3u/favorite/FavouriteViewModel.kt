@@ -1,13 +1,11 @@
 package com.m3u.favorite
 
 import android.app.Application
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
-import com.m3u.core.BaseViewModel
-import com.m3u.core.util.createClazzKey
+import com.m3u.core.architecture.BaseViewModel
 import com.m3u.data.repository.LiveRepository
 import com.m3u.data.repository.SubscriptionRepository
-import com.m3u.favorite.vo.LiveWithTitle
+import com.m3u.favorite.vo.LiveDetail
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
@@ -18,14 +16,11 @@ import javax.inject.Inject
 @HiltViewModel
 class FavouriteViewModel @Inject constructor(
     application: Application,
-    savedStateHandle: SavedStateHandle,
     liveRepository: LiveRepository,
     subscriptionRepository: SubscriptionRepository
 ) : BaseViewModel<FavoriteState, FavoriteEvent>(
     application = application,
-    emptyState = FavoriteState(),
-    savedStateHandle = savedStateHandle,
-    key = createClazzKey<FavouriteViewModel>()
+    emptyState = FavoriteState()
 ) {
 
     init {
