@@ -71,7 +71,7 @@ internal fun SubscriptionRoute(
                         icon = Icon.ImageVectorIcon(Icons.Rounded.Refresh),
                         contentDescription = "refresh",
                         onClick = {
-                            viewModel.onEvent(SubscriptionEvent.SyncingLatest)
+                            viewModel.onEvent(SubscriptionEvent.Sync)
                         }
                     )
                 )
@@ -112,7 +112,7 @@ internal fun SubscriptionRoute(
     SubscriptionScreen(
         lives = lives,
         refreshing = refreshing,
-        onSyncingLatest = { viewModel.onEvent(SubscriptionEvent.SyncingLatest) },
+        onSyncingLatest = { viewModel.onEvent(SubscriptionEvent.Sync) },
         navigateToLive = navigateToLive,
         onLiveAction = { addToFavourite = AddToFavouriteState.Prepared(it) },
         modifier = modifier

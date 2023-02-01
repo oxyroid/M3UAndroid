@@ -22,11 +22,16 @@ interface SubscriptionRepository {
     suspend fun get(url: String): Subscription?
 }
 
-    fun syncLatestSubscription(url: URL): Flow<Resource<Unit>>
-
-    fun observeAllSubscriptions(): Flow<List<Subscription>>
-    fun observeDetail(url: String): Flow<Subscription?>
-    suspend fun getDetail(url: String): Subscription?
+fun SubscriptionRepository.sync(url: URL): Flow<Resource<Unit>> = channelFlow {
+    val stringUrl = url.toString()
+    val subscription = get(stringUrl)
+    if (subscription == null) {
+        send(Resource.Failure("Cannot find subscription: $stringUrl"))
+        return@channelFlow
+    }
+    subscribe(subscription.title, url)
+        .onEach(::send)
+        .launchIn(this)
 }
 
 class SubscriptionRepositoryImpl @Inject constructor(

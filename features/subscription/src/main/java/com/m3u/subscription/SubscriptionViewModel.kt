@@ -1,14 +1,13 @@
 package com.m3u.subscription
 
 import android.app.Application
-import android.util.Log
 import androidx.lifecycle.viewModelScope
 import com.m3u.core.architecture.BaseViewModel
 import com.m3u.core.wrapper.Resource
 import com.m3u.core.wrapper.eventOf
 import com.m3u.data.repository.LiveRepository
 import com.m3u.data.repository.SubscriptionRepository
-import com.m3u.data.repository.syncLatest
+import com.m3u.data.repository.sync
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.launchIn
@@ -57,11 +56,10 @@ class SubscriptionViewModel @Inject constructor(
                     .launchIn(viewModelScope)
             }
 
-            SubscriptionEvent.SyncingLatest -> {
+            SubscriptionEvent.Sync -> {
                 val url = try {
                     URL(readable.url)
                 } catch (e: MalformedURLException) {
-                    Log.e("SubscriptionViewModel", "onEvent: ", e)
                     writable.update {
                         it.copy(
                             syncing = false,
@@ -70,7 +68,7 @@ class SubscriptionViewModel @Inject constructor(
                     }
                     return
                 }
-                subscriptionRepository.syncLatest(url)
+                subscriptionRepository.sync(url)
                     .onEach { resource ->
                         writable.update {
                             when (resource) {
