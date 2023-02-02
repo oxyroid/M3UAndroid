@@ -31,16 +31,16 @@ internal fun SubscriptionItem(
 ) {
     val spacing = LocalSpacing.current
     Card(
-        modifier = modifier.clickable(
-            onClick = onClick,
-            interactionSource = remember { MutableInteractionSource() },
-            indication = rememberRipple()
-        ),
         shape = RoundedCornerShape(spacing.medium),
         backgroundColor = LocalTheme.current.surface,
         contentColor = LocalTheme.current.onSurface
     ) {
         M3URow(
+            modifier = modifier.clickable(
+                onClick = onClick,
+                interactionSource = remember { MutableInteractionSource() },
+                indication = rememberRipple()
+            ),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(

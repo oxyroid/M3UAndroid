@@ -45,14 +45,15 @@ internal fun LiveItem(
     Card(
         shape = RectangleShape,
         backgroundColor = LocalTheme.current.surface,
-        contentColor = LocalTheme.current.onSurface,
-        modifier = modifier
-            .combinedClickable(
-                onClick = onClick,
-                onLongClick = onLongClick
-            )
+        contentColor = LocalTheme.current.onSurface
     ) {
-        M3UColumn {
+        M3UColumn(
+            modifier = modifier
+                .combinedClickable(
+                    onClick = onClick,
+                    onLongClick = onLongClick
+                )
+        ) {
             M3UImage(
                 model = live.cover,
                 contentScale = ContentScale.Crop,
