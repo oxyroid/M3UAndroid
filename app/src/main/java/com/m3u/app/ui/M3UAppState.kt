@@ -1,4 +1,4 @@
-package com.m3u.ui
+package com.m3u.app.ui
 
 import android.util.Log
 import androidx.compose.animation.ExperimentalAnimationApi
@@ -17,8 +17,8 @@ import com.m3u.features.main.navgation.mainNavigationRoute
 import com.m3u.features.main.navgation.navigateToMain
 import com.m3u.features.setting.navigation.navigateToSetting
 import com.m3u.features.setting.navigation.settingNavigationRoute
-import com.m3u.navigation.Destination
-import com.m3u.navigation.TopLevelDestination
+import com.m3u.app.navigation.Destination
+import com.m3u.app.navigation.TopLevelDestination
 import com.m3u.subscription.navigation.navigationToSubscription
 import com.m3u.ui.model.AppAction
 import com.m3u.ui.model.SetActions
@@ -47,6 +47,7 @@ fun rememberM3UAppState(
 @Stable
 class M3UAppState(
     val navController: NavHostController,
+    @Suppress("unused")
     val coroutineScope: CoroutineScope
 ) {
     val currentNavDestination: NavDestination?

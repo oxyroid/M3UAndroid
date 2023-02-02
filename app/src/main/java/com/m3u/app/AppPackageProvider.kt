@@ -1,5 +1,6 @@
-package com.m3u
+package com.m3u.app
 
+import com.m3u.BuildConfig
 import com.m3u.core.architecture.PackageProvider
 import javax.inject.Inject
 

@@ -1,8 +1,8 @@
 @file:Suppress("unused")
 
-package com.m3u.di
+package com.m3u.app.di
 
-import com.m3u.AppPackageProvider
+import com.m3u.app.AppPackageProvider
 import com.m3u.core.architecture.PackageProvider
 import dagger.Binds
 import dagger.Module

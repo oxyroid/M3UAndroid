@@ -1,4 +1,4 @@
-package com.m3u.ui
+package com.m3u.app.ui
 
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -40,9 +40,9 @@ import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hierarchy
 import com.m3u.ui.model.Icon
 import com.m3u.features.live.navigation.liveRoute
-import com.m3u.navigation.Destination
-import com.m3u.navigation.M3UNavHost
-import com.m3u.navigation.TopLevelDestination
+import com.m3u.app.navigation.Destination
+import com.m3u.app.navigation.M3UNavHost
+import com.m3u.app.navigation.TopLevelDestination
 import com.m3u.subscription.navigation.subscriptionRoute
 import com.m3u.ui.components.M3UBackground
 import com.m3u.ui.components.M3UGradientBackground

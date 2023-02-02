@@ -1,4 +1,4 @@
-package com.m3u.navigation
+package com.m3u.app.navigation
 
 sealed interface Destination {
     data class Subscription(

@@ -1,4 +1,4 @@
-package com.m3u.navigation
+package com.m3u.app.navigation
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween

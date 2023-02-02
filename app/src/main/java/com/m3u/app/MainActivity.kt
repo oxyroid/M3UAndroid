@@ -1,11 +1,11 @@
-package com.m3u
+package com.m3u.app
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowCompat
-import com.m3u.ui.M3UApp
+import com.m3u.app.ui.M3UApp
 import com.m3u.ui.components.M3ULocalProvider
 import dagger.hilt.android.AndroidEntryPoint
 
