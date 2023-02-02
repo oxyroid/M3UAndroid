@@ -31,11 +31,11 @@ import kotlinx.coroutines.flow.MutableStateFlow
 @Immutable
 data class PlayerState(
     val url: String,
-    internal val state: MutableStateFlow<@State Int>,
-    internal val exception: MutableStateFlow<PlaybackException?> = MutableStateFlow(null)
+    internal val playbackStateSource: MutableStateFlow<@State Int>,
+    internal val exceptionSource: MutableStateFlow<PlaybackException?> = MutableStateFlow(null)
 ) {
-    val stateSource: Flow<@State Int> get() = state
-    val exceptionSource: Flow<PlaybackException?> get() = exception
+    val playbackState: Flow<@State Int> get() = playbackStateSource
+    val exception: Flow<PlaybackException?> get() = exceptionSource
 }
 
 @Composable

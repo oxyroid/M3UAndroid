@@ -39,9 +39,7 @@ internal fun FavoriteLiveItem(
     val context = LocalContext.current
     val scheme = remember(live) {
         URI(live.url).scheme
-            .orEmpty()
-            .ifEmpty { context.getString(R.string.scheme_unknown) }
-            .uppercase()
+            ?: context.getString(R.string.scheme_unknown).uppercase()
     }
     Card(
         shape = RectangleShape,

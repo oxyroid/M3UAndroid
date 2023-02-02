@@ -167,7 +167,6 @@ internal object M3UTopBarDefaults {
         get() = WindowInsets.systemBarsIgnoringVisibility
             .only(WindowInsetsSides.Horizontal + WindowInsetsSides.Top)
 
-
     fun scaleInterpolator(curvature: Float, process: Float): Float {
         return curvature * (process - 1) + 1
     }
