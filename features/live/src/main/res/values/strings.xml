@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="playback_state_idle">空闲</string>
+    <string name="playback_state_buffering">缓冲中</string>
+    <string name="playback_state_ready">就绪</string>
+    <string name="playback_state_ended">结束</string>
+</resources>

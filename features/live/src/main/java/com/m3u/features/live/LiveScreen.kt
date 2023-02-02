@@ -13,15 +13,22 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.media3.common.Player
+import androidx.media3.common.PlaybackException
+import androidx.media3.common.Player.STATE_BUFFERING
+import androidx.media3.common.Player.STATE_ENDED
+import androidx.media3.common.Player.STATE_IDLE
+import androidx.media3.common.Player.STATE_READY
+import androidx.media3.common.Player.State
 import com.m3u.core.util.context.toast
 import com.m3u.ui.components.LivePlayer
 import com.m3u.ui.components.M3UColumn
 import com.m3u.ui.components.rememberPlayerState
 import com.m3u.ui.model.AppAction
+import com.m3u.ui.model.LocalTheme
 import com.m3u.ui.model.SetActions
 import com.m3u.ui.util.EventHandler
 import com.m3u.ui.util.LifecycleEffect
@@ -84,18 +91,31 @@ private fun LiveScreen(
         M3UColumn(
             modifier = Modifier.align(Alignment.BottomStart)
         ) {
-            val exception by state.exceptionSource.collectAsStateWithLifecycle(null)
+            val playback by state.playbackState.collectAsStateWithLifecycle(STATE_IDLE)
             Text(
-                text = exception?.let {
-                    "Error: [${it.errorCode}] ${it.errorCodeName}"
-                }.orEmpty(),
+                text = playback.displayText,
                 color = Color.White
             )
-            val playerState by state.stateSource.collectAsStateWithLifecycle(Player.STATE_IDLE)
+            val exception by state.exception.collectAsStateWithLifecycle(null)
             Text(
-                text = "State: $playerState",
-                color = Color.White
+                text = exception.displayText,
+                color = LocalTheme.current.error
             )
         }
     }
 }
+
+private val PlaybackException?.displayText: String
+    @Composable get() = when (this) {
+        null -> ""
+        else -> "[$errorCode] $errorCodeName"
+    }
+
+private val @State Int.displayText: String
+    @Composable get() = when (this) {
+        STATE_IDLE -> R.string.playback_state_idle
+        STATE_BUFFERING -> R.string.playback_state_buffering
+        STATE_READY -> R.string.playback_state_ready
+        STATE_ENDED -> R.string.playback_state_ended
+        else -> error("invalidate playback state: $this")
+    }.let { stringResource(id = it) }
