@@ -13,7 +13,6 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.material.AlertDialog
 import androidx.compose.material.Divider
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.MaterialTheme
@@ -25,7 +24,6 @@ import androidx.compose.material.pullrefresh.pullRefresh
 import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -43,7 +41,7 @@ import com.m3u.ui.model.Icon
 import com.m3u.core.util.context.toast
 import com.m3u.data.entity.Live
 import com.m3u.subscription.components.LiveItem
-import com.m3u.ui.components.M3UTextButton
+import com.m3u.ui.components.M3UDialog
 import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.LocalTheme
 import com.m3u.ui.model.AppAction
@@ -86,19 +84,11 @@ internal fun SubscriptionRoute(
         }
     }
 
-    val lives by remember {
-        derivedStateOf {
-            state.lives
-        }
-    }
-    val refreshing by remember {
-        derivedStateOf {
-            state.syncing
-        }
-    }
+    val lives = state.lives
+    val refreshing = state.syncing
 
-    var addToFavourite: AddToFavouriteState by remember {
-        mutableStateOf(AddToFavouriteState.None)
+    var dialogState: DialogState by remember {
+        mutableStateOf(DialogState.Idle)
     }
 
     EventHandler(state.message) {
@@ -114,43 +104,25 @@ internal fun SubscriptionRoute(
         refreshing = refreshing,
         onSyncingLatest = { viewModel.onEvent(SubscriptionEvent.Sync) },
         navigateToLive = navigateToLive,
-        onLiveAction = { addToFavourite = AddToFavouriteState.Prepared(it) },
+        onLiveAction = { dialogState = DialogState.Ready(it) },
         modifier = modifier
     )
 
-    if (addToFavourite is AddToFavouriteState.Prepared) {
-        AlertDialog(
-            onDismissRequest = { addToFavourite = AddToFavouriteState.None },
-            title = {
-                Text(
-                    text = stringResource(R.string.dialog_favourite_title),
-                    style = MaterialTheme.typography.h6,
-                    maxLines = 1
-                )
-            },
-            text = {
-                Text(
-                    text = stringResource(R.string.dialog_favourite_content),
-                    style = MaterialTheme.typography.body1
-                )
-            },
-            confirmButton = {
-                M3UTextButton(textRes = R.string.dialog_favourite_confirm) {
-                    val s = addToFavourite
-                    if (s is AddToFavouriteState.Prepared) {
-                        viewModel.onEvent(SubscriptionEvent.AddToFavourite(s.id))
-                    }
-                    addToFavourite = AddToFavouriteState.None
+    if (dialogState is DialogState.Ready) {
+        M3UDialog(
+            title = stringResource(R.string.dialog_favourite_title),
+            text = stringResource(R.string.dialog_favourite_content),
+            confirm = stringResource(R.string.dialog_favourite_confirm),
+            dismiss = stringResource(R.string.dialog_favourite_dismiss),
+            onDismissRequest = { dialogState = DialogState.Idle },
+            onConfirm = {
+                val current = dialogState
+                if (current is DialogState.Ready) {
+                    viewModel.onEvent(SubscriptionEvent.AddToFavourite(current.id))
                 }
+                dialogState = DialogState.Idle
             },
-            dismissButton = {
-                M3UTextButton(textRes = R.string.dialog_favourite_dismiss) {
-                    addToFavourite = AddToFavouriteState.None
-                }
-            },
-            backgroundColor = LocalTheme.current.background,
-            contentColor = LocalTheme.current.onBackground,
-            modifier = Modifier.padding(LocalSpacing.current.medium)
+            onDismiss = { dialogState = DialogState.Idle }
         )
     }
 }
@@ -248,7 +220,7 @@ private fun SubscriptionScreen(
     }
 }
 
-sealed class AddToFavouriteState {
-    object None : AddToFavouriteState()
-    data class Prepared(val id: Int) : AddToFavouriteState()
+private sealed class DialogState {
+    object Idle : DialogState()
+    data class Ready(val id: Int) : DialogState()
 }
