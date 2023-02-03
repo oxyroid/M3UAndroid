@@ -10,8 +10,8 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.navOptions
 import com.google.accompanist.navigation.animation.rememberAnimatedNavController
-import com.m3u.favorite.navigation.favouriteNavigationRoute
-import com.m3u.favorite.navigation.navigateToFavourite
+import com.m3u.features.favorite.navigation.favouriteNavigationRoute
+import com.m3u.features.favorite.navigation.navigateToFavourite
 import com.m3u.features.live.navigation.navigateToLive
 import com.m3u.features.main.navgation.mainNavigationRoute
 import com.m3u.features.main.navgation.navigateToMain
@@ -19,7 +19,7 @@ import com.m3u.features.setting.navigation.navigateToSetting
 import com.m3u.features.setting.navigation.settingNavigationRoute
 import com.m3u.app.navigation.Destination
 import com.m3u.app.navigation.TopLevelDestination
-import com.m3u.subscription.navigation.navigationToSubscription
+import com.m3u.features.subscription.navigation.navigationToSubscription
 import com.m3u.ui.model.AppAction
 import com.m3u.ui.model.SetActions
 import kotlinx.coroutines.CoroutineScope

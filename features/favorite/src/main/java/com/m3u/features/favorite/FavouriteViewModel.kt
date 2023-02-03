@@ -1,11 +1,11 @@
-package com.m3u.favorite
+package com.m3u.features.favorite
 
 import android.app.Application
 import androidx.lifecycle.viewModelScope
 import com.m3u.core.architecture.BaseViewModel
 import com.m3u.data.repository.LiveRepository
 import com.m3u.data.repository.SubscriptionRepository
-import com.m3u.favorite.vo.LiveDetail
+import com.m3u.features.favorite.vo.LiveDetail
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map

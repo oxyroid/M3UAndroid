@@ -1,10 +1,10 @@
-package com.m3u.subscription.navigation
+package com.m3u.features.subscription.navigation
 
 import android.net.Uri
 import androidx.compose.animation.*
 import androidx.navigation.*
 import com.google.accompanist.navigation.animation.composable
-import com.m3u.subscription.SubscriptionRoute
+import com.m3u.features.subscription.SubscriptionRoute
 import com.m3u.ui.model.SetActions
 
 

@@ -1,4 +1,4 @@
-package com.m3u.subscription
+package com.m3u.features.subscription
 
 import android.app.Application
 import androidx.lifecycle.viewModelScope

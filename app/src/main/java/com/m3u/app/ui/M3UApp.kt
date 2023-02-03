@@ -43,7 +43,7 @@ import com.m3u.features.live.navigation.liveRoute
 import com.m3u.app.navigation.Destination
 import com.m3u.app.navigation.M3UNavHost
 import com.m3u.app.navigation.TopLevelDestination
-import com.m3u.subscription.navigation.subscriptionRoute
+import com.m3u.features.subscription.navigation.subscriptionRoute
 import com.m3u.ui.components.M3UBackground
 import com.m3u.ui.components.M3UGradientBackground
 import com.m3u.ui.components.M3UIconButton

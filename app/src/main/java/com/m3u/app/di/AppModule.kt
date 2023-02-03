@@ -15,5 +15,5 @@ import javax.inject.Singleton
 interface AppModule {
     @Binds
     @Singleton
-    fun bindBuildConfigProvider(provider: AppPackageProvider): PackageProvider
+    fun bindPackageProvider(provider: AppPackageProvider): PackageProvider
 }

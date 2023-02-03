@@ -1,4 +1,4 @@
-package com.m3u.favorite.components
+package com.m3u.features.favorite.components
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource

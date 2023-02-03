@@ -1,4 +1,4 @@
-package com.m3u.favorite
+package com.m3u.features.favorite
 
 import android.content.res.Configuration
 import androidx.compose.foundation.layout.fillMaxSize
@@ -18,8 +18,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.core.util.context.toast
-import com.m3u.favorite.components.FavoriteLiveItem
-import com.m3u.favorite.vo.LiveDetail
+import com.m3u.features.favorite.components.FavoriteLiveItem
+import com.m3u.features.favorite.vo.LiveDetail
 import com.m3u.ui.model.AppAction
 import com.m3u.ui.model.SetActions
 import com.m3u.ui.util.EventHandler

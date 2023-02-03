@@ -1,15 +1,16 @@
 package com.m3u.app
 
-import com.m3u.BuildConfig
 import com.m3u.core.architecture.PackageProvider
 import javax.inject.Inject
 
-class AppPackageProvider @Inject constructor() : PackageProvider {
-    override fun getName(): String {
+class AppPackageProvider @Inject constructor(
+
+) : PackageProvider {
+    override fun getApplicationID(): String {
         return BuildConfig.APPLICATION_ID
     }
 
-    override fun version(): String {
+    override fun getVersionName(): String {
         return BuildConfig.VERSION_NAME
     }
 

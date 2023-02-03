@@ -1,4 +1,4 @@
-package com.m3u.subscription.components
+package com.m3u.features.subscription.components
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
@@ -20,7 +20,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import com.m3u.data.entity.Live
-import com.m3u.subscription.R
+import com.m3u.features.subscription.R
 import com.m3u.ui.components.M3UColumn
 import com.m3u.ui.components.M3UImage
 import com.m3u.ui.model.LocalSpacing

@@ -1,7 +1,7 @@
-package com.m3u.favorite
+package com.m3u.features.favorite
 
 import com.m3u.core.wrapper.Event
-import com.m3u.favorite.vo.LiveDetail
+import com.m3u.features.favorite.vo.LiveDetail
 
 data class FavoriteState(
     val lives: List<LiveDetail> = emptyList(),

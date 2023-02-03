@@ -1,4 +1,4 @@
-package com.m3u.favorite.vo
+package com.m3u.features.favorite.vo
 
 import com.m3u.data.entity.Live
 

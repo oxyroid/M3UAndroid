@@ -1,6 +1,7 @@
-package com.m3u.subscription.components
+package com.m3u.features.favorite.components
 
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.MaterialTheme
@@ -9,28 +10,36 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.LocalTheme
 
 @Composable
-internal fun SchemeIcon(
-    scheme: String,
-    modifier: Modifier = Modifier
+internal fun BrightIcon(
+    text: String,
+    modifier: Modifier = Modifier,
+    color: Color = LocalTheme.current.tint,
+    contentColor: Color = LocalTheme.current.onTint,
+    icon: (@Composable () -> Unit)? = null,
 ) {
     Surface(
-        color = LocalTheme.current.tint,
-        contentColor = LocalTheme.current.onTint,
+        color = color,
+        contentColor = contentColor,
         shape = RoundedCornerShape(LocalSpacing.current.extraSmall)
     ) {
-        Box(
+        Row(
             modifier = modifier
                 .padding(
                     horizontal = LocalSpacing.current.extraSmall
                 ),
-            contentAlignment = Alignment.Center
+            horizontalArrangement = Arrangement.spacedBy(LocalSpacing.current.extraSmall),
+            verticalAlignment = Alignment.CenterVertically
         ) {
+            if (icon != null) {
+                icon()
+            }
             Text(
-                text = scheme,
+                text = text,
                 style = MaterialTheme.typography.subtitle2,
                 color = LocalTheme.current.onTint
             )

@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace "com.m3u.subscription"
+    namespace "com.m3u.features.subscription"
     compileSdk 33
 
     defaultConfig {

@@ -1,4 +1,4 @@
-package com.m3u.subscription
+package com.m3u.features.subscription
 
 import android.content.res.Configuration
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -40,7 +40,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.ui.model.Icon
 import com.m3u.core.util.context.toast
 import com.m3u.data.entity.Live
-import com.m3u.subscription.components.LiveItem
+import com.m3u.features.subscription.components.LiveItem
 import com.m3u.ui.components.M3UDialog
 import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.LocalTheme

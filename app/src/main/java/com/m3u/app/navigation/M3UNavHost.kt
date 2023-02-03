@@ -6,12 +6,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import com.google.accompanist.navigation.animation.AnimatedNavHost
-import com.m3u.favorite.navigation.favouriteScreen
+import com.m3u.features.favorite.navigation.favouriteScreen
 import com.m3u.features.live.navigation.liveScreen
 import com.m3u.features.main.navgation.mainNavigationRoute
 import com.m3u.features.main.navgation.mainScreen
 import com.m3u.features.setting.navigation.settingScreen
-import com.m3u.subscription.navigation.subscriptionScreen
+import com.m3u.features.subscription.navigation.subscriptionScreen
 import com.m3u.ui.model.SetActions
 
 @OptIn(ExperimentalAnimationApi::class)

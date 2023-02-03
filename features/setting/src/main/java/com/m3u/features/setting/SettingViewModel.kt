@@ -31,7 +31,7 @@ class SettingViewModel @Inject constructor(
         configuration.syncMode
         writable.update {
             it.copy(
-                version = packageProvider.version()
+                version = packageProvider.getVersionName()
             )
         }
     }
