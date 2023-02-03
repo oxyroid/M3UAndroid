@@ -1,14 +1,16 @@
 package com.m3u.features.setting
 
 import android.content.res.Configuration
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.rememberScrollableState
+import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
@@ -28,16 +30,16 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.core.annotation.SetSyncMode
-import com.m3u.core.util.context.toast
 import com.m3u.core.annotation.SyncMode
+import com.m3u.core.util.context.toast
 import com.m3u.features.setting.components.TextItem
 import com.m3u.ui.components.M3UColumn
 import com.m3u.ui.components.M3URow
 import com.m3u.ui.components.M3UTextButton
 import com.m3u.ui.components.M3UTextField
+import com.m3u.ui.model.AppAction
 import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.LocalTheme
-import com.m3u.ui.model.AppAction
 import com.m3u.ui.model.SetActions
 import com.m3u.ui.util.EventHandler
 import com.m3u.ui.util.LifecycleEffect
@@ -183,6 +185,10 @@ private fun MakeSubscriptionPart(
     M3UColumn(
         verticalArrangement = Arrangement.spacedBy(LocalSpacing.current.small),
         modifier = modifier
+            .scrollable(
+                orientation = Orientation.Vertical,
+                state = rememberScrollableState { it }
+            )
     ) {
         val focusRequester = remember { FocusRequester() }
         M3UTextField(
@@ -227,30 +233,31 @@ private fun SettingItemsPart(
     onSyncMode: SetSyncMode,
     modifier: Modifier = Modifier
 ) {
-    LazyColumn(
-        modifier = modifier,
-        contentPadding = PaddingValues(
-            vertical = LocalSpacing.current.medium
-        )
-    ) {
-        item {
-            TextItem(
-                title = stringResource(R.string.sync_mode),
-                enabled = true,
-                content = when (syncMode) {
-                    SyncMode.DEFAULT -> stringResource(R.string.sync_mode_default)
-                    SyncMode.EXCEPT -> stringResource(R.string.sync_mode_favourite_except)
-                    else -> ""
-                },
-                onClick = {
-                    // TODO
-                    val target = when (syncMode) {
-                        SyncMode.DEFAULT -> SyncMode.EXCEPT
-                        else -> SyncMode.DEFAULT
-                    }
-                    onSyncMode(target)
-                }
+    Column(
+        modifier = modifier
+            .scrollable(
+                orientation = Orientation.Vertical,
+                state = rememberScrollableState(consumeScrollDelta = { it })
             )
-        }
+            .padding(
+                vertical = LocalSpacing.current.medium
+            )
+    ) {
+        TextItem(
+            title = stringResource(R.string.sync_mode),
+            content = when (syncMode) {
+                SyncMode.DEFAULT -> stringResource(R.string.sync_mode_default)
+                SyncMode.EXCEPT -> stringResource(R.string.sync_mode_favourite_except)
+                else -> ""
+            },
+            onClick = {
+                // TODO
+                val target = when (syncMode) {
+                    SyncMode.DEFAULT -> SyncMode.EXCEPT
+                    else -> SyncMode.DEFAULT
+                }
+                onSyncMode(target)
+            }
+        )
     }
 }

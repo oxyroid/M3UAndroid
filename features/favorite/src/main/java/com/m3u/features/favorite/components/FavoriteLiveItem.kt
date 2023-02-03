@@ -1,7 +1,6 @@
 package com.m3u.features.favorite.components
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
@@ -13,7 +12,6 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Link
-import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
@@ -38,8 +36,7 @@ internal fun FavoriteLiveItem(
 ) {
     val context = LocalContext.current
     val scheme = remember(live) {
-        URI(live.url).scheme
-            ?: context.getString(R.string.scheme_unknown).uppercase()
+        URI(live.url).scheme ?: context.getString(R.string.scheme_unknown).uppercase()
     }
     Card(
         shape = RectangleShape,
@@ -47,11 +44,10 @@ internal fun FavoriteLiveItem(
         contentColor = LocalTheme.current.onSurface
     ) {
         M3UColumn(
-            modifier = modifier.clickable(
-                onClick = onClick,
-                interactionSource = remember { MutableInteractionSource() },
-                indication = rememberRipple()
-            )
+            modifier = modifier
+                .clickable(
+                    onClick = onClick
+                )
         ) {
             CompositionLocalProvider(
                 LocalContentColor provides LocalTheme.current.onSecondary

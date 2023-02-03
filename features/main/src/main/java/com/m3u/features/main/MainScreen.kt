@@ -97,10 +97,10 @@ private fun MainScreen(
 
         Configuration.ORIENTATION_LANDSCAPE -> {
             LazyVerticalGrid(
-                columns = GridCells.Fixed(2),
+                columns = GridCells.Fixed(3),
                 contentPadding = PaddingValues(LocalSpacing.current.medium),
-                verticalArrangement = Arrangement.spacedBy(LocalSpacing.current.small),
-                horizontalArrangement = Arrangement.spacedBy(LocalSpacing.current.small),
+                verticalArrangement = Arrangement.spacedBy(LocalSpacing.current.medium),
+                horizontalArrangement = Arrangement.spacedBy(LocalSpacing.current.medium),
                 modifier = modifier.fillMaxSize()
             ) {
                 items(details) { detail ->

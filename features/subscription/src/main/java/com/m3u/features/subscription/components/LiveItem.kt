@@ -36,6 +36,8 @@ internal fun LiveItem(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
+    val spacing = LocalSpacing.current
+    val theme = LocalTheme.current
     val scheme = remember(live) {
         URI(live.url).scheme
             .orEmpty()
@@ -44,8 +46,8 @@ internal fun LiveItem(
     }
     Card(
         shape = RectangleShape,
-        backgroundColor = LocalTheme.current.surface,
-        contentColor = LocalTheme.current.onSurface
+        backgroundColor = theme.surface,
+        contentColor = theme.onSurface
     ) {
         M3UColumn(
             modifier = modifier
@@ -69,7 +71,7 @@ internal fun LiveItem(
             )
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(LocalSpacing.current.extraSmall)
+                horizontalArrangement = Arrangement.spacedBy(spacing.extraSmall)
             ) {
                 SchemeIcon(scheme = scheme)
                 CompositionLocalProvider(
