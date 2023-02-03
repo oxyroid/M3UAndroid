@@ -31,6 +31,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 @Immutable
 data class PlayerState(
     val url: String,
+    val keepScreenOn: Boolean,
     internal val playbackStateSource: MutableStateFlow<@State Int>,
     internal val exceptionSource: MutableStateFlow<PlaybackException?> = MutableStateFlow(null)
 ) {
@@ -41,10 +42,11 @@ data class PlayerState(
 @Composable
 fun rememberPlayerState(
     url: String,
+    keepScreenOn: Boolean = true,
     state: MutableStateFlow<@State Int> = remember(url) { MutableStateFlow(Player.STATE_IDLE) },
     exception: MutableStateFlow<PlaybackException?> = remember(url) { MutableStateFlow(null) }
-): PlayerState = remember(url, state, exception) {
-    PlayerState(url, state, exception)
+): PlayerState = remember(url, keepScreenOn, state, exception) {
+    PlayerState(url, keepScreenOn, state, exception)
 }
 
 @Composable
@@ -55,7 +57,7 @@ fun LivePlayer(
     resizeMode: Int = AspectRatioFrameLayout.RESIZE_MODE_FIT
 ) {
     val context = LocalContext.current
-    val (url, playerState, exception) = state
+    val (url, keepScreenOn, playerState, exception) = state
     val mediaItem = remember(url) {
         MediaItem.fromUri(url)
     }
@@ -95,6 +97,7 @@ fun LivePlayer(
             factory = { context ->
                 PlayerView(context).apply {
                     useController = false
+                    setKeepScreenOn(keepScreenOn)
                     setResizeMode(resizeMode)
                     layoutParams = ViewGroup.LayoutParams(
                         ViewGroup.LayoutParams.MATCH_PARENT,
