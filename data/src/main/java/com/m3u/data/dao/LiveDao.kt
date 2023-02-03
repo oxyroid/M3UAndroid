@@ -27,9 +27,6 @@ interface LiveDao {
     @Query("SELECT * FROM lives")
     fun observeAll(): Flow<List<Live>>
 
-    @Query("SELECT * FROM lives WHERE subscriptionUrl = :subscriptionUrl")
-    fun observeLivesBySubscriptionUrl(subscriptionUrl: String): Flow<List<Live>>
-
     @Query("UPDATE lives SET favourite = :target WHERE id = :id")
     suspend fun setFavouriteLive(id: Int, target: Boolean)
 }

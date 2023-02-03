@@ -7,6 +7,7 @@ import com.m3u.core.wrapper.Resource
 import com.m3u.core.wrapper.eventOf
 import com.m3u.data.repository.LiveRepository
 import com.m3u.data.repository.SubscriptionRepository
+import com.m3u.data.repository.observeLivesBySubscriptionUrl
 import com.m3u.data.repository.sync
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job

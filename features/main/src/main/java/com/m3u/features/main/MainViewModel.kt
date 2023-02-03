@@ -7,6 +7,7 @@ import com.m3u.core.util.collection.replaceIf
 import com.m3u.data.entity.Subscription
 import com.m3u.data.repository.LiveRepository
 import com.m3u.data.repository.SubscriptionRepository
+import com.m3u.data.repository.observeLivesBySubscriptionUrl
 import com.m3u.features.main.model.SubDetail
 import com.m3u.features.main.model.toDetail
 import dagger.hilt.android.lifecycle.HiltViewModel

@@ -1,7 +1,7 @@
 package com.m3u.data.parser.m3u
 
-import com.m3u.core.util.collection.loadLine
 import com.m3u.core.util.basic.trimBrackets
+import com.m3u.core.util.collection.loadLine
 import com.m3u.data.parser.Parser
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -16,8 +16,7 @@ class M3UParser internal constructor() : Parser<List<M3U>> {
 
     override suspend fun parse(lines: Stream<String>) {
         withContext(Dispatchers.IO) {
-            lines
-                .asSequence()
+            lines.asSequence()
                 .filterNot { it.isEmpty() }
                 .forEach { line ->
                     when {
@@ -49,12 +48,11 @@ class M3UParser internal constructor() : Parser<List<M3U>> {
     private fun M3U.setUrl(url: String): M3U = copy(url = url)
 
     private fun M3U.setContent(content: String): M3U {
-
         val properties = makeProperties(content)
 
         val id = properties.getProperty(M3U_TVG_ID_MARK, "")
         val name = properties.getProperty(M3U_TVG_NAME_MARK, "")
-        val logo = properties.getProperty(M3U_TVG_LOGO_MARK, "")
+        val cover = properties.getProperty(M3U_TVG_LOGO_MARK, "")
 
         val (group, title) = properties.getProperty(M3U_GROUP_TITLE_MARK, ",").split(",")
 
@@ -63,34 +61,29 @@ class M3UParser internal constructor() : Parser<List<M3U>> {
             name = name.trimBrackets(),
             group = group.trimBrackets(),
             title = title.trimBrackets(),
-            logo = logo.trimBrackets()
+            cover = cover.trimBrackets()
         )
     }
 
-    private fun String.isLegal(): Boolean {
-        return startsWith(M3U_TVG_ID_MARK) ||
+    private val String.hasLegalMark: Boolean
+        get() = startsWith(M3U_TVG_ID_MARK) ||
                 startsWith(M3U_TVG_LOGO_MARK) ||
                 startsWith(M3U_TVG_NAME_MARK) ||
                 startsWith(M3U_GROUP_TITLE_MARK)
-    }
 
-    private fun makeProperties(
-        content: String
-    ): Properties {
+    private fun makeProperties(content: String): Properties {
         val properties = Properties()
-
         val parts = content.split(" ")
-        // Check each part
+        // check each of parts
         var illegalPart: String? = null
-
         for (part in parts.reversed()) {
             if (part.startsWith(M3U_INFO_MARK)) continue
-            val p = part + illegalPart.orEmpty()
-            illegalPart = if (p.isLegal()) {
-                properties.loadLine(p)
+            val mergedPart = part + illegalPart.orEmpty()
+            illegalPart = if (mergedPart.hasLegalMark) {
+                properties.loadLine(mergedPart)
                 null
             } else {
-                p + illegalPart.orEmpty()
+                mergedPart + illegalPart.orEmpty()
             }
         }
         if (illegalPart != null) {
