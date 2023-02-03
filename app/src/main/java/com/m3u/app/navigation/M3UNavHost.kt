@@ -41,6 +41,9 @@ fun M3UNavHost(
             setAppActions = setAppActions
         )
         favouriteScreen(
+            navigateToLive = { id ->
+                navigateToDestination(Destination.Live(id), null)
+            },
             setAppActions = setAppActions
         )
         settingScreen(

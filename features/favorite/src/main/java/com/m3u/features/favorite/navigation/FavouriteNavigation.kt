@@ -17,12 +17,14 @@ fun NavController.navigateToFavourite(navOptions: NavOptions? = null) {
 @OptIn(ExperimentalAnimationApi::class)
 fun NavGraphBuilder.favouriteScreen(
     setAppActions: SetActions,
+    navigateToLive: (Int) -> Unit
 ) {
     composable(
         route = favouriteNavigationRoute
     ) {
         FavouriteRoute(
-            setAppActions = setAppActions
+            setAppActions = setAppActions,
+            navigateToLive = navigateToLive
         )
     }
 }

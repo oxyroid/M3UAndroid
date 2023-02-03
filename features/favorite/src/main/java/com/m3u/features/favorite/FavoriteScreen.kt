@@ -29,7 +29,8 @@ import com.m3u.ui.util.LifecycleEffect
 internal fun FavouriteRoute(
     modifier: Modifier = Modifier,
     viewModel: FavouriteViewModel = hiltViewModel(),
-    setAppActions: SetActions
+    setAppActions: SetActions,
+    navigateToLive: (Int) -> Unit
 ) {
     val context = LocalContext.current
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -53,6 +54,7 @@ internal fun FavouriteRoute(
     }
     FavoriteScreen(
         lives = state.lives,
+        navigateToLive = navigateToLive,
         modifier = modifier
     )
 }
@@ -60,6 +62,7 @@ internal fun FavouriteRoute(
 @Composable
 private fun FavoriteScreen(
     lives: List<LiveDetail>,
+    navigateToLive: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val configuration = LocalConfiguration.current
@@ -73,7 +76,7 @@ private fun FavoriteScreen(
                         live = liveWithTitle.live,
                         subscriptionTitle = liveWithTitle.title,
                         onClick = {
-
+                            navigateToLive(liveWithTitle.live.id)
                         },
                         modifier = Modifier.fillParentMaxWidth()
                     )
@@ -91,7 +94,7 @@ private fun FavoriteScreen(
                         live = liveWithTitle.live,
                         subscriptionTitle = liveWithTitle.title,
                         onClick = {
-
+                            navigateToLive(liveWithTitle.live.id)
                         },
                         modifier = Modifier.fillMaxWidth()
                     )
