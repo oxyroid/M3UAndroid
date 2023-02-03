@@ -1,6 +1,10 @@
 package com.m3u.features.subscription
 
-import android.content.res.Configuration
+import android.content.res.Configuration.ORIENTATION_LANDSCAPE
+import android.content.res.Configuration.ORIENTATION_PORTRAIT
+import android.content.res.Configuration.UI_MODE_TYPE_MASK
+import android.content.res.Configuration.UI_MODE_TYPE_NORMAL
+import android.content.res.Configuration.UI_MODE_TYPE_TELEVISION
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -37,14 +41,17 @@ import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.m3u.ui.model.Icon
+import androidx.tv.foundation.lazy.grid.TvGridCells
+import androidx.tv.foundation.lazy.grid.TvLazyVerticalGrid
+import androidx.tv.foundation.lazy.grid.items
 import com.m3u.core.util.context.toast
 import com.m3u.data.entity.Live
 import com.m3u.features.subscription.components.LiveItem
 import com.m3u.ui.components.M3UDialog
+import com.m3u.ui.model.AppAction
+import com.m3u.ui.model.Icon
 import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.LocalTheme
-import com.m3u.ui.model.AppAction
 import com.m3u.ui.model.SetActions
 import com.m3u.ui.util.EventHandler
 import com.m3u.ui.util.LifecycleEffect
@@ -59,7 +66,6 @@ internal fun SubscriptionRoute(
 ) {
     val context = LocalContext.current
     val state by viewModel.state.collectAsStateWithLifecycle()
-
     val currentSetAppActions by rememberUpdatedState(setAppActions)
     LifecycleEffect { event ->
         when (event) {
@@ -84,9 +90,6 @@ internal fun SubscriptionRoute(
         }
     }
 
-    val lives = state.lives
-    val refreshing = state.syncing
-
     var dialogState: DialogState by remember {
         mutableStateOf(DialogState.Idle)
     }
@@ -100,8 +103,8 @@ internal fun SubscriptionRoute(
     }
 
     SubscriptionScreen(
-        lives = lives,
-        refreshing = refreshing,
+        lives = state.lives,
+        refreshing = state.syncing,
         onSyncingLatest = { viewModel.onEvent(SubscriptionEvent.Sync) },
         navigateToLive = navigateToLive,
         onLiveAction = { dialogState = DialogState.Ready(it) },
@@ -146,23 +149,56 @@ private fun SubscriptionScreen(
         modifier = Modifier.pullRefresh(state)
     ) {
         when (configuration.orientation) {
-            Configuration.ORIENTATION_LANDSCAPE -> {
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(4),
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    items(lives) { live ->
-                        LiveItem(
-                            live = live,
-                            onClick = { navigateToLive(live.id) },
-                            onLongClick = { onLiveAction(live.id) },
-                            modifier = Modifier.fillMaxWidth()
-                        )
+            ORIENTATION_LANDSCAPE -> {
+                when (val type = configuration.uiMode and UI_MODE_TYPE_MASK) {
+                    UI_MODE_TYPE_NORMAL -> {
+                        LazyVerticalGrid(
+                            columns = GridCells.Fixed(4),
+                            modifier = modifier.fillMaxSize()
+                        ) {
+                            items(lives) { live ->
+                                LiveItem(
+                                    live = live.copy(
+                                        title = "${live.group} - ${live.title}"
+                                    ),
+                                    onClick = { navigateToLive(live.id) },
+                                    onLongClick = { onLiveAction(live.id) },
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+                            }
+                        }
+                    }
+
+                    UI_MODE_TYPE_TELEVISION -> {
+                        TvLazyVerticalGrid(
+                            columns = TvGridCells.Fixed(4),
+                            modifier = modifier.fillMaxSize()
+                        ) {
+                            items(lives) { live ->
+                                LiveItem(
+                                    live = live.copy(
+                                        title = "${live.group} - ${live.title}"
+                                    ),
+                                    onClick = { navigateToLive(live.id) },
+                                    onLongClick = { onLiveAction(live.id) },
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+                            }
+                        }
+                    }
+
+                    else -> {
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = modifier.fillMaxSize()
+                        ) {
+                            Text(text = "Unsupported UI Mode Type: $type")
+                        }
                     }
                 }
             }
 
-            Configuration.ORIENTATION_PORTRAIT -> {
+            ORIENTATION_PORTRAIT -> {
                 val groups = remember(lives) {
                     lives.groupBy { it.group }
                 }
