@@ -14,7 +14,6 @@ import com.m3u.ui.model.Icon
 enum class TopLevelDestination(
     val selectedIcon: Icon,
     val unselectedIcon: Icon,
-    @Suppress("unused")
     @StringRes val iconTextId: Int,
     @StringRes val titleTextId: Int
 ) {

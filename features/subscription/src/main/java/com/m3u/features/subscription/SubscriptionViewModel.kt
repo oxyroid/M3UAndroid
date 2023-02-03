@@ -28,33 +28,46 @@ class SubscriptionViewModel @Inject constructor(
     application = application,
     emptyState = SubscriptionState()
 ) {
-    private var detailJob: Job? = null
-    private var livesJob: Job? = null
+    private var job: Job? = null
     override fun onEvent(event: SubscriptionEvent) {
         when (event) {
             is SubscriptionEvent.GetDetails -> {
-                detailJob?.cancel()
-                livesJob?.cancel()
-                val subscriptionUrl = event.url
-                subscriptionRepository
-                detailJob = subscriptionRepository.observe(subscriptionUrl)
-                    .onEach { subscription ->
-                        writable.update {
-                            it.copy(
-                                url = subscription?.url.orEmpty()
-                            )
+                job?.cancel()
+                job = viewModelScope.launch {
+                    val subscriptionUrl = event.url
+                    subscriptionRepository
+                        .observe(subscriptionUrl)
+                        .onEach { subscription ->
+                            writable.update {
+                                if (subscription != null) {
+                                    it.copy(
+                                        url = subscription.url
+                                    )
+                                } else {
+                                    it.copy(
+                                        message = eventOf(
+                                            context.getString(
+                                                R.string.error_get_detail,
+                                                subscriptionUrl
+                                            )
+                                        )
+                                    )
+                                }
+                            }
                         }
-                    }
-                    .launchIn(viewModelScope)
-                livesJob = liveRepository.observeLivesBySubscriptionUrl(subscriptionUrl)
-                    .onEach { lives ->
-                        writable.update {
-                            it.copy(
-                                lives = lives
-                            )
+                        .launchIn(this)
+                    liveRepository
+                        .observeLivesBySubscriptionUrl(subscriptionUrl)
+                        .onEach { lives ->
+                            writable.update {
+                                it.copy(
+                                    lives = lives
+                                )
+                            }
                         }
-                    }
-                    .launchIn(viewModelScope)
+                        .launchIn(this)
+                }
+
             }
 
             SubscriptionEvent.Sync -> {
