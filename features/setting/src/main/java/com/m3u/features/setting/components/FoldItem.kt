@@ -65,10 +65,10 @@ internal fun CheckBoxItem(
 @Composable
 internal fun TextItem(
     title: String,
-    enabled: Boolean,
     content: String,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
 ) {
     FoldItem(
         title = title,
