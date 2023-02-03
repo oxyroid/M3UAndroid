@@ -39,9 +39,9 @@ android {
 }
 
 dependencies {
-    implementation(project(":core"))
-    implementation(project(":data"))
-    implementation(project(":ui"))
+    implementation project(":core")
+    implementation project(":data")
+    implementation project(":ui")
 
     implementation "androidx.core:core-ktx:$core_version"
     implementation "androidx.activity:activity-compose:$activity_version"
@@ -50,11 +50,14 @@ dependencies {
     implementation "androidx.lifecycle:lifecycle-runtime-compose:$lifecycle_version"
 
     implementation "androidx.compose.ui:ui:$compose_version"
-    implementation "androidx.compose.ui:ui-tooling-preview:$compose_version"
+    implementation "androidx.compose.runtime:runtime:$compose_version"
+    implementation "androidx.compose.foundation:foundation:$compose_version"
     implementation "androidx.compose.material:material:$compose_version"
-    debugImplementation "androidx.compose.ui:ui-tooling:$compose_version"
-    debugImplementation "androidx.compose.ui:ui-test-manifest:$compose_version"
     implementation "androidx.compose.material:material-icons-extended:$compose_version"
+    implementation "androidx.compose.animation:animation:$compose_version"
+
+    implementation "androidx.tv:tv-foundation:$tv_version"
+    implementation "androidx.tv:tv-material:$tv_version"
 
     implementation "androidx.navigation:navigation-compose:$navigation_version"
 

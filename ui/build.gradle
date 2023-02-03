@@ -38,7 +38,7 @@ android {
 }
 
 dependencies {
-    implementation(project(":core"))
+    implementation project(":core")
 
     implementation "androidx.core:core-ktx:$core_version"
     implementation "androidx.activity:activity-compose:$activity_version"
@@ -50,6 +50,9 @@ dependencies {
     debugImplementation "androidx.compose.ui:ui-tooling:$compose_version"
     debugImplementation "androidx.compose.ui:ui-test-manifest:$compose_version"
     implementation "androidx.compose.material:material-icons-extended:$compose_version"
+
+    implementation "androidx.tv:tv-foundation:$tv_version"
+    implementation "androidx.tv:tv-material:$tv_version"
 
     implementation "androidx.media3:media3-exoplayer:$media3_version"
     implementation "androidx.media3:media3-ui:$media3_version"
