@@ -64,7 +64,8 @@ internal fun LiveItem(
             Text(
                 text = live.title,
                 style = MaterialTheme.typography.body1,
-                overflow = TextOverflow.Ellipsis
+                overflow = TextOverflow.Ellipsis,
+                maxLines = 1,
             )
             Row(
                 verticalAlignment = Alignment.CenterVertically,
