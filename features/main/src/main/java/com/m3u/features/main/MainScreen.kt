@@ -23,8 +23,8 @@ import com.m3u.core.util.context.toast
 import com.m3u.features.main.components.SubscriptionItem
 import com.m3u.features.main.model.SubDetail
 import com.m3u.features.main.navgation.NavigateToSubscription
-import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.AppAction
+import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.SetActions
 import com.m3u.ui.util.EventHandler
 import com.m3u.ui.util.LifecycleEffect

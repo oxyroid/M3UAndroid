@@ -1,8 +1,9 @@
+@file:Suppress("unused")
 package com.m3u.data.di
 
 import com.m3u.data.repository.LiveRepository
-import com.m3u.data.repository.impl.LiveRepositoryImpl
 import com.m3u.data.repository.SubscriptionRepository
+import com.m3u.data.repository.impl.LiveRepositoryImpl
 import com.m3u.data.repository.impl.SubscriptionRepositoryImpl
 import dagger.Binds
 import dagger.Module

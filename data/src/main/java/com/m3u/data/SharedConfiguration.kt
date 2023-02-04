@@ -2,8 +2,8 @@ package com.m3u.data
 
 import android.content.Context
 import android.content.SharedPreferences
-import com.m3u.core.util.context.int
 import com.m3u.core.annotation.SyncMode
+import com.m3u.core.util.context.int
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 
