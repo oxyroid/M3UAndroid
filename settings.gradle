@@ -14,11 +14,11 @@ dependencyResolutionManagement {
 }
 rootProject.name = "M3U"
 include ":app"
-include ":features:main"
-include ':features:setting'
-include ":features:live"
-include ':features:subscription'
-include ":ui"
+include ":core"
 include ":data"
-include ':core'
-include ':features:favorite'
+include ":ui"
+include ":features:main"
+include ":features:setting"
+include ":features:live"
+include ":features:subscription"
+include ":features:favorite"
