@@ -32,8 +32,8 @@ fun M3UTopBar(
     text: String,
     visible: Boolean,
     windowInsets: WindowInsets = M3UTopBarDefaults.windowInsets,
-    actions: @Composable RowScope.() -> Unit = {},
     onBackPressed: (() -> Unit)? = null,
+    actions: @Composable RowScope.() -> Unit = {},
     content: @Composable (PaddingValues) -> Unit
 ) {
     val density = LocalDensity.current
@@ -66,6 +66,8 @@ fun M3UTopBar(
             private val Float.shouldBeConsumed: Boolean get() = (!this.isMinimize) && (!this.isMaximize)
         }
     }
+
+    // Using Box instead of Column is because of making nestedScrollable components.
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -74,24 +76,20 @@ fun M3UTopBar(
                 connection = connection
             )
     ) {
-        val paddingTopDp by remember {
-            derivedStateOf {
-                with(density) {
-                    offsetHeightPx.toDp()
-                }
-            }
-        }
-        // [contentPaddingTop] is between 1~2 times [maxHeightDp].
-        // Because the AppBar should place 1 time [maxHeightDp] at least.
+        // [contentPaddingTop] is child content PaddingValue's top value,
+        // it should be between 1~2 times [maxHeightDp].
+        // Because the AppBar will place between 1~2 times [maxHeightDp].
         // The [visible] param means the AppBar should be invisible(0.dp) or not.
         val contentPaddingTop by remember(visible) {
             derivedStateOf {
                 if (!visible) minHeightDp
-                else maxHeightDp + paddingTopDp
+                else maxHeightDp + with(density) {
+                    offsetHeightPx.toDp()
+                }
             }
         }
 
-        // Content
+        // Child Content
         content(
             PaddingValues(
                 start = spacing.none,
@@ -101,7 +99,7 @@ fun M3UTopBar(
             )
         )
 
-        // AppBarContent
+        // AppBar
         Column(
             modifier = Modifier.align(Alignment.TopCenter)
         ) {
@@ -141,12 +139,13 @@ fun M3UTopBar(
                         val scale by remember {
                             derivedStateOf {
                                 M3UTopBarDefaults.scaleInterpolator(
-                                    curvature = M3UTopBarDefaults.ScaleCurvature,
-                                    process = progress
+                                    slope = M3UTopBarDefaults.ScaleSlope,
+                                    input = progress
                                 )
                             }
                         }
                         if (onBackPressed != null) {
+                            // TODO: Refactor to Composable Param
                             M3UIconButton(
                                 icon = Icon.ImageVectorIcon(Icons.Rounded.ArrowBack),
                                 contentDescription = stringResource(R.string.cd_top_bar_on_back_pressed),
@@ -177,7 +176,7 @@ fun M3UTopBar(
 
 internal object M3UTopBarDefaults {
     val TopBarHeight = 48.dp
-    const val ScaleCurvature = 0.35f
+    const val ScaleSlope = 0.35f
 
     @OptIn(ExperimentalLayoutApi::class)
     val windowInsets: WindowInsets
@@ -185,7 +184,12 @@ internal object M3UTopBarDefaults {
         get() = WindowInsets.systemBarsIgnoringVisibility
             .only(WindowInsetsSides.Horizontal + WindowInsetsSides.Top)
 
-    fun scaleInterpolator(curvature: Float, process: Float): Float {
-        return curvature * (process - 1) + 1
+    /**
+     * Linear interpolator through point (1,1).
+     * @param slope the slope of the interpolator.
+     * @param input the x value between 0~1f.
+     */
+    fun scaleInterpolator(slope: Float, input: Float): Float {
+        return slope * (input - 1) + 1
     }
 }

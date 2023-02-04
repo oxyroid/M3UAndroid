@@ -206,7 +206,6 @@ object M3UBottomBarDefaults {
 
     @Composable
     fun navigationSelectedItemColor() = LocalTheme.current.tint
-
 }
 
 private fun NavDestination?.isTopLevelDestinationInHierarchy(destination: TopLevelDestination) =
