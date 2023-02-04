@@ -28,12 +28,7 @@ fun NavGraphBuilder.liveScreen(
                 nullable = false
             }
         ),
-        enterTransition = {
-            fadeIn() + scaleIn(
-                initialScale = 0.85f
-            )
-            slideInVertically { it }
-        },
+        enterTransition = { slideInVertically { it } },
         exitTransition = { fadeOut() },
         popEnterTransition = { fadeIn() },
         popExitTransition = { slideOutVertically { it } }

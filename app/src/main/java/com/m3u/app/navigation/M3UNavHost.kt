@@ -20,7 +20,6 @@ fun M3UNavHost(
     navController: NavHostController,
     navigateToDestination: (Destination, String?) -> Unit,
     setAppActions: SetActions,
-    onBackClick: () -> Unit,
     modifier: Modifier = Modifier,
     startDestination: String = mainNavigationRoute
 ) {

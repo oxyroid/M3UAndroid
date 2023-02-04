@@ -4,9 +4,11 @@ package com.m3u.features.setting.components
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.LocalTheme
 
 @OptIn(ExperimentalMaterialApi::class)
@@ -32,6 +34,10 @@ internal fun FoldItem(
                 enabled = enabled,
                 onClick = onClick
             )
+            .padding(
+                horizontal = LocalSpacing.current.medium,
+                vertical = LocalSpacing.current.small
+            )
     )
 }
 
@@ -56,7 +62,11 @@ internal fun CheckBoxItem(
             Checkbox(
                 checked = checked,
                 enabled = enabled,
-                onCheckedChange = onCheckedChange
+                onCheckedChange = onCheckedChange,
+                colors = CheckboxDefaults.colors(
+                    checkedColor = LocalTheme.current.primary,
+                    uncheckedColor = LocalTheme.current.onPrimary
+                )
             )
         }
     )
@@ -83,7 +93,7 @@ internal fun TextItem(
             Text(
                 text = content,
                 style = MaterialTheme.typography.button,
-                color = LocalTheme.current.tint
+                color = LocalTheme.current.primary
             )
         }
     )

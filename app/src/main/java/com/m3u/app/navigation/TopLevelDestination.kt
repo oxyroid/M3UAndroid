@@ -2,10 +2,10 @@ package com.m3u.app.navigation
 
 import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Favorite
+import androidx.compose.material.icons.outlined.Collections
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Settings
-import androidx.compose.material.icons.rounded.Favorite
+import androidx.compose.material.icons.rounded.Collections
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.Settings
 import com.m3u.app.R
@@ -24,8 +24,8 @@ enum class TopLevelDestination(
         titleTextId = R.string.app_name
     ),
     Favourite(
-        selectedIcon = Icon.ImageVectorIcon(Icons.Rounded.Favorite),
-        unselectedIcon = Icon.ImageVectorIcon(Icons.Outlined.Favorite),
+        selectedIcon = Icon.ImageVectorIcon(Icons.Rounded.Collections),
+        unselectedIcon = Icon.ImageVectorIcon(Icons.Outlined.Collections),
         iconTextId = R.string.destination_favourite,
         titleTextId = R.string.title_favourite
     ),

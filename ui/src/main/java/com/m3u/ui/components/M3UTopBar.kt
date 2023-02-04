@@ -7,6 +7,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.Divider
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.ArrowBack
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -16,10 +18,13 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.m3u.ui.R
+import com.m3u.ui.model.Icon
 import com.m3u.ui.model.LocalSpacing
 
 @OptIn(ExperimentalAnimationApi::class)
@@ -30,6 +35,7 @@ fun M3UTopBar(
     visible: Boolean,
     windowInsets: WindowInsets = M3UTopBarDefaults.windowInsets,
     actions: @Composable RowScope.() -> Unit = {},
+    onBackPressed: (() -> Unit)? = null,
     content: @Composable (PaddingValues) -> Unit
 ) {
     val topBarHeight = M3UTopBarDefaults.TopBarHeight
@@ -119,7 +125,7 @@ fun M3UTopBar(
                             .graphicsLayer {
                                 alpha = process
                             },
-                        horizontalArrangement = Arrangement.End,
+                        horizontalArrangement = Arrangement.spacedBy(spacing.medium),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         val scale by remember {
@@ -130,19 +136,25 @@ fun M3UTopBar(
                                 )
                             }
                         }
+                        if (onBackPressed != null) {
+                            M3UIconButton(
+                                icon = Icon.ImageVectorIcon(Icons.Rounded.ArrowBack),
+                                contentDescription = stringResource(R.string.cd_top_bar_on_back_pressed),
+                                onClick = onBackPressed
+                            )
+                        }
                         Text(
                             text = text,
                             style = MaterialTheme.typography.h5,
                             fontWeight = FontWeight.ExtraBold,
                             textAlign = TextAlign.Start,
                             modifier = Modifier
+                                .weight(1f)
+                                .padding(horizontal = spacing.small)
                                 .graphicsLayer {
                                     scaleX = scale
                                     scaleY = scale
                                 }
-                        )
-                        Spacer(
-                            modifier = Modifier.weight(1f)
                         )
                         AnimatedContent(
                             targetState = actions
