@@ -30,7 +30,7 @@ import java.net.URI
 @Composable
 internal fun FavoriteLiveItem(
     live: Live,
-    subscriptionTitle: String,
+    title: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -57,7 +57,7 @@ internal fun FavoriteLiveItem(
                     horizontalArrangement = Arrangement.spacedBy(LocalSpacing.current.extraSmall)
                 ) {
                     BrightIcon(
-                        text = subscriptionTitle,
+                        text = title,
                         color = LocalTheme.current.secondary,
                         contentColor = LocalTheme.current.onSecondary,
                         icon = {

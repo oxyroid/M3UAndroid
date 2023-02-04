@@ -19,6 +19,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.core.util.context.toast
 import com.m3u.features.favorite.components.FavoriteLiveItem
+import com.m3u.features.favorite.navigation.NavigateToLive
 import com.m3u.features.favorite.vo.LiveDetail
 import com.m3u.ui.model.AppAction
 import com.m3u.ui.model.SetActions
@@ -27,26 +28,26 @@ import com.m3u.ui.util.LifecycleEffect
 
 @Composable
 internal fun FavouriteRoute(
-    modifier: Modifier = Modifier,
-    viewModel: FavouriteViewModel = hiltViewModel(),
     setAppActions: SetActions,
-    navigateToLive: (Int) -> Unit
+    navigateToLive: NavigateToLive,
+    modifier: Modifier = Modifier,
+    viewModel: FavouriteViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
     val state by viewModel.state.collectAsStateWithLifecycle()
     EventHandler(state.message) {
         context.toast(it)
     }
-    val setAppActionsUpdated by rememberUpdatedState(setAppActions)
+    val currentSetAppActions by rememberUpdatedState(setAppActions)
     LifecycleEffect { event ->
         when (event) {
             Lifecycle.Event.ON_START -> {
                 val actions = listOf<AppAction>()
-                setAppActionsUpdated(actions)
+                currentSetAppActions(actions)
             }
 
             Lifecycle.Event.ON_PAUSE -> {
-                setAppActionsUpdated(emptyList())
+                currentSetAppActions(emptyList())
             }
 
             else -> {}
@@ -62,7 +63,7 @@ internal fun FavouriteRoute(
 @Composable
 private fun FavoriteScreen(
     lives: List<LiveDetail>,
-    navigateToLive: (Int) -> Unit,
+    navigateToLive: NavigateToLive,
     modifier: Modifier = Modifier
 ) {
     val configuration = LocalConfiguration.current
@@ -71,12 +72,12 @@ private fun FavoriteScreen(
             LazyColumn(
                 modifier = modifier.fillMaxSize()
             ) {
-                items(lives) { liveWithTitle ->
+                items(lives) { detail ->
                     FavoriteLiveItem(
-                        live = liveWithTitle.live,
-                        subscriptionTitle = liveWithTitle.title,
+                        title = detail.title,
+                        live = detail.live,
                         onClick = {
-                            navigateToLive(liveWithTitle.live.id)
+                            navigateToLive(detail.live.id)
                         },
                         modifier = Modifier.fillParentMaxWidth()
                     )
@@ -89,12 +90,12 @@ private fun FavoriteScreen(
                 columns = GridCells.Fixed(2),
                 modifier = modifier.fillMaxSize()
             ) {
-                items(lives) { liveWithTitle ->
+                items(lives) { detail ->
                     FavoriteLiveItem(
-                        live = liveWithTitle.live,
-                        subscriptionTitle = liveWithTitle.title,
+                        title = detail.title,
+                        live = detail.live,
                         onClick = {
-                            navigateToLive(liveWithTitle.live.id)
+                            navigateToLive(detail.live.id)
                         },
                         modifier = Modifier.fillMaxWidth()
                     )

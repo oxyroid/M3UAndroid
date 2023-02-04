@@ -8,6 +8,8 @@ import com.google.accompanist.navigation.animation.composable
 import com.m3u.features.favorite.FavouriteRoute
 import com.m3u.ui.model.SetActions
 
+typealias NavigateToLive = (Int) -> Unit
+
 const val favouriteNavigationRoute = "favourite_route"
 
 fun NavController.navigateToFavourite(navOptions: NavOptions? = null) {
@@ -17,7 +19,7 @@ fun NavController.navigateToFavourite(navOptions: NavOptions? = null) {
 @OptIn(ExperimentalAnimationApi::class)
 fun NavGraphBuilder.favouriteScreen(
     setAppActions: SetActions,
-    navigateToLive: (Int) -> Unit
+    navigateToLive: NavigateToLive
 ) {
     composable(
         route = favouriteNavigationRoute

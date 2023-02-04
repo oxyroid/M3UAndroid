@@ -39,10 +39,7 @@ internal fun LiveItem(
     val spacing = LocalSpacing.current
     val theme = LocalTheme.current
     val scheme = remember(live) {
-        URI(live.url).scheme
-            .orEmpty()
-            .ifEmpty { context.getString(R.string.scheme_unknown) }
-            .uppercase()
+        URI(live.url).scheme?: context.getString(R.string.scheme_unknown).uppercase()
     }
     Card(
         shape = RectangleShape,

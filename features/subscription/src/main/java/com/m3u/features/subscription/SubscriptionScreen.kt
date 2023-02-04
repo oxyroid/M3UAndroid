@@ -197,11 +197,8 @@ private fun SubscriptionScreen(
                     }
                 }
             }
-
             ORIENTATION_PORTRAIT -> {
-                val groups = remember(lives) {
-                    lives.groupBy { it.group }
-                }
+                val groups = remember(lives) { lives.groupBy { it.group } }
                 LazyColumn(
                     modifier = modifier.fillMaxSize()
                 ) {

@@ -8,6 +8,8 @@ import com.google.accompanist.navigation.animation.composable
 import com.m3u.features.main.MainRoute
 import com.m3u.ui.model.SetActions
 
+typealias NavigateToSubscription = (String, String?) -> Unit
+
 const val mainNavigationRoute = "main_route"
 
 fun NavController.navigateToMain(navOptions: NavOptions? = null) {
@@ -16,7 +18,7 @@ fun NavController.navigateToMain(navOptions: NavOptions? = null) {
 
 @OptIn(ExperimentalAnimationApi::class)
 fun NavGraphBuilder.mainScreen(
-    navigateToSubscription: (String, label: String?) -> Unit,
+    navigateToSubscription: NavigateToSubscription,
     setAppActions: SetActions
 ) {
     composable(mainNavigationRoute) {
