@@ -1,8 +1,6 @@
 # M3UAndroid
 
-> Stream Media Player on Android.
-
-### Feature List:
+### Features
 
 - [x] M3U and M3U8 files.
 - [x] HTTPS and RTMP stream.
