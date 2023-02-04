@@ -10,6 +10,8 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.navOptions
 import com.google.accompanist.navigation.animation.rememberAnimatedNavController
+import com.m3u.app.navigation.Destination
+import com.m3u.app.navigation.TopLevelDestination
 import com.m3u.features.favorite.navigation.favouriteNavigationRoute
 import com.m3u.features.favorite.navigation.navigateToFavourite
 import com.m3u.features.live.navigation.navigateToLive
@@ -17,12 +19,14 @@ import com.m3u.features.main.navgation.mainNavigationRoute
 import com.m3u.features.main.navgation.navigateToMain
 import com.m3u.features.setting.navigation.navigateToSetting
 import com.m3u.features.setting.navigation.settingNavigationRoute
-import com.m3u.app.navigation.Destination
-import com.m3u.app.navigation.TopLevelDestination
 import com.m3u.features.subscription.navigation.navigationToSubscription
 import com.m3u.ui.model.AppAction
 import com.m3u.ui.model.SetActions
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.shareIn
+import kotlinx.coroutines.launch
 
 @Composable
 fun rememberM3UAppState(
@@ -47,8 +51,7 @@ fun rememberM3UAppState(
 @Stable
 class M3UAppState(
     val navController: NavHostController,
-    @Suppress("unused")
-    val coroutineScope: CoroutineScope
+    private val coroutineScope: CoroutineScope
 ) {
     val currentNavDestination: NavDestination?
         @Composable get() = navController
@@ -62,16 +65,13 @@ class M3UAppState(
             else -> null
         }
 
-    val isSystemBarVisibility: Boolean
-        @Composable get() = currentTopLevelDestination != null
-
     val topLevelDestinations: List<TopLevelDestination> = TopLevelDestination.values().asList()
 
     @Throws(IllegalArgumentException::class)
     fun navigateToTopLevelDestination(topLevelDestination: TopLevelDestination) {
         val topLevelNavOptions = navOptions {
             popUpTo(navController.graph.findStartDestination().id) {
-                saveState = true
+                saveState = false
             }
             launchSingleTop = true
             restoreState = true
@@ -83,16 +83,19 @@ class M3UAppState(
         }
     }
 
-    private val _label: MutableState<String?> = mutableStateOf(null)
-    val label: State<String?> get() = _label
+    private val _labelFlow: MutableSharedFlow<String?> = MutableSharedFlow()
+    val labelFlow
+        get() = _labelFlow.shareIn(
+            scope = coroutineScope,
+            started = SharingStarted.WhileSubscribed(5_000)
+        )
 
-    fun navigateToDestination(
-        destination: Destination,
-        label: String? = ""
-    ) {
+    fun navigateToDestination(destination: Destination, label: String? = "") {
         when (destination) {
             is Destination.Subscription -> {
-                _label.value = label
+                coroutineScope.launch {
+                    _labelFlow.emit(label)
+                }
                 navController.navigationToSubscription(destination.url)
             }
 
@@ -101,7 +104,6 @@ class M3UAppState(
             }
         }
     }
-
 
     private val _appActions: MutableState<List<AppAction>> = mutableStateOf(emptyList())
     val appActions: State<List<AppAction>> get() = _appActions

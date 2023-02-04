@@ -51,6 +51,8 @@ dependencies {
     debugImplementation "androidx.compose.ui:ui-test-manifest:$compose_version"
     implementation "androidx.compose.material:material-icons-extended:$compose_version"
 
+    implementation "com.google.accompanist:accompanist-systemuicontroller:$accompanist_version"
+
     implementation "androidx.tv:tv-foundation:$tv_version"
     implementation "androidx.tv:tv-material:$tv_version"
 

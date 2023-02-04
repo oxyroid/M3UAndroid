@@ -1,17 +1,13 @@
 package com.m3u.app.ui
 
-import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
@@ -24,17 +20,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hierarchy
 import com.m3u.app.navigation.Destination
@@ -58,7 +53,6 @@ fun M3UApp(
     appState: M3UAppState = rememberM3UAppState()
 ) {
     M3UBackground {
-        val isSystemBarVisibility = appState.isSystemBarVisibility
         Scaffold(
             modifier = Modifier.semantics {
                 testTagsAsResourceId = true
@@ -84,7 +78,7 @@ fun M3UApp(
                     val topLevelLabel = appState.currentTopLevelDestination
                         ?.titleTextId
                         ?.let { stringResource(it) }
-                    val label by appState.label
+                    val label by appState.labelFlow.collectAsStateWithLifecycle("")
                     val actions by appState.appActions
 
                     val text by remember(topLevelLabel) {
@@ -103,36 +97,21 @@ fun M3UApp(
                                     onClick = action.onClick
                                 )
                             }
-                        }
+                        },
+                        onBackPressed =
+                        if (appState.currentTopLevelDestination == null) appState::onBackClick
+                        else null
                     ) { padding ->
-                        Box(
-                            contentAlignment = Alignment.BottomCenter
+                        Column(
+                            modifier = Modifier.fillMaxSize()
                         ) {
-                            val paddingBottom by animateDpAsState(
-                                if (isSystemBarVisibility) 81.dp
-                                else 0.dp
-                            )
-                            val direction = LocalLayoutDirection.current
-                            val leftPadding = padding.calculateLeftPadding(direction)
-                            val topPadding = padding.calculateTopPadding()
-                            val rightPadding = padding.calculateRightPadding(direction)
-                            val bottomPadding =
-                                padding.calculateBottomPadding() + paddingBottom
                             M3UNavHost(
                                 navController = appState.navController,
                                 navigateToDestination = appState::navigateToDestination,
                                 setAppActions = appState.setAppActions,
-                                onBackClick = appState::onBackClick,
                                 modifier = Modifier
-                                    .padding(
-                                        PaddingValues(
-                                            start = leftPadding,
-                                            top = topPadding,
-                                            end = rightPadding,
-                                            bottom = bottomPadding
-                                        )
-                                    )
-                                    .fillMaxSize()
+                                    .padding(padding)
+                                    .weight(1f)
                             )
                             M3UBottomBar(
                                 destination = appState.topLevelDestinations,
@@ -140,7 +119,6 @@ fun M3UApp(
                                 currentNavDestination = appState.currentNavDestination,
                                 modifier = Modifier
                                     .testTag("M3UBottomBar")
-                                    .height(paddingBottom)
                             )
                         }
                     }
