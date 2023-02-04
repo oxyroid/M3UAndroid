@@ -43,7 +43,7 @@ internal fun SubscriptionItem(
         ) {
             Text(
                 text = label,
-                style = MaterialTheme.typography.subtitle2,
+                style = MaterialTheme.typography.subtitle1,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.weight(1f)

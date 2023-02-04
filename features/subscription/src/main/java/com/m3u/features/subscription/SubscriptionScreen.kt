@@ -7,6 +7,7 @@ import android.content.res.Configuration.UI_MODE_TYPE_NORMAL
 import android.content.res.Configuration.UI_MODE_TYPE_TELEVISION
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -38,6 +39,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -81,11 +83,9 @@ internal fun SubscriptionRoute(
                 )
                 currentSetAppActions(actions)
             }
-
             Lifecycle.Event.ON_PAUSE -> {
                 currentSetAppActions(emptyList())
             }
-
             else -> {}
         }
     }
@@ -200,7 +200,8 @@ private fun SubscriptionScreen(
             ORIENTATION_PORTRAIT -> {
                 val groups = remember(lives) { lives.groupBy { it.group } }
                 LazyColumn(
-                    modifier = modifier.fillMaxSize()
+                    modifier = modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.spacedBy(1.dp)
                 ) {
                     groups.forEach { (group, lives) ->
                         stickyHeader {
@@ -208,7 +209,7 @@ private fun SubscriptionScreen(
                                 modifier = Modifier
                                     .fillParentMaxWidth()
                                     .background(
-                                        color = LocalTheme.current.surface
+                                        color = LocalTheme.current.topBarDisable
                                     )
                                     .padding(
                                         horizontal = LocalSpacing.current.medium,
@@ -217,7 +218,7 @@ private fun SubscriptionScreen(
                             ) {
                                 Text(
                                     text = group,
-                                    color = LocalTheme.current.onSurface,
+                                    color = LocalTheme.current.onTopBarDisable,
                                     style = MaterialTheme.typography.subtitle2
                                 )
                             }

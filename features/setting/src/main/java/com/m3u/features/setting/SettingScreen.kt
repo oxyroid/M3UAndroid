@@ -12,12 +12,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -25,7 +24,6 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextDecoration
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -34,12 +32,10 @@ import com.m3u.core.annotation.SyncMode
 import com.m3u.core.util.context.toast
 import com.m3u.features.setting.components.TextItem
 import com.m3u.ui.components.M3UColumn
-import com.m3u.ui.components.M3URow
 import com.m3u.ui.components.M3UTextButton
 import com.m3u.ui.components.M3UTextField
 import com.m3u.ui.model.AppAction
 import com.m3u.ui.model.LocalSpacing
-import com.m3u.ui.model.LocalTheme
 import com.m3u.ui.model.SetActions
 import com.m3u.ui.util.EventHandler
 import com.m3u.ui.util.LifecycleEffect
@@ -128,7 +124,6 @@ private fun SettingScreen(
                     modifier = Modifier.weight(1f)
                 )
             }
-
             Configuration.ORIENTATION_LANDSCAPE -> {
                 Row {
                     MakeSubscriptionPart(
@@ -152,22 +147,14 @@ private fun SettingScreen(
                 }
 
             }
-
             else -> {}
         }
 
-
-        M3URow(
-            horizontalArrangement = Arrangement.Center,
-            modifier = Modifier.fillMaxWidth()
+        M3UTextButton(
+            text = stringResource(R.string.label_app_version, version),
+            modifier = Modifier.align(Alignment.CenterHorizontally)
         ) {
-            val text = stringResource(R.string.label_app_version, version)
-            Text(
-                text = text,
-                style = MaterialTheme.typography.subtitle2,
-                textDecoration = TextDecoration.Underline,
-                color = LocalTheme.current.primary
-            )
+
         }
     }
 }
