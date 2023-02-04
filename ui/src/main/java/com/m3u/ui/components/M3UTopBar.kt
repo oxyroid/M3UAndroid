@@ -1,8 +1,6 @@
 package com.m3u.ui.components
 
-import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.Crossfade
-import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.Divider
 import androidx.compose.material.MaterialTheme
@@ -21,13 +19,13 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.m3u.ui.R
 import com.m3u.ui.model.Icon
 import com.m3u.ui.model.LocalSpacing
 
-@OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun M3UTopBar(
     modifier: Modifier = Modifier,
@@ -38,28 +36,35 @@ fun M3UTopBar(
     onBackPressed: (() -> Unit)? = null,
     content: @Composable (PaddingValues) -> Unit
 ) {
-    val topBarHeight = M3UTopBarDefaults.TopBarHeight
-    val topBarHeightPx = with(LocalDensity.current) { topBarHeight.roundToPx().toFloat() }
-    var offsetHeightPx by remember { mutableStateOf(topBarHeightPx) }
-    var minimize: Boolean by remember {
-        mutableStateOf(false)
-    }
+    val density = LocalDensity.current
+    val spacing = LocalSpacing.current
+
+    val maxHeightDp = M3UTopBarDefaults.TopBarHeight
+    val minHeightDp = Dp.Hairline
+
+    val maxHeightPx = with(density) { maxHeightDp.roundToPx().toFloat() }
+    val minHeightPx = with(density) { minHeightDp.roundToPx().toFloat() }
+
+    var offsetHeightPx by remember { mutableStateOf(maxHeightPx) }
+    var minimize: Boolean by remember { mutableStateOf(false) }
+
     val connection = remember {
         object : NestedScrollConnection {
             override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
-                offsetHeightPx = (available.y + offsetHeightPx).coerceIn(0f, topBarHeightPx)
-                if (offsetHeightPx == 0f) {
-                    minimize = true
-                }
-                if (offsetHeightPx == topBarHeightPx) {
-                    minimize = false
-                }
-                return Offset.Zero
+                offsetHeightPx = offsetHeightPx coercePlus available.y
+                if (offsetHeightPx.isMinimize) minimize = true
+                if (offsetHeightPx.isMaximize) minimize = false
+                return if (offsetHeightPx.shouldBeConsumed) available
+                else Offset.Zero
             }
+
+            private infix fun Float.coercePlus(length: Float): Float =
+                (length + this).coerceIn(0f, maxHeightPx)
+
+            private val Float.isMinimize: Boolean get() = this == minHeightPx
+            private val Float.isMaximize: Boolean get() = this == maxHeightPx
+            private val Float.shouldBeConsumed: Boolean get() = (!this.isMinimize) && (!this.isMaximize)
         }
-    }
-    val process by remember {
-        derivedStateOf { offsetHeightPx / topBarHeightPx }
     }
     Box(
         modifier = modifier
@@ -69,8 +74,6 @@ fun M3UTopBar(
                 connection = connection
             )
     ) {
-        val density = LocalDensity.current
-        val spacing = LocalSpacing.current
         val paddingTopDp by remember {
             derivedStateOf {
                 with(density) {
@@ -78,12 +81,17 @@ fun M3UTopBar(
                 }
             }
         }
+        // [contentPaddingTop] is between 1~2 times [maxHeightDp].
+        // Because the AppBar should place 1 time [maxHeightDp] at least.
+        // The [visible] param means the AppBar should be invisible(0.dp) or not.
         val contentPaddingTop by remember(visible) {
             derivedStateOf {
-                if (!visible) spacing.none
-                else topBarHeight + paddingTopDp
+                if (!visible) minHeightDp
+                else maxHeightDp + paddingTopDp
             }
         }
+
+        // Content
         content(
             PaddingValues(
                 start = spacing.none,
@@ -92,6 +100,8 @@ fun M3UTopBar(
                 bottom = spacing.none
             )
         )
+
+        // AppBarContent
         Column(
             modifier = Modifier.align(Alignment.TopCenter)
         ) {
@@ -99,14 +109,13 @@ fun M3UTopBar(
                 targetState = minimize,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(contentPaddingTop)
                     .padding(horizontal = spacing.medium)
             ) { minimize ->
                 if (minimize) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(topBarHeight + paddingTopDp),
+                            .height(contentPaddingTop),
                         horizontalArrangement = Arrangement.Center,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -118,12 +127,13 @@ fun M3UTopBar(
                         )
                     }
                 } else {
+                    val progress by remember { derivedStateOf { offsetHeightPx / maxHeightPx } }
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(topBarHeight + paddingTopDp)
+                            .height(contentPaddingTop)
                             .graphicsLayer {
-                                alpha = process
+                                alpha = progress
                             },
                         horizontalArrangement = Arrangement.spacedBy(spacing.medium),
                         verticalAlignment = Alignment.CenterVertically,
@@ -132,7 +142,7 @@ fun M3UTopBar(
                             derivedStateOf {
                                 M3UTopBarDefaults.scaleInterpolator(
                                     curvature = M3UTopBarDefaults.ScaleCurvature,
-                                    process = process
+                                    process = progress
                                 )
                             }
                         }
@@ -156,11 +166,7 @@ fun M3UTopBar(
                                     scaleY = scale
                                 }
                         )
-                        AnimatedContent(
-                            targetState = actions
-                        ) {
-                            it()
-                        }
+                        actions()
                     }
                 }
             }
