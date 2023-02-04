@@ -6,6 +6,9 @@
 /.idea/modules.xml
 /.idea/workspace.xml
 /.idea/navEditor.xml
+/.idea/deploymentTargetDropDown.xml
+/.idea/render.experimental.xml
+/.idea/kotlinc.xml
 /.idea/assetWizardSettings.xml
 .DS_Store
 /build
