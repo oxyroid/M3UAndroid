@@ -1,6 +1,7 @@
 package com.m3u.features.live
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.Text
@@ -23,6 +24,7 @@ import androidx.media3.common.Player.STATE_ENDED
 import androidx.media3.common.Player.STATE_IDLE
 import androidx.media3.common.Player.STATE_READY
 import androidx.media3.common.Player.State
+import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.m3u.core.util.context.toast
 import com.m3u.ui.components.LivePlayer
 import com.m3u.ui.components.M3UColumn
@@ -44,17 +46,26 @@ internal fun LiveRoute(
     val state: LiveState by viewModel.state.collectAsStateWithLifecycle()
 
     val setAppActionsUpdated by rememberUpdatedState(setAppActions)
+    val systemUiController = rememberSystemUiController()
+    val useDarkIcons = !isSystemInDarkTheme()
+
     LifecycleEffect { event ->
         when (event) {
             Lifecycle.Event.ON_START -> {
                 val actions = listOf<AppAction>()
                 setAppActionsUpdated(actions)
+                systemUiController.setSystemBarsColor(
+                    color = Color.Black,
+                    darkIcons = false
+                )
             }
-
             Lifecycle.Event.ON_PAUSE -> {
                 setAppActionsUpdated(emptyList())
+                systemUiController.setSystemBarsColor(
+                    color = Color.Transparent,
+                    darkIcons = useDarkIcons
+                )
             }
-
             else -> {}
         }
     }
