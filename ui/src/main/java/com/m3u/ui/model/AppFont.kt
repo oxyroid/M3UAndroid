@@ -45,12 +45,10 @@ val Typography = Typography(
     button = TextStyle(
         fontFamily = AppFont.TitilliumWeb,
         fontWeight = FontWeight.Medium,
-    )
-    /* Other default text styles to override
+    ),
     caption = TextStyle(
         fontFamily = FontFamily.Default,
         fontWeight = FontWeight.Normal,
         fontSize = 12.sp
     )
-    */
 )
