@@ -1,4 +1,4 @@
-package com.m3u.ui.components
+package com.m3u.ui
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material.MaterialTheme
