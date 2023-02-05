@@ -9,5 +9,6 @@ data class SettingState(
     val url: String = "",
     val message: Event<String> = Event.Handled(),
     val version: String = "",
-    val syncMode: Int = SyncMode.DEFAULT
+    val syncMode: Int = SyncMode.DEFAULT,
+    val useCommonUIMode: Boolean = false
 )

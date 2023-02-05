@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.m3u.core.architecture.BaseViewModel
 import com.m3u.core.wrapper.Resource
 import com.m3u.core.wrapper.eventOf
+import com.m3u.data.Configuration
 import com.m3u.data.repository.LiveRepository
 import com.m3u.data.repository.SubscriptionRepository
 import com.m3u.data.repository.observeLivesBySubscriptionUrl
@@ -23,11 +24,20 @@ import javax.inject.Inject
 class SubscriptionViewModel @Inject constructor(
     private val liveRepository: LiveRepository,
     private val subscriptionRepository: SubscriptionRepository,
-    application: Application
+    application: Application,
+    private val configuration: Configuration
 ) : BaseViewModel<SubscriptionState, SubscriptionEvent>(
     application = application,
     emptyState = SubscriptionState()
 ) {
+    init {
+        writable.update {
+            it.copy(
+                useCommonUIMode = configuration.useCommonUIMode
+            )
+        }
+    }
+
     private var job: Job? = null
     override fun onEvent(event: SubscriptionEvent) {
         when (event) {

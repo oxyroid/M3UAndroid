@@ -7,5 +7,6 @@ data class SubscriptionState(
     val url: String = "",
     val lives: List<Live> = emptyList(),
     val syncing: Boolean = false,
-    val message: Event<String> = Event.Handled()
+    val message: Event<String> = Event.Handled(),
+    val useCommonUIMode: Boolean = false
 )

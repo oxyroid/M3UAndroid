@@ -11,4 +11,6 @@
     <string name="sync_mode_default">所有（默认值）</string>
     <string name="sync_mode_favourite_except">绕过收藏夹</string>
     <string name="sync_mode">同步策略</string>
+    <string name="common_ui_mode">默认布局</string>
+    <string name="common_ui_mode_description">使用手机设备布局模式</string>
 </resources>

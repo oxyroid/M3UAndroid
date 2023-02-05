@@ -6,32 +6,36 @@ import androidx.compose.foundation.gestures.rememberScrollableState
 import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.core.annotation.SetSyncMode
 import com.m3u.core.annotation.SyncMode
 import com.m3u.core.util.context.toast
-import com.m3u.features.setting.components.TextItem
+import com.m3u.features.setting.components.CheckBoxPreference
+import com.m3u.features.setting.components.TextPreference
 import com.m3u.ui.components.M3UColumn
+import com.m3u.ui.components.M3URow
 import com.m3u.ui.components.M3UTextButton
 import com.m3u.ui.components.M3UTextField
 import com.m3u.ui.model.AppAction
@@ -79,6 +83,8 @@ internal fun SettingRoute(
         onUrl = { viewModel.onEvent(SettingEvent.OnUrl(it)) },
         onSubscribe = { viewModel.onEvent(SettingEvent.SubscribeUrl) },
         onSyncMode = { viewModel.onEvent(SettingEvent.OnSyncMode(it)) },
+        useCommonUIMode = state.useCommonUIMode,
+        onUIMode = { viewModel.onEvent(SettingEvent.OnUIMode) },
         modifier = modifier
     )
 }
@@ -94,19 +100,26 @@ private fun SettingScreen(
     onUrl: (String) -> Unit,
     onSubscribe: () -> Unit,
     onSyncMode: SetSyncMode,
+    useCommonUIMode: Boolean,
+    onUIMode: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val spacing = LocalSpacing.current
     Column(
-        modifier = modifier
+        modifier = Modifier
+            .scrollable(
+                orientation = Orientation.Vertical,
+                state = rememberScrollableState { it }
+            )
             .fillMaxSize()
-            .testTag("features:setting"),
-        verticalArrangement = Arrangement.spacedBy(LocalSpacing.current.small)
+            .testTag("features:setting")
     ) {
         val configuration = LocalConfiguration.current
         when (configuration.orientation) {
             Configuration.ORIENTATION_PORTRAIT -> {
                 M3UColumn(
-                    verticalArrangement = Arrangement.spacedBy(LocalSpacing.current.small),
+                    verticalArrangement = Arrangement.spacedBy(spacing.small),
+                    modifier = modifier
                 ) {
                     MakeSubscriptionPart(
                         title = title,
@@ -114,18 +127,30 @@ private fun SettingScreen(
                         subscribeEnable = subscribeEnable,
                         onTitle = onTitle,
                         onUrl = onUrl,
-                        onSubscribe = onSubscribe
+                        onSubscribe = onSubscribe,
+                        modifier = Modifier.fillMaxWidth()
                     )
-                }
+                    SettingItemsPart(
+                        syncMode = syncMode,
+                        onSyncMode = onSyncMode,
+                        useCommonUIMode = useCommonUIMode,
+                        onUIMode = onUIMode,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    M3UTextButton(
+                        text = stringResource(R.string.label_app_version, version),
+                        modifier = Modifier.align(Alignment.CenterHorizontally)
+                    ) {
 
-                SettingItemsPart(
-                    syncMode = syncMode,
-                    onSyncMode = onSyncMode,
-                    modifier = Modifier.weight(1f)
-                )
+                    }
+                }
             }
+
             Configuration.ORIENTATION_LANDSCAPE -> {
-                Row {
+                M3URow(
+                    horizontalArrangement = Arrangement.spacedBy(spacing.medium),
+                    modifier = modifier.padding(horizontal = spacing.medium)
+                ) {
                     MakeSubscriptionPart(
                         title = title,
                         url = url,
@@ -137,24 +162,27 @@ private fun SettingScreen(
                             .fillMaxHeight()
                             .weight(1f)
                     )
-                    SettingItemsPart(
-                        syncMode = syncMode,
-                        onSyncMode = onSyncMode,
-                        modifier = Modifier
-                            .fillMaxHeight()
-                            .weight(1f)
-                    )
+                    Column(
+                        modifier = modifier.weight(1f)
+                    ) {
+                        SettingItemsPart(
+                            syncMode = syncMode,
+                            onSyncMode = onSyncMode,
+                            useCommonUIMode = useCommonUIMode,
+                            onUIMode = onUIMode,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        M3UTextButton(
+                            text = stringResource(R.string.label_app_version, version),
+                            modifier = Modifier.align(Alignment.CenterHorizontally)
+                        ) {
+
+                        }
+                    }
                 }
-
             }
+
             else -> {}
-        }
-
-        M3UTextButton(
-            text = stringResource(R.string.label_app_version, version),
-            modifier = Modifier.align(Alignment.CenterHorizontally)
-        ) {
-
         }
     }
 }
@@ -169,13 +197,9 @@ private fun MakeSubscriptionPart(
     onSubscribe: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    M3UColumn(
+    Column(
         verticalArrangement = Arrangement.spacedBy(LocalSpacing.current.small),
         modifier = modifier
-            .scrollable(
-                orientation = Orientation.Vertical,
-                state = rememberScrollableState { it }
-            )
     ) {
         val focusRequester = remember { FocusRequester() }
         M3UTextField(
@@ -218,19 +242,15 @@ private fun MakeSubscriptionPart(
 private fun SettingItemsPart(
     syncMode: @SyncMode Int,
     onSyncMode: SetSyncMode,
+    useCommonUIMode: Boolean,
+    onUIMode: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
-        modifier = modifier
-            .scrollable(
-                orientation = Orientation.Vertical,
-                state = rememberScrollableState(consumeScrollDelta = { it })
-            )
-            .padding(
-                vertical = LocalSpacing.current.medium
-            )
+        modifier = modifier.clip(MaterialTheme.shapes.medium),
+        verticalArrangement = Arrangement.spacedBy(1.dp)
     ) {
-        TextItem(
+        TextPreference(
             title = stringResource(R.string.sync_mode),
             content = when (syncMode) {
                 SyncMode.DEFAULT -> stringResource(R.string.sync_mode_default)
@@ -244,6 +264,17 @@ private fun SettingItemsPart(
                     else -> SyncMode.DEFAULT
                 }
                 onSyncMode(target)
+            }
+        )
+        CheckBoxPreference(
+            title = stringResource(R.string.common_ui_mode),
+            subtitle = stringResource(R.string.common_ui_mode_description),
+            enabled = true,
+            checked = useCommonUIMode,
+            onCheckedChange = { newValue ->
+                if (newValue != useCommonUIMode) {
+                    onUIMode()
+                }
             }
         )
     }

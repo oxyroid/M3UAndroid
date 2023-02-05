@@ -9,6 +9,7 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -83,9 +84,11 @@ internal fun SubscriptionRoute(
                 )
                 currentSetAppActions(actions)
             }
+
             Lifecycle.Event.ON_PAUSE -> {
                 currentSetAppActions(emptyList())
             }
+
             else -> {}
         }
     }
@@ -103,12 +106,13 @@ internal fun SubscriptionRoute(
     }
 
     SubscriptionScreen(
+        useCommonUIMode = state.useCommonUIMode,
         lives = state.lives,
         refreshing = state.syncing,
         onSyncingLatest = { viewModel.onEvent(SubscriptionEvent.Sync) },
         navigateToLive = navigateToLive,
         onLiveAction = { dialogState = DialogState.Ready(it) },
-        modifier = modifier
+        modifier = modifier.fillMaxSize()
     )
 
     if (dialogState is DialogState.Ready) {
@@ -130,9 +134,10 @@ internal fun SubscriptionRoute(
     }
 }
 
-@OptIn(ExperimentalMaterialApi::class, ExperimentalFoundationApi::class)
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
 private fun SubscriptionScreen(
+    useCommonUIMode: Boolean,
     lives: List<Live>,
     refreshing: Boolean,
     onSyncingLatest: () -> Unit,
@@ -150,94 +155,51 @@ private fun SubscriptionScreen(
     ) {
         when (configuration.orientation) {
             ORIENTATION_LANDSCAPE -> {
-                when (val type = configuration.uiMode and UI_MODE_TYPE_MASK) {
-                    UI_MODE_TYPE_NORMAL -> {
-                        LazyVerticalGrid(
-                            columns = GridCells.Fixed(4),
-                            modifier = modifier.fillMaxSize()
-                        ) {
-                            items(lives) { live ->
-                                LiveItem(
-                                    live = live.copy(
-                                        title = "${live.group} - ${live.title}"
-                                    ),
-                                    onClick = { navigateToLive(live.id) },
-                                    onLongClick = { onLiveAction(live.id) },
-                                    modifier = Modifier.fillMaxWidth()
-                                )
-                            }
+                if (useCommonUIMode) {
+                    LandscapeUIModeList(
+                        lives = lives,
+                        navigateToLive = navigateToLive,
+                        onLiveAction = onLiveAction,
+                        modifier = modifier
+                    )
+                } else {
+                    when (val type = configuration.uiMode and UI_MODE_TYPE_MASK) {
+                        UI_MODE_TYPE_NORMAL -> {
+                            LandscapeUIModeList(
+                                lives = lives,
+                                navigateToLive = navigateToLive,
+                                onLiveAction = onLiveAction,
+                                modifier = modifier
+                            )
+                        }
+
+                        UI_MODE_TYPE_TELEVISION -> {
+                            TelevisionUIModeList(
+                                lives = lives,
+                                navigateToLive = navigateToLive,
+                                onLiveAction = onLiveAction,
+                                modifier = modifier
+                            )
+                        }
+
+                        else -> {
+                            UnsupportedUIMode(
+                                type = type,
+                                modifier = modifier
+                            )
                         }
                     }
 
-                    UI_MODE_TYPE_TELEVISION -> {
-                        TvLazyVerticalGrid(
-                            columns = TvGridCells.Fixed(4),
-                            modifier = modifier.fillMaxSize()
-                        ) {
-                            items(lives) { live ->
-                                LiveItem(
-                                    live = live.copy(
-                                        title = "${live.group} - ${live.title}"
-                                    ),
-                                    onClick = { navigateToLive(live.id) },
-                                    onLongClick = { onLiveAction(live.id) },
-                                    modifier = Modifier.fillMaxWidth()
-                                )
-                            }
-                        }
-                    }
-
-                    else -> {
-                        Box(
-                            contentAlignment = Alignment.Center,
-                            modifier = modifier.fillMaxSize()
-                        ) {
-                            Text(text = "Unsupported UI Mode Type: $type")
-                        }
-                    }
                 }
             }
+
             ORIENTATION_PORTRAIT -> {
-                val groups = remember(lives) { lives.groupBy { it.group } }
-                LazyColumn(
-                    modifier = modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.spacedBy(1.dp)
-                ) {
-                    groups.forEach { (group, lives) ->
-                        stickyHeader {
-                            Box(
-                                modifier = Modifier
-                                    .fillParentMaxWidth()
-                                    .background(
-                                        color = LocalTheme.current.topBarDisable
-                                    )
-                                    .padding(
-                                        horizontal = LocalSpacing.current.medium,
-                                        vertical = LocalSpacing.current.extraSmall
-                                    )
-                            ) {
-                                Text(
-                                    text = group,
-                                    color = LocalTheme.current.onTopBarDisable,
-                                    style = MaterialTheme.typography.subtitle2
-                                )
-                            }
-                        }
-                        itemsIndexed(lives) { index, live ->
-                            LiveItem(
-                                live = live,
-                                onClick = { navigateToLive(live.id) },
-                                onLongClick = { onLiveAction(live.id) },
-                                modifier = Modifier.fillParentMaxWidth()
-                            )
-                            if (index == lives.lastIndex) {
-                                Divider(
-                                    modifier = Modifier.height(LocalSpacing.current.extraSmall)
-                                )
-                            }
-                        }
-                    }
-                }
+                PortraitUIModeList(
+                    lives = lives,
+                    navigateToLive = navigateToLive,
+                    onLiveAction = onLiveAction,
+                    modifier = modifier
+                )
             }
 
             else -> {}
@@ -251,6 +213,134 @@ private fun SubscriptionScreen(
             contentColor = LocalTheme.current.onTint,
             backgroundColor = LocalTheme.current.tint
         )
+    }
+}
+
+@Composable
+private fun LandscapeUIModeList(
+    lives: List<Live>,
+    navigateToLive: (Int) -> Unit,
+    onLiveAction: (Int) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    LazyVerticalGrid(
+        columns = GridCells.Fixed(4),
+        modifier = modifier.fillMaxSize()
+    ) {
+        items(lives) { live ->
+            LiveItem(
+                live = live.copy(
+                    title = "${live.group} - ${live.title}"
+                ),
+                onClick = { navigateToLive(live.id) },
+                onLongClick = { onLiveAction(live.id) },
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+    }
+}
+
+@Suppress("UNREACHABLE_CODE")
+@Composable
+private fun TelevisionUIModeList(
+    lives: List<Live>,
+    navigateToLive: (Int) -> Unit,
+    onLiveAction: (Int) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    UnsupportedUIMode(
+        type = UI_MODE_TYPE_TELEVISION,
+        modifier = modifier,
+        description =
+        "Fix when [https://issuetracker.google.com/issues/267058478] is completed."
+    )
+    // FIXME: https://issuetracker.google.com/issues/267058478
+    return
+    TvLazyVerticalGrid(
+        columns = TvGridCells.Fixed(4),
+        modifier = modifier.fillMaxSize()
+    ) {
+        items(lives) { live ->
+            LiveItem(
+                live = live.copy(
+                    title = "${live.group} - ${live.title}"
+                ),
+                onClick = { navigateToLive(live.id) },
+                onLongClick = { onLiveAction(live.id) },
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun PortraitUIModeList(
+    lives: List<Live>,
+    navigateToLive: (Int) -> Unit,
+    onLiveAction: (Int) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val groups = remember(lives) { lives.groupBy { it.group } }
+    LazyColumn(
+        modifier = modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.spacedBy(1.dp)
+    ) {
+        groups.forEach { (group, lives) ->
+            stickyHeader {
+                Box(
+                    modifier = Modifier
+                        .fillParentMaxWidth()
+                        .background(
+                            color = LocalTheme.current.topBarDisable
+                        )
+                        .padding(
+                            horizontal = LocalSpacing.current.medium,
+                            vertical = LocalSpacing.current.extraSmall
+                        )
+                ) {
+                    Text(
+                        text = group,
+                        color = LocalTheme.current.onTopBarDisable,
+                        style = MaterialTheme.typography.subtitle2
+                    )
+                }
+            }
+            itemsIndexed(lives) { index, live ->
+                LiveItem(
+                    live = live,
+                    onClick = { navigateToLive(live.id) },
+                    onLongClick = { onLiveAction(live.id) },
+                    modifier = Modifier.fillParentMaxWidth()
+                )
+                if (index == lives.lastIndex) {
+                    Divider(
+                        modifier = Modifier.height(LocalSpacing.current.extraSmall)
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun UnsupportedUIMode(
+    type: Int,
+    modifier: Modifier = Modifier,
+    description: String? = null,
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(
+            LocalSpacing.current.medium,
+            Alignment.CenterVertically
+        ),
+        modifier = modifier.fillMaxSize()
+    ) {
+        Text(text = "Unsupported UI Mode Type: $type")
+        if (description != null) {
+            Text(text = description)
+        }
     }
 }
 

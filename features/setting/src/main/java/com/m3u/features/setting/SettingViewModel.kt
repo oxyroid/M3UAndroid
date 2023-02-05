@@ -28,22 +28,32 @@ class SettingViewModel @Inject constructor(
     emptyState = SettingState()
 ) {
     init {
-        configuration.syncMode
         writable.update {
             it.copy(
-                version = packageProvider.getVersionName()
+                version = packageProvider.getVersionName(),
+                syncMode = configuration.syncMode,
+                useCommonUIMode = configuration.useCommonUIMode
             )
         }
     }
 
-    private var syncMode: Int by Delegates.observable(configuration.syncMode) { _, _, new ->
-        configuration.syncMode = new
+    private var syncMode: Int by sharedDelegate(configuration.syncMode) { newValue ->
+        configuration.syncMode = newValue
         writable.update {
             it.copy(
-                syncMode = new
+                syncMode = newValue
             )
         }
     }
+    private var useCommonUIMode: Boolean by sharedDelegate(configuration.useCommonUIMode) { newValue ->
+        configuration.useCommonUIMode = newValue
+        writable.update {
+            it.copy(
+                useCommonUIMode = newValue
+            )
+        }
+    }
+
 
     override fun onEvent(event: SettingEvent) {
         when (event) {
@@ -63,9 +73,9 @@ class SettingViewModel @Inject constructor(
                 }
             }
 
-            is SettingEvent.OnSyncMode -> {
-                syncMode = event.syncMode
-            }
+            is SettingEvent.OnSyncMode -> syncMode = event.syncMode
+
+            SettingEvent.OnUIMode -> useCommonUIMode = !useCommonUIMode
 
             SettingEvent.SubscribeUrl -> {
                 val title = writable.value.title
@@ -125,4 +135,9 @@ class SettingViewModel @Inject constructor(
             }
         }
     }
+
+    private inline fun <T> sharedDelegate(observer: T, crossinline updated: (T) -> Unit) =
+        Delegates.observable(observer) { _, _, newValue ->
+            updated(newValue)
+        }
 }

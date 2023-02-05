@@ -3,6 +3,7 @@ package com.m3u.data
 import android.content.Context
 import android.content.SharedPreferences
 import com.m3u.core.annotation.SyncMode
+import com.m3u.core.util.context.boolean
 import com.m3u.core.util.context.int
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
@@ -12,6 +13,7 @@ private const val SHARED_SETTINGS = "shared_settings"
 interface Configuration {
     @SyncMode
     var syncMode: Int
+    var useCommonUIMode: Boolean
 }
 
 class SharedConfiguration @Inject constructor(
@@ -22,5 +24,5 @@ class SharedConfiguration @Inject constructor(
 
     @SyncMode
     override var syncMode: Int by sharedPreferences.int(SyncMode.DEFAULT)
-
+    override var useCommonUIMode: Boolean by sharedPreferences.boolean(true)
 }
