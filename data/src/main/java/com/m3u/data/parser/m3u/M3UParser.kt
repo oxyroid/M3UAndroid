@@ -9,7 +9,7 @@ import java.util.Properties
 import java.util.stream.Stream
 import kotlin.streams.asSequence
 
-class M3UParser internal constructor() : Parser<List<M3U>> {
+class M3UParser internal constructor() : Parser<List<M3U>, M3U>() {
     @Volatile
     private var block: M3U? = null
     private val list = mutableListOf<M3U>()
@@ -17,12 +17,20 @@ class M3UParser internal constructor() : Parser<List<M3U>> {
     override suspend fun parse(lines: Stream<String>) {
         withContext(Dispatchers.IO) {
             lines.asSequence()
+                .onEach {
+                    mInterpolator.forEach { interceptor ->
+                        interceptor.onPreHandle(it)
+                    }
+                }
                 .filterNot { it.isEmpty() }
                 .forEach { line ->
                     when {
                         line.startsWith(M3U_HEADER_MARK) -> reset()
                         line.startsWith(M3U_INFO_MARK) -> {
                             block?.let {
+                                mInterpolator.forEach { interceptor ->
+                                    interceptor.onHandle(it)
+                                }
                                 list.add(it)
                             }
                             block = M3U().setContent(line)
@@ -30,17 +38,24 @@ class M3UParser internal constructor() : Parser<List<M3U>> {
 
                         else -> {
                             block = block?.setUrl(line)
-                            block?.let { list.add(it) }
+                            block?.let {
+                                mInterpolator.forEach { interceptor ->
+                                    interceptor.onHandle(it)
+                                }
+                                list.add(it)
+                            }
                             block = null
                         }
                     }
                 }
+
         }
     }
 
     override fun get(): List<M3U> = list
 
     override fun reset() {
+        super.reset()
         list.clear()
         block = null
     }

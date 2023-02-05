@@ -4,6 +4,7 @@ import com.m3u.core.wrapper.Resource
 import com.m3u.data.dao.LiveDao
 import com.m3u.data.dao.SubscriptionDao
 import com.m3u.data.entity.Subscription
+import com.m3u.data.interceptor.LoggerInterceptor
 import com.m3u.data.parser.Parser
 import com.m3u.data.parser.m3u.toLive
 import com.m3u.data.parser.parse
@@ -29,9 +30,12 @@ class SubscriptionRepositoryImpl @Inject constructor(
             }
         }
         try {
-            parser.reset()
-            parser.parse(url)
-            val m3us = parser.get()
+            val m3us = parser.run {
+                reset()
+                addInterceptor(LoggerInterceptor())
+                parse(url)
+                get()
+            }
             val stringUrl = url.toString()
             val subscription = Subscription(
                 title = title,
