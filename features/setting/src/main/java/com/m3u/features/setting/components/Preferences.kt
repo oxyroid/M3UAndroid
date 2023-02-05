@@ -2,19 +2,22 @@
 
 package com.m3u.features.setting.components
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextOverflow
 import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.LocalTheme
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-internal fun FoldItem(
+internal fun FoldPreference(
     title: String,
+    subtitle: String?,
     enabled: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -24,9 +27,22 @@ internal fun FoldItem(
         text = {
             Text(
                 text = title,
-                style = MaterialTheme.typography.subtitle1
+                style = MaterialTheme.typography.subtitle1,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
         },
+        secondaryText = subtitle?.let {
+            @Composable {
+                Text(
+                    text = it,
+                    style = MaterialTheme.typography.subtitle2,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+        },
+        singleLineSecondaryText = true,
         trailing = trailingContent,
         modifier = modifier
             .fillMaxWidth()
@@ -34,6 +50,7 @@ internal fun FoldItem(
                 enabled = enabled,
                 onClick = onClick
             )
+            .background(LocalTheme.current.surface)
             .padding(
                 horizontal = LocalSpacing.current.medium,
                 vertical = LocalSpacing.current.small
@@ -42,15 +59,17 @@ internal fun FoldItem(
 }
 
 @Composable
-internal fun CheckBoxItem(
+internal fun CheckBoxPreference(
     title: String,
     enabled: Boolean,
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    subtitle: String? = null,
 ) {
-    FoldItem(
+    FoldPreference(
         title = title,
+        subtitle = subtitle,
         enabled = enabled,
         onClick = {
             if (enabled) {
@@ -61,7 +80,6 @@ internal fun CheckBoxItem(
         trailingContent = {
             Checkbox(
                 checked = checked,
-                enabled = enabled,
                 onCheckedChange = onCheckedChange,
                 colors = CheckboxDefaults.colors(
                     checkedColor = LocalTheme.current.primary,
@@ -73,15 +91,17 @@ internal fun CheckBoxItem(
 }
 
 @Composable
-internal fun TextItem(
+internal fun TextPreference(
     title: String,
     content: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    subtitle: String? = null,
     enabled: Boolean = true,
 ) {
-    FoldItem(
+    FoldPreference(
         title = title,
+        subtitle = subtitle,
         enabled = enabled,
         onClick = {
             if (enabled) {
@@ -93,7 +113,9 @@ internal fun TextItem(
             Text(
                 text = content,
                 style = MaterialTheme.typography.button,
-                color = LocalTheme.current.primary
+                color = LocalTheme.current.primary,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
         }
     )

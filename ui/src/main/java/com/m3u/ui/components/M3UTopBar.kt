@@ -19,6 +19,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -121,7 +122,9 @@ fun M3UTopBar(
                             text = text,
                             style = MaterialTheme.typography.h6.copy(
                                 fontSize = 16.sp
-                            )
+                            ),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                     }
                 } else {
@@ -157,6 +160,8 @@ fun M3UTopBar(
                             style = MaterialTheme.typography.h5,
                             fontWeight = FontWeight.ExtraBold,
                             textAlign = TextAlign.Start,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
                             modifier = Modifier
                                 .weight(1f)
                                 .padding(horizontal = spacing.small)
