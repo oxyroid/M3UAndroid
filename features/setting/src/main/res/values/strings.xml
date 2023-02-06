@@ -3,14 +3,20 @@
     <string name="placeholder_url">订阅链接</string>
     <string name="label_app_version">应用版本：%s</string>
     <string name="label_subscribe">订阅</string>
+
     <string name="success_subscribe">订阅成功</string>
     <string name="failed_malformed_url">URL错误（%s）</string>
     <string name="failed_empty_title">订阅名称为空</string>
     <string name="placeholder_title">订阅名称</string>
     <string name="label_subscribing">订阅中…</string>
+
     <string name="sync_mode_default">所有（默认值）</string>
     <string name="sync_mode_favourite_except">绕过收藏夹</string>
     <string name="sync_mode">同步策略</string>
+
     <string name="common_ui_mode">默认布局</string>
     <string name="common_ui_mode_description">使用手机设备布局模式</string>
+
+    <string name="script_management">脚本管理</string>
+    <string name="subscription_management">订阅管理</string>
 </resources>
