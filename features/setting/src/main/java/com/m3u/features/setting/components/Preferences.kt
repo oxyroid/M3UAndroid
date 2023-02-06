@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.LocalTheme
@@ -17,10 +18,10 @@ import com.m3u.ui.model.LocalTheme
 @Composable
 internal fun FoldPreference(
     title: String,
-    subtitle: String?,
     enabled: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    subtitle: String? = null,
     trailingContent: @Composable () -> Unit = {}
 ) {
     ListItem(
@@ -28,6 +29,7 @@ internal fun FoldPreference(
             Text(
                 text = title,
                 style = MaterialTheme.typography.subtitle1,
+                fontWeight = FontWeight.Bold,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
@@ -52,8 +54,7 @@ internal fun FoldPreference(
             )
             .background(LocalTheme.current.surface)
             .padding(
-                horizontal = LocalSpacing.current.medium,
-                vertical = LocalSpacing.current.small
+                start = LocalSpacing.current.small
             )
     )
 }
@@ -79,11 +80,12 @@ internal fun CheckBoxPreference(
         modifier = modifier,
         trailingContent = {
             Checkbox(
+                enabled = enabled,
                 checked = checked,
                 onCheckedChange = onCheckedChange,
                 colors = CheckboxDefaults.colors(
-                    checkedColor = LocalTheme.current.primary,
-                    uncheckedColor = LocalTheme.current.onPrimary
+                    checkedColor = LocalTheme.current.tint,
+                    uncheckedColor = LocalTheme.current.onTint
                 )
             )
         }
@@ -113,7 +115,7 @@ internal fun TextPreference(
             Text(
                 text = content,
                 style = MaterialTheme.typography.button,
-                color = LocalTheme.current.primary,
+                color = LocalTheme.current.tint,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
