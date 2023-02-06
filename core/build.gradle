@@ -8,7 +8,6 @@ plugins {
 android {
     namespace "com.m3u.core"
     compileSdk 33
-
     defaultConfig {
         minSdk 26
         targetSdk 33
@@ -16,7 +15,6 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles "consumer-rules.pro"
     }
-
     buildTypes {
         release {
             minifyEnabled true
