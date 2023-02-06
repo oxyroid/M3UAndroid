@@ -199,10 +199,10 @@ private fun M3UNavigationBarItem(
 
 object M3UBottomBarDefaults {
     @Composable
-    fun navigationBackgroundColor() = LocalTheme.current.topBar
+    fun navigationBackgroundColor() = LocalTheme.current.onSurface
 
     @Composable
-    fun navigationContentColor() = LocalTheme.current.onTopBar
+    fun navigationContentColor() = LocalTheme.current.surface
 
     @Composable
     fun navigationSelectedItemColor() = LocalTheme.current.tint
