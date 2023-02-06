@@ -2,9 +2,14 @@ package com.m3u.features.subscription
 
 import android.content.res.Configuration.ORIENTATION_LANDSCAPE
 import android.content.res.Configuration.ORIENTATION_PORTRAIT
+import android.content.res.Configuration.UI_MODE_TYPE_APPLIANCE
+import android.content.res.Configuration.UI_MODE_TYPE_CAR
+import android.content.res.Configuration.UI_MODE_TYPE_DESK
 import android.content.res.Configuration.UI_MODE_TYPE_MASK
 import android.content.res.Configuration.UI_MODE_TYPE_NORMAL
 import android.content.res.Configuration.UI_MODE_TYPE_TELEVISION
+import android.content.res.Configuration.UI_MODE_TYPE_VR_HEADSET
+import android.content.res.Configuration.UI_MODE_TYPE_WATCH
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -155,46 +160,17 @@ private fun SubscriptionScreen(
     ) {
         when (configuration.orientation) {
             ORIENTATION_LANDSCAPE -> {
-                if (useCommonUIMode) {
-                    LandscapeUIModeList(
-                        lives = lives,
-                        navigateToLive = navigateToLive,
-                        onLiveAction = onLiveAction,
-                        modifier = modifier
-                    )
-                } else {
-                    when (val type = configuration.uiMode and UI_MODE_TYPE_MASK) {
-                        UI_MODE_TYPE_NORMAL -> {
-                            LandscapeUIModeList(
-                                lives = lives,
-                                navigateToLive = navigateToLive,
-                                onLiveAction = onLiveAction,
-                                modifier = modifier
-                            )
-                        }
-
-                        UI_MODE_TYPE_TELEVISION -> {
-                            TelevisionUIModeList(
-                                lives = lives,
-                                navigateToLive = navigateToLive,
-                                onLiveAction = onLiveAction,
-                                modifier = modifier
-                            )
-                        }
-
-                        else -> {
-                            UnsupportedUIMode(
-                                type = type,
-                                modifier = modifier
-                            )
-                        }
-                    }
-
-                }
+                LandscapeOrientationContent(
+                    lives = lives,
+                    navigateToLive = navigateToLive,
+                    onLiveAction = onLiveAction,
+                    useCommonUIMode = useCommonUIMode,
+                    modifier = modifier
+                )
             }
 
             ORIENTATION_PORTRAIT -> {
-                PortraitUIModeList(
+                PortraitOrientationContent(
                     lives = lives,
                     navigateToLive = navigateToLive,
                     onLiveAction = onLiveAction,
@@ -217,65 +193,55 @@ private fun SubscriptionScreen(
 }
 
 @Composable
-private fun LandscapeUIModeList(
+private fun LandscapeOrientationContent(
     lives: List<Live>,
     navigateToLive: (Int) -> Unit,
     onLiveAction: (Int) -> Unit,
+    useCommonUIMode: Boolean,
     modifier: Modifier = Modifier
 ) {
-    LazyVerticalGrid(
-        columns = GridCells.Fixed(4),
-        modifier = modifier.fillMaxSize()
-    ) {
-        items(lives) { live ->
-            LiveItem(
-                live = live.copy(
-                    title = "${live.group} - ${live.title}"
-                ),
-                onClick = { navigateToLive(live.id) },
-                onLongClick = { onLiveAction(live.id) },
-                modifier = Modifier.fillMaxWidth()
-            )
+    val configuration = LocalConfiguration.current
+    val type = configuration.uiMode and UI_MODE_TYPE_MASK
+    if (useCommonUIMode || type == UI_MODE_TYPE_NORMAL) {
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(4),
+            modifier = modifier.fillMaxSize()
+        ) {
+            items(lives) { live ->
+                LiveItem(
+                    live = live.copy(
+                        title = "${live.group} - ${live.title}"
+                    ),
+                    onClick = { navigateToLive(live.id) },
+                    onLongClick = { onLiveAction(live.id) },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
         }
-    }
-}
+    } else {
+        when (type) {
+            UI_MODE_TYPE_TELEVISION -> {
+                TelevisionUIModeContent(
+                    lives = lives,
+                    navigateToLive = navigateToLive,
+                    onLiveAction = onLiveAction,
+                    modifier = modifier
+                )
+            }
 
-@Suppress("UNREACHABLE_CODE")
-@Composable
-private fun TelevisionUIModeList(
-    lives: List<Live>,
-    navigateToLive: (Int) -> Unit,
-    onLiveAction: (Int) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    UnsupportedUIMode(
-        type = UI_MODE_TYPE_TELEVISION,
-        modifier = modifier,
-        description =
-        "Fix when [https://issuetracker.google.com/issues/267058478] is completed."
-    )
-    // FIXME: https://issuetracker.google.com/issues/267058478
-    return
-    TvLazyVerticalGrid(
-        columns = TvGridCells.Fixed(4),
-        modifier = modifier.fillMaxSize()
-    ) {
-        items(lives) { live ->
-            LiveItem(
-                live = live.copy(
-                    title = "${live.group} - ${live.title}"
-                ),
-                onClick = { navigateToLive(live.id) },
-                onLongClick = { onLiveAction(live.id) },
-                modifier = Modifier.fillMaxWidth()
-            )
+            else -> {
+                UnsupportedUIModeContent(
+                    type = type,
+                    modifier = modifier
+                )
+            }
         }
     }
 }
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun PortraitUIModeList(
+private fun PortraitOrientationContent(
     lives: List<Live>,
     navigateToLive: (Int) -> Unit,
     onLiveAction: (Int) -> Unit,
@@ -323,12 +289,57 @@ private fun PortraitUIModeList(
     }
 }
 
+@Suppress("UNREACHABLE_CODE")
 @Composable
-private fun UnsupportedUIMode(
+private fun TelevisionUIModeContent(
+    lives: List<Live>,
+    navigateToLive: (Int) -> Unit,
+    onLiveAction: (Int) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    UnsupportedUIModeContent(
+        type = UI_MODE_TYPE_TELEVISION,
+        modifier = modifier,
+        description =
+        "Fix when [https://issuetracker.google.com/issues/267058478] is completed."
+    )
+    // FIXME: https://issuetracker.google.com/issues/267058478
+    return
+    TvLazyVerticalGrid(
+        columns = TvGridCells.Fixed(4),
+        modifier = modifier.fillMaxSize()
+    ) {
+        items(lives) { live ->
+            LiveItem(
+                live = live.copy(
+                    title = "${live.group} - ${live.title}"
+                ),
+                onClick = { navigateToLive(live.id) },
+                onLongClick = { onLiveAction(live.id) },
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+    }
+}
+
+@Composable
+private fun UnsupportedUIModeContent(
     type: Int,
     modifier: Modifier = Modifier,
     description: String? = null,
 ) {
+    val device = remember(type) {
+        when (type) {
+            UI_MODE_TYPE_NORMAL -> "Normal"
+            UI_MODE_TYPE_DESK -> "Desk"
+            UI_MODE_TYPE_CAR -> "Car"
+            UI_MODE_TYPE_TELEVISION -> "Television"
+            UI_MODE_TYPE_APPLIANCE -> "Appliance"
+            UI_MODE_TYPE_WATCH -> "Watch"
+            UI_MODE_TYPE_VR_HEADSET -> "VR-Headset"
+            else -> "Device Type $type"
+        }
+    }
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(
@@ -337,7 +348,7 @@ private fun UnsupportedUIMode(
         ),
         modifier = modifier.fillMaxSize()
     ) {
-        Text(text = "Unsupported UI Mode Type: $type")
+        Text(text = "Unsupported UI Mode: $device")
         if (description != null) {
             Text(text = description)
         }
