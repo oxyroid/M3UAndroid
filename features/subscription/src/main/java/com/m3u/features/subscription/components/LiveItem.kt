@@ -21,6 +21,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import com.m3u.data.entity.Live
 import com.m3u.features.subscription.R
+import com.m3u.ui.components.Badge
 import com.m3u.ui.components.M3UColumn
 import com.m3u.ui.components.M3UImage
 import com.m3u.ui.model.LocalSpacing
@@ -39,7 +40,7 @@ internal fun LiveItem(
     val spacing = LocalSpacing.current
     val theme = LocalTheme.current
     val scheme = remember(live) {
-        URI(live.url).scheme?: context.getString(R.string.scheme_unknown).uppercase()
+        URI(live.url).scheme ?: context.getString(R.string.scheme_unknown).uppercase()
     }
     Card(
         shape = RectangleShape,
@@ -70,7 +71,7 @@ internal fun LiveItem(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(spacing.extraSmall)
             ) {
-                SchemeIcon(scheme = scheme)
+                Badge(text = scheme)
                 CompositionLocalProvider(
                     LocalContentAlpha provides 0.6f
                 ) {

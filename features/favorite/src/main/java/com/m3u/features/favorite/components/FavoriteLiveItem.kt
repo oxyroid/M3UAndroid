@@ -22,6 +22,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import com.m3u.data.entity.Live
 import com.m3u.features.favorite.R
+import com.m3u.ui.components.Badge
 import com.m3u.ui.components.M3UColumn
 import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.LocalTheme
@@ -35,13 +36,15 @@ internal fun FavoriteLiveItem(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
+    val theme = LocalTheme.current
+    val spacing = LocalSpacing.current
     val scheme = remember(live) {
         URI(live.url).scheme ?: context.getString(R.string.scheme_unknown).uppercase()
     }
     Card(
         shape = RectangleShape,
-        backgroundColor = LocalTheme.current.surface,
-        contentColor = LocalTheme.current.onSurface
+        backgroundColor = theme.surface,
+        contentColor = theme.onSurface
     ) {
         M3UColumn(
             modifier = modifier
@@ -50,21 +53,21 @@ internal fun FavoriteLiveItem(
                 )
         ) {
             CompositionLocalProvider(
-                LocalContentColor provides LocalTheme.current.onSecondary
+                LocalContentColor provides theme.onSecondary
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(LocalSpacing.current.extraSmall)
+                    horizontalArrangement = Arrangement.spacedBy(spacing.extraSmall)
                 ) {
-                    BrightIcon(
+                    Badge(
                         text = title,
-                        color = LocalTheme.current.secondary,
-                        contentColor = LocalTheme.current.onSecondary,
+                        color = theme.primary,
+                        contentColor = theme.onPrimary,
                         icon = {
                             Icon(
                                 imageVector = Icons.Rounded.Link,
                                 contentDescription = null,
-                                modifier = Modifier.size(LocalSpacing.current.medium)
+                                modifier = Modifier.size(spacing.medium)
                             )
                         }
                     )
@@ -80,12 +83,10 @@ internal fun FavoriteLiveItem(
             }
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(LocalSpacing.current.extraSmall)
+                horizontalArrangement = Arrangement.spacedBy(spacing.extraSmall)
             ) {
-                BrightIcon(
-                    text = scheme,
-                    color = LocalTheme.current.primary,
-                    contentColor = LocalTheme.current.onPrimary
+                Badge(
+                    text = scheme
                 )
                 CompositionLocalProvider(
                     LocalContentAlpha provides 0.6f
