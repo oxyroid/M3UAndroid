@@ -9,12 +9,13 @@ import com.m3u.ui.model.SetActions
 
 
 const val subscriptionRoute = "subscription_route"
-private const val subscriptionStringTypeArg = "id"
-private const val subscriptionRouteWithArgs = "$subscriptionRoute/{$subscriptionStringTypeArg}"
+private const val TYPE_URL = "url"
+private const val ROUTE_PLACEHOLDER = "$subscriptionRoute/{$TYPE_URL}"
 private fun createSubscriptionRoute(url: String) = "$subscriptionRoute/$url"
 
 fun NavController.navigationToSubscription(url: String, navOptions: NavOptions? = null) {
-    val route = createSubscriptionRoute(Uri.encode(url))
+    val encodedUrl = Uri.encode(url)
+    val route = createSubscriptionRoute(encodedUrl)
     this.navigate(route, navOptions)
 }
 
@@ -24,9 +25,9 @@ fun NavGraphBuilder.subscriptionScreen(
     setAppActions: SetActions
 ) {
     composable(
-        route = subscriptionRouteWithArgs,
+        route = ROUTE_PLACEHOLDER,
         arguments = listOf(
-            navArgument(subscriptionStringTypeArg) {
+            navArgument(TYPE_URL) {
                 type = NavType.StringType
             }
         ),
@@ -37,7 +38,7 @@ fun NavGraphBuilder.subscriptionScreen(
     ) { navBackStackEntry ->
         val url = navBackStackEntry
             .arguments
-            ?.getString(subscriptionStringTypeArg)
+            ?.getString(TYPE_URL)
             ?.let(Uri::decode)
             ?: return@composable
         SubscriptionRoute(

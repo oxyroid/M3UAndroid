@@ -299,11 +299,12 @@ private fun PreferencesPart(
     modifier: Modifier = Modifier,
     useCommonUIModeEnable: Boolean = true,
 ) {
+    val spacing = LocalSpacing.current
     M3UColumn(
         modifier = modifier
     ) {
         Column(
-            modifier = Modifier.clip(RoundedCornerShape(LocalSpacing.current.medium)),
+            modifier = Modifier.clip(RoundedCornerShape(spacing.medium)),
             verticalArrangement = Arrangement.spacedBy(1.dp)
         ) {
             FoldPreference(
@@ -365,8 +366,9 @@ private fun SubscriptionManagementPart(
     onSubscribe: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val spacing = LocalSpacing.current
     M3UColumn(
-        verticalArrangement = Arrangement.spacedBy(LocalSpacing.current.small),
+        verticalArrangement = Arrangement.spacedBy(spacing.small),
         modifier = modifier
     ) {
         val focusRequester = remember { FocusRequester() }

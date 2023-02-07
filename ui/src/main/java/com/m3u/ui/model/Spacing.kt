@@ -1,9 +1,11 @@
 package com.m3u.ui.model
 
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
+@Immutable
 data class Spacing(
     val none: Dp = 0.dp,
     val extraSmall: Dp = 4.dp,
