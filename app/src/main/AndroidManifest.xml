@@ -24,6 +24,9 @@
         tools:targetApi="32"
         android:banner="@mipmap/ic_launcher">
         <activity
+            android:supportsPictureInPicture="true"
+            android:configChanges=
+                "screenSize|smallestScreenSize|screenLayout|orientation"
             android:name=".MainActivity"
             android:exported="true">
             <intent-filter>

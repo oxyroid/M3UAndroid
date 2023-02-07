@@ -1,5 +1,6 @@
 package com.m3u.app.ui
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -86,9 +87,11 @@ fun M3UApp(
                             topLevelLabel ?: label.orEmpty()
                         }
                     }
+                    val isSystemBarVisible =
+                        !appState.currentNavDestination.isInDestination<Destination.Live>()
                     M3UTopBar(
                         text = text,
-                        visible = !appState.currentNavDestination.isInDestination<Destination.Live>(),
+                        visible = isSystemBarVisible,
                         actions = {
                             actions.forEach { action ->
                                 M3UIconButton(
@@ -113,13 +116,17 @@ fun M3UApp(
                                     .padding(padding)
                                     .weight(1f)
                             )
-                            M3UBottomBar(
-                                destination = appState.topLevelDestinations,
-                                onNavigateToDestination = appState::navigateToTopLevelDestination,
-                                currentNavDestination = appState.currentNavDestination,
-                                modifier = Modifier
-                                    .testTag("M3UBottomBar")
-                            )
+                            AnimatedVisibility(
+                                visible = isSystemBarVisible
+                            ) {
+                                M3UBottomBar(
+                                    destination = appState.topLevelDestinations,
+                                    onNavigateToDestination = appState::navigateToTopLevelDestination,
+                                    currentNavDestination = appState.currentNavDestination,
+                                    modifier = Modifier
+                                        .testTag("M3UBottomBar")
+                                )
+                            }
                         }
                     }
                 }
@@ -196,13 +203,12 @@ private fun M3UNavigationBarItem(
     )
 }
 
-
 object M3UBottomBarDefaults {
     @Composable
-    fun navigationBackgroundColor() = LocalTheme.current.onSurface
+    fun navigationBackgroundColor() = Color(0xff000000)
 
     @Composable
-    fun navigationContentColor() = LocalTheme.current.surface
+    fun navigationContentColor() = Color(0xFFEEEEEE)
 
     @Composable
     fun navigationSelectedItemColor() = LocalTheme.current.tint
@@ -213,8 +219,7 @@ private fun NavDestination?.isTopLevelDestinationInHierarchy(destination: TopLev
         it.route?.contains(destination.name, true) ?: false
     } ?: false
 
-@Composable
-private inline fun <reified D : Destination> NavDestination?.isInDestination(): Boolean {
+inline fun <reified D : Destination> NavDestination?.isInDestination(): Boolean {
     val targetRoute = when (D::class.java.name) {
         Destination.Live::class.java.name -> liveRoute
         Destination.Subscription::class.java.name -> subscriptionRoute

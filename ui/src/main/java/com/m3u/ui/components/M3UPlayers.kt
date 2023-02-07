@@ -119,7 +119,7 @@ fun LivePlayer(
                         view.onResume()
                     }
 
-                    Lifecycle.Event.ON_PAUSE -> {
+                    Lifecycle.Event.ON_STOP -> {
                         view.player?.pause()
                         view.onPause()
                     }

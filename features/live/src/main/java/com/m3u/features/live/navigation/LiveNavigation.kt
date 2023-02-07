@@ -7,11 +7,14 @@ import com.m3u.features.live.LiveRoute
 import com.m3u.ui.model.SetActions
 
 const val liveRoute = "live_route"
-private const val liveIdTypeArg = "id"
-private const val liveRouteWithArgs = "$liveRoute/{$liveIdTypeArg}"
+private const val TYPE_ID = "id"
+private const val ROUTE_PLACEHOLDER = "$liveRoute/{$TYPE_ID}"
 private fun createLiveRoute(id: Int) = "$liveRoute/$id"
 
-fun NavController.navigateToLive(id: Int, navOptions: NavOptions? = null) {
+fun NavController.navigateToLive(id: Int) {
+    val navOptions = navOptions {
+        launchSingleTop = true
+    }
     val route = createLiveRoute(id)
     this.navigate(route, navOptions)
 }
@@ -21,9 +24,9 @@ fun NavGraphBuilder.liveScreen(
     setAppActions: SetActions
 ) {
     composable(
-        route = liveRouteWithArgs,
+        route = ROUTE_PLACEHOLDER,
         arguments = listOf(
-            navArgument(liveIdTypeArg) {
+            navArgument(TYPE_ID) {
                 type = NavType.IntType
                 nullable = false
             }
@@ -35,7 +38,7 @@ fun NavGraphBuilder.liveScreen(
     ) { navBackStackEntry ->
         val id = navBackStackEntry
             .arguments
-            ?.getInt(liveIdTypeArg)
+            ?.getInt(TYPE_ID)
             ?: return@composable
         LiveRoute(
             id = id,

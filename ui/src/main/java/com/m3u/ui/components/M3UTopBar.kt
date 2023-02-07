@@ -190,7 +190,7 @@ internal object M3UTopBarDefaults {
             .only(WindowInsetsSides.Horizontal + WindowInsetsSides.Top)
 
     /**
-     * Linear interpolator through point (1,1).
+     * Linear interpolator through point (1, 1).
      * @param slope the slope of the interpolator.
      * @param input the x value between 0~1f.
      */
