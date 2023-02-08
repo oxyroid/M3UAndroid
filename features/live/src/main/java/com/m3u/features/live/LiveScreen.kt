@@ -59,6 +59,7 @@ internal fun LiveRoute(
                     darkIcons = false
                 )
             }
+
             Lifecycle.Event.ON_PAUSE -> {
                 setAppActionsUpdated(emptyList())
                 systemUiController.setSystemBarsColor(
@@ -66,6 +67,7 @@ internal fun LiveRoute(
                     darkIcons = useDarkIcons
                 )
             }
+
             else -> {}
         }
     }

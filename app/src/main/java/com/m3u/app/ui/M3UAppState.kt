@@ -14,12 +14,12 @@ import com.m3u.app.navigation.Destination
 import com.m3u.app.navigation.TopLevelDestination
 import com.m3u.features.favorite.navigation.favouriteNavigationRoute
 import com.m3u.features.favorite.navigation.navigateToFavourite
+import com.m3u.features.feed.navigation.navigationToFeed
 import com.m3u.features.live.navigation.navigateToLive
 import com.m3u.features.main.navgation.mainNavigationRoute
 import com.m3u.features.main.navgation.navigateToMain
 import com.m3u.features.setting.navigation.navigateToSetting
 import com.m3u.features.setting.navigation.settingNavigationRoute
-import com.m3u.features.feed.navigation.navigationToFeed
 import com.m3u.ui.model.AppAction
 import com.m3u.ui.model.SetActions
 import kotlinx.coroutines.CoroutineScope

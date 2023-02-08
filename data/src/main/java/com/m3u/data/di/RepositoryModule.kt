@@ -1,10 +1,11 @@
 @file:Suppress("unused")
+
 package com.m3u.data.di
 
-import com.m3u.data.repository.LiveRepository
 import com.m3u.data.repository.FeedRepository
-import com.m3u.data.repository.impl.LiveRepositoryImpl
+import com.m3u.data.repository.LiveRepository
 import com.m3u.data.repository.impl.FeedRepositoryImpl
+import com.m3u.data.repository.impl.LiveRepositoryImpl
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn

@@ -2,8 +2,8 @@
 
 package com.m3u.data.di
 
-import com.m3u.data.FileLogger
 import com.m3u.core.architecture.Logger
+import com.m3u.data.FileLogger
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn

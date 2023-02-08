@@ -36,8 +36,8 @@ import androidx.navigation.NavDestination.Companion.hierarchy
 import com.m3u.app.navigation.Destination
 import com.m3u.app.navigation.M3UNavHost
 import com.m3u.app.navigation.TopLevelDestination
-import com.m3u.features.live.navigation.liveRoute
 import com.m3u.features.feed.navigation.feedRoute
+import com.m3u.features.live.navigation.liveRoute
 import com.m3u.ui.components.M3UBackground
 import com.m3u.ui.components.M3UIconButton
 import com.m3u.ui.components.M3UNavigationBar

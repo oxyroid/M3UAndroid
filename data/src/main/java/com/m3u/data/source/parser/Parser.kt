@@ -10,7 +10,7 @@ import java.io.InputStream
 import java.net.URL
 import java.util.stream.Stream
 
-abstract class Parser<T, E>: Interceptable<E> {
+abstract class Parser<T, E> : Interceptable<E> {
     protected val mInterpolator = mutableListOf<Interceptor<E>>()
     abstract suspend fun parse(lines: Stream<String>)
     abstract fun get(): T

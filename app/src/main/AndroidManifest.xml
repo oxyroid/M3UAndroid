@@ -12,23 +12,22 @@
         android:required="false" />
 
     <application
-        android:usesCleartextTraffic="true"
         android:name=".M3UApplication"
         android:allowBackup="true"
+        android:banner="@mipmap/ic_launcher"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/Theme.App.Starting"
-        tools:targetApi="32"
-        android:banner="@mipmap/ic_launcher">
+        android:usesCleartextTraffic="true"
+        tools:targetApi="32">
         <activity
-            android:supportsPictureInPicture="true"
-            android:configChanges=
-                "screenSize|smallestScreenSize|screenLayout|orientation"
             android:name=".MainActivity"
-            android:exported="true">
+            android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation"
+            android:exported="true"
+            android:supportsPictureInPicture="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
