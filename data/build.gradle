@@ -32,13 +32,13 @@ android {
 dependencies {
     implementation project(":core")
 
-    implementation "androidx.core:core-ktx:$core_version"
-    implementation "androidx.appcompat:appcompat:$appcompat_version"
+    implementation libs.androidx.core.core.ktx
+    implementation libs.androidx.appcompat.appcompat
 
-    implementation "androidx.room:room-runtime:$room_version"
-    implementation "androidx.room:room-ktx:$room_version"
-    kapt "androidx.room:room-compiler:$room_version"
+    implementation libs.androidx.room.room.runtime
+    implementation libs.androidx.room.room.ktx
+    kapt libs.androidx.room.room.compiler
 
-    implementation "com.google.dagger:hilt-android:$dagger_version"
-    kapt "com.google.dagger:hilt-compiler:$dagger_version"
+    implementation libs.com.google.dagger.hilt.android
+    kapt libs.com.google.dagger.hilt.compiler
 }

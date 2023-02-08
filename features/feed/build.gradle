@@ -42,26 +42,27 @@ dependencies {
     implementation project(":data")
     implementation project(":ui")
 
-    implementation "androidx.core:core-ktx:$core_version"
-    implementation "androidx.activity:activity-compose:$activity_version"
-    implementation "androidx.lifecycle:lifecycle-runtime-ktx:$lifecycle_version"
-    implementation "androidx.lifecycle:lifecycle-runtime-compose:$lifecycle_version"
+    implementation libs.androidx.core.core.ktx
+    implementation libs.androidx.activity.activity.compose
 
-    implementation "androidx.compose.ui:ui:$compose_version"
-    implementation "androidx.compose.runtime:runtime:$compose_version"
-    implementation "androidx.compose.foundation:foundation:$compose_version"
-    implementation "androidx.compose.material:material:$compose_version"
-    implementation "androidx.compose.material:material-icons-extended:$compose_version"
-    implementation "androidx.compose.animation:animation:$compose_version"
+    implementation libs.androidx.lifecycle.lifecycle.runtime.ktx
+    implementation libs.androidx.lifecycle.lifecycle.runtime.compose
 
-    implementation "androidx.tv:tv-foundation:$tv_version"
-    implementation "androidx.tv:tv-material:$tv_version"
+    implementation libs.androidx.compose.ui.ui
+    implementation libs.androidx.compose.runtime.runtime
+    implementation libs.androidx.compose.foundation.foundation
+    implementation libs.androidx.compose.material.material.asProvider()
+    implementation libs.androidx.compose.material.material.icons.extended
+    implementation libs.androidx.compose.animation.animation
 
-    implementation "com.google.accompanist:accompanist-navigation-animation:$accompanist_version"
+    implementation libs.androidx.tv.tv.foundation
+    implementation libs.androidx.tv.tv.material
 
-    implementation "androidx.navigation:navigation-compose:$navigation_version"
+    implementation libs.androidx.navigation.navigation.compose
 
-    implementation "com.google.dagger:hilt-android:$dagger_version"
-    kapt "com.google.dagger:hilt-compiler:$dagger_version"
-    implementation "androidx.hilt:hilt-navigation-compose:$hilt_navigation_compose_version"
+    implementation libs.com.google.accompanist.accompanist.navigation.animation
+
+    implementation libs.com.google.dagger.hilt.android
+    kapt libs.com.google.dagger.hilt.compiler
+    implementation libs.androidx.hilt.hilt.navigation.compose
 }

@@ -38,28 +38,31 @@ android {
 dependencies {
     implementation project(":core")
 
-    implementation "androidx.core:core-ktx:$core_version"
-    implementation "androidx.activity:activity-compose:$activity_version"
-    implementation "androidx.lifecycle:lifecycle-runtime-ktx:$lifecycle_version"
+    implementation libs.androidx.core.core.ktx
+    implementation libs.androidx.activity.activity.compose
 
-    implementation "androidx.compose.ui:ui:$compose_version"
-    implementation "androidx.compose.ui:ui-tooling-preview:$compose_version"
-    implementation "androidx.compose.material:material:$compose_version"
-    debugImplementation "androidx.compose.ui:ui-tooling:$compose_version"
-    debugImplementation "androidx.compose.ui:ui-test-manifest:$compose_version"
-    implementation "androidx.compose.material:material-icons-extended:$compose_version"
+    implementation libs.androidx.lifecycle.lifecycle.runtime.ktx
 
-    implementation "com.google.accompanist:accompanist-systemuicontroller:$accompanist_version"
+    implementation libs.androidx.compose.ui.ui
+    implementation libs.androidx.compose.runtime.runtime
+    implementation libs.androidx.compose.foundation.foundation
+    implementation libs.androidx.compose.material.material.asProvider()
+    implementation libs.androidx.compose.material.material.icons.extended
+    implementation libs.androidx.compose.animation.animation
 
-    implementation "androidx.tv:tv-foundation:$tv_version"
-    implementation "androidx.tv:tv-material:$tv_version"
+    implementation libs.androidx.tv.tv.foundation
+    implementation libs.androidx.tv.tv.material
 
-    implementation "androidx.media3:media3-exoplayer:$media3_version"
-    implementation "androidx.media3:media3-ui:$media3_version"
-    implementation "androidx.media3:media3-exoplayer-dash:$media3_version"
-    implementation "androidx.media3:media3-exoplayer-hls:$media3_version"
-    implementation "androidx.media3:media3-exoplayer-rtsp:$media3_version"
-    implementation "androidx.media3:media3-datasource-rtmp:$media3_version"
+    implementation libs.androidx.navigation.navigation.compose
 
-    implementation("io.coil-kt:coil-compose:$coil_version")
+    implementation libs.com.google.accompanist.accompanist.systemuicontroller
+
+    implementation libs.androidx.media3.media3.ui
+    implementation libs.androidx.media3.media3.exoplayer.asProvider()
+    implementation libs.androidx.media3.media3.exoplayer.dash
+    implementation libs.androidx.media3.media3.exoplayer.hls
+    implementation libs.androidx.media3.media3.exoplayer.rtsp
+    implementation libs.androidx.media3.media3.datasource.rtmp
+
+    implementation libs.io.coil.kt.coil.compose
 }
