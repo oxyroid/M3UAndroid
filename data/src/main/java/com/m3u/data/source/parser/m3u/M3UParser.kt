@@ -1,8 +1,8 @@
-package com.m3u.data.parser.m3u
+package com.m3u.data.source.parser.m3u
 
 import com.m3u.core.util.basic.trimBrackets
 import com.m3u.core.util.collection.loadLine
-import com.m3u.data.parser.Parser
+import com.m3u.data.source.parser.Parser
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.Properties

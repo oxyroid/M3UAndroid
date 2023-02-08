@@ -14,6 +14,8 @@ interface LiveRepository {
 }
 
 fun LiveRepository.observeLivesBySubscriptionUrl(subscriptionUrl: String): Flow<List<Live>> =
-    observeAllLives().map { lives ->
-        lives.filter { it.subscriptionUrl == subscriptionUrl }
-    }.distinctUntilChanged()
+    observeAllLives()
+        .map { lives ->
+            lives.filter { it.subscriptionUrl == subscriptionUrl }
+        }
+        .distinctUntilChanged()

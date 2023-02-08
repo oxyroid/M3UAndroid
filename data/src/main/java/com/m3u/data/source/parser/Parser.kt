@@ -1,9 +1,9 @@
-package com.m3u.data.parser
+package com.m3u.data.source.parser
 
 import androidx.annotation.CallSuper
 import com.m3u.data.interceptor.Interceptable
 import com.m3u.data.interceptor.Interceptor
-import com.m3u.data.parser.m3u.M3UParser
+import com.m3u.data.source.parser.m3u.M3UParser
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.InputStream

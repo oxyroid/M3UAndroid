@@ -25,16 +25,15 @@ class SubscriptionRepositoryImpl @Inject constructor(
     private val liveDao: LiveDao,
     private val logger: Logger
 ) : SubscriptionRepository {
-    override fun subscribe(title: String, url: URL): Flow<Resource<Unit>> = flow {
-        emit(Resource.Loading)
-        val path = url.path
-        val parser = when {
-            path.endsWith(".m3u", ignoreCase = true) -> Parser.newM3UParser()
-            path.endsWith(".m3u8", ignoreCase = true) -> Parser.newM3UParser()
-            else -> {
-                emit(Resource.Failure("Unsupported url: $url"))
-                return@flow
-            }
+    private fun createParser(url: URL): Parser<List<M3U>, M3U>? = when {
+        M3UMatcher.match(url) -> Parser.newM3UParser()
+        else -> null
+    }
+
+    override fun subscribe(title: String, url: URL): Flow<Resource<Unit>> = resourceFlow {
+        val parser = createParser(url) ?: run {
+            emitMessage("Unsupported url: $url")
+            return@resourceFlow
         }
         try {
             val result = parser.run {
