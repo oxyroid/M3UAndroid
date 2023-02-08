@@ -37,20 +37,15 @@ class SubscriptionRepositoryImpl @Inject constructor(
             }
         }
         try {
-            val m3us = parser.run {
-                reset()
+            val result = parser.run {
                 addInterceptor(LoggerInterceptor())
                 parse(url)
                 get()
             }
             val stringUrl = url.toString()
-            val subscription = Subscription(
-                title = title,
-                url = stringUrl
-            )
+            val subscription = Subscription(title, stringUrl)
             subscriptionDao.insert(subscription)
-
-            val lives = m3us.map { it.toLive(stringUrl) }
+            val lives = result.map { it.toLive(stringUrl) }
             liveDao.deleteBySubscriptionUrl(stringUrl)
             lives.forEach { liveDao.insert(it) }
             emitResource(Unit)
