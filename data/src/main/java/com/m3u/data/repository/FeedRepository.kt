@@ -3,27 +3,27 @@ package com.m3u.data.repository
 import com.m3u.core.wrapper.Resource
 import com.m3u.core.wrapper.resourceChanelFlow
 import com.m3u.core.wrapper.sendMessage
-import com.m3u.data.entity.Subscription
+import com.m3u.data.entity.Feed
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import java.net.URL
 
-interface SubscriptionRepository {
+interface FeedRepository {
     fun subscribe(title: String, url: URL): Flow<Resource<Unit>>
-    fun observeAll(): Flow<List<Subscription>>
-    fun observe(url: String): Flow<Subscription?>
-    suspend fun get(url: String): Subscription?
+    fun observeAll(): Flow<List<Feed>>
+    fun observe(url: String): Flow<Feed?>
+    suspend fun get(url: String): Feed?
 }
 
-fun SubscriptionRepository.sync(url: URL): Flow<Resource<Unit>> = resourceChanelFlow {
+fun FeedRepository.sync(url: URL): Flow<Resource<Unit>> = resourceChanelFlow {
     val stringUrl = url.toString()
-    val subscription = get(stringUrl)
-    if (subscription == null) {
-        sendMessage("Cannot find subscription: $stringUrl")
+    val feed = get(stringUrl)
+    if (feed == null) {
+        sendMessage("Cannot find feed: $stringUrl")
         return@resourceChanelFlow
     }
-    subscribe(subscription.title, url)
+    subscribe(feed.title, url)
         .onEach(::send)
         .launchIn(this)
 }

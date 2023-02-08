@@ -1,4 +1,4 @@
-package com.m3u.features.subscription
+package com.m3u.features.feed
 
 import android.content.res.Configuration.ORIENTATION_LANDSCAPE
 import android.content.res.Configuration.ORIENTATION_PORTRAIT
@@ -54,7 +54,7 @@ import androidx.tv.foundation.lazy.grid.TvLazyVerticalGrid
 import androidx.tv.foundation.lazy.grid.items
 import com.m3u.core.util.context.toast
 import com.m3u.data.entity.Live
-import com.m3u.features.subscription.components.LiveItem
+import com.m3u.features.feed.components.LiveItem
 import com.m3u.ui.components.M3UDialog
 import com.m3u.ui.model.AppAction
 import com.m3u.ui.model.Icon
@@ -65,12 +65,12 @@ import com.m3u.ui.util.EventHandler
 import com.m3u.ui.util.LifecycleEffect
 
 @Composable
-internal fun SubscriptionRoute(
+internal fun FeedRoute(
     url: String,
     navigateToLive: (Int) -> Unit,
     setAppActions: SetActions,
     modifier: Modifier = Modifier,
-    viewModel: SubscriptionViewModel = hiltViewModel()
+    viewModel: FeedViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -83,7 +83,7 @@ internal fun SubscriptionRoute(
                         icon = Icon.ImageVectorIcon(Icons.Rounded.Refresh),
                         contentDescription = "refresh",
                         onClick = {
-                            viewModel.onEvent(SubscriptionEvent.Sync)
+                            viewModel.onEvent(FeedEvent.Sync)
                         }
                     )
                 )
@@ -107,14 +107,14 @@ internal fun SubscriptionRoute(
     }
 
     LaunchedEffect(url) {
-        viewModel.onEvent(SubscriptionEvent.GetDetails(url))
+        viewModel.onEvent(FeedEvent.GetDetails(url))
     }
 
-    SubscriptionScreen(
+    FeedScreen(
         useCommonUIMode = state.useCommonUIMode,
         lives = state.lives,
         refreshing = state.syncing,
-        onSyncingLatest = { viewModel.onEvent(SubscriptionEvent.Sync) },
+        onSyncingLatest = { viewModel.onEvent(FeedEvent.Sync) },
         navigateToLive = navigateToLive,
         onLiveAction = { dialogState = DialogState.Ready(it) },
         modifier = modifier.fillMaxSize()
@@ -130,7 +130,7 @@ internal fun SubscriptionRoute(
             onConfirm = {
                 val current = dialogState
                 if (current is DialogState.Ready) {
-                    viewModel.onEvent(SubscriptionEvent.AddToFavourite(current.id))
+                    viewModel.onEvent(FeedEvent.AddToFavourite(current.id))
                 }
                 dialogState = DialogState.Idle
             },
@@ -141,7 +141,7 @@ internal fun SubscriptionRoute(
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-private fun SubscriptionScreen(
+private fun FeedScreen(
     useCommonUIMode: Boolean,
     lives: List<Live>,
     refreshing: Boolean,

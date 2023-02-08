@@ -26,8 +26,8 @@ class LiveRepositoryImpl @Inject constructor(
         flow {}
     }
 
-    override suspend fun getBySubscriptionUrl(subscriptionUrl: String): List<Live> = try {
-        liveDao.getBySubscriptionId(subscriptionUrl)
+    override suspend fun getByFeedUrl(feedUrl: String): List<Live> = try {
+        liveDao.getByFeedId(feedUrl)
     } catch (e: Exception) {
         logger.log(e)
         emptyList()

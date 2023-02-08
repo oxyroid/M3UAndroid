@@ -12,11 +12,11 @@ data class M3U(
 )
 
 fun M3U.toLive(
-    subscriptionUrl: String
+    feedUrl: String
 ): Live = Live(
     url = url,
     group = group,
     title = title,
     cover = cover,
-    subscriptionUrl = subscriptionUrl
+    feedUrl = feedUrl
 )

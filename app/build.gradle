@@ -52,7 +52,7 @@ dependencies {
     implementation project(":features:main")
     implementation project(":features:favorite")
     implementation project(":features:setting")
-    implementation project(":features:subscription")
+    implementation project(':features:feed')
     implementation project(":features:live")
 
     implementation "androidx.core:core-ktx:$core_version"

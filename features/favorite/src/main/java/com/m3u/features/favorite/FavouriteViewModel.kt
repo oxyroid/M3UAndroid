@@ -4,7 +4,7 @@ import android.app.Application
 import androidx.lifecycle.viewModelScope
 import com.m3u.core.architecture.BaseViewModel
 import com.m3u.data.repository.LiveRepository
-import com.m3u.data.repository.SubscriptionRepository
+import com.m3u.data.repository.FeedRepository
 import com.m3u.features.favorite.vo.LiveDetail
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.launchIn
@@ -15,9 +15,9 @@ import javax.inject.Inject
 
 @HiltViewModel
 class FavouriteViewModel @Inject constructor(
-    application: Application,
     liveRepository: LiveRepository,
-    subscriptionRepository: SubscriptionRepository
+    feedRepository: FeedRepository,
+    application: Application
 ) : BaseViewModel<FavoriteState, FavoriteEvent>(
     application = application,
     emptyState = FavoriteState()
@@ -33,10 +33,10 @@ class FavouriteViewModel @Inject constructor(
                 writable.update { state ->
                     state.copy(
                         lives = lives.map {
-                            val subscription = subscriptionRepository.get(it.subscriptionUrl)
+                            val feed = feedRepository.get(it.feedUrl)
                             LiveDetail(
                                 live = it,
-                                title = subscription?.title.orEmpty()
+                                title = feed?.title.orEmpty()
                             )
                         }
                     )

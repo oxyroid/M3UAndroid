@@ -21,7 +21,7 @@ import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.LocalTheme
 
 @Composable
-internal fun SubscriptionItem(
+internal fun FeedItem(
     label: String,
     number: Int,
     onClick: () -> Unit,

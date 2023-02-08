@@ -7,7 +7,7 @@ import com.m3u.core.architecture.PackageProvider
 import com.m3u.core.wrapper.Resource
 import com.m3u.core.wrapper.eventOf
 import com.m3u.data.Configuration
-import com.m3u.data.repository.SubscriptionRepository
+import com.m3u.data.repository.FeedRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -19,7 +19,7 @@ import kotlin.properties.Delegates
 
 @HiltViewModel
 class SettingViewModel @Inject constructor(
-    private val subscriptionRepository: SubscriptionRepository,
+    private val feedRepository: FeedRepository,
     packageProvider: PackageProvider,
     application: Application,
     private val configuration: Configuration
@@ -102,7 +102,7 @@ class SettingViewModel @Inject constructor(
                     }
                     return
                 }
-                subscriptionRepository.subscribe(title, url)
+                feedRepository.subscribe(title, url)
                     .onEach { resource ->
                         writable.update {
                             when (resource) {

@@ -1,10 +1,10 @@
-package com.m3u.features.subscription
+package com.m3u.features.feed
 
 import com.m3u.core.wrapper.Event
 import com.m3u.core.wrapper.handledEvent
 import com.m3u.data.entity.Live
 
-data class SubscriptionState(
+data class FeedState(
     val url: String = "",
     val lives: List<Live> = emptyList(),
     val syncing: Boolean = false,

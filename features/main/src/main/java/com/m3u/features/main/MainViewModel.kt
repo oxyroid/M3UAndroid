@@ -4,11 +4,11 @@ import android.app.Application
 import androidx.lifecycle.viewModelScope
 import com.m3u.core.architecture.BaseViewModel
 import com.m3u.core.util.collection.replaceIf
-import com.m3u.data.entity.Subscription
+import com.m3u.data.entity.Feed
+import com.m3u.data.repository.FeedRepository
 import com.m3u.data.repository.LiveRepository
-import com.m3u.data.repository.SubscriptionRepository
-import com.m3u.data.repository.observeLivesBySubscriptionUrl
-import com.m3u.features.main.model.SubDetail
+import com.m3u.data.repository.observeLivesByFeedUrl
+import com.m3u.features.main.model.FeedDetail
 import com.m3u.features.main.model.toDetail
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -24,7 +24,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
-    private val subscriptionRepository: SubscriptionRepository,
+    private val feedRepository: FeedRepository,
     private val liveRepository: LiveRepository,
     application: Application
 ) : BaseViewModel<MainState, MainEvent>(
@@ -33,14 +33,14 @@ class MainViewModel @Inject constructor(
 ) {
     init {
         var job: Job? = null
-        observeAllSubscriptions()
-            .map { it.map(Subscription::toDetail) }
+        observeAllFeeds()
+            .map { it.map(Feed::toDetail) }
             .onEach(::setAllDetails)
             .onEach { details ->
                 job?.cancel()
                 job = viewModelScope.launch {
                     details.forEach { detail ->
-                        val url = detail.subscription.url
+                        val url = detail.feed.url
                         observeSize(url)
                             .onEach { count -> setCountFromExistedDetails(url, count) }
                             .launchIn(this)
@@ -50,28 +50,26 @@ class MainViewModel @Inject constructor(
             .launchIn(viewModelScope)
     }
 
-    private fun observeAllSubscriptions(): Flow<List<Subscription>> =
-        subscriptionRepository.observeAll()
+    private fun observeAllFeeds(): Flow<List<Feed>> = feedRepository.observeAll()
 
-    private fun observeSize(url: String): Flow<Int> =
-        liveRepository
-            .observeLivesBySubscriptionUrl(url)
-            .map { it.size }
+    private fun observeSize(url: String): Flow<Int> = liveRepository
+        .observeLivesByFeedUrl(url)
+        .map { it.size }
 
-    private fun setAllDetails(details: List<SubDetail>) {
+    private fun setAllDetails(feeds: List<FeedDetail>) {
         writable.update {
             it.copy(
-                details = details
+                feeds = feeds
             )
         }
     }
 
     private suspend fun setCountFromExistedDetails(url: String, count: Int) {
         withContext(Dispatchers.IO) {
-            val predicate: (SubDetail) -> Boolean = { it.subscription.url == url }
-            val transform: (SubDetail) -> SubDetail = { it.copy(count = count) }
-            val details = readable.details.replaceIf(predicate, transform)
-            setAllDetails(details)
+            val predicate: (FeedDetail) -> Boolean = { it.feed.url == url }
+            val transform: (FeedDetail) -> FeedDetail = { it.copy(count = count) }
+            val feeds = readable.feeds.replaceIf(predicate, transform)
+            setAllDetails(feeds)
         }
     }
 

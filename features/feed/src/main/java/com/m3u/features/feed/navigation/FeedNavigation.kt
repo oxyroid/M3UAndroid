@@ -1,26 +1,26 @@
-package com.m3u.features.subscription.navigation
+package com.m3u.features.feed.navigation
 
 import android.net.Uri
 import androidx.compose.animation.*
 import androidx.navigation.*
 import com.google.accompanist.navigation.animation.composable
-import com.m3u.features.subscription.SubscriptionRoute
+import com.m3u.features.feed.FeedRoute
 import com.m3u.ui.model.SetActions
 
 
-const val subscriptionRoute = "subscription_route"
+const val feedRoute = "feed_route"
 private const val TYPE_URL = "url"
-private const val ROUTE_PLACEHOLDER = "$subscriptionRoute/{$TYPE_URL}"
-private fun createSubscriptionRoute(url: String) = "$subscriptionRoute/$url"
+private const val ROUTE_PLACEHOLDER = "$feedRoute/{$TYPE_URL}"
+private fun createFeedRoute(url: String) = "$feedRoute/$url"
 
-fun NavController.navigationToSubscription(url: String, navOptions: NavOptions? = null) {
+fun NavController.navigationToFeed(url: String, navOptions: NavOptions? = null) {
     val encodedUrl = Uri.encode(url)
-    val route = createSubscriptionRoute(encodedUrl)
+    val route = createFeedRoute(encodedUrl)
     this.navigate(route, navOptions)
 }
 
 @OptIn(ExperimentalAnimationApi::class)
-fun NavGraphBuilder.subscriptionScreen(
+fun NavGraphBuilder.feedScreen(
     navigateToLive: (Int) -> Unit,
     setAppActions: SetActions
 ) {
@@ -41,7 +41,7 @@ fun NavGraphBuilder.subscriptionScreen(
             ?.getString(TYPE_URL)
             ?.let(Uri::decode)
             ?: return@composable
-        SubscriptionRoute(
+        FeedRoute(
             url = url,
             navigateToLive = navigateToLive,
             setAppActions = setAppActions

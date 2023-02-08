@@ -179,8 +179,8 @@ private fun PortraitOrientationContent(
         Fold.NONE -> {
             PreferencesPart(
                 version = version,
-                onSubscriptionManagement = {
-                    fold = Fold.SUBSCRIPTION
+                onFeedManagement = {
+                    fold = Fold.FEED
                 },
                 onScriptManagement = {
                     fold = Fold.SCRIPT
@@ -194,8 +194,8 @@ private fun PortraitOrientationContent(
             )
         }
 
-        Fold.SUBSCRIPTION -> {
-            SubscriptionManagementPart(
+        Fold.FEED -> {
+            FeedManagementPart(
                 title = title,
                 url = url,
                 subscribeEnable = subscribeEnable,
@@ -245,7 +245,7 @@ private fun LandscapeOrientationContent(
     ) {
         PreferencesPart(
             version = version,
-            onSubscriptionManagement = { setFold(Fold.SUBSCRIPTION) },
+            onFeedManagement = { setFold(Fold.FEED) },
             onScriptManagement = { setFold(Fold.SCRIPT) },
             syncMode = syncMode,
             onSyncMode = onSyncMode,
@@ -257,8 +257,8 @@ private fun LandscapeOrientationContent(
         )
 
         when (fold) {
-            Fold.SUBSCRIPTION -> {
-                SubscriptionManagementPart(
+            Fold.FEED -> {
+                FeedManagementPart(
                     title = title,
                     url = url,
                     subscribeEnable = subscribeEnable,
@@ -290,7 +290,7 @@ private fun LandscapeOrientationContent(
 @Composable
 private fun PreferencesPart(
     version: String,
-    onSubscriptionManagement: () -> Unit,
+    onFeedManagement: () -> Unit,
     onScriptManagement: () -> Unit,
     syncMode: @SyncMode Int,
     onSyncMode: SetSyncMode,
@@ -308,9 +308,9 @@ private fun PreferencesPart(
             verticalArrangement = Arrangement.spacedBy(1.dp)
         ) {
             FoldPreference(
-                title = stringResource(R.string.subscription_management),
+                title = stringResource(R.string.feed_management),
                 enabled = true,
-                onClick = onSubscriptionManagement
+                onClick = onFeedManagement
             )
             FoldPreference(
                 title = stringResource(R.string.script_management),
@@ -357,7 +357,7 @@ private fun PreferencesPart(
 }
 
 @Composable
-private fun SubscriptionManagementPart(
+private fun FeedManagementPart(
     title: String,
     url: String,
     subscribeEnable: Boolean,
@@ -419,5 +419,5 @@ fun ScriptManagementPart(
 }
 
 private enum class Fold {
-    NONE, SUBSCRIPTION, SCRIPT
+    NONE, FEED, SCRIPT
 }

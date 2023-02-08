@@ -1,4 +1,4 @@
-package com.m3u.features.subscription
+package com.m3u.features.feed
 
 import android.app.Application
 import androidx.lifecycle.viewModelScope
@@ -6,9 +6,9 @@ import com.m3u.core.architecture.BaseViewModel
 import com.m3u.core.wrapper.Resource
 import com.m3u.core.wrapper.eventOf
 import com.m3u.data.Configuration
+import com.m3u.data.repository.FeedRepository
 import com.m3u.data.repository.LiveRepository
-import com.m3u.data.repository.SubscriptionRepository
-import com.m3u.data.repository.observeLivesBySubscriptionUrl
+import com.m3u.data.repository.observeLivesByFeedUrl
 import com.m3u.data.repository.sync
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
@@ -21,14 +21,14 @@ import java.net.URL
 import javax.inject.Inject
 
 @HiltViewModel
-class SubscriptionViewModel @Inject constructor(
+class FeedViewModel @Inject constructor(
     private val liveRepository: LiveRepository,
-    private val subscriptionRepository: SubscriptionRepository,
-    application: Application,
-    private val configuration: Configuration
-) : BaseViewModel<SubscriptionState, SubscriptionEvent>(
+    private val feedRepository: FeedRepository,
+    private val configuration: Configuration,
+    application: Application
+) : BaseViewModel<FeedState, FeedEvent>(
     application = application,
-    emptyState = SubscriptionState()
+    emptyState = FeedState()
 ) {
     init {
         writable.update {
@@ -39,26 +39,26 @@ class SubscriptionViewModel @Inject constructor(
     }
 
     private var job: Job? = null
-    override fun onEvent(event: SubscriptionEvent) {
+    override fun onEvent(event: FeedEvent) {
         when (event) {
-            is SubscriptionEvent.GetDetails -> {
+            is FeedEvent.GetDetails -> {
                 job?.cancel()
                 job = viewModelScope.launch {
-                    val subscriptionUrl = event.url
-                    subscriptionRepository
-                        .observe(subscriptionUrl)
-                        .onEach { subscription ->
+                    val feedUrl = event.url
+                    feedRepository
+                        .observe(feedUrl)
+                        .onEach { feed ->
                             writable.update {
-                                if (subscription != null) {
+                                if (feed != null) {
                                     it.copy(
-                                        url = subscription.url
+                                        url = feed.url
                                     )
                                 } else {
                                     it.copy(
                                         message = eventOf(
                                             context.getString(
                                                 R.string.error_get_detail,
-                                                subscriptionUrl
+                                                feedUrl
                                             )
                                         )
                                     )
@@ -67,7 +67,7 @@ class SubscriptionViewModel @Inject constructor(
                         }
                         .launchIn(this)
                     liveRepository
-                        .observeLivesBySubscriptionUrl(subscriptionUrl)
+                        .observeLivesByFeedUrl(feedUrl)
                         .onEach { lives ->
                             writable.update {
                                 it.copy(
@@ -80,7 +80,7 @@ class SubscriptionViewModel @Inject constructor(
 
             }
 
-            SubscriptionEvent.Sync -> {
+            FeedEvent.Sync -> {
                 val url = try {
                     URL(readable.url)
                 } catch (e: MalformedURLException) {
@@ -92,7 +92,7 @@ class SubscriptionViewModel @Inject constructor(
                     }
                     return
                 }
-                subscriptionRepository.sync(url)
+                feedRepository.sync(url)
                     .onEach { resource ->
                         writable.update {
                             when (resource) {
@@ -114,7 +114,7 @@ class SubscriptionViewModel @Inject constructor(
                     .launchIn(viewModelScope)
             }
 
-            is SubscriptionEvent.AddToFavourite -> {
+            is FeedEvent.AddToFavourite -> {
                 viewModelScope.launch {
                     val id = event.id
                     liveRepository.setFavouriteLive(id, true)

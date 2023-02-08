@@ -4,8 +4,8 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "subscriptions")
-data class Subscription(
+@Entity(tableName = "feeds")
+data class Feed(
     @ColumnInfo(name = "title")
     val title: String,
     @PrimaryKey

@@ -37,7 +37,7 @@ import com.m3u.app.navigation.Destination
 import com.m3u.app.navigation.M3UNavHost
 import com.m3u.app.navigation.TopLevelDestination
 import com.m3u.features.live.navigation.liveRoute
-import com.m3u.features.subscription.navigation.subscriptionRoute
+import com.m3u.features.feed.navigation.feedRoute
 import com.m3u.ui.components.M3UBackground
 import com.m3u.ui.components.M3UIconButton
 import com.m3u.ui.components.M3UNavigationBar
@@ -222,7 +222,7 @@ private fun NavDestination?.isTopLevelDestinationInHierarchy(destination: TopLev
 inline fun <reified D : Destination> NavDestination?.isInDestination(): Boolean {
     val targetRoute = when (D::class.java.name) {
         Destination.Live::class.java.name -> liveRoute
-        Destination.Subscription::class.java.name -> subscriptionRoute
+        Destination.Feed::class.java.name -> feedRoute
         else -> return false
     }
     return (this?.route?.startsWith(targetRoute, ignoreCase = true) ?: false)

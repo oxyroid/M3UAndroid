@@ -11,7 +11,7 @@ import com.m3u.features.live.navigation.liveScreen
 import com.m3u.features.main.navgation.mainNavigationRoute
 import com.m3u.features.main.navgation.mainScreen
 import com.m3u.features.setting.navigation.settingScreen
-import com.m3u.features.subscription.navigation.subscriptionScreen
+import com.m3u.features.feed.navigation.feedScreen
 import com.m3u.ui.model.SetActions
 
 @OptIn(ExperimentalAnimationApi::class)
@@ -34,8 +34,8 @@ fun M3UNavHost(
     ) {
         // TopLevel
         mainScreen(
-            navigateToSubscription = { url, label ->
-                navigateToDestination(Destination.Subscription(url), label)
+            navigateToFeed = { url, label ->
+                navigateToDestination(Destination.Feed(url), label)
             },
             setAppActions = setAppActions
         )
@@ -53,7 +53,7 @@ fun M3UNavHost(
             setAppActions = setAppActions
         )
 
-        subscriptionScreen(
+        feedScreen(
             navigateToLive = { id ->
                 navigateToDestination(Destination.Live(id), null)
             },

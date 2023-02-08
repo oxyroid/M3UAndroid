@@ -8,14 +8,13 @@ import kotlinx.coroutines.flow.map
 interface LiveRepository {
     fun observe(id: Int): Flow<Live?>
     fun observeAllLives(): Flow<List<Live>>
-    suspend fun getBySubscriptionUrl(subscriptionUrl: String): List<Live>
+    suspend fun getByFeedUrl(feedUrl: String): List<Live>
     suspend fun getByUrl(url: String): Live?
     suspend fun setFavouriteLive(id: Int, target: Boolean)
 }
 
-fun LiveRepository.observeLivesBySubscriptionUrl(subscriptionUrl: String): Flow<List<Live>> =
-    observeAllLives()
-        .map { lives ->
-            lives.filter { it.subscriptionUrl == subscriptionUrl }
-        }
-        .distinctUntilChanged()
+fun LiveRepository.observeLivesByFeedUrl(feedUrl: String): Flow<List<Live>> = observeAllLives()
+    .map { lives ->
+        lives.filter { it.feedUrl == feedUrl }
+    }
+    .distinctUntilChanged()

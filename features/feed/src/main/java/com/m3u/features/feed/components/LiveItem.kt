@@ -1,4 +1,4 @@
-package com.m3u.features.subscription.components
+package com.m3u.features.feed.components
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
@@ -20,7 +20,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import com.m3u.data.entity.Live
-import com.m3u.features.subscription.R
+import com.m3u.features.feed.R
 import com.m3u.ui.components.Badge
 import com.m3u.ui.components.M3UColumn
 import com.m3u.ui.components.M3UImage

@@ -14,8 +14,8 @@ data class Live(
     val title: String,
     @ColumnInfo(name = "cover")
     val cover: String? = null,
-    @ColumnInfo(name = "subscriptionUrl")
-    val subscriptionUrl: String,
+    @ColumnInfo(name = "feedUrl")
+    val feedUrl: String,
     @PrimaryKey(autoGenerate = true)
     @ColumnInfo(name = "id")
     val id: Int = 0,

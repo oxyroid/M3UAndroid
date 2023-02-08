@@ -1,7 +1,7 @@
 package com.m3u.app.navigation
 
 sealed interface Destination {
-    data class Subscription(
+    data class Feed(
         val url: String,
     ) : Destination
 

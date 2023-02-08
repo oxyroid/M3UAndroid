@@ -20,9 +20,9 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.core.util.context.toast
-import com.m3u.features.main.components.SubscriptionItem
-import com.m3u.features.main.model.SubDetail
-import com.m3u.features.main.navgation.NavigateToSubscription
+import com.m3u.features.main.components.FeedItem
+import com.m3u.features.main.model.FeedDetail
+import com.m3u.features.main.navgation.NavigateToFeed
 import com.m3u.ui.model.AppAction
 import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.SetActions
@@ -31,14 +31,14 @@ import com.m3u.ui.util.LifecycleEffect
 
 @Composable
 internal fun MainRoute(
-    navigateToSubscription: NavigateToSubscription,
+    navigateToFeed: NavigateToFeed,
     setAppActions: SetActions,
     modifier: Modifier = Modifier,
-    viewModel: MainViewModel = hiltViewModel(),
+    viewModel: MainViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
     val state: MainState by viewModel.state.collectAsStateWithLifecycle()
-    val subscriptions: List<SubDetail> = state.details
+    val feeds: List<FeedDetail> = state.feeds
 
     EventHandler(state.message) {
         context.toast(it)
@@ -61,16 +61,16 @@ internal fun MainRoute(
 
     MainScreen(
         modifier = modifier,
-        details = subscriptions,
-        navigateToSubscription = navigateToSubscription
+        feeds = feeds,
+        navigateToFeed = navigateToFeed
     )
 }
 
 @Composable
 private fun MainScreen(
-    details: List<SubDetail>,
-    navigateToSubscription: NavigateToSubscription,
-    modifier: Modifier = Modifier,
+    feeds: List<FeedDetail>,
+    navigateToFeed: NavigateToFeed,
+    modifier: Modifier = Modifier
 ) {
     val configuration = LocalConfiguration.current
     when (configuration.orientation) {
@@ -80,15 +80,15 @@ private fun MainScreen(
                 contentPadding = PaddingValues(LocalSpacing.current.medium),
                 verticalArrangement = Arrangement.spacedBy(LocalSpacing.current.small)
             ) {
-                items(details) { detail ->
-                    SubscriptionItem(
-                        label = detail.subscription.title,
+                items(feeds) { detail ->
+                    FeedItem(
+                        label = detail.feed.title,
                         number = detail.count,
                         modifier = Modifier.fillParentMaxWidth(),
                         onClick = {
-                            navigateToSubscription(
-                                detail.subscription.url,
-                                detail.subscription.title
+                            navigateToFeed(
+                                detail.feed.url,
+                                detail.feed.title
                             )
                         }
                     )
@@ -104,15 +104,15 @@ private fun MainScreen(
                 horizontalArrangement = Arrangement.spacedBy(LocalSpacing.current.medium),
                 modifier = modifier.fillMaxSize()
             ) {
-                items(details) { detail ->
-                    SubscriptionItem(
-                        label = detail.subscription.title,
+                items(feeds) { detail ->
+                    FeedItem(
+                        label = detail.feed.title,
                         number = detail.count,
                         modifier = Modifier.fillMaxWidth(),
                         onClick = {
-                            navigateToSubscription(
-                                detail.subscription.url,
-                                detail.subscription.title
+                            navigateToFeed(
+                                detail.feed.url,
+                                detail.feed.title
                             )
                         }
                     )

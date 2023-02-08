@@ -19,7 +19,7 @@ import com.m3u.features.main.navgation.mainNavigationRoute
 import com.m3u.features.main.navgation.navigateToMain
 import com.m3u.features.setting.navigation.navigateToSetting
 import com.m3u.features.setting.navigation.settingNavigationRoute
-import com.m3u.features.subscription.navigation.navigationToSubscription
+import com.m3u.features.feed.navigation.navigationToFeed
 import com.m3u.ui.model.AppAction
 import com.m3u.ui.model.SetActions
 import kotlinx.coroutines.CoroutineScope
@@ -92,11 +92,11 @@ class M3UAppState(
 
     fun navigateToDestination(destination: Destination, label: String? = "") {
         when (destination) {
-            is Destination.Subscription -> {
+            is Destination.Feed -> {
                 coroutineScope.launch {
                     _labelFlow.emit(label)
                 }
-                navController.navigationToSubscription(destination.url)
+                navController.navigationToFeed(destination.url)
             }
 
             is Destination.Live -> {

@@ -1,4 +1,4 @@
-package com.m3u
+package com.m3u.data
 
 import android.content.Context
 import android.content.pm.PackageInfo

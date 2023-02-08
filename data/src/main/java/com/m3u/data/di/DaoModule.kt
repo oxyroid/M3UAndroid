@@ -2,7 +2,7 @@ package com.m3u.data.di
 
 import com.m3u.data.M3UDatabase
 import com.m3u.data.dao.LiveDao
-import com.m3u.data.dao.SubscriptionDao
+import com.m3u.data.dao.FeedDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -17,7 +17,7 @@ object DaoModule {
     ): LiveDao = database.liveDao()
 
     @Provides
-    fun provideSubscriptionDao(
+    fun provideFeedDao(
         database: M3UDatabase
-    ): SubscriptionDao = database.subscriptionDao()
+    ): FeedDao = database.feedDao()
 }
