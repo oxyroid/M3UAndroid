@@ -72,7 +72,9 @@ fun M3UTopBar(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .windowInsetsPadding(windowInsets)
+            .let {
+                if (visible) it.windowInsetsPadding(windowInsets) else it
+            }
             .nestedScroll(
                 connection = connection
             )
