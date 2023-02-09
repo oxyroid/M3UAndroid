@@ -1,5 +1,6 @@
 package com.m3u.app.ui
 
+import android.graphics.Rect
 import android.util.Log
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.runtime.*
@@ -23,15 +24,15 @@ import com.m3u.features.setting.navigation.settingNavigationRoute
 import com.m3u.ui.model.AppAction
 import com.m3u.ui.model.SetActions
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.shareIn
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 
 @Composable
 fun rememberM3UAppState(
     @OptIn(ExperimentalAnimationApi::class)
     navController: NavHostController = rememberAnimatedNavController(),
+    label: MutableStateFlow<String> = remember { MutableStateFlow("") },
+    playerRect: MutableStateFlow<Rect> = remember { MutableStateFlow(Rect()) },
     coroutineScope: CoroutineScope = rememberCoroutineScope()
 ): M3UAppState {
     DisposableEffect(navController) {
@@ -43,14 +44,16 @@ fun rememberM3UAppState(
             navController.removeOnDestinationChangedListener(listener)
         }
     }
-    return remember(navController, coroutineScope) {
-        M3UAppState(navController, coroutineScope)
+    return remember(navController, label, playerRect, coroutineScope) {
+        M3UAppState(navController, label, playerRect, coroutineScope)
     }
 }
 
 @Stable
 class M3UAppState(
     val navController: NavHostController,
+    val label: MutableStateFlow<String> = MutableStateFlow(""),
+    val playerRect: MutableStateFlow<Rect> = MutableStateFlow(Rect()),
     private val coroutineScope: CoroutineScope
 ) {
     val currentNavDestination: NavDestination?
@@ -83,18 +86,11 @@ class M3UAppState(
         }
     }
 
-    private val _labelFlow: MutableSharedFlow<String?> = MutableSharedFlow()
-    val labelFlow
-        get() = _labelFlow.shareIn(
-            scope = coroutineScope,
-            started = SharingStarted.WhileSubscribed(5_000)
-        )
-
-    fun navigateToDestination(destination: Destination, label: String? = "") {
+    fun navigateToDestination(destination: Destination, label: String = "") {
         when (destination) {
             is Destination.Feed -> {
                 coroutineScope.launch {
-                    _labelFlow.emit(label)
+                    this@M3UAppState.label.emit(label)
                 }
                 navController.navigationToFeed(destination.url)
             }

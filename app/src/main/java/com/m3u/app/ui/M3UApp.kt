@@ -79,13 +79,11 @@ fun M3UApp(
                     val topLevelLabel = appState.currentTopLevelDestination
                         ?.titleTextId
                         ?.let { stringResource(it) }
-                    val label by appState.labelFlow.collectAsStateWithLifecycle("")
+                    val label by appState.label.collectAsStateWithLifecycle("")
                     val actions by appState.appActions
 
                     val text by remember(topLevelLabel) {
-                        derivedStateOf {
-                            topLevelLabel ?: label.orEmpty()
-                        }
+                        derivedStateOf { topLevelLabel ?: label }
                     }
                     val isSystemBarVisible =
                         !appState.currentNavDestination.isInDestination<Destination.Live>()
@@ -112,6 +110,7 @@ fun M3UApp(
                                 navController = appState.navController,
                                 navigateToDestination = appState::navigateToDestination,
                                 setAppActions = appState.setAppActions,
+                                rectSource = appState.playerRect,
                                 modifier = Modifier
                                     .padding(padding)
                                     .weight(1f)
@@ -123,8 +122,7 @@ fun M3UApp(
                                     destination = appState.topLevelDestinations,
                                     onNavigateToDestination = appState::navigateToTopLevelDestination,
                                     currentNavDestination = appState.currentNavDestination,
-                                    modifier = Modifier
-                                        .testTag("M3UBottomBar")
+                                    modifier = Modifier.testTag("M3UBottomBar")
                                 )
                             }
                         }

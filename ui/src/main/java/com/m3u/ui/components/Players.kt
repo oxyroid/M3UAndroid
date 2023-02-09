@@ -1,5 +1,7 @@
 package com.m3u.ui.components
 
+import android.graphics.Rect
+import android.util.Log
 import android.view.ViewGroup
 import androidx.annotation.OptIn
 import androidx.compose.material.Surface
@@ -21,6 +23,7 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.Player.State
+import androidx.media3.common.VideoSize
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.AspectRatioFrameLayout
@@ -34,9 +37,11 @@ data class PlayerState(
     val url: String,
     val keepScreenOn: Boolean,
     internal val playbackStateSource: MutableStateFlow<@State Int>,
+    internal val rectSource: MutableStateFlow<Rect>,
     internal val exceptionSource: MutableStateFlow<PlaybackException?> = MutableStateFlow(null)
 ) {
     val playbackState: Flow<@State Int> get() = playbackStateSource
+//    val rect: Flow<Rect> get() = rectSource
     val exception: Flow<PlaybackException?> get() = exceptionSource
 }
 
@@ -45,9 +50,10 @@ fun rememberPlayerState(
     url: String,
     keepScreenOn: Boolean = true,
     state: MutableStateFlow<@State Int> = remember(url) { MutableStateFlow(Player.STATE_IDLE) },
+    rect: MutableStateFlow<Rect> = remember(url) { MutableStateFlow(Rect()) },
     exception: MutableStateFlow<PlaybackException?> = remember(url) { MutableStateFlow(null) }
 ): PlayerState = remember(url, keepScreenOn, state, exception) {
-    PlayerState(url, keepScreenOn, state, exception)
+    PlayerState(url, keepScreenOn, state, rect, exception)
 }
 
 @Composable
@@ -58,7 +64,7 @@ fun ExoPlayer(
     resizeMode: Int = AspectRatioFrameLayout.RESIZE_MODE_FIT
 ) {
     val context = LocalContext.current
-    val (url, keepScreenOn, playerState, exception) = state
+    val (url, keepScreenOn, playerState, videoSize, exception) = state
     val mediaItem = remember(url) {
         MediaItem.fromUri(url)
     }
@@ -76,8 +82,14 @@ fun ExoPlayer(
             }
     }
 
-    DisposableEffect(player, playerState, exception) {
+    DisposableEffect(player, playerState, videoSize, exception) {
         val listener = object : Player.Listener {
+            override fun onVideoSizeChanged(size: VideoSize) {
+                super.onVideoSizeChanged(size)
+                Log.d("Player", "onVideoSizeChanged: ${size.pixelWidthHeightRatio}")
+                videoSize.value = Rect(0, 0, size.width, size.height)
+            }
+
             override fun onPlaybackStateChanged(playbackState: Int) {
                 super.onPlaybackStateChanged(playbackState)
                 playerState.value = playbackState

@@ -1,5 +1,6 @@
 package com.m3u.features.live
 
+import android.graphics.Rect
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
@@ -34,13 +35,15 @@ import com.m3u.ui.model.LocalTheme
 import com.m3u.ui.model.SetActions
 import com.m3u.ui.util.EventHandler
 import com.m3u.ui.util.LifecycleEffect
+import kotlinx.coroutines.flow.MutableStateFlow
 
 @Composable
 internal fun LiveRoute(
     modifier: Modifier = Modifier,
     viewModel: LiveViewModel = hiltViewModel(),
     setAppActions: SetActions,
-    id: Int
+    id: Int,
+    rectSource: MutableStateFlow<Rect>
 ) {
     val context = LocalContext.current
     val state: LiveState by viewModel.state.collectAsStateWithLifecycle()
@@ -81,14 +84,16 @@ internal fun LiveRoute(
     }
     LiveScreen(
         modifier = modifier,
-        url = state.live?.url
+        url = state.live?.url,
+        rectSource = rectSource
     )
 }
 
 @Composable
 private fun LiveScreen(
     modifier: Modifier = Modifier,
-    url: String?
+    url: String?,
+    rectSource: MutableStateFlow<Rect>
 ) {
     Box(
         modifier = modifier
@@ -96,7 +101,10 @@ private fun LiveScreen(
             .background(Color.Black)
             .testTag("features:live")
     ) {
-        val state = rememberPlayerState(url.orEmpty())
+        val state = rememberPlayerState(
+            url = url.orEmpty(),
+            rect = rectSource
+        )
         ExoPlayer(
             state = state,
             modifier = Modifier.fillMaxSize()

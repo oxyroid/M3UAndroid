@@ -1,5 +1,6 @@
 package com.m3u.app.navigation
 
+import android.graphics.Rect
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
@@ -13,13 +14,15 @@ import com.m3u.features.main.navgation.mainNavigationRoute
 import com.m3u.features.main.navgation.mainScreen
 import com.m3u.features.setting.navigation.settingScreen
 import com.m3u.ui.model.SetActions
+import kotlinx.coroutines.flow.MutableStateFlow
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun M3UNavHost(
     navController: NavHostController,
-    navigateToDestination: (Destination, String?) -> Unit,
+    navigateToDestination: (Destination, String) -> Unit,
     setAppActions: SetActions,
+    rectSource: MutableStateFlow<Rect>,
     modifier: Modifier = Modifier,
     startDestination: String = mainNavigationRoute
 ) {
@@ -41,7 +44,7 @@ fun M3UNavHost(
         )
         favouriteScreen(
             navigateToLive = { id ->
-                navigateToDestination(Destination.Live(id), null)
+                navigateToDestination(Destination.Live(id), "")
             },
             setAppActions = setAppActions
         )
@@ -50,12 +53,13 @@ fun M3UNavHost(
         )
 
         liveScreen(
-            setAppActions = setAppActions
+            setAppActions = setAppActions,
+            rectSource = rectSource
         )
 
         feedScreen(
             navigateToLive = { id ->
-                navigateToDestination(Destination.Live(id), null)
+                navigateToDestination(Destination.Live(id), "")
             },
             setAppActions = setAppActions
         )
