@@ -45,3 +45,6 @@ io-coil-kt-coil-compose = { group = "io.coil-kt", name = "coil-compose", version
 androidx-room-room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "androidx-room" }
 androidx-room-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "androidx-room" }
 androidx-room-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "androidx-room" }
+
+[bundles]
+androidx-compose = ["androidx-compose-ui-ui", "androidx-compose-runtime-runtime", "androidx-compose-foundation-foundation", "androidx-compose-animation-animation", "androidx-compose-material-material"]

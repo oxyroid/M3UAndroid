@@ -43,12 +43,8 @@ dependencies {
 
     implementation libs.androidx.lifecycle.lifecycle.runtime.ktx
 
-    implementation libs.androidx.compose.ui.ui
-    implementation libs.androidx.compose.runtime.runtime
-    implementation libs.androidx.compose.foundation.foundation
-    implementation libs.androidx.compose.material.material.asProvider()
+    implementation libs.bundles.androidx.compose
     implementation libs.androidx.compose.material.material.icons.extended
-    implementation libs.androidx.compose.animation.animation
 
     implementation libs.androidx.tv.tv.foundation
     implementation libs.androidx.tv.tv.material
