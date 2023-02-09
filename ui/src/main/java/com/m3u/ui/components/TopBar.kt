@@ -28,11 +28,11 @@ import com.m3u.ui.model.Icon
 import com.m3u.ui.model.LocalSpacing
 
 @Composable
-fun M3UTopBar(
+fun AppTopBar(
     modifier: Modifier = Modifier,
     text: String,
     visible: Boolean,
-    windowInsets: WindowInsets = M3UTopBarDefaults.windowInsets,
+    windowInsets: WindowInsets = AppTopBarDefaults.windowInsets,
     onBackPressed: (() -> Unit)? = null,
     actions: @Composable RowScope.() -> Unit = {},
     content: @Composable (PaddingValues) -> Unit
@@ -40,7 +40,7 @@ fun M3UTopBar(
     val density = LocalDensity.current
     val spacing = LocalSpacing.current
 
-    val maxHeightDp = M3UTopBarDefaults.TopBarHeight
+    val maxHeightDp = AppTopBarDefaults.TopBarHeight
     val minHeightDp = Dp.Hairline
 
     val maxHeightPx = with(density) { maxHeightDp.roundToPx().toFloat() }
@@ -143,15 +143,15 @@ fun M3UTopBar(
                     ) {
                         val scale by remember {
                             derivedStateOf {
-                                M3UTopBarDefaults.scaleInterpolator(
-                                    slope = M3UTopBarDefaults.ScaleSlope,
+                                AppTopBarDefaults.scaleInterpolator(
+                                    slope = AppTopBarDefaults.ScaleSlope,
                                     input = progress
                                 )
                             }
                         }
                         if (onBackPressed != null) {
                             // TODO: Refactor to Composable Param
-                            M3UIconButton(
+                            IconButton(
                                 icon = Icon.ImageVectorIcon(Icons.Rounded.ArrowBack),
                                 contentDescription = stringResource(R.string.cd_top_bar_on_back_pressed),
                                 onClick = onBackPressed
@@ -181,7 +181,7 @@ fun M3UTopBar(
     }
 }
 
-internal object M3UTopBarDefaults {
+internal object AppTopBarDefaults {
     val TopBarHeight = 48.dp
     const val ScaleSlope = 0.35f
 

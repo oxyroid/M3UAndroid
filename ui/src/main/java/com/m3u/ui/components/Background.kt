@@ -21,7 +21,7 @@ import com.m3u.ui.model.LocalBackground
 import com.m3u.ui.model.LocalGradientColors
 
 @Composable
-fun M3UBackground(
+fun Background(
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit
 ) {
@@ -40,7 +40,7 @@ fun M3UBackground(
 }
 
 @Composable
-fun M3UGradientBackground(
+fun GradientBackground(
     modifier: Modifier = Modifier,
     gradientColors: GradientColors = LocalGradientColors.current,
     content: @Composable () -> Unit

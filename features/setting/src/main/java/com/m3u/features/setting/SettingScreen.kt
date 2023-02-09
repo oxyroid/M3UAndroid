@@ -41,9 +41,9 @@ import com.m3u.core.util.context.toast
 import com.m3u.features.setting.components.CheckBoxPreference
 import com.m3u.features.setting.components.FoldPreference
 import com.m3u.features.setting.components.TextPreference
-import com.m3u.ui.components.M3UColumn
-import com.m3u.ui.components.M3UTextButton
-import com.m3u.ui.components.M3UTextField
+import com.m3u.ui.components.OuterColumn
+import com.m3u.ui.components.TextButton
+import com.m3u.ui.components.TextField
 import com.m3u.ui.model.AppAction
 import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.SetActions
@@ -87,7 +87,7 @@ internal fun SettingRoute(
         syncMode = state.syncMode,
         onTitle = { viewModel.onEvent(SettingEvent.OnTitle(it)) },
         onUrl = { viewModel.onEvent(SettingEvent.OnUrl(it)) },
-        onSubscribe = { viewModel.onEvent(SettingEvent.SubscribeUrl) },
+        onSubscribe = { viewModel.onEvent(SettingEvent.OnSubscribe) },
         onSyncMode = { viewModel.onEvent(SettingEvent.OnSyncMode(it)) },
         useCommonUIMode = state.useCommonUIMode,
         onUIMode = { viewModel.onEvent(SettingEvent.OnUIMode) },
@@ -300,7 +300,7 @@ private fun PreferencesPart(
     useCommonUIModeEnable: Boolean = true,
 ) {
     val spacing = LocalSpacing.current
-    M3UColumn(
+    OuterColumn(
         modifier = modifier
     ) {
         Column(
@@ -346,7 +346,7 @@ private fun PreferencesPart(
             )
         }
         val uriHandler = LocalUriHandler.current
-        M3UTextButton(
+        TextButton(
             text = stringResource(R.string.label_app_version, version),
             modifier = Modifier.align(Alignment.CenterHorizontally)
         ) {
@@ -367,12 +367,12 @@ private fun FeedManagementPart(
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
-    M3UColumn(
+    OuterColumn(
         verticalArrangement = Arrangement.spacedBy(spacing.small),
         modifier = modifier
     ) {
         val focusRequester = remember { FocusRequester() }
-        M3UTextField(
+        TextField(
             text = title,
             placeholder = stringResource(R.string.placeholder_title),
             onValueChange = onTitle,
@@ -383,7 +383,7 @@ private fun FeedManagementPart(
             ),
             modifier = Modifier.fillMaxWidth()
         )
-        M3UTextField(
+        TextField(
             text = url,
             placeholder = stringResource(R.string.placeholder_url),
             onValueChange = onUrl,
@@ -398,7 +398,7 @@ private fun FeedManagementPart(
         )
         val buttonTextResId = if (subscribeEnable) R.string.label_subscribe
         else R.string.label_subscribing
-        M3UTextButton(
+        TextButton(
             enabled = subscribeEnable,
             text = stringResource(buttonTextResId),
             onClick = { onSubscribe() },
@@ -411,7 +411,7 @@ private fun FeedManagementPart(
 fun ScriptManagementPart(
     modifier: Modifier = Modifier
 ) {
-    M3UColumn(
+    OuterColumn(
         modifier = modifier
     ) {
 

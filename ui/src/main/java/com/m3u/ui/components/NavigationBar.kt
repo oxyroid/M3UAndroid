@@ -11,7 +11,7 @@ import androidx.compose.ui.unit.dp
 import com.m3u.ui.model.LocalTheme
 
 @Composable
-fun M3UNavigationBar(
+fun NavigationBar(
     modifier: Modifier = Modifier,
     containerColor: Color = NavigationBarDefaults.containerColor,
     contentColor: Color = NavigationBarDefaults.contentColor,

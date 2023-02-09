@@ -15,7 +15,7 @@ typealias OnConfirm = () -> Unit
 typealias OnDismiss = () -> Unit
 
 @Composable
-fun M3UDialog(
+fun Dialog(
     title: String,
     text: String,
     confirm: String,
@@ -42,8 +42,8 @@ fun M3UDialog(
                 style = MaterialTheme.typography.body1
             )
         },
-        confirmButton = { M3UTextButton(text = confirm, onClick = onConfirm) },
-        dismissButton = { M3UTextButton(text = dismiss, onClick = onDismiss) },
+        confirmButton = { TextButton(text = confirm, onClick = onConfirm) },
+        dismissButton = { TextButton(text = dismiss, onClick = onDismiss) },
         backgroundColor = backgroundColor,
         contentColor = contentColor,
         modifier = modifier.padding(LocalSpacing.current.medium)

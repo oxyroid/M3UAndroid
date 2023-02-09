@@ -22,8 +22,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import com.m3u.data.entity.Live
 import com.m3u.features.favorite.R
-import com.m3u.ui.components.Badge
-import com.m3u.ui.components.M3UColumn
+import com.m3u.ui.components.OuterColumn
+import com.m3u.ui.components.TextBadge
 import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.LocalTheme
 import java.net.URI
@@ -46,7 +46,7 @@ internal fun FavoriteLiveItem(
         backgroundColor = theme.surface,
         contentColor = theme.onSurface
     ) {
-        M3UColumn(
+        OuterColumn(
             modifier = modifier
                 .clickable(
                     onClick = onClick
@@ -59,7 +59,7 @@ internal fun FavoriteLiveItem(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(spacing.extraSmall)
                 ) {
-                    Badge(
+                    TextBadge(
                         text = title,
                         color = theme.primary,
                         contentColor = theme.onPrimary,
@@ -85,7 +85,7 @@ internal fun FavoriteLiveItem(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(spacing.extraSmall)
             ) {
-                Badge(
+                TextBadge(
                     text = scheme
                 )
                 CompositionLocalProvider(

@@ -16,7 +16,7 @@ import com.m3u.ui.R
 import com.m3u.ui.model.LocalTheme
 
 @Composable
-fun M3UImage(
+fun Image(
     model: Any?,
     modifier: Modifier = Modifier,
     shape: Shape = RectangleShape,
@@ -45,7 +45,7 @@ fun M3UImage(
                     shape = shape,
                     color = LocalTheme.current.error,
                 ) {
-                    M3UBox(
+                    OuterBox(
                         contentAlignment = Alignment.Center,
                         modifier = Modifier.fillMaxSize()
                     ) {

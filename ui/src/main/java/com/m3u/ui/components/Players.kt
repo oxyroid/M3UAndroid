@@ -52,7 +52,7 @@ fun rememberPlayerState(
 
 @Composable
 @OptIn(UnstableApi::class)
-fun LivePlayer(
+fun ExoPlayer(
     state: PlayerState,
     modifier: Modifier = Modifier,
     resizeMode: Int = AspectRatioFrameLayout.RESIZE_MODE_FIT

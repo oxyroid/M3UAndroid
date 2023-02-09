@@ -14,7 +14,7 @@ import androidx.compose.ui.Modifier
 import com.m3u.ui.model.LocalSpacing
 
 @Composable
-fun M3UColumn(
+fun OuterColumn(
     modifier: Modifier = Modifier,
     verticalArrangement: Arrangement.Vertical = Arrangement.spacedBy(LocalSpacing.current.small),
     horizontalAlignment: Alignment.Horizontal = Alignment.Start,
@@ -22,9 +22,7 @@ fun M3UColumn(
 ) {
     val spacing = LocalSpacing.current
     Column(
-        modifier = modifier.padding(
-            spacing.medium
-        ),
+        modifier = modifier.padding(spacing.medium),
         verticalArrangement = verticalArrangement,
         horizontalAlignment = horizontalAlignment,
         content = content
@@ -32,7 +30,7 @@ fun M3UColumn(
 }
 
 @Composable
-fun M3URow(
+fun OuterRow(
     modifier: Modifier = Modifier,
     horizontalArrangement: Arrangement.Horizontal = Arrangement.spacedBy(LocalSpacing.current.small),
     verticalAlignment: Alignment.Vertical = Alignment.Top,
@@ -50,7 +48,7 @@ fun M3URow(
 }
 
 @Composable
-fun M3UBox(
+fun OuterBox(
     modifier: Modifier = Modifier,
     contentAlignment: Alignment = Alignment.TopStart,
     propagateMinConstraints: Boolean = false,

@@ -55,7 +55,7 @@ import androidx.tv.foundation.lazy.grid.items
 import com.m3u.core.util.context.toast
 import com.m3u.data.entity.Live
 import com.m3u.features.feed.components.LiveItem
-import com.m3u.ui.components.M3UDialog
+import com.m3u.ui.components.Dialog
 import com.m3u.ui.model.AppAction
 import com.m3u.ui.model.Icon
 import com.m3u.ui.model.LocalSpacing
@@ -83,7 +83,7 @@ internal fun FeedRoute(
                         icon = Icon.ImageVectorIcon(Icons.Rounded.Refresh),
                         contentDescription = "refresh",
                         onClick = {
-                            viewModel.onEvent(FeedEvent.Sync)
+                            viewModel.onEvent(FeedEvent.FetchFeed)
                         }
                     )
                 )
@@ -107,21 +107,21 @@ internal fun FeedRoute(
     }
 
     LaunchedEffect(url) {
-        viewModel.onEvent(FeedEvent.GetDetails(url))
+        viewModel.onEvent(FeedEvent.ObserveFeed(url))
     }
 
     FeedScreen(
         useCommonUIMode = state.useCommonUIMode,
         lives = state.lives,
-        refreshing = state.syncing,
-        onSyncingLatest = { viewModel.onEvent(FeedEvent.Sync) },
+        refreshing = state.fetching,
+        onSyncingLatest = { viewModel.onEvent(FeedEvent.FetchFeed) },
         navigateToLive = navigateToLive,
         onLiveAction = { dialogState = DialogState.Ready(it) },
         modifier = modifier.fillMaxSize()
     )
 
     if (dialogState is DialogState.Ready) {
-        M3UDialog(
+        Dialog(
             title = stringResource(R.string.dialog_favourite_title),
             text = stringResource(R.string.dialog_favourite_content),
             confirm = stringResource(R.string.dialog_favourite_confirm),
@@ -130,7 +130,7 @@ internal fun FeedRoute(
             onConfirm = {
                 val current = dialogState
                 if (current is DialogState.Ready) {
-                    viewModel.onEvent(FeedEvent.AddToFavourite(current.id))
+                    viewModel.onEvent(FeedEvent.FavouriteLive(current.id))
                 }
                 dialogState = DialogState.Idle
             },

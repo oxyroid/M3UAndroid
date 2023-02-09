@@ -23,7 +23,7 @@ import com.m3u.ui.model.Icon
 import com.m3u.ui.model.LocalTheme
 
 @Composable
-fun M3UButton(
+fun Button(
     textRes: Int,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
@@ -33,7 +33,7 @@ fun M3UButton(
     disabledContentColor: Color = backgroundColor.copy(alpha = 0.38f),
     onClick: () -> Unit
 ) {
-    M3UButton(
+    Button(
         text = stringResource(textRes),
         modifier = modifier,
         enabled = enabled,
@@ -46,7 +46,7 @@ fun M3UButton(
 }
 
 @Composable
-fun M3UButton(
+fun Button(
     text: String,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
@@ -75,7 +75,7 @@ fun M3UButton(
 }
 
 @Composable
-fun M3UTextButton(
+fun TextButton(
     textRes: Int,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
@@ -84,7 +84,7 @@ fun M3UTextButton(
     disabledContentColor: Color = LocalTheme.current.onSurface.copy(alpha = 0.38f),
     onClick: () -> Unit
 ) {
-    M3UTextButton(
+    TextButton(
         text = stringResource(textRes),
         modifier = modifier,
         enabled = enabled,
@@ -96,7 +96,7 @@ fun M3UTextButton(
 }
 
 @Composable
-fun M3UTextButton(
+fun TextButton(
     text: String,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
@@ -126,7 +126,7 @@ fun M3UTextButton(
 }
 
 @Composable
-fun M3UIconButton(
+fun IconButton(
     icon: Icon,
     contentDescription: String?,
     onClick: () -> Unit,
@@ -156,7 +156,7 @@ fun M3UIconButton(
 
 
 @Composable
-fun M3UBrushButton(
+fun BrushButton(
     text: String,
     brush: Brush,
     modifier: Modifier = Modifier,

@@ -21,9 +21,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import com.m3u.data.entity.Live
 import com.m3u.features.feed.R
-import com.m3u.ui.components.Badge
-import com.m3u.ui.components.M3UColumn
-import com.m3u.ui.components.M3UImage
+import com.m3u.ui.components.Image
+import com.m3u.ui.components.OuterColumn
+import com.m3u.ui.components.TextBadge
 import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.LocalTheme
 import java.net.URI
@@ -47,14 +47,14 @@ internal fun LiveItem(
         backgroundColor = theme.surface,
         contentColor = theme.onSurface
     ) {
-        M3UColumn(
+        OuterColumn(
             modifier = modifier
                 .combinedClickable(
                     onClick = onClick,
                     onLongClick = onLongClick
                 )
         ) {
-            M3UImage(
+            Image(
                 model = live.cover,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
@@ -71,7 +71,7 @@ internal fun LiveItem(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(spacing.extraSmall)
             ) {
-                Badge(text = scheme)
+                TextBadge(text = scheme)
                 CompositionLocalProvider(
                     LocalContentAlpha provides 0.6f
                 ) {

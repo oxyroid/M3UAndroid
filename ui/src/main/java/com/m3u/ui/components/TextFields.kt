@@ -56,11 +56,11 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalLayoutApi::class)
 @Composable
-fun M3UTextField(
+fun TextField(
     textFieldValue: TextFieldValue,
     modifier: Modifier = Modifier,
-    background: Color = M3UTextFieldDefaults.backgroundColor(),
-    contentColor: Color = M3UTextFieldDefaults.contentColor(),
+    background: Color = TextFieldDefaults.backgroundColor(),
+    contentColor: Color = TextFieldDefaults.contentColor(),
     placeholder: String = "",
     keyboardType: KeyboardType = KeyboardType.Text,
     readOnly: Boolean = false,
@@ -68,8 +68,8 @@ fun M3UTextField(
     imeAction: ImeAction? = null,
     enabled: Boolean = true,
     keyboardActions: KeyboardActions? = null,
-    fontSize: TextUnit = M3UTextFieldDefaults.DefaultFontSize,
-    height: Dp = M3UTextFieldDefaults.DefaultHeight,
+    fontSize: TextUnit = TextFieldDefaults.TextFontSize,
+    height: Dp = TextFieldDefaults.Height,
     isError: Boolean = false,
     onValueChange: (TextFieldValue) -> Unit = {},
 ) {
@@ -156,11 +156,11 @@ fun M3UTextField(
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalLayoutApi::class)
 @Composable
-fun M3UTextField(
+fun TextField(
     text: String,
     modifier: Modifier = Modifier,
-    background: Color = M3UTextFieldDefaults.backgroundColor(),
-    contentColor: Color = M3UTextFieldDefaults.contentColor(),
+    background: Color = TextFieldDefaults.backgroundColor(),
+    contentColor: Color = TextFieldDefaults.contentColor(),
     placeholder: String = "",
     keyboardType: KeyboardType = KeyboardType.Text,
     readOnly: Boolean = false,
@@ -168,8 +168,8 @@ fun M3UTextField(
     imeAction: ImeAction? = null,
     enabled: Boolean = true,
     keyboardActions: KeyboardActions? = null,
-    fontSize: TextUnit = M3UTextFieldDefaults.DefaultFontSize,
-    height: Dp = M3UTextFieldDefaults.DefaultHeight,
+    fontSize: TextUnit = TextFieldDefaults.TextFontSize,
+    height: Dp = TextFieldDefaults.Height,
     isError: Boolean = false,
     onValueChange: (String) -> Unit = {},
 ) {
@@ -256,13 +256,13 @@ fun M3UTextField(
 @ExperimentalLayoutApi
 @ExperimentalFoundationApi
 @Composable
-fun M3UPasswordTextField(
+fun LabelField(
     textFieldValue: TextFieldValue,
     modifier: Modifier = Modifier,
-    background: Color = M3UTextFieldDefaults.backgroundColor(),
-    contentColor: Color = M3UTextFieldDefaults.contentColor(),
+    background: Color = TextFieldDefaults.backgroundColor(),
+    contentColor: Color = TextFieldDefaults.contentColor(),
     placeholder: String = "●●●●●●",
-    height: Dp = M3UTextFieldDefaults.DefaultHeight,
+    height: Dp = TextFieldDefaults.Height,
     readOnly: Boolean = false,
     enabled: Boolean = true,
     imeAction: ImeAction = ImeAction.Done,
@@ -292,8 +292,8 @@ fun M3UPasswordTextField(
     val focusRequester = FocusRequester()
     val isFocused = remember { mutableStateOf(false) }
 
-    val fontSize = if (passwordVisibility.value) M3UTextFieldDefaults.MinimizeFontSize
-    else M3UTextFieldDefaults.PasswordFontSize
+    val fontSize = if (passwordVisibility.value) TextFieldDefaults.MinimizeLabelFontSize
+    else TextFieldDefaults.LabelFontSize
 
     BasicTextField(
         modifier = modifier
@@ -421,12 +421,12 @@ fun M3UPasswordTextField(
     )
 }
 
-private object M3UTextFieldDefaults {
-    val DefaultFontSize = 16.sp
-    val PasswordFontSize = 18.sp
-    val MinimizeFontSize = 14.sp
+private object TextFieldDefaults {
+    val TextFontSize = 16.sp
+    val LabelFontSize = 18.sp
+    val MinimizeLabelFontSize = 14.sp
 
-    val DefaultHeight = 48.dp
+    val Height = 48.dp
 
     @Composable
     fun backgroundColor() = LocalTheme.current.surface

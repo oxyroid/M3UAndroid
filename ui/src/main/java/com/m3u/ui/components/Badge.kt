@@ -1,5 +1,6 @@
 package com.m3u.ui.components
 
+import androidx.compose.material.Badge
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
@@ -8,7 +9,7 @@ import androidx.compose.ui.graphics.Color
 import com.m3u.ui.model.LocalTheme
 
 @Composable
-fun Badge(
+fun TextBadge(
     text: String,
     modifier: Modifier = Modifier,
     color: Color = LocalTheme.current.tint,
@@ -16,7 +17,7 @@ fun Badge(
     icon: (@Composable () -> Unit)? = null,
 ) {
     val theme = LocalTheme.current
-    androidx.compose.material.Badge(
+    Badge(
         modifier = modifier,
         backgroundColor = color,
         contentColor = contentColor

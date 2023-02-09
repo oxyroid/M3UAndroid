@@ -16,7 +16,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.m3u.ui.components.M3URow
+import com.m3u.ui.components.OuterRow
 import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.LocalTheme
 
@@ -34,7 +34,7 @@ internal fun FeedItem(
         backgroundColor = theme.surface,
         contentColor = theme.onSurface,
     ) {
-        M3URow(
+        OuterRow(
             modifier = modifier
                 .clickable(
                     onClick = onClick
