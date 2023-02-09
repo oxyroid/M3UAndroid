@@ -31,9 +31,7 @@ class LiveViewModel @Inject constructor(
         initJob = liveRepository.observe(id)
             .onEach { live ->
                 writable.update {
-                    it.copy(
-                        live = live
-                    )
+                    it.copy(live = live)
                 }
             }
             .launchIn(viewModelScope)

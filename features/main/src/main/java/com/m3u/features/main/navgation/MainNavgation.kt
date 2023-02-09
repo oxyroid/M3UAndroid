@@ -8,7 +8,7 @@ import com.google.accompanist.navigation.animation.composable
 import com.m3u.features.main.MainRoute
 import com.m3u.ui.model.SetActions
 
-typealias NavigateToFeed = (String, String?) -> Unit
+typealias NavigateToFeed = (String, String) -> Unit
 
 const val mainNavigationRoute = "main_route"
 
