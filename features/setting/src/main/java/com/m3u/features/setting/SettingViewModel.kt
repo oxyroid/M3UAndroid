@@ -12,8 +12,6 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
-import java.net.MalformedURLException
-import java.net.URL
 import javax.inject.Inject
 import kotlin.properties.Delegates
 
@@ -22,7 +20,7 @@ class SettingViewModel @Inject constructor(
     private val feedRepository: FeedRepository,
     packageProvider: PackageProvider,
     application: Application,
-    private val configuration: Configuration
+    configuration: Configuration
 ) : BaseViewModel<SettingState, SettingEvent>(
     application = application,
     emptyState = SettingState()
@@ -77,7 +75,7 @@ class SettingViewModel @Inject constructor(
 
             SettingEvent.OnUIMode -> useCommonUIMode = !useCommonUIMode
 
-            SettingEvent.SubscribeUrl -> {
+            SettingEvent.OnSubscribe -> {
                 val title = writable.value.title
                 if (title.isEmpty()) {
                     writable.update {
@@ -89,27 +87,13 @@ class SettingViewModel @Inject constructor(
                     }
                     return
                 }
-                val urlString = readable.url
-                val url = try {
-                    URL(urlString)
-                } catch (e: MalformedURLException) {
-                    writable.update {
-                        val message = context.getString(R.string.failed_malformed_url, urlString)
-                        it.copy(
-                            adding = false,
-                            message = eventOf(message)
-                        )
-                    }
-                    return
-                }
+                val url = readable.url
                 feedRepository.subscribe(title, url)
                     .onEach { resource ->
                         writable.update {
                             when (resource) {
                                 Resource.Loading -> {
-                                    it.copy(
-                                        adding = true
-                                    )
+                                    it.copy(adding = true)
                                 }
 
                                 is Resource.Success -> {

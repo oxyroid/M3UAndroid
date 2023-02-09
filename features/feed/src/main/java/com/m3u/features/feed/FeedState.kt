@@ -7,7 +7,7 @@ import com.m3u.data.entity.Live
 data class FeedState(
     val url: String = "",
     val lives: List<Live> = emptyList(),
-    val syncing: Boolean = false,
+    val fetching: Boolean = false,
     val message: Event<String> = handledEvent(),
     val useCommonUIMode: Boolean = false
 )

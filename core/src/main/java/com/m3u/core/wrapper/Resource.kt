@@ -25,7 +25,7 @@ fun <T> resourceFlow(@BuilderInference block: suspend FlowCollector<Resource<T>>
     }
 
 @OptIn(ExperimentalTypeInference::class)
-fun <T> resourceChanelFlow(@BuilderInference block: suspend ProducerScope<Resource<T>>.() -> Unit) =
+fun <T> resourceChannelFlow(@BuilderInference block: suspend ProducerScope<Resource<T>>.() -> Unit) =
     channelFlow {
         send(Resource.Loading)
         block()

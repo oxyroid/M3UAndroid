@@ -8,16 +8,15 @@ import com.m3u.core.wrapper.eventOf
 import com.m3u.data.Configuration
 import com.m3u.data.repository.FeedRepository
 import com.m3u.data.repository.LiveRepository
-import com.m3u.data.repository.observeLivesByFeedUrl
-import com.m3u.data.repository.sync
+import com.m3u.data.repository.fetch
+import com.m3u.data.repository.observeByFeedUrl
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import java.net.MalformedURLException
-import java.net.URL
 import javax.inject.Inject
 
 @HiltViewModel
@@ -41,71 +40,31 @@ class FeedViewModel @Inject constructor(
     private var job: Job? = null
     override fun onEvent(event: FeedEvent) {
         when (event) {
-            is FeedEvent.GetDetails -> {
+            is FeedEvent.ObserveFeed -> {
                 job?.cancel()
                 job = viewModelScope.launch {
                     val feedUrl = event.url
-                    feedRepository
-                        .observe(feedUrl)
-                        .onEach { feed ->
-                            writable.update {
-                                if (feed != null) {
-                                    it.copy(
-                                        url = feed.url
-                                    )
-                                } else {
-                                    it.copy(
-                                        message = eventOf(
-                                            context.getString(
-                                                R.string.error_get_detail,
-                                                feedUrl
-                                            )
-                                        )
-                                    )
-                                }
-                            }
-                        }
-                        .launchIn(this)
-                    liveRepository
-                        .observeLivesByFeedUrl(feedUrl)
-                        .onEach { lives ->
-                            writable.update {
-                                it.copy(
-                                    lives = lives
-                                )
-                            }
-                        }
-                        .launchIn(this)
+                    observeFeedDetail(this, feedUrl)
+                    observeFeedLives(this, feedUrl)
                 }
-
             }
 
-            FeedEvent.Sync -> {
-                val url = try {
-                    URL(readable.url)
-                } catch (e: MalformedURLException) {
-                    writable.update {
-                        it.copy(
-                            syncing = false,
-                            message = eventOf(e.message.orEmpty())
-                        )
-                    }
-                    return
-                }
-                feedRepository.sync(url)
+            FeedEvent.FetchFeed -> {
+                val url = readable.url
+                feedRepository.fetch(url)
                     .onEach { resource ->
                         writable.update {
                             when (resource) {
                                 Resource.Loading -> it.copy(
-                                    syncing = true
+                                    fetching = true
                                 )
 
                                 is Resource.Success -> it.copy(
-                                    syncing = false
+                                    fetching = false
                                 )
 
                                 is Resource.Failure -> it.copy(
-                                    syncing = false,
+                                    fetching = false,
                                     message = eventOf(resource.message.orEmpty())
                                 )
                             }
@@ -114,12 +73,44 @@ class FeedViewModel @Inject constructor(
                     .launchIn(viewModelScope)
             }
 
-            is FeedEvent.AddToFavourite -> {
+            is FeedEvent.FavouriteLive -> {
                 viewModelScope.launch {
                     val id = event.id
-                    liveRepository.setFavouriteLive(id, true)
+                    liveRepository.setFavourite(id, true)
                 }
             }
         }
     }
+
+    private fun observeFeedDetail(
+        coroutineScope: CoroutineScope,
+        feedUrl: String
+    ) {
+        feedRepository.observe(feedUrl)
+            .onEach { feed ->
+                writable.update {
+                    if (feed != null) {
+                        it.copy(url = feed.url)
+                    } else {
+                        val message = context.getString(R.string.error_observe_feed, feedUrl)
+                        it.copy(message = eventOf(message))
+                    }
+                }
+            }
+            .launchIn(coroutineScope)
+    }
+
+    private fun observeFeedLives(
+        coroutineScope: CoroutineScope,
+        feedUrl: String
+    ) {
+        liveRepository.observeByFeedUrl(feedUrl)
+            .onEach { lives ->
+                writable.update {
+                    it.copy(lives = lives)
+                }
+            }
+            .launchIn(coroutineScope)
+    }
+
 }

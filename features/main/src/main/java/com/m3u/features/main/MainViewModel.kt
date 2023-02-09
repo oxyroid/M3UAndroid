@@ -7,7 +7,7 @@ import com.m3u.core.util.collection.replaceIf
 import com.m3u.data.entity.Feed
 import com.m3u.data.repository.FeedRepository
 import com.m3u.data.repository.LiveRepository
-import com.m3u.data.repository.observeLivesByFeedUrl
+import com.m3u.data.repository.observeByFeedUrl
 import com.m3u.features.main.model.FeedDetail
 import com.m3u.features.main.model.toDetail
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -53,7 +53,7 @@ class MainViewModel @Inject constructor(
     private fun observeAllFeeds(): Flow<List<Feed>> = feedRepository.observeAll()
 
     private fun observeSize(url: String): Flow<Int> = liveRepository
-        .observeLivesByFeedUrl(url)
+        .observeByFeedUrl(url)
         .map { it.size }
 
     private fun setAllDetails(feeds: List<FeedDetail>) {

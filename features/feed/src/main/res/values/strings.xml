@@ -8,5 +8,5 @@
     </string>
     <string name="dialog_favourite_confirm">确认</string>
     <string name="dialog_favourite_dismiss">知道了</string>
-    <string name="error_get_detail">订阅不存在（%s）</string>
+    <string name="error_observe_feed">订阅不存在（%s）</string>
 </resources>

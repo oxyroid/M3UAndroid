@@ -17,7 +17,6 @@ import com.m3u.data.source.parser.m3u.toLive
 import com.m3u.data.source.parser.parse
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
-import java.net.URL
 import javax.inject.Inject
 
 class FeedRepositoryImpl @Inject constructor(
@@ -25,12 +24,12 @@ class FeedRepositoryImpl @Inject constructor(
     private val liveDao: LiveDao,
     private val logger: Logger
 ) : FeedRepository {
-    private fun createParser(url: URL): Parser<List<M3U>, M3U> = when {
+    private fun createParser(url: String): Parser<List<M3U>, M3U> = when {
         M3UMatcher.match(url) -> Parser.newM3UParser()
         else -> error("Unsupported url: $url")
     }
 
-    override fun subscribe(title: String, url: URL): Flow<Resource<Unit>> = resourceFlow {
+    override fun subscribe(title: String, url: String): Flow<Resource<Unit>> = resourceFlow {
         try {
             val parser = createParser(url)
             val result = parser.run {
@@ -38,11 +37,10 @@ class FeedRepositoryImpl @Inject constructor(
                 parse(url)
                 get()
             }
-            val stringUrl = url.toString()
-            val feed = Feed(title, stringUrl)
+            val feed = Feed(title, url)
             feedDao.insert(feed)
-            val lives = result.map { it.toLive(stringUrl) }
-            liveDao.deleteByFeedUrl(stringUrl)
+            val lives = result.map { it.toLive(url) }
+            liveDao.deleteByFeedUrl(url)
             lives.forEach { liveDao.insert(it) }
             emitResource(Unit)
         } catch (e: Exception) {

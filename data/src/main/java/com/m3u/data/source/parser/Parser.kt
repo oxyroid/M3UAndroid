@@ -43,3 +43,9 @@ suspend fun Parser<*, *>.parse(url: URL) {
         }
     }
 }
+
+suspend fun Parser<*, *>.parse(url: String) {
+    withContext(Dispatchers.IO) {
+        parse(URL(url))
+    }
+}

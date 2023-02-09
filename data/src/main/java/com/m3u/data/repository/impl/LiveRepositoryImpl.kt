@@ -19,7 +19,7 @@ class LiveRepositoryImpl @Inject constructor(
         flow {}
     }
 
-    override fun observeAllLives(): Flow<List<Live>> = try {
+    override fun observeAll(): Flow<List<Live>> = try {
         liveDao.observeAll()
     } catch (e: Exception) {
         logger.log(e)
@@ -40,7 +40,7 @@ class LiveRepositoryImpl @Inject constructor(
         null
     }
 
-    override suspend fun setFavouriteLive(id: Int, target: Boolean) = try {
+    override suspend fun setFavourite(id: Int, target: Boolean) = try {
         liveDao.setFavouriteLive(id, target)
     } catch (e: Exception) {
         logger.log(e)

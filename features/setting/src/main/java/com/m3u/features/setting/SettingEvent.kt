@@ -7,5 +7,5 @@ sealed interface SettingEvent {
     data class OnUrl(val url: String) : SettingEvent
     data class OnSyncMode(@SyncMode val syncMode: Int) : SettingEvent
     object OnUIMode : SettingEvent
-    object SubscribeUrl : SettingEvent
+    object OnSubscribe : SettingEvent
 }

@@ -25,7 +25,7 @@ class FavouriteViewModel @Inject constructor(
 
     init {
         liveRepository
-            .observeAllLives()
+            .observeAll()
             .map { lives ->
                 lives.filter { it.favourite }
             }

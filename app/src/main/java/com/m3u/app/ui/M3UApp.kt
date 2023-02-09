@@ -38,10 +38,10 @@ import com.m3u.app.navigation.M3UNavHost
 import com.m3u.app.navigation.TopLevelDestination
 import com.m3u.features.feed.navigation.feedRoute
 import com.m3u.features.live.navigation.liveRoute
-import com.m3u.ui.components.M3UBackground
-import com.m3u.ui.components.M3UIconButton
-import com.m3u.ui.components.M3UNavigationBar
-import com.m3u.ui.components.M3UTopBar
+import com.m3u.ui.components.Background
+import com.m3u.ui.components.IconButton
+import com.m3u.ui.components.NavigationBar
+import com.m3u.ui.components.AppTopBar
 import com.m3u.ui.model.Icon
 import com.m3u.ui.model.LocalTheme
 
@@ -53,7 +53,7 @@ import com.m3u.ui.model.LocalTheme
 fun M3UApp(
     appState: M3UAppState = rememberM3UAppState()
 ) {
-    M3UBackground {
+    Background {
         Scaffold(
             modifier = Modifier.semantics {
                 testTagsAsResourceId = true
@@ -89,12 +89,12 @@ fun M3UApp(
                     }
                     val isSystemBarVisible =
                         !appState.currentNavDestination.isInDestination<Destination.Live>()
-                    M3UTopBar(
+                    AppTopBar(
                         text = text,
                         visible = isSystemBarVisible,
                         actions = {
                             actions.forEach { action ->
-                                M3UIconButton(
+                                IconButton(
                                     icon = action.icon,
                                     contentDescription = action.contentDescription,
                                     onClick = action.onClick
@@ -142,7 +142,7 @@ private fun M3UBottomBar(
     currentNavDestination: NavDestination?,
     modifier: Modifier = Modifier
 ) {
-    M3UNavigationBar(
+    NavigationBar(
         modifier = modifier,
         containerColor = M3UBottomBarDefaults.navigationBackgroundColor(),
         contentColor = M3UBottomBarDefaults.navigationContentColor(),

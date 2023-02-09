@@ -26,8 +26,8 @@ import androidx.media3.common.Player.STATE_READY
 import androidx.media3.common.Player.State
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.m3u.core.util.context.toast
-import com.m3u.ui.components.LivePlayer
-import com.m3u.ui.components.M3UColumn
+import com.m3u.ui.components.ExoPlayer
+import com.m3u.ui.components.OuterColumn
 import com.m3u.ui.components.rememberPlayerState
 import com.m3u.ui.model.AppAction
 import com.m3u.ui.model.LocalTheme
@@ -97,11 +97,11 @@ private fun LiveScreen(
             .testTag("features:live")
     ) {
         val state = rememberPlayerState(url.orEmpty())
-        LivePlayer(
+        ExoPlayer(
             state = state,
             modifier = Modifier.fillMaxSize()
         )
-        M3UColumn(
+        OuterColumn(
             modifier = Modifier.align(Alignment.BottomStart)
         ) {
             val playback by state.playbackState.collectAsStateWithLifecycle(STATE_IDLE)
