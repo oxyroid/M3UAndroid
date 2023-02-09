@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.sp
 import com.m3u.ui.R
 import com.m3u.ui.model.Icon
 import com.m3u.ui.model.LocalSpacing
+import com.m3u.ui.model.LocalTheme
 
 @Composable
 fun AppTopBar(
@@ -176,7 +177,9 @@ fun AppTopBar(
                     }
                 }
             }
-            Divider()
+            Divider(
+                color = LocalTheme.current.divider
+            )
         }
     }
 }
