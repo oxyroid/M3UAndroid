@@ -24,15 +24,14 @@ import com.m3u.features.setting.navigation.settingNavigationRoute
 import com.m3u.ui.model.AppAction
 import com.m3u.ui.model.SetActions
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 
 @Composable
 fun rememberAppState(
     @OptIn(ExperimentalAnimationApi::class)
     navController: NavHostController = rememberAnimatedNavController(),
-    label: MutableStateFlow<String> = remember { MutableStateFlow("") },
-    playerRect: MutableStateFlow<Rect> = remember { MutableStateFlow(Rect()) },
+    label: MutableState<String> = remember { mutableStateOf("") },
+    playerRect: MutableState<Rect> = remember { mutableStateOf(Rect()) },
     coroutineScope: CoroutineScope = rememberCoroutineScope()
 ): AppState {
     DisposableEffect(navController) {
@@ -52,8 +51,8 @@ fun rememberAppState(
 @Stable
 class AppState(
     val navController: NavHostController,
-    val label: MutableStateFlow<String> = MutableStateFlow(""),
-    val playerRect: MutableStateFlow<Rect> = MutableStateFlow(Rect()),
+    val label: MutableState<String>,
+    val playerRect: MutableState<Rect>,
     private val coroutineScope: CoroutineScope
 ) {
     val currentNavDestination: NavDestination?
@@ -89,7 +88,7 @@ class AppState(
         when (destination) {
             is Destination.Feed -> {
                 coroutineScope.launch {
-                    this@AppState.label.emit(label)
+                    this@AppState.label.value = label
                 }
                 navController.navigationToFeed(destination.url)
             }

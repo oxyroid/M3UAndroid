@@ -24,7 +24,6 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavDestination
 import com.m3u.app.navigation.Destination
 import com.m3u.app.navigation.M3UNavHost
@@ -69,7 +68,7 @@ fun App(
                     val topLevelLabel = appState.currentTopLevelDestination
                         ?.titleTextId
                         ?.let { stringResource(it) }
-                    val label by appState.label.collectAsStateWithLifecycle("")
+                    val label by appState.label
                     val actions by appState.appActions
 
                     val text by remember(topLevelLabel) {
@@ -100,7 +99,7 @@ fun App(
                                 navController = appState.navController,
                                 navigateToDestination = appState::navigateToDestination,
                                 setAppActions = appState.setAppActions,
-                                rectSource = appState.playerRect,
+                                playerRect = appState.playerRect,
                                 modifier = Modifier
                                     .padding(padding)
                                     .weight(1f)

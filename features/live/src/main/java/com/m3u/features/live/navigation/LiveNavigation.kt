@@ -2,11 +2,11 @@ package com.m3u.features.live.navigation
 
 import android.graphics.Rect
 import androidx.compose.animation.*
+import androidx.compose.runtime.MutableState
 import androidx.navigation.*
 import com.google.accompanist.navigation.animation.composable
 import com.m3u.features.live.LiveRoute
 import com.m3u.ui.model.SetActions
-import kotlinx.coroutines.flow.MutableStateFlow
 
 const val liveRoute = "live_route"
 private const val TYPE_ID = "id"
@@ -24,7 +24,7 @@ fun NavController.navigateToLive(id: Int) {
 @OptIn(ExperimentalAnimationApi::class)
 fun NavGraphBuilder.liveScreen(
     setAppActions: SetActions,
-    rectSource: MutableStateFlow<Rect>
+    playerRect: MutableState<Rect>
 ) {
     composable(
         route = ROUTE_PLACEHOLDER,
@@ -46,7 +46,7 @@ fun NavGraphBuilder.liveScreen(
         LiveRoute(
             id = id,
             setAppActions = setAppActions,
-            rectSource = rectSource
+            playerRect = playerRect
         )
     }
 }

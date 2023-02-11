@@ -8,6 +8,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -31,22 +32,16 @@ import androidx.media3.ui.PlayerView
 import com.m3u.ui.model.Background
 import com.m3u.ui.model.LocalBackground
 import com.m3u.ui.util.LifecycleEffect
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
 
 @Immutable
 data class PlayerState(
     val url: String,
     val resizeMode: Int,
     val keepScreenOn: Boolean,
-    internal val playbackStateSource: MutableStateFlow<@State Int>,
-    internal val rectSource: MutableStateFlow<Rect>,
-    internal val exceptionSource: MutableStateFlow<PlaybackException?> = MutableStateFlow(null)
-) {
-    val playbackState: Flow<@State Int> get() = playbackStateSource
-    //    val rect: Flow<Rect> get() = rectSource
-    val exception: Flow<PlaybackException?> get() = exceptionSource
-}
+    val playbackState: MutableState<@State Int>,
+    val playerRect: MutableState<Rect>,
+    val exception: MutableState<PlaybackException?>
+)
 
 @Composable
 fun rememberPlayerState(
@@ -54,9 +49,9 @@ fun rememberPlayerState(
     @OptIn(UnstableApi::class)
     resizeMode: Int = AspectRatioFrameLayout.RESIZE_MODE_FIT,
     keepScreenOn: Boolean = true,
-    state: MutableStateFlow<@State Int> = remember(url) { MutableStateFlow(Player.STATE_IDLE) },
-    rect: MutableStateFlow<Rect> = remember(url) { MutableStateFlow(Rect()) },
-    exception: MutableStateFlow<PlaybackException?> = remember(url) { MutableStateFlow(null) }
+    state: MutableState<@State Int> = remember(url) { mutableStateOf(Player.STATE_IDLE) },
+    rect: MutableState<Rect> = remember(url) { mutableStateOf(Rect()) },
+    exception: MutableState<PlaybackException?> = remember(url) { mutableStateOf(null) }
 ): PlayerState = remember(url, resizeMode, keepScreenOn, state, rect, exception) {
     PlayerState(url, resizeMode, keepScreenOn, state, rect, exception)
 }

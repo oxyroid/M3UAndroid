@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
@@ -35,7 +36,6 @@ import com.m3u.ui.model.LocalTheme
 import com.m3u.ui.model.SetActions
 import com.m3u.ui.util.EventHandler
 import com.m3u.ui.util.LifecycleEffect
-import kotlinx.coroutines.flow.MutableStateFlow
 
 @Composable
 internal fun LiveRoute(
@@ -43,7 +43,7 @@ internal fun LiveRoute(
     viewModel: LiveViewModel = hiltViewModel(),
     setAppActions: SetActions,
     id: Int,
-    rectSource: MutableStateFlow<Rect>
+    playerRect: MutableState<Rect>
 ) {
     val context = LocalContext.current
     val state: LiveState by viewModel.state.collectAsStateWithLifecycle()
@@ -85,7 +85,7 @@ internal fun LiveRoute(
     LiveScreen(
         modifier = modifier,
         url = state.live?.url,
-        rectSource = rectSource
+        playerRect = playerRect
     )
 }
 
@@ -93,7 +93,7 @@ internal fun LiveRoute(
 private fun LiveScreen(
     modifier: Modifier = Modifier,
     url: String?,
-    rectSource: MutableStateFlow<Rect>
+    playerRect: MutableState<Rect>
 ) {
     Box(
         modifier = modifier
@@ -103,7 +103,7 @@ private fun LiveScreen(
     ) {
         val state = rememberPlayerState(
             url = url.orEmpty(),
-            rect = rectSource
+            rect = playerRect
         )
         ExoPlayer(
             state = state,
@@ -112,12 +112,12 @@ private fun LiveScreen(
         OuterColumn(
             modifier = Modifier.align(Alignment.BottomStart)
         ) {
-            val playback by state.playbackState.collectAsStateWithLifecycle(STATE_IDLE)
+            val playback by state.playbackState
             Text(
                 text = playback.displayText,
                 color = Color.White
             )
-            val exception by state.exception.collectAsStateWithLifecycle(null)
+            val exception by state.exception
             Text(
                 text = exception.displayText,
                 color = LocalTheme.current.error

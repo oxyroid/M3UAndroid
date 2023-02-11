@@ -8,6 +8,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.mutableStateOf
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowCompat
 import androidx.navigation.NavController
@@ -18,12 +19,11 @@ import com.m3u.app.ui.isInDestination
 import com.m3u.app.ui.rememberAppState
 import com.m3u.ui.M3ULocalProvider
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.flow.MutableStateFlow
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-    private val labelSource = MutableStateFlow("")
-    private val playerRectSource = MutableStateFlow(Rect())
+    private val labelState = mutableStateOf("")
+    private val playerRectState = mutableStateOf(Rect())
     private var isInLiveDestination: Boolean = false
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
@@ -45,8 +45,8 @@ class MainActivity : ComponentActivity() {
                 App(
                     appState = rememberAppState(
                         navController = navController,
-                        label = labelSource,
-                        playerRect = playerRectSource
+                        label = labelState,
+                        playerRect = playerRectState
                     )
                 )
             }
@@ -63,6 +63,6 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private val rect: Rect get() = playerRectSource.value
+    private val rect: Rect get() = playerRectState.value
     private val isRatioValidated: Boolean get() = !rect.isEmpty
 }
