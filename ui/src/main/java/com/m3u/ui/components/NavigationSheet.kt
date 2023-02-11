@@ -11,12 +11,12 @@ import androidx.compose.ui.unit.dp
 import com.m3u.ui.model.LocalTheme
 
 @Composable
-fun NavigationBar(
+fun NavigationSheet(
     modifier: Modifier = Modifier,
-    containerColor: Color = NavigationBarDefaults.containerColor,
-    contentColor: Color = NavigationBarDefaults.contentColor,
-    elevation: Dp = NavigationBarDefaults.Elevation,
-    windowInsets: WindowInsets = NavigationBarDefaults.windowInsets,
+    containerColor: Color = NavigationSheetDefaults.containerColor,
+    contentColor: Color = NavigationSheetDefaults.contentColor,
+    elevation: Dp = NavigationSheetDefaults.Elevation,
+    windowInsets: WindowInsets = NavigationSheetDefaults.windowInsets,
     content: @Composable RowScope.() -> Unit
 ) {
     Surface(
@@ -37,7 +37,7 @@ fun NavigationBar(
     }
 }
 
-object NavigationBarDefaults {
+object NavigationSheetDefaults {
     val Elevation: Dp = 3.dp
     val containerColor: Color @Composable get() = LocalTheme.current.onTopBar
     val contentColor: Color @Composable get() = LocalTheme.current.topBar

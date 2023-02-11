@@ -1,7 +1,6 @@
 package com.m3u.app.ui
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Row
@@ -13,10 +12,7 @@ import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.material.Icon
-import androidx.compose.material.NavigationRailItem
 import androidx.compose.material.Scaffold
-import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -25,24 +21,18 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavDestination
-import androidx.navigation.NavDestination.Companion.hierarchy
 import com.m3u.app.navigation.Destination
 import com.m3u.app.navigation.M3UNavHost
-import com.m3u.app.navigation.TopLevelDestination
 import com.m3u.features.feed.navigation.feedRoute
 import com.m3u.features.live.navigation.liveRoute
+import com.m3u.ui.components.AppTopBar
 import com.m3u.ui.components.Background
 import com.m3u.ui.components.IconButton
-import com.m3u.ui.components.NavigationBar
-import com.m3u.ui.components.AppTopBar
-import com.m3u.ui.model.Icon
 import com.m3u.ui.model.LocalTheme
 
 @OptIn(
@@ -50,8 +40,8 @@ import com.m3u.ui.model.LocalTheme
     ExperimentalLayoutApi::class
 )
 @Composable
-fun M3UApp(
-    appState: M3UAppState = rememberM3UAppState()
+fun App(
+    appState: AppState = rememberAppState()
 ) {
     Background {
         Scaffold(
@@ -118,9 +108,9 @@ fun M3UApp(
                             AnimatedVisibility(
                                 visible = isSystemBarVisible
                             ) {
-                                M3UBottomBar(
-                                    destination = appState.topLevelDestinations,
-                                    onNavigateToDestination = appState::navigateToTopLevelDestination,
+                                BottomNavigationSheet(
+                                    destinations = appState.topLevelDestinations,
+                                    navigateToTopLevelDestination = appState::navigateToTopLevelDestination,
                                     currentNavDestination = appState.currentNavDestination,
                                     modifier = Modifier.testTag("M3UBottomBar")
                                 )
@@ -132,90 +122,6 @@ fun M3UApp(
         }
     }
 }
-
-@Composable
-private fun M3UBottomBar(
-    destination: List<TopLevelDestination>,
-    onNavigateToDestination: (TopLevelDestination) -> Unit,
-    currentNavDestination: NavDestination?,
-    modifier: Modifier = Modifier
-) {
-    NavigationBar(
-        modifier = modifier,
-        containerColor = M3UBottomBarDefaults.navigationBackgroundColor(),
-        contentColor = M3UBottomBarDefaults.navigationContentColor(),
-        elevation = 0.dp
-    ) {
-        destination.forEach { destination ->
-            val selected = currentNavDestination.isTopLevelDestinationInHierarchy(destination)
-            M3UNavigationBarItem(
-                alwaysShowLabel = false,
-                selected = selected,
-                onClick = { onNavigateToDestination(destination) },
-                tint = M3UBottomBarDefaults.navigationSelectedItemColor(),
-                icon = {
-                    val icon = if (selected) destination.selectedIcon
-                    else destination.unselectedIcon
-                    when (icon) {
-                        is Icon.ImageVectorIcon -> Icon(
-                            imageVector = icon.imageVector,
-                            contentDescription = stringResource(destination.iconTextId)
-                        )
-
-                        is Icon.DrawableResourceIcon -> Icon(
-                            painter = painterResource(icon.id),
-                            contentDescription = stringResource(destination.iconTextId)
-                        )
-                    }
-                },
-                label = {
-                    Text(text = stringResource(destination.iconTextId))
-                }
-            )
-        }
-    }
-}
-
-
-@Composable
-private fun M3UNavigationBarItem(
-    selected: Boolean,
-    onClick: () -> Unit,
-    icon: @Composable () -> Unit,
-    modifier: Modifier = Modifier,
-    enabled: Boolean = true,
-    label: @Composable (() -> Unit)? = null,
-    alwaysShowLabel: Boolean = true,
-    tint: Color
-) {
-    NavigationRailItem(
-        selected = selected,
-        onClick = onClick,
-        icon = icon,
-        modifier = modifier,
-        enabled = enabled,
-        label = label,
-        alwaysShowLabel = alwaysShowLabel,
-        selectedContentColor = tint,
-        interactionSource = remember { MutableInteractionSource() },
-    )
-}
-
-object M3UBottomBarDefaults {
-    @Composable
-    fun navigationBackgroundColor() = Color(0xff000000)
-
-    @Composable
-    fun navigationContentColor() = Color(0xFFEEEEEE)
-
-    @Composable
-    fun navigationSelectedItemColor() = LocalTheme.current.tint
-}
-
-private fun NavDestination?.isTopLevelDestinationInHierarchy(destination: TopLevelDestination) =
-    this?.hierarchy?.any {
-        it.route?.contains(destination.name, true) ?: false
-    } ?: false
 
 inline fun <reified D : Destination> NavDestination?.isInDestination(): Boolean {
     val targetRoute = when (D::class.java.name) {

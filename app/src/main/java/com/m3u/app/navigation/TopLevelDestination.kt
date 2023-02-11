@@ -36,3 +36,5 @@ enum class TopLevelDestination(
         titleTextId = R.string.title_setting
     )
 }
+
+typealias NavigateToTopLevelDestination = (TopLevelDestination) -> Unit

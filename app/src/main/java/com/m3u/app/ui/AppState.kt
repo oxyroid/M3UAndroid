@@ -28,13 +28,13 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 
 @Composable
-fun rememberM3UAppState(
+fun rememberAppState(
     @OptIn(ExperimentalAnimationApi::class)
     navController: NavHostController = rememberAnimatedNavController(),
     label: MutableStateFlow<String> = remember { MutableStateFlow("") },
     playerRect: MutableStateFlow<Rect> = remember { MutableStateFlow(Rect()) },
     coroutineScope: CoroutineScope = rememberCoroutineScope()
-): M3UAppState {
+): AppState {
     DisposableEffect(navController) {
         val listener = NavController.OnDestinationChangedListener { _, destination, _ ->
             Log.d("AppState", "OnDestinationChanged: $destination")
@@ -45,20 +45,19 @@ fun rememberM3UAppState(
         }
     }
     return remember(navController, label, playerRect, coroutineScope) {
-        M3UAppState(navController, label, playerRect, coroutineScope)
+        AppState(navController, label, playerRect, coroutineScope)
     }
 }
 
 @Stable
-class M3UAppState(
+class AppState(
     val navController: NavHostController,
     val label: MutableStateFlow<String> = MutableStateFlow(""),
     val playerRect: MutableStateFlow<Rect> = MutableStateFlow(Rect()),
     private val coroutineScope: CoroutineScope
 ) {
     val currentNavDestination: NavDestination?
-        @Composable get() = navController
-            .currentBackStackEntryAsState().value?.destination
+        @Composable get() = navController.currentBackStackEntryAsState().value?.destination
 
     val currentTopLevelDestination: TopLevelDestination?
         @Composable get() = when (currentNavDestination?.route) {
@@ -90,7 +89,7 @@ class M3UAppState(
         when (destination) {
             is Destination.Feed -> {
                 coroutineScope.launch {
-                    this@M3UAppState.label.emit(label)
+                    this@AppState.label.emit(label)
                 }
                 navController.navigationToFeed(destination.url)
             }
@@ -104,9 +103,7 @@ class M3UAppState(
     private val _appActions: MutableState<List<AppAction>> = mutableStateOf(emptyList())
     val appActions: State<List<AppAction>> get() = _appActions
 
-    val setAppActions: SetActions = {
-        _appActions.value = it
-    }
+    val setAppActions: SetActions = { _appActions.value = it }
 
     fun onBackClick() {
         navController.popBackStack()
