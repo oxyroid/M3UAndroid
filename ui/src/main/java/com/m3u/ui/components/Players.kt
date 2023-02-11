@@ -4,8 +4,8 @@ import android.graphics.Rect
 import android.util.Log
 import android.view.ViewGroup
 import androidx.annotation.OptIn
-import androidx.compose.material.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.getValue
@@ -28,6 +28,8 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
+import com.m3u.ui.model.Background
+import com.m3u.ui.model.LocalBackground
 import com.m3u.ui.util.LifecycleEffect
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -35,39 +37,39 @@ import kotlinx.coroutines.flow.MutableStateFlow
 @Immutable
 data class PlayerState(
     val url: String,
+    val resizeMode: Int,
     val keepScreenOn: Boolean,
     internal val playbackStateSource: MutableStateFlow<@State Int>,
     internal val rectSource: MutableStateFlow<Rect>,
     internal val exceptionSource: MutableStateFlow<PlaybackException?> = MutableStateFlow(null)
 ) {
     val playbackState: Flow<@State Int> get() = playbackStateSource
-//    val rect: Flow<Rect> get() = rectSource
+    //    val rect: Flow<Rect> get() = rectSource
     val exception: Flow<PlaybackException?> get() = exceptionSource
 }
 
 @Composable
 fun rememberPlayerState(
     url: String,
+    @OptIn(UnstableApi::class)
+    resizeMode: Int = AspectRatioFrameLayout.RESIZE_MODE_FIT,
     keepScreenOn: Boolean = true,
     state: MutableStateFlow<@State Int> = remember(url) { MutableStateFlow(Player.STATE_IDLE) },
     rect: MutableStateFlow<Rect> = remember(url) { MutableStateFlow(Rect()) },
     exception: MutableStateFlow<PlaybackException?> = remember(url) { MutableStateFlow(null) }
-): PlayerState = remember(url, keepScreenOn, state, exception) {
-    PlayerState(url, keepScreenOn, state, rect, exception)
+): PlayerState = remember(url, resizeMode, keepScreenOn, state, rect, exception) {
+    PlayerState(url, resizeMode, keepScreenOn, state, rect, exception)
 }
 
-@Composable
 @OptIn(UnstableApi::class)
+@Composable
 fun ExoPlayer(
     state: PlayerState,
-    modifier: Modifier = Modifier,
-    resizeMode: Int = AspectRatioFrameLayout.RESIZE_MODE_FIT
+    modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-    val (url, keepScreenOn, playerState, videoSize, exception) = state
-    val mediaItem = remember(url) {
-        MediaItem.fromUri(url)
-    }
+    val (url, resizeMode, keepScreenOn, playerState, videoSize, exception) = state
+    val mediaItem = remember(url) { MediaItem.fromUri(url) }
     val player = remember(mediaItem) {
         ExoPlayer.Builder(context)
             .build()
@@ -106,58 +108,47 @@ fun ExoPlayer(
         }
     }
 
-    PlayerBackground(modifier) {
-        var lifecycle: Lifecycle.Event by remember { mutableStateOf(Lifecycle.Event.ON_CREATE) }
-        LifecycleEffect { lifecycle = it }
-        AndroidView(
-            factory = { context ->
-                PlayerView(context).apply {
-                    useController = false
-                    setKeepScreenOn(keepScreenOn)
-                    setResizeMode(resizeMode)
-                    layoutParams = ViewGroup.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.MATCH_PARENT
-                    )
-                }
-            },
-            update = { view ->
-                view.apply {
-                    setPlayer(player)
-                }
-                when (lifecycle) {
-                    Lifecycle.Event.ON_RESUME -> {
-                        view.player?.play()
-                        view.onResume()
+    CompositionLocalProvider(LocalBackground provides Background(Color.Black)) {
+        Background(modifier) {
+            var lifecycle: Lifecycle.Event by remember { mutableStateOf(Lifecycle.Event.ON_CREATE) }
+            LifecycleEffect { lifecycle = it }
+            AndroidView(
+                factory = { context ->
+                    PlayerView(context).apply {
+                        useController = false
+                        setKeepScreenOn(keepScreenOn)
+                        setResizeMode(resizeMode)
+                        layoutParams = ViewGroup.LayoutParams(
+                            ViewGroup.LayoutParams.MATCH_PARENT,
+                            ViewGroup.LayoutParams.MATCH_PARENT
+                        )
                     }
-
-                    Lifecycle.Event.ON_STOP -> {
-                        view.player?.pause()
-                        view.onPause()
+                },
+                update = { view ->
+                    view.apply {
+                        setPlayer(player)
                     }
+                    when (lifecycle) {
+                        Lifecycle.Event.ON_RESUME -> {
+                            view.player?.play()
+                            view.onResume()
+                        }
 
-                    else -> {}
+                        Lifecycle.Event.ON_STOP -> {
+                            view.player?.pause()
+                            view.onPause()
+                        }
+
+                        else -> {}
+                    }
                 }
-            }
-        )
-        DisposableEffect(player) {
-            player.prepare()
-            onDispose {
-                player.release()
+            )
+            DisposableEffect(player) {
+                player.prepare()
+                onDispose {
+                    player.release()
+                }
             }
         }
     }
-}
-
-@Composable
-private fun PlayerBackground(
-    modifier: Modifier = Modifier,
-    content: @Composable () -> Unit
-) {
-    Surface(
-        color = Color.Black,
-        contentColor = Color.White,
-        modifier = modifier,
-        content = content
-    )
 }
