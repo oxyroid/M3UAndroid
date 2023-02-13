@@ -8,9 +8,9 @@ import com.google.accompanist.navigation.animation.composable
 import com.m3u.features.live.LiveRoute
 import com.m3u.ui.model.SetActions
 
-const val liveRoute = "live_route"
+private const val liveRoute = "live_route"
 private const val TYPE_ID = "id"
-private const val ROUTE_PLACEHOLDER = "$liveRoute/{$TYPE_ID}"
+const val LIVE_ROUTE_PLACEHOLDER = "$liveRoute/{$TYPE_ID}"
 private fun createLiveRoute(id: Int) = "$liveRoute/$id"
 
 fun NavController.navigateToLive(id: Int) {
@@ -27,7 +27,7 @@ fun NavGraphBuilder.liveScreen(
     playerRect: MutableState<Rect>
 ) {
     composable(
-        route = ROUTE_PLACEHOLDER,
+        route = LIVE_ROUTE_PLACEHOLDER,
         arguments = listOf(
             navArgument(TYPE_ID) {
                 type = NavType.IntType

@@ -8,9 +8,9 @@ import com.m3u.features.feed.FeedRoute
 import com.m3u.ui.model.SetActions
 
 
-const val feedRoute = "feed_route"
+private const val feedRoute = "feed_route"
 private const val TYPE_URL = "url"
-private const val ROUTE_PLACEHOLDER = "$feedRoute/{$TYPE_URL}"
+const val FEED_ROUTE_PLACEHOLDER = "$feedRoute/{$TYPE_URL}"
 private fun createFeedRoute(url: String) = "$feedRoute/$url"
 
 fun NavController.navigationToFeed(url: String, navOptions: NavOptions? = null) {
@@ -25,7 +25,7 @@ fun NavGraphBuilder.feedScreen(
     setAppActions: SetActions
 ) {
     composable(
-        route = ROUTE_PLACEHOLDER,
+        route = FEED_ROUTE_PLACEHOLDER,
         arguments = listOf(
             navArgument(TYPE_URL) {
                 type = NavType.StringType

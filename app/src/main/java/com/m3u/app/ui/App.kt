@@ -27,8 +27,8 @@ import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.navigation.NavDestination
 import com.m3u.app.navigation.Destination
 import com.m3u.app.navigation.M3UNavHost
-import com.m3u.features.feed.navigation.feedRoute
-import com.m3u.features.live.navigation.liveRoute
+import com.m3u.features.feed.navigation.FEED_ROUTE_PLACEHOLDER
+import com.m3u.features.live.navigation.LIVE_ROUTE_PLACEHOLDER
 import com.m3u.ui.components.AppTopBar
 import com.m3u.ui.components.Background
 import com.m3u.ui.components.IconButton
@@ -69,8 +69,6 @@ fun App(
                         ?.titleTextId
                         ?.let { stringResource(it) }
                     val label by appState.label
-                    val actions by appState.appActions
-
                     val text by remember(topLevelLabel) {
                         derivedStateOf { topLevelLabel ?: label }
                     }
@@ -80,6 +78,7 @@ fun App(
                         text = text,
                         visible = isSystemBarVisible,
                         actions = {
+                            val actions by appState.appActions
                             actions.forEach { action ->
                                 IconButton(
                                     icon = action.icon,
@@ -111,7 +110,7 @@ fun App(
                                     destinations = appState.topLevelDestinations,
                                     navigateToTopLevelDestination = appState::navigateToTopLevelDestination,
                                     currentNavDestination = appState.currentNavDestination,
-                                    modifier = Modifier.testTag("M3UBottomBar")
+                                    modifier = Modifier.testTag("BottomNavigationSheet")
                                 )
                             }
                         }
@@ -124,9 +123,9 @@ fun App(
 
 inline fun <reified D : Destination> NavDestination?.isInDestination(): Boolean {
     val targetRoute = when (D::class.java.name) {
-        Destination.Live::class.java.name -> liveRoute
-        Destination.Feed::class.java.name -> feedRoute
+        Destination.Live::class.java.name -> LIVE_ROUTE_PLACEHOLDER
+        Destination.Feed::class.java.name -> FEED_ROUTE_PLACEHOLDER
         else -> return false
     }
-    return (this?.route?.startsWith(targetRoute, ignoreCase = true) ?: false)
+    return this?.route == targetRoute
 }
