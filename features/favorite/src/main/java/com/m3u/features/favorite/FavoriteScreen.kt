@@ -20,8 +20,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.core.util.context.toast
 import com.m3u.features.favorite.components.FavoriteLiveItem
 import com.m3u.features.favorite.navigation.NavigateToLive
-import com.m3u.features.favorite.vo.LiveDetail
-import com.m3u.ui.model.AppAction
 import com.m3u.ui.model.SetActions
 import com.m3u.ui.util.EventHandler
 import com.m3u.ui.util.LifecycleEffect
@@ -42,10 +40,8 @@ internal fun FavouriteRoute(
     LifecycleEffect { event ->
         when (event) {
             Lifecycle.Event.ON_START -> {
-                val actions = listOf<AppAction>()
-                currentSetAppActions(actions)
+                currentSetAppActions(emptyList())
             }
-
             Lifecycle.Event.ON_PAUSE -> {
                 currentSetAppActions(emptyList())
             }

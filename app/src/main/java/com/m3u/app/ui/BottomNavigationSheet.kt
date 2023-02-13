@@ -4,7 +4,6 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.material.Icon
 import androidx.compose.material.NavigationRailItem
 import androidx.compose.material.Text
-import com.m3u.ui.model.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -16,6 +15,7 @@ import androidx.navigation.NavDestination.Companion.hierarchy
 import com.m3u.app.navigation.NavigateToTopLevelDestination
 import com.m3u.app.navigation.TopLevelDestination
 import com.m3u.ui.components.NavigationSheet
+import com.m3u.ui.model.Icon
 import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.LocalTheme
 

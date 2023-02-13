@@ -1,15 +1,6 @@
 package com.m3u.features.feed
 
-import android.content.res.Configuration.ORIENTATION_LANDSCAPE
-import android.content.res.Configuration.ORIENTATION_PORTRAIT
-import android.content.res.Configuration.UI_MODE_TYPE_APPLIANCE
-import android.content.res.Configuration.UI_MODE_TYPE_CAR
-import android.content.res.Configuration.UI_MODE_TYPE_DESK
-import android.content.res.Configuration.UI_MODE_TYPE_MASK
-import android.content.res.Configuration.UI_MODE_TYPE_NORMAL
-import android.content.res.Configuration.UI_MODE_TYPE_TELEVISION
-import android.content.res.Configuration.UI_MODE_TYPE_VR_HEADSET
-import android.content.res.Configuration.UI_MODE_TYPE_WATCH
+import android.content.res.Configuration.*
 import androidx.annotation.StringRes
 import androidx.compose.animation.*
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -47,11 +38,7 @@ import com.m3u.core.wrapper.Event
 import com.m3u.data.entity.Live
 import com.m3u.features.feed.components.LiveItem
 import com.m3u.ui.components.AlertDialog
-import com.m3u.ui.model.AppAction
-import com.m3u.ui.model.Icon
-import com.m3u.ui.model.LocalSpacing
-import com.m3u.ui.model.LocalTheme
-import com.m3u.ui.model.SetActions
+import com.m3u.ui.model.*
 import com.m3u.ui.util.EventHandler
 import com.m3u.ui.util.LifecycleEffect
 import com.m3u.ui.util.isAtTop

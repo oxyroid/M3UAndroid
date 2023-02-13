@@ -7,12 +7,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.graphics.Color
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
-import com.m3u.ui.model.Background
-import com.m3u.ui.model.DayTheme
-import com.m3u.ui.model.LocalBackground
-import com.m3u.ui.model.LocalTheme
-import com.m3u.ui.model.NightTheme
-import com.m3u.ui.model.Typography
+import com.m3u.ui.model.*
 
 @Composable
 fun M3ULocalProvider(content: @Composable () -> Unit) {

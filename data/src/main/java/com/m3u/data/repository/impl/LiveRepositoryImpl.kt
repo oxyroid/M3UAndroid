@@ -30,7 +30,7 @@ class LiveRepositoryImpl @Inject constructor(
 
     override suspend fun get(id: Int): Live? = try {
         liveDao.get(id)
-    }catch (e: Exception) {
+    } catch (e: Exception) {
         logger.log(e)
         null
     }

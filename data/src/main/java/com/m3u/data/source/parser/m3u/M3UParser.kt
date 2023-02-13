@@ -5,7 +5,7 @@ import com.m3u.core.util.collection.loadLine
 import com.m3u.data.source.parser.Parser
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.util.Properties
+import java.util.*
 import java.util.stream.Stream
 import kotlin.streams.asSequence
 
