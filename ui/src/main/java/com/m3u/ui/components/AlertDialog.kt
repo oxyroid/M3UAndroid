@@ -15,11 +15,11 @@ typealias OnConfirm = () -> Unit
 typealias OnDismiss = () -> Unit
 
 @Composable
-fun Dialog(
+fun AlertDialog(
     title: String,
     text: String,
-    confirm: String,
-    dismiss: String,
+    confirm: String?,
+    dismiss: String?,
     onDismissRequest: OnDismissRequest,
     onConfirm: OnConfirm,
     onDismiss: OnDismiss,
@@ -42,8 +42,16 @@ fun Dialog(
                 style = MaterialTheme.typography.body1
             )
         },
-        confirmButton = { TextButton(text = confirm, onClick = onConfirm) },
-        dismissButton = { TextButton(text = dismiss, onClick = onDismiss) },
+        confirmButton = {
+            confirm?.let {
+                TextButton(text = it, onClick = onConfirm)
+            }
+        },
+        dismissButton = {
+            dismiss?.let {
+                TextButton(text = it, onClick = onDismiss)
+            }
+        },
         backgroundColor = backgroundColor,
         contentColor = contentColor,
         modifier = modifier.padding(LocalSpacing.current.medium)
