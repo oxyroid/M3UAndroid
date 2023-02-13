@@ -17,4 +17,4 @@
 .cxx
 local.properties
 jks.txt
-personal.jks
+*.jks
