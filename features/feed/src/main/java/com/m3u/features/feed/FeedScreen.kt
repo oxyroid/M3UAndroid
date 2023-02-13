@@ -10,52 +10,43 @@ import android.content.res.Configuration.UI_MODE_TYPE_NORMAL
 import android.content.res.Configuration.UI_MODE_TYPE_TELEVISION
 import android.content.res.Configuration.UI_MODE_TYPE_VR_HEADSET
 import android.content.res.Configuration.UI_MODE_TYPE_WATCH
+import androidx.annotation.StringRes
+import androidx.compose.animation.*
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.*
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.material.Divider
-import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Text
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.ArrowUpward
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.pullrefresh.PullRefreshIndicator
 import androidx.compose.material.pullrefresh.pullRefresh
 import androidx.compose.material.pullrefresh.rememberPullRefreshState
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.tv.foundation.lazy.grid.TvGridCells
 import androidx.tv.foundation.lazy.grid.TvLazyVerticalGrid
 import androidx.tv.foundation.lazy.grid.items
+import androidx.tv.foundation.lazy.grid.rememberTvLazyGridState
 import com.m3u.core.util.context.toast
+import com.m3u.core.wrapper.Event
 import com.m3u.data.entity.Live
 import com.m3u.features.feed.components.LiveItem
-import com.m3u.ui.components.Dialog
+import com.m3u.ui.components.AlertDialog
 import com.m3u.ui.model.AppAction
 import com.m3u.ui.model.Icon
 import com.m3u.ui.model.LocalSpacing
@@ -63,6 +54,8 @@ import com.m3u.ui.model.LocalTheme
 import com.m3u.ui.model.SetActions
 import com.m3u.ui.util.EventHandler
 import com.m3u.ui.util.LifecycleEffect
+import com.m3u.ui.util.isAtTop
+import kotlinx.coroutines.flow.MutableStateFlow
 
 @Composable
 internal fun FeedRoute(
@@ -113,30 +106,21 @@ internal fun FeedRoute(
     FeedScreen(
         useCommonUIMode = state.useCommonUIMode,
         lives = state.lives,
+        scrollUp = state.scrollUp,
         refreshing = state.fetching,
         onSyncingLatest = { viewModel.onEvent(FeedEvent.FetchFeed) },
         navigateToLive = navigateToLive,
-        onLiveAction = { dialogState = DialogState.Ready(it) },
+        onLiveAction = { dialogState = DialogState.Menu(it) },
+        onScrollUp = { viewModel.onEvent(FeedEvent.ScrollUp) },
         modifier = modifier.fillMaxSize()
     )
 
-    if (dialogState is DialogState.Ready) {
-        Dialog(
-            title = stringResource(R.string.dialog_favourite_title),
-            text = stringResource(R.string.dialog_favourite_content),
-            confirm = stringResource(R.string.dialog_favourite_confirm),
-            dismiss = stringResource(R.string.dialog_favourite_dismiss),
-            onDismissRequest = { dialogState = DialogState.Idle },
-            onConfirm = {
-                val current = dialogState
-                if (current is DialogState.Ready) {
-                    viewModel.onEvent(FeedEvent.FavouriteLive(current.id))
-                }
-                dialogState = DialogState.Idle
-            },
-            onDismiss = { dialogState = DialogState.Idle }
-        )
-    }
+    FeedDialog(
+        state = dialogState,
+        onUpdate = { dialogState = it },
+        onFavorite = { viewModel.onEvent(FeedEvent.FavouriteLive(it)) },
+        onMute = { viewModel.onEvent(FeedEvent.MuteLive(it)) }
+    )
 }
 
 @OptIn(ExperimentalMaterialApi::class)
@@ -144,10 +128,12 @@ internal fun FeedRoute(
 private fun FeedScreen(
     useCommonUIMode: Boolean,
     lives: List<Live>,
+    scrollUp: Event<Unit>,
     refreshing: Boolean,
     onSyncingLatest: () -> Unit,
     navigateToLive: (Int) -> Unit,
     onLiveAction: (Int) -> Unit,
+    onScrollUp: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val configuration = LocalConfiguration.current
@@ -158,10 +144,13 @@ private fun FeedScreen(
     Box(
         modifier = Modifier.pullRefresh(state)
     ) {
+        val isAtTopSource = remember { MutableStateFlow(true) }
         when (configuration.orientation) {
             ORIENTATION_LANDSCAPE -> {
                 LandscapeOrientationContent(
                     lives = lives,
+                    scrollUp = scrollUp,
+                    isAtTopSource = isAtTopSource,
                     navigateToLive = navigateToLive,
                     onLiveAction = onLiveAction,
                     useCommonUIMode = useCommonUIMode,
@@ -172,6 +161,8 @@ private fun FeedScreen(
             ORIENTATION_PORTRAIT -> {
                 PortraitOrientationContent(
                     lives = lives,
+                    scrollUp = scrollUp,
+                    isAtTopSource = isAtTopSource,
                     navigateToLive = navigateToLive,
                     onLiveAction = onLiveAction,
                     modifier = modifier
@@ -180,7 +171,6 @@ private fun FeedScreen(
 
             else -> {}
         }
-
         PullRefreshIndicator(
             refreshing = refreshing,
             state = state,
@@ -189,12 +179,35 @@ private fun FeedScreen(
             contentColor = LocalTheme.current.onTint,
             backgroundColor = LocalTheme.current.tint
         )
+        val isAtTop by isAtTopSource.collectAsStateWithLifecycle()
+        @OptIn(ExperimentalAnimationApi::class)
+        AnimatedVisibility(
+            visible = !isAtTop,
+            enter = scaleIn(),
+            exit = scaleOut(),
+            modifier = Modifier
+                .padding(LocalSpacing.current.medium)
+                .align(Alignment.BottomEnd)
+        ) {
+            FloatingActionButton(
+                onClick = onScrollUp,
+                backgroundColor = LocalTheme.current.tint,
+                contentColor = LocalTheme.current.onTint
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.ArrowUpward,
+                    contentDescription = null
+                )
+            }
+        }
     }
 }
 
 @Composable
 private fun LandscapeOrientationContent(
     lives: List<Live>,
+    scrollUp: Event<Unit>,
+    isAtTopSource: MutableStateFlow<Boolean>,
     navigateToLive: (Int) -> Unit,
     onLiveAction: (Int) -> Unit,
     useCommonUIMode: Boolean,
@@ -202,8 +215,17 @@ private fun LandscapeOrientationContent(
 ) {
     val configuration = LocalConfiguration.current
     val type = configuration.uiMode and UI_MODE_TYPE_MASK
+
     if (useCommonUIMode || type == UI_MODE_TYPE_NORMAL) {
+        val state = rememberLazyGridState()
+        LaunchedEffect(state.isAtTop) {
+            isAtTopSource.emit(state.isAtTop)
+        }
+        EventHandler(scrollUp) {
+            state.scrollToItem(0)
+        }
         LazyVerticalGrid(
+            state = state,
             columns = GridCells.Fixed(4),
             modifier = modifier.fillMaxSize()
         ) {
@@ -223,6 +245,8 @@ private fun LandscapeOrientationContent(
             UI_MODE_TYPE_TELEVISION -> {
                 TelevisionUIModeContent(
                     lives = lives,
+                    isAtTopSource = isAtTopSource,
+                    scrollUp = scrollUp,
                     navigateToLive = navigateToLive,
                     onLiveAction = onLiveAction,
                     modifier = modifier
@@ -243,12 +267,22 @@ private fun LandscapeOrientationContent(
 @Composable
 private fun PortraitOrientationContent(
     lives: List<Live>,
+    scrollUp: Event<Unit>,
+    isAtTopSource: MutableStateFlow<Boolean>,
     navigateToLive: (Int) -> Unit,
     onLiveAction: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val state = rememberLazyListState()
+    LaunchedEffect(state.isAtTop) {
+        isAtTopSource.emit(state.isAtTop)
+    }
     val groups = remember(lives) { lives.groupBy { it.group } }
+    EventHandler(scrollUp) {
+        state.scrollToItem(0)
+    }
     LazyColumn(
+        state = state,
         modifier = modifier.fillMaxSize(),
         verticalArrangement = Arrangement.spacedBy(1.dp)
     ) {
@@ -293,6 +327,8 @@ private fun PortraitOrientationContent(
 @Composable
 private fun TelevisionUIModeContent(
     lives: List<Live>,
+    isAtTopSource: MutableStateFlow<Boolean>,
+    scrollUp: Event<Unit>,
     navigateToLive: (Int) -> Unit,
     onLiveAction: (Int) -> Unit,
     modifier: Modifier = Modifier
@@ -305,7 +341,15 @@ private fun TelevisionUIModeContent(
     )
     // FIXME: https://issuetracker.google.com/issues/267058478
     return
+    val state = rememberTvLazyGridState()
+    LaunchedEffect(state.isAtTop) {
+        isAtTopSource.emit(state.isAtTop)
+    }
+    EventHandler(scrollUp) {
+        state.scrollToItem(0)
+    }
     TvLazyVerticalGrid(
+        state = state,
         columns = TvGridCells.Fixed(4),
         modifier = modifier.fillMaxSize()
     ) {
@@ -355,7 +399,117 @@ private fun UnsupportedUIModeContent(
     }
 }
 
+@Composable
+private fun FeedDialog(
+    state: DialogState,
+    onUpdate: (DialogState) -> Unit,
+    onFavorite: (Int) -> Unit,
+    onMute: (Int) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val title = when (state) {
+        DialogState.Idle -> ""
+        is DialogState.Menu -> ""
+        is DialogState.Favorite -> stringResource(R.string.dialog_favourite_title)
+        is DialogState.Mute -> stringResource(R.string.dialog_mute_title)
+    }
+
+    val content = when (state) {
+        DialogState.Idle -> ""
+        is DialogState.Menu -> ""
+        is DialogState.Favorite -> stringResource(R.string.dialog_favourite_content)
+        is DialogState.Mute -> stringResource(R.string.dialog_mute_content)
+    }
+    val confirm = when (state) {
+        DialogState.Idle -> null
+        is DialogState.Menu -> null
+        is DialogState.Favorite -> stringResource(R.string.dialog_favourite_confirm)
+        is DialogState.Mute -> stringResource(R.string.dialog_mute_confirm)
+    }
+    val dismiss = when (state) {
+        DialogState.Idle -> null
+        is DialogState.Menu -> stringResource(R.string.dialog_menu_dismiss)
+        is DialogState.Favorite -> stringResource(R.string.dialog_favourite_dismiss)
+        is DialogState.Mute -> stringResource(R.string.dialog_mute_dismiss)
+    }
+
+    fun onConfirm() = when (state) {
+        DialogState.Idle -> {}
+        is DialogState.Menu -> {}
+        is DialogState.Favorite -> {
+            onUpdate(DialogState.Idle)
+            onFavorite(state.id)
+        }
+        is DialogState.Mute -> {
+            onUpdate(DialogState.Idle)
+            onMute(state.id)
+        }
+    }
+
+    fun onDismiss() = when (state) {
+        DialogState.Idle -> {}
+        is DialogState.Menu -> onUpdate(DialogState.Idle)
+        is DialogState.Favorite -> onUpdate(DialogState.Menu(state.id))
+        is DialogState.Mute -> onUpdate(DialogState.Menu(state.id))
+    }
+
+    when (state) {
+        DialogState.Idle -> {}
+        is DialogState.Menu -> {
+            Dialog(
+                onDismissRequest = { onUpdate(DialogState.Idle) }
+            ) {
+                Card(
+                    backgroundColor = LocalTheme.current.background,
+                    contentColor = LocalTheme.current.onBackground
+                ) {
+                    Column {
+                        MenuItem(
+                            titleResId = R.string.dialog_favourite_title,
+                            onUpdate = { onUpdate(DialogState.Favorite(state.id)) },
+                        )
+                        MenuItem(
+                            titleResId = R.string.dialog_mute_title,
+                            onUpdate = { onUpdate(DialogState.Mute(state.id)) },
+                        )
+                    }
+                }
+            }
+        }
+        else -> {
+            AlertDialog(
+                title = title,
+                text = content,
+                confirm = confirm,
+                dismiss = dismiss,
+                onDismissRequest = { onUpdate(DialogState.Idle) },
+                onConfirm = ::onConfirm,
+                onDismiss = ::onDismiss,
+                modifier = modifier
+            )
+        }
+    }
+}
+
 private sealed class DialogState {
     object Idle : DialogState()
-    data class Ready(val id: Int) : DialogState()
+    data class Menu(val id: Int) : DialogState()
+    data class Favorite(val id: Int) : DialogState()
+    data class Mute(val id: Int) : DialogState()
+}
+
+@Composable
+private fun MenuItem(
+    @StringRes titleResId: Int,
+    onUpdate: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable(onClick = onUpdate)
+            .padding(LocalSpacing.current.medium)
+    ) {
+        Text(stringResource(titleResId))
+    }
 }

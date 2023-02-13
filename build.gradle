@@ -6,7 +6,7 @@ buildscript {
         dagger_version = "2.44.2"
     }
     dependencies {
-        // classpath("org.jetbrains.kotlin:kotlin-serialization:1.7.21")
+        classpath("org.jetbrains.kotlin:kotlin-serialization:$kotlin_version")
     }
 }
 

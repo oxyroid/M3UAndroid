@@ -3,10 +3,10 @@ package com.m3u.features.setting
 import android.app.Application
 import androidx.lifecycle.viewModelScope
 import com.m3u.core.architecture.BaseViewModel
+import com.m3u.core.architecture.Configuration
 import com.m3u.core.architecture.PackageProvider
 import com.m3u.core.wrapper.Resource
 import com.m3u.core.wrapper.eventOf
-import com.m3u.data.Configuration
 import com.m3u.data.repository.FeedRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.launchIn

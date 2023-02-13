@@ -1,12 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="scheme_unknown">未知</string>
-    <string name="dialog_favourite_title">喜欢这个频道？</string>
+    <string name="dialog_menu_title">屏蔽这个频道？</string>
+
+    <string name="dialog_favourite_title">喜欢</string>
     <string name="dialog_favourite_content">
         这个频道将被加入到您的喜欢列表，更新其订阅源可能会导致该频道丢失，或者不被更新。
         您可以到设置中调整策略后再收藏，或者在收藏列表里为每个频道进行单独设置。
     </string>
+    <string name="dialog_mute_title">屏蔽</string>
+    <string name="dialog_mute_content">包含此视频流地址的频道将不再出现在您的列表中。</string>
+
+    <string name="dialog_menu_confirm">屏蔽这个频道？</string>
+    <string name="dialog_menu_dismiss">屏蔽这个频道？</string>
+
     <string name="dialog_favourite_confirm">确认</string>
-    <string name="dialog_favourite_dismiss">知道了</string>
+    <string name="dialog_favourite_dismiss">返回</string>
+
+    <string name="dialog_mute_confirm">确认</string>
+    <string name="dialog_mute_dismiss">返回</string>
+
     <string name="error_observe_feed">订阅不存在（%s）</string>
 </resources>

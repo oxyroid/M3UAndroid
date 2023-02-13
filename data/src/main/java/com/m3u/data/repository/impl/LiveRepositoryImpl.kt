@@ -1,5 +1,6 @@
 package com.m3u.data.repository.impl
 
+import com.m3u.core.architecture.Configuration
 import com.m3u.core.architecture.Logger
 import com.m3u.data.dao.LiveDao
 import com.m3u.data.entity.Live
@@ -10,7 +11,8 @@ import javax.inject.Inject
 
 class LiveRepositoryImpl @Inject constructor(
     private val liveDao: LiveDao,
-    private val logger: Logger
+    private val logger: Logger,
+    private val configuration: Configuration
 ) : LiveRepository {
     override fun observe(id: Int): Flow<Live?> = try {
         liveDao.observeById(id)
@@ -24,6 +26,13 @@ class LiveRepositoryImpl @Inject constructor(
     } catch (e: Exception) {
         logger.log(e)
         flow {}
+    }
+
+    override suspend fun get(id: Int): Live? = try {
+        liveDao.get(id)
+    }catch (e: Exception) {
+        logger.log(e)
+        null
     }
 
     override suspend fun getByFeedUrl(feedUrl: String): List<Live> = try {
@@ -44,5 +53,16 @@ class LiveRepositoryImpl @Inject constructor(
         liveDao.setFavouriteLive(id, target)
     } catch (e: Exception) {
         logger.log(e)
+    }
+
+    override suspend fun muteByUrl(url: String) {
+        try {
+            val urls = configuration.mutedUrls
+            if (url !in urls) {
+                configuration.mutedUrls = (urls + url)
+            }
+        } catch (e: Exception) {
+            logger.log(e)
+        }
     }
 }

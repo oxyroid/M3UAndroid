@@ -136,7 +136,9 @@ private val @State Int.displayText: String
     @Composable get() = when (this) {
         STATE_IDLE -> R.string.playback_state_idle
         STATE_BUFFERING -> R.string.playback_state_buffering
-        STATE_READY -> R.string.playback_state_ready
+        STATE_READY -> null
         STATE_ENDED -> R.string.playback_state_ended
-        else -> error("invalidate playback state: $this")
-    }.let { stringResource(id = it) }
+        else -> null
+    }
+        ?.let { stringResource(id = it) }
+        .orEmpty()

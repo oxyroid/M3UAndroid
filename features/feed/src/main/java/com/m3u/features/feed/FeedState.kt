@@ -8,6 +8,7 @@ data class FeedState(
     val url: String = "",
     val lives: List<Live> = emptyList(),
     val fetching: Boolean = false,
+    val scrollUp: Event<Unit> = handledEvent(),
     val message: Event<String> = handledEvent(),
     val useCommonUIMode: Boolean = false
 )

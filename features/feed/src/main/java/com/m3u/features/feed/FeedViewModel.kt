@@ -3,9 +3,9 @@ package com.m3u.features.feed
 import android.app.Application
 import androidx.lifecycle.viewModelScope
 import com.m3u.core.architecture.BaseViewModel
+import com.m3u.core.architecture.Configuration
 import com.m3u.core.wrapper.Resource
 import com.m3u.core.wrapper.eventOf
-import com.m3u.data.Configuration
 import com.m3u.data.repository.FeedRepository
 import com.m3u.data.repository.LiveRepository
 import com.m3u.data.repository.fetch
@@ -79,6 +79,30 @@ class FeedViewModel @Inject constructor(
                     liveRepository.setFavourite(id, true)
                 }
             }
+
+            FeedEvent.ScrollUp -> {
+                writable.update {
+                    it.copy(
+                        scrollUp = eventOf(Unit)
+                    )
+                }
+            }
+
+            is FeedEvent.MuteLive -> {
+                viewModelScope.launch {
+                    val id = event.id
+                    val live = liveRepository.get(id)
+                    if (live == null) {
+                        writable.update {
+                            it.copy(
+                                message = eventOf("Live is not existed!")
+                            )
+                        }
+                    } else {
+                        liveRepository.muteByUrl(live.url)
+                    }
+                }
+            }
         }
     }
 
@@ -106,8 +130,10 @@ class FeedViewModel @Inject constructor(
     ) {
         liveRepository.observeByFeedUrl(feedUrl)
             .onEach { lives ->
+                val mutedUrls = configuration.mutedUrls
+                val filteredLives = lives.filter { it.url !in mutedUrls }
                 writable.update {
-                    it.copy(lives = lives)
+                    it.copy(lives = filteredLives)
                 }
             }
             .launchIn(coroutineScope)

@@ -1,7 +1,6 @@
 plugins {
     id "com.android.library"
     id "org.jetbrains.kotlin.android"
-//    id "kotlinx-serialization"
     id "kotlin-parcelize"
 }
 
@@ -34,6 +33,4 @@ dependencies {
     implementation libs.androidx.core.core.ktx
     implementation libs.androidx.appcompat.appcompat
     implementation libs.androidx.compose.ui.ui
-
-//    implementation "org.jetbrains.kotlinx:kotlinx-serialization-json:1.4.1"
 }

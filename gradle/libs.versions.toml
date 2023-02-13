@@ -13,6 +13,7 @@ androidx-tv = "1.0.0-alpha03"
 androidx-media3 = "1.0.0-beta03"
 io-coil = "2.2.2"
 androidx-room = "2.5.0"
+kotlinx-serialization-json = "1.4.1"
 
 [libraries]
 androidx-core-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "androidx-core" }
@@ -45,6 +46,7 @@ io-coil-kt-coil-compose = { group = "io.coil-kt", name = "coil-compose", version
 androidx-room-room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "androidx-room" }
 androidx-room-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "androidx-room" }
 androidx-room-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "androidx-room" }
+org-jetbrains-kotlinx-kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinx-serialization-json" }
 
 [bundles]
 androidx-compose = ["androidx-compose-ui-ui", "androidx-compose-runtime-runtime", "androidx-compose-foundation-foundation", "androidx-compose-animation-animation", "androidx-compose-material-material"]

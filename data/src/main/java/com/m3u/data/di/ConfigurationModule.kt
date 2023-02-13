@@ -2,7 +2,7 @@
 
 package com.m3u.data.di
 
-import com.m3u.data.Configuration
+import com.m3u.core.architecture.Configuration
 import com.m3u.data.SharedConfiguration
 import dagger.Binds
 import dagger.Module
