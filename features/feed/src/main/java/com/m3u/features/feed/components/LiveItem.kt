@@ -1,20 +1,18 @@
 package com.m3u.features.feed.components
 
+import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material.Card
-import androidx.compose.material.LocalContentAlpha
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Text
+import androidx.compose.foundation.layout.*
+import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -54,13 +52,29 @@ internal fun LiveItem(
                     onLongClick = onLongClick
                 )
         ) {
-            Image(
-                model = live.cover,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .aspectRatio(4 / 3f)
-            )
+            Box {
+                Image(
+                    model = live.cover,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .aspectRatio(4 / 3f)
+                )
+                Crossfade(
+                    targetState = live.favourite,
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(spacing.medium)
+                ) { visible ->
+                    if (visible) {
+                        Icon(
+                            imageVector = Icons.Filled.Favorite,
+                            tint = Color.Red,
+                            contentDescription = "favourite live"
+                        )
+                    }
+                }
+            }
             Text(
                 text = live.title,
                 style = MaterialTheme.typography.body1,
