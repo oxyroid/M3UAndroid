@@ -1,5 +1,6 @@
 package com.m3u.data.repository
 
+import com.m3u.core.annotation.FeedStrategy
 import com.m3u.core.wrapper.Resource
 import com.m3u.core.wrapper.resourceChannelFlow
 import com.m3u.core.wrapper.sendMessage
@@ -12,16 +13,23 @@ interface FeedRepository {
     fun observe(url: String): Flow<Feed?>
     fun observeAll(): Flow<List<Feed>>
     suspend fun get(url: String): Feed?
-    fun subscribe(title: String, url: String): Flow<Resource<Unit>>
+    fun subscribe(
+        title: String,
+        url: String,
+        @FeedStrategy strategy: Int = FeedStrategy.ALL
+    ): Flow<Resource<Unit>>
 }
 
-fun FeedRepository.fetch(url: String): Flow<Resource<Unit>> = resourceChannelFlow {
+fun FeedRepository.fetch(
+    url: String,
+    @FeedStrategy strategy: Int
+): Flow<Resource<Unit>> = resourceChannelFlow {
     val feed = get(url)
     if (feed == null) {
         sendMessage("Cannot find feed: $url")
         return@resourceChannelFlow
     }
-    subscribe(feed.title, url)
+    subscribe(feed.title, url, strategy)
         .onEach(::send)
         .launchIn(this)
 }

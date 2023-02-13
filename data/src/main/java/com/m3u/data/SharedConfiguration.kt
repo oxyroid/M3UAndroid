@@ -2,7 +2,7 @@ package com.m3u.data
 
 import android.content.Context
 import android.content.SharedPreferences
-import com.m3u.core.annotation.SyncMode
+import com.m3u.core.annotation.FeedStrategy
 import com.m3u.core.architecture.Configuration
 import com.m3u.core.util.context.boolean
 import com.m3u.core.util.context.int
@@ -22,8 +22,8 @@ class SharedConfiguration @Inject constructor(
     private val sharedPreferences: SharedPreferences =
         context.getSharedPreferences(SHARED_SETTINGS, Context.MODE_PRIVATE)
 
-    @SyncMode
-    override var syncMode: Int by sharedPreferences.int(SyncMode.DEFAULT)
+    @FeedStrategy
+    override var feedStrategy: Int by sharedPreferences.int(FeedStrategy.ALL)
     override var useCommonUIMode: Boolean by sharedPreferences.boolean(true)
     private var mutedUrlsEncoded: String? by sharedPreferences.string()
     override var mutedUrls: List<String> = emptyList()

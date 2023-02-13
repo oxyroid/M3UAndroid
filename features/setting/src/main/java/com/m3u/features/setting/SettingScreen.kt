@@ -2,6 +2,10 @@ package com.m3u.features.setting
 
 import android.content.res.Configuration
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.rememberScrollableState
 import androidx.compose.foundation.gestures.scrollable
@@ -23,8 +27,8 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.m3u.core.annotation.SetSyncMode
-import com.m3u.core.annotation.SyncMode
+import com.m3u.core.annotation.FeedStrategy
+import com.m3u.core.annotation.SetStrategy
 import com.m3u.core.util.context.toast
 import com.m3u.features.setting.components.CheckBoxPreference
 import com.m3u.features.setting.components.FoldPreference
@@ -32,8 +36,10 @@ import com.m3u.features.setting.components.TextPreference
 import com.m3u.ui.components.OuterColumn
 import com.m3u.ui.components.TextButton
 import com.m3u.ui.components.TextField
+import com.m3u.ui.components.WorkInProgressLottie
 import com.m3u.ui.model.AppAction
 import com.m3u.ui.model.LocalSpacing
+import com.m3u.ui.model.LocalTheme
 import com.m3u.ui.model.SetActions
 import com.m3u.ui.util.EventHandler
 import com.m3u.ui.util.LifecycleEffect
@@ -72,7 +78,7 @@ internal fun SettingRoute(
         title = state.title,
         url = state.url,
         version = state.version,
-        syncMode = state.syncMode,
+        feedStrategy = state.feedStrategy,
         onTitle = { viewModel.onEvent(SettingEvent.OnTitle(it)) },
         onUrl = { viewModel.onEvent(SettingEvent.OnUrl(it)) },
         onSubscribe = { viewModel.onEvent(SettingEvent.OnSubscribe) },
@@ -89,15 +95,16 @@ private fun SettingScreen(
     version: String,
     title: String,
     url: String,
-    @SyncMode syncMode: Int,
+    @FeedStrategy feedStrategy: Int,
     onTitle: (String) -> Unit,
     onUrl: (String) -> Unit,
     onSubscribe: () -> Unit,
-    onSyncMode: SetSyncMode,
+    onSyncMode: SetStrategy,
     useCommonUIMode: Boolean,
     onUIMode: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    var fold: Fold by remember { mutableStateOf(Fold.NONE) }
     Box(
         modifier = Modifier.testTag("features:setting")
     ) {
@@ -105,13 +112,15 @@ private fun SettingScreen(
         when (configuration.orientation) {
             Configuration.ORIENTATION_PORTRAIT -> {
                 PortraitOrientationContent(
+                    fold = fold,
                     title = title,
                     url = url,
                     subscribeEnable = subscribeEnable,
+                    onFold = { fold = it },
                     onTitle = onTitle,
                     onUrl = onUrl,
                     onSubscribe = onSubscribe,
-                    syncMode = syncMode,
+                    feedStrategy = feedStrategy,
                     onSyncMode = onSyncMode,
                     version = version,
                     modifier = modifier
@@ -122,16 +131,17 @@ private fun SettingScreen(
                         )
                 )
             }
-
             Configuration.ORIENTATION_LANDSCAPE -> {
                 LandscapeOrientationContent(
+                    fold = fold,
                     title = title,
                     url = url,
                     subscribeEnable = subscribeEnable,
+                    onFold = { fold = it },
                     onTitle = onTitle,
                     onUrl = onUrl,
                     onSubscribe = onSubscribe,
-                    syncMode = syncMode,
+                    feedStrategy = feedStrategy,
                     onSyncMode = onSyncMode,
                     useCommonUIMode = useCommonUIMode,
                     onUIMode = onUIMode,
@@ -143,89 +153,92 @@ private fun SettingScreen(
                         )
                 )
             }
-
             else -> {}
         }
     }
-}
-
-@Composable
-private fun PortraitOrientationContent(
-    title: String,
-    url: String,
-    subscribeEnable: Boolean,
-    onTitle: (String) -> Unit,
-    onUrl: (String) -> Unit,
-    onSubscribe: () -> Unit,
-    syncMode: @SyncMode Int,
-    onSyncMode: SetSyncMode,
-    version: String,
-    modifier: Modifier = Modifier
-) {
-    var fold: Fold by remember { mutableStateOf(Fold.NONE) }
-    when (fold) {
-        Fold.NONE -> {
-            PreferencesPart(
-                version = version,
-                onFeedManagement = {
-                    fold = Fold.FEED
-                },
-                onScriptManagement = {
-                    fold = Fold.SCRIPT
-                },
-                syncMode = syncMode,
-                onSyncMode = onSyncMode,
-                useCommonUIMode = true,
-                useCommonUIModeEnable = false,
-                onUIMode = { },
-                modifier = modifier
-            )
-        }
-
-        Fold.FEED -> {
-            FeedManagementPart(
-                title = title,
-                url = url,
-                subscribeEnable = subscribeEnable,
-                onTitle = onTitle,
-                onUrl = onUrl,
-                onSubscribe = onSubscribe,
-                modifier = modifier
-            )
-        }
-
-        Fold.SCRIPT -> {
-            ScriptManagementPart(
-                modifier = modifier
-            )
-        }
-    }
-
     BackHandler(fold != Fold.NONE) {
         fold = Fold.NONE
     }
 }
 
 @Composable
-private fun LandscapeOrientationContent(
+private fun PortraitOrientationContent(
+    fold: Fold,
     title: String,
     url: String,
     subscribeEnable: Boolean,
+    onFold: (Fold) -> Unit,
     onTitle: (String) -> Unit,
     onUrl: (String) -> Unit,
     onSubscribe: () -> Unit,
-    syncMode: @SyncMode Int,
-    onSyncMode: SetSyncMode,
+    feedStrategy: @FeedStrategy Int,
+    onSyncMode: SetStrategy,
+    version: String,
+    modifier: Modifier = Modifier
+) {
+    Box {
+        PreferencesPart(
+            version = version,
+            onFeedManagement = {
+                onFold(Fold.FEED)
+            },
+            onScriptManagement = {
+                onFold(Fold.SCRIPT)
+            },
+            feedStrategy = feedStrategy,
+            onSyncMode = onSyncMode,
+            useCommonUIMode = true,
+            useCommonUIModeEnable = false,
+            onUIMode = { },
+            modifier = modifier
+        )
+
+        AnimatedVisibility(
+            visible = fold != Fold.NONE,
+            enter = slideInHorizontally { it },
+            exit = slideOutHorizontally { it }
+        ) {
+            when (fold) {
+                Fold.FEED -> {
+                    FeedManagementPart(
+                        title = title,
+                        url = url,
+                        subscribeEnable = subscribeEnable,
+                        onTitle = onTitle,
+                        onUrl = onUrl,
+                        onSubscribe = onSubscribe,
+                        modifier = modifier.background(LocalTheme.current.background)
+                    )
+                }
+                Fold.SCRIPT -> {
+                    ScriptManagementPart(
+                        modifier = modifier.background(LocalTheme.current.background)
+                    )
+                }
+                else -> {}
+            }
+        }
+    }
+}
+
+@Composable
+private fun LandscapeOrientationContent(
+    fold: Fold,
+    title: String,
+    url: String,
+    subscribeEnable: Boolean,
+    onFold: (Fold) -> Unit,
+    onTitle: (String) -> Unit,
+    onUrl: (String) -> Unit,
+    onSubscribe: () -> Unit,
+    feedStrategy: @FeedStrategy Int,
+    onSyncMode: SetStrategy,
     useCommonUIMode: Boolean,
     onUIMode: () -> Unit,
     version: String,
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
-    var fold: Fold by remember { mutableStateOf(Fold.NONE) }
-    fun setFold(target: Fold) {
-        fold = (if (fold == target) Fold.NONE else target)
-    }
 
     Row(
         horizontalArrangement = Arrangement.spacedBy(spacing.medium, Alignment.Start),
@@ -233,9 +246,9 @@ private fun LandscapeOrientationContent(
     ) {
         PreferencesPart(
             version = version,
-            onFeedManagement = { setFold(Fold.FEED) },
-            onScriptManagement = { setFold(Fold.SCRIPT) },
-            syncMode = syncMode,
+            onFeedManagement = { onFold(Fold.FEED) },
+            onScriptManagement = { onFold(Fold.SCRIPT) },
+            feedStrategy = feedStrategy,
             onSyncMode = onSyncMode,
             useCommonUIMode = useCommonUIMode,
             onUIMode = onUIMode,
@@ -270,9 +283,6 @@ private fun LandscapeOrientationContent(
             else -> {}
         }
     }
-    BackHandler(fold != Fold.NONE) {
-        fold = Fold.NONE
-    }
 }
 
 @Composable
@@ -280,8 +290,8 @@ private fun PreferencesPart(
     version: String,
     onFeedManagement: () -> Unit,
     onScriptManagement: () -> Unit,
-    syncMode: @SyncMode Int,
-    onSyncMode: SetSyncMode,
+    feedStrategy: @FeedStrategy Int,
+    onSyncMode: SetStrategy,
     useCommonUIMode: Boolean,
     onUIMode: () -> Unit,
     modifier: Modifier = Modifier,
@@ -307,23 +317,24 @@ private fun PreferencesPart(
             )
             TextPreference(
                 title = stringResource(R.string.sync_mode),
-                content = when (syncMode) {
-                    SyncMode.DEFAULT -> stringResource(R.string.sync_mode_default)
-                    SyncMode.EXCEPT -> stringResource(R.string.sync_mode_favourite_except)
+                content = when (feedStrategy) {
+                    FeedStrategy.ALL -> stringResource(R.string.sync_mode_default)
+                    FeedStrategy.SKIP_FAVORITE -> stringResource(R.string.sync_mode_favourite_except)
                     else -> ""
                 },
                 onClick = {
                     // TODO
-                    val target = when (syncMode) {
-                        SyncMode.DEFAULT -> SyncMode.EXCEPT
-                        else -> SyncMode.DEFAULT
+                    val target = when (feedStrategy) {
+                        FeedStrategy.ALL -> FeedStrategy.SKIP_FAVORITE
+                        else -> FeedStrategy.ALL
                     }
                     onSyncMode(target)
                 }
             )
             CheckBoxPreference(
                 title = stringResource(R.string.common_ui_mode),
-                subtitle = stringResource(R.string.common_ui_mode_description),
+                subtitle = if (useCommonUIModeEnable) stringResource(R.string.common_ui_mode_description)
+                else stringResource(R.string.common_ui_mode_disabled_description),
                 enabled = useCommonUIModeEnable,
                 checked = useCommonUIMode,
                 onCheckedChange = { newValue ->
@@ -402,7 +413,11 @@ fun ScriptManagementPart(
     OuterColumn(
         modifier = modifier
     ) {
-
+        WorkInProgressLottie(
+            modifier = Modifier
+                .aspectRatio(1f)
+                .fillMaxWidth()
+        )
     }
 }
 

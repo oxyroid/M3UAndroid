@@ -9,12 +9,12 @@ import androidx.annotation.IntDef
     AnnotationTarget.TYPE
 )
 @Retention(AnnotationRetention.SOURCE)
-@IntDef(SyncMode.DEFAULT, SyncMode.EXCEPT)
-annotation class SyncMode {
+@IntDef(FeedStrategy.ALL, FeedStrategy.SKIP_FAVORITE)
+annotation class FeedStrategy {
     companion object {
-        const val DEFAULT = 0
-        const val EXCEPT = 1
+        const val ALL = 0
+        const val SKIP_FAVORITE = 1
     }
 }
 
-typealias SetSyncMode = (@SyncMode Int) -> Unit
+typealias SetStrategy = (@FeedStrategy Int) -> Unit

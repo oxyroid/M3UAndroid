@@ -16,6 +16,7 @@
 
     <string name="common_ui_mode">默认布局</string>
     <string name="common_ui_mode_description">使用手机设备布局模式</string>
+    <string name="common_ui_mode_disabled_description">手机竖屏状态下不可调整</string>
 
     <string name="script_management">脚本管理</string>
     <string name="feed_management">订阅管理</string>

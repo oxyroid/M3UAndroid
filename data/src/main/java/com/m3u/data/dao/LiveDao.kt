@@ -12,6 +12,9 @@ interface LiveDao {
     @Delete
     suspend fun delete(live: Live)
 
+    @Query("DELETE FROM lives WHERE url = :url")
+    suspend fun deleteByUrl(url: String)
+
     @Query("DELETE FROM lives WHERE feedUrl = :feedUrl")
     suspend fun deleteByFeedUrl(feedUrl: String)
 
@@ -22,7 +25,7 @@ interface LiveDao {
     suspend fun getByUrl(url: String): Live?
 
     @Query("SELECT * FROM lives WHERE feedUrl = :feedUrl")
-    suspend fun getByFeedId(feedUrl: String): List<Live>
+    suspend fun getByFeedUrl(feedUrl: String): List<Live>
 
     @Query("SELECT * FROM lives WHERE id = :id")
     fun observeById(id: Int): Flow<Live?>

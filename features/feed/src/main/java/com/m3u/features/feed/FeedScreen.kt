@@ -24,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -105,8 +106,9 @@ internal fun FeedRoute(
     FeedDialog(
         state = dialogState,
         onUpdate = { dialogState = it },
-        onFavorite = { viewModel.onEvent(FeedEvent.FavouriteLive(it)) },
-        onMute = { viewModel.onEvent(FeedEvent.MuteLive(it)) }
+        onFavorite = { id, target -> viewModel.onEvent(FeedEvent.FavouriteLive(id, target)) },
+        onMute = { viewModel.onEvent(FeedEvent.MuteLive(it)) },
+        modifier = Modifier.padding(LocalSpacing.current.medium)
     )
 }
 
@@ -119,7 +121,7 @@ private fun FeedScreen(
     refreshing: Boolean,
     onSyncingLatest: () -> Unit,
     navigateToLive: (Int) -> Unit,
-    onLiveAction: (Int) -> Unit,
+    onLiveAction: (Live) -> Unit,
     onScrollUp: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -196,7 +198,7 @@ private fun LandscapeOrientationContent(
     scrollUp: Event<Unit>,
     isAtTopSource: MutableStateFlow<Boolean>,
     navigateToLive: (Int) -> Unit,
-    onLiveAction: (Int) -> Unit,
+    onLiveAction: (Live) -> Unit,
     useCommonUIMode: Boolean,
     modifier: Modifier = Modifier
 ) {
@@ -222,7 +224,7 @@ private fun LandscapeOrientationContent(
                         title = "${live.group} - ${live.title}"
                     ),
                     onClick = { navigateToLive(live.id) },
-                    onLongClick = { onLiveAction(live.id) },
+                    onLongClick = { onLiveAction(live) },
                     modifier = Modifier.fillMaxWidth()
                 )
             }
@@ -257,7 +259,7 @@ private fun PortraitOrientationContent(
     scrollUp: Event<Unit>,
     isAtTopSource: MutableStateFlow<Boolean>,
     navigateToLive: (Int) -> Unit,
-    onLiveAction: (Int) -> Unit,
+    onLiveAction: (Live) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val state = rememberLazyListState()
@@ -297,7 +299,7 @@ private fun PortraitOrientationContent(
                 LiveItem(
                     live = live,
                     onClick = { navigateToLive(live.id) },
-                    onLongClick = { onLiveAction(live.id) },
+                    onLongClick = { onLiveAction(live) },
                     modifier = Modifier.fillParentMaxWidth()
                 )
                 if (index == lives.lastIndex) {
@@ -317,7 +319,7 @@ private fun TelevisionUIModeContent(
     isAtTopSource: MutableStateFlow<Boolean>,
     scrollUp: Event<Unit>,
     navigateToLive: (Int) -> Unit,
-    onLiveAction: (Int) -> Unit,
+    onLiveAction: (Live) -> Unit,
     modifier: Modifier = Modifier
 ) {
     UnsupportedUIModeContent(
@@ -346,7 +348,7 @@ private fun TelevisionUIModeContent(
                     title = "${live.group} - ${live.title}"
                 ),
                 onClick = { navigateToLive(live.id) },
-                onLongClick = { onLiveAction(live.id) },
+                onLongClick = { onLiveAction(live) },
                 modifier = Modifier.fillMaxWidth()
             )
         }
@@ -390,14 +392,15 @@ private fun UnsupportedUIModeContent(
 private fun FeedDialog(
     state: DialogState,
     onUpdate: (DialogState) -> Unit,
-    onFavorite: (Int) -> Unit,
+    onFavorite: (Int, Boolean) -> Unit,
     onMute: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val title = when (state) {
         DialogState.Idle -> ""
         is DialogState.Menu -> ""
-        is DialogState.Favorite -> stringResource(R.string.dialog_favourite_title)
+        is DialogState.Favorite -> if (state.live.favourite) stringResource(R.string.dialog_favourite_cancel_title)
+        else stringResource(R.string.dialog_favourite_title)
         is DialogState.Mute -> stringResource(R.string.dialog_mute_title)
     }
 
@@ -415,7 +418,7 @@ private fun FeedDialog(
     }
     val dismiss = when (state) {
         DialogState.Idle -> null
-        is DialogState.Menu -> stringResource(R.string.dialog_menu_dismiss)
+        is DialogState.Menu -> null
         is DialogState.Favorite -> stringResource(R.string.dialog_favourite_dismiss)
         is DialogState.Mute -> stringResource(R.string.dialog_mute_dismiss)
     }
@@ -425,19 +428,19 @@ private fun FeedDialog(
         is DialogState.Menu -> {}
         is DialogState.Favorite -> {
             onUpdate(DialogState.Idle)
-            onFavorite(state.id)
+            onFavorite(state.live.id, !state.live.favourite)
         }
         is DialogState.Mute -> {
             onUpdate(DialogState.Idle)
-            onMute(state.id)
+            onMute(state.live.id)
         }
     }
 
     fun onDismiss() = when (state) {
         DialogState.Idle -> {}
         is DialogState.Menu -> onUpdate(DialogState.Idle)
-        is DialogState.Favorite -> onUpdate(DialogState.Menu(state.id))
-        is DialogState.Mute -> onUpdate(DialogState.Menu(state.id))
+        is DialogState.Favorite -> onUpdate(DialogState.Menu(state.live))
+        is DialogState.Mute -> onUpdate(DialogState.Menu(state.live))
     }
 
     when (state) {
@@ -448,16 +451,25 @@ private fun FeedDialog(
             ) {
                 Card(
                     backgroundColor = LocalTheme.current.background,
-                    contentColor = LocalTheme.current.onBackground
+                    contentColor = LocalTheme.current.onBackground,
+                    modifier = modifier
                 ) {
                     Column {
                         MenuItem(
-                            titleResId = R.string.dialog_favourite_title,
-                            onUpdate = { onUpdate(DialogState.Favorite(state.id)) },
+                            titleResId = if (state.live.favourite) R.string.dialog_favourite_cancel_title
+                            else R.string.dialog_favourite_title,
+                            onUpdate = {
+                                if (state.live.favourite) {
+                                    onUpdate(DialogState.Idle)
+                                    onFavorite(state.live.id, false)
+                                } else {
+                                    onUpdate(DialogState.Favorite(state.live))
+                                }
+                            },
                         )
                         MenuItem(
                             titleResId = R.string.dialog_mute_title,
-                            onUpdate = { onUpdate(DialogState.Mute(state.id)) },
+                            onUpdate = { onUpdate(DialogState.Mute(state.live)) },
                         )
                     }
                 }
@@ -480,9 +492,9 @@ private fun FeedDialog(
 
 private sealed class DialogState {
     object Idle : DialogState()
-    data class Menu(val id: Int) : DialogState()
-    data class Favorite(val id: Int) : DialogState()
-    data class Mute(val id: Int) : DialogState()
+    data class Menu(val live: Live) : DialogState()
+    data class Favorite(val live: Live) : DialogState()
+    data class Mute(val live: Live) : DialogState()
 }
 
 @Composable
@@ -497,6 +509,11 @@ private fun MenuItem(
             .clickable(onClick = onUpdate)
             .padding(LocalSpacing.current.medium)
     ) {
-        Text(stringResource(titleResId))
+        Text(
+            text = stringResource(titleResId),
+            style = MaterialTheme.typography.subtitle1,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
     }
 }

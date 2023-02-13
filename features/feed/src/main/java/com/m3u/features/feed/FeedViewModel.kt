@@ -14,6 +14,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -37,21 +38,13 @@ class FeedViewModel @Inject constructor(
         }
     }
 
-    private var job: Job? = null
     override fun onEvent(event: FeedEvent) {
         when (event) {
-            is FeedEvent.ObserveFeed -> {
-                job?.cancel()
-                job = viewModelScope.launch {
-                    val feedUrl = event.url
-                    observeFeedDetail(this, feedUrl)
-                    observeFeedLives(this, feedUrl)
-                }
-            }
-
+            is FeedEvent.ObserveFeed -> observeFeed(event.url)
             FeedEvent.FetchFeed -> {
                 val url = readable.url
-                feedRepository.fetch(url)
+                val strategy = configuration.feedStrategy
+                feedRepository.fetch(url, strategy)
                     .onEach { resource ->
                         writable.update {
                             when (resource) {
@@ -79,7 +72,6 @@ class FeedViewModel @Inject constructor(
                     liveRepository.setFavourite(id, target)
                 }
             }
-
             FeedEvent.ScrollUp -> {
                 writable.update {
                     it.copy(
@@ -99,9 +91,32 @@ class FeedViewModel @Inject constructor(
                         }
                     } else {
                         liveRepository.muteByUrl(live.url)
+                            .onEach { resource ->
+                                when (resource) {
+                                    Resource.Loading -> {}
+                                    is Resource.Success -> observeFeed(readable.url)
+                                    is Resource.Failure -> {
+                                        writable.update {
+                                            it.copy(
+                                                message = eventOf(resource.message.orEmpty())
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                            .launchIn(this)
                     }
                 }
             }
+        }
+    }
+
+    private var observeJob: Job? = null
+    private fun observeFeed(feedUrl: String) {
+        observeJob?.cancel()
+        observeJob = viewModelScope.launch {
+            observeFeedDetail(this, feedUrl)
+            observeFeedLives(this, feedUrl)
         }
     }
 
@@ -128,11 +143,13 @@ class FeedViewModel @Inject constructor(
         feedUrl: String
     ) {
         liveRepository.observeByFeedUrl(feedUrl)
-            .onEach { lives ->
+            .map { lives ->
                 val mutedUrls = configuration.mutedUrls
-                val filteredLives = lives.filter { it.url !in mutedUrls }
+                lives.filter { it.url !in mutedUrls }
+            }
+            .onEach { lives ->
                 writable.update {
-                    it.copy(lives = filteredLives)
+                    it.copy(lives = lives)
                 }
             }
             .launchIn(coroutineScope)

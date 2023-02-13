@@ -1,5 +1,6 @@
 package com.m3u.data.repository.impl
 
+import com.m3u.core.annotation.FeedStrategy
 import com.m3u.core.architecture.Logger
 import com.m3u.core.wrapper.Resource
 import com.m3u.core.wrapper.emitMessage
@@ -29,7 +30,11 @@ class FeedRepositoryImpl @Inject constructor(
         else -> error("Unsupported url: $url")
     }
 
-    override fun subscribe(title: String, url: String): Flow<Resource<Unit>> = resourceFlow {
+    override fun subscribe(
+        title: String,
+        url: String,
+        @FeedStrategy strategy: Int
+    ): Flow<Resource<Unit>> = resourceFlow {
         try {
             val parser = createParser(url)
             val result = parser.run {
@@ -37,11 +42,28 @@ class FeedRepositoryImpl @Inject constructor(
                 parse(url)
                 get()
             }
+
             val feed = Feed(title, url)
             feedDao.insert(feed)
             val lives = result.map { it.toLive(url) }
-            liveDao.deleteByFeedUrl(url)
-            lives.forEach { liveDao.insert(it) }
+
+            when (strategy) {
+                FeedStrategy.ALL -> {
+                    liveDao.deleteByFeedUrl(url)
+                    lives.forEach { liveDao.insert(it) }
+                }
+                FeedStrategy.SKIP_FAVORITE -> {
+                    val cachedLives = liveDao.getByFeedUrl(url)
+                    val invalidatedLives = cachedLives.filterNot { it.favourite }
+                    invalidatedLives.forEach {
+                        liveDao.deleteByUrl(it.url)
+                    }
+                    val invalidatedUrls = invalidatedLives.map { it.url }
+                    lives
+                        .filter { it.url in invalidatedUrls }
+                        .forEach { liveDao.insert(it) }
+                }
+            }
             emitResource(Unit)
         } catch (e: Exception) {
             logger.log(e)

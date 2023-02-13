@@ -1,5 +1,6 @@
 package com.m3u.data.repository
 
+import com.m3u.core.wrapper.Resource
 import com.m3u.data.entity.Live
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -12,7 +13,7 @@ interface LiveRepository {
     suspend fun getByUrl(url: String): Live?
     suspend fun getByFeedUrl(feedUrl: String): List<Live>
     suspend fun setFavourite(id: Int, target: Boolean)
-    suspend fun muteByUrl(url: String)
+    fun muteByUrl(url: String): Flow<Resource<Unit>>
 }
 
 fun LiveRepository.observeByFeedUrl(feedUrl: String): Flow<List<Live>> = observeAll()

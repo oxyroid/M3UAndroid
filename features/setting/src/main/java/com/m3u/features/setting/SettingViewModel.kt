@@ -20,7 +20,7 @@ class SettingViewModel @Inject constructor(
     private val feedRepository: FeedRepository,
     packageProvider: PackageProvider,
     application: Application,
-    configuration: Configuration
+    private val configuration: Configuration
 ) : BaseViewModel<SettingState, SettingEvent>(
     application = application,
     emptyState = SettingState()
@@ -29,17 +29,17 @@ class SettingViewModel @Inject constructor(
         writable.update {
             it.copy(
                 version = packageProvider.getVersionName(),
-                syncMode = configuration.syncMode,
+                feedStrategy = configuration.feedStrategy,
                 useCommonUIMode = configuration.useCommonUIMode
             )
         }
     }
 
-    private var syncMode: Int by sharedDelegate(configuration.syncMode) { newValue ->
-        configuration.syncMode = newValue
+    private var syncMode: Int by sharedDelegate(configuration.feedStrategy) { newValue ->
+        configuration.feedStrategy = newValue
         writable.update {
             it.copy(
-                syncMode = newValue
+                feedStrategy = newValue
             )
         }
     }
@@ -71,7 +71,7 @@ class SettingViewModel @Inject constructor(
                 }
             }
 
-            is SettingEvent.OnSyncMode -> syncMode = event.syncMode
+            is SettingEvent.OnSyncMode -> syncMode = event.feedStrategy
 
             SettingEvent.OnUIMode -> useCommonUIMode = !useCommonUIMode
 
@@ -88,14 +88,14 @@ class SettingViewModel @Inject constructor(
                     return
                 }
                 val url = readable.url
-                feedRepository.subscribe(title, url)
+                val strategy = configuration.feedStrategy
+                feedRepository.subscribe(title, url, strategy)
                     .onEach { resource ->
                         writable.update {
                             when (resource) {
                                 Resource.Loading -> {
                                     it.copy(adding = true)
                                 }
-
                                 is Resource.Success -> {
                                     val message = context.getString(R.string.success_subscribe)
                                     it.copy(
@@ -105,7 +105,6 @@ class SettingViewModel @Inject constructor(
                                         message = eventOf(message)
                                     )
                                 }
-
                                 is Resource.Failure -> {
                                     it.copy(
                                         adding = false,

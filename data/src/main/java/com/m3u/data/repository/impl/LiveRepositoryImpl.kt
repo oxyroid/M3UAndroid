@@ -2,6 +2,10 @@ package com.m3u.data.repository.impl
 
 import com.m3u.core.architecture.Configuration
 import com.m3u.core.architecture.Logger
+import com.m3u.core.wrapper.Resource
+import com.m3u.core.wrapper.emitMessage
+import com.m3u.core.wrapper.emitResource
+import com.m3u.core.wrapper.resourceFlow
 import com.m3u.data.dao.LiveDao
 import com.m3u.data.entity.Live
 import com.m3u.data.repository.LiveRepository
@@ -36,7 +40,7 @@ class LiveRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getByFeedUrl(feedUrl: String): List<Live> = try {
-        liveDao.getByFeedId(feedUrl)
+        liveDao.getByFeedUrl(feedUrl)
     } catch (e: Exception) {
         logger.log(e)
         emptyList()
@@ -55,14 +59,16 @@ class LiveRepositoryImpl @Inject constructor(
         logger.log(e)
     }
 
-    override suspend fun muteByUrl(url: String) {
+    override fun muteByUrl(url: String): Flow<Resource<Unit>> = resourceFlow {
         try {
             val urls = configuration.mutedUrls
             if (url !in urls) {
                 configuration.mutedUrls = (urls + url)
             }
+            emitResource(Unit)
         } catch (e: Exception) {
             logger.log(e)
+            emitMessage(e.message)
         }
     }
 }
