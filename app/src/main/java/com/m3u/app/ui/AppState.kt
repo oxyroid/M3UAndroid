@@ -102,7 +102,12 @@ class AppState(
     private val _appActions: MutableState<List<AppAction>> = mutableStateOf(emptyList())
     val appActions: State<List<AppAction>> get() = _appActions
 
-    val setAppActions: SetActions = { _appActions.value = it }
+    val setAppActions: SetActions = {
+        var delegate by _appActions
+        if ((delegate != it)) {
+            delegate = it
+        }
+    }
 
     fun onBackClick() {
         navController.popBackStack()
