@@ -1,13 +1,11 @@
 package com.m3u.ui.components
 
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material.AlertDialog
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.LocalTheme
 
 typealias OnDismissRequest = () -> Unit
@@ -54,7 +52,6 @@ fun AlertDialog(
         },
         backgroundColor = backgroundColor,
         contentColor = contentColor,
-        modifier = modifier.padding(LocalSpacing.current.medium)
+        modifier = modifier
     )
-
 }
