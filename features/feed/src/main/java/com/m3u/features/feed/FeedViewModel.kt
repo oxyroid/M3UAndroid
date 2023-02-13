@@ -72,11 +72,11 @@ class FeedViewModel @Inject constructor(
                     }
                     .launchIn(viewModelScope)
             }
-
             is FeedEvent.FavouriteLive -> {
                 viewModelScope.launch {
                     val id = event.id
-                    liveRepository.setFavourite(id, true)
+                    val target = event.target
+                    liveRepository.setFavourite(id, target)
                 }
             }
 
@@ -87,7 +87,6 @@ class FeedViewModel @Inject constructor(
                     )
                 }
             }
-
             is FeedEvent.MuteLive -> {
                 viewModelScope.launch {
                     val id = event.id
