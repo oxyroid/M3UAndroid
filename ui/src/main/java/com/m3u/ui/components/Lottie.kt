@@ -2,6 +2,7 @@ package com.m3u.ui.components
 
 import androidx.annotation.RawRes
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
@@ -14,7 +15,7 @@ import com.m3u.ui.R
 @Composable
 fun Lottie(
     @RawRes raw: Int,
-    modifier: Modifier
+    modifier: Modifier = Modifier
 ) {
     val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(raw))
     val progress by animateLottieCompositionAsState(
@@ -31,12 +32,19 @@ fun Lottie(
 @Composable
 fun WorkInProgressLottie(modifier: Modifier = Modifier) {
     Column(
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier
     ) {
-        Lottie(raw = R.raw.running_car, modifier = modifier)
+        Lottie(
+            raw = R.raw.running_car,
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(2f)
+        )
         Text(
             text = "Working In Progress",
-            style = MaterialTheme.typography.h6
+            style = MaterialTheme.typography.h6,
+            modifier = Modifier.weight(1f)
         )
     }
 }
