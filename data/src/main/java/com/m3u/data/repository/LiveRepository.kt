@@ -13,7 +13,7 @@ interface LiveRepository {
     suspend fun getByUrl(url: String): Live?
     suspend fun getByFeedUrl(feedUrl: String): List<Live>
     suspend fun setFavourite(id: Int, target: Boolean)
-    fun muteByUrl(url: String): Flow<Resource<Unit>>
+    fun setMuteByUrl(url: String, target: Boolean): Flow<Resource<Unit>>
 }
 
 fun LiveRepository.observeByFeedUrl(feedUrl: String): Flow<List<Live>> = observeAll()
