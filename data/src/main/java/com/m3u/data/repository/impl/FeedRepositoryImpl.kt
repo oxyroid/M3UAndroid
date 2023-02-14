@@ -58,22 +58,22 @@ class FeedRepositoryImpl @Inject constructor(
                     val groupedLives = cachedLives.groupBy { it.favourite }
 
                     val favouriteLives = groupedLives[true] ?: emptyList()
-                    val favouriteIds = favouriteLives.map { it.id }
+                    val favouriteUrls = favouriteLives.map { it.url }
 
                     val invalidateLives = groupedLives[false] ?: emptyList()
 
-                    val skippedIds = mutableListOf<Int>()
+                    val skippedUrls = mutableListOf<String>()
 
                     invalidateLives.forEach { live ->
                         if (live belong lives) {
-                            skippedIds += live.id
+                            skippedUrls += live.url
                         } else {
                             liveDao.deleteByUrl(live.url)
                         }
                     }
 
                     lives
-                        .filterNot { it.id in favouriteIds + skippedIds }
+                        .filterNot { it.url in (favouriteUrls + skippedUrls) }
                         .forEach {
                             liveDao.insert(it)
                         }
