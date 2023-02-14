@@ -6,6 +6,17 @@ plugins {
 }
 
 android {
+    signingConfigs {
+        release {
+            storeFile file(project.rootProject.file("release.jks"))
+            Properties properties = new Properties()
+            properties.load(project.rootProject.file("local.properties").newDataInputStream())
+
+            storePassword properties.getProperty("release.storePassword")
+            keyAlias properties.getProperty("release.keyAlias")
+            keyPassword properties.getProperty("release.keyPassword")
+        }
+    }
     namespace "com.m3u.app"
     compileSdk 33
     defaultConfig {
@@ -25,6 +36,7 @@ android {
             minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
+            signingConfig signingConfigs.release
         }
     }
     compileOptions {
