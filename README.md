@@ -4,8 +4,9 @@
 
 - [x] M3U and M3U8 files.
 - [x] HTTPS and RTMP stream.
+- [x] Android TV.
 - [ ] Script Parser.
-- [ ] Android TV and Car.
+- [ ] Android Car.
 
 ### Android Development
 
