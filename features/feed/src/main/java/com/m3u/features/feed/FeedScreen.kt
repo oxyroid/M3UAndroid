@@ -1,16 +1,14 @@
 package com.m3u.features.feed
 
 import android.content.res.Configuration.*
+import android.view.KeyEvent
 import androidx.annotation.StringRes
 import androidx.compose.animation.*
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.*
-import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ArrowUpward
@@ -21,9 +19,13 @@ import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -93,9 +95,11 @@ internal fun FeedRoute(
 
     FeedScreen(
         useCommonUIMode = state.useCommonUIMode,
+        rowCount = state.rowCount,
         lives = state.lives,
         scrollUp = state.scrollUp,
         refreshing = state.fetching,
+        onRowCount = { viewModel.onEvent(FeedEvent.SetRowCount(it)) },
         onSyncingLatest = { viewModel.onEvent(FeedEvent.FetchFeed) },
         navigateToLive = navigateToLive,
         onLiveAction = { dialogState = DialogState.Menu(it) },
@@ -107,7 +111,8 @@ internal fun FeedRoute(
         state = dialogState,
         onUpdate = { dialogState = it },
         onFavorite = { id, target -> viewModel.onEvent(FeedEvent.FavouriteLive(id, target)) },
-        onMute = { viewModel.onEvent(FeedEvent.MuteLive(it)) },
+        onMute = { id, target -> viewModel.onEvent(FeedEvent.MuteLive(id, target)) },
+        onSavePicture = { viewModel.onEvent(FeedEvent.SavePicture(it)) },
         modifier = Modifier.padding(LocalSpacing.current.medium)
     )
 }
@@ -116,9 +121,11 @@ internal fun FeedRoute(
 @Composable
 private fun FeedScreen(
     useCommonUIMode: Boolean,
+    rowCount: Int,
     lives: List<Live>,
     scrollUp: Event<Unit>,
     refreshing: Boolean,
+    onRowCount: (Int) -> Unit,
     onSyncingLatest: () -> Unit,
     navigateToLive: (Int) -> Unit,
     onLiveAction: (Live) -> Unit,
@@ -138,7 +145,9 @@ private fun FeedScreen(
             ORIENTATION_LANDSCAPE -> {
                 LandscapeOrientationContent(
                     lives = lives,
+                    rowCount = rowCount,
                     scrollUp = scrollUp,
+                    onRowCount = onRowCount,
                     isAtTopSource = isAtTopSource,
                     navigateToLive = navigateToLive,
                     onLiveAction = onLiveAction,
@@ -150,7 +159,9 @@ private fun FeedScreen(
             ORIENTATION_PORTRAIT -> {
                 PortraitOrientationContent(
                     lives = lives,
+                    rowCount = rowCount,
                     scrollUp = scrollUp,
+                    onRowCount = onRowCount,
                     isAtTopSource = isAtTopSource,
                     navigateToLive = navigateToLive,
                     onLiveAction = onLiveAction,
@@ -194,12 +205,14 @@ private fun FeedScreen(
 
 @Composable
 private fun LandscapeOrientationContent(
+    useCommonUIMode: Boolean,
+    rowCount: Int,
     lives: List<Live>,
     scrollUp: Event<Unit>,
     isAtTopSource: MutableStateFlow<Boolean>,
     navigateToLive: (Int) -> Unit,
     onLiveAction: (Live) -> Unit,
-    useCommonUIMode: Boolean,
+    onRowCount: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val configuration = LocalConfiguration.current
@@ -213,21 +226,54 @@ private fun LandscapeOrientationContent(
         EventHandler(scrollUp) {
             state.scrollToItem(0)
         }
+        val requester = remember { FocusRequester() }
+        var lastKeyTime by remember {
+            mutableStateOf(0L)
+        }
+        val minDuration = 200L
+        @OptIn(ExperimentalFoundationApi::class)
         LazyVerticalGrid(
             state = state,
-            columns = GridCells.Fixed(4),
-            modifier = modifier.fillMaxSize()
+            columns = GridCells.Fixed(rowCount + 2),
+            modifier = modifier
+                .onKeyEvent { event ->
+                    val currentTimeMillis = System.currentTimeMillis()
+                    when (event.nativeKeyEvent.keyCode) {
+                        KeyEvent.KEYCODE_VOLUME_UP -> {
+                            if (currentTimeMillis - lastKeyTime >= minDuration) {
+                                onRowCount((rowCount - 1).coerceAtLeast(1))
+                                lastKeyTime = currentTimeMillis
+                            }
+                            true
+                        }
+                        KeyEvent.KEYCODE_VOLUME_DOWN -> {
+                            if (currentTimeMillis - lastKeyTime >= minDuration) {
+                                onRowCount((rowCount + 1).coerceAtMost(3))
+                                lastKeyTime = currentTimeMillis
+                            }
+                            true
+                        }
+                        else -> false
+                    }
+                }
+                .focusRequester(requester)
+                .focusable()
         ) {
-            items(lives) { live ->
+            items(lives, key = { it.id }) { live ->
                 LiveItem(
                     live = live.copy(
                         title = "${live.group} - ${live.title}"
                     ),
                     onClick = { navigateToLive(live.id) },
                     onLongClick = { onLiveAction(live) },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .animateItemPlacement()
+                        .fillMaxWidth()
                 )
             }
+        }
+        LaunchedEffect(Unit) {
+            requester.requestFocus()
         }
     } else {
         when (type) {
@@ -256,59 +302,71 @@ private fun LandscapeOrientationContent(
 @Composable
 private fun PortraitOrientationContent(
     lives: List<Live>,
+    rowCount: Int,
     scrollUp: Event<Unit>,
     isAtTopSource: MutableStateFlow<Boolean>,
     navigateToLive: (Int) -> Unit,
     onLiveAction: (Live) -> Unit,
+    onRowCount: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val state = rememberLazyListState()
+    val state = rememberLazyGridState()
     LaunchedEffect(state.isAtTop) {
         isAtTopSource.emit(state.isAtTop)
     }
-    val groups = remember(lives) { lives.groupBy { it.group } }
     EventHandler(scrollUp) {
         state.scrollToItem(0)
     }
-    LazyColumn(
+    val requester = remember { FocusRequester() }
+    var lastKeyTime by remember {
+        mutableStateOf(0L)
+    }
+    val minDuration = 200L
+    LazyVerticalGrid(
         state = state,
-        modifier = modifier.fillMaxSize(),
+        columns = GridCells.Fixed(rowCount),
+        modifier = modifier
+            .onKeyEvent { event ->
+                val currentTimeMillis = System.currentTimeMillis()
+                when (event.nativeKeyEvent.keyCode) {
+                    KeyEvent.KEYCODE_VOLUME_UP -> {
+                        if (currentTimeMillis - lastKeyTime >= minDuration) {
+                            onRowCount((rowCount - 1).coerceAtLeast(1))
+                            lastKeyTime = currentTimeMillis
+                        }
+                        true
+                    }
+                    KeyEvent.KEYCODE_VOLUME_DOWN -> {
+                        if (currentTimeMillis - lastKeyTime >= minDuration) {
+                            onRowCount((rowCount + 1).coerceAtMost(3))
+                            lastKeyTime = currentTimeMillis
+                        }
+                        true
+                    }
+                    else -> false
+                }
+            }
+            .focusRequester(requester)
+            .focusable()
+            .fillMaxSize(),
         verticalArrangement = Arrangement.spacedBy(1.dp)
     ) {
-        groups.forEach { (group, lives) ->
-            stickyHeader {
-                Box(
-                    modifier = Modifier
-                        .fillParentMaxWidth()
-                        .background(
-                            color = LocalTheme.current.topBarDisable
-                        )
-                        .padding(
-                            horizontal = LocalSpacing.current.medium,
-                            vertical = LocalSpacing.current.extraSmall
-                        )
-                ) {
-                    Text(
-                        text = group,
-                        color = LocalTheme.current.onTopBarDisable,
-                        style = MaterialTheme.typography.subtitle2
-                    )
-                }
-            }
-            itemsIndexed(lives) { index, live ->
-                LiveItem(
-                    live = live,
-                    onClick = { navigateToLive(live.id) },
-                    onLongClick = { onLiveAction(live) },
-                    modifier = Modifier.fillParentMaxWidth()
-                )
-                if (index == lives.lastIndex) {
-                    Divider(
-                        modifier = Modifier.height(LocalSpacing.current.extraSmall)
-                    )
-                }
-            }
+        items(lives, key = { live -> live.id }) { live ->
+            LiveItem(
+                live = live.copy(
+                    title = "${live.group} - ${live.title}"
+                ),
+                onClick = { navigateToLive(live.id) },
+                onLongClick = { onLiveAction(live) },
+                modifier = Modifier
+                    .animateItemPlacement()
+                    .fillMaxWidth()
+            )
         }
+    }
+
+    LaunchedEffect(Unit) {
+        requester.requestFocus()
     }
 }
 
@@ -322,14 +380,6 @@ private fun TelevisionUIModeContent(
     onLiveAction: (Live) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    UnsupportedUIModeContent(
-        type = UI_MODE_TYPE_TELEVISION,
-        modifier = modifier,
-        description =
-        "Fix when [https://issuetracker.google.com/issues/267058478] is completed."
-    )
-    // FIXME: https://issuetracker.google.com/issues/267058478
-    return
     val state = rememberTvLazyGridState()
     LaunchedEffect(state.isAtTop) {
         isAtTopSource.emit(state.isAtTop)
@@ -337,19 +387,22 @@ private fun TelevisionUIModeContent(
     EventHandler(scrollUp) {
         state.scrollToItem(0)
     }
+    @OptIn(ExperimentalFoundationApi::class)
     TvLazyVerticalGrid(
         state = state,
         columns = TvGridCells.Fixed(4),
         modifier = modifier.fillMaxSize()
     ) {
-        items(lives) { live ->
+        items(lives, key = { it.id }) { live ->
             LiveItem(
                 live = live.copy(
                     title = "${live.group} - ${live.title}"
                 ),
                 onClick = { navigateToLive(live.id) },
                 onLongClick = { onLiveAction(live) },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .animateItemPlacement()
+                    .fillMaxWidth()
             )
         }
     }
@@ -393,7 +446,8 @@ private fun FeedDialog(
     state: DialogState,
     onUpdate: (DialogState) -> Unit,
     onFavorite: (Int, Boolean) -> Unit,
-    onMute: (Int) -> Unit,
+    onMute: (Int, Boolean) -> Unit,
+    onSavePicture: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val title = when (state) {
@@ -402,6 +456,7 @@ private fun FeedDialog(
         is DialogState.Favorite -> if (state.live.favourite) stringResource(R.string.dialog_favourite_cancel_title)
         else stringResource(R.string.dialog_favourite_title)
         is DialogState.Mute -> stringResource(R.string.dialog_mute_title)
+        is DialogState.SavePicture -> ""
     }
 
     val content = when (state) {
@@ -409,18 +464,21 @@ private fun FeedDialog(
         is DialogState.Menu -> ""
         is DialogState.Favorite -> stringResource(R.string.dialog_favourite_content)
         is DialogState.Mute -> stringResource(R.string.dialog_mute_content)
+        is DialogState.SavePicture -> ""
     }
     val confirm = when (state) {
         DialogState.Idle -> null
         is DialogState.Menu -> null
         is DialogState.Favorite -> stringResource(R.string.dialog_favourite_confirm)
         is DialogState.Mute -> stringResource(R.string.dialog_mute_confirm)
+        is DialogState.SavePicture -> null
     }
     val dismiss = when (state) {
         DialogState.Idle -> null
         is DialogState.Menu -> null
         is DialogState.Favorite -> stringResource(R.string.dialog_favourite_dismiss)
         is DialogState.Mute -> stringResource(R.string.dialog_mute_dismiss)
+        is DialogState.SavePicture -> null
     }
 
     fun onConfirm() = when (state) {
@@ -432,8 +490,10 @@ private fun FeedDialog(
         }
         is DialogState.Mute -> {
             onUpdate(DialogState.Idle)
-            onMute(state.live.id)
+            // TODO
+            onMute(state.live.id, true)
         }
+        is DialogState.SavePicture -> {}
     }
 
     fun onDismiss() = when (state) {
@@ -441,6 +501,7 @@ private fun FeedDialog(
         is DialogState.Menu -> onUpdate(DialogState.Idle)
         is DialogState.Favorite -> onUpdate(DialogState.Menu(state.live))
         is DialogState.Mute -> onUpdate(DialogState.Menu(state.live))
+        is DialogState.SavePicture -> {}
     }
 
     when (state) {
@@ -471,6 +532,14 @@ private fun FeedDialog(
                             titleResId = R.string.dialog_mute_title,
                             onUpdate = { onUpdate(DialogState.Mute(state.live)) },
                         )
+
+                        MenuItem(
+                            titleResId = R.string.dialog_save_picture_title,
+                            onUpdate = {
+                                onUpdate(DialogState.Idle)
+                                onSavePicture(state.live.id)
+                            }
+                        )
                     }
                 }
             }
@@ -495,6 +564,7 @@ private sealed class DialogState {
     data class Menu(val live: Live) : DialogState()
     data class Favorite(val live: Live) : DialogState()
     data class Mute(val live: Live) : DialogState()
+    data class SavePicture(val live: Live) : DialogState()
 }
 
 @Composable
@@ -514,6 +584,7 @@ private fun MenuItem(
             style = MaterialTheme.typography.subtitle1,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
+            fontWeight = FontWeight.Bold
         )
     }
 }

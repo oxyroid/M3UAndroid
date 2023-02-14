@@ -13,6 +13,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -26,6 +27,7 @@ internal fun FeedItem(
     number: Int,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    labelStyle: TextStyle = MaterialTheme.typography.subtitle1,
 ) {
     val spacing = LocalSpacing.current
     val theme = LocalTheme.current
@@ -43,7 +45,7 @@ internal fun FeedItem(
         ) {
             Text(
                 text = label,
-                style = MaterialTheme.typography.subtitle1,
+                style = labelStyle,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.weight(1f)

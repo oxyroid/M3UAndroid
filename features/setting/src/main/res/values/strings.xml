@@ -10,8 +10,8 @@
     <string name="placeholder_title">订阅名称</string>
     <string name="label_subscribing">订阅中…</string>
 
-    <string name="sync_mode_default">所有（默认值）</string>
-    <string name="sync_mode_favourite_except">绕过收藏夹</string>
+    <string name="sync_mode_all">所有</string>
+    <string name="sync_mode_skip_favourite">绕过收藏夹（默认值）</string>
     <string name="sync_mode">同步策略</string>
 
     <string name="common_ui_mode">默认布局</string>
@@ -20,4 +20,5 @@
 
     <string name="script_management">脚本管理</string>
     <string name="feed_management">订阅管理</string>
+    <string name="show_muted_mode">显示屏蔽的频道</string>
 </resources>
