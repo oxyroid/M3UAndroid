@@ -24,7 +24,7 @@ fun TextBadge(
     ) {
         icon?.invoke()
         Text(
-            text = text,
+            text = text.uppercase(),
             style = MaterialTheme.typography.subtitle2,
             color = theme.onTint
         )
