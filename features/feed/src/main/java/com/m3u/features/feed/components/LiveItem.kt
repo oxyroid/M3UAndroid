@@ -53,6 +53,7 @@ internal fun LiveItem(
         ) {
             Image(
                 model = live.cover,
+                errorPlaceholder = live.title,
                 contentScale = ContentScale.Crop,
                 shape = RoundedCornerShape(spacing.small),
                 modifier = Modifier

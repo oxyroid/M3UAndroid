@@ -1,5 +1,7 @@
 package com.m3u.ui.components
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
@@ -11,15 +13,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.stringResource
 import coil.compose.SubcomposeAsyncImage
-import com.m3u.ui.R
 import com.m3u.ui.model.LocalTheme
 
 @Composable
 fun Image(
     model: Any?,
     modifier: Modifier = Modifier,
+    errorPlaceholder: String? = null,
     shape: Shape = RectangleShape,
     contentDescription: String? = null,
     contentScale: ContentScale = ContentScale.Fit
@@ -39,22 +40,17 @@ fun Image(
             }
         },
         error = {
-            Surface(
-                shape = shape,
-                color = LocalTheme.current.error,
+            Box(
+                modifier = Modifier
+                    .clip(shape)
+                    .background(LocalTheme.current.secondary),
+                contentAlignment = Alignment.Center
             ) {
-                OuterBox(
-                    contentAlignment = Alignment.Center,
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    val message =
-                        it.result.throwable.message ?: stringResource(R.string.error_unknown)
-                    Text(
-                        text = message,
-                        style = MaterialTheme.typography.h6,
-                        color = LocalTheme.current.onError
-                    )
-                }
+                Text(
+                    text = errorPlaceholder.orEmpty(),
+                    style = MaterialTheme.typography.h6,
+                    color = LocalTheme.current.onSecondary
+                )
             }
         }
     )

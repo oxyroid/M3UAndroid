@@ -261,9 +261,7 @@ private fun LandscapeOrientationContent(
         ) {
             items(lives, key = { it.id }) { live ->
                 LiveItem(
-                    live = live.copy(
-                        title = "${live.group} - ${live.title}"
-                    ),
+                    live = live,
                     onClick = { navigateToLive(live.id) },
                     onLongClick = { onLiveAction(live) },
                     modifier = Modifier
@@ -353,9 +351,7 @@ private fun PortraitOrientationContent(
     ) {
         items(lives, key = { live -> live.id }) { live ->
             LiveItem(
-                live = live.copy(
-                    title = "${live.group} - ${live.title}"
-                ),
+                live = live,
                 onClick = { navigateToLive(live.id) },
                 onLongClick = { onLiveAction(live) },
                 modifier = Modifier
@@ -395,9 +391,7 @@ private fun TelevisionUIModeContent(
     ) {
         items(lives, key = { it.id }) { live ->
             LiveItem(
-                live = live.copy(
-                    title = "${live.group} - ${live.title}"
-                ),
+                live = live,
                 onClick = { navigateToLive(live.id) },
                 onLongClick = { onLiveAction(live) },
                 modifier = Modifier

@@ -69,7 +69,13 @@ class M3UParser internal constructor() : Parser<List<M3U>, M3U>() {
         val name = properties.getProperty(M3U_TVG_NAME_MARK, "")
         val cover = properties.getProperty(M3U_TVG_LOGO_MARK, "")
 
-        val (group, title) = properties.getProperty(M3U_GROUP_TITLE_MARK, ",").split(",")
+        val groupTitle = properties.getProperty(M3U_GROUP_TITLE_MARK, ",").split(",")
+
+        val (group, title) = if (groupTitle.size == 2) {
+            groupTitle.first() to groupTitle[1]
+        } else {
+            groupTitle.firstOrNull().orEmpty() to groupTitle.getOrNull(1).orEmpty()
+        }
 
         return this.copy(
             id = id.trimBrackets(),
@@ -102,7 +108,13 @@ class M3UParser internal constructor() : Parser<List<M3U>, M3U>() {
             }
         }
         if (illegalPart != null) {
-            error("illegal m3u content: $content")
+            val split = illegalPart.split(",")
+            if (split.isNotEmpty()) {
+                val title = if ((split.size == 1)) null else split[1]
+                properties[M3U_GROUP_TITLE_MARK] = title
+            } else {
+                error("illegal m3u content: $content")
+            }
         }
         return properties
     }
