@@ -2,6 +2,7 @@ package com.m3u.data.repository.impl
 
 import com.m3u.core.annotation.FeedStrategy
 import com.m3u.core.architecture.Logger
+import com.m3u.core.util.collection.belong
 import com.m3u.core.wrapper.Resource
 import com.m3u.core.wrapper.emitMessage
 import com.m3u.core.wrapper.emitResource
@@ -54,14 +55,28 @@ class FeedRepositoryImpl @Inject constructor(
                 }
                 FeedStrategy.SKIP_FAVORITE -> {
                     val cachedLives = liveDao.getByFeedUrl(url)
-                    val invalidatedLives = cachedLives.filterNot { it.favourite }
-                    invalidatedLives.forEach {
-                        liveDao.deleteByUrl(it.url)
+                    val groupedLives = cachedLives.groupBy { it.favourite }
+
+                    val favouriteLives = groupedLives[true] ?: emptyList()
+                    val favouriteIds = favouriteLives.map { it.id }
+
+                    val invalidateLives = groupedLives[false] ?: emptyList()
+
+                    val skippedIds = mutableListOf<Int>()
+
+                    invalidateLives.forEach { live ->
+                        if (live belong lives) {
+                            skippedIds += live.id
+                        } else {
+                            liveDao.deleteByUrl(live.url)
+                        }
                     }
-                    val invalidatedUrls = invalidatedLives.map { it.url }
+
                     lives
-                        .filter { it.url in invalidatedUrls }
-                        .forEach { liveDao.insert(it) }
+                        .filterNot { it.id in favouriteIds + skippedIds }
+                        .forEach {
+                            liveDao.insert(it)
+                        }
                 }
             }
             emitResource(Unit)

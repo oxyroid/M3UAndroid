@@ -3,6 +3,7 @@ package com.m3u.data.entity
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import com.m3u.core.util.collection.Likable
 
 @Entity(tableName = "lives")
 data class Live(
@@ -22,4 +23,8 @@ data class Live(
     // extra fields
     @ColumnInfo(name = "favourite")
     val favourite: Boolean = false
-)
+) : Likable<Live> {
+    override infix fun like(another: Live): Boolean =
+        this.url == another.url && this.feedUrl == another.feedUrl && this.cover == another.cover
+                && this.group == another.group && this.title == another.title
+}
