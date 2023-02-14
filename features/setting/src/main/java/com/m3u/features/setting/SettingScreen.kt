@@ -75,6 +75,7 @@ internal fun SettingRoute(
 
     SettingScreen(
         subscribeEnable = !state.adding,
+        showMutedAsFeed = state.showMutedAsFeed,
         title = state.title,
         url = state.url,
         version = state.version,
@@ -83,6 +84,7 @@ internal fun SettingRoute(
         onUrl = { viewModel.onEvent(SettingEvent.OnUrl(it)) },
         onSubscribe = { viewModel.onEvent(SettingEvent.OnSubscribe) },
         onSyncMode = { viewModel.onEvent(SettingEvent.OnSyncMode(it)) },
+        onShowMuted = { viewModel.onEvent(SettingEvent.OnShowMuted) },
         useCommonUIMode = state.useCommonUIMode,
         onUIMode = { viewModel.onEvent(SettingEvent.OnUIMode) },
         modifier = modifier.fillMaxSize()
@@ -92,6 +94,7 @@ internal fun SettingRoute(
 @Composable
 private fun SettingScreen(
     subscribeEnable: Boolean,
+    showMutedAsFeed: Boolean,
     version: String,
     title: String,
     url: String,
@@ -102,6 +105,7 @@ private fun SettingScreen(
     onSyncMode: SetStrategy,
     useCommonUIMode: Boolean,
     onUIMode: () -> Unit,
+    onShowMuted: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     var fold: Fold by remember { mutableStateOf(Fold.NONE) }
@@ -122,6 +126,8 @@ private fun SettingScreen(
                     onSubscribe = onSubscribe,
                     feedStrategy = feedStrategy,
                     onSyncMode = onSyncMode,
+                    onShowMuted = onShowMuted,
+                    showMutedAsFeed = showMutedAsFeed,
                     version = version,
                     modifier = modifier
                         .fillMaxWidth()
@@ -144,7 +150,9 @@ private fun SettingScreen(
                     feedStrategy = feedStrategy,
                     onSyncMode = onSyncMode,
                     useCommonUIMode = useCommonUIMode,
+                    showMutedAsFeed = showMutedAsFeed,
                     onUIMode = onUIMode,
+                    onShowMuted = onShowMuted,
                     version = version,
                     modifier = modifier
                         .scrollable(
@@ -167,10 +175,12 @@ private fun PortraitOrientationContent(
     title: String,
     url: String,
     subscribeEnable: Boolean,
+    showMutedAsFeed: Boolean,
     onFold: (Fold) -> Unit,
     onTitle: (String) -> Unit,
     onUrl: (String) -> Unit,
     onSubscribe: () -> Unit,
+    onShowMuted: () -> Unit,
     feedStrategy: @FeedStrategy Int,
     onSyncMode: SetStrategy,
     version: String,
@@ -189,7 +199,9 @@ private fun PortraitOrientationContent(
             onSyncMode = onSyncMode,
             useCommonUIMode = true,
             useCommonUIModeEnable = false,
+            showMutedAsFeed = showMutedAsFeed,
             onUIMode = { },
+            onShowMuted = onShowMuted,
             modifier = modifier
         )
 
@@ -234,7 +246,9 @@ private fun LandscapeOrientationContent(
     feedStrategy: @FeedStrategy Int,
     onSyncMode: SetStrategy,
     useCommonUIMode: Boolean,
+    showMutedAsFeed: Boolean,
     onUIMode: () -> Unit,
+    onShowMuted: () -> Unit,
     version: String,
     modifier: Modifier = Modifier
 ) {
@@ -251,7 +265,9 @@ private fun LandscapeOrientationContent(
             feedStrategy = feedStrategy,
             onSyncMode = onSyncMode,
             useCommonUIMode = useCommonUIMode,
+            showMutedAsFeed = showMutedAsFeed,
             onUIMode = onUIMode,
+            onShowMuted = onShowMuted,
             modifier = Modifier
                 .fillMaxHeight()
                 .weight(1f)
@@ -293,7 +309,9 @@ private fun PreferencesPart(
     feedStrategy: @FeedStrategy Int,
     onSyncMode: SetStrategy,
     useCommonUIMode: Boolean,
+    showMutedAsFeed: Boolean,
     onUIMode: () -> Unit,
+    onShowMuted: () -> Unit,
     modifier: Modifier = Modifier,
     useCommonUIModeEnable: Boolean = true,
 ) {
@@ -318,8 +336,8 @@ private fun PreferencesPart(
             TextPreference(
                 title = stringResource(R.string.sync_mode),
                 content = when (feedStrategy) {
-                    FeedStrategy.ALL -> stringResource(R.string.sync_mode_default)
-                    FeedStrategy.SKIP_FAVORITE -> stringResource(R.string.sync_mode_favourite_except)
+                    FeedStrategy.ALL -> stringResource(R.string.sync_mode_all)
+                    FeedStrategy.SKIP_FAVORITE -> stringResource(R.string.sync_mode_skip_favourite)
                     else -> ""
                 },
                 onClick = {
@@ -329,6 +347,17 @@ private fun PreferencesPart(
                         else -> FeedStrategy.ALL
                     }
                     onSyncMode(target)
+                }
+            )
+            CheckBoxPreference(
+                title = stringResource(R.string.show_muted_mode),
+                checked = showMutedAsFeed,
+                // TODO
+                enabled = false,
+                onCheckedChange = { newValue ->
+                    if (newValue != showMutedAsFeed) {
+                        onShowMuted()
+                    }
                 }
             )
             CheckBoxPreference(
@@ -373,6 +402,7 @@ private fun FeedManagementPart(
         val focusRequester = remember { FocusRequester() }
         TextField(
             text = title,
+            enabled = subscribeEnable,
             placeholder = stringResource(R.string.placeholder_title),
             onValueChange = onTitle,
             keyboardActions = KeyboardActions(
@@ -384,6 +414,7 @@ private fun FeedManagementPart(
         )
         TextField(
             text = url,
+            enabled = subscribeEnable,
             placeholder = stringResource(R.string.placeholder_url),
             onValueChange = onUrl,
             keyboardActions = KeyboardActions(

@@ -8,5 +8,5 @@ sealed interface SettingEvent {
     data class OnSyncMode(@FeedStrategy val feedStrategy: Int) : SettingEvent
     object OnSubscribe : SettingEvent
     object OnUIMode : SettingEvent
-    object OnSubscribe : SettingEvent
+    object OnShowMuted : SettingEvent
 }

@@ -59,11 +59,17 @@ class LiveRepositoryImpl @Inject constructor(
         logger.log(e)
     }
 
-    override fun muteByUrl(url: String): Flow<Resource<Unit>> = resourceFlow {
+    override fun setMuteByUrl(url: String, target: Boolean): Flow<Resource<Unit>> = resourceFlow {
         try {
             val urls = configuration.mutedUrls
-            if (url !in urls) {
-                configuration.mutedUrls = (urls + url)
+            if (target) {
+                if (url !in urls) {
+                    configuration.mutedUrls = (urls + url)
+                }
+            } else {
+                if (url in urls) {
+                    configuration.mutedUrls = urls - url
+                }
             }
             emitResource(Unit)
         } catch (e: Exception) {

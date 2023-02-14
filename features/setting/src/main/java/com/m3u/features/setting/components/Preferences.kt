@@ -10,6 +10,7 @@ import androidx.compose.material.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.LocalTheme
@@ -31,6 +32,7 @@ internal fun FoldPreference(
                 style = MaterialTheme.typography.subtitle1,
                 fontWeight = FontWeight.Bold,
                 maxLines = 1,
+                textDecoration = if (enabled) null else TextDecoration.LineThrough,
                 overflow = TextOverflow.Ellipsis
             )
         },
@@ -40,6 +42,7 @@ internal fun FoldPreference(
                     text = it,
                     style = MaterialTheme.typography.subtitle2,
                     maxLines = 1,
+                    textDecoration = if (enabled) null else TextDecoration.LineThrough,
                     overflow = TextOverflow.Ellipsis
                 )
             }
@@ -62,11 +65,11 @@ internal fun FoldPreference(
 @Composable
 internal fun CheckBoxPreference(
     title: String,
-    enabled: Boolean,
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
     subtitle: String? = null,
+    enabled: Boolean = true,
 ) {
     FoldPreference(
         title = title,
