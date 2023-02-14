@@ -7,6 +7,7 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.layout.ContentScale
@@ -23,42 +24,39 @@ fun Image(
     contentDescription: String? = null,
     contentScale: ContentScale = ContentScale.Fit
 ) {
-    Surface(
-        shape = shape
-    ) {
-        SubcomposeAsyncImage(
-            model = model,
-            contentDescription = contentDescription,
-            modifier = modifier,
-            contentScale = contentScale,
-            loading = {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    shape = shape,
-                    color = LocalTheme.current.surface
-                ) {
+    SubcomposeAsyncImage(
+        model = model,
+        contentDescription = contentDescription,
+        modifier = modifier.clip(shape),
+        contentScale = contentScale,
+        loading = {
+            Surface(
+                modifier = Modifier.fillMaxSize(),
+                shape = shape,
+                color = LocalTheme.current.surface
+            ) {
 
-                }
-            },
-            error = {
-                Surface(
-                    shape = shape,
-                    color = LocalTheme.current.error,
+            }
+        },
+        error = {
+            Surface(
+                shape = shape,
+                color = LocalTheme.current.error,
+            ) {
+                OuterBox(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier.fillMaxSize()
                 ) {
-                    OuterBox(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier.fillMaxSize()
-                    ) {
-                        val message =
-                            it.result.throwable.message ?: stringResource(R.string.error_unknown)
-                        Text(
-                            text = message,
-                            style = MaterialTheme.typography.h6,
-                            color = LocalTheme.current.onError
-                        )
-                    }
+                    val message =
+                        it.result.throwable.message ?: stringResource(R.string.error_unknown)
+                    Text(
+                        text = message,
+                        style = MaterialTheme.typography.h6,
+                        color = LocalTheme.current.onError
+                    )
                 }
             }
-        )
-    }
+        }
+    )
+
 }

@@ -1,12 +1,10 @@
 package com.m3u.features.feed.components
 
-import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
@@ -16,6 +14,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import com.m3u.data.entity.Live
 import com.m3u.features.feed.R
@@ -52,34 +51,22 @@ internal fun LiveItem(
                     onLongClick = onLongClick
                 )
         ) {
-            Box {
-                Image(
-                    model = live.cover,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .aspectRatio(4 / 3f)
-                )
-                Crossfade(
-                    targetState = live.favourite,
-                    modifier = Modifier
-                        .align(Alignment.BottomEnd)
-                        .padding(spacing.medium)
-                ) { visible ->
-                    if (visible) {
-                        Icon(
-                            imageVector = Icons.Filled.Favorite,
-                            tint = Color.Red,
-                            contentDescription = "favourite live"
-                        )
-                    }
-                }
-            }
+            Image(
+                model = live.cover,
+                contentScale = ContentScale.Crop,
+                shape = RoundedCornerShape(spacing.small),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(4 / 3f)
+            )
             Text(
                 text = live.title,
                 style = MaterialTheme.typography.body1,
                 overflow = TextOverflow.Ellipsis,
                 maxLines = 1,
+                color = if (live.favourite) theme.primary
+                else Color.Unspecified,
+                fontWeight = FontWeight.Bold
             )
             Row(
                 verticalAlignment = Alignment.CenterVertically,
