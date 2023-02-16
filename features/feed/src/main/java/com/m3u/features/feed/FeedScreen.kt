@@ -44,6 +44,7 @@ import com.m3u.ui.components.AlertDialog
 import com.m3u.ui.model.*
 import com.m3u.ui.util.EventHandler
 import com.m3u.ui.util.LifecycleEffect
+import com.m3u.ui.util.interceptVolumeEvent
 import com.m3u.ui.util.isAtTop
 import kotlinx.coroutines.flow.MutableStateFlow
 
@@ -104,7 +105,23 @@ internal fun FeedRoute(
         navigateToLive = navigateToLive,
         onLiveAction = { dialogState = DialogState.Menu(it) },
         onScrollUp = { viewModel.onEvent(FeedEvent.ScrollUp) },
-        modifier = modifier.fillMaxSize()
+        modifier = modifier
+            .fillMaxSize()
+            .let {
+                if (state.editMode) {
+                    it.interceptVolumeEvent { event ->
+                        when (event) {
+                            KeyEvent.KEYCODE_VOLUME_UP -> {
+                                onRowCount((rowCount - 1).coerceAtLeast(1))
+                            }
+                            KeyEvent.KEYCODE_VOLUME_DOWN -> {
+                                onRowCount((rowCount + 1).coerceAtMost(3))
+                            }
+                        }
+                    }
+                } else it
+            }
+
     )
 
     FeedDialog(

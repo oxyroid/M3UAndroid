@@ -10,6 +10,7 @@ import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.rememberScrollableState
 import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.runtime.*
@@ -27,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.m3u.core.annotation.ConnectTimeout
 import com.m3u.core.annotation.FeedStrategy
 import com.m3u.core.annotation.SetStrategy
 import com.m3u.core.util.context.toast
@@ -80,6 +82,10 @@ internal fun SettingRoute(
         url = state.url,
         version = state.version,
         feedStrategy = state.feedStrategy,
+        editMode = state.editMode,
+        connectTimeout = state.connectTimeout,
+        onEditMode = { viewModel.onEvent(SettingEvent.OnEditMode) },
+        onConnectTimeout = { viewModel.onEvent(SettingEvent.OnConnectTimeout) },
         onTitle = { viewModel.onEvent(SettingEvent.OnTitle(it)) },
         onUrl = { viewModel.onEvent(SettingEvent.OnUrl(it)) },
         onSubscribe = { viewModel.onEvent(SettingEvent.OnSubscribe) },
@@ -99,6 +105,10 @@ private fun SettingScreen(
     title: String,
     url: String,
     @FeedStrategy feedStrategy: Int,
+    editMode: Boolean,
+    @ConnectTimeout connectTimeout: Int,
+    onEditMode: () -> Unit,
+    onConnectTimeout: () -> Unit,
     onTitle: (String) -> Unit,
     onUrl: (String) -> Unit,
     onSubscribe: () -> Unit,
@@ -119,14 +129,18 @@ private fun SettingScreen(
                     fold = fold,
                     title = title,
                     url = url,
+                    editMode = editMode,
+                    connectTimeout = connectTimeout,
                     subscribeEnable = subscribeEnable,
                     onFold = { fold = it },
                     onTitle = onTitle,
                     onUrl = onUrl,
                     onSubscribe = onSubscribe,
                     feedStrategy = feedStrategy,
+                    onConnectTimeout = onConnectTimeout,
                     onSyncMode = onSyncMode,
                     onShowMuted = onShowMuted,
+                    onEditMode = onEditMode,
                     showMutedAsFeed = showMutedAsFeed,
                     version = version,
                     modifier = modifier
@@ -142,23 +156,26 @@ private fun SettingScreen(
                     fold = fold,
                     title = title,
                     url = url,
+                    editMode = editMode,
                     subscribeEnable = subscribeEnable,
+                    feedStrategy = feedStrategy,
+                    connectTimeout = connectTimeout,
+                    useCommonUIMode = useCommonUIMode,
+                    version = version,
                     onFold = { fold = it },
                     onTitle = onTitle,
                     onUrl = onUrl,
                     onSubscribe = onSubscribe,
-                    feedStrategy = feedStrategy,
                     onSyncMode = onSyncMode,
-                    useCommonUIMode = useCommonUIMode,
+                    onEditMode = onEditMode,
+                    onConnectTimeout = onConnectTimeout,
                     showMutedAsFeed = showMutedAsFeed,
                     onUIMode = onUIMode,
                     onShowMuted = onShowMuted,
-                    version = version,
-                    modifier = modifier
-                        .scrollable(
-                            orientation = Orientation.Vertical,
-                            state = rememberScrollableState { it }
-                        )
+                    modifier = modifier.scrollable(
+                        orientation = Orientation.Vertical,
+                        state = rememberScrollableState { it }
+                    )
                 )
             }
             else -> {}
@@ -174,6 +191,11 @@ private fun PortraitOrientationContent(
     fold: Fold,
     title: String,
     url: String,
+    @FeedStrategy feedStrategy: Int,
+    editMode: Boolean,
+    @ConnectTimeout connectTimeout: Int,
+    onEditMode: () -> Unit,
+    onConnectTimeout: () -> Unit,
     subscribeEnable: Boolean,
     showMutedAsFeed: Boolean,
     onFold: (Fold) -> Unit,
@@ -181,7 +203,6 @@ private fun PortraitOrientationContent(
     onUrl: (String) -> Unit,
     onSubscribe: () -> Unit,
     onShowMuted: () -> Unit,
-    feedStrategy: @FeedStrategy Int,
     onSyncMode: SetStrategy,
     version: String,
     modifier: Modifier = Modifier
@@ -189,19 +210,23 @@ private fun PortraitOrientationContent(
     Box {
         PreferencesPart(
             version = version,
+            feedStrategy = feedStrategy,
+            useCommonUIMode = true,
+            useCommonUIModeEnable = false,
+            showMutedAsFeed = showMutedAsFeed,
+            editMode = editMode,
+            connectTimeout = connectTimeout,
+            onConnectTimeout = onConnectTimeout,
+            onSyncMode = onSyncMode,
+            onUIMode = { },
+            onEditMode = onEditMode,
+            onShowMuted = onShowMuted,
             onFeedManagement = {
                 onFold(Fold.FEED)
             },
             onScriptManagement = {
                 onFold(Fold.SCRIPT)
             },
-            feedStrategy = feedStrategy,
-            onSyncMode = onSyncMode,
-            useCommonUIMode = true,
-            useCommonUIModeEnable = false,
-            showMutedAsFeed = showMutedAsFeed,
-            onUIMode = { },
-            onShowMuted = onShowMuted,
             modifier = modifier
         )
 
@@ -238,16 +263,20 @@ private fun LandscapeOrientationContent(
     fold: Fold,
     title: String,
     url: String,
+    editMode: Boolean,
     subscribeEnable: Boolean,
     onFold: (Fold) -> Unit,
     onTitle: (String) -> Unit,
     onUrl: (String) -> Unit,
     onSubscribe: () -> Unit,
-    feedStrategy: @FeedStrategy Int,
+    @FeedStrategy feedStrategy: Int,
+    @ConnectTimeout connectTimeout: Int,
     onSyncMode: SetStrategy,
+    onConnectTimeout: () -> Unit,
     useCommonUIMode: Boolean,
     showMutedAsFeed: Boolean,
     onUIMode: () -> Unit,
+    onEditMode: () -> Unit,
     onShowMuted: () -> Unit,
     version: String,
     modifier: Modifier = Modifier
@@ -260,13 +289,17 @@ private fun LandscapeOrientationContent(
     ) {
         PreferencesPart(
             version = version,
+            editMode = editMode,
             onFeedManagement = { onFold(Fold.FEED) },
             onScriptManagement = { onFold(Fold.SCRIPT) },
             feedStrategy = feedStrategy,
+            connectTimeout = connectTimeout,
             onSyncMode = onSyncMode,
+            onConnectTimeout = onConnectTimeout,
             useCommonUIMode = useCommonUIMode,
             showMutedAsFeed = showMutedAsFeed,
             onUIMode = onUIMode,
+            onEditMode = onEditMode,
             onShowMuted = onShowMuted,
             modifier = Modifier
                 .fillMaxHeight()
@@ -306,80 +339,106 @@ private fun PreferencesPart(
     version: String,
     onFeedManagement: () -> Unit,
     onScriptManagement: () -> Unit,
-    feedStrategy: @FeedStrategy Int,
+    @FeedStrategy feedStrategy: Int,
+    @ConnectTimeout connectTimeout: Int,
+    editMode: Boolean,
     onSyncMode: SetStrategy,
     useCommonUIMode: Boolean,
     showMutedAsFeed: Boolean,
     onUIMode: () -> Unit,
+    onEditMode: () -> Unit,
+    onConnectTimeout: () -> Unit,
     onShowMuted: () -> Unit,
     modifier: Modifier = Modifier,
     useCommonUIModeEnable: Boolean = true,
 ) {
     val spacing = LocalSpacing.current
-    OuterColumn(
-        modifier = modifier
+    LazyColumn(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Column(
-            modifier = Modifier.clip(RoundedCornerShape(spacing.medium)),
-            verticalArrangement = Arrangement.spacedBy(1.dp)
-        ) {
-            FoldPreference(
-                title = stringResource(R.string.feed_management),
-                enabled = true,
-                onClick = onFeedManagement
-            )
-            FoldPreference(
-                title = stringResource(R.string.script_management),
-                enabled = true,
-                onClick = onScriptManagement
-            )
-            TextPreference(
-                title = stringResource(R.string.sync_mode),
-                content = when (feedStrategy) {
-                    FeedStrategy.ALL -> stringResource(R.string.sync_mode_all)
-                    FeedStrategy.SKIP_FAVORITE -> stringResource(R.string.sync_mode_skip_favourite)
-                    else -> ""
-                },
-                onClick = {
+        item {
+            Column(
+                modifier = Modifier
+                    .padding(spacing.medium)
+                    .clip(RoundedCornerShape(spacing.medium)),
+                verticalArrangement = Arrangement.spacedBy(1.dp)
+            ) {
+                FoldPreference(
+                    title = stringResource(R.string.feed_management),
+                    enabled = true,
+                    onClick = onFeedManagement
+                )
+                FoldPreference(
+                    title = stringResource(R.string.script_management),
+                    enabled = true,
+                    onClick = onScriptManagement
+                )
+                TextPreference(
+                    title = stringResource(R.string.sync_mode),
+                    content = when (feedStrategy) {
+                        FeedStrategy.ALL -> stringResource(R.string.sync_mode_all)
+                        FeedStrategy.SKIP_FAVORITE -> stringResource(R.string.sync_mode_skip_favourite)
+                        else -> ""
+                    },
+                    onClick = {
+                        // TODO
+                        val target = when (feedStrategy) {
+                            FeedStrategy.ALL -> FeedStrategy.SKIP_FAVORITE
+                            else -> FeedStrategy.ALL
+                        }
+                        onSyncMode(target)
+                    }
+                )
+                TextPreference(
+                    title = stringResource(R.string.connect_timeout),
+                    content = "${connectTimeout / 1000}s",
+                    onClick = onConnectTimeout
+                )
+                CheckBoxPreference(
+                    title = stringResource(R.string.edit_mode),
+                    subtitle = stringResource(id = R.string.edit_mode_description),
+                    checked = editMode,
+                    onCheckedChange = { newValue ->
+                        if (newValue != editMode) {
+                            onEditMode()
+                        }
+                    }
+                )
+                CheckBoxPreference(
+                    title = stringResource(R.string.show_muted_mode),
+                    subtitle = stringResource(id = R.string.show_muted_mode_description),
+                    checked = showMutedAsFeed,
                     // TODO
-                    val target = when (feedStrategy) {
-                        FeedStrategy.ALL -> FeedStrategy.SKIP_FAVORITE
-                        else -> FeedStrategy.ALL
+                    enabled = false,
+                    onCheckedChange = { newValue ->
+                        if (newValue != showMutedAsFeed) {
+                            onShowMuted()
+                        }
                     }
-                    onSyncMode(target)
-                }
-            )
-            CheckBoxPreference(
-                title = stringResource(R.string.show_muted_mode),
-                checked = showMutedAsFeed,
-                // TODO
-                enabled = false,
-                onCheckedChange = { newValue ->
-                    if (newValue != showMutedAsFeed) {
-                        onShowMuted()
+                )
+                CheckBoxPreference(
+                    title = stringResource(R.string.common_ui_mode),
+                    subtitle = if (useCommonUIModeEnable) stringResource(R.string.common_ui_mode_description)
+                    else stringResource(R.string.common_ui_mode_disabled_description),
+                    enabled = useCommonUIModeEnable,
+                    checked = useCommonUIMode,
+                    onCheckedChange = { newValue ->
+                        if (newValue != useCommonUIMode) {
+                            onUIMode()
+                        }
                     }
-                }
-            )
-            CheckBoxPreference(
-                title = stringResource(R.string.common_ui_mode),
-                subtitle = if (useCommonUIModeEnable) stringResource(R.string.common_ui_mode_description)
-                else stringResource(R.string.common_ui_mode_disabled_description),
-                enabled = useCommonUIModeEnable,
-                checked = useCommonUIMode,
-                onCheckedChange = { newValue ->
-                    if (newValue != useCommonUIMode) {
-                        onUIMode()
-                    }
-                }
-            )
+                )
+            }
         }
-        val uriHandler = LocalUriHandler.current
-        TextButton(
-            text = stringResource(R.string.label_app_version, version),
-            modifier = Modifier.align(Alignment.CenterHorizontally)
-        ) {
-            val url = "https://github.com/thxbrop/M3UAndroid/releases/tag/v$version"
-            uriHandler.openUri(url)
+        item {
+            val uriHandler = LocalUriHandler.current
+            TextButton(
+                text = stringResource(R.string.label_app_version, version),
+            ) {
+                val url = "https://github.com/thxbrop/M3UAndroid/releases/tag/v$version"
+                uriHandler.openUri(url)
+            }
         }
     }
 }

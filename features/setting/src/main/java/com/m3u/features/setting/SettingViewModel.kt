@@ -2,6 +2,7 @@ package com.m3u.features.setting
 
 import android.app.Application
 import androidx.lifecycle.viewModelScope
+import com.m3u.core.annotation.ConnectTimeout
 import com.m3u.core.architecture.BaseViewModel
 import com.m3u.core.architecture.Configuration
 import com.m3u.core.architecture.PackageProvider
@@ -30,7 +31,10 @@ class SettingViewModel @Inject constructor(
             it.copy(
                 version = packageProvider.getVersionName(),
                 feedStrategy = configuration.feedStrategy,
-                useCommonUIMode = configuration.useCommonUIMode
+                useCommonUIMode = configuration.useCommonUIMode,
+                editMode = configuration.editMode,
+                connectTimeout = configuration.connectTimeout,
+                showMutedAsFeed = configuration.showMutedAsFeed
             )
         }
     }
@@ -60,6 +64,25 @@ class SettingViewModel @Inject constructor(
         }
     }
 
+    @ConnectTimeout
+    private var connectTimeout: Int by sharedDelegate(configuration.connectTimeout) { newValue ->
+        configuration.connectTimeout = newValue
+        writable.update {
+            it.copy(
+                connectTimeout = newValue
+            )
+        }
+    }
+
+    private var editMode: Boolean by sharedDelegate(configuration.editMode) { newValue ->
+        configuration.editMode = newValue
+        writable.update {
+            it.copy(
+                editMode = newValue
+            )
+        }
+    }
+
 
     override fun onEvent(event: SettingEvent) {
         when (event) {
@@ -70,7 +93,6 @@ class SettingViewModel @Inject constructor(
                     )
                 }
             }
-
             is SettingEvent.OnUrl -> {
                 writable.update {
                     it.copy(
@@ -122,6 +144,14 @@ class SettingViewModel @Inject constructor(
                     }
                     .launchIn(viewModelScope)
             }
+            SettingEvent.OnConnectTimeout -> {
+                connectTimeout = when (connectTimeout) {
+                    ConnectTimeout.Long -> ConnectTimeout.Short
+                    ConnectTimeout.Short -> ConnectTimeout.Long
+                    else -> ConnectTimeout.Short
+                }
+            }
+            SettingEvent.OnEditMode -> editMode = !editMode
         }
     }
 

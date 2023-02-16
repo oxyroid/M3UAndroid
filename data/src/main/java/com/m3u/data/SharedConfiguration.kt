@@ -2,8 +2,11 @@ package com.m3u.data
 
 import android.content.Context
 import android.content.SharedPreferences
+import com.m3u.core.annotation.ConnectTimeout
 import com.m3u.core.annotation.FeedStrategy
 import com.m3u.core.architecture.Configuration
+import com.m3u.core.architecture.Configuration.Companion.DEFAULT_CONNECT_TIMEOUT
+import com.m3u.core.architecture.Configuration.Companion.DEFAULT_EDIT_MODE
 import com.m3u.core.architecture.Configuration.Companion.DEFAULT_FEED_STRATEGY
 import com.m3u.core.architecture.Configuration.Companion.DEFAULT_MUTED_URLS
 import com.m3u.core.architecture.Configuration.Companion.DEFAULT_ROW_COUNT
@@ -37,6 +40,11 @@ class SharedConfiguration @Inject constructor(
         }
     override var rowCount: Int by sharedPreferences.int(DEFAULT_ROW_COUNT)
     override var showMutedAsFeed: Boolean by sharedPreferences.boolean(DEFAULT_SHOW_MUTED_AS_FEED)
+
+    @ConnectTimeout
+    override var connectTimeout: Int by sharedPreferences.int(DEFAULT_CONNECT_TIMEOUT)
+
+    override var editMode: Boolean by sharedPreferences.boolean(DEFAULT_EDIT_MODE)
 
     companion object {
         private const val SHARED_SETTINGS = "shared_settings"

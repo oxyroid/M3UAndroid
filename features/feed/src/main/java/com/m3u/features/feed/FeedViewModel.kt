@@ -36,7 +36,8 @@ class FeedViewModel @Inject constructor(
         writable.update {
             it.copy(
                 useCommonUIMode = configuration.useCommonUIMode,
-                rowCount = configuration.rowCount
+                rowCount = configuration.rowCount,
+                editMode = configuration.editMode
             )
         }
         context.getSystemService(Context.KEYGUARD_SERVICE)
@@ -82,8 +83,7 @@ class FeedViewModel @Inject constructor(
                             if (feed != null) {
                                 it.copy(url = feed.url)
                             } else {
-                                val message =
-                                    context.getString(R.string.error_observe_feed, feedUrl)
+                                val message = context.getString(R.string.error_observe_feed, feedUrl)
                                 it.copy(message = eventOf(message))
                             }
                         }
