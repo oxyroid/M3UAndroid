@@ -12,11 +12,10 @@ import com.m3u.data.dao.LiveDao
 import com.m3u.data.entity.Feed
 import com.m3u.data.interceptor.LoggerInterceptor
 import com.m3u.data.repository.FeedRepository
-import com.m3u.data.source.mather.m3u.M3UMatcher
-import com.m3u.data.source.parser.Parser
-import com.m3u.data.source.parser.m3u.M3U
-import com.m3u.data.source.parser.m3u.toLive
-import com.m3u.data.source.parser.parse
+import com.m3u.data.source.analyzer.Analyzer
+import com.m3u.data.source.analyzer.analyze
+import com.m3u.data.source.matcher.m3u.M3UMatcher
+import com.m3u.data.source.model.toLive
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import javax.inject.Inject
@@ -37,13 +36,7 @@ class FeedRepositoryImpl @Inject constructor(
         @FeedStrategy strategy: Int
     ): Flow<Resource<Unit>> = resourceFlow {
         try {
-            val parser = createParser(url)
-            val result = parser.run {
-                addInterceptor(LoggerInterceptor())
-                parse(url)
-                get()
-            }
-
+            val lives = analyze(url)
             val feed = Feed(title, url)
             feedDao.insert(feed)
             val lives = result.map { it.toLive(url) }
@@ -103,8 +96,19 @@ class FeedRepositoryImpl @Inject constructor(
 
     override suspend fun get(url: String): Feed? = try {
         feedDao.getByUrl(url)
-    } catch (e: Exception) {
-        logger.log(e)
-        null
+    }
+
+    private suspend fun analyze(url: String): List<Live> {
+        val analyzer = when {
+            M3UMatcher.match(url) -> Analyzer.newM3UParser()
+            else -> error("Unsupported url: $url")
+        }
+        return analyzer.run {
+            analyze(
+                url = url,
+                connectTimeout = configuration.connectTimeout
+            )
+            get().map { it.toLive(url) }
+        }
     }
 }
