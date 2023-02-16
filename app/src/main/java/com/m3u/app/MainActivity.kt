@@ -2,6 +2,7 @@ package com.m3u.app
 
 import android.app.PictureInPictureParams
 import android.graphics.Rect
+import android.os.Build
 import android.os.Bundle
 import android.util.Rational
 import androidx.activity.ComponentActivity
@@ -53,6 +54,21 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putString(SAVED_LABEL, labelState.value)
+        outState.putParcelable(SAVED_RECT, playerRectState.value)
+    }
+
+    override fun onRestoreInstanceState(savedInstanceState: Bundle) {
+        super.onRestoreInstanceState(savedInstanceState)
+        labelState.value = savedInstanceState.getString(SAVED_LABEL, "")
+        @Suppress("DEPRECATION")
+        playerRectState.value = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            savedInstanceState.getParcelable(SAVED_RECT, Rect::class.java) ?: Rect()
+        } else savedInstanceState.getParcelable(SAVED_RECT) ?: Rect()
+    }
+
     override fun onUserLeaveHint() {
         val shouldEnterPipMode = isInLiveDestination && isRatioValidated
         if (shouldEnterPipMode) {
@@ -65,4 +81,9 @@ class MainActivity : ComponentActivity() {
 
     private val rect: Rect get() = playerRectState.value
     private val isRatioValidated: Boolean get() = !rect.isEmpty
+
+    companion object {
+        private const val SAVED_LABEL = "saved:label"
+        private const val SAVED_RECT = "saved:rect"
+    }
 }
