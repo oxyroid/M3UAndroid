@@ -5,7 +5,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material.LocalContentColor
 import androidx.compose.material.Text
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -13,6 +16,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -21,9 +25,7 @@ import androidx.media3.common.Player.*
 import androidx.media3.common.Player.State
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.m3u.core.util.context.toast
-import com.m3u.ui.components.ExoPlayer
-import com.m3u.ui.components.OuterColumn
-import com.m3u.ui.components.rememberPlayerState
+import com.m3u.ui.components.*
 import com.m3u.ui.model.AppAction
 import com.m3u.ui.model.LocalTheme
 import com.m3u.ui.model.SetActions
@@ -102,19 +104,40 @@ private fun LiveScreen(
             state = state,
             modifier = Modifier.fillMaxSize()
         )
-        OuterColumn(
-            modifier = Modifier.align(Alignment.BottomStart)
+        val maskState = rememberMaskState()
+
+        CompositionLocalProvider(
+            LocalContentColor provides Color.White
         ) {
-            val playback by state.playbackState
-            Text(
-                text = playback.displayText,
-                color = Color.White
-            )
-            val exception by state.exception
-            Text(
-                text = exception.displayText,
-                color = LocalTheme.current.error
-            )
+            MaskPanel(
+                state = maskState,
+                horizontalAlignment = Alignment.End
+            ) {
+                val playback by state.playbackState
+                Text(
+                    text = playback.displayText,
+                    fontWeight = FontWeight.Bold
+                )
+                val exception by state.exception
+                val displayText = exception.displayText
+                if (displayText.isNotEmpty()) {
+                    Text(
+                        text = displayText,
+                        color = LocalTheme.current.error
+                    )
+                }
+            }
+            Mask(
+                state = maskState,
+                backgroundColor = Color.Black.copy(alpha = 0.54f),
+                modifier = Modifier.fillMaxSize()
+            ) {
+                MaskCircleButton(
+                    state = maskState,
+                    icon = Icons.Rounded.Refresh,
+                    onClick = { /*TODO*/ }
+                )
+            }
         }
     }
 }
