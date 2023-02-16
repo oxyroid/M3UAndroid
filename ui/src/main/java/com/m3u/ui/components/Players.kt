@@ -1,5 +1,6 @@
 package com.m3u.ui.components
 
+import android.content.Context
 import android.graphics.Rect
 import android.util.Log
 import android.view.ViewGroup
@@ -11,7 +12,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.Lifecycle
 import androidx.media3.common.*
-import androidx.media3.common.Player.State
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.AspectRatioFrameLayout
@@ -25,10 +25,30 @@ data class PlayerState(
     val url: String,
     val resizeMode: Int,
     val keepScreenOn: Boolean,
-    val playbackState: MutableState<@State Int>,
+    val context: Context,
+    val playbackState: MutableState<@Player.State Int>,
     val playerRect: MutableState<Rect>,
     val exception: MutableState<PlaybackException?>
-)
+) {
+    private val mediaItem = MediaItem.fromUri(url)
+    var player: Player = ExoPlayer.Builder(context)
+        .build()
+        .apply {
+            val attributes = AudioAttributes.Builder()
+                .setUsage(C.USAGE_MEDIA)
+                .setContentType(C.AUDIO_CONTENT_TYPE_MOVIE)
+                .build()
+            setAudioAttributes(attributes, true)
+            playWhenReady = true
+            setMediaItem(mediaItem)
+        }
+        private set
+
+    fun setMedia() {
+        player.setMediaItem(mediaItem)
+    }
+
+}
 
 @Composable
 fun rememberPlayerState(
@@ -36,11 +56,12 @@ fun rememberPlayerState(
     @OptIn(UnstableApi::class)
     resizeMode: Int = AspectRatioFrameLayout.RESIZE_MODE_FIT,
     keepScreenOn: Boolean = true,
-    state: MutableState<@State Int> = remember(url) { mutableStateOf(Player.STATE_IDLE) },
+    context: Context = LocalContext.current,
+    state: MutableState<@Player.State Int> = remember(url) { mutableStateOf(Player.STATE_IDLE) },
     rect: MutableState<Rect> = remember(url) { mutableStateOf(Rect()) },
     exception: MutableState<PlaybackException?> = remember(url) { mutableStateOf(null) }
-): PlayerState = remember(url, resizeMode, keepScreenOn, state, rect, exception) {
-    PlayerState(url, resizeMode, keepScreenOn, state, rect, exception)
+): PlayerState = remember(url, resizeMode, keepScreenOn, context, state, rect, exception) {
+    PlayerState(url, resizeMode, keepScreenOn, context, state, rect, exception)
 }
 
 @OptIn(UnstableApi::class)
@@ -49,22 +70,8 @@ fun ExoPlayer(
     state: PlayerState,
     modifier: Modifier = Modifier
 ) {
-    val context = LocalContext.current
-    val (url, resizeMode, keepScreenOn, playerState, videoSize, exception) = state
-    val mediaItem = remember(url) { MediaItem.fromUri(url) }
-    val player = remember(mediaItem) {
-        ExoPlayer.Builder(context)
-            .build()
-            .apply {
-                val attributes = AudioAttributes.Builder()
-                    .setUsage(C.USAGE_MEDIA)
-                    .setContentType(C.AUDIO_CONTENT_TYPE_MOVIE)
-                    .build()
-                setAudioAttributes(attributes, true)
-                playWhenReady = true
-                setMediaItem(mediaItem)
-            }
-    }
+    val (_, resizeMode, keepScreenOn, _, playerState, videoSize, exception) = state
+    val player = remember(state.player) { state.player }
 
     DisposableEffect(player, playerState, videoSize, exception) {
         val listener = object : Player.Listener {

@@ -3,11 +3,12 @@ package com.m3u.features.live
 import android.graphics.Rect
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.LocalContentColor
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Cast
+import androidx.compose.material.icons.rounded.PictureInPicture
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -78,7 +79,7 @@ internal fun LiveRoute(
     LiveScreen(
         modifier = modifier,
         url = state.live?.url,
-        playerRect = playerRect
+        searchDlnaDevices = { viewModel.onEvent(LiveEvent.SearchDlnaDevices) },
     )
 }
 
@@ -86,55 +87,96 @@ internal fun LiveRoute(
 private fun LiveScreen(
     modifier: Modifier = Modifier,
     url: String?,
-    playerRect: MutableState<Rect>
+    searchDlnaDevices: () -> Unit,
 ) {
+    val utils = LocalUtils.current
     Box(
         modifier = modifier
             .fillMaxSize()
             .background(Color.Black)
             .testTag("features:live")
     ) {
+        val pipRect = remember { mutableStateOf(Rect()) }
         val state = rememberPlayerState(
             url = url.orEmpty(),
-            rect = playerRect
+            rect = pipRect
         )
         ExoPlayer(
             state = state,
             modifier = Modifier.fillMaxSize()
         )
-        val maskState = rememberMaskState()
-
         CompositionLocalProvider(
             LocalContentColor provides Color.White
         ) {
-            MaskPanel(
-                state = maskState,
-                horizontalAlignment = Alignment.End
-            ) {
-                val playback by state.playbackState
-                Text(
-                    text = playback.displayText,
-                    fontWeight = FontWeight.Bold
-                )
-                val exception by state.exception
-                val displayText = exception.displayText
-                if (displayText.isNotEmpty()) {
-                    Text(
-                        text = displayText,
-                        color = LocalTheme.current.error
-                    )
-                }
-            }
+            val maskState = rememberMaskState()
+            val playback by state.playbackState
+            val exception by state.exception
+            MaskPanel(maskState)
             Mask(
                 state = maskState,
-                backgroundColor = Color.Black.copy(alpha = 0.54f),
-                modifier = Modifier.fillMaxSize()
+                backgroundColor = Color.Black.copy(alpha = 0.54f)
             ) {
-                MaskCircleButton(
-                    state = maskState,
-                    icon = Icons.Rounded.Refresh,
-                    onClick = { /*TODO*/ }
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    val shouldShowCastButton = (playback == STATE_READY)
+                    if (shouldShowCastButton) {
+                        MaskButton(
+                            state = maskState,
+                            icon = Icons.Rounded.Cast,
+                            onClick = searchDlnaDevices
+                        )
+                    }
+                    val shouldShowPipButton = !pipRect.value.isEmpty
+                    if (shouldShowPipButton) {
+                        MaskButton(
+                            state = maskState,
+                            icon = Icons.Rounded.PictureInPicture,
+                            onClick = {
+                                utils.enterPipMode(pipRect.value)
+                                maskState.fail()
+                            }
+                        )
+                    }
+                }
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    MaskCircleButton(
+                        state = maskState,
+                        icon = Icons.Rounded.Refresh,
+                        onClick = {
+                            state.setMedia()
+                        }
+                    )
+                }
+                Row(
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column {
+                        Text(
+                            text = playback.displayText,
+                            fontWeight = FontWeight.Bold
+                        )
+                        val displayText = exception.displayText
+                        if (displayText.isNotEmpty()) {
+                            Text(
+                                text = displayText,
+                                color = LocalTheme.current.error
+                            )
+                        }
+                    }
+                }
+            }
+            LaunchedEffect(exception) {
+                if (exception != null) {
+                    maskState.keepAlive()
+                }
             }
         }
     }
