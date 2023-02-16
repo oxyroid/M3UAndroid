@@ -1,4 +1,4 @@
-package com.m3u.data.source.parser.m3u
+package com.m3u.data.source.analyzer.m3u
 
 import com.m3u.core.util.basic.trimBrackets
 import com.m3u.core.util.collection.loadLine
@@ -62,7 +62,7 @@ class M3UAnalyzer internal constructor() : Analyzer<List<M3U>>() {
         val (group, title) = if (groupTitle.size == 2) {
             groupTitle.first() to groupTitle[1]
         } else {
-            groupTitle.firstOrNull().orEmpty() to groupTitle.getOrNull(1).orEmpty()
+            "" to groupTitle.firstOrNull().orEmpty()
         }
 
         return this.copy(
