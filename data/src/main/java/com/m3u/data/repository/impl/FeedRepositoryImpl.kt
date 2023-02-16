@@ -1,6 +1,8 @@
 package com.m3u.data.repository.impl
 
 import com.m3u.core.annotation.FeedStrategy
+import com.m3u.core.architecture.AbstractLogger
+import com.m3u.core.architecture.Configuration
 import com.m3u.core.architecture.Logger
 import com.m3u.core.util.collection.belong
 import com.m3u.core.wrapper.Resource
@@ -10,7 +12,7 @@ import com.m3u.core.wrapper.resourceFlow
 import com.m3u.data.dao.FeedDao
 import com.m3u.data.dao.LiveDao
 import com.m3u.data.entity.Feed
-import com.m3u.data.interceptor.LoggerInterceptor
+import com.m3u.data.entity.Live
 import com.m3u.data.repository.FeedRepository
 import com.m3u.data.source.analyzer.Analyzer
 import com.m3u.data.source.analyzer.analyze
@@ -23,13 +25,9 @@ import javax.inject.Inject
 class FeedRepositoryImpl @Inject constructor(
     private val feedDao: FeedDao,
     private val liveDao: LiveDao,
-    private val logger: Logger
-) : FeedRepository {
-    private fun createParser(url: String): Parser<List<M3U>, M3U> = when {
-        M3UMatcher.match(url) -> Parser.newM3UParser()
-        else -> error("Unsupported url: $url")
-    }
-
+    logger: Logger,
+    private val configuration: Configuration
+) : FeedRepository, AbstractLogger(logger) {
     override fun subscribe(
         title: String,
         url: String,
@@ -39,39 +37,34 @@ class FeedRepositoryImpl @Inject constructor(
             val lives = analyze(url)
             val feed = Feed(title, url)
             feedDao.insert(feed)
-            val lives = result.map { it.toLive(url) }
-
-            when (strategy) {
-                FeedStrategy.ALL -> {
-                    liveDao.deleteByFeedUrl(url)
-                    lives.forEach { liveDao.insert(it) }
-                }
-                FeedStrategy.SKIP_FAVORITE -> {
-                    val cachedLives = liveDao.getByFeedUrl(url)
-                    val groupedLives = cachedLives.groupBy { it.favourite }
-
-                    val favouriteLives = groupedLives[true] ?: emptyList()
-                    val favouriteUrls = favouriteLives.map { it.url }
-
-                    val invalidateLives = groupedLives[false] ?: emptyList()
-
-                    val skippedUrls = mutableListOf<String>()
-
-                    invalidateLives.forEach { live ->
-                        if (live belong lives) {
-                            skippedUrls += live.url
-                        } else {
-                            liveDao.deleteByUrl(live.url)
-                        }
-                    }
-
-                    lives
-                        .filterNot { it.url in (favouriteUrls + skippedUrls) }
-                        .forEach {
-                            liveDao.insert(it)
-                        }
+            val cachedLives = liveDao.getByFeedUrl(url)
+            val skippedUrls = mutableListOf<String>()
+            val groupedLives by lazy {
+                cachedLives.groupBy { it.favourite }.withDefault { emptyList() }
+            }
+            val invalidateLives = when (strategy) {
+                FeedStrategy.ALL -> cachedLives
+                FeedStrategy.SKIP_FAVORITE -> groupedLives.getValue(false)
+                else -> emptyList()
+            }
+            invalidateLives.forEach { live ->
+                if (live belong lives) {
+                    skippedUrls += live.url
+                } else {
+                    liveDao.deleteByUrl(live.url)
                 }
             }
+            val existedUrls = when (strategy) {
+                FeedStrategy.ALL -> skippedUrls
+                FeedStrategy.SKIP_FAVORITE ->
+                    (groupedLives.getValue(true)).map { it.url } + skippedUrls
+                else -> emptyList()
+            }
+            lives
+                .filterNot { it.url in existedUrls }
+                .forEach {
+                    liveDao.insert(it)
+                }
             emitResource(Unit)
         } catch (e: Exception) {
             logger.log(e)
@@ -79,22 +72,15 @@ class FeedRepositoryImpl @Inject constructor(
         }
     }
 
-    override fun observeAll(): Flow<List<Feed>> = try {
+    override fun observeAll(): Flow<List<Feed>> = sandbox {
         feedDao.observeAll()
-    } catch (e: Exception) {
-        logger.log(e)
-        flow { }
-    }
+    } ?: flow { }
 
-
-    override fun observe(url: String): Flow<Feed?> = try {
+    override fun observe(url: String): Flow<Feed?> = sandbox {
         feedDao.observeByUrl(url)
-    } catch (e: Exception) {
-        logger.log(e)
-        flow { }
-    }
+    } ?: flow { }
 
-    override suspend fun get(url: String): Feed? = try {
+    override suspend fun get(url: String): Feed? = sandbox {
         feedDao.getByUrl(url)
     }
 

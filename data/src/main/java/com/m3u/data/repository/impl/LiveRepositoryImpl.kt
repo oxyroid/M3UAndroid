@@ -2,6 +2,7 @@ package com.m3u.data.repository.impl
 
 import com.m3u.core.architecture.Configuration
 import com.m3u.core.architecture.Logger
+import com.m3u.core.architecture.AbstractLogger
 import com.m3u.core.wrapper.Resource
 import com.m3u.core.wrapper.emitMessage
 import com.m3u.core.wrapper.emitResource
@@ -15,61 +16,40 @@ import javax.inject.Inject
 
 class LiveRepositoryImpl @Inject constructor(
     private val liveDao: LiveDao,
-    private val logger: Logger,
+    logger: Logger,
     private val configuration: Configuration
-) : LiveRepository {
-    override fun observe(id: Int): Flow<Live?> = try {
+) : LiveRepository, AbstractLogger(logger) {
+    override fun observe(id: Int): Flow<Live?> = sandbox {
         liveDao.observeById(id)
-    } catch (e: Exception) {
-        logger.log(e)
-        flow {}
-    }
+    } ?: flow { }
 
-    override fun observeAll(): Flow<List<Live>> = try {
+    override fun observeAll(): Flow<List<Live>> = sandbox {
         liveDao.observeAll()
-    } catch (e: Exception) {
-        logger.log(e)
-        flow {}
-    }
+    } ?: flow { }
 
-    override suspend fun get(id: Int): Live? = try {
+    override suspend fun get(id: Int): Live? = sandbox {
         liveDao.get(id)
-    } catch (e: Exception) {
-        logger.log(e)
-        null
     }
 
-    override suspend fun getByFeedUrl(feedUrl: String): List<Live> = try {
+    override suspend fun getByFeedUrl(feedUrl: String): List<Live> = sandbox {
         liveDao.getByFeedUrl(feedUrl)
-    } catch (e: Exception) {
-        logger.log(e)
-        emptyList()
-    }
+    } ?: emptyList()
 
-    override suspend fun getByUrl(url: String): Live? = try {
+    override suspend fun getByUrl(url: String): Live? = sandbox {
         liveDao.getByUrl(url)
-    } catch (e: Exception) {
-        logger.log(e)
-        null
     }
 
-    override suspend fun setFavourite(id: Int, target: Boolean) = try {
+    override suspend fun setFavourite(id: Int, target: Boolean) = sandbox {
         liveDao.setFavouriteLive(id, target)
-    } catch (e: Exception) {
-        logger.log(e)
-    }
+    } ?: Unit
 
     override fun setMuteByUrl(url: String, target: Boolean): Flow<Resource<Unit>> = resourceFlow {
         try {
             val urls = configuration.mutedUrls
             if (target) {
-                if (url !in urls) {
-                    configuration.mutedUrls = (urls + url)
-                }
+                if (url !in urls) configuration.mutedUrls = (urls + url)
             } else {
-                if (url in urls) {
-                    configuration.mutedUrls = urls - url
-                }
+                if (url in urls) configuration.mutedUrls = (urls - url)
             }
             emitResource(Unit)
         } catch (e: Exception) {
