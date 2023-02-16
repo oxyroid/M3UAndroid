@@ -7,5 +7,5 @@ sealed interface FeedEvent {
     data class MuteLive(val id: Int, val target: Boolean) : FeedEvent
     data class SavePicture(val id: Int) : FeedEvent
     object ScrollUp : FeedEvent
-    data class SetRowCount(val count: Int): FeedEvent
+    data class SetRowCount(val count: Int) : FeedEvent
 }
