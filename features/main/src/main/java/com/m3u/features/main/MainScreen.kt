@@ -10,7 +10,6 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
@@ -18,7 +17,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -106,7 +104,6 @@ fun PortraitOrientationContent(
     navigateToFeed: NavigateToFeed,
     modifier: Modifier = Modifier
 ) {
-    val theme = LocalTheme.current
     val spacing = LocalSpacing.current
     LazyColumn(
         modifier = modifier.fillMaxSize(),
@@ -131,10 +128,6 @@ fun PortraitOrientationContent(
                 val title = stringResource(R.string.muted_lives_feed)
                 FeedItem(
                     label = title,
-                    labelStyle = MaterialTheme.typography.subtitle1.copy(
-                        color = theme.primary,
-                        fontWeight = FontWeight.Bold
-                    ),
                     number = mutedFeed.count,
                     onClick = {
                         navigateToFeed(
@@ -155,7 +148,6 @@ private fun LandscapeOrientationContent(
     navigateToFeed: NavigateToFeed,
     modifier: Modifier = Modifier
 ) {
-    val theme = LocalTheme.current
     val spacing = LocalSpacing.current
     LazyVerticalGrid(
         columns = GridCells.Fixed(3),
@@ -181,10 +173,6 @@ private fun LandscapeOrientationContent(
             item {
                 FeedItem(
                     label = stringResource(R.string.muted_lives_feed),
-                    labelStyle = MaterialTheme.typography.subtitle1.copy(
-                        color = theme.primary,
-                        fontWeight = FontWeight.Bold
-                    ),
                     number = mutedFeed.count,
                     onClick = { /*TODO*/ }
                 )

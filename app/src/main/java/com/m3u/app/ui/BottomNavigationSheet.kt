@@ -2,6 +2,7 @@ package com.m3u.app.ui
 
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.material.Icon
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material.NavigationRailItem
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
@@ -10,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hierarchy
 import com.m3u.app.navigation.NavigateToTopLevelDestination
@@ -54,7 +56,11 @@ fun BottomNavigationSheet(
                     }
                 },
                 label = {
-                    Text(text = stringResource(destination.iconTextId))
+                    Text(
+                        text = stringResource(destination.iconTextId),
+                        style = MaterialTheme.typography.caption,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             )
         }

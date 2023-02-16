@@ -105,16 +105,13 @@ fun TextButton(
     disabledContentColor: Color = LocalTheme.current.onSurface.copy(alpha = 0.38f),
     onClick: () -> Unit
 ) {
-    TextButton(
-        shape = RoundedCornerShape(8.dp),
-        onClick = onClick,
+    TextButtonLayout(
         modifier = modifier,
         enabled = enabled,
-        colors = ButtonDefaults.textButtonColors(
-            backgroundColor = backgroundColor,
-            contentColor = contentColor,
-            disabledContentColor = disabledContentColor
-        )
+        backgroundColor = backgroundColor,
+        contentColor = contentColor,
+        disabledContentColor = disabledContentColor,
+        onClick = onClick
     ) {
         Text(
             style = MaterialTheme.typography.button,
@@ -124,6 +121,37 @@ fun TextButton(
         )
     }
 }
+
+@Composable
+fun TextButtonLayout(
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    backgroundColor: Color = Color.Transparent,
+    contentColor: Color = LocalTheme.current.primary,
+    disabledContentColor: Color = LocalTheme.current.onSurface.copy(alpha = 0.38f),
+    onClick: () -> Unit = {},
+    text: @Composable RowScope.() -> Unit,
+) {
+    TextButton(
+        shape = RoundedCornerShape(8.dp),
+        onClick = onClick,
+        modifier = modifier,
+        enabled = enabled,
+        colors = ButtonDefaults.textButtonColors(
+            backgroundColor = backgroundColor,
+            contentColor = contentColor,
+            disabledContentColor = disabledContentColor
+        ),
+        content = {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceAround,
+                content = text
+            )
+        }
+    )
+}
+
 
 @Composable
 fun IconButton(

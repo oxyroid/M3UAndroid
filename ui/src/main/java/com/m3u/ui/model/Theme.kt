@@ -58,7 +58,7 @@ val DayTheme = Theme(
     onPressed = Color(0xff323232),
     error = Color(0xFFBA1A1A),
     onError = Color.White,
-    divider = Color(0xFFf0f0f0)
+    divider = Color(0xFFd0d0d0)
 )
 
 val NightTheme = Theme(

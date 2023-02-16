@@ -23,6 +23,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.util.lerp
 import com.m3u.ui.R
 import com.m3u.ui.model.Icon
 import com.m3u.ui.model.LocalSpacing
@@ -177,15 +178,13 @@ fun AppTopBar(
                     }
                 }
             }
-            Divider(
-                color = LocalTheme.current.divider
-            )
+            Divider(color = LocalTheme.current.divider)
         }
     }
 }
 
 internal object AppTopBarDefaults {
-    val TopBarHeight = 48.dp
+    val TopBarHeight = 52.dp
     const val ScaleSlope = 0.35f
 
     @OptIn(ExperimentalLayoutApi::class)
@@ -199,7 +198,5 @@ internal object AppTopBarDefaults {
      * @param slope the slope of the interpolator.
      * @param input the x value between 0~1f.
      */
-    fun scaleInterpolator(slope: Float, input: Float): Float {
-        return slope * (input - 1) + 1
-    }
+    fun scaleInterpolator(slope: Float, input: Float): Float = lerp(input, 1f, 1 - slope)
 }

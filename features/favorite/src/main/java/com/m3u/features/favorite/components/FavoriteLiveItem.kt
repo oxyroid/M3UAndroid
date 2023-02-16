@@ -68,7 +68,7 @@ internal fun FavoriteLiveItem(
                     )
                     Text(
                         text = live.title,
-                        style = MaterialTheme.typography.body1,
+                        style = MaterialTheme.typography.subtitle1,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.weight(1f)
@@ -89,7 +89,7 @@ internal fun FavoriteLiveItem(
                     Text(
                         text = live.url,
                         maxLines = 1,
-                        style = MaterialTheme.typography.body2,
+                        style = MaterialTheme.typography.subtitle2,
                         overflow = TextOverflow.Ellipsis
                     )
                 }

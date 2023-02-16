@@ -34,7 +34,7 @@ fun Image(
             Surface(
                 modifier = Modifier.fillMaxSize(),
                 shape = shape,
-                color = LocalTheme.current.surface
+                color = LocalTheme.current.secondary
             ) {
 
             }
@@ -48,7 +48,7 @@ fun Image(
             ) {
                 Text(
                     text = errorPlaceholder.orEmpty(),
-                    style = MaterialTheme.typography.h6,
+                    style = MaterialTheme.typography.h5,
                     color = LocalTheme.current.onSecondary
                 )
             }

@@ -3,7 +3,6 @@ package com.m3u.features.feed.components
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -19,7 +18,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import com.m3u.data.entity.Live
 import com.m3u.features.feed.R
 import com.m3u.ui.components.Image
-import com.m3u.ui.components.OuterColumn
 import com.m3u.ui.components.TextBadge
 import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.LocalTheme
@@ -31,7 +29,8 @@ internal fun LiveItem(
     live: Live,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    scaleTime: Int = 1
 ) {
     val context = LocalContext.current
     val spacing = LocalSpacing.current
@@ -44,31 +43,32 @@ internal fun LiveItem(
         backgroundColor = theme.surface,
         contentColor = theme.onSurface
     ) {
-        OuterColumn(
+        Column(
             modifier = modifier
                 .combinedClickable(
                     onClick = onClick,
                     onLongClick = onLongClick
                 )
+                .padding(spacing.small / scaleTime)
         ) {
             Image(
                 model = live.cover,
                 errorPlaceholder = live.title,
                 contentScale = ContentScale.Crop,
-                shape = RoundedCornerShape(spacing.small),
                 modifier = Modifier
                     .fillMaxWidth()
                     .aspectRatio(4 / 3f)
             )
             Text(
                 text = live.title,
-                style = MaterialTheme.typography.body1,
+                style = MaterialTheme.typography.subtitle1,
                 overflow = TextOverflow.Ellipsis,
                 maxLines = 1,
                 color = if (live.favourite) theme.primary
                 else Color.Unspecified,
                 fontWeight = FontWeight.Bold
             )
+
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(spacing.extraSmall)
@@ -80,7 +80,7 @@ internal fun LiveItem(
                     Text(
                         text = live.url,
                         maxLines = 1,
-                        style = MaterialTheme.typography.body2,
+                        style = MaterialTheme.typography.subtitle2,
                         overflow = TextOverflow.Ellipsis
                     )
                 }
