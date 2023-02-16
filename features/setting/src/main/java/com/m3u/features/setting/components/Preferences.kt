@@ -10,7 +10,6 @@ import androidx.compose.material.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.LocalTheme
@@ -32,7 +31,6 @@ internal fun FoldPreference(
                 style = MaterialTheme.typography.subtitle1,
                 fontWeight = FontWeight.Bold,
                 maxLines = 1,
-                textDecoration = if (enabled) null else TextDecoration.LineThrough,
                 overflow = TextOverflow.Ellipsis
             )
         },
@@ -42,7 +40,6 @@ internal fun FoldPreference(
                     text = it,
                     style = MaterialTheme.typography.subtitle2,
                     maxLines = 1,
-                    textDecoration = if (enabled) null else TextDecoration.LineThrough,
                     overflow = TextOverflow.Ellipsis
                 )
             }
@@ -88,7 +85,6 @@ internal fun CheckBoxPreference(
                 onCheckedChange = onCheckedChange,
                 colors = CheckboxDefaults.colors(
                     checkedColor = LocalTheme.current.tint,
-                    uncheckedColor = LocalTheme.current.onTint
                 )
             )
         }
@@ -109,9 +105,7 @@ internal fun TextPreference(
         subtitle = subtitle,
         enabled = enabled,
         onClick = {
-            if (enabled) {
-                onClick()
-            }
+            if (enabled) onClick()
         },
         modifier = modifier,
         trailingContent = {
@@ -120,7 +114,10 @@ internal fun TextPreference(
                 style = MaterialTheme.typography.button,
                 color = LocalTheme.current.tint,
                 maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.padding(
+                    horizontal = LocalSpacing.current.small
+                )
             )
         }
     )
