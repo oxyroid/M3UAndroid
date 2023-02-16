@@ -22,6 +22,8 @@ class LiveViewModel @Inject constructor(
     override fun onEvent(event: LiveEvent) {
         when (event) {
             is LiveEvent.Init -> init(event.liveId)
+            LiveEvent.SearchDlnaDevices -> searchDlnaDevices()
+            LiveEvent.EnterPipMode -> enterPipMode()
         }
     }
 
@@ -35,5 +37,13 @@ class LiveViewModel @Inject constructor(
                 }
             }
             .launchIn(viewModelScope)
+    }
+
+    private fun searchDlnaDevices() {
+
+    }
+
+    private fun enterPipMode() {
+
     }
 }
