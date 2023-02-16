@@ -2,88 +2,87 @@ package com.m3u.app
 
 import android.app.PictureInPictureParams
 import android.graphics.Rect
-import android.os.Build
 import android.os.Bundle
 import android.util.Rational
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.animation.ExperimentalAnimationApi
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowCompat
-import androidx.navigation.NavController
-import com.google.accompanist.navigation.animation.rememberAnimatedNavController
-import com.m3u.app.navigation.Destination
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
+import androidx.lifecycle.lifecycleScope
 import com.m3u.app.ui.App
-import com.m3u.app.ui.isInDestination
 import com.m3u.app.ui.rememberAppState
 import com.m3u.ui.M3ULocalProvider
+import com.m3u.ui.model.AppAction
+import com.m3u.ui.model.Utils
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
-class MainActivity : ComponentActivity() {
-    private val labelState = mutableStateOf("")
-    private val playerRectState = mutableStateOf(Rect())
-    private var isInLiveDestination: Boolean = false
+class MainActivity : ComponentActivity(), Utils {
+    private val title = mutableStateOf("")
+    private val actions = MutableStateFlow(emptyList<AppAction>())
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         super.onCreate(savedInstanceState)
         WindowCompat.setDecorFitsSystemWindows(window, false)
         setContent {
-            M3ULocalProvider {
-                @OptIn(ExperimentalAnimationApi::class)
-                val navController = rememberAnimatedNavController()
-                DisposableEffect(navController) {
-                    val listener = NavController.OnDestinationChangedListener { _, destination, _ ->
-                        isInLiveDestination = destination.isInDestination<Destination.Live>()
-                    }
-                    navController.addOnDestinationChangedListener(listener)
-                    onDispose {
-                        navController.removeOnDestinationChangedListener(listener)
-                    }
-                }
-                App(
-                    appState = rememberAppState(
-                        navController = navController,
-                        label = labelState,
-                        playerRect = playerRectState
-                    )
+            M3ULocalProvider(this) {
+                val appState = rememberAppState(
+                    title = title,
+                    actions = actions
                 )
+                App(appState)
             }
         }
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
-        outState.putString(SAVED_LABEL, labelState.value)
-        outState.putParcelable(SAVED_RECT, playerRectState.value)
+        outState.putString(SAVED_LABEL, title.value)
     }
 
     override fun onRestoreInstanceState(savedInstanceState: Bundle) {
         super.onRestoreInstanceState(savedInstanceState)
-        labelState.value = savedInstanceState.getString(SAVED_LABEL, "")
-        @Suppress("DEPRECATION")
-        playerRectState.value = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            savedInstanceState.getParcelable(SAVED_RECT, Rect::class.java) ?: Rect()
-        } else savedInstanceState.getParcelable(SAVED_RECT) ?: Rect()
+        title.value = savedInstanceState.getString(SAVED_LABEL, "")
     }
 
-    override fun onUserLeaveHint() {
-        val shouldEnterPipMode = isInLiveDestination && isRatioValidated
-        if (shouldEnterPipMode) {
-            val params = PictureInPictureParams.Builder()
-                .setAspectRatio(Rational(rect.width(), rect.height()))
-                .build()
-            enterPictureInPictureMode(params)
+    override fun enterPipMode(source: Rect) {
+        val params = PictureInPictureParams.Builder()
+            .setAspectRatio(Rational(source.width(), source.height()))
+            .build()
+        enterPictureInPictureMode(params)
+    }
+
+    override fun setTitle(title: String) {
+        this.title.value = title
+    }
+
+    override fun setActions(actions: List<AppAction>) {
+        lifecycleScope.launch {
+            this@MainActivity.actions.emit(actions)
         }
     }
 
-    private val rect: Rect get() = playerRectState.value
-    private val isRatioValidated: Boolean get() = !rect.isEmpty
+    override fun hideSystemUI() {
+        WindowInsetsControllerCompat(window, window.decorView).let { controller ->
+            controller.hide(WindowInsetsCompat.Type.systemBars())
+            controller.systemBarsBehavior =
+                WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+        }
+    }
+
+    override fun showSystemUI() {
+        WindowInsetsControllerCompat(
+            window,
+            window.decorView
+        ).show(WindowInsetsCompat.Type.systemBars())
+    }
 
     companion object {
         private const val SAVED_LABEL = "saved:label"
-        private const val SAVED_RECT = "saved:rect"
     }
 }

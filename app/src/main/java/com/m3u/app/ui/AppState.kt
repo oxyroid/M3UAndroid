@@ -1,6 +1,5 @@
 package com.m3u.app.ui
 
-import android.graphics.Rect
 import android.util.Log
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.runtime.*
@@ -22,17 +21,14 @@ import com.m3u.features.main.navgation.navigateToMain
 import com.m3u.features.setting.navigation.navigateToSetting
 import com.m3u.features.setting.navigation.settingNavigationRoute
 import com.m3u.ui.model.AppAction
-import com.m3u.ui.model.SetActions
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.MutableStateFlow
 
 @Composable
 fun rememberAppState(
     @OptIn(ExperimentalAnimationApi::class)
     navController: NavHostController = rememberAnimatedNavController(),
-    label: MutableState<String> = remember { mutableStateOf("") },
-    playerRect: MutableState<Rect> = remember { mutableStateOf(Rect()) },
-    coroutineScope: CoroutineScope = rememberCoroutineScope()
+    title: MutableState<String> = remember { mutableStateOf("") },
+    actions: MutableStateFlow<List<AppAction>> = remember { MutableStateFlow(emptyList()) },
 ): AppState {
     DisposableEffect(navController) {
         val listener = NavController.OnDestinationChangedListener { _, destination, _ ->
@@ -43,17 +39,16 @@ fun rememberAppState(
             navController.removeOnDestinationChangedListener(listener)
         }
     }
-    return remember(navController, label, playerRect, coroutineScope) {
-        AppState(navController, label, playerRect, coroutineScope)
+    return remember(navController, title, actions) {
+        AppState(navController, title, actions)
     }
 }
 
 @Stable
 class AppState(
     val navController: NavHostController,
-    val label: MutableState<String>,
-    val playerRect: MutableState<Rect>,
-    private val coroutineScope: CoroutineScope
+    val title: MutableState<String>,
+    val actions: MutableStateFlow<List<AppAction>>,
 ) {
     val currentNavDestination: NavDestination?
         @Composable get() = navController.currentBackStackEntryAsState().value?.destination
@@ -84,28 +79,15 @@ class AppState(
         }
     }
 
-    fun navigateToDestination(destination: Destination, label: String = "") {
+    fun navigateToDestination(destination: Destination) {
         when (destination) {
             is Destination.Feed -> {
-                coroutineScope.launch {
-                    this@AppState.label.value = label
-                }
                 navController.navigationToFeed(destination.url)
             }
 
             is Destination.Live -> {
                 navController.navigateToLive(destination.id)
             }
-        }
-    }
-
-    private val _appActions: MutableState<List<AppAction>> = mutableStateOf(emptyList())
-    val appActions: State<List<AppAction>> get() = _appActions
-
-    val setAppActions: SetActions = {
-        var delegate by _appActions
-        if ((delegate != it)) {
-            delegate = it
         }
     }
 

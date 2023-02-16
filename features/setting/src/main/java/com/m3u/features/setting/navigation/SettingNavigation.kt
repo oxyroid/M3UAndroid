@@ -6,7 +6,6 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavOptions
 import com.google.accompanist.navigation.animation.composable
 import com.m3u.features.setting.SettingRoute
-import com.m3u.ui.model.SetActions
 
 const val settingNavigationRoute = "setting_route"
 
@@ -15,14 +14,10 @@ fun NavController.navigateToSetting(navOptions: NavOptions? = null) {
 }
 
 @OptIn(ExperimentalAnimationApi::class)
-fun NavGraphBuilder.settingScreen(
-    setAppActions: SetActions
-) {
+fun NavGraphBuilder.settingScreen() {
     composable(
         route = settingNavigationRoute
     ) {
-        SettingRoute(
-            setAppActions = setAppActions
-        )
+        SettingRoute()
     }
 }

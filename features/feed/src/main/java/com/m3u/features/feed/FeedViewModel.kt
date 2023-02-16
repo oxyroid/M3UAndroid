@@ -81,7 +81,10 @@ class FeedViewModel @Inject constructor(
                     .onEach { feed ->
                         writable.update {
                             if (feed != null) {
-                                it.copy(url = feed.url)
+                                it.copy(
+                                    url = feed.url,
+                                    title = feed.title
+                                )
                             } else {
                                 val message = context.getString(R.string.error_observe_feed, feedUrl)
                                 it.copy(message = eventOf(message))

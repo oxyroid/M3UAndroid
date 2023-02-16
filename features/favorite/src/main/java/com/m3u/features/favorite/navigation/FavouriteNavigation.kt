@@ -6,7 +6,6 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavOptions
 import com.google.accompanist.navigation.animation.composable
 import com.m3u.features.favorite.FavouriteRoute
-import com.m3u.ui.model.SetActions
 
 typealias NavigateToLive = (Int) -> Unit
 
@@ -18,14 +17,12 @@ fun NavController.navigateToFavourite(navOptions: NavOptions? = null) {
 
 @OptIn(ExperimentalAnimationApi::class)
 fun NavGraphBuilder.favouriteScreen(
-    setAppActions: SetActions,
     navigateToLive: NavigateToLive
 ) {
     composable(
         route = favouriteNavigationRoute
     ) {
         FavouriteRoute(
-            setAppActions = setAppActions,
             navigateToLive = navigateToLive
         )
     }

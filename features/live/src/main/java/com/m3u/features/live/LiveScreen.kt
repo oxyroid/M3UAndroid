@@ -26,9 +26,8 @@ import androidx.media3.common.Player.State
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.m3u.core.util.context.toast
 import com.m3u.ui.components.*
-import com.m3u.ui.model.AppAction
 import com.m3u.ui.model.LocalTheme
-import com.m3u.ui.model.SetActions
+import com.m3u.ui.model.LocalUtils
 import com.m3u.ui.util.EventHandler
 import com.m3u.ui.util.LifecycleEffect
 
@@ -36,22 +35,20 @@ import com.m3u.ui.util.LifecycleEffect
 internal fun LiveRoute(
     modifier: Modifier = Modifier,
     viewModel: LiveViewModel = hiltViewModel(),
-    setAppActions: SetActions,
-    id: Int,
-    playerRect: MutableState<Rect>
+    id: Int
 ) {
     val context = LocalContext.current
+    val utils = LocalUtils.current
     val state: LiveState by viewModel.state.collectAsStateWithLifecycle()
 
-    val setAppActionsUpdated by rememberUpdatedState(setAppActions)
     val systemUiController = rememberSystemUiController()
     val useDarkIcons = !isSystemInDarkTheme()
 
     LifecycleEffect { event ->
         when (event) {
             Lifecycle.Event.ON_START -> {
-                val actions = listOf<AppAction>()
-                setAppActionsUpdated(actions)
+                utils.hideSystemUI()
+                utils.setActions()
                 systemUiController.setSystemBarsColor(
                     color = Color.Black,
                     darkIcons = false
@@ -59,7 +56,8 @@ internal fun LiveRoute(
             }
 
             Lifecycle.Event.ON_PAUSE -> {
-                setAppActionsUpdated(emptyList())
+                utils.showSystemUI()
+                utils.setActions()
                 systemUiController.setSystemBarsColor(
                     color = Color.Transparent,
                     darkIcons = useDarkIcons

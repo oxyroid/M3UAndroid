@@ -5,7 +5,6 @@ import androidx.compose.animation.*
 import androidx.navigation.*
 import com.google.accompanist.navigation.animation.composable
 import com.m3u.features.feed.FeedRoute
-import com.m3u.ui.model.SetActions
 
 
 private const val FEED_ROUTE_PATH = "feed_route"
@@ -22,7 +21,6 @@ fun NavController.navigationToFeed(url: String, navOptions: NavOptions? = null) 
 @OptIn(ExperimentalAnimationApi::class)
 fun NavGraphBuilder.feedScreen(
     navigateToLive: (Int) -> Unit,
-    setAppActions: SetActions
 ) {
     composable(
         route = feedRoute,
@@ -44,7 +42,6 @@ fun NavGraphBuilder.feedScreen(
         FeedRoute(
             url = url,
             navigateToLive = navigateToLive,
-            setAppActions = setAppActions
         )
     }
 }

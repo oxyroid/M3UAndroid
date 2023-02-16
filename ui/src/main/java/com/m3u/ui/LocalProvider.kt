@@ -10,7 +10,10 @@ import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.m3u.ui.model.*
 
 @Composable
-fun M3ULocalProvider(content: @Composable () -> Unit) {
+fun M3ULocalProvider(
+    utils: Utils,
+    content: @Composable () -> Unit
+) {
     val theme = if (isSystemInDarkTheme()) NightTheme
     else DayTheme
     val background = Background(
@@ -28,7 +31,8 @@ fun M3ULocalProvider(content: @Composable () -> Unit) {
     }
     CompositionLocalProvider(
         LocalTheme provides theme,
-        LocalBackground provides background
+        LocalBackground provides background,
+        LocalUtils provides utils
     ) {
         MaterialTheme(
             typography = Typography,

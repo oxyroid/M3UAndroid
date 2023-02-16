@@ -14,6 +14,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavDestination
 import com.m3u.app.navigation.Destination
 import com.m3u.app.navigation.M3UNavHost
@@ -55,12 +56,12 @@ fun App(
                 Column(
                     modifier = Modifier.fillMaxSize()
                 ) {
-                    val topLevelLabel = appState.currentTopLevelDestination
+                    val topLevelTitle = appState.currentTopLevelDestination
                         ?.titleTextId
                         ?.let { stringResource(it) }
-                    val label by appState.label
-                    val text by remember(topLevelLabel) {
-                        derivedStateOf { topLevelLabel ?: label }
+                    val title by appState.title
+                    val text by remember(topLevelTitle) {
+                        derivedStateOf { topLevelTitle ?: title }
                     }
                     val isSystemBarVisible =
                         !appState.currentNavDestination.isInDestination<Destination.Live>()
@@ -68,7 +69,7 @@ fun App(
                         text = text,
                         visible = isSystemBarVisible,
                         actions = {
-                            val actions by appState.appActions
+                            val actions by appState.actions.collectAsStateWithLifecycle()
                             actions.forEach { action ->
                                 IconButton(
                                     icon = action.icon,
@@ -88,8 +89,6 @@ fun App(
                             M3UNavHost(
                                 navController = appState.navController,
                                 navigateToDestination = appState::navigateToDestination,
-                                setAppActions = appState.setAppActions,
-                                playerRect = appState.playerRect,
                                 modifier = Modifier
                                     .padding(padding)
                                     .weight(1f)

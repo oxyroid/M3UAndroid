@@ -12,7 +12,6 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
@@ -24,18 +23,20 @@ import com.m3u.core.util.context.toast
 import com.m3u.features.main.components.FeedItem
 import com.m3u.features.main.model.FeedDetail
 import com.m3u.features.main.navgation.NavigateToFeed
-import com.m3u.ui.model.*
+import com.m3u.ui.model.LocalSpacing
+import com.m3u.ui.model.LocalUtils
+import com.m3u.ui.model.SpecialNavigationParam
 import com.m3u.ui.util.EventHandler
 import com.m3u.ui.util.LifecycleEffect
 
 @Composable
 internal fun MainRoute(
     navigateToFeed: NavigateToFeed,
-    setAppActions: SetActions,
     modifier: Modifier = Modifier,
     viewModel: MainViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
+    val utils = LocalUtils.current
     val state: MainState by viewModel.state.collectAsStateWithLifecycle()
     val feeds: List<FeedDetail> = state.feeds
     val mutedFeed: FeedDetail? = state.mutedFeed
@@ -43,16 +44,14 @@ internal fun MainRoute(
     EventHandler(state.message) {
         context.toast(it)
     }
-    val currentSetAppActions by rememberUpdatedState(setAppActions)
     LifecycleEffect { event ->
         when (event) {
             Lifecycle.Event.ON_START -> {
-                val actions = listOf<AppAction>()
-                currentSetAppActions(actions)
+                utils.setActions()
             }
 
             Lifecycle.Event.ON_PAUSE -> {
-                currentSetAppActions(emptyList())
+                utils.setActions()
             }
 
             else -> {}
@@ -116,10 +115,7 @@ fun PortraitOrientationContent(
                 number = detail.count,
                 modifier = Modifier.fillParentMaxWidth(),
                 onClick = {
-                    navigateToFeed(
-                        detail.feed.url,
-                        detail.feed.title
-                    )
+                    navigateToFeed(detail.feed.url)
                 }
             )
         }
@@ -130,10 +126,7 @@ fun PortraitOrientationContent(
                     label = title,
                     number = mutedFeed.count,
                     onClick = {
-                        navigateToFeed(
-                            SpecialNavigationParam.FEED_MUTED_LIVES_URL,
-                            title
-                        )
+                        navigateToFeed(SpecialNavigationParam.FEED_MUTED_LIVES_URL)
                     }
                 )
             }
@@ -162,10 +155,7 @@ private fun LandscapeOrientationContent(
                 number = detail.count,
                 modifier = Modifier.fillMaxWidth(),
                 onClick = {
-                    navigateToFeed(
-                        detail.feed.url,
-                        detail.feed.title
-                    )
+                    navigateToFeed(detail.feed.url)
                 }
             )
         }

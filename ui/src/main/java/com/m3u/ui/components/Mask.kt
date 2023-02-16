@@ -12,16 +12,14 @@ import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.Icon
-import androidx.compose.material.LocalContentColor
-import androidx.compose.material.TextButton
+import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import com.m3u.ui.model.Icon
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -30,6 +28,7 @@ interface MaskState {
     val visible: Boolean
     fun excite()
     fun keepAlive()
+    fun fail()
 }
 
 @Stable
@@ -58,6 +57,10 @@ class MaskStateCoroutineImpl(
 
     override fun keepAlive() {
         lastTime = System.currentTimeMillis()
+    }
+
+    override fun fail() {
+        lastTime = 0
     }
 }
 
@@ -90,7 +93,7 @@ fun Mask(
         exit = fadeOut()
     ) {
         CompositionLocalProvider(LocalContentColor provides contentColor) {
-            Column(
+            OuterColumn(
                 modifier = modifier.background(backgroundColor),
                 content = content,
                 verticalArrangement = verticalArrangement,
@@ -129,6 +132,25 @@ fun MaskPanel(
 }
 
 @Composable
+fun MaskButton(
+    state: MaskState,
+    icon: ImageVector,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    IconButton(
+        icon = Icon.ImageVectorIcon(icon),
+        contentDescription = null,
+        onClick = {
+            state.keepAlive()
+            onClick()
+        },
+        modifier = modifier
+    )
+}
+
+@OptIn(ExperimentalMaterialApi::class)
+@Composable
 fun MaskCircleButton(
     state: MaskState,
     icon: ImageVector,
@@ -136,19 +158,19 @@ fun MaskCircleButton(
     modifier: Modifier = Modifier,
     tint: Color = LocalContentColor.current,
 ) {
-    TextButton(
+    Surface(
+        shape = CircleShape,
         onClick = {
             state.keepAlive()
             onClick()
         },
-        modifier = modifier
-            .clip(CircleShape)
-            .size(96.dp)
+        modifier = modifier,
+        color = Color.Unspecified
     ) {
         Icon(
             imageVector = icon,
             contentDescription = null,
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier.size(96.dp),
             tint = tint
         )
     }

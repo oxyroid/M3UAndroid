@@ -10,7 +10,6 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
@@ -20,30 +19,29 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.core.util.context.toast
 import com.m3u.features.favorite.components.FavoriteLiveItem
 import com.m3u.features.favorite.navigation.NavigateToLive
-import com.m3u.ui.model.SetActions
+import com.m3u.ui.model.LocalUtils
 import com.m3u.ui.util.EventHandler
 import com.m3u.ui.util.LifecycleEffect
 
 @Composable
 internal fun FavouriteRoute(
-    setAppActions: SetActions,
     navigateToLive: NavigateToLive,
     modifier: Modifier = Modifier,
     viewModel: FavouriteViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
+    val utils = LocalUtils.current
     val state by viewModel.state.collectAsStateWithLifecycle()
     EventHandler(state.message) {
         context.toast(it)
     }
-    val currentSetAppActions by rememberUpdatedState(setAppActions)
     LifecycleEffect { event ->
         when (event) {
             Lifecycle.Event.ON_START -> {
-                currentSetAppActions(emptyList())
+                utils.setActions()
             }
             Lifecycle.Event.ON_PAUSE -> {
-                currentSetAppActions(emptyList())
+                utils.setActions()
             }
 
             else -> {}

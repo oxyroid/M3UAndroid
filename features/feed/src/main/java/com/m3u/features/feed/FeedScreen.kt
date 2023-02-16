@@ -46,13 +46,12 @@ import kotlinx.coroutines.launch
 internal fun FeedRoute(
     url: String,
     navigateToLive: (Int) -> Unit,
-    setAppActions: SetActions,
     modifier: Modifier = Modifier,
     viewModel: FeedViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
+    val utils = LocalUtils.current
     val state by viewModel.state.collectAsStateWithLifecycle()
-    val currentSetAppActions by rememberUpdatedState(setAppActions)
     var dialogState: DialogState by remember { mutableStateOf(DialogState.Idle) }
     LifecycleEffect { event ->
         when (event) {
@@ -66,10 +65,11 @@ internal fun FeedRoute(
                         }
                     )
                 )
-                currentSetAppActions(actions)
+                utils.setActions(actions)
             }
             Lifecycle.Event.ON_PAUSE -> {
-                currentSetAppActions(emptyList())
+                utils.setTitle()
+                utils.setActions()
             }
             else -> {}
         }
@@ -79,6 +79,9 @@ internal fun FeedRoute(
     }
     LaunchedEffect(url) {
         viewModel.onEvent(FeedEvent.ObserveFeed(url))
+    }
+    LaunchedEffect(state.title) {
+        utils.setTitle(state.title)
     }
     val rowCount = state.rowCount
     fun onRowCount(target: Int) {

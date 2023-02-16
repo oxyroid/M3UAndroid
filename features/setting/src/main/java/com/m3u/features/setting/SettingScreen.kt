@@ -39,10 +39,9 @@ import com.m3u.ui.components.OuterColumn
 import com.m3u.ui.components.TextButton
 import com.m3u.ui.components.TextField
 import com.m3u.ui.components.WorkInProgressLottie
-import com.m3u.ui.model.AppAction
 import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.LocalTheme
-import com.m3u.ui.model.SetActions
+import com.m3u.ui.model.LocalUtils
 import com.m3u.ui.util.EventHandler
 import com.m3u.ui.util.LifecycleEffect
 
@@ -50,25 +49,23 @@ import com.m3u.ui.util.LifecycleEffect
 internal fun SettingRoute(
     modifier: Modifier = Modifier,
     viewModel: SettingViewModel = hiltViewModel(),
-    setAppActions: SetActions
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val utils = LocalUtils.current
 
     EventHandler(state.message) {
         context.toast(it)
     }
 
-    val setAppActionsUpdated by rememberUpdatedState(setAppActions)
     LifecycleEffect { event ->
         when (event) {
             Lifecycle.Event.ON_START -> {
-                val actions = listOf<AppAction>()
-                setAppActionsUpdated(actions)
+                utils.setActions()
             }
 
             Lifecycle.Event.ON_PAUSE -> {
-                setAppActionsUpdated(emptyList())
+                utils.setActions()
             }
 
             else -> {}
