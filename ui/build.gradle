@@ -44,6 +44,8 @@ dependencies {
     implementation libs.androidx.lifecycle.lifecycle.runtime.ktx
 
     implementation libs.bundles.androidx.compose
+    debugImplementation libs.androidx.compose.ui.ui.tooling
+    implementation libs.androidx.compose.ui.ui.tooling.preview
     implementation libs.androidx.compose.material.material.icons.extended
 
     implementation libs.androidx.tv.tv.foundation
