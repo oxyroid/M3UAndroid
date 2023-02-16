@@ -32,6 +32,8 @@ androidx-compose-material-material-icons-extended = { group = "androidx.compose.
 androidx-navigation-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "androidx-navigation" }
 com-google-accompanist-accompanist-navigation-animation = { group = "com.google.accompanist", name = "accompanist-navigation-animation", version.ref = "google-accompanist" }
 com-google-accompanist-accompanist-systemuicontroller = { group = "com.google.accompanist", name = "accompanist-systemuicontroller", version.ref = "google-accompanist" }
+com-google-accompanist-accompanist-pager = { group = "com.google.accompanist", name = "accompanist-pager", version.ref = "google-accompanist" }
+com-google-accompanist-accompanist-pager-indicators = { group = "com.google.accompanist", name = "accompanist-pager-indicators", version.ref = "google-accompanist" }
 com-google-dagger-hilt-android = { group = "com.google.dagger", name = "hilt-android", version.ref = "google-dagger" }
 com-google-dagger-hilt-compiler = { group = "com.google.dagger", name = "hilt-compiler", version.ref = "google-dagger" }
 androidx-hilt-hilt-navigation-compose = { group = "androidx.hilt", name = "hilt-navigation-compose", version.ref = "androidx-hilt-navigation-compose" }

@@ -57,6 +57,8 @@ dependencies {
     implementation libs.androidx.navigation.navigation.compose
 
     implementation libs.com.google.accompanist.accompanist.navigation.animation
+    implementation libs.com.google.accompanist.accompanist.pager.asProvider()
+    implementation libs.com.google.accompanist.accompanist.pager.indicators
 
     implementation libs.com.google.dagger.hilt.android
     kapt libs.com.google.dagger.hilt.compiler

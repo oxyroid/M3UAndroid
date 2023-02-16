@@ -102,14 +102,7 @@ class FeedViewModel @Inject constructor(
                 coroutineScope.launch {
                     val lives = configuration.mutedUrls
                         .mapNotNull { url -> liveRepository.getByUrl(url) }
-                        .map {
-                            val title = when {
-                                it.title.isEmpty() && it.group.isEmpty() -> it.url
-                                it.title.isEmpty() -> it.group
-                                else -> "${it.group}-${it.title}"
-                            }
-                            it.copy(title = title)
-                        }
+                        .groupBy { it.group }
                     writable.update {
                         it.copy(lives = lives)
                     }
@@ -119,16 +112,10 @@ class FeedViewModel @Inject constructor(
                 liveRepository.observeByFeedUrl(feedUrl)
                     .map { lives ->
                         val mutedUrls = configuration.mutedUrls
-                        lives
-                            .filter { it.url !in mutedUrls }
-                            .map {
-                                val title = when {
-                                    it.title.isEmpty() && it.group.isEmpty() -> it.url
-                                    it.title.isEmpty() -> it.group
-                                    else -> "${it.group}-${it.title}"
-                                }
-                                it.copy(title = title)
-                            }
+                        lives.filter { it.url !in mutedUrls }
+                    }
+                    .map { lives ->
+                        lives.groupBy { it.group }
                     }
                     .onEach { lives ->
                         writable.update {

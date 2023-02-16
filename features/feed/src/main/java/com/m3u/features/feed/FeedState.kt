@@ -8,7 +8,7 @@ import com.m3u.data.entity.Live
 data class FeedState(
     val url: String = "",
     val rowCount: Int = Configuration.DEFAULT_ROW_COUNT,
-    val lives: List<Live> = emptyList(),
+    val lives: Map<String, List<Live>> = emptyMap(),
     val fetching: Boolean = false,
     val scrollUp: Event<Unit> = handledEvent(),
     val message: Event<String> = handledEvent(),
