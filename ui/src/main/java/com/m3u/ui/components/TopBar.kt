@@ -178,7 +178,9 @@ fun AppTopBar(
                     }
                 }
             }
-            Divider(color = LocalTheme.current.divider)
+            if (visible) {
+                Divider(color = LocalTheme.current.divider)
+            }
         }
     }
 }
