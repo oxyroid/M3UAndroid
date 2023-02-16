@@ -1,4 +1,4 @@
-package com.m3u.data.source.parser.m3u
+package com.m3u.data.source.model
 
 import com.m3u.data.entity.Live
 
