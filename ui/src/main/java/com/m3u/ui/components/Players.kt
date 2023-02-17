@@ -58,10 +58,10 @@ fun rememberPlayerState(
     keepScreenOn: Boolean = true,
     context: Context = LocalContext.current,
     state: MutableState<@Player.State Int> = remember(url) { mutableStateOf(Player.STATE_IDLE) },
-    rect: MutableState<Rect> = remember(url) { mutableStateOf(Rect()) },
+    videoSize: MutableState<Rect> = remember(url) { mutableStateOf(Rect()) },
     exception: MutableState<PlaybackException?> = remember(url) { mutableStateOf(null) }
-): PlayerState = remember(url, resizeMode, keepScreenOn, context, state, rect, exception) {
-    PlayerState(url, resizeMode, keepScreenOn, context, state, rect, exception)
+): PlayerState = remember(url, resizeMode, keepScreenOn, context, state, videoSize, exception) {
+    PlayerState(url, resizeMode, keepScreenOn, context, state, videoSize, exception)
 }
 
 @OptIn(UnstableApi::class)

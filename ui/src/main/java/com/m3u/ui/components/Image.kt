@@ -23,7 +23,7 @@ fun Image(
     errorPlaceholder: String? = null,
     shape: Shape = RectangleShape,
     contentDescription: String? = null,
-    contentScale: ContentScale = ContentScale.Fit
+    contentScale: ContentScale = ContentScale.Fit,
 ) {
     SubcomposeAsyncImage(
         model = model,
@@ -54,5 +54,4 @@ fun Image(
             }
         }
     )
-
 }

@@ -50,9 +50,9 @@ class MainActivity : ComponentActivity(), Utils {
         title.value = savedInstanceState.getString(SAVED_LABEL, "")
     }
 
-    override fun enterPipMode(source: Rect) {
+    override fun enterPipMode(size: Rect) {
         val params = PictureInPictureParams.Builder()
-            .setAspectRatio(Rational(source.width(), source.height()))
+            .setAspectRatio(Rational(size.width(), size.height()))
             .build()
         enterPictureInPictureMode(params)
     }

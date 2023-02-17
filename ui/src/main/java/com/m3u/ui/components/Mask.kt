@@ -6,9 +6,6 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.Orientation
-import androidx.compose.foundation.gestures.draggable
-import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -26,66 +23,76 @@ import kotlinx.coroutines.launch
 
 interface MaskState {
     val visible: Boolean
-    fun excite()
+    fun touch()
     fun keepAlive()
-    fun fail()
+    fun sleep()
 }
 
 @Stable
 class MaskStateCoroutineImpl(
-    @IntRange(from = 1000) private val minDuration: Long = 2500L,
-    coroutineScope: CoroutineScope
+    @IntRange(from = 1) private val minSecondDuration: Long = MaskDefaults.minSecondDuration,
+    coroutineScope: CoroutineScope,
+    private val onChanged: (Boolean) -> Unit
 ) : MaskState {
-    private var currentTime: Long by mutableStateOf(System.currentTimeMillis())
+    private var currentTime: Long by mutableStateOf(fetchCurrentTime)
     private var lastTime: Long by mutableStateOf(0L)
 
-    override val visible: Boolean get() = (currentTime - lastTime <= minDuration)
+    private var last: Boolean? = null
+    override val visible: Boolean
+        get() = (currentTime - lastTime <= minSecondDuration).also {
+            if (it != last) {
+                last = it
+                onChanged(it)
+            }
+        }
 
     init {
-        if (minDuration < 1000L) error("minDuration cannot less than 1000ms.")
+        if (minSecondDuration < 1L) error("minSecondDuration cannot less than 1s.")
         coroutineScope.launch {
             while (true) {
                 delay(1000L)
-                currentTime += 1000L
+                currentTime += 1
             }
         }
     }
 
-    override fun excite() {
-        lastTime = if (!visible) System.currentTimeMillis() else 0
+    private val fetchCurrentTime: Long get() = System.currentTimeMillis() / 1000
+
+    override fun touch() {
+        lastTime = if (!visible) fetchCurrentTime else 0
     }
 
     override fun keepAlive() {
-        lastTime = System.currentTimeMillis()
+        lastTime = fetchCurrentTime
     }
 
-    override fun fail() {
+    override fun sleep() {
         lastTime = 0
     }
 }
 
 @Composable
 fun rememberMaskState(
-    @IntRange(from = 1000) minDuration: Long = 2500L,
-    coroutineScope: CoroutineScope = rememberCoroutineScope()
+    @IntRange(from = 1) minSecondDuration: Long = MaskDefaults.minSecondDuration,
+    coroutineScope: CoroutineScope = rememberCoroutineScope(),
+    onChanged: (Boolean) -> Unit
 ): MaskStateCoroutineImpl {
-    return remember(minDuration, coroutineScope) {
+    return remember(minSecondDuration, coroutineScope, onChanged) {
         MaskStateCoroutineImpl(
-            minDuration = minDuration,
-            coroutineScope = coroutineScope
+            minSecondDuration = minSecondDuration,
+            coroutineScope = coroutineScope,
+            onChanged = onChanged
         )
     }
 }
 
 @Composable
 fun Mask(
-    state: MaskStateCoroutineImpl,
+    state: MaskState,
     modifier: Modifier = Modifier,
     backgroundColor: Color = Color.Unspecified,
     contentColor: Color = LocalContentColor.current,
-    verticalArrangement: Arrangement.Vertical = Arrangement.Center,
-    horizontalAlignment: Alignment.Horizontal = Alignment.CenterHorizontally,
-    content: @Composable ColumnScope.() -> Unit
+    content: @Composable BoxScope.() -> Unit
 ) {
     AnimatedVisibility(
         visible = state.visible,
@@ -93,11 +100,9 @@ fun Mask(
         exit = fadeOut()
     ) {
         CompositionLocalProvider(LocalContentColor provides contentColor) {
-            OuterColumn(
+            OuterBox(
                 modifier = modifier.background(backgroundColor),
-                content = content,
-                verticalArrangement = verticalArrangement,
-                horizontalAlignment = horizontalAlignment
+                content = content
             )
         }
     }
@@ -105,7 +110,7 @@ fun Mask(
 
 @Composable
 fun MaskPanel(
-    state: MaskStateCoroutineImpl,
+    state: MaskState,
     modifier: Modifier = Modifier,
     verticalArrangement: Arrangement.Vertical = Arrangement.Bottom,
     horizontalAlignment: Alignment.Horizontal = Alignment.Start,
@@ -117,15 +122,9 @@ fun MaskPanel(
         modifier = modifier
             .fillMaxSize()
             .clickable(
-                onClick = state::excite,
+                onClick = state::touch,
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null
-            )
-            .draggable(
-                state = rememberDraggableState {
-
-                },
-                orientation = Orientation.Vertical
             ),
         content = content
     )
@@ -174,4 +173,8 @@ fun MaskCircleButton(
             tint = tint
         )
     }
+}
+
+object MaskDefaults {
+    const val minSecondDuration = 4L
 }

@@ -4,7 +4,7 @@ import android.graphics.Rect
 import androidx.compose.runtime.staticCompositionLocalOf
 
 interface Utils {
-    fun enterPipMode(source: Rect)
+    fun enterPipMode(size: Rect)
     fun setTitle(title: String = "")
     fun setActions(actions: List<AppAction> = emptyList())
     fun hideSystemUI()
