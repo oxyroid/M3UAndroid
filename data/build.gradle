@@ -44,4 +44,6 @@ dependencies {
     kapt libs.com.google.dagger.hilt.compiler
 
     implementation libs.org.jetbrains.kotlinx.kotlinx.serialization.json
+
+    implementation libs.io.coil.kt.coil.asProvider()
 }

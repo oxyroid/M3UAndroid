@@ -7,10 +7,7 @@ import com.m3u.core.architecture.BaseViewModel
 import com.m3u.core.architecture.Configuration
 import com.m3u.core.wrapper.Resource
 import com.m3u.core.wrapper.eventOf
-import com.m3u.data.repository.FeedRepository
-import com.m3u.data.repository.LiveRepository
-import com.m3u.data.repository.fetch
-import com.m3u.data.repository.observeByFeedUrl
+import com.m3u.data.repository.*
 import com.m3u.ui.model.SpecialNavigationParam
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineScope
@@ -26,6 +23,7 @@ import javax.inject.Inject
 class FeedViewModel @Inject constructor(
     private val liveRepository: LiveRepository,
     private val feedRepository: FeedRepository,
+    private val mediaRepository: MediaRepository,
     private val configuration: Configuration,
     application: Application
 ) : BaseViewModel<FeedState, FeedEvent>(
@@ -86,7 +84,8 @@ class FeedViewModel @Inject constructor(
                                     title = feed.title
                                 )
                             } else {
-                                val message = context.getString(R.string.error_observe_feed, feedUrl)
+                                val message =
+                                    context.getString(R.string.error_observe_feed, feedUrl)
                                 it.copy(message = eventOf(message))
                             }
                         }
@@ -172,7 +171,32 @@ class FeedViewModel @Inject constructor(
     }
 
     private fun savePicture(event: FeedEvent.SavePicture) {
-        // TODO
+        val id = event.id
+        viewModelScope.launch {
+            val live = liveRepository.get(id)
+            if (live == null) {
+                onMessage("Target live is not existed!")
+            } else {
+                val url = live.cover
+                if (url == null) {
+                    onMessage("Target live has no cover to save")
+                } else {
+                    mediaRepository.savePicture(url)
+                        .onEach { resource ->
+                            when (resource) {
+                                Resource.Loading -> {}
+                                is Resource.Success -> {
+                                    onMessage("Saved to ${resource.data.absolutePath}")
+                                }
+                                is Resource.Failure -> {
+                                    onMessage(resource.message)
+                                }
+                            }
+                        }
+                        .launchIn(this)
+                }
+            }
+        }
     }
 
     private fun muteLive(event: FeedEvent.MuteLive) {
@@ -211,6 +235,14 @@ class FeedViewModel @Inject constructor(
         writable.update {
             it.copy(
                 rowCount = event.count
+            )
+        }
+    }
+
+    private fun onMessage(message: String?) {
+        writable.update {
+            it.copy(
+                message = eventOf(message.orEmpty())
             )
         }
     }

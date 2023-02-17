@@ -54,6 +54,7 @@ androidx-media3-media3-exoplayer-hls = { group = "androidx.media3", name = "medi
 androidx-media3-media3-exoplayer-rtsp = { group = "androidx.media3", name = "media3-exoplayer-rtsp", version.ref = "androidx-media3" }
 androidx-media3-media3-datasource-rtmp = { group = "androidx.media3", name = "media3-datasource-rtmp", version.ref = "androidx-media3" }
 
+io-coil-kt-coil = { group = "io.coil-kt", name = "coil", version.ref = "io-coil" }
 io-coil-kt-coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "io-coil" }
 
 androidx-room-room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "androidx-room" }
