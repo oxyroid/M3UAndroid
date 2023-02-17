@@ -10,7 +10,6 @@ import com.m3u.core.architecture.Configuration.Companion.DEFAULT_EDIT_MODE
 import com.m3u.core.architecture.Configuration.Companion.DEFAULT_FEED_STRATEGY
 import com.m3u.core.architecture.Configuration.Companion.DEFAULT_MUTED_URLS
 import com.m3u.core.architecture.Configuration.Companion.DEFAULT_ROW_COUNT
-import com.m3u.core.architecture.Configuration.Companion.DEFAULT_SHOW_MUTED_AS_FEED
 import com.m3u.core.architecture.Configuration.Companion.DEFAULT_USE_COMMON_UI_MODE
 import com.m3u.core.util.context.boolean
 import com.m3u.core.util.context.int
@@ -39,7 +38,6 @@ class SharedConfiguration @Inject constructor(
             field = value
         }
     override var rowCount: Int by sharedPreferences.int(DEFAULT_ROW_COUNT)
-    override var showMutedAsFeed: Boolean by sharedPreferences.boolean(DEFAULT_SHOW_MUTED_AS_FEED)
 
     @ConnectTimeout
     override var connectTimeout: Int by sharedPreferences.int(DEFAULT_CONNECT_TIMEOUT)

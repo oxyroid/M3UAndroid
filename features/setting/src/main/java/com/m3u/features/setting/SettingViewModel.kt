@@ -34,7 +34,6 @@ class SettingViewModel @Inject constructor(
                 useCommonUIMode = configuration.useCommonUIMode,
                 editMode = configuration.editMode,
                 connectTimeout = configuration.connectTimeout,
-                showMutedAsFeed = configuration.showMutedAsFeed
             )
         }
     }
@@ -55,15 +54,6 @@ class SettingViewModel @Inject constructor(
             )
         }
     }
-    private var showMutedAsFeed: Boolean by sharedDelegate(configuration.showMutedAsFeed) { newValue ->
-        configuration.showMutedAsFeed = newValue
-        writable.update {
-            it.copy(
-                showMutedAsFeed = newValue
-            )
-        }
-    }
-
     @ConnectTimeout
     private var connectTimeout: Int by sharedDelegate(configuration.connectTimeout) { newValue ->
         configuration.connectTimeout = newValue
@@ -102,7 +92,6 @@ class SettingViewModel @Inject constructor(
             }
             is SettingEvent.OnSyncMode -> syncMode = event.feedStrategy
             SettingEvent.OnUIMode -> useCommonUIMode = !useCommonUIMode
-            SettingEvent.OnShowMuted -> showMutedAsFeed = !showMutedAsFeed
             SettingEvent.OnSubscribe -> {
                 val title = writable.value.title
                 if (title.isEmpty()) {

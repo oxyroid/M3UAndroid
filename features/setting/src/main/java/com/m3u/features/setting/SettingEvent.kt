@@ -9,6 +9,5 @@ sealed interface SettingEvent {
     object OnSubscribe : SettingEvent
     object OnUIMode : SettingEvent
     object OnEditMode : SettingEvent
-    object OnShowMuted : SettingEvent
-    object OnConnectTimeout: SettingEvent
+    object OnConnectTimeout : SettingEvent
 }

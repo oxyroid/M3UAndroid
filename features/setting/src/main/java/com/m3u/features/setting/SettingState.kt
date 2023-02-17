@@ -15,6 +15,5 @@ data class SettingState(
     @FeedStrategy val feedStrategy: Int = Configuration.DEFAULT_FEED_STRATEGY,
     val editMode: Boolean = Configuration.DEFAULT_EDIT_MODE,
     val useCommonUIMode: Boolean = Configuration.DEFAULT_USE_COMMON_UI_MODE,
-    val showMutedAsFeed: Boolean = Configuration.DEFAULT_SHOW_MUTED_AS_FEED,
     @ConnectTimeout val connectTimeout: Int = Configuration.DEFAULT_CONNECT_TIMEOUT,
 )

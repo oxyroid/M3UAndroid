@@ -74,7 +74,6 @@ internal fun SettingRoute(
 
     SettingScreen(
         subscribeEnable = !state.adding,
-        showMutedAsFeed = state.showMutedAsFeed,
         title = state.title,
         url = state.url,
         version = state.version,
@@ -87,7 +86,6 @@ internal fun SettingRoute(
         onUrl = { viewModel.onEvent(SettingEvent.OnUrl(it)) },
         onSubscribe = { viewModel.onEvent(SettingEvent.OnSubscribe) },
         onSyncMode = { viewModel.onEvent(SettingEvent.OnSyncMode(it)) },
-        onShowMuted = { viewModel.onEvent(SettingEvent.OnShowMuted) },
         useCommonUIMode = state.useCommonUIMode,
         onUIMode = { viewModel.onEvent(SettingEvent.OnUIMode) },
         modifier = modifier.fillMaxSize()
@@ -97,7 +95,6 @@ internal fun SettingRoute(
 @Composable
 private fun SettingScreen(
     subscribeEnable: Boolean,
-    showMutedAsFeed: Boolean,
     version: String,
     title: String,
     url: String,
@@ -112,7 +109,6 @@ private fun SettingScreen(
     onSyncMode: SetStrategy,
     useCommonUIMode: Boolean,
     onUIMode: () -> Unit,
-    onShowMuted: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     var fold: Fold by remember { mutableStateOf(Fold.NONE) }
@@ -136,9 +132,7 @@ private fun SettingScreen(
                     feedStrategy = feedStrategy,
                     onConnectTimeout = onConnectTimeout,
                     onSyncMode = onSyncMode,
-                    onShowMuted = onShowMuted,
                     onEditMode = onEditMode,
-                    showMutedAsFeed = showMutedAsFeed,
                     version = version,
                     modifier = modifier
                         .fillMaxWidth()
@@ -166,9 +160,7 @@ private fun SettingScreen(
                     onSyncMode = onSyncMode,
                     onEditMode = onEditMode,
                     onConnectTimeout = onConnectTimeout,
-                    showMutedAsFeed = showMutedAsFeed,
                     onUIMode = onUIMode,
-                    onShowMuted = onShowMuted,
                     modifier = modifier.scrollable(
                         orientation = Orientation.Vertical,
                         state = rememberScrollableState { it }
@@ -194,12 +186,10 @@ private fun PortraitOrientationContent(
     onEditMode: () -> Unit,
     onConnectTimeout: () -> Unit,
     subscribeEnable: Boolean,
-    showMutedAsFeed: Boolean,
     onFold: (Fold) -> Unit,
     onTitle: (String) -> Unit,
     onUrl: (String) -> Unit,
     onSubscribe: () -> Unit,
-    onShowMuted: () -> Unit,
     onSyncMode: SetStrategy,
     version: String,
     modifier: Modifier = Modifier
@@ -210,14 +200,12 @@ private fun PortraitOrientationContent(
             feedStrategy = feedStrategy,
             useCommonUIMode = true,
             useCommonUIModeEnable = false,
-            showMutedAsFeed = showMutedAsFeed,
             editMode = editMode,
             connectTimeout = connectTimeout,
             onConnectTimeout = onConnectTimeout,
             onSyncMode = onSyncMode,
             onUIMode = { },
             onEditMode = onEditMode,
-            onShowMuted = onShowMuted,
             onFeedManagement = {
                 onFold(Fold.FEED)
             },
@@ -271,10 +259,8 @@ private fun LandscapeOrientationContent(
     onSyncMode: SetStrategy,
     onConnectTimeout: () -> Unit,
     useCommonUIMode: Boolean,
-    showMutedAsFeed: Boolean,
     onUIMode: () -> Unit,
     onEditMode: () -> Unit,
-    onShowMuted: () -> Unit,
     version: String,
     modifier: Modifier = Modifier
 ) {
@@ -294,10 +280,8 @@ private fun LandscapeOrientationContent(
             onSyncMode = onSyncMode,
             onConnectTimeout = onConnectTimeout,
             useCommonUIMode = useCommonUIMode,
-            showMutedAsFeed = showMutedAsFeed,
             onUIMode = onUIMode,
             onEditMode = onEditMode,
-            onShowMuted = onShowMuted,
             modifier = Modifier
                 .fillMaxHeight()
                 .weight(1f)
@@ -341,11 +325,9 @@ private fun PreferencesPart(
     editMode: Boolean,
     onSyncMode: SetStrategy,
     useCommonUIMode: Boolean,
-    showMutedAsFeed: Boolean,
     onUIMode: () -> Unit,
     onEditMode: () -> Unit,
     onConnectTimeout: () -> Unit,
-    onShowMuted: () -> Unit,
     modifier: Modifier = Modifier,
     useCommonUIModeEnable: Boolean = true,
 ) {
@@ -399,18 +381,6 @@ private fun PreferencesPart(
                     onCheckedChange = { newValue ->
                         if (newValue != editMode) {
                             onEditMode()
-                        }
-                    }
-                )
-                CheckBoxPreference(
-                    title = stringResource(R.string.show_muted_mode),
-                    subtitle = stringResource(id = R.string.show_muted_mode_description),
-                    checked = showMutedAsFeed,
-                    // TODO
-                    enabled = false,
-                    onCheckedChange = { newValue ->
-                        if (newValue != showMutedAsFeed) {
-                            onShowMuted()
                         }
                     }
                 )
