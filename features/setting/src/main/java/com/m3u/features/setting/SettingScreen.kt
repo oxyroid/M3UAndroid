@@ -72,6 +72,11 @@ internal fun SettingRoute(
         }
     }
 
+    val configuration = LocalConfiguration.current
+    val type = configuration.uiMode and Configuration.UI_MODE_TYPE_MASK
+    val useCommonUIMode = if (type == Configuration.UI_MODE_TYPE_NORMAL) true
+    else state.useCommonUIMode
+    val useCommonUIModeEnable = (type != Configuration.UI_MODE_TYPE_NORMAL)
     SettingScreen(
         subscribeEnable = !state.adding,
         title = state.title,
@@ -86,7 +91,8 @@ internal fun SettingRoute(
         onUrl = { viewModel.onEvent(SettingEvent.OnUrl(it)) },
         onSubscribe = { viewModel.onEvent(SettingEvent.OnSubscribe) },
         onSyncMode = { viewModel.onEvent(SettingEvent.OnSyncMode(it)) },
-        useCommonUIMode = state.useCommonUIMode,
+        useCommonUIMode = useCommonUIMode,
+        useCommonUIModeEnable = useCommonUIModeEnable,
         onUIMode = { viewModel.onEvent(SettingEvent.OnUIMode) },
         modifier = modifier.fillMaxSize()
     )
@@ -108,6 +114,7 @@ private fun SettingScreen(
     onSubscribe: () -> Unit,
     onSyncMode: SetStrategy,
     useCommonUIMode: Boolean,
+    useCommonUIModeEnable: Boolean,
     onUIMode: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -134,6 +141,8 @@ private fun SettingScreen(
                     onSyncMode = onSyncMode,
                     onEditMode = onEditMode,
                     version = version,
+                    useCommonUIMode = useCommonUIMode,
+                    useCommonUIModeEnable = useCommonUIModeEnable,
                     modifier = modifier
                         .fillMaxWidth()
                         .scrollable(
@@ -152,6 +161,7 @@ private fun SettingScreen(
                     feedStrategy = feedStrategy,
                     connectTimeout = connectTimeout,
                     useCommonUIMode = useCommonUIMode,
+                    useCommonUIModeEnable = useCommonUIModeEnable,
                     version = version,
                     onFold = { fold = it },
                     onTitle = onTitle,
@@ -183,6 +193,8 @@ private fun PortraitOrientationContent(
     @FeedStrategy feedStrategy: Int,
     editMode: Boolean,
     @ConnectTimeout connectTimeout: Int,
+    useCommonUIMode: Boolean,
+    useCommonUIModeEnable: Boolean,
     onEditMode: () -> Unit,
     onConnectTimeout: () -> Unit,
     subscribeEnable: Boolean,
@@ -198,8 +210,8 @@ private fun PortraitOrientationContent(
         PreferencesPart(
             version = version,
             feedStrategy = feedStrategy,
-            useCommonUIMode = true,
-            useCommonUIModeEnable = false,
+            useCommonUIMode = useCommonUIMode,
+            useCommonUIModeEnable = useCommonUIModeEnable,
             editMode = editMode,
             connectTimeout = connectTimeout,
             onConnectTimeout = onConnectTimeout,
@@ -259,6 +271,7 @@ private fun LandscapeOrientationContent(
     onSyncMode: SetStrategy,
     onConnectTimeout: () -> Unit,
     useCommonUIMode: Boolean,
+    useCommonUIModeEnable: Boolean,
     onUIMode: () -> Unit,
     onEditMode: () -> Unit,
     version: String,
@@ -280,6 +293,7 @@ private fun LandscapeOrientationContent(
             onSyncMode = onSyncMode,
             onConnectTimeout = onConnectTimeout,
             useCommonUIMode = useCommonUIMode,
+            useCommonUIModeEnable = useCommonUIModeEnable,
             onUIMode = onUIMode,
             onEditMode = onEditMode,
             modifier = Modifier
@@ -329,7 +343,7 @@ private fun PreferencesPart(
     onEditMode: () -> Unit,
     onConnectTimeout: () -> Unit,
     modifier: Modifier = Modifier,
-    useCommonUIModeEnable: Boolean = true,
+    useCommonUIModeEnable: Boolean,
 ) {
     val spacing = LocalSpacing.current
     LazyColumn(
