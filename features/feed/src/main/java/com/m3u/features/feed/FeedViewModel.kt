@@ -178,7 +178,7 @@ class FeedViewModel @Inject constructor(
                 onMessage("Target live is not existed!")
             } else {
                 val url = live.cover
-                if (url == null) {
+                if (url.isNullOrEmpty()) {
                     onMessage("Target live has no cover to save")
                 } else {
                     mediaRepository.savePicture(url)
