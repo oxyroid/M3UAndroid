@@ -22,6 +22,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
+import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.m3u.core.util.context.toast
 import com.m3u.ui.components.*
 import com.m3u.ui.model.LocalTheme
@@ -37,12 +38,20 @@ internal fun LiveRoute(
 ) {
     val context = LocalContext.current
     val utils = LocalUtils.current
+    val systemUiController = rememberSystemUiController()
     val state: LiveState by viewModel.state.collectAsStateWithLifecycle()
+    val theme = LocalTheme.current
 
     LifecycleEffect { event ->
         when (event) {
-            Lifecycle.Event.ON_RESUME -> utils.hideSystemUI()
-            Lifecycle.Event.ON_PAUSE -> utils.showSystemUI()
+            Lifecycle.Event.ON_RESUME -> {
+                utils.hideSystemUI()
+                systemUiController.setSystemBarsColor(Color.Black)
+            }
+            Lifecycle.Event.ON_PAUSE -> {
+                utils.showSystemUI()
+                systemUiController.setSystemBarsColor(Color.Transparent, theme.isDarkText)
+            }
             else -> {}
         }
     }
@@ -95,7 +104,7 @@ private fun LiveScreen(
         LiveMask(
             state = maskState,
             header = {
-                val shouldShowCastButton = (playback == Player.STATE_READY)
+                val shouldShowCastButton = (playback != Player.STATE_IDLE)
                 if (shouldShowCastButton) {
                     MaskButton(
                         state = maskState,
@@ -103,7 +112,7 @@ private fun LiveScreen(
                         onClick = searchDlnaDevices
                     )
                 }
-                val shouldShowPipButton = !videoSize.value.isEmpty
+                val shouldShowPipButton = (!videoSize.value.isEmpty)
                 if (shouldShowPipButton) {
                     MaskButton(
                         state = maskState,
