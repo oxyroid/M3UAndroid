@@ -30,7 +30,7 @@ interface MaskState {
 
 @Stable
 class MaskStateCoroutineImpl(
-    @IntRange(from = 1) private val minSecondDuration: Long = MaskDefaults.minSecondDuration,
+    @IntRange(from = 1) private val minDuration: Long = MaskDefaults.minDuration,
     coroutineScope: CoroutineScope,
     private val onChanged: (Boolean) -> Unit
 ) : MaskState {
@@ -39,7 +39,7 @@ class MaskStateCoroutineImpl(
 
     private var last: Boolean? = null
     override val visible: Boolean
-        get() = (currentTime - lastTime <= minSecondDuration).also {
+        get() = (currentTime - lastTime <= minDuration).also {
             if (it != last) {
                 last = it
                 onChanged(it)
@@ -47,7 +47,7 @@ class MaskStateCoroutineImpl(
         }
 
     init {
-        if (minSecondDuration < 1L) error("minSecondDuration cannot less than 1s.")
+        if (minDuration < 1L) error("minSecondDuration cannot less than 1s.")
         coroutineScope.launch {
             while (true) {
                 delay(1000L)
@@ -73,13 +73,13 @@ class MaskStateCoroutineImpl(
 
 @Composable
 fun rememberMaskState(
-    @IntRange(from = 1) minSecondDuration: Long = MaskDefaults.minSecondDuration,
+    @IntRange(from = 1) minDuration: Long = MaskDefaults.minDuration,
     coroutineScope: CoroutineScope = rememberCoroutineScope(),
     onChanged: (Boolean) -> Unit
 ): MaskStateCoroutineImpl {
-    return remember(minSecondDuration, coroutineScope, onChanged) {
+    return remember(minDuration, coroutineScope, onChanged) {
         MaskStateCoroutineImpl(
-            minSecondDuration = minSecondDuration,
+            minDuration = minDuration,
             coroutineScope = coroutineScope,
             onChanged = onChanged
         )
@@ -176,5 +176,5 @@ fun MaskCircleButton(
 }
 
 object MaskDefaults {
-    const val minSecondDuration = 4L
+    const val minDuration = 4L
 }

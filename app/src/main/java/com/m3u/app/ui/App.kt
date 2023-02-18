@@ -42,7 +42,7 @@ fun App(
             contentColor = LocalTheme.current.onBackground,
             bottomBar = {}
         ) { padding ->
-            Row(
+            Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding)
@@ -53,56 +53,52 @@ fun App(
                         )
                     )
             ) {
-                Column(
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    val topLevelTitle = appState.currentTopLevelDestination
-                        ?.titleTextId
-                        ?.let { stringResource(it) }
-                    val title by appState.title
-                    val text by remember(topLevelTitle) {
-                        derivedStateOf { topLevelTitle ?: title }
-                    }
-                    val isSystemBarVisible =
-                        !appState.currentNavDestination.isInDestination<Destination.Live>()
-                    AppTopBar(
-                        text = text,
-                        visible = isSystemBarVisible,
-                        actions = {
-                            val actions by appState.actions.collectAsStateWithLifecycle()
-                            actions.forEach { action ->
-                                IconButton(
-                                    icon = action.icon,
-                                    contentDescription = action.contentDescription,
-                                    onClick = action.onClick
-                                )
-                            }
-                        },
-                        onBackPressed =
-                        if (appState.currentTopLevelDestination == null) appState::onBackClick
-                        else null
-                    ) { padding ->
-                        Column(
-                            modifier = Modifier.fillMaxSize(),
-                            verticalArrangement = Arrangement.Bottom
-                        ) {
-                            M3UNavHost(
-                                navController = appState.navController,
-                                navigateToDestination = appState::navigateToDestination,
-                                modifier = Modifier
-                                    .padding(padding)
-                                    .weight(1f)
+                val topLevelTitle = appState.currentTopLevelDestination
+                    ?.titleTextId
+                    ?.let { stringResource(it) }
+                val title by appState.title
+                val text by remember(topLevelTitle) {
+                    derivedStateOf { topLevelTitle ?: title }
+                }
+                val isSystemBarVisible =
+                    !appState.currentNavDestination.isInDestination<Destination.Live>()
+                AppTopBar(
+                    text = text,
+                    visible = isSystemBarVisible,
+                    actions = {
+                        val actions by appState.actions.collectAsStateWithLifecycle()
+                        actions.forEach { action ->
+                            IconButton(
+                                icon = action.icon,
+                                contentDescription = action.contentDescription,
+                                onClick = action.onClick
                             )
-                            AnimatedVisibility(
-                                visible = isSystemBarVisible,
-                            ) {
-                                BottomNavigationSheet(
-                                    destinations = appState.topLevelDestinations,
-                                    navigateToTopLevelDestination = appState::navigateToTopLevelDestination,
-                                    currentNavDestination = appState.currentNavDestination,
-                                    modifier = Modifier.testTag("BottomNavigationSheet")
-                                )
-                            }
+                        }
+                    },
+                    onBackPressed =
+                    if (appState.currentTopLevelDestination == null) appState::onBackClick
+                    else null
+                ) { padding ->
+                    Column(
+                        modifier = Modifier.fillMaxSize(),
+                        verticalArrangement = Arrangement.Bottom
+                    ) {
+                        M3UNavHost(
+                            navController = appState.navController,
+                            navigateToDestination = appState::navigateToDestination,
+                            modifier = Modifier
+                                .padding(padding)
+                                .weight(1f)
+                        )
+                        AnimatedVisibility(
+                            visible = isSystemBarVisible,
+                        ) {
+                            BottomNavigationSheet(
+                                destinations = appState.topLevelDestinations,
+                                navigateToTopLevelDestination = appState::navigateToTopLevelDestination,
+                                currentNavDestination = appState.currentNavDestination,
+                                modifier = Modifier.testTag("BottomNavigationSheet")
+                            )
                         }
                     }
                 }

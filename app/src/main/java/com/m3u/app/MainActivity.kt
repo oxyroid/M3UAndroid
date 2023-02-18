@@ -31,11 +31,11 @@ class MainActivity : ComponentActivity(), Utils {
         WindowCompat.setDecorFitsSystemWindows(window, false)
         setContent {
             M3ULocalProvider(this) {
-                val appState = rememberAppState(
+                val state = rememberAppState(
                     title = title,
                     actions = actions
                 )
-                App(appState)
+                App(state)
             }
         }
     }
