@@ -14,7 +14,7 @@ androidx-media3 = "1.0.0-beta03"
 io-coil = "2.2.2"
 androidx-room = "2.5.0"
 kotlinx-serialization-json = "1.4.1"
-lottie-compose = "5.2.0"
+lottie-compose = "6.0.0"
 
 [libraries]
 androidx-core-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "androidx-core" }
