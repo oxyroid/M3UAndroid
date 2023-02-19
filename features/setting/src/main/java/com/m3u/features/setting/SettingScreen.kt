@@ -459,7 +459,7 @@ private fun PreferencesPart(
                         if (remoteVersion == version) {
                             fetchLatestRelease()
                         } else {
-                            val url = "https://github.com/thxbrop/M3UAndroid/releases/tag/v$name"
+                            val url = "https://github.com/thxbrop/M3UAndroid/releases/tag/v$remoteVersion"
                             uriHandler.openUri(url)
                         }
                     }
