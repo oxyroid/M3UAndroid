@@ -46,4 +46,6 @@ dependencies {
     implementation libs.org.jetbrains.kotlinx.kotlinx.serialization.json
 
     implementation libs.io.coil.kt.coil.asProvider()
+
+    implementation libs.org.fourthline.cling.cling.core
 }

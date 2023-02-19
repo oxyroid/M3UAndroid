@@ -15,6 +15,7 @@ io-coil = "2.2.2"
 androidx-room = "2.5.0"
 kotlinx-serialization-json = "1.4.1"
 lottie-compose = "6.0.0"
+fourthline-cling = "2.1.2"
 
 [libraries]
 androidx-core-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "androidx-core" }
@@ -64,6 +65,8 @@ androidx-room-room-compiler = { group = "androidx.room", name = "room-compiler",
 org-jetbrains-kotlinx-kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinx-serialization-json" }
 
 com-airbnb-android-lottie-compose = { group = "com.airbnb.android", name = "lottie-compose", version.ref = "lottie-compose" }
+
+org-fourthline-cling-cling-core = { group = "org.fourthline.cling", name = "cling-core", version.ref = "fourthline-cling" }
 
 [bundles]
 androidx-compose = ["androidx-compose-ui-ui", "androidx-compose-runtime-runtime", "androidx-compose-foundation-foundation", "androidx-compose-animation-animation", "androidx-compose-material-material"]
