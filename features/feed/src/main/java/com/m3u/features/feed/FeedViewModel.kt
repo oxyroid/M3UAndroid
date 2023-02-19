@@ -12,10 +12,7 @@ import com.m3u.ui.model.SpecialNavigationParam
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -50,6 +47,7 @@ class FeedViewModel @Inject constructor(
             is FeedEvent.MuteLive -> muteLive(event)
             is FeedEvent.SavePicture -> savePicture(event)
             is FeedEvent.SetRowCount -> onRowCount(event)
+            is FeedEvent.OnQuery -> onQuery(event)
         }
     }
 
@@ -102,23 +100,26 @@ class FeedViewModel @Inject constructor(
         when (feedUrl) {
             SpecialNavigationParam.FEED_MUTED_LIVES_URL -> {
                 coroutineScope.launch {
-                    val lives = configuration.mutedUrls
-                        .mapNotNull { url -> liveRepository.getByUrl(url) }
-                        .groupBy { it.group }
-                    writable.update {
-                        it.copy(lives = lives)
-                    }
+                    queryStateFlow.onEach { query ->
+                        val lives = configuration.mutedUrls
+                            .mapNotNull { url -> liveRepository.getByUrl(url) }
+                            .filter { it.title.contains(query, true) }
+                            .groupBy { it.group }
+                        writable.update {
+                            it.copy(lives = lives)
+                        }
+                    }.launchIn(coroutineScope)
                 }
             }
             else -> {
-                liveRepository.observeByFeedUrl(feedUrl)
-                    .map { lives ->
-                        val mutedUrls = configuration.mutedUrls
-                        lives.filter { it.url !in mutedUrls }
+                val region = liveRepository.observeByFeedUrl(feedUrl)
+                val mutedUrls = configuration.mutedUrls
+                region.combine(queryStateFlow) { origin, query ->
+                    val remainedLives = origin.filter {
+                        it.url !in mutedUrls && it.title.contains(query, true)
                     }
-                    .map { lives ->
-                        lives.groupBy { it.group }
-                    }
+                    remainedLives.groupBy { it.group }
+                }
                     .onEach { lives ->
                         writable.update {
                             it.copy(lives = lives)
@@ -243,6 +244,19 @@ class FeedViewModel @Inject constructor(
         writable.update {
             it.copy(
                 message = eventOf(message.orEmpty())
+            )
+        }
+    }
+
+    private val queryStateFlow = MutableStateFlow("")
+    private fun onQuery(event: FeedEvent.OnQuery) {
+        val text = event.text
+        viewModelScope.launch {
+            queryStateFlow.emit(text)
+        }
+        writable.update {
+            it.copy(
+                query = text
             )
         }
     }

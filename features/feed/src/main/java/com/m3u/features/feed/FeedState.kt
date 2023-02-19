@@ -10,6 +10,7 @@ data class FeedState(
     val title: String = "",
     val rowCount: Int = Configuration.DEFAULT_ROW_COUNT,
     val lives: Map<String, List<Live>> = emptyMap(),
+    val query: String = "",
     val fetching: Boolean = false,
     val scrollUp: Event<Unit> = handledEvent(),
     val message: Event<String> = handledEvent(),

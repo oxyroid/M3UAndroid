@@ -2,7 +2,6 @@ package com.m3u.ui.components
 
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.Divider
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
@@ -27,7 +26,6 @@ import androidx.compose.ui.util.lerp
 import com.m3u.ui.R
 import com.m3u.ui.model.Icon
 import com.m3u.ui.model.LocalSpacing
-import com.m3u.ui.model.LocalTheme
 
 @Composable
 fun AppTopBar(
@@ -177,9 +175,6 @@ fun AppTopBar(
                         actions()
                     }
                 }
-            }
-            if (visible) {
-                Divider(color = LocalTheme.current.divider)
             }
         }
     }

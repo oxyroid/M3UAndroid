@@ -17,4 +17,5 @@
 
     <string name="error_observe_feed">订阅不存在（%s）</string>
     <string name="dialog_save_picture_title">保存封面</string>
+    <string name="query_placeholder">输入关键字</string>
 </resources>
