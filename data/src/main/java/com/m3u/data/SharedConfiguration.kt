@@ -21,9 +21,9 @@ import kotlinx.serialization.json.Json
 import javax.inject.Inject
 
 class SharedConfiguration @Inject constructor(
-    @ApplicationContext context: Context
+    @ApplicationContext context: Context,
+    private val json: Json
 ) : Configuration {
-    private val json = Json
     private val sharedPreferences: SharedPreferences =
         context.getSharedPreferences(SHARED_SETTINGS, Context.MODE_PRIVATE)
 

@@ -48,4 +48,6 @@ dependencies {
     implementation libs.io.coil.kt.coil.asProvider()
 
     implementation libs.org.fourthline.cling.cling.core
+
+    implementation libs.com.squareup.retrofit2.retrofit
 }

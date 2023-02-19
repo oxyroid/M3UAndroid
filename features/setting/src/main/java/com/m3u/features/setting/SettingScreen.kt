@@ -32,6 +32,8 @@ import com.m3u.core.annotation.ConnectTimeout
 import com.m3u.core.annotation.FeedStrategy
 import com.m3u.core.annotation.SetStrategy
 import com.m3u.core.util.context.toast
+import com.m3u.core.wrapper.Resource
+import com.m3u.data.entity.GitRelease
 import com.m3u.features.setting.components.CheckBoxPreference
 import com.m3u.features.setting.components.FoldPreference
 import com.m3u.features.setting.components.TextPreference
@@ -82,6 +84,8 @@ internal fun SettingRoute(
         title = state.title,
         url = state.url,
         version = state.version,
+        latestRelease = state.latestRelease,
+        fetchLatestRelease = { viewModel.onEvent(SettingEvent.FetchLatestRelease) },
         feedStrategy = state.feedStrategy,
         editMode = state.editMode,
         connectTimeout = state.connectTimeout,
@@ -102,6 +106,8 @@ internal fun SettingRoute(
 private fun SettingScreen(
     subscribeEnable: Boolean,
     version: String,
+    latestRelease: Resource<GitRelease>,
+    fetchLatestRelease: () -> Unit,
     title: String,
     url: String,
     @FeedStrategy feedStrategy: Int,
@@ -141,6 +147,8 @@ private fun SettingScreen(
                     onSyncMode = onSyncMode,
                     onEditMode = onEditMode,
                     version = version,
+                    latestRelease = latestRelease,
+                    fetchLatestRelease = fetchLatestRelease,
                     useCommonUIMode = useCommonUIMode,
                     useCommonUIModeEnable = useCommonUIModeEnable,
                     modifier = modifier
@@ -163,6 +171,8 @@ private fun SettingScreen(
                     useCommonUIMode = useCommonUIMode,
                     useCommonUIModeEnable = useCommonUIModeEnable,
                     version = version,
+                    latestRelease = latestRelease,
+                    fetchLatestRelease = fetchLatestRelease,
                     onFold = { fold = it },
                     onTitle = onTitle,
                     onUrl = onUrl,
@@ -204,11 +214,15 @@ private fun PortraitOrientationContent(
     onSubscribe: () -> Unit,
     onSyncMode: SetStrategy,
     version: String,
+    latestRelease: Resource<GitRelease>,
+    fetchLatestRelease: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Box {
         PreferencesPart(
             version = version,
+            latestRelease = latestRelease,
+            fetchLatestRelease = fetchLatestRelease,
             feedStrategy = feedStrategy,
             useCommonUIMode = useCommonUIMode,
             useCommonUIModeEnable = useCommonUIModeEnable,
@@ -275,6 +289,8 @@ private fun LandscapeOrientationContent(
     onUIMode: () -> Unit,
     onEditMode: () -> Unit,
     version: String,
+    latestRelease: Resource<GitRelease>,
+    fetchLatestRelease: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
@@ -285,6 +301,8 @@ private fun LandscapeOrientationContent(
     ) {
         PreferencesPart(
             version = version,
+            latestRelease = latestRelease,
+            fetchLatestRelease = fetchLatestRelease,
             editMode = editMode,
             onFeedManagement = { onFold(Fold.FEED) },
             onScriptManagement = { onFold(Fold.SCRIPT) },
@@ -332,6 +350,8 @@ private fun LandscapeOrientationContent(
 @Composable
 private fun PreferencesPart(
     version: String,
+    latestRelease: Resource<GitRelease>,
+    fetchLatestRelease: () -> Unit,
     onFeedManagement: () -> Unit,
     onScriptManagement: () -> Unit,
     @FeedStrategy feedStrategy: Int,
@@ -419,6 +439,41 @@ private fun PreferencesPart(
             ) {
                 val url = "https://github.com/thxbrop/M3UAndroid/releases/tag/v$version"
                 uriHandler.openUri(url)
+            }
+        }
+        item {
+            when (latestRelease) {
+                Resource.Loading -> {
+                    TextButton(stringResource(R.string.fetching_latest)) {}
+                }
+                is Resource.Success -> {
+                    val uriHandler = LocalUriHandler.current
+                    val remoteVersion = latestRelease.data.name
+                    val name = if (remoteVersion != version) {
+                        stringResource(R.string.label_latest_release_version, remoteVersion)
+                    } else {
+                        stringResource(R.string.label_same_version)
+                    }
+
+                    TextButton(name) {
+                        if (remoteVersion == version) {
+                            fetchLatestRelease()
+                        } else {
+                            val url = "https://github.com/thxbrop/M3UAndroid/releases/tag/v$name"
+                            uriHandler.openUri(url)
+                        }
+                    }
+                }
+                is Resource.Failure -> {
+                    TextButton(
+                        text = stringResource(
+                            R.string.failed_latest_release_version,
+                            latestRelease.message.orEmpty()
+                        )
+                    ) {
+                        fetchLatestRelease()
+                    }
+                }
             }
         }
     }

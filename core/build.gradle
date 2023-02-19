@@ -33,4 +33,6 @@ dependencies {
     implementation libs.androidx.core.core.ktx
     implementation libs.androidx.appcompat.appcompat
     implementation libs.androidx.compose.ui.ui
+    implementation libs.org.jetbrains.kotlinx.kotlinx.serialization.json
+    implementation libs.com.squareup.retrofit2.retrofit
 }

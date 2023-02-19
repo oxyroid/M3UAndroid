@@ -10,4 +10,5 @@ sealed interface SettingEvent {
     object OnUIMode : SettingEvent
     object OnEditMode : SettingEvent
     object OnConnectTimeout : SettingEvent
+    object FetchLatestRelease : SettingEvent
 }

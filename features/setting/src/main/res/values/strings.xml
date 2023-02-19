@@ -2,6 +2,7 @@
 <resources>
     <string name="placeholder_url">订阅链接</string>
     <string name="label_app_version">应用版本：%s</string>
+    <string name="label_latest_release_version">最新版本：%s</string>
     <string name="label_subscribe">订阅</string>
 
     <string name="success_subscribe">订阅成功</string>
@@ -26,4 +27,7 @@
     <string name="label_contact_me">加入讨论群</string>
     <string name="edit_mode">上帝模式</string>
     <string name="edit_mode_description">通过物理按键调节界面</string>
+    <string name="failed_latest_release_version">无法获取版本信息：%s</string>
+    <string name="fetching_latest">拉取版本信息中</string>
+    <string name="label_same_version">已是最新版本</string>
 </resources>
