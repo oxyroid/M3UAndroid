@@ -25,5 +25,5 @@
     <string name="show_muted_mode_description">测试功能暂不可用</string>
     <string name="label_contact_me">加入讨论群</string>
     <string name="edit_mode">上帝模式</string>
-    <string name="edit_mode_description">通过物理案件调节界面</string>
+    <string name="edit_mode_description">通过物理按键调节界面</string>
 </resources>
