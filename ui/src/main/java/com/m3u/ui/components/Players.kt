@@ -14,6 +14,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.media3.common.*
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import com.m3u.ui.model.Background
@@ -21,6 +22,7 @@ import com.m3u.ui.model.LocalBackground
 import com.m3u.ui.util.LifecycleEffect
 
 @Immutable
+@OptIn(UnstableApi::class)
 data class PlayerState(
     val url: String,
     val resizeMode: Int,
@@ -31,7 +33,12 @@ data class PlayerState(
     val exception: MutableState<PlaybackException?>
 ) {
     private val mediaItem = MediaItem.fromUri(url)
+    private val trackSelector = DefaultTrackSelector(context).apply {
+        setParameters(buildUponParameters().setMaxVideoSizeSd())
+    }
+
     var player: Player = ExoPlayer.Builder(context)
+        .setTrackSelector(trackSelector)
         .build()
         .apply {
             val attributes = AudioAttributes.Builder()
@@ -88,6 +95,13 @@ fun ExoPlayer(
 
             override fun onPlayerError(error: PlaybackException) {
                 super.onPlayerError(error)
+                when (error.errorCode) {
+                    PlaybackException.ERROR_CODE_BEHIND_LIVE_WINDOW -> {
+                        player.seekToDefaultPosition()
+                        player.prepare()
+                    }
+                    else -> {}
+                }
                 exception.value = error
             }
         }
@@ -105,8 +119,6 @@ fun ExoPlayer(
                 factory = { context ->
                     PlayerView(context).apply {
                         useController = false
-                        setKeepScreenOn(keepScreenOn)
-                        setResizeMode(resizeMode)
                         layoutParams = ViewGroup.LayoutParams(
                             ViewGroup.LayoutParams.MATCH_PARENT,
                             ViewGroup.LayoutParams.MATCH_PARENT
@@ -116,18 +128,16 @@ fun ExoPlayer(
                 update = { view ->
                     view.apply {
                         setPlayer(player)
+                        setKeepScreenOn(keepScreenOn)
+                        setResizeMode(resizeMode)
                     }
                     when (lifecycle) {
                         Lifecycle.Event.ON_RESUME -> {
                             view.player?.play()
-                            view.onResume()
                         }
-
                         Lifecycle.Event.ON_STOP -> {
                             view.player?.pause()
-                            view.onPause()
                         }
-
                         else -> {}
                     }
                 }

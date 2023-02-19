@@ -3,6 +3,7 @@ package com.m3u.features.live
 import android.app.Application
 import androidx.lifecycle.viewModelScope
 import com.m3u.core.architecture.BaseViewModel
+import com.m3u.core.wrapper.eventOf
 import com.m3u.data.repository.LiveRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
@@ -23,7 +24,6 @@ class LiveViewModel @Inject constructor(
         when (event) {
             is LiveEvent.Init -> init(event.liveId)
             LiveEvent.SearchDlnaDevices -> searchDlnaDevices()
-            LiveEvent.EnterPipMode -> enterPipMode()
         }
     }
 
@@ -40,10 +40,10 @@ class LiveViewModel @Inject constructor(
     }
 
     private fun searchDlnaDevices() {
-
-    }
-
-    private fun enterPipMode() {
-
+        writable.update {
+            it.copy(
+                message = eventOf("Working in progress!")
+            )
+        }
     }
 }

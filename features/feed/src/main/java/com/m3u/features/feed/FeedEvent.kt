@@ -8,4 +8,5 @@ sealed interface FeedEvent {
     data class SavePicture(val id: Int) : FeedEvent
     object ScrollUp : FeedEvent
     data class SetRowCount(val count: Int) : FeedEvent
+    data class OnQuery(val text: String) : FeedEvent
 }

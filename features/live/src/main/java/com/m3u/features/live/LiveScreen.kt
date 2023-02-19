@@ -8,6 +8,7 @@ import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Cast
 import androidx.compose.material.icons.rounded.PictureInPicture
+import androidx.compose.material.icons.rounded.RadioButtonChecked
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -104,6 +105,11 @@ private fun LiveScreen(
         LiveMask(
             state = maskState,
             header = {
+                MaskButton(
+                    state = maskState,
+                    icon = Icons.Rounded.RadioButtonChecked,
+                    onClick = { /*TODO*/ }
+                )
                 val shouldShowCastButton = (playback != Player.STATE_IDLE)
                 if (shouldShowCastButton) {
                     MaskButton(
