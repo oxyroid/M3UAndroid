@@ -2,6 +2,7 @@ package com.m3u.features.feed
 
 import android.content.res.Configuration.*
 import android.view.KeyEvent
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.*
@@ -89,6 +90,9 @@ internal fun FeedRoute(
     val rowCount = state.rowCount
     fun onRowCount(target: Int) {
         viewModel.onEvent(FeedEvent.SetRowCount(target))
+    }
+    BackHandler(state.query.isNotEmpty()) {
+        viewModel.onEvent(FeedEvent.OnQuery(""))
     }
     FeedScreen(
         query = state.query,
