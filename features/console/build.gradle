@@ -1,42 +1,26 @@
 plugins {
-    id "com.android.application"
+    id "com.android.library"
     id "org.jetbrains.kotlin.android"
     id "kotlin-kapt"
     id "com.google.dagger.hilt.android"
 }
 
 android {
-    signingConfigs {
-        release {
-            storeFile file(project.rootProject.file("release.jks"))
-            Properties properties = new Properties()
-            properties.load(project.rootProject.file("local.properties").newDataInputStream())
-
-            storePassword properties.getProperty("release.storePassword")
-            keyAlias properties.getProperty("release.keyAlias")
-            keyPassword properties.getProperty("release.keyPassword")
-        }
-    }
-    namespace "com.m3u.app"
+    namespace "com.m3u.features.console"
     compileSdk 33
+
     defaultConfig {
-        applicationId "com.m3u.app"
         minSdk 26
         targetSdk 33
-        versionCode 25
-        versionName "1.10.0-alpha03"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-        vectorDrawables {
-            useSupportLibrary true
-        }
+        consumerProguardFiles "consumer-rules.pro"
     }
+
     buildTypes {
         release {
             minifyEnabled true
-            shrinkResources true
             proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
-            signingConfig signingConfigs.release
         }
     }
     compileOptions {
@@ -52,25 +36,14 @@ android {
     composeOptions {
         kotlinCompilerExtensionVersion = rootProject.ext.compose_compiler_version
     }
-    packagingOptions {
-        resources {
-            excludes += "/META-INF/{AL2.0,LGPL2.1}"
-        }
-    }
 }
 
 dependencies {
     implementation project(":core")
+    implementation project(":data")
     implementation project(":ui")
-    implementation project(":features:main")
-    implementation project(":features:favorite")
-    implementation project(":features:setting")
-    implementation project(":features:feed")
-    implementation project(":features:live")
-    implementation project(":features:console")
 
     implementation libs.androidx.core.core.ktx
-    implementation libs.androidx.appcompat.appcompat
     implementation libs.androidx.activity.activity.compose
 
     implementation libs.androidx.lifecycle.lifecycle.runtime.ktx
@@ -80,7 +53,6 @@ dependencies {
     implementation libs.androidx.compose.material.material.icons.extended
 
     implementation libs.androidx.navigation.navigation.compose
-    implementation libs.androidx.core.core.splashscreen
 
     implementation libs.com.google.accompanist.accompanist.navigation.animation
 

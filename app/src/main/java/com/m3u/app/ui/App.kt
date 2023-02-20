@@ -18,6 +18,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavDestination
 import com.m3u.app.navigation.Destination
 import com.m3u.app.navigation.M3UNavHost
+import com.m3u.features.console.navigation.consoleRoute
 import com.m3u.features.feed.navigation.feedRoute
 import com.m3u.features.live.navigation.liveRoute
 import com.m3u.ui.components.AppTopBar
@@ -111,6 +112,7 @@ inline fun <reified D : Destination> NavDestination?.isInDestination(): Boolean 
     val targetRoute = when (D::class.java.name) {
         Destination.Live::class.java.name -> liveRoute
         Destination.Feed::class.java.name -> feedRoute
+        Destination.Console::class.java.name -> consoleRoute
         else -> return false
     }
     return this?.route == targetRoute

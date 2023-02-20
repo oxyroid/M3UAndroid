@@ -6,6 +6,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import com.google.accompanist.navigation.animation.AnimatedNavHost
+import com.m3u.features.console.navigation.consoleScreen
 import com.m3u.features.favorite.navigation.favouriteScreen
 import com.m3u.features.feed.navigation.feedScreen
 import com.m3u.features.live.navigation.liveScreen
@@ -40,12 +41,17 @@ fun M3UNavHost(
                 navigateToDestination(Destination.Live(id))
             }
         )
-        settingScreen()
+        settingScreen(
+            navigateToConsole = {
+                navigateToDestination(Destination.Console)
+            }
+        )
         liveScreen()
         feedScreen(
             navigateToLive = { id ->
                 navigateToDestination(Destination.Live(id))
             }
         )
+        consoleScreen()
     }
 }

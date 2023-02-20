@@ -8,4 +8,6 @@ sealed interface Destination {
     data class Live(
         val id: Int,
     ) : Destination
+
+    object Console : Destination
 }

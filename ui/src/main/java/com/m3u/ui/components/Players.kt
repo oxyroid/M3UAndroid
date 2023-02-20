@@ -36,7 +36,6 @@ data class PlayerState(
     private val trackSelector = DefaultTrackSelector(context).apply {
         setParameters(buildUponParameters().setMaxVideoSizeSd())
     }
-
     var player: Player = ExoPlayer.Builder(context)
         .setTrackSelector(trackSelector)
         .build()

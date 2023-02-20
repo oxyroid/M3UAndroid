@@ -12,6 +12,7 @@ import androidx.navigation.navOptions
 import com.google.accompanist.navigation.animation.rememberAnimatedNavController
 import com.m3u.app.navigation.Destination
 import com.m3u.app.navigation.TopLevelDestination
+import com.m3u.features.console.navigation.navigateToConsole
 import com.m3u.features.favorite.navigation.favouriteNavigationRoute
 import com.m3u.features.favorite.navigation.navigateToFavourite
 import com.m3u.features.feed.navigation.navigationToFeed
@@ -19,7 +20,7 @@ import com.m3u.features.live.navigation.navigateToLive
 import com.m3u.features.main.navgation.mainNavigationRoute
 import com.m3u.features.main.navgation.navigateToMain
 import com.m3u.features.setting.navigation.navigateToSetting
-import com.m3u.features.setting.navigation.settingNavigationRoute
+import com.m3u.features.setting.navigation.settingRoute
 import com.m3u.ui.model.AppAction
 import kotlinx.coroutines.flow.MutableStateFlow
 
@@ -56,7 +57,7 @@ class AppState(
     val currentTopLevelDestination: TopLevelDestination?
         @Composable get() = when (currentNavDestination?.route) {
             mainNavigationRoute -> TopLevelDestination.Main
-            settingNavigationRoute -> TopLevelDestination.Setting
+            settingRoute -> TopLevelDestination.Setting
             favouriteNavigationRoute -> TopLevelDestination.Favourite
             else -> null
         }
@@ -87,6 +88,10 @@ class AppState(
 
             is Destination.Live -> {
                 navController.navigateToLive(destination.id)
+            }
+
+            Destination.Console -> {
+                navController.navigateToConsole()
             }
         }
     }

@@ -37,6 +37,7 @@ import com.m3u.data.entity.GitRelease
 import com.m3u.features.setting.components.CheckBoxPreference
 import com.m3u.features.setting.components.FoldPreference
 import com.m3u.features.setting.components.TextPreference
+import com.m3u.features.setting.navigation.NavigateToConsole
 import com.m3u.ui.components.OuterColumn
 import com.m3u.ui.components.TextButton
 import com.m3u.ui.components.TextField
@@ -51,6 +52,7 @@ import com.m3u.ui.util.LifecycleEffect
 internal fun SettingRoute(
     modifier: Modifier = Modifier,
     viewModel: SettingViewModel = hiltViewModel(),
+    navigateToConsole: NavigateToConsole
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
@@ -98,6 +100,7 @@ internal fun SettingRoute(
         useCommonUIMode = useCommonUIMode,
         useCommonUIModeEnable = useCommonUIModeEnable,
         onUIMode = { viewModel.onEvent(SettingEvent.OnUIMode) },
+        navigateToConsole = navigateToConsole,
         modifier = modifier.fillMaxSize()
     )
 }
@@ -122,6 +125,7 @@ private fun SettingScreen(
     useCommonUIMode: Boolean,
     useCommonUIModeEnable: Boolean,
     onUIMode: () -> Unit,
+    navigateToConsole: NavigateToConsole,
     modifier: Modifier = Modifier
 ) {
     var fold: Fold by remember { mutableStateOf(Fold.NONE) }
@@ -150,6 +154,7 @@ private fun SettingScreen(
                     latestRelease = latestRelease,
                     fetchLatestRelease = fetchLatestRelease,
                     useCommonUIMode = useCommonUIMode,
+                    navigateToConsole = navigateToConsole,
                     useCommonUIModeEnable = useCommonUIModeEnable,
                     modifier = modifier
                         .fillMaxWidth()
@@ -181,6 +186,7 @@ private fun SettingScreen(
                     onEditMode = onEditMode,
                     onConnectTimeout = onConnectTimeout,
                     onUIMode = onUIMode,
+                    navigateToConsole = navigateToConsole,
                     modifier = modifier.scrollable(
                         orientation = Orientation.Vertical,
                         state = rememberScrollableState { it }
@@ -216,6 +222,7 @@ private fun PortraitOrientationContent(
     version: String,
     latestRelease: Resource<GitRelease>,
     fetchLatestRelease: () -> Unit,
+    navigateToConsole: NavigateToConsole,
     modifier: Modifier = Modifier
 ) {
     Box {
@@ -238,6 +245,7 @@ private fun PortraitOrientationContent(
             onScriptManagement = {
                 onFold(Fold.SCRIPT)
             },
+            navigateToConsole = navigateToConsole,
             modifier = modifier
         )
 
@@ -291,6 +299,7 @@ private fun LandscapeOrientationContent(
     version: String,
     latestRelease: Resource<GitRelease>,
     fetchLatestRelease: () -> Unit,
+    navigateToConsole: NavigateToConsole,
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
@@ -314,6 +323,7 @@ private fun LandscapeOrientationContent(
             useCommonUIModeEnable = useCommonUIModeEnable,
             onUIMode = onUIMode,
             onEditMode = onEditMode,
+            navigateToConsole = navigateToConsole,
             modifier = Modifier
                 .fillMaxHeight()
                 .weight(1f)
@@ -364,6 +374,7 @@ private fun PreferencesPart(
     onConnectTimeout: () -> Unit,
     modifier: Modifier = Modifier,
     useCommonUIModeEnable: Boolean,
+    navigateToConsole: NavigateToConsole,
 ) {
     val spacing = LocalSpacing.current
     LazyColumn(
@@ -429,6 +440,11 @@ private fun PreferencesPart(
                             onUIMode()
                         }
                     }
+                )
+                FoldPreference(
+                    title = stringResource(R.string.console_editor),
+                    enabled = BuildConfig.DEBUG,
+                    onClick = navigateToConsole
                 )
             }
         }
