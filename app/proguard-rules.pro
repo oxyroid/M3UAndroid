@@ -111,3 +111,10 @@
 # kept. Suspend functions are wrapped in continuations where the type argument
 # is used.
 -keep,allowobfuscation,allowshrinking class kotlin.coroutines.Continuation
+
+-dontwarn com.sun.net.httpserver.HttpContext
+-dontwarn com.sun.net.httpserver.HttpHandler
+-dontwarn com.sun.net.httpserver.HttpServer
+-dontwarn javax.enterprise.context.ApplicationScoped
+-dontwarn javax.enterprise.inject.Alternative
+-dontwarn sun.net.www.protocol.http.Handler

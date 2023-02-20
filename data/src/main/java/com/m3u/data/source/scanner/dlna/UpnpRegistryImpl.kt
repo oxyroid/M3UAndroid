@@ -7,6 +7,10 @@ import kotlinx.coroutines.withContext
 import org.fourthline.cling.UpnpService
 import org.fourthline.cling.UpnpServiceImpl
 import org.fourthline.cling.android.AndroidUpnpServiceConfiguration
+import org.fourthline.cling.binding.xml.DeviceDescriptorBinder
+import org.fourthline.cling.binding.xml.ServiceDescriptorBinder
+import org.fourthline.cling.binding.xml.UDA10DeviceDescriptorBinderImpl
+import org.fourthline.cling.binding.xml.UDA10ServiceDescriptorBinderImpl
 import org.fourthline.cling.model.message.header.STAllHeader
 import org.fourthline.cling.model.meta.LocalDevice
 import org.fourthline.cling.model.meta.RemoteDevice
@@ -31,7 +35,7 @@ class UpnpRegistryImpl : UpnpRegistry {
         }
 
         override fun remoteDeviceUpdated(registry: Registry, device: RemoteDevice) {
-            remoteDevices.add(device)
+            // remoteDevices.add(device)
         }
 
         override fun remoteDeviceRemoved(registry: Registry, device: RemoteDevice) {
@@ -54,7 +58,7 @@ class UpnpRegistryImpl : UpnpRegistry {
 
     override suspend fun remoteDevices(): List<RemoteDevice> = withContext(Dispatchers.IO) {
         try {
-            service = UpnpServiceImpl(AndroidUpnpServiceConfiguration(), listener)
+            init()
             remoteDevices.clear()
             service?.apply {
                 controlPoint.search(STAllHeader())
@@ -69,7 +73,7 @@ class UpnpRegistryImpl : UpnpRegistry {
 
     override suspend fun localDevices(): List<LocalDevice> = withContext(Dispatchers.IO) {
         try {
-            service = UpnpServiceImpl(AndroidUpnpServiceConfiguration(), listener)
+            init()
             localDevices.clear()
             service?.apply {
                 controlPoint.search(STAllHeader())
@@ -80,5 +84,20 @@ class UpnpRegistryImpl : UpnpRegistry {
         } catch (e: java.lang.Exception) {
             emptyList()
         }
+    }
+
+    private fun init() {
+        service = UpnpServiceImpl(
+            object : AndroidUpnpServiceConfiguration() {
+                override fun getDeviceDescriptorBinderUDA10(): DeviceDescriptorBinder {
+                    return UDA10DeviceDescriptorBinderImpl()
+                }
+
+                override fun getServiceDescriptorBinderUDA10(): ServiceDescriptorBinder {
+                    return UDA10ServiceDescriptorBinderImpl()
+                }
+            },
+            listener
+        )
     }
 }
