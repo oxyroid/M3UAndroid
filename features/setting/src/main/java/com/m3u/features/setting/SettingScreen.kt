@@ -443,7 +443,7 @@ private fun PreferencesPart(
                 )
                 FoldPreference(
                     title = stringResource(R.string.console_editor),
-                    enabled = BuildConfig.DEBUG,
+                    enabled = true,
                     onClick = navigateToConsole
                 )
             }

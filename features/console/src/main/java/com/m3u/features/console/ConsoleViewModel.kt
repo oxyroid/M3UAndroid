@@ -3,8 +3,10 @@ package com.m3u.features.console
 import android.app.Application
 import androidx.lifecycle.viewModelScope
 import com.m3u.core.architecture.BaseViewModel
+import com.m3u.core.architecture.PackageProvider
 import com.m3u.features.console.command.CommandHandler
 import com.m3u.features.console.command.CommandResource
+import com.m3u.features.console.command.LoggerCommandHandler
 import com.m3u.features.console.command.UpnpCommandHandler
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
@@ -16,7 +18,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ConsoleViewModel @Inject constructor(
-    application: Application
+    application: Application,
+    provider: PackageProvider
 ) : BaseViewModel<ConsoleState, ConsoleEvent>(
     application = application,
     emptyState = ConsoleState()
@@ -24,7 +27,13 @@ class ConsoleViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             delay(2000)
-            append("Hello World!")
+            val message = """
+                > Console Editor
+                version: ${provider.getVersionName()}
+                debug: ${provider.isDebug()},
+                applicationId: ${provider.getApplicationID()}
+            """.trimIndent()
+            append(message)
         }
     }
 
@@ -48,10 +57,10 @@ class ConsoleViewModel @Inject constructor(
         handler.execute()
             .onEach { resource ->
                 when (resource) {
-                    CommandResource.Idle -> clearFocus()
+                    CommandResource.Idle -> requestFocus()
                     is CommandResource.Output -> {
                         append(resource.line)
-                        requestFocus()
+                        clearFocus()
                     }
                 }
             }
@@ -85,8 +94,10 @@ class ConsoleViewModel @Inject constructor(
 
     private fun findCommandHandler(input: String): CommandHandler {
         val upnpCommandHandler = UpnpCommandHandler(input)
+        val loggerCommandHandler = LoggerCommandHandler(input)
         upnpCommandHandler.intercept()
-        return upnpCommandHandler
+        loggerCommandHandler.intercept(upnpCommandHandler)
+        return loggerCommandHandler
     }
 
     private fun requestFocus() {
