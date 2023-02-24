@@ -1,13 +1,11 @@
 @file:Suppress("unused")
+@file:OptIn(ExperimentalFoundationApi::class, ExperimentalLayoutApi::class)
 
 package com.m3u.ui.components
 
 import androidx.annotation.DrawableRes
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateIntAsState
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -19,14 +17,9 @@ import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.Icon
-import androidx.compose.material.IconButton
 import androidx.compose.material.LocalContentAlpha
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Visibility
-import androidx.compose.material.icons.rounded.VisibilityOff
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -54,7 +47,6 @@ import com.m3u.ui.model.LocalTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalFoundationApi::class, ExperimentalLayoutApi::class)
 @Composable
 fun TextField(
     textFieldValue: TextFieldValue,
@@ -153,8 +145,6 @@ fun TextField(
     )
 }
 
-
-@OptIn(ExperimentalFoundationApi::class, ExperimentalLayoutApi::class)
 @Composable
 fun TextField(
     text: String,
@@ -253,15 +243,13 @@ fun TextField(
     )
 }
 
-@ExperimentalLayoutApi
-@ExperimentalFoundationApi
 @Composable
 fun LabelField(
     textFieldValue: TextFieldValue,
     modifier: Modifier = Modifier,
     background: Color = TextFieldDefaults.backgroundColor(),
     contentColor: Color = TextFieldDefaults.contentColor(),
-    placeholder: String = "●●●●●●",
+    placeholder: String = "",
     height: Dp = TextFieldDefaults.Height,
     readOnly: Boolean = false,
     enabled: Boolean = true,
@@ -272,7 +260,6 @@ fun LabelField(
 ) {
     val focusManager = LocalFocusManager.current
     val duration = LocalDuration.current
-    val passwordVisibility = remember { mutableStateOf(false) }
     val bringIntoViewRequester = remember { BringIntoViewRequester() }
     val interactionSource = remember { MutableInteractionSource() }
     val interactionSourceState by interactionSource.collectIsFocusedAsState()
@@ -292,8 +279,7 @@ fun LabelField(
     val focusRequester = FocusRequester()
     val isFocused = remember { mutableStateOf(false) }
 
-    val fontSize = if (passwordVisibility.value) TextFieldDefaults.MinimizeLabelFontSize
-    else TextFieldDefaults.LabelFontSize
+    val fontSize = TextFieldDefaults.MinimizeLabelFontSize
 
     BasicTextField(
         modifier = modifier
@@ -307,9 +293,6 @@ fun LabelField(
         enabled = enabled,
         value = textFieldValue,
         singleLine = true,
-        visualTransformation =
-        if (passwordVisibility.value) VisualTransformation.None
-        else PasswordVisualTransformation(mask = '*'),
         onValueChange = onValueChange,
         keyboardActions = keyboardActions ?: KeyboardActions(
             onDone = { focusManager.clearFocus() },
@@ -382,37 +365,131 @@ fun LabelField(
                         innerTextField()
                     }
                 }
+            }
+        },
+        cursorBrush = SolidColor(contentColor.copy(.35f))
+    )
+}
 
-                Spacer(Modifier.width(16.dp))
+@Composable
+fun LabelField(
+    text: String,
+    modifier: Modifier = Modifier,
+    background: Color = TextFieldDefaults.backgroundColor(),
+    contentColor: Color = TextFieldDefaults.contentColor(),
+    placeholder: String = "",
+    height: Dp = TextFieldDefaults.Height,
+    readOnly: Boolean = false,
+    enabled: Boolean = true,
+    imeAction: ImeAction = ImeAction.Done,
+    keyboardActions: KeyboardActions? = null,
+    @DrawableRes icon: Int? = null,
+    onValueChange: (String) -> Unit = {},
+) {
+    val focusManager = LocalFocusManager.current
+    val duration = LocalDuration.current
+    val bringIntoViewRequester = remember { BringIntoViewRequester() }
+    val interactionSource = remember { MutableInteractionSource() }
+    val interactionSourceState by interactionSource.collectIsFocusedAsState()
+    val scope = rememberCoroutineScope()
+    val imeVisible = WindowInsets.isImeVisible
 
-                IconButton(
-                    modifier = Modifier.align(Alignment.CenterVertically),
-                    onClick = {
-                        passwordVisibility.value = !passwordVisibility.value
-                    }
+    // Bring the composable into view (visible to user).
+    LaunchedEffect(imeVisible, interactionSourceState) {
+        if (imeVisible && interactionSourceState) {
+            scope.launch {
+                delay(duration.fast.toLong())
+                bringIntoViewRequester.bringIntoView()
+            }
+        }
+    }
+
+    val focusRequester = FocusRequester()
+    val isFocused = remember { mutableStateOf(false) }
+
+    val fontSize = TextFieldDefaults.MinimizeLabelFontSize
+
+    BasicTextField(
+        modifier = modifier
+            .focusRequester(focusRequester)
+            .onFocusChanged {
+                isFocused.value = it.isFocused
+            }
+            .bringIntoViewRequester(bringIntoViewRequester)
+            .fillMaxWidth(),
+        interactionSource = interactionSource,
+        enabled = enabled,
+        value = text,
+        singleLine = true,
+        onValueChange = onValueChange,
+        keyboardActions = keyboardActions ?: KeyboardActions(
+            onDone = { focusManager.clearFocus() },
+            onNext = { focusManager.moveFocus(FocusDirection.Down) }
+        ),
+        keyboardOptions = KeyboardOptions(
+            keyboardType = KeyboardType.Password,
+            imeAction = imeAction
+        ),
+        readOnly = readOnly,
+        textStyle = TextStyle(
+            fontSize = fontSize,
+            fontFamily = MaterialTheme.typography.body1.fontFamily,
+            fontWeight = FontWeight.Medium,
+            color = contentColor,
+        ),
+        decorationBox = { innerTextField ->
+            Row(
+                Modifier
+                    .clip(MaterialTheme.shapes.medium)
+                    .background(background)
+                    .height(height),
+            ) {
+                icon?.let {
+                    Image(
+                        modifier = Modifier
+                            .size(48.dp)
+                            .padding(15.dp),
+                        painter = painterResource(id = icon),
+                        contentDescription = null,
+                        colorFilter = ColorFilter.tint(contentColor)
+                    )
+                }
+
+                Box(
+                    Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .padding(
+                            start = if (icon == null) 15.dp else 0.dp,
+                            bottom = 0.dp,
+                            end = 15.dp
+                        )
                 ) {
-                    AnimatedVisibility(
-                        visible = passwordVisibility.value,
-                        enter = fadeIn(),
-                        exit = fadeOut()
-                    ) {
-                        Icon(
-                            imageVector = Icons.Rounded.VisibilityOff,
-                            contentDescription = "Show Password",
-                            tint = contentColor.copy(alpha = .35f)
-                        )
-                    }
+                    val hasText = text.isNotEmpty()
 
-                    AnimatedVisibility(
-                        visible = !passwordVisibility.value,
-                        enter = fadeIn(),
-                        exit = fadeOut()
+                    val animPlaceholder: Dp by animateDpAsState(if (isFocused.value || hasText) 6.dp else 14.dp)
+                    val animPlaceHolderFontSize: Int by animateIntAsState(if (isFocused.value || hasText) 12 else 14)
+
+                    Text(
+                        modifier = Modifier
+                            .graphicsLayer {
+                                translationY = animPlaceholder.toPx()
+                            },
+                        text = placeholder,
+                        color = contentColor.copy(alpha = .35f),
+                        fontSize = animPlaceHolderFontSize.sp,
+                        fontFamily = MaterialTheme.typography.body1.fontFamily,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+
+                    Box(
+                        Modifier
+                            .padding(top = 21.dp)
+                            .fillMaxWidth()
+                            .height(18.dp),
                     ) {
-                        Icon(
-                            imageVector = Icons.Rounded.Visibility,
-                            contentDescription = "Hide Password",
-                            tint = contentColor.copy(alpha = .35f)
-                        )
+                        innerTextField()
                     }
                 }
             }

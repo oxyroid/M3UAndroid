@@ -33,15 +33,12 @@ import com.m3u.core.annotation.FeedStrategy
 import com.m3u.core.annotation.SetStrategy
 import com.m3u.core.util.context.toast
 import com.m3u.core.wrapper.Resource
-import com.m3u.data.entity.GitRelease
+import com.m3u.data.entity.Release
 import com.m3u.features.setting.components.CheckBoxPreference
 import com.m3u.features.setting.components.FoldPreference
 import com.m3u.features.setting.components.TextPreference
 import com.m3u.features.setting.navigation.NavigateToConsole
-import com.m3u.ui.components.OuterColumn
-import com.m3u.ui.components.TextButton
-import com.m3u.ui.components.TextField
-import com.m3u.ui.components.WorkInProgressLottie
+import com.m3u.ui.components.*
 import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.LocalTheme
 import com.m3u.ui.model.LocalUtils
@@ -109,7 +106,7 @@ internal fun SettingRoute(
 private fun SettingScreen(
     subscribeEnable: Boolean,
     version: String,
-    latestRelease: Resource<GitRelease>,
+    latestRelease: Resource<Release>,
     fetchLatestRelease: () -> Unit,
     title: String,
     url: String,
@@ -220,7 +217,7 @@ private fun PortraitOrientationContent(
     onSubscribe: () -> Unit,
     onSyncMode: SetStrategy,
     version: String,
-    latestRelease: Resource<GitRelease>,
+    latestRelease: Resource<Release>,
     fetchLatestRelease: () -> Unit,
     navigateToConsole: NavigateToConsole,
     modifier: Modifier = Modifier
@@ -297,7 +294,7 @@ private fun LandscapeOrientationContent(
     onUIMode: () -> Unit,
     onEditMode: () -> Unit,
     version: String,
-    latestRelease: Resource<GitRelease>,
+    latestRelease: Resource<Release>,
     fetchLatestRelease: () -> Unit,
     navigateToConsole: NavigateToConsole,
     modifier: Modifier = Modifier
@@ -360,7 +357,7 @@ private fun LandscapeOrientationContent(
 @Composable
 private fun PreferencesPart(
     version: String,
-    latestRelease: Resource<GitRelease>,
+    latestRelease: Resource<Release>,
     fetchLatestRelease: () -> Unit,
     onFeedManagement: () -> Unit,
     onScriptManagement: () -> Unit,
@@ -414,6 +411,12 @@ private fun PreferencesPart(
                         onSyncMode(target)
                     }
                 )
+                if (BuildConfig.DEBUG) {
+                    FoldPreference(
+                        title = stringResource(R.string.console_editor),
+                        onClick = navigateToConsole
+                    )
+                }
                 TextPreference(
                     title = stringResource(R.string.connect_timeout),
                     content = "${connectTimeout / 1000}s",
@@ -440,11 +443,6 @@ private fun PreferencesPart(
                             onUIMode()
                         }
                     }
-                )
-                FoldPreference(
-                    title = stringResource(R.string.console_editor),
-                    enabled = true,
-                    onClick = navigateToConsole
                 )
             }
         }
@@ -475,7 +473,8 @@ private fun PreferencesPart(
                         if (remoteVersion == version) {
                             fetchLatestRelease()
                         } else {
-                            val url = "https://github.com/thxbrop/M3UAndroid/releases/tag/v$remoteVersion"
+                            val url =
+                                "https://github.com/thxbrop/M3UAndroid/releases/tag/v$remoteVersion"
                             uriHandler.openUri(url)
                         }
                     }
@@ -511,7 +510,7 @@ private fun FeedManagementPart(
         modifier = modifier
     ) {
         val focusRequester = remember { FocusRequester() }
-        TextField(
+        LabelField(
             text = title,
             enabled = subscribeEnable,
             placeholder = stringResource(R.string.placeholder_title),
@@ -523,7 +522,7 @@ private fun FeedManagementPart(
             ),
             modifier = Modifier.fillMaxWidth()
         )
-        TextField(
+        LabelField(
             text = url,
             enabled = subscribeEnable,
             placeholder = stringResource(R.string.placeholder_url),
