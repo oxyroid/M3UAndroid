@@ -18,9 +18,9 @@ import com.m3u.ui.model.LocalTheme
 @Composable
 internal fun FoldPreference(
     title: String,
-    enabled: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
     subtitle: String? = null,
     trailingContent: @Composable () -> Unit = {}
 ) {
