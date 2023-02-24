@@ -1,6 +1,6 @@
 package com.m3u.data.api
 
-import com.m3u.data.entity.GitRelease
+import com.m3u.data.entity.Release
 import retrofit2.http.GET
 import retrofit2.http.Path
 
@@ -9,5 +9,5 @@ interface GithubApi {
     suspend fun getReleases(
         @Path("author") author: String,
         @Path("repos") repos: String
-    ): List<GitRelease>
+    ): List<Release>
 }

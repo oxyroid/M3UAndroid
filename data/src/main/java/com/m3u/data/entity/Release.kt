@@ -5,7 +5,7 @@ import kotlinx.serialization.Serializable
 
 @Keep
 @Serializable
-data class GitRelease(
+data class Release(
     val assets: List<Asset>,
     val assets_url: String,
     val author: User,
