@@ -163,7 +163,11 @@ private fun FeedScreen(
                 onValueChange = onQuery,
                 placeholder = stringResource(R.string.query_placeholder),
                 modifier = Modifier
-                    .padding(LocalSpacing.current.medium)
+                    .padding(
+                        start = LocalSpacing.current.medium,
+                        end = LocalSpacing.current.medium,
+                        bottom = LocalSpacing.current.medium,
+                    )
                     .fillMaxWidth()
             )
             Box(
