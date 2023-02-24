@@ -34,6 +34,7 @@ internal fun FeedItem(
         shape = RoundedCornerShape(spacing.medium),
         backgroundColor = theme.surface,
         contentColor = theme.onSurface,
+        elevation = spacing.none
     ) {
         OuterRow(
             modifier = modifier
