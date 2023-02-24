@@ -6,8 +6,8 @@ import com.m3u.core.architecture.BaseViewModel
 import com.m3u.core.architecture.PackageProvider
 import com.m3u.features.console.command.CommandHandler
 import com.m3u.features.console.command.CommandResource
+import com.m3u.features.console.command.EmptyCommandHandler
 import com.m3u.features.console.command.LoggerCommandHandler
-import com.m3u.features.console.command.UpnpCommandHandler
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.launchIn
@@ -93,11 +93,10 @@ class ConsoleViewModel @Inject constructor(
     }
 
     private fun findCommandHandler(input: String): CommandHandler {
-        val upnpCommandHandler = UpnpCommandHandler(input)
-        val loggerCommandHandler = LoggerCommandHandler(input)
-        upnpCommandHandler.intercept()
-        loggerCommandHandler.intercept(upnpCommandHandler)
-        return loggerCommandHandler
+        return when (CommandHandler.parseKey(input)) {
+            "logger" -> LoggerCommandHandler(input)
+            else -> EmptyCommandHandler
+        }
     }
 
     private fun requestFocus() {

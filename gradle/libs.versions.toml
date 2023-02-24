@@ -17,8 +17,6 @@ kotlinx-serialization-json = "1.4.1"
 lottie-compose = "6.0.0"
 fourthline-cling = "2.1.2"
 squareup-retrofit2 = "2.9.0"
-eclipse-jetty = "8.1.15.v20140411"
-javax-servlet = "3.0.1"
 
 [libraries]
 androidx-core-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "androidx-core" }
@@ -72,11 +70,6 @@ com-airbnb-android-lottie-compose = { group = "com.airbnb.android", name = "lott
 org-fourthline-cling-cling-core = { group = "org.fourthline.cling", name = "cling-core", version.ref = "fourthline-cling" }
 
 com-squareup-retrofit2-retrofit = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "squareup-retrofit2" }
-
-org-eclipse-jetty-jetty-client = { group = "org.eclipse.jetty", name = "jetty-client", version.ref = "eclipse-jetty" }
-org-eclipse-jetty-jetty-servlet = { group = "org.eclipse.jetty", name = "jetty-client", version.ref = "eclipse-jetty" }
-org-eclipse-jetty-jetty-server = { group = "org.eclipse.jetty", name = "jetty-client", version.ref = "eclipse-jetty" }
-javax-servlet-javax-servlet-api = { group = "javax.servlet", name = "javax.servlet-api", version.ref = "javax-servlet" }
 
 [bundles]
 androidx-compose = ["androidx-compose-ui-ui", "androidx-compose-runtime-runtime", "androidx-compose-foundation-foundation", "androidx-compose-animation-animation", "androidx-compose-material-material"]
