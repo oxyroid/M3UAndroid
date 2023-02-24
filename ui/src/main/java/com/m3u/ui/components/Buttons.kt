@@ -158,7 +158,8 @@ fun IconButton(
     icon: Icon,
     contentDescription: String?,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    tint: Color = LocalContentColor.current.copy(alpha = LocalContentAlpha.current),
 ) {
     IconButton(
         onClick = onClick,
@@ -168,14 +169,16 @@ fun IconButton(
             is Icon.DrawableResourceIcon -> {
                 Icon(
                     painter = painterResource(icon.id),
-                    contentDescription = contentDescription
+                    contentDescription = contentDescription,
+                    tint = tint
                 )
             }
 
             is Icon.ImageVectorIcon -> {
                 Icon(
                     imageVector = icon.imageVector,
-                    contentDescription = contentDescription
+                    contentDescription = contentDescription,
+                    tint = tint
                 )
             }
         }

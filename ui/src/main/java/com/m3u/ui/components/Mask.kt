@@ -2,6 +2,7 @@ package com.m3u.ui.components
 
 import androidx.annotation.IntRange
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
@@ -21,6 +22,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
+@Stable
 interface MaskState {
     val visible: Boolean
     fun touch()
@@ -59,11 +61,11 @@ class MaskStateCoroutineImpl(
     private val fetchCurrentTime: Long get() = System.currentTimeMillis() / 1000
 
     override fun touch() {
-        lastTime = if (!visible) fetchCurrentTime else 0
+        lastTime = if (!visible) currentTime else 0
     }
 
     override fun keepAlive() {
-        lastTime = fetchCurrentTime
+        lastTime = currentTime
     }
 
     override fun sleep() {
@@ -77,11 +79,12 @@ fun rememberMaskState(
     coroutineScope: CoroutineScope = rememberCoroutineScope(),
     onChanged: (Boolean) -> Unit
 ): MaskStateCoroutineImpl {
-    return remember(minDuration, coroutineScope, onChanged) {
+    val currentOnChanged by rememberUpdatedState(onChanged)
+    return remember(minDuration, coroutineScope) {
         MaskStateCoroutineImpl(
             minDuration = minDuration,
             coroutineScope = coroutineScope,
-            onChanged = onChanged
+            onChanged = currentOnChanged
         )
     }
 }
@@ -135,16 +138,20 @@ fun MaskButton(
     state: MaskState,
     icon: ImageVector,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    tint: Color = LocalContentColor.current.copy(alpha = LocalContentAlpha.current),
 ) {
+    val animatedColor by animateColorAsState(tint)
+    val currentKeepAlive by rememberUpdatedState(state::keepAlive)
     IconButton(
         icon = Icon.ImageVectorIcon(icon),
         contentDescription = null,
         onClick = {
-            state.keepAlive()
+            currentKeepAlive()
             onClick()
         },
-        modifier = modifier
+        modifier = modifier,
+        tint = animatedColor
     )
 }
 
