@@ -24,6 +24,7 @@ class LiveViewModel @Inject constructor(
         when (event) {
             is LiveEvent.Init -> init(event.liveId)
             LiveEvent.SearchDlnaDevices -> searchDlnaDevices()
+            LiveEvent.Record -> record()
         }
     }
 
@@ -43,6 +44,14 @@ class LiveViewModel @Inject constructor(
         writable.update {
             it.copy(
                 message = eventOf("Working in progress!")
+            )
+        }
+    }
+
+    private fun record() {
+        writable.update {
+            it.copy(
+                recording = !readable.recording
             )
         }
     }

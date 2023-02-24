@@ -3,13 +3,11 @@ package com.m3u.features.live
 import android.graphics.Rect
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.LocalContentAlpha
 import androidx.compose.material.LocalContentColor
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Cast
-import androidx.compose.material.icons.rounded.PictureInPicture
-import androidx.compose.material.icons.rounded.RadioButtonChecked
-import androidx.compose.material.icons.rounded.Refresh
+import androidx.compose.material.icons.rounded.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -66,15 +64,19 @@ internal fun LiveRoute(
     }
     LiveScreen(
         modifier = modifier,
+        recording = state.recording,
         url = state.live?.url,
         searchDlnaDevices = { viewModel.onEvent(LiveEvent.SearchDlnaDevices) },
+        onRecord = { viewModel.onEvent(LiveEvent.Record) }
     )
 }
 
 @Composable
 private fun LiveScreen(
     url: String?,
+    recording: Boolean,
     searchDlnaDevices: () -> Unit,
+    onRecord: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val utils = LocalUtils.current
@@ -107,8 +109,11 @@ private fun LiveScreen(
             header = {
                 MaskButton(
                     state = maskState,
-                    icon = Icons.Rounded.RadioButtonChecked,
-                    onClick = { /*TODO*/ }
+                    icon = if (recording) Icons.Rounded.RadioButtonChecked
+                    else Icons.Rounded.RadioButtonUnchecked,
+                    tint = if (recording) LocalTheme.current.error
+                    else LocalContentColor.current.copy(alpha = LocalContentAlpha.current),
+                    onClick = onRecord
                 )
                 val shouldShowCastButton = (playback != Player.STATE_IDLE)
                 if (shouldShowCastButton) {

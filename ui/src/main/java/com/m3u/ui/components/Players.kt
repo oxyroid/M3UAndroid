@@ -14,12 +14,19 @@ import androidx.lifecycle.Lifecycle
 import androidx.media3.common.*
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.offline.DownloadHelper
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
+import com.m3u.core.wrapper.Resource
 import com.m3u.ui.model.Background
 import com.m3u.ui.model.LocalBackground
 import com.m3u.ui.util.LifecycleEffect
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.channels.trySendBlocking
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
+import java.io.IOException
 
 @Immutable
 @OptIn(UnstableApi::class)
@@ -52,6 +59,25 @@ data class PlayerState(
 
     fun setMedia() {
         player.setMediaItem(mediaItem)
+    }
+
+    fun getDownloadRequest(): Flow<Resource<ByteArray>> = callbackFlow {
+        trySendBlocking(Resource.Loading)
+        val helper = DownloadHelper.forMediaItem(context, mediaItem)
+        helper.prepare(object : DownloadHelper.Callback {
+            override fun onPrepared(helper: DownloadHelper) {
+                val byteArray = byteArrayOf()
+                helper.getDownloadRequest(byteArray)
+                trySendBlocking(Resource.Success(byteArray))
+            }
+
+            override fun onPrepareError(helper: DownloadHelper, e: IOException) {
+                trySendBlocking(Resource.Failure(e.message))
+            }
+        })
+        awaitClose {
+            helper.release()
+        }
     }
 
 }
