@@ -9,6 +9,7 @@ import com.google.accompanist.navigation.animation.AnimatedNavHost
 import com.m3u.features.console.navigation.consoleScreen
 import com.m3u.features.favorite.navigation.favouriteScreen
 import com.m3u.features.feed.navigation.feedScreen
+import com.m3u.features.live.navigation.livePlaylistScreen
 import com.m3u.features.live.navigation.liveScreen
 import com.m3u.features.main.navgation.mainNavigationRoute
 import com.m3u.features.main.navgation.mainScreen
@@ -47,9 +48,13 @@ fun M3UNavHost(
             }
         )
         liveScreen()
+        livePlaylistScreen()
         feedScreen(
             navigateToLive = { id ->
                 navigateToDestination(Destination.Live(id))
+            },
+            navigateToLivePlayList = { ids, initialIndex ->
+                navigateToDestination(Destination.LivePlayList(ids, initialIndex))
             }
         )
         consoleScreen()

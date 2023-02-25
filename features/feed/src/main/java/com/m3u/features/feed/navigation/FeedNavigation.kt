@@ -21,6 +21,7 @@ fun NavController.navigationToFeed(url: String, navOptions: NavOptions? = null) 
 @OptIn(ExperimentalAnimationApi::class)
 fun NavGraphBuilder.feedScreen(
     navigateToLive: (Int) -> Unit,
+    navigateToLivePlayList: (List<Int>, Int) -> Unit,
 ) {
     composable(
         route = feedRoute,
@@ -42,6 +43,7 @@ fun NavGraphBuilder.feedScreen(
         FeedRoute(
             url = url,
             navigateToLive = navigateToLive,
+            navigateToLivePlayList = navigateToLivePlayList
         )
     }
 }

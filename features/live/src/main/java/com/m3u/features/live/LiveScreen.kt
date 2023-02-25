@@ -12,15 +12,21 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.util.lerp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
+import com.google.accompanist.pager.ExperimentalPagerApi
+import com.google.accompanist.pager.VerticalPager
+import com.google.accompanist.pager.calculateCurrentOffsetForPage
+import com.google.accompanist.pager.rememberPagerState
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.m3u.core.util.context.toast
 import com.m3u.ui.components.*
@@ -28,10 +34,11 @@ import com.m3u.ui.model.LocalTheme
 import com.m3u.ui.model.LocalUtils
 import com.m3u.ui.util.EventHandler
 import com.m3u.ui.util.LifecycleEffect
+import kotlin.math.absoluteValue
 
 @Composable
 internal fun LiveRoute(
-    id: Int,
+    init: LiveEvent.Init,
     modifier: Modifier = Modifier,
     viewModel: LiveViewModel = hiltViewModel(),
 ) {
@@ -59,36 +66,92 @@ internal fun LiveRoute(
         context.toast(it)
     }
 
-    LaunchedEffect(id) {
-        viewModel.onEvent(LiveEvent.Init(id))
+    LaunchedEffect(init) {
+        viewModel.onEvent(init)
     }
     LiveScreen(
-        modifier = modifier,
+        init = state.init,
+        experimentalMode = state.experimentalMode,
         recording = state.recording,
-        url = state.live?.url,
         searchDlnaDevices = { viewModel.onEvent(LiveEvent.SearchDlnaDevices) },
-        onRecord = { viewModel.onEvent(LiveEvent.Record) }
+        onRecord = { viewModel.onEvent(LiveEvent.Record) },
+        modifier = modifier,
     )
 }
 
+@OptIn(ExperimentalPagerApi::class)
 @Composable
 private fun LiveScreen(
-    url: String?,
+    init: LiveState.Init,
+    experimentalMode: Boolean,
     recording: Boolean,
     searchDlnaDevices: () -> Unit,
     onRecord: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val utils = LocalUtils.current
+    val theme = LocalTheme.current
+    when (init) {
+        is LiveState.Init.SingleLive -> {
+            LivePart(
+                url = init.live?.url.orEmpty(),
+                experimentalMode = experimentalMode,
+                recording = recording,
+                onRecord = onRecord,
+                searchDlnaDevices = searchDlnaDevices,
+                modifier = modifier
+                    .fillMaxSize()
+                    .background(Color.Black)
+                    .testTag("features:live")
+            )
+        }
+        is LiveState.Init.PlayList -> {
+            val pagerState = rememberPagerState(init.initialIndex)
+            VerticalPager(
+                state = pagerState,
+                count = init.lives.size,
+                modifier = modifier
+                    .fillMaxSize()
+                    .background(theme.background)
+                    .testTag("features:live")
+            ) { page ->
+                LivePart(
+                    url = init.lives[page].url,
+                    experimentalMode = experimentalMode,
+                    recording = recording,
+                    onRecord = onRecord,
+                    searchDlnaDevices = searchDlnaDevices,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black)
+                        .graphicsLayer {
+                            val offset = calculateCurrentOffsetForPage(page)
+                                .absoluteValue.coerceIn(0f, 1f)
+                            val scale = lerp(1f, 0.8f, offset)
+                            scaleX = scale
+                            scaleY = scale
+                        }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun LivePart(
+    url: String,
+    experimentalMode: Boolean,
+    recording: Boolean,
+    onRecord: () -> Unit,
+    searchDlnaDevices: () -> Unit,
+    modifier: Modifier = Modifier
+) {
     Box(
         modifier = modifier
-            .fillMaxSize()
-            .background(Color.Black)
-            .testTag("features:live")
     ) {
+        val utils = LocalUtils.current
         val videoSize = remember { mutableStateOf(Rect()) }
         val playerState = rememberPlayerState(
-            url = url.orEmpty(),
+            url = url,
             videoSize = videoSize
         )
         ExoPlayer(
@@ -107,22 +170,25 @@ private fun LiveScreen(
         LiveMask(
             state = maskState,
             header = {
-                MaskButton(
-                    state = maskState,
-                    icon = if (recording) Icons.Rounded.RadioButtonChecked
-                    else Icons.Rounded.RadioButtonUnchecked,
-                    tint = if (recording) LocalTheme.current.error
-                    else LocalContentColor.current.copy(alpha = LocalContentAlpha.current),
-                    onClick = onRecord
-                )
-                val shouldShowCastButton = (playback != Player.STATE_IDLE)
-                if (shouldShowCastButton) {
+                if (experimentalMode) {
                     MaskButton(
                         state = maskState,
-                        icon = Icons.Rounded.Cast,
-                        onClick = searchDlnaDevices
+                        icon = if (recording) Icons.Rounded.RadioButtonChecked
+                        else Icons.Rounded.RadioButtonUnchecked,
+                        tint = if (recording) LocalTheme.current.error
+                        else LocalContentColor.current.copy(alpha = LocalContentAlpha.current),
+                        onClick = onRecord
                     )
+                    val shouldShowCastButton = (playback != Player.STATE_IDLE)
+                    if (shouldShowCastButton) {
+                        MaskButton(
+                            state = maskState,
+                            icon = Icons.Rounded.Cast,
+                            onClick = searchDlnaDevices
+                        )
+                    }
                 }
+
                 val shouldShowPipButton = (!videoSize.value.isEmpty)
                 if (shouldShowPipButton) {
                     MaskButton(
@@ -160,7 +226,6 @@ private fun LiveScreen(
                 }
             }
         )
-
         LaunchedEffect(exception) {
             if (exception != null) {
                 maskState.keepAlive()

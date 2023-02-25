@@ -50,6 +50,7 @@ import kotlinx.coroutines.launch
 internal fun FeedRoute(
     url: String,
     navigateToLive: (Int) -> Unit,
+    navigateToLivePlayList: (List<Int>, Int) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: FeedViewModel = hiltViewModel()
 ) {
@@ -98,12 +99,14 @@ internal fun FeedRoute(
         query = state.query,
         onQuery = { viewModel.onEvent(FeedEvent.OnQuery(it)) },
         useCommonUIMode = state.useCommonUIMode,
+        experimentalMode = state.experimentalMode,
         rowCount = rowCount,
         lives = state.lives,
         scrollUp = state.scrollUp,
         refreshing = state.fetching,
         onSyncingLatest = { viewModel.onEvent(FeedEvent.FetchFeed) },
         navigateToLive = navigateToLive,
+        navigateToLivePlayList = navigateToLivePlayList,
         onLiveAction = { dialogState = DialogState.Menu(it) },
         onScrollUp = { viewModel.onEvent(FeedEvent.ScrollUp) },
         modifier = modifier
@@ -141,12 +144,14 @@ private fun FeedScreen(
     query: String,
     onQuery: (String) -> Unit,
     useCommonUIMode: Boolean,
+    experimentalMode: Boolean,
     rowCount: Int,
     lives: Map<String, List<Live>>,
     scrollUp: Event<Unit>,
     refreshing: Boolean,
     onSyncingLatest: () -> Unit,
     navigateToLive: (Int) -> Unit,
+    navigateToLivePlayList: (List<Int>, Int) -> Unit,
     onLiveAction: (Live) -> Unit,
     onScrollUp: () -> Unit,
     modifier: Modifier = Modifier
@@ -158,18 +163,20 @@ private fun FeedScreen(
     )
     Background {
         Column {
-            TextField(
-                text = query,
-                onValueChange = onQuery,
-                placeholder = stringResource(R.string.query_placeholder),
-                modifier = Modifier
-                    .padding(
-                        start = LocalSpacing.current.medium,
-                        end = LocalSpacing.current.medium,
-                        bottom = LocalSpacing.current.medium,
-                    )
-                    .fillMaxWidth()
-            )
+            if (experimentalMode) {
+                TextField(
+                    text = query,
+                    onValueChange = onQuery,
+                    placeholder = stringResource(R.string.query_placeholder),
+                    modifier = Modifier
+                        .padding(
+                            start = LocalSpacing.current.medium,
+                            end = LocalSpacing.current.medium,
+                            bottom = LocalSpacing.current.medium,
+                        )
+                        .fillMaxWidth()
+                )
+            }
             Box(
                 modifier = Modifier.pullRefresh(state)
             ) {
@@ -182,12 +189,14 @@ private fun FeedScreen(
                         ) {
                             LandscapeOrientationContent(
                                 lives = it,
-                                rowCount = rowCount,
-                                scrollUp = scrollUp,
-                                isAtTopState = isAtTopState,
-                                navigateToLive = navigateToLive,
-                                onLiveAction = onLiveAction,
                                 useCommonUIMode = useCommonUIMode,
+                                experimentalMode = experimentalMode,
+                                rowCount = rowCount,
+                                isAtTopState = isAtTopState,
+                                scrollUp = scrollUp,
+                                navigateToLive = navigateToLive,
+                                navigateToLivePlayList = navigateToLivePlayList,
+                                onLiveAction = onLiveAction,
                                 modifier = modifier
                             )
                         }
@@ -200,10 +209,12 @@ private fun FeedScreen(
                         ) {
                             PortraitOrientationContent(
                                 lives = it,
+                                experimentalMode = experimentalMode,
                                 rowCount = rowCount,
-                                scrollUp = scrollUp,
                                 isAtTopState = isAtTopState,
+                                scrollUp = scrollUp,
                                 navigateToLive = navigateToLive,
+                                navigateToLivePlayList = navigateToLivePlayList,
                                 onLiveAction = onLiveAction,
                                 modifier = modifier
                             )
@@ -247,16 +258,22 @@ private fun FeedScreen(
 @Composable
 private fun LandscapeOrientationContent(
     useCommonUIMode: Boolean,
+    experimentalMode: Boolean,
     rowCount: Int,
     lives: List<Live>,
     scrollUp: Event<Unit>,
     isAtTopState: MutableState<Boolean>,
     navigateToLive: (Int) -> Unit,
+    navigateToLivePlayList: (List<Int>, Int) -> Unit,
     onLiveAction: (Live) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val configuration = LocalConfiguration.current
     val type = configuration.uiMode and UI_MODE_TYPE_MASK
+    val ids = remember(experimentalMode, lives) {
+        if (experimentalMode) lives.map { it.id }
+        else emptyList()
+    }
 
     Column {
         if (useCommonUIMode || type == UI_MODE_TYPE_NORMAL) {
@@ -278,7 +295,14 @@ private fun LandscapeOrientationContent(
                 ) { live ->
                     LiveItem(
                         live = live,
-                        onClick = { navigateToLive(live.id) },
+                        onClick = {
+                            if (experimentalMode) {
+                                val initialIndex = ids.indexOfFirst { it == live.id }
+                                navigateToLivePlayList(ids, initialIndex)
+                            } else {
+                                navigateToLive(live.id)
+                            }
+                        },
                         onLongClick = { onLiveAction(live) },
                         modifier = Modifier.fillMaxWidth(),
                         scaleTime = rowCount
@@ -290,9 +314,11 @@ private fun LandscapeOrientationContent(
                 UI_MODE_TYPE_TELEVISION -> {
                     TelevisionUIModeContent(
                         lives = lives,
+                        experimentalMode = experimentalMode,
                         isAtTopState = isAtTopState,
                         scrollUp = scrollUp,
                         navigateToLive = navigateToLive,
+                        navigateToLivePlayList = navigateToLivePlayList,
                         onLiveAction = onLiveAction,
                         modifier = modifier
                     )
@@ -314,14 +340,21 @@ private fun LandscapeOrientationContent(
 @Composable
 private fun PortraitOrientationContent(
     lives: List<Live>,
+    experimentalMode: Boolean,
     rowCount: Int,
     scrollUp: Event<Unit>,
     isAtTopState: MutableState<Boolean>,
     navigateToLive: (Int) -> Unit,
+    navigateToLivePlayList: (List<Int>, Int) -> Unit,
     onLiveAction: (Live) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val state = rememberLazyGridState()
+    val ids = remember(experimentalMode, lives) {
+        if (experimentalMode) lives.map { it.id }
+        else emptyList()
+    }
+
     LaunchedEffect(state.isAtTop) {
         isAtTopState.value = state.isAtTop
     }
@@ -340,7 +373,14 @@ private fun PortraitOrientationContent(
         ) { live ->
             LiveItem(
                 live = live,
-                onClick = { navigateToLive(live.id) },
+                onClick = {
+                    if (experimentalMode) {
+                        val initialIndex = ids.indexOfFirst { it == live.id }
+                        navigateToLivePlayList(ids, initialIndex)
+                    } else {
+                        navigateToLive(live.id)
+                    }
+                },
                 onLongClick = { onLiveAction(live) },
                 modifier = Modifier.fillMaxWidth(),
                 scaleTime = rowCount
@@ -352,13 +392,20 @@ private fun PortraitOrientationContent(
 @Composable
 private fun TelevisionUIModeContent(
     lives: List<Live>,
+    experimentalMode: Boolean,
     isAtTopState: MutableState<Boolean>,
     scrollUp: Event<Unit>,
     navigateToLive: (Int) -> Unit,
+    navigateToLivePlayList: (List<Int>, Int) -> Unit,
     onLiveAction: (Live) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val state = rememberTvLazyGridState()
+    val ids = remember(experimentalMode, lives) {
+        if (experimentalMode) lives.map { it.id }
+        else emptyList()
+    }
+
     LaunchedEffect(state.isAtTop) {
         isAtTopState.value = state.isAtTop
     }
@@ -376,7 +423,14 @@ private fun TelevisionUIModeContent(
         ) { live ->
             LiveItem(
                 live = live,
-                onClick = { navigateToLive(live.id) },
+                onClick = {
+                    if (experimentalMode) {
+                        val initialIndex = ids.indexOfFirst { it == live.id }
+                        navigateToLivePlayList(ids, initialIndex)
+                    } else {
+                        navigateToLive(live.id)
+                    }
+                },
                 onLongClick = { onLiveAction(live) },
                 modifier = Modifier.fillMaxWidth()
             )

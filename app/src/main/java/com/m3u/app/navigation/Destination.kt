@@ -9,5 +9,10 @@ sealed interface Destination {
         val id: Int,
     ) : Destination
 
+    data class LivePlayList(
+        val ids: List<Int>,
+        val initialIndex: Int
+    ) : Destination
+
     object Console : Destination
 }

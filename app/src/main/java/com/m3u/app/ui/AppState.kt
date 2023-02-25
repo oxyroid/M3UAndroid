@@ -17,6 +17,7 @@ import com.m3u.features.favorite.navigation.favouriteNavigationRoute
 import com.m3u.features.favorite.navigation.navigateToFavourite
 import com.m3u.features.feed.navigation.navigationToFeed
 import com.m3u.features.live.navigation.navigateToLive
+import com.m3u.features.live.navigation.navigateToLivePlayList
 import com.m3u.features.main.navgation.mainNavigationRoute
 import com.m3u.features.main.navgation.navigateToMain
 import com.m3u.features.setting.navigation.navigateToSetting
@@ -88,6 +89,10 @@ class AppState(
 
             is Destination.Live -> {
                 navController.navigateToLive(destination.id)
+            }
+
+            is Destination.LivePlayList -> {
+                navController.navigateToLivePlayList(destination.ids, destination.initialIndex)
             }
 
             Destination.Console -> {

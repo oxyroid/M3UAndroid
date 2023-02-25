@@ -10,6 +10,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
@@ -22,22 +23,49 @@ class LiveViewModel @Inject constructor(
 ) {
     override fun onEvent(event: LiveEvent) {
         when (event) {
-            is LiveEvent.Init -> init(event.liveId)
+            is LiveEvent.Init.SingleLive -> initLive(event.liveId)
+            is LiveEvent.Init.PlayList -> initPlaylist(event.ids, event.initialIndex)
             LiveEvent.SearchDlnaDevices -> searchDlnaDevices()
             LiveEvent.Record -> record()
         }
     }
 
     private var initJob: Job? = null
-    private fun init(id: Int) {
+    private fun initLive(id: Int) {
         initJob?.cancel()
         initJob = liveRepository.observe(id)
             .onEach { live ->
                 writable.update {
-                    it.copy(live = live)
+                    it.copy(
+                        init = LiveState.Init.SingleLive(live)
+                    )
                 }
             }
             .launchIn(viewModelScope)
+    }
+
+    private fun initPlaylist(ids: List<Int>, initialIndex: Int) {
+        initJob?.cancel()
+        initJob = viewModelScope.launch {
+            val lives = when (val init = readable.init) {
+                is LiveState.Init.PlayList -> init.lives
+                is LiveState.Init.SingleLive -> init.live?.let(::listOf) ?: emptyList()
+            }.toMutableList()
+            ids.forEach { id ->
+                val live = liveRepository.get(id)
+                if (live != null) {
+                    lives.add(live)
+                }
+            }
+            writable.update { readable ->
+                readable.copy(
+                    init = LiveState.Init.PlayList(
+                        lives = lives,
+                        initialIndex = initialIndex
+                    ),
+                )
+            }
+        }
     }
 
     private fun searchDlnaDevices() {

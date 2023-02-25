@@ -20,6 +20,7 @@ import com.m3u.app.navigation.Destination
 import com.m3u.app.navigation.M3UNavHost
 import com.m3u.features.console.navigation.consoleRoute
 import com.m3u.features.feed.navigation.feedRoute
+import com.m3u.features.live.navigation.livePlaylistRoute
 import com.m3u.features.live.navigation.liveRoute
 import com.m3u.ui.components.AppTopBar
 import com.m3u.ui.components.Background
@@ -62,7 +63,8 @@ fun App(
                     derivedStateOf { topLevelTitle ?: title }
                 }
                 val isSystemBarVisible =
-                    !appState.currentNavDestination.isInDestination<Destination.Live>()
+                    !appState.currentNavDestination.isInDestination<Destination.Live>() &&
+                            !appState.currentNavDestination.isInDestination<Destination.LivePlayList>()
                 AppTopBar(
                     text = text,
                     visible = isSystemBarVisible,
@@ -111,6 +113,7 @@ fun App(
 inline fun <reified D : Destination> NavDestination?.isInDestination(): Boolean {
     val targetRoute = when (D::class.java.name) {
         Destination.Live::class.java.name -> liveRoute
+        Destination.LivePlayList::class.java.name -> livePlaylistRoute
         Destination.Feed::class.java.name -> feedRoute
         Destination.Console::class.java.name -> consoleRoute
         else -> return false
