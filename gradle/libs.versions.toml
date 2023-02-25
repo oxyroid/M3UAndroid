@@ -15,7 +15,6 @@ io-coil = "2.2.2"
 androidx-room = "2.5.0"
 kotlinx-serialization-json = "1.4.1"
 lottie-compose = "6.0.0"
-fourthline-cling = "2.1.2"
 squareup-retrofit2 = "2.9.0"
 
 [libraries]
@@ -66,8 +65,6 @@ androidx-room-room-compiler = { group = "androidx.room", name = "room-compiler",
 org-jetbrains-kotlinx-kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinx-serialization-json" }
 
 com-airbnb-android-lottie-compose = { group = "com.airbnb.android", name = "lottie-compose", version.ref = "lottie-compose" }
-
-org-fourthline-cling-cling-core = { group = "org.fourthline.cling", name = "cling-core", version.ref = "fourthline-cling" }
 
 com-squareup-retrofit2-retrofit = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "squareup-retrofit2" }
 
