@@ -31,4 +31,6 @@
     <string name="fetching_latest">拉取版本信息中</string>
     <string name="label_same_version">已是最新版本</string>
     <string name="console_editor">Console Editor</string>
+    <string name="experimental_mode">试验特性</string>
+    <string name="experimental_mode_description">不稳定的功能可能引发致命错误</string>
 </resources>

@@ -19,4 +19,5 @@ data class SettingState(
     val editMode: Boolean = Configuration.DEFAULT_EDIT_MODE,
     val useCommonUIMode: Boolean = Configuration.DEFAULT_USE_COMMON_UI_MODE,
     @ConnectTimeout val connectTimeout: Int = Configuration.DEFAULT_CONNECT_TIMEOUT,
+    val experimentalMode: Boolean = Configuration.DEFAULT_EXPERIMENTAL_MODE
 )

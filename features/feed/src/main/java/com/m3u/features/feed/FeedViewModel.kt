@@ -31,6 +31,7 @@ class FeedViewModel @Inject constructor(
         writable.update {
             it.copy(
                 useCommonUIMode = configuration.useCommonUIMode,
+                experimentalMode = configuration.experimentalMode,
                 rowCount = configuration.rowCount,
                 editMode = configuration.editMode
             )

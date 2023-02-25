@@ -2,9 +2,7 @@ package com.m3u.features.setting
 
 import android.content.res.Configuration
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.rememberScrollableState
@@ -38,7 +36,10 @@ import com.m3u.features.setting.components.CheckBoxPreference
 import com.m3u.features.setting.components.FoldPreference
 import com.m3u.features.setting.components.TextPreference
 import com.m3u.features.setting.navigation.NavigateToConsole
-import com.m3u.ui.components.*
+import com.m3u.ui.components.LabelField
+import com.m3u.ui.components.OuterColumn
+import com.m3u.ui.components.TextButton
+import com.m3u.ui.components.WorkInProgressLottie
 import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.LocalTheme
 import com.m3u.ui.model.LocalUtils
@@ -98,6 +99,8 @@ internal fun SettingRoute(
         useCommonUIModeEnable = useCommonUIModeEnable,
         onUIMode = { viewModel.onEvent(SettingEvent.OnUIMode) },
         navigateToConsole = navigateToConsole,
+        experimentalMode = state.experimentalMode,
+        onExperimentalMode = { viewModel.onEvent(SettingEvent.OnExperimentalMode) },
         modifier = modifier.fillMaxSize()
     )
 }
@@ -123,6 +126,8 @@ private fun SettingScreen(
     useCommonUIModeEnable: Boolean,
     onUIMode: () -> Unit,
     navigateToConsole: NavigateToConsole,
+    experimentalMode: Boolean,
+    onExperimentalMode: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     var fold: Fold by remember { mutableStateOf(Fold.NONE) }
@@ -153,6 +158,8 @@ private fun SettingScreen(
                     useCommonUIMode = useCommonUIMode,
                     navigateToConsole = navigateToConsole,
                     useCommonUIModeEnable = useCommonUIModeEnable,
+                    experimentalMode = experimentalMode,
+                    onExperimentalMode = onExperimentalMode,
                     modifier = modifier
                         .fillMaxWidth()
                         .scrollable(
@@ -184,6 +191,8 @@ private fun SettingScreen(
                     onConnectTimeout = onConnectTimeout,
                     onUIMode = onUIMode,
                     navigateToConsole = navigateToConsole,
+                    experimentalMode = experimentalMode,
+                    onExperimentalMode = onExperimentalMode,
                     modifier = modifier.scrollable(
                         orientation = Orientation.Vertical,
                         state = rememberScrollableState { it }
@@ -220,6 +229,8 @@ private fun PortraitOrientationContent(
     latestRelease: Resource<Release>,
     fetchLatestRelease: () -> Unit,
     navigateToConsole: NavigateToConsole,
+    experimentalMode: Boolean,
+    onExperimentalMode: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Box {
@@ -243,6 +254,8 @@ private fun PortraitOrientationContent(
                 onFold(Fold.SCRIPT)
             },
             navigateToConsole = navigateToConsole,
+            experimentalMode = experimentalMode,
+            onExperimentalMode = onExperimentalMode,
             modifier = modifier
         )
 
@@ -297,6 +310,8 @@ private fun LandscapeOrientationContent(
     latestRelease: Resource<Release>,
     fetchLatestRelease: () -> Unit,
     navigateToConsole: NavigateToConsole,
+    experimentalMode: Boolean,
+    onExperimentalMode: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
@@ -321,6 +336,8 @@ private fun LandscapeOrientationContent(
             onUIMode = onUIMode,
             onEditMode = onEditMode,
             navigateToConsole = navigateToConsole,
+            experimentalMode = experimentalMode,
+            onExperimentalMode = onExperimentalMode,
             modifier = Modifier
                 .fillMaxHeight()
                 .weight(1f)
@@ -371,6 +388,8 @@ private fun PreferencesPart(
     onConnectTimeout: () -> Unit,
     modifier: Modifier = Modifier,
     useCommonUIModeEnable: Boolean,
+    experimentalMode: Boolean,
+    onExperimentalMode: () -> Unit,
     navigateToConsole: NavigateToConsole,
 ) {
     val spacing = LocalSpacing.current
@@ -390,11 +409,22 @@ private fun PreferencesPart(
                     enabled = true,
                     onClick = onFeedManagement
                 )
-                FoldPreference(
-                    title = stringResource(R.string.script_management),
-                    enabled = true,
-                    onClick = onScriptManagement
-                )
+                AnimatedVisibility(
+                    visible = experimentalMode,
+                    enter = expandVertically(
+                        expandFrom = Alignment.CenterVertically
+                    ) + fadeIn(),
+                    exit = shrinkVertically(
+                        shrinkTowards = Alignment.CenterVertically
+                    ) + fadeOut()
+                ) {
+                    FoldPreference(
+                        title = stringResource(R.string.script_management),
+                        enabled = true,
+                        onClick = onScriptManagement
+                    )
+                }
+
                 TextPreference(
                     title = stringResource(R.string.sync_mode),
                     content = when (feedStrategy) {
@@ -411,7 +441,15 @@ private fun PreferencesPart(
                         onSyncMode(target)
                     }
                 )
-                if (BuildConfig.DEBUG) {
+                AnimatedVisibility(
+                    visible = experimentalMode,
+                    enter = expandVertically(
+                        expandFrom = Alignment.CenterVertically
+                    ) + fadeIn(),
+                    exit = shrinkVertically(
+                        shrinkTowards = Alignment.CenterVertically
+                    ) + fadeOut()
+                ) {
                     FoldPreference(
                         title = stringResource(R.string.console_editor),
                         onClick = navigateToConsole
@@ -444,6 +482,16 @@ private fun PreferencesPart(
                         }
                     }
                 )
+                CheckBoxPreference(
+                    title = stringResource(R.string.experimental_mode),
+                    subtitle = stringResource(R.string.experimental_mode_description),
+                    checked = experimentalMode,
+                    onCheckedChange = { newValue ->
+                        if (newValue != experimentalMode) {
+                            onExperimentalMode()
+                        }
+                    }
+                )
             }
         }
         item {
@@ -456,37 +504,43 @@ private fun PreferencesPart(
             }
         }
         item {
-            when (latestRelease) {
-                Resource.Loading -> {
-                    TextButton(stringResource(R.string.fetching_latest)) {}
-                }
-                is Resource.Success -> {
-                    val uriHandler = LocalUriHandler.current
-                    val remoteVersion = latestRelease.data.name
-                    val name = if (remoteVersion != version) {
-                        stringResource(R.string.label_latest_release_version, remoteVersion)
-                    } else {
-                        stringResource(R.string.label_same_version)
+            AnimatedVisibility(
+                visible = experimentalMode,
+                enter = fadeIn(),
+                exit = fadeOut()
+            ) {
+                when (latestRelease) {
+                    Resource.Loading -> {
+                        TextButton(stringResource(R.string.fetching_latest)) {}
                     }
-
-                    TextButton(name) {
-                        if (remoteVersion == version) {
-                            fetchLatestRelease()
+                    is Resource.Success -> {
+                        val uriHandler = LocalUriHandler.current
+                        val remoteVersion = latestRelease.data.name
+                        val name = if (remoteVersion != version) {
+                            stringResource(R.string.label_latest_release_version, remoteVersion)
                         } else {
-                            val url =
-                                "https://github.com/thxbrop/M3UAndroid/releases/tag/v$remoteVersion"
-                            uriHandler.openUri(url)
+                            stringResource(R.string.label_same_version)
+                        }
+
+                        TextButton(name) {
+                            if (remoteVersion == version) {
+                                fetchLatestRelease()
+                            } else {
+                                val url =
+                                    "https://github.com/thxbrop/M3UAndroid/releases/tag/v$remoteVersion"
+                                uriHandler.openUri(url)
+                            }
                         }
                     }
-                }
-                is Resource.Failure -> {
-                    TextButton(
-                        text = stringResource(
-                            R.string.failed_latest_release_version,
-                            latestRelease.message.orEmpty()
-                        )
-                    ) {
-                        fetchLatestRelease()
+                    is Resource.Failure -> {
+                        TextButton(
+                            text = stringResource(
+                                R.string.failed_latest_release_version,
+                                latestRelease.message.orEmpty()
+                            )
+                        ) {
+                            fetchLatestRelease()
+                        }
                     }
                 }
             }

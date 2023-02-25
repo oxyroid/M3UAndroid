@@ -3,6 +3,7 @@ package com.m3u.features.live
 import android.app.Application
 import androidx.lifecycle.viewModelScope
 import com.m3u.core.architecture.BaseViewModel
+import com.m3u.core.architecture.Configuration
 import com.m3u.core.wrapper.eventOf
 import com.m3u.data.repository.LiveRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -16,11 +17,19 @@ import javax.inject.Inject
 @HiltViewModel
 class LiveViewModel @Inject constructor(
     private val liveRepository: LiveRepository,
-    application: Application
+    application: Application,
+    configuration: Configuration
 ) : BaseViewModel<LiveState, LiveEvent>(
     application = application,
     emptyState = LiveState()
 ) {
+    init {
+        writable.update {
+            it.copy(
+                experimentalMode = configuration.experimentalMode
+            )
+        }
+    }
     override fun onEvent(event: LiveEvent) {
         when (event) {
             is LiveEvent.Init.SingleLive -> initLive(event.liveId)

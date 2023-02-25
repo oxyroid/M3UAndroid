@@ -7,6 +7,7 @@ import com.m3u.core.annotation.FeedStrategy
 import com.m3u.core.architecture.Configuration
 import com.m3u.core.architecture.Configuration.Companion.DEFAULT_CONNECT_TIMEOUT
 import com.m3u.core.architecture.Configuration.Companion.DEFAULT_EDIT_MODE
+import com.m3u.core.architecture.Configuration.Companion.DEFAULT_EXPERIMENTAL_MODE
 import com.m3u.core.architecture.Configuration.Companion.DEFAULT_FEED_STRATEGY
 import com.m3u.core.architecture.Configuration.Companion.DEFAULT_MUTED_URLS
 import com.m3u.core.architecture.Configuration.Companion.DEFAULT_ROW_COUNT
@@ -43,6 +44,8 @@ class SharedConfiguration @Inject constructor(
     override var connectTimeout: Int by sharedPreferences.int(DEFAULT_CONNECT_TIMEOUT)
 
     override var editMode: Boolean by sharedPreferences.boolean(DEFAULT_EDIT_MODE)
+
+    override var experimentalMode: Boolean by sharedPreferences.boolean(DEFAULT_EXPERIMENTAL_MODE)
 
     companion object {
         private const val SHARED_SETTINGS = "shared_settings"

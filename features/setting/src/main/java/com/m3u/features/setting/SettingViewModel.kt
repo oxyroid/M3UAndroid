@@ -34,6 +34,7 @@ class SettingViewModel @Inject constructor(
                 version = packageProvider.getVersionName(),
                 feedStrategy = configuration.feedStrategy,
                 useCommonUIMode = configuration.useCommonUIMode,
+                experimentalMode = configuration.experimentalMode,
                 editMode = configuration.editMode,
                 connectTimeout = configuration.connectTimeout,
             )
@@ -73,6 +74,14 @@ class SettingViewModel @Inject constructor(
         writable.update {
             it.copy(
                 editMode = newValue
+            )
+        }
+    }
+    private var experimentalMode: Boolean by sharedDelegate(configuration.experimentalMode) { newValue ->
+        configuration.experimentalMode = newValue
+        writable.update {
+            it.copy(
+                experimentalMode = newValue
             )
         }
     }
@@ -145,6 +154,7 @@ class SettingViewModel @Inject constructor(
                 }
             }
             SettingEvent.OnEditMode -> editMode = !editMode
+            SettingEvent.OnExperimentalMode -> experimentalMode = !experimentalMode
             SettingEvent.FetchLatestRelease -> fetchLatestRelease()
         }
     }
