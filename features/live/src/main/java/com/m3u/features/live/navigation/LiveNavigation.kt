@@ -3,6 +3,7 @@ package com.m3u.features.live.navigation
 import androidx.compose.animation.*
 import androidx.navigation.*
 import com.google.accompanist.navigation.animation.composable
+import com.m3u.data.util.transform.encrypt.IntIterativeTransferable
 import com.m3u.features.live.LiveEvent
 import com.m3u.features.live.LiveRoute
 
@@ -18,7 +19,7 @@ private const val TYPE_IDS = "ids"
 const val livePlaylistRoute = "$LIVE_PLAYLIST_ROUTE_PATH/{$TYPE_IDS}/{$TYPE_INITIAL_INDEX}"
 
 private fun createLivePlaylistRoute(ids: List<Int>, initialIndex: Int) =
-    "$LIVE_PLAYLIST_ROUTE_PATH/${encodeIntList(ids)}/$initialIndex"
+    "$LIVE_PLAYLIST_ROUTE_PATH/${IntIterativeTransferable.transfer(ids)}/$initialIndex"
 
 fun NavController.navigateToLive(id: Int) {
     val navOptions = navOptions {
@@ -83,7 +84,8 @@ fun NavGraphBuilder.livePlaylistScreen() {
         val ids = navBackStackEntry
             .arguments
             ?.getString(TYPE_IDS)
-            ?.let(::decodeIntList)
+            ?.let(IntIterativeTransferable::accept)
+            ?.toList()
             ?: return@composable
         val initialIndex = navBackStackEntry
             .arguments
@@ -95,29 +97,5 @@ fun NavGraphBuilder.livePlaylistScreen() {
                 ids = ids
             )
         )
-    }
-}
-
-private fun encodeIntList(list: List<Int>): String = list.joinToString(
-    prefix = "[",
-    postfix = "]",
-    separator = ",",
-    transform = Int::toString
-)
-
-private fun decodeIntList(s: String): List<Int> = buildList {
-    var current = ""
-    s.trim().forEachIndexed { index, c ->
-        if (index == 0 && c != '[') return emptyList()
-        if (index == s.lastIndex && c != ']') return emptyList()
-        if (c == ',') {
-            if (current.isNotEmpty()) add(current.toInt())
-            current = ""
-        } else if (c.isDigit()) {
-            current += c
-        }
-    }
-    if (current.isNotEmpty()) {
-        add(current.toInt())
     }
 }
