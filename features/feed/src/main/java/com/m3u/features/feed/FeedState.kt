@@ -3,7 +3,7 @@ package com.m3u.features.feed
 import com.m3u.core.architecture.Configuration
 import com.m3u.core.wrapper.Event
 import com.m3u.core.wrapper.handledEvent
-import com.m3u.data.entity.Live
+import com.m3u.data.local.entity.Live
 
 data class FeedState(
     val url: String = "",

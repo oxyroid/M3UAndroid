@@ -7,8 +7,8 @@ import com.m3u.core.wrapper.Resource
 import com.m3u.core.wrapper.emitMessage
 import com.m3u.core.wrapper.emitResource
 import com.m3u.core.wrapper.resourceFlow
-import com.m3u.data.dao.LiveDao
-import com.m3u.data.entity.Live
+import com.m3u.data.local.dao.LiveDao
+import com.m3u.data.local.entity.Live
 import com.m3u.data.repository.LiveRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow

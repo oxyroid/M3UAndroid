@@ -1,8 +1,8 @@
 package com.m3u.data.di
 
-import com.m3u.data.M3UDatabase
-import com.m3u.data.dao.FeedDao
-import com.m3u.data.dao.LiveDao
+import com.m3u.data.local.M3UDatabase
+import com.m3u.data.local.dao.FeedDao
+import com.m3u.data.local.dao.LiveDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn

@@ -1,7 +1,7 @@
-package com.m3u.data.dao
+package com.m3u.data.local.dao
 
 import androidx.room.*
-import com.m3u.data.entity.Live
+import com.m3u.data.local.entity.Live
 import kotlinx.coroutines.flow.Flow
 
 @Dao

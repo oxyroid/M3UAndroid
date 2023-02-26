@@ -9,10 +9,10 @@ import androidx.annotation.IntDef
     AnnotationTarget.TYPE
 )
 @Retention(AnnotationRetention.SOURCE)
-@IntDef(ConnectTimeout.Short, ConnectTimeout.Long)
+@IntDef(ConnectTimeout.SHORT, ConnectTimeout.LONG)
 annotation class ConnectTimeout {
     companion object {
-        const val Short = 8000
-        const val Long = 20000
+        const val SHORT = 8000
+        const val LONG = 20000
     }
 }

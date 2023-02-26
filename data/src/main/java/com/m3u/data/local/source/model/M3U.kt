@@ -1,6 +1,6 @@
-package com.m3u.data.source.model
+package com.m3u.data.local.source.model
 
-import com.m3u.data.entity.Live
+import com.m3u.data.local.entity.Live
 
 data class M3U(
     val id: String = "",

@@ -1,6 +1,6 @@
-package com.m3u.data.source.matcher.m3u
+package com.m3u.data.local.source.matcher.m3u
 
-import com.m3u.data.source.matcher.Matcher
+import com.m3u.data.local.source.matcher.Matcher
 import java.net.URL
 
 object M3UMatcher : Matcher {

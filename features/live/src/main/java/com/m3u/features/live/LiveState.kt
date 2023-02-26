@@ -3,7 +3,7 @@ package com.m3u.features.live
 import com.m3u.core.architecture.Configuration
 import com.m3u.core.wrapper.Event
 import com.m3u.core.wrapper.handledEvent
-import com.m3u.data.entity.Live
+import com.m3u.data.local.entity.Live
 
 data class LiveState(
     val init: Init = Init.SingleLive(),

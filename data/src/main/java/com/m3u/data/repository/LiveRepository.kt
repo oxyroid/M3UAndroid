@@ -1,7 +1,7 @@
 package com.m3u.data.repository
 
 import com.m3u.core.wrapper.Resource
-import com.m3u.data.entity.Live
+import com.m3u.data.local.entity.Live
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map

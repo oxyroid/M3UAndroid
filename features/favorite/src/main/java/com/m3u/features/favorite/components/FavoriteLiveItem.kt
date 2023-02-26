@@ -15,7 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
-import com.m3u.data.entity.Live
+import com.m3u.data.local.entity.Live
 import com.m3u.features.favorite.R
 import com.m3u.ui.components.OuterColumn
 import com.m3u.ui.components.TextBadge

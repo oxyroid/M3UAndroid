@@ -4,7 +4,7 @@ import android.app.Application
 import androidx.lifecycle.viewModelScope
 import com.m3u.core.architecture.BaseViewModel
 import com.m3u.core.util.collection.replaceIf
-import com.m3u.data.entity.Feed
+import com.m3u.data.local.entity.Feed
 import com.m3u.data.repository.FeedRepository
 import com.m3u.data.repository.LiveRepository
 import com.m3u.data.repository.observeByFeedUrl

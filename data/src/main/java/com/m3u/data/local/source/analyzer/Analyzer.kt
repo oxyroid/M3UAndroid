@@ -1,6 +1,6 @@
-package com.m3u.data.source.analyzer
+package com.m3u.data.local.source.analyzer
 
-import com.m3u.data.source.analyzer.m3u.M3UAnalyzer
+import com.m3u.data.local.source.analyzer.m3u.M3UAnalyzer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.InputStream

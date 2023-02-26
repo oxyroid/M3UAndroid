@@ -1,6 +1,6 @@
 package com.m3u.features.main.model
 
-import com.m3u.data.entity.Feed
+import com.m3u.data.local.entity.Feed
 
 data class FeedDetail(
     val feed: Feed,

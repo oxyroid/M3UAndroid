@@ -4,7 +4,7 @@ import com.m3u.core.annotation.FeedStrategy
 import com.m3u.core.wrapper.Resource
 import com.m3u.core.wrapper.resourceChannelFlow
 import com.m3u.core.wrapper.sendMessage
-import com.m3u.data.entity.Feed
+import com.m3u.data.local.entity.Feed
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach

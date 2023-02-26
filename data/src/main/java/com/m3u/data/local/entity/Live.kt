@@ -1,4 +1,4 @@
-package com.m3u.data.entity
+package com.m3u.data.local.entity
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity

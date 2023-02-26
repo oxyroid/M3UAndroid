@@ -1,9 +1,9 @@
-package com.m3u.data.source.analyzer.m3u
+package com.m3u.data.local.source.analyzer.m3u
 
 import com.m3u.core.util.basic.trimBrackets
 import com.m3u.core.util.collection.loadLine
-import com.m3u.data.source.analyzer.Analyzer
-import com.m3u.data.source.model.M3U
+import com.m3u.data.local.source.analyzer.Analyzer
+import com.m3u.data.local.source.model.M3U
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.*

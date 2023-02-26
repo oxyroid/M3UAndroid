@@ -6,8 +6,8 @@ import com.m3u.core.wrapper.Resource
 import com.m3u.core.wrapper.emitMessage
 import com.m3u.core.wrapper.emitResource
 import com.m3u.core.wrapper.resourceFlow
-import com.m3u.data.api.GithubApi
-import com.m3u.data.entity.Release
+import com.m3u.data.remote.api.GithubApi
+import com.m3u.data.local.entity.Release
 import com.m3u.data.repository.RemoteRepository
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject

@@ -1,6 +1,6 @@
-package com.m3u.data.api
+package com.m3u.data.remote.api
 
-import com.m3u.data.entity.Release
+import com.m3u.data.local.entity.Release
 import retrofit2.http.GET
 import retrofit2.http.Path
 

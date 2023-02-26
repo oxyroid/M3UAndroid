@@ -2,7 +2,7 @@ package com.m3u.data.di
 
 import android.content.Context
 import androidx.room.Room
-import com.m3u.data.M3UDatabase
+import com.m3u.data.local.M3UDatabase
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn

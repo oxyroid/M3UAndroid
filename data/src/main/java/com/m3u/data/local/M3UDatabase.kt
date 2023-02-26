@@ -1,11 +1,11 @@
-package com.m3u.data
+package com.m3u.data.local
 
 import androidx.room.Database
 import androidx.room.RoomDatabase
-import com.m3u.data.dao.FeedDao
-import com.m3u.data.dao.LiveDao
-import com.m3u.data.entity.Feed
-import com.m3u.data.entity.Live
+import com.m3u.data.local.dao.FeedDao
+import com.m3u.data.local.dao.LiveDao
+import com.m3u.data.local.entity.Feed
+import com.m3u.data.local.entity.Live
 
 @Database(
     entities = [Live::class, Feed::class],

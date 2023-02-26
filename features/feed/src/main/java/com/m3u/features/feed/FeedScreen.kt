@@ -33,7 +33,7 @@ import com.google.accompanist.pager.pagerTabIndicatorOffset
 import com.google.accompanist.pager.rememberPagerState
 import com.m3u.core.util.context.toast
 import com.m3u.core.wrapper.Event
-import com.m3u.data.entity.Live
+import com.m3u.data.local.entity.Live
 import com.m3u.features.feed.components.DialogState
 import com.m3u.features.feed.components.FeedDialog
 import com.m3u.features.feed.components.LiveItem
