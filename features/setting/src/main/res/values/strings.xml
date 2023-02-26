@@ -33,4 +33,7 @@
     <string name="console_editor">Console Editor</string>
     <string name="experimental_mode">试验特性</string>
     <string name="experimental_mode_description">不稳定的功能可能引发致命错误</string>
+    <string name="label_muted_lives">屏蔽的频道</string>
+    <string name="label_add_feed">新增订阅</string>
+    <string name="label_parse_from_clipboard">解析剪贴板</string>
 </resources>

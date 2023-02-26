@@ -11,35 +11,33 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalUriHandler
-import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.platform.*
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.tv.material3.Text
 import com.m3u.core.annotation.ConnectTimeout
 import com.m3u.core.annotation.FeedStrategy
 import com.m3u.core.annotation.SetStrategy
 import com.m3u.core.util.context.toast
 import com.m3u.core.wrapper.Resource
-import com.m3u.data.entity.Release
+import com.m3u.data.local.entity.Live
+import com.m3u.data.local.entity.Release
 import com.m3u.features.setting.components.CheckBoxPreference
 import com.m3u.features.setting.components.FoldPreference
+import com.m3u.features.setting.components.MutedLiveItem
 import com.m3u.features.setting.components.TextPreference
 import com.m3u.features.setting.navigation.NavigateToConsole
-import com.m3u.ui.components.LabelField
-import com.m3u.ui.components.OuterColumn
-import com.m3u.ui.components.TextButton
-import com.m3u.ui.components.WorkInProgressLottie
+import com.m3u.ui.components.*
 import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.LocalTheme
 import com.m3u.ui.model.LocalUtils
@@ -85,22 +83,24 @@ internal fun SettingRoute(
         url = state.url,
         version = state.version,
         latestRelease = state.latestRelease,
-        fetchLatestRelease = { viewModel.onEvent(SettingEvent.FetchLatestRelease) },
         feedStrategy = state.feedStrategy,
         editMode = state.editMode,
         connectTimeout = state.connectTimeout,
+        useCommonUIMode = useCommonUIMode,
+        useCommonUIModeEnable = useCommonUIModeEnable,
+        navigateToConsole = navigateToConsole,
+        experimentalMode = state.experimentalMode,
+        mutedLives = state.mutedLives,
+        fetchLatestRelease = { viewModel.onEvent(SettingEvent.FetchLatestRelease) },
         onEditMode = { viewModel.onEvent(SettingEvent.OnEditMode) },
         onConnectTimeout = { viewModel.onEvent(SettingEvent.OnConnectTimeout) },
         onTitle = { viewModel.onEvent(SettingEvent.OnTitle(it)) },
         onUrl = { viewModel.onEvent(SettingEvent.OnUrl(it)) },
         onSubscribe = { viewModel.onEvent(SettingEvent.OnSubscribe) },
         onSyncMode = { viewModel.onEvent(SettingEvent.OnSyncMode(it)) },
-        useCommonUIMode = useCommonUIMode,
-        useCommonUIModeEnable = useCommonUIModeEnable,
-        onUIMode = { viewModel.onEvent(SettingEvent.OnUIMode) },
-        navigateToConsole = navigateToConsole,
-        experimentalMode = state.experimentalMode,
+        onUIMode = { viewModel.onEvent(SettingEvent.OnUseCommonUIMode) },
         onExperimentalMode = { viewModel.onEvent(SettingEvent.OnExperimentalMode) },
+        onVoiceLiveUrl = { viewModel.onEvent(SettingEvent.OnVoiceLiveUrl(it)) },
         modifier = modifier.fillMaxSize()
     )
 }
@@ -124,6 +124,8 @@ private fun SettingScreen(
     onSyncMode: SetStrategy,
     useCommonUIMode: Boolean,
     useCommonUIModeEnable: Boolean,
+    mutedLives: List<Live>,
+    onVoiceLiveUrl: (String) -> Unit,
     onUIMode: () -> Unit,
     navigateToConsole: NavigateToConsole,
     experimentalMode: Boolean,
@@ -160,6 +162,8 @@ private fun SettingScreen(
                     useCommonUIModeEnable = useCommonUIModeEnable,
                     experimentalMode = experimentalMode,
                     onExperimentalMode = onExperimentalMode,
+                    mutedLives = mutedLives,
+                    onVoiceLiveUrl = onVoiceLiveUrl,
                     modifier = modifier
                         .fillMaxWidth()
                         .scrollable(
@@ -193,6 +197,8 @@ private fun SettingScreen(
                     navigateToConsole = navigateToConsole,
                     experimentalMode = experimentalMode,
                     onExperimentalMode = onExperimentalMode,
+                    mutedLives = mutedLives,
+                    onVoiceLiveUrl = onVoiceLiveUrl,
                     modifier = modifier.scrollable(
                         orientation = Orientation.Vertical,
                         state = rememberScrollableState { it }
@@ -220,6 +226,8 @@ private fun PortraitOrientationContent(
     onEditMode: () -> Unit,
     onConnectTimeout: () -> Unit,
     subscribeEnable: Boolean,
+    mutedLives: List<Live>,
+    onVoiceLiveUrl: (String) -> Unit,
     onFold: (Fold) -> Unit,
     onTitle: (String) -> Unit,
     onUrl: (String) -> Unit,
@@ -269,6 +277,8 @@ private fun PortraitOrientationContent(
                     FeedManagementPart(
                         title = title,
                         url = url,
+                        mutedLives = mutedLives,
+                        onVoiceLiveUrl = onVoiceLiveUrl,
                         subscribeEnable = subscribeEnable,
                         onTitle = onTitle,
                         onUrl = onUrl,
@@ -308,6 +318,8 @@ private fun LandscapeOrientationContent(
     onEditMode: () -> Unit,
     version: String,
     latestRelease: Resource<Release>,
+    mutedLives: List<Live>,
+    onVoiceLiveUrl: (String) -> Unit,
     fetchLatestRelease: () -> Unit,
     navigateToConsole: NavigateToConsole,
     experimentalMode: Boolean,
@@ -348,6 +360,8 @@ private fun LandscapeOrientationContent(
                 FeedManagementPart(
                     title = title,
                     url = url,
+                    mutedLives = mutedLives,
+                    onVoiceLiveUrl = onVoiceLiveUrl,
                     subscribeEnable = subscribeEnable,
                     onTitle = onTitle,
                     onUrl = onUrl,
@@ -552,6 +566,8 @@ private fun PreferencesPart(
 private fun FeedManagementPart(
     title: String,
     url: String,
+    mutedLives: List<Live>,
+    onVoiceLiveUrl: (String) -> Unit,
     subscribeEnable: Boolean,
     onTitle: (String) -> Unit,
     onUrl: (String) -> Unit,
@@ -559,45 +575,118 @@ private fun FeedManagementPart(
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
-    OuterColumn(
+    val theme = LocalTheme.current
+    LazyColumn(
         verticalArrangement = Arrangement.spacedBy(spacing.small),
-        modifier = modifier
+        modifier = modifier.padding(spacing.medium)
     ) {
-        val focusRequester = remember { FocusRequester() }
-        LabelField(
-            text = title,
-            enabled = subscribeEnable,
-            placeholder = stringResource(R.string.placeholder_title),
-            onValueChange = onTitle,
-            keyboardActions = KeyboardActions(
-                onNext = {
-                    focusRequester.requestFocus()
+        if (mutedLives.isNotEmpty()) {
+            item {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(spacing.medium)),
+                    verticalArrangement = Arrangement.spacedBy(1.dp)
+                ) {
+                    Text(
+                        text = stringResource(R.string.label_muted_lives),
+                        style = MaterialTheme.typography.button,
+                        color = theme.onTint,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(theme.tint)
+                            .padding(
+                                vertical = spacing.extraSmall,
+                                horizontal = spacing.medium
+                            )
+                    )
+                    mutedLives.forEach { live ->
+                        MutedLiveItem(
+                            live = live,
+                            onVoiced = { onVoiceLiveUrl(live.url) },
+                            modifier = Modifier.background(theme.surface)
+                        )
+                    }
                 }
-            ),
-            modifier = Modifier.fillMaxWidth()
-        )
-        LabelField(
-            text = url,
-            enabled = subscribeEnable,
-            placeholder = stringResource(R.string.placeholder_url),
-            onValueChange = onUrl,
-            keyboardActions = KeyboardActions(
-                onDone = {
-                    onSubscribe()
-                }
-            ),
-            modifier = Modifier
-                .fillMaxWidth()
-                .focusRequester(focusRequester)
-        )
-        val buttonTextResId = if (subscribeEnable) R.string.label_subscribe
-        else R.string.label_subscribing
-        TextButton(
-            enabled = subscribeEnable,
-            text = stringResource(buttonTextResId),
-            onClick = { onSubscribe() },
-            modifier = Modifier.fillMaxWidth()
-        )
+            }
+
+        }
+
+        item {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(spacing.small),
+            ) {
+                Text(
+                    text = stringResource(R.string.label_add_feed),
+                    style = MaterialTheme.typography.button,
+                    color = theme.onTint,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(spacing.medium))
+                        .background(theme.tint)
+                        .padding(
+                            vertical = spacing.extraSmall,
+                            horizontal = spacing.medium
+                        )
+                )
+                val focusRequester = remember { FocusRequester() }
+                LabelField(
+                    text = title,
+                    enabled = subscribeEnable,
+                    placeholder = stringResource(R.string.placeholder_title),
+                    onValueChange = onTitle,
+                    keyboardActions = KeyboardActions(
+                        onNext = {
+                            focusRequester.requestFocus()
+                        }
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                )
+                LabelField(
+                    text = url,
+                    enabled = subscribeEnable,
+                    placeholder = stringResource(R.string.placeholder_url),
+                    onValueChange = onUrl,
+                    keyboardActions = KeyboardActions(
+                        onDone = {
+                            onSubscribe()
+                        }
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .focusRequester(focusRequester)
+                )
+                val subscribeTextResId = if (subscribeEnable) R.string.label_subscribe
+                else R.string.label_subscribing
+                val subscribeFromClipboardTextResId =
+                    if (subscribeEnable) R.string.label_parse_from_clipboard
+                    else R.string.label_subscribing
+                Button(
+                    enabled = subscribeEnable,
+                    text = stringResource(subscribeTextResId),
+                    onClick = onSubscribe,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                val clipboardManager = LocalClipboardManager.current
+                TextButton(
+                    text = stringResource(subscribeFromClipboardTextResId),
+                    enabled = subscribeEnable,
+                    onClick = {
+                        val clipboardUrl = clipboardManager.getText()?.text.orEmpty()
+                        val clipboardTitle = run {
+                            val filePath = clipboardUrl.split("/")
+                            val fileSplit = filePath.lastOrNull()?.split(".") ?: emptyList()
+                            fileSplit.firstOrNull() ?: "Feed_${System.currentTimeMillis()}"
+                        }
+                        onTitle(clipboardTitle)
+                        onUrl(clipboardUrl)
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+
+        }
     }
 }
 

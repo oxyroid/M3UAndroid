@@ -9,19 +9,21 @@ import com.m3u.core.architecture.PackageProvider
 import com.m3u.core.wrapper.Resource
 import com.m3u.core.wrapper.eventOf
 import com.m3u.data.repository.FeedRepository
+import com.m3u.data.repository.LiveRepository
 import com.m3u.data.repository.RemoteRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import javax.inject.Inject
-import kotlin.properties.Delegates
 
 @HiltViewModel
 class SettingViewModel @Inject constructor(
     private val feedRepository: FeedRepository,
+    private val liveRepository: LiveRepository,
     private val remoteRepository: RemoteRepository,
-    packageProvider: PackageProvider,
+    provider: PackageProvider,
     application: Application,
     private val configuration: Configuration
 ) : BaseViewModel<SettingState, SettingEvent>(
@@ -31,64 +33,41 @@ class SettingViewModel @Inject constructor(
     init {
         writable.update {
             it.copy(
-                version = packageProvider.getVersionName(),
+                version = provider.getVersionName(),
                 feedStrategy = configuration.feedStrategy,
                 useCommonUIMode = configuration.useCommonUIMode,
                 experimentalMode = configuration.experimentalMode,
                 editMode = configuration.editMode,
                 connectTimeout = configuration.connectTimeout,
+                clipMode = configuration.clipMode
             )
+        }
+        viewModelScope.launch {
+            val newerMutedUrls = configuration.mutedUrls.toMutableList()
+            val lives = newerMutedUrls
+                .mapNotNull { url ->
+                    val live = liveRepository.getByUrl(url)
+                    if (live == null) {
+                        newerMutedUrls.remove(url)
+                    }
+                    live
+                }
+
+            configuration.mutedUrls = newerMutedUrls
+
+            writable.update {
+                it.copy(
+                    mutedLives = lives
+                )
+            }
         }
         fetchLatestRelease()
     }
 
-    private var syncMode: Int by sharedDelegate(configuration.feedStrategy) { newValue ->
-        configuration.feedStrategy = newValue
-        writable.update {
-            it.copy(
-                feedStrategy = newValue
-            )
-        }
-    }
-    private var useCommonUIMode: Boolean by sharedDelegate(configuration.useCommonUIMode) { newValue ->
-        configuration.useCommonUIMode = newValue
-        writable.update {
-            it.copy(
-                useCommonUIMode = newValue
-            )
-        }
-    }
-
-    @ConnectTimeout
-    private var connectTimeout: Int by sharedDelegate(configuration.connectTimeout) { newValue ->
-        configuration.connectTimeout = newValue
-        writable.update {
-            it.copy(
-                connectTimeout = newValue
-            )
-        }
-    }
-
-    private var editMode: Boolean by sharedDelegate(configuration.editMode) { newValue ->
-        configuration.editMode = newValue
-        writable.update {
-            it.copy(
-                editMode = newValue
-            )
-        }
-    }
-    private var experimentalMode: Boolean by sharedDelegate(configuration.experimentalMode) { newValue ->
-        configuration.experimentalMode = newValue
-        writable.update {
-            it.copy(
-                experimentalMode = newValue
-            )
-        }
-    }
-
-
     override fun onEvent(event: SettingEvent) {
         when (event) {
+            SettingEvent.OnSubscribe -> subscribe()
+            SettingEvent.FetchLatestRelease -> fetchLatestRelease()
             is SettingEvent.OnTitle -> {
                 writable.update {
                     it.copy(
@@ -103,60 +82,117 @@ class SettingViewModel @Inject constructor(
                     )
                 }
             }
-            is SettingEvent.OnSyncMode -> syncMode = event.feedStrategy
-            SettingEvent.OnUIMode -> useCommonUIMode = !useCommonUIMode
-            SettingEvent.OnSubscribe -> {
-                val title = writable.value.title
-                if (title.isEmpty()) {
-                    writable.update {
-                        val message = context.getString(R.string.failed_empty_title)
-                        it.copy(
-                            adding = false,
-                            message = eventOf(message)
-                        )
-                    }
-                    return
+            is SettingEvent.OnSyncMode -> {
+                val newValue = event.feedStrategy
+                configuration.feedStrategy = newValue
+                writable.update {
+                    it.copy(
+                        feedStrategy = newValue
+                    )
                 }
-                val url = readable.url
-                val strategy = configuration.feedStrategy
-                feedRepository.subscribe(title, url, strategy)
-                    .onEach { resource ->
-                        writable.update {
-                            when (resource) {
-                                Resource.Loading -> {
-                                    it.copy(adding = true)
-                                }
-                                is Resource.Success -> {
-                                    val message = context.getString(R.string.success_subscribe)
-                                    it.copy(
-                                        adding = false,
-                                        title = "",
-                                        url = "",
-                                        message = eventOf(message)
-                                    )
-                                }
-                                is Resource.Failure -> {
-                                    it.copy(
-                                        adding = false,
-                                        message = eventOf(resource.message.orEmpty())
-                                    )
-                                }
-                            }
-                        }
-                    }
-                    .launchIn(viewModelScope)
+            }
+            SettingEvent.OnUseCommonUIMode -> {
+                val newValue = !configuration.useCommonUIMode
+                configuration.useCommonUIMode = newValue
+                writable.update {
+                    it.copy(
+                        useCommonUIMode = newValue
+                    )
+                }
             }
             SettingEvent.OnConnectTimeout -> {
-                connectTimeout = when (connectTimeout) {
-                    ConnectTimeout.Long -> ConnectTimeout.Short
-                    ConnectTimeout.Short -> ConnectTimeout.Long
-                    else -> ConnectTimeout.Short
+                val newValue = when (configuration.connectTimeout) {
+                    ConnectTimeout.LONG -> ConnectTimeout.SHORT
+                    ConnectTimeout.SHORT -> ConnectTimeout.LONG
+                    else -> ConnectTimeout.SHORT
+                }
+                configuration.connectTimeout = newValue
+                writable.update {
+                    it.copy(
+                        connectTimeout = newValue
+                    )
                 }
             }
-            SettingEvent.OnEditMode -> editMode = !editMode
-            SettingEvent.OnExperimentalMode -> experimentalMode = !experimentalMode
-            SettingEvent.FetchLatestRelease -> fetchLatestRelease()
+            SettingEvent.OnEditMode -> {
+                val newValue = !configuration.editMode
+                configuration.editMode = newValue
+                writable.update {
+                    it.copy(
+                        editMode = newValue
+                    )
+                }
+            }
+            SettingEvent.OnExperimentalMode -> {
+                val newValue = !configuration.experimentalMode
+                configuration.experimentalMode = newValue
+                writable.update {
+                    it.copy(
+                        experimentalMode = newValue
+                    )
+                }
+            }
+            is SettingEvent.OnClipMode -> {
+                val newValue = event.mode
+                configuration.clipMode = newValue
+                writable.update {
+                    it.copy(
+                        clipMode = newValue
+                    )
+                }
+            }
+            is SettingEvent.OnVoiceLiveUrl -> {
+                configuration.mutedUrls -= event.url
+                writable.update { readable ->
+                    val lives = readable.mutedLives.toMutableList()
+                    lives.removeIf { it.url == event.url }
+                    readable.copy(
+                        mutedLives = lives
+                    )
+                }
+            }
         }
+    }
+
+    private fun subscribe() {
+        val title = writable.value.title
+        if (title.isEmpty()) {
+            writable.update {
+                val message = context.getString(R.string.failed_empty_title)
+                it.copy(
+                    adding = false,
+                    message = eventOf(message)
+                )
+            }
+            return
+        }
+        val url = readable.url
+        val strategy = configuration.feedStrategy
+        feedRepository.subscribe(title, url, strategy)
+            .onEach { resource ->
+                writable.update {
+                    when (resource) {
+                        Resource.Loading -> {
+                            it.copy(adding = true)
+                        }
+                        is Resource.Success -> {
+                            val message = context.getString(R.string.success_subscribe)
+                            it.copy(
+                                adding = false,
+                                title = "",
+                                url = "",
+                                message = eventOf(message)
+                            )
+                        }
+                        is Resource.Failure -> {
+                            it.copy(
+                                adding = false,
+                                message = eventOf(resource.message.orEmpty())
+                            )
+                        }
+                    }
+                }
+            }
+            .launchIn(viewModelScope)
     }
 
     private fun fetchLatestRelease() {
@@ -170,9 +206,4 @@ class SettingViewModel @Inject constructor(
             }
             .launchIn(viewModelScope)
     }
-
-    private inline fun <T> sharedDelegate(observer: T, crossinline updated: (T) -> Unit) =
-        Delegates.observable(observer) { _, _, newValue ->
-            updated(newValue)
-        }
 }
