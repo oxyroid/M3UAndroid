@@ -7,6 +7,7 @@
 - [x] Android TV.
 - [ ] Script Parser.
 - [ ] Android Car.
+- [ ] DLNA Protocol.
 
 ### Android Development
 
