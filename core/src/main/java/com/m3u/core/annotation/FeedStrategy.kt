@@ -17,4 +17,4 @@ annotation class FeedStrategy {
     }
 }
 
-typealias SetStrategy = (@FeedStrategy Int) -> Unit
+typealias OnFeedStrategy = (@FeedStrategy Int) -> Unit
