@@ -7,6 +7,7 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
@@ -34,7 +35,8 @@ fun BottomSheetContent(
     onDismiss: () -> Unit,
     content: @Composable ColumnScope.() -> Unit,
     modifier: Modifier = Modifier,
-    maxHeight: Boolean = false
+    maxHeight: Boolean = false,
+    verticalArrangement: Arrangement.Vertical = Arrangement.Top
 ) {
     var offset by remember {
         mutableStateOf(0f)
@@ -52,7 +54,8 @@ fun BottomSheetContent(
     AnimatedVisibility(
         visible = visible,
         enter = slideInVertically { it },
-        exit = slideOutVertically { it }
+        exit = slideOutVertically { it },
+        modifier = modifier
     ) {
         Surface(
             color = theme.background,
@@ -61,7 +64,9 @@ fun BottomSheetContent(
                 topStart = LocalSpacing.current.medium,
                 topEnd = LocalSpacing.current.medium
             ),
-            modifier = modifier
+            border = BorderStroke(2.dp, theme.divider.copy(alpha = 0.45f)),
+            elevation = spacing.medium,
+            modifier = Modifier
                 .graphicsLayer {
                     translationY = animateOffset.coerceAtLeast(0f)
                 }
@@ -105,6 +110,7 @@ fun BottomSheetContent(
                         .clip(CircleShape)
                 )
                 Column(
+                    verticalArrangement = verticalArrangement,
                     modifier = Modifier
                         .padding(
                             vertical = spacing.small
@@ -112,6 +118,35 @@ fun BottomSheetContent(
                     content = content
                 )
             }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterialApi::class)
+@Composable
+fun BottomSheetItem(
+    text: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val theme = LocalTheme.current
+    val spacing = LocalSpacing.current
+    Surface(
+        shape = RoundedCornerShape(spacing.medium),
+        elevation = 0.dp,
+        color = theme.surface,
+        contentColor = theme.onSurface,
+        onClick = onClick
+    ) {
+        Row(
+            horizontalArrangement = Arrangement.Start,
+            modifier = modifier.padding(spacing.medium)
+        ) {
+            Text(
+                text = text,
+                style = MaterialTheme.typography.subtitle1,
+                maxLines = 1
+            )
         }
     }
 }

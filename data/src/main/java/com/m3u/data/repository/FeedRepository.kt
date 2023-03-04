@@ -13,6 +13,7 @@ interface FeedRepository {
     fun observe(url: String): Flow<Feed?>
     fun observeAll(): Flow<List<Feed>>
     suspend fun get(url: String): Feed?
+    suspend fun unsubscribe(url: String): Feed?
     fun subscribe(
         title: String,
         url: String,

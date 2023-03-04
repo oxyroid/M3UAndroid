@@ -1,33 +1,42 @@
 package com.m3u.features.main
 
 import android.content.res.Configuration
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.material.MaterialTheme
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.tv.material3.Text
 import com.m3u.core.util.context.toast
+import com.m3u.data.local.entity.Feed
 import com.m3u.features.main.components.FeedItem
 import com.m3u.features.main.model.FeedDetail
 import com.m3u.features.main.navgation.NavigateToFeed
+import com.m3u.ui.components.BottomSheetContent
+import com.m3u.ui.components.BottomSheetItem
 import com.m3u.ui.model.LocalSpacing
+import com.m3u.ui.model.LocalTheme
 import com.m3u.ui.model.LocalUtils
-import com.m3u.ui.model.SpecialNavigationParam
 import com.m3u.ui.util.EventHandler
 import com.m3u.ui.util.LifecycleEffect
+
+private typealias ShowFeedBottomSheet = (Feed) -> Unit
+private typealias UnsubscribeFeedByUrl = (String) -> Unit
 
 @Composable
 internal fun MainRoute(
@@ -39,7 +48,6 @@ internal fun MainRoute(
     val utils = LocalUtils.current
     val state: MainState by viewModel.state.collectAsStateWithLifecycle()
     val feeds: List<FeedDetail> = state.feeds
-    val mutedFeed: FeedDetail? = state.mutedFeed
 
     EventHandler(state.message) {
         context.toast(it)
@@ -61,46 +69,83 @@ internal fun MainRoute(
     MainScreen(
         modifier = modifier,
         feeds = feeds,
-        mutedFeed = mutedFeed,
-        navigateToFeed = navigateToFeed
+        navigateToFeed = navigateToFeed,
+        unsubscribeFeedByUrl = { viewModel.onEvent(MainEvent.UnsubscribeFeedByUrl(it)) }
     )
 }
 
 @Composable
 private fun MainScreen(
     feeds: List<FeedDetail>,
-    mutedFeed: FeedDetail?,
     navigateToFeed: NavigateToFeed,
+    unsubscribeFeedByUrl: UnsubscribeFeedByUrl,
     modifier: Modifier = Modifier
 ) {
-    val configuration = LocalConfiguration.current
-    when (configuration.orientation) {
-        Configuration.ORIENTATION_PORTRAIT -> {
-            PortraitOrientationContent(
-                feeds = feeds,
-                mutedFeed = mutedFeed,
-                navigateToFeed = navigateToFeed,
-                modifier = modifier
-            )
-        }
+    Box {
+        var feedSheetState: FeedSheetState by remember { mutableStateOf(FeedSheetState.Idle) }
+        val configuration = LocalConfiguration.current
+        when (configuration.orientation) {
+            Configuration.ORIENTATION_PORTRAIT -> {
+                PortraitOrientationContent(
+                    feeds = feeds,
+                    navigateToFeed = navigateToFeed,
+                    showFeedBottomSheet = { feedSheetState = FeedSheetState.Existed(it) },
+                    modifier = modifier
+                )
+            }
 
-        Configuration.ORIENTATION_LANDSCAPE -> {
-            LandscapeOrientationContent(
-                feeds = feeds,
-                mutedFeed = mutedFeed,
-                navigateToFeed = navigateToFeed,
-                modifier = modifier
-            )
+            Configuration.ORIENTATION_LANDSCAPE -> {
+                LandscapeOrientationContent(
+                    feeds = feeds,
+                    navigateToFeed = navigateToFeed,
+                    showFeedBottomSheet = { feedSheetState = FeedSheetState.Existed(it) },
+                    modifier = modifier
+                )
+            }
+            else -> {}
         }
-        else -> {}
+        BottomSheetContent(
+            visible = feedSheetState is FeedSheetState.Existed,
+            onDismiss = { feedSheetState = FeedSheetState.Idle },
+            modifier = Modifier.align(Alignment.BottomCenter),
+            verticalArrangement = Arrangement.spacedBy(LocalSpacing.current.medium),
+            content = {
+                var state = remember { feedSheetState as FeedSheetState.Existed }
+                LaunchedEffect(feedSheetState) {
+                    if (feedSheetState is FeedSheetState.Existed) {
+                        state = feedSheetState as FeedSheetState.Existed
+                    }
+                }
+                Text(
+                    text = state.feed.title,
+                    style = MaterialTheme.typography.h6,
+                    fontWeight = FontWeight.ExtraBold,
+                    textAlign = TextAlign.Start,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    color = LocalTheme.current.onBackground
+                )
+                BottomSheetItem(
+                    text = stringResource(R.string.unsubscribe_feed),
+                    onClick = {
+                        unsubscribeFeedByUrl(state.feed.url)
+                        feedSheetState = FeedSheetState.Idle
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        )
+        BackHandler(feedSheetState is FeedSheetState.Existed) {
+            feedSheetState = FeedSheetState.Idle
+        }
     }
 }
 
 @Composable
 fun PortraitOrientationContent(
     feeds: List<FeedDetail>,
-    mutedFeed: FeedDetail?,
     navigateToFeed: NavigateToFeed,
+    showFeedBottomSheet: ShowFeedBottomSheet,
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
@@ -116,20 +161,11 @@ fun PortraitOrientationContent(
                 modifier = Modifier.fillParentMaxWidth(),
                 onClick = {
                     navigateToFeed(detail.feed.url)
+                },
+                onLongClick = {
+                    showFeedBottomSheet(detail.feed)
                 }
             )
-        }
-        if (mutedFeed != null) {
-            item {
-                val title = stringResource(R.string.muted_lives_feed)
-                FeedItem(
-                    label = title,
-                    number = mutedFeed.count,
-                    onClick = {
-                        navigateToFeed(SpecialNavigationParam.FEED_MUTED_LIVES_URL)
-                    }
-                )
-            }
         }
     }
 }
@@ -137,8 +173,8 @@ fun PortraitOrientationContent(
 @Composable
 private fun LandscapeOrientationContent(
     feeds: List<FeedDetail>,
-    mutedFeed: FeedDetail?,
     navigateToFeed: NavigateToFeed,
+    showFeedBottomSheet: ShowFeedBottomSheet,
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
@@ -156,17 +192,16 @@ private fun LandscapeOrientationContent(
                 modifier = Modifier.fillMaxWidth(),
                 onClick = {
                     navigateToFeed(detail.feed.url)
+                },
+                onLongClick = {
+                    showFeedBottomSheet(detail.feed)
                 }
             )
         }
-        if (mutedFeed != null) {
-            item {
-                FeedItem(
-                    label = stringResource(R.string.muted_lives_feed),
-                    number = mutedFeed.count,
-                    onClick = { /*TODO*/ }
-                )
-            }
-        }
     }
+}
+
+private sealed class FeedSheetState {
+    object Idle : FeedSheetState()
+    data class Existed(val feed: Feed) : FeedSheetState()
 }

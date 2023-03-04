@@ -7,6 +7,5 @@ import com.m3u.features.main.model.FeedDetail
 data class MainState(
     val loading: Boolean = false,
     val feeds: List<FeedDetail> = emptyList(),
-    val mutedFeed: FeedDetail? = null,
     val message: Event<String> = handledEvent(),
 )

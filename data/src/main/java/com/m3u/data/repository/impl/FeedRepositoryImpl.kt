@@ -13,11 +13,11 @@ import com.m3u.data.local.dao.FeedDao
 import com.m3u.data.local.dao.LiveDao
 import com.m3u.data.local.entity.Feed
 import com.m3u.data.local.entity.Live
-import com.m3u.data.repository.FeedRepository
 import com.m3u.data.local.source.analyzer.Analyzer
 import com.m3u.data.local.source.analyzer.analyze
 import com.m3u.data.local.source.matcher.m3u.M3UMatcher
 import com.m3u.data.local.source.model.toLive
+import com.m3u.data.repository.FeedRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import javax.inject.Inject
@@ -83,6 +83,17 @@ class FeedRepositoryImpl @Inject constructor(
     override suspend fun get(url: String): Feed? = sandbox {
         feedDao.getByUrl(url)
     }
+
+    override suspend fun unsubscribe(url: String): Feed? = sandbox {
+        val feed = feedDao.getByUrl(url)
+        val lives = liveDao.getByFeedUrl(url)
+        configuration.mutedUrls -= lives.map { it.url }
+        liveDao.deleteByFeedUrl(url)
+        feed?.also {
+            feedDao.delete(it)
+        }
+    }
+
 
     private suspend fun analyze(url: String): List<Live> {
         val analyzer = when {

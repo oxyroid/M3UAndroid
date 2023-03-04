@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.lifecycle.viewModelScope
 import com.m3u.core.architecture.BaseViewModel
 import com.m3u.core.util.collection.replaceIf
+import com.m3u.core.wrapper.eventOf
 import com.m3u.data.local.entity.Feed
 import com.m3u.data.repository.FeedRepository
 import com.m3u.data.repository.LiveRepository
@@ -70,6 +71,21 @@ class MainViewModel @Inject constructor(
     }
 
     override fun onEvent(event: MainEvent) {
+        when (event) {
+            is MainEvent.UnsubscribeFeedByUrl -> unsubscribeFeedByUrl(event.url)
+        }
+    }
 
+    private fun unsubscribeFeedByUrl(url: String) {
+        viewModelScope.launch {
+            val feed = feedRepository.unsubscribe(url)
+            if (feed == null) {
+                writable.update {
+                    it.copy(
+                        message = eventOf(context.getString(R.string.error_unsubscribe_feed))
+                    )
+                }
+            }
+        }
     }
 }

@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="muted_lives_feed">屏蔽的频道</string>
+    <string name="unsubscribe_feed">取消订阅</string>
+    <string name="error_unsubscribe_feed">取消订阅失败</string>
 </resources>
