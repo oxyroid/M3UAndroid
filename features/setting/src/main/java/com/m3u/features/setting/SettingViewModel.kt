@@ -39,7 +39,8 @@ class SettingViewModel @Inject constructor(
                 experimentalMode = configuration.experimentalMode,
                 editMode = configuration.editMode,
                 connectTimeout = configuration.connectTimeout,
-                clipMode = configuration.clipMode
+                clipMode = configuration.clipMode,
+                scrollMode = configuration.scrollMode
             )
         }
         viewModelScope.launch {
@@ -124,6 +125,15 @@ class SettingViewModel @Inject constructor(
             }
             SettingEvent.OnExperimentalMode -> {
                 val newValue = !configuration.experimentalMode
+                if (!newValue) {
+                    // reset experimental ones to default value
+                    configuration.scrollMode = Configuration.DEFAULT_SCROLL_MODE
+                    writable.update {
+                        it.copy(
+                            scrollMode = Configuration.DEFAULT_SCROLL_MODE
+                        )
+                    }
+                }
                 configuration.experimentalMode = newValue
                 writable.update {
                     it.copy(
@@ -147,6 +157,15 @@ class SettingViewModel @Inject constructor(
                     lives.removeIf { it.url == event.url }
                     readable.copy(
                         mutedLives = lives
+                    )
+                }
+            }
+            SettingEvent.OnScrollMode -> {
+                val target = !configuration.scrollMode
+                configuration.scrollMode = target
+                writable.update {
+                    it.copy(
+                        scrollMode = target
                     )
                 }
             }

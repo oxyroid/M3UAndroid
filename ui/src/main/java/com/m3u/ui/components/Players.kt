@@ -2,7 +2,6 @@ package com.m3u.ui.components
 
 import android.content.Context
 import android.graphics.Rect
-import android.util.Log
 import android.view.ViewGroup
 import androidx.annotation.OptIn
 import androidx.compose.runtime.*
@@ -10,22 +9,21 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.lifecycle.Lifecycle
 import androidx.media3.common.*
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
+import com.m3u.core.annotation.ClipMode
 import com.m3u.ui.model.Background
 import com.m3u.ui.model.LocalBackground
-import com.m3u.ui.util.LifecycleEffect
 
 @Immutable
 @OptIn(UnstableApi::class)
 data class PlayerState(
     val url: String,
-    val resizeMode: Int,
+    @ClipMode val clipMode: Int,
     val keepScreenOn: Boolean,
     val context: Context,
     val playbackState: MutableState<@Player.State Int>,
@@ -49,7 +47,7 @@ data class PlayerState(
         }
         private set
 
-    fun setMedia() {
+    fun loadMedia() {
         player.setMediaItem(mediaItem)
     }
 }
@@ -57,15 +55,14 @@ data class PlayerState(
 @Composable
 fun rememberPlayerState(
     url: String,
-    @OptIn(UnstableApi::class)
-    resizeMode: Int = AspectRatioFrameLayout.RESIZE_MODE_FIT,
+    @ClipMode clipMode: Int = ClipMode.ADAPTIVE,
     keepScreenOn: Boolean = true,
     context: Context = LocalContext.current,
     state: MutableState<@Player.State Int> = remember(url) { mutableStateOf(Player.STATE_IDLE) },
     videoSize: MutableState<Rect> = remember(url) { mutableStateOf(Rect()) },
     exception: MutableState<PlaybackException?> = remember(url) { mutableStateOf(null) }
-): PlayerState = remember(url, resizeMode, keepScreenOn, context, state, videoSize, exception) {
-    PlayerState(url, resizeMode, keepScreenOn, context, state, videoSize, exception)
+): PlayerState = remember(url, clipMode, keepScreenOn, context, state, videoSize, exception) {
+    PlayerState(url, clipMode, keepScreenOn, context, state, videoSize, exception)
 }
 
 @OptIn(UnstableApi::class)
@@ -74,14 +71,17 @@ fun ExoPlayer(
     state: PlayerState,
     modifier: Modifier = Modifier
 ) {
-    val (_, resizeMode, keepScreenOn, _, playerState, videoSize, exception) = state
-    val player = remember(state.player) { state.player }
+    val player = state.player
+    val keepScreenOn = state.keepScreenOn
+    val playerState = state.playbackState
+    val videoSize = state.playerRect
+    val exception = state.exception
+    val clipMode = state.clipMode
 
     DisposableEffect(player, playerState, videoSize, exception) {
         val listener = object : Player.Listener {
             override fun onVideoSizeChanged(size: VideoSize) {
                 super.onVideoSizeChanged(size)
-                Log.d("Player", "onVideoSizeChanged: ${size.pixelWidthHeightRatio}")
                 videoSize.value = Rect(0, 0, size.width, size.height)
             }
 
@@ -94,27 +94,22 @@ fun ExoPlayer(
                 super.onPlayerError(error)
                 when (error.errorCode) {
                     PlaybackException.ERROR_CODE_BEHIND_LIVE_WINDOW -> {
-                        player.seekToDefaultPosition()
-                        player.prepare()
+                        state.player.seekToDefaultPosition()
+                        state.player.prepare()
                     }
                     else -> {}
                 }
                 exception.value = error
             }
         }
-        player.addListener(listener)
+        state.player.addListener(listener)
         onDispose {
-            player.removeListener(listener)
+            state.player.removeListener(listener)
         }
     }
 
     CompositionLocalProvider(LocalBackground provides Background(Color.Black)) {
         Background(modifier) {
-            var lifecycle: Lifecycle.Event by remember { mutableStateOf(Lifecycle.Event.ON_CREATE) }
-            LifecycleEffect {
-                lifecycle = it
-                Log.e("TAG", "ExoPlayer: ${state.url}, Event: $it")
-            }
             AndroidView(
                 factory = { context ->
                     PlayerView(context).apply {
@@ -124,29 +119,24 @@ fun ExoPlayer(
                             ViewGroup.LayoutParams.MATCH_PARENT
                         )
                     }
-                },
-                update = { view ->
-                    view.apply {
-                        setPlayer(player)
-                        setKeepScreenOn(keepScreenOn)
-                        setResizeMode(resizeMode)
-                    }
-//                    when (lifecycle) {
-//                        Lifecycle.Event.ON_RESUME -> {
-//                            state.setMedia()
-//                        }
-//                        Lifecycle.Event.ON_STOP -> {
-//                            state.clearMedia()
-//                        }
-//                        else -> {}
-//                    }
                 }
-            )
+            ) { view ->
+                view.apply {
+                    setPlayer(player)
+                    setKeepScreenOn(keepScreenOn)
+                    resizeMode = when (clipMode) {
+                        ClipMode.ADAPTIVE -> AspectRatioFrameLayout.RESIZE_MODE_FIT
+                        ClipMode.CLIP -> AspectRatioFrameLayout.RESIZE_MODE_ZOOM
+                        ClipMode.STRETCHED -> AspectRatioFrameLayout.RESIZE_MODE_FILL
+                        else -> AspectRatioFrameLayout.RESIZE_MODE_FIT
+                    }
+                }
+            }
             DisposableEffect(state.player) {
-                state.setMedia()
-                player.prepare()
+                state.loadMedia()
+                state.player.prepare()
                 onDispose {
-                    player.release()
+                    state.player.release()
                 }
             }
         }

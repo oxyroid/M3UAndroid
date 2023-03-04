@@ -25,9 +25,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.tv.material3.Text
-import com.m3u.core.annotation.ConnectTimeout
-import com.m3u.core.annotation.FeedStrategy
-import com.m3u.core.annotation.SetStrategy
+import com.m3u.core.annotation.*
 import com.m3u.core.util.context.toast
 import com.m3u.core.wrapper.Resource
 import com.m3u.data.local.entity.Live
@@ -85,6 +83,8 @@ internal fun SettingRoute(
         latestRelease = state.latestRelease,
         feedStrategy = state.feedStrategy,
         editMode = state.editMode,
+        clipMode = state.clipMode,
+        scrollMode = state.scrollMode,
         connectTimeout = state.connectTimeout,
         useCommonUIMode = useCommonUIMode,
         useCommonUIModeEnable = useCommonUIModeEnable,
@@ -97,10 +97,12 @@ internal fun SettingRoute(
         onTitle = { viewModel.onEvent(SettingEvent.OnTitle(it)) },
         onUrl = { viewModel.onEvent(SettingEvent.OnUrl(it)) },
         onSubscribe = { viewModel.onEvent(SettingEvent.OnSubscribe) },
-        onSyncMode = { viewModel.onEvent(SettingEvent.OnSyncMode(it)) },
+        onScrollMode = { viewModel.onEvent(SettingEvent.OnScrollMode) },
+        onFeedStrategy = { viewModel.onEvent(SettingEvent.OnSyncMode(it)) },
         onUIMode = { viewModel.onEvent(SettingEvent.OnUseCommonUIMode) },
         onExperimentalMode = { viewModel.onEvent(SettingEvent.OnExperimentalMode) },
         onVoiceLiveUrl = { viewModel.onEvent(SettingEvent.OnVoiceLiveUrl(it)) },
+        onClipMode = { viewModel.onEvent(SettingEvent.OnClipMode(it)) },
         modifier = modifier.fillMaxSize()
     )
 }
@@ -115,18 +117,22 @@ private fun SettingScreen(
     url: String,
     @FeedStrategy feedStrategy: Int,
     editMode: Boolean,
+    @ClipMode clipMode: Int,
     @ConnectTimeout connectTimeout: Int,
+    scrollMode: Boolean,
     onEditMode: () -> Unit,
     onConnectTimeout: () -> Unit,
     onTitle: (String) -> Unit,
     onUrl: (String) -> Unit,
     onSubscribe: () -> Unit,
-    onSyncMode: SetStrategy,
+    onScrollMode: () -> Unit,
+    onFeedStrategy: OnFeedStrategy,
     useCommonUIMode: Boolean,
     useCommonUIModeEnable: Boolean,
     mutedLives: List<Live>,
     onVoiceLiveUrl: (String) -> Unit,
     onUIMode: () -> Unit,
+    onClipMode: OnClipMode,
     navigateToConsole: NavigateToConsole,
     experimentalMode: Boolean,
     onExperimentalMode: () -> Unit,
@@ -146,14 +152,18 @@ private fun SettingScreen(
                     editMode = editMode,
                     connectTimeout = connectTimeout,
                     subscribeEnable = subscribeEnable,
+                    scrollMode = scrollMode,
                     onFold = { fold = it },
                     onTitle = onTitle,
                     onUrl = onUrl,
                     onSubscribe = onSubscribe,
                     feedStrategy = feedStrategy,
+                    clipMode = clipMode,
+                    onClipMode = onClipMode,
                     onConnectTimeout = onConnectTimeout,
-                    onSyncMode = onSyncMode,
+                    onFeedStrategy = onFeedStrategy,
                     onEditMode = onEditMode,
+                    onScrollMode = onScrollMode,
                     version = version,
                     latestRelease = latestRelease,
                     fetchLatestRelease = fetchLatestRelease,
@@ -178,6 +188,8 @@ private fun SettingScreen(
                     title = title,
                     url = url,
                     editMode = editMode,
+                    clipMode = clipMode,
+                    scrollMode = scrollMode,
                     subscribeEnable = subscribeEnable,
                     feedStrategy = feedStrategy,
                     connectTimeout = connectTimeout,
@@ -189,8 +201,10 @@ private fun SettingScreen(
                     onFold = { fold = it },
                     onTitle = onTitle,
                     onUrl = onUrl,
+                    onClipMode = onClipMode,
+                    onScrollMode = onScrollMode,
                     onSubscribe = onSubscribe,
-                    onSyncMode = onSyncMode,
+                    onFeedStrategy = onFeedStrategy,
                     onEditMode = onEditMode,
                     onConnectTimeout = onConnectTimeout,
                     onUIMode = onUIMode,
@@ -220,10 +234,12 @@ private fun PortraitOrientationContent(
     url: String,
     @FeedStrategy feedStrategy: Int,
     editMode: Boolean,
+    @ClipMode clipMode: Int,
     @ConnectTimeout connectTimeout: Int,
     useCommonUIMode: Boolean,
     useCommonUIModeEnable: Boolean,
     onEditMode: () -> Unit,
+    onClipMode: OnClipMode,
     onConnectTimeout: () -> Unit,
     subscribeEnable: Boolean,
     mutedLives: List<Live>,
@@ -232,12 +248,14 @@ private fun PortraitOrientationContent(
     onTitle: (String) -> Unit,
     onUrl: (String) -> Unit,
     onSubscribe: () -> Unit,
-    onSyncMode: SetStrategy,
+    onFeedStrategy: OnFeedStrategy,
     version: String,
     latestRelease: Resource<Release>,
     fetchLatestRelease: () -> Unit,
     navigateToConsole: NavigateToConsole,
     experimentalMode: Boolean,
+    onScrollMode: () -> Unit,
+    scrollMode: Boolean,
     onExperimentalMode: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -250,9 +268,11 @@ private fun PortraitOrientationContent(
             useCommonUIMode = useCommonUIMode,
             useCommonUIModeEnable = useCommonUIModeEnable,
             editMode = editMode,
+            clipMode = clipMode,
             connectTimeout = connectTimeout,
             onConnectTimeout = onConnectTimeout,
-            onSyncMode = onSyncMode,
+            onFeedStrategy = onFeedStrategy,
+            onClipMode = onClipMode,
             onUIMode = { },
             onEditMode = onEditMode,
             onFeedManagement = {
@@ -264,6 +284,8 @@ private fun PortraitOrientationContent(
             navigateToConsole = navigateToConsole,
             experimentalMode = experimentalMode,
             onExperimentalMode = onExperimentalMode,
+            scrollMode = scrollMode,
+            onScrollMode = onScrollMode,
             modifier = modifier
         )
 
@@ -303,6 +325,7 @@ private fun LandscapeOrientationContent(
     title: String,
     url: String,
     editMode: Boolean,
+    @ClipMode clipMode: Int,
     subscribeEnable: Boolean,
     onFold: (Fold) -> Unit,
     onTitle: (String) -> Unit,
@@ -310,12 +333,15 @@ private fun LandscapeOrientationContent(
     onSubscribe: () -> Unit,
     @FeedStrategy feedStrategy: Int,
     @ConnectTimeout connectTimeout: Int,
-    onSyncMode: SetStrategy,
+    onFeedStrategy: OnFeedStrategy,
     onConnectTimeout: () -> Unit,
     useCommonUIMode: Boolean,
     useCommonUIModeEnable: Boolean,
+    scrollMode: Boolean,
     onUIMode: () -> Unit,
     onEditMode: () -> Unit,
+    onClipMode: OnClipMode,
+    onScrollMode: () -> Unit,
     version: String,
     latestRelease: Resource<Release>,
     mutedLives: List<Live>,
@@ -337,11 +363,13 @@ private fun LandscapeOrientationContent(
             latestRelease = latestRelease,
             fetchLatestRelease = fetchLatestRelease,
             editMode = editMode,
+            clipMode = clipMode,
+            onClipMode = onClipMode,
             onFeedManagement = { onFold(Fold.FEED) },
             onScriptManagement = { onFold(Fold.SCRIPT) },
             feedStrategy = feedStrategy,
             connectTimeout = connectTimeout,
-            onSyncMode = onSyncMode,
+            onFeedStrategy = onFeedStrategy,
             onConnectTimeout = onConnectTimeout,
             useCommonUIMode = useCommonUIMode,
             useCommonUIModeEnable = useCommonUIModeEnable,
@@ -350,6 +378,8 @@ private fun LandscapeOrientationContent(
             navigateToConsole = navigateToConsole,
             experimentalMode = experimentalMode,
             onExperimentalMode = onExperimentalMode,
+            scrollMode = scrollMode,
+            onScrollMode = onScrollMode,
             modifier = Modifier
                 .fillMaxHeight()
                 .weight(1f)
@@ -387,24 +417,28 @@ private fun LandscapeOrientationContent(
 
 @Composable
 private fun PreferencesPart(
+    @FeedStrategy feedStrategy: Int,
+    @ConnectTimeout connectTimeout: Int,
+    @ClipMode clipMode: Int,
+    useCommonUIMode: Boolean,
+    useCommonUIModeEnable: Boolean,
+    experimentalMode: Boolean,
+    editMode: Boolean,
+    scrollMode: Boolean,
     version: String,
     latestRelease: Resource<Release>,
+    onFeedStrategy: OnFeedStrategy,
+    onClipMode: OnClipMode,
+    onUIMode: () -> Unit,
+    onEditMode: () -> Unit,
+    onScrollMode: () -> Unit,
     fetchLatestRelease: () -> Unit,
     onFeedManagement: () -> Unit,
     onScriptManagement: () -> Unit,
-    @FeedStrategy feedStrategy: Int,
-    @ConnectTimeout connectTimeout: Int,
-    editMode: Boolean,
-    onSyncMode: SetStrategy,
-    useCommonUIMode: Boolean,
-    onUIMode: () -> Unit,
-    onEditMode: () -> Unit,
     onConnectTimeout: () -> Unit,
-    modifier: Modifier = Modifier,
-    useCommonUIModeEnable: Boolean,
-    experimentalMode: Boolean,
     onExperimentalMode: () -> Unit,
     navigateToConsole: NavigateToConsole,
+    modifier: Modifier = Modifier,
 ) {
     val spacing = LocalSpacing.current
     LazyColumn(
@@ -423,21 +457,6 @@ private fun PreferencesPart(
                     enabled = true,
                     onClick = onFeedManagement
                 )
-                AnimatedVisibility(
-                    visible = experimentalMode,
-                    enter = expandVertically(
-                        expandFrom = Alignment.CenterVertically
-                    ) + fadeIn(),
-                    exit = shrinkVertically(
-                        shrinkTowards = Alignment.CenterVertically
-                    ) + fadeOut()
-                ) {
-                    FoldPreference(
-                        title = stringResource(R.string.script_management),
-                        enabled = true,
-                        onClick = onScriptManagement
-                    )
-                }
 
                 TextPreference(
                     title = stringResource(R.string.sync_mode),
@@ -447,28 +466,33 @@ private fun PreferencesPart(
                         else -> ""
                     },
                     onClick = {
-                        // TODO
                         val target = when (feedStrategy) {
                             FeedStrategy.ALL -> FeedStrategy.SKIP_FAVORITE
                             else -> FeedStrategy.ALL
                         }
-                        onSyncMode(target)
+                        onFeedStrategy(target)
                     }
                 )
-                AnimatedVisibility(
-                    visible = experimentalMode,
-                    enter = expandVertically(
-                        expandFrom = Alignment.CenterVertically
-                    ) + fadeIn(),
-                    exit = shrinkVertically(
-                        shrinkTowards = Alignment.CenterVertically
-                    ) + fadeOut()
-                ) {
-                    FoldPreference(
-                        title = stringResource(R.string.console_editor),
-                        onClick = navigateToConsole
-                    )
-                }
+                TextPreference(
+                    title = stringResource(R.string.clip_mode),
+                    content = when (clipMode) {
+                        ClipMode.ADAPTIVE -> stringResource(R.string.clip_mode_adaptive)
+                        ClipMode.CLIP -> stringResource(R.string.clip_mode_clip)
+                        ClipMode.STRETCHED -> stringResource(R.string.clip_mode_stretched)
+                        else -> ""
+                    },
+                    onClick = {
+                        val target = when (clipMode) {
+                            ClipMode.ADAPTIVE -> ClipMode.CLIP
+                            ClipMode.CLIP -> ClipMode.STRETCHED
+                            ClipMode.STRETCHED -> ClipMode.ADAPTIVE
+                            else -> ClipMode.ADAPTIVE
+                        }
+                        onClipMode(target)
+                    }
+                )
+
+
                 TextPreference(
                     title = stringResource(R.string.connect_timeout),
                     content = "${connectTimeout / 1000}s",
@@ -496,6 +520,16 @@ private fun PreferencesPart(
                         }
                     }
                 )
+
+            }
+        }
+        item {
+            Column(
+                modifier = Modifier
+                    .padding(spacing.medium)
+                    .clip(RoundedCornerShape(spacing.medium)),
+                verticalArrangement = Arrangement.spacedBy(1.dp)
+            ) {
                 CheckBoxPreference(
                     title = stringResource(R.string.experimental_mode),
                     subtitle = stringResource(R.string.experimental_mode_description),
@@ -506,8 +540,41 @@ private fun PreferencesPart(
                         }
                     }
                 )
+                AnimatedVisibility(
+                    visible = experimentalMode,
+                    enter = expandVertically(
+                        expandFrom = Alignment.Bottom
+                    ),
+                    exit = shrinkVertically(
+                        shrinkTowards = Alignment.Bottom
+                    )
+                ) {
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(1.dp)
+                    ) {
+                        FoldPreference(
+                            title = stringResource(R.string.script_management),
+                            enabled = true,
+                            onClick = onScriptManagement
+                        )
+                        FoldPreference(
+                            title = stringResource(R.string.console_editor),
+                            onClick = navigateToConsole
+                        )
+                        CheckBoxPreference(
+                            title = stringResource(R.string.scroll_mode),
+                            checked = scrollMode,
+                            onCheckedChange = { newValue ->
+                                if (newValue != scrollMode) {
+                                    onScrollMode()
+                                }
+                            }
+                        )
+                    }
+                }
             }
         }
+
         item {
             val uriHandler = LocalUriHandler.current
             TextButton(
@@ -518,43 +585,37 @@ private fun PreferencesPart(
             }
         }
         item {
-            AnimatedVisibility(
-                visible = experimentalMode,
-                enter = fadeIn(),
-                exit = fadeOut()
-            ) {
-                when (latestRelease) {
-                    Resource.Loading -> {
-                        TextButton(stringResource(R.string.fetching_latest)) {}
+            when (latestRelease) {
+                Resource.Loading -> {
+                    TextButton(stringResource(R.string.fetching_latest)) {}
+                }
+                is Resource.Success -> {
+                    val uriHandler = LocalUriHandler.current
+                    val remoteVersion = latestRelease.data.name
+                    val name = if (remoteVersion != version) {
+                        stringResource(R.string.label_latest_release_version, remoteVersion)
+                    } else {
+                        stringResource(R.string.label_same_version)
                     }
-                    is Resource.Success -> {
-                        val uriHandler = LocalUriHandler.current
-                        val remoteVersion = latestRelease.data.name
-                        val name = if (remoteVersion != version) {
-                            stringResource(R.string.label_latest_release_version, remoteVersion)
-                        } else {
-                            stringResource(R.string.label_same_version)
-                        }
 
-                        TextButton(name) {
-                            if (remoteVersion == version) {
-                                fetchLatestRelease()
-                            } else {
-                                val url =
-                                    "https://github.com/thxbrop/M3UAndroid/releases/tag/v$remoteVersion"
-                                uriHandler.openUri(url)
-                            }
+                    TextButton(name) {
+                        if (remoteVersion == version) {
+                            fetchLatestRelease()
+                        } else {
+                            val url =
+                                "https://github.com/thxbrop/M3UAndroid/releases/tag/v$remoteVersion"
+                            uriHandler.openUri(url)
                         }
                     }
-                    is Resource.Failure -> {
-                        TextButton(
-                            text = stringResource(
-                                R.string.failed_latest_release_version,
-                                latestRelease.message.orEmpty()
-                            )
-                        ) {
-                            fetchLatestRelease()
-                        }
+                }
+                is Resource.Failure -> {
+                    TextButton(
+                        text = stringResource(
+                            R.string.failed_latest_release_version,
+                            latestRelease.message.orEmpty()
+                        )
+                    ) {
+                        fetchLatestRelease()
                     }
                 }
             }

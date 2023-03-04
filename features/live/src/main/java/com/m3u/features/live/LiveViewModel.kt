@@ -26,7 +26,8 @@ class LiveViewModel @Inject constructor(
     init {
         writable.update {
             it.copy(
-                experimentalMode = configuration.experimentalMode
+                experimentalMode = configuration.experimentalMode,
+                clipMode = configuration.clipMode
             )
         }
     }

@@ -28,6 +28,7 @@ import com.google.accompanist.pager.VerticalPager
 import com.google.accompanist.pager.calculateCurrentOffsetForPage
 import com.google.accompanist.pager.rememberPagerState
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
+import com.m3u.core.annotation.ClipMode
 import com.m3u.core.util.context.toast
 import com.m3u.ui.components.*
 import com.m3u.ui.model.LocalTheme
@@ -72,6 +73,7 @@ internal fun LiveRoute(
     LiveScreen(
         init = state.init,
         experimentalMode = state.experimentalMode,
+        clipMode = state.clipMode,
         recording = state.recording,
         searchDlnaDevices = { viewModel.onEvent(LiveEvent.SearchDlnaDevices) },
         onRecord = { viewModel.onEvent(LiveEvent.Record) },
@@ -84,6 +86,7 @@ internal fun LiveRoute(
 private fun LiveScreen(
     init: LiveState.Init,
     experimentalMode: Boolean,
+    @ClipMode clipMode: Int,
     recording: Boolean,
     searchDlnaDevices: () -> Unit,
     onRecord: () -> Unit,
@@ -95,6 +98,7 @@ private fun LiveScreen(
             LivePart(
                 url = init.live?.url.orEmpty(),
                 experimentalMode = experimentalMode,
+                clipMode = clipMode,
                 recording = recording,
                 onRecord = onRecord,
                 searchDlnaDevices = searchDlnaDevices,
@@ -117,6 +121,7 @@ private fun LiveScreen(
                 LivePart(
                     url = init.lives[page].url,
                     experimentalMode = experimentalMode,
+                    clipMode = clipMode,
                     recording = recording,
                     onRecord = onRecord,
                     searchDlnaDevices = searchDlnaDevices,
@@ -140,6 +145,7 @@ private fun LiveScreen(
 private fun LivePart(
     url: String,
     experimentalMode: Boolean,
+    @ClipMode clipMode: Int,
     recording: Boolean,
     onRecord: () -> Unit,
     searchDlnaDevices: () -> Unit,
@@ -152,7 +158,8 @@ private fun LivePart(
         val videoSize = remember { mutableStateOf(Rect()) }
         val playerState = rememberPlayerState(
             url = url,
-            videoSize = videoSize
+            videoSize = videoSize,
+            clipMode = clipMode
         )
         ExoPlayer(
             state = playerState,
@@ -206,7 +213,7 @@ private fun LivePart(
                     state = maskState,
                     icon = Icons.Rounded.Refresh,
                     onClick = {
-                        playerState.setMedia()
+                        playerState.loadMedia()
                     }
                 )
             },

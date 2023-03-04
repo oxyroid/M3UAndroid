@@ -13,5 +13,7 @@ sealed interface SettingEvent {
     object OnEditMode : SettingEvent
     object OnExperimentalMode : SettingEvent
     object OnConnectTimeout : SettingEvent
-    object FetchLatestRelease : SettingEvent
+    object OnScrollMode : SettingEvent
+    data class OnClipMode(@ClipMode val mode: Int) : SettingEvent
+    data class OnVoiceLiveUrl(val url: String) : SettingEvent
 }

@@ -23,5 +23,6 @@ data class SettingState(
     val useCommonUIMode: Boolean = Configuration.DEFAULT_USE_COMMON_UI_MODE,
     @ConnectTimeout val connectTimeout: Int = Configuration.DEFAULT_CONNECT_TIMEOUT,
     val experimentalMode: Boolean = Configuration.DEFAULT_EXPERIMENTAL_MODE,
-    @ClipMode val clipMode: Int = Configuration.DEFAULT_CLIP_MODE
+    @ClipMode val clipMode: Int = Configuration.DEFAULT_CLIP_MODE,
+    val scrollMode: Boolean = Configuration.DEFAULT_SCROLL_MODE
 )

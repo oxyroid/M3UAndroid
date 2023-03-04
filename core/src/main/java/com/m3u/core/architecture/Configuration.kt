@@ -1,5 +1,6 @@
 package com.m3u.core.architecture
 
+import com.m3u.core.annotation.ClipMode
 import com.m3u.core.annotation.ConnectTimeout
 import com.m3u.core.annotation.FeedStrategy
 
@@ -15,6 +16,10 @@ interface Configuration {
     var editMode: Boolean
     var experimentalMode: Boolean
 
+    @ClipMode
+    var clipMode: Int
+    var scrollMode: Boolean
+
     companion object {
         @FeedStrategy
         const val DEFAULT_FEED_STRATEGY = FeedStrategy.SKIP_FAVORITE
@@ -25,5 +30,8 @@ interface Configuration {
         const val DEFAULT_CONNECT_TIMEOUT = ConnectTimeout.SHORT
         const val DEFAULT_EDIT_MODE = false
         const val DEFAULT_EXPERIMENTAL_MODE = false
+        @ClipMode
+        const val DEFAULT_CLIP_MODE = ClipMode.ADAPTIVE
+        const val DEFAULT_SCROLL_MODE = false
     }
 }

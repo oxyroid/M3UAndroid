@@ -15,6 +15,6 @@ data class FeedState(
     val scrollUp: Event<Unit> = handledEvent(),
     val message: Event<String> = handledEvent(),
     val useCommonUIMode: Boolean = Configuration.DEFAULT_USE_COMMON_UI_MODE,
-    val experimentalMode: Boolean = Configuration.DEFAULT_EXPERIMENTAL_MODE,
+    val scrollMode: Boolean = Configuration.DEFAULT_SCROLL_MODE,
     val editMode: Boolean = Configuration.DEFAULT_EDIT_MODE
 )
