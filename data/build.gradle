@@ -1,8 +1,9 @@
 plugins {
     id "com.android.library"
     id "org.jetbrains.kotlin.android"
-    id "kotlin-kapt"
     id "kotlinx-serialization"
+    id "com.google.devtools.ksp"
+    id "kotlin-kapt"
 }
 
 android {
@@ -38,7 +39,7 @@ dependencies {
 
     implementation libs.androidx.room.room.runtime
     implementation libs.androidx.room.room.ktx
-    kapt libs.androidx.room.room.compiler
+    ksp libs.androidx.room.room.compiler
 
     implementation libs.com.google.dagger.hilt.android
     kapt libs.com.google.dagger.hilt.compiler
