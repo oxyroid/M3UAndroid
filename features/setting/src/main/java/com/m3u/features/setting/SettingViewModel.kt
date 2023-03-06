@@ -12,6 +12,7 @@ import com.m3u.data.repository.FeedRepository
 import com.m3u.data.repository.LiveRepository
 import com.m3u.data.repository.RemoteRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
@@ -43,19 +44,10 @@ class SettingViewModel @Inject constructor(
                 scrollMode = configuration.scrollMode
             )
         }
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.Default) {
             val newerMutedUrls = configuration.mutedUrls.toMutableList()
-            val lives = newerMutedUrls
-                .mapNotNull { url ->
-                    val live = liveRepository.getByUrl(url)
-                    if (live == null) {
-                        newerMutedUrls.remove(url)
-                    }
-                    live
-                }
-
-            configuration.mutedUrls = newerMutedUrls
-
+            val lives = newerMutedUrls.mapNotNull { url -> liveRepository.getByUrl(url) }
+            configuration.mutedUrls = lives.map { it.url }
             writable.update {
                 it.copy(
                     mutedLives = lives

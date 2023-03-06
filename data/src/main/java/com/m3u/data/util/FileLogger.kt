@@ -8,6 +8,9 @@ import android.os.Build
 import com.m3u.core.architecture.Logger
 import com.m3u.core.util.collection.forEachNotNull
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.filterNotNull
 import java.io.File
 import java.io.PrintWriter
 import java.io.StringWriter
@@ -94,11 +97,18 @@ class FileLogger @Inject constructor(
             appendLine(trace)
         }
         writeToFile(text)
+        mObservers.value = trace
     }
 
     override fun readAll(): List<File> {
         val dir = File(dir.path)
         if (!dir.exists() || dir.isFile) return emptyList()
-        return dir.list()?.map { File(it) } ?: emptyList()
+        return dir.list()
+            ?.filter { it.endsWith(".txt") }
+            ?.map { File(it) }
+            ?: emptyList()
     }
+
+    private var mObservers = MutableStateFlow<String?>(null)
+    override fun observe(): Flow<String> = mObservers.filterNotNull()
 }

@@ -32,9 +32,9 @@ internal abstract class CommandHandler(
             send(resource)
             val scope = CommandProducerScope(this, commands)
             block(scope)
+            send(CommandResource.Idle)
         } else {
-            val resource =
-                CommandResource.Output("Unknown path \"$path\", please try again!")
+            val resource = CommandResource.Output("Unknown path \"$path\", please try again!")
             send(resource)
             send(CommandResource.Idle)
         }

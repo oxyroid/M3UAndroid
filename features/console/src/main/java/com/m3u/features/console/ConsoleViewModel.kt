@@ -30,7 +30,7 @@ class ConsoleViewModel @Inject constructor(
         viewModelScope.launch {
             delay(2000)
             val message = """
-                > Console Editor
+                >-Console Editor
                 version: ${provider.getVersionName()}
                 debug: ${provider.isDebug()},
                 applicationId: ${provider.getApplicationID()}
@@ -49,7 +49,7 @@ class ConsoleViewModel @Inject constructor(
     private fun execute() {
         val input = readable.input
         input("")
-        append("> $input")
+        append(">-$input")
         val lowercaseInput = input.lowercase().trim()
         if (lowercaseInput == "clear") {
             clear()
@@ -103,7 +103,7 @@ class ConsoleViewModel @Inject constructor(
                     input = input
                 )
             }
-            else -> EmptyCommandHandler
+            else -> EmptyCommandHandler(input)
         }
 
     private fun requestFocus() {

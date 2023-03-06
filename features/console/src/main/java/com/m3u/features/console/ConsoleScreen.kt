@@ -10,10 +10,7 @@ import androidx.compose.foundation.text.selection.TextSelectionColors
 import androidx.compose.material.LocalContentColor
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -23,10 +20,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.ui.components.Background
 import com.m3u.ui.components.TextField
-import com.m3u.ui.model.Background
-import com.m3u.ui.model.LocalBackground
-import com.m3u.ui.model.LocalSpacing
-import com.m3u.ui.model.LocalUtils
+import com.m3u.ui.model.*
 import com.m3u.ui.util.LifecycleEffect
 
 @Composable
@@ -93,12 +87,19 @@ private fun ConsoleScreen(
                         ) {
                             SelectionContainer {
                                 Text(
-                                    text = command,
+                                    text = when {
+                                        command.startsWith(">-") || command.startsWith("!-") ||
+                                                command.startsWith("#-") -> command.drop(2)
+                                        else -> command
+                                    },
                                     style = MaterialTheme.typography.h6,
-                                    color = if (command.startsWith("> ")) Color.Yellow
-                                    else Color.Unspecified,
-                                    modifier = Modifier
-                                        .padding(horizontal = LocalSpacing.current.medium),
+                                    color = when {
+                                        command.startsWith(">-") -> Color.Yellow
+                                        command.startsWith("!-") -> LocalTheme.current.error
+                                        command.startsWith("#-") -> LocalTheme.current.primary
+                                        else -> Color.Unspecified
+                                    },
+                                    modifier = Modifier.padding(horizontal = LocalSpacing.current.medium),
                                 )
                             }
                         }

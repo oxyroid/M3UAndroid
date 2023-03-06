@@ -13,16 +13,16 @@ import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
 class RemoteRepositoryImpl @Inject constructor(
-    private val githubApi: GithubApi,
+    private val api: GithubApi,
     logger: Logger
 ) : RemoteRepository, AbstractLogger(logger) {
     override fun fetchLatestRelease(): Flow<Resource<Release>> = resourceFlow {
         try {
             val releases =
-                githubApi.getReleases(RemoteRepository.REPOS_AUTHOR, RemoteRepository.REPOS_NAME)
+                api.getReleases(RemoteRepository.REPOS_AUTHOR, RemoteRepository.REPOS_NAME)
             val release = releases.firstOrNull()
             if (release == null) {
-                emitMessage("Cannot fetch latest release in Github.")
+                emitMessage("Cannot fetch latest release.")
             } else {
                 emitResource(release)
             }

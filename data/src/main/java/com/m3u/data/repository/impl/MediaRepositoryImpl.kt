@@ -65,10 +65,14 @@ class MediaRepositoryImpl @Inject constructor(
         }
     }
 
-    override fun readAllLogFiles(): List<File> = logger.readAll()
+    override fun readAllLogFiles(): List<File> = sandbox {
+        logger.readAll()
+    } ?: emptyList()
 
     override fun clearAllLogFiles() {
-        val files = logger.readAll()
-        files.forEach(File::delete)
+        sandbox {
+            val files = logger.readAll()
+            files.forEach(File::delete)
+        }
     }
 }
