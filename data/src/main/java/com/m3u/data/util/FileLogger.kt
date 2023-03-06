@@ -30,7 +30,7 @@ class FileLogger @Inject constructor(
             }
         }
 
-    private val dir: File? = context.externalCacheDir
+    private val dir: File = context.cacheDir
 
     private val PackageInfo.code: String
         get() = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
@@ -72,13 +72,11 @@ class FileLogger @Inject constructor(
     }
 
     private fun writeToFile(text: String) {
-        dir?.let {
-            val file = File(it.path, "${System.currentTimeMillis()}.txt")
-            if (!file.exists()) {
-                file.createNewFile()
-            }
-            file.writeText(text)
+        val file = File(dir.path, "${System.currentTimeMillis()}.txt")
+        if (!file.exists()) {
+            file.createNewFile()
         }
+        file.writeText(text)
     }
 
     override fun log(throwable: Throwable) {
@@ -98,16 +96,9 @@ class FileLogger @Inject constructor(
         writeToFile(text)
     }
 
-    override fun readAll(): List<String> = dir?.let {
-        val dir = File(it.path)
-        if (!dir.exists() || dir.isFile) return@let emptyList()
-        (dir.list() ?: emptyArray()).map { filePath ->
-            val file = try {
-                File(filePath)
-            } catch (ignored: NullPointerException) {
-                null
-            }
-            file?.readText().orEmpty()
-        }
-    } ?: emptyList()
+    override fun readAll(): List<File> {
+        val dir = File(dir.path)
+        if (!dir.exists() || dir.isFile) return emptyList()
+        return dir.list()?.map { File(it) } ?: emptyList()
+    }
 }

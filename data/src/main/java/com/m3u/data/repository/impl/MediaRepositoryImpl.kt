@@ -32,7 +32,7 @@ class MediaRepositoryImpl @Inject constructor(
 
     override fun savePicture(url: String): Flow<Resource<File>> = resourceFlow {
         try {
-            val drawable = load(url)
+            val drawable = loadDrawable(url)
             val bitmap = drawable.toBitmap()
             val name = "Picture_${System.currentTimeMillis()}.png"
             val file = File(directory, name)
@@ -54,7 +54,7 @@ class MediaRepositoryImpl @Inject constructor(
         }
     }
 
-    private suspend fun load(url: String): Drawable {
+    private suspend fun loadDrawable(url: String): Drawable {
         val loader = Coil.imageLoader(context)
         val request: ImageRequest = ImageRequest.Builder(context)
             .data(url)
@@ -63,5 +63,12 @@ class MediaRepositoryImpl @Inject constructor(
             is SuccessResult -> result.drawable
             is ErrorResult -> throw result.throwable
         }
+    }
+
+    override fun readAllLogFiles(): List<File> = logger.readAll()
+
+    override fun clearAllLogFiles() {
+        val files = logger.readAll()
+        files.forEach(File::delete)
     }
 }

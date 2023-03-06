@@ -1,10 +1,11 @@
 package com.m3u.core.architecture
 
 import android.util.Log
+import java.io.File
 
 interface Logger {
     fun log(throwable: Throwable)
-    fun readAll(): List<String>
+    fun readAll(): List<File>
 }
 
 abstract class AbstractLogger(val logger: Logger) {

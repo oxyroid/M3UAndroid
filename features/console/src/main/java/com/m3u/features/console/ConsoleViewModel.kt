@@ -4,10 +4,11 @@ import android.app.Application
 import androidx.lifecycle.viewModelScope
 import com.m3u.core.architecture.BaseViewModel
 import com.m3u.core.architecture.PackageProvider
+import com.m3u.data.repository.MediaRepository
 import com.m3u.features.console.command.CommandHandler
 import com.m3u.features.console.command.CommandResource
-import com.m3u.features.console.command.EmptyCommandHandler
-import com.m3u.features.console.command.LoggerCommandHandler
+import com.m3u.features.console.command.impl.EmptyCommandHandler
+import com.m3u.features.console.command.impl.LoggerCommandHandler
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.launchIn
@@ -19,7 +20,8 @@ import javax.inject.Inject
 @HiltViewModel
 class ConsoleViewModel @Inject constructor(
     application: Application,
-    provider: PackageProvider
+    provider: PackageProvider,
+    private val mediaRepository: MediaRepository
 ) : BaseViewModel<ConsoleState, ConsoleEvent>(
     application = application,
     emptyState = ConsoleState()
@@ -92,12 +94,17 @@ class ConsoleViewModel @Inject constructor(
         writable.update { ConsoleState() }
     }
 
-    private fun findCommandHandler(input: String): CommandHandler {
-        return when (CommandHandler.parseKey(input)) {
-            "logger" -> LoggerCommandHandler(input)
+    private fun findCommandHandler(input: String): CommandHandler =
+        when (CommandHandler.parseKey(input)) {
+            "logger" -> {
+                LoggerCommandHandler(
+                    logs = mediaRepository.readAllLogFiles(),
+                    onClear = mediaRepository::clearAllLogFiles,
+                    input = input
+                )
+            }
             else -> EmptyCommandHandler
         }
-    }
 
     private fun requestFocus() {
         writable.update {

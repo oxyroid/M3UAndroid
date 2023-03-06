@@ -6,4 +6,6 @@ import java.io.File
 
 interface MediaRepository {
     fun savePicture(url: String): Flow<Resource<File>>
+    fun readAllLogFiles(): List<File>
+    fun clearAllLogFiles()
 }

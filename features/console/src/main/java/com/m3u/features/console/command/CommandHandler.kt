@@ -1,22 +1,21 @@
 package com.m3u.features.console.command
 
 import androidx.annotation.CallSuper
-import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 
-abstract class CommandHandler(
+internal abstract class CommandHandler(
     private val input: String,
     private val key: String,
 ) {
-    private val paths: MutableMap<String, suspend ProducerScope<CommandResource<String>>.(String?) -> Unit> =
-        mutableMapOf()
+    protected abstract val introduce: String
+    private val scopes: MutableMap<String, suspend CommandScope.() -> Unit> = mutableMapOf()
 
-    protected fun configPath(
+    protected fun path(
         path: String,
-        block: suspend ProducerScope<CommandResource<String>>.(String?) -> Unit
+        block: suspend CommandScope.() -> Unit = {},
     ) {
-        paths[path] = block
+        scopes[path] = block
     }
 
     @CallSuper
@@ -27,11 +26,12 @@ abstract class CommandHandler(
             send(CommandResource.Idle)
             return@channelFlow
         }
-        val block = paths[path]
+        val block = scopes[path]
         if (block != null) {
             val resource = CommandResource.Output("Executing $key command...")
             send(resource)
-            block(this, commands.param)
+            val scope = CommandProducerScope(this, commands)
+            block(scope)
         } else {
             val resource =
                 CommandResource.Output("Unknown path \"$path\", please try again!")
@@ -40,12 +40,6 @@ abstract class CommandHandler(
         }
     }
 
-    abstract val introduce: String
-
-    private val List<String>.key: String get() = first()
-    private val List<String>.path: String? get() = getOrNull(1)
-    private val List<String>.param: String? get() = getOrNull(2)
-
     companion object {
         fun parseKey(input: String): String? {
             return input.lowercase().split(" ").firstOrNull()
@@ -53,7 +47,4 @@ abstract class CommandHandler(
     }
 }
 
-sealed class CommandResource<out T> {
-    object Idle : CommandResource<Nothing>()
-    data class Output(val line: String) : CommandResource<String>()
-}
+private val List<String>.path: String? get() = getOrNull(1)
