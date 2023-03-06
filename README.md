@@ -9,6 +9,7 @@
 - [ ] DLNA Protocol.
 - [ ] Script.
 - [ ] More interface languages support.
+- [ ] iOS and Desktop support in the future.
 
 ### Android Development
 
