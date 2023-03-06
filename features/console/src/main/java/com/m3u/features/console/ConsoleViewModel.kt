@@ -98,8 +98,8 @@ class ConsoleViewModel @Inject constructor(
         when (CommandHandler.parseKey(input)) {
             "logger" -> {
                 LoggerCommandHandler(
-                    logs = mediaRepository.readAllLogFiles(),
-                    onClear = mediaRepository::clearAllLogFiles,
+                    readAllLogFiles = mediaRepository::readAllLogFiles,
+                    clearAllLogFiles = mediaRepository::clearAllLogFiles,
                     input = input
                 )
             }

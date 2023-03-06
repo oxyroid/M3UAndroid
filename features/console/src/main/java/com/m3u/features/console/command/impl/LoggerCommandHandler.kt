@@ -4,23 +4,23 @@ import com.m3u.features.console.command.CommandHandler
 import java.io.File
 
 internal class LoggerCommandHandler(
-    logs: List<File>,
-    onClear: () -> Unit,
+    readAllLogFiles: () -> List<File>,
+    clearAllLogFiles: () -> Unit,
     input: String
 ) : CommandHandler(input, "logger") {
 
     init {
         path("list") {
             val text = if (param.isNullOrEmpty()) {
-                logs.joinToString(
+                readAllLogFiles().joinToString(
                     separator = "\n",
                     postfix = "\n",
                     transform = { it.path }
                 )
             } else {
                 val file = when (param) {
-                    "-i" -> logs.lastOrNull()
-                    else -> logs.find { it.path == arg }
+                    "-i" -> readAllLogFiles().lastOrNull()
+                    else -> readAllLogFiles().find { it.path == arg }
                 }
                 file?.readText() ?: ""
             }
@@ -28,7 +28,7 @@ internal class LoggerCommandHandler(
         }
 
         path("clear") {
-            onClear()
+            clearAllLogFiles()
         }
     }
 
