@@ -1,7 +1,6 @@
 package com.m3u.features.feed
 
 import android.app.Application
-import android.content.Context
 import androidx.lifecycle.viewModelScope
 import com.m3u.core.architecture.BaseViewModel
 import com.m3u.core.architecture.Configuration
@@ -36,7 +35,6 @@ class FeedViewModel @Inject constructor(
                 editMode = configuration.editMode
             )
         }
-        context.getSystemService(Context.KEYGUARD_SERVICE)
     }
 
     override fun onEvent(event: FeedEvent) {
@@ -56,15 +54,12 @@ class FeedViewModel @Inject constructor(
     private fun observeFeed(feedUrl: String) {
         observeJob?.cancel()
         observeJob = viewModelScope.launch {
-            observeFeedDetail(this, feedUrl)
-            observeFeedLives(this, feedUrl)
+            observeFeedDetail(feedUrl)
+            observeFeedLives(feedUrl)
         }
     }
 
-    private fun observeFeedDetail(
-        coroutineScope: CoroutineScope,
-        feedUrl: String
-    ) {
+    private fun CoroutineScope.observeFeedDetail(feedUrl: String) {
         when (feedUrl) {
             SpecialNavigationParam.FEED_MUTED_LIVES_URL -> {
                 writable.update {
@@ -89,44 +84,41 @@ class FeedViewModel @Inject constructor(
                             }
                         }
                     }
-                    .launchIn(coroutineScope)
+                    .launchIn(this)
             }
         }
     }
 
-    private fun observeFeedLives(
-        coroutineScope: CoroutineScope,
-        feedUrl: String
-    ) {
+    private fun CoroutineScope.observeFeedLives(feedUrl: String) {
         when (feedUrl) {
             SpecialNavigationParam.FEED_MUTED_LIVES_URL -> {
-                coroutineScope.launch {
-                    queryStateFlow.onEach { query ->
-                        val lives = configuration.mutedUrls
-                            .mapNotNull { url -> liveRepository.getByUrl(url) }
-                            .filter { it.title.contains(query, true) }
-                            .groupBy { it.group }
-                        writable.update {
-                            it.copy(lives = lives)
-                        }
-                    }.launchIn(coroutineScope)
+                queryStateFlow.onEach { query ->
+                    val lives = configuration.mutedUrls
+                        .mapNotNull { url -> liveRepository.getByUrl(url) }
+                        .filter { it.title.contains(query, true) }
+                        .groupBy { it.group }
+                    writable.update {
+                        it.copy(lives = lives)
+                    }
                 }
+                    .launchIn(this)
             }
             else -> {
                 val region = liveRepository.observeByFeedUrl(feedUrl)
                 val mutedUrls = configuration.mutedUrls
-                region.combine(queryStateFlow) { origin, query ->
-                    val remainedLives = origin.filter {
-                        it.url !in mutedUrls && it.title.contains(query, true)
+                region
+                    .combine(queryStateFlow) { origin, query ->
+                        val remainedLives = origin.filter {
+                            it.url !in mutedUrls && it.title.contains(query, true)
+                        }
+                        remainedLives.groupBy { it.group }
                     }
-                    remainedLives.groupBy { it.group }
-                }
                     .onEach { lives ->
                         writable.update {
                             it.copy(lives = lives)
                         }
                     }
-                    .launchIn(coroutineScope)
+                    .launchIn(this)
             }
         }
     }
