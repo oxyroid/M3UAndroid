@@ -68,13 +68,15 @@ fun App(
                 AppTopBar(
                     text = text,
                     visible = isSystemBarVisible,
-                    actions = {
+                    actions = { enable ->
                         val actions by appState.actions.collectAsStateWithLifecycle()
                         actions.forEach { action ->
                             IconButton(
                                 icon = action.icon,
                                 contentDescription = action.contentDescription,
-                                onClick = action.onClick
+                                onClick = {
+                                    if (enable) action.onClick
+                                }
                             )
                         }
                     },
