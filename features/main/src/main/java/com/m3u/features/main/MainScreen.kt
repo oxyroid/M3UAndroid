@@ -154,7 +154,10 @@ fun PortraitOrientationContent(
         contentPadding = PaddingValues(spacing.medium),
         verticalArrangement = Arrangement.spacedBy(spacing.small)
     ) {
-        items(feeds) { detail ->
+        items(
+            items = feeds,
+            key = { it.feed.url }
+        ) { detail ->
             FeedItem(
                 label = detail.feed.title,
                 number = detail.count,
@@ -185,7 +188,10 @@ private fun LandscapeOrientationContent(
         horizontalArrangement = Arrangement.spacedBy(spacing.medium),
         modifier = modifier.fillMaxSize()
     ) {
-        items(feeds) { detail ->
+        items(
+            items = feeds,
+            key = { it.feed.url }
+        ) { detail ->
             FeedItem(
                 label = detail.feed.title,
                 number = detail.count,

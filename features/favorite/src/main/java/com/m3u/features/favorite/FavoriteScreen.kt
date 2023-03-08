@@ -66,7 +66,10 @@ private fun FavoriteScreen(
             LazyColumn(
                 modifier = modifier.fillMaxSize()
             ) {
-                items(lives) { detail ->
+                items(
+                    items = lives,
+                    key = { it.live.id }
+                ) { detail ->
                     FavoriteLiveItem(
                         title = detail.title,
                         live = detail.live,
@@ -84,7 +87,10 @@ private fun FavoriteScreen(
                 columns = GridCells.Fixed(2),
                 modifier = modifier.fillMaxSize()
             ) {
-                items(lives) { detail ->
+                items(
+                    items = lives,
+                    key = { it.live.id }
+                ) { detail ->
                     FavoriteLiveItem(
                         title = detail.title,
                         live = detail.live,
