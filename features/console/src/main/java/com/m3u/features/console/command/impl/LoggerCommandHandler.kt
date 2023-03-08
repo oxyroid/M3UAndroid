@@ -6,8 +6,9 @@ import java.io.File
 internal class LoggerCommandHandler(
     readAllLogFiles: () -> List<File>,
     clearAllLogFiles: () -> Unit,
+    shareLogFiles: (List<File>) -> Unit,
     input: String
-) : CommandHandler(input, "logger") {
+) : CommandHandler(input) {
 
     init {
         path("list") {
@@ -27,6 +28,12 @@ internal class LoggerCommandHandler(
             output(text)
         }
 
+        path("share") {
+            val files = if (param.isNullOrEmpty()) readAllLogFiles()
+            else listOfNotNull(readAllLogFiles().lastOrNull())
+            shareLogFiles(files)
+        }
+
         path("clear") {
             clearAllLogFiles()
         }
@@ -43,4 +50,8 @@ internal class LoggerCommandHandler(
             - clear: delete all log files.
             ~
         """.trimIndent()
+
+    companion object {
+        const val KEY = "logger"
+    }
 }

@@ -3,7 +3,7 @@ package com.m3u.features.console
 import android.app.Application
 import androidx.lifecycle.viewModelScope
 import com.m3u.core.architecture.BaseViewModel
-import com.m3u.core.architecture.PackageProvider
+import com.m3u.core.architecture.Packager
 import com.m3u.data.repository.MediaRepository
 import com.m3u.features.console.command.CommandHandler
 import com.m3u.features.console.command.CommandResource
@@ -20,7 +20,7 @@ import javax.inject.Inject
 @HiltViewModel
 class ConsoleViewModel @Inject constructor(
     application: Application,
-    provider: PackageProvider,
+    provider: Packager,
     private val mediaRepository: MediaRepository
 ) : BaseViewModel<ConsoleState, ConsoleEvent>(
     application = application,
@@ -31,9 +31,9 @@ class ConsoleViewModel @Inject constructor(
             delay(2000)
             val message = """
                 >-Console Editor
-                version: ${provider.getVersionName()}
-                debug: ${provider.isDebug()},
-                applicationId: ${provider.getApplicationID()}
+                version: ${provider.versionName}
+                debug: ${provider.debug},
+                applicationId: ${provider.applicationID}
             """.trimIndent()
             append(message)
         }
@@ -96,10 +96,11 @@ class ConsoleViewModel @Inject constructor(
 
     private fun findCommandHandler(input: String): CommandHandler =
         when (CommandHandler.parseKey(input)) {
-            "logger" -> {
+            LoggerCommandHandler.KEY -> {
                 LoggerCommandHandler(
                     readAllLogFiles = mediaRepository::readAllLogFiles,
                     clearAllLogFiles = mediaRepository::clearAllLogFiles,
+                    shareLogFiles = mediaRepository::shareFiles,
                     input = input
                 )
             }

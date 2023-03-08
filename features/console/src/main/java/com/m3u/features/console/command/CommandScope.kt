@@ -10,10 +10,10 @@ internal interface CommandScope {
 
 internal class CommandProducerScope(
     private val scope: ProducerScope<CommandResource<String>>,
-    private val commands: List<String>,
+    commands: List<String>,
 ) : CommandScope {
-    override val param: String? get() = commands.param
-    override val arg: String? get() = commands.arg
+    override val param: String? = commands.param
+    override val arg: String? = commands.arg
     override suspend fun output(text: String) {
         scope.send(CommandResource.Output(text))
     }
