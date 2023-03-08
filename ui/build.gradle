@@ -71,3 +71,20 @@ dependencies {
 
     implementation libs.com.airbnb.android.lottie.compose
 }
+
+tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+    kotlinOptions {
+        if (project.findProperty("build.enableComposeCompilerReports") == "true") {
+            freeCompilerArgs += [
+                    "-P",
+                    "plugin:androidx.compose.compiler.plugins.kotlin:reportsDestination=" +
+                            project.buildDir.absolutePath + "/compose_compiler"
+            ]
+            freeCompilerArgs += [
+                    "-P",
+                    "plugin:androidx.compose.compiler.plugins.kotlin:metricsDestination=" +
+                            project.buildDir.absolutePath + "/compose_compiler"
+            ]
+        }
+    }
+}
