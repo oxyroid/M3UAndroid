@@ -1,7 +1,9 @@
-package com.m3u.app
+package com.m3u.features.crash
 
+import android.app.AlarmManager
+import android.app.PendingIntent
 import android.content.Context
-import android.os.Looper
+import android.content.Intent
 import com.m3u.core.architecture.Logger
 import com.m3u.core.util.context.toast
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -19,8 +21,17 @@ class CrashHandler @Inject constructor(
         if (handler != null) {
             logger.log(throwable)
             context.toast("Uncaught error occurred!")
-            Looper.loop()
-            exitProcess(1)
+            val reportPending = PendingIntent.getActivity(
+                context,
+                192837,
+                Intent(context, CrashActivity::class.java),
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_ONE_SHOT
+            )
+
+            val alarmManager: AlarmManager =
+                context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+            alarmManager[AlarmManager.ELAPSED_REALTIME_WAKEUP, 500] = reportPending
+            exitProcess(2)
         }
     }
 }

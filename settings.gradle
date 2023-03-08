@@ -26,4 +26,5 @@ include ":features:setting"
 include ":features:live"
 include ":features:feed"
 include ":features:favorite"
-include ':features:console'
+include ":features:console"
+include ":features:crash"
