@@ -1,6 +1,7 @@
 package com.m3u.app
 
 import android.app.Application
+import com.m3u.features.crash.CrashHandler
 import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject
 
@@ -13,4 +14,3 @@ class M3UApplication : Application() {
         Thread.setDefaultUncaughtExceptionHandler(handler)
     }
 }
-
