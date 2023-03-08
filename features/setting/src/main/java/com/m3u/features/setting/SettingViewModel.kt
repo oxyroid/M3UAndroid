@@ -1,11 +1,12 @@
 package com.m3u.features.setting
 
 import android.app.Application
+import android.net.Uri
 import androidx.lifecycle.viewModelScope
 import com.m3u.core.annotation.ConnectTimeout
 import com.m3u.core.architecture.BaseViewModel
 import com.m3u.core.architecture.Configuration
-import com.m3u.core.architecture.PackageProvider
+import com.m3u.core.architecture.Packager
 import com.m3u.core.wrapper.Resource
 import com.m3u.core.wrapper.eventOf
 import com.m3u.data.repository.FeedRepository
@@ -24,7 +25,7 @@ class SettingViewModel @Inject constructor(
     private val feedRepository: FeedRepository,
     private val liveRepository: LiveRepository,
     private val remoteRepository: RemoteRepository,
-    provider: PackageProvider,
+    packager: Packager,
     application: Application,
     private val configuration: Configuration
 ) : BaseViewModel<SettingState, SettingEvent>(
@@ -34,7 +35,7 @@ class SettingViewModel @Inject constructor(
     init {
         writable.update {
             it.copy(
-                version = provider.getVersionName(),
+                version = packager.versionName,
                 feedStrategy = configuration.feedStrategy,
                 useCommonUIMode = configuration.useCommonUIMode,
                 experimentalMode = configuration.experimentalMode,
@@ -61,20 +62,8 @@ class SettingViewModel @Inject constructor(
         when (event) {
             SettingEvent.OnSubscribe -> subscribe()
             SettingEvent.FetchLatestRelease -> fetchLatestRelease()
-            is SettingEvent.OnTitle -> {
-                writable.update {
-                    it.copy(
-                        title = event.title
-                    )
-                }
-            }
-            is SettingEvent.OnUrl -> {
-                writable.update {
-                    it.copy(
-                        url = event.url
-                    )
-                }
-            }
+            is SettingEvent.OnTitle -> onTitle(event.title)
+            is SettingEvent.OnUrl -> onUrl(event.url)
             is SettingEvent.OnSyncMode -> {
                 val newValue = event.feedStrategy
                 configuration.feedStrategy = newValue
@@ -161,6 +150,22 @@ class SettingViewModel @Inject constructor(
                     )
                 }
             }
+        }
+    }
+
+    private fun onTitle(title: String) {
+        writable.update {
+            it.copy(
+                title = Uri.decode(title)
+            )
+        }
+    }
+
+    private fun onUrl(url: String) {
+        writable.update {
+            it.copy(
+                url = Uri.decode(url)
+            )
         }
     }
 
