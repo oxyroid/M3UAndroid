@@ -11,7 +11,7 @@ import com.m3u.ui.model.*
 
 @Composable
 fun M3ULocalProvider(
-    utils: Utils,
+    utils: Utils = EmptyUtils,
     content: @Composable () -> Unit
 ) {
     val theme = if (isSystemInDarkTheme()) NightTheme

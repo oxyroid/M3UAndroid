@@ -11,4 +11,16 @@ interface Utils {
     fun showSystemUI()
 }
 
-val LocalUtils = staticCompositionLocalOf<Utils> { error("No utils provided.") }
+val EmptyUtils = object : Utils {
+    override fun enterPipMode(size: Rect) = error("Cannot enterPipMode")
+
+    override fun setTitle(title: String) = error("Cannot setTitle")
+
+    override fun setActions(actions: List<AppAction>) = error("Cannot setActions")
+
+    override fun hideSystemUI() = error("Cannot hideSystemUI")
+
+    override fun showSystemUI() = error("Cannot showSystemUI")
+}
+
+val LocalUtils = staticCompositionLocalOf { EmptyUtils }
