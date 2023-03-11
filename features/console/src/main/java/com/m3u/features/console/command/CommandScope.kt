@@ -8,6 +8,14 @@ internal interface CommandScope {
     suspend fun output(text: String)
 }
 
+internal suspend fun CommandScope.error(text: String) {
+    val message = text.lines().joinToString(
+        separator = "\n",
+        transform = { "!-$it" }
+    )
+    output(message)
+}
+
 internal class CommandProducerScope(
     private val scope: ProducerScope<CommandResource<String>>,
     commands: List<String>,
