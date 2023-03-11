@@ -8,5 +8,5 @@ interface MediaRepository {
     fun savePicture(url: String): Flow<Resource<File>>
     fun readAllLogFiles(): List<File>
     fun clearAllLogFiles()
-    fun shareFiles(files: List<File>)
+    fun shareFiles(files: List<File>): Result<Unit>
 }

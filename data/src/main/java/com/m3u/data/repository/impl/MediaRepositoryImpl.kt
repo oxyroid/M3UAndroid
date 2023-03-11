@@ -79,7 +79,7 @@ class MediaRepositoryImpl @Inject constructor(
         }
     }
 
-    override fun shareFiles(files: List<File>) {
+    override fun shareFiles(files: List<File>): Result<Unit> = result {
         val uris: List<Uri> = files.mapNotNull {
             try {
                 FileProvider.getUriForFile(

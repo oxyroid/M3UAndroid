@@ -1,12 +1,13 @@
 package com.m3u.features.console.command.impl
 
 import com.m3u.features.console.command.CommandHandler
+import com.m3u.features.console.command.error
 import java.io.File
 
 internal class LoggerCommandHandler(
     readAllLogFiles: () -> List<File>,
     clearAllLogFiles: () -> Unit,
-    shareLogFiles: (List<File>) -> Unit,
+    shareLogFiles: (List<File>) -> Result<Unit>,
     input: String
 ) : CommandHandler(input) {
 
@@ -32,6 +33,12 @@ internal class LoggerCommandHandler(
             val files = if (param.isNullOrEmpty()) readAllLogFiles()
             else listOfNotNull(readAllLogFiles().lastOrNull())
             shareLogFiles(files)
+                .onSuccess {
+                    output("success")
+                }
+                .onFailure {
+                    error(it.stackTraceToString())
+                }
         }
 
         path("clear") {

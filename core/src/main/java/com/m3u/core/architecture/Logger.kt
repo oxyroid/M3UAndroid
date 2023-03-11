@@ -15,7 +15,16 @@ abstract class AbstractLogger(val logger: Logger) {
         block()
     } catch (e: Exception) {
         logger.log(e)
-        Log.e("TAG", "sandbox: ", e)
+        Log.e("AbstractLogger", "sandbox: ", e)
         null
+    }
+
+    protected inline fun <R> result(block: () -> R): Result<R> = try {
+        val data = block()
+        Result.success(data)
+    } catch (e: Exception) {
+        logger.log(e)
+        Log.e("AbstractLogger", "resource", e)
+        Result.failure(e)
     }
 }
