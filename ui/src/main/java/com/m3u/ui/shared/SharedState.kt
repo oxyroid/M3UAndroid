@@ -14,7 +14,7 @@ import androidx.compose.ui.unit.IntOffset
 /**
  * A Compose shared element state holder
  *
- * @see rememberSharedState
+ * @see rememberSharedElementState
  */
 @Immutable
 interface SharedState {
@@ -26,6 +26,9 @@ interface SharedState {
 
     @get:Composable
     val offset: IntOffset
+
+    @get:Composable
+    val elevation: Dp
 }
 
 /**
@@ -37,13 +40,21 @@ interface SharedState {
  * @see SharedState
  */
 @Composable
-fun rememberSharedState(
+fun rememberSharedElementState(
     size: DpSize = DpSize(Dp.Hairline, Dp.Hairline),
     shape: Shape = RectangleShape,
-    offset: IntOffset = IntOffset.Zero
-): SharedState = remember(size, shape, offset) {
-    SharedStateImpl(size, shape, offset)
+    offset: IntOffset = IntOffset.Zero,
+    elevation: Dp = Dp.Unspecified
+): SharedState = remember(size, shape, offset, elevation) {
+    SharedStateImpl(size, shape, offset, elevation)
 }
+
+fun SharedState(
+    size: DpSize = DpSize(Dp.Hairline, Dp.Hairline),
+    shape: Shape = RectangleShape,
+    offset: IntOffset = IntOffset.Zero,
+    elevation: Dp = Dp.Unspecified
+): SharedState = SharedStateImpl(size, shape, offset, elevation)
 
 /**
  * Default implementation of [SharedState]
@@ -51,7 +62,8 @@ fun rememberSharedState(
 private class SharedStateImpl(
     private val innerSize: DpSize,
     private val innerShape: Shape,
-    private val innerOffset: IntOffset
+    private val innerOffset: IntOffset,
+    private val innerElevation: Dp
 ) : SharedState {
     override val size: DpSize
         @Composable get() = DpSize(
@@ -60,13 +72,14 @@ private class SharedStateImpl(
         )
     override val shape: Shape @Composable get() = innerShape
     override val offset: IntOffset @Composable get() = innerOffset
+    override val elevation: Dp @Composable get() = innerElevation
 }
 
 /**
  * The [SharedState] for current screen.
  */
-val Configuration.sharedState: SharedState
-    @Composable get() = rememberSharedState(
+val Configuration.sharedElement: SharedState
+    @Composable get() = rememberSharedElementState(
         size = with(LocalDensity.current) {
             DpSize(
                 width = screenWidthDp.toDp(),

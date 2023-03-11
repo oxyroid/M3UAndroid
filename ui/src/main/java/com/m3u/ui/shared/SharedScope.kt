@@ -10,17 +10,29 @@ import com.m3u.ui.shared.material.SharedSurface
  * @see SharedSurface
  */
 @Immutable
+@Deprecated("Use animateSharedState, Modifier.shared and Modifier.onShared instead")
 interface SharedScope {
-
-    val isElement: Boolean
-
     @get:Composable
     val state: SharedState
 
     /**
      * Copy a holding subclass extra properties instance.
      *
-     * @suppress [T] can only be the subclass.
+     * @suppress [T] can only be itself.
      */
-    fun <T : SharedScope> copy(state: SharedState): T
+    @Composable
+    fun copy(
+        state: SharedState = this.state,
+    ): SharedScope {
+        error("Copy instance in this SharedScope is not allowed!")
+    }
+}
+
+@Deprecated("Use animateSharedState, Modifier.shared and Modifier.onShared instead")
+interface SharedElementScope : SharedScope {
+    fun expand()
+    fun shrink()
+
+    @Composable
+    override fun copy(state: SharedState): SharedElementScope
 }

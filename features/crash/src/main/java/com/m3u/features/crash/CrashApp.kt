@@ -1,45 +1,35 @@
 package com.m3u.features.crash
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.*
-import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.Modifier
 import com.m3u.features.crash.navigation.Destination
 import com.m3u.features.crash.screen.detail.DetailScreen
 import com.m3u.features.crash.screen.list.ListScreen
-import com.m3u.ui.shared.material.SharedSurface
-import com.m3u.ui.shared.sharedState
 
 @Composable
 internal fun CrashApp() {
-    val configuration = LocalConfiguration.current
-    val scope = configuration.sharedState
-    var destination by remember {
-        mutableStateOf<Destination>(
-            Destination.List
-        )
-    }
-    SharedSurface(
-        scope = destination,
-        backgroundContent = {
-            ListScreen(
-                navigateToDetail = { path ->
-                    destination = Destination.Detail(this, path)
-                }
-            )
-        },
-        foregroundContent = { modifier ->
-            val target = this as Destination.Detail
-            DetailScreen(
-                path = target.path,
-                modifier = modifier
-            )
-        },
-        onStart = {
-            destination = destination.copy(scope)
+    Box {
+        var destination: Destination by remember {
+            mutableStateOf(Destination.List)
         }
-    )
+        ListScreen(
+            navigateToDetail = { path ->
+                destination = Destination.Detail(path)
+            },
+            modifier = Modifier.fillMaxSize()
+        )
 
-    BackHandler(destination != Destination.List) {
-        destination = Destination.List
+        if (destination is Destination.Detail) {
+            DetailScreen(
+                path = (destination as Destination.Detail).path,
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+        BackHandler(destination != Destination.List) {
+            destination = Destination.List
+        }
     }
 }

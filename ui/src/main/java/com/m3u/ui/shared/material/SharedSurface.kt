@@ -7,11 +7,41 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.Dp
-import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.LocalTheme
-import com.m3u.ui.shared.AnimatedModifier
+import com.m3u.ui.shared.SharedElementScope
 import com.m3u.ui.shared.SharedScope
+import com.m3u.ui.shared.SharedState
+import com.m3u.ui.shared.animation.AnimatedModifier
+import com.m3u.ui.shared.sharedElement
+
+@Composable
+fun SharedSurface(
+    state: SharedState,
+    modifier: Modifier = Modifier,
+    color: Color = SharedHostDefaults.surfaceColor(),
+    contentColor: Color = SharedHostDefaults.surfaceContentColor(),
+    content: @Composable () -> Unit,
+) {
+    Surface(
+        color = color,
+        contentColor = contentColor,
+        elevation = state.elevation,
+        shape = state.shape,
+        modifier = Modifier
+            .sharedElement(state)
+            .then(modifier),
+        content = content
+    )
+}
+
+object SharedHostDefaults {
+    @Composable
+    fun surfaceColor(): Color = LocalTheme.current.background
+
+    @Composable
+    fun surfaceContentColor(): Color = LocalTheme.current.onBackground
+}
+
 
 /**
  * A shared element surface.
@@ -24,15 +54,15 @@ import com.m3u.ui.shared.SharedScope
  * @suppress The [backgroundContent]'s lifecycle will not enter PAUSE or later state when it is dismiss.
  */
 @Composable
+@Deprecated("Use ShareSurface(state: SharedState,...) instead")
 fun SharedSurface(
     scope: SharedScope,
     backgroundContent: @Composable () -> Unit,
-    foregroundContent: @Composable SharedScope.(Modifier) -> Unit,
+    foregroundContent: @Composable SharedElementScope.() -> Unit,
     modifier: Modifier = Modifier,
     onStart: () -> Unit = {},
     color: Color = SharedHostDefaults.surfaceColor(),
     contentColor: Color = SharedHostDefaults.surfaceContentColor(),
-    elevation: Dp = SharedHostDefaults.surfaceElevation()
 ) {
     val currentOnStart by rememberUpdatedState(onStart)
     Surface(
@@ -40,28 +70,16 @@ fun SharedSurface(
         contentColor = contentColor
     ) {
         backgroundContent()
-        if (scope.isElement) {
+        if (scope is SharedElementScope) {
             AnimatedModifier(
                 state = scope.state,
-                elevation = elevation,
                 modifier = modifier
-            ) { modifier ->
-                scope.foregroundContent(modifier)
+            ) {
+                foregroundContent(scope)
             }
             LaunchedEffect(scope) {
                 currentOnStart()
             }
         }
     }
-}
-
-object SharedHostDefaults {
-    @Composable
-    fun surfaceColor(): Color = LocalTheme.current.background
-
-    @Composable
-    fun surfaceContentColor(): Color = LocalTheme.current.onBackground
-
-    @Composable
-    fun surfaceElevation(): Dp = LocalSpacing.current.medium
 }
