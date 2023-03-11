@@ -4,6 +4,8 @@ import android.app.Application
 import androidx.lifecycle.viewModelScope
 import com.m3u.core.architecture.BaseViewModel
 import com.m3u.core.util.collection.replaceIf
+import com.m3u.core.util.coroutine.mapElement
+import com.m3u.core.util.coroutine.onEachElement
 import com.m3u.core.wrapper.eventOf
 import com.m3u.data.local.entity.Feed
 import com.m3u.data.repository.FeedRepository
@@ -13,7 +15,6 @@ import com.m3u.features.main.model.FeedDetail
 import com.m3u.features.main.model.toDetail
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -29,19 +30,13 @@ class MainViewModel @Inject constructor(
     emptyState = MainState()
 ) {
     init {
-        var job: Job? = null
         observeAllFeeds()
-            .map { it.map(Feed::toDetail) }
+            .mapElement(Feed::toDetail)
             .onEach(::setAllDetails)
-            .onEach { details ->
-                job?.cancel()
-                job = viewModelScope.launch {
-                    details.forEach { detail ->
-                        val url = detail.feed.url
-                        observeSize(url)
-                            .onEach { count -> setCountFromExistedDetails(url, count) }
-                            .launchIn(this)
-                    }
+            .onEachElement { detail ->
+                val url = detail.feed.url
+                observeSize(url).collectLatest { count ->
+                    setCountFromExistedDetails(url, count)
                 }
             }
             .launchIn(viewModelScope)
