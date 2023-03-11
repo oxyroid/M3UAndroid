@@ -39,9 +39,11 @@ class MainViewModel @Inject constructor(
                 job = viewModelScope.launch {
                     details.forEach { detail ->
                         val url = detail.feed.url
-                        observeSize(url).collectLatest { count ->
-                            setCountFromExistedDetails(url, count)
-                        }
+                        observeSize(url)
+                            .onEach { count ->
+                                setCountFromExistedDetails(url, count)
+                            }
+                            .launchIn(this)
                     }
                 }
             }
