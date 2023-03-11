@@ -18,6 +18,9 @@ object AppFont {
         Font(R.font.titillium_web_bold, FontWeight.Bold),
         Font(R.font.titillium_web_bold_italic, FontWeight.Bold, style = FontStyle.Italic),
     )
+    val JetbrainsMono = FontFamily(
+        Font(R.font.jb_mono_medium)
+    )
 }
 
 val Typography = Typography(
