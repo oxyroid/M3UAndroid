@@ -28,13 +28,11 @@ inline fun <T> Flow<Iterable<T>>.onEachElement(
 
 @JvmName("mapIterableElement")
 inline fun <T, R> Flow<Iterable<T>>.mapElement(
-    crossinline block: suspend (T) -> R
+    crossinline block: (T) -> R
 ): Flow<Iterable<R>> {
     return map { element ->
-        coroutineScope {
-            element.map {
-                block(it)
-            }
+        element.map {
+            block(it)
         }
     }
 }
@@ -58,43 +56,33 @@ inline fun <T> Flow<Collection<T>>.onEachElement(
 
 @JvmName("mapCollectionElement")
 inline fun <T, R> Flow<Collection<T>>.mapElement(
-    crossinline block: suspend (T) -> R
+    crossinline block: (T) -> R
 ): Flow<Collection<R>> {
     return map { element ->
-        coroutineScope {
-            element.map {
-                block(it)
-            }
+        element.map {
+            block(it)
         }
     }
 }
 
 @JvmName("onListEachElement")
 inline fun <T> Flow<List<T>>.onEachElement(
-    crossinline block: suspend (T) -> Unit
+    crossinline block: (T) -> Unit
 ): Flow<List<T>> {
-    var job: Job? = null
     return onEach { collection ->
-        job?.cancel()
-        job = coroutineScope {
-            launch {
-                collection.forEach {
-                    block(it)
-                }
-            }
+        collection.forEach {
+            block(it)
         }
     }
 }
 
 @JvmName("mapListElement")
 inline fun <T, R> Flow<List<T>>.mapElement(
-    crossinline block: suspend (T) -> R
+    crossinline block: (T) -> R
 ): Flow<List<R>> {
     return map { element ->
-        coroutineScope {
-            element.map {
-                block(it)
-            }
+        element.map {
+            block(it)
         }
     }
 }
