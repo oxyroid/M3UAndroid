@@ -679,7 +679,7 @@ private fun FeedManagementPart(
                 verticalArrangement = Arrangement.spacedBy(spacing.small),
             ) {
                 Text(
-                    text = stringResource(R.string.label_add_feed),
+                    text = stringResource(R.string.label_add_feed).uppercase(),
                     style = MaterialTheme.typography.button,
                     color = theme.onTint,
                     modifier = Modifier
@@ -695,7 +695,7 @@ private fun FeedManagementPart(
                 LabelField(
                     text = title,
                     enabled = subscribeEnable,
-                    placeholder = stringResource(R.string.placeholder_title),
+                    placeholder = stringResource(R.string.placeholder_title).uppercase(),
                     onValueChange = onTitle,
                     keyboardActions = KeyboardActions(
                         onNext = {
@@ -707,7 +707,7 @@ private fun FeedManagementPart(
                 LabelField(
                     text = url,
                     enabled = subscribeEnable,
-                    placeholder = stringResource(R.string.placeholder_url),
+                    placeholder = stringResource(R.string.placeholder_url).uppercase(),
                     onValueChange = onUrl,
                     keyboardActions = KeyboardActions(
                         onDone = {

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="playback_state_idle">idle</string>
+    <string name="playback_state_buffering">buffering</string>
+    <string name="playback_state_ready">ready</string>
+    <string name="playback_state_ended">completed</string>
+</resources>

@@ -69,7 +69,7 @@ fun Button(
         )
     ) {
         Text(
-            text = text
+            text = text.uppercase()
         )
     }
 }
@@ -115,7 +115,7 @@ fun TextButton(
     ) {
         Text(
             style = MaterialTheme.typography.button,
-            text = text,
+            text = text.uppercase(),
             fontSize = 14.sp,
             maxLines = 1
         )

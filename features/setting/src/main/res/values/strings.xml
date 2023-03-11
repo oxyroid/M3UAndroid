@@ -21,7 +21,6 @@
 
     <string name="script_management">脚本管理</string>
     <string name="feed_management">订阅管理</string>
-    <string name="show_muted_mode">显示屏蔽的频道</string>
     <string name="connect_timeout">最大超时时间</string>
     <string name="show_muted_mode_description">测试功能暂不可用</string>
     <string name="label_contact_me">加入讨论群</string>

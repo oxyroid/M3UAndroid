@@ -12,3 +12,17 @@ fun String.trimBrackets(): String {
 inline fun <reified C : Any> createClazzKey(): String {
     return C::class.java.name
 }
+
+fun String.uppercaseLetter(): String {
+    if (this.isEmpty()) return this
+    val split = this.split(" ")
+    return split.joinToString(
+        separator = " ",
+        transform = { it.first().uppercase() + it.drop(1) }
+    )
+}
+
+fun String.uppercaseFirst(): String {
+    if (this.isEmpty()) return this
+    return this.first().uppercase() + this.drop(1)
+}

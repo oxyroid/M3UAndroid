@@ -31,6 +31,7 @@ import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.pagerTabIndicatorOffset
 import com.google.accompanist.pager.rememberPagerState
+import com.m3u.core.util.basic.uppercaseFirst
 import com.m3u.core.util.context.toast
 import com.m3u.core.wrapper.Event
 import com.m3u.data.local.entity.Live
@@ -164,7 +165,7 @@ private fun FeedScreen(
                 text = query,
                 onValueChange = onQuery,
                 height = 32.dp,
-                placeholder = stringResource(R.string.query_placeholder),
+                placeholder = stringResource(R.string.query_placeholder).uppercaseFirst(),
                 modifier = Modifier
                     .padding(LocalSpacing.current.medium,)
                     .fillMaxWidth()

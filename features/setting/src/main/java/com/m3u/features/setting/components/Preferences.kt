@@ -11,6 +11,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import com.m3u.core.util.basic.uppercaseFirst
+import com.m3u.core.util.basic.uppercaseLetter
 import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.LocalTheme
 
@@ -27,7 +29,7 @@ internal fun FoldPreference(
     ListItem(
         text = {
             Text(
-                text = title,
+                text = title.uppercaseLetter(),
                 style = MaterialTheme.typography.subtitle1,
                 fontWeight = FontWeight.Bold,
                 maxLines = 1,
@@ -37,7 +39,7 @@ internal fun FoldPreference(
         secondaryText = subtitle?.let {
             @Composable {
                 Text(
-                    text = it,
+                    text = it.uppercaseFirst(),
                     style = MaterialTheme.typography.subtitle2,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
@@ -110,7 +112,7 @@ internal fun TextPreference(
         modifier = modifier,
         trailingContent = {
             Text(
-                text = content,
+                text = content.uppercase(),
                 style = MaterialTheme.typography.button,
                 color = LocalTheme.current.tint,
                 maxLines = 1,

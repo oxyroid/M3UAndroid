@@ -126,7 +126,7 @@ private fun MainScreen(
                     color = LocalTheme.current.onBackground
                 )
                 BottomSheetItem(
-                    text = stringResource(R.string.unsubscribe_feed),
+                    text = stringResource(R.string.unsubscribe_feed).uppercase(),
                     onClick = {
                         unsubscribeFeedByUrl(state.feed.url)
                         feedSheetState = FeedSheetState.Idle

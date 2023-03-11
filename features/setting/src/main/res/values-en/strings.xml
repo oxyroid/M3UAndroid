@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="placeholder_url">feed link</string>
+    <string name="label_app_version">app version: %s</string>
+    <string name="label_latest_release_version">latest version: %s</string>
+    <string name="label_subscribe">subscribe</string>
+    <string name="success_subscribe">subscribe successfully</string>
+    <string name="failed_malformed_url">malformed url (%s)</string>
+    <string name="failed_empty_title">feed name is empty</string>
+    <string name="placeholder_title">feed name</string>
+    <string name="label_subscribing">subscribing</string>
+    <string name="sync_mode_all">all</string>
+    <string name="sync_mode_skip_favourite">skip favourite</string>
+    <string name="sync_mode">synchronization strategy</string>
+    <string name="common_ui_mode">UI mode</string>
+    <string name="common_ui_mode_description">use mobile device UI mode</string>
+    <string name="common_ui_mode_disabled_description">mobile device could not adjust this</string>
+    <string name="script_management">script management</string>
+    <string name="feed_management">feed management</string>
+    <string name="connect_timeout">connect timeout</string>
+    <string name="show_muted_mode_description">the feature is temporarily unavailable</string>
+    <string name="label_contact_me">join discussion</string>
+    <string name="edit_mode">god mode</string>
+    <string name="edit_mode_description">adjust screen by physical buttons</string>
+    <string name="failed_latest_release_version">cannot fetch version information: %s</string>
+    <string name="fetching_latest">fetching…</string>
+    <string name="label_same_version">already the latest version</string>
+    <string name="console_editor">Console Editor</string>
+    <string name="experimental_mode">experimental mode</string>
+    <string name="experimental_mode_description">unstable features can throw fatal errors</string>
+    <string name="label_muted_lives">banned lives</string>
+    <string name="label_add_feed">add feed</string>
+    <string name="label_parse_from_clipboard">parse clipboard</string>
+    <string name="clip_mode">video clip mode</string>
+    <string name="clip_mode_adaptive">adaptive</string>
+    <string name="clip_mode_clip">clip</string>
+    <string name="clip_mode_stretched">stretched</string>
+    <string name="scroll_mode">scroll to change lives</string>
+</resources>

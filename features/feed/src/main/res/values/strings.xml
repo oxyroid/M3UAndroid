@@ -5,15 +5,7 @@
 
     <string name="dialog_favourite_title">喜欢</string>
     <string name="dialog_favourite_cancel_title">取消喜欢</string>
-    <string name="dialog_favourite_content">此频道将被加入喜欢列表，您可以在设置中调整同步策略。</string>
     <string name="dialog_mute_title">屏蔽</string>
-    <string name="dialog_mute_content">此操作将屏蔽此视频流对应的频道。\n注意，除非您重新安装应用程序，当前版本此操作是<b>不可逆</b>的。</string>
-
-    <string name="dialog_favourite_confirm">确认</string>
-    <string name="dialog_favourite_dismiss">返回</string>
-
-    <string name="dialog_mute_confirm">确认</string>
-    <string name="dialog_mute_dismiss">返回</string>
 
     <string name="error_observe_feed">订阅不存在（%s）</string>
     <string name="dialog_save_picture_title">保存封面</string>
