@@ -16,9 +16,6 @@ fun M3ULocalProvider(
 ) {
     val theme = if (isSystemInDarkTheme()) NightTheme
     else DayTheme
-    val background = Background(
-        color = theme.background
-    )
     val systemUiController = rememberSystemUiController()
     val useDarkIcons = !isSystemInDarkTheme()
 
@@ -31,7 +28,6 @@ fun M3ULocalProvider(
     }
     CompositionLocalProvider(
         LocalTheme provides theme,
-        LocalBackground provides background,
         LocalUtils provides utils
     ) {
         MaterialTheme(

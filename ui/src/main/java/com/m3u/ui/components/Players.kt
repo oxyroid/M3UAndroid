@@ -16,8 +16,6 @@ import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import com.m3u.core.annotation.ClipMode
-import com.m3u.ui.model.Background
-import com.m3u.ui.model.LocalBackground
 
 @Immutable
 @OptIn(UnstableApi::class)
@@ -108,8 +106,12 @@ fun ExoPlayer(
         }
     }
 
-    CompositionLocalProvider(LocalBackground provides Background(Color.Black)) {
-        Background(modifier) {
+    CompositionLocalProvider {
+        Background(
+            modifier = modifier,
+            color = Color.Black,
+            contentColor = Color.White
+        ) {
             AndroidView(
                 factory = { context ->
                     PlayerView(context).apply {

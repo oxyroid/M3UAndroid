@@ -15,22 +15,20 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.isUnspecified
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.isUnspecified
 import com.m3u.ui.model.GradientColors
-import com.m3u.ui.model.LocalBackground
 import com.m3u.ui.model.LocalGradientColors
+import com.m3u.ui.model.LocalTheme
 
 @Composable
 fun Background(
     modifier: Modifier = Modifier,
+    color: Color = LocalTheme.current.background,
+    contentColor: Color = LocalTheme.current.onBackground,
     content: @Composable () -> Unit
 ) {
-    val color = LocalBackground.current.color
-    val elevation = LocalBackground.current.elevation
-
     Surface(
         color = if (color.isUnspecified) Color.Transparent else color,
-        elevation = if (elevation.isUnspecified) 0.dp else elevation,
+        contentColor = contentColor,
         modifier = modifier.fillMaxSize()
     ) {
         CompositionLocalProvider(LocalAbsoluteElevation provides 0.dp) {
