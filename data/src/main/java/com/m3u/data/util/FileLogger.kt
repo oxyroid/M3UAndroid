@@ -5,6 +5,7 @@ import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.content.pm.PackageManager.GET_ACTIVITIES
 import android.os.Build
+import android.util.Log
 import com.m3u.core.architecture.Logger
 import com.m3u.core.util.collection.forEachNotNull
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -83,6 +84,7 @@ class FileLogger @Inject constructor(
     }
 
     override fun log(throwable: Throwable) {
+        Log.e("FileLogger", "log: ", throwable)
         val infoMap = mutableMapOf<String, String>()
         infoMap["name"] = packageInfo.versionName
         infoMap["code"] = packageInfo.code

@@ -52,26 +52,33 @@ class M3UAnalyzer internal constructor() : Analyzer<List<M3U>>() {
 
     private fun M3U.setContent(content: String): M3U {
         val properties = makeProperties(content)
-
-        val id = properties.getProperty(M3U_TVG_ID_MARK, "")
-        val name = properties.getProperty(M3U_TVG_NAME_MARK, "")
-        val cover = properties.getProperty(M3U_TVG_LOGO_MARK, "")
-
-        val groupTitle = properties.getProperty(M3U_GROUP_TITLE_MARK, ",").split(",")
-
-        val (group, title) = if (groupTitle.size == 2) {
-            groupTitle.first() to groupTitle[1]
+        if (properties.isEmpty) {
+            val title = content.split(",").last()
+            return this.copy(
+                title = title
+            )
         } else {
-            "" to groupTitle.firstOrNull().orEmpty()
+            val id = properties.getProperty(M3U_TVG_ID_MARK, "")
+            val name = properties.getProperty(M3U_TVG_NAME_MARK, "")
+            val cover = properties.getProperty(M3U_TVG_LOGO_MARK, "")
+
+            val groupTitle = properties.getProperty(M3U_GROUP_TITLE_MARK, ",").split(",")
+
+            val (group, title) = if (groupTitle.size == 2) {
+                groupTitle.first() to groupTitle[1]
+            } else {
+                "" to groupTitle.firstOrNull().orEmpty()
+            }
+            return this.copy(
+                id = id.trimBrackets(),
+                name = name.trimBrackets(),
+                group = group.trimBrackets(),
+                title = title.trimBrackets(),
+                cover = cover.trimBrackets()
+            )
         }
 
-        return this.copy(
-            id = id.trimBrackets(),
-            name = name.trimBrackets(),
-            group = group.trimBrackets(),
-            title = title.trimBrackets(),
-            cover = cover.trimBrackets()
-        )
+
     }
 
     private val String.hasLegalMark: Boolean
@@ -95,10 +102,13 @@ class M3UAnalyzer internal constructor() : Analyzer<List<M3U>>() {
                 mergedPart + illegalPart.orEmpty()
             }
         }
+        if (properties.isEmpty) {
+            return properties
+        }
         if (illegalPart != null) {
             val split = illegalPart.split(",")
             if (split.isNotEmpty()) {
-                val title = if ((split.size == 1)) null else split[1]
+                val title = if ((split.size == 1)) split[0] else split[1]
                 properties[M3U_GROUP_TITLE_MARK] = title
             } else {
                 error("illegal m3u content: $content")
