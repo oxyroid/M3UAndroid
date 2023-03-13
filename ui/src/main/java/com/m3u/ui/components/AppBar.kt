@@ -29,11 +29,31 @@ import com.m3u.ui.model.Icon
 import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.LocalTheme
 
+@Suppress("unused")
+interface AppTopBarConsumer {
+    fun Float.value(min: Float, max: Float): Boolean
+
+    object Never : AppTopBarConsumer {
+        override fun Float.value(min: Float, max: Float): Boolean = false
+    }
+
+    object Edges : AppTopBarConsumer {
+        override fun Float.value(min: Float, max: Float): Boolean = (this == min) || (this == max)
+    }
+
+    object Always : AppTopBarConsumer {
+        override fun Float.value(min: Float, max: Float): Boolean = (this != min) && (this != max)
+    }
+}
+
+fun AppTopBarConsumer.consume(value: Float, min: Float, max: Float): Boolean = value.value(min, max)
+
 @Composable
 fun AppTopBar(
     modifier: Modifier = Modifier,
     text: String,
     visible: Boolean,
+    consumer: AppTopBarConsumer = AppTopBarDefaults.consumer,
     windowInsets: WindowInsets = AppTopBarDefaults.windowInsets,
     onBackPressed: (() -> Unit)? = null,
     actions: @Composable RowScope.(Boolean) -> Unit = {},
@@ -54,16 +74,12 @@ fun AppTopBar(
         object : NestedScrollConnection {
             override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
                 offsetHeightPx = offsetHeightPx coercePlus available.y
-                return if (offsetHeightPx.shouldBeConsumed) available
-                else Offset.Zero
+                val innerConsumer = consumer.consume(offsetHeightPx, minHeightPx, maxHeightPx)
+                return if (innerConsumer) available else Offset.Zero
             }
 
             private infix fun Float.coercePlus(length: Float): Float =
                 (length + this).coerceIn(0f, maxHeightPx)
-
-            private val Float.isMinimize: Boolean get() = this == minHeightPx
-            private val Float.isMaximize: Boolean get() = this == maxHeightPx
-            private val Float.shouldBeConsumed: Boolean get() = (!this.isMinimize) && (!this.isMaximize)
         }
     }
 
@@ -170,6 +186,7 @@ fun AppTopBar(
 internal object AppTopBarDefaults {
     val TopBarHeight = 64.dp
     const val ScaleSlope = 0.35f
+    val consumer = AppTopBarConsumer.Always
 
     @OptIn(ExperimentalLayoutApi::class)
     val windowInsets: WindowInsets
