@@ -19,7 +19,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.tv.material3.Text
 import com.m3u.core.util.context.toast
@@ -31,9 +30,9 @@ import com.m3u.ui.components.BottomSheetContent
 import com.m3u.ui.components.BottomSheetItem
 import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.LocalTheme
-import com.m3u.ui.model.LocalUtils
+import com.m3u.ui.model.LocalHelper
 import com.m3u.ui.util.EventHandler
-import com.m3u.ui.util.LifecycleEffect
+import com.m3u.ui.util.RepeatOnCreate
 
 private typealias ShowFeedBottomSheet = (Feed) -> Unit
 private typealias UnsubscribeFeedByUrl = (String) -> Unit
@@ -45,27 +44,16 @@ internal fun MainRoute(
     viewModel: MainViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
-    val utils = LocalUtils.current
+    val helper = LocalHelper.current
     val state: MainState by viewModel.state.collectAsStateWithLifecycle()
     val feeds: List<FeedDetail> = state.feeds
 
     EventHandler(state.message) {
         context.toast(it)
     }
-    LifecycleEffect { event ->
-        when (event) {
-            Lifecycle.Event.ON_START -> {
-                utils.setActions()
-            }
-
-            Lifecycle.Event.ON_PAUSE -> {
-                utils.setActions()
-            }
-
-            else -> {}
-        }
+    RepeatOnCreate {
+        helper.actions()
     }
-
     MainScreen(
         modifier = modifier,
         feeds = feeds,

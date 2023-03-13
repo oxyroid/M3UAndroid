@@ -15,32 +15,23 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.ui.components.Background
 import com.m3u.ui.components.MonoText
 import com.m3u.ui.components.TextField
 import com.m3u.ui.model.LocalSpacing
-import com.m3u.ui.model.LocalUtils
-import com.m3u.ui.util.LifecycleEffect
+import com.m3u.ui.model.LocalHelper
+import com.m3u.ui.util.RepeatOnCreate
 
 @Composable
 internal fun ConsoleRoute(
     modifier: Modifier = Modifier,
     viewModel: ConsoleViewModel = hiltViewModel()
 ) {
-    val utils = LocalUtils.current
-    val title = stringResource(id = R.string.title)
-    LifecycleEffect { event ->
-        when (event) {
-            Lifecycle.Event.ON_RESUME -> {
-                utils.setTitle(title)
-            }
-            Lifecycle.Event.ON_PAUSE -> {
-                utils.setTitle()
-            }
-            else -> {}
-        }
+    val helper = LocalHelper.current
+    val title = stringResource(R.string.title)
+    RepeatOnCreate {
+        helper.title = title
     }
     val state by viewModel.state.collectAsStateWithLifecycle()
     ConsoleScreen(

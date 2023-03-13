@@ -22,7 +22,6 @@ import androidx.compose.ui.platform.*
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.tv.material3.Text
 import com.m3u.core.annotation.*
@@ -36,11 +35,11 @@ import com.m3u.features.setting.components.MutedLiveItem
 import com.m3u.features.setting.components.TextPreference
 import com.m3u.features.setting.navigation.NavigateToConsole
 import com.m3u.ui.components.*
+import com.m3u.ui.model.LocalHelper
 import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.LocalTheme
-import com.m3u.ui.model.LocalUtils
 import com.m3u.ui.util.EventHandler
-import com.m3u.ui.util.LifecycleEffect
+import com.m3u.ui.util.RepeatOnCreate
 
 @Composable
 internal fun SettingRoute(
@@ -50,24 +49,14 @@ internal fun SettingRoute(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
-    val utils = LocalUtils.current
+    val helper = LocalHelper.current
 
     EventHandler(state.message) {
         context.toast(it)
     }
 
-    LifecycleEffect { event ->
-        when (event) {
-            Lifecycle.Event.ON_START -> {
-                utils.setActions()
-            }
-
-            Lifecycle.Event.ON_PAUSE -> {
-                utils.setActions()
-            }
-
-            else -> {}
-        }
+    RepeatOnCreate {
+        helper.actions()
     }
 
     val configuration = LocalConfiguration.current
@@ -76,7 +65,7 @@ internal fun SettingRoute(
     else state.useCommonUIMode
     val useCommonUIModeEnable = (type != Configuration.UI_MODE_TYPE_NORMAL)
     SettingScreen(
-        subscribeEnable = !state.adding,
+        adding = !state.adding,
         title = state.title,
         url = state.url,
         version = state.version,
@@ -109,7 +98,7 @@ internal fun SettingRoute(
 
 @Composable
 private fun SettingScreen(
-    subscribeEnable: Boolean,
+    adding: Boolean,
     version: String,
     latestRelease: Resource<Release>,
     fetchLatestRelease: () -> Unit,
@@ -149,9 +138,9 @@ private fun SettingScreen(
                     fold = fold,
                     title = title,
                     url = url,
+                    adding = adding,
                     editMode = editMode,
                     connectTimeout = connectTimeout,
-                    subscribeEnable = subscribeEnable,
                     scrollMode = scrollMode,
                     onFold = { fold = it },
                     onTitle = onTitle,
@@ -187,10 +176,10 @@ private fun SettingScreen(
                     fold = fold,
                     title = title,
                     url = url,
+                    adding = adding,
                     editMode = editMode,
                     clipMode = clipMode,
                     scrollMode = scrollMode,
-                    subscribeEnable = subscribeEnable,
                     feedStrategy = feedStrategy,
                     connectTimeout = connectTimeout,
                     useCommonUIMode = useCommonUIMode,
@@ -241,7 +230,7 @@ private fun PortraitOrientationContent(
     onEditMode: () -> Unit,
     onClipMode: OnClipMode,
     onConnectTimeout: () -> Unit,
-    subscribeEnable: Boolean,
+    adding: Boolean,
     mutedLives: List<Live>,
     onVoiceLiveUrl: (String) -> Unit,
     onFold: (Fold) -> Unit,
@@ -301,7 +290,7 @@ private fun PortraitOrientationContent(
                         url = url,
                         mutedLives = mutedLives,
                         onVoiceLiveUrl = onVoiceLiveUrl,
-                        subscribeEnable = subscribeEnable,
+                        adding = adding,
                         onTitle = onTitle,
                         onUrl = onUrl,
                         onSubscribe = onSubscribe,
@@ -326,7 +315,7 @@ private fun LandscapeOrientationContent(
     url: String,
     editMode: Boolean,
     @ClipMode clipMode: Int,
-    subscribeEnable: Boolean,
+    adding: Boolean,
     onFold: (Fold) -> Unit,
     onTitle: (String) -> Unit,
     onUrl: (String) -> Unit,
@@ -392,7 +381,7 @@ private fun LandscapeOrientationContent(
                     url = url,
                     mutedLives = mutedLives,
                     onVoiceLiveUrl = onVoiceLiveUrl,
-                    subscribeEnable = subscribeEnable,
+                    adding = adding,
                     onTitle = onTitle,
                     onUrl = onUrl,
                     onSubscribe = onSubscribe,
@@ -629,7 +618,7 @@ private fun FeedManagementPart(
     url: String,
     mutedLives: List<Live>,
     onVoiceLiveUrl: (String) -> Unit,
-    subscribeEnable: Boolean,
+    adding: Boolean,
     onTitle: (String) -> Unit,
     onUrl: (String) -> Unit,
     onSubscribe: () -> Unit,
@@ -694,7 +683,7 @@ private fun FeedManagementPart(
                 val focusRequester = remember { FocusRequester() }
                 LabelField(
                     text = title,
-                    enabled = subscribeEnable,
+                    enabled = adding,
                     placeholder = stringResource(R.string.placeholder_title).uppercase(),
                     onValueChange = onTitle,
                     keyboardActions = KeyboardActions(
@@ -706,7 +695,7 @@ private fun FeedManagementPart(
                 )
                 LabelField(
                     text = url,
-                    enabled = subscribeEnable,
+                    enabled = adding,
                     placeholder = stringResource(R.string.placeholder_url).uppercase(),
                     onValueChange = onUrl,
                     keyboardActions = KeyboardActions(
@@ -718,13 +707,13 @@ private fun FeedManagementPart(
                         .fillMaxWidth()
                         .focusRequester(focusRequester)
                 )
-                val subscribeTextResId = if (subscribeEnable) R.string.label_subscribe
+                val subscribeTextResId = if (adding) R.string.label_subscribe
                 else R.string.label_subscribing
                 val subscribeFromClipboardTextResId =
-                    if (subscribeEnable) R.string.label_parse_from_clipboard
+                    if (adding) R.string.label_parse_from_clipboard
                     else R.string.label_subscribing
                 Button(
-                    enabled = subscribeEnable,
+                    enabled = adding,
                     text = stringResource(subscribeTextResId),
                     onClick = onSubscribe,
                     modifier = Modifier.fillMaxWidth()
@@ -732,7 +721,7 @@ private fun FeedManagementPart(
                 val clipboardManager = LocalClipboardManager.current
                 TextButton(
                     text = stringResource(subscribeFromClipboardTextResId),
-                    enabled = subscribeEnable,
+                    enabled = adding,
                     onClick = {
                         val clipboardUrl = clipboardManager.getText()?.text.orEmpty()
                         val clipboardTitle = run {
@@ -767,5 +756,5 @@ fun ScriptManagementPart(
 }
 
 private enum class Fold {
-    NONE, FEED, SCRIPT
+    NONE, FEED, SCRIPT, ABOUT
 }

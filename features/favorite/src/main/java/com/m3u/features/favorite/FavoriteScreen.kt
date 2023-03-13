@@ -14,14 +14,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.core.util.context.toast
 import com.m3u.features.favorite.components.FavoriteLiveItem
 import com.m3u.features.favorite.navigation.NavigateToLive
-import com.m3u.ui.model.LocalUtils
+import com.m3u.ui.model.LocalHelper
 import com.m3u.ui.util.EventHandler
-import com.m3u.ui.util.LifecycleEffect
+import com.m3u.ui.util.RepeatOnCreate
 
 @Composable
 internal fun FavouriteRoute(
@@ -30,22 +29,13 @@ internal fun FavouriteRoute(
     viewModel: FavouriteViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
-    val utils = LocalUtils.current
+    val helper = LocalHelper.current
     val state by viewModel.state.collectAsStateWithLifecycle()
     EventHandler(state.message) {
         context.toast(it)
     }
-    LifecycleEffect { event ->
-        when (event) {
-            Lifecycle.Event.ON_START -> {
-                utils.setActions()
-            }
-            Lifecycle.Event.ON_PAUSE -> {
-                utils.setActions()
-            }
-
-            else -> {}
-        }
+    RepeatOnCreate {
+        helper.actions()
     }
     FavoriteScreen(
         lives = state.lives,
