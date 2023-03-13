@@ -6,83 +6,103 @@ import android.os.Bundle
 import android.util.Rational
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.isUnspecified
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.lifecycleScope
+import com.google.accompanist.systemuicontroller.rememberSystemUiController
+import com.m3u.app.navigation.Destination
 import com.m3u.app.ui.App
+import com.m3u.app.ui.isInDestination
 import com.m3u.app.ui.rememberAppState
 import com.m3u.ui.M3ULocalProvider
 import com.m3u.ui.model.AppAction
-import com.m3u.ui.model.Utils
+import com.m3u.ui.model.Helper
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
-class MainActivity : ComponentActivity(), Utils {
-    private val title = mutableStateOf("")
+class MainActivity : ComponentActivity() {
+    private val title = MutableStateFlow("")
     private val actions = MutableStateFlow(emptyList<AppAction>())
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         super.onCreate(savedInstanceState)
         WindowCompat.setDecorFitsSystemWindows(window, false)
         setContent {
-            M3ULocalProvider(this) {
+            M3ULocalProvider(
+                helper = helper
+            ) {
                 val state = rememberAppState(
                     title = title,
                     actions = actions
                 )
+
+                val systemUiController = rememberSystemUiController()
+                val systemBarsColor =
+                    if (state.currentNavDestination.isInDestination<Destination.Live>()) Color.Black
+                    else Color.Unspecified
+                val useDarkIcons = !isSystemInDarkTheme()
+
+                DisposableEffect(systemUiController, useDarkIcons, systemBarsColor) {
+                    if (systemBarsColor.isUnspecified) {
+                        systemUiController.setSystemBarsColor(
+                            color = Color.Transparent,
+                            darkIcons = useDarkIcons
+                        )
+                    } else {
+                        systemUiController.setSystemBarsColor(
+                            color = systemBarsColor
+                        )
+                    }
+                    onDispose {}
+                }
                 App(state)
             }
         }
     }
 
-    override fun onSaveInstanceState(outState: Bundle) {
-        super.onSaveInstanceState(outState)
-        outState.putString(SAVED_LABEL, title.value)
-    }
 
-    override fun onRestoreInstanceState(savedInstanceState: Bundle) {
-        super.onRestoreInstanceState(savedInstanceState)
-        title.value = savedInstanceState.getString(SAVED_LABEL, "")
-    }
-
-    override fun enterPipMode(size: Rect) {
-        val params = PictureInPictureParams.Builder()
-            .setAspectRatio(Rational(size.width(), size.height()))
-            .build()
-        enterPictureInPictureMode(params)
-    }
-
-    override fun setTitle(title: String) {
-        this.title.value = title
-    }
-
-    override fun setActions(actions: List<AppAction>) {
-        lifecycleScope.launch {
-            this@MainActivity.actions.emit(actions)
+    private val helper: Helper = object : Helper() {
+        override fun enterPipMode(size: Rect) {
+            val params = PictureInPictureParams.Builder()
+                .setAspectRatio(Rational(size.width(), size.height()))
+                .build()
+            enterPictureInPictureMode(params)
         }
-    }
 
-    override fun hideSystemUI() {
-        WindowInsetsControllerCompat(window, window.decorView).let { controller ->
-            controller.hide(WindowInsetsCompat.Type.systemBars())
-            controller.systemBarsBehavior =
-                WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+        override var title: String
+            get() = this@MainActivity.title.value
+            set(value) {
+                this@MainActivity.title.value = value
+            }
+
+        override fun actions(actions: List<AppAction>) {
+            if (this@MainActivity.actions.value == actions) return
+            lifecycleScope.launch {
+                this@MainActivity.actions.emit(actions)
+            }
         }
-    }
 
-    override fun showSystemUI() {
-        WindowInsetsControllerCompat(
-            window,
-            window.decorView
-        ).show(WindowInsetsCompat.Type.systemBars())
-    }
+        override fun hideSystemUI() {
+            WindowInsetsControllerCompat(window, window.decorView).let { controller ->
+                controller.hide(WindowInsetsCompat.Type.systemBars())
+                controller.systemBarsBehavior =
+                    WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+            }
+        }
 
-    companion object {
-        private const val SAVED_LABEL = "saved:label"
+        override fun showSystemUI() {
+            WindowInsetsControllerCompat(
+                window,
+                window.decorView
+            ).show(WindowInsetsCompat.Type.systemBars())
+        }
     }
 }
