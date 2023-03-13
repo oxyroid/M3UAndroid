@@ -18,6 +18,7 @@ import com.m3u.core.wrapper.Resource
 import com.m3u.core.wrapper.emitMessage
 import com.m3u.core.wrapper.emitResource
 import com.m3u.core.wrapper.resourceFlow
+import com.m3u.data.remote.upnp.UpnpDiscover
 import com.m3u.data.repository.MediaRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -93,5 +94,10 @@ class MediaRepositoryImpl @Inject constructor(
         }
         val intent = Intent(Intent.ACTION_MEDIA_SHARED, uris.first())
         context.startActivity(intent)
+    }
+
+    override fun discoverNearbyDevices(): Flow<String> {
+        val discover = UpnpDiscover()
+        return discover.start()
     }
 }

@@ -9,4 +9,5 @@ interface MediaRepository {
     fun readAllLogFiles(): List<File>
     fun clearAllLogFiles()
     fun shareFiles(files: List<File>): Result<Unit>
+    fun discoverNearbyDevices(): Flow<String>
 }

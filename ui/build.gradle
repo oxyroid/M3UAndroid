@@ -57,8 +57,6 @@ dependencies {
 
     implementation libs.androidx.navigation.navigation.compose
 
-    implementation libs.com.google.accompanist.accompanist.systemuicontroller
-
     implementation libs.androidx.media3.media3.ui
     implementation libs.androidx.media3.media3.exoplayer.asProvider()
     implementation libs.androidx.media3.media3.exoplayer.dash
