@@ -25,7 +25,7 @@ data class PlayerState(
     val keepScreenOn: Boolean,
     val context: Context,
     val playbackState: MutableState<@Player.State Int>,
-    val playerRect: MutableState<Rect>,
+    val videoSize: MutableState<Rect>,
     val exception: MutableState<PlaybackException?>
 ) {
     private val mediaItem = MediaItem.fromUri(url)
@@ -71,21 +71,21 @@ fun ExoPlayer(
 ) {
     val player = state.player
     val keepScreenOn = state.keepScreenOn
-    val playerState = state.playbackState
-    val videoSize = state.playerRect
-    val exception = state.exception
+    val playbackState = state.playbackState
+    val videoSize = state.videoSize
+    val playerError = state.exception
     val clipMode = state.clipMode
 
-    DisposableEffect(player, playerState, videoSize, exception) {
+    DisposableEffect(player, playbackState, videoSize, playerError) {
         val listener = object : Player.Listener {
             override fun onVideoSizeChanged(size: VideoSize) {
                 super.onVideoSizeChanged(size)
                 videoSize.value = Rect(0, 0, size.width, size.height)
             }
 
-            override fun onPlaybackStateChanged(playbackState: Int) {
-                super.onPlaybackStateChanged(playbackState)
-                playerState.value = playbackState
+            override fun onPlaybackStateChanged(state: Int) {
+                super.onPlaybackStateChanged(state)
+                playbackState.value = state
             }
 
             override fun onPlayerError(error: PlaybackException) {
@@ -97,7 +97,7 @@ fun ExoPlayer(
                     }
                     else -> {}
                 }
-                exception.value = error
+                playerError.value = error
             }
         }
         state.player.addListener(listener)

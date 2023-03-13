@@ -9,6 +9,7 @@ import com.m3u.features.console.command.CommandHandler
 import com.m3u.features.console.command.CommandResource
 import com.m3u.features.console.command.impl.EmptyCommandHandler
 import com.m3u.features.console.command.impl.LoggerCommandHandler
+import com.m3u.features.console.command.impl.UpnpCommandHandler
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.launchIn
@@ -101,6 +102,12 @@ class ConsoleViewModel @Inject constructor(
                     readAllLogFiles = mediaRepository::readAllLogFiles,
                     clearAllLogFiles = mediaRepository::clearAllLogFiles,
                     shareLogFiles = mediaRepository::shareFiles,
+                    input = input
+                )
+            }
+            UpnpCommandHandler.KEY -> {
+                UpnpCommandHandler(
+                    discoverNearbyDevices = mediaRepository::discoverNearbyDevices,
                     input = input
                 )
             }

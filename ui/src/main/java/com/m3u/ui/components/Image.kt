@@ -3,6 +3,7 @@ package com.m3u.ui.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
@@ -14,6 +15,7 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.layout.ContentScale
 import coil.compose.SubcomposeAsyncImage
+import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.LocalTheme
 
 @Composable
@@ -43,13 +45,13 @@ fun Image(
             Box(
                 modifier = Modifier
                     .clip(shape)
-                    .background(LocalTheme.current.secondary),
+                    .background(LocalTheme.current.secondary)
+                    .padding(LocalSpacing.current.small),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
                     text = errorPlaceholder.orEmpty(),
-                    style = MaterialTheme.typography.h5,
-                    color = LocalTheme.current.onSecondary
+                    style = MaterialTheme.typography.h5
                 )
             }
         }

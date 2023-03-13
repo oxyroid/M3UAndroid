@@ -1,31 +1,33 @@
-package com.m3u.data.local.source.analyzer
+package com.m3u.data.remote.analyzer
 
-import com.m3u.data.local.source.analyzer.m3u.M3UAnalyzer
+import com.m3u.data.remote.analyzer.impl.M3UParser
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.InputStream
 import java.net.URL
 import java.util.stream.Stream
+import kotlin.streams.asSequence
 
-abstract class Analyzer<T> {
-    abstract suspend fun analyze(lines: Stream<String>)
+abstract class Parser<T> {
+    abstract suspend fun execute(lines: Sequence<String>)
     abstract fun get(): T
-    abstract fun reset()
 
     companion object {
-        fun newM3UParser() = M3UAnalyzer()
+        fun newM3UParser() = M3UParser()
     }
 }
 
-suspend fun Analyzer<*>.analyze(stream: InputStream) {
-    withContext(Dispatchers.Default) {
-        stream.bufferedReader().lines().use {
-            this@analyze.analyze(it)
-        }
+suspend fun Parser<*>.execute(stream: Stream<String>) {
+    this@execute.execute(stream.asSequence())
+}
+
+suspend fun Parser<*>.execute(stream: InputStream) {
+    stream.bufferedReader().lines().use {
+        this@execute.execute(it)
     }
 }
 
-suspend fun Analyzer<*>.analyze(
+suspend fun Parser<*>.execute(
     url: URL,
     connectTimeout: Int = 8000,
     readTimeout: Int = connectTimeout,
@@ -35,13 +37,13 @@ suspend fun Analyzer<*>.analyze(
         connection.connectTimeout = connectTimeout
         connection.readTimeout = readTimeout
         connection.getInputStream().use {
-            this@analyze.analyze(it)
+            this@execute.execute(it)
         }
     }
 }
 
-suspend fun Analyzer<*>.analyze(
+suspend fun Parser<*>.execute(
     url: String,
     connectTimeout: Int = 8000,
     readTimeout: Int = connectTimeout
-) = analyze(URL(url), connectTimeout, readTimeout)
+) = execute(URL(url), connectTimeout, readTimeout)

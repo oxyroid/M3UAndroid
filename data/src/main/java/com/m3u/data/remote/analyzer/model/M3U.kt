@@ -1,4 +1,4 @@
-package com.m3u.data.local.source.model
+package com.m3u.data.remote.analyzer.model
 
 import com.m3u.data.local.entity.Live
 

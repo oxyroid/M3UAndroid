@@ -13,10 +13,10 @@ import com.m3u.data.local.dao.FeedDao
 import com.m3u.data.local.dao.LiveDao
 import com.m3u.data.local.entity.Feed
 import com.m3u.data.local.entity.Live
-import com.m3u.data.local.source.analyzer.Analyzer
-import com.m3u.data.local.source.analyzer.analyze
-import com.m3u.data.local.source.matcher.m3u.M3UMatcher
-import com.m3u.data.local.source.model.toLive
+import com.m3u.data.remote.analyzer.Parser
+import com.m3u.data.remote.analyzer.execute
+import com.m3u.data.remote.analyzer.impl.M3UParser
+import com.m3u.data.remote.analyzer.model.toLive
 import com.m3u.data.repository.FeedRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
@@ -34,7 +34,7 @@ class FeedRepositoryImpl @Inject constructor(
         @FeedStrategy strategy: Int
     ): Flow<Resource<Unit>> = resourceFlow {
         try {
-            val lives = analyze(url)
+            val lives = parse(url)
             val feed = Feed(title, url)
             feedDao.insert(feed)
             val cachedLives = liveDao.getByFeedUrl(url)
@@ -95,13 +95,13 @@ class FeedRepositoryImpl @Inject constructor(
     }
 
 
-    private suspend fun analyze(url: String): List<Live> {
-        val analyzer = when {
-            M3UMatcher.match(url) -> Analyzer.newM3UParser()
+    private suspend fun parse(url: String): List<Live> {
+        val parser = when {
+            M3UParser.match(url) -> Parser.newM3UParser()
             else -> error("Unsupported url: $url")
         }
-        return analyzer.run {
-            analyze(
+        return parser.run {
+            execute(
                 url = url,
                 connectTimeout = configuration.connectTimeout
             )

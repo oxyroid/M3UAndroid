@@ -1,34 +1,34 @@
-package com.m3u.data.local.source.analyzer.m3u
+package com.m3u.data.remote.analyzer.impl
 
 import com.m3u.core.util.basic.trimBrackets
 import com.m3u.core.util.collection.loadLine
-import com.m3u.data.local.source.analyzer.Analyzer
-import com.m3u.data.local.source.model.M3U
+import com.m3u.data.remote.analyzer.Parser
+import com.m3u.data.remote.analyzer.model.M3U
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.net.URL
 import java.util.*
-import java.util.stream.Stream
-import kotlin.streams.asSequence
 
-class M3UAnalyzer internal constructor() : Analyzer<List<M3U>>() {
-    @Volatile
-    private var block: M3U? = null
+class M3UParser internal constructor() : Parser<List<M3U>>() {
     private val list = mutableListOf<M3U>()
-
-    override suspend fun analyze(lines: Stream<String>) {
+    override suspend fun execute(lines: Sequence<String>) {
         withContext(Dispatchers.Default) {
-            lines.asSequence()
+            var block: M3U? = null
+            lines
                 .filterNot { it.isEmpty() }
                 .forEach { line ->
                     when {
-                        line.startsWith(M3U_HEADER_MARK) -> reset()
+                        line.startsWith(M3U_HEADER_MARK) -> {
+                            list.clear()
+                            block = null
+                        }
                         line.startsWith(M3U_INFO_MARK) -> {
                             block?.let {
                                 list.add(it)
                             }
                             block = M3U().setContent(line)
                         }
-
+                        line.startsWith("#") -> {}
                         else -> {
                             block = block?.setUrl(line)
                             block?.let {
@@ -42,11 +42,6 @@ class M3UAnalyzer internal constructor() : Analyzer<List<M3U>>() {
     }
 
     override fun get(): List<M3U> = list
-
-    override fun reset() {
-        list.clear()
-        block = null
-    }
 
     private fun M3U.setUrl(url: String): M3U = copy(url = url)
 
@@ -125,5 +120,13 @@ class M3UAnalyzer internal constructor() : Analyzer<List<M3U>>() {
         private const val M3U_TVG_ID_MARK = "tvg-id"
         private const val M3U_TVG_NAME_MARK = "tvg-name"
         private const val M3U_GROUP_TITLE_MARK = "group-title"
+
+        fun match(url: String): Boolean = try {
+            val path = URL(url).path
+            path.endsWith(".m3u", ignoreCase = true) ||
+                    path.endsWith(".m3u8", ignoreCase = true)
+        } catch (e: Exception) {
+            false
+        }
     }
 }

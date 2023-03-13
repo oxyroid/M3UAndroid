@@ -1,6 +1,5 @@
 package com.m3u.features.live
 
-import android.graphics.Rect
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.LocalContentAlpha
@@ -19,7 +18,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.util.lerp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
@@ -27,14 +25,14 @@ import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.VerticalPager
 import com.google.accompanist.pager.calculateCurrentOffsetForPage
 import com.google.accompanist.pager.rememberPagerState
-import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.m3u.core.annotation.ClipMode
+import com.m3u.core.util.basic.isNotEmpty
 import com.m3u.core.util.context.toast
 import com.m3u.ui.components.*
 import com.m3u.ui.model.LocalTheme
-import com.m3u.ui.model.LocalUtils
+import com.m3u.ui.model.LocalHelper
 import com.m3u.ui.util.EventHandler
-import com.m3u.ui.util.LifecycleEffect
+import com.m3u.ui.util.RepeatOnCreate
 import kotlin.math.absoluteValue
 
 @Composable
@@ -44,23 +42,11 @@ internal fun LiveRoute(
     viewModel: LiveViewModel = hiltViewModel(),
 ) {
     val context = LocalContext.current
-    val utils = LocalUtils.current
-    val systemUiController = rememberSystemUiController()
+    val helper = LocalHelper.current
     val state: LiveState by viewModel.state.collectAsStateWithLifecycle()
-    val theme = LocalTheme.current
 
-    LifecycleEffect { event ->
-        when (event) {
-            Lifecycle.Event.ON_RESUME -> {
-                utils.hideSystemUI()
-                systemUiController.setSystemBarsColor(Color.Black)
-            }
-            Lifecycle.Event.ON_PAUSE -> {
-                utils.showSystemUI()
-                systemUiController.setSystemBarsColor(Color.Transparent, theme.isDarkText)
-            }
-            else -> {}
-        }
+    RepeatOnCreate {
+        helper.hideSystemUI()
     }
 
     EventHandler(state.message) {
@@ -154,25 +140,21 @@ private fun LivePart(
     Box(
         modifier = modifier
     ) {
-        val utils = LocalUtils.current
-        val videoSize = remember { mutableStateOf(Rect()) }
-        val playerState = rememberPlayerState(
+        val helper = LocalHelper.current
+        val state = rememberPlayerState(
             url = url,
-            videoSize = videoSize,
             clipMode = clipMode
         )
         ExoPlayer(
-            state = playerState,
+            state = state,
             modifier = Modifier.fillMaxSize()
         )
         val maskState = rememberMaskState { visible ->
-            when (visible) {
-                true -> utils.showSystemUI()
-                false -> utils.hideSystemUI()
-            }
+            helper.systemUiVisibility = visible
         }
-        val playback by playerState.playbackState
-        val exception by playerState.exception
+        val playback by state.playbackState
+        val exception by state.exception
+        val videoSize by state.videoSize
 
         LiveMask(
             state = maskState,
@@ -195,14 +177,13 @@ private fun LivePart(
                         )
                     }
                 }
-
-                val shouldShowPipButton = (!videoSize.value.isEmpty)
+                val shouldShowPipButton = videoSize.isNotEmpty
                 if (shouldShowPipButton) {
                     MaskButton(
                         state = maskState,
                         icon = Icons.Rounded.PictureInPicture,
                         onClick = {
-                            utils.enterPipMode(videoSize.value)
+                            helper.enterPipMode(videoSize)
                             maskState.sleep()
                         }
                     )
@@ -213,7 +194,7 @@ private fun LivePart(
                     state = maskState,
                     icon = Icons.Rounded.Refresh,
                     onClick = {
-                        playerState.loadMedia()
+                        state.loadMedia()
                     }
                 )
             },
