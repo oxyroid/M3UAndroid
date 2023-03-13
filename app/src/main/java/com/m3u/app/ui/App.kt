@@ -58,7 +58,7 @@ fun App(
                 val topLevelTitle = appState.currentTopLevelDestination
                     ?.titleTextId
                     ?.let { stringResource(it) }
-                val title by appState.title
+                val title by appState.title.collectAsStateWithLifecycle()
                 val text by remember(topLevelTitle) {
                     derivedStateOf { topLevelTitle ?: title }
                 }

@@ -29,7 +29,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 fun rememberAppState(
     @OptIn(ExperimentalAnimationApi::class)
     navController: NavHostController = rememberAnimatedNavController(),
-    title: MutableState<String> = remember { mutableStateOf("") },
+    title: MutableStateFlow<String> = remember { MutableStateFlow("") },
     actions: MutableStateFlow<List<AppAction>> = remember { MutableStateFlow(emptyList()) },
 ): AppState {
     DisposableEffect(navController) {
@@ -49,7 +49,7 @@ fun rememberAppState(
 @Stable
 class AppState(
     val navController: NavHostController,
-    val title: MutableState<String>,
+    val title: MutableStateFlow<String>,
     val actions: MutableStateFlow<List<AppAction>>,
 ) {
     val currentNavDestination: NavDestination?
