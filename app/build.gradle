@@ -23,8 +23,8 @@ android {
         applicationId "com.m3u.app"
         minSdk 26
         targetSdk 33
-        versionCode 35
-        versionName "1.11.0-alpha04"
+        versionCode 36
+        versionName "1.11.0-alpha05"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -91,6 +91,7 @@ dependencies {
     implementation libs.androidx.core.core.splashscreen
 
     implementation libs.com.google.accompanist.accompanist.navigation.animation
+    implementation libs.com.google.accompanist.accompanist.systemuicontroller
 
     implementation libs.com.google.dagger.hilt.android
     kapt libs.com.google.dagger.hilt.compiler
