@@ -3,6 +3,8 @@ package com.m3u.features.console.command
 import kotlinx.coroutines.channels.ProducerScope
 
 internal interface CommandScope {
+    var keep: Boolean
+
     val param: String?
     val arg: String?
     suspend fun output(text: String)
@@ -25,6 +27,8 @@ internal class CommandProducerScope(
     override suspend fun output(text: String) {
         scope.send(CommandResource.Output(text))
     }
+
+    override var keep: Boolean = false
 }
 
 private val List<String>.param: String? get() = getOrNull(2)

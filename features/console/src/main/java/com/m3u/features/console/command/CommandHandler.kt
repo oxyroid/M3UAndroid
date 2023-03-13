@@ -28,7 +28,9 @@ internal abstract class CommandHandler(private val input: String) {
         val block = scopes[path]
         if (block != null) {
             block(scope)
-            send(CommandResource.Idle)
+            if (!scope.keep) {
+                send(CommandResource.Idle)
+            }
         } else {
             EmptyCommandHandler(input)
                 .execute()

@@ -10,7 +10,6 @@ internal class LoggerCommandHandler(
     shareLogFiles: (List<File>) -> Result<Unit>,
     input: String
 ) : CommandHandler(input) {
-
     init {
         path("list") {
             val text = if (param.isNullOrEmpty()) {
