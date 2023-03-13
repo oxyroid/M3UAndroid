@@ -21,7 +21,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.tv.foundation.lazy.grid.TvGridCells
 import androidx.tv.foundation.lazy.grid.TvLazyVerticalGrid
@@ -38,13 +37,9 @@ import com.m3u.data.local.entity.Live
 import com.m3u.features.feed.components.DialogState
 import com.m3u.features.feed.components.FeedDialog
 import com.m3u.features.feed.components.LiveItem
-import com.m3u.ui.components.Background
 import com.m3u.ui.components.TextField
 import com.m3u.ui.model.*
-import com.m3u.ui.util.EventHandler
-import com.m3u.ui.util.LifecycleEffect
-import com.m3u.ui.util.interceptVolumeEvent
-import com.m3u.ui.util.isAtTop
+import com.m3u.ui.util.*
 import kotlinx.coroutines.launch
 
 @Composable
@@ -56,40 +51,31 @@ internal fun FeedRoute(
     viewModel: FeedViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
-    val utils = LocalUtils.current
+    val helper = LocalHelper.current
     val state by viewModel.state.collectAsStateWithLifecycle()
     var dialogState: DialogState by remember { mutableStateOf(DialogState.Idle) }
-    LifecycleEffect { event ->
-        when (event) {
-            Lifecycle.Event.ON_START -> {
-                val actions = listOf(
-                    AppAction(
-                        icon = Icon.ImageVectorIcon(Icons.Rounded.Refresh),
-                        contentDescription = "refresh",
-                        onClick = {
-                            viewModel.onEvent(FeedEvent.FetchFeed)
-                        }
-                    )
-                )
-                utils.setActions(actions)
-            }
 
-            Lifecycle.Event.ON_PAUSE -> {
-                utils.setTitle()
-                utils.setActions()
-            }
-
-            else -> {}
-        }
+    LaunchedEffect(url) {
+        viewModel.onEvent(FeedEvent.ObserveFeed(url))
+    }
+    RepeatOnCreate {
+        helper.actions(
+            AppAction(
+                icon = Icon.ImageVectorIcon(Icons.Rounded.Refresh),
+                contentDescription = "refresh",
+                onClick = {
+                    viewModel.onEvent(FeedEvent.FetchFeed)
+                }
+            )
+        )
     }
     EventHandler(state.message) {
         context.toast(it)
     }
-    LaunchedEffect(url) {
-        viewModel.onEvent(FeedEvent.ObserveFeed(url))
-    }
     LaunchedEffect(state.title) {
-        utils.setTitle(state.title)
+        state.title?.let {
+            helper.title = it
+        }
     }
     val rowCount = state.rowCount
     fun onRowCount(target: Int) {
@@ -159,89 +145,87 @@ private fun FeedScreen(
         refreshing = refreshing,
         onRefresh = onSyncingLatest
     )
-    Background {
-        Column {
-            TextField(
-                text = query,
-                onValueChange = onQuery,
-                height = 32.dp,
-                placeholder = stringResource(R.string.query_placeholder).uppercaseFirst(),
-                modifier = Modifier
-                    .padding(LocalSpacing.current.medium,)
-                    .fillMaxWidth()
-            )
-            Box(
-                modifier = Modifier.pullRefresh(state)
-            ) {
-                val isAtTopState = remember { mutableStateOf(true) }
-                when (configuration.orientation) {
-                    ORIENTATION_LANDSCAPE -> {
-                        FeedPager(
-                            lives = lives,
-                            modifier = Modifier.fillMaxSize()
-                        ) {
-                            LandscapeOrientationContent(
-                                lives = it,
-                                useCommonUIMode = useCommonUIMode,
-                                scrollMode = scrollMode,
-                                rowCount = rowCount,
-                                isAtTopState = isAtTopState,
-                                scrollUp = scrollUp,
-                                navigateToLive = navigateToLive,
-                                navigateToLivePlayList = navigateToLivePlayList,
-                                onLiveAction = onLiveAction,
-                                modifier = modifier
-                            )
-                        }
-                    }
-
-                    ORIENTATION_PORTRAIT -> {
-                        FeedPager(
-                            lives = lives,
-                            modifier = Modifier.fillMaxSize()
-                        ) {
-                            PortraitOrientationContent(
-                                lives = it,
-                                scrollMode = scrollMode,
-                                rowCount = rowCount,
-                                isAtTopState = isAtTopState,
-                                scrollUp = scrollUp,
-                                navigateToLive = navigateToLive,
-                                navigateToLivePlayList = navigateToLivePlayList,
-                                onLiveAction = onLiveAction,
-                                modifier = modifier
-                            )
-                        }
-                    }
-
-                    else -> {}
-                }
-                PullRefreshIndicator(
-                    refreshing = refreshing,
-                    state = state,
-                    modifier = Modifier.align(Alignment.TopCenter),
-                    scale = true,
-                    contentColor = LocalTheme.current.onTint,
-                    backgroundColor = LocalTheme.current.tint
-                )
-                this@Column.AnimatedVisibility(
-                    visible = !isAtTopState.value,
-                    enter = scaleIn(),
-                    exit = scaleOut(),
-                    modifier = Modifier
-                        .padding(LocalSpacing.current.medium)
-                        .align(Alignment.BottomEnd)
-                ) {
-                    FloatingActionButton(
-                        onClick = onScrollUp,
-                        backgroundColor = LocalTheme.current.tint,
-                        contentColor = LocalTheme.current.onTint
+    Column {
+        TextField(
+            text = query,
+            onValueChange = onQuery,
+            height = 32.dp,
+            placeholder = stringResource(R.string.query_placeholder).uppercaseFirst(),
+            modifier = Modifier
+                .padding(LocalSpacing.current.medium)
+                .fillMaxWidth()
+        )
+        Box(
+            modifier = Modifier.pullRefresh(state)
+        ) {
+            val isAtTopState = remember { mutableStateOf(true) }
+            when (configuration.orientation) {
+                ORIENTATION_LANDSCAPE -> {
+                    FeedPager(
+                        lives = lives,
+                        modifier = Modifier.fillMaxSize()
                     ) {
-                        Icon(
-                            imageVector = Icons.Rounded.ArrowUpward,
-                            contentDescription = null
+                        LandscapeOrientationContent(
+                            lives = it,
+                            useCommonUIMode = useCommonUIMode,
+                            scrollMode = scrollMode,
+                            rowCount = rowCount,
+                            isAtTopState = isAtTopState,
+                            scrollUp = scrollUp,
+                            navigateToLive = navigateToLive,
+                            navigateToLivePlayList = navigateToLivePlayList,
+                            onLiveAction = onLiveAction,
+                            modifier = modifier
                         )
                     }
+                }
+
+                ORIENTATION_PORTRAIT -> {
+                    FeedPager(
+                        lives = lives,
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        PortraitOrientationContent(
+                            lives = it,
+                            scrollMode = scrollMode,
+                            rowCount = rowCount,
+                            isAtTopState = isAtTopState,
+                            scrollUp = scrollUp,
+                            navigateToLive = navigateToLive,
+                            navigateToLivePlayList = navigateToLivePlayList,
+                            onLiveAction = onLiveAction,
+                            modifier = modifier
+                        )
+                    }
+                }
+
+                else -> {}
+            }
+            PullRefreshIndicator(
+                refreshing = refreshing,
+                state = state,
+                modifier = Modifier.align(Alignment.TopCenter),
+                scale = true,
+                contentColor = LocalTheme.current.onTint,
+                backgroundColor = LocalTheme.current.tint
+            )
+            this@Column.AnimatedVisibility(
+                visible = !isAtTopState.value,
+                enter = scaleIn(),
+                exit = scaleOut(),
+                modifier = Modifier
+                    .padding(LocalSpacing.current.medium)
+                    .align(Alignment.BottomEnd)
+            ) {
+                FloatingActionButton(
+                    onClick = onScrollUp,
+                    backgroundColor = LocalTheme.current.tint,
+                    contentColor = LocalTheme.current.onTint
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.ArrowUpward,
+                        contentDescription = null
+                    )
                 }
             }
         }
@@ -261,6 +245,7 @@ private fun LandscapeOrientationContent(
     onLiveAction: (Live) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val spacing = LocalSpacing.current
     val configuration = LocalConfiguration.current
     val type = configuration.uiMode and UI_MODE_TYPE_MASK
     val ids = remember(scrollMode, lives) {
@@ -268,61 +253,62 @@ private fun LandscapeOrientationContent(
         else emptyList()
     }
 
-    Column {
-        if (useCommonUIMode || type == UI_MODE_TYPE_NORMAL) {
-            val state = rememberLazyGridState()
-            LaunchedEffect(state.isAtTop) {
-                isAtTopState.value = state.isAtTop
+    if (useCommonUIMode || type == UI_MODE_TYPE_NORMAL) {
+        val state = rememberLazyGridState()
+        LaunchedEffect(state.isAtTop) {
+            isAtTopState.value = state.isAtTop
+        }
+        EventHandler(scrollUp) {
+            state.scrollToItem(0)
+        }
+        LazyVerticalGrid(
+            state = state,
+            columns = GridCells.Fixed(rowCount + 2),
+            verticalArrangement = Arrangement.spacedBy(spacing.medium),
+            horizontalArrangement = Arrangement.spacedBy(spacing.medium),
+            contentPadding = PaddingValues(spacing.medium),
+            modifier = modifier.fillMaxSize()
+        ) {
+            items(
+                items = lives,
+                key = { it.id }
+            ) { live ->
+                LiveItem(
+                    live = live,
+                    onClick = {
+                        if (scrollMode) {
+                            val initialIndex = ids.indexOfFirst { it == live.id }
+                            navigateToLivePlayList(ids, initialIndex)
+                        } else {
+                            navigateToLive(live.id)
+                        }
+                    },
+                    onLongClick = { onLiveAction(live) },
+                    scaleTime = rowCount,
+                    modifier = Modifier.fillMaxWidth(),
+                )
             }
-            EventHandler(scrollUp) {
-                state.scrollToItem(0)
+        }
+    } else {
+        when (type) {
+            UI_MODE_TYPE_TELEVISION -> {
+                TelevisionUIModeContent(
+                    lives = lives,
+                    experimentalMode = scrollMode,
+                    isAtTopState = isAtTopState,
+                    scrollUp = scrollUp,
+                    navigateToLive = navigateToLive,
+                    navigateToLivePlayList = navigateToLivePlayList,
+                    onLiveAction = onLiveAction,
+                    modifier = modifier
+                )
             }
-            LazyVerticalGrid(
-                state = state,
-                columns = GridCells.Fixed(rowCount + 2),
-                modifier = modifier.fillMaxSize()
-            ) {
-                items(
-                    items = lives,
-                    key = { it.id }
-                ) { live ->
-                    LiveItem(
-                        live = live,
-                        onClick = {
-                            if (scrollMode) {
-                                val initialIndex = ids.indexOfFirst { it == live.id }
-                                navigateToLivePlayList(ids, initialIndex)
-                            } else {
-                                navigateToLive(live.id)
-                            }
-                        },
-                        onLongClick = { onLiveAction(live) },
-                        modifier = Modifier.fillMaxWidth(),
-                        scaleTime = rowCount
-                    )
-                }
-            }
-        } else {
-            when (type) {
-                UI_MODE_TYPE_TELEVISION -> {
-                    TelevisionUIModeContent(
-                        lives = lives,
-                        experimentalMode = scrollMode,
-                        isAtTopState = isAtTopState,
-                        scrollUp = scrollUp,
-                        navigateToLive = navigateToLive,
-                        navigateToLivePlayList = navigateToLivePlayList,
-                        onLiveAction = onLiveAction,
-                        modifier = modifier
-                    )
-                }
 
-                else -> {
-                    UnsupportedUIModeContent(
-                        type = type,
-                        modifier = modifier
-                    )
-                }
+            else -> {
+                UnsupportedUIModeContent(
+                    type = type,
+                    modifier = modifier
+                )
             }
         }
     }
@@ -340,6 +326,7 @@ private fun PortraitOrientationContent(
     onLiveAction: (Live) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val spacing = LocalSpacing.current
     val state = rememberLazyGridState()
     val ids = remember(scrollMode, lives) {
         if (scrollMode) lives.map { it.id }
@@ -355,7 +342,9 @@ private fun PortraitOrientationContent(
     LazyVerticalGrid(
         state = state,
         columns = GridCells.Fixed(rowCount),
-        verticalArrangement = Arrangement.spacedBy(1.dp),
+        verticalArrangement = Arrangement.spacedBy(spacing.medium),
+        horizontalArrangement = Arrangement.spacedBy(spacing.medium),
+        contentPadding = PaddingValues(spacing.medium),
         modifier = modifier.fillMaxSize()
     ) {
         items(
@@ -391,6 +380,7 @@ private fun TelevisionUIModeContent(
     onLiveAction: (Live) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val spacing = LocalSpacing.current
     val state = rememberTvLazyGridState()
     val ids = remember(experimentalMode, lives) {
         if (experimentalMode) lives.map { it.id }
@@ -406,6 +396,9 @@ private fun TelevisionUIModeContent(
     TvLazyVerticalGrid(
         state = state,
         columns = TvGridCells.Fixed(4),
+        verticalArrangement = Arrangement.spacedBy(spacing.medium),
+        horizontalArrangement = Arrangement.spacedBy(spacing.medium),
+        contentPadding = PaddingValues(spacing.medium),
         modifier = modifier.fillMaxSize()
     ) {
         items(
@@ -455,9 +448,9 @@ private fun UnsupportedUIModeContent(
         ),
         modifier = modifier.fillMaxSize()
     ) {
-        Text(text = "Unsupported UI Mode: $device")
+        Text("Unsupported UI Mode: $device")
         if (description != null) {
-            Text(text = description)
+            Text(description)
         }
     }
 }
@@ -501,12 +494,12 @@ private fun FeedPager(
                 modifier = Modifier.fillMaxWidth()
             )
         }
-        val c = remember(lives) { lives.values.toList() }
+        val entities = remember(lives) { lives.values.toList() }
         HorizontalPager(
-            count = c.size,
+            count = entities.size,
             state = pagerState
         ) { pager ->
-            content(c[pager])
+            content(entities[pager])
         }
     }
 }
