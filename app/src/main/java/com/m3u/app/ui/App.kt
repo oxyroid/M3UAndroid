@@ -7,6 +7,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -85,15 +86,17 @@ fun App(
                     else null
                 ) { padding ->
                     Column(
-                        modifier = Modifier.fillMaxSize(),
-                        verticalArrangement = Arrangement.Bottom
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(padding),
+                        verticalArrangement = Arrangement.Bottom,
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         M3UNavHost(
                             navController = appState.navController,
                             navigateToDestination = appState::navigateToDestination,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(padding)
                                 .weight(1f)
                         )
                         AnimatedVisibility(isSystemBarVisible) {
