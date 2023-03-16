@@ -25,7 +25,7 @@ M3U is an app that attempts to use the latest libraries and tools. As a summary:
 
 M3U is my first elaborate Android project.
 
-You can join the Telegram [Channel](https://t.me/m3u_android) for latest updates.
+You can join the Telegram [Channel](https://t.me/m3u_android) for update informations.
 
 ### About me
 
