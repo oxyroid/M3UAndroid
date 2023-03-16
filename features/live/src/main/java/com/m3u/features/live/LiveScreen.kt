@@ -18,6 +18,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.util.lerp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
@@ -29,10 +30,10 @@ import com.m3u.core.annotation.ClipMode
 import com.m3u.core.util.basic.isNotEmpty
 import com.m3u.core.util.context.toast
 import com.m3u.ui.components.*
-import com.m3u.ui.model.LocalTheme
 import com.m3u.ui.model.LocalHelper
+import com.m3u.ui.model.LocalTheme
 import com.m3u.ui.util.EventHandler
-import com.m3u.ui.util.RepeatOnCreate
+import com.m3u.ui.util.LifecycleEffect
 import kotlin.math.absoluteValue
 
 @Composable
@@ -45,8 +46,16 @@ internal fun LiveRoute(
     val helper = LocalHelper.current
     val state: LiveState by viewModel.state.collectAsStateWithLifecycle()
 
-    RepeatOnCreate {
-        helper.hideSystemUI()
+    LifecycleEffect { event ->
+        when (event) {
+            Lifecycle.Event.ON_CREATE -> {
+                helper.hideSystemUI()
+            }
+            Lifecycle.Event.ON_DESTROY -> {
+                helper.showSystemUI()
+            }
+            else -> {}
+        }
     }
 
     EventHandler(state.message) {
