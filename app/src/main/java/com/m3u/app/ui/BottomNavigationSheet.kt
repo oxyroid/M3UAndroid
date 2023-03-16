@@ -6,6 +6,7 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.NavigationRailItem
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -14,6 +15,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hierarchy
+import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.m3u.app.navigation.NavigateToTopLevelDestination
 import com.m3u.app.navigation.TopLevelDestination
 import com.m3u.ui.components.NavigationSheet
@@ -28,10 +30,13 @@ fun BottomNavigationSheet(
     currentNavDestination: NavDestination?,
     modifier: Modifier = Modifier
 ) {
+    val controller = rememberSystemUiController()
+    val backgroundColor = BottomSheetDefaults.navigationBackgroundColor()
+    val contentColor = BottomSheetDefaults.navigationContentColor()
     NavigationSheet(
         modifier = modifier,
-        containerColor = BottomSheetDefaults.navigationBackgroundColor(),
-        contentColor = BottomSheetDefaults.navigationContentColor(),
+        containerColor = backgroundColor,
+        contentColor = contentColor,
         elevation = LocalSpacing.current.none
     ) {
         destinations.forEach { destination ->
@@ -63,6 +68,14 @@ fun BottomNavigationSheet(
                     )
                 }
             )
+        }
+    }
+
+
+    DisposableEffect(backgroundColor) {
+        controller.setNavigationBarColor(backgroundColor)
+        onDispose {
+            controller.setNavigationBarColor(Color.Transparent)
         }
     }
 }
