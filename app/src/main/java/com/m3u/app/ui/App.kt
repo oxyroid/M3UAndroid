@@ -92,17 +92,18 @@ fun App(
                             navController = appState.navController,
                             navigateToDestination = appState::navigateToDestination,
                             modifier = Modifier
+                                .fillMaxWidth()
                                 .padding(padding)
                                 .weight(1f)
                         )
-                        AnimatedVisibility(
-                            visible = isSystemBarVisible,
-                        ) {
+                        AnimatedVisibility(isSystemBarVisible) {
                             BottomNavigationSheet(
                                 destinations = appState.topLevelDestinations,
                                 navigateToTopLevelDestination = appState::navigateToTopLevelDestination,
                                 currentNavDestination = appState.currentNavDestination,
-                                modifier = Modifier.testTag("BottomNavigationSheet")
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .testTag("BottomNavigationSheet")
                             )
                         }
                     }
