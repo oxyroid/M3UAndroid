@@ -18,8 +18,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import com.m3u.data.local.entity.Live
 import com.m3u.features.feed.R
 import com.m3u.ui.components.Image
-import com.m3u.ui.components.OuterColumn
 import com.m3u.ui.components.TextBadge
+import com.m3u.ui.model.LocalScalable
 import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.LocalTheme
 import java.net.URI
@@ -30,12 +30,15 @@ internal fun LiveItem(
     live: Live,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    scaleTime: Int = 1
+    modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-    val spacing = LocalSpacing.current
+    val scalable = LocalScalable.current
+    val spacing = with(scalable) {
+        LocalSpacing.current.scaled
+    }
     val theme = LocalTheme.current
+
     val scheme = remember(live) {
         URI(live.url).scheme ?: context.getString(R.string.scheme_unknown).uppercase()
     }
@@ -61,10 +64,15 @@ internal fun LiveItem(
                     .fillMaxWidth()
                     .aspectRatio(4 / 3f)
             )
-            OuterColumn {
+            Column(
+                modifier = Modifier.padding(spacing.medium)
+            ) {
                 Text(
                     text = live.title,
                     style = MaterialTheme.typography.subtitle1,
+                    fontSize = with(scalable) {
+                        MaterialTheme.typography.subtitle1.fontSize.scaled
+                    },
                     overflow = TextOverflow.Ellipsis,
                     maxLines = 1,
                     color = if (live.favourite) theme.primary
@@ -76,7 +84,7 @@ internal fun LiveItem(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(spacing.extraSmall)
                 ) {
-                    TextBadge(text = scheme)
+                    TextBadge(scheme)
                     CompositionLocalProvider(
                         LocalContentAlpha provides 0.6f
                     ) {
@@ -84,6 +92,9 @@ internal fun LiveItem(
                             text = live.url,
                             maxLines = 1,
                             style = MaterialTheme.typography.subtitle2,
+                            fontSize = with(scalable) {
+                                MaterialTheme.typography.subtitle2.fontSize.scaled
+                            },
                             overflow = TextOverflow.Ellipsis
                         )
                     }

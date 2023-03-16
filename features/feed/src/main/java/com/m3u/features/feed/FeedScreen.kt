@@ -93,24 +93,29 @@ internal fun FeedRoute(
         }
     } else Modifier
 
-    FeedScreen(
-        query = state.query,
-        onQuery = { viewModel.onEvent(FeedEvent.OnQuery(it)) },
-        useCommonUIMode = state.useCommonUIMode,
-        scrollMode = state.scrollMode,
-        rowCount = rowCount,
-        lives = state.lives,
-        scrollUp = state.scrollUp,
-        refreshing = state.fetching,
-        onSyncingLatest = { viewModel.onEvent(FeedEvent.FetchFeed) },
-        navigateToLive = navigateToLive,
-        navigateToLivePlayList = navigateToLivePlayList,
-        onLiveAction = { dialogState = DialogState.Menu(it) },
-        onScrollUp = { viewModel.onEvent(FeedEvent.ScrollUp) },
-        modifier = modifier
-            .fillMaxSize()
-            .then(interceptVolumeEventModifier)
-    )
+
+    CompositionLocalProvider(
+        LocalScalable provides Scalable(1f / rowCount)
+    ) {
+        FeedScreen(
+            query = state.query,
+            onQuery = { viewModel.onEvent(FeedEvent.OnQuery(it)) },
+            useCommonUIMode = state.useCommonUIMode,
+            scrollMode = state.scrollMode,
+            rowCount = rowCount,
+            lives = state.lives,
+            scrollUp = state.scrollUp,
+            refreshing = state.fetching,
+            onSyncingLatest = { viewModel.onEvent(FeedEvent.FetchFeed) },
+            navigateToLive = navigateToLive,
+            navigateToLivePlayList = navigateToLivePlayList,
+            onLiveAction = { dialogState = DialogState.Menu(it) },
+            onScrollUp = { viewModel.onEvent(FeedEvent.ScrollUp) },
+            modifier = modifier
+                .fillMaxSize()
+                .then(interceptVolumeEventModifier)
+        )
+    }
 
     FeedDialog(
         state = dialogState,
@@ -245,7 +250,10 @@ private fun LandscapeOrientationContent(
     onLiveAction: (Live) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val spacing = LocalSpacing.current
+    val scalable = LocalScalable.current
+    val spacing = with(scalable) {
+        LocalSpacing.current.scaled
+    }
     val configuration = LocalConfiguration.current
     val type = configuration.uiMode and UI_MODE_TYPE_MASK
     val ids = remember(scrollMode, lives) {
@@ -284,7 +292,6 @@ private fun LandscapeOrientationContent(
                         }
                     },
                     onLongClick = { onLiveAction(live) },
-                    scaleTime = rowCount,
                     modifier = Modifier.fillMaxWidth(),
                 )
             }
@@ -326,7 +333,10 @@ private fun PortraitOrientationContent(
     onLiveAction: (Live) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val spacing = LocalSpacing.current
+    val scalable = LocalScalable.current
+    val spacing = with(scalable) {
+        LocalSpacing.current.scaled
+    }
     val state = rememberLazyGridState()
     val ids = remember(scrollMode, lives) {
         if (scrollMode) lives.map { it.id }
@@ -363,7 +373,6 @@ private fun PortraitOrientationContent(
                 },
                 onLongClick = { onLiveAction(live) },
                 modifier = Modifier.fillMaxWidth(),
-                scaleTime = rowCount
             )
         }
     }
@@ -380,7 +389,10 @@ private fun TelevisionUIModeContent(
     onLiveAction: (Live) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val spacing = LocalSpacing.current
+    val scalable = LocalScalable.current
+    val spacing = with(scalable) {
+        LocalSpacing.current.scaled
+    }
     val state = rememberTvLazyGridState()
     val ids = remember(experimentalMode, lives) {
         if (experimentalMode) lives.map { it.id }
