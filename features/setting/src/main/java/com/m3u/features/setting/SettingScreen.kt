@@ -19,10 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.platform.LocalClipboardManager
-import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.platform.*
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -572,29 +569,30 @@ private fun PreferencesPart(
             when (release) {
                 Resource.Loading -> {}
                 is Resource.Success -> {
-//                    val uriHandler = LocalUriHandler.current
+                    val uriHandler = LocalUriHandler.current
                     val remoteVersion = release.data.name
-//                    val name = if (remoteVersion != version) {
-//                        stringResource(R.string.label_latest_release_version, remoteVersion)
-//                    } else {
-//                        stringResource(R.string.label_same_version)
-//                    }
-                    Selection(
-                        onClick = { /*TODO*/ },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text(text = remoteVersion)
+                    val name = if (remoteVersion != version) {
+                        stringResource(R.string.label_latest_release_version, remoteVersion)
+                    } else {
+                        stringResource(R.string.label_same_version)
                     }
 
-//                    TextButton(name) {
-//                        if (remoteVersion == version) {
-//                            fetchRelease()
-//                        } else {
-//                            val url =
-//                                "https://github.com/thxbrop/M3UAndroid/releases/tag/v$remoteVersion"
-//                            uriHandler.openUri(url)
-//                        }
+//                    Selection(
+//                        onClick = { /*TODO*/ },
+//                        modifier = Modifier.fillMaxWidth()
+//                    ) {
+//                        Text(text = remoteVersion)
 //                    }
+
+                    TextButton(name) {
+                        if (remoteVersion == version) {
+                            fetchRelease()
+                        } else {
+                            val url =
+                                "https://github.com/thxbrop/M3UAndroid/releases/tag/v$remoteVersion"
+                            uriHandler.openUri(url)
+                        }
+                    }
                 }
                 is Resource.Failure -> {
                     TextButton(

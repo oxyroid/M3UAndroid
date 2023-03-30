@@ -47,6 +47,10 @@ fun MonoText(
         textDecoration = textDecoration,
         textAlign = textAlign,
         lineHeight = lineHeight,
-        overflow = overflow
+        overflow = overflow,
+        softWrap = softWrap,
+        maxLines = maxLines,
+        onTextLayout = onTextLayout,
+        style = style
     )
 }
