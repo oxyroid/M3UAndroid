@@ -1,6 +1,7 @@
 package com.m3u.ui.components
 
-import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.LocalContentColor
 import androidx.compose.material.MaterialTheme
@@ -26,6 +27,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.lerp
 import com.m3u.ui.R
 import com.m3u.ui.model.Icon
+import com.m3u.ui.model.LocalDuration
 import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.LocalTheme
 
@@ -53,10 +55,11 @@ fun AppTopBar(
     modifier: Modifier = Modifier,
     text: String,
     visible: Boolean,
+    scrollable: Boolean,
     consumer: AppTopBarConsumer = AppTopBarDefaults.consumer,
     windowInsets: WindowInsets = AppTopBarDefaults.windowInsets,
     onBackPressed: (() -> Unit)? = null,
-    actions: @Composable RowScope.(Boolean) -> Unit = {},
+    actions: @Composable RowScope.() -> Unit = {},
     content: @Composable (PaddingValues) -> Unit
 ) {
     val density = LocalDensity.current
@@ -70,12 +73,20 @@ fun AppTopBar(
 
     var offsetHeightPx by remember { mutableStateOf(maxHeightPx) }
 
-    val connection = remember {
+    LaunchedEffect(scrollable) {
+        if (!scrollable) {
+            offsetHeightPx = maxHeightPx
+        }
+    }
+
+    val connection = remember(scrollable, consumer) {
         object : NestedScrollConnection {
             override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
-                offsetHeightPx = offsetHeightPx coercePlus available.y
-                val innerConsumer = consumer.consume(offsetHeightPx, minHeightPx, maxHeightPx)
-                return if (innerConsumer) available else Offset.Zero
+                return if (scrollable) {
+                    offsetHeightPx = offsetHeightPx coercePlus available.y
+                    val innerConsumer = consumer.consume(offsetHeightPx, minHeightPx, maxHeightPx)
+                    return if (innerConsumer) available else Offset.Zero
+                } else Offset.Zero
             }
 
             private infix fun Float.coercePlus(length: Float): Float =
@@ -91,7 +102,8 @@ fun AppTopBar(
             modifier = modifier
                 .fillMaxSize()
                 .let {
-                    if (visible) it.windowInsetsPadding(windowInsets) else it
+                    if (visible) it.windowInsetsPadding(windowInsets)
+                    else it
                 }
                 .nestedScroll(
                     connection = connection
@@ -127,37 +139,36 @@ fun AppTopBar(
                     .fillMaxWidth()
                     .padding(horizontal = spacing.medium)
                     .height(contentPaddingTop),
-                horizontalArrangement = Arrangement.spacedBy(spacing.medium),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                val scale by remember {
-                    derivedStateOf {
-                        AppTopBarDefaults.interpolator(
-                            slope = AppTopBarDefaults.ScaleSlope,
-                            input = progress
-                        )
-                    }
-                }
                 val alpha by remember {
                     derivedStateOf {
                         progress * 2 - 1
                     }
                 }
-                if (onBackPressed != null) {
-                    IconButton(
-                        icon = Icon.ImageVectorIcon(Icons.Rounded.ArrowBack),
-                        contentDescription = stringResource(R.string.cd_top_bar_on_back_pressed),
-                        onClick = { if (progress > 0) onBackPressed() },
-                        modifier = Modifier.graphicsLayer {
-                            this.alpha = alpha
-                        }
-                    )
+                val duration = LocalDuration.current
+
+                Box(
+                    modifier = Modifier
+                        .animateContentSize(
+                            animationSpec = tween(duration.medium)
+                        )
+                ) {
+                    if (onBackPressed != null) {
+                        IconButton(
+                            icon = Icon.ImageVectorIcon(Icons.Rounded.ArrowBack),
+                            contentDescription = stringResource(R.string.cd_top_bar_on_back_pressed),
+                            onClick = { if (progress > 0) onBackPressed() },
+                            modifier = Modifier.graphicsLayer {
+                                this.alpha = alpha
+                            }
+                        )
+                    }
                 }
-                val fontSize by animateFloatAsState(22 * scale)
                 Text(
                     text = text,
                     style = MaterialTheme.typography.h6.copy(
-                        fontSize = fontSize.sp
+                        fontSize = 21.sp
                     ),
                     fontWeight = FontWeight.ExtraBold,
                     textAlign = TextAlign.Start,
@@ -165,17 +176,20 @@ fun AppTopBar(
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier
                         .weight(1f)
-                        .padding(horizontal = spacing.small)
+                        .padding(horizontal = spacing.extraSmall)
                         .graphicsLayer {
                             this.alpha = alpha
                         }
                 )
                 Row(
                     modifier = Modifier
+                        .animateContentSize(
+                            animationSpec = tween(duration.medium)
+                        )
                         .graphicsLayer {
                             this.alpha = alpha
                         },
-                    content = { actions(this, progress > 0) }
+                    content = actions
                 )
             }
         }
@@ -183,6 +197,7 @@ fun AppTopBar(
     }
 }
 
+@Suppress("unused")
 internal object AppTopBarDefaults {
     val TopBarHeight = 64.dp
     const val ScaleSlope = 0.35f
