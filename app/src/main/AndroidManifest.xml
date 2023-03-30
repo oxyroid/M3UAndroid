@@ -48,7 +48,7 @@
         <activity
             android:name="com.m3u.features.crash.CrashActivity"
             android:label="@string/label_crash"
-            android:launchMode="singleTop" />
+            android:launchMode="singleInstance"/>
 
         <provider
             android:name="androidx.core.content.FileProvider"
