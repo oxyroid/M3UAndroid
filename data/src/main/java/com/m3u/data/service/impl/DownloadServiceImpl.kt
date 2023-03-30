@@ -10,6 +10,10 @@ import com.m3u.data.service.DownloadService
 import com.m3u.data.service.DownloadTaskProcessObserver
 import com.m3u.data.service.DownloadTaskStatusObserver
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 class DownloadServiceImpl @Inject constructor(
@@ -23,6 +27,9 @@ class DownloadServiceImpl @Inject constructor(
     private val downloadTaskStatusObservers = mutableMapOf<Long, DownloadTaskStatusObserver>()
     private val downloadTaskProcessObservers = mutableMapOf<Long, DownloadTaskProcessObserver>()
 
+    private var processJobs = mutableMapOf<Long, Job>()
+
+
     override fun enqueueDownloadTask(
         title: String,
         description: String,
@@ -33,6 +40,7 @@ class DownloadServiceImpl @Inject constructor(
     ): Long {
         val request = DownloadManager.Request(uri)
             .setTitle(title)
+            .setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI or DownloadManager.Request.NETWORK_MOBILE)
             .setDescription(description)
             .setNotificationVisibility(visibility)
             .setDestinationInExternalPublicDir(dirType, subPath)
@@ -40,10 +48,10 @@ class DownloadServiceImpl @Inject constructor(
     }
 
     override fun getStatus(downloadId: Long): Int = try {
-        val query = DownloadManager.Query()
-            .setFilterById(downloadId)
+        val query = DownloadManager.Query().setFilterById(downloadId)
         downloadManager.query(query).use {
-            if (it.moveToFirst()) it.getInt(it.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS))
+            val toFirst = it.moveToFirst()
+            if (toFirst) it.getInt(it.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS))
             else DownloadManager.STATUS_FAILED
         }
     } catch (ignored: Exception) {
@@ -51,19 +59,18 @@ class DownloadServiceImpl @Inject constructor(
     }
 
     override fun getProcess(downloadId: Long): Int = try {
-        val query = DownloadManager.Query()
-            .setFilterById(downloadId)
+        val query = DownloadManager.Query().setFilterById(downloadId)
         downloadManager.query(query).use {
             if (it.moveToFirst()) {
-                val bytesDownloaded =
-                    it.getInt(it.getColumnIndexOrThrow(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR))
-                val bytesTotal =
-                    it.getInt(it.getColumnIndexOrThrow(DownloadManager.COLUMN_TOTAL_SIZE_BYTES))
-                bytesDownloaded * 100 / bytesTotal
-            } else -1
+                val downloaded =
+                    it.getLong(it.getColumnIndexOrThrow(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR))
+                val total =
+                    it.getLong(it.getColumnIndexOrThrow(DownloadManager.COLUMN_TOTAL_SIZE_BYTES))
+                (downloaded * 100 / total).toInt()
+            } else 0
         }
     } catch (ignored: Exception) {
-        -1
+        0
     }
 
     override fun addStatusObserver(
@@ -77,11 +84,25 @@ class DownloadServiceImpl @Inject constructor(
         return downloadTaskStatusObservers.remove(downloadId)
     }
 
-    override fun addProcessObserver(
+    override suspend fun addProcessObserver(
         downloadId: Long,
         observer: DownloadTaskProcessObserver
     ) {
-        downloadTaskProcessObservers[downloadId] = observer
+        coroutineScope {
+            val job = processJobs[downloadId]
+            job?.cancel()
+            processJobs[downloadId] = launch {
+                while (true) {
+                    val process = getProcess(downloadId)
+                    downloadTaskProcessObservers[downloadId]?.invoke(process)
+                    if (process == 100) {
+                        processJobs[downloadId]?.cancel()
+                    }
+                    delay(50)
+                }
+            }
+            downloadTaskProcessObservers[downloadId] = observer
+        }
     }
 
     override fun removeProcessObserver(downloadId: Long): DownloadTaskProcessObserver? =
@@ -93,14 +114,6 @@ class DownloadServiceImpl @Inject constructor(
             if (downloadId != -1L) {
                 val status = getStatus(downloadId)
                 downloadTaskStatusObservers[downloadId]?.invoke(status)
-                val process = when (status) {
-                    DownloadManager.STATUS_PENDING -> 0
-                    DownloadManager.STATUS_RUNNING -> getProcess(downloadId)
-                    DownloadManager.STATUS_SUCCESSFUL -> 100
-                    DownloadManager.STATUS_FAILED -> -1
-                    else -> -1
-                }
-                downloadTaskProcessObservers[downloadId]?.invoke(process)
             }
         }
     }
@@ -109,8 +122,10 @@ class DownloadServiceImpl @Inject constructor(
         if (!isRegister) {
             context.registerReceiver(
                 downloadTasksBroadcastReceiver,
-                IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE),
-
+                IntentFilter().apply {
+                    addAction(DownloadManager.ACTION_DOWNLOAD_COMPLETE)
+                    addAction(DownloadManager.ACTION_NOTIFICATION_CLICKED)
+                }
             )
             isRegister = true
         }

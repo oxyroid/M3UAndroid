@@ -21,7 +21,7 @@ interface DownloadService {
     fun getProcess(downloadId: Long): Int
     fun addStatusObserver(downloadId: Long, observer: DownloadTaskStatusObserver)
     fun removeStatusObserver(downloadId: Long): DownloadTaskStatusObserver?
-    fun addProcessObserver(downloadId: Long, observer: DownloadTaskProcessObserver)
+    suspend fun addProcessObserver(downloadId: Long, observer: DownloadTaskProcessObserver)
     fun removeProcessObserver(downloadId: Long): DownloadTaskProcessObserver?
 
     fun register()
@@ -46,7 +46,7 @@ fun DownloadService.enqueueDownloadTaskStatus(
     addStatusObserver(downloadId, observer)
 }
 
-fun DownloadService.enqueueDownloadTaskProcess(
+suspend fun DownloadService.enqueueDownloadTaskProcess(
     title: String,
     description: String,
     uri: Uri,
