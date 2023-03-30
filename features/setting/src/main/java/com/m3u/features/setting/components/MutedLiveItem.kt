@@ -8,6 +8,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextOverflow
 import com.m3u.data.local.entity.Live
 import com.m3u.ui.components.IconButton
 import com.m3u.ui.model.Icon
@@ -24,14 +25,18 @@ internal fun MutedLiveItem(
             val text = live.title
             Text(
                 text = text,
-                style = MaterialTheme.typography.subtitle1
+                style = MaterialTheme.typography.subtitle1,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
         },
         secondaryText = {
             val text = live.url
             Text(
                 text = text,
-                style = MaterialTheme.typography.subtitle2
+                style = MaterialTheme.typography.subtitle2,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
         },
         trailing = {

@@ -5,7 +5,7 @@ import com.m3u.core.annotation.FeedStrategy
 
 sealed interface SettingEvent {
     object OnSubscribe : SettingEvent
-    object FetchLatestRelease : SettingEvent
+    object FetchRelease : SettingEvent
     data class OnTitle(val title: String) : SettingEvent
     data class OnUrl(val url: String) : SettingEvent
     data class OnSyncMode(@FeedStrategy val feedStrategy: Int) : SettingEvent
