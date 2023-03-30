@@ -49,13 +49,9 @@ dependencies {
     implementation project(":ui")
 
     implementation libs.androidx.core.core.ktx
-    implementation libs.androidx.activity.activity.compose
 
     implementation libs.androidx.lifecycle.lifecycle.runtime.ktx
     implementation libs.androidx.lifecycle.lifecycle.runtime.compose
-
-    implementation libs.bundles.androidx.compose
-    implementation libs.androidx.compose.material.material.icons.extended
 
     implementation libs.com.google.dagger.hilt.android
     kapt libs.com.google.dagger.hilt.compiler

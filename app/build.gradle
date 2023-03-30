@@ -52,6 +52,7 @@ android {
     }
     kotlinOptions {
         jvmTarget = "11"
+        freeCompilerArgs += "-opt-in=kotlin.RequiresOptIn"
     }
     buildFeatures {
         compose true
@@ -75,7 +76,7 @@ dependencies {
     implementation project(":features:feed")
     implementation project(":features:live")
     implementation project(":features:console")
-     implementation project(":features:crash")
+    implementation project(":features:crash")
 
     implementation libs.androidx.core.core.ktx
     implementation libs.androidx.appcompat.appcompat
@@ -84,14 +85,7 @@ dependencies {
     implementation libs.androidx.lifecycle.lifecycle.runtime.ktx
     implementation libs.androidx.lifecycle.lifecycle.runtime.compose
 
-    implementation libs.bundles.androidx.compose
-    implementation libs.androidx.compose.material.material.icons.extended
-
-    implementation libs.androidx.navigation.navigation.compose
     implementation libs.androidx.core.core.splashscreen
-
-    implementation libs.com.google.accompanist.accompanist.navigation.animation
-    implementation libs.com.google.accompanist.accompanist.systemuicontroller
 
     implementation libs.com.google.dagger.hilt.android
     kapt libs.com.google.dagger.hilt.compiler
