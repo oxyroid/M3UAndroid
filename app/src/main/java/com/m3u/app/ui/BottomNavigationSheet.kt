@@ -13,8 +13,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.navigation.NavDestination
-import androidx.navigation.NavDestination.Companion.hierarchy
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.m3u.app.navigation.NavigateToTopLevelDestination
 import com.m3u.app.navigation.TopLevelDestination
@@ -27,7 +25,7 @@ import com.m3u.ui.model.LocalTheme
 fun BottomNavigationSheet(
     destinations: List<TopLevelDestination>,
     navigateToTopLevelDestination: NavigateToTopLevelDestination,
-    currentNavDestination: NavDestination?,
+    currentTopLevelDestination: TopLevelDestination?,
     modifier: Modifier = Modifier
 ) {
     val controller = rememberSystemUiController()
@@ -40,7 +38,7 @@ fun BottomNavigationSheet(
         elevation = LocalSpacing.current.none
     ) {
         destinations.forEach { destination ->
-            val selected = currentNavDestination.isTopLevelDestinationInHierarchy(destination)
+            val selected = currentTopLevelDestination == destination
             NavigationBarItem(
                 alwaysShowLabel = false,
                 selected = selected,
@@ -115,8 +113,3 @@ object BottomSheetDefaults {
     @Composable
     fun navigationSelectedItemColor() = LocalTheme.current.tint
 }
-
-private fun NavDestination?.isTopLevelDestinationInHierarchy(destination: TopLevelDestination) =
-    this?.hierarchy?.any {
-        it.route?.contains(destination.name, true) ?: false
-    } ?: false

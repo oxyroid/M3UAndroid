@@ -17,13 +17,14 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.core.util.context.toast
 import com.m3u.features.favorite.components.FavoriteLiveItem
-import com.m3u.features.favorite.navigation.NavigateToLive
 import com.m3u.ui.model.LocalHelper
 import com.m3u.ui.util.EventHandler
 import com.m3u.ui.util.RepeatOnCreate
 
+typealias NavigateToLive = (Int) -> Unit
+
 @Composable
-internal fun FavouriteRoute(
+fun FavouriteRoute(
     navigateToLive: NavigateToLive,
     modifier: Modifier = Modifier,
     viewModel: FavouriteViewModel = hiltViewModel()

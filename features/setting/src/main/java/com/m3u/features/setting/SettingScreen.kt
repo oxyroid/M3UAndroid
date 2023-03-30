@@ -12,18 +12,21 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.platform.*
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.tv.material3.Text
 import com.m3u.core.annotation.*
 import com.m3u.core.util.context.toast
 import com.m3u.core.wrapper.Resource
@@ -33,7 +36,6 @@ import com.m3u.features.setting.components.CheckBoxPreference
 import com.m3u.features.setting.components.FoldPreference
 import com.m3u.features.setting.components.MutedLiveItem
 import com.m3u.features.setting.components.TextPreference
-import com.m3u.features.setting.navigation.NavigateToConsole
 import com.m3u.ui.components.*
 import com.m3u.ui.model.LocalHelper
 import com.m3u.ui.model.LocalSpacing
@@ -41,8 +43,10 @@ import com.m3u.ui.model.LocalTheme
 import com.m3u.ui.util.EventHandler
 import com.m3u.ui.util.RepeatOnCreate
 
+typealias NavigateToConsole = () -> Unit
+
 @Composable
-internal fun SettingRoute(
+fun SettingRoute(
     modifier: Modifier = Modifier,
     viewModel: SettingViewModel = hiltViewModel(),
     navigateToConsole: NavigateToConsole
@@ -69,7 +73,7 @@ internal fun SettingRoute(
         title = state.title,
         url = state.url,
         version = state.version,
-        latestRelease = state.latestRelease,
+        release = state.release,
         feedStrategy = state.feedStrategy,
         editMode = state.editMode,
         clipMode = state.clipMode,
@@ -80,7 +84,7 @@ internal fun SettingRoute(
         navigateToConsole = navigateToConsole,
         experimentalMode = state.experimentalMode,
         mutedLives = state.mutedLives,
-        fetchLatestRelease = { viewModel.onEvent(SettingEvent.FetchLatestRelease) },
+        fetchRelease = { viewModel.onEvent(SettingEvent.FetchRelease) },
         onEditMode = { viewModel.onEvent(SettingEvent.OnEditMode) },
         onConnectTimeout = { viewModel.onEvent(SettingEvent.OnConnectTimeout) },
         onTitle = { viewModel.onEvent(SettingEvent.OnTitle(it)) },
@@ -100,8 +104,8 @@ internal fun SettingRoute(
 private fun SettingScreen(
     adding: Boolean,
     version: String,
-    latestRelease: Resource<Release>,
-    fetchLatestRelease: () -> Unit,
+    release: Resource<Release>,
+    fetchRelease: () -> Unit,
     title: String,
     url: String,
     @FeedStrategy feedStrategy: Int,
@@ -154,8 +158,8 @@ private fun SettingScreen(
                     onEditMode = onEditMode,
                     onScrollMode = onScrollMode,
                     version = version,
-                    latestRelease = latestRelease,
-                    fetchLatestRelease = fetchLatestRelease,
+                    release = release,
+                    fetchRelease = fetchRelease,
                     useCommonUIMode = useCommonUIMode,
                     navigateToConsole = navigateToConsole,
                     useCommonUIModeEnable = useCommonUIModeEnable,
@@ -185,8 +189,8 @@ private fun SettingScreen(
                     useCommonUIMode = useCommonUIMode,
                     useCommonUIModeEnable = useCommonUIModeEnable,
                     version = version,
-                    latestRelease = latestRelease,
-                    fetchLatestRelease = fetchLatestRelease,
+                    release = release,
+                    fetchRelease = fetchRelease,
                     onFold = { fold = it },
                     onTitle = onTitle,
                     onUrl = onUrl,
@@ -239,8 +243,8 @@ private fun PortraitOrientationContent(
     onSubscribe: () -> Unit,
     onFeedStrategy: OnFeedStrategy,
     version: String,
-    latestRelease: Resource<Release>,
-    fetchLatestRelease: () -> Unit,
+    release: Resource<Release>,
+    fetchRelease: () -> Unit,
     navigateToConsole: NavigateToConsole,
     experimentalMode: Boolean,
     onScrollMode: () -> Unit,
@@ -251,8 +255,8 @@ private fun PortraitOrientationContent(
     Box {
         PreferencesPart(
             version = version,
-            latestRelease = latestRelease,
-            fetchLatestRelease = fetchLatestRelease,
+            release = release,
+            fetchRelease = fetchRelease,
             feedStrategy = feedStrategy,
             useCommonUIMode = useCommonUIMode,
             useCommonUIModeEnable = useCommonUIModeEnable,
@@ -332,10 +336,10 @@ private fun LandscapeOrientationContent(
     onClipMode: OnClipMode,
     onScrollMode: () -> Unit,
     version: String,
-    latestRelease: Resource<Release>,
+    release: Resource<Release>,
     mutedLives: List<Live>,
     onVoiceLiveUrl: (String) -> Unit,
-    fetchLatestRelease: () -> Unit,
+    fetchRelease: () -> Unit,
     navigateToConsole: NavigateToConsole,
     experimentalMode: Boolean,
     onExperimentalMode: () -> Unit,
@@ -349,8 +353,8 @@ private fun LandscapeOrientationContent(
     ) {
         PreferencesPart(
             version = version,
-            latestRelease = latestRelease,
-            fetchLatestRelease = fetchLatestRelease,
+            release = release,
+            fetchRelease = fetchRelease,
             editMode = editMode,
             clipMode = clipMode,
             onClipMode = onClipMode,
@@ -415,13 +419,13 @@ private fun PreferencesPart(
     editMode: Boolean,
     scrollMode: Boolean,
     version: String,
-    latestRelease: Resource<Release>,
+    release: Resource<Release>,
     onFeedStrategy: OnFeedStrategy,
     onClipMode: OnClipMode,
     onUIMode: () -> Unit,
     onEditMode: () -> Unit,
     onScrollMode: () -> Unit,
-    fetchLatestRelease: () -> Unit,
+    fetchRelease: () -> Unit,
     onFeedManagement: () -> Unit,
     onScriptManagement: () -> Unit,
     onConnectTimeout: () -> Unit,
@@ -565,46 +569,41 @@ private fun PreferencesPart(
         }
 
         item {
-            val uriHandler = LocalUriHandler.current
-            TextButton(
-                text = stringResource(R.string.label_app_version, version),
-            ) {
-                val url = "https://github.com/thxbrop/M3UAndroid/releases/tag/v$version"
-                uriHandler.openUri(url)
-            }
-        }
-        item {
-            when (latestRelease) {
-                Resource.Loading -> {
-                    TextButton(stringResource(R.string.fetching_latest)) {}
-                }
+            when (release) {
+                Resource.Loading -> {}
                 is Resource.Success -> {
-                    val uriHandler = LocalUriHandler.current
-                    val remoteVersion = latestRelease.data.name
-                    val name = if (remoteVersion != version) {
-                        stringResource(R.string.label_latest_release_version, remoteVersion)
-                    } else {
-                        stringResource(R.string.label_same_version)
+//                    val uriHandler = LocalUriHandler.current
+                    val remoteVersion = release.data.name
+//                    val name = if (remoteVersion != version) {
+//                        stringResource(R.string.label_latest_release_version, remoteVersion)
+//                    } else {
+//                        stringResource(R.string.label_same_version)
+//                    }
+                    Selection(
+                        onClick = { /*TODO*/ },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(text = remoteVersion)
                     }
 
-                    TextButton(name) {
-                        if (remoteVersion == version) {
-                            fetchLatestRelease()
-                        } else {
-                            val url =
-                                "https://github.com/thxbrop/M3UAndroid/releases/tag/v$remoteVersion"
-                            uriHandler.openUri(url)
-                        }
-                    }
+//                    TextButton(name) {
+//                        if (remoteVersion == version) {
+//                            fetchRelease()
+//                        } else {
+//                            val url =
+//                                "https://github.com/thxbrop/M3UAndroid/releases/tag/v$remoteVersion"
+//                            uriHandler.openUri(url)
+//                        }
+//                    }
                 }
                 is Resource.Failure -> {
                     TextButton(
                         text = stringResource(
                             R.string.failed_latest_release_version,
-                            latestRelease.message.orEmpty()
+                            release.message.orEmpty()
                         )
                     ) {
-                        fetchLatestRelease()
+                        fetchRelease()
                     }
                 }
             }
@@ -756,5 +755,5 @@ fun ScriptManagementPart(
 }
 
 private enum class Fold {
-    NONE, FEED, SCRIPT, ABOUT
+    NONE, FEED, SCRIPT
 }

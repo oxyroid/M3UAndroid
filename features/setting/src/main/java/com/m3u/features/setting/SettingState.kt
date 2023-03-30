@@ -17,7 +17,7 @@ data class SettingState(
     val mutedLives: List<Live> = emptyList(),
     val message: Event<String> = handledEvent(),
     val version: String = "",
-    val latestRelease: Resource<Release> = Resource.Loading,
+    val release: Resource<Release> = Resource.Loading,
     @FeedStrategy val feedStrategy: Int = Configuration.DEFAULT_FEED_STRATEGY,
     val editMode: Boolean = Configuration.DEFAULT_EDIT_MODE,
     val useCommonUIMode: Boolean = Configuration.DEFAULT_USE_COMMON_UI_MODE,

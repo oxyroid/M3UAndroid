@@ -1,6 +1,7 @@
 package com.m3u.app.ui
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.Scaffold
 import androidx.compose.runtime.Composable
@@ -19,6 +20,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavDestination
 import com.m3u.app.navigation.Destination
 import com.m3u.app.navigation.M3UNavHost
+import com.m3u.app.navigation.rootNavigationRoute
 import com.m3u.features.console.navigation.consoleRoute
 import com.m3u.features.feed.navigation.feedRoute
 import com.m3u.features.live.navigation.livePlaylistRoute
@@ -30,7 +32,8 @@ import com.m3u.ui.model.LocalTheme
 
 @OptIn(
     ExperimentalComposeUiApi::class,
-    ExperimentalLayoutApi::class
+    ExperimentalLayoutApi::class,
+    ExperimentalFoundationApi::class
 )
 @Composable
 fun App(
@@ -56,6 +59,7 @@ fun App(
                         )
                     )
             ) {
+                val currentDestination = appState.currentNavDestination
                 val topLevelTitle = appState.currentTopLevelDestination
                     ?.titleTextId
                     ?.let { stringResource(it) }
@@ -64,20 +68,19 @@ fun App(
                     derivedStateOf { topLevelTitle ?: title }
                 }
                 val isSystemBarVisible =
-                    !appState.currentNavDestination.isInDestination<Destination.Live>() &&
-                            !appState.currentNavDestination.isInDestination<Destination.LivePlayList>()
+                    !currentDestination.isInDestination<Destination.Live>() &&
+                            !currentDestination.isInDestination<Destination.LivePlayList>()
                 AppTopBar(
                     text = text,
                     visible = isSystemBarVisible,
-                    actions = { enable ->
+                    scrollable = !currentDestination.isInDestination<Destination.Root>(),
+                    actions = {
                         val actions by appState.actions.collectAsStateWithLifecycle()
                         actions.forEach { action ->
                             IconButton(
                                 icon = action.icon,
                                 contentDescription = action.contentDescription,
-                                onClick = {
-                                    if (enable) action.onClick
-                                }
+                                onClick = action.onClick
                             )
                         }
                     },
@@ -94,6 +97,8 @@ fun App(
                     ) {
                         M3UNavHost(
                             navController = appState.navController,
+                            pagerState = appState.pagerState,
+                            destinations = appState.topLevelDestinations,
                             navigateToDestination = appState::navigateToDestination,
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -102,8 +107,8 @@ fun App(
                         AnimatedVisibility(isSystemBarVisible) {
                             BottomNavigationSheet(
                                 destinations = appState.topLevelDestinations,
+                                currentTopLevelDestination = appState.currentTopLevelDestination,
                                 navigateToTopLevelDestination = appState::navigateToTopLevelDestination,
-                                currentNavDestination = appState.currentNavDestination,
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .testTag("BottomNavigationSheet")
@@ -122,6 +127,7 @@ inline fun <reified D : Destination> NavDestination?.isInDestination(): Boolean 
         Destination.LivePlayList::class.java.name -> livePlaylistRoute
         Destination.Feed::class.java.name -> feedRoute
         Destination.Console::class.java.name -> consoleRoute
+        Destination.Root::class.java.name -> rootNavigationRoute
         else -> return false
     }
     return this?.route == targetRoute

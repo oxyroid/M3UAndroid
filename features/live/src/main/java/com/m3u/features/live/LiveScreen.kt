@@ -1,7 +1,10 @@
 package com.m3u.features.live
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.pager.VerticalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.LocalContentAlpha
 import androidx.compose.material.LocalContentColor
 import androidx.compose.material.Text
@@ -22,10 +25,6 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
-import com.google.accompanist.pager.ExperimentalPagerApi
-import com.google.accompanist.pager.VerticalPager
-import com.google.accompanist.pager.calculateCurrentOffsetForPage
-import com.google.accompanist.pager.rememberPagerState
 import com.m3u.core.annotation.ClipMode
 import com.m3u.core.util.basic.isNotEmpty
 import com.m3u.core.util.context.toast
@@ -51,9 +50,11 @@ internal fun LiveRoute(
             Lifecycle.Event.ON_CREATE -> {
                 helper.hideSystemUI()
             }
+
             Lifecycle.Event.ON_DESTROY -> {
                 helper.showSystemUI()
             }
+
             else -> {}
         }
     }
@@ -76,7 +77,7 @@ internal fun LiveRoute(
     )
 }
 
-@OptIn(ExperimentalPagerApi::class)
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun LiveScreen(
     init: LiveState.Init,
@@ -103,18 +104,18 @@ private fun LiveScreen(
                     .testTag("features:live")
             )
         }
+
         is LiveState.Init.PlayList -> {
             val pagerState = rememberPagerState(init.initialIndex)
             VerticalPager(
                 state = pagerState,
-                count = init.lives.size,
+                pageCount = init.lives.size,
                 modifier = modifier
                     .fillMaxSize()
                     .background(theme.background)
                     .testTag("features:live")
             ) { page ->
-                LivePart(
-                    url = init.lives[page].url,
+                LivePart(url = init.lives[page].url,
                     experimentalMode = experimentalMode,
                     clipMode = clipMode,
                     recording = recording,
@@ -124,13 +125,14 @@ private fun LiveScreen(
                         .fillMaxSize()
                         .background(Color.Black)
                         .graphicsLayer {
-                            val offset = calculateCurrentOffsetForPage(page)
-                                .absoluteValue.coerceIn(0f, 1f)
+                            val offset =
+                                (pagerState.currentPage - page) + pagerState.currentPageOffsetFraction.absoluteValue.coerceIn(
+                                    0f, 1f
+                                )
                             val scale = lerp(1f, 0.8f, offset)
                             scaleX = scale
                             scaleY = scale
-                        }
-                )
+                        })
             }
         }
     }
@@ -151,12 +153,10 @@ private fun LivePart(
     ) {
         val helper = LocalHelper.current
         val state = rememberPlayerState(
-            url = url,
-            clipMode = clipMode
+            url = url, clipMode = clipMode
         )
         ExoPlayer(
-            state = state,
-            modifier = Modifier.fillMaxSize()
+            state = state, modifier = Modifier.fillMaxSize()
         )
         val maskState = rememberMaskState { visible ->
             helper.systemUiVisibility = visible
@@ -165,64 +165,49 @@ private fun LivePart(
         val exception by state.exception
         val videoSize by state.videoSize
 
-        LiveMask(
-            state = maskState,
-            header = {
-                if (experimentalMode) {
-                    MaskButton(
-                        state = maskState,
-                        icon = if (recording) Icons.Rounded.RadioButtonChecked
-                        else Icons.Rounded.RadioButtonUnchecked,
-                        tint = if (recording) LocalTheme.current.error
-                        else LocalContentColor.current.copy(alpha = LocalContentAlpha.current),
-                        onClick = onRecord
-                    )
-                    val shouldShowCastButton = (playback != Player.STATE_IDLE)
-                    if (shouldShowCastButton) {
-                        MaskButton(
-                            state = maskState,
-                            icon = Icons.Rounded.Cast,
-                            onClick = searchDlnaDevices
-                        )
-                    }
-                }
-                val shouldShowPipButton = videoSize.isNotEmpty
-                if (shouldShowPipButton) {
-                    MaskButton(
-                        state = maskState,
-                        icon = Icons.Rounded.PictureInPicture,
-                        onClick = {
-                            helper.enterPipMode(videoSize)
-                            maskState.sleep()
-                        }
-                    )
-                }
-            },
-            body = {
-                MaskCircleButton(
+        LiveMask(state = maskState, header = {
+            if (experimentalMode) {
+                MaskButton(
                     state = maskState,
-                    icon = Icons.Rounded.Refresh,
-                    onClick = {
-                        state.loadMedia()
-                    }
+                    icon = if (recording) Icons.Rounded.RadioButtonChecked
+                    else Icons.Rounded.RadioButtonUnchecked,
+                    tint = if (recording) LocalTheme.current.error
+                    else LocalContentColor.current.copy(alpha = LocalContentAlpha.current),
+                    onClick = onRecord
                 )
-            },
-            foot = {
-                Column {
-                    Text(
-                        text = playback.displayText,
-                        fontWeight = FontWeight.Bold
+                val shouldShowCastButton = (playback != Player.STATE_IDLE)
+                if (shouldShowCastButton) {
+                    MaskButton(
+                        state = maskState,
+                        icon = Icons.Rounded.Cast,
+                        onClick = searchDlnaDevices
                     )
-                    val displayText = exception.displayText
-                    if (displayText.isNotEmpty()) {
-                        Text(
-                            text = displayText,
-                            color = LocalTheme.current.error
-                        )
-                    }
                 }
             }
-        )
+            val shouldShowPipButton = videoSize.isNotEmpty
+            if (shouldShowPipButton) {
+                MaskButton(state = maskState, icon = Icons.Rounded.PictureInPicture, onClick = {
+                    helper.enterPipMode(videoSize)
+                    maskState.sleep()
+                })
+            }
+        }, body = {
+            MaskCircleButton(state = maskState, icon = Icons.Rounded.Refresh, onClick = {
+                state.loadMedia()
+            })
+        }, foot = {
+            Column {
+                Text(
+                    text = playback.displayText, fontWeight = FontWeight.Bold
+                )
+                val displayText = exception.displayText
+                if (displayText.isNotEmpty()) {
+                    Text(
+                        text = displayText, color = LocalTheme.current.error
+                    )
+                }
+            }
+        })
         LaunchedEffect(exception) {
             if (exception != null) {
                 maskState.keepAlive()
@@ -243,13 +228,10 @@ private fun LiveMask(
         LocalContentColor provides Color.White
     ) {
         MaskPanel(
-            state = state,
-            modifier = modifier
+            state = state, modifier = modifier
         )
         Mask(
-            state = state,
-            backgroundColor = Color.Black.copy(alpha = 0.54f),
-            modifier = modifier
+            state = state, backgroundColor = Color.Black.copy(alpha = 0.54f), modifier = modifier
         ) {
             Row(
                 modifier = Modifier

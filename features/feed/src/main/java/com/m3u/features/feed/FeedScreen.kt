@@ -4,8 +4,11 @@ import android.content.res.Configuration.*
 import android.view.KeyEvent
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.*
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.*
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ArrowUpward
@@ -22,14 +25,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.tv.foundation.lazy.grid.TvGridCells
-import androidx.tv.foundation.lazy.grid.TvLazyVerticalGrid
-import androidx.tv.foundation.lazy.grid.items
-import androidx.tv.foundation.lazy.grid.rememberTvLazyGridState
-import com.google.accompanist.pager.ExperimentalPagerApi
-import com.google.accompanist.pager.HorizontalPager
-import com.google.accompanist.pager.pagerTabIndicatorOffset
-import com.google.accompanist.pager.rememberPagerState
+import androidx.tv.foundation.lazy.grid.*
 import com.m3u.core.util.basic.uppercaseFirst
 import com.m3u.core.util.context.toast
 import com.m3u.core.wrapper.Event
@@ -122,8 +118,7 @@ internal fun FeedRoute(
         onUpdate = { dialogState = it },
         onFavorite = { id, target -> viewModel.onEvent(FeedEvent.FavouriteLive(id, target)) },
         onMute = { id, target -> viewModel.onEvent(FeedEvent.MuteLive(id, target)) },
-        onSavePicture = { viewModel.onEvent(FeedEvent.SavePicture(it)) },
-        modifier = Modifier.padding(LocalSpacing.current.medium)
+        onSavePicture = { viewModel.onEvent(FeedEvent.SavePicture(it)) }
     )
 }
 
@@ -222,6 +217,7 @@ private fun FeedScreen(
                     .padding(LocalSpacing.current.medium)
                     .align(Alignment.BottomEnd)
             ) {
+
                 FloatingActionButton(
                     onClick = onScrollUp,
                     backgroundColor = LocalTheme.current.tint,
@@ -467,7 +463,7 @@ private fun UnsupportedUIModeContent(
     }
 }
 
-@OptIn(ExperimentalPagerApi::class)
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun FeedPager(
     lives: Map<String, List<Live>>,
@@ -483,9 +479,12 @@ private fun FeedPager(
             ScrollableTabRow(
                 selectedTabIndex = pagerState.currentPage,
                 indicator = { tabPositions ->
-                    TabRowDefaults.Indicator(
-                        Modifier.pagerTabIndicatorOffset(pagerState, tabPositions)
-                    )
+                    val index = pagerState.currentPage
+                    with(TabRowDefaults) {
+                        Modifier.tabIndicatorOffset(
+                            currentTabPosition = tabPositions[index]
+                        )
+                    }
                 },
                 tabs = {
                     lives.keys.forEachIndexed { index, title ->
@@ -508,7 +507,7 @@ private fun FeedPager(
         }
         val entities = remember(lives) { lives.values.toList() }
         HorizontalPager(
-            count = entities.size,
+            pageCount = entities.size,
             state = pagerState
         ) { pager ->
             content(entities[pager])

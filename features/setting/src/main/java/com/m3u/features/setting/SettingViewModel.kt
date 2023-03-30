@@ -61,7 +61,7 @@ class SettingViewModel @Inject constructor(
     override fun onEvent(event: SettingEvent) {
         when (event) {
             SettingEvent.OnSubscribe -> subscribe()
-            SettingEvent.FetchLatestRelease -> fetchLatestRelease()
+            SettingEvent.FetchRelease -> fetchLatestRelease()
             is SettingEvent.OnTitle -> onTitle(event.title)
             is SettingEvent.OnUrl -> onUrl(event.url)
             is SettingEvent.OnSyncMode -> {
@@ -216,7 +216,7 @@ class SettingViewModel @Inject constructor(
             .onEach { resource ->
                 writable.update {
                     it.copy(
-                        latestRelease = resource
+                        release = resource
                     )
                 }
             }
