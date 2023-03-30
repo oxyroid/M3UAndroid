@@ -2,35 +2,23 @@
 
 package com.m3u.ui.components
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.gestures.Orientation
-import androidx.compose.foundation.gestures.draggable
-import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.LocalTheme
 
 @Composable
-fun BottomSheetContent(
+fun SheetDialog(
     visible: Boolean,
     onDismiss: () -> Unit,
     content: @Composable ColumnScope.() -> Unit,
@@ -38,83 +26,32 @@ fun BottomSheetContent(
     maxHeight: Boolean = false,
     verticalArrangement: Arrangement.Vertical = Arrangement.Top
 ) {
-    var offset by remember {
-        mutableStateOf(0f)
-    }
-    val animateOffset by animateFloatAsState(offset)
-    var pressed by remember {
-        mutableStateOf(false)
-    }
-    val state = rememberDraggableState {
-        offset += it
-    }
     val theme = LocalTheme.current
     val spacing = LocalSpacing.current
 
-    AnimatedVisibility(
-        visible = visible,
-        enter = slideInVertically { it },
-        exit = slideOutVertically { it },
-        modifier = modifier
-    ) {
-        Surface(
-            color = theme.background,
-            contentColor = theme.onBackground,
-            shape = RoundedCornerShape(
-                topStart = LocalSpacing.current.medium,
-                topEnd = LocalSpacing.current.medium
-            ),
-            border = BorderStroke(2.dp, theme.divider.copy(alpha = 0.45f)),
-            elevation = spacing.medium,
-            modifier = Modifier
-                .graphicsLayer {
-                    translationY = animateOffset.coerceAtLeast(0f)
-                }
+    if (visible) {
+        Dialog(
+            onDismissRequest = onDismiss
         ) {
-            val configuration = LocalConfiguration.current
-            val feedback = LocalHapticFeedback.current
-            val density = LocalDensity.current.density
-            Column(
+            Surface(
+                color = theme.background,
+                contentColor = theme.onBackground,
+                shape = RoundedCornerShape(LocalSpacing.current.medium),
+                border = BorderStroke(2.dp, theme.divider.copy(alpha = 0.45f)),
+                elevation = spacing.medium,
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .let {
-                        if (maxHeight) it.fillMaxHeight()
-                        else it.wrapContentHeight()
-                    }
-                    .draggable(
-                        orientation = Orientation.Vertical,
-                        state = state,
-                        onDragStarted = {
-                            feedback.performHapticFeedback(HapticFeedbackType.LongPress)
-                            pressed = true
-                        },
-                        onDragStopped = {
-                            if (offset > configuration.screenHeightDp * density / 4) {
-                                onDismiss()
-                            }
-                            offset = 0f
-                            pressed = false
-                        },
-                    )
-                    .padding(LocalSpacing.current.medium),
+                    .padding(spacing.medium)
+                    .then(modifier)
             ) {
-                val dividerColor by animateColorAsState(
-                    if (pressed) theme.primary.copy(alpha = 0.45f) else theme.topBar
-                )
-                Divider(
-                    color = dividerColor,
-                    thickness = LocalSpacing.current.small,
-                    modifier = Modifier
-                        .align(Alignment.CenterHorizontally)
-                        .width(64.dp)
-                        .clip(CircleShape)
-                )
                 Column(
                     verticalArrangement = verticalArrangement,
                     modifier = Modifier
-                        .padding(
-                            vertical = spacing.small
-                        ),
+                        .fillMaxWidth()
+                        .let {
+                            if (maxHeight) it.fillMaxHeight()
+                            else it.wrapContentHeight()
+                        }
+                        .padding(LocalSpacing.current.medium),
                     content = content
                 )
             }
@@ -122,9 +59,27 @@ fun BottomSheetContent(
     }
 }
 
+@Composable
+fun SheetTitle(
+    text: String,
+    modifier: Modifier = Modifier,
+    color: Color = LocalTheme.current.onBackground,
+) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.h6,
+        fontWeight = FontWeight.ExtraBold,
+        textAlign = TextAlign.Start,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+        color = color,
+        modifier = modifier
+    )
+}
+
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun BottomSheetItem(
+fun SheetItem(
     text: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -143,7 +98,7 @@ fun BottomSheetItem(
             modifier = modifier.padding(spacing.medium)
         ) {
             Text(
-                text = text,
+                text = text.uppercase(),
                 style = MaterialTheme.typography.subtitle1,
                 maxLines = 1
             )
