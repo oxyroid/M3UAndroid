@@ -1,11 +1,13 @@
 package com.m3u.ui.components
 
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import com.m3u.ui.model.LocalScalable
@@ -31,17 +33,22 @@ fun TextBadge(
         contentColor = contentColor,
         shape = RoundedCornerShape(spacing.small)
     ) {
-        icon?.invoke()
-        Text(
-            text = text.uppercase(),
-            style = MaterialTheme.typography.subtitle2,
-            fontSize = with(scalable) {
-                MaterialTheme.typography.subtitle2.fontSize.scaled
-            },
-            color = theme.onTint,
-            modifier = Modifier.padding(
-                horizontal = spacing.extraSmall
+        Row(
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            icon?.invoke()
+            Text(
+                text = text.uppercase(),
+                style = MaterialTheme.typography.subtitle2,
+                fontSize = with(scalable) {
+                    MaterialTheme.typography.subtitle2.fontSize.scaled
+                },
+                color = theme.onTint,
+                modifier = Modifier.padding(
+                    horizontal = spacing.extraSmall
+                )
             )
-        )
+        }
+
     }
 }

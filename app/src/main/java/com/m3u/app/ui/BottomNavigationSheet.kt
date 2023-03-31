@@ -1,10 +1,7 @@
 package com.m3u.app.ui
 
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.material.Icon
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.NavigationRailItem
-import androidx.compose.material.Text
+import androidx.compose.material.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
@@ -18,7 +15,6 @@ import com.m3u.app.navigation.NavigateToTopLevelDestination
 import com.m3u.app.navigation.TopLevelDestination
 import com.m3u.ui.components.NavigationSheet
 import com.m3u.ui.model.Icon
-import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.LocalTheme
 
 @Composable
@@ -35,7 +31,7 @@ fun BottomNavigationSheet(
         modifier = modifier,
         containerColor = backgroundColor,
         contentColor = contentColor,
-        elevation = LocalSpacing.current.none
+        elevation = LocalAbsoluteElevation.current
     ) {
         destinations.forEach { destination ->
             val selected = currentTopLevelDestination == destination

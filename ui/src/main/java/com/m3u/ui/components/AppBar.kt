@@ -3,9 +3,7 @@ package com.m3u.ui.components
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.LocalContentColor
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Text
+import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ArrowBack
 import androidx.compose.runtime.*
@@ -134,66 +132,70 @@ fun AppTopBar(
 
             // AppBar
             val progress by remember { derivedStateOf { offsetHeightPx / maxHeightPx } }
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = spacing.medium)
-                    .height(contentPaddingTop),
-                verticalAlignment = Alignment.CenterVertically,
+            Surface(
+                elevation = LocalAbsoluteElevation.current
             ) {
-                val alpha by remember {
-                    derivedStateOf {
-                        progress * 2 - 1
-                    }
-                }
-                val duration = LocalDuration.current
-
-                Box(
-                    modifier = Modifier
-                        .animateContentSize(
-                            animationSpec = tween(duration.medium)
-                        )
-                ) {
-                    if (onBackPressed != null) {
-                        IconButton(
-                            icon = Icon.ImageVectorIcon(Icons.Rounded.ArrowBack),
-                            contentDescription = stringResource(R.string.cd_top_bar_on_back_pressed),
-                            onClick = { if (progress > 0) onBackPressed() },
-                            modifier = Modifier.graphicsLayer {
-                                this.alpha = alpha
-                            }
-                        )
-                    }
-                }
-                Text(
-                    text = text,
-                    style = MaterialTheme.typography.h6.copy(
-                        fontSize = 21.sp
-                    ),
-                    fontWeight = FontWeight.ExtraBold,
-                    textAlign = TextAlign.Start,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(horizontal = spacing.extraSmall)
-                        .graphicsLayer {
-                            this.alpha = alpha
-                        }
-                )
                 Row(
                     modifier = Modifier
-                        .animateContentSize(
-                            animationSpec = tween(duration.medium)
-                        )
-                        .graphicsLayer {
-                            this.alpha = alpha
-                        },
-                    content = actions
-                )
+                        .fillMaxWidth()
+                        .padding(horizontal = spacing.medium)
+                        .height(contentPaddingTop),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    val alpha by remember {
+                        derivedStateOf {
+                            progress * 2 - 1
+                        }
+                    }
+                    val duration = LocalDuration.current
+
+                    Box(
+                        modifier = Modifier
+                            .animateContentSize(
+                                animationSpec = tween(duration.medium)
+                            )
+                    ) {
+                        if (onBackPressed != null) {
+                            IconButton(
+                                icon = Icon.ImageVectorIcon(Icons.Rounded.ArrowBack),
+                                contentDescription = stringResource(R.string.cd_top_bar_on_back_pressed),
+                                onClick = { if (progress > 0) onBackPressed() },
+                                modifier = Modifier.graphicsLayer {
+                                    this.alpha = alpha
+                                }
+                            )
+                        }
+                    }
+                    Text(
+                        text = text,
+                        style = MaterialTheme.typography.h6.copy(
+                            fontSize = 21.sp
+                        ),
+                        fontWeight = FontWeight.ExtraBold,
+                        textAlign = TextAlign.Start,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(horizontal = spacing.extraSmall)
+                            .graphicsLayer {
+                                this.alpha = alpha
+                            }
+                    )
+                    Row(
+                        modifier = Modifier
+                            .animateContentSize(
+                                animationSpec = tween(duration.medium)
+                            )
+                            .graphicsLayer {
+                                this.alpha = alpha
+                            },
+                        content = actions
+                    )
+                }
+
             }
         }
-
     }
 }
 

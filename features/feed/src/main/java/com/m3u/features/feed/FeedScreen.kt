@@ -4,6 +4,7 @@ import android.content.res.Configuration.*
 import android.view.KeyEvent
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.*
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.*
@@ -36,6 +37,7 @@ import com.m3u.features.feed.components.LiveItem
 import com.m3u.ui.components.TextField
 import com.m3u.ui.model.*
 import com.m3u.ui.util.*
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @Composable
@@ -141,24 +143,38 @@ private fun FeedScreen(
     modifier: Modifier = Modifier
 ) {
     val configuration = LocalConfiguration.current
+    val spacing = LocalSpacing.current
+    val duration = LocalDuration.current
     val state = rememberPullRefreshState(
         refreshing = refreshing,
         onRefresh = onSyncingLatest
     )
     Column {
-        TextField(
-            text = query,
-            onValueChange = onQuery,
-            height = 32.dp,
-            placeholder = stringResource(R.string.query_placeholder).uppercaseFirst(),
-            modifier = Modifier
-                .padding(LocalSpacing.current.medium)
-                .fillMaxWidth()
+        val isAtTopState = remember { mutableStateOf(true) }
+        var flag by remember { mutableStateOf(false) }
+        val surfaceElevation by animateDpAsState(
+            if (!isAtTopState.value && flag) spacing.medium else spacing.none
         )
+        LaunchedEffect(Unit) {
+            delay(duration.medium.toLong())
+            flag = true
+        }
+        Surface(
+            elevation = surfaceElevation
+        ) {
+            TextField(
+                text = query,
+                onValueChange = onQuery,
+                height = 32.dp,
+                placeholder = stringResource(R.string.query_placeholder).uppercaseFirst(),
+                modifier = Modifier
+                    .padding(LocalSpacing.current.medium)
+                    .fillMaxWidth()
+            )
+        }
         Box(
             modifier = Modifier.pullRefresh(state)
         ) {
-            val isAtTopState = remember { mutableStateOf(true) }
             when (configuration.orientation) {
                 ORIENTATION_LANDSCAPE -> {
                     FeedPager(
@@ -211,23 +227,27 @@ private fun FeedScreen(
             )
             this@Column.AnimatedVisibility(
                 visible = !isAtTopState.value,
-                enter = scaleIn(),
-                exit = scaleOut(),
+                enter = slideInVertically { it } + fadeIn(),
+                exit = slideOutVertically { it } + fadeOut(),
                 modifier = Modifier
                     .padding(LocalSpacing.current.medium)
                     .align(Alignment.BottomEnd)
             ) {
 
-                FloatingActionButton(
+                ExtendedFloatingActionButton(
+                    text = {
+                        Text(text = stringResource(R.string.scroll_up))
+                    },
                     onClick = onScrollUp,
                     backgroundColor = LocalTheme.current.tint,
-                    contentColor = LocalTheme.current.onTint
-                ) {
-                    Icon(
-                        imageVector = Icons.Rounded.ArrowUpward,
-                        contentDescription = null
-                    )
-                }
+                    contentColor = LocalTheme.current.onTint,
+                    icon = {
+                        Icon(
+                            imageVector = Icons.Rounded.ArrowUpward,
+                            contentDescription = null
+                        )
+                    }
+                )
             }
         }
     }

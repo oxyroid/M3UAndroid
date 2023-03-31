@@ -1,5 +1,6 @@
 package com.m3u.features.feed.components
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
@@ -10,11 +11,11 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
 import com.m3u.data.local.entity.Live
 import com.m3u.features.feed.R
 import com.m3u.ui.components.Image
@@ -44,6 +45,10 @@ internal fun LiveItem(
     }
     Card(
         shape = RoundedCornerShape(spacing.medium),
+        border = BorderStroke(
+            if (live.favourite) spacing.extraSmall else 0.dp,
+            theme.divider.copy(alpha = 0.45f)
+        ),
         backgroundColor = theme.surface,
         contentColor = theme.onSurface,
         elevation = spacing.none
@@ -56,16 +61,19 @@ internal fun LiveItem(
                 )
                 .then(modifier)
         ) {
-            Image(
-                model = live.cover,
-                errorPlaceholder = live.title,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .aspectRatio(4 / 3f)
-            )
+            if (!live.cover.isNullOrEmpty()) {
+                Image(
+                    model = live.cover,
+                    errorPlaceholder = live.title,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .aspectRatio(4 / 3f)
+                )
+            }
             Column(
-                modifier = Modifier.padding(spacing.medium)
+                modifier = Modifier.padding(spacing.medium),
+                verticalArrangement = Arrangement.spacedBy(spacing.small)
             ) {
                 Text(
                     text = live.title,
@@ -75,8 +83,6 @@ internal fun LiveItem(
                     },
                     overflow = TextOverflow.Ellipsis,
                     maxLines = 1,
-                    color = if (live.favourite) theme.primary
-                    else Color.Unspecified,
                     fontWeight = FontWeight.Bold
                 )
 

@@ -8,4 +8,5 @@
     <string name="error_observe_feed">playlist is not existed (%s)</string>
     <string name="dialog_save_picture_title">save to gallery</string>
     <string name="query_placeholder">enter key word</string>
+    <string name="scroll_up">scroll up</string>
 </resources>
