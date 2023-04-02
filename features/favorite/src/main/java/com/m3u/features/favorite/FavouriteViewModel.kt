@@ -3,6 +3,7 @@ package com.m3u.features.favorite
 import android.app.Application
 import androidx.lifecycle.viewModelScope
 import com.m3u.core.architecture.BaseViewModel
+import com.m3u.core.util.collection.filterNotNullKeys
 import com.m3u.data.repository.FeedRepository
 import com.m3u.data.repository.LiveRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -31,13 +32,10 @@ class FavouriteViewModel @Inject constructor(
             .onEach { lives ->
                 writable.update { state ->
                     state.copy(
-                        lives = lives.map {
-                            val feed = feedRepository.get(it.feedUrl)
-                            LiveDetail(
-                                live = it,
-                                title = feed?.title.orEmpty()
-                            )
-                        }
+                        details = lives
+                            .groupBy { it.feedUrl }
+                            .mapKeys { feedRepository.get(it.key)?.title }
+                            .filterNotNullKeys()
                     )
                 }
             }

@@ -4,12 +4,9 @@ import com.m3u.core.wrapper.Event
 import com.m3u.core.wrapper.handledEvent
 import com.m3u.data.local.entity.Live
 
-data class FavoriteState(
-    val lives: List<LiveDetail> = emptyList(),
-    val message: Event<String> = handledEvent()
-)
+typealias LiveDetails = Map<String, List<Live>>
 
-data class LiveDetail(
-    val live: Live,
-    val title: String
+data class FavoriteState(
+    val details: LiveDetails = emptyMap(),
+    val message: Event<String> = handledEvent()
 )

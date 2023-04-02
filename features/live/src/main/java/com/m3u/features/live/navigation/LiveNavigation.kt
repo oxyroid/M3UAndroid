@@ -38,7 +38,9 @@ fun NavController.navigateToLivePlayList(ids: List<Int>, initialIndex: Int) {
 }
 
 @OptIn(ExperimentalAnimationApi::class)
-fun NavGraphBuilder.liveScreen() {
+fun NavGraphBuilder.liveScreen(
+    onBackPressed: () -> Unit
+) {
     composable(
         route = liveRoute,
         arguments = listOf(
@@ -57,13 +59,16 @@ fun NavGraphBuilder.liveScreen() {
             ?.getInt(TYPE_ID)
             ?: return@composable
         LiveRoute(
-            init = LiveEvent.Init.SingleLive(id)
+            init = LiveEvent.Init.SingleLive(id),
+            onBackPressed = onBackPressed
         )
     }
 }
 
 @OptIn(ExperimentalAnimationApi::class)
-fun NavGraphBuilder.livePlaylistScreen() {
+fun NavGraphBuilder.livePlaylistScreen(
+    onBackPressed: () -> Unit
+) {
     composable(
         route = livePlaylistRoute,
         arguments = listOf(
@@ -95,7 +100,8 @@ fun NavGraphBuilder.livePlaylistScreen() {
             init = LiveEvent.Init.PlayList(
                 initialIndex = initialIndex,
                 ids = ids
-            )
+            ),
+            onBackPressed = onBackPressed
         )
     }
 }

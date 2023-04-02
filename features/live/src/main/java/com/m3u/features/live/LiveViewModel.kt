@@ -47,7 +47,7 @@ class LiveViewModel @Inject constructor(
             .onEach { live ->
                 writable.update {
                     it.copy(
-                        init = LiveState.Init.SingleLive(live)
+                        init = LiveState.Init.Live(live)
                     )
                 }
             }
@@ -59,7 +59,7 @@ class LiveViewModel @Inject constructor(
         initJob = viewModelScope.launch {
             val lives = when (val init = readable.init) {
                 is LiveState.Init.PlayList -> init.lives
-                is LiveState.Init.SingleLive -> init.live?.let(::listOf) ?: emptyList()
+                is LiveState.Init.Live -> init.live?.let(::listOf) ?: emptyList()
             }.toMutableList()
             ids.forEach { id ->
                 val live = liveRepository.get(id)
