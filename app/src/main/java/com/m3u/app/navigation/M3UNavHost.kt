@@ -1,7 +1,9 @@
 package com.m3u.app.navigation
 
-import androidx.compose.animation.*
+import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.runtime.Composable
@@ -46,8 +48,16 @@ fun M3UNavHost(
             }
         )
 
-        liveScreen()
-        livePlaylistScreen()
+        liveScreen(
+            onBackPressed = {
+                navController.popBackStack()
+            }
+        )
+        livePlaylistScreen(
+            onBackPressed = {
+                navController.popBackStack()
+            }
+        )
         feedScreen(
             navigateToLive = { id ->
                 navigateToDestination(Destination.Live(id))

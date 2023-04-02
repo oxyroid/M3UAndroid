@@ -144,7 +144,8 @@ fun PortraitOrientationContent(
     ) {
         items(
             items = feeds,
-            key = { it.feed.url }
+            key = { it.feed.url },
+            contentType = {}
         ) { detail ->
             FeedItem(
                 label = detail.feed.title,
@@ -178,7 +179,8 @@ private fun LandscapeOrientationContent(
     ) {
         items(
             items = feeds,
-            key = { it.feed.url }
+            key = { it.feed.url },
+            contentType = {}
         ) { detail ->
             FeedItem(
                 label = detail.feed.title,

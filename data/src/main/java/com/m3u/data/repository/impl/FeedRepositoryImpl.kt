@@ -13,10 +13,10 @@ import com.m3u.data.local.dao.FeedDao
 import com.m3u.data.local.dao.LiveDao
 import com.m3u.data.local.entity.Feed
 import com.m3u.data.local.entity.Live
-import com.m3u.data.remote.analyzer.Parser
-import com.m3u.data.remote.analyzer.execute
-import com.m3u.data.remote.analyzer.impl.M3UParser
-import com.m3u.data.remote.analyzer.model.toLive
+import com.m3u.data.remote.parser.Parser
+import com.m3u.data.remote.parser.execute
+import com.m3u.data.remote.parser.impl.DefaultPlaylistParser
+import com.m3u.data.remote.parser.model.toLive
 import com.m3u.data.repository.FeedRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
@@ -86,8 +86,6 @@ class FeedRepositoryImpl @Inject constructor(
 
     override suspend fun unsubscribe(url: String): Feed? = sandbox {
         val feed = feedDao.getByUrl(url)
-        val lives = liveDao.getByFeedUrl(url)
-        configuration.mutedUrls -= lives.map { it.url }
         liveDao.deleteByFeedUrl(url)
         feed?.also {
             feedDao.delete(it)
@@ -97,7 +95,7 @@ class FeedRepositoryImpl @Inject constructor(
 
     private suspend fun parse(url: String): List<Live> {
         val parser = when {
-            M3UParser.match(url) -> Parser.newM3UParser()
+            DefaultPlaylistParser.match(url) -> Parser.newM3UParser()
             else -> error("Unsupported url: $url")
         }
         return parser.run {
@@ -105,7 +103,7 @@ class FeedRepositoryImpl @Inject constructor(
                 url = url,
                 connectTimeout = configuration.connectTimeout
             )
-            get().map { it.toLive(url) }
+                .map { it.toLive(url) }
         }
     }
 }

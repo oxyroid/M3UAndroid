@@ -39,6 +39,7 @@ import kotlin.math.absoluteValue
 internal fun LiveRoute(
     init: LiveEvent.Init,
     modifier: Modifier = Modifier,
+    onBackPressed: () -> Unit,
     viewModel: LiveViewModel = hiltViewModel(),
 ) {
     val context = LocalContext.current
@@ -73,6 +74,7 @@ internal fun LiveRoute(
         recording = state.recording,
         searchDlnaDevices = { viewModel.onEvent(LiveEvent.SearchDlnaDevices) },
         onRecord = { viewModel.onEvent(LiveEvent.Record) },
+        onBackPressed = onBackPressed,
         modifier = modifier,
     )
 }
@@ -86,11 +88,12 @@ private fun LiveScreen(
     recording: Boolean,
     searchDlnaDevices: () -> Unit,
     onRecord: () -> Unit,
+    onBackPressed: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val theme = LocalTheme.current
     when (init) {
-        is LiveState.Init.SingleLive -> {
+        is LiveState.Init.Live -> {
             LivePart(
                 url = init.live?.url.orEmpty(),
                 experimentalMode = experimentalMode,
@@ -98,6 +101,7 @@ private fun LiveScreen(
                 recording = recording,
                 onRecord = onRecord,
                 searchDlnaDevices = searchDlnaDevices,
+                onBackPressed = onBackPressed,
                 modifier = modifier
                     .fillMaxSize()
                     .background(Color.Black)
@@ -115,24 +119,26 @@ private fun LiveScreen(
                     .background(theme.background)
                     .testTag("features:live")
             ) { page ->
-                LivePart(url = init.lives[page].url,
+                LivePart(
+                    url = init.lives[page].url,
                     experimentalMode = experimentalMode,
                     clipMode = clipMode,
                     recording = recording,
                     onRecord = onRecord,
                     searchDlnaDevices = searchDlnaDevices,
+                    onBackPressed = onBackPressed,
                     modifier = Modifier
                         .fillMaxSize()
                         .background(Color.Black)
                         .graphicsLayer {
-                            val offset =
-                                (pagerState.currentPage - page) + pagerState.currentPageOffsetFraction.absoluteValue.coerceIn(
-                                    0f, 1f
-                                )
+                            val offset = (pagerState.currentPage - page) +
+                                    pagerState.currentPageOffsetFraction.absoluteValue
+                                        .coerceIn(0f, 1f)
                             val scale = lerp(1f, 0.8f, offset)
                             scaleX = scale
                             scaleY = scale
-                        })
+                        }
+                )
             }
         }
     }
@@ -146,6 +152,7 @@ private fun LivePart(
     recording: Boolean,
     onRecord: () -> Unit,
     searchDlnaDevices: () -> Unit,
+    onBackPressed: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Box(
@@ -156,7 +163,8 @@ private fun LivePart(
             url = url, clipMode = clipMode
         )
         ExoPlayer(
-            state = state, modifier = Modifier.fillMaxSize()
+            state = state,
+            modifier = Modifier.fillMaxSize()
         )
         val maskState = rememberMaskState { visible ->
             helper.systemUiVisibility = visible
@@ -165,49 +173,62 @@ private fun LivePart(
         val exception by state.exception
         val videoSize by state.videoSize
 
-        LiveMask(state = maskState, header = {
-            if (experimentalMode) {
+        LiveMask(
+            state = maskState,
+            header = {
                 MaskButton(
                     state = maskState,
-                    icon = if (recording) Icons.Rounded.RadioButtonChecked
-                    else Icons.Rounded.RadioButtonUnchecked,
-                    tint = if (recording) LocalTheme.current.error
-                    else LocalContentColor.current.copy(alpha = LocalContentAlpha.current),
-                    onClick = onRecord
+                    icon = Icons.Rounded.ArrowBack,
+                    onClick = onBackPressed
                 )
-                val shouldShowCastButton = (playback != Player.STATE_IDLE)
-                if (shouldShowCastButton) {
+                Spacer(
+                    modifier = Modifier.weight(1f)
+                )
+                if (experimentalMode) {
                     MaskButton(
                         state = maskState,
-                        icon = Icons.Rounded.Cast,
-                        onClick = searchDlnaDevices
+                        icon = if (recording) Icons.Rounded.RadioButtonChecked
+                        else Icons.Rounded.RadioButtonUnchecked,
+                        tint = if (recording) LocalTheme.current.error
+                        else LocalContentColor.current.copy(alpha = LocalContentAlpha.current),
+                        onClick = onRecord
                     )
+                    val shouldShowCastButton = (playback != Player.STATE_IDLE)
+                    if (shouldShowCastButton) {
+                        MaskButton(
+                            state = maskState,
+                            icon = Icons.Rounded.Cast,
+                            onClick = searchDlnaDevices
+                        )
+                    }
                 }
-            }
-            val shouldShowPipButton = videoSize.isNotEmpty
-            if (shouldShowPipButton) {
-                MaskButton(state = maskState, icon = Icons.Rounded.PictureInPicture, onClick = {
-                    helper.enterPipMode(videoSize)
-                    maskState.sleep()
+                val shouldShowPipButton = videoSize.isNotEmpty
+                if (shouldShowPipButton) {
+                    MaskButton(state = maskState, icon = Icons.Rounded.PictureInPicture, onClick = {
+                        helper.enterPipMode(videoSize)
+                        maskState.sleep()
+                    })
+                }
+            },
+            body = {
+                MaskCircleButton(state = maskState, icon = Icons.Rounded.Refresh, onClick = {
+                    state.loadMedia()
                 })
-            }
-        }, body = {
-            MaskCircleButton(state = maskState, icon = Icons.Rounded.Refresh, onClick = {
-                state.loadMedia()
-            })
-        }, foot = {
-            Column {
-                Text(
-                    text = playback.displayText, fontWeight = FontWeight.Bold
-                )
-                val displayText = exception.displayText
-                if (displayText.isNotEmpty()) {
+            },
+            foot = {
+                Column {
                     Text(
-                        text = displayText, color = LocalTheme.current.error
+                        text = playback.displayText, fontWeight = FontWeight.Bold
                     )
+                    val displayText = exception.displayText
+                    if (displayText.isNotEmpty()) {
+                        Text(
+                            text = displayText, color = LocalTheme.current.error
+                        )
+                    }
                 }
             }
-        })
+        )
         LaunchedEffect(exception) {
             if (exception != null) {
                 maskState.keepAlive()
