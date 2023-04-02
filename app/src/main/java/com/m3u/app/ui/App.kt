@@ -53,11 +53,6 @@ fun App(
                     .fillMaxSize()
                     .padding(padding)
                     .consumeWindowInsets(padding)
-                    .windowInsetsPadding(
-                        WindowInsets.safeDrawing.only(
-                            WindowInsetsSides.Horizontal
-                        )
-                    )
             ) {
                 val currentDestination = appState.currentNavDestination
                 val topLevelTitle = appState.currentTopLevelDestination
@@ -67,9 +62,7 @@ fun App(
                 val text by remember(topLevelTitle) {
                     derivedStateOf { topLevelTitle ?: title }
                 }
-                val isSystemBarVisible =
-                    !currentDestination.isInDestination<Destination.Live>() &&
-                            !currentDestination.isInDestination<Destination.LivePlayList>()
+                val isSystemBarVisible = !appState.currentNavDestination.isInFullscreenDestination()
                 AppTopBar(
                     text = text,
                     visible = isSystemBarVisible,
@@ -84,9 +77,8 @@ fun App(
                             )
                         }
                     },
-                    onBackPressed =
-                    if (appState.currentTopLevelDestination == null) appState::onBackClick
-                    else null
+                    onBackPressed = if (!appState.currentNavDestination.isInLeafDestination()) null
+                    else appState::onBackClick
                 ) { padding ->
                     Column(
                         modifier = Modifier
@@ -132,3 +124,11 @@ inline fun <reified D : Destination> NavDestination?.isInDestination(): Boolean 
     }
     return this?.route == targetRoute
 }
+
+fun NavDestination?.isInLeafDestination(): Boolean = isInDestination<Destination.Feed>() ||
+        isInDestination<Destination.Live>() ||
+        isInDestination<Destination.LivePlayList>() ||
+        isInDestination<Destination.Console>()
+
+fun NavDestination?.isInFullscreenDestination(): Boolean = isInDestination<Destination.Live>() ||
+        isInDestination<Destination.LivePlayList>()
