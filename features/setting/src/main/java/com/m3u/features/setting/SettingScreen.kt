@@ -91,7 +91,7 @@ fun SettingRoute(
         onFeedStrategy = { viewModel.onEvent(SettingEvent.OnSyncMode(it)) },
         onUIMode = { viewModel.onEvent(SettingEvent.OnUseCommonUIMode) },
         onExperimentalMode = { viewModel.onEvent(SettingEvent.OnExperimentalMode) },
-        onVoiceLiveUrl = { viewModel.onEvent(SettingEvent.OnVoiceLiveUrl(it)) },
+        onBannedLive = { viewModel.onEvent(SettingEvent.OnBannedLive(it)) },
         onClipMode = { viewModel.onEvent(SettingEvent.OnClipMode(it)) },
         modifier = modifier.fillMaxSize()
     )
@@ -120,7 +120,7 @@ private fun SettingScreen(
     useCommonUIMode: Boolean,
     useCommonUIModeEnable: Boolean,
     mutedLives: List<Live>,
-    onVoiceLiveUrl: (String) -> Unit,
+    onBannedLive: (Int) -> Unit,
     onUIMode: () -> Unit,
     onClipMode: OnClipMode,
     navigateToConsole: NavigateToConsole,
@@ -163,7 +163,7 @@ private fun SettingScreen(
                     experimentalMode = experimentalMode,
                     onExperimentalMode = onExperimentalMode,
                     mutedLives = mutedLives,
-                    onVoiceLiveUrl = onVoiceLiveUrl,
+                    onBannedLive = onBannedLive,
                     modifier = modifier
                         .fillMaxWidth()
                         .scrollable(
@@ -202,7 +202,7 @@ private fun SettingScreen(
                     experimentalMode = experimentalMode,
                     onExperimentalMode = onExperimentalMode,
                     mutedLives = mutedLives,
-                    onVoiceLiveUrl = onVoiceLiveUrl,
+                    onBannedLive = onBannedLive,
                     modifier = modifier.scrollable(
                         orientation = Orientation.Vertical,
                         state = rememberScrollableState { it }
@@ -233,7 +233,7 @@ private fun PortraitOrientationContent(
     onConnectTimeout: () -> Unit,
     adding: Boolean,
     mutedLives: List<Live>,
-    onVoiceLiveUrl: (String) -> Unit,
+    onBannedLive: (Int) -> Unit,
     onFold: (Fold) -> Unit,
     onTitle: (String) -> Unit,
     onUrl: (String) -> Unit,
@@ -290,7 +290,7 @@ private fun PortraitOrientationContent(
                         title = title,
                         url = url,
                         mutedLives = mutedLives,
-                        onVoiceLiveUrl = onVoiceLiveUrl,
+                        onBannedLive = onBannedLive,
                         adding = adding,
                         onTitle = onTitle,
                         onUrl = onUrl,
@@ -335,7 +335,7 @@ private fun LandscapeOrientationContent(
     version: String,
     release: Resource<Release>,
     mutedLives: List<Live>,
-    onVoiceLiveUrl: (String) -> Unit,
+    onBannedLive: (Int) -> Unit,
     fetchRelease: () -> Unit,
     navigateToConsole: NavigateToConsole,
     experimentalMode: Boolean,
@@ -381,7 +381,7 @@ private fun LandscapeOrientationContent(
                     title = title,
                     url = url,
                     mutedLives = mutedLives,
-                    onVoiceLiveUrl = onVoiceLiveUrl,
+                    onBannedLive = onBannedLive,
                     adding = adding,
                     onTitle = onTitle,
                     onUrl = onUrl,
@@ -564,7 +564,6 @@ private fun PreferencesPart(
                 }
             }
         }
-
         item {
             when (release) {
                 Resource.Loading -> {}
@@ -576,14 +575,6 @@ private fun PreferencesPart(
                     } else {
                         stringResource(R.string.label_same_version)
                     }
-
-//                    Selection(
-//                        onClick = { /*TODO*/ },
-//                        modifier = Modifier.fillMaxWidth()
-//                    ) {
-//                        Text(text = remoteVersion)
-//                    }
-
                     TextButton(name) {
                         if (remoteVersion == version) {
                             fetchRelease()
@@ -614,7 +605,7 @@ private fun FeedManagementPart(
     title: String,
     url: String,
     mutedLives: List<Live>,
-    onVoiceLiveUrl: (String) -> Unit,
+    onBannedLive: (Int) -> Unit,
     adding: Boolean,
     onTitle: (String) -> Unit,
     onUrl: (String) -> Unit,
@@ -650,7 +641,7 @@ private fun FeedManagementPart(
                     mutedLives.forEach { live ->
                         MutedLiveItem(
                             live = live,
-                            onVoiced = { onVoiceLiveUrl(live.url) },
+                            onBannedLive = { onBannedLive(live.id) },
                             modifier = Modifier.background(theme.surface)
                         )
                     }

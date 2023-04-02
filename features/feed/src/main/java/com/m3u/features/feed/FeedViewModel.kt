@@ -7,7 +7,6 @@ import com.m3u.core.architecture.Configuration
 import com.m3u.core.wrapper.Resource
 import com.m3u.core.wrapper.eventOf
 import com.m3u.data.repository.*
-import com.m3u.ui.model.SpecialNavigationParam
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -60,67 +59,42 @@ class FeedViewModel @Inject constructor(
     }
 
     private fun CoroutineScope.observeFeedDetail(feedUrl: String) {
-        when (feedUrl) {
-            SpecialNavigationParam.FEED_MUTED_LIVES_URL -> {
+        feedRepository.observe(feedUrl)
+            .onEach { feed ->
                 writable.update {
-                    it.copy(
-                        url = feedUrl
-                    )
+                    if (feed != null) {
+                        it.copy(
+                            url = feed.url,
+                            title = feed.title
+                        )
+                    } else {
+                        val message = context.getString(R.string.error_observe_feed, feedUrl)
+                        it.copy(message = eventOf(message))
+                    }
                 }
             }
-            else -> {
-                feedRepository.observe(feedUrl)
-                    .onEach { feed ->
-                        writable.update {
-                            if (feed != null) {
-                                it.copy(
-                                    url = feed.url,
-                                    title = feed.title
-                                )
-                            } else {
-                                val message =
-                                    context.getString(R.string.error_observe_feed, feedUrl)
-                                it.copy(message = eventOf(message))
-                            }
-                        }
-                    }
-                    .launchIn(this)
-            }
-        }
+            .launchIn(this)
     }
 
     private fun CoroutineScope.observeFeedLives(feedUrl: String) {
-        when (feedUrl) {
-            SpecialNavigationParam.FEED_MUTED_LIVES_URL -> {
-                queryStateFlow.onEach { query ->
-                    val lives = configuration.mutedUrls
-                        .mapNotNull { url -> liveRepository.getByUrl(url) }
-                        .filter { it.title.contains(query, true) }
-                        .groupBy { it.group }
-                    writable.update {
-                        it.copy(lives = lives)
-                    }
+        liveRepository.observeBannedByFeedUrl(
+            feedUrl = feedUrl,
+            banned = false
+        )
+            .combine(queryStateFlow) { origin, query ->
+                val remainedLives = origin.filter {
+                    it.title.contains(query, true)
                 }
-                    .launchIn(this)
+                remainedLives.groupBy { it.group }
             }
-            else -> {
-                val region = liveRepository.observeByFeedUrl(feedUrl)
-                val mutedUrls = configuration.mutedUrls
-                region
-                    .combine(queryStateFlow) { origin, query ->
-                        val remainedLives = origin.filter {
-                            it.url !in mutedUrls && it.title.contains(query, true)
-                        }
-                        remainedLives.groupBy { it.group }
-                    }
-                    .onEach { lives ->
-                        writable.update {
-                            it.copy(lives = lives)
-                        }
-                    }
-                    .launchIn(this)
+            .onEach { lives ->
+                writable.update {
+                    it.copy(
+                        lives = lives
+                    )
+                }
             }
-        }
+            .launchIn(this)
     }
 
     private fun fetchFeed() {
@@ -205,21 +179,7 @@ class FeedViewModel @Inject constructor(
                     )
                 }
             } else {
-                liveRepository.setMuteByUrl(live.url, target)
-                    .onEach { resource ->
-                        when (resource) {
-                            Resource.Loading -> {}
-                            is Resource.Success -> observeFeed(readable.url)
-                            is Resource.Failure -> {
-                                writable.update {
-                                    it.copy(
-                                        message = eventOf(resource.message.orEmpty())
-                                    )
-                                }
-                            }
-                        }
-                    }
-                    .launchIn(this)
+                liveRepository.setBanned(live.id, target)
             }
         }
     }

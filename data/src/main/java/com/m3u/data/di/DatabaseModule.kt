@@ -21,5 +21,7 @@ object DatabaseModule {
         context,
         M3UDatabase::class.java,
         "m3u-database"
-    ).build()
+    )
+        .addMigrations(M3UDatabase.MIGRATION_1_2)
+        .build()
 }

@@ -12,8 +12,8 @@ import com.m3u.core.wrapper.eventOf
 import com.m3u.data.repository.FeedRepository
 import com.m3u.data.repository.LiveRepository
 import com.m3u.data.repository.RemoteRepository
+import com.m3u.data.repository.observeBanned
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
@@ -45,16 +45,15 @@ class SettingViewModel @Inject constructor(
                 scrollMode = configuration.scrollMode
             )
         }
-        viewModelScope.launch(Dispatchers.Default) {
-            val newerMutedUrls = configuration.mutedUrls.toMutableList()
-            val lives = newerMutedUrls.mapNotNull { url -> liveRepository.getByUrl(url) }
-            configuration.mutedUrls = lives.map { it.url }
-            writable.update {
-                it.copy(
-                    mutedLives = lives
-                )
+        liveRepository.observeBanned(banned = true)
+            .onEach { lives ->
+                writable.update {
+                    it.copy(
+                        mutedLives = lives
+                    )
+                }
             }
-        }
+            .launchIn(viewModelScope)
         fetchLatestRelease()
     }
 
@@ -131,14 +130,12 @@ class SettingViewModel @Inject constructor(
                     )
                 }
             }
-            is SettingEvent.OnVoiceLiveUrl -> {
-                configuration.mutedUrls -= event.url
-                writable.update { readable ->
-                    val lives = readable.mutedLives.toMutableList()
-                    lives.removeIf { it.url == event.url }
-                    readable.copy(
-                        mutedLives = lives
-                    )
+            is SettingEvent.OnBannedLive -> {
+                val bannedLive = readable.mutedLives.find { it.id == event.id }
+                if (bannedLive != null) {
+                    viewModelScope.launch {
+                        liveRepository.setBanned(event.id, false)
+                    }
                 }
             }
             SettingEvent.OnScrollMode -> {

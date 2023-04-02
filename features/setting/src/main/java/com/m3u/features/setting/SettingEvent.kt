@@ -15,5 +15,5 @@ sealed interface SettingEvent {
     object OnConnectTimeout : SettingEvent
     object OnScrollMode : SettingEvent
     data class OnClipMode(@ClipMode val mode: Int) : SettingEvent
-    data class OnVoiceLiveUrl(val url: String) : SettingEvent
+    data class OnBannedLive(val id: Int) : SettingEvent
 }

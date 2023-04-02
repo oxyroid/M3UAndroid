@@ -1,6 +1,5 @@
 package com.m3u.data.repository
 
-import com.m3u.core.wrapper.Resource
 import com.m3u.data.local.entity.Live
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -13,11 +12,26 @@ interface LiveRepository {
     suspend fun getByUrl(url: String): Live?
     suspend fun getByFeedUrl(feedUrl: String): List<Live>
     suspend fun setFavourite(id: Int, target: Boolean)
-    fun setMuteByUrl(url: String, target: Boolean): Flow<Resource<Unit>>
+    suspend fun setBanned(id: Int, target: Boolean)
 }
 
 fun LiveRepository.observeByFeedUrl(feedUrl: String): Flow<List<Live>> = observeAll()
     .map { lives ->
         lives.filter { it.feedUrl == feedUrl }
+    }
+    .distinctUntilChanged()
+
+fun LiveRepository.observeBanned(banned: Boolean): Flow<List<Live>> = observeAll()
+    .map { lives ->
+        lives.filter { it.banned == banned }
+    }
+    .distinctUntilChanged()
+
+fun LiveRepository.observeBannedByFeedUrl(
+    feedUrl: String,
+    banned: Boolean
+): Flow<List<Live>> = observeAll()
+    .map { lives ->
+        lives.filter { it.feedUrl == feedUrl && it.banned == banned }
     }
     .distinctUntilChanged()

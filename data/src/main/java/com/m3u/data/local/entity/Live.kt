@@ -22,7 +22,9 @@ data class Live(
     val id: Int = 0,
     // extra fields
     @ColumnInfo(name = "favourite")
-    val favourite: Boolean = false
+    val favourite: Boolean = false,
+    @ColumnInfo(name = "banned")
+    val banned: Boolean = false,
 ) : Likable<Live> {
     override infix fun like(another: Live): Boolean =
         this.url == another.url && this.feedUrl == another.feedUrl && this.cover == another.cover
