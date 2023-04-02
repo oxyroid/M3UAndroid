@@ -38,13 +38,6 @@ android {
             proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
             signingConfig signingConfigs.release
         }
-
-        unminify {
-            minifyEnabled false
-            shrinkResources false
-            proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
-            signingConfig signingConfigs.release
-        }
     }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_11
@@ -77,6 +70,7 @@ dependencies {
     implementation project(":features:live")
     implementation project(":features:console")
     implementation project(":features:crash")
+    implementation project(":features:scheme")
 
     implementation libs.androidx.core.core.ktx
     implementation libs.androidx.appcompat.appcompat
