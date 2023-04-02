@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalFoundationApi::class)
+
 package com.m3u.features.feed
 
 import android.content.res.Configuration.*
@@ -8,6 +10,10 @@ import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.*
+import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
+import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
+import androidx.compose.foundation.lazy.staggeredgrid.items
+import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.*
@@ -142,6 +148,7 @@ private fun FeedScreen(
     onScrollUp: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val theme = LocalTheme.current
     val configuration = LocalConfiguration.current
     val spacing = LocalSpacing.current
     val duration = LocalDuration.current
@@ -160,7 +167,9 @@ private fun FeedScreen(
             flag = true
         }
         Surface(
-            elevation = surfaceElevation
+            elevation = surfaceElevation,
+            color = theme.background,
+            contentColor = theme.onBackground
         ) {
             TextField(
                 text = query,
@@ -222,8 +231,8 @@ private fun FeedScreen(
                 state = state,
                 modifier = Modifier.align(Alignment.TopCenter),
                 scale = true,
-                contentColor = LocalTheme.current.onTint,
-                backgroundColor = LocalTheme.current.tint
+                contentColor = theme.onTint,
+                backgroundColor = theme.tint
             )
             this@Column.AnimatedVisibility(
                 visible = !isAtTopState.value,
@@ -239,8 +248,8 @@ private fun FeedScreen(
                         Text(text = stringResource(R.string.scroll_up))
                     },
                     onClick = onScrollUp,
-                    backgroundColor = LocalTheme.current.tint,
-                    contentColor = LocalTheme.current.onTint,
+                    backgroundColor = theme.tint,
+                    contentColor = theme.onTint,
                     icon = {
                         Icon(
                             imageVector = Icons.Rounded.ArrowUpward,
@@ -278,24 +287,25 @@ private fun LandscapeOrientationContent(
     }
 
     if (useCommonUIMode || type == UI_MODE_TYPE_NORMAL) {
-        val state = rememberLazyGridState()
+        val state = rememberLazyStaggeredGridState()
         LaunchedEffect(state.isAtTop) {
             isAtTopState.value = state.isAtTop
         }
         EventHandler(scrollUp) {
             state.scrollToItem(0)
         }
-        LazyVerticalGrid(
+        LazyVerticalStaggeredGrid(
             state = state,
-            columns = GridCells.Fixed(rowCount + 2),
-            verticalArrangement = Arrangement.spacedBy(spacing.medium),
+            columns = StaggeredGridCells.Fixed(rowCount + 2),
+            verticalItemSpacing = spacing.medium,
             horizontalArrangement = Arrangement.spacedBy(spacing.medium),
             contentPadding = PaddingValues(spacing.medium),
             modifier = modifier.fillMaxSize()
         ) {
             items(
                 items = lives,
-                key = { it.id }
+                key = { it.id },
+                contentType = { it.cover.isNullOrEmpty() }
             ) { live ->
                 LiveItem(
                     live = live,
@@ -353,7 +363,7 @@ private fun PortraitOrientationContent(
     val spacing = with(scalable) {
         LocalSpacing.current.scaled
     }
-    val state = rememberLazyGridState()
+    val state = rememberLazyStaggeredGridState()
     val ids = remember(scrollMode, lives) {
         if (scrollMode) lives.map { it.id }
         else emptyList()
@@ -365,17 +375,18 @@ private fun PortraitOrientationContent(
     EventHandler(scrollUp) {
         state.scrollToItem(0)
     }
-    LazyVerticalGrid(
+    LazyVerticalStaggeredGrid(
         state = state,
-        columns = GridCells.Fixed(rowCount),
-        verticalArrangement = Arrangement.spacedBy(spacing.medium),
+        columns = StaggeredGridCells.Fixed(rowCount),
+        verticalItemSpacing = spacing.medium,
         horizontalArrangement = Arrangement.spacedBy(spacing.medium),
         contentPadding = PaddingValues(spacing.medium),
         modifier = modifier.fillMaxSize()
     ) {
         items(
             items = lives,
-            key = { live -> live.id }
+            key = { live -> live.id },
+            contentType = { it.cover.isNullOrEmpty() }
         ) { live ->
             LiveItem(
                 live = live,
@@ -431,7 +442,8 @@ private fun TelevisionUIModeContent(
     ) {
         items(
             items = lives,
-            key = { it.id }
+            key = { it.id },
+            contentType = { it.cover.isNullOrEmpty() }
         ) { live ->
             LiveItem(
                 live = live,

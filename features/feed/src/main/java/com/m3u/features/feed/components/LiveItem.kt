@@ -15,7 +15,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
 import com.m3u.data.local.entity.Live
 import com.m3u.features.feed.R
 import com.m3u.ui.components.Image
@@ -43,13 +42,13 @@ internal fun LiveItem(
     val scheme = remember(live) {
         URI(live.url).scheme ?: context.getString(R.string.scheme_unknown).uppercase()
     }
-    Card(
+    Surface(
         shape = RoundedCornerShape(spacing.medium),
         border = BorderStroke(
-            if (live.favourite) spacing.extraSmall else 0.dp,
+            if (live.favourite) spacing.extraSmall else spacing.none,
             theme.divider.copy(alpha = 0.45f)
         ),
-        backgroundColor = theme.surface,
+        color = theme.surface,
         contentColor = theme.onSurface,
         elevation = spacing.none
     ) {
@@ -106,7 +105,6 @@ internal fun LiveItem(
                     }
                 }
             }
-
         }
     }
 }

@@ -83,7 +83,7 @@ fun AppTopBar(
                 return if (scrollable) {
                     offsetHeightPx = offsetHeightPx coercePlus available.y
                     val innerConsumer = consumer.consume(offsetHeightPx, minHeightPx, maxHeightPx)
-                    return if (innerConsumer) available else Offset.Zero
+                    if (innerConsumer) available else Offset.Zero
                 } else Offset.Zero
             }
 
@@ -133,7 +133,9 @@ fun AppTopBar(
             // AppBar
             val progress by remember { derivedStateOf { offsetHeightPx / maxHeightPx } }
             Surface(
-                elevation = LocalAbsoluteElevation.current
+                elevation = LocalAbsoluteElevation.current,
+                color = LocalTheme.current.background,
+                contentColor = LocalTheme.current.onBackground
             ) {
                 Row(
                     modifier = Modifier
@@ -193,7 +195,6 @@ fun AppTopBar(
                         content = actions
                     )
                 }
-
             }
         }
     }
