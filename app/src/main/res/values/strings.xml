@@ -13,4 +13,6 @@
     <string name="title_favourite">喜欢</string>
     <string name="title_feed_placeholder">--</string>
     <string name="label_crash">应用发生崩溃</string>
+
+    <string name="features_scheme_import">导入频道</string>
 </resources>

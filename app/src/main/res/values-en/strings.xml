@@ -14,4 +14,6 @@
     <string name="title_favourite">Favourite</string>
     <string name="title_feed_placeholder">--</string>
     <string name="label_crash">app crashes</string>
+
+    <string name="features_scheme_import">Import as live</string>
 </resources>
