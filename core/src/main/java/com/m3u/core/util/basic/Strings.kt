@@ -26,3 +26,31 @@ fun String.uppercaseFirst(): String {
     if (this.isEmpty()) return this
     return this.first().uppercase() + this.drop(1)
 }
+
+fun String.splitOutOfQuotation(delimiter: Char): List<String> {
+    val list = mutableListOf<String>()
+    var start = 0
+    var inQuotes = false
+    var quoteChar: Char? = null
+
+    for (i in indices) {
+        val c = this[i]
+        if (c == '\'' || c == '\"') {
+            if (!inQuotes) {
+                inQuotes = true
+                quoteChar = c
+            } else if (quoteChar == c) {
+                inQuotes = false
+                quoteChar = null
+            }
+        }
+        if (c == delimiter && !inQuotes) {
+            list.add(substring(start, i))
+            start = i + 1
+        }
+    }
+
+    list.add(substring(start))
+    return list
+
+}

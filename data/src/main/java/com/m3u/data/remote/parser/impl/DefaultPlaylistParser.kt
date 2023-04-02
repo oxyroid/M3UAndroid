@@ -1,6 +1,7 @@
 package com.m3u.data.remote.parser.impl
 
 import android.net.Uri
+import com.m3u.core.util.basic.splitOutOfQuotation
 import com.m3u.core.util.basic.trimBrackets
 import com.m3u.core.util.collection.loadLine
 import com.m3u.data.remote.parser.Parser
@@ -40,9 +41,9 @@ class DefaultPlaylistParser internal constructor() : Parser<List<M3UData>>() {
     private fun M3UData.setUrl(url: String): M3UData = copy(url = url)
 
     private fun M3UData.setContent(decodedContent: String): M3UData {
-        val contents = decodedContent.split(",")
+        val contents = decodedContent.splitOutOfQuotation(',')
         if (contents.size > 2) {
-            error("The content can only have one comma at most! Try decoration before invoking.")
+            error("The content can only have one comma at most! Try decoration before invoking. [$decodedContent]")
         }
         val spaceContentIndex = contents.indexOfFirst { it.startsWith(M3U_INFO_MARK) }
         val spaceContent = if (spaceContentIndex == -1) null else contents[spaceContentIndex]
@@ -74,7 +75,7 @@ class DefaultPlaylistParser internal constructor() : Parser<List<M3UData>>() {
 
     private fun makeProperties(spaceContent: String): Properties {
         val properties = Properties()
-        val parts = spaceContent.split(" ")
+        val parts = spaceContent.splitOutOfQuotation(' ')
         // check each of parts
         parts
             .mapNotNull { it.trim().ifEmpty { null } }
