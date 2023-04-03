@@ -10,10 +10,6 @@ import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.*
-import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
-import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
-import androidx.compose.foundation.lazy.staggeredgrid.items
-import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.*
@@ -287,17 +283,17 @@ private fun LandscapeOrientationContent(
     }
 
     if (useCommonUIMode || type == UI_MODE_TYPE_NORMAL) {
-        val state = rememberLazyStaggeredGridState()
+        val state = rememberLazyGridState()
         LaunchedEffect(state.isAtTop) {
             isAtTopState.value = state.isAtTop
         }
         EventHandler(scrollUp) {
             state.scrollToItem(0)
         }
-        LazyVerticalStaggeredGrid(
+        LazyVerticalGrid(
             state = state,
-            columns = StaggeredGridCells.Fixed(rowCount + 2),
-            verticalItemSpacing = spacing.medium,
+            columns = GridCells.Fixed(rowCount + 2),
+            verticalArrangement = Arrangement.spacedBy(spacing.medium),
             horizontalArrangement = Arrangement.spacedBy(spacing.medium),
             contentPadding = PaddingValues(spacing.medium),
             modifier = modifier.fillMaxSize()
@@ -363,7 +359,7 @@ private fun PortraitOrientationContent(
     val spacing = with(scalable) {
         LocalSpacing.current.scaled
     }
-    val state = rememberLazyStaggeredGridState()
+    val state = rememberLazyGridState()
     val ids = remember(scrollMode, lives) {
         if (scrollMode) lives.map { it.id }
         else emptyList()
@@ -375,10 +371,10 @@ private fun PortraitOrientationContent(
     EventHandler(scrollUp) {
         state.scrollToItem(0)
     }
-    LazyVerticalStaggeredGrid(
+    LazyVerticalGrid(
         state = state,
-        columns = StaggeredGridCells.Fixed(rowCount),
-        verticalItemSpacing = spacing.medium,
+        columns = GridCells.Fixed(rowCount),
+        verticalArrangement = Arrangement.spacedBy(spacing.medium),
         horizontalArrangement = Arrangement.spacedBy(spacing.medium),
         contentPadding = PaddingValues(spacing.medium),
         modifier = modifier.fillMaxSize()
