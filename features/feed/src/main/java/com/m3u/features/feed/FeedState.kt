@@ -5,11 +5,13 @@ import com.m3u.core.wrapper.Event
 import com.m3u.core.wrapper.handledEvent
 import com.m3u.data.local.entity.Live
 
+internal typealias MappedLives = Map<String, List<Live>>
+
 data class FeedState(
     val url: String = "",
     val title: String? = null,
     val rowCount: Int = Configuration.DEFAULT_ROW_COUNT,
-    val lives: Map<String, List<Live>> = emptyMap(),
+    val lives: MappedLives = emptyMap(),
     val query: String = "",
     val fetching: Boolean = false,
     val scrollUp: Event<Unit> = handledEvent(),

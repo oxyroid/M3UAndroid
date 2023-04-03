@@ -2,15 +2,32 @@ package com.m3u.features.live
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.pager.VerticalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.LocalContentAlpha
 import androidx.compose.material.LocalContentColor
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.Cast
+import androidx.compose.material.icons.rounded.PictureInPicture
+import androidx.compose.material.icons.rounded.RadioButtonChecked
+import androidx.compose.material.icons.rounded.RadioButtonUnchecked
+import androidx.compose.material.icons.rounded.Refresh
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -28,7 +45,14 @@ import androidx.media3.common.Player
 import com.m3u.core.annotation.ClipMode
 import com.m3u.core.util.basic.isNotEmpty
 import com.m3u.core.util.context.toast
-import com.m3u.ui.components.*
+import com.m3u.ui.components.ExoPlayer
+import com.m3u.ui.components.Mask
+import com.m3u.ui.components.MaskButton
+import com.m3u.ui.components.MaskCircleButton
+import com.m3u.ui.components.MaskPanel
+import com.m3u.ui.components.MaskState
+import com.m3u.ui.components.rememberMaskState
+import com.m3u.ui.components.rememberPlayerState
 import com.m3u.ui.model.LocalHelper
 import com.m3u.ui.model.LocalTheme
 import com.m3u.ui.util.EventHandler
@@ -160,7 +184,8 @@ private fun LivePart(
     ) {
         val helper = LocalHelper.current
         val state = rememberPlayerState(
-            url = url, clipMode = clipMode
+            url = url,
+            clipMode = clipMode
         )
         ExoPlayer(
             state = state,
@@ -204,26 +229,36 @@ private fun LivePart(
                 }
                 val shouldShowPipButton = videoSize.isNotEmpty
                 if (shouldShowPipButton) {
-                    MaskButton(state = maskState, icon = Icons.Rounded.PictureInPicture, onClick = {
-                        helper.enterPipMode(videoSize)
-                        maskState.sleep()
-                    })
+                    MaskButton(
+                        state = maskState,
+                        icon = Icons.Rounded.PictureInPicture,
+                        onClick = {
+                            helper.enterPipMode(videoSize)
+                            maskState.sleep()
+                        }
+                    )
                 }
             },
             body = {
-                MaskCircleButton(state = maskState, icon = Icons.Rounded.Refresh, onClick = {
-                    state.loadMedia()
-                })
+                MaskCircleButton(
+                    state = maskState,
+                    icon = Icons.Rounded.Refresh,
+                    onClick = {
+                        state.loadMedia()
+                    }
+                )
             },
             foot = {
                 Column {
                     Text(
-                        text = playback.displayText, fontWeight = FontWeight.Bold
+                        text = playback.displayText,
+                        fontWeight = FontWeight.Bold
                     )
                     val displayText = exception.displayText
                     if (displayText.isNotEmpty()) {
                         Text(
-                            text = displayText, color = LocalTheme.current.error
+                            text = displayText,
+                            color = LocalTheme.current.error
                         )
                     }
                 }
@@ -249,10 +284,13 @@ private fun LiveMask(
         LocalContentColor provides Color.White
     ) {
         MaskPanel(
-            state = state, modifier = modifier
+            state = state,
+            modifier = modifier
         )
         Mask(
-            state = state, backgroundColor = Color.Black.copy(alpha = 0.54f), modifier = modifier
+            state = state,
+            backgroundColor = Color.Black.copy(alpha = 0.54f),
+            modifier = modifier
         ) {
             Row(
                 modifier = Modifier

@@ -1,8 +1,16 @@
 package com.m3u.features.feed.navigation
 
 import android.net.Uri
-import androidx.compose.animation.*
-import androidx.navigation.*
+import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.navigation.NavController
+import androidx.navigation.NavGraphBuilder
+import androidx.navigation.NavOptions
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 import com.google.accompanist.navigation.animation.composable
 import com.m3u.features.feed.FeedRoute
 
@@ -43,7 +51,7 @@ fun NavGraphBuilder.feedScreen(
         FeedRoute(
             url = url,
             navigateToLive = navigateToLive,
-            navigateToLivePlayList = navigateToLivePlayList
+            navigateToPlaylist = navigateToLivePlayList
         )
     }
 }

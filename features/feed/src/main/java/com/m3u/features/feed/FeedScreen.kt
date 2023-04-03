@@ -1,25 +1,62 @@
-@file:OptIn(ExperimentalFoundationApi::class)
+@file:OptIn(ExperimentalFoundationApi::class, ExperimentalMaterialApi::class)
 
 package com.m3u.features.feed
 
-import android.content.res.Configuration.*
+import android.content.res.Configuration.ORIENTATION_LANDSCAPE
+import android.content.res.Configuration.ORIENTATION_PORTRAIT
+import android.content.res.Configuration.UI_MODE_TYPE_APPLIANCE
+import android.content.res.Configuration.UI_MODE_TYPE_CAR
+import android.content.res.Configuration.UI_MODE_TYPE_DESK
+import android.content.res.Configuration.UI_MODE_TYPE_MASK
+import android.content.res.Configuration.UI_MODE_TYPE_NORMAL
+import android.content.res.Configuration.UI_MODE_TYPE_TELEVISION
+import android.content.res.Configuration.UI_MODE_TYPE_VR_HEADSET
+import android.content.res.Configuration.UI_MODE_TYPE_WATCH
 import android.view.KeyEvent
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.*
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.grid.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.material.*
+import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.ExtendedFloatingActionButton
+import androidx.compose.material.Icon
+import androidx.compose.material.ScrollableTabRow
+import androidx.compose.material.Surface
+import androidx.compose.material.Tab
+import androidx.compose.material.TabRowDefaults
+import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ArrowUpward
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.pullrefresh.PullRefreshIndicator
 import androidx.compose.material.pullrefresh.pullRefresh
 import androidx.compose.material.pullrefresh.rememberPullRefreshState
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
@@ -28,7 +65,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.tv.foundation.lazy.grid.*
+import androidx.tv.foundation.lazy.grid.TvGridCells
+import androidx.tv.foundation.lazy.grid.TvLazyVerticalGrid
+import androidx.tv.foundation.lazy.grid.items
+import androidx.tv.foundation.lazy.grid.rememberTvLazyGridState
 import com.m3u.core.util.basic.uppercaseFirst
 import com.m3u.core.util.context.toast
 import com.m3u.core.wrapper.Event
@@ -37,16 +77,33 @@ import com.m3u.features.feed.components.DialogState
 import com.m3u.features.feed.components.FeedDialog
 import com.m3u.features.feed.components.LiveItem
 import com.m3u.ui.components.TextField
-import com.m3u.ui.model.*
-import com.m3u.ui.util.*
+import com.m3u.ui.model.AppAction
+import com.m3u.ui.model.Icon
+import com.m3u.ui.model.LocalDuration
+import com.m3u.ui.model.LocalHelper
+import com.m3u.ui.model.LocalScalable
+import com.m3u.ui.model.LocalSpacing
+import com.m3u.ui.model.LocalTheme
+import com.m3u.ui.model.Scalable
+import com.m3u.ui.model.actions
+import com.m3u.ui.util.EventHandler
+import com.m3u.ui.util.RepeatOnCreate
+import com.m3u.ui.util.interceptVolumeEvent
+import com.m3u.ui.util.isAtTop
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+
+private typealias NavigateToLive = (liveId: Int) -> Unit
+private typealias NavigateToPlaylist = (playlist: List<Int>, initialIndex: Int) -> Unit
+private typealias OnLongClickLive = (Live) -> Unit
+private typealias OnScrollUp = () -> Unit
+private typealias OnRefresh = () -> Unit
 
 @Composable
 internal fun FeedRoute(
     url: String,
-    navigateToLive: (Int) -> Unit,
-    navigateToLivePlayList: (List<Int>, Int) -> Unit,
+    navigateToLive: NavigateToLive,
+    navigateToPlaylist: NavigateToPlaylist,
     modifier: Modifier = Modifier,
     viewModel: FeedViewModel = hiltViewModel()
 ) {
@@ -93,7 +150,6 @@ internal fun FeedRoute(
         }
     } else Modifier
 
-
     CompositionLocalProvider(
         LocalScalable provides Scalable(1f / rowCount)
     ) {
@@ -106,10 +162,10 @@ internal fun FeedRoute(
             lives = state.lives,
             scrollUp = state.scrollUp,
             refreshing = state.fetching,
-            onSyncingLatest = { viewModel.onEvent(FeedEvent.FetchFeed) },
+            onRefresh = { viewModel.onEvent(FeedEvent.FetchFeed) },
             navigateToLive = navigateToLive,
-            navigateToLivePlayList = navigateToLivePlayList,
-            onLiveAction = { dialogState = DialogState.Menu(it) },
+            navigateToPlaylist = navigateToPlaylist,
+            onLongClickLive = { dialogState = DialogState.Menu(it) },
             onScrollUp = { viewModel.onEvent(FeedEvent.ScrollUp) },
             modifier = modifier
                 .fillMaxSize()
@@ -126,7 +182,6 @@ internal fun FeedRoute(
     )
 }
 
-@OptIn(ExperimentalMaterialApi::class, ExperimentalAnimationApi::class)
 @Composable
 private fun FeedScreen(
     query: String,
@@ -134,14 +189,14 @@ private fun FeedScreen(
     useCommonUIMode: Boolean,
     scrollMode: Boolean,
     rowCount: Int,
-    lives: Map<String, List<Live>>,
+    lives: MappedLives,
     scrollUp: Event<Unit>,
     refreshing: Boolean,
-    onSyncingLatest: () -> Unit,
-    navigateToLive: (Int) -> Unit,
-    navigateToLivePlayList: (List<Int>, Int) -> Unit,
-    onLiveAction: (Live) -> Unit,
-    onScrollUp: () -> Unit,
+    onRefresh: OnRefresh,
+    navigateToLive: NavigateToLive,
+    navigateToPlaylist: NavigateToPlaylist,
+    onLongClickLive: OnLongClickLive,
+    onScrollUp: OnScrollUp,
     modifier: Modifier = Modifier
 ) {
     val theme = LocalTheme.current
@@ -150,7 +205,7 @@ private fun FeedScreen(
     val duration = LocalDuration.current
     val state = rememberPullRefreshState(
         refreshing = refreshing,
-        onRefresh = onSyncingLatest
+        onRefresh = onRefresh
     )
     Column {
         val isAtTopState = remember { mutableStateOf(true) }
@@ -194,8 +249,8 @@ private fun FeedScreen(
                             isAtTopState = isAtTopState,
                             scrollUp = scrollUp,
                             navigateToLive = navigateToLive,
-                            navigateToLivePlayList = navigateToLivePlayList,
-                            onLiveAction = onLiveAction,
+                            navigateToPlaylist = navigateToPlaylist,
+                            onLongClickLive = onLongClickLive,
                             modifier = modifier
                         )
                     }
@@ -213,8 +268,8 @@ private fun FeedScreen(
                             isAtTopState = isAtTopState,
                             scrollUp = scrollUp,
                             navigateToLive = navigateToLive,
-                            navigateToLivePlayList = navigateToLivePlayList,
-                            onLiveAction = onLiveAction,
+                            navigateToLivePlayList = navigateToPlaylist,
+                            onLongClickLive = onLongClickLive,
                             modifier = modifier
                         )
                     }
@@ -238,7 +293,6 @@ private fun FeedScreen(
                     .padding(LocalSpacing.current.medium)
                     .align(Alignment.BottomEnd)
             ) {
-
                 ExtendedFloatingActionButton(
                     text = {
                         Text(text = stringResource(R.string.scroll_up))
@@ -266,9 +320,9 @@ private fun LandscapeOrientationContent(
     lives: List<Live>,
     scrollUp: Event<Unit>,
     isAtTopState: MutableState<Boolean>,
-    navigateToLive: (Int) -> Unit,
-    navigateToLivePlayList: (List<Int>, Int) -> Unit,
-    onLiveAction: (Live) -> Unit,
+    navigateToLive: NavigateToLive,
+    navigateToPlaylist: NavigateToPlaylist,
+    onLongClickLive: OnLongClickLive,
     modifier: Modifier = Modifier
 ) {
     val scalable = LocalScalable.current
@@ -308,12 +362,12 @@ private fun LandscapeOrientationContent(
                     onClick = {
                         if (scrollMode) {
                             val initialIndex = ids.indexOfFirst { it == live.id }
-                            navigateToLivePlayList(ids, initialIndex)
+                            navigateToPlaylist(ids, initialIndex)
                         } else {
                             navigateToLive(live.id)
                         }
                     },
-                    onLongClick = { onLiveAction(live) },
+                    onLongClick = { onLongClickLive(live) },
                     modifier = Modifier.fillMaxWidth(),
                 )
             }
@@ -327,8 +381,8 @@ private fun LandscapeOrientationContent(
                     isAtTopState = isAtTopState,
                     scrollUp = scrollUp,
                     navigateToLive = navigateToLive,
-                    navigateToLivePlayList = navigateToLivePlayList,
-                    onLiveAction = onLiveAction,
+                    navigateToLivePlayList = navigateToPlaylist,
+                    onLongClickLive = onLongClickLive,
                     modifier = modifier
                 )
             }
@@ -352,7 +406,7 @@ private fun PortraitOrientationContent(
     isAtTopState: MutableState<Boolean>,
     navigateToLive: (Int) -> Unit,
     navigateToLivePlayList: (List<Int>, Int) -> Unit,
-    onLiveAction: (Live) -> Unit,
+    onLongClickLive: OnLongClickLive,
     modifier: Modifier = Modifier
 ) {
     val scalable = LocalScalable.current
@@ -394,7 +448,7 @@ private fun PortraitOrientationContent(
                         navigateToLive(live.id)
                     }
                 },
-                onLongClick = { onLiveAction(live) },
+                onLongClick = { onLongClickLive(live) },
                 modifier = Modifier.fillMaxWidth(),
             )
         }
@@ -409,7 +463,7 @@ private fun TelevisionUIModeContent(
     scrollUp: Event<Unit>,
     navigateToLive: (Int) -> Unit,
     navigateToLivePlayList: (List<Int>, Int) -> Unit,
-    onLiveAction: (Live) -> Unit,
+    onLongClickLive: (Live) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val scalable = LocalScalable.current
@@ -451,7 +505,7 @@ private fun TelevisionUIModeContent(
                         navigateToLive(live.id)
                     }
                 },
-                onLongClick = { onLiveAction(live) },
+                onLongClick = { onLongClickLive(live) },
                 modifier = Modifier.fillMaxWidth()
             )
         }
@@ -494,7 +548,7 @@ private fun UnsupportedUIModeContent(
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun FeedPager(
-    lives: Map<String, List<Live>>,
+    lives: MappedLives,
     modifier: Modifier = Modifier,
     content: @Composable (List<Live>) -> Unit,
 ) {
