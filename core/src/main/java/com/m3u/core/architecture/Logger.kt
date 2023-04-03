@@ -1,8 +1,8 @@
 package com.m3u.core.architecture
 
 import android.util.Log
-import kotlinx.coroutines.flow.Flow
 import java.io.File
+import kotlinx.coroutines.flow.Flow
 
 interface Logger {
     fun log(throwable: Throwable)

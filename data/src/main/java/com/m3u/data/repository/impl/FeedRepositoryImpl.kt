@@ -18,9 +18,9 @@ import com.m3u.data.remote.parser.execute
 import com.m3u.data.remote.parser.impl.DefaultPlaylistParser
 import com.m3u.data.remote.parser.model.toLive
 import com.m3u.data.repository.FeedRepository
+import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
-import javax.inject.Inject
 
 class FeedRepositoryImpl @Inject constructor(
     private val feedDao: FeedDao,

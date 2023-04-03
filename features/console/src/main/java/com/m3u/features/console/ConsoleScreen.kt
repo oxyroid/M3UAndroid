@@ -1,6 +1,10 @@
 package com.m3u.features.console
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -9,7 +13,11 @@ import androidx.compose.foundation.text.selection.LocalTextSelectionColors
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.text.selection.TextSelectionColors
 import androidx.compose.material.MaterialTheme
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -19,8 +27,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.ui.components.Background
 import com.m3u.ui.components.MonoText
 import com.m3u.ui.components.TextField
-import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.LocalHelper
+import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.util.RepeatOnCreate
 
 @Composable

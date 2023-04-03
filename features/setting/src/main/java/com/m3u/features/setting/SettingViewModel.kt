@@ -14,11 +14,11 @@ import com.m3u.data.repository.LiveRepository
 import com.m3u.data.repository.RemoteRepository
 import com.m3u.data.repository.observeBanned
 import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 @HiltViewModel
 class SettingViewModel @Inject constructor(

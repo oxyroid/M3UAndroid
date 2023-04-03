@@ -11,12 +11,12 @@ import com.m3u.features.console.command.impl.EmptyCommandHandler
 import com.m3u.features.console.command.impl.LoggerCommandHandler
 import com.m3u.features.console.command.impl.UpnpCommandHandler
 import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 @HiltViewModel
 class ConsoleViewModel @Inject constructor(

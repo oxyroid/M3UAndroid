@@ -4,6 +4,7 @@
 
 package com.m3u.core.util.serialization
 
+import java.lang.reflect.Type
 import kotlinx.serialization.BinaryFormat
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.StringFormat
@@ -12,7 +13,6 @@ import okhttp3.RequestBody
 import okhttp3.ResponseBody
 import retrofit2.Converter
 import retrofit2.Retrofit
-import java.lang.reflect.Type
 
 @ExperimentalSerializationApi
 internal class Factory(

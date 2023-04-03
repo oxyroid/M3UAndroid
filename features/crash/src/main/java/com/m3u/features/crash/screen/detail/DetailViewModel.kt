@@ -3,9 +3,9 @@ package com.m3u.features.crash.screen.detail
 import android.app.Application
 import com.m3u.core.architecture.BaseViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.update
 import java.io.File
 import javax.inject.Inject
+import kotlinx.coroutines.flow.update
 
 @HiltViewModel
 class DetailViewModel @Inject constructor(

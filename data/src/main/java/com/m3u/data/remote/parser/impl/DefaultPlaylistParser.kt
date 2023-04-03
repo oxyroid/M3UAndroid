@@ -8,7 +8,7 @@ import com.m3u.data.remote.parser.Parser
 import com.m3u.data.remote.parser.model.M3UData
 import java.io.InputStream
 import java.net.URL
-import java.util.*
+import java.util.Properties
 
 class DefaultPlaylistParser internal constructor() : Parser<List<M3UData>>() {
     override suspend fun execute(stream: InputStream): List<M3UData> = buildList {

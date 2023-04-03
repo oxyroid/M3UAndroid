@@ -4,8 +4,8 @@ import android.app.Application
 import com.m3u.core.architecture.BaseViewModel
 import com.m3u.data.repository.MediaRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.update
 import javax.inject.Inject
+import kotlinx.coroutines.flow.update
 
 @HiltViewModel
 class ListViewModel @Inject constructor(

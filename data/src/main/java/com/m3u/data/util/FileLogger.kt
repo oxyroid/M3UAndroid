@@ -9,13 +9,13 @@ import android.util.Log
 import com.m3u.core.architecture.Logger
 import com.m3u.core.util.collection.forEachNotNull
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.filterNotNull
 import java.io.File
 import java.io.PrintWriter
 import java.io.StringWriter
 import javax.inject.Inject
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.filterNotNull
 
 class FileLogger @Inject constructor(
     @ApplicationContext private val context: Context

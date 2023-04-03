@@ -1,15 +1,21 @@
 package com.m3u.ui.util
 
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.NonRestartableComposable
+import androidx.compose.runtime.State
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.withContext
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.withContext
 
 @Composable
 @NonRestartableComposable

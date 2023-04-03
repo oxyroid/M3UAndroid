@@ -10,11 +10,11 @@ import com.m3u.data.service.DownloadService
 import com.m3u.data.service.DownloadTaskProcessObserver
 import com.m3u.data.service.DownloadTaskStatusObserver
 import dagger.hilt.android.qualifiers.ApplicationContext
+import javax.inject.Inject
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 class DownloadServiceImpl @Inject constructor(
     @ApplicationContext private val context: Context

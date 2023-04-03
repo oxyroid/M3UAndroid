@@ -1,10 +1,12 @@
+@file:Suppress("unused")
+
 package com.m3u.core.wrapper
 
+import kotlin.experimental.ExperimentalTypeInference
 import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.flow
-import kotlin.experimental.ExperimentalTypeInference
 
 sealed class Resource<out T> {
     object Loading : Resource<Nothing>()

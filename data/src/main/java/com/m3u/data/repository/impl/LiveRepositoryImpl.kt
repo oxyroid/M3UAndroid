@@ -5,9 +5,9 @@ import com.m3u.core.architecture.Logger
 import com.m3u.data.local.dao.LiveDao
 import com.m3u.data.local.entity.Live
 import com.m3u.data.repository.LiveRepository
+import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
-import javax.inject.Inject
 
 class LiveRepositoryImpl @Inject constructor(
     private val liveDao: LiveDao,

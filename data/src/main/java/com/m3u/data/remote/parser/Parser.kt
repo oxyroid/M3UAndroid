@@ -1,10 +1,10 @@
 package com.m3u.data.remote.parser
 
 import com.m3u.data.remote.parser.impl.DefaultPlaylistParser
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import java.io.InputStream
 import java.net.URL
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 abstract class Parser<T> {
     abstract suspend fun execute(stream: InputStream): T

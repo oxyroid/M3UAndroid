@@ -1,8 +1,8 @@
 package com.m3u.data.remote.api
 
+import javax.inject.Inject
 import retrofit2.Retrofit
 import retrofit2.create
-import javax.inject.Inject
 
 abstract class Client<T> {
     protected abstract val baseUrl: String
