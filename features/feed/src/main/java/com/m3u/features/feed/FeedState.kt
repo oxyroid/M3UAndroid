@@ -1,9 +1,9 @@
 package com.m3u.features.feed
 
-import com.m3u.core.architecture.Configuration
+import com.m3u.core.architecture.configuration.Configuration
 import com.m3u.core.wrapper.Event
 import com.m3u.core.wrapper.handledEvent
-import com.m3u.data.local.entity.Live
+import com.m3u.data.database.entity.Live
 
 internal typealias MappedLives = Map<String, List<Live>>
 

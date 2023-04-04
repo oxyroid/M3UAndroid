@@ -3,7 +3,7 @@ package com.m3u.features.scheme
 import android.app.Service
 import android.content.Intent
 import android.os.IBinder
-import com.m3u.core.architecture.Logger
+import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.util.context.toast
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject

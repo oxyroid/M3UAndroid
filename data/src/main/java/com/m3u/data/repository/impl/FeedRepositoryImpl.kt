@@ -1,22 +1,22 @@
 package com.m3u.data.repository.impl
 
 import com.m3u.core.annotation.FeedStrategy
-import com.m3u.core.architecture.AbstractLogger
-import com.m3u.core.architecture.Configuration
-import com.m3u.core.architecture.Logger
+import com.m3u.core.architecture.configuration.Configuration
+import com.m3u.core.architecture.logger.FileLoggerImpl
+import com.m3u.core.architecture.logger.Logger
+import com.m3u.core.architecture.logger.execute
 import com.m3u.core.util.collection.belong
 import com.m3u.core.wrapper.Resource
 import com.m3u.core.wrapper.emitMessage
 import com.m3u.core.wrapper.emitResource
 import com.m3u.core.wrapper.resourceFlow
-import com.m3u.data.local.dao.FeedDao
-import com.m3u.data.local.dao.LiveDao
-import com.m3u.data.local.entity.Feed
-import com.m3u.data.local.entity.Live
-import com.m3u.data.remote.parser.Parser
+import com.m3u.data.database.dao.FeedDao
+import com.m3u.data.database.dao.LiveDao
+import com.m3u.data.database.entity.Feed
+import com.m3u.data.database.entity.Live
 import com.m3u.data.remote.parser.execute
-import com.m3u.data.remote.parser.impl.DefaultPlaylistParser
-import com.m3u.data.remote.parser.model.toLive
+import com.m3u.data.remote.parser.m3u.PlaylistParser
+import com.m3u.data.remote.parser.m3u.toLive
 import com.m3u.data.repository.FeedRepository
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
@@ -25,9 +25,10 @@ import kotlinx.coroutines.flow.flow
 class FeedRepositoryImpl @Inject constructor(
     private val feedDao: FeedDao,
     private val liveDao: LiveDao,
-    logger: Logger,
-    private val configuration: Configuration
-) : FeedRepository, AbstractLogger(logger) {
+    @FileLoggerImpl private val logger: Logger,
+    private val configuration: Configuration,
+    private val parser: PlaylistParser
+) : FeedRepository {
     override fun subscribe(
         title: String,
         url: String,
@@ -72,19 +73,19 @@ class FeedRepositoryImpl @Inject constructor(
         }
     }
 
-    override fun observeAll(): Flow<List<Feed>> = sandbox {
+    override fun observeAll(): Flow<List<Feed>> = logger.execute {
         feedDao.observeAll()
     } ?: flow { }
 
-    override fun observe(url: String): Flow<Feed?> = sandbox {
+    override fun observe(url: String): Flow<Feed?> = logger.execute {
         feedDao.observeByUrl(url)
     } ?: flow { }
 
-    override suspend fun get(url: String): Feed? = sandbox {
+    override suspend fun get(url: String): Feed? = logger.execute {
         feedDao.getByUrl(url)
     }
 
-    override suspend fun unsubscribe(url: String): Feed? = sandbox {
+    override suspend fun unsubscribe(url: String): Feed? = logger.execute {
         val feed = feedDao.getByUrl(url)
         liveDao.deleteByFeedUrl(url)
         feed?.also {
@@ -92,18 +93,9 @@ class FeedRepositoryImpl @Inject constructor(
         }
     }
 
-
-    private suspend fun parse(url: String): List<Live> {
-        val parser = when {
-            DefaultPlaylistParser.match(url) -> Parser.newM3UParser()
-            else -> error("Unsupported url: $url")
-        }
-        return parser.run {
-            execute(
-                url = url,
-                connectTimeout = configuration.connectTimeout
-            )
-                .map { it.toLive(url) }
-        }
-    }
+    private suspend fun parse(url: String): List<Live> = parser.execute(
+        url = url,
+        connectTimeout = configuration.connectTimeout
+    )
+        .map { it.toLive(url) }
 }

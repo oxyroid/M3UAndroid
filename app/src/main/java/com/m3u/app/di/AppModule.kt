@@ -2,8 +2,8 @@
 
 package com.m3u.app.di
 
-import com.m3u.app.AppPackager
-import com.m3u.core.architecture.Packager
+import com.m3u.app.PublisherImpl
+import com.m3u.core.architecture.Publisher
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -15,5 +15,5 @@ import javax.inject.Singleton
 interface AppModule {
     @Binds
     @Singleton
-    fun bindPackageProvider(provider: AppPackager): Packager
+    fun bindPublisher(provider: PublisherImpl): Publisher
 }

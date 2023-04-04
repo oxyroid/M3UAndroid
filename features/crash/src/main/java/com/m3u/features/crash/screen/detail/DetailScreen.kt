@@ -25,7 +25,8 @@ internal fun DetailScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     Background {
         LazyColumn(
-            contentPadding = PaddingValues(LocalSpacing.current.medium)
+            contentPadding = PaddingValues(LocalSpacing.current.medium),
+            modifier = modifier
         ) {
             item {
                 MonoText(

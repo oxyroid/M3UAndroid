@@ -3,12 +3,12 @@ package com.m3u.features.setting
 import com.m3u.core.annotation.ClipMode
 import com.m3u.core.annotation.ConnectTimeout
 import com.m3u.core.annotation.FeedStrategy
-import com.m3u.core.architecture.Configuration
+import com.m3u.core.architecture.configuration.Configuration
 import com.m3u.core.wrapper.Event
 import com.m3u.core.wrapper.Resource
 import com.m3u.core.wrapper.handledEvent
-import com.m3u.data.local.entity.Live
-import com.m3u.data.local.entity.Release
+import com.m3u.data.database.entity.Live
+import com.m3u.data.database.entity.Release
 
 data class SettingState(
     val adding: Boolean = false,

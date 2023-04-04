@@ -2,6 +2,7 @@ plugins {
     id "com.android.library"
     id "org.jetbrains.kotlin.android"
     id "kotlin-parcelize"
+    id "kotlin-kapt"
 }
 
 android {
@@ -35,4 +36,6 @@ dependencies {
     implementation libs.androidx.compose.ui.ui
     implementation libs.org.jetbrains.kotlinx.kotlinx.serialization.json
     implementation libs.com.squareup.retrofit2.retrofit
+    implementation libs.com.google.dagger.hilt.android
+    kapt libs.com.google.dagger.hilt.compiler
 }

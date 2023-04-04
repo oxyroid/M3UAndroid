@@ -4,13 +4,14 @@ import android.app.AlarmManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import com.m3u.core.architecture.Logger
+import com.m3u.core.architecture.logger.FileLoggerImpl
+import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.util.context.toast
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 
 class CrashHandler @Inject constructor(
-    private val logger: Logger,
+    @FileLoggerImpl private val logger: Logger,
     @ApplicationContext private val context: Context
 ) : Thread.UncaughtExceptionHandler {
     private val handler: Thread.UncaughtExceptionHandler? =

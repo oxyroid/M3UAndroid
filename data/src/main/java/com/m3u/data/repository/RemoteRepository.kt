@@ -1,7 +1,7 @@
 package com.m3u.data.repository
 
 import com.m3u.core.wrapper.Resource
-import com.m3u.data.local.entity.Release
+import com.m3u.data.database.entity.Release
 import kotlinx.coroutines.flow.Flow
 
 interface RemoteRepository {

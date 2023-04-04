@@ -72,7 +72,7 @@ import androidx.tv.foundation.lazy.grid.rememberTvLazyGridState
 import com.m3u.core.util.basic.uppercaseFirst
 import com.m3u.core.util.context.toast
 import com.m3u.core.wrapper.Event
-import com.m3u.data.local.entity.Live
+import com.m3u.data.database.entity.Live
 import com.m3u.features.feed.components.DialogState
 import com.m3u.features.feed.components.FeedDialog
 import com.m3u.features.feed.components.LiveItem

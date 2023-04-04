@@ -3,7 +3,7 @@ package com.m3u.features.console
 import android.app.Application
 import androidx.lifecycle.viewModelScope
 import com.m3u.core.architecture.BaseViewModel
-import com.m3u.core.architecture.Packager
+import com.m3u.core.architecture.Publisher
 import com.m3u.data.repository.MediaRepository
 import com.m3u.features.console.command.CommandHandler
 import com.m3u.features.console.command.CommandResource
@@ -21,7 +21,7 @@ import kotlinx.coroutines.launch
 @HiltViewModel
 class ConsoleViewModel @Inject constructor(
     application: Application,
-    provider: Packager,
+    publisher: Publisher,
     private val mediaRepository: MediaRepository
 ) : BaseViewModel<ConsoleState, ConsoleEvent>(
     application = application,
@@ -32,9 +32,9 @@ class ConsoleViewModel @Inject constructor(
             delay(2000)
             val message = """
                 >-Console Editor
-                version: ${provider.versionName}
-                debug: ${provider.debug},
-                applicationId: ${provider.applicationID}
+                version: ${publisher.versionName}
+                debug: ${publisher.debug},
+                applicationId: ${publisher.applicationID}
             """.trimIndent()
             append(message)
         }

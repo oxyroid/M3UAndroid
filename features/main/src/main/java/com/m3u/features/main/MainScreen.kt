@@ -26,7 +26,7 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.core.util.context.toast
-import com.m3u.data.local.entity.Feed
+import com.m3u.data.database.entity.Feed
 import com.m3u.features.main.components.FeedItem
 import com.m3u.features.main.model.FeedDetail
 import com.m3u.ui.components.SheetDialog

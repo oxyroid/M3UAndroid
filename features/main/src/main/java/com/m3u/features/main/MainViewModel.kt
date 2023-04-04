@@ -6,7 +6,7 @@ import com.m3u.core.architecture.BaseViewModel
 import com.m3u.core.util.collection.replaceIf
 import com.m3u.core.util.coroutine.mapElement
 import com.m3u.core.wrapper.eventOf
-import com.m3u.data.local.entity.Feed
+import com.m3u.data.database.entity.Feed
 import com.m3u.data.repository.FeedRepository
 import com.m3u.data.repository.LiveRepository
 import com.m3u.data.repository.observeByFeedUrl

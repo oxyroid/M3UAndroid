@@ -5,8 +5,8 @@ import android.net.Uri
 import androidx.lifecycle.viewModelScope
 import com.m3u.core.annotation.ConnectTimeout
 import com.m3u.core.architecture.BaseViewModel
-import com.m3u.core.architecture.Configuration
-import com.m3u.core.architecture.Packager
+import com.m3u.core.architecture.configuration.Configuration
+import com.m3u.core.architecture.Publisher
 import com.m3u.core.wrapper.Resource
 import com.m3u.core.wrapper.eventOf
 import com.m3u.data.repository.FeedRepository
@@ -25,7 +25,7 @@ class SettingViewModel @Inject constructor(
     private val feedRepository: FeedRepository,
     private val liveRepository: LiveRepository,
     private val remoteRepository: RemoteRepository,
-    packager: Packager,
+    publisher: Publisher,
     application: Application,
     private val configuration: Configuration
 ) : BaseViewModel<SettingState, SettingEvent>(
@@ -35,7 +35,7 @@ class SettingViewModel @Inject constructor(
     init {
         writable.update {
             it.copy(
-                version = packager.versionName,
+                version = publisher.versionName,
                 feedStrategy = configuration.feedStrategy,
                 useCommonUIMode = configuration.useCommonUIMode,
                 experimentalMode = configuration.experimentalMode,

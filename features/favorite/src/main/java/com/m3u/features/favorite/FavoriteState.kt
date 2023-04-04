@@ -2,7 +2,7 @@ package com.m3u.features.favorite
 
 import com.m3u.core.wrapper.Event
 import com.m3u.core.wrapper.handledEvent
-import com.m3u.data.local.entity.Live
+import com.m3u.data.database.entity.Live
 
 typealias LiveDetails = Map<String, List<Live>>
 
