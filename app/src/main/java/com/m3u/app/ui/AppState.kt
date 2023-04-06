@@ -66,42 +66,32 @@ class AppState(
 
     val currentTopLevelDestination: TopLevelDestination?
         @Composable get() = when (currentNavDestination?.route) {
-            rootNavigationRoute -> TopLevelDestination.values().toList()[pagerState.currentPage]
+            rootNavigationRoute -> topLevelDestinations[pagerState.currentPage]
             else -> null
         }
 
     val topLevelDestinations: List<TopLevelDestination> = TopLevelDestination.values().asList()
 
-    @Throws(IllegalArgumentException::class)
     fun navigateToTopLevelDestination(destination: TopLevelDestination) {
-        navController.popUpToRoot()
+        if (navController.currentBackStackEntry?.destination?.route != rootNavigationRoute) {
+            navController.popUpToRoot()
+        }
         coroutineScope.launch {
-            pagerState.animateScrollToPage(
-                TopLevelDestination.values().indexOf(destination)
-            )
+            val target = topLevelDestinations.indexOf(destination)
+            pagerState.scrollToPage(target)
         }
     }
 
     fun navigateToDestination(destination: Destination) {
         when (destination) {
-            Destination.Root -> {
-                navController.popUpToRoot()
-            }
-            is Destination.Feed -> {
-                navController.navigationToFeed(destination.url)
-            }
-
-            is Destination.Live -> {
-                navController.navigateToLive(destination.id)
-            }
-
-            is Destination.LivePlayList -> {
-                navController.navigateToLivePlayList(destination.ids, destination.initialIndex)
-            }
-
-            Destination.Console -> {
-                navController.navigateToConsole()
-            }
+            Destination.Root -> navController.popUpToRoot()
+            is Destination.Feed -> navController.navigationToFeed(destination.url)
+            is Destination.Live -> navController.navigateToLive(destination.id)
+            is Destination.LivePlayList -> navController.navigateToLivePlayList(
+                destination.ids,
+                destination.initialIndex
+            )
+            Destination.Console -> navController.navigateToConsole()
         }
     }
 

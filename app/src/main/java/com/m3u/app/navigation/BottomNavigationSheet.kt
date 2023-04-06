@@ -1,4 +1,4 @@
-package com.m3u.app.ui
+package com.m3u.app.navigation
 
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.material.Icon
@@ -15,8 +15,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
-import com.m3u.app.navigation.NavigateToTopLevelDestination
-import com.m3u.app.navigation.TopLevelDestination
 import com.m3u.ui.components.NavigationSheet
 import com.m3u.ui.model.Icon
 import com.m3u.ui.model.LocalTheme
