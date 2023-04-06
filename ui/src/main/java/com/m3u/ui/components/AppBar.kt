@@ -9,6 +9,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -39,6 +42,7 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -123,10 +127,6 @@ fun AppTopBar(
         Box(
             modifier = modifier
                 .fillMaxSize()
-                .let {
-                    if (visible) it.windowInsetsPadding(windowInsets)
-                    else it
-                }
                 .nestedScroll(
                     connection = connection
                 )
@@ -134,7 +134,7 @@ fun AppTopBar(
             // [contentPaddingTop] is child content PaddingValue's top value,
             // it should be between 1~2 times [maxHeightDp].
             // Because the AppBar will place between 1~2 times [maxHeightDp].
-            // The [visible] param means the AppBar should be invisible(0.dp) or not.
+            // The [visible] param means the AppBar should be invisible(spacing.none) or not.
             val contentPaddingTop by remember(visible) {
                 derivedStateOf {
                     if (!visible) minHeightDp
@@ -144,13 +144,18 @@ fun AppTopBar(
                 }
             }
 
+            val direction = LocalLayoutDirection.current
             // Child Content
             content(
                 PaddingValues(
-                    start = spacing.none,
-                    top = contentPaddingTop,
-                    end = spacing.none,
-                    bottom = spacing.none
+                    start = spacing.none + if (!visible) spacing.none
+                    else windowInsets.asPaddingValues().calculateStartPadding(direction),
+                    top = contentPaddingTop + if (!visible) spacing.none
+                    else windowInsets.asPaddingValues().calculateTopPadding(),
+                    end = spacing.none + if (!visible) spacing.none
+                    else windowInsets.asPaddingValues().calculateEndPadding(direction),
+                    bottom = spacing.none + if (!visible) spacing.none
+                    else windowInsets.asPaddingValues().calculateBottomPadding()
                 )
             )
 
@@ -164,6 +169,10 @@ fun AppTopBar(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .let {
+                            if (visible) it.windowInsetsPadding(windowInsets)
+                            else it
+                        }
                         .padding(horizontal = spacing.medium)
                         .height(contentPaddingTop),
                     verticalAlignment = Alignment.CenterVertically,
