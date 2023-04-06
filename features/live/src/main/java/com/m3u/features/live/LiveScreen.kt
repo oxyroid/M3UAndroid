@@ -1,5 +1,8 @@
 package com.m3u.features.live
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -46,6 +49,7 @@ import com.m3u.core.annotation.ClipMode
 import com.m3u.core.util.basic.isNotEmpty
 import com.m3u.core.util.context.toast
 import com.m3u.ui.components.ExoPlayer
+import com.m3u.ui.components.Image
 import com.m3u.ui.components.Mask
 import com.m3u.ui.components.MaskButton
 import com.m3u.ui.components.MaskCircleButton
@@ -120,6 +124,7 @@ private fun LiveScreen(
         is LiveState.Init.Live -> {
             LivePart(
                 url = init.live?.url.orEmpty(),
+                cover = init.live?.cover.orEmpty(),
                 experimentalMode = experimentalMode,
                 clipMode = clipMode,
                 recording = recording,
@@ -145,6 +150,7 @@ private fun LiveScreen(
             ) { page ->
                 LivePart(
                     url = init.lives[page].url,
+                    cover = init.lives[page].cover.orEmpty(),
                     experimentalMode = experimentalMode,
                     clipMode = clipMode,
                     recording = recording,
@@ -171,6 +177,7 @@ private fun LiveScreen(
 @Composable
 private fun LivePart(
     url: String,
+    cover: String,
     experimentalMode: Boolean,
     @ClipMode clipMode: Int,
     recording: Boolean,
@@ -187,6 +194,11 @@ private fun LivePart(
             url = url,
             clipMode = clipMode
         )
+
+        val playback by state.playbackState
+        val exception by state.exception
+        val videoSize by state.videoSize
+
         ExoPlayer(
             state = state,
             modifier = Modifier.fillMaxSize()
@@ -194,10 +206,18 @@ private fun LivePart(
         val maskState = rememberMaskState { visible ->
             helper.systemUiVisibility = visible
         }
-        val playback by state.playbackState
-        val exception by state.exception
-        val videoSize by state.videoSize
-
+        val shouldShowPlaceholder =
+            cover.isNotEmpty() && (playback != Player.STATE_READY || videoSize.isEmpty)
+        AnimatedVisibility(
+            visible = shouldShowPlaceholder,
+            enter = fadeIn(),
+            exit = fadeOut()
+        ) {
+            Image(
+                model = cover,
+                modifier = Modifier.fillMaxSize()
+            )
+        }
         LiveMask(
             state = maskState,
             header = {

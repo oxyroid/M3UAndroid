@@ -5,14 +5,12 @@ import android.graphics.Rect
 import android.view.ViewGroup
 import androidx.annotation.OptIn
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.media3.common.AudioAttributes
@@ -117,41 +115,34 @@ fun ExoPlayer(
         }
     }
 
-    CompositionLocalProvider {
-        Background(
-            modifier = modifier,
-            color = Color.Black,
-            contentColor = Color.White
-        ) {
-            AndroidView(
-                factory = { context ->
-                    PlayerView(context).apply {
-                        useController = false
-                        layoutParams = ViewGroup.LayoutParams(
-                            ViewGroup.LayoutParams.MATCH_PARENT,
-                            ViewGroup.LayoutParams.MATCH_PARENT
-                        )
-                    }
-                }
-            ) { view ->
-                view.apply {
-                    setPlayer(player)
-                    setKeepScreenOn(keepScreenOn)
-                    resizeMode = when (clipMode) {
-                        ClipMode.ADAPTIVE -> AspectRatioFrameLayout.RESIZE_MODE_FIT
-                        ClipMode.CLIP -> AspectRatioFrameLayout.RESIZE_MODE_ZOOM
-                        ClipMode.STRETCHED -> AspectRatioFrameLayout.RESIZE_MODE_FILL
-                        else -> AspectRatioFrameLayout.RESIZE_MODE_FIT
-                    }
-                }
+    AndroidView(
+        factory = { context ->
+            PlayerView(context).apply {
+                useController = false
+                layoutParams = ViewGroup.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT
+                )
             }
-            DisposableEffect(state.player) {
-                state.loadMedia()
-                state.player.prepare()
-                onDispose {
-                    state.player.release()
-                }
+        },
+        modifier = modifier
+    ) { view ->
+        view.apply {
+            setPlayer(player)
+            setKeepScreenOn(keepScreenOn)
+            resizeMode = when (clipMode) {
+                ClipMode.ADAPTIVE -> AspectRatioFrameLayout.RESIZE_MODE_FIT
+                ClipMode.CLIP -> AspectRatioFrameLayout.RESIZE_MODE_ZOOM
+                ClipMode.STRETCHED -> AspectRatioFrameLayout.RESIZE_MODE_FILL
+                else -> AspectRatioFrameLayout.RESIZE_MODE_FIT
             }
+        }
+    }
+    DisposableEffect(state.player) {
+        state.loadMedia()
+        state.player.prepare()
+        onDispose {
+            state.player.release()
         }
     }
 }
