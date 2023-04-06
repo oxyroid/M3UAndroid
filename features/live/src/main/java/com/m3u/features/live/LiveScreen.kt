@@ -19,6 +19,7 @@ import androidx.compose.foundation.pager.VerticalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.LocalContentAlpha
 import androidx.compose.material.LocalContentColor
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ArrowBack
@@ -38,7 +39,6 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.util.lerp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
@@ -48,6 +48,7 @@ import androidx.media3.common.Player
 import com.m3u.core.annotation.ClipMode
 import com.m3u.core.util.basic.isNotEmpty
 import com.m3u.core.util.context.toast
+import com.m3u.ui.components.Background
 import com.m3u.ui.components.ExoPlayer
 import com.m3u.ui.components.Image
 import com.m3u.ui.components.Mask
@@ -123,6 +124,7 @@ private fun LiveScreen(
     when (init) {
         is LiveState.Init.Live -> {
             LivePart(
+                title = init.live?.title.orEmpty(),
                 url = init.live?.url.orEmpty(),
                 cover = init.live?.cover.orEmpty(),
                 experimentalMode = experimentalMode,
@@ -149,6 +151,7 @@ private fun LiveScreen(
                     .testTag("features:live")
             ) { page ->
                 LivePart(
+                    title = init.lives[page].title,
                     url = init.lives[page].url,
                     cover = init.lives[page].cover.orEmpty(),
                     experimentalMode = experimentalMode,
@@ -176,6 +179,7 @@ private fun LiveScreen(
 
 @Composable
 private fun LivePart(
+    title: String,
     url: String,
     cover: String,
     experimentalMode: Boolean,
@@ -186,107 +190,123 @@ private fun LivePart(
     onBackPressed: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Box(
-        modifier = modifier
+    Background(
+        color = Color.Black,
+        contentColor = Color.White
     ) {
-        val helper = LocalHelper.current
-        val state = rememberPlayerState(
-            url = url,
-            clipMode = clipMode
-        )
-
-        val playback by state.playbackState
-        val exception by state.exception
-        val videoSize by state.videoSize
-
-        ExoPlayer(
-            state = state,
-            modifier = Modifier.fillMaxSize()
-        )
-        val maskState = rememberMaskState { visible ->
-            helper.systemUiVisibility = visible
-        }
-        val shouldShowPlaceholder =
-            cover.isNotEmpty() && (playback != Player.STATE_READY || videoSize.isEmpty)
-        AnimatedVisibility(
-            visible = shouldShowPlaceholder,
-            enter = fadeIn(),
-            exit = fadeOut()
+        Box(
+            modifier = modifier
         ) {
-            Image(
-                model = cover,
+            val helper = LocalHelper.current
+            val state = rememberPlayerState(
+                url = url,
+                clipMode = clipMode
+            )
+
+            val playback by state.playbackState
+            val exception by state.exception
+            val videoSize by state.videoSize
+
+            ExoPlayer(
+                state = state,
                 modifier = Modifier.fillMaxSize()
             )
-        }
-        LiveMask(
-            state = maskState,
-            header = {
-                MaskButton(
-                    state = maskState,
-                    icon = Icons.Rounded.ArrowBack,
-                    onClick = onBackPressed
+            val maskState = rememberMaskState { visible ->
+                helper.systemUiVisibility = visible
+            }
+            val shouldShowPlaceholder =
+                cover.isNotEmpty() && (playback != Player.STATE_READY || videoSize.isEmpty)
+            AnimatedVisibility(
+                visible = shouldShowPlaceholder,
+                enter = fadeIn(),
+                exit = fadeOut()
+            ) {
+                Image(
+                    model = cover,
+                    modifier = Modifier.fillMaxSize()
                 )
-                Spacer(
-                    modifier = Modifier.weight(1f)
-                )
-                if (experimentalMode) {
+            }
+            LiveMask(
+                state = maskState,
+                header = {
                     MaskButton(
                         state = maskState,
-                        icon = if (recording) Icons.Rounded.RadioButtonChecked
-                        else Icons.Rounded.RadioButtonUnchecked,
-                        tint = if (recording) LocalTheme.current.error
-                        else LocalContentColor.current.copy(alpha = LocalContentAlpha.current),
-                        onClick = onRecord
+                        icon = Icons.Rounded.ArrowBack,
+                        onClick = onBackPressed
                     )
-                    val shouldShowCastButton = (playback != Player.STATE_IDLE)
-                    if (shouldShowCastButton) {
+                    Spacer(
+                        modifier = Modifier.weight(1f)
+                    )
+                    if (experimentalMode) {
                         MaskButton(
                             state = maskState,
-                            icon = Icons.Rounded.Cast,
-                            onClick = searchDlnaDevices
+                            icon = if (recording) Icons.Rounded.RadioButtonChecked
+                            else Icons.Rounded.RadioButtonUnchecked,
+                            tint = if (recording) LocalTheme.current.error
+                            else LocalContentColor.current.copy(alpha = LocalContentAlpha.current),
+                            onClick = onRecord
+                        )
+                        val shouldShowCastButton = (playback != Player.STATE_IDLE)
+                        if (shouldShowCastButton) {
+                            MaskButton(
+                                state = maskState,
+                                icon = Icons.Rounded.Cast,
+                                onClick = searchDlnaDevices
+                            )
+                        }
+                    }
+                    val shouldShowPipButton = videoSize.isNotEmpty
+                    if (shouldShowPipButton) {
+                        MaskButton(
+                            state = maskState,
+                            icon = Icons.Rounded.PictureInPicture,
+                            onClick = {
+                                helper.enterPipMode(videoSize)
+                                maskState.sleep()
+                            }
                         )
                     }
-                }
-                val shouldShowPipButton = videoSize.isNotEmpty
-                if (shouldShowPipButton) {
-                    MaskButton(
+                },
+                body = {
+                    MaskCircleButton(
                         state = maskState,
-                        icon = Icons.Rounded.PictureInPicture,
+                        icon = Icons.Rounded.Refresh,
                         onClick = {
-                            helper.enterPipMode(videoSize)
-                            maskState.sleep()
+                            state.loadMedia()
                         }
                     )
-                }
-            },
-            body = {
-                MaskCircleButton(
-                    state = maskState,
-                    icon = Icons.Rounded.Refresh,
-                    onClick = {
-                        state.loadMedia()
-                    }
-                )
-            },
-            foot = {
-                Column {
-                    Text(
-                        text = playback.displayText,
-                        fontWeight = FontWeight.Bold
-                    )
-                    val displayText = exception.displayText
-                    if (displayText.isNotEmpty()) {
+                },
+                foot = {
+                    Column(
+                        verticalArrangement = Arrangement.Bottom,
+                        modifier = Modifier.fillMaxSize()
+                    ) {
                         Text(
-                            text = displayText,
-                            color = LocalTheme.current.error
+                            text = title,
+                            style = MaterialTheme.typography.subtitle1
                         )
+                        val playbackDisplayText = playback.displayText
+                        AnimatedVisibility(playbackDisplayText.isNotEmpty()) {
+                            Text(
+                                text = playbackDisplayText,
+                                style = MaterialTheme.typography.subtitle2,
+                            )
+                        }
+                        val exceptionDisplayText = exception.displayText
+                        AnimatedVisibility(exceptionDisplayText.isNotEmpty()) {
+                            Text(
+                                text = exceptionDisplayText,
+                                style = MaterialTheme.typography.subtitle2,
+                                color = LocalTheme.current.error
+                            )
+                        }
                     }
                 }
-            }
-        )
-        LaunchedEffect(exception) {
-            if (exception != null) {
-                maskState.keepAlive()
+            )
+            LaunchedEffect(exception) {
+                if (exception != null) {
+                    maskState.keepAlive()
+                }
             }
         }
     }
