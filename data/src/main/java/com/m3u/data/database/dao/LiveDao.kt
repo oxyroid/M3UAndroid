@@ -38,8 +38,8 @@ interface LiveDao {
     fun observeAll(): Flow<List<Live>>
 
     @Query("UPDATE lives SET favourite = :target WHERE id = :id")
-    suspend fun setFavouriteLive(id: Int, target: Boolean)
+    suspend fun setFavourite(id: Int, target: Boolean)
 
     @Query("UPDATE lives SET banned = :target WHERE id = :id")
-    suspend fun setBannedLive(id: Int, target: Boolean)
+    suspend fun setBanned(id: Int, target: Boolean)
 }

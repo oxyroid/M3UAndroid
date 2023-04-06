@@ -54,7 +54,7 @@ internal fun LiveItem(
         shape = RoundedCornerShape(spacing.medium),
         border = BorderStroke(
             if (live.favourite) spacing.extraSmall else spacing.none,
-            theme.divider.copy(alpha = 0.45f)
+            theme.divider.copy(alpha = 0.65f)
         ),
         color = theme.surface,
         contentColor = theme.onSurface,

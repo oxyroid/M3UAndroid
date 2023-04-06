@@ -108,16 +108,7 @@ class FileLogger @Inject constructor(
         writeToFile(text)
     }
 
-    override fun readAll(): List<File> {
-        val dir = File(dir.path)
-        if (!dir.exists() || dir.isFile) return emptyList()
-        return dir.list()
-            ?.filter { it.endsWith(".txt") }
-            ?.map { File(it) }
-            ?: emptyList()
-    }
-
-    override fun log(s: String) {
-        writeInfoToFile(s)
+    override fun log(text: String) {
+        writeInfoToFile(text)
     }
 }

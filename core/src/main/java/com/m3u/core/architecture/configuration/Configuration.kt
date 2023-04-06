@@ -18,6 +18,7 @@ interface Configuration {
     @ClipMode
     var clipMode: Int
     var scrollMode: Boolean
+    var autoRefresh: Boolean
 
     companion object {
         @FeedStrategy
@@ -33,5 +34,6 @@ interface Configuration {
         @ClipMode
         const val DEFAULT_CLIP_MODE = ClipMode.ADAPTIVE
         const val DEFAULT_SCROLL_MODE = false
+        const val DEFAULT_AUTO_REFRESH = false
     }
 }

@@ -14,27 +14,22 @@ import coil.request.ImageRequest
 import coil.request.SuccessResult
 import com.m3u.core.architecture.logger.FileLoggerImpl
 import com.m3u.core.architecture.logger.Logger
-import com.m3u.core.architecture.logger.execute
 import com.m3u.core.architecture.logger.executeResult
 import com.m3u.core.wrapper.Resource
 import com.m3u.core.wrapper.emitMessage
 import com.m3u.core.wrapper.emitResource
 import com.m3u.core.wrapper.resourceFlow
-import com.m3u.data.remote.parser.executeAsFlow
-import com.m3u.data.remote.parser.upnp.UdpParser
 import com.m3u.data.repository.MediaRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.withContext
 
 class MediaRepositoryImpl @Inject constructor(
     @ApplicationContext private val context: Context,
-    @FileLoggerImpl private val logger: Logger,
-    private val udpParser: UdpParser
+    @FileLoggerImpl private val logger: Logger
 ) : MediaRepository {
     private val directory =
         Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
@@ -74,17 +69,6 @@ class MediaRepositoryImpl @Inject constructor(
         }
     }
 
-    override fun readAllLogFiles(): List<File> = logger.execute {
-        logger.readAll()
-    } ?: emptyList()
-
-    override fun clearAllLogFiles() {
-        logger.execute {
-            val files = logger.readAll()
-            files.forEach(File::delete)
-        }
-    }
-
     override fun shareFiles(files: List<File>): Result<Unit> = logger.executeResult {
         val uris: List<Uri> = files.mapNotNull {
             try {
@@ -99,9 +83,5 @@ class MediaRepositoryImpl @Inject constructor(
         }
         val intent = Intent(Intent.ACTION_MEDIA_SHARED, uris.first())
         context.startActivity(intent)
-    }
-
-    override fun discoverNearbyDevices(): Flow<String> {
-        return udpParser.executeAsFlow(Unit).mapNotNull { it.lastOrNull() }
     }
 }

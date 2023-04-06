@@ -1,19 +1,22 @@
 package com.m3u.features.favorite
 
 import android.content.res.Configuration
+import android.view.KeyEvent
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -24,9 +27,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.core.util.context.toast
 import com.m3u.features.favorite.components.FavoriteItem
 import com.m3u.ui.model.LocalHelper
+import com.m3u.ui.model.LocalScalable
 import com.m3u.ui.model.LocalSpacing
+import com.m3u.ui.model.Scalable
 import com.m3u.ui.util.EventHandler
 import com.m3u.ui.util.RepeatOnCreate
+import com.m3u.ui.util.interceptVolumeEvent
 
 typealias NavigateToLive = (Int) -> Unit
 
@@ -39,17 +45,39 @@ fun FavouriteRoute(
     val context = LocalContext.current
     val helper = LocalHelper.current
     val state by viewModel.state.collectAsStateWithLifecycle()
+
+    val rowCount = state.rowCount
+    fun onRowCount(target: Int) {
+        viewModel.onEvent(FavoriteEvent.SetRowCount(target))
+    }
+
     EventHandler(state.message) {
         context.toast(it)
     }
     RepeatOnCreate {
         helper.actions()
     }
-    FavoriteScreen(
-        details = state.details,
-        navigateToLive = navigateToLive,
-        modifier = modifier
-    )
+    val interceptVolumeEventModifier = if (state.editMode) {
+        Modifier.interceptVolumeEvent { event ->
+            when (event) {
+                KeyEvent.KEYCODE_VOLUME_UP -> onRowCount((rowCount - 1).coerceAtLeast(1))
+                KeyEvent.KEYCODE_VOLUME_DOWN -> onRowCount((rowCount + 1).coerceAtMost(3))
+            }
+        }
+    } else Modifier
+
+    CompositionLocalProvider(
+        LocalScalable provides Scalable(1f / rowCount)
+    ) {
+        FavoriteScreen(
+            rowCount = rowCount,
+            details = state.details,
+            navigateToLive = navigateToLive,
+            modifier = modifier
+                .fillMaxSize()
+                .then(interceptVolumeEventModifier)
+        )
+    }
 }
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -57,13 +85,19 @@ fun FavouriteRoute(
 private fun FavoriteScreen(
     details: LiveDetails,
     navigateToLive: NavigateToLive,
+    rowCount: Int,
     modifier: Modifier = Modifier
 ) {
     val configuration = LocalConfiguration.current
-    val spacing = LocalSpacing.current
+    val scalable = LocalScalable.current
+    val spacing = with(scalable) {
+        LocalSpacing.current.scaled
+    }
+
     when (configuration.orientation) {
         Configuration.ORIENTATION_PORTRAIT -> {
-            LazyColumn(
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(rowCount),
                 verticalArrangement = Arrangement.spacedBy(spacing.medium),
                 contentPadding = PaddingValues(spacing.medium),
                 modifier = modifier.fillMaxSize()
@@ -86,7 +120,7 @@ private fun FavoriteScreen(
                                 navigateToLive(live.id)
                             },
                             onLongClick = {},
-                            modifier = Modifier.fillParentMaxWidth()
+                            modifier = Modifier.fillMaxSize()
                         )
                     }
                 }
@@ -97,7 +131,7 @@ private fun FavoriteScreen(
                 details.flatMap { it.value }
             }
             LazyVerticalStaggeredGrid(
-                columns = StaggeredGridCells.Fixed(2),
+                columns = StaggeredGridCells.Fixed(rowCount + 2),
                 modifier = modifier.fillMaxSize(),
                 verticalItemSpacing = spacing.medium,
                 horizontalArrangement = Arrangement.spacedBy(spacing.medium),

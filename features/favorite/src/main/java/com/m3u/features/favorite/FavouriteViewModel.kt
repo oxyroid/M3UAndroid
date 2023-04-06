@@ -3,6 +3,7 @@ package com.m3u.features.favorite
 import android.app.Application
 import androidx.lifecycle.viewModelScope
 import com.m3u.core.architecture.BaseViewModel
+import com.m3u.core.architecture.configuration.Configuration
 import com.m3u.core.util.collection.filterNotNullKeys
 import com.m3u.data.repository.FeedRepository
 import com.m3u.data.repository.LiveRepository
@@ -17,13 +18,19 @@ import kotlinx.coroutines.flow.update
 class FavouriteViewModel @Inject constructor(
     liveRepository: LiveRepository,
     feedRepository: FeedRepository,
-    application: Application
+    application: Application,
+    private val configuration: Configuration,
 ) : BaseViewModel<FavoriteState, FavoriteEvent>(
     application = application,
     emptyState = FavoriteState()
 ) {
-
     init {
+        writable.update {
+            it.copy(
+                rowCount = configuration.rowCount,
+                editMode = configuration.editMode
+            )
+        }
         liveRepository
             .observeAll()
             .map { lives ->
@@ -43,6 +50,17 @@ class FavouriteViewModel @Inject constructor(
     }
 
     override fun onEvent(event: FavoriteEvent) {
+        when (event) {
+            is FavoriteEvent.SetRowCount -> setRowCount(event.target)
+        }
+    }
 
+    private fun setRowCount(target: Int) {
+        configuration.rowCount = target
+        writable.update {
+            it.copy(
+                rowCount = target
+            )
+        }
     }
 }

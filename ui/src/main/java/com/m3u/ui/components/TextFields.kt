@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -44,6 +45,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalFocusManager
@@ -69,6 +71,7 @@ fun TextField(
     modifier: Modifier = Modifier,
     background: Color = TextFieldDefaults.backgroundColor(),
     contentColor: Color = TextFieldDefaults.contentColor(),
+    shape: Shape = TextFieldDefaults.shape(),
     placeholder: String = "",
     keyboardType: KeyboardType = KeyboardType.Text,
     readOnly: Boolean = false,
@@ -130,7 +133,7 @@ fun TextField(
         decorationBox = { innerTextField ->
             Box(
                 Modifier
-                    .clip(MaterialTheme.shapes.medium)
+                    .clip(shape)
                     .background(if (isError) LocalTheme.current.error else background)
                     .height(height)
                     .padding(horizontal = 12.dp),
@@ -167,6 +170,7 @@ fun TextField(
     modifier: Modifier = Modifier,
     background: Color = TextFieldDefaults.backgroundColor(),
     contentColor: Color = TextFieldDefaults.contentColor(),
+    shape: Shape = TextFieldDefaults.shape(),
     placeholder: String = "",
     keyboardType: KeyboardType = KeyboardType.Text,
     readOnly: Boolean = false,
@@ -228,7 +232,7 @@ fun TextField(
         decorationBox = { innerTextField ->
             Box(
                 Modifier
-                    .clip(MaterialTheme.shapes.medium)
+                    .clip(shape)
                     .background(if (isError) LocalTheme.current.error else background)
                     .height(height)
                     .padding(horizontal = 12.dp),
@@ -265,6 +269,7 @@ fun LabelField(
     modifier: Modifier = Modifier,
     background: Color = TextFieldDefaults.backgroundColor(),
     contentColor: Color = TextFieldDefaults.contentColor(),
+    shape: Shape = TextFieldDefaults.shape(),
     placeholder: String = "",
     height: Dp = TextFieldDefaults.Height,
     readOnly: Boolean = false,
@@ -328,7 +333,7 @@ fun LabelField(
         decorationBox = { innerTextField ->
             Row(
                 Modifier
-                    .clip(MaterialTheme.shapes.medium)
+                    .clip(shape)
                     .background(background)
                     .height(height),
             ) {
@@ -391,6 +396,7 @@ fun LabelField(
     modifier: Modifier = Modifier,
     background: Color = TextFieldDefaults.backgroundColor(),
     contentColor: Color = TextFieldDefaults.contentColor(),
+    shape: Shape = TextFieldDefaults.shape(),
     placeholder: String = "",
     height: Dp = TextFieldDefaults.Height,
     readOnly: Boolean = false,
@@ -454,7 +460,7 @@ fun LabelField(
         decorationBox = { innerTextField ->
             Row(
                 Modifier
-                    .clip(MaterialTheme.shapes.medium)
+                    .clip(shape)
                     .background(background)
                     .height(height),
             ) {
@@ -524,4 +530,7 @@ private object TextFieldDefaults {
 
     @Composable
     fun contentColor() = LocalTheme.current.onSurface
+
+    @Composable
+    fun shape() = RoundedCornerShape(25)
 }

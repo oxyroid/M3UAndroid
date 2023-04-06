@@ -1,47 +1,30 @@
 package com.m3u.features.console.command.impl
 
+import com.m3u.core.architecture.reader.Reader
 import com.m3u.features.console.command.CommandHandler
-import com.m3u.features.console.command.error
 import java.io.File
 
 internal class LoggerCommandHandler(
-    readAllLogFiles: () -> List<File>,
-    clearAllLogFiles: () -> Unit,
-    shareLogFiles: (List<File>) -> Result<Unit>,
-    input: String
+    input: String,
+    reader: Reader<File>
 ) : CommandHandler(input) {
     init {
         path("list") {
+            val files = reader.read()
             val text = if (param.isNullOrEmpty()) {
-                readAllLogFiles().joinToString(
+                files.joinToString(
                     separator = "\n",
                     postfix = "\n",
                     transform = { it.path }
                 )
             } else {
                 val file = when (param) {
-                    "-i" -> readAllLogFiles().lastOrNull()
-                    else -> readAllLogFiles().find { it.path == arg }
+                    "-i" -> files.lastOrNull()
+                    else -> files.find { it.path == arg }
                 }
                 file?.readText() ?: ""
             }
             output(text)
-        }
-
-        path("share") {
-            val files = if (param.isNullOrEmpty()) readAllLogFiles()
-            else listOfNotNull(readAllLogFiles().lastOrNull())
-            shareLogFiles(files)
-                .onSuccess {
-                    output("success")
-                }
-                .onFailure {
-                    error(it.stackTraceToString())
-                }
-        }
-
-        path("clear") {
-            clearAllLogFiles()
         }
     }
 
@@ -51,9 +34,6 @@ internal class LoggerCommandHandler(
             - list: show all *.log files as a directory.
             - list -l: show content of latest log file.
             - list log.txt: show content of target log file.
-            - share: share all log files.
-            - share -l: share latest log file.
-            - clear: delete all log files.
             ~
         """.trimIndent()
 

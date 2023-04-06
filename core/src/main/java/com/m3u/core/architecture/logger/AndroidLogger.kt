@@ -2,15 +2,14 @@ package com.m3u.core.architecture.logger
 
 import android.util.Log
 import com.m3u.core.architecture.Publisher
-import java.io.File
 import javax.inject.Inject
 
 class AndroidLogger @Inject constructor(
     private val publisher: Publisher
 ) : Logger {
-    override fun log(s: String) {
+    override fun log(text: String) {
         if (publisher.debug) {
-            Log.i("AndroidLogger", s)
+            Log.i("AndroidLogger", text)
         }
     }
 
@@ -18,9 +17,5 @@ class AndroidLogger @Inject constructor(
         if (publisher.debug) {
             Log.e("AndroidLogger", "", throwable)
         }
-    }
-
-    override fun readAll(): List<File> {
-        error("Common logger cannot read log history.")
     }
 }

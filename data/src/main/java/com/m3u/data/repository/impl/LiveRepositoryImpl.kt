@@ -3,6 +3,7 @@ package com.m3u.data.repository.impl
 import com.m3u.core.architecture.logger.FileLoggerImpl
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.execute
+import com.m3u.core.architecture.logger.sandBox
 import com.m3u.data.database.dao.LiveDao
 import com.m3u.data.database.entity.Live
 import com.m3u.data.repository.LiveRepository
@@ -34,13 +35,13 @@ class LiveRepositoryImpl @Inject constructor(
         liveDao.getByUrl(url)
     }
 
-    override suspend fun setFavourite(id: Int, target: Boolean) = logger.execute {
-        liveDao.setFavouriteLive(id, target)
-    } ?: Unit
+    override suspend fun setFavourite(id: Int, target: Boolean) = logger.sandBox {
+        liveDao.setFavourite(id, target)
+    }
 
     override suspend fun setBanned(id: Int, target: Boolean) {
         logger.execute {
-            liveDao.setBannedLive(id, target)
+            liveDao.setBanned(id, target)
         }
     }
 }

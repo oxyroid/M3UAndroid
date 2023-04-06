@@ -1,11 +1,16 @@
 package com.m3u.core.architecture.logger
 
-import java.io.File
-
 interface Logger {
-    fun log(s: String)
+    fun log(text: String)
     fun log(throwable: Throwable)
-    fun readAll(): List<File>
+}
+
+inline fun Logger.sandBox(block: () -> Unit) {
+    try {
+        block()
+    } catch (e: Exception) {
+        log(e)
+    }
 }
 
 inline fun <R> Logger.execute(block: () -> R): R? = try {

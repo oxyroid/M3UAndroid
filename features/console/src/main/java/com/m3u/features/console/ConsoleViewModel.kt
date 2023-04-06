@@ -4,7 +4,7 @@ import android.app.Application
 import androidx.lifecycle.viewModelScope
 import com.m3u.core.architecture.BaseViewModel
 import com.m3u.core.architecture.Publisher
-import com.m3u.data.repository.MediaRepository
+import com.m3u.core.architecture.reader.FileReader
 import com.m3u.features.console.command.CommandHandler
 import com.m3u.features.console.command.CommandResource
 import com.m3u.features.console.command.impl.EmptyCommandHandler
@@ -13,6 +13,7 @@ import com.m3u.features.console.command.impl.UpnpCommandHandler
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
@@ -22,7 +23,7 @@ import kotlinx.coroutines.launch
 class ConsoleViewModel @Inject constructor(
     application: Application,
     publisher: Publisher,
-    private val mediaRepository: MediaRepository
+    private val reader: FileReader
 ) : BaseViewModel<ConsoleState, ConsoleEvent>(
     application = application,
     emptyState = ConsoleState()
@@ -92,22 +93,20 @@ class ConsoleViewModel @Inject constructor(
     }
 
     private fun clear() {
-        writable.update { ConsoleState() }
+        writable.value = ConsoleState()
     }
 
     private fun findCommandHandler(input: String): CommandHandler =
         when (CommandHandler.parseKey(input)) {
             LoggerCommandHandler.KEY -> {
                 LoggerCommandHandler(
-                    readAllLogFiles = mediaRepository::readAllLogFiles,
-                    clearAllLogFiles = mediaRepository::clearAllLogFiles,
-                    shareLogFiles = mediaRepository::shareFiles,
-                    input = input
+                    input = input,
+                    reader = reader
                 )
             }
             UpnpCommandHandler.KEY -> {
                 UpnpCommandHandler(
-                    discoverNearbyDevices = mediaRepository::discoverNearbyDevices,
+                    discoverNearbyDevices = { flow { } },
                     input = input
                 )
             }

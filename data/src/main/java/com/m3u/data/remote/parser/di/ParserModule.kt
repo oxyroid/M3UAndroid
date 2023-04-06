@@ -4,13 +4,12 @@ package com.m3u.data.remote.parser.di
 
 import com.m3u.data.remote.parser.m3u.DefaultPlaylistParser
 import com.m3u.data.remote.parser.m3u.PlaylistParser
-import com.m3u.data.remote.parser.upnp.UdpParser
-import com.m3u.data.remote.parser.upnp.UdpParserImpl
+import com.m3u.data.remote.parser.udp.UdpDiscover
+import com.m3u.data.remote.parser.udp.UdpDiscoverImpl
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
-import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -19,6 +18,5 @@ interface ParserModule {
     fun bindPlaylistParser(parser: DefaultPlaylistParser): PlaylistParser
 
     @Binds
-    @Singleton
-    fun bindUdpParser(parser: UdpParserImpl): UdpParser
+    fun bindUDPDiscover(discoverImpl: UdpDiscoverImpl): UdpDiscover
 }
