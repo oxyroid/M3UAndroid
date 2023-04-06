@@ -42,7 +42,8 @@ class SettingViewModel @Inject constructor(
                 editMode = configuration.editMode,
                 connectTimeout = configuration.connectTimeout,
                 clipMode = configuration.clipMode,
-                scrollMode = configuration.scrollMode
+                scrollMode = configuration.scrollMode,
+                autoRefresh = configuration.autoRefresh
             )
         }
         liveRepository.observeBanned(banned = true)
@@ -144,6 +145,15 @@ class SettingViewModel @Inject constructor(
                 writable.update {
                     it.copy(
                         scrollMode = target
+                    )
+                }
+            }
+            SettingEvent.OnAutoRefresh -> {
+                val target = !configuration.autoRefresh
+                configuration.autoRefresh = target
+                writable.update {
+                    it.copy(
+                        autoRefresh = target
                     )
                 }
             }

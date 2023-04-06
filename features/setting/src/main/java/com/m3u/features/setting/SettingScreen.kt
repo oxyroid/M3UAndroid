@@ -121,6 +121,8 @@ fun SettingRoute(
         onExperimentalMode = { viewModel.onEvent(SettingEvent.OnExperimentalMode) },
         onBannedLive = { viewModel.onEvent(SettingEvent.OnBannedLive(it)) },
         onClipMode = { viewModel.onEvent(SettingEvent.OnClipMode(it)) },
+        autoRefresh = state.autoRefresh,
+        onAutoRefresh = { viewModel.onEvent(SettingEvent.OnAutoRefresh) },
         modifier = modifier.fillMaxSize()
     )
 }
@@ -154,6 +156,8 @@ private fun SettingScreen(
     navigateToConsole: NavigateToConsole,
     experimentalMode: Boolean,
     onExperimentalMode: () -> Unit,
+    autoRefresh: Boolean,
+    onAutoRefresh: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     var fold: Fold by remember { mutableStateOf(Fold.NONE) }
@@ -192,6 +196,8 @@ private fun SettingScreen(
                     onExperimentalMode = onExperimentalMode,
                     mutedLives = mutedLives,
                     onBannedLive = onBannedLive,
+                    autoRefresh = autoRefresh,
+                    onAutoRefresh = onAutoRefresh,
                     modifier = modifier
                         .fillMaxWidth()
                         .scrollable(
@@ -231,6 +237,8 @@ private fun SettingScreen(
                     onExperimentalMode = onExperimentalMode,
                     mutedLives = mutedLives,
                     onBannedLive = onBannedLive,
+                    autoRefresh = autoRefresh,
+                    onAutoRefresh = onAutoRefresh,
                     modifier = modifier.scrollable(
                         orientation = Orientation.Vertical,
                         state = rememberScrollableState { it }
@@ -275,6 +283,8 @@ private fun PortraitOrientationContent(
     onScrollMode: () -> Unit,
     scrollMode: Boolean,
     onExperimentalMode: () -> Unit,
+    autoRefresh: Boolean,
+    onAutoRefresh: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Box {
@@ -304,6 +314,8 @@ private fun PortraitOrientationContent(
             onExperimentalMode = onExperimentalMode,
             scrollMode = scrollMode,
             onScrollMode = onScrollMode,
+            autoRefresh = autoRefresh,
+            onAutoRefresh = onAutoRefresh,
             modifier = modifier
         )
 
@@ -368,6 +380,8 @@ private fun LandscapeOrientationContent(
     navigateToConsole: NavigateToConsole,
     experimentalMode: Boolean,
     onExperimentalMode: () -> Unit,
+    autoRefresh: Boolean,
+    onAutoRefresh: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
@@ -398,6 +412,8 @@ private fun LandscapeOrientationContent(
             onExperimentalMode = onExperimentalMode,
             scrollMode = scrollMode,
             onScrollMode = onScrollMode,
+            autoRefresh = autoRefresh,
+            onAutoRefresh = onAutoRefresh,
             modifier = Modifier
                 .fillMaxHeight()
                 .weight(1f)
@@ -456,6 +472,8 @@ private fun PreferencesPart(
     onConnectTimeout: () -> Unit,
     onExperimentalMode: () -> Unit,
     navigateToConsole: NavigateToConsole,
+    autoRefresh: Boolean,
+    onAutoRefresh: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val spacing = LocalSpacing.current
@@ -517,8 +535,18 @@ private fun PreferencesPart(
                     onClick = onConnectTimeout
                 )
                 CheckBoxPreference(
-                    title = stringResource(R.string.edit_mode),
-                    subtitle = stringResource(id = R.string.edit_mode_description),
+                    title = stringResource(R.string.auto_refresh),
+                    subtitle = stringResource(id = R.string.auto_refresh_description),
+                    checked = autoRefresh,
+                    onCheckedChange = { newValue ->
+                        if (newValue != autoRefresh) {
+                            onAutoRefresh()
+                        }
+                    }
+                )
+                CheckBoxPreference(
+                    title = stringResource(R.string.god_mode),
+                    subtitle = stringResource(id = R.string.god_mode_description),
                     checked = editMode,
                     onCheckedChange = { newValue ->
                         if (newValue != editMode) {
@@ -642,6 +670,7 @@ private fun FeedManagementPart(
 ) {
     val spacing = LocalSpacing.current
     val theme = LocalTheme.current
+    val focusRequester = remember { FocusRequester() }
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(spacing.small),
         modifier = modifier.padding(spacing.medium)
@@ -675,83 +704,68 @@ private fun FeedManagementPart(
                     }
                 }
             }
-
         }
 
         item {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(spacing.small),
-            ) {
-                Text(
-                    text = stringResource(R.string.label_add_feed).uppercase(),
-                    style = MaterialTheme.typography.button,
-                    color = theme.onTint,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(spacing.medium))
-                        .background(theme.tint)
-                        .padding(
-                            vertical = spacing.extraSmall,
-                            horizontal = spacing.medium
-                        )
-                )
-                val focusRequester = remember { FocusRequester() }
-                LabelField(
-                    text = title,
-                    enabled = adding,
-                    placeholder = stringResource(R.string.placeholder_title).uppercase(),
-                    onValueChange = onTitle,
-                    keyboardActions = KeyboardActions(
-                        onNext = {
-                            focusRequester.requestFocus()
-                        }
-                    ),
-                    modifier = Modifier.fillMaxWidth()
-                )
-                LabelField(
-                    text = url,
-                    enabled = adding,
-                    placeholder = stringResource(R.string.placeholder_url).uppercase(),
-                    onValueChange = onUrl,
-                    keyboardActions = KeyboardActions(
-                        onDone = {
-                            onSubscribe()
-                        }
-                    ),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .focusRequester(focusRequester)
-                )
-                val subscribeTextResId = if (adding) R.string.label_subscribe
-                else R.string.label_subscribing
-                val subscribeFromClipboardTextResId =
-                    if (adding) R.string.label_parse_from_clipboard
-                    else R.string.label_subscribing
-                Button(
-                    enabled = adding,
-                    text = stringResource(subscribeTextResId),
-                    onClick = onSubscribe,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                val clipboardManager = LocalClipboardManager.current
-                TextButton(
-                    text = stringResource(subscribeFromClipboardTextResId),
-                    enabled = adding,
-                    onClick = {
-                        val clipboardUrl = clipboardManager.getText()?.text.orEmpty()
-                        val clipboardTitle = run {
-                            val filePath = clipboardUrl.split("/")
-                            val fileSplit = filePath.lastOrNull()?.split(".") ?: emptyList()
-                            fileSplit.firstOrNull() ?: "Feed_${System.currentTimeMillis()}"
-                        }
-                        onTitle(clipboardTitle)
-                        onUrl(clipboardUrl)
-                    },
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
+            LabelField(
+                text = title,
+                enabled = adding,
+                placeholder = stringResource(R.string.placeholder_title).uppercase(),
+                onValueChange = onTitle,
+                keyboardActions = KeyboardActions(
+                    onNext = {
+                        focusRequester.requestFocus()
+                    }
+                ),
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
 
+        item {
+            LabelField(
+                text = url,
+                enabled = adding,
+                placeholder = stringResource(R.string.placeholder_url).uppercase(),
+                onValueChange = onUrl,
+                keyboardActions = KeyboardActions(
+                    onDone = {
+                        onSubscribe()
+                    }
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .focusRequester(focusRequester)
+            )
+        }
+
+        item {
+            val subscribeTextResId = if (adding) R.string.label_subscribe else R.string.label_subscribing
+            Button(
+                enabled = adding,
+                text = stringResource(subscribeTextResId),
+                onClick = onSubscribe,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+        item {
+            val subscribeFromClipboardTextResId =
+                if (adding) R.string.label_parse_from_clipboard else R.string.label_subscribing
+            val clipboardManager = LocalClipboardManager.current
+            TextButton(
+                text = stringResource(subscribeFromClipboardTextResId),
+                enabled = adding,
+                onClick = {
+                    val clipboardUrl = clipboardManager.getText()?.text.orEmpty()
+                    val clipboardTitle = run {
+                        val filePath = clipboardUrl.split("/")
+                        val fileSplit = filePath.lastOrNull()?.split(".") ?: emptyList()
+                        fileSplit.firstOrNull() ?: "Feed_${System.currentTimeMillis()}"
+                    }
+                    onTitle(clipboardTitle)
+                    onUrl(clipboardUrl)
+                },
+                modifier = Modifier.fillMaxWidth()
+            )
         }
     }
 }

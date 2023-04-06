@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 import com.m3u.core.annotation.ClipMode
 import com.m3u.core.annotation.ConnectTimeout
 import com.m3u.core.annotation.FeedStrategy
+import com.m3u.core.architecture.configuration.Configuration.Companion.DEFAULT_AUTO_REFRESH
 import com.m3u.core.architecture.configuration.Configuration.Companion.DEFAULT_CLIP_MODE
 import com.m3u.core.architecture.configuration.Configuration.Companion.DEFAULT_CONNECT_TIMEOUT
 import com.m3u.core.architecture.configuration.Configuration.Companion.DEFAULT_EDIT_MODE
@@ -38,6 +39,7 @@ class SharedConfiguration @Inject constructor(
     @ClipMode
     override var clipMode: Int by sharedPreferences.int(DEFAULT_CLIP_MODE)
     override var scrollMode: Boolean by sharedPreferences.boolean(DEFAULT_SCROLL_MODE)
+    override var autoRefresh: Boolean by sharedPreferences.boolean(DEFAULT_AUTO_REFRESH)
 
     companion object {
         private const val SHARED_SETTINGS = "shared_settings"

@@ -121,7 +121,7 @@ internal fun FeedRoute(
                 icon = Icon.ImageVectorIcon(Icons.Rounded.Refresh),
                 contentDescription = "refresh",
                 onClick = {
-                    viewModel.onEvent(FeedEvent.FetchFeed)
+                    viewModel.onEvent(FeedEvent.Refresh)
                 }
             )
         )
@@ -132,6 +132,11 @@ internal fun FeedRoute(
     LaunchedEffect(state.title) {
         state.title?.let {
             helper.title = it
+        }
+    }
+    LaunchedEffect(state.autoRefresh, state.url) {
+        if (state.url.isNotEmpty() && state.autoRefresh) {
+            viewModel.onEvent(FeedEvent.Refresh)
         }
     }
     val rowCount = state.rowCount
@@ -162,7 +167,7 @@ internal fun FeedRoute(
             lives = state.lives,
             scrollUp = state.scrollUp,
             refreshing = state.fetching,
-            onRefresh = { viewModel.onEvent(FeedEvent.FetchFeed) },
+            onRefresh = { viewModel.onEvent(FeedEvent.Refresh) },
             navigateToLive = navigateToLive,
             navigateToPlaylist = navigateToPlaylist,
             onLongClickLive = { dialogState = DialogState.Menu(it) },

@@ -24,8 +24,8 @@
     <string name="connect_timeout">最大超时时间</string>
     <string name="show_muted_mode_description">测试功能暂不可用</string>
     <string name="label_contact_me">加入讨论群</string>
-    <string name="edit_mode">上帝模式</string>
-    <string name="edit_mode_description">通过物理按键调节界面</string>
+    <string name="god_mode">上帝模式</string>
+    <string name="god_mode_description">通过物理按键调节界面</string>
     <string name="failed_latest_release_version">无法获取版本信息：%s</string>
     <string name="fetching_latest">拉取版本信息中</string>
     <string name="label_same_version">已是最新版本</string>
@@ -40,4 +40,6 @@
     <string name="clip_mode_clip">裁剪</string>
     <string name="clip_mode_stretched">拉伸</string>
     <string name="scroll_mode">滑动切换频道</string>
+    <string name="auto_refresh">自动刷新</string>
+    <string name="auto_refresh_description">进入播放列表自动刷新</string>
 </resources>

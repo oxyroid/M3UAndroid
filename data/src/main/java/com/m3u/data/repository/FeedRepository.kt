@@ -21,7 +21,7 @@ interface FeedRepository {
     ): Flow<Resource<Unit>>
 }
 
-fun FeedRepository.fetch(
+fun FeedRepository.refresh(
     url: String,
     @FeedStrategy strategy: Int
 ): Flow<Resource<Unit>> = resourceChannelFlow {

@@ -20,9 +20,9 @@
     <string name="connect_timeout">connect timeout</string>
     <string name="show_muted_mode_description">the feature is temporarily unavailable</string>
     <string name="label_contact_me">join discussion</string>
-    <string name="edit_mode">god mode</string>
-    <string name="edit_mode_description">adjust screen by physical buttons</string>
-    <string name="failed_latest_release_version">cannot fetch version information: %s</string>
+    <string name="god_mode">god mode</string>
+    <string name="god_mode_description">adjust layouts by physical volume buttons</string>
+    <string name="failed_latest_release_version">cannot request version information: %s</string>
     <string name="fetching_latest">fetching…</string>
     <string name="label_same_version">already the latest version</string>
     <string name="console_editor">Console Editor</string>
@@ -36,4 +36,6 @@
     <string name="clip_mode_clip">clip</string>
     <string name="clip_mode_stretched">stretched</string>
     <string name="scroll_mode">scroll to change lives</string>
+    <string name="auto_refresh">auto refresh</string>
+    <string name="auto_refresh_description">automatically refreshed when enter the playlist</string>
 </resources>

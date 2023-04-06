@@ -9,7 +9,7 @@ import com.m3u.core.wrapper.eventOf
 import com.m3u.data.repository.FeedRepository
 import com.m3u.data.repository.LiveRepository
 import com.m3u.data.repository.MediaRepository
-import com.m3u.data.repository.fetch
+import com.m3u.data.repository.refresh
 import com.m3u.data.repository.observeBannedByFeedUrl
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -39,7 +39,8 @@ class FeedViewModel @Inject constructor(
                 useCommonUIMode = configuration.useCommonUIMode,
                 scrollMode = configuration.scrollMode,
                 rowCount = configuration.rowCount,
-                editMode = configuration.editMode
+                editMode = configuration.editMode,
+                autoRefresh = configuration.autoRefresh
             )
         }
     }
@@ -47,12 +48,12 @@ class FeedViewModel @Inject constructor(
     override fun onEvent(event: FeedEvent) {
         when (event) {
             is FeedEvent.ObserveFeed -> observeFeed(event.url)
-            FeedEvent.FetchFeed -> fetchFeed()
+            FeedEvent.Refresh -> refresh()
             is FeedEvent.FavouriteLive -> favouriteFeed(event)
             FeedEvent.ScrollUp -> scrollUp()
             is FeedEvent.MuteLive -> muteLive(event)
             is FeedEvent.SavePicture -> savePicture(event)
-            is FeedEvent.SetRowCount -> onRowCount(event)
+            is FeedEvent.SetRowCount -> setRowCount(event)
             is FeedEvent.OnQuery -> onQuery(event)
         }
     }
@@ -105,10 +106,10 @@ class FeedViewModel @Inject constructor(
             .launchIn(this)
     }
 
-    private fun fetchFeed() {
+    private fun refresh() {
         val url = readable.url
         val strategy = configuration.feedStrategy
-        feedRepository.fetch(url, strategy)
+        feedRepository.refresh(url, strategy)
             .onEach { resource ->
                 writable.update {
                     when (resource) {
@@ -192,7 +193,7 @@ class FeedViewModel @Inject constructor(
         }
     }
 
-    private fun onRowCount(event: FeedEvent.SetRowCount) {
+    private fun setRowCount(event: FeedEvent.SetRowCount) {
         configuration.rowCount = event.count
         writable.update {
             it.copy(

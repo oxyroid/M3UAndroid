@@ -24,5 +24,6 @@ data class SettingState(
     @ConnectTimeout val connectTimeout: Int = Configuration.DEFAULT_CONNECT_TIMEOUT,
     val experimentalMode: Boolean = Configuration.DEFAULT_EXPERIMENTAL_MODE,
     @ClipMode val clipMode: Int = Configuration.DEFAULT_CLIP_MODE,
-    val scrollMode: Boolean = Configuration.DEFAULT_SCROLL_MODE
+    val scrollMode: Boolean = Configuration.DEFAULT_SCROLL_MODE,
+    val autoRefresh: Boolean = Configuration.DEFAULT_AUTO_REFRESH
 )
