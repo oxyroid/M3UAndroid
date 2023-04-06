@@ -6,6 +6,20 @@ plugins {
 }
 
 android {
+    namespace "com.m3u.app"
+    compileSdk 33
+    defaultConfig {
+        applicationId "com.m3u.app"
+        minSdk 26
+        targetSdk 33
+        versionCode 43
+        versionName "1.11.5"
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        vectorDrawables {
+            useSupportLibrary true
+        }
+    }
     signingConfigs {
         release {
             storeFile file(project.rootProject.file("release.jks"))
@@ -15,20 +29,6 @@ android {
             storePassword properties.getProperty("release.storePassword")
             keyAlias properties.getProperty("release.keyAlias")
             keyPassword properties.getProperty("release.keyPassword")
-        }
-    }
-    namespace "com.m3u.app"
-    compileSdk 33
-    defaultConfig {
-        applicationId "com.m3u.app"
-        minSdk 26
-        targetSdk 33
-        versionCode 42
-        versionName "1.11.4"
-
-        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-        vectorDrawables {
-            useSupportLibrary true
         }
     }
     buildTypes {
