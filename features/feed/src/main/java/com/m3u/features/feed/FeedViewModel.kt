@@ -39,7 +39,7 @@ class FeedViewModel @Inject constructor(
                 useCommonUIMode = configuration.useCommonUIMode,
                 scrollMode = configuration.scrollMode,
                 rowCount = configuration.rowCount,
-                editMode = configuration.editMode,
+                godMode = configuration.godMode,
                 autoRefresh = configuration.autoRefresh
             )
         }

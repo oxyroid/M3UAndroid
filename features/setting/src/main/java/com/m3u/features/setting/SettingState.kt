@@ -19,7 +19,7 @@ data class SettingState(
     val version: String = "",
     val release: Resource<Release> = Resource.Loading,
     @FeedStrategy val feedStrategy: Int = Configuration.DEFAULT_FEED_STRATEGY,
-    val editMode: Boolean = Configuration.DEFAULT_EDIT_MODE,
+    val editMode: Boolean = Configuration.DEFAULT_GOD_MODE,
     val useCommonUIMode: Boolean = Configuration.DEFAULT_USE_COMMON_UI_MODE,
     @ConnectTimeout val connectTimeout: Int = Configuration.DEFAULT_CONNECT_TIMEOUT,
     val experimentalMode: Boolean = Configuration.DEFAULT_EXPERIMENTAL_MODE,

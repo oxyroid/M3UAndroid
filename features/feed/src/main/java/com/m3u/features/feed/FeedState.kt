@@ -18,6 +18,6 @@ data class FeedState(
     val message: Event<String> = handledEvent(),
     val useCommonUIMode: Boolean = Configuration.DEFAULT_USE_COMMON_UI_MODE,
     val scrollMode: Boolean = Configuration.DEFAULT_SCROLL_MODE,
-    val editMode: Boolean = Configuration.DEFAULT_EDIT_MODE,
+    val godMode: Boolean = Configuration.DEFAULT_GOD_MODE,
     val autoRefresh: Boolean = Configuration.DEFAULT_AUTO_REFRESH
 )

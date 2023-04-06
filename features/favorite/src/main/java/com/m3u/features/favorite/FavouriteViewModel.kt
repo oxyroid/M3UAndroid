@@ -28,7 +28,7 @@ class FavouriteViewModel @Inject constructor(
         writable.update {
             it.copy(
                 rowCount = configuration.rowCount,
-                editMode = configuration.editMode
+                godMode = configuration.godMode
             )
         }
         liveRepository

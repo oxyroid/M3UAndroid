@@ -8,7 +8,7 @@ import com.m3u.core.annotation.FeedStrategy
 import com.m3u.core.architecture.configuration.Configuration.Companion.DEFAULT_AUTO_REFRESH
 import com.m3u.core.architecture.configuration.Configuration.Companion.DEFAULT_CLIP_MODE
 import com.m3u.core.architecture.configuration.Configuration.Companion.DEFAULT_CONNECT_TIMEOUT
-import com.m3u.core.architecture.configuration.Configuration.Companion.DEFAULT_EDIT_MODE
+import com.m3u.core.architecture.configuration.Configuration.Companion.DEFAULT_GOD_MODE
 import com.m3u.core.architecture.configuration.Configuration.Companion.DEFAULT_EXPERIMENTAL_MODE
 import com.m3u.core.architecture.configuration.Configuration.Companion.DEFAULT_FEED_STRATEGY
 import com.m3u.core.architecture.configuration.Configuration.Companion.DEFAULT_ROW_COUNT
@@ -33,7 +33,7 @@ class SharedConfiguration @Inject constructor(
 
     @ConnectTimeout
     override var connectTimeout: Int by sharedPreferences.int(DEFAULT_CONNECT_TIMEOUT)
-    override var editMode: Boolean by sharedPreferences.boolean(DEFAULT_EDIT_MODE)
+    override var godMode: Boolean by sharedPreferences.boolean(DEFAULT_GOD_MODE)
     override var experimentalMode: Boolean by sharedPreferences.boolean(DEFAULT_EXPERIMENTAL_MODE)
 
     @ClipMode

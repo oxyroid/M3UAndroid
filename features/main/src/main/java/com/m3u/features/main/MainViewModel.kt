@@ -3,6 +3,7 @@ package com.m3u.features.main
 import android.app.Application
 import androidx.lifecycle.viewModelScope
 import com.m3u.core.architecture.BaseViewModel
+import com.m3u.core.architecture.configuration.Configuration
 import com.m3u.core.util.collection.replaceIf
 import com.m3u.core.util.coroutine.mapElement
 import com.m3u.core.wrapper.eventOf
@@ -28,12 +29,19 @@ import kotlinx.coroutines.withContext
 class MainViewModel @Inject constructor(
     private val feedRepository: FeedRepository,
     private val liveRepository: LiveRepository,
-    application: Application
+    application: Application,
+    private val configuration: Configuration
 ) : BaseViewModel<MainState, MainEvent>(
     application = application,
     emptyState = MainState()
 ) {
     init {
+        writable.update {
+            it.copy(
+                godMode = configuration.godMode,
+                rowCount = configuration.rowCount
+            )
+        }
         var job: Job? = null
         observeAllFeeds()
             .mapElement(Feed::toDetail)
@@ -80,6 +88,7 @@ class MainViewModel @Inject constructor(
     override fun onEvent(event: MainEvent) {
         when (event) {
             is MainEvent.UnsubscribeFeedByUrl -> unsubscribeFeedByUrl(event.url)
+            is MainEvent.SetRowCount -> setRowCount(event.target)
         }
     }
 
@@ -93,6 +102,15 @@ class MainViewModel @Inject constructor(
                     )
                 }
             }
+        }
+    }
+
+    private fun setRowCount(target: Int) {
+        configuration.rowCount = target
+        writable.update {
+            it.copy(
+                rowCount = target
+            )
         }
     }
 }

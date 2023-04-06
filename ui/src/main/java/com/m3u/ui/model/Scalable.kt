@@ -1,7 +1,6 @@
 package com.m3u.ui.model
 
 import androidx.compose.runtime.staticCompositionLocalOf
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 
 data class Scalable(
@@ -18,9 +17,7 @@ data class Scalable(
             largest = largest * value
         )
 
-    val Dp.scaled: Dp get() = this * value
-
-    val TextUnit.scaled: TextUnit get() = this * ((this@Scalable.value - 1) / 2f + 1f)
+    val TextUnit.scaled: TextUnit get() = this * (this@Scalable.value / 3f + 2 / 3f)
 }
 
 val LocalScalable = staticCompositionLocalOf {

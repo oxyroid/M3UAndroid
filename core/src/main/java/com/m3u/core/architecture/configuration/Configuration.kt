@@ -12,7 +12,7 @@ interface Configuration {
 
     @ConnectTimeout
     var connectTimeout: Int
-    var editMode: Boolean
+    var godMode: Boolean
     var experimentalMode: Boolean
 
     @ClipMode
@@ -28,7 +28,7 @@ interface Configuration {
 
         @ConnectTimeout
         const val DEFAULT_CONNECT_TIMEOUT = ConnectTimeout.SHORT
-        const val DEFAULT_EDIT_MODE = false
+        const val DEFAULT_GOD_MODE = false
         const val DEFAULT_EXPERIMENTAL_MODE = false
 
         @ClipMode

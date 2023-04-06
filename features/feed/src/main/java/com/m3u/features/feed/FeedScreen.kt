@@ -146,7 +146,7 @@ internal fun FeedRoute(
     BackHandler(state.query.isNotEmpty()) {
         viewModel.onEvent(FeedEvent.OnQuery(""))
     }
-    val interceptVolumeEventModifier = if (state.editMode) {
+    val interceptVolumeEventModifier = if (state.godMode) {
         Modifier.interceptVolumeEvent { event ->
             when (event) {
                 KeyEvent.KEYCODE_VOLUME_UP -> onRowCount((rowCount - 1).coerceAtLeast(1))

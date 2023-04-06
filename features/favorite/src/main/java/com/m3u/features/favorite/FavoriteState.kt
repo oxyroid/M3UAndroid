@@ -11,5 +11,5 @@ data class FavoriteState(
     val details: LiveDetails = emptyMap(),
     val message: Event<String> = handledEvent(),
     val rowCount: Int = Configuration.DEFAULT_ROW_COUNT,
-    val editMode: Boolean = Configuration.DEFAULT_EDIT_MODE
+    val godMode: Boolean = Configuration.DEFAULT_GOD_MODE
 )

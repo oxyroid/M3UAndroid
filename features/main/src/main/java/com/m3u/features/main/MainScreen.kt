@@ -1,6 +1,7 @@
 package com.m3u.features.main
 
 import android.content.res.Configuration
+import android.view.KeyEvent
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
@@ -12,6 +13,7 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -33,12 +35,16 @@ import com.m3u.ui.components.SheetDialog
 import com.m3u.ui.components.SheetItem
 import com.m3u.ui.components.SheetTitle
 import com.m3u.ui.model.LocalHelper
+import com.m3u.ui.model.LocalScalable
 import com.m3u.ui.model.LocalSpacing
+import com.m3u.ui.model.Scalable
 import com.m3u.ui.util.EventHandler
 import com.m3u.ui.util.RepeatOnCreate
+import com.m3u.ui.util.interceptVolumeEvent
 
 private typealias ShowFeedBottomSheet = (Feed) -> Unit
 private typealias UnsubscribeFeedByUrl = (String) -> Unit
+
 typealias NavigateToFeed = (url: String) -> Unit
 
 @Composable
@@ -51,23 +57,44 @@ fun MainRoute(
     val helper = LocalHelper.current
     val state: MainState by viewModel.state.collectAsStateWithLifecycle()
     val feeds: List<FeedDetail> = state.feeds
-
+    val rowCount = state.rowCount
+    fun onRowCount(target: Int) {
+        viewModel.onEvent(MainEvent.SetRowCount(target))
+    }
     EventHandler(state.message) {
         context.toast(it)
     }
     RepeatOnCreate {
         helper.actions()
     }
-    MainScreen(
-        modifier = modifier,
-        feeds = feeds,
-        navigateToFeed = navigateToFeed,
-        unsubscribeFeedByUrl = { viewModel.onEvent(MainEvent.UnsubscribeFeedByUrl(it)) }
-    )
+
+    val interceptVolumeEventModifier = if (state.godMode) {
+        Modifier.interceptVolumeEvent { event ->
+            when (event) {
+                KeyEvent.KEYCODE_VOLUME_UP -> onRowCount((rowCount - 1).coerceAtLeast(1))
+                KeyEvent.KEYCODE_VOLUME_DOWN -> onRowCount((rowCount + 1).coerceAtMost(3))
+            }
+        }
+    } else Modifier
+
+    CompositionLocalProvider(
+        LocalScalable provides Scalable(1f / rowCount)
+    ) {
+        MainScreen(
+            rowCount = rowCount,
+            feeds = feeds,
+            navigateToFeed = navigateToFeed,
+            unsubscribeFeedByUrl = { viewModel.onEvent(MainEvent.UnsubscribeFeedByUrl(it)) },
+            modifier = modifier
+                .fillMaxSize()
+                .then(interceptVolumeEventModifier),
+        )
+    }
 }
 
 @Composable
 private fun MainScreen(
+    rowCount: Int,
     feeds: List<FeedDetail>,
     navigateToFeed: NavigateToFeed,
     unsubscribeFeedByUrl: UnsubscribeFeedByUrl,
@@ -87,6 +114,7 @@ private fun MainScreen(
 
         Configuration.ORIENTATION_LANDSCAPE -> {
             LandscapeOrientationContent(
+                rowCount = rowCount,
                 feeds = feeds,
                 navigateToFeed = navigateToFeed,
                 showFeedBottomSheet = { feedSheetState = FeedSheetState.Existed(it) },
@@ -131,7 +159,6 @@ private fun MainScreen(
     BackHandler(feedSheetState is FeedSheetState.Existed) {
         feedSheetState = FeedSheetState.Idle
     }
-
 }
 
 @Composable
@@ -169,14 +196,18 @@ fun PortraitOrientationContent(
 
 @Composable
 private fun LandscapeOrientationContent(
+    rowCount: Int,
     feeds: List<FeedDetail>,
     navigateToFeed: NavigateToFeed,
     showFeedBottomSheet: ShowFeedBottomSheet,
     modifier: Modifier = Modifier
 ) {
-    val spacing = LocalSpacing.current
+    val scalable = LocalScalable.current
+    val spacing = with(scalable) {
+        LocalSpacing.current.scaled
+    }
     LazyVerticalGrid(
-        columns = GridCells.Fixed(3),
+        columns = GridCells.Fixed(rowCount + 2),
         contentPadding = PaddingValues(spacing.medium),
         verticalArrangement = Arrangement.spacedBy(spacing.medium),
         horizontalArrangement = Arrangement.spacedBy(spacing.medium),

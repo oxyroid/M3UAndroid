@@ -7,9 +7,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.items
@@ -57,7 +54,7 @@ fun FavouriteRoute(
     RepeatOnCreate {
         helper.actions()
     }
-    val interceptVolumeEventModifier = if (state.editMode) {
+    val interceptVolumeEventModifier = if (state.godMode) {
         Modifier.interceptVolumeEvent { event ->
             when (event) {
                 KeyEvent.KEYCODE_VOLUME_UP -> onRowCount((rowCount - 1).coerceAtLeast(1))
@@ -83,9 +80,9 @@ fun FavouriteRoute(
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun FavoriteScreen(
+    rowCount: Int,
     details: LiveDetails,
     navigateToLive: NavigateToLive,
-    rowCount: Int,
     modifier: Modifier = Modifier
 ) {
     val configuration = LocalConfiguration.current
@@ -96,9 +93,9 @@ private fun FavoriteScreen(
 
     when (configuration.orientation) {
         Configuration.ORIENTATION_PORTRAIT -> {
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(rowCount),
-                verticalArrangement = Arrangement.spacedBy(spacing.medium),
+            LazyVerticalStaggeredGrid(
+                columns = StaggeredGridCells.Fixed(rowCount),
+                verticalItemSpacing = spacing.medium,
                 contentPadding = PaddingValues(spacing.medium),
                 modifier = modifier.fillMaxSize()
             ) {
@@ -132,10 +129,10 @@ private fun FavoriteScreen(
             }
             LazyVerticalStaggeredGrid(
                 columns = StaggeredGridCells.Fixed(rowCount + 2),
-                modifier = modifier.fillMaxSize(),
                 verticalItemSpacing = spacing.medium,
                 horizontalArrangement = Arrangement.spacedBy(spacing.medium),
                 contentPadding = PaddingValues(spacing.medium),
+                modifier = modifier.fillMaxSize(),
             ) {
                 items(
                     items = lives,

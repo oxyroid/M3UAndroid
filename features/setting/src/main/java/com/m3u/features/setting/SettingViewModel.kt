@@ -39,7 +39,7 @@ class SettingViewModel @Inject constructor(
                 feedStrategy = configuration.feedStrategy,
                 useCommonUIMode = configuration.useCommonUIMode,
                 experimentalMode = configuration.experimentalMode,
-                editMode = configuration.editMode,
+                editMode = configuration.godMode,
                 connectTimeout = configuration.connectTimeout,
                 clipMode = configuration.clipMode,
                 scrollMode = configuration.scrollMode,
@@ -96,8 +96,8 @@ class SettingViewModel @Inject constructor(
                 }
             }
             SettingEvent.OnEditMode -> {
-                val newValue = !configuration.editMode
-                configuration.editMode = newValue
+                val newValue = !configuration.godMode
+                configuration.godMode = newValue
                 writable.update {
                     it.copy(
                         editMode = newValue
