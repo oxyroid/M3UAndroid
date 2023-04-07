@@ -5,20 +5,27 @@ import androidx.lifecycle.viewModelScope
 import com.m3u.core.architecture.BaseViewModel
 import com.m3u.core.architecture.configuration.Configuration
 import com.m3u.core.wrapper.eventOf
+import com.m3u.data.repository.FeedRepository
 import com.m3u.data.repository.LiveRepository
+import com.m3u.data.service.PlayerManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 @HiltViewModel
 class LiveViewModel @Inject constructor(
     private val liveRepository: LiveRepository,
+    private val feedRepository: FeedRepository,
     application: Application,
-    configuration: Configuration
+    configuration: Configuration,
+    private val playerManager: PlayerManager
 ) : BaseViewModel<LiveState, LiveEvent>(
     application = application,
     emptyState = LiveState()
@@ -27,40 +34,79 @@ class LiveViewModel @Inject constructor(
         writable.update {
             it.copy(
                 experimentalMode = configuration.experimentalMode,
-                clipMode = configuration.clipMode
+                clipMode = configuration.clipMode,
+                player = playerManager.player
             )
         }
+        combine(
+            playerManager.playbackState,
+            playerManager.videoSize,
+            playerManager.playerError
+        ) { playback, videoSize, playerError ->
+            LiveState.PlayerState(
+                playback = playback,
+                videoSize = videoSize,
+                playerError = playerError
+            )
+        }
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5_000),
+                initialValue = LiveState.PlayerState()
+            )
+            .onEach { playerState ->
+                writable.value = readable.copy(
+                    playerState = playerState
+                )
+            }
+            .launchIn(viewModelScope)
     }
 
     override fun onEvent(event: LiveEvent) {
         when (event) {
-            is LiveEvent.Init.SingleLive -> initLive(event.liveId)
-            is LiveEvent.Init.PlayList -> initPlaylist(event.ids, event.initialIndex)
+            is LiveEvent.InitSpecial -> initSpecial(event.liveId)
+            is LiveEvent.InitPlayList -> initPlaylist(event.ids, event.initialIndex)
             LiveEvent.SearchDlnaDevices -> searchDlnaDevices()
             LiveEvent.Record -> record()
+            is LiveEvent.InstallMedia -> {
+                val url = event.url
+                if (url.isEmpty()) return
+                playerManager.installMedia(url)
+            }
+            LiveEvent.UninstallMedia -> {
+                playerManager.uninstallMedia()
+            }
         }
     }
 
     private var initJob: Job? = null
-    private fun initLive(id: Int) {
+    private fun initSpecial(id: Int) {
         initJob?.cancel()
-        initJob = liveRepository.observe(id)
-            .onEach { live ->
-                writable.update {
-                    it.copy(
-                        init = LiveState.Init.Live(live)
-                    )
+        initJob = viewModelScope.launch {
+            liveRepository.observe(id)
+                .onEach { live ->
+                    if (live != null) {
+                        val feed = feedRepository.get(live.feedUrl)
+                        writable.update {
+                            it.copy(
+                                init = LiveState.InitSpecial(
+                                    live = live,
+                                    feed = feed
+                                )
+                            )
+                        }
+                    }
                 }
-            }
-            .launchIn(viewModelScope)
+                .launchIn(this)
+        }
     }
 
     private fun initPlaylist(ids: List<Int>, initialIndex: Int) {
         initJob?.cancel()
         initJob = viewModelScope.launch {
             val lives = when (val init = readable.init) {
-                is LiveState.Init.PlayList -> init.lives
-                is LiveState.Init.Live -> init.live?.let(::listOf) ?: emptyList()
+                is LiveState.InitPlayList -> init.lives
+                is LiveState.InitSpecial -> init.live?.let(::listOf) ?: emptyList()
             }.toMutableList()
             ids.forEach { id ->
                 val live = liveRepository.get(id)
@@ -70,7 +116,7 @@ class LiveViewModel @Inject constructor(
             }
             writable.update { readable ->
                 readable.copy(
-                    init = LiveState.Init.PlayList(
+                    init = LiveState.InitPlayList(
                         lives = lives,
                         initialIndex = initialIndex
                     ),

@@ -67,7 +67,7 @@ fun NavGraphBuilder.liveScreen(
             ?.getInt(TYPE_ID)
             ?: return@composable
         LiveRoute(
-            init = LiveEvent.Init.SingleLive(id),
+            init = LiveEvent.InitSpecial(id),
             onBackPressed = onBackPressed
         )
     }
@@ -105,7 +105,7 @@ fun NavGraphBuilder.livePlaylistScreen(
             ?.getInt(TYPE_INITIAL_INDEX)
             ?: return@composable
         LiveRoute(
-            init = LiveEvent.Init.PlayList(
+            init = LiveEvent.InitPlayList(
                 initialIndex = initialIndex,
                 ids = ids
             ),

@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.pager.VerticalPager
@@ -111,6 +112,12 @@ internal fun LiveRoute(
         searchDlnaDevices = { viewModel.onEvent(LiveEvent.SearchDlnaDevices) },
         onRecord = { viewModel.onEvent(LiveEvent.Record) },
         onBackPressed = onBackPressed,
+        player = state.player,
+        playback = state.playerState.playback,
+        videoSize = state.playerState.videoSize,
+        playerError = state.playerState.playerError,
+        onInstallMedia = { viewModel.onEvent(LiveEvent.InstallMedia(it)) },
+        onUninstallMedia = { viewModel.onEvent(LiveEvent.UninstallMedia) },
         modifier = modifier,
     )
 }
@@ -119,18 +126,28 @@ internal fun LiveRoute(
 @Composable
 private fun LiveScreen(
     init: LiveState.Init,
-    experimentalMode: Boolean,
     @ClipMode clipMode: Int,
     recording: Boolean,
     searchDlnaDevices: () -> Unit,
     onRecord: () -> Unit,
     onBackPressed: () -> Unit,
+    experimentalMode: Boolean,
+    player: Player?,
+    playback: @Player.State Int,
+    videoSize: Rect,
+    playerError: PlaybackException?,
+    onInstallMedia: (String) -> Unit,
+    onUninstallMedia: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val theme = LocalTheme.current
     when (init) {
-        is LiveState.Init.Live -> {
+        is LiveState.InitSpecial -> {
             LivePart(
+                player = player,
+                playback = playback,
+                videoSize = videoSize,
+                playerError = playerError,
                 title = init.live?.title.orEmpty(),
                 url = init.live?.url.orEmpty(),
                 cover = init.live?.cover.orEmpty(),
@@ -141,6 +158,8 @@ private fun LiveScreen(
                 onRecord = onRecord,
                 searchDlnaDevices = searchDlnaDevices,
                 onBackPressed = onBackPressed,
+                onInstallMedia = onInstallMedia,
+                onUninstallMedia = onUninstallMedia,
                 modifier = modifier
                     .fillMaxSize()
                     .background(Color.Black)
@@ -148,7 +167,7 @@ private fun LiveScreen(
             )
         }
 
-        is LiveState.Init.PlayList -> {
+        is LiveState.InitPlayList -> {
             val pagerState = rememberPagerState(init.initialIndex)
             VerticalPager(
                 state = pagerState,
@@ -159,6 +178,10 @@ private fun LiveScreen(
                     .testTag("features:live")
             ) { page ->
                 LivePart(
+                    player = player,
+                    playback = playback,
+                    videoSize = videoSize,
+                    playerError = playerError,
                     title = init.lives[page].title,
                     feedTitle = init.feed?.title.orEmpty(),
                     url = init.lives[page].url,
@@ -169,6 +192,8 @@ private fun LiveScreen(
                     onRecord = onRecord,
                     searchDlnaDevices = searchDlnaDevices,
                     onBackPressed = onBackPressed,
+                    onInstallMedia = onInstallMedia,
+                    onUninstallMedia = onUninstallMedia,
                     modifier = Modifier
                         .fillMaxSize()
                         .background(Color.Black)
@@ -186,8 +211,13 @@ private fun LiveScreen(
     }
 }
 
+@OptIn(ExperimentalAnimationApi::class)
 @Composable
 private fun LivePart(
+    player: Player?,
+    playback: @Player.State Int,
+    videoSize: Rect,
+    playerError: PlaybackException?,
     title: String,
     feedTitle: String,
     url: String,
@@ -198,6 +228,8 @@ private fun LivePart(
     onRecord: () -> Unit,
     searchDlnaDevices: () -> Unit,
     onBackPressed: () -> Unit,
+    onInstallMedia: (String) -> Unit,
+    onUninstallMedia: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Background(
@@ -209,13 +241,12 @@ private fun LivePart(
         ) {
             val helper = LocalHelper.current
             val state = rememberPlayerState(
+                player = player,
                 url = url,
-                clipMode = clipMode
+                clipMode = clipMode,
+                onInstallMedia = onInstallMedia,
+                onUninstallMedia = onUninstallMedia
             )
-
-            val playback by state.playbackState
-            val exception by state.exception
-            val videoSize by state.videoSize
 
             ExoPlayer(
                 state = state,
@@ -228,8 +259,8 @@ private fun LivePart(
                 cover.isNotEmpty() && (playback != Player.STATE_READY || videoSize.isEmpty)
             AnimatedVisibility(
                 visible = shouldShowPlaceholder,
-                enter = fadeIn(),
-                exit = fadeOut()
+                enter = scaleIn(initialScale = 0.7f) + fadeIn(),
+                exit = scaleOut(targetScale = 0.7f) + fadeOut()
             ) {
                 Image(
                     model = cover,
@@ -282,7 +313,7 @@ private fun LivePart(
                         state = maskState,
                         icon = Icons.Rounded.Refresh,
                         onClick = {
-                            state.loadMedia()
+                            onInstallMedia(state.url)
                         }
                     )
                 },
@@ -295,14 +326,25 @@ private fun LivePart(
                             text = feedTitle,
                             style = MaterialTheme.typography.subtitle1
                         )
+                        Text(
+                            text = title,
+                            style = MaterialTheme.typography.h5,
+                            fontWeight = FontWeight.ExtraBold
+                        )
                         val playbackDisplayText = playback.displayText
+                        val exceptionDisplayText = playerError.displayText
+                        if (playbackDisplayText.isNotEmpty() || exceptionDisplayText.isNotEmpty()) {
+                            Divider(
+                                modifier = Modifier.height(LocalSpacing.current.small)
+                            )
+                        }
                         AnimatedVisibility(playbackDisplayText.isNotEmpty()) {
                             Text(
                                 text = playbackDisplayText,
                                 style = MaterialTheme.typography.subtitle2,
+                                color = LocalContentColor.current.copy(alpha = 0.75f)
                             )
                         }
-                        val exceptionDisplayText = exception.displayText
                         AnimatedVisibility(exceptionDisplayText.isNotEmpty()) {
                             Text(
                                 text = exceptionDisplayText,
@@ -313,8 +355,8 @@ private fun LivePart(
                     }
                 }
             )
-            LaunchedEffect(exception) {
-                if (exception != null) {
+            LaunchedEffect(playerError) {
+                if (playerError != null) {
                     maskState.keepAlive()
                 }
             }
