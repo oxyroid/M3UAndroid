@@ -25,5 +25,6 @@ data class SettingState(
     val experimentalMode: Boolean = Configuration.DEFAULT_EXPERIMENTAL_MODE,
     @ClipMode val clipMode: Int = Configuration.DEFAULT_CLIP_MODE,
     val scrollMode: Boolean = Configuration.DEFAULT_SCROLL_MODE,
-    val autoRefresh: Boolean = Configuration.DEFAULT_AUTO_REFRESH
+    val autoRefresh: Boolean = Configuration.DEFAULT_AUTO_REFRESH,
+    val isSSLVerificationEnabled: Boolean = Configuration.DEFAULT_SSL_VERIFICATION_ENABLED
 )

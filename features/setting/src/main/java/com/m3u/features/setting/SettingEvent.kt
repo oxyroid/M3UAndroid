@@ -17,4 +17,5 @@ sealed interface SettingEvent {
     object OnAutoRefresh : SettingEvent
     data class OnClipMode(@ClipMode val mode: Int) : SettingEvent
     data class OnBannedLive(val id: Int) : SettingEvent
+    object OnSSLVerificationEnabled : SettingEvent
 }

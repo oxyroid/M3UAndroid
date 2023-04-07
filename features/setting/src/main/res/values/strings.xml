@@ -42,4 +42,6 @@
     <string name="scroll_mode">滑动切换频道</string>
     <string name="auto_refresh">自动刷新</string>
     <string name="auto_refresh_description">进入播放列表自动刷新</string>
+    <string name="ssl_verification_enabled">SSL证书校验</string>
+    <string name="ssl_verification_enabled_description">校验网络连接安全性</string>
 </resources>

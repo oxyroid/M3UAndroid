@@ -8,11 +8,12 @@ import com.m3u.core.annotation.FeedStrategy
 import com.m3u.core.architecture.configuration.Configuration.Companion.DEFAULT_AUTO_REFRESH
 import com.m3u.core.architecture.configuration.Configuration.Companion.DEFAULT_CLIP_MODE
 import com.m3u.core.architecture.configuration.Configuration.Companion.DEFAULT_CONNECT_TIMEOUT
-import com.m3u.core.architecture.configuration.Configuration.Companion.DEFAULT_GOD_MODE
 import com.m3u.core.architecture.configuration.Configuration.Companion.DEFAULT_EXPERIMENTAL_MODE
 import com.m3u.core.architecture.configuration.Configuration.Companion.DEFAULT_FEED_STRATEGY
+import com.m3u.core.architecture.configuration.Configuration.Companion.DEFAULT_GOD_MODE
 import com.m3u.core.architecture.configuration.Configuration.Companion.DEFAULT_ROW_COUNT
 import com.m3u.core.architecture.configuration.Configuration.Companion.DEFAULT_SCROLL_MODE
+import com.m3u.core.architecture.configuration.Configuration.Companion.DEFAULT_SSL_VERIFICATION_ENABLED
 import com.m3u.core.architecture.configuration.Configuration.Companion.DEFAULT_USE_COMMON_UI_MODE
 import com.m3u.core.util.context.boolean
 import com.m3u.core.util.context.int
@@ -40,6 +41,8 @@ class SharedConfiguration @Inject constructor(
     override var clipMode: Int by sharedPreferences.int(DEFAULT_CLIP_MODE)
     override var scrollMode: Boolean by sharedPreferences.boolean(DEFAULT_SCROLL_MODE)
     override var autoRefresh: Boolean by sharedPreferences.boolean(DEFAULT_AUTO_REFRESH)
+    override var isSSLVerificationEnabled: Boolean
+            by sharedPreferences.boolean(DEFAULT_SSL_VERIFICATION_ENABLED)
 
     companion object {
         private const val SHARED_SETTINGS = "shared_settings"

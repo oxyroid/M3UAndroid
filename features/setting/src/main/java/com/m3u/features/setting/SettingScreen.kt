@@ -123,6 +123,8 @@ fun SettingRoute(
         onClipMode = { viewModel.onEvent(SettingEvent.OnClipMode(it)) },
         autoRefresh = state.autoRefresh,
         onAutoRefresh = { viewModel.onEvent(SettingEvent.OnAutoRefresh) },
+        isSSLVerificationEnabled = state.isSSLVerificationEnabled,
+        onSSLVerificationEnabled = { viewModel.onEvent(SettingEvent.OnSSLVerificationEnabled) },
         modifier = modifier.fillMaxSize()
     )
 }
@@ -158,6 +160,8 @@ private fun SettingScreen(
     onExperimentalMode: () -> Unit,
     autoRefresh: Boolean,
     onAutoRefresh: () -> Unit,
+    isSSLVerificationEnabled: Boolean,
+    onSSLVerificationEnabled: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     var fold: Fold by remember { mutableStateOf(Fold.NONE) }
@@ -198,6 +202,8 @@ private fun SettingScreen(
                     onBannedLive = onBannedLive,
                     autoRefresh = autoRefresh,
                     onAutoRefresh = onAutoRefresh,
+                    isSSLVerificationEnabled = isSSLVerificationEnabled,
+                    onSSLVerificationEnabled = onSSLVerificationEnabled,
                     modifier = modifier
                         .fillMaxWidth()
                         .scrollable(
@@ -239,6 +245,8 @@ private fun SettingScreen(
                     onBannedLive = onBannedLive,
                     autoRefresh = autoRefresh,
                     onAutoRefresh = onAutoRefresh,
+                    isSSLVerificationEnabled = isSSLVerificationEnabled,
+                    onSSLVerificationEnabled = onSSLVerificationEnabled,
                     modifier = modifier.scrollable(
                         orientation = Orientation.Vertical,
                         state = rememberScrollableState { it }
@@ -285,6 +293,8 @@ private fun PortraitOrientationContent(
     onExperimentalMode: () -> Unit,
     autoRefresh: Boolean,
     onAutoRefresh: () -> Unit,
+    isSSLVerificationEnabled: Boolean,
+    onSSLVerificationEnabled: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Box {
@@ -316,6 +326,8 @@ private fun PortraitOrientationContent(
             onScrollMode = onScrollMode,
             autoRefresh = autoRefresh,
             onAutoRefresh = onAutoRefresh,
+            isSSLVerificationEnabled = isSSLVerificationEnabled,
+            onSSLVerificationEnabled = onSSLVerificationEnabled,
             modifier = modifier
         )
 
@@ -382,6 +394,8 @@ private fun LandscapeOrientationContent(
     onExperimentalMode: () -> Unit,
     autoRefresh: Boolean,
     onAutoRefresh: () -> Unit,
+    isSSLVerificationEnabled: Boolean,
+    onSSLVerificationEnabled: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
@@ -414,6 +428,8 @@ private fun LandscapeOrientationContent(
             onScrollMode = onScrollMode,
             autoRefresh = autoRefresh,
             onAutoRefresh = onAutoRefresh,
+            isSSLVerificationEnabled = isSSLVerificationEnabled,
+            onSSLVerificationEnabled = onSSLVerificationEnabled,
             modifier = Modifier
                 .fillMaxHeight()
                 .weight(1f)
@@ -474,6 +490,8 @@ private fun PreferencesPart(
     navigateToConsole: NavigateToConsole,
     autoRefresh: Boolean,
     onAutoRefresh: () -> Unit,
+    isSSLVerificationEnabled: Boolean,
+    onSSLVerificationEnabled: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val spacing = LocalSpacing.current
@@ -616,6 +634,16 @@ private fun PreferencesPart(
                                 }
                             }
                         )
+                        CheckBoxPreference(
+                            title = stringResource(R.string.ssl_verification_enabled),
+                            subtitle = stringResource(R.string.ssl_verification_enabled_description),
+                            checked = isSSLVerificationEnabled,
+                            onCheckedChange = { newValue ->
+                                if (newValue != isSSLVerificationEnabled) {
+                                    onSSLVerificationEnabled()
+                                }
+                            }
+                        )
                     }
                 }
             }
@@ -739,7 +767,8 @@ private fun FeedManagementPart(
         }
 
         item {
-            val subscribeTextResId = if (adding) R.string.label_subscribe else R.string.label_subscribing
+            val subscribeTextResId =
+                if (adding) R.string.label_subscribe else R.string.label_subscribing
             Button(
                 enabled = adding,
                 text = stringResource(subscribeTextResId),

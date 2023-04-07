@@ -43,7 +43,8 @@ class SettingViewModel @Inject constructor(
                 connectTimeout = configuration.connectTimeout,
                 clipMode = configuration.clipMode,
                 scrollMode = configuration.scrollMode,
-                autoRefresh = configuration.autoRefresh
+                autoRefresh = configuration.autoRefresh,
+                isSSLVerificationEnabled = configuration.isSSLVerificationEnabled
             )
         }
         liveRepository.observeBanned(banned = true)
@@ -154,6 +155,15 @@ class SettingViewModel @Inject constructor(
                 writable.update {
                     it.copy(
                         autoRefresh = target
+                    )
+                }
+            }
+            SettingEvent.OnSSLVerificationEnabled -> {
+                val target = !configuration.isSSLVerificationEnabled
+                configuration.isSSLVerificationEnabled = target
+                writable.update {
+                    it.copy(
+                        isSSLVerificationEnabled = target
                     )
                 }
             }

@@ -38,4 +38,6 @@
     <string name="scroll_mode">scroll to change lives</string>
     <string name="auto_refresh">auto refresh</string>
     <string name="auto_refresh_description">automatically refreshed when enter the playlist</string>
+    <string name="ssl_verification_enabled">SSL certificate verification</string>
+    <string name="ssl_verification_enabled_description">ensure valid and trustworthy SSL/TLS certificates for secure communications</string>
 </resources>

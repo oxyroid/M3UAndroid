@@ -19,6 +19,7 @@ interface Configuration {
     var clipMode: Int
     var scrollMode: Boolean
     var autoRefresh: Boolean
+    var isSSLVerificationEnabled: Boolean
 
     companion object {
         @FeedStrategy
@@ -35,5 +36,6 @@ interface Configuration {
         const val DEFAULT_CLIP_MODE = ClipMode.ADAPTIVE
         const val DEFAULT_SCROLL_MODE = false
         const val DEFAULT_AUTO_REFRESH = false
+        const val DEFAULT_SSL_VERIFICATION_ENABLED = true
     }
 }

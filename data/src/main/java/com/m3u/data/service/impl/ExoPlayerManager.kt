@@ -16,6 +16,7 @@ import androidx.media3.datasource.okhttp.OkHttpDataSource
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
+import com.m3u.core.architecture.configuration.Configuration
 import com.m3u.data.service.PlayerManager
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.security.SecureRandom
@@ -27,7 +28,8 @@ import okhttp3.OkHttpClient
 
 @OptIn(UnstableApi::class)
 class ExoPlayerManager @Inject constructor(
-    @ApplicationContext private val context: Context
+    @ApplicationContext private val context: Context,
+    private val configuration: Configuration
 ) : PlayerManager(), Player.Listener {
     private val trackSelector = DefaultTrackSelector(context).apply {
         setParameters(buildUponParameters().setMaxVideoSizeSd())
@@ -63,16 +65,19 @@ class ExoPlayerManager @Inject constructor(
         .hostnameVerifier { _, _ -> true }
         .build()
 
-    override val player: Player = ExoPlayer.Builder(context)
-        .setTrackSelector(trackSelector)
-        .setMediaSourceFactory(
-            DefaultMediaSourceFactory(context).setDataSourceFactory(
-                DefaultDataSource.Factory(
-                    context,
-                    OkHttpDataSource.Factory(okHttpClient)
+    override var player: Player = ExoPlayer.Builder(context)
+        .let {
+            if (configuration.isSSLVerificationEnabled) it
+            else it.setMediaSourceFactory(
+                DefaultMediaSourceFactory(context).setDataSourceFactory(
+                    DefaultDataSource.Factory(
+                        context,
+                        OkHttpDataSource.Factory(okHttpClient)
+                    )
                 )
             )
-        )
+        }
+        .setTrackSelector(trackSelector)
         .build()
         .apply {
             val attributes = AudioAttributes.Builder()
@@ -84,6 +89,7 @@ class ExoPlayerManager @Inject constructor(
         }
 
     override fun installMedia(url: String) {
+        super.playerError.value = null
         player.addListener(this)
         val mediaItem = MediaItem.fromUri(url)
         player.setMediaItem(mediaItem)
