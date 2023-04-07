@@ -23,7 +23,7 @@ internal fun ListScreen(
     val logs = state.logs
     Background {
         LazyColumn(
-            modifier = Modifier.fillMaxSize()
+            modifier = modifier.fillMaxSize()
         ) {
             items(logs) { file ->
                 FileItem(

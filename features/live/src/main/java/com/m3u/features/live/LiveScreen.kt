@@ -2,11 +2,6 @@ package com.m3u.features.live
 
 import android.graphics.Rect
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.ExperimentalAnimationApi
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -88,7 +83,6 @@ internal fun LiveRoute(
             Lifecycle.Event.ON_CREATE -> {
                 helper.hideSystemUI()
             }
-
             Lifecycle.Event.ON_DESTROY -> {
                 helper.showSystemUI()
             }
@@ -211,7 +205,6 @@ private fun LiveScreen(
     }
 }
 
-@OptIn(ExperimentalAnimationApi::class)
 @Composable
 private fun LivePart(
     player: Player?,
@@ -255,13 +248,8 @@ private fun LivePart(
             val maskState = rememberMaskState { visible ->
                 helper.systemUiVisibility = visible
             }
-            val shouldShowPlaceholder =
-                cover.isNotEmpty() && (playback != Player.STATE_READY || videoSize.isEmpty)
-            AnimatedVisibility(
-                visible = shouldShowPlaceholder,
-                enter = scaleIn(initialScale = 0.7f) + fadeIn(),
-                exit = scaleOut(targetScale = 0.7f) + fadeOut()
-            ) {
+            val shouldShowPlaceholder = cover.isNotEmpty() && videoSize.isEmpty
+            if (shouldShowPlaceholder) {
                 Image(
                     model = cover,
                     modifier = Modifier.fillMaxSize()
