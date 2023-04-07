@@ -1,8 +1,12 @@
 package com.m3u.features.live
 
+import android.graphics.Rect
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -17,6 +21,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.pager.VerticalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.material.Divider
 import androidx.compose.material.LocalContentAlpha
 import androidx.compose.material.LocalContentColor
 import androidx.compose.material.MaterialTheme
@@ -39,6 +44,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.util.lerp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
@@ -59,6 +65,7 @@ import com.m3u.ui.components.MaskState
 import com.m3u.ui.components.rememberMaskState
 import com.m3u.ui.components.rememberPlayerState
 import com.m3u.ui.model.LocalHelper
+import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.LocalTheme
 import com.m3u.ui.util.EventHandler
 import com.m3u.ui.util.LifecycleEffect
@@ -127,6 +134,7 @@ private fun LiveScreen(
                 title = init.live?.title.orEmpty(),
                 url = init.live?.url.orEmpty(),
                 cover = init.live?.cover.orEmpty(),
+                feedTitle = init.feed?.title.orEmpty(),
                 experimentalMode = experimentalMode,
                 clipMode = clipMode,
                 recording = recording,
@@ -152,6 +160,7 @@ private fun LiveScreen(
             ) { page ->
                 LivePart(
                     title = init.lives[page].title,
+                    feedTitle = init.feed?.title.orEmpty(),
                     url = init.lives[page].url,
                     cover = init.lives[page].cover.orEmpty(),
                     experimentalMode = experimentalMode,
@@ -180,6 +189,7 @@ private fun LiveScreen(
 @Composable
 private fun LivePart(
     title: String,
+    feedTitle: String,
     url: String,
     cover: String,
     experimentalMode: Boolean,
@@ -282,7 +292,7 @@ private fun LivePart(
                         modifier = Modifier.fillMaxSize()
                     ) {
                         Text(
-                            text = title,
+                            text = feedTitle,
                             style = MaterialTheme.typography.subtitle1
                         )
                         val playbackDisplayText = playback.displayText
