@@ -12,8 +12,8 @@ android {
         applicationId "com.m3u.app"
         minSdk 26
         targetSdk 33
-        versionCode 43
-        versionName "1.11.5"
+        versionCode 44
+        versionName "1.11.6"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
