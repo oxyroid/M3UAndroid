@@ -38,4 +38,6 @@ dependencies {
     implementation libs.com.squareup.retrofit2.retrofit
     implementation libs.com.google.dagger.hilt.android
     kapt libs.com.google.dagger.hilt.compiler
+    implementation libs.androidx.media3.media3.exoplayer.asProvider()
+    implementation libs.androidx.media3.media3.session
 }

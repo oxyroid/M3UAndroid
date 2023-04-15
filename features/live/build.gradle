@@ -51,6 +51,5 @@ dependencies {
     kapt libs.com.google.dagger.hilt.compiler
     implementation libs.androidx.hilt.hilt.navigation.compose
 
-    // FIXME: DO NOT IMPLEMENT THIS, WRAPPING INTO DATA LAYER
     implementation libs.androidx.media3.media3.exoplayer.asProvider()
 }

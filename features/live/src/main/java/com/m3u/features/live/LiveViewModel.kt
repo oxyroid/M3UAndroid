@@ -4,10 +4,10 @@ import android.app.Application
 import androidx.lifecycle.viewModelScope
 import com.m3u.core.architecture.BaseViewModel
 import com.m3u.core.architecture.configuration.Configuration
+import com.m3u.core.architecture.service.PlayerManager
 import com.m3u.core.wrapper.eventOf
 import com.m3u.data.repository.FeedRepository
 import com.m3u.data.repository.LiveRepository
-import com.m3u.data.service.PlayerManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.Job

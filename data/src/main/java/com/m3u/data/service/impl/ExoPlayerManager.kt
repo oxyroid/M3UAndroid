@@ -16,8 +16,9 @@ import androidx.media3.datasource.okhttp.OkHttpDataSource
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
+import androidx.media3.session.MediaSession
 import com.m3u.core.architecture.configuration.Configuration
-import com.m3u.data.service.PlayerManager
+import com.m3u.core.architecture.service.PlayerManager
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.security.SecureRandom
 import java.security.cert.X509Certificate
@@ -35,35 +36,41 @@ class ExoPlayerManager @Inject constructor(
         setParameters(buildUponParameters().setMaxVideoSizeSd())
     }
 
-    @SuppressLint("CustomX509TrustManager")
-    private val trustAllCert = object : X509TrustManager {
-        @SuppressLint("TrustAllX509TrustManager")
-        override fun checkClientTrusted(
-            chain: Array<out X509Certificate>?,
-            authType: String?
-        ) {
-        }
+    private val trustAllCert by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
+        @SuppressLint("CustomX509TrustManager")
+        object : X509TrustManager {
+            @SuppressLint("TrustAllX509TrustManager")
+            override fun checkClientTrusted(
+                chain: Array<out X509Certificate>?,
+                authType: String?
+            ) {
+            }
 
-        @SuppressLint("TrustAllX509TrustManager")
-        override fun checkServerTrusted(
-            chain: Array<out X509Certificate>?,
-            authType: String?
-        ) {
-        }
+            @SuppressLint("TrustAllX509TrustManager")
+            override fun checkServerTrusted(
+                chain: Array<out X509Certificate>?,
+                authType: String?
+            ) {
+            }
 
-        override fun getAcceptedIssuers(): Array<X509Certificate> {
-            return emptyArray()
+            override fun getAcceptedIssuers(): Array<X509Certificate> {
+                return emptyArray()
+            }
         }
     }
 
-    private val sslContext = SSLContext.getInstance("TLS").apply {
-        init(null, arrayOf(trustAllCert), SecureRandom())
+    private val sslContext by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
+        SSLContext.getInstance("TLS").apply {
+            init(null, arrayOf(trustAllCert), SecureRandom())
+        }
     }
 
-    private val okHttpClient = OkHttpClient.Builder()
-        .sslSocketFactory(sslContext.socketFactory, trustAllCert as X509TrustManager)
-        .hostnameVerifier { _, _ -> true }
-        .build()
+    private val okHttpClient by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
+        OkHttpClient.Builder()
+            .sslSocketFactory(sslContext.socketFactory, trustAllCert as X509TrustManager)
+            .hostnameVerifier { _, _ -> true }
+            .build()
+    }
 
     override var player: Player = ExoPlayer.Builder(context)
         .let {
@@ -86,6 +93,7 @@ class ExoPlayerManager @Inject constructor(
                 .build()
             setAudioAttributes(attributes, true)
             playWhenReady = true
+            MediaSession.Builder(context, this).build()
         }
 
     override fun installMedia(url: String) {
