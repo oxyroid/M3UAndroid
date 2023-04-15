@@ -2,6 +2,7 @@ package com.m3u.features.console
 
 import android.app.Application
 import androidx.lifecycle.viewModelScope
+import com.m3u.core.annotation.AppPublisherImpl
 import com.m3u.core.architecture.BaseViewModel
 import com.m3u.core.architecture.Publisher
 import com.m3u.core.architecture.reader.FileReader
@@ -22,7 +23,7 @@ import kotlinx.coroutines.launch
 @HiltViewModel
 class ConsoleViewModel @Inject constructor(
     application: Application,
-    publisher: Publisher,
+    @AppPublisherImpl publisher: Publisher,
     private val reader: FileReader
 ) : BaseViewModel<ConsoleState, ConsoleEvent>(
     application = application,
@@ -34,7 +35,7 @@ class ConsoleViewModel @Inject constructor(
             val message = """
                 >-Console Editor
                 version: ${publisher.versionName}
-                debug: ${publisher.debug},
+                debug: ${publisher.debug}
                 applicationId: ${publisher.applicationID}
             """.trimIndent()
             append(message)

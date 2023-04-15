@@ -1,4 +1,4 @@
-package com.m3u.data.service
+package com.m3u.core.architecture.service
 
 import android.graphics.Rect
 import androidx.media3.common.PlaybackException

@@ -3,6 +3,7 @@ package com.m3u.features.setting
 import android.app.Application
 import android.net.Uri
 import androidx.lifecycle.viewModelScope
+import com.m3u.core.annotation.AppPublisherImpl
 import com.m3u.core.annotation.ConnectTimeout
 import com.m3u.core.architecture.BaseViewModel
 import com.m3u.core.architecture.configuration.Configuration
@@ -25,7 +26,7 @@ class SettingViewModel @Inject constructor(
     private val feedRepository: FeedRepository,
     private val liveRepository: LiveRepository,
     private val remoteRepository: RemoteRepository,
-    publisher: Publisher,
+    @AppPublisherImpl publisher: Publisher,
     application: Application,
     private val configuration: Configuration
 ) : BaseViewModel<SettingState, SettingEvent>(
