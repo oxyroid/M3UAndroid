@@ -14,26 +14,23 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.AnnotatedString
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.core.util.context.toast
 import com.m3u.data.database.entity.Feed
 import com.m3u.features.main.components.FeedItem
+import com.m3u.features.main.components.MainDialog
+import com.m3u.features.main.components.MainDialogStatus
+import com.m3u.features.main.components.OnRename
+import com.m3u.features.main.components.OnUnsubscribe
 import com.m3u.features.main.model.FeedDetail
-import com.m3u.ui.components.SheetDialog
-import com.m3u.ui.components.SheetItem
-import com.m3u.ui.components.SheetTitle
 import com.m3u.ui.model.LocalHelper
 import com.m3u.ui.model.LocalScalable
 import com.m3u.ui.model.LocalSpacing
@@ -43,7 +40,6 @@ import com.m3u.ui.util.RepeatOnCreate
 import com.m3u.ui.util.interceptVolumeEvent
 
 private typealias ShowFeedBottomSheet = (Feed) -> Unit
-private typealias UnsubscribeFeedByUrl = (String) -> Unit
 
 typealias NavigateToFeed = (url: String) -> Unit
 
@@ -84,7 +80,8 @@ fun MainRoute(
             rowCount = rowCount,
             feeds = feeds,
             navigateToFeed = navigateToFeed,
-            unsubscribeFeedByUrl = { viewModel.onEvent(MainEvent.UnsubscribeFeedByUrl(it)) },
+            unsubscribe = { viewModel.onEvent(MainEvent.UnsubscribeFeedByUrl(it)) },
+            rename = { feedUrl, target -> viewModel.onEvent(MainEvent.Rename(feedUrl, target)) },
             modifier = modifier
                 .fillMaxSize()
                 .then(interceptVolumeEventModifier),
@@ -97,17 +94,18 @@ private fun MainScreen(
     rowCount: Int,
     feeds: List<FeedDetail>,
     navigateToFeed: NavigateToFeed,
-    unsubscribeFeedByUrl: UnsubscribeFeedByUrl,
+    unsubscribe: OnUnsubscribe,
+    rename: OnRename,
     modifier: Modifier = Modifier
 ) {
-    var feedSheetState: FeedSheetState by remember { mutableStateOf(FeedSheetState.Idle) }
+    var dialogStatus: MainDialogStatus by remember { mutableStateOf(MainDialogStatus.Idle) }
     val configuration = LocalConfiguration.current
     when (configuration.orientation) {
         Configuration.ORIENTATION_PORTRAIT -> {
             PortraitOrientationContent(
                 feeds = feeds,
                 navigateToFeed = navigateToFeed,
-                showFeedBottomSheet = { feedSheetState = FeedSheetState.Existed(it) },
+                showFeedBottomSheet = { dialogStatus = MainDialogStatus.Selections(it) },
                 modifier = modifier
             )
         }
@@ -117,47 +115,20 @@ private fun MainScreen(
                 rowCount = rowCount,
                 feeds = feeds,
                 navigateToFeed = navigateToFeed,
-                showFeedBottomSheet = { feedSheetState = FeedSheetState.Existed(it) },
+                showFeedBottomSheet = { dialogStatus = MainDialogStatus.Selections(it) },
                 modifier = modifier
             )
         }
         else -> {}
     }
-    SheetDialog(
-        visible = feedSheetState is FeedSheetState.Existed,
-        onDismiss = { feedSheetState = FeedSheetState.Idle },
-        verticalArrangement = Arrangement.spacedBy(LocalSpacing.current.medium),
-        content = {
-            var state = remember { feedSheetState as FeedSheetState.Existed }
-            LaunchedEffect(feedSheetState) {
-                if (feedSheetState is FeedSheetState.Existed) {
-                    state = feedSheetState as FeedSheetState.Existed
-                }
-            }
-            SheetTitle(state.feed.title)
-            SheetItem(
-                text = stringResource(R.string.unsubscribe_feed),
-                onClick = {
-                    unsubscribeFeedByUrl(state.feed.url)
-                    feedSheetState = FeedSheetState.Idle
-                },
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            val clipboardManager = LocalClipboardManager.current
-            SheetItem(
-                text = stringResource(R.string.copy_feed_url),
-                onClick = {
-                    val annotatedString = AnnotatedString(state.feed.url)
-                    clipboardManager.setText(annotatedString)
-                    feedSheetState = FeedSheetState.Idle
-                },
-                modifier = Modifier.fillMaxWidth()
-            )
-        }
+    MainDialog(
+        status = dialogStatus,
+        update = { dialogStatus = it },
+        unsubscribe = unsubscribe,
+        rename = rename
     )
-    BackHandler(feedSheetState is FeedSheetState.Existed) {
-        feedSheetState = FeedSheetState.Idle
+    BackHandler(dialogStatus is MainDialogStatus.Selections) {
+        dialogStatus = MainDialogStatus.Idle
     }
 }
 
@@ -231,9 +202,4 @@ private fun LandscapeOrientationContent(
             )
         }
     }
-}
-
-private sealed class FeedSheetState {
-    object Idle : FeedSheetState()
-    data class Existed(val feed: Feed) : FeedSheetState()
 }

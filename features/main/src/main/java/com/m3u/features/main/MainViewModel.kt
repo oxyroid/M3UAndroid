@@ -89,6 +89,7 @@ class MainViewModel @Inject constructor(
         when (event) {
             is MainEvent.UnsubscribeFeedByUrl -> unsubscribeFeedByUrl(event.url)
             is MainEvent.SetRowCount -> setRowCount(event.target)
+            is MainEvent.Rename -> rename(event.feedUrl, event.target)
         }
     }
 
@@ -111,6 +112,12 @@ class MainViewModel @Inject constructor(
             it.copy(
                 rowCount = target
             )
+        }
+    }
+
+    private fun rename(feedUrl: String, target: String) {
+        viewModelScope.launch {
+            feedRepository.rename(feedUrl, target)
         }
     }
 }

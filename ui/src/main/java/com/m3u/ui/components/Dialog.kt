@@ -3,6 +3,7 @@
 package com.m3u.ui.components
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -10,23 +11,134 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.AlertDialog
-import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.isUnspecified
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import com.m3u.ui.model.Icon
 import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.LocalTheme
+
+
+@Composable
+fun SheetTextField(
+    text: String,
+    modifier: Modifier = Modifier,
+    color: Color = LocalTheme.current.onBackground,
+    onTextChange: (String) -> Unit = {},
+    icon: ImageVector? = null,
+    iconTint: Color = color,
+    readOnly: Boolean = true,
+    onIconClick: (() -> Unit)? = null,
+) {
+    val theme = LocalTheme.current
+    val spacing = LocalSpacing.current
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(spacing.medium),
+        modifier = modifier
+    ) {
+        TextField(
+            text = text,
+            onValueChange = onTextChange,
+            background = if (readOnly) Color.Transparent else theme.surface,
+            readOnly = readOnly,
+            fontWeight = FontWeight.ExtraBold,
+            fontSize = 20.sp,
+            modifier = Modifier.weight(1f)
+        )
+        if (onIconClick != null && icon != null) {
+            IconButton(
+                icon = Icon.ImageVectorIcon(icon),
+                tint = iconTint,
+                onClick = onIconClick,
+                contentDescription = null
+            )
+        }
+    }
+
+}
+
+@Composable
+fun SheetItem(
+    text: String,
+    color: Color = Color.Unspecified,
+    contentColor: Color = Color.Unspecified,
+    onClick: () -> Unit
+) {
+    val theme = LocalTheme.current
+    val spacing = LocalSpacing.current
+    Surface(
+        shape = RoundedCornerShape(spacing.medium),
+        elevation = 0.dp,
+        color = if (color.isUnspecified) theme.surface
+        else color,
+        contentColor = if (contentColor.isUnspecified) theme.onSurface
+        else contentColor
+    ) {
+        Row(
+            horizontalArrangement = Arrangement.Start,
+            modifier = Modifier
+                .clickable(onClick = onClick)
+                .padding(spacing.medium)
+                .fillMaxWidth()
+        ) {
+            Text(
+                text = text.uppercase(),
+                style = MaterialTheme.typography.subtitle1,
+                maxLines = 1
+            )
+        }
+    }
+}
+
+@Composable
+fun SheetTextField(
+    resId: Int,
+    color: Color = LocalTheme.current.onBackground,
+    onTextChange: (String) -> Unit,
+    icon: ImageVector? = null,
+    iconTint: Color = color,
+    readOnly: Boolean = true,
+    onIconClick: (() -> Unit)? = null,
+) {
+    SheetTextField(
+        text = stringResource(id = resId),
+        color = color,
+        onTextChange = onTextChange,
+        icon = icon,
+        iconTint = iconTint,
+        readOnly = readOnly,
+        onIconClick = onIconClick
+    )
+}
+
+@Composable
+fun SheetItem(
+    resId: Int,
+    color: Color = Color.Unspecified,
+    contentColor: Color = Color.Unspecified,
+    onClick: () -> Unit
+) {
+    SheetItem(
+        text = stringResource(id = resId),
+        color = color,
+        contentColor = contentColor,
+        onClick = onClick
+    )
+}
 
 @Composable
 fun SheetDialog(
@@ -35,6 +147,7 @@ fun SheetDialog(
     content: @Composable ColumnScope.() -> Unit,
     modifier: Modifier = Modifier,
     maxHeight: Boolean = false,
+    border: BorderStroke = BorderStroke(2.dp, LocalTheme.current.divider.copy(alpha = 0.45f)),
     verticalArrangement: Arrangement.Vertical = Arrangement.Top
 ) {
     val theme = LocalTheme.current
@@ -48,10 +161,11 @@ fun SheetDialog(
                 color = theme.background,
                 contentColor = theme.onBackground,
                 shape = RoundedCornerShape(LocalSpacing.current.medium),
-                border = BorderStroke(2.dp, theme.divider.copy(alpha = 0.45f)),
+                border = border,
                 elevation = spacing.medium,
                 modifier = Modifier
                     .padding(spacing.medium)
+                    .fillMaxWidth()
                     .then(modifier)
             ) {
                 Column(
@@ -60,59 +174,12 @@ fun SheetDialog(
                         .fillMaxWidth()
                         .let {
                             if (maxHeight) it.fillMaxHeight()
-                            else it.wrapContentHeight()
+                            else it
                         }
                         .padding(LocalSpacing.current.medium),
                     content = content
                 )
             }
-        }
-    }
-}
-
-@Composable
-fun SheetTitle(
-    text: String,
-    modifier: Modifier = Modifier,
-    color: Color = LocalTheme.current.onBackground,
-) {
-    Text(
-        text = text,
-        style = MaterialTheme.typography.h6,
-        fontWeight = FontWeight.ExtraBold,
-        textAlign = TextAlign.Start,
-        maxLines = 1,
-        overflow = TextOverflow.Ellipsis,
-        color = color,
-        modifier = modifier
-    )
-}
-
-@OptIn(ExperimentalMaterialApi::class)
-@Composable
-fun SheetItem(
-    text: String,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val theme = LocalTheme.current
-    val spacing = LocalSpacing.current
-    Surface(
-        shape = RoundedCornerShape(spacing.medium),
-        elevation = 0.dp,
-        color = theme.surface,
-        contentColor = theme.onSurface,
-        onClick = onClick
-    ) {
-        Row(
-            horizontalArrangement = Arrangement.Start,
-            modifier = modifier.padding(spacing.medium)
-        ) {
-            Text(
-                text = text.uppercase(),
-                style = MaterialTheme.typography.subtitle1,
-                maxLines = 1
-            )
         }
     }
 }
