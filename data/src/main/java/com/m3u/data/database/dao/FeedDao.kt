@@ -24,4 +24,7 @@ interface FeedDao {
 
     @Query("SELECT * FROM feeds WHERE url = :url")
     fun observeByUrl(url: String): Flow<Feed?>
+
+    @Query("UPDATE feeds SET title = :target WHERE url = :url")
+    suspend fun rename(url: String, target: String)
 }

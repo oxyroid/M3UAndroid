@@ -2,9 +2,9 @@ package com.m3u.data.repository.impl
 
 import com.m3u.core.annotation.FeedStrategy
 import com.m3u.core.architecture.configuration.Configuration
-import com.m3u.core.architecture.logger.FileLoggerImpl
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.execute
+import com.m3u.core.architecture.logger.sandBox
 import com.m3u.core.util.collection.belong
 import com.m3u.core.wrapper.Resource
 import com.m3u.core.wrapper.emitMessage
@@ -25,7 +25,7 @@ import kotlinx.coroutines.flow.flow
 class FeedRepositoryImpl @Inject constructor(
     private val feedDao: FeedDao,
     private val liveDao: LiveDao,
-    @FileLoggerImpl private val logger: Logger,
+    private val logger: Logger,
     private val configuration: Configuration,
     private val parser: PlaylistParser
 ) : FeedRepository {
@@ -98,4 +98,8 @@ class FeedRepositoryImpl @Inject constructor(
         connectTimeout = configuration.connectTimeout
     )
         .map { it.toLive(url) }
+
+    override suspend fun rename(url: String, target: String) = logger.sandBox {
+        feedDao.rename(url, target)
+    }
 }

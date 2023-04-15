@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -17,7 +18,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.pager.VerticalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.material.Divider
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.LocalContentAlpha
 import androidx.compose.material.LocalContentColor
 import androidx.compose.material.MaterialTheme
@@ -32,12 +33,19 @@ import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -305,25 +313,58 @@ private fun LivePart(
                         }
                     )
                 },
-                foot = {
+                footer = {
+                    val density = LocalDensity.current
+                    val spacing = LocalSpacing.current
+                    var titleHeight by remember {
+                        mutableStateOf(spacing.none)
+                    }
+                    var subtitleHeight by remember {
+                        mutableStateOf(spacing.none)
+                    }
+                    val totalHeight by remember {
+                        derivedStateOf {
+                            titleHeight + subtitleHeight
+                        }
+                    }
+                    if (cover.isNotEmpty()) {
+                        Image(
+                            model = cover,
+                            modifier = Modifier
+                                .height(totalHeight)
+                                .aspectRatio(1f)
+                                .align(Alignment.Bottom)
+                                .clip(RoundedCornerShape(spacing.small))
+                        )
+                    }
                     Column(
                         verticalArrangement = Arrangement.Bottom,
                         modifier = Modifier.fillMaxSize()
                     ) {
                         Text(
                             text = feedTitle,
-                            style = MaterialTheme.typography.subtitle1
+                            style = MaterialTheme.typography.subtitle1,
+                            modifier = Modifier.onSizeChanged {
+                                titleHeight = with(density) {
+                                    it.height.toDp()
+                                }
+                            }
                         )
                         Text(
                             text = title,
                             style = MaterialTheme.typography.h5,
-                            fontWeight = FontWeight.ExtraBold
+                            fontWeight = FontWeight.ExtraBold,
+                            modifier = Modifier.onSizeChanged {
+                                subtitleHeight = with(density) {
+                                    it.height.toDp()
+                                }
+                            }
                         )
                         val playbackDisplayText = playback.displayText
                         val exceptionDisplayText = playerError.displayText
                         if (playbackDisplayText.isNotEmpty() || exceptionDisplayText.isNotEmpty()) {
-                            Divider(
-                                modifier = Modifier.height(LocalSpacing.current.small)
+                            Spacer(
+                                modifier = Modifier.height(spacing.small)
                             )
                         }
                         AnimatedVisibility(playbackDisplayText.isNotEmpty()) {
@@ -357,7 +398,7 @@ private fun LiveMask(
     state: MaskState,
     header: @Composable RowScope.() -> Unit,
     body: @Composable RowScope.() -> Unit,
-    foot: @Composable RowScope.() -> Unit,
+    footer: @Composable RowScope.() -> Unit,
     modifier: Modifier = Modifier
 ) {
     CompositionLocalProvider(
@@ -391,7 +432,8 @@ private fun LiveMask(
                     .fillMaxWidth()
                     .align(Alignment.BottomCenter)
                     .navigationBarsPadding(),
-                content = foot
+                horizontalArrangement = Arrangement.spacedBy(LocalSpacing.current.medium),
+                content = footer
             )
         }
     }

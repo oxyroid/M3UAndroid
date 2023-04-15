@@ -19,6 +19,8 @@ interface FeedRepository {
         url: String,
         @FeedStrategy strategy: Int = FeedStrategy.ALL
     ): Flow<Resource<Unit>>
+
+    suspend fun rename(url: String, target: String)
 }
 
 fun FeedRepository.refresh(
