@@ -29,23 +29,21 @@ import com.m3u.ui.components.AppTopBar
 import com.m3u.ui.components.Background
 import com.m3u.ui.components.IconButton
 
-@OptIn(
-    ExperimentalFoundationApi::class
-)
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun App(
     appState: AppState = rememberAppState()
 ) {
     Background {
-        val currentDestination = appState.currentNavDestination
-        val topLevelTitle = appState.currentTopLevelDestination
+        val currentDestination = appState.currentComposableNavDestination
+        val topLevelTitle = appState.currentComposableTopLevelDestination
             ?.titleTextId
             ?.let { stringResource(it) }
         val title by appState.title.collectAsStateWithLifecycle()
         val text by remember(topLevelTitle) {
             derivedStateOf { topLevelTitle ?: title }
         }
-        val isSystemBarVisible = !appState.currentNavDestination.isInFullscreenDestination()
+        val isSystemBarVisible = !appState.currentComposableNavDestination.isInFullscreenDestination()
         AppTopBar(
             text = text,
             visible = isSystemBarVisible,
@@ -60,7 +58,7 @@ fun App(
                     )
                 }
             },
-            onBackPressed = if (!appState.currentNavDestination.isInLeafDestination()) null
+            onBackPressed = if (!appState.currentComposableNavDestination.isInLeafDestination()) null
             else appState::onBackClick
         ) { padding ->
             Column(
@@ -82,7 +80,7 @@ fun App(
                 AnimatedVisibility(isSystemBarVisible) {
                     BottomNavigationSheet(
                         destinations = appState.topLevelDestinations,
-                        currentTopLevelDestination = appState.currentTopLevelDestination,
+                        currentTopLevelDestination = appState.currentComposableTopLevelDestination,
                         navigateToTopLevelDestination = appState::navigateToTopLevelDestination,
                         modifier = Modifier
                             .fillMaxWidth()

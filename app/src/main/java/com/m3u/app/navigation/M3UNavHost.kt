@@ -10,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import com.google.accompanist.navigation.animation.AnimatedNavHost
+import com.m3u.app.ui.NavigateToDestination
 import com.m3u.features.console.navigation.consoleScreen
 import com.m3u.features.feed.navigation.feedScreen
 import com.m3u.features.live.navigation.livePlaylistScreen
@@ -21,7 +22,7 @@ fun M3UNavHost(
     pagerState: PagerState,
     navController: NavHostController,
     destinations: List<TopLevelDestination>,
-    navigateToDestination: (Destination) -> Unit,
+    navigateToDestination: NavigateToDestination,
     modifier: Modifier = Modifier,
     startDestination: String = rootNavigationRoute
 ) {

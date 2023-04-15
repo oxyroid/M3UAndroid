@@ -80,6 +80,7 @@ fun TextField(
     enabled: Boolean = true,
     keyboardActions: KeyboardActions? = null,
     fontSize: TextUnit = TextFieldDefaults.TextFontSize,
+    fontWeight: FontWeight? = null,
     height: Dp = TextFieldDefaults.Height,
     isError: Boolean = false,
     onValueChange: (TextFieldValue) -> Unit = {},
@@ -111,6 +112,7 @@ fun TextField(
             fontFamily = MaterialTheme.typography.body1.fontFamily,
             fontSize = fontSize,
             color = contentColor,
+            fontWeight = fontWeight
         ),
         onValueChange = {
             onValueChange(it)
@@ -180,6 +182,7 @@ fun TextField(
     keyboardActions: KeyboardActions? = null,
     fontSize: TextUnit = TextFieldDefaults.TextFontSize,
     height: Dp = TextFieldDefaults.Height,
+    fontWeight: FontWeight? = null,
     isError: Boolean = false,
     onValueChange: (String) -> Unit = {},
 ) {
@@ -210,6 +213,7 @@ fun TextField(
             fontFamily = MaterialTheme.typography.body1.fontFamily,
             fontSize = fontSize,
             color = contentColor,
+            fontWeight = fontWeight
         ),
         onValueChange = {
             onValueChange(it)

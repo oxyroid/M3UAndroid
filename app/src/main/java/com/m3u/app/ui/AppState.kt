@@ -3,7 +3,6 @@
 package com.m3u.app.ui
 
 import android.util.Log
-import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
@@ -16,7 +15,7 @@ import androidx.navigation.NavController
 import androidx.navigation.NavDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
-import com.google.accompanist.navigation.animation.rememberAnimatedNavController
+import androidx.navigation.compose.rememberNavController
 import com.m3u.app.navigation.Destination
 import com.m3u.app.navigation.TopLevelDestination
 import com.m3u.app.navigation.popUpToRoot
@@ -30,11 +29,12 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 
+typealias NavigateToDestination = (destination: Destination) -> Unit
+
 @Composable
 fun rememberAppState(
     coroutineScope: CoroutineScope = rememberCoroutineScope(),
-    @OptIn(ExperimentalAnimationApi::class)
-    navController: NavHostController = rememberAnimatedNavController(),
+    navController: NavHostController = rememberNavController(),
     pagerState: PagerState = rememberPagerState(),
     title: MutableStateFlow<String> = remember { MutableStateFlow("") },
     actions: MutableStateFlow<List<AppAction>> = remember { MutableStateFlow(emptyList()) },
@@ -61,24 +61,27 @@ class AppState(
     val title: MutableStateFlow<String>,
     val actions: MutableStateFlow<List<AppAction>>,
 ) {
-    val currentNavDestination: NavDestination?
+    val currentComposableNavDestination: NavDestination?
         @Composable get() = navController.currentBackStackEntryAsState().value?.destination
 
-    val currentTopLevelDestination: TopLevelDestination?
-        @Composable get() = when (currentNavDestination?.route) {
+    private val currentNavDestination: NavDestination?
+        get() = navController.currentBackStackEntry?.destination
+
+    val currentComposableTopLevelDestination: TopLevelDestination?
+        @Composable get() = when (currentComposableNavDestination?.route) {
             rootNavigationRoute -> topLevelDestinations[pagerState.currentPage]
             else -> null
         }
 
-    val topLevelDestinations: List<TopLevelDestination> = TopLevelDestination.values().asList()
+    val topLevelDestinations: List<TopLevelDestination> = TopLevelDestination.values().toList()
 
     fun navigateToTopLevelDestination(destination: TopLevelDestination) {
-        if (navController.currentBackStackEntry?.destination?.route != rootNavigationRoute) {
+        if (!currentNavDestination.isInDestination<Destination.Root>()) {
             navController.popUpToRoot()
         }
         coroutineScope.launch {
-            val target = topLevelDestinations.indexOf(destination)
-            pagerState.scrollToPage(target)
+            val index = topLevelDestinations.indexOf(destination)
+            pagerState.scrollToPage(index)
         }
     }
 

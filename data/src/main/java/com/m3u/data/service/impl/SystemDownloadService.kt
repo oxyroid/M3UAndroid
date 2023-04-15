@@ -6,9 +6,9 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.net.Uri
-import com.m3u.data.service.DownloadService
-import com.m3u.data.service.DownloadTaskProcessObserver
-import com.m3u.data.service.DownloadTaskStatusObserver
+import com.m3u.core.architecture.service.DownloadService
+import com.m3u.core.architecture.service.DownloadTaskProcessObserver
+import com.m3u.core.architecture.service.DownloadTaskStatusObserver
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import kotlinx.coroutines.Job

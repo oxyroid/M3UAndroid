@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.util.Rational
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.DisposableEffect
@@ -16,6 +17,7 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.lifecycleScope
+import com.google.accompanist.navigation.animation.rememberAnimatedNavController
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.m3u.app.navigation.Destination
 import com.m3u.app.ui.App
@@ -33,7 +35,7 @@ class MainActivity : ComponentActivity() {
     private val title = MutableStateFlow("")
     private val actions = MutableStateFlow(emptyList<AppAction>())
 
-    @OptIn(ExperimentalFoundationApi::class)
+    @OptIn(ExperimentalFoundationApi::class, ExperimentalAnimationApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         super.onCreate(savedInstanceState)
@@ -44,12 +46,13 @@ class MainActivity : ComponentActivity() {
             ) {
                 val state = rememberAppState(
                     title = title,
-                    actions = actions
+                    actions = actions,
+                    navController = rememberAnimatedNavController()
                 )
 
                 val systemUiController = rememberSystemUiController()
                 val systemBarsColor =
-                    if (state.currentNavDestination.isInDestination<Destination.Live>()) Color.Black
+                    if (state.currentComposableNavDestination.isInDestination<Destination.Live>()) Color.Black
                     else Color.Unspecified
                 val useDarkIcons = !isSystemInDarkTheme()
 

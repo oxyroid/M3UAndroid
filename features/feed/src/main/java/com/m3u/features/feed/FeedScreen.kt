@@ -73,7 +73,7 @@ import com.m3u.core.util.basic.uppercaseFirst
 import com.m3u.core.util.context.toast
 import com.m3u.core.wrapper.Event
 import com.m3u.data.database.entity.Live
-import com.m3u.features.feed.components.DialogState
+import com.m3u.features.feed.components.DialogStatus
 import com.m3u.features.feed.components.FeedDialog
 import com.m3u.features.feed.components.LiveItem
 import com.m3u.ui.components.TextField
@@ -110,7 +110,7 @@ internal fun FeedRoute(
     val context = LocalContext.current
     val helper = LocalHelper.current
     val state by viewModel.state.collectAsStateWithLifecycle()
-    var dialogState: DialogState by remember { mutableStateOf(DialogState.Idle) }
+    var dialogStatus: DialogStatus by remember { mutableStateOf(DialogStatus.Idle) }
 
     LaunchedEffect(url) {
         viewModel.onEvent(FeedEvent.ObserveFeed(url))
@@ -170,7 +170,9 @@ internal fun FeedRoute(
             onRefresh = { viewModel.onEvent(FeedEvent.Refresh) },
             navigateToLive = navigateToLive,
             navigateToPlaylist = navigateToPlaylist,
-            onLongClickLive = { dialogState = DialogState.Menu(it) },
+            onLongClickLive = {
+                dialogStatus = DialogStatus.Selections(it)
+            },
             onScrollUp = { viewModel.onEvent(FeedEvent.ScrollUp) },
             modifier = modifier
                 .fillMaxSize()
@@ -179,10 +181,10 @@ internal fun FeedRoute(
     }
 
     FeedDialog(
-        state = dialogState,
-        onUpdate = { dialogState = it },
+        status = dialogStatus,
+        onUpdate = { dialogStatus = it },
         onFavorite = { id, target -> viewModel.onEvent(FeedEvent.FavouriteLive(id, target)) },
-        onMute = { id, target -> viewModel.onEvent(FeedEvent.MuteLive(id, target)) },
+        onBanned = { id, target -> viewModel.onEvent(FeedEvent.MuteLive(id, target)) },
         onSavePicture = { viewModel.onEvent(FeedEvent.SavePicture(it)) }
     )
 }

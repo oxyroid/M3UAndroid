@@ -1,4 +1,6 @@
-package com.m3u.data.service
+@file:Suppress("unused")
+
+package com.m3u.core.architecture.service
 
 import android.app.DownloadManager
 import android.net.Uri

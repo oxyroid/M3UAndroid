@@ -15,67 +15,63 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import com.m3u.data.database.entity.Live
 import com.m3u.features.feed.R
-import com.m3u.ui.components.SheetDialog
+import com.m3u.ui.components.SheetTextField
 import com.m3u.ui.components.SheetItem
-import com.m3u.ui.components.SheetTitle
+import com.m3u.ui.components.SheetDialog
 import com.m3u.ui.model.LocalSpacing
+
+internal typealias OnUpdateDialogStatus = (DialogStatus) -> Unit
+internal typealias OnFavoriteLive = (liveId: Int, target: Boolean) -> Unit
+internal typealias OnBannedLive = (liveId: Int, target: Boolean) -> Unit
+internal typealias OnSavePicture = (liveId: Int) -> Unit
 
 @Composable
 internal fun FeedDialog(
-    state: DialogState,
-    onUpdate: (DialogState) -> Unit,
-    onFavorite: (Int, Boolean) -> Unit,
-    onMute: (Int, Boolean) -> Unit,
-    onSavePicture: (Int) -> Unit,
+    status: DialogStatus,
+    onUpdate: OnUpdateDialogStatus,
+    onFavorite: OnFavoriteLive,
+    onBanned: OnBannedLive,
+    onSavePicture: OnSavePicture,
     modifier: Modifier = Modifier
 ) {
     SheetDialog(
-        visible = state != DialogState.Idle,
+        visible = status != DialogStatus.Idle,
         onDismiss = {
-            onUpdate(DialogState.Idle)
+            onUpdate(DialogStatus.Idle)
         },
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(LocalSpacing.current.small),
         content = {
-            state as DialogState.Menu
-            SheetTitle(state.live.title)
-            val favourite = state.live.favourite
-            SheetItem(
-                text = stringResource(
+            if (status is DialogStatus.Selections) {
+                SheetTextField(
+                    text = status.live.title,
+                )
+                val favourite = status.live.favourite
+                SheetItem(
                     if (favourite) R.string.dialog_favourite_cancel_title
                     else R.string.dialog_favourite_title
-                ),
-                onClick = {
-                    onUpdate(DialogState.Idle)
-                    onFavorite(state.live.id, !favourite)
-                },
-                modifier = Modifier.fillMaxWidth()
-            )
-            SheetItem(
-                text = stringResource(R.string.dialog_mute_title),
-                onClick = {
-                    onUpdate(DialogState.Idle)
-                    onMute(state.live.id, true)
-                },
-                modifier = Modifier.fillMaxWidth()
-            )
-            if (!state.live.cover.isNullOrEmpty()) {
-                SheetItem(
-                    text = stringResource(R.string.dialog_save_picture_title),
-                    onClick = {
-                        onUpdate(DialogState.Idle)
-                        onSavePicture(state.live.id)
-                    },
-                    modifier = Modifier.fillMaxWidth()
-                )
+                ) {
+                    onUpdate(DialogStatus.Idle)
+                    onFavorite(status.live.id, !favourite)
+                }
+                SheetItem(R.string.dialog_mute_title) {
+                    onUpdate(DialogStatus.Idle)
+                    onBanned(status.live.id, true)
+                }
+                if (!status.live.cover.isNullOrEmpty()) {
+                    SheetItem(R.string.dialog_save_picture_title) {
+                        onUpdate(DialogStatus.Idle)
+                        onSavePicture(status.live.id)
+                    }
+                }
             }
         }
     )
 }
 
-internal sealed class DialogState {
-    object Idle : DialogState()
-    data class Menu(val live: Live) : DialogState()
+internal sealed class DialogStatus {
+    object Idle : DialogStatus()
+    data class Selections(val live: Live) : DialogStatus()
 }
 
 @Composable
