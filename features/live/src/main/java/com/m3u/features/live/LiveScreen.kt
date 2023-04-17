@@ -10,11 +10,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.pager.VerticalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -33,22 +33,17 @@ import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.lerp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
@@ -314,25 +309,13 @@ private fun LivePart(
                     )
                 },
                 footer = {
-                    val density = LocalDensity.current
                     val spacing = LocalSpacing.current
-                    var titleHeight by remember {
-                        mutableStateOf(spacing.none)
-                    }
-                    var subtitleHeight by remember {
-                        mutableStateOf(spacing.none)
-                    }
-                    val totalHeight by remember {
-                        derivedStateOf {
-                            titleHeight + subtitleHeight
-                        }
-                    }
+
                     if (cover.isNotEmpty()) {
                         Image(
                             model = cover,
                             modifier = Modifier
-                                .height(totalHeight)
-                                .aspectRatio(1f)
+                                .size(64.dp)
                                 .align(Alignment.Bottom)
                                 .clip(RoundedCornerShape(spacing.small))
                         )
@@ -343,22 +326,12 @@ private fun LivePart(
                     ) {
                         Text(
                             text = feedTitle,
-                            style = MaterialTheme.typography.subtitle1,
-                            modifier = Modifier.onSizeChanged {
-                                titleHeight = with(density) {
-                                    it.height.toDp()
-                                }
-                            }
+                            style = MaterialTheme.typography.subtitle1
                         )
                         Text(
                             text = title,
                             style = MaterialTheme.typography.h5,
-                            fontWeight = FontWeight.ExtraBold,
-                            modifier = Modifier.onSizeChanged {
-                                subtitleHeight = with(density) {
-                                    it.height.toDp()
-                                }
-                            }
+                            fontWeight = FontWeight.ExtraBold
                         )
                         val playbackDisplayText = playback.displayText
                         val exceptionDisplayText = playerError.displayText
