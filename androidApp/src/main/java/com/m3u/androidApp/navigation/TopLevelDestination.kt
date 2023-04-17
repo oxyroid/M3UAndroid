@@ -1,4 +1,4 @@
-package com.m3u.app.navigation
+package com.m3u.androidApp.navigation
 
 import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
@@ -8,7 +8,7 @@ import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.rounded.Collections
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.Settings
-import com.m3u.app.R
+import com.m3u.androidApp.R
 import com.m3u.ui.model.Icon
 
 enum class TopLevelDestination(

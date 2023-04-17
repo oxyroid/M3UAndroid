@@ -1,4 +1,4 @@
-package com.m3u.app.navigation
+package com.m3u.androidApp.navigation
 
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.material.Icon

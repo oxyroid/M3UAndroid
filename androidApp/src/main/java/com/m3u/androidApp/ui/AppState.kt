@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalFoundationApi::class)
 
-package com.m3u.app.ui
+package com.m3u.androidApp.ui
 
 import android.util.Log
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -16,10 +16,10 @@ import androidx.navigation.NavDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.m3u.app.navigation.Destination
-import com.m3u.app.navigation.TopLevelDestination
-import com.m3u.app.navigation.popUpToRoot
-import com.m3u.app.navigation.rootNavigationRoute
+import com.m3u.androidApp.navigation.Destination
+import com.m3u.androidApp.navigation.TopLevelDestination
+import com.m3u.androidApp.navigation.popUpToRoot
+import com.m3u.androidApp.navigation.rootNavigationRoute
 import com.m3u.features.console.navigation.navigateToConsole
 import com.m3u.features.feed.navigation.navigationToFeed
 import com.m3u.features.live.navigation.navigateToLive

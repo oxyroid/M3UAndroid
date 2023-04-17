@@ -1,4 +1,4 @@
-package com.m3u.app.navigation
+package com.m3u.androidApp.navigation
 
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.ExperimentalFoundationApi

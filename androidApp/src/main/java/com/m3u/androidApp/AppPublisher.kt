@@ -1,4 +1,4 @@
-package com.m3u.app
+package com.m3u.androidApp
 
 import com.m3u.core.architecture.Publisher
 import javax.inject.Inject

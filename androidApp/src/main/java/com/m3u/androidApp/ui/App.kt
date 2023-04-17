@@ -1,4 +1,4 @@
-package com.m3u.app.ui
+package com.m3u.androidApp.ui
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -17,10 +17,10 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavDestination
-import com.m3u.app.navigation.BottomNavigationSheet
-import com.m3u.app.navigation.Destination
-import com.m3u.app.navigation.M3UNavHost
-import com.m3u.app.navigation.rootNavigationRoute
+import com.m3u.androidApp.navigation.BottomNavigationSheet
+import com.m3u.androidApp.navigation.Destination
+import com.m3u.androidApp.navigation.M3UNavHost
+import com.m3u.androidApp.navigation.rootNavigationRoute
 import com.m3u.features.console.navigation.consoleRoute
 import com.m3u.features.feed.navigation.feedRoute
 import com.m3u.features.live.navigation.livePlaylistRoute

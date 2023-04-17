@@ -1,8 +1,8 @@
 @file:Suppress("unused")
 
-package com.m3u.app.di
+package com.m3u.androidApp.di
 
-import com.m3u.app.AppPublisher
+import com.m3u.androidApp.AppPublisher
 import com.m3u.core.annotation.AppPublisherImpl
 import com.m3u.core.architecture.Publisher
 import dagger.Binds

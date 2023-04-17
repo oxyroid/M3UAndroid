@@ -1,4 +1,4 @@
-package com.m3u.app
+package com.m3u.androidApp
 
 import android.app.Application
 import com.m3u.features.crash.CrashHandler

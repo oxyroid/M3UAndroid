@@ -1,4 +1,4 @@
-package com.m3u.app
+package com.m3u.androidApp
 
 import android.app.PictureInPictureParams
 import android.graphics.Rect
@@ -19,10 +19,10 @@ import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.lifecycleScope
 import com.google.accompanist.navigation.animation.rememberAnimatedNavController
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
-import com.m3u.app.navigation.Destination
-import com.m3u.app.ui.App
-import com.m3u.app.ui.isInDestination
-import com.m3u.app.ui.rememberAppState
+import com.m3u.androidApp.navigation.Destination
+import com.m3u.androidApp.ui.App
+import com.m3u.androidApp.ui.isInDestination
+import com.m3u.androidApp.ui.rememberAppState
 import com.m3u.ui.M3ULocalProvider
 import com.m3u.ui.model.AppAction
 import com.m3u.ui.model.Helper

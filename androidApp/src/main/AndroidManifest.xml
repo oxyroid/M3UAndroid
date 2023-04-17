@@ -71,7 +71,7 @@
 
         <provider
             android:name="androidx.core.content.FileProvider"
-            android:authorities="com.m3u.app.fileprovider"
+            android:authorities="com.m3u.androidApp.fileprovider"
             android:exported="false"
             android:grantUriPermissions="true">
             <meta-data
