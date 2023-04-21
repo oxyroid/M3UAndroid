@@ -16,7 +16,6 @@ import androidx.media3.datasource.okhttp.OkHttpDataSource
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
-import androidx.media3.session.MediaSession
 import com.m3u.core.architecture.configuration.Configuration
 import com.m3u.core.architecture.service.PlayerManager
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -25,6 +24,9 @@ import java.security.cert.X509Certificate
 import javax.inject.Inject
 import javax.net.ssl.SSLContext
 import javax.net.ssl.X509TrustManager
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import okhttp3.OkHttpClient
 
 @OptIn(UnstableApi::class)
@@ -32,9 +34,6 @@ class ExoPlayerManager @Inject constructor(
     @ApplicationContext private val context: Context,
     private val configuration: Configuration
 ) : PlayerManager(), Player.Listener {
-    private val trackSelector = DefaultTrackSelector(context).apply {
-        setParameters(buildUponParameters().setMaxVideoSizeSd())
-    }
 
     private val trustAllCert by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
         @SuppressLint("CustomX509TrustManager")
@@ -72,41 +71,58 @@ class ExoPlayerManager @Inject constructor(
             .build()
     }
 
-    override var player: Player = ExoPlayer.Builder(context)
-        .let {
-            if (configuration.isSSLVerification) it
-            else it.setMediaSourceFactory(
-                DefaultMediaSourceFactory(context).setDataSourceFactory(
-                    DefaultDataSource.Factory(
-                        context,
-                        OkHttpDataSource.Factory(okHttpClient)
+    override fun observePlayer(): Flow<Player?> = playerFlow.asStateFlow()
+
+    private val playerFlow = MutableStateFlow<Player?>(null)
+    private val player: Player? get() = playerFlow.value
+
+    override fun initPlayer() {
+        playerFlow.value = ExoPlayer.Builder(context)
+            .let {
+                if (configuration.isSSLVerification) it
+                else it.setMediaSourceFactory(
+                    DefaultMediaSourceFactory(context).setDataSourceFactory(
+                        DefaultDataSource.Factory(
+                            context,
+                            OkHttpDataSource.Factory(okHttpClient)
+                        )
                     )
                 )
+            }
+            .setTrackSelector(
+                DefaultTrackSelector(context).apply {
+                    setParameters(buildUponParameters().setMaxVideoSizeSd())
+                }
             )
-        }
-        .setTrackSelector(trackSelector)
-        .build()
-        .apply {
-            val attributes = AudioAttributes.Builder()
-                .setUsage(C.USAGE_MEDIA)
-                .setContentType(C.AUDIO_CONTENT_TYPE_MOVIE)
-                .build()
-            setAudioAttributes(attributes, true)
-            playWhenReady = true
-            MediaSession.Builder(context, this).build()
-        }
+            .build()
+            .apply {
+                val attributes = AudioAttributes.Builder()
+                    .setUsage(C.USAGE_MEDIA)
+                    .setContentType(C.AUDIO_CONTENT_TYPE_MOVIE)
+                    .build()
+                setAudioAttributes(attributes, true)
+                playWhenReady = true
+            }
+
+    }
 
     override fun installMedia(url: String) {
-        super.playerError.value = null
-        player.addListener(this)
-        val mediaItem = MediaItem.fromUri(url)
-        player.setMediaItem(mediaItem)
-        player.prepare()
+        player?.let {
+            it.addListener(this)
+            val mediaItem = MediaItem.fromUri(url)
+            it.setMediaItem(mediaItem)
+            it.prepare()
+        }
     }
 
     override fun uninstallMedia() {
-        player.removeListener(this)
-        player.stop()
+        player?.let {
+            it.removeListener(this)
+            it.stop()
+        }
+        super.playbackState.value = Player.STATE_IDLE
+        super.playerError.value = null
+        super.videoSize.value = Rect()
     }
 
     override fun onVideoSizeChanged(size: VideoSize) {
@@ -123,8 +139,10 @@ class ExoPlayerManager @Inject constructor(
         super.onPlayerError(error)
         when (error.errorCode) {
             PlaybackException.ERROR_CODE_BEHIND_LIVE_WINDOW -> {
-                player.seekToDefaultPosition()
-                player.prepare()
+                player?.let {
+                    it.seekToDefaultPosition()
+                    it.prepare()
+                }
             }
 
             else -> {}

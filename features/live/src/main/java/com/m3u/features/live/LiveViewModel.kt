@@ -35,10 +35,23 @@ class LiveViewModel @Inject constructor(
             it.copy(
                 experimentalMode = configuration.experimentalMode,
                 clipMode = configuration.clipMode,
-                fullInfoPlayer = configuration.fullInfoPlayer,
-                player = playerManager.player
+                fullInfoPlayer = configuration.fullInfoPlayer
             )
         }
+
+        playerManager.observePlayer()
+            .onEach { player ->
+                writable.update {
+                    it.copy(
+                        player = player,
+                        muted = player?.volume == 0f
+                    )
+                }
+            }
+            .launchIn(viewModelScope)
+
+        playerManager.initPlayer()
+
         combine(
             playerManager.playbackState,
             playerManager.videoSize,
