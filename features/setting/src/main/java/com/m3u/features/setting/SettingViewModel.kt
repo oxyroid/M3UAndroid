@@ -6,8 +6,8 @@ import androidx.lifecycle.viewModelScope
 import com.m3u.core.annotation.AppPublisherImpl
 import com.m3u.core.annotation.ConnectTimeout
 import com.m3u.core.architecture.BaseViewModel
-import com.m3u.core.architecture.configuration.Configuration
 import com.m3u.core.architecture.Publisher
+import com.m3u.core.architecture.configuration.Configuration
 import com.m3u.core.wrapper.Resource
 import com.m3u.core.wrapper.eventOf
 import com.m3u.data.repository.FeedRepository
@@ -40,12 +40,13 @@ class SettingViewModel @Inject constructor(
                 feedStrategy = configuration.feedStrategy,
                 useCommonUIMode = configuration.useCommonUIMode,
                 experimentalMode = configuration.experimentalMode,
-                editMode = configuration.godMode,
+                godMode = configuration.godMode,
                 connectTimeout = configuration.connectTimeout,
                 clipMode = configuration.clipMode,
                 scrollMode = configuration.scrollMode,
                 autoRefresh = configuration.autoRefresh,
-                isSSLVerificationEnabled = configuration.isSSLVerificationEnabled
+                isSSLVerificationEnabled = configuration.isSSLVerification,
+                fullInfoPlayer = configuration.fullInfoPlayer
             )
         }
         liveRepository.observeBanned(banned = true)
@@ -97,12 +98,12 @@ class SettingViewModel @Inject constructor(
                     )
                 }
             }
-            SettingEvent.OnEditMode -> {
+            SettingEvent.OnGodMode -> {
                 val newValue = !configuration.godMode
                 configuration.godMode = newValue
                 writable.update {
                     it.copy(
-                        editMode = newValue
+                        godMode = newValue
                     )
                 }
             }
@@ -160,11 +161,20 @@ class SettingViewModel @Inject constructor(
                 }
             }
             SettingEvent.OnSSLVerificationEnabled -> {
-                val target = !configuration.isSSLVerificationEnabled
-                configuration.isSSLVerificationEnabled = target
+                val target = !configuration.isSSLVerification
+                configuration.isSSLVerification = target
                 writable.update {
                     it.copy(
                         isSSLVerificationEnabled = target
+                    )
+                }
+            }
+            SettingEvent.OnFullInfoPlayer -> {
+                val target = !configuration.fullInfoPlayer
+                configuration.fullInfoPlayer = target
+                writable.update {
+                    it.copy(
+                        fullInfoPlayer = target
                     )
                 }
             }

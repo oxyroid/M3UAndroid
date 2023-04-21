@@ -10,7 +10,7 @@ sealed interface SettingEvent {
     data class OnUrl(val url: String) : SettingEvent
     data class OnSyncMode(@FeedStrategy val feedStrategy: Int) : SettingEvent
     object OnUseCommonUIMode : SettingEvent
-    object OnEditMode : SettingEvent
+    object OnGodMode : SettingEvent
     object OnExperimentalMode : SettingEvent
     object OnConnectTimeout : SettingEvent
     object OnScrollMode : SettingEvent
@@ -18,4 +18,5 @@ sealed interface SettingEvent {
     data class OnClipMode(@ClipMode val mode: Int) : SettingEvent
     data class OnBannedLive(val id: Int) : SettingEvent
     object OnSSLVerificationEnabled : SettingEvent
+    object OnFullInfoPlayer : SettingEvent
 }

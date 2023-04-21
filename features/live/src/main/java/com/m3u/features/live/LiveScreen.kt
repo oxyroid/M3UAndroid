@@ -19,7 +19,6 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.pager.VerticalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.LocalContentAlpha
 import androidx.compose.material.LocalContentColor
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
@@ -30,6 +29,8 @@ import androidx.compose.material.icons.rounded.PictureInPicture
 import androidx.compose.material.icons.rounded.RadioButtonChecked
 import androidx.compose.material.icons.rounded.RadioButtonUnchecked
 import androidx.compose.material.icons.rounded.Refresh
+import androidx.compose.material.icons.rounded.VolumeMute
+import androidx.compose.material.icons.rounded.VolumeUp
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -105,6 +106,7 @@ internal fun LiveRoute(
         init = state.init,
         experimentalMode = state.experimentalMode,
         clipMode = state.clipMode,
+        fullInfoPlayer = state.fullInfoPlayer,
         recording = state.recording,
         searchDlnaDevices = { viewModel.onEvent(LiveEvent.SearchDlnaDevices) },
         onRecord = { viewModel.onEvent(LiveEvent.Record) },
@@ -115,6 +117,8 @@ internal fun LiveRoute(
         playerError = state.playerState.playerError,
         onInstallMedia = { viewModel.onEvent(LiveEvent.InstallMedia(it)) },
         onUninstallMedia = { viewModel.onEvent(LiveEvent.UninstallMedia) },
+        muted = state.muted,
+        onMuted = { viewModel.onEvent(LiveEvent.OnMuted) },
         modifier = modifier,
     )
 }
@@ -124,6 +128,7 @@ internal fun LiveRoute(
 private fun LiveScreen(
     init: LiveState.Init,
     @ClipMode clipMode: Int,
+    fullInfoPlayer: Boolean,
     recording: Boolean,
     searchDlnaDevices: () -> Unit,
     onRecord: () -> Unit,
@@ -135,6 +140,8 @@ private fun LiveScreen(
     playerError: PlaybackException?,
     onInstallMedia: (String) -> Unit,
     onUninstallMedia: () -> Unit,
+    muted: Boolean,
+    onMuted: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val theme = LocalTheme.current
@@ -150,6 +157,7 @@ private fun LiveScreen(
                 cover = init.live?.cover.orEmpty(),
                 feedTitle = init.feed?.title.orEmpty(),
                 experimentalMode = experimentalMode,
+                fullInfoPlayer = fullInfoPlayer,
                 clipMode = clipMode,
                 recording = recording,
                 onRecord = onRecord,
@@ -157,6 +165,8 @@ private fun LiveScreen(
                 onBackPressed = onBackPressed,
                 onInstallMedia = onInstallMedia,
                 onUninstallMedia = onUninstallMedia,
+                muted = muted,
+                onMuted = onMuted,
                 modifier = modifier
                     .fillMaxSize()
                     .background(Color.Black)
@@ -184,6 +194,7 @@ private fun LiveScreen(
                     url = init.lives[page].url,
                     cover = init.lives[page].cover.orEmpty(),
                     experimentalMode = experimentalMode,
+                    fullInfoPlayer = fullInfoPlayer,
                     clipMode = clipMode,
                     recording = recording,
                     onRecord = onRecord,
@@ -191,6 +202,8 @@ private fun LiveScreen(
                     onBackPressed = onBackPressed,
                     onInstallMedia = onInstallMedia,
                     onUninstallMedia = onUninstallMedia,
+                    muted = muted,
+                    onMuted = onMuted,
                     modifier = Modifier
                         .fillMaxSize()
                         .background(Color.Black)
@@ -220,12 +233,15 @@ private fun LivePart(
     cover: String,
     experimentalMode: Boolean,
     @ClipMode clipMode: Int,
+    fullInfoPlayer: Boolean,
     recording: Boolean,
     onRecord: () -> Unit,
     searchDlnaDevices: () -> Unit,
     onBackPressed: () -> Unit,
     onInstallMedia: (String) -> Unit,
     onUninstallMedia: () -> Unit,
+    muted: Boolean,
+    onMuted: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Background(
@@ -269,13 +285,19 @@ private fun LivePart(
                     Spacer(
                         modifier = Modifier.weight(1f)
                     )
+                    MaskButton(
+                        state = maskState,
+                        icon = if (muted) Icons.Rounded.VolumeMute
+                        else Icons.Rounded.VolumeUp,
+                        onClick = onMuted
+                    )
                     if (experimentalMode) {
                         MaskButton(
                             state = maskState,
                             icon = if (recording) Icons.Rounded.RadioButtonChecked
                             else Icons.Rounded.RadioButtonUnchecked,
                             tint = if (recording) LocalTheme.current.error
-                            else LocalContentColor.current.copy(alpha = LocalContentAlpha.current),
+                            else Color.Unspecified,
                             onClick = onRecord
                         )
                         val shouldShowCastButton = (playback != Player.STATE_IDLE)
@@ -311,7 +333,7 @@ private fun LivePart(
                 footer = {
                     val spacing = LocalSpacing.current
 
-                    if (cover.isNotEmpty()) {
+                    if (fullInfoPlayer && cover.isNotEmpty()) {
                         Image(
                             model = cover,
                             modifier = Modifier

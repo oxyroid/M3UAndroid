@@ -44,4 +44,6 @@
     <string name="auto_refresh_description">进入播放列表自动刷新</string>
     <string name="ssl_verification_enabled">SSL证书校验</string>
     <string name="ssl_verification_enabled_description">校验网络连接安全性</string>
+    <string name="full_info_player">详细信息的播放器</string>
+    <string name="full_info_player_description">播放器中展示更多的信息</string>
 </resources>

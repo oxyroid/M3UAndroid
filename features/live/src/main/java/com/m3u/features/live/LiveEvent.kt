@@ -10,4 +10,5 @@ sealed interface LiveEvent {
     object Record : LiveEvent
     data class InstallMedia(val url: String) : LiveEvent
     object UninstallMedia : LiveEvent
+    object OnMuted : LiveEvent
 }

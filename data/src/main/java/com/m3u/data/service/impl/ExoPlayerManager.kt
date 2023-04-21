@@ -74,7 +74,7 @@ class ExoPlayerManager @Inject constructor(
 
     override var player: Player = ExoPlayer.Builder(context)
         .let {
-            if (configuration.isSSLVerificationEnabled) it
+            if (configuration.isSSLVerification) it
             else it.setMediaSourceFactory(
                 DefaultMediaSourceFactory(context).setDataSourceFactory(
                     DefaultDataSource.Factory(

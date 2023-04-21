@@ -31,6 +31,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.isUnspecified
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import com.m3u.ui.model.Icon
@@ -155,9 +156,12 @@ fun MaskButton(
     icon: ImageVector,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    tint: Color = LocalContentColor.current.copy(alpha = LocalContentAlpha.current),
+    tint: Color = Color.Unspecified,
 ) {
-    val animatedColor by animateColorAsState(tint)
+    val animatedColor by animateColorAsState(
+        if (tint.isUnspecified) LocalContentColor.current.copy(alpha = LocalContentAlpha.current)
+        else tint
+    )
     val currentKeepAlive by rememberUpdatedState(state::keepAlive)
     IconButton(
         icon = Icon.ImageVectorIcon(icon),

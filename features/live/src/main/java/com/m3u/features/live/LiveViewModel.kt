@@ -35,6 +35,7 @@ class LiveViewModel @Inject constructor(
             it.copy(
                 experimentalMode = configuration.experimentalMode,
                 clipMode = configuration.clipMode,
+                fullInfoPlayer = configuration.fullInfoPlayer,
                 player = playerManager.player
             )
         }
@@ -76,6 +77,7 @@ class LiveViewModel @Inject constructor(
             LiveEvent.UninstallMedia -> {
                 playerManager.uninstallMedia()
             }
+            LiveEvent.OnMuted -> muted()
         }
     }
 
@@ -137,6 +139,17 @@ class LiveViewModel @Inject constructor(
         writable.update {
             it.copy(
                 recording = !readable.recording
+            )
+        }
+    }
+
+    private fun muted() {
+        val target = !readable.muted
+        val volume = if (target) 0f else 1f
+        readable.player?.volume = volume
+        writable.update {
+            it.copy(
+                muted = target
             )
         }
     }

@@ -19,12 +19,13 @@ data class SettingState(
     val version: String = "",
     val release: Resource<Release> = Resource.Loading,
     @FeedStrategy val feedStrategy: Int = Configuration.DEFAULT_FEED_STRATEGY,
-    val editMode: Boolean = Configuration.DEFAULT_GOD_MODE,
+    val godMode: Boolean = Configuration.DEFAULT_GOD_MODE,
     val useCommonUIMode: Boolean = Configuration.DEFAULT_USE_COMMON_UI_MODE,
     @ConnectTimeout val connectTimeout: Int = Configuration.DEFAULT_CONNECT_TIMEOUT,
     val experimentalMode: Boolean = Configuration.DEFAULT_EXPERIMENTAL_MODE,
     @ClipMode val clipMode: Int = Configuration.DEFAULT_CLIP_MODE,
     val scrollMode: Boolean = Configuration.DEFAULT_SCROLL_MODE,
     val autoRefresh: Boolean = Configuration.DEFAULT_AUTO_REFRESH,
-    val isSSLVerificationEnabled: Boolean = Configuration.DEFAULT_SSL_VERIFICATION_ENABLED
+    val isSSLVerificationEnabled: Boolean = Configuration.DEFAULT_SSL_VERIFICATION,
+    val fullInfoPlayer: Boolean = Configuration.DEFAULT_FULL_INFO_PLAYER
 )

@@ -57,8 +57,8 @@ class FeedRepositoryImpl @Inject constructor(
             }
             val existedUrls = when (strategy) {
                 FeedStrategy.ALL -> skippedUrls
-                FeedStrategy.SKIP_FAVORITE ->
-                    (groupedLives.getValue(true)).map { it.url } + skippedUrls
+                FeedStrategy.SKIP_FAVORITE -> groupedLives.getValue(true)
+                    .map { it.url } + skippedUrls
                 else -> emptyList()
             }
             lives

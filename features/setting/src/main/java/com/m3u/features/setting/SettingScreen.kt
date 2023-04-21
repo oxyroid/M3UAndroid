@@ -100,7 +100,7 @@ fun SettingRoute(
         version = state.version,
         release = state.release,
         feedStrategy = state.feedStrategy,
-        editMode = state.editMode,
+        godMode = state.godMode,
         clipMode = state.clipMode,
         scrollMode = state.scrollMode,
         connectTimeout = state.connectTimeout,
@@ -110,7 +110,7 @@ fun SettingRoute(
         experimentalMode = state.experimentalMode,
         mutedLives = state.mutedLives,
         fetchRelease = { viewModel.onEvent(SettingEvent.FetchRelease) },
-        onEditMode = { viewModel.onEvent(SettingEvent.OnEditMode) },
+        onGodMode = { viewModel.onEvent(SettingEvent.OnGodMode) },
         onConnectTimeout = { viewModel.onEvent(SettingEvent.OnConnectTimeout) },
         onTitle = { viewModel.onEvent(SettingEvent.OnTitle(it)) },
         onUrl = { viewModel.onEvent(SettingEvent.OnUrl(it)) },
@@ -125,6 +125,8 @@ fun SettingRoute(
         onAutoRefresh = { viewModel.onEvent(SettingEvent.OnAutoRefresh) },
         isSSLVerificationEnabled = state.isSSLVerificationEnabled,
         onSSLVerificationEnabled = { viewModel.onEvent(SettingEvent.OnSSLVerificationEnabled) },
+        fullInfoPlayer = state.fullInfoPlayer,
+        onFullInfoPlayer = { viewModel.onEvent(SettingEvent.OnFullInfoPlayer) },
         modifier = modifier.fillMaxSize()
     )
 }
@@ -138,11 +140,11 @@ private fun SettingScreen(
     title: String,
     url: String,
     @FeedStrategy feedStrategy: Int,
-    editMode: Boolean,
+    godMode: Boolean,
     @ClipMode clipMode: Int,
     @ConnectTimeout connectTimeout: Int,
     scrollMode: Boolean,
-    onEditMode: () -> Unit,
+    onGodMode: () -> Unit,
     onConnectTimeout: () -> Unit,
     onTitle: (String) -> Unit,
     onUrl: (String) -> Unit,
@@ -162,6 +164,8 @@ private fun SettingScreen(
     onAutoRefresh: () -> Unit,
     isSSLVerificationEnabled: Boolean,
     onSSLVerificationEnabled: () -> Unit,
+    fullInfoPlayer: Boolean,
+    onFullInfoPlayer: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     var fold: Fold by remember { mutableStateOf(Fold.NONE) }
@@ -176,7 +180,7 @@ private fun SettingScreen(
                     title = title,
                     url = url,
                     adding = adding,
-                    editMode = editMode,
+                    godMode = godMode,
                     connectTimeout = connectTimeout,
                     scrollMode = scrollMode,
                     onFold = { fold = it },
@@ -188,7 +192,7 @@ private fun SettingScreen(
                     onClipMode = onClipMode,
                     onConnectTimeout = onConnectTimeout,
                     onFeedStrategy = onFeedStrategy,
-                    onEditMode = onEditMode,
+                    onGodMode = onGodMode,
                     onScrollMode = onScrollMode,
                     version = version,
                     release = release,
@@ -204,6 +208,8 @@ private fun SettingScreen(
                     onAutoRefresh = onAutoRefresh,
                     isSSLVerificationEnabled = isSSLVerificationEnabled,
                     onSSLVerificationEnabled = onSSLVerificationEnabled,
+                    fullInfoPlayer = fullInfoPlayer,
+                    onFullInfoPlayer = onFullInfoPlayer,
                     modifier = modifier
                         .fillMaxWidth()
                         .scrollable(
@@ -218,7 +224,7 @@ private fun SettingScreen(
                     title = title,
                     url = url,
                     adding = adding,
-                    editMode = editMode,
+                    godMode = godMode,
                     clipMode = clipMode,
                     scrollMode = scrollMode,
                     feedStrategy = feedStrategy,
@@ -235,7 +241,7 @@ private fun SettingScreen(
                     onScrollMode = onScrollMode,
                     onSubscribe = onSubscribe,
                     onFeedStrategy = onFeedStrategy,
-                    onEditMode = onEditMode,
+                    onGodMode = onGodMode,
                     onConnectTimeout = onConnectTimeout,
                     onUIMode = onUIMode,
                     navigateToConsole = navigateToConsole,
@@ -247,6 +253,8 @@ private fun SettingScreen(
                     onAutoRefresh = onAutoRefresh,
                     isSSLVerificationEnabled = isSSLVerificationEnabled,
                     onSSLVerificationEnabled = onSSLVerificationEnabled,
+                    fullInfoPlayer = fullInfoPlayer,
+                    onFullInfoPlayer = onFullInfoPlayer,
                     modifier = modifier.scrollable(
                         orientation = Orientation.Vertical,
                         state = rememberScrollableState { it }
@@ -267,12 +275,12 @@ private fun PortraitOrientationContent(
     title: String,
     url: String,
     @FeedStrategy feedStrategy: Int,
-    editMode: Boolean,
+    godMode: Boolean,
     @ClipMode clipMode: Int,
     @ConnectTimeout connectTimeout: Int,
     useCommonUIMode: Boolean,
     useCommonUIModeEnable: Boolean,
-    onEditMode: () -> Unit,
+    onGodMode: () -> Unit,
     onClipMode: OnClipMode,
     onConnectTimeout: () -> Unit,
     adding: Boolean,
@@ -295,6 +303,8 @@ private fun PortraitOrientationContent(
     onAutoRefresh: () -> Unit,
     isSSLVerificationEnabled: Boolean,
     onSSLVerificationEnabled: () -> Unit,
+    fullInfoPlayer: Boolean,
+    onFullInfoPlayer: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Box {
@@ -305,14 +315,14 @@ private fun PortraitOrientationContent(
             feedStrategy = feedStrategy,
             useCommonUIMode = useCommonUIMode,
             useCommonUIModeEnable = useCommonUIModeEnable,
-            editMode = editMode,
+            godMode = godMode,
             clipMode = clipMode,
             connectTimeout = connectTimeout,
             onConnectTimeout = onConnectTimeout,
             onFeedStrategy = onFeedStrategy,
             onClipMode = onClipMode,
             onUIMode = { },
-            onEditMode = onEditMode,
+            onGodMode = onGodMode,
             onFeedManagement = {
                 onFold(Fold.FEED)
             },
@@ -328,6 +338,8 @@ private fun PortraitOrientationContent(
             onAutoRefresh = onAutoRefresh,
             isSSLVerificationEnabled = isSSLVerificationEnabled,
             onSSLVerificationEnabled = onSSLVerificationEnabled,
+            fullInfoPlayer = fullInfoPlayer,
+            onFullInfoPlayer = onFullInfoPlayer,
             modifier = modifier
         )
 
@@ -366,7 +378,7 @@ private fun LandscapeOrientationContent(
     fold: Fold,
     title: String,
     url: String,
-    editMode: Boolean,
+    godMode: Boolean,
     @ClipMode clipMode: Int,
     adding: Boolean,
     onFold: (Fold) -> Unit,
@@ -381,7 +393,7 @@ private fun LandscapeOrientationContent(
     useCommonUIModeEnable: Boolean,
     scrollMode: Boolean,
     onUIMode: () -> Unit,
-    onEditMode: () -> Unit,
+    onGodMode: () -> Unit,
     onClipMode: OnClipMode,
     onScrollMode: () -> Unit,
     version: String,
@@ -396,6 +408,8 @@ private fun LandscapeOrientationContent(
     onAutoRefresh: () -> Unit,
     isSSLVerificationEnabled: Boolean,
     onSSLVerificationEnabled: () -> Unit,
+    fullInfoPlayer: Boolean,
+    onFullInfoPlayer: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
@@ -408,7 +422,7 @@ private fun LandscapeOrientationContent(
             version = version,
             release = release,
             fetchRelease = fetchRelease,
-            editMode = editMode,
+            godMode = godMode,
             clipMode = clipMode,
             onClipMode = onClipMode,
             onFeedManagement = { onFold(Fold.FEED) },
@@ -420,7 +434,7 @@ private fun LandscapeOrientationContent(
             useCommonUIMode = useCommonUIMode,
             useCommonUIModeEnable = useCommonUIModeEnable,
             onUIMode = onUIMode,
-            onEditMode = onEditMode,
+            onGodMode = onGodMode,
             navigateToConsole = navigateToConsole,
             experimentalMode = experimentalMode,
             onExperimentalMode = onExperimentalMode,
@@ -430,6 +444,8 @@ private fun LandscapeOrientationContent(
             onAutoRefresh = onAutoRefresh,
             isSSLVerificationEnabled = isSSLVerificationEnabled,
             onSSLVerificationEnabled = onSSLVerificationEnabled,
+            fullInfoPlayer = fullInfoPlayer,
+            onFullInfoPlayer = onFullInfoPlayer,
             modifier = Modifier
                 .fillMaxHeight()
                 .weight(1f)
@@ -473,20 +489,22 @@ private fun PreferencesPart(
     useCommonUIMode: Boolean,
     useCommonUIModeEnable: Boolean,
     experimentalMode: Boolean,
-    editMode: Boolean,
+    godMode: Boolean,
     scrollMode: Boolean,
+    fullInfoPlayer: Boolean,
     version: String,
     release: Resource<Release>,
     onFeedStrategy: OnFeedStrategy,
     onClipMode: OnClipMode,
     onUIMode: () -> Unit,
-    onEditMode: () -> Unit,
+    onGodMode: () -> Unit,
     onScrollMode: () -> Unit,
     fetchRelease: () -> Unit,
     onFeedManagement: () -> Unit,
     onScriptManagement: () -> Unit,
     onConnectTimeout: () -> Unit,
     onExperimentalMode: () -> Unit,
+    onFullInfoPlayer: () -> Unit,
     navigateToConsole: NavigateToConsole,
     autoRefresh: Boolean,
     onAutoRefresh: () -> Unit,
@@ -554,7 +572,7 @@ private fun PreferencesPart(
                 )
                 CheckBoxPreference(
                     title = stringResource(R.string.auto_refresh),
-                    subtitle = stringResource(id = R.string.auto_refresh_description),
+                    subtitle = stringResource(R.string.auto_refresh_description),
                     checked = autoRefresh,
                     onCheckedChange = { newValue ->
                         if (newValue != autoRefresh) {
@@ -563,12 +581,22 @@ private fun PreferencesPart(
                     }
                 )
                 CheckBoxPreference(
-                    title = stringResource(R.string.god_mode),
-                    subtitle = stringResource(id = R.string.god_mode_description),
-                    checked = editMode,
+                    title = stringResource(R.string.full_info_player),
+                    subtitle = stringResource(R.string.full_info_player_description),
+                    checked = fullInfoPlayer,
                     onCheckedChange = { newValue ->
-                        if (newValue != editMode) {
-                            onEditMode()
+                        if (newValue != fullInfoPlayer) {
+                            onFullInfoPlayer()
+                        }
+                    }
+                )
+                CheckBoxPreference(
+                    title = stringResource(R.string.god_mode),
+                    subtitle = stringResource(R.string.god_mode_description),
+                    checked = godMode,
+                    onCheckedChange = { newValue ->
+                        if (newValue != godMode) {
+                            onGodMode()
                         }
                     }
                 )

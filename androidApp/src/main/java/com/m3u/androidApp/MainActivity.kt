@@ -34,7 +34,6 @@ import kotlinx.coroutines.launch
 class MainActivity : ComponentActivity() {
     private val title = MutableStateFlow("")
     private val actions = MutableStateFlow(emptyList<AppAction>())
-
     @OptIn(ExperimentalFoundationApi::class, ExperimentalAnimationApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
