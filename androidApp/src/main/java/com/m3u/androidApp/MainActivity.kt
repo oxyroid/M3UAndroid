@@ -78,6 +78,7 @@ class MainActivity : ComponentActivity() {
 
     private var onUserLeaveHintCallback: (() -> Unit)? = null
     private val helper: Helper = object : Helper() {
+
         override fun enterPipMode(size: Rect) {
             val params = PictureInPictureParams.Builder()
                 .setAspectRatio(Rational(size.width(), size.height()))

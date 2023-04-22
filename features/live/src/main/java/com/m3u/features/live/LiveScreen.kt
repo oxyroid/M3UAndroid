@@ -35,6 +35,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -84,18 +87,26 @@ internal fun LiveRoute(
     val maskState = rememberMaskState { visible ->
         helper.systemUiVisibility = visible
     }
+    var isPipMode by remember { mutableStateOf(false) }
     LifecycleEffect { event ->
         when (event) {
             Lifecycle.Event.ON_CREATE -> {
                 helper.hideSystemUI()
                 helper.registerOnUserLeaveHintListener {
-                    maskState.sleep()
-                    helper.enterPipMode(state.playerState.videoSize)
+                    if (state.playerState.videoSize.isNotEmpty) {
+                        maskState.sleep()
+                        helper.enterPipMode(state.playerState.videoSize)
+                    }
+                }
+                helper.registerOnPictureInPictureModeChangedListener { info ->
+                    isPipMode = info.isInPictureInPictureMode
                 }
             }
 
             Lifecycle.Event.ON_STOP -> {
-                viewModel.onEvent(LiveEvent.UninstallMedia)
+                if (isPipMode) {
+                    viewModel.onEvent(LiveEvent.UninstallMedia)
+                }
             }
 
             Lifecycle.Event.ON_DESTROY -> {
