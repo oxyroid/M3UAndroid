@@ -1,6 +1,4 @@
-package com.m3u.data.util.transform.encrypt
-
-import com.m3u.core.util.transform.IterativeTransferable
+package com.m3u.core.util.transform
 
 object IntIterativeTransferable : IterativeTransferable<Int>() {
     override fun transferElement(element: Int): String = element.toString()

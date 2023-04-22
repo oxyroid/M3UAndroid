@@ -12,7 +12,9 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.isUnspecified
+import androidx.core.app.PictureInPictureModeChangedInfo
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.core.util.Consumer
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
@@ -34,6 +36,7 @@ import kotlinx.coroutines.launch
 class MainActivity : ComponentActivity() {
     private val title = MutableStateFlow("")
     private val actions = MutableStateFlow(emptyList<AppAction>())
+
     @OptIn(ExperimentalFoundationApi::class, ExperimentalAnimationApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
@@ -73,7 +76,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-
+    private var onUserLeaveHintCallback: (() -> Unit)? = null
     private val helper: Helper = object : Helper() {
         override fun enterPipMode(size: Rect) {
             val params = PictureInPictureParams.Builder()
@@ -104,10 +107,34 @@ class MainActivity : ComponentActivity() {
         }
 
         override fun showSystemUI() {
-            WindowInsetsControllerCompat(
-                window,
-                window.decorView
-            ).show(WindowInsetsCompat.Type.systemBars())
+            WindowInsetsControllerCompat(window, window.decorView)
+                .show(WindowInsetsCompat.Type.systemBars())
         }
+
+        private var listener: Consumer<PictureInPictureModeChangedInfo>? = null
+
+        override fun registerOnPictureInPictureModeChangedListener(
+            consumer: Consumer<PictureInPictureModeChangedInfo>
+        ) {
+            this@MainActivity.addOnPictureInPictureModeChangedListener(consumer)
+            this.listener = consumer
+        }
+
+        override fun unregisterOnPictureInPictureModeChangedListener() {
+            this.listener?.let { removeOnPictureInPictureModeChangedListener(it) }
+        }
+
+        override fun registerOnUserLeaveHintListener(callback: () -> Unit) {
+            onUserLeaveHintCallback = callback
+        }
+
+        override fun unregisterOnUserLeaveHintListener() {
+            onUserLeaveHintCallback = null
+        }
+    }
+
+    override fun onUserLeaveHint() {
+        super.onUserLeaveHint()
+        onUserLeaveHintCallback?.invoke()
     }
 }

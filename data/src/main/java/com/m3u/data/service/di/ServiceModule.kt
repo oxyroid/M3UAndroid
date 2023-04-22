@@ -8,9 +8,9 @@ import androidx.core.app.NotificationManagerCompat
 import com.m3u.core.architecture.service.DownloadService
 import com.m3u.core.architecture.service.NotificationService
 import com.m3u.core.architecture.service.PlayerManager
-import com.m3u.data.service.impl.ExoPlayerManager
-import com.m3u.data.service.impl.NotificationServiceImpl
-import com.m3u.data.service.impl.SystemDownloadService
+import com.m3u.data.service.ExoPlayerManager
+import com.m3u.data.service.NotificationServiceImpl
+import com.m3u.data.service.SystemDownloadService
 import dagger.Binds
 import dagger.Module
 import dagger.Provides

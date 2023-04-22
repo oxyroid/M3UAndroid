@@ -1,4 +1,4 @@
-package com.m3u.data.service.impl
+package com.m3u.data.service
 
 import android.annotation.SuppressLint
 import android.content.Context
@@ -16,6 +16,7 @@ import androidx.media3.datasource.okhttp.OkHttpDataSource
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
+import androidx.media3.session.MediaSession
 import com.m3u.core.architecture.configuration.Configuration
 import com.m3u.core.architecture.service.PlayerManager
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -33,7 +34,7 @@ import okhttp3.OkHttpClient
 class ExoPlayerManager @Inject constructor(
     @ApplicationContext private val context: Context,
     private val configuration: Configuration
-) : PlayerManager(), Player.Listener {
+) : PlayerManager(), Player.Listener, MediaSession.Callback {
 
     private val trustAllCert by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
         @SuppressLint("CustomX509TrustManager")

@@ -11,7 +11,7 @@ import androidx.navigation.NavType
 import androidx.navigation.navArgument
 import androidx.navigation.navOptions
 import com.google.accompanist.navigation.animation.composable
-import com.m3u.data.util.transform.encrypt.IntIterativeTransferable
+import com.m3u.core.util.transform.IntIterativeTransferable
 import com.m3u.features.live.LiveEvent
 import com.m3u.features.live.LiveRoute
 

@@ -53,7 +53,7 @@ class MaskStateCoroutineImpl(
     coroutineScope: CoroutineScope,
     private val onChanged: (Boolean) -> Unit
 ) : MaskState {
-    private var currentTime: Long by mutableStateOf(fetchCurrentTime)
+    private var currentTime: Long by mutableStateOf(systemClock)
     private var lastTime: Long by mutableStateOf(0L)
 
     private var last: Boolean? = null
@@ -75,7 +75,7 @@ class MaskStateCoroutineImpl(
         }
     }
 
-    private val fetchCurrentTime: Long get() = System.currentTimeMillis() / 1000
+    private val systemClock: Long get() = System.currentTimeMillis() / 1000
 
     override fun touch() {
         lastTime = if (!visible) currentTime else 0

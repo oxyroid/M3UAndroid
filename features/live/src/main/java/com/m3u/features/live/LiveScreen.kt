@@ -81,14 +81,27 @@ internal fun LiveRoute(
     val context = LocalContext.current
     val helper = LocalHelper.current
     val state: LiveState by viewModel.state.collectAsStateWithLifecycle()
-
+    val maskState = rememberMaskState { visible ->
+        helper.systemUiVisibility = visible
+    }
     LifecycleEffect { event ->
         when (event) {
             Lifecycle.Event.ON_CREATE -> {
                 helper.hideSystemUI()
+                helper.registerOnUserLeaveHintListener {
+                    maskState.sleep()
+                    helper.enterPipMode(state.playerState.videoSize)
+                }
             }
+
+            Lifecycle.Event.ON_STOP -> {
+                viewModel.onEvent(LiveEvent.UninstallMedia)
+            }
+
             Lifecycle.Event.ON_DESTROY -> {
                 helper.showSystemUI()
+                helper.unregisterOnPictureInPictureModeChangedListener()
+                helper.unregisterOnUserLeaveHintListener()
             }
 
             else -> {}
@@ -111,6 +124,7 @@ internal fun LiveRoute(
         searchDlnaDevices = { viewModel.onEvent(LiveEvent.SearchDlnaDevices) },
         onRecord = { viewModel.onEvent(LiveEvent.Record) },
         onBackPressed = onBackPressed,
+        maskState = maskState,
         player = state.player,
         playback = state.playerState.playback,
         videoSize = state.playerState.videoSize,
@@ -133,6 +147,7 @@ private fun LiveScreen(
     searchDlnaDevices: () -> Unit,
     onRecord: () -> Unit,
     onBackPressed: () -> Unit,
+    maskState: MaskState,
     experimentalMode: Boolean,
     player: Player?,
     playback: @Player.State Int,
@@ -156,6 +171,7 @@ private fun LiveScreen(
                 url = init.live?.url.orEmpty(),
                 cover = init.live?.cover.orEmpty(),
                 feedTitle = init.feed?.title.orEmpty(),
+                maskState = maskState,
                 experimentalMode = experimentalMode,
                 fullInfoPlayer = fullInfoPlayer,
                 clipMode = clipMode,
@@ -193,6 +209,7 @@ private fun LiveScreen(
                     feedTitle = init.feed?.title.orEmpty(),
                     url = init.lives[page].url,
                     cover = init.lives[page].cover.orEmpty(),
+                    maskState = maskState,
                     experimentalMode = experimentalMode,
                     fullInfoPlayer = fullInfoPlayer,
                     clipMode = clipMode,
@@ -231,6 +248,7 @@ private fun LivePart(
     feedTitle: String,
     url: String,
     cover: String,
+    maskState: MaskState,
     experimentalMode: Boolean,
     @ClipMode clipMode: Int,
     fullInfoPlayer: Boolean,
@@ -264,9 +282,6 @@ private fun LivePart(
                 state = state,
                 modifier = Modifier.fillMaxSize()
             )
-            val maskState = rememberMaskState { visible ->
-                helper.systemUiVisibility = visible
-            }
             val shouldShowPlaceholder = cover.isNotEmpty() && videoSize.isEmpty
             if (shouldShowPlaceholder) {
                 Image(

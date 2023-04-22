@@ -1,4 +1,4 @@
-package com.m3u.data.service.impl
+package com.m3u.data.service
 
 import android.app.Notification
 import android.app.NotificationManager
