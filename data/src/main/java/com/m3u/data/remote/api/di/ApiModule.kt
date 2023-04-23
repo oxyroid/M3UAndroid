@@ -3,8 +3,7 @@
 package com.m3u.data.remote.api.di
 
 import com.m3u.core.util.serialization.asConverterFactory
-import com.m3u.data.remote.api.GithubApiWrapper
-import com.m3u.data.remote.api.GithubRepositoryApi
+import com.m3u.data.remote.api.RemoteApi
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -13,6 +12,7 @@ import javax.inject.Singleton
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import retrofit2.Retrofit
+import retrofit2.create
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -34,7 +34,10 @@ object ApiModule {
     }
 
     @Provides
-    fun provideDistributionApi(
+    fun provideRemoteApi(
         builder: Retrofit.Builder
-    ): GithubRepositoryApi = GithubApiWrapper(builder).api
+    ): RemoteApi = builder
+        .baseUrl("https://api.github.com")
+        .build()
+        .create()
 }

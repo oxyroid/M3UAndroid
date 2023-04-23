@@ -170,7 +170,7 @@ fun TextField(
 fun TextField(
     text: String,
     modifier: Modifier = Modifier,
-    background: Color = TextFieldDefaults.backgroundColor(),
+    backgroundColor: Color = TextFieldDefaults.backgroundColor(),
     contentColor: Color = TextFieldDefaults.contentColor(),
     shape: Shape = TextFieldDefaults.shape(),
     placeholder: String = "",
@@ -237,7 +237,7 @@ fun TextField(
             Box(
                 Modifier
                     .clip(shape)
-                    .background(if (isError) LocalTheme.current.error else background)
+                    .background(if (isError) LocalTheme.current.error else backgroundColor)
                     .height(height)
                     .padding(horizontal = 12.dp),
                 contentAlignment = if (singleLine) Alignment.CenterStart else Alignment.TopStart,

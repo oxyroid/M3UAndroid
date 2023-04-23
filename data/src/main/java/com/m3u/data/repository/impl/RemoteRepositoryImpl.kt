@@ -6,19 +6,20 @@ import com.m3u.core.wrapper.Resource
 import com.m3u.core.wrapper.emitMessage
 import com.m3u.core.wrapper.emitResource
 import com.m3u.core.wrapper.resourceFlow
-import com.m3u.data.database.entity.Release
-import com.m3u.data.remote.api.GithubRepositoryApi
+import com.m3u.data.remote.api.RemoteApi
+import com.m3u.data.remote.api.dto.Release
 import com.m3u.data.repository.RemoteRepository
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 
 class RemoteRepositoryImpl @Inject constructor(
-    private val api: GithubRepositoryApi,
-    @FileLoggerImpl private val logger: Logger
+    private val api: RemoteApi,
+    @FileLoggerImpl private val logger: Logger,
 ) : RemoteRepository {
     override fun fetchLatestRelease(): Flow<Resource<Release>> = resourceFlow {
         try {
-            val releases = api.releases(RemoteRepository.REPOS_AUTHOR, RemoteRepository.REPOS_NAME)
+            val releases =
+                api.releases(RemoteRepository.REPOS_AUTHOR, RemoteRepository.REPOS_NAME_PROJECT)
             val release = releases.firstOrNull()
             if (release == null) {
                 emitMessage("Cannot fetch latest release.")

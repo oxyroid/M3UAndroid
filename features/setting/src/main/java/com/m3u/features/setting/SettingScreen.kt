@@ -52,7 +52,7 @@ import com.m3u.core.annotation.OnFeedStrategy
 import com.m3u.core.util.context.toast
 import com.m3u.core.wrapper.Resource
 import com.m3u.data.database.entity.Live
-import com.m3u.data.database.entity.Release
+import com.m3u.data.remote.api.dto.Release
 import com.m3u.features.setting.components.CheckBoxPreference
 import com.m3u.features.setting.components.FoldPreference
 import com.m3u.features.setting.components.MutedLiveItem

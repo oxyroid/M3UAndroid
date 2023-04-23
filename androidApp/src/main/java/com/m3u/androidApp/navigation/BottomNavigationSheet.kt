@@ -11,12 +11,10 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.m3u.ui.components.NavigationSheet
-import com.m3u.ui.model.Icon
 import com.m3u.ui.model.LocalTheme
 
 @Composable
@@ -45,16 +43,10 @@ fun BottomNavigationSheet(
                 icon = {
                     val icon = if (selected) destination.selectedIcon
                     else destination.unselectedIcon
-                    when (icon) {
-                        is Icon.ImageVectorIcon -> Icon(
-                            imageVector = icon.imageVector,
-                            contentDescription = stringResource(destination.iconTextId)
-                        )
-                        is Icon.DrawableResourceIcon -> Icon(
-                            painter = painterResource(icon.id),
-                            contentDescription = stringResource(destination.iconTextId)
-                        )
-                    }
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = stringResource(destination.iconTextId)
+                    )
                 },
                 label = {
                     Text(

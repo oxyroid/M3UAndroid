@@ -7,6 +7,7 @@ import androidx.room.Room
 import com.m3u.data.database.M3UDatabase
 import com.m3u.data.database.dao.FeedDao
 import com.m3u.data.database.dao.LiveDao
+import com.m3u.data.database.dao.PostDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -28,13 +29,22 @@ object DatabaseModule {
     )
         .addMigrations(M3UDatabase.MIGRATION_1_2)
         .build()
+
     @Provides
+    @Singleton
     fun provideLiveDao(
         database: M3UDatabase
     ): LiveDao = database.liveDao()
 
     @Provides
+    @Singleton
     fun provideFeedDao(
         database: M3UDatabase
     ): FeedDao = database.feedDao()
+
+    @Provides
+    @Singleton
+    fun providePostDao(
+        database: M3UDatabase
+    ): PostDao = database.postDao()
 }

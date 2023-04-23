@@ -34,7 +34,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.isUnspecified
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
-import com.m3u.ui.model.Icon
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -164,7 +163,7 @@ fun MaskButton(
     )
     val currentKeepAlive by rememberUpdatedState(state::keepAlive)
     IconButton(
-        icon = Icon.ImageVectorIcon(icon),
+        icon = icon,
         contentDescription = null,
         onClick = {
             currentKeepAlive()

@@ -11,7 +11,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import com.m3u.data.database.entity.Live
 import com.m3u.ui.components.IconButton
-import com.m3u.ui.model.Icon
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
@@ -41,7 +40,7 @@ internal fun MutedLiveItem(
         },
         trailing = {
             IconButton(
-                icon = Icon.ImageVectorIcon(Icons.Rounded.Close),
+                icon = Icons.Rounded.Close,
                 contentDescription = "voice",
                 onClick = onBannedLive
             )

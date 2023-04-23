@@ -27,19 +27,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
-import com.m3u.ui.model.Icon
 import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.LocalTheme
-
 
 @Composable
 fun SheetTextField(
     text: String,
     modifier: Modifier = Modifier,
-    color: Color = LocalTheme.current.onBackground,
+    backgroundColor: Color = Color.Unspecified,
+    contentColor: Color = Color.Unspecified,
     onTextChange: (String) -> Unit = {},
     icon: ImageVector? = null,
-    iconTint: Color = color,
+    iconTint: Color = backgroundColor,
     readOnly: Boolean = true,
     onIconClick: (() -> Unit)? = null,
 ) {
@@ -53,7 +52,13 @@ fun SheetTextField(
         TextField(
             text = text,
             onValueChange = onTextChange,
-            background = if (readOnly) Color.Transparent else theme.surface,
+            backgroundColor = if (readOnly) Color.Transparent
+            else {
+                if (backgroundColor.isUnspecified) theme.surface
+                else backgroundColor
+            },
+            contentColor = if (contentColor.isUnspecified) theme.onSurface
+            else contentColor,
             readOnly = readOnly,
             fontWeight = FontWeight.ExtraBold,
             fontSize = 20.sp,
@@ -61,8 +66,9 @@ fun SheetTextField(
         )
         if (onIconClick != null && icon != null) {
             IconButton(
-                icon = Icon.ImageVectorIcon(icon),
-                tint = iconTint,
+                icon = icon,
+                tint = if (iconTint.isUnspecified) LocalTheme.current.onBackground
+                else iconTint,
                 onClick = onIconClick,
                 contentDescription = null
             )
@@ -76,7 +82,7 @@ fun SheetItem(
     text: String,
     color: Color = Color.Unspecified,
     contentColor: Color = Color.Unspecified,
-    onClick: () -> Unit
+    onClick: () -> Unit,
 ) {
     val theme = LocalTheme.current
     val spacing = LocalSpacing.current
@@ -116,7 +122,7 @@ fun SheetTextField(
 ) {
     SheetTextField(
         text = stringResource(id = resId),
-        color = color,
+        backgroundColor = color,
         onTextChange = onTextChange,
         icon = icon,
         iconTint = iconTint,
@@ -130,7 +136,7 @@ fun SheetItem(
     resId: Int,
     color: Color = Color.Unspecified,
     contentColor: Color = Color.Unspecified,
-    onClick: () -> Unit
+    onClick: () -> Unit,
 ) {
     SheetItem(
         text = stringResource(id = resId),
@@ -148,7 +154,7 @@ fun SheetDialog(
     modifier: Modifier = Modifier,
     maxHeight: Boolean = false,
     border: BorderStroke = BorderStroke(2.dp, LocalTheme.current.divider.copy(alpha = 0.45f)),
-    verticalArrangement: Arrangement.Vertical = Arrangement.Top
+    verticalArrangement: Arrangement.Vertical = Arrangement.Top,
 ) {
     val theme = LocalTheme.current
     val spacing = LocalSpacing.current

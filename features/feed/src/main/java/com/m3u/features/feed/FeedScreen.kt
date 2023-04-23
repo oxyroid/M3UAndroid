@@ -78,7 +78,6 @@ import com.m3u.features.feed.components.FeedDialog
 import com.m3u.features.feed.components.LiveItem
 import com.m3u.ui.components.TextField
 import com.m3u.ui.model.AppAction
-import com.m3u.ui.model.Icon
 import com.m3u.ui.model.LocalDuration
 import com.m3u.ui.model.LocalHelper
 import com.m3u.ui.model.LocalScalable
@@ -118,7 +117,7 @@ internal fun FeedRoute(
     RepeatOnCreate {
         helper.actions(
             AppAction(
-                icon = Icon.ImageVectorIcon(Icons.Rounded.Refresh),
+                icon = Icons.Rounded.Refresh,
                 contentDescription = "refresh",
                 onClick = {
                     viewModel.onEvent(FeedEvent.Refresh)

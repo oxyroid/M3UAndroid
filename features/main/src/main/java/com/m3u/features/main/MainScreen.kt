@@ -40,7 +40,6 @@ import com.m3u.ui.util.RepeatOnCreate
 import com.m3u.ui.util.interceptVolumeEvent
 
 private typealias ShowFeedBottomSheet = (Feed) -> Unit
-
 typealias NavigateToFeed = (url: String) -> Unit
 
 @Composable
@@ -52,7 +51,6 @@ fun MainRoute(
     val context = LocalContext.current
     val helper = LocalHelper.current
     val state: MainState by viewModel.state.collectAsStateWithLifecycle()
-    val feeds: List<FeedDetail> = state.feeds
     val rowCount = state.rowCount
     fun onRowCount(target: Int) {
         viewModel.onEvent(MainEvent.SetRowCount(target))
@@ -77,8 +75,8 @@ fun MainRoute(
         LocalScalable provides Scalable(1f / rowCount)
     ) {
         MainScreen(
+            feeds = state.feeds,
             rowCount = rowCount,
-            feeds = feeds,
             navigateToFeed = navigateToFeed,
             unsubscribe = { viewModel.onEvent(MainEvent.UnsubscribeFeedByUrl(it)) },
             rename = { feedUrl, target -> viewModel.onEvent(MainEvent.Rename(feedUrl, target)) },
@@ -98,15 +96,18 @@ private fun MainScreen(
     rename: OnRename,
     modifier: Modifier = Modifier
 ) {
-    var dialogStatus: MainDialogStatus by remember { mutableStateOf(MainDialogStatus.Idle) }
+    var dialogStatus: MainDialogStatus by remember {
+        mutableStateOf(MainDialogStatus.Idle)
+    }
     val configuration = LocalConfiguration.current
+
     when (configuration.orientation) {
         Configuration.ORIENTATION_PORTRAIT -> {
             PortraitOrientationContent(
                 feeds = feeds,
                 navigateToFeed = navigateToFeed,
                 showFeedBottomSheet = { dialogStatus = MainDialogStatus.Selections(it) },
-                modifier = modifier
+                modifier = Modifier.fillMaxSize()
             )
         }
 
@@ -116,18 +117,21 @@ private fun MainScreen(
                 feeds = feeds,
                 navigateToFeed = navigateToFeed,
                 showFeedBottomSheet = { dialogStatus = MainDialogStatus.Selections(it) },
-                modifier = modifier
+                modifier = Modifier.fillMaxSize()
             )
         }
+
         else -> {}
     }
+
     MainDialog(
         status = dialogStatus,
         update = { dialogStatus = it },
         unsubscribe = unsubscribe,
         rename = rename
     )
-    BackHandler(dialogStatus is MainDialogStatus.Selections) {
+
+    BackHandler(dialogStatus != MainDialogStatus.Idle) {
         dialogStatus = MainDialogStatus.Idle
     }
 }

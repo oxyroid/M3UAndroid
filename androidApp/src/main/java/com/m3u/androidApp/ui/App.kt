@@ -1,5 +1,6 @@
 package com.m3u.androidApp.ui
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
@@ -13,14 +14,18 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavDestination
+import com.m3u.androidApp.components.OptimizeBanner
+import com.m3u.androidApp.components.PostDialog
+import com.m3u.androidApp.components.PostDialogStatus
 import com.m3u.androidApp.navigation.BottomNavigationSheet
 import com.m3u.androidApp.navigation.Destination
 import com.m3u.androidApp.navigation.M3UNavHost
 import com.m3u.androidApp.navigation.rootNavigationRoute
+import com.m3u.data.database.entity.Post
 import com.m3u.features.console.navigation.consoleRoute
 import com.m3u.features.feed.navigation.feedRoute
 import com.m3u.features.live.navigation.livePlaylistRoute
@@ -32,8 +37,13 @@ import com.m3u.ui.components.IconButton
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun App(
-    appState: AppState = rememberAppState()
+    appState: AppState = rememberAppState(),
+    viewModel: RootViewModel = hiltViewModel()
 ) {
+    val rootState by viewModel.state.collectAsStateWithLifecycle()
+    val posts by viewModel.posts.collectAsStateWithLifecycle()
+    val post = rootState.post
+    val onPost = { it: Post? -> viewModel.onEvent(RootEvent.OnPost(it)) }
     Background {
         val currentDestination = appState.currentComposableNavDestination
         val topLevelTitle = appState.currentComposableTopLevelDestination
@@ -43,7 +53,25 @@ fun App(
         val text by remember(topLevelTitle) {
             derivedStateOf { topLevelTitle ?: title }
         }
-        val isSystemBarVisible = !appState.currentComposableNavDestination.isInFullscreenDestination()
+        var postDialogStatus = remember(post, posts) {
+            if (post == null) PostDialogStatus.Idle
+            else {
+                val index = posts.indexOf(post)
+                val total = posts.size
+                if (index != -1 && total > 0) {
+                    PostDialogStatus.Visible(
+                        post = post,
+                        index = posts.indexOf(post),
+                        total = posts.size
+                    )
+                } else {
+                    onPost(null)
+                    PostDialogStatus.Idle
+                }
+            }
+        }
+        val isSystemBarVisible =
+            !appState.currentComposableNavDestination.isInFullscreenDestination()
         AppTopBar(
             text = text,
             visible = isSystemBarVisible,
@@ -78,16 +106,31 @@ fun App(
                         .weight(1f)
                 )
                 AnimatedVisibility(isSystemBarVisible) {
-                    BottomNavigationSheet(
-                        destinations = appState.topLevelDestinations,
-                        currentTopLevelDestination = appState.currentComposableTopLevelDestination,
-                        navigateToTopLevelDestination = appState::navigateToTopLevelDestination,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .testTag("BottomNavigationSheet")
-                    )
+                    Column {
+                        OptimizeBanner(
+                            posts = posts,
+                            onPost = onPost,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        BottomNavigationSheet(
+                            destinations = appState.topLevelDestinations,
+                            currentTopLevelDestination = appState.currentComposableTopLevelDestination,
+                            navigateToTopLevelDestination = appState::navigateToTopLevelDestination,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
                 }
             }
+        }
+        PostDialog(
+            status = postDialogStatus,
+            onDismiss = { onPost(null) },
+            onNext = { viewModel.onEvent(RootEvent.OnNext) },
+            onPrevious = { viewModel.onEvent(RootEvent.OnPrevious) },
+            onRead = { viewModel.onEvent(RootEvent.OnRead) }
+        )
+        BackHandler(postDialogStatus != PostDialogStatus.Idle) {
+            postDialogStatus = PostDialogStatus.Idle
         }
     }
 }

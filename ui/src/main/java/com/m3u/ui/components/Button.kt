@@ -28,12 +28,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.m3u.ui.model.Icon
 import com.m3u.ui.model.LocalTheme
 
 @Composable
@@ -169,7 +168,7 @@ fun TextButtonLayout(
 
 @Composable
 fun IconButton(
-    icon: Icon,
+    icon: ImageVector,
     contentDescription: String?,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -179,23 +178,12 @@ fun IconButton(
         onClick = onClick,
         modifier = modifier
     ) {
-        when (icon) {
-            is Icon.DrawableResourceIcon -> {
-                Icon(
-                    painter = painterResource(icon.id),
-                    contentDescription = contentDescription,
-                    tint = tint
-                )
-            }
 
-            is Icon.ImageVectorIcon -> {
-                Icon(
-                    imageVector = icon.imageVector,
-                    contentDescription = contentDescription,
-                    tint = tint
-                )
-            }
-        }
+        Icon(
+            imageVector = icon,
+            contentDescription = contentDescription,
+            tint = tint
+        )
     }
 }
 

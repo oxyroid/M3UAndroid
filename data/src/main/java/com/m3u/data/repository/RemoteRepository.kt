@@ -1,7 +1,7 @@
 package com.m3u.data.repository
 
 import com.m3u.core.wrapper.Resource
-import com.m3u.data.database.entity.Release
+import com.m3u.data.remote.api.dto.Release
 import kotlinx.coroutines.flow.Flow
 
 interface RemoteRepository {
@@ -9,6 +9,6 @@ interface RemoteRepository {
 
     companion object {
         const val REPOS_AUTHOR = "thxbrop"
-        const val REPOS_NAME = "M3UAndroid"
+        const val REPOS_NAME_PROJECT = "M3UAndroid"
     }
 }

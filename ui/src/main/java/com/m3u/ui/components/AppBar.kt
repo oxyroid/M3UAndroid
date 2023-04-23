@@ -52,7 +52,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.lerp
 import com.m3u.ui.R
-import com.m3u.ui.model.Icon
 import com.m3u.ui.model.LocalDuration
 import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.LocalTheme
@@ -192,7 +191,7 @@ fun AppTopBar(
                     ) {
                         if (onBackPressed != null) {
                             IconButton(
-                                icon = Icon.ImageVectorIcon(Icons.Rounded.ArrowBack),
+                                icon = Icons.Rounded.ArrowBack,
                                 contentDescription = stringResource(R.string.cd_top_bar_on_back_pressed),
                                 onClick = { if (progress > 0) onBackPressed() },
                                 modifier = Modifier.graphicsLayer {

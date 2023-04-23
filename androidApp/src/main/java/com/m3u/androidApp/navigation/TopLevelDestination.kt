@@ -8,30 +8,30 @@ import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.rounded.Collections
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.Settings
+import androidx.compose.ui.graphics.vector.ImageVector
 import com.m3u.androidApp.R
-import com.m3u.ui.model.Icon
 
 enum class TopLevelDestination(
-    val selectedIcon: Icon,
-    val unselectedIcon: Icon,
+    val selectedIcon: ImageVector,
+    val unselectedIcon: ImageVector,
     @StringRes val iconTextId: Int,
     @StringRes val titleTextId: Int
 ) {
     Main(
-        selectedIcon = Icon.ImageVectorIcon(Icons.Rounded.Home),
-        unselectedIcon = Icon.ImageVectorIcon(Icons.Outlined.Home),
+        selectedIcon = Icons.Rounded.Home,
+        unselectedIcon = Icons.Outlined.Home,
         iconTextId = R.string.destination_main,
         titleTextId = R.string.app_name
     ),
     Favourite(
-        selectedIcon = Icon.ImageVectorIcon(Icons.Rounded.Collections),
-        unselectedIcon = Icon.ImageVectorIcon(Icons.Outlined.Collections),
+        selectedIcon = Icons.Rounded.Collections,
+        unselectedIcon = Icons.Outlined.Collections,
         iconTextId = R.string.destination_favourite,
         titleTextId = R.string.title_favourite
     ),
     Setting(
-        selectedIcon = Icon.ImageVectorIcon(Icons.Rounded.Settings),
-        unselectedIcon = Icon.ImageVectorIcon(Icons.Outlined.Settings),
+        selectedIcon = Icons.Rounded.Settings,
+        unselectedIcon = Icons.Outlined.Settings,
         iconTextId = R.string.destination_setting,
         titleTextId = R.string.title_setting
     )

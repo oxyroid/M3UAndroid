@@ -1,4 +1,4 @@
-package com.m3u.data.database.entity
+package com.m3u.data.remote.api.dto
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable

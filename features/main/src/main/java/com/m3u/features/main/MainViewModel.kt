@@ -30,7 +30,7 @@ class MainViewModel @Inject constructor(
     private val feedRepository: FeedRepository,
     private val liveRepository: LiveRepository,
     application: Application,
-    private val configuration: Configuration
+    private val configuration: Configuration,
 ) : BaseViewModel<MainState, MainEvent>(
     application = application,
     emptyState = MainState()

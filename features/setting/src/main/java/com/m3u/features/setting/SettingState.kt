@@ -8,7 +8,7 @@ import com.m3u.core.wrapper.Event
 import com.m3u.core.wrapper.Resource
 import com.m3u.core.wrapper.handledEvent
 import com.m3u.data.database.entity.Live
-import com.m3u.data.database.entity.Release
+import com.m3u.data.remote.api.dto.Release
 
 data class SettingState(
     val adding: Boolean = false,
