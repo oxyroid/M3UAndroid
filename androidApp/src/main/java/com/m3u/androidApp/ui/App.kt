@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -40,10 +41,18 @@ fun App(
     appState: AppState = rememberAppState(),
     viewModel: RootViewModel = hiltViewModel()
 ) {
-    val rootState by viewModel.state.collectAsStateWithLifecycle()
+    val state by viewModel.state.collectAsStateWithLifecycle()
     val posts by viewModel.posts.collectAsStateWithLifecycle()
-    val post = rootState.post
+    val post = state.post
     val onPost = { it: Post? -> viewModel.onEvent(RootEvent.OnPost(it)) }
+    LaunchedEffect(Unit) {
+        viewModel.onEvent(RootEvent.OnInitialTab)
+    }
+    LaunchedEffect(state.navigateTopLevelDestination) {
+        state.navigateTopLevelDestination.handle {
+            appState.navigateToTopLevelDestination(it)
+        }
+    }
     Background {
         val currentDestination = appState.currentComposableNavDestination
         val topLevelTitle = appState.currentComposableTopLevelDestination
@@ -54,19 +63,22 @@ fun App(
             derivedStateOf { topLevelTitle ?: title }
         }
         var postDialogStatus = remember(post, posts) {
-            if (post == null) PostDialogStatus.Idle
+            if (post == null || post.temporal) PostDialogStatus.Idle
             else {
-                val index = posts.indexOf(post)
-                val total = posts.size
-                if (index != -1 && total > 0) {
-                    PostDialogStatus.Visible(
-                        post = post,
-                        index = posts.indexOf(post),
-                        total = posts.size
-                    )
-                } else {
-                    onPost(null)
-                    PostDialogStatus.Idle
+                if (post.temporal) PostDialogStatus.Idle
+                else {
+                    val index = posts.indexOf(post)
+                    val total = posts.size
+                    if (index != -1 && total > 0) {
+                        PostDialogStatus.Visible(
+                            post = post,
+                            index = posts.indexOf(post),
+                            total = posts.size
+                        )
+                    } else {
+                        onPost(null)
+                        PostDialogStatus.Idle
+                    }
                 }
             }
         }

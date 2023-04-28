@@ -73,7 +73,7 @@ class AppState(
             else -> null
         }
 
-    val topLevelDestinations: List<TopLevelDestination> = TopLevelDestination.values().toList()
+    val topLevelDestinations: List<TopLevelDestination> = TopLevelDestination.values().asList()
 
     fun navigateToTopLevelDestination(destination: TopLevelDestination) {
         if (!currentNavDestination.isInDestination<Destination.Root>()) {
