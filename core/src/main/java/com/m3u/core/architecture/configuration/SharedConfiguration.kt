@@ -12,8 +12,11 @@ import com.m3u.core.architecture.configuration.Configuration.Companion.DEFAULT_E
 import com.m3u.core.architecture.configuration.Configuration.Companion.DEFAULT_FEED_STRATEGY
 import com.m3u.core.architecture.configuration.Configuration.Companion.DEFAULT_FULL_INFO_PLAYER
 import com.m3u.core.architecture.configuration.Configuration.Companion.DEFAULT_GOD_MODE
+import com.m3u.core.architecture.configuration.Configuration.Companion.DEFAULT_INITIAL_TAB_INDEX
+import com.m3u.core.architecture.configuration.Configuration.Companion.DEFAULT_IS_NEVER_DELIVER_COVER
 import com.m3u.core.architecture.configuration.Configuration.Companion.DEFAULT_ROW_COUNT
 import com.m3u.core.architecture.configuration.Configuration.Companion.DEFAULT_SCROLL_MODE
+import com.m3u.core.architecture.configuration.Configuration.Companion.DEFAULT_SILENT_MODE
 import com.m3u.core.architecture.configuration.Configuration.Companion.DEFAULT_SSL_VERIFICATION
 import com.m3u.core.architecture.configuration.Configuration.Companion.DEFAULT_USE_COMMON_UI_MODE
 import com.m3u.core.util.context.boolean
@@ -44,6 +47,10 @@ class SharedConfiguration @Inject constructor(
     override var autoRefresh: Boolean by sharedPreferences.boolean(DEFAULT_AUTO_REFRESH)
     override var isSSLVerification: Boolean by sharedPreferences.boolean(DEFAULT_SSL_VERIFICATION)
     override var fullInfoPlayer: Boolean by sharedPreferences.boolean(DEFAULT_FULL_INFO_PLAYER)
+    override var initialTabIndex: Int by sharedPreferences.int(DEFAULT_INITIAL_TAB_INDEX)
+    override var isNeverDeliverCover: Boolean
+            by sharedPreferences.boolean(DEFAULT_IS_NEVER_DELIVER_COVER)
+    override var silentMode: Boolean by sharedPreferences.boolean(DEFAULT_SILENT_MODE)
 
     companion object {
         private const val SHARED_SETTINGS = "shared_settings"

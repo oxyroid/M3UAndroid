@@ -3,6 +3,7 @@
 package com.m3u.data.database.entity
 
 import androidx.room.Entity
+import androidx.room.Ignore
 import androidx.room.PrimaryKey
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -19,8 +20,11 @@ data class Post(
     // for local
     val status: Int = STATUS_UNREAD,
     @PrimaryKey
-    val id: Int,
+    val id: Int
 ) {
+    @get:Ignore
+    val temporal: Boolean get() = standard == -1
+
     companion object {
         const val LANGUAGE_ZH_CN = "zh-cn"
         const val LANGUAGE_EN_WW = "en-ww"
@@ -31,6 +35,18 @@ data class Post(
         const val TYPE_INFO = 0
         const val TYPE_WARNING = 1
         const val TYPE_RELEASE = 2
+
+        fun createTemporal(text: String): Post = Post(
+            title = text,
+            content = "",
+            createdAt = 0L,
+            updatedAt = 0L,
+            language = "",
+            standard = -1,
+            type = TYPE_INFO,
+            status = -1,
+            id = -1
+        )
     }
 }
 

@@ -18,4 +18,4 @@ annotation class ClipMode {
     }
 }
 
-typealias OnClipMode = (@ClipMode Int) -> Unit
+typealias OnClipMode = () -> Unit

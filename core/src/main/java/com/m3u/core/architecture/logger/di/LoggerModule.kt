@@ -3,6 +3,8 @@
 package com.m3u.core.architecture.logger.di
 
 import com.m3u.core.architecture.logger.AndroidLogger
+import com.m3u.core.architecture.logger.BannerLogger
+import com.m3u.core.architecture.logger.BannerLoggerImpl
 import com.m3u.core.architecture.logger.FileLogger
 import com.m3u.core.architecture.logger.FileLoggerImpl
 import com.m3u.core.architecture.logger.Logger
@@ -23,4 +25,9 @@ interface LoggerModule {
     @Singleton
     @FileLoggerImpl
     fun bindFileLogger(logger: FileLogger): Logger
+
+    @Binds
+    @Singleton
+    @BannerLoggerImpl
+    fun bindBannerLogger(logger: BannerLogger): Logger
 }

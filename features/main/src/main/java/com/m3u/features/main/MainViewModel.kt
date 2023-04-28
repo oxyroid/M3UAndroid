@@ -4,9 +4,10 @@ import android.app.Application
 import androidx.lifecycle.viewModelScope
 import com.m3u.core.architecture.BaseViewModel
 import com.m3u.core.architecture.configuration.Configuration
+import com.m3u.core.architecture.logger.BannerLoggerImpl
+import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.util.collection.replaceIf
 import com.m3u.core.util.coroutine.mapElement
-import com.m3u.core.wrapper.eventOf
 import com.m3u.data.database.entity.Feed
 import com.m3u.data.repository.FeedRepository
 import com.m3u.data.repository.LiveRepository
@@ -31,6 +32,7 @@ class MainViewModel @Inject constructor(
     private val liveRepository: LiveRepository,
     application: Application,
     private val configuration: Configuration,
+    @BannerLoggerImpl private val logger: Logger
 ) : BaseViewModel<MainState, MainEvent>(
     application = application,
     emptyState = MainState()
@@ -97,11 +99,8 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch {
             val feed = feedRepository.unsubscribe(url)
             if (feed == null) {
-                writable.update {
-                    it.copy(
-                        message = eventOf(context.getString(R.string.error_unsubscribe_feed))
-                    )
-                }
+                val message = context.getString(R.string.error_unsubscribe_feed)
+                logger.log(message)
             }
         }
     }

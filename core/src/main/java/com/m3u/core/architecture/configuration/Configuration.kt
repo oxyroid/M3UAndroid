@@ -22,8 +22,15 @@ interface Configuration {
 
     @ExperimentalConfiguration
     var scrollMode: Boolean
+
     @ExperimentalConfiguration
     var isSSLVerification: Boolean
+
+    var initialTabIndex: Int
+
+    var isNeverDeliverCover: Boolean
+
+    var silentMode: Boolean
 
     companion object {
         @FeedStrategy
@@ -42,5 +49,8 @@ interface Configuration {
         const val DEFAULT_AUTO_REFRESH = false
         const val DEFAULT_SSL_VERIFICATION = true
         const val DEFAULT_FULL_INFO_PLAYER = false
+        const val DEFAULT_INITIAL_TAB_INDEX = 0
+        const val DEFAULT_IS_NEVER_DELIVER_COVER = false
+        const val DEFAULT_SILENT_MODE = false
     }
 }

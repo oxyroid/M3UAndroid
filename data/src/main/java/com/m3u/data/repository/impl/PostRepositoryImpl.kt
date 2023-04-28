@@ -13,7 +13,11 @@ import java.util.Locale
 import javax.inject.Inject
 import kotlin.streams.toList
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
@@ -22,9 +26,9 @@ class PostRepositoryImpl @Inject constructor(
     private val dao: PostDao,
     private val logger: Logger,
     private val api: RemoteApi,
-    private val json: Json,
+    private val json: Json
 ) : PostRepository {
-    override fun observeUnreadPosts(): Flow<List<Post>> = dao.observeAllUnread()
+    override fun observeActivePosts(): Flow<List<Post>> = dao.observeActivePosts()
 
     override suspend fun fetchAll() = logger.sandBox {
         val author = PostRepository.REPOS_AUTHOR
@@ -67,6 +71,22 @@ class PostRepositoryImpl @Inject constructor(
 
     override suspend fun read(id: Int) = logger.sandBox {
         dao.read(id)
+    }
+
+    private var temporalJob: Job? = null
+    override suspend fun temporal(post: Post) = coroutineScope {
+        temporalJob?.cancel()
+        temporalJob = launch {
+            logger.sandBox {
+                dao.insert(post)
+                delay(2500L)
+                dao.delete(post)
+            }
+        }
+    }
+
+    override suspend fun clear() = logger.sandBox {
+        dao.clear()
     }
 
     private fun getSystemLanguage(): String {

@@ -39,6 +39,7 @@ import java.net.URI
 @Composable
 internal fun LiveItem(
     live: Live,
+    isNeverDeliverCover: Boolean,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -78,7 +79,7 @@ internal fun LiveItem(
                 )
                 .then(modifier)
         ) {
-            if (!live.cover.isNullOrEmpty()) {
+            if (!isNeverDeliverCover && !live.cover.isNullOrEmpty()) {
                 Image(
                     model = live.cover,
                     errorPlaceholder = live.title,

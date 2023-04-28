@@ -25,7 +25,7 @@ class LiveViewModel @Inject constructor(
     private val feedRepository: FeedRepository,
     application: Application,
     configuration: Configuration,
-    private val playerManager: PlayerManager
+    private val playerManager: PlayerManager,
 ) : BaseViewModel<LiveState, LiveEvent>(
     application = application,
     emptyState = LiveState()
@@ -87,9 +87,11 @@ class LiveViewModel @Inject constructor(
                 if (url.isEmpty()) return
                 playerManager.installMedia(url)
             }
+
             LiveEvent.UninstallMedia -> {
                 playerManager.uninstallMedia()
             }
+
             LiveEvent.OnMuted -> muted()
         }
     }

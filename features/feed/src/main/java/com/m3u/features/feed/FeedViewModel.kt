@@ -4,6 +4,8 @@ import android.app.Application
 import androidx.lifecycle.viewModelScope
 import com.m3u.core.architecture.BaseViewModel
 import com.m3u.core.architecture.configuration.Configuration
+import com.m3u.core.architecture.logger.BannerLoggerImpl
+import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.wrapper.Resource
 import com.m3u.core.wrapper.eventOf
 import com.m3u.data.repository.FeedRepository
@@ -28,6 +30,7 @@ class FeedViewModel @Inject constructor(
     private val feedRepository: FeedRepository,
     private val mediaRepository: MediaRepository,
     private val configuration: Configuration,
+    @BannerLoggerImpl private val logger: Logger,
     application: Application
 ) : BaseViewModel<FeedState, FeedEvent>(
     application = application,
@@ -40,7 +43,8 @@ class FeedViewModel @Inject constructor(
                 scrollMode = configuration.scrollMode,
                 rowCount = configuration.rowCount,
                 godMode = configuration.godMode,
-                autoRefresh = configuration.autoRefresh
+                autoRefresh = configuration.autoRefresh,
+                isNeverDeliverCover = configuration.isNeverDeliverCover
             )
         }
     }
@@ -70,17 +74,18 @@ class FeedViewModel @Inject constructor(
     private fun CoroutineScope.observeFeedDetail(feedUrl: String) {
         feedRepository.observe(feedUrl)
             .onEach { feed ->
-                writable.update {
-                    if (feed != null) {
+                if (feed != null) {
+                    writable.update {
                         it.copy(
                             url = feed.url,
                             title = feed.title
                         )
-                    } else {
-                        val message = context.getString(R.string.error_observe_feed, feedUrl)
-                        it.copy(message = eventOf(message))
                     }
+                } else {
+                    val message = context.getString(R.string.error_observe_feed, feedUrl)
+                    onMessage(message)
                 }
+
             }
             .launchIn(this)
     }
@@ -121,10 +126,13 @@ class FeedViewModel @Inject constructor(
                             fetching = false
                         )
 
-                        is Resource.Failure -> it.copy(
-                            fetching = false,
-                            message = eventOf(resource.message.orEmpty())
-                        )
+                        is Resource.Failure -> {
+                            val message = resource.message.orEmpty()
+                            onMessage(message)
+                            it.copy(
+                                fetching = false
+                            )
+                        }
                     }
                 }
             }
@@ -165,6 +173,7 @@ class FeedViewModel @Inject constructor(
                                 is Resource.Success -> {
                                     onMessage("Saved to ${resource.data.absolutePath}")
                                 }
+
                                 is Resource.Failure -> {
                                     onMessage(resource.message)
                                 }
@@ -182,11 +191,7 @@ class FeedViewModel @Inject constructor(
             val target = event.target
             val live = liveRepository.get(id)
             if (live == null) {
-                writable.update {
-                    it.copy(
-                        message = eventOf("Live is not existed!")
-                    )
-                }
+                onMessage("channel is not existed!")
             } else {
                 liveRepository.setBanned(live.id, target)
             }
@@ -203,11 +208,7 @@ class FeedViewModel @Inject constructor(
     }
 
     private fun onMessage(message: String?) {
-        writable.update {
-            it.copy(
-                message = eventOf(message.orEmpty())
-            )
-        }
+        logger.log(message.orEmpty())
     }
 
     private val queryStateFlow = MutableStateFlow("")

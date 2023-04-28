@@ -60,7 +60,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -70,7 +69,6 @@ import androidx.tv.foundation.lazy.grid.TvLazyVerticalGrid
 import androidx.tv.foundation.lazy.grid.items
 import androidx.tv.foundation.lazy.grid.rememberTvLazyGridState
 import com.m3u.core.util.basic.uppercaseFirst
-import com.m3u.core.util.context.toast
 import com.m3u.core.wrapper.Event
 import com.m3u.data.database.entity.Live
 import com.m3u.features.feed.components.DialogStatus
@@ -106,7 +104,6 @@ internal fun FeedRoute(
     modifier: Modifier = Modifier,
     viewModel: FeedViewModel = hiltViewModel()
 ) {
-    val context = LocalContext.current
     val helper = LocalHelper.current
     val state by viewModel.state.collectAsStateWithLifecycle()
     var dialogStatus: DialogStatus by remember { mutableStateOf(DialogStatus.Idle) }
@@ -124,9 +121,6 @@ internal fun FeedRoute(
                 }
             )
         )
-    }
-    EventHandler(state.message) {
-        context.toast(it)
     }
     LaunchedEffect(state.title) {
         state.title?.let {
@@ -162,6 +156,7 @@ internal fun FeedRoute(
             onQuery = { viewModel.onEvent(FeedEvent.OnQuery(it)) },
             useCommonUIMode = state.useCommonUIMode,
             scrollMode = state.scrollMode,
+            isNeverDeliverCover = state.isNeverDeliverCover,
             rowCount = rowCount,
             lives = state.lives,
             scrollUp = state.scrollUp,
@@ -194,6 +189,7 @@ private fun FeedScreen(
     onQuery: (String) -> Unit,
     useCommonUIMode: Boolean,
     scrollMode: Boolean,
+    isNeverDeliverCover: Boolean,
     rowCount: Int,
     lives: MappedLives,
     scrollUp: Event<Unit>,
@@ -251,6 +247,7 @@ private fun FeedScreen(
                             lives = it,
                             useCommonUIMode = useCommonUIMode,
                             scrollMode = scrollMode,
+                            isNeverDeliverCover = isNeverDeliverCover,
                             rowCount = rowCount,
                             isAtTopState = isAtTopState,
                             scrollUp = scrollUp,
@@ -270,6 +267,7 @@ private fun FeedScreen(
                         PortraitOrientationContent(
                             lives = it,
                             scrollMode = scrollMode,
+                            isNeverDeliverCover = isNeverDeliverCover,
                             rowCount = rowCount,
                             isAtTopState = isAtTopState,
                             scrollUp = scrollUp,
@@ -322,6 +320,7 @@ private fun FeedScreen(
 private fun LandscapeOrientationContent(
     useCommonUIMode: Boolean,
     scrollMode: Boolean,
+    isNeverDeliverCover: Boolean,
     rowCount: Int,
     lives: List<Live>,
     scrollUp: Event<Unit>,
@@ -365,6 +364,7 @@ private fun LandscapeOrientationContent(
             ) { live ->
                 LiveItem(
                     live = live,
+                    isNeverDeliverCover = isNeverDeliverCover,
                     onClick = {
                         if (scrollMode) {
                             val initialIndex = ids.indexOfFirst { it == live.id }
@@ -384,6 +384,7 @@ private fun LandscapeOrientationContent(
                 TelevisionUIModeContent(
                     lives = lives,
                     experimentalMode = scrollMode,
+                    isNeverDeliverCover = isNeverDeliverCover,
                     isAtTopState = isAtTopState,
                     scrollUp = scrollUp,
                     navigateToLive = navigateToLive,
@@ -407,6 +408,7 @@ private fun LandscapeOrientationContent(
 private fun PortraitOrientationContent(
     lives: List<Live>,
     scrollMode: Boolean,
+    isNeverDeliverCover: Boolean,
     rowCount: Int,
     scrollUp: Event<Unit>,
     isAtTopState: MutableState<Boolean>,
@@ -446,6 +448,7 @@ private fun PortraitOrientationContent(
         ) { live ->
             LiveItem(
                 live = live,
+                isNeverDeliverCover = isNeverDeliverCover,
                 onClick = {
                     if (scrollMode) {
                         val initialIndex = ids.indexOfFirst { it == live.id }
@@ -465,6 +468,7 @@ private fun PortraitOrientationContent(
 private fun TelevisionUIModeContent(
     lives: List<Live>,
     experimentalMode: Boolean,
+    isNeverDeliverCover: Boolean,
     isAtTopState: MutableState<Boolean>,
     scrollUp: Event<Unit>,
     navigateToLive: (Int) -> Unit,
@@ -503,6 +507,7 @@ private fun TelevisionUIModeContent(
         ) { live ->
             LiveItem(
                 live = live,
+                isNeverDeliverCover = isNeverDeliverCover,
                 onClick = {
                     if (experimentalMode) {
                         val initialIndex = ids.indexOfFirst { it == live.id }

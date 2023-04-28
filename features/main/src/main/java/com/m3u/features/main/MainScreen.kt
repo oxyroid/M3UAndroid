@@ -20,10 +20,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.m3u.core.util.context.toast
 import com.m3u.data.database.entity.Feed
 import com.m3u.features.main.components.FeedItem
 import com.m3u.features.main.components.MainDialog
@@ -35,7 +33,6 @@ import com.m3u.ui.model.LocalHelper
 import com.m3u.ui.model.LocalScalable
 import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.Scalable
-import com.m3u.ui.util.EventHandler
 import com.m3u.ui.util.RepeatOnCreate
 import com.m3u.ui.util.interceptVolumeEvent
 
@@ -48,15 +45,11 @@ fun MainRoute(
     modifier: Modifier = Modifier,
     viewModel: MainViewModel = hiltViewModel()
 ) {
-    val context = LocalContext.current
     val helper = LocalHelper.current
     val state: MainState by viewModel.state.collectAsStateWithLifecycle()
     val rowCount = state.rowCount
     fun onRowCount(target: Int) {
         viewModel.onEvent(MainEvent.SetRowCount(target))
-    }
-    EventHandler(state.message) {
-        context.toast(it)
     }
     RepeatOnCreate {
         helper.actions()

@@ -4,9 +4,11 @@ import com.m3u.data.database.entity.Post
 import kotlinx.coroutines.flow.Flow
 
 interface PostRepository {
-    fun observeUnreadPosts(): Flow<List<Post>>
+    fun observeActivePosts(): Flow<List<Post>>
     suspend fun fetchAll()
     suspend fun read(id: Int)
+    suspend fun temporal(post: Post)
+    suspend fun clear()
 
     companion object {
         const val REPOS_AUTHOR = "thxbrop"

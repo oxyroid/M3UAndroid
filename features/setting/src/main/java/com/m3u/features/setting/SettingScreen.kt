@@ -37,8 +37,6 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -49,10 +47,7 @@ import com.m3u.core.annotation.ConnectTimeout
 import com.m3u.core.annotation.FeedStrategy
 import com.m3u.core.annotation.OnClipMode
 import com.m3u.core.annotation.OnFeedStrategy
-import com.m3u.core.util.context.toast
-import com.m3u.core.wrapper.Resource
 import com.m3u.data.database.entity.Live
-import com.m3u.data.remote.api.dto.Release
 import com.m3u.features.setting.components.CheckBoxPreference
 import com.m3u.features.setting.components.FoldPreference
 import com.m3u.features.setting.components.MutedLiveItem
@@ -65,7 +60,6 @@ import com.m3u.ui.components.WorkInProgressLottie
 import com.m3u.ui.model.LocalHelper
 import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.LocalTheme
-import com.m3u.ui.util.EventHandler
 import com.m3u.ui.util.RepeatOnCreate
 
 typealias NavigateToConsole = () -> Unit
@@ -77,12 +71,7 @@ fun SettingRoute(
     navigateToConsole: NavigateToConsole
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    val context = LocalContext.current
     val helper = LocalHelper.current
-
-    EventHandler(state.message) {
-        context.toast(it)
-    }
 
     RepeatOnCreate {
         helper.actions()
@@ -97,8 +86,6 @@ fun SettingRoute(
         adding = !state.adding,
         title = state.title,
         url = state.url,
-        version = state.version,
-        release = state.release,
         feedStrategy = state.feedStrategy,
         godMode = state.godMode,
         clipMode = state.clipMode,
@@ -109,24 +96,31 @@ fun SettingRoute(
         navigateToConsole = navigateToConsole,
         experimentalMode = state.experimentalMode,
         mutedLives = state.mutedLives,
-        fetchRelease = { viewModel.onEvent(SettingEvent.FetchRelease) },
         onGodMode = { viewModel.onEvent(SettingEvent.OnGodMode) },
         onConnectTimeout = { viewModel.onEvent(SettingEvent.OnConnectTimeout) },
         onTitle = { viewModel.onEvent(SettingEvent.OnTitle(it)) },
         onUrl = { viewModel.onEvent(SettingEvent.OnUrl(it)) },
         onSubscribe = { viewModel.onEvent(SettingEvent.OnSubscribe) },
         onScrollMode = { viewModel.onEvent(SettingEvent.OnScrollMode) },
-        onFeedStrategy = { viewModel.onEvent(SettingEvent.OnSyncMode(it)) },
+        onFeedStrategy = { viewModel.onEvent(SettingEvent.OnSyncMode) },
         onUIMode = { viewModel.onEvent(SettingEvent.OnUseCommonUIMode) },
         onExperimentalMode = { viewModel.onEvent(SettingEvent.OnExperimentalMode) },
         onBannedLive = { viewModel.onEvent(SettingEvent.OnBannedLive(it)) },
-        onClipMode = { viewModel.onEvent(SettingEvent.OnClipMode(it)) },
+        onClipMode = { viewModel.onEvent(SettingEvent.OnClipMode) },
         autoRefresh = state.autoRefresh,
         onAutoRefresh = { viewModel.onEvent(SettingEvent.OnAutoRefresh) },
         isSSLVerificationEnabled = state.isSSLVerificationEnabled,
         onSSLVerificationEnabled = { viewModel.onEvent(SettingEvent.OnSSLVerificationEnabled) },
         fullInfoPlayer = state.fullInfoPlayer,
         onFullInfoPlayer = { viewModel.onEvent(SettingEvent.OnFullInfoPlayer) },
+        initialTabTitle = remember(state.initialTabTitle, state.tabTitles) {
+            state.tabTitles.getOrNull(state.initialTabTitle).orEmpty()
+        },
+        onInitialTabIndex = { viewModel.onEvent(SettingEvent.OnInitialTabIndex) },
+        isNeverDeliverCover = state.isNeverDeliverCover,
+        onNeverDeliverCover = { viewModel.onEvent(SettingEvent.OnNeverDeliverCover) },
+        silentMode = state.silentMode,
+        onSilentMode = { viewModel.onEvent(SettingEvent.OnSilentMode) },
         modifier = modifier.fillMaxSize()
     )
 }
@@ -134,9 +128,6 @@ fun SettingRoute(
 @Composable
 private fun SettingScreen(
     adding: Boolean,
-    version: String,
-    release: Resource<Release>,
-    fetchRelease: () -> Unit,
     title: String,
     url: String,
     @FeedStrategy feedStrategy: Int,
@@ -166,6 +157,12 @@ private fun SettingScreen(
     onSSLVerificationEnabled: () -> Unit,
     fullInfoPlayer: Boolean,
     onFullInfoPlayer: () -> Unit,
+    initialTabTitle: String,
+    onInitialTabIndex: () -> Unit,
+    isNeverDeliverCover: Boolean,
+    onNeverDeliverCover: () -> Unit,
+    silentMode: Boolean,
+    onSilentMode: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     var fold: Fold by remember { mutableStateOf(Fold.NONE) }
@@ -194,9 +191,6 @@ private fun SettingScreen(
                     onFeedStrategy = onFeedStrategy,
                     onGodMode = onGodMode,
                     onScrollMode = onScrollMode,
-                    version = version,
-                    release = release,
-                    fetchRelease = fetchRelease,
                     useCommonUIMode = useCommonUIMode,
                     navigateToConsole = navigateToConsole,
                     useCommonUIModeEnable = useCommonUIModeEnable,
@@ -210,6 +204,12 @@ private fun SettingScreen(
                     onSSLVerificationEnabled = onSSLVerificationEnabled,
                     fullInfoPlayer = fullInfoPlayer,
                     onFullInfoPlayer = onFullInfoPlayer,
+                    initialTabTitle = initialTabTitle,
+                    onInitialTabIndex = onInitialTabIndex,
+                    isNeverDeliverCover = isNeverDeliverCover,
+                    onNeverDeliverCover = onNeverDeliverCover,
+                    silentMode = silentMode,
+                    onSilentMode = onSilentMode,
                     modifier = modifier
                         .fillMaxWidth()
                         .scrollable(
@@ -218,6 +218,7 @@ private fun SettingScreen(
                         )
                 )
             }
+
             Configuration.ORIENTATION_LANDSCAPE -> {
                 LandscapeOrientationContent(
                     fold = fold,
@@ -231,9 +232,6 @@ private fun SettingScreen(
                     connectTimeout = connectTimeout,
                     useCommonUIMode = useCommonUIMode,
                     useCommonUIModeEnable = useCommonUIModeEnable,
-                    version = version,
-                    release = release,
-                    fetchRelease = fetchRelease,
                     onFold = { fold = it },
                     onTitle = onTitle,
                     onUrl = onUrl,
@@ -255,12 +253,19 @@ private fun SettingScreen(
                     onSSLVerificationEnabled = onSSLVerificationEnabled,
                     fullInfoPlayer = fullInfoPlayer,
                     onFullInfoPlayer = onFullInfoPlayer,
+                    initialTabTitle = initialTabTitle,
+                    onInitialTabIndex = onInitialTabIndex,
+                    isNeverDeliverCover = isNeverDeliverCover,
+                    onNeverDeliverCover = onNeverDeliverCover,
+                    silentMode = silentMode,
+                    onSilentMode = onSilentMode,
                     modifier = modifier.scrollable(
                         orientation = Orientation.Vertical,
                         state = rememberScrollableState { it }
                     )
                 )
             }
+
             else -> {}
         }
     }
@@ -291,9 +296,6 @@ private fun PortraitOrientationContent(
     onUrl: (String) -> Unit,
     onSubscribe: () -> Unit,
     onFeedStrategy: OnFeedStrategy,
-    version: String,
-    release: Resource<Release>,
-    fetchRelease: () -> Unit,
     navigateToConsole: NavigateToConsole,
     experimentalMode: Boolean,
     onScrollMode: () -> Unit,
@@ -305,13 +307,16 @@ private fun PortraitOrientationContent(
     onSSLVerificationEnabled: () -> Unit,
     fullInfoPlayer: Boolean,
     onFullInfoPlayer: () -> Unit,
+    initialTabTitle: String,
+    onInitialTabIndex: () -> Unit,
+    isNeverDeliverCover: Boolean,
+    onNeverDeliverCover: () -> Unit,
+    silentMode: Boolean,
+    onSilentMode: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Box {
         PreferencesPart(
-            version = version,
-            release = release,
-            fetchRelease = fetchRelease,
             feedStrategy = feedStrategy,
             useCommonUIMode = useCommonUIMode,
             useCommonUIModeEnable = useCommonUIModeEnable,
@@ -340,6 +345,12 @@ private fun PortraitOrientationContent(
             onSSLVerificationEnabled = onSSLVerificationEnabled,
             fullInfoPlayer = fullInfoPlayer,
             onFullInfoPlayer = onFullInfoPlayer,
+            initialTabTitle = initialTabTitle,
+            onInitialTabIndex = onInitialTabIndex,
+            isNeverDeliverCover = isNeverDeliverCover,
+            onNeverDeliverCover = onNeverDeliverCover,
+            silentMode = silentMode,
+            onSilentMode = onSilentMode,
             modifier = modifier
         )
 
@@ -362,11 +373,13 @@ private fun PortraitOrientationContent(
                         modifier = modifier.background(LocalTheme.current.background)
                     )
                 }
+
                 Fold.SCRIPT -> {
                     ScriptManagementPart(
                         modifier = modifier.background(LocalTheme.current.background)
                     )
                 }
+
                 else -> {}
             }
         }
@@ -396,11 +409,8 @@ private fun LandscapeOrientationContent(
     onGodMode: () -> Unit,
     onClipMode: OnClipMode,
     onScrollMode: () -> Unit,
-    version: String,
-    release: Resource<Release>,
     mutedLives: List<Live>,
     onBannedLive: (Int) -> Unit,
-    fetchRelease: () -> Unit,
     navigateToConsole: NavigateToConsole,
     experimentalMode: Boolean,
     onExperimentalMode: () -> Unit,
@@ -410,6 +420,12 @@ private fun LandscapeOrientationContent(
     onSSLVerificationEnabled: () -> Unit,
     fullInfoPlayer: Boolean,
     onFullInfoPlayer: () -> Unit,
+    initialTabTitle: String,
+    onInitialTabIndex: () -> Unit,
+    isNeverDeliverCover: Boolean,
+    onNeverDeliverCover: () -> Unit,
+    silentMode: Boolean,
+    onSilentMode: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
@@ -419,9 +435,6 @@ private fun LandscapeOrientationContent(
         modifier = modifier.padding(horizontal = spacing.medium)
     ) {
         PreferencesPart(
-            version = version,
-            release = release,
-            fetchRelease = fetchRelease,
             godMode = godMode,
             clipMode = clipMode,
             onClipMode = onClipMode,
@@ -446,6 +459,12 @@ private fun LandscapeOrientationContent(
             onSSLVerificationEnabled = onSSLVerificationEnabled,
             fullInfoPlayer = fullInfoPlayer,
             onFullInfoPlayer = onFullInfoPlayer,
+            initialTabTitle = initialTabTitle,
+            onInitialTabIndex = onInitialTabIndex,
+            isNeverDeliverCover = isNeverDeliverCover,
+            onNeverDeliverCover = onNeverDeliverCover,
+            silentMode = silentMode,
+            onSilentMode = onSilentMode,
             modifier = Modifier
                 .fillMaxHeight()
                 .weight(1f)
@@ -492,14 +511,11 @@ private fun PreferencesPart(
     godMode: Boolean,
     scrollMode: Boolean,
     fullInfoPlayer: Boolean,
-    version: String,
-    release: Resource<Release>,
     onFeedStrategy: OnFeedStrategy,
     onClipMode: OnClipMode,
     onUIMode: () -> Unit,
     onGodMode: () -> Unit,
     onScrollMode: () -> Unit,
-    fetchRelease: () -> Unit,
     onFeedManagement: () -> Unit,
     onScriptManagement: () -> Unit,
     onConnectTimeout: () -> Unit,
@@ -510,6 +526,12 @@ private fun PreferencesPart(
     onAutoRefresh: () -> Unit,
     isSSLVerificationEnabled: Boolean,
     onSSLVerificationEnabled: () -> Unit,
+    initialTabTitle: String,
+    onInitialTabIndex: () -> Unit,
+    isNeverDeliverCover: Boolean,
+    onNeverDeliverCover: () -> Unit,
+    silentMode: Boolean,
+    onSilentMode: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val spacing = LocalSpacing.current
@@ -537,13 +559,7 @@ private fun PreferencesPart(
                         FeedStrategy.SKIP_FAVORITE -> stringResource(R.string.sync_mode_skip_favourite)
                         else -> ""
                     },
-                    onClick = {
-                        val target = when (feedStrategy) {
-                            FeedStrategy.ALL -> FeedStrategy.SKIP_FAVORITE
-                            else -> FeedStrategy.ALL
-                        }
-                        onFeedStrategy(target)
-                    }
+                    onClick = onFeedStrategy
                 )
                 TextPreference(
                     title = stringResource(R.string.clip_mode),
@@ -553,22 +569,17 @@ private fun PreferencesPart(
                         ClipMode.STRETCHED -> stringResource(R.string.clip_mode_stretched)
                         else -> ""
                     },
-                    onClick = {
-                        val target = when (clipMode) {
-                            ClipMode.ADAPTIVE -> ClipMode.CLIP
-                            ClipMode.CLIP -> ClipMode.STRETCHED
-                            ClipMode.STRETCHED -> ClipMode.ADAPTIVE
-                            else -> ClipMode.ADAPTIVE
-                        }
-                        onClipMode(target)
-                    }
+                    onClick = onClipMode
                 )
-
-
                 TextPreference(
                     title = stringResource(R.string.connect_timeout),
                     content = "${connectTimeout / 1000}s",
                     onClick = onConnectTimeout
+                )
+                TextPreference(
+                    title = stringResource(R.string.initial_tab),
+                    content = initialTabTitle,
+                    onClick = onInitialTabIndex
                 )
                 CheckBoxPreference(
                     title = stringResource(R.string.auto_refresh),
@@ -581,12 +592,32 @@ private fun PreferencesPart(
                     }
                 )
                 CheckBoxPreference(
+                    title = stringResource(R.string.never_deliver_cover),
+                    subtitle = stringResource(R.string.never_deliver_cover_description),
+                    checked = isNeverDeliverCover,
+                    onCheckedChange = { newValue ->
+                        if (newValue != isNeverDeliverCover) {
+                            onNeverDeliverCover()
+                        }
+                    }
+                )
+                CheckBoxPreference(
                     title = stringResource(R.string.full_info_player),
                     subtitle = stringResource(R.string.full_info_player_description),
                     checked = fullInfoPlayer,
                     onCheckedChange = { newValue ->
                         if (newValue != fullInfoPlayer) {
                             onFullInfoPlayer()
+                        }
+                    }
+                )
+                CheckBoxPreference(
+                    title = stringResource(R.string.silent_mode),
+                    subtitle = stringResource(R.string.silent_mode_description),
+                    checked = silentMode,
+                    onCheckedChange = { newValue ->
+                        if (newValue != silentMode) {
+                            onSilentMode()
                         }
                     }
                 )
@@ -672,39 +703,6 @@ private fun PreferencesPart(
                                 }
                             }
                         )
-                    }
-                }
-            }
-        }
-        item {
-            when (release) {
-                Resource.Loading -> {}
-                is Resource.Success -> {
-                    val uriHandler = LocalUriHandler.current
-                    val remoteVersion = release.data.name
-                    val name = if (remoteVersion != version) {
-                        stringResource(R.string.label_latest_release_version, remoteVersion)
-                    } else {
-                        stringResource(R.string.label_same_version)
-                    }
-                    TextButton(name) {
-                        if (remoteVersion == version) {
-                            fetchRelease()
-                        } else {
-                            val url =
-                                "https://github.com/thxbrop/M3UAndroid/releases/tag/v$remoteVersion"
-                            uriHandler.openUri(url)
-                        }
-                    }
-                }
-                is Resource.Failure -> {
-                    TextButton(
-                        text = stringResource(
-                            R.string.failed_latest_release_version,
-                            release.message.orEmpty()
-                        )
-                    ) {
-                        fetchRelease()
                     }
                 }
             }

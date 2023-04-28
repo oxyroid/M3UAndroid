@@ -5,12 +5,14 @@ package com.m3u.data.service.di
 import android.app.NotificationManager
 import android.content.Context
 import androidx.core.app.NotificationManagerCompat
+import com.m3u.core.architecture.service.BannerService
 import com.m3u.core.architecture.service.DownloadService
 import com.m3u.core.architecture.service.NotificationService
 import com.m3u.core.architecture.service.PlayerManager
+import com.m3u.data.service.ConflatedBannerService
+import com.m3u.data.service.DefaultDownloadService
+import com.m3u.data.service.DefaultNotificationService
 import com.m3u.data.service.ExoPlayerManager
-import com.m3u.data.service.NotificationServiceImpl
-import com.m3u.data.service.SystemDownloadService
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -24,7 +26,7 @@ import javax.inject.Singleton
 interface ServiceModule {
     @Binds
     @Singleton
-    fun bindDownloadService(service: SystemDownloadService): DownloadService
+    fun bindDownloadService(service: DefaultDownloadService): DownloadService
 
     @Binds
     @Singleton
@@ -32,7 +34,11 @@ interface ServiceModule {
 
     @Binds
     @Singleton
-    fun bindNotificationService(service: NotificationServiceImpl): NotificationService
+    fun bindNotificationService(service: DefaultNotificationService): NotificationService
+
+    @Binds
+    @Singleton
+    fun bindConflatedBannerService(service: ConflatedBannerService): BannerService
 }
 
 @Module

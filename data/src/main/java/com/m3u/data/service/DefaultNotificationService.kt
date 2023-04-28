@@ -12,7 +12,7 @@ import com.m3u.core.architecture.service.NotificationService
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 
-class NotificationServiceImpl @Inject constructor(
+class DefaultNotificationService @Inject constructor(
     @ApplicationContext private val context: Context,
     private val managerCompat: NotificationManagerCompat,
     private val manager: NotificationManager

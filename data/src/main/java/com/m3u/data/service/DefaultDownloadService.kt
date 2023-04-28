@@ -16,7 +16,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-class SystemDownloadService @Inject constructor(
+class DefaultDownloadService @Inject constructor(
     @ApplicationContext private val context: Context
 ) : DownloadService {
     private var isRegister: Boolean = false

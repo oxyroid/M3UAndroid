@@ -15,9 +15,9 @@ data class FeedState(
     val query: String = "",
     val fetching: Boolean = false,
     val scrollUp: Event<Unit> = handledEvent(),
-    val message: Event<String> = handledEvent(),
     val useCommonUIMode: Boolean = Configuration.DEFAULT_USE_COMMON_UI_MODE,
     val scrollMode: Boolean = Configuration.DEFAULT_SCROLL_MODE,
     val godMode: Boolean = Configuration.DEFAULT_GOD_MODE,
-    val autoRefresh: Boolean = Configuration.DEFAULT_AUTO_REFRESH
+    val autoRefresh: Boolean = Configuration.DEFAULT_AUTO_REFRESH,
+    val isNeverDeliverCover: Boolean = Configuration.DEFAULT_IS_NEVER_DELIVER_COVER
 )

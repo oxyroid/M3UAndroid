@@ -42,4 +42,9 @@
     <string name="ssl_verification_enabled_description">ensure valid and trustworthy SSL/TLS certificates for secure communications</string>
     <string name="full_info_player">full information player</string>
     <string name="full_info_player_description">display more information in the player</string>
+    <string name="initial_tab">initial Screen</string>
+    <string name="never_deliver_cover">never show cover</string>
+    <string name="never_deliver_cover_description">may improve performance</string>
+    <string name="silent_mode">silent mode</string>
+    <string name="silent_mode_description">do not receive cloud announcements</string>
 </resources>
