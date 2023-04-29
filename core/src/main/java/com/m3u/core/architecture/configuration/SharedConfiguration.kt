@@ -13,7 +13,7 @@ import com.m3u.core.architecture.configuration.Configuration.Companion.DEFAULT_F
 import com.m3u.core.architecture.configuration.Configuration.Companion.DEFAULT_FULL_INFO_PLAYER
 import com.m3u.core.architecture.configuration.Configuration.Companion.DEFAULT_GOD_MODE
 import com.m3u.core.architecture.configuration.Configuration.Companion.DEFAULT_INITIAL_TAB_INDEX
-import com.m3u.core.architecture.configuration.Configuration.Companion.DEFAULT_IS_NEVER_DELIVER_COVER
+import com.m3u.core.architecture.configuration.Configuration.Companion.DEFAULT_NO_PICTURE_MODE
 import com.m3u.core.architecture.configuration.Configuration.Companion.DEFAULT_ROW_COUNT
 import com.m3u.core.architecture.configuration.Configuration.Companion.DEFAULT_SCROLL_MODE
 import com.m3u.core.architecture.configuration.Configuration.Companion.DEFAULT_SILENT_MODE
@@ -48,8 +48,8 @@ class SharedConfiguration @Inject constructor(
     override var isSSLVerification: Boolean by sharedPreferences.boolean(DEFAULT_SSL_VERIFICATION)
     override var fullInfoPlayer: Boolean by sharedPreferences.boolean(DEFAULT_FULL_INFO_PLAYER)
     override var initialTabIndex: Int by sharedPreferences.int(DEFAULT_INITIAL_TAB_INDEX)
-    override var isNeverDeliverCover: Boolean
-            by sharedPreferences.boolean(DEFAULT_IS_NEVER_DELIVER_COVER)
+    override var noPictureMode: Boolean
+            by sharedPreferences.boolean(DEFAULT_NO_PICTURE_MODE)
     override var silentMode: Boolean by sharedPreferences.boolean(DEFAULT_SILENT_MODE)
 
     companion object {

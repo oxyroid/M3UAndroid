@@ -8,5 +8,6 @@ typealias LiveDetails = Map<String, List<Live>>
 data class FavoriteState(
     val details: LiveDetails = emptyMap(),
     val rowCount: Int = Configuration.DEFAULT_ROW_COUNT,
-    val godMode: Boolean = Configuration.DEFAULT_GOD_MODE
+    val godMode: Boolean = Configuration.DEFAULT_GOD_MODE,
+    val noPictureMode: Boolean = Configuration.DEFAULT_NO_PICTURE_MODE
 )

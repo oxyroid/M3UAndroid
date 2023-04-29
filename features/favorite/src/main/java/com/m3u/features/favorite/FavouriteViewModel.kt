@@ -25,12 +25,6 @@ class FavouriteViewModel @Inject constructor(
     emptyState = FavoriteState()
 ) {
     init {
-        writable.update {
-            it.copy(
-                rowCount = configuration.rowCount,
-                godMode = configuration.godMode
-            )
-        }
         liveRepository
             .observeAll()
             .map { lives ->
@@ -52,6 +46,17 @@ class FavouriteViewModel @Inject constructor(
     override fun onEvent(event: FavoriteEvent) {
         when (event) {
             is FavoriteEvent.SetRowCount -> setRowCount(event.target)
+            FavoriteEvent.InitConfiguration -> initConfiguration()
+        }
+    }
+
+    private fun initConfiguration() {
+        writable.update {
+            it.copy(
+                rowCount = configuration.rowCount,
+                godMode = configuration.godMode,
+                noPictureMode = configuration.noPictureMode
+            )
         }
     }
 

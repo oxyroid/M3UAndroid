@@ -156,7 +156,7 @@ internal fun FeedRoute(
             onQuery = { viewModel.onEvent(FeedEvent.OnQuery(it)) },
             useCommonUIMode = state.useCommonUIMode,
             scrollMode = state.scrollMode,
-            isNeverDeliverCover = state.isNeverDeliverCover,
+            noPictureMode = state.noPictureMode,
             rowCount = rowCount,
             lives = state.lives,
             scrollUp = state.scrollUp,
@@ -189,7 +189,7 @@ private fun FeedScreen(
     onQuery: (String) -> Unit,
     useCommonUIMode: Boolean,
     scrollMode: Boolean,
-    isNeverDeliverCover: Boolean,
+    noPictureMode: Boolean,
     rowCount: Int,
     lives: MappedLives,
     scrollUp: Event<Unit>,
@@ -247,7 +247,7 @@ private fun FeedScreen(
                             lives = it,
                             useCommonUIMode = useCommonUIMode,
                             scrollMode = scrollMode,
-                            isNeverDeliverCover = isNeverDeliverCover,
+                            noPictureMode = noPictureMode,
                             rowCount = rowCount,
                             isAtTopState = isAtTopState,
                             scrollUp = scrollUp,
@@ -267,7 +267,7 @@ private fun FeedScreen(
                         PortraitOrientationContent(
                             lives = it,
                             scrollMode = scrollMode,
-                            isNeverDeliverCover = isNeverDeliverCover,
+                            noPictureMode = noPictureMode,
                             rowCount = rowCount,
                             isAtTopState = isAtTopState,
                             scrollUp = scrollUp,
@@ -320,7 +320,7 @@ private fun FeedScreen(
 private fun LandscapeOrientationContent(
     useCommonUIMode: Boolean,
     scrollMode: Boolean,
-    isNeverDeliverCover: Boolean,
+    noPictureMode: Boolean,
     rowCount: Int,
     lives: List<Live>,
     scrollUp: Event<Unit>,
@@ -364,7 +364,7 @@ private fun LandscapeOrientationContent(
             ) { live ->
                 LiveItem(
                     live = live,
-                    isNeverDeliverCover = isNeverDeliverCover,
+                    noPictureMode = noPictureMode,
                     onClick = {
                         if (scrollMode) {
                             val initialIndex = ids.indexOfFirst { it == live.id }
@@ -384,7 +384,7 @@ private fun LandscapeOrientationContent(
                 TelevisionUIModeContent(
                     lives = lives,
                     experimentalMode = scrollMode,
-                    isNeverDeliverCover = isNeverDeliverCover,
+                    noPictureMode = noPictureMode,
                     isAtTopState = isAtTopState,
                     scrollUp = scrollUp,
                     navigateToLive = navigateToLive,
@@ -408,7 +408,7 @@ private fun LandscapeOrientationContent(
 private fun PortraitOrientationContent(
     lives: List<Live>,
     scrollMode: Boolean,
-    isNeverDeliverCover: Boolean,
+    noPictureMode: Boolean,
     rowCount: Int,
     scrollUp: Event<Unit>,
     isAtTopState: MutableState<Boolean>,
@@ -448,7 +448,7 @@ private fun PortraitOrientationContent(
         ) { live ->
             LiveItem(
                 live = live,
-                isNeverDeliverCover = isNeverDeliverCover,
+                noPictureMode = noPictureMode,
                 onClick = {
                     if (scrollMode) {
                         val initialIndex = ids.indexOfFirst { it == live.id }
@@ -468,7 +468,7 @@ private fun PortraitOrientationContent(
 private fun TelevisionUIModeContent(
     lives: List<Live>,
     experimentalMode: Boolean,
-    isNeverDeliverCover: Boolean,
+    noPictureMode: Boolean,
     isAtTopState: MutableState<Boolean>,
     scrollUp: Event<Unit>,
     navigateToLive: (Int) -> Unit,
@@ -507,7 +507,7 @@ private fun TelevisionUIModeContent(
         ) { live ->
             LiveItem(
                 live = live,
-                isNeverDeliverCover = isNeverDeliverCover,
+                noPictureMode = noPictureMode,
                 onClick = {
                     if (experimentalMode) {
                         val initialIndex = ids.indexOfFirst { it == live.id }

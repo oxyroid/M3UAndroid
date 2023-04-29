@@ -19,5 +19,5 @@ data class FeedState(
     val scrollMode: Boolean = Configuration.DEFAULT_SCROLL_MODE,
     val godMode: Boolean = Configuration.DEFAULT_GOD_MODE,
     val autoRefresh: Boolean = Configuration.DEFAULT_AUTO_REFRESH,
-    val isNeverDeliverCover: Boolean = Configuration.DEFAULT_IS_NEVER_DELIVER_COVER
+    val noPictureMode: Boolean = Configuration.DEFAULT_NO_PICTURE_MODE
 )

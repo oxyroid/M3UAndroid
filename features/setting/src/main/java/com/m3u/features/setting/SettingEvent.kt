@@ -16,6 +16,8 @@ sealed interface SettingEvent {
     object OnSSLVerificationEnabled : SettingEvent
     object OnFullInfoPlayer : SettingEvent
     object OnInitialTabIndex : SettingEvent
-    object OnNeverDeliverCover: SettingEvent
-    object OnSilentMode: SettingEvent
+    object OnNoPictureMode : SettingEvent
+    object OnSilentMode : SettingEvent
+
+    object InitConfiguration : SettingEvent
 }

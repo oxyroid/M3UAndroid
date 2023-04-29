@@ -23,6 +23,6 @@ data class SettingState(
     val fullInfoPlayer: Boolean = Configuration.DEFAULT_FULL_INFO_PLAYER,
     val initialTabTitle: Int = Configuration.DEFAULT_INITIAL_TAB_INDEX,
     val tabTitles: List<String> = emptyList(),
-    val isNeverDeliverCover: Boolean = Configuration.DEFAULT_IS_NEVER_DELIVER_COVER,
+    val noPictureMode: Boolean = Configuration.DEFAULT_NO_PICTURE_MODE,
     val silentMode: Boolean = Configuration.DEFAULT_SILENT_MODE
 )

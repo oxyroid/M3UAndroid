@@ -44,7 +44,7 @@ class FeedViewModel @Inject constructor(
                 rowCount = configuration.rowCount,
                 godMode = configuration.godMode,
                 autoRefresh = configuration.autoRefresh,
-                isNeverDeliverCover = configuration.isNeverDeliverCover
+                noPictureMode = configuration.noPictureMode
             )
         }
     }

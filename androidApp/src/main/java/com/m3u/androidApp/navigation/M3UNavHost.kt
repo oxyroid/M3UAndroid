@@ -29,11 +29,11 @@ fun M3UNavHost(
     AnimatedNavHost(
         navController = navController,
         startDestination = startDestination,
-        modifier = modifier,
         enterTransition = { fadeIn(tween(0)) },
         exitTransition = { fadeOut(tween(0)) },
         popEnterTransition = { fadeIn(tween(0)) },
         popExitTransition = { fadeOut(tween(0)) },
+        modifier = modifier,
     ) {
         rootGraph(
             pagerState = pagerState,

@@ -1,5 +1,6 @@
 package com.m3u.features.favorite.components
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
@@ -35,6 +36,7 @@ import java.net.URI
 @Composable
 internal fun FavoriteItem(
     live: Live,
+    noPictureMode: Boolean,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -63,7 +65,7 @@ internal fun FavoriteItem(
                 )
                 .then(modifier)
         ) {
-            if (!live.cover.isNullOrEmpty()) {
+            AnimatedVisibility (!noPictureMode && !live.cover.isNullOrEmpty()) {
                 Image(
                     model = live.cover,
                     errorPlaceholder = live.title,

@@ -38,12 +38,6 @@ class MainViewModel @Inject constructor(
     emptyState = MainState()
 ) {
     init {
-        writable.update {
-            it.copy(
-                godMode = configuration.godMode,
-                rowCount = configuration.rowCount
-            )
-        }
         var job: Job? = null
         observeAllFeeds()
             .mapElement(Feed::toDetail)
@@ -92,6 +86,7 @@ class MainViewModel @Inject constructor(
             is MainEvent.UnsubscribeFeedByUrl -> unsubscribeFeedByUrl(event.url)
             is MainEvent.SetRowCount -> setRowCount(event.target)
             is MainEvent.Rename -> rename(event.feedUrl, event.target)
+            MainEvent.InitConfiguration -> initConfiguration()
         }
     }
 
@@ -117,6 +112,15 @@ class MainViewModel @Inject constructor(
     private fun rename(feedUrl: String, target: String) {
         viewModelScope.launch {
             feedRepository.rename(feedUrl, target)
+        }
+    }
+
+    private fun initConfiguration() {
+        writable.update {
+            it.copy(
+                godMode = configuration.godMode,
+                rowCount = configuration.rowCount
+            )
         }
     }
 }

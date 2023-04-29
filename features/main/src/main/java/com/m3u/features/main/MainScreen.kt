@@ -14,6 +14,7 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -33,7 +34,6 @@ import com.m3u.ui.model.LocalHelper
 import com.m3u.ui.model.LocalScalable
 import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.Scalable
-import com.m3u.ui.util.RepeatOnCreate
 import com.m3u.ui.util.interceptVolumeEvent
 
 private typealias ShowFeedBottomSheet = (Feed) -> Unit
@@ -42,6 +42,7 @@ typealias NavigateToFeed = (url: String) -> Unit
 @Composable
 fun MainRoute(
     navigateToFeed: NavigateToFeed,
+    isCurrentPage: Boolean,
     modifier: Modifier = Modifier,
     viewModel: MainViewModel = hiltViewModel()
 ) {
@@ -51,8 +52,11 @@ fun MainRoute(
     fun onRowCount(target: Int) {
         viewModel.onEvent(MainEvent.SetRowCount(target))
     }
-    RepeatOnCreate {
-        helper.actions()
+    LaunchedEffect(isCurrentPage) {
+        if (isCurrentPage) {
+            helper.actions()
+            viewModel.onEvent(MainEvent.InitConfiguration)
+        }
     }
 
     val interceptVolumeEventModifier = if (state.godMode) {

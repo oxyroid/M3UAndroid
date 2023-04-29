@@ -47,8 +47,8 @@
     <string name="full_info_player">详细信息的播放器</string>
     <string name="full_info_player_description">播放器中展示更多的信息</string>
     <string name="initial_tab">初始界面</string>
-    <string name="never_deliver_cover">永不显示封面</string>
-    <string name="never_deliver_cover_description">可能会对性能有所提升</string>
+    <string name="no_picture_mode">无图模式</string>
+    <string name="no_picture_mode_description">可能会对性能有所提升</string>
     <string name="silent_mode">寂静模式</string>
     <string name="silent_mode_description">不接收云端公告</string>
 </resources>

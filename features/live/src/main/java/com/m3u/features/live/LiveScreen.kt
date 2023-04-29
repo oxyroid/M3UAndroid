@@ -126,6 +126,7 @@ internal fun LiveRoute(
     LaunchedEffect(init) {
         viewModel.onEvent(init)
     }
+
     LiveScreen(
         init = state.init,
         experimentalMode = state.experimentalMode,
@@ -209,17 +210,16 @@ private fun LiveScreen(
                 modifier = modifier
                     .fillMaxSize()
                     .background(theme.background)
-                    .testTag("features:live")
-            ) { page ->
+            ) { pageIndex ->
                 LivePart(
                     player = player,
                     playback = playback,
                     videoSize = videoSize,
                     playerError = playerError,
-                    title = init.lives[page].title,
+                    title = init.lives[pageIndex].title,
                     feedTitle = init.feed?.title.orEmpty(),
-                    url = init.lives[page].url,
-                    cover = init.lives[page].cover.orEmpty(),
+                    url = init.lives[pageIndex].url,
+                    cover = init.lives[pageIndex].cover.orEmpty(),
                     maskState = maskState,
                     experimentalMode = experimentalMode,
                     fullInfoPlayer = fullInfoPlayer,
@@ -236,7 +236,7 @@ private fun LiveScreen(
                         .fillMaxSize()
                         .background(Color.Black)
                         .graphicsLayer {
-                            val offset = (pagerState.currentPage - page) +
+                            val offset = (pagerState.currentPage - pageIndex) +
                                     pagerState.currentPageOffsetFraction.absoluteValue
                                         .coerceIn(0f, 1f)
                             val scale = lerp(1f, 0.8f, offset)

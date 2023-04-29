@@ -64,18 +64,23 @@ private fun RootGraph(
             TopLevelDestination.Main -> {
                 MainRoute(
                     navigateToFeed = navigateToFeed,
+                    isCurrentPage = state.currentPage == pagerIndex,
                     modifier = Modifier.fillMaxSize()
                 )
             }
+
             TopLevelDestination.Favourite -> {
                 FavouriteRoute(
                     navigateToLive = navigateToLive,
+                    isCurrentPage = state.currentPage == pagerIndex,
                     modifier = Modifier.fillMaxSize()
                 )
             }
+
             TopLevelDestination.Setting -> {
                 SettingRoute(
                     navigateToConsole = navigateToConsole,
+                    isCurrentPage = state.currentPage == pagerIndex,
                     modifier = Modifier.fillMaxSize()
                 )
             }

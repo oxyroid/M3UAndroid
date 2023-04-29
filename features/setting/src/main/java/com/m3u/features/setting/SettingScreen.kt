@@ -26,6 +26,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -60,21 +61,24 @@ import com.m3u.ui.components.WorkInProgressLottie
 import com.m3u.ui.model.LocalHelper
 import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.LocalTheme
-import com.m3u.ui.util.RepeatOnCreate
 
 typealias NavigateToConsole = () -> Unit
 
 @Composable
 fun SettingRoute(
     modifier: Modifier = Modifier,
+    isCurrentPage: Boolean,
     viewModel: SettingViewModel = hiltViewModel(),
     navigateToConsole: NavigateToConsole
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val helper = LocalHelper.current
 
-    RepeatOnCreate {
-        helper.actions()
+    LaunchedEffect(isCurrentPage) {
+        if (isCurrentPage) {
+            helper.actions()
+            viewModel.onEvent(SettingEvent.InitConfiguration)
+        }
     }
 
     val configuration = LocalConfiguration.current
@@ -117,8 +121,8 @@ fun SettingRoute(
             state.tabTitles.getOrNull(state.initialTabTitle).orEmpty()
         },
         onInitialTabIndex = { viewModel.onEvent(SettingEvent.OnInitialTabIndex) },
-        isNeverDeliverCover = state.isNeverDeliverCover,
-        onNeverDeliverCover = { viewModel.onEvent(SettingEvent.OnNeverDeliverCover) },
+        noPictureMode = state.noPictureMode,
+        onNoPictureMode = { viewModel.onEvent(SettingEvent.OnNoPictureMode) },
         silentMode = state.silentMode,
         onSilentMode = { viewModel.onEvent(SettingEvent.OnSilentMode) },
         modifier = modifier.fillMaxSize()
@@ -159,8 +163,8 @@ private fun SettingScreen(
     onFullInfoPlayer: () -> Unit,
     initialTabTitle: String,
     onInitialTabIndex: () -> Unit,
-    isNeverDeliverCover: Boolean,
-    onNeverDeliverCover: () -> Unit,
+    noPictureMode: Boolean,
+    onNoPictureMode: () -> Unit,
     silentMode: Boolean,
     onSilentMode: () -> Unit,
     modifier: Modifier = Modifier
@@ -206,8 +210,8 @@ private fun SettingScreen(
                     onFullInfoPlayer = onFullInfoPlayer,
                     initialTabTitle = initialTabTitle,
                     onInitialTabIndex = onInitialTabIndex,
-                    isNeverDeliverCover = isNeverDeliverCover,
-                    onNeverDeliverCover = onNeverDeliverCover,
+                    noPictureMode = noPictureMode,
+                    onNoPictureMode = onNoPictureMode,
                     silentMode = silentMode,
                     onSilentMode = onSilentMode,
                     modifier = modifier
@@ -255,8 +259,8 @@ private fun SettingScreen(
                     onFullInfoPlayer = onFullInfoPlayer,
                     initialTabTitle = initialTabTitle,
                     onInitialTabIndex = onInitialTabIndex,
-                    isNeverDeliverCover = isNeverDeliverCover,
-                    onNeverDeliverCover = onNeverDeliverCover,
+                    noPictureMode = noPictureMode,
+                    onNoPictureMode = onNoPictureMode,
                     silentMode = silentMode,
                     onSilentMode = onSilentMode,
                     modifier = modifier.scrollable(
@@ -309,8 +313,8 @@ private fun PortraitOrientationContent(
     onFullInfoPlayer: () -> Unit,
     initialTabTitle: String,
     onInitialTabIndex: () -> Unit,
-    isNeverDeliverCover: Boolean,
-    onNeverDeliverCover: () -> Unit,
+    noPictureMode: Boolean,
+    onNoPictureMode: () -> Unit,
     silentMode: Boolean,
     onSilentMode: () -> Unit,
     modifier: Modifier = Modifier
@@ -347,8 +351,8 @@ private fun PortraitOrientationContent(
             onFullInfoPlayer = onFullInfoPlayer,
             initialTabTitle = initialTabTitle,
             onInitialTabIndex = onInitialTabIndex,
-            isNeverDeliverCover = isNeverDeliverCover,
-            onNeverDeliverCover = onNeverDeliverCover,
+            noPictureMode = noPictureMode,
+            onNoPictureMode = onNoPictureMode,
             silentMode = silentMode,
             onSilentMode = onSilentMode,
             modifier = modifier
@@ -422,8 +426,8 @@ private fun LandscapeOrientationContent(
     onFullInfoPlayer: () -> Unit,
     initialTabTitle: String,
     onInitialTabIndex: () -> Unit,
-    isNeverDeliverCover: Boolean,
-    onNeverDeliverCover: () -> Unit,
+    noPictureMode: Boolean,
+    onNoPictureMode: () -> Unit,
     silentMode: Boolean,
     onSilentMode: () -> Unit,
     modifier: Modifier = Modifier
@@ -461,8 +465,8 @@ private fun LandscapeOrientationContent(
             onFullInfoPlayer = onFullInfoPlayer,
             initialTabTitle = initialTabTitle,
             onInitialTabIndex = onInitialTabIndex,
-            isNeverDeliverCover = isNeverDeliverCover,
-            onNeverDeliverCover = onNeverDeliverCover,
+            noPictureMode = noPictureMode,
+            onNoPictureMode = onNoPictureMode,
             silentMode = silentMode,
             onSilentMode = onSilentMode,
             modifier = Modifier
@@ -528,8 +532,8 @@ private fun PreferencesPart(
     onSSLVerificationEnabled: () -> Unit,
     initialTabTitle: String,
     onInitialTabIndex: () -> Unit,
-    isNeverDeliverCover: Boolean,
-    onNeverDeliverCover: () -> Unit,
+    noPictureMode: Boolean,
+    onNoPictureMode: () -> Unit,
     silentMode: Boolean,
     onSilentMode: () -> Unit,
     modifier: Modifier = Modifier,
@@ -592,12 +596,12 @@ private fun PreferencesPart(
                     }
                 )
                 CheckBoxPreference(
-                    title = stringResource(R.string.never_deliver_cover),
-                    subtitle = stringResource(R.string.never_deliver_cover_description),
-                    checked = isNeverDeliverCover,
+                    title = stringResource(R.string.no_picture_mode),
+                    subtitle = stringResource(R.string.no_picture_mode_description),
+                    checked = noPictureMode,
                     onCheckedChange = { newValue ->
-                        if (newValue != isNeverDeliverCover) {
-                            onNeverDeliverCover()
+                        if (newValue != noPictureMode) {
+                            onNoPictureMode()
                         }
                     }
                 )

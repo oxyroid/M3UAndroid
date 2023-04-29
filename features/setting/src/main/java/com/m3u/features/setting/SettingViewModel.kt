@@ -38,24 +38,6 @@ class SettingViewModel @Inject constructor(
     emptyState = SettingState()
 ) {
     init {
-        writable.update {
-            it.copy(
-                feedStrategy = configuration.feedStrategy,
-                useCommonUIMode = configuration.useCommonUIMode,
-                experimentalMode = configuration.experimentalMode,
-                godMode = configuration.godMode,
-                connectTimeout = configuration.connectTimeout,
-                clipMode = configuration.clipMode,
-                scrollMode = configuration.scrollMode,
-                autoRefresh = configuration.autoRefresh,
-                isSSLVerificationEnabled = configuration.isSSLVerification,
-                fullInfoPlayer = configuration.fullInfoPlayer,
-                initialTabTitle = configuration.initialTabIndex,
-                tabTitles = createTabTitles(publisher.maxTabIndex),
-                isNeverDeliverCover = configuration.isNeverDeliverCover,
-                silentMode = configuration.silentMode
-            )
-        }
         liveRepository.observeBanned(banned = true)
             .onEach { lives ->
                 writable.update {
@@ -69,6 +51,7 @@ class SettingViewModel @Inject constructor(
 
     override fun onEvent(event: SettingEvent) {
         when (event) {
+            SettingEvent.InitConfiguration -> initConfiguration()
             SettingEvent.OnSubscribe -> subscribe()
             is SettingEvent.OnTitle -> onTitle(event.title)
             is SettingEvent.OnUrl -> onUrl(event.url)
@@ -84,8 +67,29 @@ class SettingViewModel @Inject constructor(
             SettingEvent.OnSSLVerificationEnabled -> onSSLVerificationEnabled()
             SettingEvent.OnFullInfoPlayer -> onFullInfoPlayer()
             SettingEvent.OnInitialTabIndex -> onInitialTabIndex()
-            SettingEvent.OnNeverDeliverCover -> onNeverDeliverCover()
+            SettingEvent.OnNoPictureMode -> onNoPictureMode()
             SettingEvent.OnSilentMode -> onSilentMode()
+        }
+    }
+
+    private fun initConfiguration() {
+        writable.update {
+            it.copy(
+                feedStrategy = configuration.feedStrategy,
+                useCommonUIMode = configuration.useCommonUIMode,
+                experimentalMode = configuration.experimentalMode,
+                godMode = configuration.godMode,
+                connectTimeout = configuration.connectTimeout,
+                clipMode = configuration.clipMode,
+                scrollMode = configuration.scrollMode,
+                autoRefresh = configuration.autoRefresh,
+                isSSLVerificationEnabled = configuration.isSSLVerification,
+                fullInfoPlayer = configuration.fullInfoPlayer,
+                initialTabTitle = configuration.initialTabIndex,
+                tabTitles = createTabTitles(publisher.maxTabIndex),
+                noPictureMode = configuration.noPictureMode,
+                silentMode = configuration.silentMode
+            )
         }
     }
 
@@ -106,12 +110,12 @@ class SettingViewModel @Inject constructor(
         }
     }
 
-    private fun onNeverDeliverCover() {
-        val target = !configuration.isNeverDeliverCover
-        configuration.isNeverDeliverCover = target
+    private fun onNoPictureMode() {
+        val target = !configuration.noPictureMode
+        configuration.noPictureMode = target
         writable.update {
             it.copy(
-                isNeverDeliverCover = target
+                noPictureMode = target
             )
         }
     }

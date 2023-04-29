@@ -14,6 +14,7 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -25,7 +26,6 @@ import com.m3u.ui.model.LocalHelper
 import com.m3u.ui.model.LocalScalable
 import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.Scalable
-import com.m3u.ui.util.RepeatOnCreate
 import com.m3u.ui.util.interceptVolumeEvent
 
 typealias NavigateToLive = (Int) -> Unit
@@ -33,6 +33,7 @@ typealias NavigateToLive = (Int) -> Unit
 @Composable
 fun FavouriteRoute(
     navigateToLive: NavigateToLive,
+    isCurrentPage: Boolean,
     modifier: Modifier = Modifier,
     viewModel: FavouriteViewModel = hiltViewModel()
 ) {
@@ -43,23 +44,33 @@ fun FavouriteRoute(
     fun onRowCount(target: Int) {
         viewModel.onEvent(FavoriteEvent.SetRowCount(target))
     }
-    RepeatOnCreate {
-        helper.actions()
-    }
-    val interceptVolumeEventModifier = if (state.godMode) {
-        Modifier.interceptVolumeEvent { event ->
-            when (event) {
-                KeyEvent.KEYCODE_VOLUME_UP -> onRowCount((rowCount - 1).coerceAtLeast(1))
-                KeyEvent.KEYCODE_VOLUME_DOWN -> onRowCount((rowCount + 1).coerceAtMost(3))
-            }
+    LaunchedEffect(isCurrentPage) {
+        if (isCurrentPage) {
+            helper.actions()
+            viewModel.onEvent(FavoriteEvent.InitConfiguration)
         }
-    } else Modifier
+    }
+
+    val interceptVolumeEventModifier = remember(state.godMode) {
+        if (state.godMode) {
+            Modifier.interceptVolumeEvent { event ->
+                when (event) {
+                    KeyEvent.KEYCODE_VOLUME_UP ->
+                        onRowCount((rowCount - 1).coerceAtLeast(1))
+
+                    KeyEvent.KEYCODE_VOLUME_DOWN ->
+                        onRowCount((rowCount + 1).coerceAtMost(3))
+                }
+            }
+        } else Modifier
+    }
 
     CompositionLocalProvider(
         LocalScalable provides Scalable(1f / rowCount)
     ) {
         FavoriteScreen(
             rowCount = rowCount,
+            noPictureMode = state.noPictureMode,
             details = state.details,
             navigateToLive = navigateToLive,
             modifier = modifier
@@ -73,6 +84,7 @@ fun FavouriteRoute(
 @Composable
 private fun FavoriteScreen(
     rowCount: Int,
+    noPictureMode: Boolean,
     details: LiveDetails,
     navigateToLive: NavigateToLive,
     modifier: Modifier = Modifier
@@ -105,6 +117,7 @@ private fun FavoriteScreen(
                     ) { live ->
                         FavoriteItem(
                             live = live,
+                            noPictureMode = noPictureMode,
                             onClick = {
                                 navigateToLive(live.id)
                             },
@@ -134,6 +147,7 @@ private fun FavoriteScreen(
                 ) { live ->
                     FavoriteItem(
                         live = live,
+                        noPictureMode = noPictureMode,
                         onClick = {
                             navigateToLive(live.id)
                         },

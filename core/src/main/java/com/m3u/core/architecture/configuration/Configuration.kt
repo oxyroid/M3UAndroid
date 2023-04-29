@@ -28,7 +28,7 @@ interface Configuration {
 
     var initialTabIndex: Int
 
-    var isNeverDeliverCover: Boolean
+    var noPictureMode: Boolean
 
     var silentMode: Boolean
 
@@ -50,7 +50,7 @@ interface Configuration {
         const val DEFAULT_SSL_VERIFICATION = true
         const val DEFAULT_FULL_INFO_PLAYER = false
         const val DEFAULT_INITIAL_TAB_INDEX = 0
-        const val DEFAULT_IS_NEVER_DELIVER_COVER = false
+        const val DEFAULT_NO_PICTURE_MODE = false
         const val DEFAULT_SILENT_MODE = false
     }
 }

@@ -11,7 +11,6 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.isUnspecified
 import androidx.core.app.PictureInPictureModeChangedInfo
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.util.Consumer
@@ -21,9 +20,8 @@ import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.lifecycleScope
 import com.google.accompanist.navigation.animation.rememberAnimatedNavController
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
-import com.m3u.androidApp.navigation.Destination
 import com.m3u.androidApp.ui.App
-import com.m3u.androidApp.ui.isInDestination
+import com.m3u.androidApp.ui.isInFullscreenDestination
 import com.m3u.androidApp.ui.rememberAppState
 import com.m3u.ui.M3ULocalProvider
 import com.m3u.ui.model.AppAction
@@ -53,22 +51,16 @@ class MainActivity : ComponentActivity() {
                 )
 
                 val systemUiController = rememberSystemUiController()
-                val systemBarsColor =
-                    if (state.currentComposableNavDestination.isInDestination<Destination.Live>()) Color.Black
-                    else Color.Unspecified
-                val useDarkIcons = !isSystemInDarkTheme()
+                val useDarkIcons = when {
+                    state.currentComposableNavDestination.isInFullscreenDestination() -> false
+                    else -> !isSystemInDarkTheme()
+                }
 
-                DisposableEffect(systemUiController, useDarkIcons, systemBarsColor) {
-                    if (systemBarsColor.isUnspecified) {
-                        systemUiController.setSystemBarsColor(
-                            color = Color.Transparent,
-                            darkIcons = useDarkIcons
-                        )
-                    } else {
-                        systemUiController.setSystemBarsColor(
-                            color = systemBarsColor
-                        )
-                    }
+                DisposableEffect(systemUiController, useDarkIcons) {
+                    systemUiController.setSystemBarsColor(
+                        color = Color.Transparent,
+                        darkIcons = useDarkIcons
+                    )
                     onDispose {}
                 }
                 App(state)
