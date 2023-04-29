@@ -19,7 +19,6 @@ import com.m3u.features.setting.SettingRoute
 
 const val rootNavigationRoute = "root_route"
 
-
 fun NavController.popUpToRoot() {
     this.popBackStack(rootNavigationRoute, false)
 }
@@ -56,9 +55,9 @@ private fun RootGraph(
     modifier: Modifier = Modifier
 ) {
     HorizontalPager(
-        modifier = modifier,
         state = state,
-        pageCount = destinations.size
+        pageCount = destinations.size,
+        modifier = modifier
     ) { pagerIndex ->
         when (destinations[pagerIndex]) {
             TopLevelDestination.Main -> {

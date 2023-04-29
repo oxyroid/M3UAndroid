@@ -8,9 +8,11 @@ import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.snapshotFlow
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination
 import androidx.navigation.NavHostController
@@ -48,6 +50,20 @@ fun rememberAppState(
             navController.removeOnDestinationChangedListener(listener)
         }
     }
+    LaunchedEffect(pagerState) {
+        snapshotFlow {
+            Triple(
+                pagerState.currentPage,
+                pagerState.settledPage,
+                pagerState.targetPage
+            )
+        }.collect {
+            Log.d(
+                "PagerState",
+                "OnPageChanged: [C]${it.first}, [S]${it.second}, [T]${it.third}"
+            )
+        }
+    }
     return remember(coroutineScope, navController, pagerState, title, actions) {
         AppState(coroutineScope, navController, pagerState, title, actions)
     }
@@ -69,7 +85,10 @@ class AppState(
 
     val currentComposableTopLevelDestination: TopLevelDestination?
         @Composable get() = when (currentComposableNavDestination?.route) {
-            rootNavigationRoute -> topLevelDestinations[pagerState.currentPage]
+            rootNavigationRoute -> {
+                topLevelDestinations[pagerState.currentPage]
+            }
+
             else -> null
         }
 
@@ -94,6 +113,7 @@ class AppState(
                 destination.ids,
                 destination.initialIndex
             )
+
             Destination.Console -> navController.navigateToConsole()
         }
     }
