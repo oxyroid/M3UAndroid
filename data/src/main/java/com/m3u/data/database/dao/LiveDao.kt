@@ -28,13 +28,13 @@ interface LiveDao {
     @Query("SELECT * FROM lives WHERE url = :url")
     suspend fun getByUrl(url: String): Live?
 
-    @Query("SELECT * FROM lives WHERE feedUrl = :feedUrl")
+    @Query("SELECT * FROM lives WHERE feedUrl = :feedUrl ORDER BY id")
     suspend fun getByFeedUrl(feedUrl: String): List<Live>
 
     @Query("SELECT * FROM lives WHERE id = :id")
     fun observeById(id: Int): Flow<Live?>
 
-    @Query("SELECT * FROM lives")
+    @Query("SELECT * FROM lives ORDER BY id")
     fun observeAll(): Flow<List<Live>>
 
     @Query("UPDATE lives SET favourite = :target WHERE id = :id")

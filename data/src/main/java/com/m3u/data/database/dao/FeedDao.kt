@@ -19,10 +19,10 @@ interface FeedDao {
     @Query("SELECT * FROM feeds WHERE url = :url")
     suspend fun getByUrl(url: String): Feed?
 
-    @Query("SELECT * FROM feeds")
+    @Query("SELECT * FROM feeds ORDER BY title")
     fun observeAll(): Flow<List<Feed>>
 
-    @Query("SELECT * FROM feeds WHERE url = :url")
+    @Query("SELECT * FROM feeds WHERE url = :url ORDER BY title")
     fun observeByUrl(url: String): Flow<Feed?>
 
     @Query("UPDATE feeds SET title = :target WHERE url = :url")
