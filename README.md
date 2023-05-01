@@ -8,7 +8,7 @@
 - [ ] Android Car.
 - [ ] DLNA Protocol.
 - [ ] Script.
-- [ ] More interface languages support.
+- [x] More interface languages support.
 - [ ] iOS and Desktop support in the future.
 
 ### Android Development
