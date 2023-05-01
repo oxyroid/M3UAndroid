@@ -10,8 +10,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.items
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -97,34 +95,30 @@ private fun FavoriteScreen(
 
     when (configuration.orientation) {
         Configuration.ORIENTATION_PORTRAIT -> {
+            val lives = remember(details) {
+                details.flatMap { it.value }
+            }
             LazyVerticalStaggeredGrid(
                 columns = StaggeredGridCells.Fixed(rowCount),
                 verticalItemSpacing = spacing.medium,
-                contentPadding = PaddingValues(spacing.medium),
+                horizontalArrangement = Arrangement.spacedBy(spacing.medium),
+                contentPadding = PaddingValues(LocalSpacing.current.medium),
                 modifier = modifier.fillMaxSize()
             ) {
-                details.forEach { feed ->
-                    item {
-                        Text(
-                            text = feed.key,
-                            style = MaterialTheme.typography.subtitle1
-                        )
-                    }
-                    items(
-                        items = feed.value,
-                        contentType = { it.cover.isNullOrEmpty() },
-                        key = { it.id }
-                    ) { live ->
-                        FavoriteItem(
-                            live = live,
-                            noPictureMode = noPictureMode,
-                            onClick = {
-                                navigateToLive(live.id)
-                            },
-                            onLongClick = {},
-                            modifier = Modifier.fillMaxSize()
-                        )
-                    }
+                items(
+                    items = lives,
+                    contentType = { it.cover.isNullOrEmpty() },
+                    key = { it.id }
+                ) { live ->
+                    FavoriteItem(
+                        live = live,
+                        noPictureMode = noPictureMode,
+                        onClick = {
+                            navigateToLive(live.id)
+                        },
+                        onLongClick = {},
+                        modifier = Modifier.fillMaxSize()
+                    )
                 }
             }
         }
@@ -137,7 +131,7 @@ private fun FavoriteScreen(
                 columns = StaggeredGridCells.Fixed(rowCount + 2),
                 verticalItemSpacing = spacing.medium,
                 horizontalArrangement = Arrangement.spacedBy(spacing.medium),
-                contentPadding = PaddingValues(spacing.medium),
+                contentPadding = PaddingValues(LocalSpacing.current.medium),
                 modifier = modifier.fillMaxSize(),
             ) {
                 items(
