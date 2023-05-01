@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="placeholder_url">订阅链接</string>
-    <string name="label_app_version">应用版本：%s</string>
-    <string name="label_latest_release_version">最新版本：%s</string>
+    <string name="app_version">应用版本</string>
     <string name="label_subscribe">订阅</string>
 
     <string name="success_subscribe">订阅成功</string>
@@ -22,14 +21,9 @@
     <string name="script_management">脚本管理</string>
     <string name="feed_management">订阅管理</string>
     <string name="connect_timeout">最大超时时间</string>
-    <string name="show_muted_mode_description">测试功能暂不可用</string>
-    <string name="label_contact_me">加入讨论群</string>
     <string name="god_mode">上帝模式</string>
     <string name="god_mode_description">通过物理按键调节界面</string>
-    <string name="failed_latest_release_version">无法获取版本信息：%s</string>
-    <string name="fetching_latest">拉取版本信息中</string>
-    <string name="label_same_version">已是最新版本</string>
-    <string name="console_editor">Console Editor</string>
+    <string name="console_editor">console editor</string>
     <string name="experimental_mode">试验特性</string>
     <string name="experimental_mode_description">不稳定的功能可能引发致命错误</string>
     <string name="label_muted_lives">屏蔽的频道</string>
@@ -51,4 +45,5 @@
     <string name="no_picture_mode_description">可能会对性能有所提升</string>
     <string name="silent_mode">寂静模式</string>
     <string name="silent_mode_description">不接收云端公告</string>
+    <string name="system_setting">系统设置</string>
 </resources>

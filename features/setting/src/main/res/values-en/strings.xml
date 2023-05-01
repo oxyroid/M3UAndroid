@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="placeholder_url">playlist link</string>
-    <string name="label_app_version">app version: %s</string>
-    <string name="label_latest_release_version">latest version: %s</string>
+    <string name="app_version">app version</string>
     <string name="label_subscribe">subscribe</string>
     <string name="success_subscribe">subscribe successfully</string>
     <string name="failed_malformed_url">malformed url (%s)</string>
@@ -18,13 +17,8 @@
     <string name="script_management">script management</string>
     <string name="feed_management">playlist management</string>
     <string name="connect_timeout">connect timeout</string>
-    <string name="show_muted_mode_description">the feature is temporarily unavailable</string>
-    <string name="label_contact_me">join discussion</string>
     <string name="god_mode">god mode</string>
     <string name="god_mode_description">adjust layouts by physical volume buttons</string>
-    <string name="failed_latest_release_version">cannot request version information: %s</string>
-    <string name="fetching_latest">fetching…</string>
-    <string name="label_same_version">already the latest version</string>
     <string name="console_editor">Console Editor</string>
     <string name="experimental_mode">experimental mode</string>
     <string name="experimental_mode_description">unstable features can throw fatal errors</string>
@@ -47,4 +41,5 @@
     <string name="no_picture_mode_description">may improve performance</string>
     <string name="silent_mode">silent mode</string>
     <string name="silent_mode_description">do not receive cloud announcements</string>
+    <string name="system_setting">system setting</string>
 </resources>
