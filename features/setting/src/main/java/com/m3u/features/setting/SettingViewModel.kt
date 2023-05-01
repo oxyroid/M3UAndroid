@@ -35,7 +35,9 @@ class SettingViewModel @Inject constructor(
     private val postRepository: PostRepository
 ) : BaseViewModel<SettingState, SettingEvent>(
     application = application,
-    emptyState = SettingState()
+    emptyState = SettingState(
+        version = publisher.versionName
+    )
 ) {
     init {
         liveRepository.observeBanned(banned = true)

@@ -1,6 +1,9 @@
 package com.m3u.features.setting
 
+import android.content.Intent
 import android.content.res.Configuration
+import android.net.Uri
+import android.provider.Settings
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
@@ -38,6 +41,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -87,6 +91,7 @@ fun SettingRoute(
     else state.useCommonUIMode
     val useCommonUIModeEnable = (type != Configuration.UI_MODE_TYPE_NORMAL)
     SettingScreen(
+        version = state.version,
         adding = !state.adding,
         title = state.title,
         url = state.url,
@@ -131,6 +136,7 @@ fun SettingRoute(
 
 @Composable
 private fun SettingScreen(
+    version: String,
     adding: Boolean,
     title: String,
     url: String,
@@ -177,6 +183,7 @@ private fun SettingScreen(
         when (configuration.orientation) {
             Configuration.ORIENTATION_PORTRAIT -> {
                 PortraitOrientationContent(
+                    version = version,
                     fold = fold,
                     title = title,
                     url = url,
@@ -225,6 +232,7 @@ private fun SettingScreen(
 
             Configuration.ORIENTATION_LANDSCAPE -> {
                 LandscapeOrientationContent(
+                    version = version,
                     fold = fold,
                     title = title,
                     url = url,
@@ -280,6 +288,7 @@ private fun SettingScreen(
 
 @Composable
 private fun PortraitOrientationContent(
+    version: String,
     fold: Fold,
     title: String,
     url: String,
@@ -321,6 +330,7 @@ private fun PortraitOrientationContent(
 ) {
     Box {
         PreferencesPart(
+            version = version,
             feedStrategy = feedStrategy,
             useCommonUIMode = useCommonUIMode,
             useCommonUIModeEnable = useCommonUIModeEnable,
@@ -392,6 +402,7 @@ private fun PortraitOrientationContent(
 
 @Composable
 private fun LandscapeOrientationContent(
+    version: String,
     fold: Fold,
     title: String,
     url: String,
@@ -439,6 +450,7 @@ private fun LandscapeOrientationContent(
         modifier = modifier.padding(horizontal = spacing.medium)
     ) {
         PreferencesPart(
+            version = version,
             godMode = godMode,
             clipMode = clipMode,
             onClipMode = onClipMode,
@@ -506,6 +518,7 @@ private fun LandscapeOrientationContent(
 
 @Composable
 private fun PreferencesPart(
+    version: String,
     @FeedStrategy feedStrategy: Int,
     @ConnectTimeout connectTimeout: Int,
     @ClipMode clipMode: Int,
@@ -709,6 +722,31 @@ private fun PreferencesPart(
                         )
                     }
                 }
+            }
+        }
+        item {
+            Column(
+                modifier = Modifier
+                    .padding(spacing.medium)
+                    .clip(RoundedCornerShape(spacing.medium)),
+                verticalArrangement = Arrangement.spacedBy(1.dp)
+            ) {
+                val context = LocalContext.current
+                FoldPreference(
+                    title = stringResource(R.string.system_setting),
+                    onClick = {
+                        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                            data = Uri.fromParts("package", context.packageName, null)
+                        }
+                        context.startActivity(intent)
+                    }
+                )
+                FoldPreference(
+                    title = stringResource(R.string.app_version),
+                    subtitle = version,
+                    enabled = false,
+                    onClick = {}
+                )
             }
         }
     }

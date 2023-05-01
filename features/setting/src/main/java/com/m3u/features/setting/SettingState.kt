@@ -7,6 +7,7 @@ import com.m3u.core.architecture.configuration.Configuration
 import com.m3u.data.database.entity.Live
 
 data class SettingState(
+    val version: String = "",
     val adding: Boolean = false,
     val title: String = "",
     val url: String = "",
