@@ -89,7 +89,7 @@ private fun ConsoleScreen(
                         SelectionContainer {
                             MonoText(
                                 text = MonoStyle.get(command).actual(command),
-                                style = MaterialTheme.typography.h6,
+                                style = MaterialTheme.typography.subtitle2,
                                 color = MonoStyle.get(command).color,
                                 modifier = Modifier.padding(horizontal = LocalSpacing.current.medium),
                             )

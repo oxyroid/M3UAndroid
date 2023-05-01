@@ -1,5 +1,6 @@
 package com.m3u.features.console
 
+import androidx.compose.material.LocalContentColor
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import com.m3u.ui.model.LocalTheme
@@ -17,7 +18,7 @@ sealed class MonoStyle(
             Input -> Color.Yellow
             Error -> LocalTheme.current.error
             HighLight -> LocalTheme.current.primary
-            Common -> LocalTheme.current.surface
+            Common -> LocalContentColor.current
         }
 
     fun actual(text: String): String = when (this) {

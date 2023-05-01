@@ -108,6 +108,7 @@ internal fun PostDialog(
 
                 PostDialogStatus.Idle -> {}
             }
-        }
+        },
+        modifier = modifier
     )
 }
