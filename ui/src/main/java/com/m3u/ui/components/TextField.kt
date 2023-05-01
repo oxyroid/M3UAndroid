@@ -27,10 +27,14 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.selection.LocalTextSelectionColors
+import androidx.compose.foundation.text.selection.TextSelectionColors
 import androidx.compose.material.LocalContentAlpha
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
+import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -48,6 +52,7 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
@@ -104,66 +109,74 @@ fun TextField(
         }
     }
 
-    BasicTextField(
-        value = textFieldValue,
-        singleLine = singleLine,
-        enabled = enabled,
-        textStyle = TextStyle(
-            fontFamily = MaterialTheme.typography.body1.fontFamily,
-            fontSize = fontSize,
-            color = contentColor,
-            fontWeight = fontWeight
-        ),
-        onValueChange = {
-            onValueChange(it)
-        },
-        keyboardActions = keyboardActions ?: KeyboardActions(
-            onDone = { focusManager.clearFocus() },
-            onNext = { focusManager.moveFocus(FocusDirection.Down) },
-            onSearch = { focusManager.clearFocus() }
-        ),
-        keyboardOptions = KeyboardOptions(
-            keyboardType = keyboardType,
-            imeAction = imeAction ?: if (singleLine) ImeAction.Done else ImeAction.Default
-        ),
-        interactionSource = interactionSource,
-        modifier = modifier
-            .bringIntoViewRequester(bringIntoViewRequester)
-            .fillMaxWidth(),
-        readOnly = readOnly,
-        cursorBrush = SolidColor(contentColor.copy(LocalContentAlpha.current)),
-        decorationBox = { innerTextField ->
-            Box(
-                Modifier
-                    .clip(shape)
-                    .background(if (isError) LocalTheme.current.error else background)
-                    .height(height)
-                    .padding(horizontal = 12.dp),
-                contentAlignment = if (singleLine) Alignment.CenterStart else Alignment.TopStart,
-            ) {
+    val theme = LocalTheme.current
+    CompositionLocalProvider(
+        LocalTextSelectionColors provides TextSelectionColors(
+            handleColor = theme.primary,
+            backgroundColor = theme.primary.copy(alpha = 0.45f)
+        )
+    ) {
+        BasicTextField(
+            value = textFieldValue,
+            singleLine = singleLine,
+            enabled = enabled,
+            textStyle = TextStyle(
+                fontFamily = MaterialTheme.typography.body1.fontFamily,
+                fontSize = fontSize,
+                color = contentColor,
+                fontWeight = fontWeight
+            ),
+            onValueChange = {
+                onValueChange(it)
+            },
+            keyboardActions = keyboardActions ?: KeyboardActions(
+                onDone = { focusManager.clearFocus() },
+                onNext = { focusManager.moveFocus(FocusDirection.Down) },
+                onSearch = { focusManager.clearFocus() }
+            ),
+            keyboardOptions = KeyboardOptions(
+                keyboardType = keyboardType,
+                imeAction = imeAction ?: if (singleLine) ImeAction.Done else ImeAction.Default
+            ),
+            interactionSource = interactionSource,
+            modifier = modifier
+                .bringIntoViewRequester(bringIntoViewRequester)
+                .fillMaxWidth(),
+            readOnly = readOnly,
+            cursorBrush = SolidColor(contentColor.copy(LocalContentAlpha.current)),
+            decorationBox = { innerTextField ->
                 Box(
                     Modifier
-                        .fillMaxWidth()
-                        .padding(
-                            top = if (singleLine) 0.dp else 12.5.dp,
-                            bottom = if (singleLine) 2.5.dp else 12.5.dp
-                        )
+                        .clip(shape)
+                        .background(if (isError) LocalTheme.current.error else background)
+                        .height(height)
+                        .padding(horizontal = 12.dp),
+                    contentAlignment = if (singleLine) Alignment.CenterStart else Alignment.TopStart,
                 ) {
-                    innerTextField()
+                    Box(
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(
+                                top = if (singleLine) 0.dp else 12.5.dp,
+                                bottom = if (singleLine) 2.5.dp else 12.5.dp
+                            )
+                    ) {
+                        innerTextField()
 
-                    if (textFieldValue.text.isEmpty()) {
-                        Text(
-                            text = placeholder,
-                            color = contentColor.copy(.35f),
-                            fontSize = fontSize,
-                            maxLines = if (singleLine) 1 else Int.MAX_VALUE,
-                            overflow = TextOverflow.Ellipsis
-                        )
+                        if (textFieldValue.text.isEmpty()) {
+                            Text(
+                                text = placeholder,
+                                color = contentColor.copy(.35f),
+                                fontSize = fontSize,
+                                maxLines = if (singleLine) 1 else Int.MAX_VALUE,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
                     }
                 }
             }
-        }
-    )
+        )
+    }
 }
 
 @Composable
@@ -205,66 +218,74 @@ fun TextField(
         }
     }
 
-    BasicTextField(
-        value = text,
-        singleLine = singleLine,
-        enabled = enabled,
-        textStyle = TextStyle(
-            fontFamily = MaterialTheme.typography.body1.fontFamily,
-            fontSize = fontSize,
-            color = contentColor,
-            fontWeight = fontWeight
-        ),
-        onValueChange = {
-            onValueChange(it)
-        },
-        keyboardActions = keyboardActions ?: KeyboardActions(
-            onDone = { focusManager.clearFocus() },
-            onNext = { focusManager.moveFocus(FocusDirection.Down) },
-            onSearch = { focusManager.clearFocus() }
-        ),
-        keyboardOptions = KeyboardOptions(
-            keyboardType = keyboardType,
-            imeAction = imeAction ?: if (singleLine) ImeAction.Done else ImeAction.Default
-        ),
-        interactionSource = interactionSource,
-        modifier = modifier
-            .bringIntoViewRequester(bringIntoViewRequester)
-            .fillMaxWidth(),
-        readOnly = readOnly,
-        cursorBrush = SolidColor(contentColor.copy(LocalContentAlpha.current)),
-        decorationBox = { innerTextField ->
-            Box(
-                Modifier
-                    .clip(shape)
-                    .background(if (isError) LocalTheme.current.error else backgroundColor)
-                    .height(height)
-                    .padding(horizontal = 12.dp),
-                contentAlignment = if (singleLine) Alignment.CenterStart else Alignment.TopStart,
-            ) {
+    val theme = LocalTheme.current
+    CompositionLocalProvider(
+        LocalTextSelectionColors provides TextSelectionColors(
+            handleColor = theme.primary,
+            backgroundColor = theme.primary.copy(alpha = 0.45f)
+        )
+    ) {
+        BasicTextField(
+            value = text,
+            singleLine = singleLine,
+            enabled = enabled,
+            textStyle = TextStyle(
+                fontFamily = MaterialTheme.typography.body1.fontFamily,
+                fontSize = fontSize,
+                color = contentColor,
+                fontWeight = fontWeight
+            ),
+            onValueChange = {
+                onValueChange(it)
+            },
+            keyboardActions = keyboardActions ?: KeyboardActions(
+                onDone = { focusManager.clearFocus() },
+                onNext = { focusManager.moveFocus(FocusDirection.Down) },
+                onSearch = { focusManager.clearFocus() }
+            ),
+            keyboardOptions = KeyboardOptions(
+                keyboardType = keyboardType,
+                imeAction = imeAction ?: if (singleLine) ImeAction.Done else ImeAction.Default
+            ),
+            interactionSource = interactionSource,
+            modifier = modifier
+                .bringIntoViewRequester(bringIntoViewRequester)
+                .fillMaxWidth(),
+            readOnly = readOnly,
+            cursorBrush = SolidColor(contentColor.copy(LocalContentAlpha.current)),
+            decorationBox = { innerTextField ->
                 Box(
                     Modifier
-                        .fillMaxWidth()
-                        .padding(
-                            top = if (singleLine) 0.dp else 12.5.dp,
-                            bottom = if (singleLine) 2.5.dp else 12.5.dp
-                        )
+                        .clip(shape)
+                        .background(if (isError) theme.error else backgroundColor)
+                        .height(height)
+                        .padding(horizontal = 12.dp),
+                    contentAlignment = if (singleLine) Alignment.CenterStart else Alignment.TopStart,
                 ) {
-                    innerTextField()
+                    Box(
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(
+                                top = if (singleLine) 0.dp else 12.5.dp,
+                                bottom = if (singleLine) 2.5.dp else 12.5.dp
+                            )
+                    ) {
+                        innerTextField()
 
-                    if (text.isEmpty()) {
-                        Text(
-                            text = placeholder,
-                            color = contentColor.copy(.35f),
-                            fontSize = fontSize,
-                            maxLines = if (singleLine) 1 else Int.MAX_VALUE,
-                            overflow = TextOverflow.Ellipsis
-                        )
+                        if (text.isEmpty()) {
+                            Text(
+                                text = placeholder,
+                                color = contentColor.copy(.35f),
+                                fontSize = fontSize,
+                                maxLines = if (singleLine) 1 else Int.MAX_VALUE,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
                     }
                 }
             }
-        }
-    )
+        )
+    }
 }
 
 @Composable
@@ -306,92 +327,100 @@ fun LabelField(
 
     val fontSize = TextFieldDefaults.MinimizeLabelFontSize
 
-    BasicTextField(
-        modifier = modifier
-            .focusRequester(focusRequester)
-            .onFocusChanged {
-                isFocused.value = it.isFocused
-            }
-            .bringIntoViewRequester(bringIntoViewRequester)
-            .fillMaxWidth(),
-        interactionSource = interactionSource,
-        enabled = enabled,
-        value = textFieldValue,
-        singleLine = true,
-        onValueChange = onValueChange,
-        keyboardActions = keyboardActions ?: KeyboardActions(
-            onDone = { focusManager.clearFocus() },
-            onNext = { focusManager.moveFocus(FocusDirection.Down) }
-        ),
-        keyboardOptions = KeyboardOptions(
-            keyboardType = KeyboardType.Password,
-            imeAction = imeAction
-        ),
-        readOnly = readOnly,
-        textStyle = TextStyle(
-            fontSize = fontSize,
-            fontFamily = MaterialTheme.typography.body1.fontFamily,
-            fontWeight = FontWeight.Medium,
-            color = contentColor,
-        ),
-        decorationBox = { innerTextField ->
-            Row(
-                Modifier
-                    .clip(shape)
-                    .background(background)
-                    .height(height),
-            ) {
-                icon?.let {
-                    Image(
-                        modifier = Modifier
-                            .size(48.dp)
-                            .padding(15.dp),
-                        painter = painterResource(id = icon),
-                        contentDescription = null,
-                        colorFilter = ColorFilter.tint(contentColor)
-                    )
+    val theme = LocalTheme.current
+    CompositionLocalProvider(
+        LocalTextSelectionColors provides TextSelectionColors(
+            handleColor = theme.primary,
+            backgroundColor = theme.primary.copy(alpha = 0.45f)
+        )
+    ) {
+        BasicTextField(
+            modifier = modifier
+                .focusRequester(focusRequester)
+                .onFocusChanged {
+                    isFocused.value = it.isFocused
                 }
-                Box(
+                .bringIntoViewRequester(bringIntoViewRequester)
+                .fillMaxWidth(),
+            interactionSource = interactionSource,
+            enabled = enabled,
+            value = textFieldValue,
+            singleLine = true,
+            onValueChange = onValueChange,
+            keyboardActions = keyboardActions ?: KeyboardActions(
+                onDone = { focusManager.clearFocus() },
+                onNext = { focusManager.moveFocus(FocusDirection.Down) }
+            ),
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Password,
+                imeAction = imeAction
+            ),
+            readOnly = readOnly,
+            textStyle = TextStyle(
+                fontSize = fontSize,
+                fontFamily = MaterialTheme.typography.body1.fontFamily,
+                fontWeight = FontWeight.Medium,
+                color = contentColor,
+            ),
+            decorationBox = { innerTextField ->
+                Row(
                     Modifier
-                        .weight(1f)
-                        .fillMaxHeight()
-                        .padding(
-                            start = if (icon == null) 15.dp else 0.dp,
-                            bottom = 0.dp,
-                            end = 15.dp
-                        )
+                        .clip(shape)
+                        .background(background)
+                        .height(height),
                 ) {
-                    val hasText = textFieldValue.text.isNotEmpty()
-
-                    val animPlaceholder: Dp by animateDpAsState(if (isFocused.value || hasText) 6.dp else 14.dp)
-                    val animPlaceHolderFontSize: Int by animateIntAsState(if (isFocused.value || hasText) 12 else 14)
-
-                    Text(
-                        modifier = Modifier
-                            .graphicsLayer {
-                                translationY = animPlaceholder.toPx()
-                            },
-                        text = placeholder,
-                        color = contentColor.copy(alpha = .35f),
-                        fontSize = animPlaceHolderFontSize.sp,
-                        fontFamily = MaterialTheme.typography.body1.fontFamily,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-
+                    icon?.let {
+                        Image(
+                            modifier = Modifier
+                                .size(48.dp)
+                                .padding(15.dp),
+                            painter = painterResource(id = icon),
+                            contentDescription = null,
+                            colorFilter = ColorFilter.tint(contentColor)
+                        )
+                    }
                     Box(
                         Modifier
-                            .padding(top = 21.dp)
-                            .fillMaxWidth()
-                            .height(18.dp),
+                            .weight(1f)
+                            .fillMaxHeight()
+                            .padding(
+                                start = if (icon == null) 15.dp else 0.dp,
+                                bottom = 0.dp,
+                                end = 15.dp
+                            )
                     ) {
-                        innerTextField()
+                        val hasText = textFieldValue.text.isNotEmpty()
+
+                        val animPlaceholder: Dp by animateDpAsState(if (isFocused.value || hasText) 6.dp else 14.dp)
+                        val animPlaceHolderFontSize: Int by animateIntAsState(if (isFocused.value || hasText) 12 else 14)
+
+                        Text(
+                            modifier = Modifier
+                                .graphicsLayer {
+                                    translationY = animPlaceholder.toPx()
+                                },
+                            text = placeholder,
+                            color = contentColor.copy(alpha = .35f),
+                            fontSize = animPlaceHolderFontSize.sp,
+                            fontFamily = MaterialTheme.typography.body1.fontFamily,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+
+                        Box(
+                            Modifier
+                                .padding(top = 21.dp)
+                                .fillMaxWidth()
+                                .height(18.dp),
+                        ) {
+                            innerTextField()
+                        }
                     }
                 }
-            }
-        },
-        cursorBrush = SolidColor(contentColor.copy(.35f))
-    )
+            },
+            cursorBrush = SolidColor(contentColor.copy(.35f))
+        )
+    }
 }
 
 @Composable
@@ -407,7 +436,7 @@ fun LabelField(
     enabled: Boolean = true,
     imeAction: ImeAction = ImeAction.Done,
     keyboardActions: KeyboardActions? = null,
-    @DrawableRes icon: Int? = null,
+    icon: ImageVector? = null,
     onValueChange: (String) -> Unit = {},
 ) {
     val focusManager = LocalFocusManager.current
@@ -433,93 +462,101 @@ fun LabelField(
 
     val fontSize = TextFieldDefaults.MinimizeLabelFontSize
 
-    BasicTextField(
-        modifier = modifier
-            .focusRequester(focusRequester)
-            .onFocusChanged {
-                isFocused.value = it.isFocused
-            }
-            .bringIntoViewRequester(bringIntoViewRequester)
-            .fillMaxWidth(),
-        interactionSource = interactionSource,
-        enabled = enabled,
-        value = text,
-        singleLine = true,
-        onValueChange = onValueChange,
-        keyboardActions = keyboardActions ?: KeyboardActions(
-            onDone = { focusManager.clearFocus() },
-            onNext = { focusManager.moveFocus(FocusDirection.Down) }
-        ),
-        keyboardOptions = KeyboardOptions(
-            keyboardType = KeyboardType.Password,
-            imeAction = imeAction
-        ),
-        readOnly = readOnly,
-        textStyle = TextStyle(
-            fontSize = fontSize,
-            fontFamily = MaterialTheme.typography.body1.fontFamily,
-            fontWeight = FontWeight.Medium,
-            color = contentColor,
-        ),
-        decorationBox = { innerTextField ->
-            Row(
-                Modifier
-                    .clip(shape)
-                    .background(background)
-                    .height(height),
-            ) {
-                icon?.let {
-                    Image(
-                        modifier = Modifier
-                            .size(48.dp)
-                            .padding(15.dp),
-                        painter = painterResource(id = icon),
-                        contentDescription = null,
-                        colorFilter = ColorFilter.tint(contentColor)
-                    )
+    val theme = LocalTheme.current
+    CompositionLocalProvider(
+        LocalTextSelectionColors provides TextSelectionColors(
+            handleColor = theme.primary,
+            backgroundColor = theme.primary.copy(alpha = 0.45f)
+        )
+    ) {
+        BasicTextField(
+            modifier = modifier
+                .focusRequester(focusRequester)
+                .onFocusChanged {
+                    isFocused.value = it.isFocused
                 }
-
-                Box(
-                    Modifier
-                        .weight(1f)
-                        .fillMaxHeight()
-                        .padding(
-                            start = if (icon == null) 15.dp else 0.dp,
-                            bottom = 0.dp,
-                            end = 15.dp
-                        )
+                .bringIntoViewRequester(bringIntoViewRequester)
+                .fillMaxWidth(),
+            interactionSource = interactionSource,
+            enabled = enabled,
+            value = text,
+            singleLine = true,
+            onValueChange = onValueChange,
+            keyboardActions = keyboardActions ?: KeyboardActions(
+                onDone = { focusManager.clearFocus() },
+                onNext = { focusManager.moveFocus(FocusDirection.Down) }
+            ),
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Password,
+                imeAction = imeAction
+            ),
+            readOnly = readOnly,
+            textStyle = TextStyle(
+                fontSize = fontSize,
+                fontFamily = MaterialTheme.typography.body1.fontFamily,
+                fontWeight = FontWeight.Medium,
+                color = contentColor,
+            ),
+            decorationBox = { innerTextField ->
+                Row(
+                    modifier = Modifier
+                        .clip(shape)
+                        .background(background)
+                        .height(height)
                 ) {
-                    val hasText = text.isNotEmpty()
-
-                    val animPlaceholder: Dp by animateDpAsState(if (isFocused.value || hasText) 6.dp else 14.dp)
-                    val animPlaceHolderFontSize: Int by animateIntAsState(if (isFocused.value || hasText) 12 else 14)
-
-                    Text(
-                        modifier = Modifier
-                            .graphicsLayer {
-                                translationY = animPlaceholder.toPx()
-                            },
-                        text = placeholder,
-                        color = contentColor.copy(alpha = .35f),
-                        fontSize = animPlaceHolderFontSize.sp,
-                        fontFamily = MaterialTheme.typography.body1.fontFamily,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
+                    icon?.let {
+                        Icon(
+                            imageVector = icon,
+                            contentDescription = null,
+                            modifier = Modifier
+                                .size(48.dp)
+                                .padding(15.dp),
+                            tint = contentColor
+                        )
+                    }
 
                     Box(
                         Modifier
-                            .padding(top = 21.dp)
-                            .fillMaxWidth()
-                            .height(18.dp),
+                            .weight(1f)
+                            .fillMaxHeight()
+                            .padding(
+                                start = if (icon == null) 15.dp else 0.dp,
+                                bottom = 0.dp,
+                                end = 15.dp
+                            )
                     ) {
-                        innerTextField()
+                        val hasText = text.isNotEmpty()
+
+                        val animPlaceholder: Dp by animateDpAsState(if (isFocused.value || hasText) 6.dp else 14.dp)
+                        val animPlaceHolderFontSize: Int by animateIntAsState(if (isFocused.value || hasText) 12 else 14)
+
+                        Text(
+                            modifier = Modifier
+                                .graphicsLayer {
+                                    translationY = animPlaceholder.toPx()
+                                },
+                            text = placeholder,
+                            color = contentColor.copy(alpha = .35f),
+                            fontSize = animPlaceHolderFontSize.sp,
+                            fontFamily = MaterialTheme.typography.body1.fontFamily,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+
+                        Box(
+                            Modifier
+                                .padding(top = 21.dp)
+                                .fillMaxWidth()
+                                .height(18.dp),
+                        ) {
+                            innerTextField()
+                        }
                     }
                 }
-            }
-        },
-        cursorBrush = SolidColor(contentColor.copy(.35f))
-    )
+            },
+            cursorBrush = SolidColor(contentColor.copy(.35f))
+        )
+    }
 }
 
 private object TextFieldDefaults {
