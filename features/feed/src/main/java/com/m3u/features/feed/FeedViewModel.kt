@@ -37,16 +37,14 @@ class FeedViewModel @Inject constructor(
     emptyState = FeedState()
 ) {
     init {
-        writable.update {
-            it.copy(
-                useCommonUIMode = configuration.useCommonUIMode,
-                scrollMode = configuration.scrollMode,
-                rowCount = configuration.rowCount,
-                godMode = configuration.godMode,
-                autoRefresh = configuration.autoRefresh,
-                noPictureMode = configuration.noPictureMode
-            )
-        }
+        writable.value = FeedState(
+            useCommonUIMode = configuration.useCommonUIMode,
+            scrollMode = configuration.scrollMode,
+            rowCount = configuration.rowCount,
+            godMode = configuration.godMode,
+            autoRefresh = configuration.autoRefresh,
+            noPictureMode = configuration.noPictureMode
+        )
     }
 
     override fun onEvent(event: FeedEvent) {

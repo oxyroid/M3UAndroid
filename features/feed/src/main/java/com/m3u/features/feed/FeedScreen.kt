@@ -21,6 +21,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -34,8 +35,10 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.ExtendedFloatingActionButton
+import androidx.compose.material.FloatingActionButtonDefaults
 import androidx.compose.material.Icon
 import androidx.compose.material.ScrollableTabRow
 import androidx.compose.material.Surface
@@ -59,6 +62,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -122,11 +126,6 @@ internal fun FeedRoute(
             )
         )
     }
-    LaunchedEffect(state.title) {
-        state.title?.let {
-            helper.title = it
-        }
-    }
     LaunchedEffect(state.autoRefresh, state.url) {
         if (state.url.isNotEmpty() && state.autoRefresh) {
             viewModel.onEvent(FeedEvent.Refresh)
@@ -139,14 +138,16 @@ internal fun FeedRoute(
     BackHandler(state.query.isNotEmpty()) {
         viewModel.onEvent(FeedEvent.OnQuery(""))
     }
-    val interceptVolumeEventModifier = if (state.godMode) {
-        Modifier.interceptVolumeEvent { event ->
-            when (event) {
-                KeyEvent.KEYCODE_VOLUME_UP -> onRowCount((rowCount - 1).coerceAtLeast(1))
-                KeyEvent.KEYCODE_VOLUME_DOWN -> onRowCount((rowCount + 1).coerceAtMost(3))
+    val interceptVolumeEventModifier = remember(state.godMode) {
+        if (state.godMode) {
+            Modifier.interceptVolumeEvent { event ->
+                when (event) {
+                    KeyEvent.KEYCODE_VOLUME_UP -> onRowCount((rowCount - 1).coerceAtLeast(1))
+                    KeyEvent.KEYCODE_VOLUME_DOWN -> onRowCount((rowCount + 1).coerceAtMost(3))
+                }
             }
-        }
-    } else Modifier
+        } else Modifier
+    }
 
     CompositionLocalProvider(
         LocalScalable provides Scalable(1f / rowCount)
@@ -309,7 +310,19 @@ private fun FeedScreen(
                             imageVector = Icons.Rounded.ArrowUpward,
                             contentDescription = null
                         )
-                    }
+                    },
+                    elevation = FloatingActionButtonDefaults.elevation(
+                        defaultElevation = spacing.none,
+                        pressedElevation = spacing.small,
+                        hoveredElevation = spacing.extraSmall,
+                        focusedElevation = spacing.extraSmall,
+                    ),
+                    modifier = Modifier
+                        .border(
+                            spacing.extraSmall,
+                            Color.Black.copy(alpha = 0.114f),
+                            shape = CircleShape
+                        )
                 )
             }
         }
@@ -354,7 +367,7 @@ private fun LandscapeOrientationContent(
             columns = GridCells.Fixed(rowCount + 2),
             verticalArrangement = Arrangement.spacedBy(spacing.medium),
             horizontalArrangement = Arrangement.spacedBy(spacing.medium),
-            contentPadding = PaddingValues(spacing.medium),
+            contentPadding = PaddingValues(LocalSpacing.current.medium),
             modifier = modifier.fillMaxSize()
         ) {
             items(
@@ -438,7 +451,7 @@ private fun PortraitOrientationContent(
         columns = GridCells.Fixed(rowCount),
         verticalArrangement = Arrangement.spacedBy(spacing.medium),
         horizontalArrangement = Arrangement.spacedBy(spacing.medium),
-        contentPadding = PaddingValues(spacing.medium),
+        contentPadding = PaddingValues(LocalSpacing.current.medium),
         modifier = modifier.fillMaxSize()
     ) {
         items(
@@ -497,7 +510,7 @@ private fun TelevisionUIModeContent(
         columns = TvGridCells.Fixed(4),
         verticalArrangement = Arrangement.spacedBy(spacing.medium),
         horizontalArrangement = Arrangement.spacedBy(spacing.medium),
-        contentPadding = PaddingValues(spacing.medium),
+        contentPadding = PaddingValues(LocalSpacing.current.medium),
         modifier = modifier.fillMaxSize()
     ) {
         items(

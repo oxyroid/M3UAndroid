@@ -14,7 +14,6 @@ import androidx.navigation.navArgument
 import com.google.accompanist.navigation.animation.composable
 import com.m3u.features.feed.FeedRoute
 
-
 private const val FEED_ROUTE_PATH = "feed_route"
 private const val TYPE_URL = "url"
 const val feedRoute = "$FEED_ROUTE_PATH/{$TYPE_URL}"

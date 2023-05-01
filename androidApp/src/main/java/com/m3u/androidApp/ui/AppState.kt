@@ -88,7 +88,6 @@ class AppState(
             rootNavigationRoute -> {
                 topLevelDestinations[pagerState.currentPage]
             }
-
             else -> null
         }
 

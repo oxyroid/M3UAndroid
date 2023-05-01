@@ -15,6 +15,7 @@ import com.m3u.features.console.navigation.consoleScreen
 import com.m3u.features.feed.navigation.feedScreen
 import com.m3u.features.live.navigation.livePlaylistScreen
 import com.m3u.features.live.navigation.liveScreen
+import com.m3u.ui.model.LocalHelper
 
 @OptIn(ExperimentalAnimationApi::class, ExperimentalFoundationApi::class)
 @Composable
@@ -26,6 +27,7 @@ fun M3UNavHost(
     modifier: Modifier = Modifier,
     startDestination: String = rootNavigationRoute
 ) {
+    val helper = LocalHelper.current
     AnimatedNavHost(
         navController = navController,
         startDestination = startDestination,
@@ -38,8 +40,9 @@ fun M3UNavHost(
         rootGraph(
             pagerState = pagerState,
             destinations = destinations,
-            navigateToFeed = { url ->
-                navigateToDestination(Destination.Feed(url))
+            navigateToFeed = { feed ->
+                helper.title = feed.title
+                navigateToDestination(Destination.Feed(feed.url))
             },
             navigateToLive = { id ->
                 navigateToDestination(Destination.Live(id))
