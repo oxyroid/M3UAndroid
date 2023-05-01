@@ -2,15 +2,16 @@
 
 package com.m3u.ui.components
 
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.AlertDialog
 import androidx.compose.material.MaterialTheme
@@ -27,6 +28,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.LocalTheme
 
@@ -64,6 +66,7 @@ fun SheetTextField(
             fontSize = 20.sp,
             modifier = Modifier.weight(1f)
         )
+
         if (onIconClick != null && icon != null) {
             IconButton(
                 icon = icon,
@@ -152,7 +155,6 @@ fun SheetDialog(
     onDismiss: () -> Unit,
     content: @Composable ColumnScope.() -> Unit,
     modifier: Modifier = Modifier,
-    maxHeight: Boolean = false,
     border: BorderStroke = BorderStroke(2.dp, LocalTheme.current.divider.copy(alpha = 0.45f)),
     verticalArrangement: Arrangement.Vertical = Arrangement.Top,
 ) {
@@ -161,7 +163,10 @@ fun SheetDialog(
 
     if (visible) {
         Dialog(
-            onDismissRequest = onDismiss
+            onDismissRequest = onDismiss,
+            properties = DialogProperties(
+                decorFitsSystemWindows = false
+            )
         ) {
             Surface(
                 color = theme.background,
@@ -172,17 +177,15 @@ fun SheetDialog(
                 modifier = Modifier
                     .padding(spacing.medium)
                     .fillMaxWidth()
+                    .wrapContentSize()
+                    .animateContentSize()
                     .then(modifier)
             ) {
                 Column(
                     verticalArrangement = verticalArrangement,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .let {
-                            if (maxHeight) it.fillMaxHeight()
-                            else it
-                        }
-                        .padding(LocalSpacing.current.medium),
+                        .padding(spacing.medium),
                     content = content
                 )
             }
