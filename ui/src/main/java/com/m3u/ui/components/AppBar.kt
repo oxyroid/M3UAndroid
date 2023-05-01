@@ -1,7 +1,7 @@
 package com.m3u.ui.components
 
-import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.tween
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.PaddingValues
@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBarsIgnoringVisibility
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material.LocalAbsoluteElevation
 import androidx.compose.material.LocalContentColor
 import androidx.compose.material.MaterialTheme
@@ -52,7 +53,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.lerp
 import com.m3u.ui.R
-import com.m3u.ui.model.LocalDuration
 import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.LocalTheme
 
@@ -134,14 +134,12 @@ fun AppTopBar(
             // it should be between 1~2 times [maxHeightDp].
             // Because the AppBar will place between 1~2 times [maxHeightDp].
             // The [visible] param means the AppBar should be invisible(spacing.none) or not.
-            val contentPaddingTop by remember(visible) {
-                derivedStateOf {
-                    if (!visible) minHeightDp
-                    else with(density) {
-                        offsetHeightPx.toDp()
-                    }
+            val contentPaddingTop by animateDpAsState(
+                if (!visible) minHeightDp
+                else with(density) {
+                    offsetHeightPx.toDp()
                 }
-            }
+            )
 
             val direction = LocalLayoutDirection.current
             // Child Content
@@ -165,6 +163,11 @@ fun AppTopBar(
                 color = LocalTheme.current.background,
                 contentColor = LocalTheme.current.onBackground
             ) {
+                val alpha by remember {
+                    derivedStateOf {
+                        progress * 2 - 1
+                    }
+                }
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -173,33 +176,21 @@ fun AppTopBar(
                             else it
                         }
                         .padding(horizontal = spacing.medium)
-                        .height(contentPaddingTop),
+                        .height(contentPaddingTop)
+                        .graphicsLayer {
+                            this.alpha = alpha
+                        },
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    val alpha by remember {
-                        derivedStateOf {
-                            progress * 2 - 1
-                        }
+                    AnimatedVisibility(onBackPressed != null) {
+                        IconButton(
+                            icon = Icons.Rounded.ArrowBack,
+                            contentDescription = stringResource(R.string.cd_top_bar_on_back_pressed),
+                            onClick = { if (progress > 0) onBackPressed?.invoke() },
+                            modifier = Modifier.wrapContentSize()
+                        )
                     }
-                    val duration = LocalDuration.current
 
-                    Box(
-                        modifier = Modifier
-                            .animateContentSize(
-                                animationSpec = tween(duration.medium)
-                            )
-                    ) {
-                        if (onBackPressed != null) {
-                            IconButton(
-                                icon = Icons.Rounded.ArrowBack,
-                                contentDescription = stringResource(R.string.cd_top_bar_on_back_pressed),
-                                onClick = { if (progress > 0) onBackPressed() },
-                                modifier = Modifier.graphicsLayer {
-                                    this.alpha = alpha
-                                }
-                            )
-                        }
-                    }
                     Text(
                         text = text,
                         style = MaterialTheme.typography.h6.copy(
@@ -212,18 +203,8 @@ fun AppTopBar(
                         modifier = Modifier
                             .weight(1f)
                             .padding(horizontal = spacing.extraSmall)
-                            .graphicsLayer {
-                                this.alpha = alpha
-                            }
                     )
                     Row(
-                        modifier = Modifier
-                            .animateContentSize(
-                                animationSpec = tween(duration.medium)
-                            )
-                            .graphicsLayer {
-                                this.alpha = alpha
-                            },
                         content = actions
                     )
                 }
