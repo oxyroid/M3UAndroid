@@ -54,13 +54,15 @@ fun App(
         }
     }
     Background {
+        val topLevelDestinations = appState.topLevelDestinations
         val currentDestination = appState.currentComposableNavDestination
-        val topLevelTitle = appState.currentComposableTopLevelDestination
+        val currentTopLevelDestination = appState.currentComposableTopLevelDestination
+        val currentTopLevelDestinationTitle = currentTopLevelDestination
             ?.titleTextId
             ?.let { stringResource(it) }
         val title by appState.title.collectAsStateWithLifecycle()
-        val text by remember(topLevelTitle) {
-            derivedStateOf { topLevelTitle ?: title }
+        val text by remember(currentTopLevelDestinationTitle) {
+            derivedStateOf { currentTopLevelDestinationTitle ?: title }
         }
         var postDialogStatus = remember(post, posts) {
             if (post == null || post.temporal) PostDialogStatus.Idle
@@ -82,11 +84,12 @@ fun App(
                 }
             }
         }
-        val isSystemBarVisible =
-            !appState.currentComposableNavDestination.isInFullscreenDestination()
+        val isSheetVisible =
+            currentDestination.isNotInDestinations<Destination.Live, Destination.LivePlayList>()
+        val isBackPressedVisible = currentDestination.isInDestination<Destination.Root>(true)
         AppTopBar(
             text = text,
-            visible = isSystemBarVisible,
+            visible = isSheetVisible,
             scrollable = !currentDestination.isInDestination<Destination.Root>(),
             actions = {
                 val actions by appState.actions.collectAsStateWithLifecycle()
@@ -98,8 +101,7 @@ fun App(
                     )
                 }
             },
-            onBackPressed = if (!appState.currentComposableNavDestination.isInLeafDestination()) null
-            else appState::onBackClick
+            onBackPressed = if (isBackPressedVisible) null else appState::onBackClick
         ) { padding ->
             Column(
                 modifier = Modifier
@@ -111,13 +113,13 @@ fun App(
                 M3UNavHost(
                     navController = appState.navController,
                     pagerState = appState.pagerState,
-                    destinations = appState.topLevelDestinations,
+                    destinations = topLevelDestinations,
                     navigateToDestination = appState::navigateToDestination,
                     modifier = Modifier
                         .fillMaxWidth()
                         .weight(1f)
                 )
-                AnimatedVisibility(isSystemBarVisible) {
+                AnimatedVisibility(isSheetVisible) {
                     Column {
                         OptimizeBanner(
                             posts = posts,
@@ -125,8 +127,8 @@ fun App(
                             modifier = Modifier.fillMaxWidth()
                         )
                         BottomNavigationSheet(
-                            destinations = appState.topLevelDestinations,
-                            currentTopLevelDestination = appState.currentComposableTopLevelDestination,
+                            destinations = topLevelDestinations,
+                            currentTopLevelDestination = currentTopLevelDestination,
                             navigateToTopLevelDestination = appState::navigateToTopLevelDestination,
                             modifier = Modifier.fillMaxWidth()
                         )
@@ -159,10 +161,15 @@ inline fun <reified D : Destination> NavDestination?.isInDestination(): Boolean 
     return this?.route == targetRoute
 }
 
-fun NavDestination?.isInLeafDestination(): Boolean = isInDestination<Destination.Feed>() ||
-        isInDestination<Destination.Live>() ||
-        isInDestination<Destination.LivePlayList>() ||
-        isInDestination<Destination.Console>()
+inline fun <reified D : Destination> NavDestination?.isInDestination(
+    includeNullValue: Boolean
+): Boolean {
+    this ?: return includeNullValue
+    return isInDestination<D>()
+}
 
-fun NavDestination?.isInFullscreenDestination(): Boolean = isInDestination<Destination.Live>() ||
-        isInDestination<Destination.LivePlayList>()
+inline fun <reified D1 : Destination, reified D2 : Destination> NavDestination?.isInDestinations(): Boolean =
+    isInDestination<D1>() || isInDestination<D2>()
+
+inline fun <reified D1 : Destination, reified D2 : Destination> NavDestination?.isNotInDestinations(): Boolean =
+    !isInDestination<D1>() && !isInDestination<D2>()

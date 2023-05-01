@@ -37,7 +37,7 @@ import com.m3u.ui.model.Scalable
 import com.m3u.ui.util.interceptVolumeEvent
 
 private typealias ShowFeedBottomSheet = (Feed) -> Unit
-typealias NavigateToFeed = (url: String) -> Unit
+typealias NavigateToFeed = (feed: Feed) -> Unit
 
 @Composable
 fun MainRoute(
@@ -59,14 +59,16 @@ fun MainRoute(
         }
     }
 
-    val interceptVolumeEventModifier = if (state.godMode) {
-        Modifier.interceptVolumeEvent { event ->
-            when (event) {
-                KeyEvent.KEYCODE_VOLUME_UP -> onRowCount((rowCount - 1).coerceAtLeast(1))
-                KeyEvent.KEYCODE_VOLUME_DOWN -> onRowCount((rowCount + 1).coerceAtMost(3))
+    val interceptVolumeEventModifier = remember(state.godMode) {
+        if (state.godMode) {
+            Modifier.interceptVolumeEvent { event ->
+                when (event) {
+                    KeyEvent.KEYCODE_VOLUME_UP -> onRowCount((rowCount - 1).coerceAtLeast(1))
+                    KeyEvent.KEYCODE_VOLUME_DOWN -> onRowCount((rowCount + 1).coerceAtMost(3))
+                }
             }
-        }
-    } else Modifier
+        } else Modifier
+    }
 
     CompositionLocalProvider(
         LocalScalable provides Scalable(1f / rowCount)
@@ -104,7 +106,7 @@ private fun MainScreen(
                 feeds = feeds,
                 navigateToFeed = navigateToFeed,
                 showFeedBottomSheet = { dialogStatus = MainDialogStatus.Selections(it) },
-                modifier = Modifier.fillMaxSize()
+                modifier = modifier.fillMaxSize()
             )
         }
 
@@ -114,7 +116,7 @@ private fun MainScreen(
                 feeds = feeds,
                 navigateToFeed = navigateToFeed,
                 showFeedBottomSheet = { dialogStatus = MainDialogStatus.Selections(it) },
-                modifier = Modifier.fillMaxSize()
+                modifier = modifier.fillMaxSize()
             )
         }
 
@@ -143,7 +145,7 @@ fun PortraitOrientationContent(
     val spacing = LocalSpacing.current
     LazyColumn(
         modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(spacing.medium),
+        contentPadding = PaddingValues(LocalSpacing.current.medium),
         verticalArrangement = Arrangement.spacedBy(spacing.small)
     ) {
         items(
@@ -156,7 +158,7 @@ fun PortraitOrientationContent(
                 number = detail.count,
                 modifier = Modifier.fillParentMaxWidth(),
                 onClick = {
-                    navigateToFeed(detail.feed.url)
+                    navigateToFeed(detail.feed)
                 },
                 onLongClick = {
                     showFeedBottomSheet(detail.feed)
@@ -180,7 +182,7 @@ private fun LandscapeOrientationContent(
     }
     LazyVerticalGrid(
         columns = GridCells.Fixed(rowCount + 2),
-        contentPadding = PaddingValues(spacing.medium),
+        contentPadding = PaddingValues(LocalSpacing.current.medium),
         verticalArrangement = Arrangement.spacedBy(spacing.medium),
         horizontalArrangement = Arrangement.spacedBy(spacing.medium),
         modifier = modifier.fillMaxSize()
@@ -195,7 +197,7 @@ private fun LandscapeOrientationContent(
                 number = detail.count,
                 modifier = Modifier.fillMaxWidth(),
                 onClick = {
-                    navigateToFeed(detail.feed.url)
+                    navigateToFeed(detail.feed)
                 },
                 onLongClick = {
                     showFeedBottomSheet(detail.feed)
