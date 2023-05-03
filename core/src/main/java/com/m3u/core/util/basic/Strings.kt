@@ -52,5 +52,4 @@ fun String.splitOutOfQuotation(delimiter: Char): List<String> {
 
     list.add(substring(start))
     return list
-
 }

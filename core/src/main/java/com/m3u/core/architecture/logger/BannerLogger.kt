@@ -8,6 +8,11 @@ import javax.inject.Qualifier
 @Retention(AnnotationRetention.BINARY)
 annotation class BannerLoggerImpl
 
+/**
+ * A collector of banner service.
+ * Its messages will be deliver to users just like a global snack bar.
+ * @see BannerService
+ */
 class BannerLogger @Inject constructor(
     private val bannerService: BannerService
 ) : Logger {

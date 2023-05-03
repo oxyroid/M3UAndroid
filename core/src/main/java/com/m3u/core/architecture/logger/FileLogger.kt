@@ -17,6 +17,12 @@ import javax.inject.Qualifier
 @Retention(AnnotationRetention.BINARY)
 annotation class FileLoggerImpl
 
+/**
+ * An uncaught error file collector.
+ * Write messages to application cache dir.
+ *
+ * This implement is an android platform version.
+ */
 class FileLogger @Inject constructor(
     @ApplicationContext private val context: Context
 ) : Logger {

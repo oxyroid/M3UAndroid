@@ -4,6 +4,9 @@ import com.m3u.core.annotation.ClipMode
 import com.m3u.core.annotation.ConnectTimeout
 import com.m3u.core.annotation.FeedStrategy
 
+/**
+ * This is a static key-value configuration standard.
+ */
 interface Configuration {
     @FeedStrategy
     var feedStrategy: Int

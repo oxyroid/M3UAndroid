@@ -5,6 +5,7 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.m3u.core.util.collection.Likable
 
+// called channel in user interface
 @Entity(tableName = "lives")
 data class Live(
     @ColumnInfo(name = "url")

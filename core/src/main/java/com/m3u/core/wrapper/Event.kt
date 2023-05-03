@@ -7,7 +7,7 @@ sealed class Event<out T> private constructor(
     open var isHandled: Boolean = false
 
     /**
-     * Get the data and consume it
+     * Get the data and consume it if is has not been consumed
      * @param block The data receiver, it will be invoked if the data has not been consumed
      */
     inline fun handle(block: (T) -> Unit) {
@@ -32,6 +32,7 @@ sealed class Event<out T> private constructor(
     /**
      * Regular Event
      * @see eventOf
+     * @hide
      */
     class Regular<out T>(data: T) : Event<T>(data)
 }

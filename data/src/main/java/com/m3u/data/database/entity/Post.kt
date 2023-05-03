@@ -8,6 +8,7 @@ import androidx.room.PrimaryKey
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
+// called announcement in user interface
 @Entity(tableName = "posts")
 data class Post(
     val title: String,

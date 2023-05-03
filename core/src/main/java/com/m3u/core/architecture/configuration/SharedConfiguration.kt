@@ -24,6 +24,11 @@ import com.m3u.core.util.context.int
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 
+/**
+ * SharedPreferences based Configuration.
+ *
+ * This implement is an android platform version.
+ */
 class SharedConfiguration @Inject constructor(
     @ApplicationContext context: Context
 ) : Configuration {
