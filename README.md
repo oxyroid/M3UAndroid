@@ -8,7 +8,7 @@
 - [ ] Android Car.
 - [ ] DLNA Protocol.
 - [ ] Script.
-- [ ] More interface languages support.
+- [x] More interface languages support.
 - [ ] iOS and Desktop support in the future.
 
 ### Android Development
@@ -25,7 +25,7 @@ M3U is an app that attempts to use the latest libraries and tools. As a summary:
 
 M3U is my first elaborate Android project.
 
-You can join the [Telegram Channel](https://t.me/m3u_android) for update information.
+You can join the [Telegram Channel](https://t.me/m3u_android) for update information and **alpha & beta packages**.
 
 ### About me
 
