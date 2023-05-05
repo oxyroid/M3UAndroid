@@ -6,6 +6,7 @@ import com.m3u.core.annotation.ClipMode
 import com.m3u.core.annotation.ConnectTimeout
 import com.m3u.core.annotation.FeedStrategy
 import com.m3u.core.architecture.configuration.Configuration.Companion.DEFAULT_AUTO_REFRESH
+import com.m3u.core.architecture.configuration.Configuration.Companion.DEFAULT_CINEMA_MODE
 import com.m3u.core.architecture.configuration.Configuration.Companion.DEFAULT_CLIP_MODE
 import com.m3u.core.architecture.configuration.Configuration.Companion.DEFAULT_CONNECT_TIMEOUT
 import com.m3u.core.architecture.configuration.Configuration.Companion.DEFAULT_EXPERIMENTAL_MODE
@@ -56,7 +57,7 @@ class SharedConfiguration @Inject constructor(
     override var noPictureMode: Boolean
             by sharedPreferences.boolean(DEFAULT_NO_PICTURE_MODE)
     override var silentMode: Boolean by sharedPreferences.boolean(DEFAULT_SILENT_MODE)
-
+    override var cinemaMode: Boolean by sharedPreferences.boolean(DEFAULT_CINEMA_MODE)
     companion object {
         private const val SHARED_SETTINGS = "shared_settings"
     }

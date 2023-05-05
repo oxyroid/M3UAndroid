@@ -42,4 +42,6 @@
     <string name="silent_mode">silent mode</string>
     <string name="silent_mode_description">do not receive cloud announcements</string>
     <string name="system_setting">system setting</string>
+    <string name="cinema_mode">cinema_mode</string>
+    <string name="cinema_mode_description">favourite screen use OLED black theme</string>
 </resources>

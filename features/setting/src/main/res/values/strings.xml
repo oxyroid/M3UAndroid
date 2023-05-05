@@ -46,4 +46,6 @@
     <string name="silent_mode">寂静模式</string>
     <string name="silent_mode_description">不接收云端公告</string>
     <string name="system_setting">系统设置</string>
+    <string name="cinema_mode">影院模式</string>
+    <string name="cinema_mode_description">收藏夹界面使用纯黑主题</string>
 </resources>
