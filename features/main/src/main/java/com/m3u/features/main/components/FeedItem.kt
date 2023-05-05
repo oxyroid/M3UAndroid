@@ -11,6 +11,7 @@ import androidx.compose.material.Card
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -21,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import com.m3u.ui.components.OuterRow
 import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.LocalTheme
+import com.m3u.ui.util.animated
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -33,10 +35,12 @@ internal fun FeedItem(
 ) {
     val spacing = LocalSpacing.current
     val theme = LocalTheme.current
+    val actualBackgroundColor by theme.surface.animated()
+    val actualContentColor by theme.onSurface.animated()
     Card(
         shape = RoundedCornerShape(spacing.medium),
-        backgroundColor = theme.surface,
-        contentColor = theme.onSurface,
+        backgroundColor = actualBackgroundColor,
+        contentColor = actualContentColor,
         elevation = spacing.none
     ) {
         OuterRow(
@@ -55,14 +59,17 @@ internal fun FeedItem(
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.weight(1f)
             )
+
+            val actualPrimaryColor by theme.primary.animated()
+            val actualOnPrimaryColor by theme.onPrimary.animated()
             Box(
                 modifier = Modifier
                     .clip(CircleShape)
-                    .background(theme.primary),
+                    .background(actualPrimaryColor),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    color = theme.onPrimary,
+                    color = actualOnPrimaryColor,
                     text = number.toString(),
                     style = MaterialTheme.typography.subtitle2,
                     maxLines = 1,

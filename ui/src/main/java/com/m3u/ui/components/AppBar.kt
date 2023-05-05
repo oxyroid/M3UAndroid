@@ -2,6 +2,11 @@ package com.m3u.ui.components
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandHorizontally
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.PaddingValues
@@ -53,8 +58,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.lerp
 import com.m3u.ui.R
+import com.m3u.ui.model.LocalDuration
 import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.LocalTheme
+import com.m3u.ui.util.animated
 
 @Suppress("unused")
 interface AppTopBarConsumer {
@@ -158,10 +165,13 @@ fun AppTopBar(
 
             // AppBar
             val progress by remember { derivedStateOf { offsetHeightPx / maxHeightPx } }
+            val duration = LocalDuration.current
+            val actualBackgroundColor by LocalTheme.current.background.animated()
+            val actualContentColor by LocalTheme.current.onBackground.animated()
             Surface(
                 elevation = LocalAbsoluteElevation.current,
-                color = LocalTheme.current.background,
-                contentColor = LocalTheme.current.onBackground
+                color = actualBackgroundColor,
+                contentColor = actualContentColor
             ) {
                 val alpha by remember {
                     derivedStateOf {
@@ -182,7 +192,13 @@ fun AppTopBar(
                         },
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    AnimatedVisibility(onBackPressed != null) {
+                    AnimatedVisibility(
+                        visible = onBackPressed != null,
+                        enter = fadeIn(tween(delayMillis = duration.medium))
+                                + expandHorizontally(tween(duration.medium)),
+                        exit = fadeOut(tween(duration.medium))
+                                + shrinkHorizontally(tween(delayMillis = duration.medium)),
+                    ) {
                         IconButton(
                             icon = Icons.Rounded.ArrowBack,
                             contentDescription = stringResource(R.string.cd_top_bar_on_back_pressed),
@@ -190,7 +206,6 @@ fun AppTopBar(
                             modifier = Modifier.wrapContentSize()
                         )
                     }
-
                     Text(
                         text = text,
                         style = MaterialTheme.typography.h6.copy(

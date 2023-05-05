@@ -28,12 +28,12 @@ interface Configuration {
 
     @ExperimentalConfiguration
     var isSSLVerification: Boolean
-
     var initialTabIndex: Int
-
     var noPictureMode: Boolean
-
     var silentMode: Boolean
+
+    @ExperimentalConfiguration
+    var cinemaMode: Boolean
 
     companion object {
         @FeedStrategy
@@ -55,5 +55,6 @@ interface Configuration {
         const val DEFAULT_INITIAL_TAB_INDEX = 0
         const val DEFAULT_NO_PICTURE_MODE = false
         const val DEFAULT_SILENT_MODE = false
+        const val DEFAULT_CINEMA_MODE = false
     }
 }

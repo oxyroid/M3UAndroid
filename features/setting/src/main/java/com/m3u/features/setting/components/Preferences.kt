@@ -13,6 +13,7 @@ import androidx.compose.material.ListItem
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -20,6 +21,7 @@ import com.m3u.core.util.basic.uppercaseFirst
 import com.m3u.core.util.basic.uppercaseLetter
 import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.LocalTheme
+import com.m3u.ui.util.animated
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
@@ -31,6 +33,8 @@ internal fun FoldPreference(
     subtitle: String? = null,
     trailingContent: @Composable () -> Unit = {}
 ) {
+    val theme = LocalTheme.current
+    val actualBackgroundColor by theme.surface.animated()
     ListItem(
         text = {
             Text(
@@ -38,7 +42,7 @@ internal fun FoldPreference(
                 style = MaterialTheme.typography.subtitle1,
                 fontWeight = FontWeight.Bold,
                 maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                overflow = TextOverflow.Ellipsis,
             )
         },
         secondaryText = subtitle?.let {
@@ -59,7 +63,7 @@ internal fun FoldPreference(
                 enabled = enabled,
                 onClick = onClick
             )
-            .background(LocalTheme.current.surface)
+            .background(actualBackgroundColor)
             .padding(
                 start = LocalSpacing.current.small
             )

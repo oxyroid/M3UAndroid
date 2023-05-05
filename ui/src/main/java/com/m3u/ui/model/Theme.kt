@@ -88,3 +88,31 @@ val NightTheme = Theme(
     error = Color(0xfff2b8b5),
     onError = Color(0xff601410)
 )
+
+val ABlackTheme = Theme(
+    name = "ABlack",
+    isDark = true,
+    isDarkText = false,
+    tint = Color.White,
+    surface = Color.Transparent,
+    onSurface = Color(0xFFeeeeee),
+    topBar = Color(0xff1C1B1F),
+    onTopBar = Color(0xFFE6E1E5),
+    topBarDisable = Color(0xff232325),
+    onTopBarDisable = Color(0xFFffffff),
+    secondaryBackground = Color(0xff141622),
+    secondary = Color(0xff202123),
+    onSecondary = Color(0xffffffff),
+    background = Color.Black,
+    onBackground = Color(0xffffffff),
+    pressed = Color(0xff222222),
+    onPressed = Color(0xff323232),
+    tintDisable = Color(0xffc7c6cb),
+    onTintDisable = Color(0xfff6f5f9),
+    onTint = Color.Black,
+    primary = Color(0xff387ab4),
+    onPrimary = Color(0xffeef5f9),
+    divider = Color(0xFF0A0A0A),
+    error = Color(0xfff2b8b5),
+    onError = Color(0xff601410)
+)

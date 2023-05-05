@@ -16,6 +16,7 @@ import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -30,6 +31,7 @@ import com.m3u.ui.components.TextBadge
 import com.m3u.ui.model.LocalScalable
 import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.LocalTheme
+import com.m3u.ui.util.animated
 import java.net.URI
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -47,14 +49,15 @@ internal fun FavoriteItem(
         LocalSpacing.current.scaled
     }
     val theme = LocalTheme.current
-
+    val actualBackgroundColor by theme.surface.animated()
+    val actualContentColor by theme.onSurface.animated()
     val scheme = remember(live) {
         URI(live.url).scheme ?: context.getString(R.string.scheme_unknown).uppercase()
     }
     Surface(
         shape = RoundedCornerShape(spacing.medium),
-        color = theme.surface,
-        contentColor = theme.onSurface,
+        color = actualBackgroundColor,
+        contentColor = actualContentColor,
         elevation = spacing.none
     ) {
         Column(
@@ -65,7 +68,7 @@ internal fun FavoriteItem(
                 )
                 .then(modifier)
         ) {
-            AnimatedVisibility (!noPictureMode && !live.cover.isNullOrEmpty()) {
+            AnimatedVisibility(!noPictureMode && !live.cover.isNullOrEmpty()) {
                 Image(
                     model = live.cover,
                     errorPlaceholder = live.title,

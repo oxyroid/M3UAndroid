@@ -22,7 +22,7 @@ import androidx.navigation.NavDestination
 import com.m3u.androidApp.components.OptimizeBanner
 import com.m3u.androidApp.components.PostDialog
 import com.m3u.androidApp.components.PostDialogStatus
-import com.m3u.androidApp.navigation.BottomNavigationSheet
+import com.m3u.androidApp.components.BottomNavigationSheet
 import com.m3u.androidApp.navigation.Destination
 import com.m3u.androidApp.navigation.M3UNavHost
 import com.m3u.androidApp.navigation.rootNavigationRoute
