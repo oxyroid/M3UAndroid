@@ -6,13 +6,11 @@ pluginManagement {
     }
 }
 dependencyResolutionManagement {
-    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
         google()
         mavenCentral()
         maven {
-            url "http://4thline.org/m2"
-            allowInsecureProtocol true
+            url "https://androidx.dev/storage/compose-compiler/repository/"
         }
     }
 }
@@ -29,3 +27,4 @@ include ":features:favorite"
 include ":features:console"
 include ":features:crash"
 include ":features:scheme"
+include ":shared"

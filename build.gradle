@@ -1,10 +1,10 @@
 buildscript {
     ext {
-        kotlin_version = "1.8.10"
-        android_gradle_plugin_version = "8.0.0"
-        compose_compiler_version = "1.4.4"
+        kotlin_version = "1.8.21"
+        android_gradle_plugin_version = "8.0.1"
+        compose_compiler_version = "1.4.6-dev-k1.8.21-290a127309e"
         dagger_version = "2.44.2"
-        ksp_version = "1.8.10-1.0.9"
+        ksp_version = "1.8.21-1.0.11"
     }
     dependencies {
         classpath("org.jetbrains.kotlin:kotlin-serialization:$kotlin_version")
