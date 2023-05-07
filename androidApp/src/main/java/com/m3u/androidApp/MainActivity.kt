@@ -10,6 +10,7 @@ import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.graphics.Color
 import androidx.core.app.PictureInPictureModeChangedInfo
@@ -18,50 +19,61 @@ import androidx.core.util.Consumer
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
-import androidx.lifecycle.lifecycleScope
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.google.accompanist.navigation.animation.rememberAnimatedNavController
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.m3u.androidApp.navigation.Destination
+import com.m3u.androidApp.navigation.destinationTo
 import com.m3u.androidApp.ui.App
-import com.m3u.androidApp.ui.isInDestinations
+import com.m3u.androidApp.ui.RootViewModel
 import com.m3u.androidApp.ui.rememberAppState
 import com.m3u.ui.M3ULocalProvider
 import com.m3u.ui.model.AppAction
 import com.m3u.ui.model.Helper
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-    private val title = MutableStateFlow("")
-    private val actions = MutableStateFlow(emptyList<AppAction>())
-
     @OptIn(ExperimentalFoundationApi::class, ExperimentalAnimationApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         super.onCreate(savedInstanceState)
         WindowCompat.setDecorFitsSystemWindows(window, false)
         setContent {
+            val viewModel: RootViewModel = hiltViewModel()
+
             M3ULocalProvider(
-                helper = helper
+                helper = createHelper(
+                    setTitle = { viewModel.title.value = it },
+                    getTitle = viewModel.title::value,
+                    setActions = { viewModel.actions.value = it },
+                    getActions = viewModel.actions::value
+                )
             ) {
                 val state = rememberAppState(
-                    title = title,
-                    actions = actions,
                     navController = rememberAnimatedNavController()
                 )
                 val currentDestination = state.currentComposableNavDestination
                 val systemUiController = rememberSystemUiController()
                 val scope = rememberCoroutineScope()
+                val isPlaying = remember(currentDestination) {
+                    currentDestination destinationTo Destination.Live::class.java ||
+                            currentDestination destinationTo Destination.LivePlayList::class.java
+                }
                 val useDarkIcons = when {
-                    currentDestination.isInDestinations<Destination.Live, Destination.LivePlayList>() -> false
+                    isPlaying -> false
                     else -> !isSystemInDarkTheme()
                 }
-                DisposableEffect(systemUiController, useDarkIcons, scope) {
+                DisposableEffect(
+                    systemUiController,
+                    useDarkIcons,
+                    scope,
+                    isPlaying
+                ) {
                     scope.launch {
-                        if (!useDarkIcons) {
+                        if (isPlaying) {
                             delay(800)
                         }
                         systemUiController.setSystemBarsColor(
@@ -72,13 +84,21 @@ class MainActivity : ComponentActivity() {
 
                     onDispose {}
                 }
-                App(state)
+                App(
+                    appState = state,
+                    viewModel = viewModel
+                )
             }
         }
     }
 
     private var onUserLeaveHintCallback: (() -> Unit)? = null
-    private val helper: Helper = object : Helper() {
+    private fun createHelper(
+        setTitle: (String) -> Unit,
+        getTitle: () -> String,
+        setActions: (List<AppAction>) -> Unit,
+        getActions: () -> List<AppAction>,
+    ): Helper = object : Helper() {
 
         override fun enterPipMode(size: Rect) {
             val params = PictureInPictureParams.Builder()
@@ -88,17 +108,12 @@ class MainActivity : ComponentActivity() {
         }
 
         override var title: String
-            get() = this@MainActivity.title.value
-            set(value) {
-                this@MainActivity.title.value = value
-            }
+            get() = getTitle()
+            set(value) = setTitle(value)
 
-        override fun actions(actions: List<AppAction>) {
-            if (this@MainActivity.actions.value == actions) return
-            lifecycleScope.launch {
-                this@MainActivity.actions.emit(actions)
-            }
-        }
+        override var actions: List<AppAction>
+            get() = getActions()
+            set(value) = setActions(value)
 
         override fun hideSystemUI() {
             WindowInsetsControllerCompat(window, window.decorView).let { controller ->

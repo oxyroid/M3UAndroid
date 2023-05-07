@@ -54,7 +54,7 @@ fun MainRoute(
     }
     LaunchedEffect(isCurrentPage) {
         if (isCurrentPage) {
-            helper.actions()
+            helper.actions = emptyList()
             viewModel.onEvent(MainEvent.InitConfiguration)
         }
     }

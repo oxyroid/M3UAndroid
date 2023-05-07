@@ -7,6 +7,8 @@ import androidx.core.util.Consumer
 
 abstract class Helper {
     abstract var title: String
+
+    abstract var actions: List<AppAction>
     var systemUiVisibility: Boolean = true
         set(value) {
             if (field == value) return
@@ -16,7 +18,6 @@ abstract class Helper {
         }
 
     abstract fun enterPipMode(size: Rect)
-    abstract fun actions(actions: List<AppAction> = emptyList())
     abstract fun hideSystemUI()
     abstract fun showSystemUI()
     abstract fun registerOnUserLeaveHintListener(callback: () -> Unit)
@@ -28,8 +29,6 @@ abstract class Helper {
     abstract fun unregisterOnPictureInPictureModeChangedListener()
 }
 
-fun Helper.actions(vararg actions: AppAction) = actions(actions.toList())
-
 val EmptyHelper = object : Helper() {
     override var title: String
         get() = error("Cannot get title")
@@ -37,9 +36,13 @@ val EmptyHelper = object : Helper() {
             error("Cannot set title")
         }
 
-    override fun enterPipMode(size: Rect) = error("Cannot enterPipMode")
+    override var actions: List<AppAction>
+        get() = error("Cannot get actions")
+        set(_) {
+            error("Cannot set actions")
+        }
 
-    override fun actions(actions: List<AppAction>) = error("Cannot setActions")
+    override fun enterPipMode(size: Rect) = error("Cannot enterPipMode")
 
     override fun hideSystemUI() = error("Cannot hideSystemUI")
 

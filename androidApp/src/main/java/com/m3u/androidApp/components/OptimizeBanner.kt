@@ -10,7 +10,6 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.text.style.TextOverflow
@@ -23,20 +22,17 @@ private typealias OnPost = (post: Post) -> Unit
 
 @Composable
 fun ColumnScope.OptimizeBanner(
-    posts: List<Post>,
+    post: Post?,
     modifier: Modifier = Modifier,
     onPost: OnPost
 ) {
     val spacing = LocalSpacing.current
     val theme = LocalTheme.current
     val duration = LocalDuration.current
-    val post = remember(posts) {
-        posts.firstOrNull()
-    }
     val actualBackgroundColor by animateColorAsState(
         when {
             post == null -> theme.tintDisable
-            post.temporal -> theme.error
+            post.temporal -> theme.primary
             else -> theme.tint
         },
         animationSpec = tween(duration.slow)
@@ -44,7 +40,7 @@ fun ColumnScope.OptimizeBanner(
     val actualContentColor by animateColorAsState(
         when {
             post == null -> theme.onTint
-            post.temporal -> theme.onError
+            post.temporal -> theme.onPrimary
             else -> theme.onTintDisable
         },
         animationSpec = tween(duration.slow)

@@ -12,7 +12,9 @@ import com.m3u.core.wrapper.eventOf
 import com.m3u.core.wrapper.handledEvent
 import com.m3u.data.database.entity.Post
 import com.m3u.data.repository.PostRepository
+import com.m3u.ui.model.AppAction
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
 import javax.inject.Inject
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.launchIn
@@ -53,6 +55,10 @@ class RootViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5_000L),
             initialValue = emptyList()
         )
+
+
+    val title: MutableStateFlow<String> = MutableStateFlow("")
+    val actions: MutableStateFlow<List<AppAction>> = MutableStateFlow(emptyList())
 
     override fun onEvent(event: RootEvent) {
         when (event) {

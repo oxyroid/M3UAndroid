@@ -19,7 +19,7 @@ interface PostDao {
     @Query("SELECT * FROM posts ORDER BY id")
     fun observeAll(): Flow<List<Post>>
 
-    @Query("SELECT * FROM posts WHERE status = ${Post.STATUS_UNREAD} OR standard = -1 ORDER BY id")
+    @Query("SELECT * FROM posts WHERE (status = ${Post.STATUS_UNREAD} OR standard = -1) ORDER BY standard, id DESC")
     fun observeActivePosts(): Flow<List<Post>>
 
     @Query("UPDATE posts SET status = ${Post.STATUS_READ} WHERE id = :id")

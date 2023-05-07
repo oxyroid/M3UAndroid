@@ -80,7 +80,7 @@ fun SettingRoute(
 
     LaunchedEffect(isCurrentPage) {
         if (isCurrentPage) {
-            helper.actions()
+            helper.actions = emptyList()
             viewModel.onEvent(SettingEvent.InitConfiguration)
         }
     }

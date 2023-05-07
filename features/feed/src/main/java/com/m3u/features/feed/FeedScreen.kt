@@ -86,7 +86,6 @@ import com.m3u.ui.model.LocalScalable
 import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.LocalTheme
 import com.m3u.ui.model.Scalable
-import com.m3u.ui.model.actions
 import com.m3u.ui.util.EventHandler
 import com.m3u.ui.util.RepeatOnCreate
 import com.m3u.ui.util.interceptVolumeEvent
@@ -116,7 +115,7 @@ internal fun FeedRoute(
         viewModel.onEvent(FeedEvent.ObserveFeed(url))
     }
     RepeatOnCreate {
-        helper.actions(
+        helper.actions = listOf(
             AppAction(
                 icon = Icons.Rounded.Refresh,
                 contentDescription = "refresh",

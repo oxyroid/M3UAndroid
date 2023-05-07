@@ -18,19 +18,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.navigation.NavDestination
+import com.m3u.androidApp.components.BottomNavigationSheet
 import com.m3u.androidApp.components.OptimizeBanner
 import com.m3u.androidApp.components.PostDialog
 import com.m3u.androidApp.components.PostDialogStatus
-import com.m3u.androidApp.components.BottomNavigationSheet
 import com.m3u.androidApp.navigation.Destination
 import com.m3u.androidApp.navigation.M3UNavHost
-import com.m3u.androidApp.navigation.rootNavigationRoute
+import com.m3u.androidApp.navigation.notDestinationTo
+import com.m3u.androidApp.navigation.safeDestinationTo
 import com.m3u.data.database.entity.Post
-import com.m3u.features.console.navigation.consoleRoute
-import com.m3u.features.feed.navigation.feedRoute
-import com.m3u.features.live.navigation.livePlaylistRoute
-import com.m3u.features.live.navigation.liveRoute
 import com.m3u.ui.components.AppTopBar
 import com.m3u.ui.components.Background
 import com.m3u.ui.components.IconButton
@@ -44,7 +40,40 @@ fun App(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val posts by viewModel.posts.collectAsStateWithLifecycle()
     val post = state.post
-    val onPost = { it: Post? -> viewModel.onEvent(RootEvent.OnPost(it)) }
+    val onPost: (Post?) -> Unit = { viewModel.onEvent(RootEvent.OnPost(it)) }
+
+    val topLevelDestinations = appState.topLevelDestinations
+    val currentDestination = appState.currentComposableNavDestination
+    val currentTopLevelDestination = appState.currentComposableTopLevelDestination
+    val currentTopLevelDestinationTitle = currentTopLevelDestination
+        ?.titleTextId
+        ?.let { stringResource(it) }
+    val title by viewModel.title.collectAsStateWithLifecycle()
+    val text by remember(currentTopLevelDestinationTitle) {
+        derivedStateOf { currentTopLevelDestinationTitle ?: title }
+    }
+    var postDialogStatus = remember(post, posts) {
+        if (post == null || post.temporal) PostDialogStatus.Idle
+        else {
+            val index = posts.indexOf(post)
+            val total = posts.size
+            if (index != -1 && total > 0) {
+                PostDialogStatus.Visible(
+                    post = post,
+                    index = index,
+                    total = total
+                )
+            } else {
+                onPost(null)
+                PostDialogStatus.Idle
+            }
+        }
+    }
+    val isSystemBarVisible =
+        currentDestination notDestinationTo Destination.Live::class.java &&
+                currentDestination notDestinationTo Destination.LivePlayList::class.java
+    val isBackPressedVisible = currentDestination.safeDestinationTo<Destination.Root>(true)
+
     LaunchedEffect(Unit) {
         viewModel.onEvent(RootEvent.OnInitialTab)
     }
@@ -54,45 +83,12 @@ fun App(
         }
     }
     Background {
-        val topLevelDestinations = appState.topLevelDestinations
-        val currentDestination = appState.currentComposableNavDestination
-        val currentTopLevelDestination = appState.currentComposableTopLevelDestination
-        val currentTopLevelDestinationTitle = currentTopLevelDestination
-            ?.titleTextId
-            ?.let { stringResource(it) }
-        val title by appState.title.collectAsStateWithLifecycle()
-        val text by remember(currentTopLevelDestinationTitle) {
-            derivedStateOf { currentTopLevelDestinationTitle ?: title }
-        }
-        var postDialogStatus = remember(post, posts) {
-            if (post == null || post.temporal) PostDialogStatus.Idle
-            else {
-                if (post.temporal) PostDialogStatus.Idle
-                else {
-                    val index = posts.indexOf(post)
-                    val total = posts.size
-                    if (index != -1 && total > 0) {
-                        PostDialogStatus.Visible(
-                            post = post,
-                            index = posts.indexOf(post),
-                            total = posts.size
-                        )
-                    } else {
-                        onPost(null)
-                        PostDialogStatus.Idle
-                    }
-                }
-            }
-        }
-        val isSheetVisible =
-            currentDestination.isNotInDestinations<Destination.Live, Destination.LivePlayList>()
-        val isBackPressedVisible = currentDestination.isInDestination<Destination.Root>(true)
         AppTopBar(
             text = text,
-            visible = isSheetVisible,
-            scrollable = !currentDestination.isInDestination<Destination.Root>(),
+            visible = isSystemBarVisible,
+            scrollable = currentDestination notDestinationTo Destination.Root::class.java,
             actions = {
-                val actions by appState.actions.collectAsStateWithLifecycle()
+                val actions by viewModel.actions.collectAsStateWithLifecycle()
                 actions.forEach { action ->
                     IconButton(
                         icon = action.icon,
@@ -119,10 +115,10 @@ fun App(
                         .fillMaxWidth()
                         .weight(1f)
                 )
-                AnimatedVisibility(isSheetVisible) {
+                AnimatedVisibility(isSystemBarVisible) {
                     Column {
                         OptimizeBanner(
-                            posts = posts,
+                            post = posts.firstOrNull(),
                             onPost = onPost,
                             modifier = Modifier.fillMaxWidth()
                         )
@@ -149,27 +145,3 @@ fun App(
     }
 }
 
-inline fun <reified D : Destination> NavDestination?.isInDestination(): Boolean {
-    val targetRoute = when (D::class.java.name) {
-        Destination.Live::class.java.name -> liveRoute
-        Destination.LivePlayList::class.java.name -> livePlaylistRoute
-        Destination.Feed::class.java.name -> feedRoute
-        Destination.Console::class.java.name -> consoleRoute
-        Destination.Root::class.java.name -> rootNavigationRoute
-        else -> return false
-    }
-    return this?.route == targetRoute
-}
-
-inline fun <reified D : Destination> NavDestination?.isInDestination(
-    includeNullValue: Boolean
-): Boolean {
-    this ?: return includeNullValue
-    return isInDestination<D>()
-}
-
-inline fun <reified D1 : Destination, reified D2 : Destination> NavDestination?.isInDestinations(): Boolean =
-    isInDestination<D1>() || isInDestination<D2>()
-
-inline fun <reified D1 : Destination, reified D2 : Destination> NavDestination?.isNotInDestinations(): Boolean =
-    !isInDestination<D1>() && !isInDestination<D2>()
