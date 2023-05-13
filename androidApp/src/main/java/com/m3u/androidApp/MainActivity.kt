@@ -8,11 +8,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.ui.graphics.Color
 import androidx.core.app.PictureInPictureModeChangedInfo
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.util.Consumer
@@ -20,16 +15,11 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import com.google.accompanist.navigation.animation.rememberAnimatedNavController
-import com.google.accompanist.systemuicontroller.rememberSystemUiController
-import com.m3u.androidApp.navigation.Destination
-import com.m3u.androidApp.navigation.destinationTo
 import com.m3u.androidApp.ui.App
 import com.m3u.androidApp.ui.rememberAppState
 import com.m3u.ui.model.AppAction
 import com.m3u.ui.model.Helper
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -42,35 +32,6 @@ class MainActivity : ComponentActivity() {
             val state = rememberAppState(
                 navController = rememberAnimatedNavController()
             )
-            val currentDestination = state.currentComposableNavDestination
-            val systemUiController = rememberSystemUiController()
-            val scope = rememberCoroutineScope()
-            val isPlaying = remember(currentDestination) {
-                currentDestination destinationTo Destination.Live::class.java ||
-                        currentDestination destinationTo Destination.LivePlayList::class.java
-            }
-            val useDarkIcons = when {
-                isPlaying -> false
-                else -> !isSystemInDarkTheme()
-            }
-            DisposableEffect(
-                systemUiController,
-                useDarkIcons,
-                scope,
-                isPlaying
-            ) {
-                scope.launch {
-                    if (isPlaying) {
-                        delay(800)
-                    }
-                    systemUiController.setSystemBarsColor(
-                        color = Color.Transparent,
-                        darkIcons = useDarkIcons
-                    )
-                }
-
-                onDispose {}
-            }
             App(
                 appState = state,
                 connector = this::createHelper

@@ -57,5 +57,23 @@ interface Configuration {
         const val DEFAULT_NO_PICTURE_MODE = false
         const val DEFAULT_SILENT_MODE = true
         const val DEFAULT_CINEMA_MODE = false
+
+        const val FEED_STRATEGY = "feedStrategy"
+        const val USE_COMMON_UI_MODE = "useCommonUIMode"
+        const val ROW_COUNT = "rowCount"
+
+        const val CONNECT_TIMEOUT = "connectTimeout"
+        const val GOD_MODE = "godMode"
+        const val EXPERIMENTAL_MODE = "experimentalMode"
+
+        const val CLIP_MODE = "clipMode"
+        const val SCROLL_MODE = "scrollMode"
+        const val AUTO_REFRESH = "autoRefresh"
+        const val SSL_VERIFICATION = "sslVerification"
+        const val FULL_INFO_PLAYER = "fullInfoPlayer"
+        const val INITIAL_TAB_INDEX = "initialTabIndex"
+        const val NO_PICTURE_MODE = "noPictureMode"
+        const val SILENT_MODE = "silentMode"
+        const val CINEMA_MODE = "cinemaMode"
     }
 }

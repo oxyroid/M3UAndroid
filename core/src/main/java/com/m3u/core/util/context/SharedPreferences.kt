@@ -15,7 +15,7 @@ fun SharedPreferences.int(
 
 fun SharedPreferences.intAsState(
     def: Int = 0,
-    key: String? = null,
+    key: String
 ) = delegateAsState(key, def, SharedPreferences::getInt, SharedPreferences.Editor::putInt)
 
 fun SharedPreferences.string(
@@ -25,7 +25,7 @@ fun SharedPreferences.string(
 
 fun SharedPreferences.stringAsState(
     def: String? = null,
-    key: String? = null
+    key: String
 ) = delegateAsState(key, def, SharedPreferences::getString, SharedPreferences.Editor::putString)
 
 fun SharedPreferences.long(
@@ -35,12 +35,12 @@ fun SharedPreferences.long(
 
 fun SharedPreferences.longAsState(
     def: Long = 0,
-    key: String? = null
+    key: String
 ) = delegateAsState(key, def, SharedPreferences::getLong, SharedPreferences.Editor::putLong)
 
 fun SharedPreferences.boolean(
     def: Boolean = false,
-    key: String? = null
+    key: String
 ) = delegate(
     key,
     def,
@@ -49,7 +49,7 @@ fun SharedPreferences.boolean(
 )
 fun SharedPreferences.booleanAsState(
     def: Boolean = false,
-    key: String? = null
+    key: String
 ) = delegateAsState(
     key,
     def,
@@ -73,7 +73,7 @@ private inline fun <T> SharedPreferences.delegate(
 }
 
 private fun <T> SharedPreferences.delegateAsState(
-    key: String? = null,
+    key: String,
     defaultValue: T,
     getter: SharedPreferences.(String, T) -> T,
     setter: SharedPreferences.Editor.(String, T) -> SharedPreferences.Editor
@@ -84,23 +84,19 @@ private fun <T> SharedPreferences.delegateAsState(
 
 private class SharedPreferencesStateDelegator<T>(
     sharedPreferences: SharedPreferences,
-    key: String? = null,
+    key: String,
     defaultValue: T,
     getter: SharedPreferences.(String, T) -> T,
     setter: SharedPreferences.Editor.(String, T) -> SharedPreferences.Editor
 ) {
     var delegate by object : ReadWriteProperty<Any, T> {
-        override fun getValue(thisRef: Any, property: KProperty<*>): T {
-            return sharedPreferences.getter(key ?: property.name, defaultValue)
-        }
+        override fun getValue(thisRef: Any, property: KProperty<*>): T =
+            sharedPreferences.getter(key, defaultValue)
 
-        override fun setValue(thisRef: Any, property: KProperty<*>, value: T) {
-            val actualKey = key ?: property.name
-
-            return sharedPreferences.edit().setter(actualKey, value).apply()
-        }
+        override fun setValue(thisRef: Any, property: KProperty<*>, value: T) =
+            sharedPreferences.edit().setter(key, value).apply()
     }
-    private val origin = mutableStateOf(defaultValue)
+    private val origin = mutableStateOf(delegate)
     val state = StateDelegator(
         delegate = origin,
         onUpdate = { delegate = it },

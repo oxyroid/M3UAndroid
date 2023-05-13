@@ -10,21 +10,26 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.m3u.androidApp.components.BottomNavigationSheet
 import com.m3u.androidApp.components.OptimizeBanner
 import com.m3u.androidApp.components.PostDialog
 import com.m3u.androidApp.components.PostDialogStatus
 import com.m3u.androidApp.navigation.Destination
 import com.m3u.androidApp.navigation.M3UNavHost
+import com.m3u.androidApp.navigation.destinationTo
 import com.m3u.androidApp.navigation.notDestinationTo
 import com.m3u.androidApp.navigation.safeDestinationTo
 import com.m3u.data.database.entity.Post
@@ -38,6 +43,8 @@ import com.m3u.ui.model.DayTheme
 import com.m3u.ui.model.EmptyHelper
 import com.m3u.ui.model.Helper
 import com.m3u.ui.model.NightTheme
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 typealias HelperConnector =
             ((String) -> Unit, () -> String, (List<AppAction>) -> Unit, () -> List<AppAction>) -> Helper
@@ -86,6 +93,38 @@ fun App(
                 currentDestination notDestinationTo Destination.LivePlayList::class.java
     val isBackPressedVisible = currentDestination.safeDestinationTo<Destination.Root>(true)
 
+    val systemUiController = rememberSystemUiController()
+    val scope = rememberCoroutineScope()
+    val isPlaying = remember(currentDestination) {
+        currentDestination destinationTo Destination.Live::class.java ||
+                currentDestination destinationTo Destination.LivePlayList::class.java
+    }
+    val cinemaMode = state.cinemaMode
+
+    val useDarkIcons = when {
+        cinemaMode -> false
+        isPlaying -> false
+        else -> !isSystemInDarkTheme()
+    }
+    DisposableEffect(
+        systemUiController,
+        useDarkIcons,
+        scope,
+        isPlaying,
+        cinemaMode
+    ) {
+        scope.launch {
+            if (!cinemaMode && isPlaying) {
+                delay(800)
+            }
+            systemUiController.setSystemBarsColor(
+                color = Color.Transparent,
+                darkIcons = useDarkIcons
+            )
+        }
+
+        onDispose {}
+    }
     LaunchedEffect(Unit) {
         viewModel.onEvent(RootEvent.OnInitialTab)
     }
@@ -95,7 +134,7 @@ fun App(
         }
     }
     val theme = when {
-        state.cinemaMode -> ABlackTheme
+        cinemaMode -> ABlackTheme
         isSystemInDarkTheme() -> NightTheme
         else -> DayTheme
     }
