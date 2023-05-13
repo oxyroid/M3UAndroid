@@ -129,6 +129,8 @@ fun SettingRoute(
         onNoPictureMode = { state.noPictureMode = !state.noPictureMode },
         silentMode = state.silentMode,
         onSilentMode = { viewModel.onEvent(SettingEvent.OnSilentMode) },
+        cinemaMode = state.cinemaMode,
+        onCinemaMode = { state.cinemaMode = !state.cinemaMode },
         modifier = modifier.fillMaxSize()
     )
 }
@@ -172,6 +174,8 @@ private fun SettingScreen(
     onNoPictureMode: () -> Unit,
     silentMode: Boolean,
     onSilentMode: () -> Unit,
+    cinemaMode: Boolean,
+    onCinemaMode: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     var fold: Fold by remember { mutableStateOf(Fold.NONE) }
@@ -220,6 +224,8 @@ private fun SettingScreen(
                     onNoPictureMode = onNoPictureMode,
                     silentMode = silentMode,
                     onSilentMode = onSilentMode,
+                    cinemaMode = cinemaMode,
+                    onCinemaMode = onCinemaMode,
                     modifier = modifier
                         .fillMaxWidth()
                         .scrollable(
@@ -270,6 +276,8 @@ private fun SettingScreen(
                     onNoPictureMode = onNoPictureMode,
                     silentMode = silentMode,
                     onSilentMode = onSilentMode,
+                    cinemaMode = cinemaMode,
+                    onCinemaMode = onCinemaMode,
                     modifier = modifier.scrollable(
                         orientation = Orientation.Vertical,
                         state = rememberScrollableState { it }
@@ -325,6 +333,8 @@ private fun PortraitOrientationContent(
     onNoPictureMode: () -> Unit,
     silentMode: Boolean,
     onSilentMode: () -> Unit,
+    cinemaMode: Boolean,
+    onCinemaMode: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Box {
@@ -364,6 +374,8 @@ private fun PortraitOrientationContent(
             onNoPictureMode = onNoPictureMode,
             silentMode = silentMode,
             onSilentMode = onSilentMode,
+            cinemaMode = cinemaMode,
+            onCinemaMode = onCinemaMode,
             modifier = modifier
         )
 
@@ -440,6 +452,8 @@ private fun LandscapeOrientationContent(
     onNoPictureMode: () -> Unit,
     silentMode: Boolean,
     onSilentMode: () -> Unit,
+    cinemaMode: Boolean,
+    onCinemaMode: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
@@ -480,6 +494,8 @@ private fun LandscapeOrientationContent(
             onNoPictureMode = onNoPictureMode,
             silentMode = silentMode,
             onSilentMode = onSilentMode,
+            cinemaMode = cinemaMode,
+            onCinemaMode = onCinemaMode,
             modifier = Modifier
                 .fillMaxHeight()
                 .weight(1f)
@@ -548,6 +564,8 @@ private fun PreferencesPart(
     onNoPictureMode: () -> Unit,
     silentMode: Boolean,
     onSilentMode: () -> Unit,
+    cinemaMode: Boolean,
+    onCinemaMode: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val spacing = LocalSpacing.current
@@ -691,6 +709,16 @@ private fun PreferencesPart(
                     Column(
                         verticalArrangement = Arrangement.spacedBy(1.dp)
                     ) {
+                        CheckBoxPreference(
+                            title = stringResource(R.string.cinema_mode),
+                            subtitle = stringResource(R.string.cinema_mode_description),
+                            checked = cinemaMode,
+                            onCheckedChange = { newValue ->
+                                if (newValue != cinemaMode) {
+                                    onCinemaMode()
+                                }
+                            }
+                        )
                         FoldPreference(
                             title = stringResource(R.string.script_management),
                             enabled = true,
