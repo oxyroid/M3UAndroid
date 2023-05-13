@@ -28,17 +28,11 @@ class LiveViewModel @Inject constructor(
     private val playerManager: PlayerManager,
 ) : BaseViewModel<LiveState, LiveEvent>(
     application = application,
-    emptyState = LiveState()
+    emptyState = LiveState(
+        configuration = configuration
+    )
 ) {
     init {
-        writable.update {
-            it.copy(
-                experimentalMode = configuration.experimentalMode,
-                clipMode = configuration.clipMode,
-                fullInfoPlayer = configuration.fullInfoPlayer
-            )
-        }
-
         playerManager.observePlayer()
             .onEach { player ->
                 writable.update {

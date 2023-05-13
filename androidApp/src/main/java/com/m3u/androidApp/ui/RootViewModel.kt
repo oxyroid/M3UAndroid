@@ -1,6 +1,8 @@
 package com.m3u.androidApp.ui
 
 import android.app.Application
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.viewModelScope
 import com.m3u.androidApp.AppPublisher
 import com.m3u.androidApp.navigation.TopLevelDestination
@@ -27,15 +29,17 @@ import kotlinx.coroutines.launch
 class RootViewModel @Inject constructor(
     application: Application,
     private val postRepository: PostRepository,
-    private val configuration: Configuration,
+    configuration: Configuration,
     private val publisher: AppPublisher,
     bannerService: BannerService
 ) : BaseViewModel<RootState, RootEvent>(
     application = application,
-    emptyState = RootState()
+    emptyState = RootState(
+        configuration = configuration
+    )
 ) {
     init {
-        if (!configuration.silentMode) {
+        if (!readable.silentMode) {
             fetchPosts()
         }
         bannerService
@@ -135,7 +139,7 @@ class RootViewModel @Inject constructor(
     }
 
     private fun getSafelyInitialTabIndex(): Int {
-        val index = configuration.initialTabIndex
+        val index = readable.initialTabIndex
         if (index < 0 || index > publisher.maxTabIndex) return 0
         return index
     }
@@ -143,8 +147,13 @@ class RootViewModel @Inject constructor(
 
 data class RootState(
     val post: Post? = null,
-    val navigateTopLevelDestination: Event<TopLevelDestination> = handledEvent()
-)
+    val navigateTopLevelDestination: Event<TopLevelDestination> = handledEvent(),
+    private val configuration: Configuration
+) {
+    var cinemaMode: Boolean by configuration.cinemaMode
+    var initialTabIndex: Int by configuration.initialTabIndex
+    var silentMode: Boolean by configuration.silentMode
+}
 
 sealed class RootEvent {
     data class OnPost(val post: Post?) : RootEvent()

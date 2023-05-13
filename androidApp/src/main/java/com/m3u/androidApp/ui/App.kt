@@ -3,6 +3,7 @@ package com.m3u.androidApp.ui
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -27,15 +28,26 @@ import com.m3u.androidApp.navigation.M3UNavHost
 import com.m3u.androidApp.navigation.notDestinationTo
 import com.m3u.androidApp.navigation.safeDestinationTo
 import com.m3u.data.database.entity.Post
+import com.m3u.ui.M3ULocalProvider
 import com.m3u.ui.components.AppTopBar
 import com.m3u.ui.components.Background
 import com.m3u.ui.components.IconButton
+import com.m3u.ui.model.ABlackTheme
+import com.m3u.ui.model.AppAction
+import com.m3u.ui.model.DayTheme
+import com.m3u.ui.model.EmptyHelper
+import com.m3u.ui.model.Helper
+import com.m3u.ui.model.NightTheme
+
+typealias HelperConnector =
+            ((String) -> Unit, () -> String, (List<AppAction>) -> Unit, () -> List<AppAction>) -> Helper
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun App(
     appState: AppState = rememberAppState(),
-    viewModel: RootViewModel = hiltViewModel()
+    viewModel: RootViewModel = hiltViewModel(),
+    connector: HelperConnector = { _, _, _, _ -> EmptyHelper }
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val posts by viewModel.posts.collectAsStateWithLifecycle()
@@ -82,65 +94,80 @@ fun App(
             appState.navigateToTopLevelDestination(it)
         }
     }
-    Background {
-        AppTopBar(
-            text = text,
-            visible = isSystemBarVisible,
-            scrollable = currentDestination notDestinationTo Destination.Root::class.java,
-            actions = {
-                val actions by viewModel.actions.collectAsStateWithLifecycle()
-                actions.forEach { action ->
-                    IconButton(
-                        icon = action.icon,
-                        contentDescription = action.contentDescription,
-                        onClick = action.onClick
-                    )
-                }
-            },
-            onBackPressed = if (isBackPressedVisible) null else appState::onBackClick
-        ) { padding ->
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding),
-                verticalArrangement = Arrangement.Bottom,
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                M3UNavHost(
-                    navController = appState.navController,
-                    pagerState = appState.pagerState,
-                    destinations = topLevelDestinations,
-                    navigateToDestination = appState::navigateToDestination,
+    val theme = when {
+        state.cinemaMode -> ABlackTheme
+        isSystemInDarkTheme() -> NightTheme
+        else -> DayTheme
+    }
+    M3ULocalProvider(
+        helper = connector.invoke(
+            { viewModel.title.value = it },
+            viewModel.title::value,
+            { viewModel.actions.value = it },
+            viewModel.actions::value
+        ),
+        theme = theme
+    ) {
+        Background {
+            AppTopBar(
+                text = text,
+                visible = isSystemBarVisible,
+                scrollable = currentDestination notDestinationTo Destination.Root::class.java,
+                actions = {
+                    val actions by viewModel.actions.collectAsStateWithLifecycle()
+                    actions.forEach { action ->
+                        IconButton(
+                            icon = action.icon,
+                            contentDescription = action.contentDescription,
+                            onClick = action.onClick
+                        )
+                    }
+                },
+                onBackPressed = if (isBackPressedVisible) null else appState::onBackClick
+            ) { padding ->
+                Column(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f)
-                )
-                AnimatedVisibility(isSystemBarVisible) {
-                    Column {
-                        OptimizeBanner(
-                            post = posts.firstOrNull(),
-                            onPost = onPost,
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                        BottomNavigationSheet(
-                            destinations = topLevelDestinations,
-                            currentTopLevelDestination = currentTopLevelDestination,
-                            navigateToTopLevelDestination = appState::navigateToTopLevelDestination,
-                            modifier = Modifier.fillMaxWidth()
-                        )
+                        .fillMaxSize()
+                        .padding(padding),
+                    verticalArrangement = Arrangement.Bottom,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    M3UNavHost(
+                        navController = appState.navController,
+                        pagerState = appState.pagerState,
+                        destinations = topLevelDestinations,
+                        navigateToDestination = appState::navigateToDestination,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f)
+                    )
+                    AnimatedVisibility(isSystemBarVisible) {
+                        Column {
+                            OptimizeBanner(
+                                post = posts.firstOrNull(),
+                                onPost = onPost,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                            BottomNavigationSheet(
+                                destinations = topLevelDestinations,
+                                currentTopLevelDestination = currentTopLevelDestination,
+                                navigateToTopLevelDestination = appState::navigateToTopLevelDestination,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
                     }
                 }
             }
-        }
-        PostDialog(
-            status = postDialogStatus,
-            onDismiss = { onPost(null) },
-            onNext = { viewModel.onEvent(RootEvent.OnNext) },
-            onPrevious = { viewModel.onEvent(RootEvent.OnPrevious) },
-            onRead = { viewModel.onEvent(RootEvent.OnRead) }
-        )
-        BackHandler(postDialogStatus != PostDialogStatus.Idle) {
-            postDialogStatus = PostDialogStatus.Idle
+            PostDialog(
+                status = postDialogStatus,
+                onDismiss = { onPost(null) },
+                onNext = { viewModel.onEvent(RootEvent.OnNext) },
+                onPrevious = { viewModel.onEvent(RootEvent.OnPrevious) },
+                onRead = { viewModel.onEvent(RootEvent.OnRead) }
+            )
+            BackHandler(postDialogStatus != PostDialogStatus.Idle) {
+                postDialogStatus = PostDialogStatus.Idle
+            }
         }
     }
 }

@@ -132,7 +132,7 @@ internal fun FeedRoute(
     }
     val rowCount = state.rowCount
     fun onRowCount(target: Int) {
-        viewModel.onEvent(FeedEvent.SetRowCount(target))
+        state.rowCount = target
     }
     BackHandler(state.query.isNotEmpty()) {
         viewModel.onEvent(FeedEvent.OnQuery(""))

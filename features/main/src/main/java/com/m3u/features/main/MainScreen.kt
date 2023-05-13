@@ -50,12 +50,11 @@ fun MainRoute(
     val state: MainState by viewModel.state.collectAsStateWithLifecycle()
     val rowCount = state.rowCount
     fun onRowCount(target: Int) {
-        viewModel.onEvent(MainEvent.SetRowCount(target))
+        state.rowCount = target
     }
     LaunchedEffect(isCurrentPage) {
         if (isCurrentPage) {
             helper.actions = emptyList()
-            viewModel.onEvent(MainEvent.InitConfiguration)
         }
     }
 

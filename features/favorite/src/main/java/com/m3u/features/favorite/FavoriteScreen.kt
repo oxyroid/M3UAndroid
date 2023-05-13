@@ -40,12 +40,11 @@ fun FavouriteRoute(
 
     val rowCount = state.rowCount
     fun onRowCount(target: Int) {
-        viewModel.onEvent(FavoriteEvent.SetRowCount(target))
+        state.rowCount = target
     }
     LaunchedEffect(isCurrentPage) {
         if (isCurrentPage) {
             helper.actions = emptyList()
-            viewModel.onEvent(FavoriteEvent.InitConfiguration)
         }
     }
 

@@ -1,5 +1,6 @@
 package com.m3u.core.architecture.configuration
 
+import androidx.compose.runtime.MutableState
 import com.m3u.core.annotation.ClipMode
 import com.m3u.core.annotation.ConnectTimeout
 import com.m3u.core.annotation.FeedStrategy
@@ -9,31 +10,31 @@ import com.m3u.core.annotation.FeedStrategy
  */
 interface Configuration {
     @FeedStrategy
-    var feedStrategy: Int
-    var useCommonUIMode: Boolean
-    var rowCount: Int
+    val feedStrategy: MutableState<Int>
+    val useCommonUIMode: MutableState<Boolean>
+    val rowCount: MutableState<Int>
 
     @ConnectTimeout
-    var connectTimeout: Int
-    var godMode: Boolean
-    var experimentalMode: Boolean
+    val connectTimeout: MutableState<Int>
+    val godMode: MutableState<Boolean>
+    val experimentalMode: MutableState<Boolean>
 
     @ClipMode
-    var clipMode: Int
-    var autoRefresh: Boolean
-    var fullInfoPlayer: Boolean
+    val clipMode: MutableState<Int>
+    val autoRefresh: MutableState<Boolean>
+    val fullInfoPlayer: MutableState<Boolean>
 
     @ExperimentalConfiguration
-    var scrollMode: Boolean
+    val scrollMode: MutableState<Boolean>
 
     @ExperimentalConfiguration
-    var isSSLVerification: Boolean
-    var initialTabIndex: Int
-    var noPictureMode: Boolean
-    var silentMode: Boolean
+    val isSSLVerification: MutableState<Boolean>
+    val initialTabIndex: MutableState<Int>
+    val noPictureMode: MutableState<Boolean>
+    val silentMode: MutableState<Boolean>
 
     @ExperimentalConfiguration
-    var cinemaMode: Boolean
+    val cinemaMode: MutableState<Boolean>
 
     companion object {
         @FeedStrategy

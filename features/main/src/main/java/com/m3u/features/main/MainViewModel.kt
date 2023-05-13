@@ -31,11 +31,13 @@ class MainViewModel @Inject constructor(
     private val feedRepository: FeedRepository,
     private val liveRepository: LiveRepository,
     application: Application,
-    private val configuration: Configuration,
+    configuration: Configuration,
     @BannerLoggerImpl private val logger: Logger
 ) : BaseViewModel<MainState, MainEvent>(
     application = application,
-    emptyState = MainState()
+    emptyState = MainState(
+        configuration = configuration
+    ),
 ) {
     init {
         var job: Job? = null
@@ -84,9 +86,7 @@ class MainViewModel @Inject constructor(
     override fun onEvent(event: MainEvent) {
         when (event) {
             is MainEvent.UnsubscribeFeedByUrl -> unsubscribeFeedByUrl(event.url)
-            is MainEvent.SetRowCount -> setRowCount(event.target)
             is MainEvent.Rename -> rename(event.feedUrl, event.target)
-            MainEvent.InitConfiguration -> initConfiguration()
         }
     }
 
@@ -100,27 +100,9 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    private fun setRowCount(target: Int) {
-        configuration.rowCount = target
-        writable.update {
-            it.copy(
-                rowCount = target
-            )
-        }
-    }
-
     private fun rename(feedUrl: String, target: String) {
         viewModelScope.launch {
             feedRepository.rename(feedUrl, target)
-        }
-    }
-
-    private fun initConfiguration() {
-        writable.update {
-            it.copy(
-                godMode = configuration.godMode,
-                rowCount = configuration.rowCount
-            )
         }
     }
 }

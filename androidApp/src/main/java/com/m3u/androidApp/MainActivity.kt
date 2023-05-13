@@ -19,15 +19,12 @@ import androidx.core.util.Consumer
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
-import androidx.hilt.navigation.compose.hiltViewModel
 import com.google.accompanist.navigation.animation.rememberAnimatedNavController
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.m3u.androidApp.navigation.Destination
 import com.m3u.androidApp.navigation.destinationTo
 import com.m3u.androidApp.ui.App
-import com.m3u.androidApp.ui.RootViewModel
 import com.m3u.androidApp.ui.rememberAppState
-import com.m3u.ui.M3ULocalProvider
 import com.m3u.ui.model.AppAction
 import com.m3u.ui.model.Helper
 import dagger.hilt.android.AndroidEntryPoint
@@ -42,53 +39,42 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         WindowCompat.setDecorFitsSystemWindows(window, false)
         setContent {
-            val viewModel: RootViewModel = hiltViewModel()
-
-            M3ULocalProvider(
-                helper = createHelper(
-                    setTitle = { viewModel.title.value = it },
-                    getTitle = viewModel.title::value,
-                    setActions = { viewModel.actions.value = it },
-                    getActions = viewModel.actions::value
-                )
-            ) {
-                val state = rememberAppState(
-                    navController = rememberAnimatedNavController()
-                )
-                val currentDestination = state.currentComposableNavDestination
-                val systemUiController = rememberSystemUiController()
-                val scope = rememberCoroutineScope()
-                val isPlaying = remember(currentDestination) {
-                    currentDestination destinationTo Destination.Live::class.java ||
-                            currentDestination destinationTo Destination.LivePlayList::class.java
-                }
-                val useDarkIcons = when {
-                    isPlaying -> false
-                    else -> !isSystemInDarkTheme()
-                }
-                DisposableEffect(
-                    systemUiController,
-                    useDarkIcons,
-                    scope,
-                    isPlaying
-                ) {
-                    scope.launch {
-                        if (isPlaying) {
-                            delay(800)
-                        }
-                        systemUiController.setSystemBarsColor(
-                            color = Color.Transparent,
-                            darkIcons = useDarkIcons
-                        )
-                    }
-
-                    onDispose {}
-                }
-                App(
-                    appState = state,
-                    viewModel = viewModel
-                )
+            val state = rememberAppState(
+                navController = rememberAnimatedNavController()
+            )
+            val currentDestination = state.currentComposableNavDestination
+            val systemUiController = rememberSystemUiController()
+            val scope = rememberCoroutineScope()
+            val isPlaying = remember(currentDestination) {
+                currentDestination destinationTo Destination.Live::class.java ||
+                        currentDestination destinationTo Destination.LivePlayList::class.java
             }
+            val useDarkIcons = when {
+                isPlaying -> false
+                else -> !isSystemInDarkTheme()
+            }
+            DisposableEffect(
+                systemUiController,
+                useDarkIcons,
+                scope,
+                isPlaying
+            ) {
+                scope.launch {
+                    if (isPlaying) {
+                        delay(800)
+                    }
+                    systemUiController.setSystemBarsColor(
+                        color = Color.Transparent,
+                        darkIcons = useDarkIcons
+                    )
+                }
+
+                onDispose {}
+            }
+            App(
+                appState = state,
+                connector = this::createHelper
+            )
         }
     }
 

@@ -81,7 +81,6 @@ fun SettingRoute(
     LaunchedEffect(isCurrentPage) {
         if (isCurrentPage) {
             helper.actions = emptyList()
-            viewModel.onEvent(SettingEvent.InitConfiguration)
         }
     }
 
@@ -105,29 +104,29 @@ fun SettingRoute(
         navigateToConsole = navigateToConsole,
         experimentalMode = state.experimentalMode,
         mutedLives = state.mutedLives,
-        onGodMode = { viewModel.onEvent(SettingEvent.OnGodMode) },
+        onGodMode = { state.godMode = !state.godMode },
         onConnectTimeout = { viewModel.onEvent(SettingEvent.OnConnectTimeout) },
         onTitle = { viewModel.onEvent(SettingEvent.OnTitle(it)) },
         onUrl = { viewModel.onEvent(SettingEvent.OnUrl(it)) },
         onSubscribe = { viewModel.onEvent(SettingEvent.OnSubscribe) },
-        onScrollMode = { viewModel.onEvent(SettingEvent.OnScrollMode) },
+        onScrollMode = { state.scrollMode = !state.scrollMode },
         onFeedStrategy = { viewModel.onEvent(SettingEvent.OnSyncMode) },
         onUIMode = { viewModel.onEvent(SettingEvent.OnUseCommonUIMode) },
         onExperimentalMode = { viewModel.onEvent(SettingEvent.OnExperimentalMode) },
         onBannedLive = { viewModel.onEvent(SettingEvent.OnBannedLive(it)) },
         onClipMode = { viewModel.onEvent(SettingEvent.OnClipMode) },
         autoRefresh = state.autoRefresh,
-        onAutoRefresh = { viewModel.onEvent(SettingEvent.OnAutoRefresh) },
-        isSSLVerificationEnabled = state.isSSLVerificationEnabled,
-        onSSLVerificationEnabled = { viewModel.onEvent(SettingEvent.OnSSLVerificationEnabled) },
+        onAutoRefresh = { state.autoRefresh = !state.autoRefresh },
+        isSSLVerification = state.isSSLVerification,
+        onSSLVerification = { state.isSSLVerification = !state.isSSLVerification },
         fullInfoPlayer = state.fullInfoPlayer,
-        onFullInfoPlayer = { viewModel.onEvent(SettingEvent.OnFullInfoPlayer) },
-        initialTabTitle = remember(state.initialTabTitle, state.tabTitles) {
-            state.tabTitles.getOrNull(state.initialTabTitle).orEmpty()
+        onFullInfoPlayer = { state.fullInfoPlayer = !state.fullInfoPlayer },
+        initialTabTitle = remember(state.initialTabIndex, state.tabTitles) {
+            state.tabTitles.getOrNull(state.initialTabIndex).orEmpty()
         },
         onInitialTabIndex = { viewModel.onEvent(SettingEvent.OnInitialTabIndex) },
         noPictureMode = state.noPictureMode,
-        onNoPictureMode = { viewModel.onEvent(SettingEvent.OnNoPictureMode) },
+        onNoPictureMode = { state.noPictureMode = !state.noPictureMode },
         silentMode = state.silentMode,
         onSilentMode = { viewModel.onEvent(SettingEvent.OnSilentMode) },
         modifier = modifier.fillMaxSize()
@@ -163,8 +162,8 @@ private fun SettingScreen(
     onExperimentalMode: () -> Unit,
     autoRefresh: Boolean,
     onAutoRefresh: () -> Unit,
-    isSSLVerificationEnabled: Boolean,
-    onSSLVerificationEnabled: () -> Unit,
+    isSSLVerification: Boolean,
+    onSSLVerification: () -> Unit,
     fullInfoPlayer: Boolean,
     onFullInfoPlayer: () -> Unit,
     initialTabTitle: String,
@@ -211,8 +210,8 @@ private fun SettingScreen(
                     onBannedLive = onBannedLive,
                     autoRefresh = autoRefresh,
                     onAutoRefresh = onAutoRefresh,
-                    isSSLVerificationEnabled = isSSLVerificationEnabled,
-                    onSSLVerificationEnabled = onSSLVerificationEnabled,
+                    isSSLVerificationEnabled = isSSLVerification,
+                    onSSLVerificationEnabled = onSSLVerification,
                     fullInfoPlayer = fullInfoPlayer,
                     onFullInfoPlayer = onFullInfoPlayer,
                     initialTabTitle = initialTabTitle,
@@ -261,8 +260,8 @@ private fun SettingScreen(
                     onBannedLive = onBannedLive,
                     autoRefresh = autoRefresh,
                     onAutoRefresh = onAutoRefresh,
-                    isSSLVerificationEnabled = isSSLVerificationEnabled,
-                    onSSLVerificationEnabled = onSSLVerificationEnabled,
+                    isSSLVerificationEnabled = isSSLVerification,
+                    onSSLVerificationEnabled = onSSLVerification,
                     fullInfoPlayer = fullInfoPlayer,
                     onFullInfoPlayer = onFullInfoPlayer,
                     initialTabTitle = initialTabTitle,

@@ -18,11 +18,11 @@ import com.m3u.data.repository.LiveRepository
 import com.m3u.data.repository.PostRepository
 import com.m3u.data.repository.observeBanned
 import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 @HiltViewModel
 class SettingViewModel @Inject constructor(
@@ -30,13 +30,17 @@ class SettingViewModel @Inject constructor(
     private val liveRepository: LiveRepository,
     @AppPublisherImpl private val publisher: Publisher,
     application: Application,
-    private val configuration: Configuration,
+    configuration: Configuration,
     @BannerLoggerImpl private val logger: Logger,
     private val postRepository: PostRepository
 ) : BaseViewModel<SettingState, SettingEvent>(
     application = application,
     emptyState = SettingState(
-        version = publisher.versionName
+        version = publisher.versionName,
+        configuration = configuration,
+        tabTitles = List(publisher.maxTabIndex + 1) {
+            publisher.getTabTitle(it)
+        }
     )
 ) {
     init {
@@ -53,51 +57,23 @@ class SettingViewModel @Inject constructor(
 
     override fun onEvent(event: SettingEvent) {
         when (event) {
-            SettingEvent.InitConfiguration -> initConfiguration()
             SettingEvent.OnSubscribe -> subscribe()
             is SettingEvent.OnTitle -> onTitle(event.title)
             is SettingEvent.OnUrl -> onUrl(event.url)
             SettingEvent.OnSyncMode -> onSyncMode()
             SettingEvent.OnUseCommonUIMode -> onUseCommonUIMode()
             SettingEvent.OnConnectTimeout -> onConnectTimeout()
-            SettingEvent.OnGodMode -> onGodMode()
             SettingEvent.OnExperimentalMode -> onExperimentalMode()
             SettingEvent.OnClipMode -> onClipMode()
             is SettingEvent.OnBannedLive -> onBannedLive(event.id)
-            SettingEvent.OnScrollMode -> onScrollMode()
-            SettingEvent.OnAutoRefresh -> onAutoRefresh()
-            SettingEvent.OnSSLVerificationEnabled -> onSSLVerificationEnabled()
-            SettingEvent.OnFullInfoPlayer -> onFullInfoPlayer()
             SettingEvent.OnInitialTabIndex -> onInitialTabIndex()
-            SettingEvent.OnNoPictureMode -> onNoPictureMode()
             SettingEvent.OnSilentMode -> onSilentMode()
         }
     }
 
-    private fun initConfiguration() {
-        writable.update {
-            it.copy(
-                feedStrategy = configuration.feedStrategy,
-                useCommonUIMode = configuration.useCommonUIMode,
-                experimentalMode = configuration.experimentalMode,
-                godMode = configuration.godMode,
-                connectTimeout = configuration.connectTimeout,
-                clipMode = configuration.clipMode,
-                scrollMode = configuration.scrollMode,
-                autoRefresh = configuration.autoRefresh,
-                isSSLVerificationEnabled = configuration.isSSLVerification,
-                fullInfoPlayer = configuration.fullInfoPlayer,
-                initialTabTitle = configuration.initialTabIndex,
-                tabTitles = createTabTitles(publisher.maxTabIndex),
-                noPictureMode = configuration.noPictureMode,
-                silentMode = configuration.silentMode
-            )
-        }
-    }
-
     private fun onSilentMode() {
-        val target = !configuration.silentMode
-        configuration.silentMode = target
+        val target = !readable.silentMode
+        readable.silentMode = target
         viewModelScope.launch {
             if (target) {
                 postRepository.clear()
@@ -105,73 +81,13 @@ class SettingViewModel @Inject constructor(
                 postRepository.fetchAll()
             }
         }
-        writable.update {
-            it.copy(
-                silentMode = target
-            )
-        }
-    }
-
-    private fun onNoPictureMode() {
-        val target = !configuration.noPictureMode
-        configuration.noPictureMode = target
-        writable.update {
-            it.copy(
-                noPictureMode = target
-            )
-        }
     }
 
     private fun onInitialTabIndex() {
         val maxIndex = publisher.maxTabIndex
-        val currentIndex = readable.initialTabTitle
+        val currentIndex = readable.initialTabIndex
         val targetIndex = (currentIndex + 1).takeIf { it <= maxIndex } ?: 0
-        configuration.initialTabIndex = targetIndex
-        writable.update {
-            it.copy(
-                initialTabTitle = targetIndex
-            )
-        }
-    }
-
-    private fun onFullInfoPlayer() {
-        val target = !configuration.fullInfoPlayer
-        configuration.fullInfoPlayer = target
-        writable.update {
-            it.copy(
-                fullInfoPlayer = target
-            )
-        }
-    }
-
-    private fun onSSLVerificationEnabled() {
-        val target = !configuration.isSSLVerification
-        configuration.isSSLVerification = target
-        writable.update {
-            it.copy(
-                isSSLVerificationEnabled = target
-            )
-        }
-    }
-
-    private fun onAutoRefresh() {
-        val target = !configuration.autoRefresh
-        configuration.autoRefresh = target
-        writable.update {
-            it.copy(
-                autoRefresh = target
-            )
-        }
-    }
-
-    private fun onScrollMode() {
-        val target = !configuration.scrollMode
-        configuration.scrollMode = target
-        writable.update {
-            it.copy(
-                scrollMode = target
-            )
-        }
+        readable.initialTabIndex = targetIndex
     }
 
     private fun onBannedLive(liveId: Int) {
@@ -190,65 +106,32 @@ class SettingViewModel @Inject constructor(
             ClipMode.STRETCHED -> ClipMode.ADAPTIVE
             else -> ClipMode.ADAPTIVE
         }
-        configuration.clipMode = newValue
-        writable.update {
-            it.copy(
-                clipMode = newValue
-            )
-        }
+        readable.clipMode = newValue
     }
 
     private fun onExperimentalMode() {
-        val newValue = !configuration.experimentalMode
+        val newValue = !readable.experimentalMode
         if (!newValue) {
             // reset experimental ones to default value
-            configuration.scrollMode = Configuration.DEFAULT_SCROLL_MODE
-            writable.update {
-                it.copy(
-                    scrollMode = Configuration.DEFAULT_SCROLL_MODE
-                )
-            }
+            readable.scrollMode = Configuration.DEFAULT_SCROLL_MODE
+            readable.cinemaMode = Configuration.DEFAULT_CINEMA_MODE
         }
-        configuration.experimentalMode = newValue
-        writable.update {
-            it.copy(
-                experimentalMode = newValue
-            )
-        }
+        readable.experimentalMode = newValue
     }
 
-    private fun onGodMode() {
-        val newValue = !configuration.godMode
-        configuration.godMode = newValue
-        writable.update {
-            it.copy(
-                godMode = newValue
-            )
-        }
-    }
 
     private fun onConnectTimeout() {
-        val newValue = when (configuration.connectTimeout) {
+        val newValue = when (readable.connectTimeout) {
             ConnectTimeout.LONG -> ConnectTimeout.SHORT
             ConnectTimeout.SHORT -> ConnectTimeout.LONG
             else -> ConnectTimeout.SHORT
         }
-        configuration.connectTimeout = newValue
-        writable.update {
-            it.copy(
-                connectTimeout = newValue
-            )
-        }
+        readable.connectTimeout = newValue
     }
 
     private fun onUseCommonUIMode() {
-        val newValue = !configuration.useCommonUIMode
-        configuration.useCommonUIMode = newValue
-        writable.update {
-            it.copy(
-                useCommonUIMode = newValue
-            )
-        }
+        val newValue = !readable.useCommonUIMode
+        readable.useCommonUIMode = newValue
     }
 
     private fun onTitle(title: String) {
@@ -272,12 +155,7 @@ class SettingViewModel @Inject constructor(
             FeedStrategy.ALL -> FeedStrategy.SKIP_FAVORITE
             else -> FeedStrategy.ALL
         }
-        configuration.feedStrategy = newValue
-        writable.update {
-            it.copy(
-                feedStrategy = newValue
-            )
-        }
+        readable.feedStrategy = newValue
     }
 
     private fun subscribe() {
@@ -293,7 +171,7 @@ class SettingViewModel @Inject constructor(
             return
         }
         val url = readable.url
-        val strategy = configuration.feedStrategy
+        val strategy = readable.feedStrategy
         feedRepository.subscribe(title, url, strategy)
             .onEach { resource ->
                 writable.update {
@@ -325,7 +203,4 @@ class SettingViewModel @Inject constructor(
             .launchIn(viewModelScope)
     }
 
-    private fun createTabTitles(maxIndex: Int): List<String> = List(maxIndex + 1) {
-        publisher.getTabTitle(it)
-    }
 }

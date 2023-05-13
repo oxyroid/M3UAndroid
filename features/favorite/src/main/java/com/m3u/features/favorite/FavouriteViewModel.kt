@@ -19,10 +19,12 @@ class FavouriteViewModel @Inject constructor(
     liveRepository: LiveRepository,
     feedRepository: FeedRepository,
     application: Application,
-    private val configuration: Configuration,
+    configuration: Configuration,
 ) : BaseViewModel<FavoriteState, FavoriteEvent>(
     application = application,
-    emptyState = FavoriteState()
+    emptyState = FavoriteState(
+        configuration = configuration
+    )
 ) {
     init {
         liveRepository
@@ -44,28 +46,6 @@ class FavouriteViewModel @Inject constructor(
     }
 
     override fun onEvent(event: FavoriteEvent) {
-        when (event) {
-            is FavoriteEvent.SetRowCount -> setRowCount(event.target)
-            FavoriteEvent.InitConfiguration -> initConfiguration()
-        }
-    }
 
-    private fun initConfiguration() {
-        writable.update {
-            it.copy(
-                rowCount = configuration.rowCount,
-                godMode = configuration.godMode,
-                noPictureMode = configuration.noPictureMode
-            )
-        }
-    }
-
-    private fun setRowCount(target: Int) {
-        configuration.rowCount = target
-        writable.update {
-            it.copy(
-                rowCount = target
-            )
-        }
     }
 }

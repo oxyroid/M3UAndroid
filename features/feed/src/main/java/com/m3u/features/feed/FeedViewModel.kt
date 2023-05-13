@@ -14,7 +14,6 @@ import com.m3u.data.repository.MediaRepository
 import com.m3u.data.repository.observeBannedByFeedUrl
 import com.m3u.data.repository.refresh
 import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -23,30 +22,22 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 @HiltViewModel
 class FeedViewModel @Inject constructor(
     private val liveRepository: LiveRepository,
     private val feedRepository: FeedRepository,
     private val mediaRepository: MediaRepository,
-    private val configuration: Configuration,
+    configuration: Configuration,
     @BannerLoggerImpl private val logger: Logger,
     application: Application
 ) : BaseViewModel<FeedState, FeedEvent>(
     application = application,
-    emptyState = FeedState()
+    emptyState = FeedState(
+        configuration = configuration
+    )
 ) {
-    init {
-        writable.value = FeedState(
-            useCommonUIMode = configuration.useCommonUIMode,
-            scrollMode = configuration.scrollMode,
-            rowCount = configuration.rowCount,
-            godMode = configuration.godMode,
-            autoRefresh = configuration.autoRefresh,
-            noPictureMode = configuration.noPictureMode
-        )
-    }
-
     override fun onEvent(event: FeedEvent) {
         when (event) {
             is FeedEvent.ObserveFeed -> observeFeed(event.url)
@@ -55,7 +46,6 @@ class FeedViewModel @Inject constructor(
             FeedEvent.ScrollUp -> scrollUp()
             is FeedEvent.MuteLive -> muteLive(event)
             is FeedEvent.SavePicture -> savePicture(event)
-            is FeedEvent.SetRowCount -> setRowCount(event)
             is FeedEvent.OnQuery -> onQuery(event)
         }
     }
@@ -111,8 +101,7 @@ class FeedViewModel @Inject constructor(
 
     private fun refresh() {
         val url = readable.url
-        val strategy = configuration.feedStrategy
-        feedRepository.refresh(url, strategy)
+        feedRepository.refresh(url, readable.strategy)
             .onEach { resource ->
                 writable.update {
                     when (resource) {
@@ -196,14 +185,6 @@ class FeedViewModel @Inject constructor(
         }
     }
 
-    private fun setRowCount(event: FeedEvent.SetRowCount) {
-        configuration.rowCount = event.count
-        writable.update {
-            it.copy(
-                rowCount = event.count
-            )
-        }
-    }
 
     private fun onMessage(message: String?) {
         logger.log(message.orEmpty())

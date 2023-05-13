@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Rect
 import androidx.annotation.OptIn
+import androidx.compose.runtime.getValue
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
@@ -33,7 +34,7 @@ import okhttp3.OkHttpClient
 @OptIn(UnstableApi::class)
 class ExoPlayerManager @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val configuration: Configuration
+    configuration: Configuration
 ) : PlayerManager(), Player.Listener, MediaSession.Callback {
 
     private val trustAllCert by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
@@ -77,10 +78,11 @@ class ExoPlayerManager @Inject constructor(
     private val playerFlow = MutableStateFlow<Player?>(null)
     private val player: Player? get() = playerFlow.value
 
+    private val isSSLVerification by configuration.isSSLVerification
     override fun initPlayer() {
         playerFlow.value = ExoPlayer.Builder(context)
             .let {
-                if (configuration.isSSLVerification) it
+                if (isSSLVerification) it
                 else it.setMediaSourceFactory(
                     DefaultMediaSourceFactory(context).setDataSourceFactory(
                         DefaultDataSource.Factory(

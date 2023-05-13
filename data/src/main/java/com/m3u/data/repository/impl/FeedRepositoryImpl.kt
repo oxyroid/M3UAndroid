@@ -1,5 +1,6 @@
 package com.m3u.data.repository.impl
 
+import androidx.compose.runtime.getValue
 import com.m3u.core.annotation.FeedStrategy
 import com.m3u.core.architecture.configuration.Configuration
 import com.m3u.core.architecture.logger.Logger
@@ -26,9 +27,10 @@ class FeedRepositoryImpl @Inject constructor(
     private val feedDao: FeedDao,
     private val liveDao: LiveDao,
     private val logger: Logger,
-    private val configuration: Configuration,
+    configuration: Configuration,
     private val parser: PlaylistParser
 ) : FeedRepository {
+    private val connectTimeout by configuration.connectTimeout
     override fun subscribe(
         title: String,
         url: String,
@@ -95,7 +97,7 @@ class FeedRepositoryImpl @Inject constructor(
 
     private suspend fun parse(url: String): List<Live> = parser.execute(
         url = url,
-        connectTimeout = configuration.connectTimeout
+        connectTimeout = connectTimeout
     )
         .map { it.toLive(url) }
 
