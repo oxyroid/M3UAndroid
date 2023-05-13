@@ -390,7 +390,7 @@ private fun LivePart(
                         }
                         AnimatedVisibility(playbackDisplayText.isNotEmpty()) {
                             Text(
-                                text = playbackDisplayText,
+                                text = playbackDisplayText.uppercase(),
                                 style = MaterialTheme.typography.subtitle2,
                                 color = LocalContentColor.current.copy(alpha = 0.75f)
                             )

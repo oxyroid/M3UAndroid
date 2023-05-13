@@ -299,7 +299,7 @@ private fun FeedScreen(
             ) {
                 ExtendedFloatingActionButton(
                     text = {
-                        Text(text = stringResource(R.string.scroll_up))
+                        Text(stringResource(R.string.scroll_up).uppercase())
                     },
                     onClick = onScrollUp,
                     backgroundColor = theme.tint,
