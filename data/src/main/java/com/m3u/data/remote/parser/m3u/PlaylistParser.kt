@@ -12,6 +12,7 @@ import javax.inject.Inject
 interface PlaylistParser : Parser<InputStream, List<M3UData>>
 
 class DefaultPlaylistParser @Inject constructor() : PlaylistParser {
+    private val pattern = Regex("#EXTINF:-?\\d+,")
     override suspend fun execute(input: InputStream): List<M3UData> = buildList {
         var block: M3UData? = null
         input
@@ -23,9 +24,18 @@ class DefaultPlaylistParser @Inject constructor() : PlaylistParser {
                     line.startsWith(M3U_HEADER_MARK) -> block = null
                     line.startsWith(M3U_INFO_MARK) -> {
                         block?.let { add(it) }
-                        val decodedContent = Uri.decode(line)
+                        // decoded content and replace #EXTINF:-1,tvg-id to #EXTINF:-1 tvg-id
+                        val decodedContent = Uri
+                            .decode(line)
+                            .let {
+                                pattern.replace(it) { result ->
+                                    result.value.dropLast(1) + " "
+                                }
+                            }
+
                         block = M3UData().setContent(decodedContent)
                     }
+
                     line.startsWith("#") -> {}
                     else -> {
                         block = block?.setUrl(line)
@@ -43,9 +53,6 @@ class DefaultPlaylistParser @Inject constructor() : PlaylistParser {
 
     private fun M3UData.setContent(decodedContent: String): M3UData {
         val contents = decodedContent.splitOutOfQuotation(',')
-        if (contents.size > 2) {
-            error("The content can only have one comma at most! Try decoration before invoking. [$decodedContent]")
-        }
         val spaceContentIndex =
             contents.indexOfFirst { it.startsWith(M3U_INFO_MARK) }
         val spaceContent = if (spaceContentIndex == -1) null else contents[spaceContentIndex]
