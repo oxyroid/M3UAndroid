@@ -50,4 +50,6 @@ dependencies {
     implementation libs.com.google.dagger.hilt.android
     kapt libs.com.google.dagger.hilt.compiler
     implementation libs.androidx.hilt.hilt.navigation.compose
+
+    implementation libs.com.airbnb.android.lottie.compose
 }
