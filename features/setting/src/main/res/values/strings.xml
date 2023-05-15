@@ -29,6 +29,7 @@
     <string name="label_muted_lives">屏蔽的频道</string>
     <string name="label_add_feed">新增订阅</string>
     <string name="label_parse_from_clipboard">解析剪贴板</string>
+    <string name="label_parse_from_disk">解析本地文件</string>
     <string name="clip_mode">视频裁剪模式</string>
     <string name="clip_mode_adaptive">自适应</string>
     <string name="clip_mode_clip">裁剪</string>

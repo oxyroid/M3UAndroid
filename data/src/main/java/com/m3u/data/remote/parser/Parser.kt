@@ -29,3 +29,7 @@ suspend fun <R> Parser<InputStream, R>.execute(
     connectTimeout: Int = 8000,
     readTimeout: Int = connectTimeout
 ) = execute(URL(url), connectTimeout, readTimeout)
+
+suspend fun <R> Parser<InputStream, R>.execute(
+    content: String
+) = execute(content.byteInputStream())

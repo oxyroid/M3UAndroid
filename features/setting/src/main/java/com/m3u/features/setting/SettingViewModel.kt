@@ -57,7 +57,7 @@ class SettingViewModel @Inject constructor(
 
     override fun onEvent(event: SettingEvent) {
         when (event) {
-            SettingEvent.OnSubscribe -> subscribe()
+            SettingEvent.Subscribe -> subscribe()
             is SettingEvent.OnTitle -> onTitle(event.title)
             is SettingEvent.OnUrl -> onUrl(event.url)
             SettingEvent.OnSyncMode -> onSyncMode()
@@ -165,7 +165,7 @@ class SettingViewModel @Inject constructor(
                 val message = context.getString(R.string.failed_empty_title)
                 logger.log(message)
                 it.copy(
-                    adding = false,
+                    enabled = false,
                 )
             }
             return
@@ -177,14 +177,14 @@ class SettingViewModel @Inject constructor(
                 writable.update {
                     when (resource) {
                         Resource.Loading -> {
-                            it.copy(adding = true)
+                            it.copy(enabled = true)
                         }
 
                         is Resource.Success -> {
                             val message = context.getString(R.string.success_subscribe)
                             logger.log(message)
                             it.copy(
-                                adding = false,
+                                enabled = false,
                                 title = "",
                                 url = "",
                             )
@@ -194,7 +194,7 @@ class SettingViewModel @Inject constructor(
                             val message = resource.message.orEmpty()
                             logger.log(message)
                             it.copy(
-                                adding = false
+                                enabled = false
                             )
                         }
                     }

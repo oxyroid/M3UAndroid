@@ -1,5 +1,6 @@
 package com.m3u.features.feed.components
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
@@ -93,17 +94,20 @@ internal fun LiveItem(
                 modifier = Modifier.padding(spacing.medium),
                 verticalArrangement = Arrangement.spacedBy(spacing.small)
             ) {
-                Text(
-                    text = live.title,
-                    style = MaterialTheme.typography.subtitle1,
-                    fontSize = with(scalable) {
-                        MaterialTheme.typography.subtitle1.fontSize.scaled
-                    },
-                    overflow = TextOverflow.Ellipsis,
-                    maxLines = 1,
-                    fontWeight = FontWeight.Bold
-                )
-
+                AnimatedVisibility(
+                    live.title.isNotEmpty()
+                ) {
+                    Text(
+                        text = live.title,
+                        style = MaterialTheme.typography.subtitle1,
+                        fontSize = with(scalable) {
+                            MaterialTheme.typography.subtitle1.fontSize.scaled
+                        },
+                        overflow = TextOverflow.Ellipsis,
+                        maxLines = 1,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(spacing.extraSmall)

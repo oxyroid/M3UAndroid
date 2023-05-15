@@ -10,7 +10,6 @@ import java.util.Properties
 import javax.inject.Inject
 
 interface PlaylistParser : Parser<InputStream, List<M3UData>>
-
 class DefaultPlaylistParser @Inject constructor() : PlaylistParser {
     private val pattern = Regex("#EXTINF:-?\\d+,")
     override suspend fun execute(input: InputStream): List<M3UData> = buildList {
@@ -28,6 +27,7 @@ class DefaultPlaylistParser @Inject constructor() : PlaylistParser {
                         val decodedContent = Uri
                             .decode(line)
                             .let {
+                                // TODO: Ignore the content within the quotation marks.
                                 pattern.replace(it) { result ->
                                     result.value.dropLast(1) + " "
                                 }
@@ -85,7 +85,7 @@ class DefaultPlaylistParser @Inject constructor() : PlaylistParser {
         val duration = properties.getProperty(
             M3U_TVG_DURATION,
             "-1"
-        ).toLong()
+        ).toDouble()
 
         return this.copy(
             id = id.trimBrackets(),
@@ -105,7 +105,7 @@ class DefaultPlaylistParser @Inject constructor() : PlaylistParser {
             .mapNotNull { it.trim().ifEmpty { null } }
             .forEach { part ->
                 if (part.startsWith(M3U_INFO_MARK)) {
-                    val duration = part.drop(M3U_INFO_MARK.length).toLong()
+                    val duration = part.drop(M3U_INFO_MARK.length).toDouble()
                     properties[M3U_TVG_DURATION] = duration
                 } else properties.loadLine(part)
             }
@@ -124,3 +124,4 @@ class DefaultPlaylistParser @Inject constructor() : PlaylistParser {
         private const val M3U_GROUP_TITLE_MARK = "group-title"
     }
 }
+

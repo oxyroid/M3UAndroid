@@ -89,7 +89,7 @@ fun SettingRoute(
     val useCommonUIModeEnable = (type != Configuration.UI_MODE_TYPE_NORMAL)
     SettingScreen(
         version = state.version,
-        adding = !state.adding,
+        enabled = !state.enabled,
         title = state.title,
         url = state.url,
         feedStrategy = state.feedStrategy,
@@ -106,7 +106,7 @@ fun SettingRoute(
         onConnectTimeout = { viewModel.onEvent(SettingEvent.OnConnectTimeout) },
         onTitle = { viewModel.onEvent(SettingEvent.OnTitle(it)) },
         onUrl = { viewModel.onEvent(SettingEvent.OnUrl(it)) },
-        onSubscribe = { viewModel.onEvent(SettingEvent.OnSubscribe) },
+        onSubscribe = { viewModel.onEvent(SettingEvent.Subscribe) },
         onScrollMode = { state.scrollMode = !state.scrollMode },
         onFeedStrategy = { viewModel.onEvent(SettingEvent.OnSyncMode) },
         onUIMode = { viewModel.onEvent(SettingEvent.OnUseCommonUIMode) },
@@ -136,7 +136,7 @@ fun SettingRoute(
 @Composable
 private fun SettingScreen(
     version: String,
-    adding: Boolean,
+    enabled: Boolean,
     title: String,
     url: String,
     @FeedStrategy feedStrategy: Int,
@@ -188,7 +188,7 @@ private fun SettingScreen(
                     fold = fold,
                     title = title,
                     url = url,
-                    adding = adding,
+                    enabled = enabled,
                     godMode = godMode,
                     connectTimeout = connectTimeout,
                     scrollMode = scrollMode,
@@ -239,7 +239,7 @@ private fun SettingScreen(
                     fold = fold,
                     title = title,
                     url = url,
-                    adding = adding,
+                    adding = enabled,
                     godMode = godMode,
                     clipMode = clipMode,
                     scrollMode = scrollMode,
@@ -306,7 +306,7 @@ private fun PortraitOrientationContent(
     onGodMode: () -> Unit,
     onClipMode: OnClipMode,
     onConnectTimeout: () -> Unit,
-    adding: Boolean,
+    enabled: Boolean,
     mutedLives: List<Live>,
     onBannedLive: (Int) -> Unit,
     onFold: (Fold) -> Unit,
@@ -389,7 +389,7 @@ private fun PortraitOrientationContent(
                         url = url,
                         mutedLives = mutedLives,
                         onBannedLive = onBannedLive,
-                        adding = adding,
+                        enabled = enabled,
                         onTitle = onTitle,
                         onUrl = onUrl,
                         onSubscribe = onSubscribe,
@@ -506,7 +506,7 @@ private fun LandscapeOrientationContent(
                     url = url,
                     mutedLives = mutedLives,
                     onBannedLive = onBannedLive,
-                    adding = adding,
+                    enabled = adding,
                     onTitle = onTitle,
                     onUrl = onUrl,
                     onSubscribe = onSubscribe,
@@ -783,7 +783,7 @@ private fun FeedManagementPart(
     url: String,
     mutedLives: List<Live>,
     onBannedLive: (Int) -> Unit,
-    adding: Boolean,
+    enabled: Boolean,
     onTitle: (String) -> Unit,
     onUrl: (String) -> Unit,
     onSubscribe: () -> Unit,
@@ -830,7 +830,7 @@ private fun FeedManagementPart(
         item {
             LabelField(
                 text = title,
-                enabled = adding,
+                enabled = enabled,
                 placeholder = stringResource(R.string.placeholder_title).uppercase(),
                 onValueChange = onTitle,
                 keyboardActions = KeyboardActions(
@@ -845,7 +845,7 @@ private fun FeedManagementPart(
         item {
             LabelField(
                 text = url,
-                enabled = adding,
+                enabled = enabled,
                 placeholder = stringResource(R.string.placeholder_url).uppercase(),
                 onValueChange = onUrl,
                 keyboardActions = KeyboardActions(
@@ -861,9 +861,9 @@ private fun FeedManagementPart(
 
         item {
             val subscribeTextResId =
-                if (adding) R.string.label_subscribe else R.string.label_subscribing
+                if (enabled) R.string.label_subscribe else R.string.label_subscribing
             Button(
-                enabled = adding,
+                enabled = enabled,
                 text = stringResource(subscribeTextResId),
                 onClick = onSubscribe,
                 modifier = Modifier.fillMaxWidth()
@@ -871,11 +871,11 @@ private fun FeedManagementPart(
         }
         item {
             val subscribeFromClipboardTextResId =
-                if (adding) R.string.label_parse_from_clipboard else R.string.label_subscribing
+                if (enabled) R.string.label_parse_from_clipboard else R.string.label_subscribing
             val clipboardManager = LocalClipboardManager.current
             TextButton(
                 text = stringResource(subscribeFromClipboardTextResId),
-                enabled = adding,
+                enabled = enabled,
                 onClick = {
                     val clipboardUrl = clipboardManager.getText()?.text.orEmpty()
                     val clipboardTitle = run {
@@ -889,6 +889,29 @@ private fun FeedManagementPart(
                 modifier = Modifier.fillMaxWidth()
             )
         }
+
+//        item {
+//            val context = LocalContext.current
+//            val launcher =
+//                rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { file ->
+//                    file ?: return@rememberLauncherForActivityResult
+//                    val text = context.contentResolver.openInputStream(file)?.use {
+//                        it.bufferedReader().readText()
+//                    }.orEmpty()
+//                    context.toast(text)
+//                }
+//            val subscribeFromDiskTextResId = if (enabled) R.string.label_parse_from_disk
+//            else R.string.label_subscribing
+//            TextButton(
+//                text = stringResource(subscribeFromDiskTextResId),
+//                enabled = enabled,
+//                onClick = {
+//                    launcher.launch(arrayOf("text/plain"))
+//                },
+//                modifier = Modifier.fillMaxWidth()
+//            )
+//        }
+
     }
 }
 

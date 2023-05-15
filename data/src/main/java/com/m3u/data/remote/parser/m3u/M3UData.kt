@@ -9,7 +9,7 @@ data class M3UData(
     val group: String = "",
     val title: String = "",
     val url: String = "",
-    val duration: Long = -1
+    val duration: Double = -1.0
 )
 
 fun M3UData.toLive(
