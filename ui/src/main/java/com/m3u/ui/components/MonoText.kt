@@ -2,6 +2,8 @@
 
 package com.m3u.ui.components
 
+import androidx.compose.material.LocalTextStyle
+import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -13,8 +15,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
-import androidx.tv.material3.LocalTextStyle
-import androidx.tv.material3.Text
 import com.m3u.ui.model.AppFont
 
 @Composable

@@ -95,7 +95,8 @@ internal fun CheckBoxPreference(
                 checked = checked,
                 onCheckedChange = onCheckedChange,
                 colors = CheckboxDefaults.colors(
-                    checkedColor = LocalTheme.current.tint,
+                    checkmarkColor = LocalTheme.current.onPrimary,
+                    checkedColor = LocalTheme.current.primary,
                 )
             )
         }

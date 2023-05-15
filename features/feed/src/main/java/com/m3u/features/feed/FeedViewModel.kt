@@ -40,18 +40,18 @@ class FeedViewModel @Inject constructor(
 ) {
     override fun onEvent(event: FeedEvent) {
         when (event) {
-            is FeedEvent.ObserveFeed -> observeFeed(event.url)
+            is FeedEvent.Observe -> observe(event.url)
             FeedEvent.Refresh -> refresh()
-            is FeedEvent.FavouriteLive -> favouriteFeed(event)
+            is FeedEvent.Favourite -> favourite(event)
             FeedEvent.ScrollUp -> scrollUp()
-            is FeedEvent.MuteLive -> muteLive(event)
+            is FeedEvent.Mute -> mute(event)
             is FeedEvent.SavePicture -> savePicture(event)
-            is FeedEvent.OnQuery -> onQuery(event)
+            is FeedEvent.Query -> query(event)
         }
     }
 
     private var observeJob: Job? = null
-    private fun observeFeed(feedUrl: String) {
+    private fun observe(feedUrl: String) {
         observeJob?.cancel()
         observeJob = viewModelScope.launch {
             observeFeedDetail(feedUrl)
@@ -126,7 +126,7 @@ class FeedViewModel @Inject constructor(
             .launchIn(viewModelScope)
     }
 
-    private fun favouriteFeed(event: FeedEvent.FavouriteLive) {
+    private fun favourite(event: FeedEvent.Favourite) {
         viewModelScope.launch {
             val id = event.id
             val target = event.target
@@ -172,7 +172,7 @@ class FeedViewModel @Inject constructor(
         }
     }
 
-    private fun muteLive(event: FeedEvent.MuteLive) {
+    private fun mute(event: FeedEvent.Mute) {
         viewModelScope.launch {
             val id = event.id
             val target = event.target
@@ -191,7 +191,7 @@ class FeedViewModel @Inject constructor(
     }
 
     private val queryStateFlow = MutableStateFlow("")
-    private fun onQuery(event: FeedEvent.OnQuery) {
+    private fun query(event: FeedEvent.Query) {
         val text = event.text
         viewModelScope.launch {
             queryStateFlow.emit(text)

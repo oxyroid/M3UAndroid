@@ -18,7 +18,7 @@ data class FeedState(
     val scrollUp: Event<Unit> = handledEvent(),
     private val configuration: Configuration
 ) {
-    var strategy: Int by configuration.feedStrategy
+    val strategy: Int by configuration.feedStrategy
     var rowCount: Int by configuration.rowCount
     val useCommonUIMode: Boolean by configuration.useCommonUIMode
     val scrollMode: Boolean by configuration.scrollMode

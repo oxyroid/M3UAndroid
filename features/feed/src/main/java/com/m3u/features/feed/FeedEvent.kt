@@ -1,11 +1,11 @@
 package com.m3u.features.feed
 
 sealed interface FeedEvent {
-    data class ObserveFeed(val url: String) : FeedEvent
+    data class Observe(val url: String) : FeedEvent
     object Refresh : FeedEvent
-    data class FavouriteLive(val id: Int, val target: Boolean) : FeedEvent
-    data class MuteLive(val id: Int, val target: Boolean) : FeedEvent
+    data class Favourite(val id: Int, val target: Boolean) : FeedEvent
+    data class Mute(val id: Int, val target: Boolean) : FeedEvent
     data class SavePicture(val id: Int) : FeedEvent
     object ScrollUp : FeedEvent
-    data class OnQuery(val text: String) : FeedEvent
+    data class Query(val text: String) : FeedEvent
 }

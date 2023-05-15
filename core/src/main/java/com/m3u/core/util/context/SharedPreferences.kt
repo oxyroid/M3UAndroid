@@ -47,6 +47,7 @@ fun SharedPreferences.boolean(
     SharedPreferences::getBoolean,
     SharedPreferences.Editor::putBoolean
 )
+
 fun SharedPreferences.booleanAsState(
     def: Boolean = false,
     key: String
@@ -63,13 +64,11 @@ private inline fun <T> SharedPreferences.delegate(
     crossinline getter: SharedPreferences.(String, T) -> T,
     crossinline setter: SharedPreferences.Editor.(String, T) -> SharedPreferences.Editor
 ): ReadWriteProperty<Any, T> = object : ReadWriteProperty<Any, T> {
-    override fun getValue(thisRef: Any, property: KProperty<*>): T {
-        return getter(key ?: property.name, defaultValue)
-    }
+    override fun getValue(thisRef: Any, property: KProperty<*>): T =
+        getter(key ?: property.name, defaultValue)
 
-    override fun setValue(thisRef: Any, property: KProperty<*>, value: T) {
-        return edit().setter(key ?: property.name, value).apply()
-    }
+    override fun setValue(thisRef: Any, property: KProperty<*>, value: T) =
+        edit().setter(key ?: property.name, value).apply()
 }
 
 private fun <T> SharedPreferences.delegateAsState(
@@ -77,36 +76,15 @@ private fun <T> SharedPreferences.delegateAsState(
     defaultValue: T,
     getter: SharedPreferences.(String, T) -> T,
     setter: SharedPreferences.Editor.(String, T) -> SharedPreferences.Editor
-): MutableState<T> = SharedPreferencesStateDelegator(
-    sharedPreferences = this,
-    key, defaultValue, getter, setter
-).state
-
-private class SharedPreferencesStateDelegator<T>(
-    sharedPreferences: SharedPreferences,
-    key: String,
-    defaultValue: T,
-    getter: SharedPreferences.(String, T) -> T,
-    setter: SharedPreferences.Editor.(String, T) -> SharedPreferences.Editor
-) {
-    var delegate by object : ReadWriteProperty<Any, T> {
-        override fun getValue(thisRef: Any, property: KProperty<*>): T =
-            sharedPreferences.getter(key, defaultValue)
-
-        override fun setValue(thisRef: Any, property: KProperty<*>, value: T) =
-            sharedPreferences.edit().setter(key, value).apply()
-    }
-    private val origin = mutableStateOf(delegate)
-    val state = StateDelegator(
-        delegate = origin,
-        onUpdate = { delegate = it },
-    )
-}
+): MutableState<T> = StateDelegator(
+    delegate = mutableStateOf(getter(key, defaultValue)),
+    onUpdate = { edit().setter(key, it).apply() },
+)
 
 private class StateDelegator<T>(
     private val delegate: MutableState<T>,
     private val onUpdate: (T) -> Unit
-): MutableState<T> {
+) : MutableState<T> {
     override var value: T
         get() = delegate.value
         set(value) {

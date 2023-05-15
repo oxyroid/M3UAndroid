@@ -112,7 +112,7 @@ internal fun FeedRoute(
     var dialogStatus: DialogStatus by remember { mutableStateOf(DialogStatus.Idle) }
 
     LaunchedEffect(url) {
-        viewModel.onEvent(FeedEvent.ObserveFeed(url))
+        viewModel.onEvent(FeedEvent.Observe(url))
     }
     RepeatOnCreate {
         helper.actions = listOf(
@@ -135,7 +135,7 @@ internal fun FeedRoute(
         state.rowCount = target
     }
     BackHandler(state.query.isNotEmpty()) {
-        viewModel.onEvent(FeedEvent.OnQuery(""))
+        viewModel.onEvent(FeedEvent.Query(""))
     }
     val interceptVolumeEventModifier = remember(state.godMode) {
         if (state.godMode) {
@@ -153,7 +153,7 @@ internal fun FeedRoute(
     ) {
         FeedScreen(
             query = state.query,
-            onQuery = { viewModel.onEvent(FeedEvent.OnQuery(it)) },
+            onQuery = { viewModel.onEvent(FeedEvent.Query(it)) },
             useCommonUIMode = state.useCommonUIMode,
             scrollMode = state.scrollMode,
             noPictureMode = state.noPictureMode,
@@ -177,8 +177,8 @@ internal fun FeedRoute(
     FeedDialog(
         status = dialogStatus,
         onUpdate = { dialogStatus = it },
-        onFavorite = { id, target -> viewModel.onEvent(FeedEvent.FavouriteLive(id, target)) },
-        onBanned = { id, target -> viewModel.onEvent(FeedEvent.MuteLive(id, target)) },
+        onFavorite = { id, target -> viewModel.onEvent(FeedEvent.Favourite(id, target)) },
+        onBanned = { id, target -> viewModel.onEvent(FeedEvent.Mute(id, target)) },
         onSavePicture = { viewModel.onEvent(FeedEvent.SavePicture(it)) }
     )
 }
