@@ -34,6 +34,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
@@ -41,6 +42,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -66,6 +68,7 @@ import com.m3u.ui.model.LocalTheme
 
 typealias NavigateToConsole = () -> Unit
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun SettingRoute(
     modifier: Modifier = Modifier,
@@ -87,6 +90,8 @@ fun SettingRoute(
     val useCommonUIMode = if (type == Configuration.UI_MODE_TYPE_NORMAL) true
     else state.useCommonUIMode
     val useCommonUIModeEnable = (type != Configuration.UI_MODE_TYPE_NORMAL)
+
+    val controller = LocalSoftwareKeyboardController.current
     SettingScreen(
         version = state.version,
         enabled = !state.enabled,
@@ -106,7 +111,10 @@ fun SettingRoute(
         onConnectTimeout = { viewModel.onEvent(SettingEvent.OnConnectTimeout) },
         onTitle = { viewModel.onEvent(SettingEvent.OnTitle(it)) },
         onUrl = { viewModel.onEvent(SettingEvent.OnUrl(it)) },
-        onSubscribe = { viewModel.onEvent(SettingEvent.Subscribe) },
+        onSubscribe = {
+            controller?.hide()
+            viewModel.onEvent(SettingEvent.Subscribe)
+        },
         onScrollMode = { state.scrollMode = !state.scrollMode },
         onFeedStrategy = { viewModel.onEvent(SettingEvent.OnSyncMode) },
         onUIMode = { viewModel.onEvent(SettingEvent.OnUseCommonUIMode) },
@@ -860,11 +868,10 @@ private fun FeedManagementPart(
         }
 
         item {
-            val subscribeTextResId =
-                if (enabled) R.string.label_subscribe else R.string.label_subscribing
+            val resId = if (enabled) R.string.label_subscribe else R.string.label_subscribing
             Button(
                 enabled = enabled,
-                text = stringResource(subscribeTextResId),
+                text = stringResource(resId),
                 onClick = onSubscribe,
                 modifier = Modifier.fillMaxWidth()
             )
@@ -911,7 +918,6 @@ private fun FeedManagementPart(
 //                modifier = Modifier.fillMaxWidth()
 //            )
 //        }
-
     }
 }
 
