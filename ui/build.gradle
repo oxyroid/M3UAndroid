@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
 plugins {
     id "com.android.library"
     id "org.jetbrains.kotlin.android"
@@ -65,7 +67,7 @@ dependencies {
     implementation libs.com.airbnb.android.lottie.compose
 }
 
-tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+tasks.withType(KotlinCompile).configureEach {
     kotlinOptions {
         if (project.findProperty("build.enableComposeCompilerReports") == "true") {
             freeCompilerArgs += [
