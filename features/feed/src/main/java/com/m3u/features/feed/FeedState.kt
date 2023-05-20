@@ -11,7 +11,6 @@ internal typealias MappedLives = Map<String, List<Live>>
 
 data class FeedState(
     val url: String = "",
-    val title: String? = null,
     val lives: MappedLives = emptyMap(),
     val query: String = "",
     val fetching: Boolean = false,

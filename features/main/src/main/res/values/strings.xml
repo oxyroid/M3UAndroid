@@ -5,4 +5,5 @@
     <string name="error_unsubscribe_feed">取消订阅失败</string>
     <string name="copy_feed_url">复制链接</string>
     <string name="rename_feed">重命名</string>
+    <string name="imported_feed_title">导入频道</string>
 </resources>

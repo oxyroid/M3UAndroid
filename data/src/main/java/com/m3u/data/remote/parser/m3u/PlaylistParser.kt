@@ -12,6 +12,7 @@ import javax.inject.Inject
 interface PlaylistParser : Parser<InputStream, List<M3UData>>
 class DefaultPlaylistParser @Inject constructor() : PlaylistParser {
     private val pattern = Regex("#EXTINF:-?\\d+,")
+    @Throws(InvalidatePlaylistError::class)
     override suspend fun execute(input: InputStream): List<M3UData> = buildList {
         var block: M3UData? = null
         input
@@ -23,7 +24,7 @@ class DefaultPlaylistParser @Inject constructor() : PlaylistParser {
                     line.startsWith(M3U_HEADER_MARK) -> block = null
                     line.startsWith(M3U_INFO_MARK) -> {
                         block?.let { add(it) }
-                        // decoded content and replace #EXTINF:-1,tvg-id to #EXTINF:-1 tvg-id
+                        // decoded content and replace "#EXTINF:-1," to "#EXTINF:-1 "
                         val decodedContent = Uri
                             .decode(line)
                             .let {
@@ -32,7 +33,6 @@ class DefaultPlaylistParser @Inject constructor() : PlaylistParser {
                                     result.value.dropLast(1) + " "
                                 }
                             }
-
                         block = M3UData().setContent(decodedContent)
                     }
 
@@ -49,7 +49,12 @@ class DefaultPlaylistParser @Inject constructor() : PlaylistParser {
     }
 
 
-    private fun M3UData.setUrl(url: String): M3UData = copy(url = url)
+    @Throws(InvalidatePlaylistError::class)
+    private fun M3UData.setUrl(url: String): M3UData = run {
+        if (!url.startsWith("http://") && !url.startsWith("https://"))
+            throw InvalidatePlaylistError
+        copy(url = url)
+    }
 
     private fun M3UData.setContent(decodedContent: String): M3UData {
         val contents = decodedContent.splitOutOfQuotation(',')
@@ -71,7 +76,6 @@ class DefaultPlaylistParser @Inject constructor() : PlaylistParser {
             M3U_TVG_LOGO_MARK,
             ""
         )
-
         val group = properties.getProperty(
             M3U_GROUP_TITLE_MARK,
             ""
@@ -81,7 +85,6 @@ class DefaultPlaylistParser @Inject constructor() : PlaylistParser {
                 removeAt(spaceContentIndex)
             }
         }.firstOrNull().orEmpty()
-
         val duration = properties.getProperty(
             M3U_TVG_DURATION,
             "-1"

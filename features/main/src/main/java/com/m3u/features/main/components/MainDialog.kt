@@ -12,6 +12,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import com.m3u.data.database.entity.Feed
@@ -58,16 +59,20 @@ internal fun MainDialog(
         modifier = modifier,
         content = {
             val theme = LocalTheme.current
+            val context = LocalContext.current
             val currentStatus = remember { status as MainDialogStatus.Selections }
             if (status is MainDialogStatus.Selections) {
                 var renamedText by remember {
-                    mutableStateOf(currentStatus.feed.title)
+                    mutableStateOf(
+                        if (!currentStatus.feed.isTemplated()) currentStatus.feed.title
+                        else context.getString(R.string.imported_feed_title)
+                    )
                 }
                 SheetTextField(
                     text = renamedText,
                     onTextChange = { renamedText = it },
                     readOnly = !editMode,
-                    icon = Icons.Rounded.Edit,
+                    icon = Icons.Rounded.Edit.takeUnless { currentStatus.feed.isTemplated() },
                     iconTint = if (editMode) theme.tint else theme.onBackground,
                     onIconClick = {
                         val target = !editMode
@@ -82,11 +87,13 @@ internal fun MainDialog(
                         unsubscribe(currentStatus.feed.url)
                         update(MainDialogStatus.Idle)
                     }
-                    val clipboardManager = LocalClipboardManager.current
-                    SheetItem(R.string.copy_feed_url) {
-                        val annotatedString = AnnotatedString(currentStatus.feed.url)
-                        clipboardManager.setText(annotatedString)
-                        update(MainDialogStatus.Idle)
+                    if (!currentStatus.feed.isTemplated()) {
+                        val clipboardManager = LocalClipboardManager.current
+                        SheetItem(R.string.copy_feed_url) {
+                            val annotatedString = AnnotatedString(currentStatus.feed.url)
+                            clipboardManager.setText(annotatedString)
+                            update(MainDialogStatus.Idle)
+                        }
                     }
                 }
             }

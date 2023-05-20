@@ -8,6 +8,7 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
 import com.google.accompanist.navigation.animation.AnimatedNavHost
 import com.m3u.androidApp.ui.NavigateToDestination
@@ -15,6 +16,7 @@ import com.m3u.features.console.navigation.consoleScreen
 import com.m3u.features.feed.navigation.feedScreen
 import com.m3u.features.live.navigation.livePlaylistScreen
 import com.m3u.features.live.navigation.liveScreen
+import com.m3u.features.main.R
 import com.m3u.ui.model.LocalHelper
 
 @OptIn(ExperimentalAnimationApi::class, ExperimentalFoundationApi::class)
@@ -28,6 +30,7 @@ fun M3UNavHost(
     startDestination: String = rootNavigationRoute
 ) {
     val helper = LocalHelper.current
+    val context = LocalContext.current
     AnimatedNavHost(
         navController = navController,
         startDestination = startDestination,
@@ -41,7 +44,8 @@ fun M3UNavHost(
             pagerState = pagerState,
             destinations = destinations,
             navigateToFeed = { feed ->
-                helper.title = feed.title
+                helper.title = if (!feed.isTemplated()) feed.title
+                else context.getString(R.string.imported_feed_title)
                 navigateToDestination(Destination.Feed(feed.url))
             },
             navigateToLive = { id ->

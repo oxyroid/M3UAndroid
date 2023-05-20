@@ -9,8 +9,7 @@ data class FeedDetail(
 
 internal fun Feed.toDetail(
     count: Int = 0
-): FeedDetail {
-    return FeedDetail(
-        this, count
-    )
-}
+): FeedDetail = FeedDetail(
+    feed = this,
+    count = count
+)

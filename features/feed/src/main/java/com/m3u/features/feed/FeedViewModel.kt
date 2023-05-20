@@ -65,8 +65,7 @@ class FeedViewModel @Inject constructor(
                 if (feed != null) {
                     writable.update {
                         it.copy(
-                            url = feed.url,
-                            title = feed.title
+                            url = feed.url
                         )
                     }
                 } else {

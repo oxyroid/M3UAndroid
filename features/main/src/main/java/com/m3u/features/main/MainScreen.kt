@@ -21,6 +21,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.data.database.entity.Feed
@@ -153,8 +155,9 @@ fun PortraitOrientationContent(
             contentType = {}
         ) { detail ->
             FeedItem(
-                label = detail.feed.title,
+                label = detail.feed.calculateUiTitle(),
                 number = detail.count,
+                special = detail.feed.isTemplated(),
                 modifier = Modifier.fillParentMaxWidth(),
                 onClick = {
                     navigateToFeed(detail.feed)
@@ -192,8 +195,9 @@ private fun LandscapeOrientationContent(
             contentType = {}
         ) { detail ->
             FeedItem(
-                label = detail.feed.title,
+                label = detail.feed.calculateUiTitle(),
                 number = detail.count,
+                special = detail.feed.isTemplated(),
                 modifier = Modifier.fillMaxWidth(),
                 onClick = {
                     navigateToFeed(detail.feed)
@@ -204,4 +208,12 @@ private fun LandscapeOrientationContent(
             )
         }
     }
+}
+
+@Composable
+private fun Feed.calculateUiTitle(): AnnotatedString {
+    return if (!this.isTemplated()) AnnotatedString(this.title)
+    else AnnotatedString(
+        text = stringResource(R.string.imported_feed_title)
+    )
 }

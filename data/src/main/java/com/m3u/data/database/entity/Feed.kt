@@ -12,4 +12,10 @@ data class Feed(
     @PrimaryKey
     @ColumnInfo(name = "url")
     val url: String
-)
+) {
+    fun isTemplated(): Boolean = url == URL_IMPORTED
+
+    companion object {
+        const val URL_IMPORTED = "imported"
+    }
+}

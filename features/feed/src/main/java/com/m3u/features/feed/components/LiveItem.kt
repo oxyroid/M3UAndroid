@@ -80,7 +80,9 @@ internal fun LiveItem(
                 )
                 .then(modifier)
         ) {
-            if (!noPictureMode && !live.cover.isNullOrEmpty()) {
+            AnimatedVisibility (
+                visible = !noPictureMode && !live.cover.isNullOrEmpty()
+            ) {
                 Image(
                     model = live.cover,
                     errorPlaceholder = live.title,
@@ -95,7 +97,7 @@ internal fun LiveItem(
                 verticalArrangement = Arrangement.spacedBy(spacing.small)
             ) {
                 AnimatedVisibility(
-                    live.title.isNotEmpty()
+                    visible = live.title.isNotEmpty()
                 ) {
                     Text(
                         text = live.title,

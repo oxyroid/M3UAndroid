@@ -61,8 +61,4 @@ dependencies {
     implementation libs.androidx.media3.media3.session
     implementation libs.androidx.media3.media3.datasource.rtmp
     implementation libs.androidx.media3.media3.datasource.okhttp
-
-
-    implementation 'junit:junit:4.13.2'
-    testImplementation 'org.junit.jupiter:junit-jupiter'
 }

@@ -21,6 +21,7 @@ import com.m3u.data.database.dao.LiveDao
 import com.m3u.data.database.entity.Feed
 import com.m3u.data.database.entity.Live
 import com.m3u.data.remote.parser.execute
+import com.m3u.data.remote.parser.m3u.InvalidatePlaylistError
 import com.m3u.data.remote.parser.m3u.PlaylistParser
 import com.m3u.data.remote.parser.m3u.toLive
 import com.m3u.data.repository.FeedRepository
@@ -47,7 +48,6 @@ class FeedRepositoryImpl @Inject constructor(
         @FeedStrategy strategy: Int
     ): Flow<Resource<Unit>> = resourceFlow {
         try {
-            val parent = url.findParentPath().orEmpty()
             val lives = when {
                 url.startsWith("http://") || url.startsWith("https://") -> networkParse(url)
                 url.startsWith("file://") || url.startsWith("content://") -> {
@@ -90,14 +90,6 @@ class FeedRepositoryImpl @Inject constructor(
                 }
 
                 else -> emptyList()
-            }.map { live ->
-                val uri = Uri.parse(live.url)
-                when (uri.scheme) {
-                    null -> live.copy(
-                        url = parent + live.url
-                    )
-                    else -> live
-                }
             }
             val feed = Feed(title, url)
             feedDao.insert(feed)
@@ -131,20 +123,29 @@ class FeedRepositoryImpl @Inject constructor(
                     liveDao.insert(it)
                 }
             emitResource(Unit)
+        } catch (e: InvalidatePlaylistError) {
+            val feed = Feed("", Feed.URL_IMPORTED)
+            val live = Live(
+                url = url,
+                group = "",
+                title = title,
+                feedUrl = feed.url
+            )
+            if (feedDao.getByUrl(feed.url) == null) {
+                feedDao.insert(feed)
+            }
+            liveDao.insert(live)
+            emitResource(Unit)
         } catch (e: Exception) {
             logger.log(e)
             emitMessage(e.message)
         }
     }
 
-    private fun String.findParentPath(): String? {
-        val index = lastIndexOf("/")
-        if (index == -1) return null
-        return take(index + 1)
-    }
-
+    @Throws(InvalidatePlaylistError::class)
     private suspend fun networkParse(url: String): List<Live> = parse(url)
 
+    @Throws(InvalidatePlaylistError::class)
     private suspend fun diskParse(url: String): List<Live> {
         val uri = Uri.parse(url)
         val content = context.contentResolver.openInputStream(uri)?.use {
