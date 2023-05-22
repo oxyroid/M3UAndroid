@@ -51,8 +51,7 @@ class DefaultPlaylistParser @Inject constructor() : PlaylistParser {
 
     @Throws(InvalidatePlaylistError::class)
     private fun M3UData.setUrl(url: String): M3UData = run {
-        if (!url.startsWith("http://") && !url.startsWith("https://"))
-            throw InvalidatePlaylistError
+        if (Uri.parse(url).scheme == null) throw InvalidatePlaylistError
         copy(url = url)
     }
 
