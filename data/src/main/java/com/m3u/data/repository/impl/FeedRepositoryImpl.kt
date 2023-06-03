@@ -31,6 +31,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.withContext
 import java.io.File
+import java.net.Proxy
 import javax.inject.Inject
 
 class FeedRepositoryImpl @Inject constructor(
@@ -39,6 +40,7 @@ class FeedRepositoryImpl @Inject constructor(
     private val logger: Logger,
     configuration: Configuration,
     private val parser: PlaylistParser,
+    private val proxy: Proxy,
     @ApplicationContext private val context: Context
 ) : FeedRepository {
     private val connectTimeout by configuration.connectTimeout
@@ -176,7 +178,8 @@ class FeedRepositoryImpl @Inject constructor(
 
     private suspend fun parse(url: String): List<Live> = parser.execute(
         url = url,
-        connectTimeout = connectTimeout
+        connectTimeout = connectTimeout,
+        proxy = proxy
     )
         .map { it.toLive(url) }
 

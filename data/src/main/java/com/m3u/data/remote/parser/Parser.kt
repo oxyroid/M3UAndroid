@@ -1,9 +1,10 @@
 package com.m3u.data.remote.parser
 
-import java.io.InputStream
-import java.net.URL
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.io.InputStream
+import java.net.Proxy
+import java.net.URL
 
 interface Parser<I, R> {
     suspend fun execute(input: I): R
@@ -13,8 +14,9 @@ suspend fun <R> Parser<InputStream, R>.execute(
     url: URL,
     connectTimeout: Int = 8000,
     readTimeout: Int = connectTimeout,
+    proxy: Proxy
 ): R = withContext(Dispatchers.IO) {
-    val connection = url.openConnection()
+    val connection = url.openConnection(proxy)
     connection.connectTimeout = connectTimeout
     connection.readTimeout = readTimeout
     connection.getInputStream().use {
@@ -27,8 +29,9 @@ suspend fun <R> Parser<InputStream, R>.execute(
 suspend fun <R> Parser<InputStream, R>.execute(
     url: String,
     connectTimeout: Int = 8000,
-    readTimeout: Int = connectTimeout
-) = execute(URL(url), connectTimeout, readTimeout)
+    readTimeout: Int = connectTimeout,
+    proxy: Proxy
+) = execute(URL(url), connectTimeout, readTimeout, proxy)
 
 suspend fun <R> Parser<InputStream, R>.execute(
     content: String
