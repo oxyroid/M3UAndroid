@@ -9,7 +9,5 @@ fun Properties.loadLine(line: String) {
         val key = trim.take(index).ifEmpty { error("Cannot found key: $line") }
         val value = trim.drop(index + 1)
         this.setProperty(key, value)
-    } else {
-        error("Cannot parse this to a property line: $line")
     }
 }

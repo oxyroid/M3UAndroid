@@ -1,5 +1,7 @@
 package com.m3u.features.setting
 
+import android.net.Uri
+
 sealed interface SettingEvent {
     object Subscribe : SettingEvent
     data class OnTitle(val title: String) : SettingEvent
@@ -10,6 +12,8 @@ sealed interface SettingEvent {
     object OnConnectTimeout : SettingEvent
     object OnClipMode : SettingEvent
     data class OnBannedLive(val id: Int) : SettingEvent
-    object OnInitialTabIndex : SettingEvent
+    data class ImportJavaScript(val uri: Uri) : SettingEvent
+
+    object OnInitialDestination : SettingEvent
     object OnSilentMode : SettingEvent
 }

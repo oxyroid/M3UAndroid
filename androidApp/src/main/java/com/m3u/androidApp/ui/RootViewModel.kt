@@ -17,13 +17,13 @@ import com.m3u.data.repository.PostRepository
 import com.m3u.ui.model.AppAction
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
-import javax.inject.Inject
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 @HiltViewModel
 class RootViewModel @Inject constructor(
@@ -140,7 +140,7 @@ class RootViewModel @Inject constructor(
 
     private fun getSafelyInitialTabIndex(): Int {
         val index = readable.initialTabIndex
-        if (index < 0 || index > publisher.maxTabIndex) return 0
+        if (index < 0 || index > publisher.destinationsCount - 1) return 0
         return index
     }
 }

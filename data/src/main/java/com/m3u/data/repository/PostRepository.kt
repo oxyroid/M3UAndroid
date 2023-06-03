@@ -11,7 +11,7 @@ interface PostRepository {
     suspend fun clear()
 
     companion object {
-        const val REPOS_AUTHOR = "thxbrop"
+        const val REPOS_AUTHOR = "realOxy"
         const val REPOS_NAME_POST_PROJECT = "M3UAndroidPost"
     }
 }

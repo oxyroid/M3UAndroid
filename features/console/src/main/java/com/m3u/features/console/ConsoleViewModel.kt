@@ -1,3 +1,4 @@
+@file:Suppress("unused")
 package com.m3u.features.console
 
 import android.app.Application
@@ -7,18 +8,15 @@ import com.m3u.core.architecture.BaseViewModel
 import com.m3u.core.architecture.Publisher
 import com.m3u.core.architecture.reader.FileReader
 import com.m3u.features.console.command.CommandHandler
-import com.m3u.features.console.command.CommandResource
 import com.m3u.features.console.command.impl.EmptyCommandHandler
 import com.m3u.features.console.command.impl.LoggerCommandHandler
 import com.m3u.features.console.command.impl.UpnpCommandHandler
 import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 @HiltViewModel
 class ConsoleViewModel @Inject constructor(
@@ -58,18 +56,26 @@ class ConsoleViewModel @Inject constructor(
             clear()
             return
         }
-        val handler = findCommandHandler(lowercaseInput)
-        handler.execute()
-            .onEach { resource ->
-                when (resource) {
-                    CommandResource.Idle -> requestFocus()
-                    is CommandResource.Output -> {
-                        append(resource.line)
-                        clearFocus()
-                    }
-                }
-            }
-            .launchIn(viewModelScope)
+//        val handler = findCommandHandler(lowercaseInput)
+//        handler.execute()
+//            .onEach { resource ->
+//                when (resource) {
+//                    CommandResource.Idle -> requestFocus()
+//                    is CommandResource.Output -> {
+//                        append(resource.line)
+//                        clearFocus()
+//                    }
+//                }
+//            }
+//            .launchIn(viewModelScope)
+        val builder = ProcessBuilder(input).apply {
+            redirectErrorStream(true)
+        }
+        val process = builder.start()
+        val lines = process.inputStream.use {
+            it.bufferedReader().readLines()
+        }
+        append(lines.joinToString(separator = "\n"))
     }
 
     private fun input(text: String) {
@@ -105,12 +111,14 @@ class ConsoleViewModel @Inject constructor(
                     reader = reader
                 )
             }
+
             UpnpCommandHandler.KEY -> {
                 UpnpCommandHandler(
                     discoverNearbyDevices = { flow { } },
                     input = input
                 )
             }
+
             else -> EmptyCommandHandler(input)
         }
 

@@ -12,8 +12,8 @@ class AppPublisher @Inject constructor(
     override val applicationID: String = BuildConfig.APPLICATION_ID
     override val versionName: String = BuildConfig.VERSION_NAME
     override val debug: Boolean = BuildConfig.DEBUG
-    override val maxTabIndex: Int get() = TopLevelDestination.values().size - 1
-    override fun getTabTitle(index: Int): String {
+    override val destinationsCount: Int get() = TopLevelDestination.values().size
+    override fun getDestination(index: Int): String {
         val resId = TopLevelDestination.values()[index].iconTextId
         return context.getString(resId)
     }

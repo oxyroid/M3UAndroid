@@ -4,6 +4,6 @@ interface Publisher {
     val applicationID: String
     val versionName: String
     val debug: Boolean
-    val maxTabIndex: Int
-    fun getTabTitle(index: Int): String
+    val destinationsCount: Int
+    fun getDestination(index: Int): String
 }

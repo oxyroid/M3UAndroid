@@ -15,7 +15,7 @@ data class SettingState(
     val title: String = "",
     val url: String = "",
     val mutedLives: List<Live> = emptyList(),
-    val tabTitles: List<String> = emptyList(),
+    val destinations: List<String> = emptyList(),
 ) {
     @FeedStrategy var feedStrategy: Int by configuration.feedStrategy
     var godMode: Boolean by configuration.godMode
@@ -27,7 +27,7 @@ data class SettingState(
     var autoRefresh: Boolean by configuration.autoRefresh
     var isSSLVerification: Boolean by configuration.isSSLVerification
     var fullInfoPlayer: Boolean by configuration.fullInfoPlayer
-    var initialTabIndex: Int by configuration.initialTabIndex
+    var initialDestinationIndex: Int by configuration.initialTabIndex
     var noPictureMode: Boolean by configuration.noPictureMode
     var silentMode: Boolean by configuration.silentMode
     var cinemaMode: Boolean by configuration.cinemaMode

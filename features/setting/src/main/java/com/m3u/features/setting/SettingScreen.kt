@@ -1,13 +1,9 @@
 package com.m3u.features.setting
 
-import android.content.Intent
 import android.content.res.Configuration
 import android.net.Uri
-import android.provider.Settings
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
@@ -16,17 +12,11 @@ import androidx.compose.foundation.gestures.rememberScrollableState
 import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -36,16 +26,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.core.annotation.ClipMode
@@ -54,14 +37,9 @@ import com.m3u.core.annotation.FeedStrategy
 import com.m3u.core.annotation.OnClipMode
 import com.m3u.core.annotation.OnFeedStrategy
 import com.m3u.data.database.entity.Live
-import com.m3u.features.setting.components.CheckBoxPreference
-import com.m3u.features.setting.components.FoldPreference
-import com.m3u.features.setting.components.MutedLiveItem
-import com.m3u.features.setting.components.TextPreference
-import com.m3u.ui.components.Button
-import com.m3u.ui.components.LabelField
-import com.m3u.ui.components.OuterColumn
-import com.m3u.ui.components.TextButton
+import com.m3u.features.setting.parts.FeedsPart
+import com.m3u.features.setting.parts.PreferencesPart
+import com.m3u.features.setting.parts.ScriptsPart
 import com.m3u.ui.model.LocalHelper
 import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.LocalTheme
@@ -127,16 +105,17 @@ fun SettingRoute(
         onSSLVerification = { state.isSSLVerification = !state.isSSLVerification },
         fullInfoPlayer = state.fullInfoPlayer,
         onFullInfoPlayer = { state.fullInfoPlayer = !state.fullInfoPlayer },
-        initialTabTitle = remember(state.initialTabIndex, state.tabTitles) {
-            state.tabTitles.getOrNull(state.initialTabIndex).orEmpty()
+        initialDestination = remember(state.initialDestinationIndex, state.destinations) {
+            state.destinations.getOrNull(state.initialDestinationIndex).orEmpty()
         },
-        onInitialTabIndex = { viewModel.onEvent(SettingEvent.OnInitialTabIndex) },
+        onInitialDestination = { viewModel.onEvent(SettingEvent.OnInitialDestination) },
         noPictureMode = state.noPictureMode,
         onNoPictureMode = { state.noPictureMode = !state.noPictureMode },
         silentMode = state.silentMode,
         onSilentMode = { viewModel.onEvent(SettingEvent.OnSilentMode) },
         cinemaMode = state.cinemaMode,
         onCinemaMode = { state.cinemaMode = !state.cinemaMode },
+        importJavaScript = { viewModel.onEvent(SettingEvent.ImportJavaScript(it)) },
         modifier = modifier.fillMaxSize()
     )
 }
@@ -174,17 +153,18 @@ private fun SettingScreen(
     onSSLVerification: () -> Unit,
     fullInfoPlayer: Boolean,
     onFullInfoPlayer: () -> Unit,
-    initialTabTitle: String,
-    onInitialTabIndex: () -> Unit,
+    initialDestination: String,
+    onInitialDestination: () -> Unit,
     noPictureMode: Boolean,
     onNoPictureMode: () -> Unit,
     silentMode: Boolean,
     onSilentMode: () -> Unit,
     cinemaMode: Boolean,
     onCinemaMode: () -> Unit,
+    importJavaScript: (Uri) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var fold: Fold by remember { mutableStateOf(Fold.NONE) }
+    var part: SettingPart by remember { mutableStateOf(SettingPart.PREFERENCE) }
     Box(
         modifier = Modifier.testTag("features:setting")
     ) {
@@ -193,14 +173,14 @@ private fun SettingScreen(
             Configuration.ORIENTATION_PORTRAIT -> {
                 PortraitOrientationContent(
                     version = version,
-                    fold = fold,
+                    part = part,
                     title = title,
                     url = url,
                     enabled = enabled,
                     godMode = godMode,
                     connectTimeout = connectTimeout,
                     scrollMode = scrollMode,
-                    onFold = { fold = it },
+                    onFold = { part = it },
                     onTitle = onTitle,
                     onUrl = onUrl,
                     onSubscribe = onSubscribe,
@@ -224,14 +204,15 @@ private fun SettingScreen(
                     onSSLVerificationEnabled = onSSLVerification,
                     fullInfoPlayer = fullInfoPlayer,
                     onFullInfoPlayer = onFullInfoPlayer,
-                    initialTabTitle = initialTabTitle,
-                    onInitialTabIndex = onInitialTabIndex,
+                    initialTabTitle = initialDestination,
+                    onInitialTabIndex = onInitialDestination,
                     noPictureMode = noPictureMode,
                     onNoPictureMode = onNoPictureMode,
                     silentMode = silentMode,
                     onSilentMode = onSilentMode,
                     cinemaMode = cinemaMode,
                     onCinemaMode = onCinemaMode,
+                    importJavaScript = importJavaScript,
                     modifier = modifier
                         .fillMaxWidth()
                         .scrollable(
@@ -244,7 +225,7 @@ private fun SettingScreen(
             Configuration.ORIENTATION_LANDSCAPE -> {
                 LandscapeOrientationContent(
                     version = version,
-                    fold = fold,
+                    part = part,
                     title = title,
                     url = url,
                     adding = enabled,
@@ -255,7 +236,7 @@ private fun SettingScreen(
                     connectTimeout = connectTimeout,
                     useCommonUIMode = useCommonUIMode,
                     useCommonUIModeEnable = useCommonUIModeEnable,
-                    onFold = { fold = it },
+                    onFold = { part = it },
                     onTitle = onTitle,
                     onUrl = onUrl,
                     onClipMode = onClipMode,
@@ -276,14 +257,15 @@ private fun SettingScreen(
                     onSSLVerificationEnabled = onSSLVerification,
                     fullInfoPlayer = fullInfoPlayer,
                     onFullInfoPlayer = onFullInfoPlayer,
-                    initialTabTitle = initialTabTitle,
-                    onInitialTabIndex = onInitialTabIndex,
+                    initialTabTitle = initialDestination,
+                    onInitialTabIndex = onInitialDestination,
                     noPictureMode = noPictureMode,
                     onNoPictureMode = onNoPictureMode,
                     silentMode = silentMode,
                     onSilentMode = onSilentMode,
                     cinemaMode = cinemaMode,
                     onCinemaMode = onCinemaMode,
+                    importJavaScript = importJavaScript,
                     modifier = modifier.scrollable(
                         orientation = Orientation.Vertical,
                         state = rememberScrollableState { it }
@@ -294,15 +276,15 @@ private fun SettingScreen(
             else -> {}
         }
     }
-    BackHandler(fold != Fold.NONE) {
-        fold = Fold.NONE
+    BackHandler(part != SettingPart.PREFERENCE) {
+        part = SettingPart.PREFERENCE
     }
 }
 
 @Composable
 private fun PortraitOrientationContent(
     version: String,
-    fold: Fold,
+    part: SettingPart,
     title: String,
     url: String,
     @FeedStrategy feedStrategy: Int,
@@ -317,7 +299,7 @@ private fun PortraitOrientationContent(
     enabled: Boolean,
     mutedLives: List<Live>,
     onBannedLive: (Int) -> Unit,
-    onFold: (Fold) -> Unit,
+    onFold: (SettingPart) -> Unit,
     onTitle: (String) -> Unit,
     onUrl: (String) -> Unit,
     onSubscribe: () -> Unit,
@@ -341,6 +323,7 @@ private fun PortraitOrientationContent(
     onSilentMode: () -> Unit,
     cinemaMode: Boolean,
     onCinemaMode: () -> Unit,
+    importJavaScript: (Uri) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Box {
@@ -358,10 +341,10 @@ private fun PortraitOrientationContent(
             onUIMode = { },
             onGodMode = onGodMode,
             onFeedManagement = {
-                onFold(Fold.FEED)
+                onFold(SettingPart.FEED)
             },
             onScriptManagement = {
-                onFold(Fold.SCRIPT)
+                onFold(SettingPart.SCRIPT)
             },
             navigateToConsole = navigateToConsole,
             experimentalMode = experimentalMode,
@@ -386,13 +369,13 @@ private fun PortraitOrientationContent(
         )
 
         AnimatedVisibility(
-            visible = fold != Fold.NONE,
+            visible = part != SettingPart.PREFERENCE,
             enter = slideInHorizontally { it },
             exit = slideOutHorizontally { it }
         ) {
-            when (fold) {
-                Fold.FEED -> {
-                    FeedManagementPart(
+            when (part) {
+                SettingPart.FEED -> {
+                    FeedsPart(
                         title = title,
                         url = url,
                         mutedLives = mutedLives,
@@ -405,8 +388,9 @@ private fun PortraitOrientationContent(
                     )
                 }
 
-                Fold.SCRIPT -> {
-                    ScriptManagementPart(
+                SettingPart.SCRIPT -> {
+                    ScriptsPart(
+                        importJavaScript = importJavaScript,
                         modifier = modifier.background(LocalTheme.current.background)
                     )
                 }
@@ -420,13 +404,13 @@ private fun PortraitOrientationContent(
 @Composable
 private fun LandscapeOrientationContent(
     version: String,
-    fold: Fold,
+    part: SettingPart,
     title: String,
     url: String,
     godMode: Boolean,
     @ClipMode clipMode: Int,
     adding: Boolean,
-    onFold: (Fold) -> Unit,
+    onFold: (SettingPart) -> Unit,
     onTitle: (String) -> Unit,
     onUrl: (String) -> Unit,
     onSubscribe: () -> Unit,
@@ -460,6 +444,7 @@ private fun LandscapeOrientationContent(
     onSilentMode: () -> Unit,
     cinemaMode: Boolean,
     onCinemaMode: () -> Unit,
+    importJavaScript: (Uri) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
@@ -473,8 +458,8 @@ private fun LandscapeOrientationContent(
             godMode = godMode,
             clipMode = clipMode,
             onClipMode = onClipMode,
-            onFeedManagement = { onFold(Fold.FEED) },
-            onScriptManagement = { onFold(Fold.SCRIPT) },
+            onFeedManagement = { onFold(SettingPart.FEED) },
+            onScriptManagement = { onFold(SettingPart.SCRIPT) },
             feedStrategy = feedStrategy,
             connectTimeout = connectTimeout,
             onFeedStrategy = onFeedStrategy,
@@ -507,9 +492,9 @@ private fun LandscapeOrientationContent(
                 .weight(1f)
         )
 
-        when (fold) {
-            Fold.FEED -> {
-                FeedManagementPart(
+        when (part) {
+            SettingPart.FEED -> {
+                FeedsPart(
                     title = title,
                     url = url,
                     mutedLives = mutedLives,
@@ -524,8 +509,9 @@ private fun LandscapeOrientationContent(
                 )
             }
 
-            Fold.SCRIPT -> {
-                ScriptManagementPart(
+            SettingPart.SCRIPT -> {
+                ScriptsPart(
+                    importJavaScript = importJavaScript,
                     modifier = Modifier
                         .fillMaxHeight()
                         .weight(1f)
@@ -535,402 +521,4 @@ private fun LandscapeOrientationContent(
             else -> {}
         }
     }
-}
-
-@Composable
-private fun PreferencesPart(
-    version: String,
-    @FeedStrategy feedStrategy: Int,
-    @ConnectTimeout connectTimeout: Int,
-    @ClipMode clipMode: Int,
-    useCommonUIMode: Boolean,
-    useCommonUIModeEnable: Boolean,
-    experimentalMode: Boolean,
-    godMode: Boolean,
-    scrollMode: Boolean,
-    fullInfoPlayer: Boolean,
-    onFeedStrategy: OnFeedStrategy,
-    onClipMode: OnClipMode,
-    onUIMode: () -> Unit,
-    onGodMode: () -> Unit,
-    onScrollMode: () -> Unit,
-    onFeedManagement: () -> Unit,
-    onScriptManagement: () -> Unit,
-    onConnectTimeout: () -> Unit,
-    onExperimentalMode: () -> Unit,
-    onFullInfoPlayer: () -> Unit,
-    navigateToConsole: NavigateToConsole,
-    autoRefresh: Boolean,
-    onAutoRefresh: () -> Unit,
-    isSSLVerificationEnabled: Boolean,
-    onSSLVerificationEnabled: () -> Unit,
-    initialTabTitle: String,
-    onInitialTabIndex: () -> Unit,
-    noPictureMode: Boolean,
-    onNoPictureMode: () -> Unit,
-    silentMode: Boolean,
-    onSilentMode: () -> Unit,
-    cinemaMode: Boolean,
-    onCinemaMode: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val spacing = LocalSpacing.current
-    LazyColumn(
-        modifier = modifier,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        item {
-            Column(
-                modifier = Modifier
-                    .padding(spacing.medium)
-                    .clip(RoundedCornerShape(spacing.medium)),
-                verticalArrangement = Arrangement.spacedBy(1.dp)
-            ) {
-                FoldPreference(
-                    title = stringResource(R.string.feed_management),
-                    enabled = true,
-                    onClick = onFeedManagement
-                )
-
-                TextPreference(
-                    title = stringResource(R.string.sync_mode),
-                    content = when (feedStrategy) {
-                        FeedStrategy.ALL -> stringResource(R.string.sync_mode_all)
-                        FeedStrategy.SKIP_FAVORITE -> stringResource(R.string.sync_mode_skip_favourite)
-                        else -> ""
-                    },
-                    onClick = onFeedStrategy
-                )
-                TextPreference(
-                    title = stringResource(R.string.clip_mode),
-                    content = when (clipMode) {
-                        ClipMode.ADAPTIVE -> stringResource(R.string.clip_mode_adaptive)
-                        ClipMode.CLIP -> stringResource(R.string.clip_mode_clip)
-                        ClipMode.STRETCHED -> stringResource(R.string.clip_mode_stretched)
-                        else -> ""
-                    },
-                    onClick = onClipMode
-                )
-                TextPreference(
-                    title = stringResource(R.string.connect_timeout),
-                    content = "${connectTimeout / 1000}s",
-                    onClick = onConnectTimeout
-                )
-                TextPreference(
-                    title = stringResource(R.string.initial_tab),
-                    content = initialTabTitle,
-                    onClick = onInitialTabIndex
-                )
-                CheckBoxPreference(
-                    title = stringResource(R.string.auto_refresh),
-                    subtitle = stringResource(R.string.auto_refresh_description),
-                    checked = autoRefresh,
-                    onCheckedChange = { newValue ->
-                        if (newValue != autoRefresh) {
-                            onAutoRefresh()
-                        }
-                    }
-                )
-                CheckBoxPreference(
-                    title = stringResource(R.string.no_picture_mode),
-                    subtitle = stringResource(R.string.no_picture_mode_description),
-                    checked = noPictureMode,
-                    onCheckedChange = { newValue ->
-                        if (newValue != noPictureMode) {
-                            onNoPictureMode()
-                        }
-                    }
-                )
-                CheckBoxPreference(
-                    title = stringResource(R.string.full_info_player),
-                    subtitle = stringResource(R.string.full_info_player_description),
-                    checked = fullInfoPlayer,
-                    onCheckedChange = { newValue ->
-                        if (newValue != fullInfoPlayer) {
-                            onFullInfoPlayer()
-                        }
-                    }
-                )
-                CheckBoxPreference(
-                    title = stringResource(R.string.silent_mode),
-                    subtitle = stringResource(R.string.silent_mode_description),
-                    checked = silentMode,
-                    onCheckedChange = { newValue ->
-                        if (newValue != silentMode) {
-                            onSilentMode()
-                        }
-                    }
-                )
-                CheckBoxPreference(
-                    title = stringResource(R.string.god_mode),
-                    subtitle = stringResource(R.string.god_mode_description),
-                    checked = godMode,
-                    onCheckedChange = { newValue ->
-                        if (newValue != godMode) {
-                            onGodMode()
-                        }
-                    }
-                )
-                CheckBoxPreference(
-                    title = stringResource(R.string.common_ui_mode),
-                    subtitle = if (useCommonUIModeEnable) stringResource(R.string.common_ui_mode_description)
-                    else stringResource(R.string.common_ui_mode_disabled_description),
-                    enabled = useCommonUIModeEnable,
-                    checked = useCommonUIMode,
-                    onCheckedChange = { newValue ->
-                        if (newValue != useCommonUIMode) {
-                            onUIMode()
-                        }
-                    }
-                )
-
-            }
-        }
-        item {
-            Column(
-                modifier = Modifier
-                    .padding(spacing.medium)
-                    .clip(RoundedCornerShape(spacing.medium)),
-                verticalArrangement = Arrangement.spacedBy(1.dp)
-            ) {
-                CheckBoxPreference(
-                    title = stringResource(R.string.experimental_mode),
-                    subtitle = stringResource(R.string.experimental_mode_description),
-                    checked = experimentalMode,
-                    onCheckedChange = { newValue ->
-                        if (newValue != experimentalMode) {
-                            onExperimentalMode()
-                        }
-                    }
-                )
-                AnimatedVisibility(
-                    visible = experimentalMode,
-                    enter = expandVertically(
-                        expandFrom = Alignment.Bottom
-                    ),
-                    exit = shrinkVertically(
-                        shrinkTowards = Alignment.Bottom
-                    )
-                ) {
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(1.dp)
-                    ) {
-                        CheckBoxPreference(
-                            title = stringResource(R.string.cinema_mode),
-                            subtitle = stringResource(R.string.cinema_mode_description),
-                            checked = cinemaMode,
-                            onCheckedChange = { newValue ->
-                                if (newValue != cinemaMode) {
-                                    onCinemaMode()
-                                }
-                            }
-                        )
-                        FoldPreference(
-                            title = stringResource(R.string.script_management),
-                            enabled = true,
-                            onClick = onScriptManagement
-                        )
-                        FoldPreference(
-                            title = stringResource(R.string.console_editor),
-                            onClick = navigateToConsole
-                        )
-                        CheckBoxPreference(
-                            title = stringResource(R.string.scroll_mode),
-                            checked = scrollMode,
-                            onCheckedChange = { newValue ->
-                                if (newValue != scrollMode) {
-                                    onScrollMode()
-                                }
-                            }
-                        )
-                        CheckBoxPreference(
-                            title = stringResource(R.string.ssl_verification_enabled),
-                            subtitle = stringResource(R.string.ssl_verification_enabled_description),
-                            checked = isSSLVerificationEnabled,
-                            onCheckedChange = { newValue ->
-                                if (newValue != isSSLVerificationEnabled) {
-                                    onSSLVerificationEnabled()
-                                }
-                            }
-                        )
-                    }
-                }
-            }
-        }
-        item {
-            Column(
-                modifier = Modifier
-                    .padding(spacing.medium)
-                    .clip(RoundedCornerShape(spacing.medium)),
-                verticalArrangement = Arrangement.spacedBy(1.dp)
-            ) {
-                val context = LocalContext.current
-                FoldPreference(
-                    title = stringResource(R.string.system_setting),
-                    onClick = {
-                        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                            data = Uri.fromParts("package", context.packageName, null)
-                        }
-                        context.startActivity(intent)
-                    }
-                )
-                FoldPreference(
-                    title = stringResource(R.string.app_version),
-                    subtitle = version,
-                    enabled = false,
-                    onClick = {}
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun FeedManagementPart(
-    title: String,
-    url: String,
-    mutedLives: List<Live>,
-    onBannedLive: (Int) -> Unit,
-    enabled: Boolean,
-    onTitle: (String) -> Unit,
-    onUrl: (String) -> Unit,
-    onSubscribe: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val spacing = LocalSpacing.current
-    val theme = LocalTheme.current
-    val focusRequester = remember { FocusRequester() }
-    LazyColumn(
-        verticalArrangement = Arrangement.spacedBy(spacing.small),
-        modifier = modifier.padding(spacing.medium)
-    ) {
-        if (mutedLives.isNotEmpty()) {
-            item {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(spacing.medium)),
-                    verticalArrangement = Arrangement.spacedBy(1.dp)
-                ) {
-                    Text(
-                        text = stringResource(R.string.label_muted_lives),
-                        style = MaterialTheme.typography.button,
-                        color = theme.onTint,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(theme.tint)
-                            .padding(
-                                vertical = spacing.extraSmall,
-                                horizontal = spacing.medium
-                            )
-                    )
-                    mutedLives.forEach { live ->
-                        MutedLiveItem(
-                            live = live,
-                            onBannedLive = { onBannedLive(live.id) },
-                            modifier = Modifier.background(theme.surface)
-                        )
-                    }
-                }
-            }
-        }
-
-        item {
-            LabelField(
-                text = title,
-                enabled = enabled,
-                placeholder = stringResource(R.string.placeholder_title).uppercase(),
-                onValueChange = onTitle,
-                keyboardActions = KeyboardActions(
-                    onNext = {
-                        focusRequester.requestFocus()
-                    }
-                ),
-                modifier = Modifier.fillMaxWidth()
-            )
-        }
-
-        item {
-            LabelField(
-                text = url,
-                enabled = enabled,
-                placeholder = stringResource(R.string.placeholder_url).uppercase(),
-                onValueChange = onUrl,
-                keyboardActions = KeyboardActions(
-                    onDone = {
-                        onSubscribe()
-                    }
-                ),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .focusRequester(focusRequester)
-            )
-        }
-
-        item {
-            val resId = if (enabled) R.string.label_subscribe else R.string.label_subscribing
-            Button(
-                enabled = enabled,
-                text = stringResource(resId),
-                onClick = onSubscribe,
-                modifier = Modifier.fillMaxWidth()
-            )
-        }
-        item {
-            val subscribeFromClipboardTextResId =
-                if (enabled) R.string.label_parse_from_clipboard else R.string.label_subscribing
-            val clipboardManager = LocalClipboardManager.current
-            TextButton(
-                text = stringResource(subscribeFromClipboardTextResId),
-                enabled = enabled,
-                onClick = {
-                    val clipboardUrl = clipboardManager.getText()?.text.orEmpty()
-                    val clipboardTitle = run {
-                        val filePath = clipboardUrl.split("/")
-                        val fileSplit = filePath.lastOrNull()?.split(".") ?: emptyList()
-                        fileSplit.firstOrNull() ?: "Feed_${System.currentTimeMillis()}"
-                    }
-                    onTitle(clipboardTitle)
-                    onUrl(clipboardUrl)
-                },
-                modifier = Modifier.fillMaxWidth()
-            )
-        }
-
-//        item {
-//            val context = LocalContext.current
-//            val launcher =
-//                rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { file ->
-//                    file ?: return@rememberLauncherForActivityResult
-//                    val text = context.contentResolver.openInputStream(file)?.use {
-//                        it.bufferedReader().readText()
-//                    }.orEmpty()
-//                    context.toast(text)
-//                }
-//            val subscribeFromDiskTextResId = if (enabled) R.string.label_parse_from_disk
-//            else R.string.label_subscribing
-//            TextButton(
-//                text = stringResource(subscribeFromDiskTextResId),
-//                enabled = enabled,
-//                onClick = {
-//                    launcher.launch(arrayOf("text/plain"))
-//                },
-//                modifier = Modifier.fillMaxWidth()
-//            )
-//        }
-    }
-}
-
-@Composable
-fun ScriptManagementPart(
-    modifier: Modifier = Modifier
-) {
-    OuterColumn(
-        modifier = modifier
-    ) {
-    }
-}
-
-private enum class Fold {
-    NONE, FEED, SCRIPT
 }

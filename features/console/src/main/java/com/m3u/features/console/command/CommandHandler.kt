@@ -1,5 +1,6 @@
 package com.m3u.features.console.command
 
+import com.m3u.core.util.basic.splitOutOfQuotation
 import com.m3u.features.console.command.impl.EmptyCommandHandler
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
@@ -18,7 +19,7 @@ internal abstract class CommandHandler(private val input: String) {
     }
 
     open fun execute(): Flow<CommandResource<String>> = channelFlow {
-        val commands = input.split(" ")
+        val commands = input.splitOutOfQuotation(' ')
         val path = commands.path ?: run {
             send(CommandResource.Output(introduce))
             send(CommandResource.Idle)
@@ -41,7 +42,7 @@ internal abstract class CommandHandler(private val input: String) {
 
     companion object {
         fun parseKey(input: String): String? {
-            return input.lowercase().split(" ").firstOrNull()
+            return input.lowercase().splitOutOfQuotation(' ').firstOrNull()
         }
     }
 }

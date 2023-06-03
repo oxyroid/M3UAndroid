@@ -1,6 +1,7 @@
 package com.m3u.data.remote.parser.m3u
 
 import android.net.Uri
+import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.util.basic.splitOutOfQuotation
 import com.m3u.core.util.basic.trimBrackets
 import com.m3u.core.util.collection.loadLine
@@ -10,8 +11,11 @@ import java.util.Properties
 import javax.inject.Inject
 
 interface PlaylistParser : Parser<InputStream, List<M3UData>>
-class DefaultPlaylistParser @Inject constructor() : PlaylistParser {
+class DefaultPlaylistParser @Inject constructor(
+    private val logger: Logger
+) : PlaylistParser {
     private val pattern = Regex("#EXTINF:-?\\d+,")
+
     @Throws(InvalidatePlaylistError::class)
     override suspend fun execute(input: InputStream): List<M3UData> = buildList {
         var block: M3UData? = null
@@ -23,17 +27,27 @@ class DefaultPlaylistParser @Inject constructor() : PlaylistParser {
                 when {
                     line.startsWith(M3U_HEADER_MARK) -> block = null
                     line.startsWith(M3U_INFO_MARK) -> {
-                        block?.let { add(it) }
-                        // decoded content and replace "#EXTINF:-1," to "#EXTINF:-1 "
-                        val decodedContent = Uri
-                            .decode(line)
-                            .let {
-                                // TODO: Ignore the content within the quotation marks.
-                                pattern.replace(it) { result ->
-                                    result.value.dropLast(1) + " "
+                        try {
+                            block?.let { add(it) }
+                            // decoded content and replace "#EXTINF:-1," to "#EXTINF:-1 "
+                            val decodedContent = Uri
+                                .decode(line)
+                                .also {
+                                    logger.log("before: $it")
                                 }
-                            }
-                        block = M3UData().setContent(decodedContent)
+                                .let {
+                                    // TODO: Ignore the content within the quotation marks.
+                                    pattern.replace(it) { result ->
+                                        result.value.dropLast(1) + " "
+                                    }
+                                }
+                                .also {
+                                    logger.log("after: $it")
+                                }
+                            block = M3UData().setContent(decodedContent)
+                        } catch (e: Exception) {
+                            logger.log(e)
+                        }
                     }
 
                     line.startsWith("#") -> {}

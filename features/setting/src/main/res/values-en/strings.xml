@@ -45,4 +45,5 @@
     <string name="system_setting">system setting</string>
     <string name="cinema_mode">cinema mode</string>
     <string name="cinema_mode_description">use OLED black theme</string>
+    <string name="script_management_import_js">import Javascript</string>
 </resources>

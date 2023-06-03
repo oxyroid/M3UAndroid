@@ -17,6 +17,7 @@ import com.m3u.data.repository.FeedRepository
 import com.m3u.data.repository.LiveRepository
 import com.m3u.data.repository.PostRepository
 import com.m3u.data.repository.observeBanned
+import com.m3u.data.service.JavaScriptExecutor
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -38,8 +39,8 @@ class SettingViewModel @Inject constructor(
     emptyState = SettingState(
         version = publisher.versionName,
         configuration = configuration,
-        tabTitles = List(publisher.maxTabIndex + 1) {
-            publisher.getTabTitle(it)
+        destinations = List(publisher.destinationsCount) {
+            publisher.getDestination(it)
         }
     )
 ) {
@@ -66,9 +67,18 @@ class SettingViewModel @Inject constructor(
             SettingEvent.OnExperimentalMode -> onExperimentalMode()
             SettingEvent.OnClipMode -> onClipMode()
             is SettingEvent.OnBannedLive -> onBannedLive(event.id)
-            SettingEvent.OnInitialTabIndex -> onInitialTabIndex()
+            SettingEvent.OnInitialDestination -> onInitialTabIndex()
             SettingEvent.OnSilentMode -> onSilentMode()
+            is SettingEvent.ImportJavaScript -> importJavaScript(event.uri)
         }
+    }
+
+    private fun importJavaScript(uri: Uri) {
+        val text = context.contentResolver.openInputStream(uri)?.use { input ->
+            input.bufferedReader().readText()
+        }
+        val result = JavaScriptExecutor.executeString(text ?: return)
+        logger.log(result)
     }
 
     private fun onSilentMode() {
@@ -84,10 +94,10 @@ class SettingViewModel @Inject constructor(
     }
 
     private fun onInitialTabIndex() {
-        val maxIndex = publisher.maxTabIndex
-        val currentIndex = readable.initialTabIndex
+        val maxIndex = publisher.destinationsCount
+        val currentIndex = readable.initialDestinationIndex
         val targetIndex = (currentIndex + 1).takeIf { it <= maxIndex } ?: 0
-        readable.initialTabIndex = targetIndex
+        readable.initialDestinationIndex = targetIndex
     }
 
     private fun onBannedLive(liveId: Int) {
