@@ -11,6 +11,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.create
 import java.net.InetSocketAddress
@@ -29,10 +30,16 @@ object ApiModule {
     @Provides
     @Singleton
     fun provideRetrofitBuilder(
-        json: Json
+        json: Json,
+        proxy: Proxy
     ): Retrofit.Builder {
         val mediaType = "application/json".toMediaType()
         return Retrofit.Builder()
+            .client(
+                OkHttpClient.Builder()
+                    .proxy(proxy)
+                    .build()
+            )
             .addConverterFactory(json.asConverterFactory(mediaType))
     }
 

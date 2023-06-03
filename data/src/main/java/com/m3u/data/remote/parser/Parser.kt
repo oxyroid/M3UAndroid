@@ -14,7 +14,7 @@ suspend fun <R> Parser<InputStream, R>.execute(
     url: URL,
     connectTimeout: Int = 8000,
     readTimeout: Int = connectTimeout,
-    proxy: Proxy
+    proxy: Proxy = Proxy.NO_PROXY
 ): R = withContext(Dispatchers.IO) {
     val connection = url.openConnection(proxy)
     connection.connectTimeout = connectTimeout
@@ -30,7 +30,7 @@ suspend fun <R> Parser<InputStream, R>.execute(
     url: String,
     connectTimeout: Int = 8000,
     readTimeout: Int = connectTimeout,
-    proxy: Proxy
+    proxy: Proxy = Proxy.NO_PROXY
 ) = execute(URL(url), connectTimeout, readTimeout, proxy)
 
 suspend fun <R> Parser<InputStream, R>.execute(

@@ -116,7 +116,6 @@ class FeedRepositoryImpl @Inject constructor(
                 FeedStrategy.ALL -> skippedUrls
                 FeedStrategy.SKIP_FAVORITE -> groupedLives.getValue(true)
                     .map { it.url } + skippedUrls
-
                 else -> emptyList()
             }
             lives
