@@ -3,12 +3,18 @@ pluginManagement {
         gradlePluginPortal()
         google()
         mavenCentral()
+        maven {
+            url "https://maven.pkg.jetbrains.space/public/p/compose/dev"
+        }
     }
 }
 dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        maven {
+            url "https://maven.pkg.jetbrains.space/public/p/compose/dev"
+        }
         maven {
             url "https://androidx.dev/storage/compose-compiler/repository/"
         }
@@ -27,4 +33,3 @@ include ":features:favorite"
 include ":features:console"
 include ":features:crash"
 include ":features:scheme"
-include ":shared"

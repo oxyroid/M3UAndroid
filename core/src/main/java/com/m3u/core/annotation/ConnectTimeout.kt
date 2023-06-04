@@ -1,7 +1,5 @@
 package com.m3u.core.annotation
 
-import androidx.annotation.IntDef
-
 @Target(
     AnnotationTarget.CLASS,
     AnnotationTarget.PROPERTY,
@@ -9,7 +7,6 @@ import androidx.annotation.IntDef
     AnnotationTarget.TYPE
 )
 @Retention(AnnotationRetention.SOURCE)
-@IntDef(ConnectTimeout.SHORT, ConnectTimeout.LONG)
 annotation class ConnectTimeout {
     companion object {
         const val SHORT = 8000

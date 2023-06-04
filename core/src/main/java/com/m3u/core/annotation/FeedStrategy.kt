@@ -1,7 +1,5 @@
 package com.m3u.core.annotation
 
-import androidx.annotation.IntDef
-
 @Target(
     AnnotationTarget.CLASS,
     AnnotationTarget.PROPERTY,
@@ -9,7 +7,6 @@ import androidx.annotation.IntDef
     AnnotationTarget.TYPE
 )
 @Retention(AnnotationRetention.SOURCE)
-@IntDef(FeedStrategy.ALL, FeedStrategy.SKIP_FAVORITE)
 annotation class FeedStrategy {
     companion object {
         const val ALL = 0

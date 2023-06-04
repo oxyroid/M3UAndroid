@@ -5,7 +5,6 @@
     <option name="linkedExternalProjectsSettings">
       <GradleProjectSettings>
         <option name="testRunner" value="GRADLE" />
-        <option name="distributionType" value="DEFAULT_WRAPPED" />
         <option name="externalProjectPath" value="$PROJECT_DIR$" />
         <option name="gradleJvm" value="jbr-17" />
         <option name="modules">
@@ -23,7 +22,6 @@
             <option value="$PROJECT_DIR$/features/main" />
             <option value="$PROJECT_DIR$/features/scheme" />
             <option value="$PROJECT_DIR$/features/setting" />
-            <option value="$PROJECT_DIR$/shared" />
             <option value="$PROJECT_DIR$/ui" />
           </set>
         </option>
