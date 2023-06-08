@@ -10,7 +10,6 @@ import com.m3u.data.remote.api.RemoteApi
 import com.m3u.data.repository.PostRepository
 import java.net.URL
 import java.util.Locale
-import javax.inject.Inject
 import kotlin.streams.toList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -22,7 +21,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 
-class PostRepositoryImpl @Inject constructor(
+class PostRepositoryImpl constructor(
     private val dao: PostDao,
     private val logger: Logger,
     private val api: RemoteApi,

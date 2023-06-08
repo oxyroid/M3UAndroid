@@ -8,9 +8,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.graphics.Color
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.m3u.ui.M3ULocalProvider
-import dagger.hilt.android.AndroidEntryPoint
 
-@AndroidEntryPoint
 class CrashActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

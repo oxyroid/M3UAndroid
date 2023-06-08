@@ -38,17 +38,13 @@ import com.m3u.core.architecture.configuration.Configuration.Companion.SSL_VERIF
 import com.m3u.core.architecture.configuration.Configuration.Companion.USE_COMMON_UI_MODE
 import com.m3u.core.util.context.booleanAsState
 import com.m3u.core.util.context.intAsState
-import dagger.hilt.android.qualifiers.ApplicationContext
-import javax.inject.Inject
 
 /**
  * SharedPreferences based Configuration.
  *
  * This implement is an android platform version.
  */
-class SharedConfiguration @Inject constructor(
-    @ApplicationContext context: Context
-) : Configuration {
+class SharedConfiguration(context: Context) : Configuration {
     private val sharedPreferences: SharedPreferences =
         context.getSharedPreferences(SHARED_SETTINGS, Context.MODE_PRIVATE)
 
@@ -58,17 +54,20 @@ class SharedConfiguration @Inject constructor(
     override val useCommonUIMode: MutableState<Boolean> =
         sharedPreferences.booleanAsState(DEFAULT_USE_COMMON_UI_MODE, USE_COMMON_UI_MODE)
 
-    override val rowCount: MutableState<Int> = sharedPreferences.intAsState(DEFAULT_ROW_COUNT, ROW_COUNT)
+    override val rowCount: MutableState<Int> =
+        sharedPreferences.intAsState(DEFAULT_ROW_COUNT, ROW_COUNT)
 
     @ConnectTimeout
     override val connectTimeout: MutableState<Int> =
         sharedPreferences.intAsState(DEFAULT_CONNECT_TIMEOUT, CONNECT_TIMEOUT)
-    override val godMode: MutableState<Boolean> = sharedPreferences.booleanAsState(DEFAULT_GOD_MODE, GOD_MODE)
+    override val godMode: MutableState<Boolean> =
+        sharedPreferences.booleanAsState(DEFAULT_GOD_MODE, GOD_MODE)
     override val experimentalMode: MutableState<Boolean> =
         sharedPreferences.booleanAsState(DEFAULT_EXPERIMENTAL_MODE, EXPERIMENTAL_MODE)
 
     @ClipMode
-    override val clipMode: MutableState<Int> = sharedPreferences.intAsState(DEFAULT_CLIP_MODE, CLIP_MODE)
+    override val clipMode: MutableState<Int> =
+        sharedPreferences.intAsState(DEFAULT_CLIP_MODE, CLIP_MODE)
     override val scrollMode: MutableState<Boolean> =
         sharedPreferences.booleanAsState(DEFAULT_SCROLL_MODE, SCROLL_MODE)
     override val autoRefresh: MutableState<Boolean> =

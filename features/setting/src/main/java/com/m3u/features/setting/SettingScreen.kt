@@ -29,7 +29,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.core.annotation.ClipMode
 import com.m3u.core.annotation.ConnectTimeout
@@ -43,6 +42,7 @@ import com.m3u.features.setting.parts.ScriptsPart
 import com.m3u.ui.model.LocalHelper
 import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.LocalTheme
+import org.koin.androidx.compose.koinViewModel
 
 typealias NavigateToConsole = () -> Unit
 
@@ -51,7 +51,7 @@ typealias NavigateToConsole = () -> Unit
 fun SettingRoute(
     modifier: Modifier = Modifier,
     isCurrentPage: Boolean,
-    viewModel: SettingViewModel = hiltViewModel(),
+    viewModel: SettingViewModel = koinViewModel(),
     navigateToConsole: NavigateToConsole
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()

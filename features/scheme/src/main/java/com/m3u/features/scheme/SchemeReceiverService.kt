@@ -5,14 +5,8 @@ import android.content.Intent
 import android.os.IBinder
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.util.context.toast
-import dagger.hilt.android.AndroidEntryPoint
-import javax.inject.Inject
 
-@AndroidEntryPoint
 class SchemeReceiverService : Service() {
-    @Inject
-    lateinit var logger: Logger
-
     override fun onBind(intent: Intent?): IBinder? {
         return null
     }

@@ -65,14 +65,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.capitalize
+import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.tv.foundation.lazy.grid.TvGridCells
 import androidx.tv.foundation.lazy.grid.TvLazyVerticalGrid
 import androidx.tv.foundation.lazy.grid.items
 import androidx.tv.foundation.lazy.grid.rememberTvLazyGridState
-import com.m3u.core.util.basic.uppercaseFirst
 import com.m3u.core.wrapper.Event
 import com.m3u.data.database.entity.Live
 import com.m3u.features.feed.components.DialogStatus
@@ -92,10 +92,12 @@ import com.m3u.ui.util.interceptVolumeEvent
 import com.m3u.ui.util.isAtTop
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.koin.androidx.compose.koinViewModel
 
-private typealias NavigateToLive = (liveId: Int) -> Unit
-private typealias NavigateToPlaylist = (playlist: List<Int>, initialIndex: Int) -> Unit
-private typealias OnLongClickLive = (Live) -> Unit
+internal typealias NavigateToLive = (liveId: Int) -> Unit
+internal typealias NavigateToPlaylist = (playlist: List<Int>, initial: Int) -> Unit
+
+private typealias OnLongClickItem = (Live) -> Unit
 private typealias OnScrollUp = () -> Unit
 private typealias OnRefresh = () -> Unit
 
@@ -105,7 +107,7 @@ internal fun FeedRoute(
     navigateToLive: NavigateToLive,
     navigateToPlaylist: NavigateToPlaylist,
     modifier: Modifier = Modifier,
-    viewModel: FeedViewModel = hiltViewModel()
+    viewModel: FeedViewModel = koinViewModel()
 ) {
     val helper = LocalHelper.current
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -164,7 +166,7 @@ internal fun FeedRoute(
             onRefresh = { viewModel.onEvent(FeedEvent.Refresh) },
             navigateToLive = navigateToLive,
             navigateToPlaylist = navigateToPlaylist,
-            onLongClickLive = {
+            onLongClickItem = {
                 dialogStatus = DialogStatus.Selections(it)
             },
             onScrollUp = { viewModel.onEvent(FeedEvent.ScrollUp) },
@@ -197,7 +199,7 @@ private fun FeedScreen(
     onRefresh: OnRefresh,
     navigateToLive: NavigateToLive,
     navigateToPlaylist: NavigateToPlaylist,
-    onLongClickLive: OnLongClickLive,
+    onLongClickItem: OnLongClickItem,
     onScrollUp: OnScrollUp,
     modifier: Modifier = Modifier
 ) {
@@ -228,7 +230,7 @@ private fun FeedScreen(
                 text = query,
                 onValueChange = onQuery,
                 height = 32.dp,
-                placeholder = stringResource(R.string.query_placeholder).uppercaseFirst(),
+                placeholder = stringResource(R.string.query_placeholder).capitalize(Locale.current),
                 modifier = Modifier
                     .padding(LocalSpacing.current.medium)
                     .fillMaxWidth()
@@ -239,10 +241,7 @@ private fun FeedScreen(
         ) {
             when (configuration.orientation) {
                 ORIENTATION_LANDSCAPE -> {
-                    FeedPager(
-                        lives = lives,
-                        modifier = Modifier.fillMaxSize()
-                    ) {
+                    FeedPager(lives) {
                         LandscapeOrientationContent(
                             lives = it,
                             useCommonUIMode = useCommonUIMode,
@@ -253,17 +252,14 @@ private fun FeedScreen(
                             scrollUp = scrollUp,
                             navigateToLive = navigateToLive,
                             navigateToPlaylist = navigateToPlaylist,
-                            onLongClickLive = onLongClickLive,
+                            onLongClickItem = onLongClickItem,
                             modifier = modifier
                         )
                     }
                 }
 
                 ORIENTATION_PORTRAIT -> {
-                    FeedPager(
-                        lives = lives,
-                        modifier = Modifier.fillMaxSize()
-                    ) {
+                    FeedPager(lives) {
                         PortraitOrientationContent(
                             lives = it,
                             scrollMode = scrollMode,
@@ -273,7 +269,7 @@ private fun FeedScreen(
                             scrollUp = scrollUp,
                             navigateToLive = navigateToLive,
                             navigateToLivePlayList = navigateToPlaylist,
-                            onLongClickLive = onLongClickLive,
+                            onLongClickItem = onLongClickItem,
                             modifier = modifier
                         )
                     }
@@ -339,7 +335,7 @@ private fun LandscapeOrientationContent(
     isAtTopState: MutableState<Boolean>,
     navigateToLive: NavigateToLive,
     navigateToPlaylist: NavigateToPlaylist,
-    onLongClickLive: OnLongClickLive,
+    onLongClickItem: OnLongClickItem,
     modifier: Modifier = Modifier
 ) {
     val scalable = LocalScalable.current
@@ -385,7 +381,7 @@ private fun LandscapeOrientationContent(
                             navigateToLive(live.id)
                         }
                     },
-                    onLongClick = { onLongClickLive(live) },
+                    onLongClick = { onLongClickItem(live) },
                     modifier = Modifier.fillMaxWidth(),
                 )
             }
@@ -401,7 +397,7 @@ private fun LandscapeOrientationContent(
                     scrollUp = scrollUp,
                     navigateToLive = navigateToLive,
                     navigateToLivePlayList = navigateToPlaylist,
-                    onLongClickLive = onLongClickLive,
+                    onLongClickLive = onLongClickItem,
                     modifier = modifier
                 )
             }
@@ -426,7 +422,7 @@ private fun PortraitOrientationContent(
     isAtTopState: MutableState<Boolean>,
     navigateToLive: (Int) -> Unit,
     navigateToLivePlayList: (List<Int>, Int) -> Unit,
-    onLongClickLive: OnLongClickLive,
+    onLongClickItem: OnLongClickItem,
     modifier: Modifier = Modifier
 ) {
     val scalable = LocalScalable.current
@@ -469,7 +465,7 @@ private fun PortraitOrientationContent(
                         navigateToLive(live.id)
                     }
                 },
-                onLongClick = { onLongClickLive(live) },
+                onLongClick = { onLongClickItem(live) },
                 modifier = Modifier.fillMaxWidth(),
             )
         }

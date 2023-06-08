@@ -5,7 +5,6 @@ plugins {
     alias(libs.plugins.org.jetbrains.kotlin.android)
     alias(libs.plugins.com.google.devtools.ksp)
     id("kotlinx-serialization")
-    id("kotlin-kapt")
 }
 
 android {
@@ -48,9 +47,6 @@ dependencies {
     implementation(libs.androidx.room.room.ktx)
     ksp(libs.androidx.room.room.compiler)
 
-    implementation(libs.com.google.dagger.hilt.android)
-    kapt(libs.com.google.dagger.hilt.compiler)
-
     implementation(libs.org.jetbrains.kotlinx.kotlinx.serialization.json)
 
     implementation(libs.io.coil.kt.coil)
@@ -66,5 +62,8 @@ dependencies {
     implementation(libs.androidx.media3.media3.datasource.okhttp)
     implementation(libs.androidx.media3.media3.extractor)
 
+    implementation(libs.io.insert.koin.koin.core)
+
+    implementation("com.github.realOxy:otto:0.1.0-alpha04")
     api("com.eclipsesource.j2v8:j2v8:6.2.1@aar")
 }

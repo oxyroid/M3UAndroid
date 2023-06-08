@@ -106,7 +106,7 @@ class AppState(
             is Destination.Live -> navController.navigateToLive(destination.id)
             is Destination.LivePlayList -> navController.navigateToLivePlayList(
                 destination.ids,
-                destination.initialIndex
+                destination.initial
             )
 
             Destination.Console -> navController.navigateToConsole()

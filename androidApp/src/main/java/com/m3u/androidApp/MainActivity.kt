@@ -19,9 +19,7 @@ import com.m3u.androidApp.ui.App
 import com.m3u.androidApp.ui.rememberAppState
 import com.m3u.ui.model.AppAction
 import com.m3u.ui.model.Helper
-import dagger.hilt.android.AndroidEntryPoint
 
-@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalFoundationApi::class, ExperimentalAnimationApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {

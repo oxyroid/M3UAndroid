@@ -20,7 +20,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.m3u.androidApp.components.BottomNavigationSheet
@@ -45,6 +44,7 @@ import com.m3u.ui.model.Helper
 import com.m3u.ui.model.NightTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.koin.androidx.compose.koinViewModel
 
 typealias HelperConnector =
             ((String) -> Unit, () -> String, (List<AppAction>) -> Unit, () -> List<AppAction>) -> Helper
@@ -53,7 +53,7 @@ typealias HelperConnector =
 @Composable
 fun App(
     appState: AppState = rememberAppState(),
-    viewModel: RootViewModel = hiltViewModel(),
+    viewModel: RootViewModel = koinViewModel(),
     connector: HelperConnector = { _, _, _, _ -> EmptyHelper }
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()

@@ -17,7 +17,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.features.favorite.components.FavoriteItem
 import com.m3u.ui.model.LocalHelper
@@ -25,6 +24,7 @@ import com.m3u.ui.model.LocalScalable
 import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.Scalable
 import com.m3u.ui.util.interceptVolumeEvent
+import org.koin.androidx.compose.koinViewModel
 
 typealias NavigateToLive = (Int) -> Unit
 
@@ -33,7 +33,7 @@ fun FavouriteRoute(
     navigateToLive: NavigateToLive,
     isCurrentPage: Boolean,
     modifier: Modifier = Modifier,
-    viewModel: FavouriteViewModel = hiltViewModel()
+    viewModel: FavouriteViewModel = koinViewModel()
 ) {
     val helper = LocalHelper.current
     val state by viewModel.state.collectAsStateWithLifecycle()

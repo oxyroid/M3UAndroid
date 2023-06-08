@@ -20,10 +20,8 @@ import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
 import androidx.media3.session.MediaSession
 import com.m3u.core.architecture.configuration.Configuration
 import com.m3u.core.architecture.service.PlayerManager
-import dagger.hilt.android.qualifiers.ApplicationContext
 import java.security.SecureRandom
 import java.security.cert.X509Certificate
-import javax.inject.Inject
 import javax.net.ssl.SSLContext
 import javax.net.ssl.X509TrustManager
 import kotlinx.coroutines.flow.Flow
@@ -32,8 +30,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import okhttp3.OkHttpClient
 
 @OptIn(UnstableApi::class)
-class ExoPlayerManager @Inject constructor(
-    @ApplicationContext private val context: Context,
+class AndroidPlayerManager(
+    private val context: Context,
     configuration: Configuration
 ) : PlayerManager(), Player.Listener, MediaSession.Callback {
 

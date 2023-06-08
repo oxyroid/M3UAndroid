@@ -1,17 +1,17 @@
 package com.m3u.data.remote.parser.m3u
 
-import android.net.Uri
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.util.basic.splitOutOfQuotation
 import com.m3u.core.util.basic.trimBrackets
 import com.m3u.core.util.collection.loadLine
 import com.m3u.data.remote.parser.Parser
 import java.io.InputStream
+import java.net.URI
+import java.net.URLDecoder
 import java.util.Properties
-import javax.inject.Inject
 
 interface PlaylistParser : Parser<InputStream, List<M3UData>>
-class DefaultPlaylistParser @Inject constructor(
+class DefaultPlaylistParser(
     private val logger: Logger
 ) : PlaylistParser {
     private val pattern = Regex("#EXTINF:-?\\d+,")
@@ -30,7 +30,7 @@ class DefaultPlaylistParser @Inject constructor(
                         try {
                             block?.let { add(it) }
                             // decoded content and replace "#EXTINF:-1," to "#EXTINF:-1 "
-                            val decodedContent = Uri
+                            val decodedContent = URLDecoder
                                 .decode(line)
                                 .also {
                                     logger.log("before: $it")
@@ -65,7 +65,7 @@ class DefaultPlaylistParser @Inject constructor(
 
     @Throws(InvalidatePlaylistError::class)
     private fun M3UData.setUrl(url: String): M3UData = run {
-        if (Uri.parse(url).scheme == null) throw InvalidatePlaylistError
+        if (URI.create(url).scheme == null) throw InvalidatePlaylistError
         copy(url = url)
     }
 

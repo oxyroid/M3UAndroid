@@ -2,6 +2,9 @@
 
 package com.m3u.core.util.basic
 
+import androidx.compose.ui.text.capitalize
+import androidx.compose.ui.text.intl.Locale
+
 fun String.trimBrackets(): String {
     return if (this.isEmpty()) this
     else if (this.length > 1 && this.firstOrNull() == '\"' && this.lastOrNull() == '\"') {
@@ -9,22 +12,21 @@ fun String.trimBrackets(): String {
     } else this
 }
 
-inline fun <reified C : Any> createClazzKey(): String {
-    return C::class.java.name
-}
-
-fun String.uppercaseLetter(): String {
+fun String.title(): String {
     if (this.isEmpty()) return this
     val split = this.split(" ")
     return split.joinToString(
         separator = " ",
-        transform = { it.first().uppercase() + it.drop(1) }
+        transform = { it.capitalize(Locale.current) }
     )
 }
 
-fun String.uppercaseFirst(): String {
-    if (this.isEmpty()) return this
-    return this.first().uppercase() + this.drop(1)
+fun String.loopOutOfQuotation(block: (Char) -> Unit) {
+    var flag = false
+    this.forEach {
+        if (it == '\"' || it == '\'') flag = !flag
+        if (!flag) block(it)
+    }
 }
 
 fun String.splitOutOfQuotation(delimiter: Char): List<String> {
@@ -32,9 +34,7 @@ fun String.splitOutOfQuotation(delimiter: Char): List<String> {
     var start = 0
     var inQuotes = false
     var quoteChar: Char? = null
-
-    for (i in indices) {
-        val c = this[i]
+    forEachIndexed { i, c ->
         if (c == '\'' || c == '\"') {
             if (!inQuotes) {
                 inQuotes = true
@@ -49,7 +49,6 @@ fun String.splitOutOfQuotation(delimiter: Char): List<String> {
             start = i + 1
         }
     }
-
     list.add(substring(start))
     return list
 }

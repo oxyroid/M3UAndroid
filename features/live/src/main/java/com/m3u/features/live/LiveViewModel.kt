@@ -8,8 +8,6 @@ import com.m3u.core.architecture.service.PlayerManager
 import com.m3u.core.wrapper.eventOf
 import com.m3u.data.repository.FeedRepository
 import com.m3u.data.repository.LiveRepository
-import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
@@ -19,8 +17,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-@HiltViewModel
-class LiveViewModel @Inject constructor(
+class LiveViewModel(
     private val liveRepository: LiveRepository,
     private val feedRepository: FeedRepository,
     application: Application,

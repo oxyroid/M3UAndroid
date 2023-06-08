@@ -49,7 +49,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.lerp
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.PlaybackException
@@ -72,6 +71,7 @@ import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.LocalTheme
 import com.m3u.ui.util.EventHandler
 import com.m3u.ui.util.LifecycleEffect
+import org.koin.androidx.compose.koinViewModel
 import kotlin.math.absoluteValue
 
 @Composable
@@ -79,7 +79,7 @@ internal fun LiveRoute(
     init: LiveEvent.Init,
     modifier: Modifier = Modifier,
     onBackPressed: () -> Unit,
-    viewModel: LiveViewModel = hiltViewModel(),
+    viewModel: LiveViewModel = koinViewModel(),
 ) {
     val context = LocalContext.current
     val helper = LocalHelper.current

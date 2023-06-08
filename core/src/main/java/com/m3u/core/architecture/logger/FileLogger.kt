@@ -6,25 +6,22 @@ import android.content.pm.PackageManager
 import android.content.pm.PackageManager.GET_ACTIVITIES
 import android.os.Build
 import com.m3u.core.util.collection.forEachNotNull
-import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
 import java.io.PrintWriter
 import java.io.StringWriter
-import javax.inject.Inject
-import javax.inject.Qualifier
 
-@Qualifier
 @Retention(AnnotationRetention.BINARY)
+@Deprecated("This is an android platform implement.")
 annotation class FileLoggerImpl
 
 /**
  * An uncaught error file collector.
  * Write messages to application cache dir.
  *
- * This implement is an android platform version.
+ * TODO: This implement is an android platform version.
  */
-class FileLogger @Inject constructor(
-    @ApplicationContext private val context: Context
+class FileLogger(
+    private val context: Context
 ) : Logger {
     private val packageInfo: PackageInfo
         get() {

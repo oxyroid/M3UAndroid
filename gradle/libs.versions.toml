@@ -8,8 +8,6 @@ androidx-compose = "1.4.3"
 androidx-compose-material3 = "1.1.0-rc01"
 androidx-navigation = "2.5.3"
 google-accompanist = "0.30.0"
-google-dagger = "2.46"
-androidx-hilt-navigation-compose = "1.0.0"
 androidx-tv = "1.0.0-alpha04"
 androidx-media3 = "1.0.1"
 io-coil = "2.3.0"
@@ -24,6 +22,10 @@ dagger-plugin = "2.44.2"
 ksp-plugin = "1.8.21-1.0.11"
 
 compose_compiler = "1.4.6-dev-k1.8.21-290a127309e"
+
+koin = "3.4.1"
+koin-compose = "1.0.3"
+koin-compose-navigation = "3.4.5"
 
 [libraries]
 androidx-core-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "androidx-core" }
@@ -49,10 +51,6 @@ androidx-compose-material3-material3 = { group = "androidx.compose.material3", n
 
 com-google-accompanist-accompanist-navigation-animation = { group = "com.google.accompanist", name = "accompanist-navigation-animation", version.ref = "google-accompanist" }
 com-google-accompanist-accompanist-systemuicontroller = { group = "com.google.accompanist", name = "accompanist-systemuicontroller", version.ref = "google-accompanist" }
-
-com-google-dagger-hilt-android = { group = "com.google.dagger", name = "hilt-android", version.ref = "google-dagger" }
-com-google-dagger-hilt-compiler = { group = "com.google.dagger", name = "hilt-compiler", version.ref = "google-dagger" }
-androidx-hilt-hilt-navigation-compose = { group = "androidx.hilt", name = "hilt-navigation-compose", version.ref = "androidx-hilt-navigation-compose" }
 
 androidx-tv-tv-foundation = { group = "androidx.tv", name = "tv-foundation", version.ref = "androidx-tv" }
 androidx-tv-tv-material = { group = "androidx.tv", name = "tv-material", version.ref = "androidx-tv" }
@@ -81,11 +79,15 @@ com-squareup-retrofit2-retrofit = { group = "com.squareup.retrofit2", name = "re
 org-jetbrains-kotlin-kotlin-serialization = { group = "org.jetbrains.kotlin", name = "kotlin-serialization", version.ref = "kotlin" }
 org-jetbrains-kotlinx-kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinx-serialization-json" }
 
+io-insert-koin-koin-core = { group = "io.insert-koin", name = "koin-core", version.ref = "koin" }
+io-insert-koin-koin-android = { group = "io.insert-koin", name = "koin-android", version.ref = "koin" }
+io-insert-koin-koin-compose = { group = "io.insert-koin", name = "koin-compose", version.ref = "koin-compose" }
+io-insert-koin-koin-compose-navigation = { group = "io.insert-koin", name = "koin-androidx-compose-navigation", version.ref = "koin-compose-navigation" }
+
 [plugins]
 com-android-application = { id = "com.android.application", version.ref = "android-gradle-plugin" }
 com-android-library = { id = "com.android.library", version.ref = "android-gradle-plugin" }
 org-jetbrains-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
-com-google-dagger-hilt-android = { id = "com.google.dagger.hilt.android", version.ref = "dagger-plugin" }
 com-google-devtools-ksp = { id = "com.google.devtools.ksp", version.ref = "ksp-plugin" }
 
 [bundles]

@@ -1,12 +1,10 @@
 package com.m3u.core.architecture.reader
 
 import android.content.Context
-import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
-import javax.inject.Inject
 
-class LogFileReader @Inject constructor(
-    @ApplicationContext context: Context
+class LogFileReader constructor(
+    context: Context
 ) : FileReader {
     private val dir = context.cacheDir
     override fun read(): List<File> {

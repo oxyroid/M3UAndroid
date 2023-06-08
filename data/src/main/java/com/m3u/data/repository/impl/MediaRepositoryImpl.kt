@@ -20,15 +20,13 @@ import com.m3u.core.wrapper.emitMessage
 import com.m3u.core.wrapper.emitResource
 import com.m3u.core.wrapper.resourceFlow
 import com.m3u.data.repository.MediaRepository
-import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
-import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
 
-class MediaRepositoryImpl @Inject constructor(
-    @ApplicationContext private val context: Context,
+class MediaRepositoryImpl constructor(
+    private val context: Context,
     @FileLoggerImpl private val logger: Logger
 ) : MediaRepository {
     private val directory =

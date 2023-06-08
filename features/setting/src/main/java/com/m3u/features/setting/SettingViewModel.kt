@@ -18,15 +18,12 @@ import com.m3u.data.repository.LiveRepository
 import com.m3u.data.repository.PostRepository
 import com.m3u.data.repository.observeBanned
 import com.m3u.data.service.JavaScriptExecutor
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
-@HiltViewModel
-class SettingViewModel @Inject constructor(
+class SettingViewModel(
     private val feedRepository: FeedRepository,
     private val liveRepository: LiveRepository,
     @AppPublisherImpl private val publisher: Publisher,

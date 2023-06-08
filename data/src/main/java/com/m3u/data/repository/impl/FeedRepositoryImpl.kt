@@ -25,23 +25,21 @@ import com.m3u.data.remote.parser.m3u.InvalidatePlaylistError
 import com.m3u.data.remote.parser.m3u.PlaylistParser
 import com.m3u.data.remote.parser.m3u.toLive
 import com.m3u.data.repository.FeedRepository
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.net.Proxy
-import javax.inject.Inject
 
-class FeedRepositoryImpl @Inject constructor(
+class FeedRepositoryImpl(
     private val feedDao: FeedDao,
     private val liveDao: LiveDao,
     private val logger: Logger,
     configuration: Configuration,
     private val parser: PlaylistParser,
     private val proxy: Proxy,
-    @ApplicationContext private val context: Context
+    private val context: Context
 ) : FeedRepository {
     private val connectTimeout by configuration.connectTimeout
     override fun subscribe(
@@ -52,6 +50,7 @@ class FeedRepositoryImpl @Inject constructor(
         try {
             val lives = when {
                 url.startsWith("http://") || url.startsWith("https://") -> networkParse(url)
+                // TODO: Android Platform Only!
                 url.startsWith("file://") || url.startsWith("content://") -> {
                     val uri = Uri.parse(url) ?: return@resourceFlow
                     val filename = when (uri.scheme) {
@@ -90,7 +89,6 @@ class FeedRepositoryImpl @Inject constructor(
                     }
                     diskParse(url)
                 }
-
                 else -> emptyList()
             }
             val feed = Feed(title, url)

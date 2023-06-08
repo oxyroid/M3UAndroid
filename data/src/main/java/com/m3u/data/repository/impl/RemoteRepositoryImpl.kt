@@ -9,10 +9,9 @@ import com.m3u.core.wrapper.resourceFlow
 import com.m3u.data.remote.api.RemoteApi
 import com.m3u.data.remote.api.dto.Release
 import com.m3u.data.repository.RemoteRepository
-import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 
-class RemoteRepositoryImpl @Inject constructor(
+class RemoteRepositoryImpl constructor(
     private val api: RemoteApi,
     @FileLoggerImpl private val logger: Logger,
 ) : RemoteRepository {

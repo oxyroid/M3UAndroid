@@ -3,8 +3,6 @@
 plugins {
     alias(libs.plugins.com.android.application)
     alias(libs.plugins.org.jetbrains.kotlin.android)
-    alias(libs.plugins.com.google.dagger.hilt.android)
-    id("kotlin-kapt")
 }
 
 android {
@@ -67,7 +65,8 @@ dependencies {
 
     implementation(libs.androidx.core.core.splashscreen)
 
-    implementation(libs.com.google.dagger.hilt.android)
-    kapt(libs.com.google.dagger.hilt.compiler)
-    implementation(libs.androidx.hilt.hilt.navigation.compose)
+    runtimeOnly(libs.io.insert.koin.koin.core)
+    implementation(libs.io.insert.koin.koin.android)
+    implementation(libs.io.insert.koin.koin.compose)
+    implementation(libs.io.insert.koin.koin.compose.navigation)
 }

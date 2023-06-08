@@ -1,4 +1,5 @@
 @file:Suppress("unused")
+
 package com.m3u.features.console
 
 import android.app.Application
@@ -11,15 +12,12 @@ import com.m3u.features.console.command.CommandHandler
 import com.m3u.features.console.command.impl.EmptyCommandHandler
 import com.m3u.features.console.command.impl.LoggerCommandHandler
 import com.m3u.features.console.command.impl.UpnpCommandHandler
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
-@HiltViewModel
-class ConsoleViewModel @Inject constructor(
+class ConsoleViewModel(
     application: Application,
     @AppPublisherImpl publisher: Publisher,
     private val reader: FileReader

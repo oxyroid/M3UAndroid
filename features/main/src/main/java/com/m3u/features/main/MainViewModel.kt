@@ -14,8 +14,6 @@ import com.m3u.data.repository.LiveRepository
 import com.m3u.data.repository.observeByFeedUrl
 import com.m3u.features.main.model.FeedDetail
 import com.m3u.features.main.model.toDetail
-import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
@@ -26,8 +24,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-@HiltViewModel
-class MainViewModel @Inject constructor(
+class MainViewModel(
     private val feedRepository: FeedRepository,
     private val liveRepository: LiveRepository,
     application: Application,
