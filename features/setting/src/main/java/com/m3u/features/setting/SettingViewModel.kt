@@ -17,7 +17,6 @@ import com.m3u.data.repository.FeedRepository
 import com.m3u.data.repository.LiveRepository
 import com.m3u.data.repository.PostRepository
 import com.m3u.data.repository.observeBanned
-import com.m3u.data.service.JavaScriptExecutor
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
@@ -71,11 +70,6 @@ class SettingViewModel(
     }
 
     private fun importJavaScript(uri: Uri) {
-        val text = context.contentResolver.openInputStream(uri)?.use { input ->
-            input.bufferedReader().readText()
-        }
-        val result = JavaScriptExecutor.executeString(text ?: return)
-        logger.log(result)
     }
 
     private fun onSilentMode() {

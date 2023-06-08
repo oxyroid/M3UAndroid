@@ -65,5 +65,4 @@ dependencies {
     implementation(libs.io.insert.koin.koin.core)
 
     implementation("com.github.realOxy:otto:0.1.0-alpha04")
-    api("com.eclipsesource.j2v8:j2v8:6.2.1@aar")
 }

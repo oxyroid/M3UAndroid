@@ -12,8 +12,8 @@ android {
         applicationId = "com.m3u.androidApp"
         minSdk = 26
         targetSdk = 33
-        versionCode = 59
-        versionName = "1.12.0-beta01"
+        versionCode = 60
+        versionName = "1.12.0-beta02"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
