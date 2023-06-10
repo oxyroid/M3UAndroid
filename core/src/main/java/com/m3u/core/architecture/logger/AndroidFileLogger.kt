@@ -20,7 +20,7 @@ annotation class FileLoggerImpl
  *
  * TODO: This implement is an android platform version.
  */
-class FileLogger(
+class AndroidFileLogger(
     private val context: Context
 ) : Logger {
     private val packageInfo: PackageInfo

@@ -3,7 +3,7 @@ package com.m3u.core.architecture.reader
 import android.content.Context
 import java.io.File
 
-class LogFileReader constructor(
+class AndroidFileReader constructor(
     context: Context
 ) : FileReader {
     private val dir = context.cacheDir

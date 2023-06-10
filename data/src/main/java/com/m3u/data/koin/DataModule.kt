@@ -4,7 +4,7 @@ import android.app.NotificationManager
 import android.content.Context
 import androidx.core.app.NotificationManagerCompat
 import androidx.room.Room
-import com.m3u.core.architecture.service.BannerService
+import com.m3u.core.architecture.service.UserInterface
 import com.m3u.core.architecture.service.NotificationService
 import com.m3u.core.architecture.service.PlayerManager
 import com.m3u.core.util.serialization.asConverterFactory
@@ -27,7 +27,7 @@ import com.m3u.data.repository.impl.PostRepositoryImpl
 import com.m3u.data.repository.impl.RemoteRepositoryImpl
 import com.m3u.data.service.AndroidNotificationService
 import com.m3u.data.service.AndroidPlayerManager
-import com.m3u.data.service.ConflatedBannerService
+import com.m3u.data.service.ConflatedUserInterface
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -118,7 +118,7 @@ object DataModule {
                 .create(RemoteApi::class.java)
         }
         factoryOf(::DefaultPlaylistParser) bind PlaylistParser::class
-        singleOf(::ConflatedBannerService) bind BannerService::class
+        singleOf(::ConflatedUserInterface) bind UserInterface::class
         singleOf(::PostRepositoryImpl) bind PostRepository::class
     }
 }

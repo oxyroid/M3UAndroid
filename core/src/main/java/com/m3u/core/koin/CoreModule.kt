@@ -3,11 +3,11 @@ package com.m3u.core.koin
 import com.m3u.core.architecture.configuration.Configuration
 import com.m3u.core.architecture.configuration.SharedConfiguration
 import com.m3u.core.architecture.logger.AndroidLogger
-import com.m3u.core.architecture.logger.BannerLogger
-import com.m3u.core.architecture.logger.FileLogger
+import com.m3u.core.architecture.logger.UserInterfaceLogger
+import com.m3u.core.architecture.logger.AndroidFileLogger
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.reader.FileReader
-import com.m3u.core.architecture.reader.LogFileReader
+import com.m3u.core.architecture.reader.AndroidFileReader
 import org.koin.core.module.dsl.named
 import org.koin.core.module.dsl.singleOf
 import org.koin.core.module.dsl.withOptions
@@ -20,14 +20,14 @@ object CoreModule {
         singleOf(::AndroidLogger) bind Logger::class withOptions {
             named("android")
         }
-        singleOf(::FileLogger) bind Logger::class withOptions {
+        singleOf(::AndroidFileLogger) bind Logger::class withOptions {
             named("file")
         }
-        singleOf(::LogFileReader) bind FileReader::class
+        singleOf(::AndroidFileReader) bind FileReader::class
     }
     val SharedPlatform = module {
-        singleOf(::BannerLogger) bind Logger::class withOptions {
-            named("banner")
+        singleOf(::UserInterfaceLogger) bind Logger::class withOptions {
+            named("user_interface")
         }
     }
 }

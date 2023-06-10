@@ -6,9 +6,9 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.viewModelScope
 import com.m3u.androidApp.AppPublisher
 import com.m3u.androidApp.navigation.TopLevelDestination
-import com.m3u.core.architecture.BaseViewModel
+import com.m3u.core.architecture.viewmodel.AndroidPlatformViewModel
 import com.m3u.core.architecture.configuration.Configuration
-import com.m3u.core.architecture.service.BannerService
+import com.m3u.core.architecture.service.UserInterface
 import com.m3u.core.wrapper.Event
 import com.m3u.core.wrapper.eventOf
 import com.m3u.core.wrapper.handledEvent
@@ -28,8 +28,8 @@ class RootViewModel(
     private val postRepository: PostRepository,
     configuration: Configuration,
     private val publisher: AppPublisher,
-    bannerService: BannerService
-) : BaseViewModel<RootState, RootEvent>(
+    userInterface: UserInterface
+) : AndroidPlatformViewModel<RootState, RootEvent>(
     application = application,
     emptyState = RootState(
         configuration = configuration
@@ -39,7 +39,7 @@ class RootViewModel(
         if (!readable.silentMode) {
             fetchPosts()
         }
-        bannerService
+        userInterface
             .messages
             .onEach { message ->
                 appendTemporalPost(

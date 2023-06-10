@@ -5,7 +5,7 @@ package com.m3u.features.console
 import android.app.Application
 import androidx.lifecycle.viewModelScope
 import com.m3u.core.annotation.AppPublisherImpl
-import com.m3u.core.architecture.BaseViewModel
+import com.m3u.core.architecture.viewmodel.AndroidPlatformViewModel
 import com.m3u.core.architecture.Publisher
 import com.m3u.core.architecture.reader.FileReader
 import com.m3u.features.console.command.CommandHandler
@@ -21,7 +21,7 @@ class ConsoleViewModel(
     application: Application,
     @AppPublisherImpl publisher: Publisher,
     private val reader: FileReader
-) : BaseViewModel<ConsoleState, ConsoleEvent>(
+) : AndroidPlatformViewModel<ConsoleState, ConsoleEvent>(
     application = application,
     emptyState = ConsoleState()
 ) {

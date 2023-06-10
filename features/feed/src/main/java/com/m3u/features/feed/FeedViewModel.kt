@@ -2,10 +2,9 @@ package com.m3u.features.feed
 
 import android.app.Application
 import androidx.lifecycle.viewModelScope
-import com.m3u.core.architecture.BaseViewModel
 import com.m3u.core.architecture.configuration.Configuration
-import com.m3u.core.architecture.logger.BannerLoggerImpl
-import com.m3u.core.architecture.logger.Logger
+import com.m3u.core.architecture.logger.UserInterfaceLogger
+import com.m3u.core.architecture.viewmodel.AndroidPlatformViewModel
 import com.m3u.core.wrapper.Resource
 import com.m3u.core.wrapper.eventOf
 import com.m3u.data.repository.FeedRepository
@@ -27,9 +26,9 @@ class FeedViewModel(
     private val feedRepository: FeedRepository,
     private val mediaRepository: MediaRepository,
     configuration: Configuration,
-    @BannerLoggerImpl private val logger: Logger,
-    application: Application
-) : BaseViewModel<FeedState, FeedEvent>(
+    private val logger: UserInterfaceLogger,
+    application: Application,
+) : AndroidPlatformViewModel<FeedState, FeedEvent>(
     application = application,
     emptyState = FeedState(
         configuration = configuration
