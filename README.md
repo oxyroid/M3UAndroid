@@ -26,19 +26,20 @@ M3U is an app that attempts to use the latest libraries and tools. As a summary:
 > If you want to join the migrating work, just
 > join the Telegram Channel [@m3u_android_chat](https://t.me/m3u_android_chat).
 
-#### Completed
+#### Completed Migrating
 
 - Koin has been the dependency injection framework (migrated from Hilt).
 
-#### Migrating
+#### Migrating Roadmap
 
-- Replace `context.getString` with i18n kotlin framework.
-- Replace `Jetpack Room` by [SQLDelight](https://cashapp.github.io/sqldelight/).
-- Replace `Jetpack ViewModel` with KM-MVVM framework.
+- Migrate i18n kotlin framework from `context.getString` to [MoKo-Resource](https://github.com/icerockdev/moko-resources).
+- Migrate ORM framework from `Jetpack Room` to [SQLDelight](https://cashapp.github.io/sqldelight/).
+- Migrate Video Player from `ExoPlayer` to [VLCJ](https://github.com/caprica/vlcj), visit [official demo](https://github.com/JetBrains/compose-multiplatform/blob/master/experimental/components/VideoPlayer/library/src/desktopMain/kotlin/org/jetbrains/compose/videoplayer/DesktopVideoPlayer.kt).
+- Add desktop Lifecycle ViewModel support just like `Jetpack ViewModel` in Android Platform.
 
 ### Community
 
-M3U is my first elaborate Android project.
+M3U is my first elaborate Android project and is also my first cross-platform application project.
 
 You can join the [Telegram Channel](https://t.me/m3u_android) for update information and **alpha &
 beta packages**.
