@@ -26,16 +26,17 @@ M3U is an app that attempts to use the latest libraries and tools. As a summary:
 > If you want to join the migrating work, just
 > join the Telegram Channel [@m3u_android_chat](https://t.me/m3u_android_chat).
 
-#### Completed Migrating
-
-- Koin has been the dependency injection framework (migrated from Hilt).
-
-#### Migrating Roadmap
-
-- Migrate i18n kotlin framework from `context.getString` to [MoKo-Resource](https://github.com/icerockdev/moko-resources).
-- Migrate ORM framework from `Jetpack Room` to [SQLDelight](https://cashapp.github.io/sqldelight/).
-- Migrate Video Player from `ExoPlayer` to [VLCJ](https://github.com/caprica/vlcj), visit [official demo](https://github.com/JetBrains/compose-multiplatform/blob/master/experimental/components/VideoPlayer/library/src/desktopMain/kotlin/org/jetbrains/compose/videoplayer/DesktopVideoPlayer.kt).
-- Add desktop Lifecycle ViewModel support just like `Jetpack ViewModel` in Android Platform.
+- [x] Migrate dependency injection framework from Hilt to [Koin](https://insert-koin.io).
+- [ ] Migrate i18n kotlin framework from `context.getString`
+  to [MoKo-Resource](https://github.com/icerockdev/moko-resources).
+- [ ] Migrate ORM framework from `Jetpack Room`
+  to [SQLDelight](https://cashapp.github.io/sqldelight/).
+- [ ] Migrate Image Viewer from `coil-kt`
+  to [KorGE-KorIM](https://github.com/korlibs/korge/tree/main/korim).
+- [ ] Migrate Video Player from `ExoPlayer` to [VLCJ](https://github.com/caprica/vlcj),
+  visit [official demo](https://github.com/JetBrains/compose-multiplatform/blob/master/experimental/components/VideoPlayer/library/src/desktopMain/kotlin/org/jetbrains/compose/videoplayer/DesktopVideoPlayer.kt)
+  .
+- [ ] Add desktop Lifecycle ViewModel support just like `Jetpack ViewModel` in Android Platform.
 
 ### Community
 
