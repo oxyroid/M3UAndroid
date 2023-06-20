@@ -1,7 +1,6 @@
 # M3UAndroid
 
-> Project is migrating to compose multiplatform.
-> Visit [desktop-migration](https://github.com/realOxy/M3UAndroid/tree/desktop-migration) Branch.
+> Navigate to [desktop-migration](https://github.com/realOxy/M3UAndroid/tree/desktop-migration) branch.
 
 ### Features
 
