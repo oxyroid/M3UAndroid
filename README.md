@@ -1,6 +1,6 @@
 # M3UAndroid
 
-> Navigate to [desktop-migration](https://github.com/realOxy/M3UAndroid/tree/desktop-migration) branch.
+Navigate to [desktop-migration](https://github.com/realOxy/M3UAndroid/tree/desktop-migration) branch.
 
 ### Features
 
