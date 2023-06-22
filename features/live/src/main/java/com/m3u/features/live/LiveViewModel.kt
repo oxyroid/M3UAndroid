@@ -2,7 +2,7 @@ package com.m3u.features.live
 
 import android.app.Application
 import androidx.lifecycle.viewModelScope
-import com.m3u.core.architecture.viewmodel.AndroidPlatformViewModel
+import com.m3u.core.architecture.viewmodel.BaseViewModel
 import com.m3u.core.architecture.configuration.Configuration
 import com.m3u.core.architecture.service.PlayerManager
 import com.m3u.core.wrapper.eventOf
@@ -23,7 +23,7 @@ class LiveViewModel(
     application: Application,
     configuration: Configuration,
     private val playerManager: PlayerManager,
-) : AndroidPlatformViewModel<LiveState, LiveEvent>(
+) : BaseViewModel<LiveState, LiveEvent>(
     application = application,
     emptyState = LiveState(
         configuration = configuration

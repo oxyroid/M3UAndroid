@@ -1,13 +1,13 @@
 package com.m3u.features.crash.screen.detail
 
 import android.app.Application
-import com.m3u.core.architecture.viewmodel.AndroidPlatformViewModel
+import com.m3u.core.architecture.viewmodel.BaseViewModel
 import kotlinx.coroutines.flow.update
 import java.io.File
 
 class DetailViewModel(
     application: Application
-) : AndroidPlatformViewModel<DetailState, DetailEvent>(
+) : BaseViewModel<DetailState, DetailEvent>(
     application = application,
     emptyState = DetailState()
 ) {

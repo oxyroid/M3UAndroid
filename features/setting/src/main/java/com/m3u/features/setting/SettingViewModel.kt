@@ -9,8 +9,8 @@ import com.m3u.core.annotation.ConnectTimeout
 import com.m3u.core.annotation.FeedStrategy
 import com.m3u.core.architecture.Publisher
 import com.m3u.core.architecture.configuration.Configuration
-import com.m3u.core.architecture.logger.UserInterfaceLogger
-import com.m3u.core.architecture.viewmodel.AndroidPlatformViewModel
+import com.m3u.core.architecture.logger.UiLogger
+import com.m3u.core.architecture.viewmodel.BaseViewModel
 import com.m3u.core.wrapper.Resource
 import com.m3u.data.repository.FeedRepository
 import com.m3u.data.repository.LiveRepository
@@ -27,9 +27,9 @@ class SettingViewModel(
     @AppPublisherImpl private val publisher: Publisher,
     application: Application,
     configuration: Configuration,
-    private val logger: UserInterfaceLogger,
+    private val logger: UiLogger,
     private val postRepository: PostRepository
-) : AndroidPlatformViewModel<SettingState, SettingEvent>(
+) : BaseViewModel<SettingState, SettingEvent>(
     application = application,
     emptyState = SettingState(
         version = publisher.versionName,

@@ -8,12 +8,12 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 /**
- * MVI architecture PlatformViewModel for Android Platform.
+ * MVI architecture ViewModel.
  * 1. The `readable` and `writable` fields should be used in ViewModels themself.
  * 2. ViewModel should change writable value to update current state.
  * 3. It also provides context but not making memory lacking.
  */
-abstract class AndroidPlatformViewModel<S, in E>(
+abstract class BaseViewModel<S, in E>(
     application: Application,
     emptyState: S
 ) : AndroidViewModel(application), PlatformViewModel<S, E> {

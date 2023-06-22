@@ -3,7 +3,7 @@ package com.m3u.core.koin
 import com.m3u.core.architecture.configuration.Configuration
 import com.m3u.core.architecture.configuration.SharedConfiguration
 import com.m3u.core.architecture.logger.AndroidLogger
-import com.m3u.core.architecture.logger.UserInterfaceLogger
+import com.m3u.core.architecture.logger.UiLogger
 import com.m3u.core.architecture.logger.AndroidFileLogger
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.reader.FileReader
@@ -26,7 +26,7 @@ object CoreModule {
         singleOf(::AndroidFileReader) bind FileReader::class
     }
     val SharedPlatform = module {
-        singleOf(::UserInterfaceLogger) bind Logger::class withOptions {
+        singleOf(::UiLogger) bind Logger::class withOptions {
             named("user_interface")
         }
     }

@@ -2,7 +2,7 @@ package com.m3u.features.favorite
 
 import android.app.Application
 import androidx.lifecycle.viewModelScope
-import com.m3u.core.architecture.viewmodel.AndroidPlatformViewModel
+import com.m3u.core.architecture.viewmodel.BaseViewModel
 import com.m3u.core.architecture.configuration.Configuration
 import com.m3u.core.util.collection.filterNotNullKeys
 import com.m3u.data.repository.FeedRepository
@@ -17,7 +17,7 @@ class FavouriteViewModel(
     feedRepository: FeedRepository,
     application: Application,
     configuration: Configuration,
-) : AndroidPlatformViewModel<FavoriteState, FavoriteEvent>(
+) : BaseViewModel<FavoriteState, FavoriteEvent>(
     application = application,
     emptyState = FavoriteState(
         configuration = configuration

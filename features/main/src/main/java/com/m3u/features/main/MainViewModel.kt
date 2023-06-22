@@ -3,8 +3,8 @@ package com.m3u.features.main
 import android.app.Application
 import androidx.lifecycle.viewModelScope
 import com.m3u.core.architecture.configuration.Configuration
-import com.m3u.core.architecture.logger.UserInterfaceLogger
-import com.m3u.core.architecture.viewmodel.AndroidPlatformViewModel
+import com.m3u.core.architecture.logger.UiLogger
+import com.m3u.core.architecture.viewmodel.BaseViewModel
 import com.m3u.core.util.collection.replaceIf
 import com.m3u.core.util.coroutine.mapElement
 import com.m3u.data.database.entity.Feed
@@ -28,8 +28,8 @@ class MainViewModel(
     private val liveRepository: LiveRepository,
     application: Application,
     configuration: Configuration,
-    private val logger: UserInterfaceLogger
-) : AndroidPlatformViewModel<MainState, MainEvent>(
+    private val logger: UiLogger
+) : BaseViewModel<MainState, MainEvent>(
     application = application,
     emptyState = MainState(
         configuration = configuration

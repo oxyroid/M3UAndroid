@@ -6,7 +6,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.viewModelScope
 import com.m3u.androidApp.AppPublisher
 import com.m3u.androidApp.navigation.TopLevelDestination
-import com.m3u.core.architecture.viewmodel.AndroidPlatformViewModel
+import com.m3u.core.architecture.viewmodel.BaseViewModel
 import com.m3u.core.architecture.configuration.Configuration
 import com.m3u.core.architecture.service.UserInterface
 import com.m3u.core.wrapper.Event
@@ -29,7 +29,7 @@ class RootViewModel(
     configuration: Configuration,
     private val publisher: AppPublisher,
     userInterface: UserInterface
-) : AndroidPlatformViewModel<RootState, RootEvent>(
+) : BaseViewModel<RootState, RootEvent>(
     application = application,
     emptyState = RootState(
         configuration = configuration
