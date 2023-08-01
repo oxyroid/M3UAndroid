@@ -20,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.m3u.androidApp.components.BottomNavigationSheet
@@ -44,7 +45,6 @@ import com.m3u.ui.model.Helper
 import com.m3u.ui.model.NightTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import org.koin.androidx.compose.koinViewModel
 
 typealias HelperConnector =
             ((String) -> Unit, () -> String, (List<AppAction>) -> Unit, () -> List<AppAction>) -> Helper
@@ -53,7 +53,7 @@ typealias HelperConnector =
 @Composable
 fun App(
     appState: AppState = rememberAppState(),
-    viewModel: RootViewModel = koinViewModel(),
+    viewModel: RootViewModel = hiltViewModel(),
     connector: HelperConnector = { _, _, _, _ -> EmptyHelper }
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -125,9 +125,6 @@ fun App(
 
         onDispose {}
     }
-    LaunchedEffect(Unit) {
-        viewModel.onEvent(RootEvent.OnInitialTab)
-    }
     LaunchedEffect(state.navigateTopLevelDestination) {
         state.navigateTopLevelDestination.handle {
             appState.navigateToTopLevelDestination(it)
@@ -139,7 +136,7 @@ fun App(
         else -> DayTheme
     }
     M3ULocalProvider(
-        helper = connector.invoke(
+        helper = connector(
             { viewModel.title.value = it },
             viewModel.title::value,
             { viewModel.actions.value = it },
@@ -173,7 +170,7 @@ fun App(
                 ) {
                     M3UNavHost(
                         navController = appState.navController,
-                        pagerState = appState.pagerState,
+                        currentPage = appState.currentPage,
                         destinations = topLevelDestinations,
                         navigateToDestination = appState::navigateToDestination,
                         modifier = Modifier
@@ -190,7 +187,9 @@ fun App(
                             BottomNavigationSheet(
                                 destinations = topLevelDestinations,
                                 currentTopLevelDestination = currentTopLevelDestination,
-                                navigateToTopLevelDestination = appState::navigateToTopLevelDestination,
+                                navigateToTopLevelDestination = {
+                                    appState.navigateToTopLevelDestination(it)
+                                },
                                 modifier = Modifier.fillMaxWidth()
                             )
                         }

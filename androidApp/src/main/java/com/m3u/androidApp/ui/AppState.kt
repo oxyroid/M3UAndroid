@@ -1,18 +1,14 @@
-@file:OptIn(ExperimentalFoundationApi::class)
-
 package com.m3u.androidApp.ui
 
 import android.util.Log
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.pager.PagerState
-import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.snapshotFlow
+import androidx.compose.runtime.setValue
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination
 import androidx.navigation.NavHostController
@@ -21,7 +17,7 @@ import androidx.navigation.compose.rememberNavController
 import com.m3u.androidApp.navigation.Destination
 import com.m3u.androidApp.navigation.TopLevelDestination
 import com.m3u.androidApp.navigation.notDestinationTo
-import com.m3u.androidApp.navigation.popUpToRoot
+import com.m3u.androidApp.navigation.popupToRoot
 import com.m3u.androidApp.navigation.rootNavigationRoute
 import com.m3u.features.console.navigation.navigateToConsole
 import com.m3u.features.feed.navigation.navigationToFeed
@@ -35,8 +31,7 @@ typealias NavigateToDestination = (destination: Destination) -> Unit
 @Composable
 fun rememberAppState(
     coroutineScope: CoroutineScope = rememberCoroutineScope(),
-    navController: NavHostController = rememberNavController(),
-    pagerState: PagerState = rememberPagerState()
+    navController: NavHostController = rememberNavController()
 ): AppState {
     DisposableEffect(navController) {
         val listener = NavController.OnDestinationChangedListener { _, destination, _ ->
@@ -47,31 +42,18 @@ fun rememberAppState(
             navController.removeOnDestinationChangedListener(listener)
         }
     }
-    LaunchedEffect(pagerState) {
-        snapshotFlow {
-            Triple(
-                pagerState.currentPage,
-                pagerState.settledPage,
-                pagerState.targetPage
-            )
-        }.collect {
-            Log.d(
-                "PagerState",
-                "OnPageChanged: [C]${it.first}, [S]${it.second}, [T]${it.third}"
-            )
-        }
-    }
-    return remember(coroutineScope, navController, pagerState) {
-        AppState(coroutineScope, navController, pagerState)
+    return remember(coroutineScope, navController) {
+        AppState(coroutineScope, navController)
     }
 }
 
 @Stable
 class AppState(
     private val coroutineScope: CoroutineScope,
-    val navController: NavHostController,
-    val pagerState: PagerState
+    val navController: NavHostController
 ) {
+    var currentPage by mutableStateOf(0)
+        private set
     val currentComposableNavDestination: NavDestination?
         @Composable get() = navController.currentBackStackEntryAsState().value?.destination
 
@@ -81,7 +63,7 @@ class AppState(
     val currentComposableTopLevelDestination: TopLevelDestination?
         @Composable get() = when (currentComposableNavDestination?.route) {
             rootNavigationRoute -> {
-                topLevelDestinations[pagerState.currentPage]
+                topLevelDestinations[currentPage]
             }
 
             else -> null
@@ -90,18 +72,18 @@ class AppState(
     val topLevelDestinations: List<TopLevelDestination> = TopLevelDestination.values().asList()
 
     fun navigateToTopLevelDestination(destination: TopLevelDestination) {
-        if (currentNavDestination notDestinationTo Destination.Root::class.java) {
-            navController.popUpToRoot()
-        }
         coroutineScope.launch {
+            if (currentNavDestination notDestinationTo Destination.Root::class.java) {
+                navController.popupToRoot()
+            }
             val index = topLevelDestinations.indexOf(destination)
-            pagerState.scrollToPage(index)
+            currentPage = index
         }
     }
 
     fun navigateToDestination(destination: Destination) {
         when (destination) {
-            Destination.Root -> navController.popUpToRoot()
+            Destination.Root -> navController.popupToRoot()
             is Destination.Feed -> navController.navigationToFeed(destination.url)
             is Destination.Live -> navController.navigateToLive(destination.id)
             is Destination.LivePlayList -> navController.navigateToLivePlayList(

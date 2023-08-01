@@ -4,8 +4,9 @@ import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.PagerState
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
@@ -19,14 +20,14 @@ import com.m3u.features.setting.SettingRoute
 
 const val rootNavigationRoute = "root_route"
 
-fun NavController.popUpToRoot() {
+fun NavController.popupToRoot() {
     this.popBackStack(rootNavigationRoute, false)
 }
 
-@OptIn(ExperimentalAnimationApi::class, ExperimentalFoundationApi::class)
+@OptIn(ExperimentalAnimationApi::class)
 fun NavGraphBuilder.rootGraph(
-    pagerState: PagerState,
     destinations: List<TopLevelDestination>,
+    currentPage: Int,
     navigateToFeed: NavigateToFeed,
     navigateToLive: NavigateToLive,
     navigateToConsole: NavigateToConsole,
@@ -35,7 +36,7 @@ fun NavGraphBuilder.rootGraph(
         route = rootNavigationRoute
     ) {
         RootGraph(
-            state = pagerState,
+            currentPage = currentPage,
             destinations = destinations,
             navigateToFeed = navigateToFeed,
             navigateToLive = navigateToLive,
@@ -47,13 +48,17 @@ fun NavGraphBuilder.rootGraph(
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun RootGraph(
-    state: PagerState,
+    currentPage: Int,
     destinations: List<TopLevelDestination>,
     navigateToFeed: NavigateToFeed,
     navigateToLive: NavigateToLive,
     navigateToConsole: NavigateToConsole,
     modifier: Modifier = Modifier
 ) {
+    val state = rememberPagerState()
+    LaunchedEffect(currentPage) {
+        state.animateScrollToPage(currentPage)
+    }
     HorizontalPager(
         state = state,
         pageCount = destinations.size,
