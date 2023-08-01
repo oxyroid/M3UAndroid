@@ -321,7 +321,8 @@ private fun LivePart(
                     MaskButton(
                         state = maskState,
                         icon = Icons.Rounded.ArrowBack,
-                        onClick = onBackPressed
+                        onClick = onBackPressed,
+                        contentDescription = stringResource(R.string.tooltip_on_back_pressed)
                     )
                     Spacer(
                         modifier = Modifier.weight(1f)
@@ -330,13 +331,17 @@ private fun LivePart(
                         state = maskState,
                         icon = if (muted) Icons.Rounded.VolumeMute
                         else Icons.Rounded.VolumeUp,
-                        onClick = onMuted
+                        onClick = onMuted,
+                        contentDescription = if (muted) stringResource(R.string.tooltip_unmute)
+                        else stringResource(R.string.tooltip_mute)
                     )
                     MaskButton(
                         state = maskState,
                         icon = Icons.Rounded.Star,
                         tint = if (stared) Color.Yellow else Color.Unspecified,
-                        onClick = onFavourite
+                        onClick = onFavourite,
+                        contentDescription = if (stared) stringResource(R.string.tooltip_unfavourite)
+                        else stringResource(R.string.tooltip_favourite)
                     )
                     if (experimentalMode) {
                         MaskButton(
@@ -345,26 +350,28 @@ private fun LivePart(
                             else Icons.Rounded.RadioButtonUnchecked,
                             tint = if (recording) LocalTheme.current.error
                             else Color.Unspecified,
-                            onClick = onRecord
+                            onClick = onRecord,
+                            contentDescription = if (recording) stringResource(R.string.tooltip_unrecord)
+                            else stringResource(R.string.tooltip_record)
                         )
-                        val shouldShowCastButton = (playback != Player.STATE_IDLE)
-                        if (shouldShowCastButton) {
+                        if (playback != Player.STATE_IDLE) {
                             MaskButton(
                                 state = maskState,
                                 icon = Icons.Rounded.Cast,
-                                onClick = searchDlnaDevices
+                                onClick = searchDlnaDevices,
+                                contentDescription = stringResource(R.string.tooltip_cast)
                             )
                         }
                     }
-                    val shouldShowPipButton = videoSize.isNotEmpty
-                    if (shouldShowPipButton) {
+                    if (videoSize.isNotEmpty) {
                         MaskButton(
                             state = maskState,
                             icon = Icons.Rounded.PictureInPicture,
                             onClick = {
                                 helper.enterPipMode(videoSize)
                                 maskState.sleep()
-                            }
+                            },
+                            contentDescription = stringResource(R.string.tooltip_enter_pip_mode)
                         )
                     }
                 },
@@ -428,7 +435,7 @@ private fun LivePart(
             )
             LaunchedEffect(playerError) {
                 if (playerError != null) {
-                    maskState.keepAlive()
+                    maskState.active()
                 }
             }
         }

@@ -19,8 +19,13 @@ import androidx.compose.material.Icon
 import androidx.compose.material.LocalContentAlpha
 import androidx.compose.material.LocalContentColor
 import androidx.compose.material.Surface
+import androidx.compose.material.Text
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.PlainTooltipBox
+import androidx.compose.material3.PlainTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -42,8 +47,10 @@ import kotlinx.coroutines.launch
 interface MaskState {
     val visible: Boolean
     fun touch()
-    fun keepAlive()
+    fun active()
     fun sleep()
+    fun lock()
+    fun unlock()
 }
 
 @Stable
@@ -54,10 +61,11 @@ class MaskStateCoroutineImpl(
 ) : MaskState {
     private var currentTime: Long by mutableStateOf(systemClock)
     private var lastTime: Long by mutableStateOf(0L)
+    private var locked: Boolean by mutableStateOf(false)
 
     private var last: Boolean? = null
     override val visible: Boolean
-        get() = (currentTime - lastTime <= minDuration).also {
+        get() = locked || (currentTime - lastTime <= minDuration).also {
             if (it != last) {
                 last = it
                 onChanged(it)
@@ -80,12 +88,20 @@ class MaskStateCoroutineImpl(
         lastTime = if (!visible) currentTime else 0
     }
 
-    override fun keepAlive() {
+    override fun active() {
         lastTime = currentTime
     }
 
     override fun sleep() {
         lastTime = 0
+    }
+
+    override fun lock() {
+        locked = true
+    }
+
+    override fun unlock() {
+        locked = false
     }
 }
 
@@ -149,6 +165,7 @@ fun MaskPanel(
     )
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MaskButton(
     state: MaskState,
@@ -156,22 +173,38 @@ fun MaskButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     tint: Color = Color.Unspecified,
+    contentDescription: String,
 ) {
+    val tooltipState = remember { PlainTooltipState() }
+
+    LaunchedEffect(tooltipState.isVisible) {
+        if (tooltipState.isVisible) {
+            state.lock()
+        } else {
+            state.unlock()
+        }
+    }
+
     val animatedColor by animateColorAsState(
         if (tint.isUnspecified) LocalContentColor.current.copy(alpha = LocalContentAlpha.current)
         else tint
     )
-    val currentKeepAlive by rememberUpdatedState(state::keepAlive)
-    IconButton(
-        icon = icon,
-        contentDescription = null,
-        onClick = {
-            currentKeepAlive()
-            onClick()
-        },
-        modifier = modifier,
-        tint = animatedColor
-    )
+    val currentKeepAlive by rememberUpdatedState(state::active)
+    PlainTooltipBox(
+        tooltipState = tooltipState,
+        tooltip = { Text(text = contentDescription) }
+    ) {
+        IconButton(
+            icon = icon,
+            contentDescription = null,
+            onClick = {
+                currentKeepAlive()
+                onClick()
+            },
+            modifier = modifier.tooltipAnchor(),
+            tint = animatedColor
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterialApi::class)
@@ -186,7 +219,7 @@ fun MaskCircleButton(
     Surface(
         shape = CircleShape,
         onClick = {
-            state.keepAlive()
+            state.active()
             onClick()
         },
         modifier = modifier,
