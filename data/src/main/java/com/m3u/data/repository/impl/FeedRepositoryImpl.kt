@@ -12,10 +12,11 @@ import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.execute
 import com.m3u.core.architecture.logger.sandBox
 import com.m3u.core.util.collection.belong
-import com.m3u.core.wrapper.Resource
+import com.m3u.core.wrapper.ProgressResource
 import com.m3u.core.wrapper.emitException
+import com.m3u.core.wrapper.emitMessage
+import com.m3u.core.wrapper.emitProgress
 import com.m3u.core.wrapper.emitResource
-import com.m3u.core.wrapper.resourceFlow
 import com.m3u.data.R
 import com.m3u.data.database.dao.FeedDao
 import com.m3u.data.database.dao.LiveDao
@@ -46,17 +47,20 @@ class FeedRepositoryImpl @Inject constructor(
     @ApplicationContext private val context: Context
 ) : FeedRepository {
     private val connectTimeout by configuration.connectTimeout
+
     override fun subscribe(
         title: String,
         url: String,
-        @FeedStrategy strategy: Int
-    ): Flow<Resource<Unit>> = resourceFlow {
+        strategy: Int
+    ): Flow<ProgressResource<Unit>> = flow {
         try {
             val lives = when {
                 url.startsWith("http://") || url.startsWith("https://") -> networkParse(url)
-                // TODO: Android Platform Only!
                 url.startsWith("file://") || url.startsWith("content://") -> {
-                    val uri = Uri.parse(url) ?: return@resourceFlow
+                    val uri = Uri.parse(url) ?: run {
+                        emitMessage("Url is empty")
+                        return@flow
+                    }
                     val filename = when (uri.scheme) {
                         ContentResolver.SCHEME_FILE -> uri.toFile().name
                         ContentResolver.SCHEME_CONTENT -> {
@@ -122,10 +126,13 @@ class FeedRepositoryImpl @Inject constructor(
 
                 else -> emptyList()
             }
+            var progress = 0
             lives
                 .filterNot { it.url in existedUrls }
                 .forEach {
                     liveDao.insert(it)
+                    progress++
+                    emitProgress(progress)
                 }
             emitResource(Unit)
         } catch (e: InvalidatePlaylistError) {

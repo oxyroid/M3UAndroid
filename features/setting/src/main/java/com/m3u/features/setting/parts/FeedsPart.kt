@@ -34,7 +34,6 @@ internal fun FeedsPart(
     url: String,
     mutedLives: List<Live>,
     onBannedLive: (Int) -> Unit,
-    enabled: Boolean,
     onTitle: (String) -> Unit,
     onUrl: (String) -> Unit,
     onSubscribe: () -> Unit,
@@ -81,7 +80,6 @@ internal fun FeedsPart(
         item {
             LabelField(
                 text = title,
-                enabled = enabled,
                 placeholder = stringResource(R.string.placeholder_title).uppercase(),
                 onValueChange = onTitle,
                 keyboardActions = KeyboardActions(
@@ -96,7 +94,6 @@ internal fun FeedsPart(
         item {
             LabelField(
                 text = url,
-                enabled = enabled,
                 placeholder = stringResource(R.string.placeholder_url).uppercase(),
                 onValueChange = onUrl,
                 keyboardActions = KeyboardActions(
@@ -111,21 +108,18 @@ internal fun FeedsPart(
         }
 
         item {
-            val resId = if (enabled) R.string.label_subscribe else R.string.label_subscribing
+            val resId = R.string.label_subscribe
             Button(
-                enabled = enabled,
                 text = stringResource(resId),
                 onClick = onSubscribe,
                 modifier = Modifier.fillMaxWidth()
             )
         }
         item {
-            val subscribeFromClipboardTextResId =
-                if (enabled) R.string.label_parse_from_clipboard else R.string.label_subscribing
+            val subscribeFromClipboardTextResId = R.string.label_parse_from_clipboard
             val clipboardManager = LocalClipboardManager.current
             TextButton(
                 text = stringResource(subscribeFromClipboardTextResId),
-                enabled = enabled,
                 onClick = {
                     val clipboardUrl = clipboardManager.getText()?.text.orEmpty()
                     val clipboardTitle = run {

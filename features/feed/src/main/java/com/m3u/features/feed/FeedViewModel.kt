@@ -6,6 +6,7 @@ import com.m3u.core.architecture.configuration.Configuration
 import com.m3u.core.architecture.logger.BannerLoggerImpl
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.viewmodel.BaseViewModel
+import com.m3u.core.wrapper.ProgressResource
 import com.m3u.core.wrapper.Resource
 import com.m3u.core.wrapper.eventOf
 import com.m3u.data.repository.FeedRepository
@@ -106,15 +107,15 @@ class FeedViewModel @Inject constructor(
             .onEach { resource ->
                 writable.update {
                     when (resource) {
-                        Resource.Loading -> it.copy(
+                        is ProgressResource.Loading -> it.copy(
                             fetching = true
                         )
 
-                        is Resource.Success -> it.copy(
+                        is ProgressResource.Success -> it.copy(
                             fetching = false
                         )
 
-                        is Resource.Failure -> {
+                        is ProgressResource.Failure -> {
                             val message = resource.message.orEmpty()
                             onMessage(message)
                             it.copy(

@@ -1,5 +1,6 @@
 package com.m3u.data.remote.parser.m3u
 
+import android.net.Uri
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.util.basic.splitOutOfQuotation
 import com.m3u.core.util.basic.trimBrackets
@@ -9,7 +10,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.InputStream
 import java.net.URI
-import java.net.URLDecoder
 import java.util.Properties
 import javax.inject.Inject
 
@@ -36,7 +36,7 @@ class DefaultPlaylistParser @Inject constructor(
                                 block?.let { add(it) }
                                 // decoded content and replace "#EXTINF:-1," to "#EXTINF:-1 "
                                 val decodedContent = pattern.replace(
-                                    URLDecoder.decode(line)
+                                    Uri.decode(line)
                                 ) { result ->
                                     result.value.dropLast(1) + " "
                                 }

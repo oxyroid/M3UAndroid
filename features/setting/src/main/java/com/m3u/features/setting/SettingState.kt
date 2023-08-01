@@ -11,7 +11,6 @@ import com.m3u.data.database.entity.Live
 data class SettingState(
     private val configuration: Configuration,
     val version: String = "",
-    val enabled: Boolean = false,
     val title: String = "",
     val url: String = "",
     val mutedLives: List<Live> = emptyList(),

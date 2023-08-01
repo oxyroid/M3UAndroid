@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="error_file_not_found">文件不存在</string>
+    <string name="error_empty_title">订阅名称为空</string>
 </resources>

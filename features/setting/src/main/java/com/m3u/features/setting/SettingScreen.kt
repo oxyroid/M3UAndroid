@@ -72,7 +72,6 @@ fun SettingRoute(
     val controller = LocalSoftwareKeyboardController.current
     SettingScreen(
         version = state.version,
-        enabled = !state.enabled,
         title = state.title,
         url = state.url,
         feedStrategy = state.feedStrategy,
@@ -123,7 +122,6 @@ fun SettingRoute(
 @Composable
 private fun SettingScreen(
     version: String,
-    enabled: Boolean,
     title: String,
     url: String,
     @FeedStrategy feedStrategy: Int,
@@ -176,7 +174,6 @@ private fun SettingScreen(
                     part = part,
                     title = title,
                     url = url,
-                    enabled = enabled,
                     godMode = godMode,
                     connectTimeout = connectTimeout,
                     scrollMode = scrollMode,
@@ -228,7 +225,6 @@ private fun SettingScreen(
                     part = part,
                     title = title,
                     url = url,
-                    adding = enabled,
                     godMode = godMode,
                     clipMode = clipMode,
                     scrollMode = scrollMode,
@@ -296,7 +292,6 @@ private fun PortraitOrientationContent(
     onGodMode: () -> Unit,
     onClipMode: OnClipMode,
     onConnectTimeout: () -> Unit,
-    enabled: Boolean,
     mutedLives: List<Live>,
     onBannedLive: (Int) -> Unit,
     onFold: (SettingPart) -> Unit,
@@ -380,7 +375,6 @@ private fun PortraitOrientationContent(
                         url = url,
                         mutedLives = mutedLives,
                         onBannedLive = onBannedLive,
-                        enabled = enabled,
                         onTitle = onTitle,
                         onUrl = onUrl,
                         onSubscribe = onSubscribe,
@@ -409,7 +403,6 @@ private fun LandscapeOrientationContent(
     url: String,
     godMode: Boolean,
     @ClipMode clipMode: Int,
-    adding: Boolean,
     onFold: (SettingPart) -> Unit,
     onTitle: (String) -> Unit,
     onUrl: (String) -> Unit,
@@ -499,7 +492,6 @@ private fun LandscapeOrientationContent(
                     url = url,
                     mutedLives = mutedLives,
                     onBannedLive = onBannedLive,
-                    enabled = adding,
                     onTitle = onTitle,
                     onUrl = onUrl,
                     onSubscribe = onSubscribe,

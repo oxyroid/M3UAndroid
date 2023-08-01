@@ -9,9 +9,12 @@ androidx-compose-material3 = "1.1.0-rc01"
 androidx-navigation = "2.5.3"
 google-accompanist = "0.30.0"
 google-dagger = "2.46"
+androidx-hilt-compiler = "1.0.0"
+androidx-hilt-work = "1.0.0"
 androidx-hilt-navigation-compose = "1.0.0"
 androidx-tv = "1.0.0-alpha04"
 androidx-media3 = "1.0.1"
+androidx-work = "2.8.0"
 io-coil = "2.3.0"
 androidx-room = "2.5.1"
 kotlinx-serialization-json = "1.5.0"
@@ -55,6 +58,8 @@ androidx-tv-tv-material = { group = "androidx.tv", name = "tv-material", version
 
 com-google-dagger-hilt-android = { group = "com.google.dagger", name = "hilt-android", version.ref = "google-dagger" }
 com-google-dagger-hilt-compiler = { group = "com.google.dagger", name = "hilt-compiler", version.ref = "google-dagger" }
+androidx-hilt-hilt-compiler = { group = "androidx.hilt", name = "hilt-compiler", version.ref = "androidx-hilt-compiler" }
+androidx-hilt-hilt-work = { group = "androidx.hilt", name = "hilt-work", version.ref = "androidx-hilt-work" }
 androidx-hilt-hilt-navigation-compose = { group = "androidx.hilt", name = "hilt-navigation-compose", version.ref = "androidx-hilt-navigation-compose" }
 
 androidx-media3-media3-ui = { group = "androidx.media3", name = "media3-ui", version.ref = "androidx-media3" }
@@ -67,6 +72,7 @@ androidx-media3-media3-exoplayer-rtsp = { group = "androidx.media3", name = "med
 androidx-media3-media3-datasource-rtmp = { group = "androidx.media3", name = "media3-datasource-rtmp", version.ref = "androidx-media3" }
 androidx-media3-media3-datasource-okhttp = { group = "androidx.media3", name = "media3-datasource-okhttp", version.ref = "androidx-media3" }
 
+androidx-work-work-runtime-ktx = { group = "androidx.work", name = "work-runtime-ktx", version.ref = "androidx-work" }
 io-coil-kt-coil = { group = "io.coil-kt", name = "coil", version.ref = "io-coil" }
 io-coil-kt-coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "io-coil" }
 

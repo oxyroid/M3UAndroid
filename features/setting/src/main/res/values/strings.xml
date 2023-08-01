@@ -6,7 +6,7 @@
 
     <string name="success_subscribe">订阅成功</string>
     <string name="failed_malformed_url">URL错误（%s）</string>
-    <string name="failed_empty_title">订阅名称为空</string>
+    <string name="error_empty_title">订阅名称为空</string>
     <string name="placeholder_title">订阅名称</string>
     <string name="label_subscribing">订阅中…</string>
 
@@ -50,4 +50,5 @@
     <string name="cinema_mode">影院模式</string>
     <string name="cinema_mode_description">使用OLED纯黑主题</string>
     <string name="script_management_import_js">导入Javascript</string>
+    <string name="enqueue_subscribe">订阅任务已添加至队列</string>
 </resources>

@@ -5,7 +5,7 @@
     <string name="label_subscribe">subscribe</string>
     <string name="success_subscribe">subscribe successfully</string>
     <string name="failed_malformed_url">malformed url (%s)</string>
-    <string name="failed_empty_title">playlist name is empty</string>
+    <string name="error_empty_title">playlist name is empty</string>
     <string name="placeholder_title">playlist name</string>
     <string name="label_subscribing">subscribing</string>
     <string name="sync_mode_all">all</string>
@@ -46,4 +46,5 @@
     <string name="cinema_mode">cinema mode</string>
     <string name="cinema_mode_description">use OLED black theme</string>
     <string name="script_management_import_js">import Javascript</string>
+    <string name="enqueue_subscribe">a subscription task has been added to the queue</string>
 </resources>

@@ -3,6 +3,9 @@ package com.m3u.features.setting
 import android.app.Application
 import android.net.Uri
 import androidx.lifecycle.viewModelScope
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
+import androidx.work.workDataOf
 import com.m3u.core.annotation.AppPublisherImpl
 import com.m3u.core.annotation.ClipMode
 import com.m3u.core.annotation.ConnectTimeout
@@ -12,11 +15,11 @@ import com.m3u.core.architecture.configuration.Configuration
 import com.m3u.core.architecture.logger.BannerLoggerImpl
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.viewmodel.BaseViewModel
-import com.m3u.core.wrapper.Resource
 import com.m3u.data.repository.FeedRepository
 import com.m3u.data.repository.LiveRepository
 import com.m3u.data.repository.PostRepository
 import com.m3u.data.repository.observeBanned
+import com.m3u.data.worker.SubscribeFeedWorker
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -165,46 +168,33 @@ class SettingViewModel @Inject constructor(
     private fun subscribe() {
         val title = writable.value.title
         if (title.isEmpty()) {
+            val message = context.getString(R.string.error_empty_title)
+            logger.log(message)
+        } else {
+            val url = readable.url
+            val strategy = readable.feedStrategy
+            val workManager = WorkManager.getInstance(context)
+            workManager.cancelAllWorkByTag(url)
+            val request = OneTimeWorkRequestBuilder<SubscribeFeedWorker>()
+                .setInputData(
+                    workDataOf(
+                        SubscribeFeedWorker.INPUT_STRING_TITLE to title,
+                        SubscribeFeedWorker.INPUT_STRING_URL to url,
+                        SubscribeFeedWorker.INPUT_INT_STRATEGY to strategy
+                    )
+                )
+                .addTag(url)
+                .build()
+            workManager.enqueue(request)
+            val message = context.getString(R.string.enqueue_subscribe)
+            logger.log(message)
             writable.update {
-                val message = context.getString(R.string.failed_empty_title)
-                logger.log(message)
                 it.copy(
-                    enabled = false,
+                    title = "",
+                    url = "",
                 )
             }
-            return
         }
-        val url = readable.url
-        val strategy = readable.feedStrategy
-        feedRepository.subscribe(title, url, strategy)
-            .onEach { resource ->
-                writable.update {
-                    when (resource) {
-                        Resource.Loading -> {
-                            it.copy(enabled = true)
-                        }
 
-                        is Resource.Success -> {
-                            val message = context.getString(R.string.success_subscribe)
-                            logger.log(message)
-                            it.copy(
-                                enabled = false,
-                                title = "",
-                                url = "",
-                            )
-                        }
-
-                        is Resource.Failure -> {
-                            val message = resource.message.orEmpty()
-                            logger.log(message)
-                            it.copy(
-                                enabled = false
-                            )
-                        }
-                    }
-                }
-            }
-            .launchIn(viewModelScope)
     }
-
 }
