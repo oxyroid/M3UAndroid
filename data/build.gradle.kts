@@ -5,6 +5,7 @@ plugins {
     alias(libs.plugins.org.jetbrains.kotlin.android)
     alias(libs.plugins.com.google.devtools.ksp)
     id("kotlinx-serialization")
+    id("kotlin-kapt")
 }
 
 android {
@@ -51,6 +52,9 @@ dependencies {
 
     implementation(libs.io.coil.kt.coil)
 
+    implementation(libs.com.google.dagger.hilt.android)
+    kapt(libs.com.google.dagger.hilt.compiler)
+
     implementation(libs.com.squareup.retrofit2.retrofit)
 
     implementation(libs.androidx.media3.media3.exoplayer)
@@ -61,8 +65,6 @@ dependencies {
     implementation(libs.androidx.media3.media3.datasource.rtmp)
     implementation(libs.androidx.media3.media3.datasource.okhttp)
     implementation(libs.androidx.media3.media3.extractor)
-
-    implementation(libs.io.insert.koin.koin.core)
 
     implementation("com.github.realOxy:otto:0.1.0-alpha04")
 }

@@ -2,8 +2,8 @@ package com.m3u.data.repository
 
 import com.m3u.core.annotation.FeedStrategy
 import com.m3u.core.wrapper.Resource
+import com.m3u.core.wrapper.emitException
 import com.m3u.core.wrapper.resourceChannelFlow
-import com.m3u.core.wrapper.sendMessage
 import com.m3u.data.database.entity.Feed
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.launchIn
@@ -27,12 +27,12 @@ fun FeedRepository.refresh(
     url: String,
     @FeedStrategy strategy: Int
 ): Flow<Resource<Unit>> = resourceChannelFlow {
-    val feed = get(url)
-    if (feed == null) {
-        sendMessage("Cannot find feed: $url")
-        return@resourceChannelFlow
+    try {
+        val feed = get(url) ?: error("Cannot find feed: $url")
+        subscribe(feed.title, url, strategy)
+            .onEach(::send)
+            .launchIn(this)
+    } catch (e: Exception) {
+        emitException(e)
     }
-    subscribe(feed.title, url, strategy)
-        .onEach(::send)
-        .launchIn(this)
 }

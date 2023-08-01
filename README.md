@@ -21,7 +21,7 @@ M3U is an app that attempts to use the latest libraries and tools. As a summary:
 - UI completely written in Jetpack Compose.
 - Uses Kotlin Coroutines throughout.
 - Uses many of the Architecture Components, including: Room, Lifecycle, Navigation.
-- Uses [Koin](https://insert-koin.io) for dependency injection.
+- Uses Hilt for dependency injection.
 
 ### Community
 

@@ -5,61 +5,58 @@ import com.m3u.core.util.basic.splitOutOfQuotation
 import com.m3u.core.util.basic.trimBrackets
 import com.m3u.core.util.collection.loadLine
 import com.m3u.data.remote.parser.Parser
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.io.InputStream
 import java.net.URI
 import java.net.URLDecoder
 import java.util.Properties
+import javax.inject.Inject
 
 interface PlaylistParser : Parser<InputStream, List<M3UData>>
-class DefaultPlaylistParser(
+
+class DefaultPlaylistParser @Inject constructor(
     private val logger: Logger
 ) : PlaylistParser {
     private val pattern = Regex("#EXTINF:-?\\d+,")
 
     @Throws(InvalidatePlaylistError::class)
     override suspend fun execute(input: InputStream): List<M3UData> = buildList {
-        var block: M3UData? = null
-        input
-            .bufferedReader()
-            .lines()
-            .filter { it.isNotEmpty() }
-            .forEach { line ->
-                when {
-                    line.startsWith(M3U_HEADER_MARK) -> block = null
-                    line.startsWith(M3U_INFO_MARK) -> {
-                        try {
-                            block?.let { add(it) }
-                            // decoded content and replace "#EXTINF:-1," to "#EXTINF:-1 "
-                            val decodedContent = URLDecoder
-                                .decode(line)
-                                .also {
-                                    logger.log("before: $it")
+        withContext(Dispatchers.IO) {
+            var block: M3UData? = null
+            input
+                .bufferedReader()
+                .lines()
+                .filter { it.isNotEmpty() }
+                .forEach { line ->
+                    when {
+                        line.startsWith(M3U_HEADER_MARK) -> block = null
+                        line.startsWith(M3U_INFO_MARK) -> {
+                            try {
+                                block?.let { add(it) }
+                                // decoded content and replace "#EXTINF:-1," to "#EXTINF:-1 "
+                                val decodedContent = pattern.replace(
+                                    URLDecoder.decode(line)
+                                ) { result ->
+                                    result.value.dropLast(1) + " "
                                 }
-                                .let {
-                                    // TODO: Ignore the content within the quotation marks.
-                                    pattern.replace(it) { result ->
-                                        result.value.dropLast(1) + " "
-                                    }
-                                }
-                                .also {
-                                    logger.log("after: $it")
-                                }
-                            block = M3UData().setContent(decodedContent)
-                        } catch (e: Exception) {
-                            logger.log(e)
+                                block = M3UData().setContent(decodedContent)
+                            } catch (e: Exception) {
+                                logger.log(e)
+                            }
                         }
-                    }
 
-                    line.startsWith("#") -> {}
-                    else -> {
-                        block = block?.setUrl(line)
-                        block?.let {
-                            add(it)
+                        line.startsWith("#") -> {}
+                        else -> {
+                            block = block?.setUrl(line)
+                            block?.let {
+                                add(it)
+                            }
+                            block = null
                         }
-                        block = null
                     }
                 }
-            }
+        }
     }
 
 

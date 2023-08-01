@@ -3,7 +3,8 @@ package com.m3u.features.feed
 import android.app.Application
 import androidx.lifecycle.viewModelScope
 import com.m3u.core.architecture.configuration.Configuration
-import com.m3u.core.architecture.logger.UiLogger
+import com.m3u.core.architecture.logger.BannerLoggerImpl
+import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.viewmodel.BaseViewModel
 import com.m3u.core.wrapper.Resource
 import com.m3u.core.wrapper.eventOf
@@ -12,6 +13,7 @@ import com.m3u.data.repository.LiveRepository
 import com.m3u.data.repository.MediaRepository
 import com.m3u.data.repository.observeBannedByFeedUrl
 import com.m3u.data.repository.refresh
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,13 +22,15 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class FeedViewModel(
+@HiltViewModel
+class FeedViewModel @Inject constructor(
     private val liveRepository: LiveRepository,
     private val feedRepository: FeedRepository,
     private val mediaRepository: MediaRepository,
     configuration: Configuration,
-    private val logger: UiLogger,
+    @BannerLoggerImpl private val logger: Logger,
     application: Application,
 ) : BaseViewModel<FeedState, FeedEvent>(
     application = application,
@@ -83,11 +87,13 @@ class FeedViewModel(
                     it.title.contains(query, true)
                 }
                 remainedLives.groupBy { it.group }
+                    .toList()
+                    .map { Channel(it.first, it.second) }
             }
             .onEach { lives ->
                 writable.update {
                     it.copy(
-                        lives = lives
+                        channels = lives
                     )
                 }
             }

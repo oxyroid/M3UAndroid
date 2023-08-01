@@ -68,6 +68,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.capitalize
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.tv.foundation.lazy.grid.TvGridCells
 import androidx.tv.foundation.lazy.grid.TvLazyVerticalGrid
@@ -78,6 +79,7 @@ import com.m3u.data.database.entity.Live
 import com.m3u.features.feed.components.DialogStatus
 import com.m3u.features.feed.components.FeedDialog
 import com.m3u.features.feed.components.LiveItem
+import com.m3u.ui.components.LocalConnection
 import com.m3u.ui.components.TextField
 import com.m3u.ui.model.AppAction
 import com.m3u.ui.model.LocalDuration
@@ -92,7 +94,6 @@ import com.m3u.ui.util.interceptVolumeEvent
 import com.m3u.ui.util.isAtTop
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import org.koin.androidx.compose.koinViewModel
 
 internal typealias NavigateToLive = (liveId: Int) -> Unit
 internal typealias NavigateToPlaylist = (playlist: List<Int>, initial: Int) -> Unit
@@ -107,7 +108,7 @@ internal fun FeedRoute(
     navigateToLive: NavigateToLive,
     navigateToPlaylist: NavigateToPlaylist,
     modifier: Modifier = Modifier,
-    viewModel: FeedViewModel = koinViewModel()
+    viewModel: FeedViewModel = hiltViewModel()
 ) {
     val helper = LocalHelper.current
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -153,6 +154,7 @@ internal fun FeedRoute(
     CompositionLocalProvider(
         LocalScalable provides Scalable(1f / rowCount)
     ) {
+        val connection = LocalConnection.current
         FeedScreen(
             query = state.query,
             onQuery = { viewModel.onEvent(FeedEvent.Query(it)) },
@@ -160,7 +162,7 @@ internal fun FeedRoute(
             scrollMode = state.scrollMode,
             noPictureMode = state.noPictureMode,
             rowCount = rowCount,
-            lives = state.lives,
+            channels = state.channels,
             scrollUp = state.scrollUp,
             refreshing = state.fetching,
             onRefresh = { viewModel.onEvent(FeedEvent.Refresh) },
@@ -173,6 +175,7 @@ internal fun FeedRoute(
             modifier = modifier
                 .fillMaxSize()
                 .then(interceptVolumeEventModifier)
+//                .nestedScroll(connection)
         )
     }
 
@@ -193,7 +196,7 @@ private fun FeedScreen(
     scrollMode: Boolean,
     noPictureMode: Boolean,
     rowCount: Int,
-    lives: MappedLives,
+    channels: List<Channel>,
     scrollUp: Event<Unit>,
     refreshing: Boolean,
     onRefresh: OnRefresh,
@@ -241,7 +244,7 @@ private fun FeedScreen(
         ) {
             when (configuration.orientation) {
                 ORIENTATION_LANDSCAPE -> {
-                    FeedPager(lives) {
+                    FeedPager(channels) {
                         LandscapeOrientationContent(
                             lives = it,
                             useCommonUIMode = useCommonUIMode,
@@ -259,7 +262,7 @@ private fun FeedScreen(
                 }
 
                 ORIENTATION_PORTRAIT -> {
-                    FeedPager(lives) {
+                    FeedPager(channels) {
                         PortraitOrientationContent(
                             lives = it,
                             scrollMode = scrollMode,
@@ -357,6 +360,7 @@ private fun LandscapeOrientationContent(
         EventHandler(scrollUp) {
             state.scrollToItem(0)
         }
+
         LazyVerticalGrid(
             state = state,
             columns = GridCells.Fixed(rowCount + 2),
@@ -567,7 +571,7 @@ private fun UnsupportedUIModeContent(
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun FeedPager(
-    lives: MappedLives,
+    channels: List<Channel>,
     modifier: Modifier = Modifier,
     content: @Composable (List<Live>) -> Unit,
 ) {
@@ -576,7 +580,7 @@ private fun FeedPager(
     ) {
         val pagerState = rememberPagerState()
         val coroutineScope = rememberCoroutineScope()
-        if (lives.size > 1) {
+        if (channels.size > 1) {
             ScrollableTabRow(
                 selectedTabIndex = pagerState.currentPage,
                 indicator = { tabPositions ->
@@ -588,7 +592,8 @@ private fun FeedPager(
                     }
                 },
                 tabs = {
-                    lives.keys.forEachIndexed { index, title ->
+                    val keys = remember(channels) { channels.map { it.title } }
+                    keys.forEachIndexed { index, title ->
                         Tab(
                             text = { Text(title) },
                             selected = pagerState.currentPage == index,
@@ -606,12 +611,11 @@ private fun FeedPager(
                 modifier = Modifier.fillMaxWidth()
             )
         }
-        val entities = remember(lives) { lives.values.toList() }
         HorizontalPager(
-            pageCount = entities.size,
+            pageCount = channels.size,
             state = pagerState
         ) { pager ->
-            content(entities[pager])
+            content(channels[pager].lives)
         }
     }
 }

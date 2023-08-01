@@ -7,10 +7,12 @@ import android.content.Intent
 import com.m3u.core.architecture.logger.FileLoggerImpl
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.util.context.toast
+import dagger.hilt.android.qualifiers.ApplicationContext
+import javax.inject.Inject
 
-class CrashHandler constructor(
+class CrashHandler @Inject constructor(
     @FileLoggerImpl private val logger: Logger,
-    private val context: Context
+    @ApplicationContext private val context: Context
 ) : Thread.UncaughtExceptionHandler {
     private val handler: Thread.UncaughtExceptionHandler? =
         Thread.getDefaultUncaughtExceptionHandler()

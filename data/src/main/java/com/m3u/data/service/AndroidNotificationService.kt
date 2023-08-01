@@ -9,9 +9,11 @@ import androidx.core.app.NotificationChannelCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.m3u.core.architecture.service.NotificationService
+import dagger.hilt.android.qualifiers.ApplicationContext
+import javax.inject.Inject
 
-class AndroidNotificationService constructor(
-    private val context: Context,
+class AndroidNotificationService @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val managerCompat: NotificationManagerCompat,
     private val manager: NotificationManager
 ) : NotificationService {

@@ -8,13 +8,14 @@ import com.m3u.androidApp.AppPublisher
 import com.m3u.androidApp.navigation.TopLevelDestination
 import com.m3u.core.architecture.viewmodel.BaseViewModel
 import com.m3u.core.architecture.configuration.Configuration
-import com.m3u.core.architecture.service.UserInterface
+import com.m3u.core.architecture.service.BannerService
 import com.m3u.core.wrapper.Event
 import com.m3u.core.wrapper.eventOf
 import com.m3u.core.wrapper.handledEvent
 import com.m3u.data.database.entity.Post
 import com.m3u.data.repository.PostRepository
 import com.m3u.ui.model.AppAction
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.launchIn
@@ -22,13 +23,15 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class RootViewModel(
+@HiltViewModel
+class RootViewModel @Inject constructor(
     application: Application,
     private val postRepository: PostRepository,
     configuration: Configuration,
     private val publisher: AppPublisher,
-    userInterface: UserInterface
+    bannerService: BannerService
 ) : BaseViewModel<RootState, RootEvent>(
     application = application,
     emptyState = RootState(
@@ -39,7 +42,7 @@ class RootViewModel(
         if (!readable.silentMode) {
             fetchPosts()
         }
-        userInterface
+        bannerService
             .messages
             .onEach { message ->
                 appendTemporalPost(
@@ -47,6 +50,8 @@ class RootViewModel(
                 )
             }
             .launchIn(viewModelScope)
+
+        initialState()
     }
 
     val posts = postRepository
@@ -67,7 +72,6 @@ class RootViewModel(
             RootEvent.OnNext -> onNext()
             RootEvent.OnPrevious -> onPrevious()
             RootEvent.OnRead -> onRead()
-            is RootEvent.OnInitialTab -> onNavigateTopLevelDestination()
         }
     }
 
@@ -125,7 +129,7 @@ class RootViewModel(
         }
     }
 
-    private fun onNavigateTopLevelDestination() {
+    private fun initialState() {
         val index = getSafelyInitialTabIndex()
         val destination = TopLevelDestination.values()[index]
         writable.update {
@@ -157,5 +161,4 @@ sealed class RootEvent {
     object OnNext : RootEvent()
     object OnPrevious : RootEvent()
     object OnRead : RootEvent()
-    object OnInitialTab : RootEvent()
 }

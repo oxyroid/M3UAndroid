@@ -7,17 +7,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.ui.components.Background
 import com.m3u.ui.components.MonoText
 import com.m3u.ui.model.LocalSpacing
-import org.koin.androidx.compose.koinViewModel
 
 @Composable
 internal fun DetailScreen(
     path: String,
     modifier: Modifier = Modifier,
-    viewModel: DetailViewModel = koinViewModel()
+    viewModel: DetailViewModel = hiltViewModel()
 ) {
     LaunchedEffect(path) {
         viewModel.onEvent(DetailEvent.Init(path))

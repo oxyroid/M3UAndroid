@@ -7,11 +7,14 @@ import com.m3u.core.wrapper.Event
 import com.m3u.core.wrapper.handledEvent
 import com.m3u.data.database.entity.Live
 
-internal typealias MappedLives = Map<String, List<Live>>
+data class Channel(
+    val title: String,
+    val lives: List<Live>
+)
 
 data class FeedState(
     val url: String = "",
-    val lives: MappedLives = emptyMap(),
+    val channels: List<Channel> = emptyList(),
     val query: String = "",
     val fetching: Boolean = false,
     val scrollUp: Event<Unit> = handledEvent(),

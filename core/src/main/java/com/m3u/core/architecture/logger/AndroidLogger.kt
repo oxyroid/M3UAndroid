@@ -3,6 +3,7 @@ package com.m3u.core.architecture.logger
 import android.util.Log
 import com.m3u.core.annotation.AppPublisherImpl
 import com.m3u.core.architecture.Publisher
+import javax.inject.Inject
 
 /**
  * This is a wrapper of android logcat.
@@ -12,7 +13,7 @@ import com.m3u.core.architecture.Publisher
  *
  * This is the default Logger implement.
  */
-class AndroidLogger constructor(
+class AndroidLogger @Inject constructor(
     @AppPublisherImpl private val publisher: Publisher
 ) : Logger {
     override fun log(text: String) {

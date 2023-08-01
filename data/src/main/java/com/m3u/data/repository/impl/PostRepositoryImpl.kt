@@ -20,8 +20,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
+import javax.inject.Inject
 
-class PostRepositoryImpl constructor(
+class PostRepositoryImpl @Inject constructor(
     private val dao: PostDao,
     private val logger: Logger,
     private val api: RemoteApi,

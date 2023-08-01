@@ -2,10 +2,13 @@ package com.m3u.features.crash.screen.detail
 
 import android.app.Application
 import com.m3u.core.architecture.viewmodel.BaseViewModel
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.update
 import java.io.File
+import javax.inject.Inject
 
-class DetailViewModel(
+@HiltViewModel
+class DetailViewModel @Inject constructor(
     application: Application
 ) : BaseViewModel<DetailState, DetailEvent>(
     application = application,

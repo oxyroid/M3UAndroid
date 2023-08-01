@@ -1,11 +1,14 @@
 package com.m3u.features.crash.screen.list
 
 import android.app.Application
-import com.m3u.core.architecture.viewmodel.BaseViewModel
 import com.m3u.core.architecture.reader.FileReader
+import com.m3u.core.architecture.viewmodel.BaseViewModel
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.update
+import javax.inject.Inject
 
-class ListViewModel(
+@HiltViewModel
+class ListViewModel @Inject constructor(
     application: Application,
     reader: FileReader
 ) : BaseViewModel<ListState, ListEvent>(

@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.com.android.library)
     alias(libs.plugins.org.jetbrains.kotlin.android)
     id("kotlin-parcelize")
+    id("kotlin-kapt")
 }
 
 android {
@@ -41,6 +42,6 @@ dependencies {
     implementation(libs.com.squareup.retrofit2.retrofit)
     implementation(libs.androidx.media3.media3.exoplayer)
     implementation(libs.androidx.media3.media3.session)
-
-    implementation(libs.io.insert.koin.koin.core)
+    implementation(libs.com.google.dagger.hilt.android)
+    kapt(libs.com.google.dagger.hilt.compiler)
 }

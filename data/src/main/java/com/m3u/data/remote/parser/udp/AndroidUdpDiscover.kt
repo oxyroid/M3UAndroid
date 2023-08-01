@@ -6,18 +6,20 @@ import android.content.Context
 import android.net.nsd.NsdManager
 import android.net.nsd.NsdServiceInfo
 import com.m3u.core.architecture.logger.Logger
-import java.net.DatagramPacket
-import java.net.DatagramSocket
-import java.net.InetAddress
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
+import java.net.DatagramPacket
+import java.net.DatagramSocket
+import java.net.InetAddress
+import javax.inject.Inject
 
-class AndroidUdpDiscover constructor(
-    private val context: Context,
+class AndroidUdpDiscover @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val logger: Logger
 ) : UdpDiscover {
     private val address = InetAddress.getByName("239.255.255.250")

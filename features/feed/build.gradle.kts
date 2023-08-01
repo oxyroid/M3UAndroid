@@ -4,6 +4,8 @@ plugins {
     alias(libs.plugins.com.android.library)
     alias(libs.plugins.org.jetbrains.kotlin.android)
     alias(libs.plugins.com.google.devtools.ksp)
+    alias(libs.plugins.com.google.dagger.hilt.android)
+    id("kotlin-kapt")
 }
 
 android {
@@ -51,8 +53,7 @@ dependencies {
     implementation(libs.androidx.tv.tv.foundation)
     implementation(libs.androidx.tv.tv.material)
 
-    implementation(libs.io.insert.koin.koin.core)
-    implementation(libs.io.insert.koin.koin.android)
-    implementation(libs.io.insert.koin.koin.compose)
-    implementation(libs.io.insert.koin.koin.compose.navigation)
+    implementation(libs.com.google.dagger.hilt.android)
+    kapt(libs.com.google.dagger.hilt.compiler)
+    implementation(libs.androidx.hilt.hilt.navigation.compose)
 }

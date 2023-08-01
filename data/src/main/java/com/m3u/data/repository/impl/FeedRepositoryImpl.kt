@@ -13,9 +13,10 @@ import com.m3u.core.architecture.logger.execute
 import com.m3u.core.architecture.logger.sandBox
 import com.m3u.core.util.collection.belong
 import com.m3u.core.wrapper.Resource
-import com.m3u.core.wrapper.emitMessage
+import com.m3u.core.wrapper.emitException
 import com.m3u.core.wrapper.emitResource
 import com.m3u.core.wrapper.resourceFlow
+import com.m3u.data.R
 import com.m3u.data.database.dao.FeedDao
 import com.m3u.data.database.dao.LiveDao
 import com.m3u.data.database.entity.Feed
@@ -25,21 +26,24 @@ import com.m3u.data.remote.parser.m3u.InvalidatePlaylistError
 import com.m3u.data.remote.parser.m3u.PlaylistParser
 import com.m3u.data.remote.parser.m3u.toLive
 import com.m3u.data.repository.FeedRepository
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.withContext
 import java.io.File
+import java.io.FileNotFoundException
 import java.net.Proxy
+import javax.inject.Inject
 
-class FeedRepositoryImpl(
+class FeedRepositoryImpl @Inject constructor(
     private val feedDao: FeedDao,
     private val liveDao: LiveDao,
     private val logger: Logger,
     configuration: Configuration,
     private val parser: PlaylistParser,
     private val proxy: Proxy,
-    private val context: Context
+    @ApplicationContext private val context: Context
 ) : FeedRepository {
     private val connectTimeout by configuration.connectTimeout
     override fun subscribe(
@@ -89,6 +93,7 @@ class FeedRepositoryImpl(
                     }
                     diskParse(url)
                 }
+
                 else -> emptyList()
             }
             val feed = Feed(title, url)
@@ -114,6 +119,7 @@ class FeedRepositoryImpl(
                 FeedStrategy.ALL -> skippedUrls
                 FeedStrategy.SKIP_FAVORITE -> groupedLives.getValue(true)
                     .map { it.url } + skippedUrls
+
                 else -> emptyList()
             }
             lives
@@ -135,9 +141,11 @@ class FeedRepositoryImpl(
             }
             liveDao.insert(live)
             emitResource(Unit)
+        } catch (e: FileNotFoundException) {
+            error(context.getString(R.string.error_file_not_found))
         } catch (e: Exception) {
             logger.log(e)
-            emitMessage(e.message)
+            emitException(e)
         }
     }
 

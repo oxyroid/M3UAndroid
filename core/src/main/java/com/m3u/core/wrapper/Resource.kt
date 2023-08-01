@@ -2,11 +2,11 @@
 
 package com.m3u.core.wrapper
 
-import kotlin.experimental.ExperimentalTypeInference
 import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.flow
+import kotlin.experimental.ExperimentalTypeInference
 
 sealed class Resource<out T> {
     object Loading : Resource<Nothing>()
@@ -35,10 +35,10 @@ fun <T> resourceChannelFlow(@BuilderInference block: suspend ProducerScope<Resou
 
 suspend fun <T> FlowCollector<Resource<T>>.emitResource(value: T) = emit(Resource.Success(value))
 
-suspend fun <T> FlowCollector<Resource<T>>.emitMessage(message: String?) =
-    emit(Resource.Failure(message))
+suspend fun <T> FlowCollector<Resource<T>>.emitException(exception: Exception?) =
+    emit(Resource.Failure(exception?.message))
 
 suspend fun <T> ProducerScope<Resource<T>>.sendResource(value: T) = send(Resource.Success(value))
 
-suspend fun <T> ProducerScope<Resource<T>>.sendMessage(message: String?) =
-    send(Resource.Failure(message))
+suspend fun <T> ProducerScope<Resource<T>>.emitException(exception: Exception?) =
+    send(Resource.Failure(exception?.message))

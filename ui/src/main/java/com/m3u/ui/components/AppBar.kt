@@ -35,6 +35,7 @@ import androidx.compose.material.icons.rounded.ArrowBack
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -62,6 +63,10 @@ import com.m3u.ui.model.LocalDuration
 import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.LocalTheme
 import com.m3u.ui.util.animated
+
+val LocalConnection = compositionLocalOf<NestedScrollConnection> {
+    error("")
+}
 
 @Suppress("unused")
 interface AppTopBarConsumer {
@@ -127,7 +132,8 @@ fun AppTopBar(
     }
 
     CompositionLocalProvider(
-        LocalContentColor provides LocalTheme.current.onTopBar
+        LocalContentColor provides LocalTheme.current.onTopBar,
+        LocalConnection provides connection
     ) {
         // Using Box instead of Column is because of making nestedScrollable components.
         Box(

@@ -9,8 +9,9 @@ import com.m3u.data.database.entity.Live
 import com.m3u.data.repository.LiveRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import javax.inject.Inject
 
-class LiveRepositoryImpl constructor(
+class LiveRepositoryImpl @Inject constructor(
     private val liveDao: LiveDao,
     @FileLoggerImpl private val logger: Logger
 ) : LiveRepository {

@@ -3,7 +3,8 @@ package com.m3u.features.main
 import android.app.Application
 import androidx.lifecycle.viewModelScope
 import com.m3u.core.architecture.configuration.Configuration
-import com.m3u.core.architecture.logger.UiLogger
+import com.m3u.core.architecture.logger.BannerLoggerImpl
+import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.viewmodel.BaseViewModel
 import com.m3u.core.util.collection.replaceIf
 import com.m3u.core.util.coroutine.mapElement
@@ -13,6 +14,7 @@ import com.m3u.data.repository.LiveRepository
 import com.m3u.data.repository.observeByFeedUrl
 import com.m3u.features.main.model.FeedDetail
 import com.m3u.features.main.model.toDetail
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
@@ -22,13 +24,15 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import javax.inject.Inject
 
-class MainViewModel(
+@HiltViewModel
+class MainViewModel @Inject constructor(
     private val feedRepository: FeedRepository,
     private val liveRepository: LiveRepository,
     application: Application,
     configuration: Configuration,
-    private val logger: UiLogger
+    @BannerLoggerImpl private val logger: Logger
 ) : BaseViewModel<MainState, MainEvent>(
     application = application,
     emptyState = MainState(

@@ -22,6 +22,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.ui.components.Background
 import com.m3u.ui.components.MonoText
@@ -29,12 +30,11 @@ import com.m3u.ui.components.TextField
 import com.m3u.ui.model.LocalHelper
 import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.util.RepeatOnCreate
-import org.koin.androidx.compose.koinViewModel
 
 @Composable
 internal fun ConsoleRoute(
     modifier: Modifier = Modifier,
-    viewModel: ConsoleViewModel = koinViewModel()
+    viewModel: ConsoleViewModel = hiltViewModel()
 ) {
     val helper = LocalHelper.current
     val title = stringResource(R.string.title)
