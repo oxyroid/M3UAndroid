@@ -29,6 +29,7 @@ import androidx.compose.material.icons.rounded.PictureInPicture
 import androidx.compose.material.icons.rounded.RadioButtonChecked
 import androidx.compose.material.icons.rounded.RadioButtonUnchecked
 import androidx.compose.material.icons.rounded.Refresh
+import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material.icons.rounded.VolumeMute
 import androidx.compose.material.icons.rounded.VolumeUp
 import androidx.compose.runtime.Composable
@@ -135,6 +136,7 @@ internal fun LiveRoute(
         recording = state.recording,
         searchDlnaDevices = { viewModel.onEvent(LiveEvent.SearchDlnaDevices) },
         onRecord = { viewModel.onEvent(LiveEvent.Record) },
+        onFavourite = { viewModel.onEvent(LiveEvent.OnFavourite(it)) },
         onBackPressed = onBackPressed,
         maskState = maskState,
         player = state.player,
@@ -158,6 +160,7 @@ private fun LiveScreen(
     recording: Boolean,
     searchDlnaDevices: () -> Unit,
     onRecord: () -> Unit,
+    onFavourite: (String) -> Unit,
     onBackPressed: () -> Unit,
     maskState: MaskState,
     experimentalMode: Boolean,
@@ -174,13 +177,16 @@ private fun LiveScreen(
     val theme = LocalTheme.current
     when (init) {
         is LiveState.InitSpecial -> {
+            val live = init.live
+            val url = live?.url.orEmpty()
+            val favourite = live?.favourite ?: false
             LivePart(
                 player = player,
                 playback = playback,
                 videoSize = videoSize,
                 playerError = playerError,
                 title = init.live?.title.orEmpty(),
-                url = init.live?.url.orEmpty(),
+                url = url,
                 cover = init.live?.cover.orEmpty(),
                 feedTitle = init.feed?.title.orEmpty(),
                 maskState = maskState,
@@ -188,7 +194,9 @@ private fun LiveScreen(
                 fullInfoPlayer = fullInfoPlayer,
                 clipMode = clipMode,
                 recording = recording,
+                stared = favourite,
                 onRecord = onRecord,
+                onFavourite = { onFavourite(url) },
                 searchDlnaDevices = searchDlnaDevices,
                 onBackPressed = onBackPressed,
                 onInstallMedia = onInstallMedia,
@@ -211,6 +219,9 @@ private fun LiveScreen(
                     .fillMaxSize()
                     .background(theme.background)
             ) { pageIndex ->
+                val live = init.lives[pageIndex]
+                val url = live.url
+                val favourite = live.favourite
                 LivePart(
                     player = player,
                     playback = playback,
@@ -218,14 +229,16 @@ private fun LiveScreen(
                     playerError = playerError,
                     title = init.lives[pageIndex].title,
                     feedTitle = init.feed?.title.orEmpty(),
-                    url = init.lives[pageIndex].url,
+                    url = url,
                     cover = init.lives[pageIndex].cover.orEmpty(),
                     maskState = maskState,
                     experimentalMode = experimentalMode,
                     fullInfoPlayer = fullInfoPlayer,
                     clipMode = clipMode,
                     recording = recording,
+                    stared = favourite,
                     onRecord = onRecord,
+                    onFavourite = { onFavourite(url) },
                     searchDlnaDevices = searchDlnaDevices,
                     onBackPressed = onBackPressed,
                     onInstallMedia = onInstallMedia,
@@ -264,7 +277,9 @@ private fun LivePart(
     @ClipMode clipMode: Int,
     fullInfoPlayer: Boolean,
     recording: Boolean,
+    stared: Boolean,
     onRecord: () -> Unit,
+    onFavourite: () -> Unit,
     searchDlnaDevices: () -> Unit,
     onBackPressed: () -> Unit,
     onInstallMedia: (String) -> Unit,
@@ -316,6 +331,12 @@ private fun LivePart(
                         icon = if (muted) Icons.Rounded.VolumeMute
                         else Icons.Rounded.VolumeUp,
                         onClick = onMuted
+                    )
+                    MaskButton(
+                        state = maskState,
+                        icon = Icons.Rounded.Star,
+                        tint = if (stared) Color.Yellow else Color.Unspecified,
+                        onClick = onFavourite
                     )
                     if (experimentalMode) {
                         MaskButton(

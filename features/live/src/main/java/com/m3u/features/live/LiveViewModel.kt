@@ -76,6 +76,7 @@ class LiveViewModel @Inject constructor(
             is LiveEvent.InitPlayList -> initPlaylist(event.ids, event.initialIndex)
             LiveEvent.SearchDlnaDevices -> searchDlnaDevices()
             LiveEvent.Record -> record()
+            is LiveEvent.OnFavourite -> setFavourite(event.url)
             is LiveEvent.InstallMedia -> {
                 val url = event.url
                 if (url.isEmpty()) return
@@ -149,6 +150,15 @@ class LiveViewModel @Inject constructor(
             it.copy(
                 recording = !readable.recording
             )
+        }
+    }
+
+    private fun setFavourite(url: String) {
+        viewModelScope.launch {
+            val live = liveRepository.getByUrl(url) ?: return@launch
+            val id = live.id
+            val target = !live.favourite
+            liveRepository.setFavourite(id, target)
         }
     }
 

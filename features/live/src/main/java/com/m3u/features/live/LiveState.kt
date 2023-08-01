@@ -21,7 +21,6 @@ data class LiveState(
     val playerState: PlayerState = PlayerState(),
     val muted: Boolean = false
 ) {
-
     sealed class Init(
         open val feed: Feed? = null
     )

@@ -11,4 +11,5 @@ sealed interface LiveEvent {
     data class InstallMedia(val url: String) : LiveEvent
     object UninstallMedia : LiveEvent
     object OnMuted : LiveEvent
+    data class OnFavourite(val url: String) : LiveEvent
 }
