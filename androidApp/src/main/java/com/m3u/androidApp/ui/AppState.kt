@@ -53,7 +53,6 @@ class AppState(
     val navController: NavHostController
 ) {
     var currentPage by mutableStateOf(0)
-        private set
     val currentComposableNavDestination: NavDestination?
         @Composable get() = navController.currentBackStackEntryAsState().value?.destination
 

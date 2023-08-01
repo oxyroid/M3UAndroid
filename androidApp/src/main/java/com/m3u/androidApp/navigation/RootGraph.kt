@@ -1,5 +1,6 @@
 package com.m3u.androidApp.navigation
 
+import android.util.Log
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.fillMaxSize
@@ -7,6 +8,9 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
@@ -17,6 +21,9 @@ import com.m3u.features.main.MainRoute
 import com.m3u.features.main.NavigateToFeed
 import com.m3u.features.setting.NavigateToConsole
 import com.m3u.features.setting.SettingRoute
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 
 const val rootNavigationRoute = "root_route"
 
@@ -28,6 +35,7 @@ fun NavController.popupToRoot() {
 fun NavGraphBuilder.rootGraph(
     destinations: List<TopLevelDestination>,
     currentPage: Int,
+    onCurrentPage: (Int) -> Unit,
     navigateToFeed: NavigateToFeed,
     navigateToLive: NavigateToLive,
     navigateToConsole: NavigateToConsole,
@@ -37,6 +45,7 @@ fun NavGraphBuilder.rootGraph(
     ) {
         RootGraph(
             currentPage = currentPage,
+            onCurrentPage = onCurrentPage,
             destinations = destinations,
             navigateToFeed = navigateToFeed,
             navigateToLive = navigateToLive,
@@ -49,13 +58,31 @@ fun NavGraphBuilder.rootGraph(
 @Composable
 private fun RootGraph(
     currentPage: Int,
+    onCurrentPage: (Int) -> Unit,
     destinations: List<TopLevelDestination>,
     navigateToFeed: NavigateToFeed,
     navigateToLive: NavigateToLive,
     navigateToConsole: NavigateToConsole,
     modifier: Modifier = Modifier
 ) {
+    val actualSetCurrentPage by rememberUpdatedState(onCurrentPage)
     val state = rememberPagerState()
+
+    LaunchedEffect(state) {
+        snapshotFlow {
+            Triple(state.currentPage, state.targetPage, state.settledPage)
+        }
+            .onEach {
+                Log.e("PagerState", "$it")
+            }
+            .launchIn(this)
+    }
+    LaunchedEffect(state) {
+        snapshotFlow { state.settledPage }
+            .onEach(actualSetCurrentPage)
+            .launchIn(this)
+    }
+
     LaunchedEffect(currentPage) {
         state.animateScrollToPage(currentPage)
     }

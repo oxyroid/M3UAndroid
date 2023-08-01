@@ -22,6 +22,7 @@ import com.m3u.ui.model.LocalHelper
 fun M3UNavHost(
     navController: NavHostController,
     currentPage: Int,
+    onCurrentPage: (Int) -> Unit,
     destinations: List<TopLevelDestination>,
     navigateToDestination: NavigateToDestination,
     modifier: Modifier = Modifier,
@@ -41,6 +42,7 @@ fun M3UNavHost(
         rootGraph(
             destinations = destinations,
             currentPage = currentPage,
+            onCurrentPage = onCurrentPage,
             navigateToFeed = { feed ->
                 helper.title = if (!feed.isTemplated()) feed.title
                 else context.getString(R.string.imported_feed_title)

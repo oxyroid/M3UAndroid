@@ -2,7 +2,6 @@ package com.m3u.androidApp.ui
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -49,7 +48,6 @@ import kotlinx.coroutines.launch
 typealias HelperConnector =
             ((String) -> Unit, () -> String, (List<AppAction>) -> Unit, () -> List<AppAction>) -> Helper
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun App(
     appState: AppState = rememberAppState(),
@@ -171,6 +169,7 @@ fun App(
                     M3UNavHost(
                         navController = appState.navController,
                         currentPage = appState.currentPage,
+                        onCurrentPage = { appState.currentPage = it },
                         destinations = topLevelDestinations,
                         navigateToDestination = appState::navigateToDestination,
                         modifier = Modifier
