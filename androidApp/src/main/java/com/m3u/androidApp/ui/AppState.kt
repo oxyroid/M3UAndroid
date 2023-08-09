@@ -52,6 +52,25 @@ class AppState(
     private val coroutineScope: CoroutineScope,
     val navController: NavHostController
 ) {
+    // Initially, we stored the "pagerState" here. However, we encountered an unexpected behavior
+    // with "scrollToPage/animateScrollToPage". This function did not update the pagerState#currentPage as intended.
+    // This issue arose due to the pager being invisible while navigating through child screens.
+    //
+    // To address this, we decided to store "currentPage: Int" here. Both the bottom bar and the pager
+    // now observe this value. Here's how it works:
+    // 1. When a user selects a bottom bar item on the root screen, the currentPage is modified. The pager responds to this change,
+    //    performing an animateScrollToPage to page 2, resulting in the desired behavior.
+    // 2. When a user scrolls the page using gestures on the root screen, we monitor the "pagerState#currentPage" to make adjustments
+    //    to the currentPage. This ensures that the bottom bar functions correctly.
+    //    However, this approach triggers pagerState#animateScrollToPage due to the pager's observation, causing unintended effects.
+    // 3. When a user selects a bottom bar item on child screens, the function "navigateToTopLevelDestination" is invoked.
+    //    Similar to scenario #1, this works effectively.
+    //
+    // To resolve the issue outlined in #2, we introduced a modification. Before the pager responds to the currentPager value,
+    // it now checks against the pagerState#currentPage. This change helps prevent the undesired behavior.
+    //
+    // It's important to note that this solution might not be the optimal one, and further improvements could be explored.
+
     var currentPage by mutableStateOf(0)
     val currentComposableNavDestination: NavDestination?
         @Composable get() = navController.currentBackStackEntryAsState().value?.destination
@@ -61,10 +80,7 @@ class AppState(
 
     val currentComposableTopLevelDestination: TopLevelDestination?
         @Composable get() = when (currentComposableNavDestination?.route) {
-            rootNavigationRoute -> {
-                topLevelDestinations[currentPage]
-            }
-
+            rootNavigationRoute -> topLevelDestinations[currentPage]
             else -> null
         }
 

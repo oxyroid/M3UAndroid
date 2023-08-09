@@ -21,7 +21,6 @@ import com.m3u.features.main.MainRoute
 import com.m3u.features.main.NavigateToFeed
 import com.m3u.features.setting.NavigateToConsole
 import com.m3u.features.setting.SettingRoute
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 
@@ -65,29 +64,41 @@ private fun RootGraph(
     navigateToConsole: NavigateToConsole,
     modifier: Modifier = Modifier
 ) {
-    val actualSetCurrentPage by rememberUpdatedState(onCurrentPage)
-    val state = rememberPagerState()
+    val pagerState = rememberPagerState()
+    val actualOnCurrentPage by rememberUpdatedState(onCurrentPage)
 
-    LaunchedEffect(state) {
+    LaunchedEffect(pagerState) {
         snapshotFlow {
-            Triple(state.currentPage, state.targetPage, state.settledPage)
+            PagerStateSnapshot(
+                pagerState.currentPage,
+                pagerState.targetPage,
+                pagerState.settledPage,
+                pagerState.isScrollInProgress
+            )
         }
             .onEach {
                 Log.e("PagerState", "$it")
             }
             .launchIn(this)
-    }
-    LaunchedEffect(state) {
-        snapshotFlow { state.settledPage }
-            .onEach(actualSetCurrentPage)
+
+        snapshotFlow {
+            // FIXME:
+            //  When a user scrolls the page using gestures on the root screen, it may be 0.
+            //  But we cannot use pageState#currentPage because it will not work
+            //  when we selects a bottom bar item from 0 -> 2
+            pagerState.targetPage
+        }
+            .onEach(actualOnCurrentPage)
             .launchIn(this)
     }
 
     LaunchedEffect(currentPage) {
-        state.animateScrollToPage(currentPage)
+        if (currentPage != pagerState.currentPage) {
+            pagerState.animateScrollToPage(currentPage)
+        }
     }
     HorizontalPager(
-        state = state,
+        state = pagerState,
         pageCount = destinations.size,
         modifier = modifier
     ) { pagerIndex ->
@@ -95,7 +106,7 @@ private fun RootGraph(
             TopLevelDestination.Main -> {
                 MainRoute(
                     navigateToFeed = navigateToFeed,
-                    isCurrentPage = state.currentPage == pagerIndex,
+                    isCurrentPage = pagerState.currentPage == pagerIndex,
                     modifier = Modifier.fillMaxSize()
                 )
             }
@@ -103,7 +114,7 @@ private fun RootGraph(
             TopLevelDestination.Favourite -> {
                 FavouriteRoute(
                     navigateToLive = navigateToLive,
-                    isCurrentPage = state.currentPage == pagerIndex,
+                    isCurrentPage = pagerState.currentPage == pagerIndex,
                     modifier = Modifier.fillMaxSize()
                 )
             }
@@ -111,10 +122,17 @@ private fun RootGraph(
             TopLevelDestination.Setting -> {
                 SettingRoute(
                     navigateToConsole = navigateToConsole,
-                    isCurrentPage = state.currentPage == pagerIndex,
+                    isCurrentPage = pagerState.currentPage == pagerIndex,
                     modifier = Modifier.fillMaxSize()
                 )
             }
         }
     }
 }
+
+private data class PagerStateSnapshot(
+    val current: Int,
+    val target: Int,
+    val settled: Int,
+    val scrolling: Boolean
+)

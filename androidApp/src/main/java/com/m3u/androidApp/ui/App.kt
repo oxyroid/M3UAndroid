@@ -185,7 +185,7 @@ fun App(
                             )
                             BottomNavigationSheet(
                                 destinations = topLevelDestinations,
-                                currentTopLevelDestination = currentTopLevelDestination,
+                                index = appState.currentPage,
                                 navigateToTopLevelDestination = {
                                     appState.navigateToTopLevelDestination(it)
                                 },

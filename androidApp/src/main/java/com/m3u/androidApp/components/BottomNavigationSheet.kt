@@ -28,7 +28,7 @@ import com.m3u.ui.util.animated
 fun BottomNavigationSheet(
     destinations: List<TopLevelDestination>,
     navigateToTopLevelDestination: NavigateToTopLevelDestination,
-    currentTopLevelDestination: TopLevelDestination?,
+    index: Int,
     modifier: Modifier = Modifier,
     backgroundColor: Color = BottomSheetDefaults.navigationBackgroundColor(),
     contentColor: Color = BottomSheetDefaults.navigationContentColor(),
@@ -46,8 +46,8 @@ fun BottomNavigationSheet(
         contentColor = actualContentColor,
         elevation = LocalAbsoluteElevation.current
     ) {
-        destinations.forEach { destination ->
-            val selected = currentTopLevelDestination == destination
+        destinations.forEachIndexed { i, destination ->
+            val selected = i == index
             NavigationBarItem(
                 selected = selected,
                 onClick = {
