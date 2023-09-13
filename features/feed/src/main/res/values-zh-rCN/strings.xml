@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="scheme_unknown">未知</string>
+    <string name="dialog_menu_title">屏蔽这个频道？</string>
+
+    <string name="dialog_favourite_title">喜欢</string>
+    <string name="dialog_favourite_cancel_title">取消喜欢</string>
+    <string name="dialog_mute_title">屏蔽</string>
+
+    <string name="error_observe_feed">订阅不存在（%s）</string>
+    <string name="dialog_save_picture_title">保存封面</string>
+    <string name="query_placeholder">输入关键字</string>
+    <string name="scroll_up">回到顶部</string>
+</resources>

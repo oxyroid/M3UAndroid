@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="muted_lives_feed">屏蔽的频道</string>
-    <string name="unsubscribe_feed">取消订阅</string>
-    <string name="error_unsubscribe_feed">取消订阅失败</string>
-    <string name="copy_feed_url">复制链接</string>
-    <string name="rename_feed">重命名</string>
-    <string name="imported_feed_title">导入频道</string>
+    <string name="muted_lives_feed">banned lives</string>
+    <string name="unsubscribe_feed">unsubscribe</string>
+    <string name="error_unsubscribe_feed">cannot unsubscribe</string>
+    <string name="copy_feed_url">copy url</string>
+    <string name="rename_feed">rename</string>
+    <string name="imported_feed_title">imported</string>
 </resources>

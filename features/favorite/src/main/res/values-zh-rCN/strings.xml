@@ -1,4 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="scheme_unknown">unknown</string>
+    <string name="scheme_unknown">未知</string>
 </resources>

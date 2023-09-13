@@ -1,0 +1,18 @@
+<resources>
+    <string name="app_name">M3U</string>
+
+    <string name="destination_main">主页</string>
+    <string name="destination_setting">设置</string>
+
+    <string name="destination_live">直播</string>
+    <string name="destination_feed">订阅</string>
+
+    <string name="title_live">正在播放</string>
+    <string name="title_setting">设置</string>
+    <string name="destination_favourite">喜欢</string>
+    <string name="title_favourite">喜欢</string>
+    <string name="title_feed_placeholder">--</string>
+    <string name="label_crash">应用发生崩溃</string>
+
+    <string name="features_scheme_import">导入频道</string>
+</resources>
