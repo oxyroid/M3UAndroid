@@ -2,8 +2,11 @@
 
 package com.m3u.features.setting.components
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Checkbox
@@ -14,17 +17,22 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.text.capitalize
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.sp
 import com.m3u.core.util.basic.title
 import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.LocalTheme
 import com.m3u.ui.util.animated
 
-@OptIn(ExperimentalMaterialApi::class)
+@OptIn(ExperimentalMaterialApi::class, ExperimentalFoundationApi::class)
 @Composable
 internal fun FoldPreference(
     title: String,
@@ -34,8 +42,9 @@ internal fun FoldPreference(
     subtitle: String? = null,
     trailingContent: @Composable () -> Unit = {}
 ) {
+    var hasFocus by remember { mutableStateOf(false) }
     val theme = LocalTheme.current
-    val actualBackgroundColor by theme.surface.animated()
+    val actualBackgroundColor by theme.surface.animated("FoldPreferenceBackground")
     ListItem(
         text = {
             Text(
@@ -52,7 +61,13 @@ internal fun FoldPreference(
                     text = it.capitalize(Locale.current),
                     style = MaterialTheme.typography.subtitle2,
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Ellipsis,
+                    lineHeight = 16.sp,
+                    modifier = Modifier
+                        .let {
+                            if (hasFocus) it.basicMarquee()
+                            else it
+                        }
                 )
             }
         },
@@ -60,6 +75,10 @@ internal fun FoldPreference(
         trailing = trailingContent,
         modifier = modifier
             .fillMaxWidth()
+            .onFocusChanged {
+                hasFocus = it.hasFocus
+            }
+            .focusable()
             .clickable(
                 enabled = enabled,
                 onClick = onClick
