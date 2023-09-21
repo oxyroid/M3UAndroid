@@ -1,15 +1,16 @@
 package com.m3u.androidApp.components
 
-//import androidx.compose.material3.PlainTooltip
-//import androidx.compose.material3.TooltipBox
-//import androidx.compose.material3.TooltipDefaults
-//import androidx.compose.material3.rememberTooltipState
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.material.Icon
 import androidx.compose.material.LocalAbsoluteElevation
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.NavigationRailItem
 import androidx.compose.material.Text
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.PlainTooltip
+import androidx.compose.material3.TooltipBox
+import androidx.compose.material3.TooltipDefaults
+import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -71,6 +72,7 @@ fun BottomNavigationSheet(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun NavigationBarItem(
     selected: Boolean,
@@ -82,28 +84,27 @@ private fun NavigationBarItem(
     contentDestination: String? = null,
     tint: Color
 ) {
-    // TODO: Enabled when [https://issuetracker.google.com/issues/299500338] fixed.
-//    TooltipBox(
-//        positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
-//        state = rememberTooltipState(),
-//        tooltip = {
-//            PlainTooltip {
-//                Text(contentDestination.orEmpty())
-//            }
-//        }
-//    ) {
-    NavigationRailItem(
-        selected = selected,
-        onClick = onClick,
-        icon = icon,
-        modifier = modifier,
-        enabled = enabled,
-        label = label,
-        alwaysShowLabel = false,
-        selectedContentColor = tint,
-        interactionSource = remember { MutableInteractionSource() },
-    )
-//    }
+    TooltipBox(
+        positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+        state = rememberTooltipState(),
+        tooltip = {
+            PlainTooltip {
+                Text(contentDestination.orEmpty())
+            }
+        }
+    ) {
+        NavigationRailItem(
+            selected = selected,
+            onClick = onClick,
+            icon = icon,
+            modifier = modifier,
+            enabled = enabled,
+            label = label,
+            alwaysShowLabel = false,
+            selectedContentColor = tint,
+            interactionSource = remember { MutableInteractionSource() },
+        )
+    }
 }
 
 object BottomSheetDefaults {

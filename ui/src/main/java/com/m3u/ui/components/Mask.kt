@@ -29,6 +29,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -61,8 +62,8 @@ class MaskStateCoroutineImpl(
     coroutineScope: CoroutineScope,
     private val onChanged: (Boolean) -> Unit
 ) : MaskState {
-    private var currentTime: Long by mutableStateOf(systemClock)
-    private var lastTime: Long by mutableStateOf(0L)
+    private var currentTime: Long by mutableLongStateOf(systemClock)
+    private var lastTime: Long by mutableLongStateOf(0L)
     private var locked: Boolean by mutableStateOf(false)
 
     private var last: Boolean? = null
@@ -192,16 +193,15 @@ fun MaskButton(
         else tint
     }
     val currentKeepAlive by rememberUpdatedState(state::active)
-    // TODO: Enabled when [https://issuetracker.google.com/issues/299500338] fixed.
-//    TooltipBox(
-//        positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
-//        tooltip = {
-//            PlainTooltip {
-//                Text(text = contentDescription.uppercase())
-//            }
-//        },
-//        state = tooltipState
-//    ) {
+    TooltipBox(
+        positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+        tooltip = {
+            PlainTooltip {
+                Text(text = contentDescription.uppercase())
+            }
+        },
+        state = tooltipState
+    ) {
         IconButton(
             icon = icon,
             contentDescription = null,
@@ -212,7 +212,7 @@ fun MaskButton(
             modifier = modifier,
             tint = animatedColor
         )
-//    }
+    }
 }
 
 @OptIn(ExperimentalMaterialApi::class)
