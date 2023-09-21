@@ -24,7 +24,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -46,7 +45,6 @@ import com.m3u.ui.model.LocalTheme
 
 typealias NavigateToConsole = () -> Unit
 
-@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun SettingRoute(
     modifier: Modifier = Modifier,

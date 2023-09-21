@@ -5,7 +5,7 @@ import androidx.annotation.IntDef
 import androidx.compose.foundation.focusable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -20,7 +20,7 @@ fun Modifier.interceptVolumeEvent(
 ): Modifier = composed {
     if (minDuration < 0L) error("Modifier.interceptVolumeEvent: minDuration cannot less than 0.")
     val requester = remember { FocusRequester() }
-    var lastKeyTime by remember { mutableStateOf(0L) }
+    var lastKeyTime by remember { mutableLongStateOf(0L) }
     LaunchedEffect(Unit) {
         requester.requestFocus()
     }
@@ -34,6 +34,7 @@ fun Modifier.interceptVolumeEvent(
                 }
                 true
             }
+
             KeyEvent.KEYCODE_VOLUME_DOWN -> {
                 if (currentTimeMillis - lastKeyTime >= minDuration) {
                     onEvent(KeyEvent.KEYCODE_VOLUME_DOWN)
@@ -41,6 +42,7 @@ fun Modifier.interceptVolumeEvent(
                 }
                 true
             }
+
             else -> false
         }
     }

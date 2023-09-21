@@ -15,7 +15,6 @@ import com.m3u.core.architecture.configuration.Configuration
 import com.m3u.core.architecture.logger.BannerLoggerImpl
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.viewmodel.BaseViewModel
-import com.m3u.data.repository.FeedRepository
 import com.m3u.data.repository.LiveRepository
 import com.m3u.data.repository.PostRepository
 import com.m3u.data.repository.observeBanned
@@ -29,7 +28,6 @@ import javax.inject.Inject
 
 @HiltViewModel
 class SettingViewModel @Inject constructor(
-    private val feedRepository: FeedRepository,
     private val liveRepository: LiveRepository,
     @AppPublisherImpl private val publisher: Publisher,
     application: Application,
@@ -195,6 +193,5 @@ class SettingViewModel @Inject constructor(
                 )
             }
         }
-
     }
 }

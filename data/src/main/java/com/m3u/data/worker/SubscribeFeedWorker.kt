@@ -16,6 +16,7 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.supervisorScope
 
 @HiltWorker
 class SubscribeFeedWorker @AssistedInject constructor(
@@ -58,7 +59,7 @@ class SubscribeFeedWorker @AssistedInject constructor(
         title: String,
         url: String,
         strategy: Int
-    ) = coroutineScope {
+    ) = supervisorScope {
         feedRepository
             .subscribe(title, url, strategy)
             .collect { resource ->
@@ -89,6 +90,7 @@ class SubscribeFeedWorker @AssistedInject constructor(
         builder
             .setContentText(message.orEmpty())
             .setOngoing(false)
+
         manager.notify(id, builder.build())
     }
 
