@@ -31,11 +31,10 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.ArrowBack
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -63,10 +62,6 @@ import com.m3u.ui.model.LocalDuration
 import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.LocalTheme
 import com.m3u.ui.util.animated
-
-val LocalConnection = compositionLocalOf<NestedScrollConnection> {
-    error("")
-}
 
 @Suppress("unused")
 interface AppTopBarConsumer {
@@ -132,8 +127,7 @@ fun AppTopBar(
     }
 
     CompositionLocalProvider(
-        LocalContentColor provides LocalTheme.current.onTopBar,
-        LocalConnection provides connection
+        LocalContentColor provides LocalTheme.current.onTopBar
     ) {
         // Using Box instead of Column is because of making nestedScrollable components.
         Box(
@@ -172,8 +166,8 @@ fun AppTopBar(
             // AppBar
             val progress by remember { derivedStateOf { offsetHeightPx / maxHeightPx } }
             val duration = LocalDuration.current
-            val actualBackgroundColor by LocalTheme.current.background.animated()
-            val actualContentColor by LocalTheme.current.onBackground.animated()
+            val actualBackgroundColor by LocalTheme.current.background.animated("AppBarBackground")
+            val actualContentColor by LocalTheme.current.onBackground.animated("AppBarContent")
             Surface(
                 elevation = LocalAbsoluteElevation.current,
                 color = actualBackgroundColor,
@@ -206,7 +200,7 @@ fun AppTopBar(
                                 + shrinkHorizontally(tween(delayMillis = duration.medium)),
                     ) {
                         IconButton(
-                            icon = Icons.Rounded.ArrowBack,
+                            icon = Icons.AutoMirrored.Rounded.ArrowBack,
                             contentDescription = stringResource(R.string.cd_top_bar_on_back_pressed),
                             onClick = { if (progress > 0) onBackPressed?.invoke() },
                             modifier = Modifier.wrapContentSize()

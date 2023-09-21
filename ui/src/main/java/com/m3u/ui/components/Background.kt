@@ -20,8 +20,8 @@ fun Background(
     contentColor: Color = LocalTheme.current.onBackground,
     content: @Composable () -> Unit
 ) {
-    val actualBackgroundColor by (if (color.isUnspecified) Color.Transparent else color).animated()
-    val actualContentColor by contentColor.animated()
+    val actualBackgroundColor by (if (color.isUnspecified) Color.Transparent else color).animated("BackgroundBackground")
+    val actualContentColor by contentColor.animated("BackgroundContent")
     Surface(
         color = actualBackgroundColor,
         contentColor = actualContentColor,

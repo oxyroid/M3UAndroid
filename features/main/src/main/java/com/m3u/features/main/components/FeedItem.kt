@@ -1,6 +1,5 @@
 package com.m3u.features.main.components
 
-import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -26,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import com.m3u.ui.components.OuterRow
 import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.LocalTheme
+import com.m3u.ui.util.animateDp
 import com.m3u.ui.util.animated
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -40,12 +40,12 @@ internal fun FeedItem(
 ) {
     val spacing = LocalSpacing.current
     val theme = LocalTheme.current
-    val actualBackgroundColor by theme.surface.animated()
-    val actualContentColor by theme.onSurface.animated()
-    val actualBorder by animateDpAsState(
+    val actualBackgroundColor by theme.surface.animated("FeedItemBackground")
+    val actualContentColor by theme.onSurface.animated("FeedItemContent")
+    val actualBorder by animateDp("FeedItemBorder") {
         if (special) spacing.extraSmall
         else spacing.none
-    )
+    }
     Card(
         shape = RoundedCornerShape(spacing.medium),
         backgroundColor = actualBackgroundColor,
@@ -70,8 +70,8 @@ internal fun FeedItem(
                 modifier = Modifier.weight(1f)
             )
 
-            val actualPrimaryColor by theme.primary.animated()
-            val actualOnPrimaryColor by theme.onPrimary.animated()
+            val actualPrimaryColor by theme.primary.animated("FeedItemPrimary")
+            val actualOnPrimaryColor by theme.onPrimary.animated("FeedItemOnPrimary")
             Box(
                 modifier = Modifier
                     .clip(CircleShape)

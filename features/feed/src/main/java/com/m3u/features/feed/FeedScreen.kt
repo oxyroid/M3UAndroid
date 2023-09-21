@@ -15,7 +15,6 @@ import android.content.res.Configuration.UI_MODE_TYPE_WATCH
 import android.view.KeyEvent
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
@@ -79,7 +78,6 @@ import com.m3u.data.database.entity.Live
 import com.m3u.features.feed.components.DialogStatus
 import com.m3u.features.feed.components.FeedDialog
 import com.m3u.features.feed.components.LiveItem
-import com.m3u.ui.components.LocalConnection
 import com.m3u.ui.components.TextField
 import com.m3u.ui.model.AppAction
 import com.m3u.ui.model.LocalDuration
@@ -90,6 +88,7 @@ import com.m3u.ui.model.LocalTheme
 import com.m3u.ui.model.Scalable
 import com.m3u.ui.util.EventHandler
 import com.m3u.ui.util.RepeatOnCreate
+import com.m3u.ui.util.animateDp
 import com.m3u.ui.util.interceptVolumeEvent
 import com.m3u.ui.util.isAtTop
 import kotlinx.coroutines.delay
@@ -154,7 +153,6 @@ internal fun FeedRoute(
     CompositionLocalProvider(
         LocalScalable provides Scalable(1f / rowCount)
     ) {
-        val connection = LocalConnection.current
         FeedScreen(
             query = state.query,
             onQuery = { viewModel.onEvent(FeedEvent.Query(it)) },
@@ -217,9 +215,9 @@ private fun FeedScreen(
     Column {
         val isAtTopState = remember { mutableStateOf(true) }
         var flag by remember { mutableStateOf(false) }
-        val surfaceElevation by animateDpAsState(
+        val surfaceElevation by animateDp("FeedScreenSearchElevation") {
             if (!isAtTopState.value && flag) spacing.medium else spacing.none
-        )
+        }
         LaunchedEffect(Unit) {
             delay(duration.medium.toLong())
             flag = true
@@ -578,7 +576,9 @@ private fun FeedPager(
     Column(
         modifier = modifier
     ) {
-        val pagerState = rememberPagerState()
+        val pagerState = rememberPagerState {
+            channels.size
+        }
         val coroutineScope = rememberCoroutineScope()
         if (channels.size > 1) {
             ScrollableTabRow(
@@ -612,7 +612,6 @@ private fun FeedPager(
             )
         }
         HorizontalPager(
-            pageCount = channels.size,
             state = pagerState
         ) { pager ->
             content(channels[pager].lives)

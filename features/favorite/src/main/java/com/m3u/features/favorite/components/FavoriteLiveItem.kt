@@ -49,8 +49,8 @@ internal fun FavoriteItem(
         LocalSpacing.current.scaled
     }
     val theme = LocalTheme.current
-    val actualBackgroundColor by theme.surface.animated()
-    val actualContentColor by theme.onSurface.animated()
+    val actualBackgroundColor by theme.surface.animated("FavoriteItemBackground")
+    val actualContentColor by theme.onSurface.animated("FavoriteItemContent")
     val scheme = remember(live) {
         URI(live.url).scheme ?: context.getString(R.string.scheme_unknown).uppercase()
     }

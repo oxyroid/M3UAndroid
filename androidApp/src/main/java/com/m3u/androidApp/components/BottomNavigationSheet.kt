@@ -7,7 +7,10 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.NavigationRailItem
 import androidx.compose.material.Text
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.PlainTooltipBox
+import androidx.compose.material3.PlainTooltip
+import androidx.compose.material3.TooltipBox
+import androidx.compose.material3.TooltipDefaults
+import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
@@ -35,9 +38,9 @@ fun BottomNavigationSheet(
 ) {
     val controller = rememberSystemUiController()
 
-    val actualBackgroundColor by backgroundColor.animated()
-    val actualContentColor by contentColor.animated()
-    val actualSelectedColor by selectedColor.animated()
+    val actualBackgroundColor by backgroundColor.animated("BottomNavigationSheetBackground")
+    val actualContentColor by contentColor.animated("BottomNavigationSheetContent")
+    val actualSelectedColor by selectedColor.animated("BottomNavigationSheetSelected")
     NavigationSheet(
         modifier = modifier,
         containerColor = actualBackgroundColor,
@@ -94,16 +97,20 @@ private fun NavigationBarItem(
     contentDestination: String? = null,
     tint: Color
 ) {
-    PlainTooltipBox(
-        tooltip = { Text(contentDestination.orEmpty()) }
+    TooltipBox(
+        positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+        state = rememberTooltipState(),
+        tooltip = {
+            PlainTooltip {
+                Text(contentDestination.orEmpty())
+            }
+        }
     ) {
         NavigationRailItem(
             selected = selected,
             onClick = onClick,
             icon = icon,
-            modifier = Modifier
-                .tooltipAnchor()
-                .then(modifier),
+            modifier = modifier,
             enabled = enabled,
             label = label,
             alwaysShowLabel = false,
