@@ -1,15 +1,17 @@
 package com.m3u.androidApp
 
 import android.app.PictureInPictureParams
+import android.graphics.Color
 import android.graphics.Rect
 import android.os.Bundle
 import android.util.Rational
 import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.core.app.PictureInPictureModeChangedInfo
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.util.Consumer
-import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import com.m3u.androidApp.ui.App
@@ -20,9 +22,9 @@ import dagger.hilt.android.AndroidEntryPoint
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
+        enableEdgeToEdge()
         installSplashScreen()
         super.onCreate(savedInstanceState)
-        WindowCompat.setDecorFitsSystemWindows(window, false)
         setContent {
             App(
                 connector = this::createHelper
@@ -64,6 +66,14 @@ class MainActivity : ComponentActivity() {
         override fun showSystemUI() {
             WindowInsetsControllerCompat(window, window.decorView)
                 .show(WindowInsetsCompat.Type.systemBars())
+        }
+
+        override fun detectDarkMode(handler: () -> Boolean) {
+            val darkMode = handler()
+            enableEdgeToEdge(
+                SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT) { !darkMode },
+                SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT) { true }
+            )
         }
 
         private var listener: Consumer<PictureInPictureModeChangedInfo>? = null

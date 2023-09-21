@@ -20,6 +20,7 @@ abstract class Helper {
     abstract fun enterPipMode(size: Rect)
     abstract fun hideSystemUI()
     abstract fun showSystemUI()
+    abstract fun detectDarkMode(handler: () -> Boolean)
     abstract fun registerOnUserLeaveHintListener(callback: () -> Unit)
     abstract fun unregisterOnUserLeaveHintListener()
     abstract fun registerOnPictureInPictureModeChangedListener(
@@ -60,6 +61,9 @@ val EmptyHelper = object : Helper() {
         error("addOnUserLeaveHintListener")
 
     override fun unregisterOnUserLeaveHintListener() = error("unregisterOnUserLeaveHintListener")
+    override fun detectDarkMode(handler: () -> Boolean) {
+        error("detectDarkMode")
+    }
 }
 
 val LocalHelper = staticCompositionLocalOf { EmptyHelper }

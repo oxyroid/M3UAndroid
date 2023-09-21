@@ -42,6 +42,7 @@ dependencies {
     implementation(project(":core"))
 
     implementation(libs.androidx.core.core.ktx)
+    implementation(libs.androidx.activity.activity.compose)
 
     implementation(libs.androidx.lifecycle.lifecycle.runtime.ktx)
 
@@ -55,8 +56,6 @@ dependencies {
     implementation(libs.androidx.tv.tv.material)
 
     api(libs.androidx.navigation.navigation.compose)
-
-    api(libs.com.google.accompanist.accompanist.systemuicontroller)
 
     implementation(libs.androidx.media3.media3.ui)
     implementation(libs.androidx.media3.media3.exoplayer)

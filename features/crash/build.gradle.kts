@@ -45,6 +45,7 @@ dependencies {
     implementation(project(":ui"))
 
     implementation(libs.androidx.core.core.ktx)
+    implementation(libs.androidx.activity.activity.compose)
 
     implementation(libs.androidx.lifecycle.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.lifecycle.runtime.compose)

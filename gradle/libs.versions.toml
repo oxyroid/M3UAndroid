@@ -2,7 +2,7 @@
 androidx-core = "1.12.0"
 androidx-core-splashscreen = "1.0.1"
 androidx-appcompat = "1.6.1"
-androidx-activity = "1.7.2"
+androidx-activity = "1.8.0-beta01"
 androidx-lifecycle = "2.6.2"
 androidx-compose = "1.5.1"
 androidx-compose-material3 = "1.2.0-alpha07"
@@ -49,8 +49,6 @@ androidx-compose-material-material-icons-extended = { group = "androidx.compose.
 androidx-navigation-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "androidx-navigation" }
 
 androidx-compose-material3-material3 = { group = "androidx.compose.material3", name = "material3", version.ref = "androidx-compose-material3" }
-
-com-google-accompanist-accompanist-systemuicontroller = { group = "com.google.accompanist", name = "accompanist-systemuicontroller", version.ref = "google-accompanist" }
 
 androidx-tv-tv-foundation = { group = "androidx.tv", name = "tv-foundation", version.ref = "androidx-tv" }
 androidx-tv-tv-material = { group = "androidx.tv", name = "tv-material", version.ref = "androidx-tv" }

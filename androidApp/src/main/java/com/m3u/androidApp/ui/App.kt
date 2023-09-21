@@ -17,11 +17,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.m3u.androidApp.components.BottomNavigationSheet
 import com.m3u.androidApp.components.OptimizeBanner
 import com.m3u.androidApp.components.PostDialog
@@ -44,6 +42,7 @@ import com.m3u.ui.model.Helper
 import com.m3u.ui.model.NightTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.milliseconds
 
 typealias HelperConnector =
             ((String) -> Unit, () -> String, (List<AppAction>) -> Unit, () -> List<AppAction>) -> Helper
@@ -86,62 +85,59 @@ fun App(
             }
         }
     }
-    val isSystemBarVisible =
-        currentDestination notDestinationTo Destination.Live::class.java &&
-                currentDestination notDestinationTo Destination.LivePlayList::class.java
-    val isBackPressedVisible = currentDestination.safeDestinationTo<Destination.Root>(true)
-
-    val systemUiController = rememberSystemUiController()
-    val scope = rememberCoroutineScope()
-    val isPlaying = remember(currentDestination) {
-        currentDestination destinationTo Destination.Live::class.java ||
-                currentDestination destinationTo Destination.LivePlayList::class.java
-    }
-    val cinemaMode = state.cinemaMode
-
-    val useDarkIcons = when {
-        cinemaMode -> false
-        isPlaying -> false
-        else -> !isSystemInDarkTheme()
-    }
-    DisposableEffect(
-        systemUiController,
-        useDarkIcons,
-        scope,
-        isPlaying,
-        cinemaMode
-    ) {
-        scope.launch {
-            if (!cinemaMode && isPlaying) {
-                delay(800)
-            }
-            systemUiController.setSystemBarsColor(
-                color = Color.Transparent,
-                darkIcons = useDarkIcons
-            )
-        }
-
-        onDispose {}
-    }
     LaunchedEffect(state.navigateTopLevelDestination) {
         state.navigateTopLevelDestination.handle {
             appState.navigateToTopLevelDestination(it)
         }
     }
+    val isSystemBarVisible =
+        currentDestination notDestinationTo Destination.Live::class.java &&
+                currentDestination notDestinationTo Destination.LivePlayList::class.java
+    val isBackPressedVisible = currentDestination.safeDestinationTo<Destination.Root>(true)
+
+    val cinemaMode = state.cinemaMode
     val theme = when {
         cinemaMode -> ABlackTheme
         isSystemInDarkTheme() -> NightTheme
         else -> DayTheme
     }
+    val helper = connector(
+        { viewModel.title.value = it },
+        viewModel.title::value,
+        { viewModel.actions.value = it },
+        viewModel.actions::value
+    )
     M3ULocalProvider(
-        helper = connector(
-            { viewModel.title.value = it },
-            viewModel.title::value,
-            { viewModel.actions.value = it },
-            viewModel.actions::value
-        ),
+        helper = helper,
         theme = theme
     ) {
+        val scope = rememberCoroutineScope()
+        val isPlaying = remember(currentDestination) {
+            currentDestination destinationTo Destination.Live::class.java ||
+                    currentDestination destinationTo Destination.LivePlayList::class.java
+        }
+        val useDarkIcons = when {
+            cinemaMode -> false
+            isPlaying -> false
+            else -> !isSystemInDarkTheme()
+        }
+        DisposableEffect(
+            useDarkIcons,
+            scope,
+            isPlaying,
+            cinemaMode
+        ) {
+            scope.launch {
+                if (!cinemaMode && isPlaying) {
+                    delay(800.milliseconds)
+                }
+                helper.detectDarkMode {
+                    useDarkIcons
+                }
+            }
+
+            onDispose {}
+        }
         Background {
             AppTopBar(
                 text = text,
