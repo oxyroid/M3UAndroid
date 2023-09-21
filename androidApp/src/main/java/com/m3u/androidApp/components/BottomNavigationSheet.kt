@@ -1,25 +1,22 @@
 package com.m3u.androidApp.components
 
+//import androidx.compose.material3.PlainTooltip
+//import androidx.compose.material3.TooltipBox
+//import androidx.compose.material3.TooltipDefaults
+//import androidx.compose.material3.rememberTooltipState
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.material.Icon
 import androidx.compose.material.LocalAbsoluteElevation
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.NavigationRailItem
 import androidx.compose.material.Text
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.PlainTooltip
-import androidx.compose.material3.TooltipBox
-import androidx.compose.material3.TooltipDefaults
-import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.m3u.androidApp.navigation.NavigateToTopLevelDestination
 import com.m3u.androidApp.navigation.TopLevelDestination
 import com.m3u.ui.components.NavigationSheet
@@ -36,8 +33,6 @@ fun BottomNavigationSheet(
     contentColor: Color = BottomSheetDefaults.navigationContentColor(),
     selectedColor: Color = BottomSheetDefaults.navigationSelectedColor(),
 ) {
-    val controller = rememberSystemUiController()
-
     val actualBackgroundColor by backgroundColor.animated("BottomNavigationSheetBackground")
     val actualContentColor by contentColor.animated("BottomNavigationSheetContent")
     val actualSelectedColor by selectedColor.animated("BottomNavigationSheetSelected")
@@ -74,18 +69,8 @@ fun BottomNavigationSheet(
             )
         }
     }
-
-
-    DisposableEffect(backgroundColor) {
-        controller.setNavigationBarColor(backgroundColor)
-        onDispose {
-            controller.setNavigationBarColor(Color.Transparent)
-        }
-    }
 }
 
-
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun NavigationBarItem(
     selected: Boolean,
@@ -97,27 +82,28 @@ private fun NavigationBarItem(
     contentDestination: String? = null,
     tint: Color
 ) {
-    TooltipBox(
-        positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
-        state = rememberTooltipState(),
-        tooltip = {
-            PlainTooltip {
-                Text(contentDestination.orEmpty())
-            }
-        }
-    ) {
-        NavigationRailItem(
-            selected = selected,
-            onClick = onClick,
-            icon = icon,
-            modifier = modifier,
-            enabled = enabled,
-            label = label,
-            alwaysShowLabel = false,
-            selectedContentColor = tint,
-            interactionSource = remember { MutableInteractionSource() },
-        )
-    }
+    // TODO: Enabled when [https://issuetracker.google.com/issues/299500338] fixed.
+//    TooltipBox(
+//        positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+//        state = rememberTooltipState(),
+//        tooltip = {
+//            PlainTooltip {
+//                Text(contentDestination.orEmpty())
+//            }
+//        }
+//    ) {
+    NavigationRailItem(
+        selected = selected,
+        onClick = onClick,
+        icon = icon,
+        modifier = modifier,
+        enabled = enabled,
+        label = label,
+        alwaysShowLabel = false,
+        selectedContentColor = tint,
+        interactionSource = remember { MutableInteractionSource() },
+    )
+//    }
 }
 
 object BottomSheetDefaults {

@@ -192,15 +192,16 @@ fun MaskButton(
         else tint
     }
     val currentKeepAlive by rememberUpdatedState(state::active)
-    TooltipBox(
-        positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
-        tooltip = {
-            PlainTooltip {
-                Text(text = contentDescription.uppercase())
-            }
-        },
-        state = tooltipState
-    ) {
+    // TODO: Enabled when [https://issuetracker.google.com/issues/299500338] fixed.
+//    TooltipBox(
+//        positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+//        tooltip = {
+//            PlainTooltip {
+//                Text(text = contentDescription.uppercase())
+//            }
+//        },
+//        state = tooltipState
+//    ) {
         IconButton(
             icon = icon,
             contentDescription = null,
@@ -211,7 +212,7 @@ fun MaskButton(
             modifier = modifier,
             tint = animatedColor
         )
-    }
+//    }
 }
 
 @OptIn(ExperimentalMaterialApi::class)
