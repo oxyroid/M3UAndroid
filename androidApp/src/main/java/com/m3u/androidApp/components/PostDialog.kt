@@ -27,7 +27,7 @@ internal typealias OnPrevious = () -> Unit
 internal typealias OnRead = () -> Unit
 
 internal sealed class PostDialogStatus {
-    object Idle : PostDialogStatus()
+    data object Idle : PostDialogStatus()
     data class Visible(
         val post: Post,
         val index: Int,

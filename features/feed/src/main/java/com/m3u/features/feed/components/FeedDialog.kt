@@ -70,7 +70,7 @@ internal fun FeedDialog(
 }
 
 internal sealed class DialogStatus {
-    object Idle : DialogStatus()
+    data object Idle : DialogStatus()
     data class Selections(val live: Live) : DialogStatus()
 }
 

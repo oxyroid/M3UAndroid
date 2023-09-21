@@ -6,10 +6,10 @@ sealed interface LiveEvent {
     data class InitSpecial(val liveId: Int) : Init
     data class InitPlayList(val initialIndex: Int, val ids: List<Int>) : Init
 
-    object SearchDlnaDevices : LiveEvent
-    object Record : LiveEvent
+    data object SearchDlnaDevices : LiveEvent
+    data object Record : LiveEvent
     data class InstallMedia(val url: String) : LiveEvent
-    object UninstallMedia : LiveEvent
-    object OnMuted : LiveEvent
+    data object UninstallMedia : LiveEvent
+    data object OnMuted : LiveEvent
     data class OnFavourite(val url: String) : LiveEvent
 }

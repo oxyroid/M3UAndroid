@@ -158,7 +158,7 @@ data class RootState(
 
 sealed class RootEvent {
     data class OnPost(val post: Post?) : RootEvent()
-    object OnNext : RootEvent()
-    object OnPrevious : RootEvent()
-    object OnRead : RootEvent()
+    data object OnNext : RootEvent()
+    data object OnPrevious : RootEvent()
+    data object OnRead : RootEvent()
 }

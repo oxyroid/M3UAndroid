@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.flow
 import kotlin.experimental.ExperimentalTypeInference
 
 sealed class Resource<out T> {
-    object Loading : Resource<Nothing>()
+    data object Loading : Resource<Nothing>()
     data class Success<out T>(
         val data: T
     ) : Resource<T>()

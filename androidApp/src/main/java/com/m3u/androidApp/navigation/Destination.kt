@@ -7,7 +7,7 @@ import com.m3u.features.live.navigation.livePlaylistRoute
 import com.m3u.features.live.navigation.liveRoute
 
 sealed interface Destination {
-    object Root : Destination
+    data object Root : Destination
 
     data class Feed(
         val url: String,
@@ -22,7 +22,7 @@ sealed interface Destination {
         val initial: Int
     ) : Destination
 
-    object Console : Destination
+    data object Console : Destination
 }
 
 inline infix fun <reified D : Destination> NavDestination?.destinationTo(clazz: Class<D>): Boolean {

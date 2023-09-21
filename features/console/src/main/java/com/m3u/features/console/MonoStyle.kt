@@ -8,10 +8,10 @@ import com.m3u.ui.model.LocalTheme
 sealed class MonoStyle(
     val prefix: String
 ) {
-    object Input : MonoStyle(">-")
-    object Error : MonoStyle("!-")
-    object HighLight : MonoStyle("#-")
-    object Common : MonoStyle("")
+    data object Input : MonoStyle(">-")
+    data object Error : MonoStyle("!-")
+    data object HighLight : MonoStyle("#-")
+    data object Common : MonoStyle("")
 
     val color: Color
         @Composable get() = when (this) {
