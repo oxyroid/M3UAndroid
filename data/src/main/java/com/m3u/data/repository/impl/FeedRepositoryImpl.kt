@@ -8,6 +8,7 @@ import androidx.compose.runtime.getValue
 import androidx.core.net.toFile
 import com.m3u.core.annotation.FeedStrategy
 import com.m3u.core.architecture.configuration.Configuration
+import com.m3u.core.architecture.logger.BannerLoggerImpl
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.execute
 import com.m3u.core.architecture.logger.sandBox
@@ -34,16 +35,14 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileNotFoundException
-import java.net.Proxy
 import javax.inject.Inject
 
 class FeedRepositoryImpl @Inject constructor(
     private val feedDao: FeedDao,
     private val liveDao: LiveDao,
-    private val logger: Logger,
+    @BannerLoggerImpl private val logger: Logger,
     configuration: Configuration,
     private val parser: PlaylistParser,
-    private val proxy: Proxy,
     @ApplicationContext private val context: Context
 ) : FeedRepository {
     private val connectTimeout by configuration.connectTimeout
@@ -190,8 +189,7 @@ class FeedRepositoryImpl @Inject constructor(
 
     private suspend fun parse(url: String): List<Live> = parser.execute(
         url = url,
-        connectTimeout = connectTimeout,
-        proxy = proxy
+        connectTimeout = connectTimeout
     )
         .map { it.toLive(url) }
 
