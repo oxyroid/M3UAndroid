@@ -15,7 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import com.m3u.data.database.entity.Post
 import com.m3u.ui.components.IconButton
-import com.m3u.ui.components.SheetDialog
+import com.m3u.ui.components.AppDialog
 import com.m3u.ui.components.SheetTextField
 import com.m3u.ui.components.TextButton
 import com.m3u.ui.model.LocalSpacing
@@ -46,7 +46,7 @@ internal fun PostDialog(
 ) {
     val theme = LocalTheme.current
     val spacing = LocalSpacing.current
-    SheetDialog(
+    AppDialog(
         visible = status != PostDialogStatus.Idle,
         onDismiss = onDismiss,
         content = {

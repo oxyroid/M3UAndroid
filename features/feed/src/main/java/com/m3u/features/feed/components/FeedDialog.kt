@@ -17,7 +17,7 @@ import com.m3u.data.database.entity.Live
 import com.m3u.features.feed.R
 import com.m3u.ui.components.SheetTextField
 import com.m3u.ui.components.SheetItem
-import com.m3u.ui.components.SheetDialog
+import com.m3u.ui.components.AppDialog
 import com.m3u.ui.model.LocalSpacing
 
 internal typealias OnUpdateDialogStatus = (DialogStatus) -> Unit
@@ -34,7 +34,7 @@ internal fun FeedDialog(
     onSavePicture: OnSavePicture,
     modifier: Modifier = Modifier
 ) {
-    SheetDialog(
+    AppDialog(
         visible = status != DialogStatus.Idle,
         onDismiss = {
             onUpdate(DialogStatus.Idle)

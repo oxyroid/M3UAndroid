@@ -28,7 +28,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.data.database.entity.Feed
 import com.m3u.features.main.components.FeedItem
 import com.m3u.features.main.components.MainDialog
-import com.m3u.features.main.components.MainDialogStatus
 import com.m3u.features.main.components.OnRename
 import com.m3u.features.main.components.OnUnsubscribe
 import com.m3u.features.main.model.FeedDetail
@@ -38,7 +37,7 @@ import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.Scalable
 import com.m3u.ui.util.interceptVolumeEvent
 
-private typealias ShowFeedBottomSheet = (Feed) -> Unit
+private typealias showDialog = (Feed) -> Unit
 typealias NavigateToFeed = (feed: Feed) -> Unit
 
 @Composable
@@ -96,8 +95,8 @@ private fun MainScreen(
     rename: OnRename,
     modifier: Modifier = Modifier
 ) {
-    var dialogStatus: MainDialogStatus by remember {
-        mutableStateOf(MainDialogStatus.Idle)
+    var dialog: MainDialog by remember {
+        mutableStateOf(MainDialog.Idle)
     }
     val configuration = LocalConfiguration.current
 
@@ -106,7 +105,7 @@ private fun MainScreen(
             PortraitOrientationContent(
                 feeds = feeds,
                 navigateToFeed = navigateToFeed,
-                showFeedBottomSheet = { dialogStatus = MainDialogStatus.Selections(it) },
+                showDialog = { dialog = MainDialog.Selections(it) },
                 modifier = modifier.fillMaxSize()
             )
         }
@@ -116,7 +115,7 @@ private fun MainScreen(
                 rowCount = rowCount,
                 feeds = feeds,
                 navigateToFeed = navigateToFeed,
-                showFeedBottomSheet = { dialogStatus = MainDialogStatus.Selections(it) },
+                showDialog = { dialog = MainDialog.Selections(it) },
                 modifier = modifier.fillMaxSize()
             )
         }
@@ -125,14 +124,14 @@ private fun MainScreen(
     }
 
     MainDialog(
-        status = dialogStatus,
-        update = { dialogStatus = it },
+        status = dialog,
+        update = { dialog = it },
         unsubscribe = unsubscribe,
         rename = rename
     )
 
-    BackHandler(dialogStatus != MainDialogStatus.Idle) {
-        dialogStatus = MainDialogStatus.Idle
+    BackHandler(dialog != MainDialog.Idle) {
+        dialog = MainDialog.Idle
     }
 }
 
@@ -140,7 +139,7 @@ private fun MainScreen(
 fun PortraitOrientationContent(
     feeds: List<FeedDetail>,
     navigateToFeed: NavigateToFeed,
-    showFeedBottomSheet: ShowFeedBottomSheet,
+    showDialog: showDialog,
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
@@ -163,7 +162,7 @@ fun PortraitOrientationContent(
                     navigateToFeed(detail.feed)
                 },
                 onLongClick = {
-                    showFeedBottomSheet(detail.feed)
+                    showDialog(detail.feed)
                 }
             )
         }
@@ -175,7 +174,7 @@ private fun LandscapeOrientationContent(
     rowCount: Int,
     feeds: List<FeedDetail>,
     navigateToFeed: NavigateToFeed,
-    showFeedBottomSheet: ShowFeedBottomSheet,
+    showDialog: showDialog,
     modifier: Modifier = Modifier
 ) {
     val scalable = LocalScalable.current
@@ -203,7 +202,7 @@ private fun LandscapeOrientationContent(
                     navigateToFeed(detail.feed)
                 },
                 onLongClick = {
-                    showFeedBottomSheet(detail.feed)
+                    showDialog(detail.feed)
                 }
             )
         }

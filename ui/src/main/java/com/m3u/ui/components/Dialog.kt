@@ -28,7 +28,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.LocalTheme
 
@@ -150,7 +149,7 @@ fun SheetItem(
 }
 
 @Composable
-fun SheetDialog(
+fun AppDialog(
     visible: Boolean,
     onDismiss: () -> Unit,
     content: @Composable ColumnScope.() -> Unit,
@@ -163,10 +162,7 @@ fun SheetDialog(
 
     if (visible) {
         Dialog(
-            onDismissRequest = onDismiss,
-            properties = DialogProperties(
-                decorFitsSystemWindows = false
-            )
+            onDismissRequest = onDismiss
         ) {
             Surface(
                 color = theme.background,

@@ -1,6 +1,5 @@
 package com.m3u.features.main.components
 
-import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.material.icons.Icons
@@ -17,38 +16,39 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import com.m3u.data.database.entity.Feed
 import com.m3u.features.main.R
-import com.m3u.ui.components.SheetDialog
+import com.m3u.ui.components.AppDialog
 import com.m3u.ui.components.SheetItem
 import com.m3u.ui.components.SheetTextField
 import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.LocalTheme
+import com.m3u.ui.util.animateDp
 
-internal typealias OnUpdateStatus = (MainDialogStatus) -> Unit
+internal typealias OnUpdateStatus = (MainDialog) -> Unit
 internal typealias OnUnsubscribe = (feedUrl: String) -> Unit
 internal typealias OnRename = (feedUrl: String, target: String) -> Unit
 
-internal sealed class MainDialogStatus {
-    object Idle : MainDialogStatus()
+internal sealed class MainDialog {
+    data object Idle : MainDialog()
     data class Selections(
         val feed: Feed
-    ) : MainDialogStatus()
+    ) : MainDialog()
 }
 
 @Composable
 internal fun MainDialog(
-    status: MainDialogStatus,
+    status: MainDialog,
     update: OnUpdateStatus,
     unsubscribe: OnUnsubscribe,
     rename: OnRename,
     modifier: Modifier = Modifier
 ) {
     var editMode by remember { mutableStateOf(false) }
-    val borderWidth by animateDpAsState(if (editMode) 6.dp else 2.dp)
-    SheetDialog(
-        visible = status is MainDialogStatus.Selections,
+    val borderWidth by animateDp("MainDialogBorder") { if (editMode) 6.dp else 2.dp }
+    AppDialog(
+        visible = status is MainDialog.Selections,
         onDismiss = {
             if (!editMode) {
-                update(MainDialogStatus.Idle)
+                update(MainDialog.Idle)
             }
         },
         border = BorderStroke(
@@ -60,8 +60,8 @@ internal fun MainDialog(
         content = {
             val theme = LocalTheme.current
             val context = LocalContext.current
-            val currentStatus = remember { status as MainDialogStatus.Selections }
-            if (status is MainDialogStatus.Selections) {
+            val currentStatus = remember { status as MainDialog.Selections }
+            if (status is MainDialog.Selections) {
                 var renamedText by remember {
                     mutableStateOf(
                         if (!currentStatus.feed.isTemplated()) currentStatus.feed.title
@@ -85,14 +85,14 @@ internal fun MainDialog(
                 if (!editMode) {
                     SheetItem(R.string.unsubscribe_feed) {
                         unsubscribe(currentStatus.feed.url)
-                        update(MainDialogStatus.Idle)
+                        update(MainDialog.Idle)
                     }
                     if (!currentStatus.feed.isTemplated()) {
                         val clipboardManager = LocalClipboardManager.current
                         SheetItem(R.string.copy_feed_url) {
                             val annotatedString = AnnotatedString(currentStatus.feed.url)
                             clipboardManager.setText(annotatedString)
-                            update(MainDialogStatus.Idle)
+                            update(MainDialog.Idle)
                         }
                     }
                 }
