@@ -5,7 +5,6 @@ plugins {
     alias(libs.plugins.org.jetbrains.kotlin.android)
     alias(libs.plugins.com.google.devtools.ksp)
     alias(libs.plugins.com.google.dagger.hilt.android)
-    id("kotlin-kapt")
 }
 
 android {
@@ -53,6 +52,6 @@ dependencies {
     implementation(libs.androidx.media3.media3.exoplayer)
 
     implementation(libs.com.google.dagger.hilt.android)
-    kapt(libs.com.google.dagger.hilt.compiler)
     implementation(libs.androidx.hilt.hilt.navigation.compose)
+    ksp(libs.com.google.dagger.hilt.compiler)
 }

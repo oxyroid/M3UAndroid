@@ -2,7 +2,6 @@ package com.m3u.ui.components
 
 import androidx.annotation.IntRange
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
@@ -21,8 +20,10 @@ import androidx.compose.material.LocalContentColor
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.PlainTooltipBox
-import androidx.compose.material3.PlainTooltipState
+import androidx.compose.material3.PlainTooltip
+import androidx.compose.material3.TooltipBox
+import androidx.compose.material3.TooltipDefaults
+import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -39,6 +40,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.isUnspecified
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import com.m3u.ui.util.animateColor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -175,7 +177,7 @@ fun MaskButton(
     tint: Color = Color.Unspecified,
     contentDescription: String,
 ) {
-    val tooltipState = remember { PlainTooltipState() }
+    val tooltipState = rememberTooltipState()
 
     LaunchedEffect(tooltipState.isVisible) {
         if (tooltipState.isVisible) {
@@ -185,14 +187,19 @@ fun MaskButton(
         }
     }
 
-    val animatedColor by animateColorAsState(
+    val animatedColor by animateColor("MaskButtonTint") {
         if (tint.isUnspecified) LocalContentColor.current.copy(alpha = LocalContentAlpha.current)
         else tint
-    )
+    }
     val currentKeepAlive by rememberUpdatedState(state::active)
-    PlainTooltipBox(
-        tooltipState = tooltipState,
-        tooltip = { Text(text = contentDescription) }
+    TooltipBox(
+        positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+        tooltip = {
+            PlainTooltip {
+                Text(text = contentDescription.uppercase())
+            }
+        },
+        state = tooltipState
     ) {
         IconButton(
             icon = icon,
@@ -201,7 +208,7 @@ fun MaskButton(
                 currentKeepAlive()
                 onClick()
             },
-            modifier = modifier.tooltipAnchor(),
+            modifier = modifier,
             tint = animatedColor
         )
     }

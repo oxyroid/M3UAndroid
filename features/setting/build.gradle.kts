@@ -5,7 +5,6 @@ plugins {
     alias(libs.plugins.org.jetbrains.kotlin.android)
     alias(libs.plugins.com.google.devtools.ksp)
     alias(libs.plugins.com.google.dagger.hilt.android)
-    id("kotlin-kapt")
 }
 
 android {
@@ -51,10 +50,10 @@ dependencies {
     implementation(libs.androidx.lifecycle.lifecycle.runtime.compose)
 
     implementation(libs.com.google.dagger.hilt.android)
-    kapt(libs.com.google.dagger.hilt.compiler)
+    ksp(libs.com.google.dagger.hilt.compiler)
     implementation(libs.androidx.hilt.hilt.navigation.compose)
 
     implementation(libs.androidx.work.work.runtime.ktx)
-    kapt(libs.androidx.hilt.hilt.compiler)
+    ksp(libs.androidx.hilt.hilt.compiler)
     implementation(libs.androidx.hilt.hilt.work)
 }

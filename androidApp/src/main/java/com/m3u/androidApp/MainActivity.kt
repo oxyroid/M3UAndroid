@@ -6,33 +6,25 @@ import android.os.Bundle
 import android.util.Rational
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.core.app.PictureInPictureModeChangedInfo
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.util.Consumer
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
-import com.google.accompanist.navigation.animation.rememberAnimatedNavController
 import com.m3u.androidApp.ui.App
-import com.m3u.androidApp.ui.rememberAppState
 import com.m3u.ui.model.AppAction
 import com.m3u.ui.model.Helper
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-    @OptIn(ExperimentalAnimationApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         super.onCreate(savedInstanceState)
         WindowCompat.setDecorFitsSystemWindows(window, false)
         setContent {
-            val state = rememberAppState(
-                navController = rememberAnimatedNavController()
-            )
             App(
-                appState = state,
                 connector = this::createHelper
             )
         }

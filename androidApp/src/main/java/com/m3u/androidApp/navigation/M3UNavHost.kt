@@ -1,6 +1,5 @@
 package com.m3u.androidApp.navigation
 
-import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -8,7 +7,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
-import com.google.accompanist.navigation.animation.AnimatedNavHost
+import androidx.navigation.compose.NavHost
 import com.m3u.androidApp.ui.NavigateToDestination
 import com.m3u.features.console.navigation.consoleScreen
 import com.m3u.features.feed.navigation.feedScreen
@@ -17,7 +16,6 @@ import com.m3u.features.live.navigation.liveScreen
 import com.m3u.features.main.R
 import com.m3u.ui.model.LocalHelper
 
-@OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun M3UNavHost(
     navController: NavHostController,
@@ -30,7 +28,7 @@ fun M3UNavHost(
 ) {
     val helper = LocalHelper.current
     val context = LocalContext.current
-    AnimatedNavHost(
+    NavHost(
         navController = navController,
         startDestination = startDestination,
         enterTransition = { fadeIn(tween(0)) },

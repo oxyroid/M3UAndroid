@@ -56,7 +56,6 @@ dependencies {
 
     api(libs.androidx.navigation.navigation.compose)
 
-    api(libs.com.google.accompanist.accompanist.navigation.animation)
     api(libs.com.google.accompanist.accompanist.systemuicontroller)
 
     implementation(libs.androidx.media3.media3.ui)

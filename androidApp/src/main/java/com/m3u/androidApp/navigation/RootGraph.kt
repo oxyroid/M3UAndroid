@@ -1,7 +1,6 @@
 package com.m3u.androidApp.navigation
 
 import android.util.Log
-import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.pager.HorizontalPager
@@ -14,7 +13,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
-import com.google.accompanist.navigation.animation.composable
+import androidx.navigation.compose.composable
 import com.m3u.features.favorite.FavouriteRoute
 import com.m3u.features.favorite.NavigateToLive
 import com.m3u.features.main.MainRoute
@@ -30,7 +29,6 @@ fun NavController.popupToRoot() {
     this.popBackStack(rootNavigationRoute, false)
 }
 
-@OptIn(ExperimentalAnimationApi::class)
 fun NavGraphBuilder.rootGraph(
     destinations: List<TopLevelDestination>,
     currentPage: Int,
@@ -64,7 +62,9 @@ private fun RootGraph(
     navigateToConsole: NavigateToConsole,
     modifier: Modifier = Modifier
 ) {
-    val pagerState = rememberPagerState()
+    val pagerState = rememberPagerState {
+        destinations.size
+    }
     val actualOnCurrentPage by rememberUpdatedState(onCurrentPage)
 
     LaunchedEffect(pagerState) {
@@ -99,7 +99,6 @@ private fun RootGraph(
     }
     HorizontalPager(
         state = pagerState,
-        pageCount = destinations.size,
         modifier = modifier
     ) { pagerIndex ->
         when (destinations[pagerIndex]) {

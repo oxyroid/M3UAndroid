@@ -3,8 +3,8 @@
 plugins {
     alias(libs.plugins.com.android.library)
     alias(libs.plugins.org.jetbrains.kotlin.android)
+    alias(libs.plugins.com.google.devtools.ksp)
     id("kotlin-parcelize")
-    id("kotlin-kapt")
 }
 
 android {
@@ -43,5 +43,5 @@ dependencies {
     implementation(libs.androidx.media3.media3.exoplayer)
     implementation(libs.androidx.media3.media3.session)
     implementation(libs.com.google.dagger.hilt.android)
-    kapt(libs.com.google.dagger.hilt.compiler)
+    ksp(libs.com.google.dagger.hilt.compiler)
 }

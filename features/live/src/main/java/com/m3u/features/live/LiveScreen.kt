@@ -23,15 +23,15 @@ import androidx.compose.material.LocalContentColor
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.ArrowBack
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.automirrored.rounded.VolumeMute
+import androidx.compose.material.icons.automirrored.rounded.VolumeUp
 import androidx.compose.material.icons.rounded.Cast
 import androidx.compose.material.icons.rounded.PictureInPicture
 import androidx.compose.material.icons.rounded.RadioButtonChecked
 import androidx.compose.material.icons.rounded.RadioButtonUnchecked
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Star
-import androidx.compose.material.icons.rounded.VolumeMute
-import androidx.compose.material.icons.rounded.VolumeUp
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -211,10 +211,11 @@ private fun LiveScreen(
         }
 
         is LiveState.InitPlayList -> {
-            val pagerState = rememberPagerState(init.initialIndex)
+            val pagerState = rememberPagerState(init.initialIndex) {
+                init.lives.size
+            }
             VerticalPager(
                 state = pagerState,
-                pageCount = init.lives.size,
                 modifier = modifier
                     .fillMaxSize()
                     .background(theme.background)
@@ -320,7 +321,7 @@ private fun LivePart(
                 header = {
                     MaskButton(
                         state = maskState,
-                        icon = Icons.Rounded.ArrowBack,
+                        icon = Icons.AutoMirrored.Rounded.ArrowBack,
                         onClick = onBackPressed,
                         contentDescription = stringResource(R.string.tooltip_on_back_pressed)
                     )
@@ -329,8 +330,8 @@ private fun LivePart(
                     )
                     MaskButton(
                         state = maskState,
-                        icon = if (muted) Icons.Rounded.VolumeMute
-                        else Icons.Rounded.VolumeUp,
+                        icon = if (muted) Icons.AutoMirrored.Rounded.VolumeMute
+                        else Icons.AutoMirrored.Rounded.VolumeUp,
                         onClick = onMuted,
                         contentDescription = if (muted) stringResource(R.string.tooltip_unmute)
                         else stringResource(R.string.tooltip_mute)

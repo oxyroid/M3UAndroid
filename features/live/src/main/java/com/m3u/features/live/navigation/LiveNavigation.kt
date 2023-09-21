@@ -1,6 +1,5 @@
 package com.m3u.features.live.navigation
 
-import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
@@ -8,9 +7,9 @@ import androidx.compose.animation.slideOutVertically
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavType
+import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import androidx.navigation.navOptions
-import com.google.accompanist.navigation.animation.composable
 import com.m3u.core.util.transform.IntIterativeTransferable
 import com.m3u.features.live.LiveEvent
 import com.m3u.features.live.LiveRoute
@@ -45,7 +44,6 @@ fun NavController.navigateToLivePlayList(ids: List<Int>, initialIndex: Int) {
     this.navigate(route, navOptions)
 }
 
-@OptIn(ExperimentalAnimationApi::class)
 fun NavGraphBuilder.liveScreen(
     onBackPressed: () -> Unit
 ) {
@@ -73,7 +71,6 @@ fun NavGraphBuilder.liveScreen(
     }
 }
 
-@OptIn(ExperimentalAnimationApi::class)
 fun NavGraphBuilder.livePlaylistScreen(
     onBackPressed: () -> Unit
 ) {

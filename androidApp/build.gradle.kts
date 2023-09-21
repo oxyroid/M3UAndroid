@@ -4,12 +4,12 @@ plugins {
     alias(libs.plugins.com.android.application)
     alias(libs.plugins.org.jetbrains.kotlin.android)
     alias(libs.plugins.com.google.dagger.hilt.android)
-    id("kotlin-kapt")
+    alias(libs.plugins.com.google.devtools.ksp)
 }
 
 android {
     namespace = "com.m3u.androidApp"
-    compileSdk = 33
+    compileSdk = 34
     defaultConfig {
         applicationId = "com.m3u.androidApp"
         minSdk = 26
@@ -45,6 +45,10 @@ android {
     }
 }
 
+hilt {
+    enableAggregatingTask = true
+}
+
 dependencies {
     implementation(project(":core"))
     implementation(project(":data"))
@@ -68,10 +72,10 @@ dependencies {
     implementation(libs.androidx.core.core.splashscreen)
 
     implementation(libs.com.google.dagger.hilt.android)
-    kapt(libs.com.google.dagger.hilt.compiler)
+    ksp(libs.com.google.dagger.hilt.compiler)
     implementation(libs.androidx.hilt.hilt.navigation.compose)
 
     implementation(libs.androidx.work.work.runtime.ktx)
-    kapt(libs.androidx.hilt.hilt.compiler)
+    ksp(libs.androidx.hilt.hilt.compiler)
     implementation(libs.androidx.hilt.hilt.work)
 }
