@@ -67,7 +67,7 @@ class SettingViewModel @Inject constructor(
             SettingEvent.OnExperimentalMode -> onExperimentalMode()
             SettingEvent.OnClipMode -> onClipMode()
             is SettingEvent.OnBannedLive -> onBannedLive(event.id)
-            SettingEvent.OnInitialDestination -> onInitialTabIndex()
+            SettingEvent.ScrollDefaultDestination -> scrollDefaultDestination()
             SettingEvent.OnSilentMode -> onSilentMode()
             is SettingEvent.ImportJavaScript -> importJavaScript(event.uri)
         }
@@ -88,11 +88,11 @@ class SettingViewModel @Inject constructor(
         }
     }
 
-    private fun onInitialTabIndex() {
-        val maxIndex = publisher.destinationsCount
-        val currentIndex = readable.initialDestinationIndex
-        val targetIndex = (currentIndex + 1).takeIf { it <= maxIndex } ?: 0
-        readable.initialDestinationIndex = targetIndex
+    private fun scrollDefaultDestination() {
+        val max = publisher.destinationsCount
+        val current = readable.defaultDestination
+        val target = (current + 1).takeIf { it <= max } ?: 0
+        readable.defaultDestination = target
     }
 
     private fun onBannedLive(liveId: Int) {

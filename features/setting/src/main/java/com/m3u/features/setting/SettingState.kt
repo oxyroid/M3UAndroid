@@ -26,7 +26,7 @@ data class SettingState(
     var autoRefresh: Boolean by configuration.autoRefresh
     var isSSLVerification: Boolean by configuration.isSSLVerification
     var fullInfoPlayer: Boolean by configuration.fullInfoPlayer
-    var initialDestinationIndex: Int by configuration.initialTabIndex
+    var defaultDestination: Int by configuration.initialTabIndex
     var noPictureMode: Boolean by configuration.noPictureMode
     var silentMode: Boolean by configuration.silentMode
     var cinemaMode: Boolean by configuration.cinemaMode
