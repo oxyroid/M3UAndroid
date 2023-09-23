@@ -47,4 +47,5 @@
     <string name="cinema_mode_description">use OLED black theme</string>
     <string name="script_management_import_js">import Javascript</string>
     <string name="enqueue_subscribe">a subscription task has been added to the queue</string>
+    <string name="project_about">about project</string>
 </resources>
