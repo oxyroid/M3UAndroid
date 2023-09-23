@@ -3,6 +3,7 @@
 If you want to contribute to this repository, follow these steps:
 
 1. **Fork the Repository**
+> Unselect `copy master branch only` if you want to base other branches.
 
 2. **Configure Your IDE (IDEA or Android Studio)**
     - Navigate to `Settings` -> `Editor` -> `Code Style` -> `Kotlin` (Choose Project Schema) -> `Imports`.
