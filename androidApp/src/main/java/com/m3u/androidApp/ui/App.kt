@@ -32,7 +32,6 @@ import com.m3u.androidApp.navigation.safeDestinationTo
 import com.m3u.data.database.entity.Post
 import com.m3u.ui.M3ULocalProvider
 import com.m3u.ui.components.AppTopBar
-import com.m3u.ui.components.Background
 import com.m3u.ui.components.IconButton
 import com.m3u.ui.model.ABlackTheme
 import com.m3u.ui.model.AppAction
@@ -93,7 +92,9 @@ fun App(
     val isSystemBarVisible =
         currentDestination notDestinationTo Destination.Live::class.java &&
                 currentDestination notDestinationTo Destination.LivePlayList::class.java
-    val isBackPressedVisible = currentDestination.safeDestinationTo<Destination.Root>(true)
+    val isBackPressedVisible = with(currentDestination) {
+        safeDestinationTo<Destination.Root>(true)
+    }
 
     val cinemaMode = state.cinemaMode
     val theme = when {
@@ -138,69 +139,67 @@ fun App(
 
             onDispose {}
         }
-        Background {
-            AppTopBar(
-                text = text,
-                visible = isSystemBarVisible,
-                scrollable = currentDestination notDestinationTo Destination.Root::class.java,
-                actions = {
-                    val actions by viewModel.actions.collectAsStateWithLifecycle()
-                    actions.forEach { action ->
-                        IconButton(
-                            icon = action.icon,
-                            contentDescription = action.contentDescription,
-                            onClick = action.onClick
-                        )
-                    }
-                },
-                onBackPressed = if (isBackPressedVisible) null else appState::onBackClick
-            ) { padding ->
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(padding),
-                    verticalArrangement = Arrangement.Bottom,
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    M3UNavHost(
-                        navController = appState.navController,
-                        currentPage = appState.currentPage,
-                        onCurrentPage = { appState.currentPage = it },
-                        destinations = topLevelDestinations,
-                        navigateToDestination = appState::navigateToDestination,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .weight(1f)
+        AppTopBar(
+            text = text,
+            visible = isSystemBarVisible,
+            scrollable = currentDestination notDestinationTo Destination.Root::class.java,
+            actions = {
+                val actions by viewModel.actions.collectAsStateWithLifecycle()
+                actions.forEach { action ->
+                    IconButton(
+                        icon = action.icon,
+                        contentDescription = action.contentDescription,
+                        onClick = action.onClick
                     )
-                    AnimatedVisibility(isSystemBarVisible) {
-                        Column {
-                            OptimizeBanner(
-                                post = posts.firstOrNull(),
-                                onPost = onPost,
-                                modifier = Modifier.fillMaxWidth()
-                            )
-                            BottomNavigationSheet(
-                                destinations = topLevelDestinations,
-                                index = appState.currentPage,
-                                navigateToTopLevelDestination = {
-                                    appState.navigateToTopLevelDestination(it)
-                                },
-                                modifier = Modifier.fillMaxWidth()
-                            )
-                        }
+                }
+            },
+            onBackPressed = if (isBackPressedVisible) null else appState::onBackClick
+        ) { padding ->
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding),
+                verticalArrangement = Arrangement.Bottom,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                M3UNavHost(
+                    navController = appState.navController,
+                    currentPage = appState.currentPage,
+                    onCurrentPage = { appState.currentPage = it },
+                    destinations = topLevelDestinations,
+                    navigateToDestination = appState::navigateToDestination,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+                )
+                AnimatedVisibility(isSystemBarVisible) {
+                    Column {
+                        OptimizeBanner(
+                            post = posts.firstOrNull(),
+                            onPost = onPost,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        BottomNavigationSheet(
+                            destinations = topLevelDestinations,
+                            index = appState.currentPage,
+                            navigateToTopLevelDestination = {
+                                appState.navigateToTopLevelDestination(it)
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        )
                     }
                 }
             }
-            PostDialog(
-                status = postDialogStatus,
-                onDismiss = { onPost(null) },
-                onNext = { viewModel.onEvent(RootEvent.OnNext) },
-                onPrevious = { viewModel.onEvent(RootEvent.OnPrevious) },
-                onRead = { viewModel.onEvent(RootEvent.OnRead) }
-            )
-            BackHandler(postDialogStatus != PostDialogStatus.Idle) {
-                postDialogStatus = PostDialogStatus.Idle
-            }
+        }
+        PostDialog(
+            status = postDialogStatus,
+            onDismiss = { onPost(null) },
+            onNext = { viewModel.onEvent(RootEvent.OnNext) },
+            onPrevious = { viewModel.onEvent(RootEvent.OnPrevious) },
+            onRead = { viewModel.onEvent(RootEvent.OnRead) }
+        )
+        BackHandler(postDialogStatus != PostDialogStatus.Idle) {
+            postDialogStatus = PostDialogStatus.Idle
         }
     }
 }
