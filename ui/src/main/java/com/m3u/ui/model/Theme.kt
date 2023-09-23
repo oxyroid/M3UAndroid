@@ -1,6 +1,6 @@
 package com.m3u.ui.model
 
-import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.graphics.Color
 
 data class Theme(
@@ -31,7 +31,7 @@ data class Theme(
     val divider: Color
 )
 
-val LocalTheme = staticCompositionLocalOf { DayTheme }
+val LocalTheme = compositionLocalOf { DayTheme }
 
 val DayTheme = Theme(
     name = "Day",
@@ -94,7 +94,7 @@ val ABlackTheme = Theme(
     isDark = true,
     isDarkText = false,
     tint = Color.White,
-    surface = Color.Transparent,
+    surface = Color(0xff000000),
     onSurface = Color(0xFFeeeeee),
     topBar = Color(0xff1C1B1F),
     onTopBar = Color(0xFFE6E1E5),
