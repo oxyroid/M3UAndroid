@@ -24,14 +24,14 @@ If you want to contribute to this repository, follow these steps:
 
 4. **Commit Rules**
     - Follow this format for your commits: "lower-case", "space after the colon", "end with a period".
-    - Use this format: `{catalog}: {description}`.
+    - Use this format: `{catalog}: {description}.`.
     - Examples:
-        - `feat: new screen feature`
-        - `fix: bug fix`
-        - `docs: markdown files or comments update`
-        - `build: gradle files or project structure update`
-        - `upgrade (master only): release new version`
-        - `style: code style or naming update`
+        - `feat: new screen feature.`
+        - `fix: bug fix.`
+        - `docs: markdown files or comments update.`
+        - `build: gradle files or project structure update.`
+        - `upgrade (master only): release new version.`
+        - `style: code style or naming update.`
         - `etc`
 
 5. **Coding in Your Branch**
