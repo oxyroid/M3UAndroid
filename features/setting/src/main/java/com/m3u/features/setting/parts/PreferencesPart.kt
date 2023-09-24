@@ -26,7 +26,7 @@ import com.m3u.core.annotation.OnFeedStrategy
 import com.m3u.features.setting.NavigateToConsole
 import com.m3u.features.setting.R
 import com.m3u.features.setting.components.CheckBoxPreference
-import com.m3u.features.setting.components.FoldPreference
+import com.m3u.features.setting.components.Preference
 import com.m3u.features.setting.components.TextPreference
 import com.m3u.ui.model.LocalSpacing
 
@@ -80,7 +80,7 @@ internal fun PreferencesPart(
                     .clip(RoundedCornerShape(spacing.medium)),
                 verticalArrangement = Arrangement.spacedBy(1.dp)
             ) {
-                FoldPreference(
+                Preference(
                     title = stringResource(R.string.feed_management),
                     enabled = true,
                     onClick = onFeedManagement
@@ -219,12 +219,12 @@ internal fun PreferencesPart(
                                 }
                             }
                         )
-                        FoldPreference(
+                        Preference(
                             title = stringResource(R.string.script_management),
                             enabled = true,
                             onClick = onScriptManagement
                         )
-                        FoldPreference(
+                        Preference(
                             title = stringResource(R.string.console_editor),
                             onClick = navigateToConsole
                         )
@@ -259,7 +259,7 @@ internal fun PreferencesPart(
                 verticalArrangement = Arrangement.spacedBy(1.dp)
             ) {
                 val context = LocalContext.current
-                FoldPreference(
+                Preference(
                     title = stringResource(R.string.system_setting),
                     onClick = {
                         val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
@@ -268,7 +268,7 @@ internal fun PreferencesPart(
                         context.startActivity(intent)
                     }
                 )
-                FoldPreference(
+                Preference(
                     title = stringResource(R.string.app_version),
                     subtitle = version,
                     enabled = false,
