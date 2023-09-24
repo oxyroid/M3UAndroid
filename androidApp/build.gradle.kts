@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace = "com.m3u.androidApp"
-    compileSdk = 34
+    compileSdk = 33
     defaultConfig {
         applicationId = "com.m3u.androidApp"
         minSdk = 26
