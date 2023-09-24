@@ -25,6 +25,7 @@
             <option value="$PROJECT_DIR$/ui" />
           </set>
         </option>
+        <option name="resolveExternalAnnotations" value="false" />
       </GradleProjectSettings>
     </option>
   </component>

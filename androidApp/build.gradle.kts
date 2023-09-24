@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace = "com.m3u.androidApp"
-    compileSdk = 33
+    compileSdk = 34
     defaultConfig {
         applicationId = "com.m3u.androidApp"
         minSdk = 26
@@ -37,6 +37,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     composeOptions {
         kotlinCompilerExtensionVersion = libs.versions.compose.compiler.get()
