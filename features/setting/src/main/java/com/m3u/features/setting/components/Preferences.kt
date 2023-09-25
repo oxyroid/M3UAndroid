@@ -13,9 +13,12 @@ import androidx.compose.material.Checkbox
 import androidx.compose.material.CheckboxDefaults
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.ListItem
+import androidx.compose.material.LocalContentColor
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
+import androidx.compose.material.minimumInteractiveComponentSize
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.TooltipBox
 import androidx.compose.material3.TooltipDefaults
@@ -28,6 +31,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.capitalize
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.intl.Locale
@@ -36,7 +40,7 @@ import androidx.compose.ui.unit.sp
 import com.m3u.core.util.basic.title
 import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.LocalTheme
-import com.m3u.ui.util.animated
+import com.m3u.ui.ktx.animated
 
 @OptIn(
     ExperimentalMaterialApi::class,
@@ -46,14 +50,14 @@ import com.m3u.ui.util.animated
 @Composable
 internal fun Preference(
     title: String,
-    onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     subtitle: String? = null,
+    onClick: () -> Unit = {},
     trailingContent: @Composable () -> Unit = {}
 ) {
     val theme = LocalTheme.current
-    var hasFocus by remember { mutableStateOf(false) }
+    var focus by remember { mutableStateOf(false) }
     val actualBackgroundColor by theme.surface.animated("FoldPreferenceBackground")
 
     TooltipBox(
@@ -91,7 +95,7 @@ internal fun Preference(
                         lineHeight = 16.sp,
                         modifier = Modifier
                             .let {
-                                if (hasFocus) it.basicMarquee()
+                                if (focus) it.basicMarquee()
                                 else it
                             }
                     )
@@ -102,7 +106,7 @@ internal fun Preference(
             modifier = modifier
                 .fillMaxWidth()
                 .onFocusChanged {
-                    hasFocus = it.hasFocus
+                    focus = it.hasFocus
                 }
                 .focusable()
                 .clickable(
@@ -146,6 +150,34 @@ internal fun CheckBoxPreference(
                     checkedColor = LocalTheme.current.primary,
                 )
             )
+        }
+    )
+}
+
+@Composable
+internal fun IconPreference(
+    title: String,
+    imageVector: ImageVector,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    subtitle: String? = null,
+    enabled: Boolean = true,
+) {
+    Preference(
+        title = title,
+        subtitle = subtitle,
+        enabled = enabled,
+        onClick = onClick,
+        modifier = modifier,
+        trailingContent = {
+            Icon(
+                imageVector = imageVector,
+                contentDescription = null,
+                tint = LocalContentColor.current.copy(alpha = 0.65f),
+                modifier = Modifier.minimumInteractiveComponentSize()
+            )
+
+
         }
     )
 }

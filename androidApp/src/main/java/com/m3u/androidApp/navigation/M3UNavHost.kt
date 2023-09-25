@@ -9,6 +9,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import com.m3u.androidApp.ui.NavigateToDestination
+import com.m3u.features.about.navigation.aboutScreen
 import com.m3u.features.console.navigation.consoleScreen
 import com.m3u.features.feed.navigation.feedScreen
 import com.m3u.features.live.navigation.livePlaylistScreen
@@ -51,6 +52,9 @@ fun M3UNavHost(
             },
             navigateToConsole = {
                 navigateToDestination(Destination.Console)
+            },
+            navigateToAbout = {
+                navigateToDestination(Destination.About)
             }
         )
 
@@ -73,5 +77,6 @@ fun M3UNavHost(
             }
         )
         consoleScreen()
+        aboutScreen()
     }
 }
