@@ -37,7 +37,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -58,10 +58,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.lerp
 import com.m3u.ui.R
+import com.m3u.ui.ktx.animated
 import com.m3u.ui.model.LocalDuration
 import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.LocalTheme
-import com.m3u.ui.util.animated
 
 @Suppress("unused")
 interface AppTopBarConsumer {
@@ -103,7 +103,7 @@ fun AppTopBar(
     val maxHeightPx = with(density) { maxHeightDp.roundToPx().toFloat() }
     val minHeightPx = with(density) { minHeightDp.roundToPx().toFloat() }
 
-    var offsetHeightPx by remember { mutableStateOf(maxHeightPx) }
+    var offsetHeightPx by remember { mutableFloatStateOf(maxHeightPx) }
 
     LaunchedEffect(scrollable) {
         if (!scrollable) {
@@ -145,7 +145,8 @@ fun AppTopBar(
                 if (!visible) minHeightDp
                 else with(density) {
                     offsetHeightPx.toDp()
-                }
+                },
+                label = "TopBarContentPaddingTop"
             )
 
             val direction = LocalLayoutDirection.current
