@@ -1,4 +1,4 @@
-package com.m3u.ui.util
+package com.m3u.ui.ktx
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState

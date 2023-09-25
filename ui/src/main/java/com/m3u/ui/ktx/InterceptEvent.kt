@@ -1,4 +1,4 @@
-package com.m3u.ui.util
+package com.m3u.ui.ktx
 
 import android.view.KeyEvent
 import androidx.annotation.IntDef
