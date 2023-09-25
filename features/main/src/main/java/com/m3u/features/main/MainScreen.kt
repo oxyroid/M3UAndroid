@@ -35,7 +35,7 @@ import com.m3u.ui.model.LocalHelper
 import com.m3u.ui.model.LocalScalable
 import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.Scalable
-import com.m3u.ui.util.interceptVolumeEvent
+import com.m3u.ui.ktx.interceptVolumeEvent
 
 private typealias showDialog = (Feed) -> Unit
 typealias NavigateToFeed = (feed: Feed) -> Unit

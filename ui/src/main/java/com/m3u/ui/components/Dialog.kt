@@ -28,11 +28,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.LocalTheme
 
 @Composable
-fun SheetTextField(
+fun DialogTextField(
     text: String,
     modifier: Modifier = Modifier,
     backgroundColor: Color = Color.Unspecified,
@@ -80,7 +81,7 @@ fun SheetTextField(
 }
 
 @Composable
-fun SheetItem(
+fun DialogItem(
     text: String,
     color: Color = Color.Unspecified,
     contentColor: Color = Color.Unspecified,
@@ -113,7 +114,7 @@ fun SheetItem(
 }
 
 @Composable
-fun SheetTextField(
+fun DialogTextField(
     resId: Int,
     color: Color = LocalTheme.current.onBackground,
     onTextChange: (String) -> Unit,
@@ -122,7 +123,7 @@ fun SheetTextField(
     readOnly: Boolean = true,
     onIconClick: (() -> Unit)? = null,
 ) {
-    SheetTextField(
+    DialogTextField(
         text = stringResource(id = resId),
         backgroundColor = color,
         onTextChange = onTextChange,
@@ -134,13 +135,13 @@ fun SheetTextField(
 }
 
 @Composable
-fun SheetItem(
+fun DialogItem(
     resId: Int,
     color: Color = Color.Unspecified,
     contentColor: Color = Color.Unspecified,
     onClick: () -> Unit,
 ) {
-    SheetItem(
+    DialogItem(
         text = stringResource(id = resId),
         color = color,
         contentColor = contentColor,
@@ -162,7 +163,10 @@ fun AppDialog(
 
     if (visible) {
         Dialog(
-            onDismissRequest = onDismiss
+            onDismissRequest = onDismiss,
+            properties = DialogProperties(
+                usePlatformDefaultWidth = false
+            )
         ) {
             Surface(
                 color = theme.background,

@@ -71,8 +71,8 @@ import com.m3u.ui.components.rememberPlayerState
 import com.m3u.ui.model.LocalHelper
 import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.LocalTheme
-import com.m3u.ui.util.EventHandler
-import com.m3u.ui.util.LifecycleEffect
+import com.m3u.ui.ktx.EventHandler
+import com.m3u.ui.ktx.LifecycleEffect
 import kotlin.math.absoluteValue
 
 @Composable

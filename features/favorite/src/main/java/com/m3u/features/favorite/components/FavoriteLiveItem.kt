@@ -31,7 +31,7 @@ import com.m3u.ui.components.TextBadge
 import com.m3u.ui.model.LocalScalable
 import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.LocalTheme
-import com.m3u.ui.util.animated
+import com.m3u.ui.ktx.animated
 import java.net.URI
 
 @OptIn(ExperimentalFoundationApi::class)
