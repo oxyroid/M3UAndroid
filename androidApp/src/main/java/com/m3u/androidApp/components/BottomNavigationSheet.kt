@@ -1,5 +1,6 @@
 package com.m3u.androidApp.components
 
+import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.material.Icon
 import androidx.compose.material.LocalAbsoluteElevation
@@ -18,51 +19,74 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import com.m3u.androidApp.navigation.NavigateToTopLevelDestination
-import com.m3u.androidApp.navigation.TopLevelDestination
+import com.m3u.core.util.basic.title
+import com.m3u.ui.NavigateToTopLevelDestination
+import com.m3u.ui.TopLevelDestination
 import com.m3u.ui.components.NavigationSheet
+import com.m3u.ui.ktx.animateColor
+import com.m3u.ui.ktx.animated
 import com.m3u.ui.model.LocalTheme
-import com.m3u.ui.util.animated
+import com.m3u.ui.model.ScaffoldFob
 
 @Composable
 fun BottomNavigationSheet(
     destinations: List<TopLevelDestination>,
     navigateToTopLevelDestination: NavigateToTopLevelDestination,
-    index: Int,
+    destination: TopLevelDestination?,
+    fob: ScaffoldFob?,
     modifier: Modifier = Modifier,
-    backgroundColor: Color = BottomSheetDefaults.navigationBackgroundColor(),
-    contentColor: Color = BottomSheetDefaults.navigationContentColor(),
-    selectedColor: Color = BottomSheetDefaults.navigationSelectedColor(),
+    backgroundColor: Color = BottomSheetDefaults.backgroundColor(),
+    selectedColor: Color = BottomSheetDefaults.selectedColor(),
+    unselectedColor: Color = BottomSheetDefaults.unselectedColor(),
+    fobbedColor: Color = BottomSheetDefaults.fobbedColor(),
 ) {
     val actualBackgroundColor by backgroundColor.animated("BottomNavigationSheetBackground")
-    val actualContentColor by contentColor.animated("BottomNavigationSheetContent")
-    val actualSelectedColor by selectedColor.animated("BottomNavigationSheetSelected")
+    val actualContentColor by unselectedColor.animated("BottomNavigationSheetContent")
+
     NavigationSheet(
         modifier = modifier,
         containerColor = actualBackgroundColor,
         contentColor = actualContentColor,
         elevation = LocalAbsoluteElevation.current
     ) {
-        destinations.forEachIndexed { i, destination ->
-            val selected = i == index
+        val relation = fob?.relation
+        val actualActiveDestination = destination ?: relation
+        destinations.forEach { default ->
+            val fobbed = default == relation
+            val selected = default == actualActiveDestination
+            val iconTextId = default.iconTextId
+            val selectedIcon = fob?.icon.takeIf { fobbed } ?: default.selectedIcon
+            val unselectedIcon = fob?.icon.takeIf { fobbed } ?: default.unselectedIcon
+            val actualSelectedColor by animateColor("BottomNavigationSheetSelected") {
+                if (fobbed) fobbedColor else selectedColor
+            }
             NavigationBarItem(
                 selected = selected,
                 onClick = {
-                    navigateToTopLevelDestination(destination)
+                    if (fobbed && fob != null) {
+                        fob.onClick()
+                    } else {
+                        navigateToTopLevelDestination(default)
+                    }
                 },
-                tint = actualSelectedColor,
-                contentDestination = stringResource(destination.iconTextId),
+                selectedColor = actualSelectedColor,
+                contentDestination = stringResource(iconTextId),
                 icon = {
-                    val icon = if (selected) destination.selectedIcon
-                    else destination.unselectedIcon
-                    Icon(
-                        imageVector = icon,
-                        contentDescription = stringResource(destination.iconTextId)
-                    )
+                    val icon = if (selected) selectedIcon
+                    else unselectedIcon
+                    Crossfade(
+                        targetState = icon,
+                        label = "BottomNavigationSheetIcon"
+                    ) { actualIcon ->
+                        Icon(
+                            imageVector = actualIcon,
+                            contentDescription = stringResource(iconTextId)
+                        )
+                    }
                 },
                 label = {
                     Text(
-                        text = stringResource(destination.iconTextId),
+                        text = stringResource(iconTextId).title(),
                         style = MaterialTheme.typography.caption,
                         fontWeight = FontWeight.Bold
                     )
@@ -82,7 +106,7 @@ private fun NavigationBarItem(
     enabled: Boolean = true,
     label: @Composable (() -> Unit)? = null,
     contentDestination: String? = null,
-    tint: Color
+    selectedColor: Color
 ) {
     TooltipBox(
         positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
@@ -101,19 +125,19 @@ private fun NavigationBarItem(
             enabled = enabled,
             label = label,
             alwaysShowLabel = false,
-            selectedContentColor = tint,
+            selectedContentColor = selectedColor,
             interactionSource = remember { MutableInteractionSource() },
         )
     }
 }
 
 object BottomSheetDefaults {
-    @Composable
-    fun navigationBackgroundColor() = Color.Black
+    fun backgroundColor() = Color.Black
 
     @Composable
-    fun navigationContentColor() = Color(0xFFEEEEEE)
+    fun selectedColor() = LocalTheme.current.tint
+    fun unselectedColor() = Color(0xFFEEEEEE)
 
     @Composable
-    fun navigationSelectedColor() = LocalTheme.current.tint
+    fun fobbedColor() = LocalTheme.current.onPrimary
 }

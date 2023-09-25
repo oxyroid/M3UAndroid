@@ -18,8 +18,13 @@ import com.m3u.features.favorite.FavouriteRoute
 import com.m3u.features.favorite.NavigateToLive
 import com.m3u.features.main.MainRoute
 import com.m3u.features.main.NavigateToFeed
+import com.m3u.features.setting.NavigateToAbout
 import com.m3u.features.setting.NavigateToConsole
 import com.m3u.features.setting.SettingRoute
+import com.m3u.ui.TopLevelDestination
+import com.m3u.ui.ktx.Edge
+import com.m3u.ui.ktx.blurEdges
+import com.m3u.ui.model.LocalTheme
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 
@@ -36,6 +41,7 @@ fun NavGraphBuilder.rootGraph(
     navigateToFeed: NavigateToFeed,
     navigateToLive: NavigateToLive,
     navigateToConsole: NavigateToConsole,
+    navigateToAbout: NavigateToAbout,
 ) {
     composable(
         route = rootNavigationRoute
@@ -46,7 +52,8 @@ fun NavGraphBuilder.rootGraph(
             destinations = destinations,
             navigateToFeed = navigateToFeed,
             navigateToLive = navigateToLive,
-            navigateToConsole = navigateToConsole
+            navigateToConsole = navigateToConsole,
+            navigateToAbout = navigateToAbout
         )
     }
 }
@@ -60,6 +67,7 @@ private fun RootGraph(
     navigateToFeed: NavigateToFeed,
     navigateToLive: NavigateToLive,
     navigateToConsole: NavigateToConsole,
+    navigateToAbout: NavigateToAbout,
     modifier: Modifier = Modifier
 ) {
     val pagerState = rememberPagerState {
@@ -100,6 +108,11 @@ private fun RootGraph(
     HorizontalPager(
         state = pagerState,
         modifier = modifier
+            .fillMaxSize()
+            .blurEdges(
+                edges = listOf(Edge.Top, Edge.Bottom),
+                color = LocalTheme.current.background
+            )
     ) { pagerIndex ->
         when (destinations[pagerIndex]) {
             TopLevelDestination.Main -> {
@@ -121,6 +134,7 @@ private fun RootGraph(
             TopLevelDestination.Setting -> {
                 SettingRoute(
                     navigateToConsole = navigateToConsole,
+                    navigateToAbout = navigateToAbout,
                     isCurrentPage = pagerState.currentPage == pagerIndex,
                     modifier = Modifier.fillMaxSize()
                 )

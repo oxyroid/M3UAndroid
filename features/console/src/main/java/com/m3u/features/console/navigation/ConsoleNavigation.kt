@@ -1,5 +1,9 @@
 package com.m3u.features.console.navigation
 
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavOptions
@@ -14,7 +18,11 @@ fun NavController.navigateToConsole(navOptions: NavOptions? = null) {
 
 fun NavGraphBuilder.consoleScreen() {
     composable(
-        route = consoleRoute
+        route = consoleRoute,
+        enterTransition = { slideInVertically { it } },
+        exitTransition = { fadeOut() },
+        popEnterTransition = { fadeIn() },
+        popExitTransition = { slideOutVertically { it } }
     ) {
         ConsoleRoute()
     }

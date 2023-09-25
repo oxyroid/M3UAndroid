@@ -17,11 +17,11 @@ import androidx.compose.ui.unit.dp
 import com.m3u.data.database.entity.Feed
 import com.m3u.features.main.R
 import com.m3u.ui.components.AppDialog
-import com.m3u.ui.components.SheetItem
-import com.m3u.ui.components.SheetTextField
+import com.m3u.ui.components.DialogItem
+import com.m3u.ui.components.DialogTextField
 import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.LocalTheme
-import com.m3u.ui.util.animateDp
+import com.m3u.ui.ktx.animateDp
 
 internal typealias OnUpdateStatus = (MainDialog) -> Unit
 internal typealias OnUnsubscribe = (feedUrl: String) -> Unit
@@ -68,7 +68,7 @@ internal fun MainDialog(
                         else context.getString(R.string.imported_feed_title)
                     )
                 }
-                SheetTextField(
+                DialogTextField(
                     text = renamedText,
                     onTextChange = { renamedText = it },
                     readOnly = !editMode,
@@ -83,13 +83,13 @@ internal fun MainDialog(
                     }
                 )
                 if (!editMode) {
-                    SheetItem(R.string.unsubscribe_feed) {
+                    DialogItem(R.string.unsubscribe_feed) {
                         unsubscribe(currentStatus.feed.url)
                         update(MainDialog.Idle)
                     }
                     if (!currentStatus.feed.isTemplated()) {
                         val clipboardManager = LocalClipboardManager.current
-                        SheetItem(R.string.copy_feed_url) {
+                        DialogItem(R.string.copy_feed_url) {
                             val annotatedString = AnnotatedString(currentStatus.feed.url)
                             clipboardManager.setText(annotatedString)
                             update(MainDialog.Idle)

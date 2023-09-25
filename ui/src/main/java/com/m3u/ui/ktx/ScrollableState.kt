@@ -1,9 +1,7 @@
 @file:Suppress("unused")
-@file:OptIn(ExperimentalFoundationApi::class)
 
-package com.m3u.ui.util
+package com.m3u.ui.ktx
 
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.staggeredgrid.LazyStaggeredGridState

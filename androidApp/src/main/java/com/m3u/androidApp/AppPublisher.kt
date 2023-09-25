@@ -1,7 +1,7 @@
 package com.m3u.androidApp
 
 import android.content.Context
-import com.m3u.androidApp.navigation.TopLevelDestination
+import com.m3u.ui.TopLevelDestination
 import com.m3u.core.architecture.Publisher
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject

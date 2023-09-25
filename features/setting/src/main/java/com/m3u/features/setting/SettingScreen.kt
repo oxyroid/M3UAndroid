@@ -44,13 +44,15 @@ import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.LocalTheme
 
 typealias NavigateToConsole = () -> Unit
+typealias NavigateToAbout = () -> Unit
 
 @Composable
 fun SettingRoute(
     modifier: Modifier = Modifier,
     isCurrentPage: Boolean,
     viewModel: SettingViewModel = hiltViewModel(),
-    navigateToConsole: NavigateToConsole
+    navigateToConsole: NavigateToConsole,
+    navigateToAbout: NavigateToAbout
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val helper = LocalHelper.current
@@ -113,6 +115,7 @@ fun SettingRoute(
         cinemaMode = state.cinemaMode,
         onCinemaMode = { state.cinemaMode = !state.cinemaMode },
         importJavaScript = { viewModel.onEvent(SettingEvent.ImportJavaScript(it)) },
+        navigateToAbout = navigateToAbout,
         modifier = modifier.fillMaxSize()
     )
 }
@@ -158,6 +161,7 @@ private fun SettingScreen(
     cinemaMode: Boolean,
     onCinemaMode: () -> Unit,
     importJavaScript: (Uri) -> Unit,
+    navigateToAbout: NavigateToAbout,
     modifier: Modifier = Modifier
 ) {
     var part: SettingPart by remember { mutableStateOf(SettingPart.PREFERENCE) }
@@ -208,6 +212,7 @@ private fun SettingScreen(
                     cinemaMode = cinemaMode,
                     onCinemaMode = onCinemaMode,
                     importJavaScript = importJavaScript,
+                    navigateToAbout = navigateToAbout,
                     modifier = modifier
                         .fillMaxWidth()
                         .scrollable(
@@ -260,6 +265,7 @@ private fun SettingScreen(
                     cinemaMode = cinemaMode,
                     onCinemaMode = onCinemaMode,
                     importJavaScript = importJavaScript,
+                    navigateToAbout = navigateToAbout,
                     modifier = modifier.scrollable(
                         orientation = Orientation.Vertical,
                         state = rememberScrollableState { it }
@@ -317,6 +323,7 @@ private fun PortraitOrientationContent(
     cinemaMode: Boolean,
     onCinemaMode: () -> Unit,
     importJavaScript: (Uri) -> Unit,
+    navigateToAbout: NavigateToAbout,
     modifier: Modifier = Modifier
 ) {
     Box {
@@ -358,6 +365,7 @@ private fun PortraitOrientationContent(
             onSilentMode = onSilentMode,
             cinemaMode = cinemaMode,
             onCinemaMode = onCinemaMode,
+            navigateToAbout = navigateToAbout,
             modifier = modifier
         )
 
@@ -436,6 +444,7 @@ private fun LandscapeOrientationContent(
     cinemaMode: Boolean,
     onCinemaMode: () -> Unit,
     importJavaScript: (Uri) -> Unit,
+    navigateToAbout: NavigateToAbout,
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
@@ -478,6 +487,7 @@ private fun LandscapeOrientationContent(
             onSilentMode = onSilentMode,
             cinemaMode = cinemaMode,
             onCinemaMode = onCinemaMode,
+            navigateToAbout = navigateToAbout,
             modifier = Modifier
                 .fillMaxHeight()
                 .weight(1f)

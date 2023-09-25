@@ -2,13 +2,16 @@ package com.m3u.ui.model
 
 import android.graphics.Rect
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.core.app.PictureInPictureModeChangedInfo
 import androidx.core.util.Consumer
+import com.m3u.ui.TopLevelDestination
 
 abstract class Helper {
     abstract var title: String
+    abstract var actions: List<ScaffoldAction>
+    open var fab: ScaffoldFob? = null
 
-    abstract var actions: List<AppAction>
     var systemUiVisibility: Boolean = true
         set(value) {
             if (field == value) return
@@ -16,6 +19,7 @@ abstract class Helper {
             else hideSystemUI()
             field = value
         }
+
 
     abstract fun enterPipMode(size: Rect)
     abstract fun hideSystemUI()
@@ -37,7 +41,7 @@ val EmptyHelper = object : Helper() {
             error("Cannot set title")
         }
 
-    override var actions: List<AppAction>
+    override var actions: List<ScaffoldAction>
         get() = error("Cannot get actions")
         set(_) {
             error("Cannot set actions")
@@ -67,3 +71,16 @@ val EmptyHelper = object : Helper() {
 }
 
 val LocalHelper = staticCompositionLocalOf { EmptyHelper }
+
+
+data class ScaffoldAction(
+    val icon: ImageVector,
+    val contentDescription: String?,
+    val onClick: () -> Unit
+)
+
+data class ScaffoldFob(
+    val relation: TopLevelDestination,
+    val icon: ImageVector,
+    val onClick: () -> Unit
+)

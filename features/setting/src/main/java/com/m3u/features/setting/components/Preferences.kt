@@ -13,8 +13,16 @@ import androidx.compose.material.Checkbox
 import androidx.compose.material.CheckboxDefaults
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.ListItem
+import androidx.compose.material.LocalContentColor
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
+import androidx.compose.material.minimumInteractiveComponentSize
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.PlainTooltip
+import androidx.compose.material3.TooltipBox
+import androidx.compose.material3.TooltipDefaults
+import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -22,6 +30,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.capitalize
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.intl.Locale
@@ -30,64 +40,85 @@ import androidx.compose.ui.unit.sp
 import com.m3u.core.util.basic.title
 import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.LocalTheme
-import com.m3u.ui.util.animated
+import com.m3u.ui.ktx.animated
 
-@OptIn(ExperimentalMaterialApi::class, ExperimentalFoundationApi::class)
+@OptIn(
+    ExperimentalMaterialApi::class,
+    ExperimentalFoundationApi::class,
+    ExperimentalMaterial3Api::class
+)
 @Composable
-internal fun FoldPreference(
+internal fun Preference(
     title: String,
-    onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     subtitle: String? = null,
+    onClick: () -> Unit = {},
     trailingContent: @Composable () -> Unit = {}
 ) {
-    var hasFocus by remember { mutableStateOf(false) }
     val theme = LocalTheme.current
+    var focus by remember { mutableStateOf(false) }
     val actualBackgroundColor by theme.surface.animated("FoldPreferenceBackground")
-    ListItem(
-        text = {
-            Text(
-                text = title.title(),
-                style = MaterialTheme.typography.subtitle1,
-                fontWeight = FontWeight.Bold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-        },
-        secondaryText = subtitle?.let {
-            @Composable {
+
+    TooltipBox(
+        state = rememberTooltipState(),
+        positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+        tooltip = {
+            if (!subtitle.isNullOrEmpty()) {
+                PlainTooltip {
+                    Text(
+                        text = subtitle,
+                        // FIXME: Do not specify text color.
+                        color = Color(0xFFEEEEEE)
+                    )
+                }
+            }
+        }
+    ) {
+        ListItem(
+            text = {
                 Text(
-                    text = it.capitalize(Locale.current),
-                    style = MaterialTheme.typography.subtitle2,
+                    text = title.title(),
+                    style = MaterialTheme.typography.subtitle1,
+                    fontWeight = FontWeight.Bold,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    lineHeight = 16.sp,
-                    modifier = Modifier
-                        .let {
-                            if (hasFocus) it.basicMarquee()
-                            else it
-                        }
                 )
-            }
-        },
-        singleLineSecondaryText = true,
-        trailing = trailingContent,
-        modifier = modifier
-            .fillMaxWidth()
-            .onFocusChanged {
-                hasFocus = it.hasFocus
-            }
-            .focusable()
-            .clickable(
-                enabled = enabled,
-                onClick = onClick
-            )
-            .background(actualBackgroundColor)
-            .padding(
-                start = LocalSpacing.current.small
-            )
-    )
+            },
+            secondaryText = subtitle?.let {
+                @Composable {
+                    Text(
+                        text = it.capitalize(Locale.current),
+                        style = MaterialTheme.typography.subtitle2,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        lineHeight = 16.sp,
+                        modifier = Modifier
+                            .let {
+                                if (focus) it.basicMarquee()
+                                else it
+                            }
+                    )
+                }
+            },
+            singleLineSecondaryText = true,
+            trailing = trailingContent,
+            modifier = modifier
+                .fillMaxWidth()
+                .onFocusChanged {
+                    focus = it.hasFocus
+                }
+                .focusable()
+                .clickable(
+                    enabled = enabled,
+                    onClick = onClick
+                )
+                .background(actualBackgroundColor)
+                .padding(
+                    start = LocalSpacing.current.small
+                )
+        )
+    }
 }
 
 @Composable
@@ -99,7 +130,7 @@ internal fun CheckBoxPreference(
     subtitle: String? = null,
     enabled: Boolean = true,
 ) {
-    FoldPreference(
+    Preference(
         title = title,
         subtitle = subtitle,
         enabled = enabled,
@@ -124,6 +155,34 @@ internal fun CheckBoxPreference(
 }
 
 @Composable
+internal fun IconPreference(
+    title: String,
+    imageVector: ImageVector,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    subtitle: String? = null,
+    enabled: Boolean = true,
+) {
+    Preference(
+        title = title,
+        subtitle = subtitle,
+        enabled = enabled,
+        onClick = onClick,
+        modifier = modifier,
+        trailingContent = {
+            Icon(
+                imageVector = imageVector,
+                contentDescription = null,
+                tint = LocalContentColor.current.copy(alpha = 0.65f),
+                modifier = Modifier.minimumInteractiveComponentSize()
+            )
+
+
+        }
+    )
+}
+
+@Composable
 internal fun TextPreference(
     title: String,
     content: String,
@@ -132,7 +191,7 @@ internal fun TextPreference(
     subtitle: String? = null,
     enabled: Boolean = true,
 ) {
-    FoldPreference(
+    Preference(
         title = title,
         subtitle = subtitle,
         enabled = enabled,

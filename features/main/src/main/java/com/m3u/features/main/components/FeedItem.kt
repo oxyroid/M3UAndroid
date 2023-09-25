@@ -25,8 +25,8 @@ import androidx.compose.ui.unit.dp
 import com.m3u.ui.components.OuterRow
 import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.LocalTheme
-import com.m3u.ui.util.animateDp
-import com.m3u.ui.util.animated
+import com.m3u.ui.ktx.animateDp
+import com.m3u.ui.ktx.animated
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable

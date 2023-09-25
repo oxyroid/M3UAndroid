@@ -28,5 +28,6 @@ include(
     ":features:favorite",
     ":features:console",
     ":features:crash",
-    ":features:scheme"
+    ":features:scheme",
+    ":features:about"
 )

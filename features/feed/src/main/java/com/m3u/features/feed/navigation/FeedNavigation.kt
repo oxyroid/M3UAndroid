@@ -20,7 +20,7 @@ private const val TYPE_URL = "url"
 const val feedRoute = "$FEED_ROUTE_PATH/{$TYPE_URL}"
 private fun createFeedRoute(url: String) = "$FEED_ROUTE_PATH/$url"
 
-fun NavController.navigationToFeed(url: String, navOptions: NavOptions? = null) {
+fun NavController.navigateToFeed(url: String, navOptions: NavOptions? = null) {
     val encodedUrl = Uri.encode(url)
     val route = createFeedRoute(encodedUrl)
     this.navigate(route, navOptions)
