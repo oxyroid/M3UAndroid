@@ -34,23 +34,30 @@ import com.m3u.ui.M3ULocalProvider
 import com.m3u.ui.components.AppTopBar
 import com.m3u.ui.components.IconButton
 import com.m3u.ui.model.ABlackTheme
-import com.m3u.ui.model.AppAction
 import com.m3u.ui.model.DayTheme
 import com.m3u.ui.model.EmptyHelper
 import com.m3u.ui.model.Helper
 import com.m3u.ui.model.NightTheme
+import com.m3u.ui.model.ScaffoldAction
+import com.m3u.ui.model.ScaffoldFob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
 
-typealias HelperConnector =
-            ((String) -> Unit, () -> String, (List<AppAction>) -> Unit, () -> List<AppAction>) -> Helper
+typealias HelperConnector = (
+    setTitle: (String) -> Unit,
+    getTitle: () -> String,
+    setActions: (List<ScaffoldAction>) -> Unit,
+    getActions: () -> List<ScaffoldAction>,
+    setFab: (ScaffoldFob?) -> Unit,
+    getFab: () -> ScaffoldFob?
+) -> Helper
 
 @Composable
 fun App(
     appState: AppState = rememberAppState(),
     viewModel: RootViewModel = hiltViewModel(),
-    connector: HelperConnector = { _, _, _, _ -> EmptyHelper }
+    connector: HelperConnector = { _, _, _, _, _, _ -> EmptyHelper }
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val posts by viewModel.posts.collectAsStateWithLifecycle()
@@ -59,14 +66,17 @@ fun App(
 
     val topLevelDestinations = appState.topLevelDestinations
     val currentDestination = appState.currentComposableNavDestination
-    val currentTopLevelDestination = appState.currentComposableTopLevelDestination
-    val currentTopLevelDestinationTitle = currentTopLevelDestination
+    val currentTopLevelDestination = appState.currentTopLevelDestination
+    val parentTitle = currentTopLevelDestination
         ?.titleTextId
         ?.let { stringResource(it) }
-    val title by viewModel.title.collectAsStateWithLifecycle()
-    val text by remember(currentTopLevelDestinationTitle) {
-        derivedStateOf { currentTopLevelDestinationTitle ?: title }
+
+    val childTitle by viewModel.childTitle.collectAsStateWithLifecycle()
+    val title by remember(parentTitle) {
+        derivedStateOf { parentTitle ?: childTitle }
     }
+    val fab by viewModel.fab.collectAsStateWithLifecycle()
+
     var postDialogStatus = remember(post, posts) {
         if (post == null || post.temporal) PostDialogStatus.Idle
         else {
@@ -103,10 +113,12 @@ fun App(
         else -> DayTheme
     }
     val helper = connector(
-        { viewModel.title.value = it },
-        viewModel.title::value,
+        { viewModel.childTitle.value = it },
+        viewModel.childTitle::value,
         { viewModel.actions.value = it },
-        viewModel.actions::value
+        viewModel.actions::value,
+        { viewModel.fab.value = it },
+        viewModel.fab::value
     )
     M3ULocalProvider(
         helper = helper,
@@ -140,7 +152,7 @@ fun App(
             onDispose {}
         }
         AppTopBar(
-            text = text,
+            text = title,
             visible = isSystemBarVisible,
             scrollable = currentDestination notDestinationTo Destination.Root::class.java,
             actions = {
@@ -179,9 +191,11 @@ fun App(
                             onPost = onPost,
                             modifier = Modifier.fillMaxWidth()
                         )
+
                         BottomNavigationSheet(
                             destinations = topLevelDestinations,
-                            index = appState.currentPage,
+                            destination = currentTopLevelDestination,
+                            fob = fab,
                             navigateToTopLevelDestination = {
                                 appState.navigateToTopLevelDestination(it)
                             },
@@ -203,4 +217,3 @@ fun App(
         }
     }
 }
-
