@@ -11,7 +11,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.isUnspecified
 import androidx.compose.ui.unit.dp
 import com.m3u.ui.model.LocalTheme
-import com.m3u.ui.util.animated
+import com.m3u.ui.ktx.animated
 
 @Composable
 fun Background(

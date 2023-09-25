@@ -14,6 +14,7 @@
             <option value="$PROJECT_DIR$/core" />
             <option value="$PROJECT_DIR$/data" />
             <option value="$PROJECT_DIR$/features" />
+            <option value="$PROJECT_DIR$/features/about" />
             <option value="$PROJECT_DIR$/features/console" />
             <option value="$PROJECT_DIR$/features/crash" />
             <option value="$PROJECT_DIR$/features/favorite" />

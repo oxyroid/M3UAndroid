@@ -1,4 +1,4 @@
-package com.m3u.androidApp.navigation
+package com.m3u.ui
 
 import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
@@ -9,7 +9,8 @@ import androidx.compose.material.icons.rounded.Collections
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.ui.graphics.vector.ImageVector
-import com.m3u.androidApp.R
+
+typealias NavigateToTopLevelDestination = (TopLevelDestination) -> Unit
 
 enum class TopLevelDestination(
     val selectedIcon: ImageVector,
@@ -36,5 +37,3 @@ enum class TopLevelDestination(
         titleTextId = R.string.title_setting
     )
 }
-
-typealias NavigateToTopLevelDestination = (TopLevelDestination) -> Unit

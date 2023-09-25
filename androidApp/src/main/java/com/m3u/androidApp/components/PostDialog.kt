@@ -16,7 +16,7 @@ import androidx.compose.ui.graphics.Color
 import com.m3u.data.database.entity.Post
 import com.m3u.ui.components.IconButton
 import com.m3u.ui.components.AppDialog
-import com.m3u.ui.components.SheetTextField
+import com.m3u.ui.components.DialogTextField
 import com.m3u.ui.components.TextButton
 import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.LocalTheme
@@ -68,7 +68,7 @@ internal fun PostDialog(
                         Post.TYPE_RELEASE -> theme.tint
                         else -> theme.divider
                     }
-                    SheetTextField(
+                    DialogTextField(
                         text = post.title,
                         icon = icon,
                         iconTint = tint,

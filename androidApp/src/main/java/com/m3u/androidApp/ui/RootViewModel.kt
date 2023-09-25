@@ -5,7 +5,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.viewModelScope
 import com.m3u.androidApp.AppPublisher
-import com.m3u.androidApp.navigation.TopLevelDestination
+import com.m3u.ui.TopLevelDestination
 import com.m3u.core.architecture.viewmodel.BaseViewModel
 import com.m3u.core.architecture.configuration.Configuration
 import com.m3u.core.architecture.service.BannerService
@@ -14,7 +14,8 @@ import com.m3u.core.wrapper.eventOf
 import com.m3u.core.wrapper.handledEvent
 import com.m3u.data.database.entity.Post
 import com.m3u.data.repository.PostRepository
-import com.m3u.ui.model.AppAction
+import com.m3u.ui.model.ScaffoldAction
+import com.m3u.ui.model.ScaffoldFob
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -62,9 +63,9 @@ class RootViewModel @Inject constructor(
             initialValue = emptyList()
         )
 
-
-    val title: MutableStateFlow<String> = MutableStateFlow("")
-    val actions: MutableStateFlow<List<AppAction>> = MutableStateFlow(emptyList())
+    val childTitle: MutableStateFlow<String> = MutableStateFlow("")
+    val actions: MutableStateFlow<List<ScaffoldAction>> = MutableStateFlow(emptyList())
+    val fab: MutableStateFlow<ScaffoldFob?> = MutableStateFlow(null)
 
     override fun onEvent(event: RootEvent) {
         when (event) {

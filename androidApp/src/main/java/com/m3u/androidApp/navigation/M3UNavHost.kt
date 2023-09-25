@@ -1,19 +1,22 @@
 package com.m3u.androidApp.navigation
 
-import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import com.m3u.androidApp.ui.NavigateToDestination
+import com.m3u.features.about.navigation.aboutScreen
 import com.m3u.features.console.navigation.consoleScreen
 import com.m3u.features.feed.navigation.feedScreen
 import com.m3u.features.live.navigation.livePlaylistScreen
 import com.m3u.features.live.navigation.liveScreen
 import com.m3u.features.main.R
+import com.m3u.ui.TopLevelDestination
 import com.m3u.ui.model.LocalHelper
 
 @Composable
@@ -31,10 +34,8 @@ fun M3UNavHost(
     NavHost(
         navController = navController,
         startDestination = startDestination,
-        enterTransition = { fadeIn(tween(0)) },
-        exitTransition = { fadeOut(tween(0)) },
-        popEnterTransition = { fadeIn(tween(0)) },
-        popExitTransition = { fadeOut(tween(0)) },
+        exitTransition = { slideOutVertically { -it / 5 } + fadeOut() },
+        popEnterTransition = { slideInVertically { -it / 5 } + fadeIn() },
         modifier = modifier,
     ) {
         rootGraph(
@@ -51,6 +52,9 @@ fun M3UNavHost(
             },
             navigateToConsole = {
                 navigateToDestination(Destination.Console)
+            },
+            navigateToAbout = {
+                navigateToDestination(Destination.About)
             }
         )
 
@@ -73,5 +77,6 @@ fun M3UNavHost(
             }
         )
         consoleScreen()
+        aboutScreen()
     }
 }

@@ -1,6 +1,7 @@
 package com.m3u.androidApp.navigation
 
 import androidx.navigation.NavDestination
+import com.m3u.features.about.navigation.aboutRoute
 import com.m3u.features.console.navigation.consoleRoute
 import com.m3u.features.feed.navigation.feedRoute
 import com.m3u.features.live.navigation.livePlaylistRoute
@@ -23,6 +24,7 @@ sealed interface Destination {
     ) : Destination
 
     data object Console : Destination
+    data object About: Destination
 }
 
 inline infix fun <reified D : Destination> NavDestination?.destinationTo(clazz: Class<D>): Boolean {
@@ -32,6 +34,7 @@ inline infix fun <reified D : Destination> NavDestination?.destinationTo(clazz: 
         Destination.Feed::class.java.name -> feedRoute
         Destination.Console::class.java.name -> consoleRoute
         Destination.Root::class.java.name -> rootNavigationRoute
+        Destination.About::class.java.name -> aboutRoute
         else -> return false
     }
     return this?.route == targetRoute

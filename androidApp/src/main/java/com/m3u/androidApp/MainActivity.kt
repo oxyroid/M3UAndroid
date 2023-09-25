@@ -15,8 +15,9 @@ import androidx.core.util.Consumer
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import com.m3u.androidApp.ui.App
-import com.m3u.ui.model.AppAction
+import com.m3u.ui.model.ScaffoldAction
 import com.m3u.ui.model.Helper
+import com.m3u.ui.model.ScaffoldFob
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -36,8 +37,10 @@ class MainActivity : ComponentActivity() {
     private fun createHelper(
         setTitle: (String) -> Unit,
         getTitle: () -> String,
-        setActions: (List<AppAction>) -> Unit,
-        getActions: () -> List<AppAction>,
+        setActions: (List<ScaffoldAction>) -> Unit,
+        getActions: () -> List<ScaffoldAction>,
+        setFab: (ScaffoldFob?) -> Unit,
+        getFab: () -> ScaffoldFob?
     ): Helper = object : Helper() {
 
         override fun enterPipMode(size: Rect) {
@@ -51,9 +54,13 @@ class MainActivity : ComponentActivity() {
             get() = getTitle()
             set(value) = setTitle(value)
 
-        override var actions: List<AppAction>
+        override var actions: List<ScaffoldAction>
             get() = getActions()
             set(value) = setActions(value)
+
+        override var fab: ScaffoldFob?
+            get() = getFab()
+            set(value) = setFab(value)
 
         override fun hideSystemUI() {
             WindowInsetsControllerCompat(window, window.decorView).let { controller ->

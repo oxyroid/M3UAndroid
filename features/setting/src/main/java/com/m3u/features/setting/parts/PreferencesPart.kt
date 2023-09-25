@@ -11,6 +11,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.OpenInNew
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -23,9 +25,11 @@ import com.m3u.core.annotation.ConnectTimeout
 import com.m3u.core.annotation.FeedStrategy
 import com.m3u.core.annotation.OnClipMode
 import com.m3u.core.annotation.OnFeedStrategy
+import com.m3u.features.setting.NavigateToAbout
 import com.m3u.features.setting.NavigateToConsole
 import com.m3u.features.setting.R
 import com.m3u.features.setting.components.CheckBoxPreference
+import com.m3u.features.setting.components.IconPreference
 import com.m3u.features.setting.components.Preference
 import com.m3u.features.setting.components.TextPreference
 import com.m3u.ui.model.LocalSpacing
@@ -54,6 +58,7 @@ internal fun PreferencesPart(
     onExperimentalMode: () -> Unit,
     onFullInfoPlayer: () -> Unit,
     navigateToConsole: NavigateToConsole,
+    navigateToAbout: NavigateToAbout,
     autoRefresh: Boolean,
     onAutoRefresh: () -> Unit,
     isSSLVerificationEnabled: Boolean,
@@ -259,8 +264,9 @@ internal fun PreferencesPart(
                 verticalArrangement = Arrangement.spacedBy(1.dp)
             ) {
                 val context = LocalContext.current
-                Preference(
+                IconPreference(
                     title = stringResource(R.string.system_setting),
+                    imageVector = Icons.AutoMirrored.Rounded.OpenInNew,
                     onClick = {
                         val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
                             data = Uri.fromParts("package", context.packageName, null)
@@ -269,10 +275,12 @@ internal fun PreferencesPart(
                     }
                 )
                 Preference(
+                    title = stringResource(R.string.project_about),
+                    onClick = navigateToAbout
+                )
+                Preference(
                     title = stringResource(R.string.app_version),
-                    subtitle = version,
-                    enabled = false,
-                    onClick = {}
+                    subtitle = version
                 )
             }
         }

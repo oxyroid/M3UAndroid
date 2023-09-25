@@ -5,7 +5,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -15,12 +15,13 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.m3u.androidApp.navigation.Destination
-import com.m3u.androidApp.navigation.TopLevelDestination
+import com.m3u.ui.TopLevelDestination
 import com.m3u.androidApp.navigation.notDestinationTo
 import com.m3u.androidApp.navigation.popupToRoot
 import com.m3u.androidApp.navigation.rootNavigationRoute
+import com.m3u.features.about.navigation.navigateToAbout
 import com.m3u.features.console.navigation.navigateToConsole
-import com.m3u.features.feed.navigation.navigationToFeed
+import com.m3u.features.feed.navigation.navigateToFeed
 import com.m3u.features.live.navigation.navigateToLive
 import com.m3u.features.live.navigation.navigateToLivePlayList
 import kotlinx.coroutines.CoroutineScope
@@ -71,14 +72,14 @@ class AppState(
     //
     // It's important to note that this solution might not be the optimal one, and further improvements could be explored.
 
-    var currentPage by mutableStateOf(0)
+    var currentPage by mutableIntStateOf(0)
     val currentComposableNavDestination: NavDestination?
         @Composable get() = navController.currentBackStackEntryAsState().value?.destination
 
     private val currentNavDestination: NavDestination?
         get() = navController.currentBackStackEntry?.destination
 
-    val currentComposableTopLevelDestination: TopLevelDestination?
+    val currentTopLevelDestination: TopLevelDestination?
         @Composable get() = when (currentComposableNavDestination?.route) {
             rootNavigationRoute -> topLevelDestinations[currentPage]
             else -> null
@@ -99,7 +100,7 @@ class AppState(
     fun navigateToDestination(destination: Destination) {
         when (destination) {
             Destination.Root -> navController.popupToRoot()
-            is Destination.Feed -> navController.navigationToFeed(destination.url)
+            is Destination.Feed -> navController.navigateToFeed(destination.url)
             is Destination.Live -> navController.navigateToLive(destination.id)
             is Destination.LivePlayList -> navController.navigateToLivePlayList(
                 destination.ids,
@@ -107,6 +108,7 @@ class AppState(
             )
 
             Destination.Console -> navController.navigateToConsole()
+            Destination.About -> navController.navigateToAbout()
         }
     }
 

@@ -14,13 +14,7 @@ import android.content.res.Configuration.UI_MODE_TYPE_VR_HEADSET
 import android.content.res.Configuration.UI_MODE_TYPE_WATCH
 import android.view.KeyEvent
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -34,26 +28,24 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material.ExtendedFloatingActionButton
-import androidx.compose.material.FloatingActionButtonDefaults
-import androidx.compose.material.Icon
 import androidx.compose.material.ScrollableTabRow
 import androidx.compose.material.Surface
 import androidx.compose.material.Tab
 import androidx.compose.material.TabRowDefaults
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.ArrowUpward
+import androidx.compose.material.icons.rounded.ArrowCircleUp
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.pullrefresh.PullRefreshIndicator
 import androidx.compose.material.pullrefresh.pullRefresh
 import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -61,7 +53,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.capitalize
@@ -73,24 +64,28 @@ import androidx.tv.foundation.lazy.grid.TvGridCells
 import androidx.tv.foundation.lazy.grid.TvLazyVerticalGrid
 import androidx.tv.foundation.lazy.grid.items
 import androidx.tv.foundation.lazy.grid.rememberTvLazyGridState
+import com.m3u.core.util.compose.observableStateOf
 import com.m3u.core.wrapper.Event
 import com.m3u.data.database.entity.Live
 import com.m3u.features.feed.components.DialogStatus
 import com.m3u.features.feed.components.FeedDialog
 import com.m3u.features.feed.components.LiveItem
+import com.m3u.ui.TopLevelDestination
 import com.m3u.ui.components.TextField
-import com.m3u.ui.model.AppAction
+import com.m3u.ui.ktx.Edge
+import com.m3u.ui.ktx.EventHandler
+import com.m3u.ui.ktx.animateDp
+import com.m3u.ui.ktx.blurEdges
+import com.m3u.ui.ktx.interceptVolumeEvent
+import com.m3u.ui.ktx.isAtTop
 import com.m3u.ui.model.LocalDuration
 import com.m3u.ui.model.LocalHelper
 import com.m3u.ui.model.LocalScalable
 import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.LocalTheme
+import com.m3u.ui.model.ScaffoldAction
+import com.m3u.ui.model.ScaffoldFob
 import com.m3u.ui.model.Scalable
-import com.m3u.ui.util.EventHandler
-import com.m3u.ui.util.RepeatOnCreate
-import com.m3u.ui.util.animateDp
-import com.m3u.ui.util.interceptVolumeEvent
-import com.m3u.ui.util.isAtTop
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -116,9 +111,9 @@ internal fun FeedRoute(
     LaunchedEffect(url) {
         viewModel.onEvent(FeedEvent.Observe(url))
     }
-    RepeatOnCreate {
+    SideEffect {
         helper.actions = listOf(
-            AppAction(
+            ScaffoldAction(
                 icon = Icons.Rounded.Refresh,
                 contentDescription = "refresh",
                 onClick = {
@@ -138,6 +133,11 @@ internal fun FeedRoute(
     }
     BackHandler(state.query.isNotEmpty()) {
         viewModel.onEvent(FeedEvent.Query(""))
+    }
+    DisposableEffect(Unit) {
+        onDispose {
+            helper.fab = null
+        }
     }
     val interceptVolumeEventModifier = remember(state.godMode) {
         if (state.godMode) {
@@ -173,7 +173,13 @@ internal fun FeedRoute(
             modifier = modifier
                 .fillMaxSize()
                 .then(interceptVolumeEventModifier)
-//                .nestedScroll(connection)
+                .blurEdges(
+                    color = LocalTheme.current.background,
+                    edges = listOf(
+                        Edge.Top,
+                        Edge.Bottom
+                    )
+                )
         )
     }
 
@@ -204,6 +210,7 @@ private fun FeedScreen(
     onScrollUp: OnScrollUp,
     modifier: Modifier = Modifier
 ) {
+    val helper = LocalHelper.current
     val theme = LocalTheme.current
     val configuration = LocalConfiguration.current
     val spacing = LocalSpacing.current
@@ -213,14 +220,22 @@ private fun FeedScreen(
         onRefresh = onRefresh
     )
     Column {
-        val isAtTopState = remember { mutableStateOf(true) }
-        var flag by remember { mutableStateOf(false) }
+        val isAtTopState = remember {
+            observableStateOf(true) { newValue ->
+                helper.fab = ScaffoldFob(
+                    icon = Icons.Rounded.ArrowCircleUp,
+                    relation = TopLevelDestination.Main,
+                    onClick = onScrollUp
+                ).takeIf { !newValue }
+            }
+        }
+        var hasElevation by remember { mutableStateOf(false) }
         val surfaceElevation by animateDp("FeedScreenSearchElevation") {
-            if (!isAtTopState.value && flag) spacing.medium else spacing.none
+            if (!isAtTopState.value && hasElevation) spacing.medium else spacing.none
         }
         LaunchedEffect(Unit) {
             delay(duration.medium.toLong())
-            flag = true
+            hasElevation = true
         }
         Surface(
             elevation = surfaceElevation,
@@ -233,7 +248,7 @@ private fun FeedScreen(
                 height = 32.dp,
                 placeholder = stringResource(R.string.query_placeholder).capitalize(Locale.current),
                 modifier = Modifier
-                    .padding(LocalSpacing.current.medium)
+                    .padding(spacing.medium)
                     .fillMaxWidth()
             )
         }
@@ -286,41 +301,6 @@ private fun FeedScreen(
                 contentColor = theme.onTint,
                 backgroundColor = theme.tint
             )
-            this@Column.AnimatedVisibility(
-                visible = !isAtTopState.value,
-                enter = slideInVertically { it } + fadeIn(),
-                exit = slideOutVertically { it } + fadeOut(),
-                modifier = Modifier
-                    .padding(LocalSpacing.current.medium)
-                    .align(Alignment.BottomEnd)
-            ) {
-                ExtendedFloatingActionButton(
-                    text = {
-                        Text(stringResource(R.string.scroll_up).uppercase())
-                    },
-                    onClick = onScrollUp,
-                    backgroundColor = theme.tint,
-                    contentColor = theme.onTint,
-                    icon = {
-                        Icon(
-                            imageVector = Icons.Rounded.ArrowUpward,
-                            contentDescription = null
-                        )
-                    },
-                    elevation = FloatingActionButtonDefaults.elevation(
-                        defaultElevation = spacing.none,
-                        pressedElevation = spacing.small,
-                        hoveredElevation = spacing.extraSmall,
-                        focusedElevation = spacing.extraSmall,
-                    ),
-                    modifier = Modifier
-                        .border(
-                            spacing.extraSmall,
-                            Color.Black.copy(alpha = 0.114f),
-                            shape = CircleShape
-                        )
-                )
-            }
         }
     }
 }
@@ -339,10 +319,6 @@ private fun LandscapeOrientationContent(
     onLongClickItem: OnLongClickItem,
     modifier: Modifier = Modifier
 ) {
-    val scalable = LocalScalable.current
-    val spacing = with(scalable) {
-        LocalSpacing.current.scaled
-    }
     val configuration = LocalConfiguration.current
     val type = configuration.uiMode and UI_MODE_TYPE_MASK
     val ids = remember(scrollMode, lives) {
@@ -351,43 +327,18 @@ private fun LandscapeOrientationContent(
     }
 
     if (useCommonUIMode || type == UI_MODE_TYPE_NORMAL) {
-        val state = rememberLazyGridState()
-        LaunchedEffect(state.isAtTop) {
-            isAtTopState.value = state.isAtTop
-        }
-        EventHandler(scrollUp) {
-            state.scrollToItem(0)
-        }
-
-        LazyVerticalGrid(
-            state = state,
-            columns = GridCells.Fixed(rowCount + 2),
-            verticalArrangement = Arrangement.spacedBy(spacing.medium),
-            horizontalArrangement = Arrangement.spacedBy(spacing.medium),
-            contentPadding = PaddingValues(LocalSpacing.current.medium),
-            modifier = modifier.fillMaxSize()
-        ) {
-            items(
-                items = lives,
-                key = { it.id },
-                contentType = { it.cover.isNullOrEmpty() }
-            ) { live ->
-                LiveItem(
-                    live = live,
-                    noPictureMode = noPictureMode,
-                    onClick = {
-                        if (scrollMode) {
-                            val initialIndex = ids.indexOfFirst { it == live.id }
-                            navigateToPlaylist(ids, initialIndex)
-                        } else {
-                            navigateToLive(live.id)
-                        }
-                    },
-                    onLongClick = { onLongClickItem(live) },
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
-        }
+        NormalLand(
+            lives = lives,
+            rowCount = rowCount,
+            noPictureMode = noPictureMode,
+            isAtTopState = isAtTopState,
+            scrollUp = scrollUp,
+            scrollMode = scrollMode,
+            ids = ids,
+            navigateToLive = navigateToLive,
+            navigateToPlaylist = navigateToPlaylist,
+            onLongClickItem = onLongClickItem
+        )
     } else {
         when (type) {
             UI_MODE_TYPE_TELEVISION -> {
@@ -398,8 +349,8 @@ private fun LandscapeOrientationContent(
                     isAtTopState = isAtTopState,
                     scrollUp = scrollUp,
                     navigateToLive = navigateToLive,
-                    navigateToLivePlayList = navigateToPlaylist,
-                    onLongClickLive = onLongClickItem,
+                    navigateToPlaylist = navigateToPlaylist,
+                    onLongClickItem = onLongClickItem,
                     modifier = modifier
                 )
             }
@@ -475,6 +426,63 @@ private fun PortraitOrientationContent(
 }
 
 @Composable
+fun NormalLand(
+    lives: List<Live>,
+    rowCount: Int,
+    noPictureMode: Boolean,
+    isAtTopState: MutableState<Boolean>,
+    scrollUp: Event<Unit>,
+    scrollMode: Boolean,
+    ids: List<Int>,
+    navigateToLive: (Int) -> Unit,
+    navigateToPlaylist: (List<Int>, Int) -> Unit,
+    onLongClickItem: (Live) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val scalable = LocalScalable.current
+    val spacing = with(scalable) {
+        LocalSpacing.current.scaled
+    }
+    val state = rememberLazyGridState()
+    LaunchedEffect(state.isAtTop) {
+        isAtTopState.value = state.isAtTop
+    }
+    EventHandler(scrollUp) {
+        state.scrollToItem(0)
+    }
+
+    LazyVerticalGrid(
+        state = state,
+        columns = GridCells.Fixed(rowCount + 2),
+        verticalArrangement = Arrangement.spacedBy(spacing.medium),
+        horizontalArrangement = Arrangement.spacedBy(spacing.medium),
+        contentPadding = PaddingValues(spacing.medium),
+        modifier = modifier.fillMaxSize()
+    ) {
+        items(
+            items = lives,
+            key = { it.id },
+            contentType = { it.cover.isNullOrEmpty() }
+        ) { live ->
+            LiveItem(
+                live = live,
+                noPictureMode = noPictureMode,
+                onClick = {
+                    if (scrollMode) {
+                        val initialIndex = ids.indexOfFirst { it == live.id }
+                        navigateToPlaylist(ids, initialIndex)
+                    } else {
+                        navigateToLive(live.id)
+                    }
+                },
+                onLongClick = { onLongClickItem(live) },
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+    }
+}
+
+@Composable
 private fun TelevisionUIModeContent(
     lives: List<Live>,
     experimentalMode: Boolean,
@@ -482,8 +490,8 @@ private fun TelevisionUIModeContent(
     isAtTopState: MutableState<Boolean>,
     scrollUp: Event<Unit>,
     navigateToLive: (Int) -> Unit,
-    navigateToLivePlayList: (List<Int>, Int) -> Unit,
-    onLongClickLive: (Live) -> Unit,
+    navigateToPlaylist: (List<Int>, Int) -> Unit,
+    onLongClickItem: (Live) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val scalable = LocalScalable.current
@@ -507,7 +515,7 @@ private fun TelevisionUIModeContent(
         columns = TvGridCells.Fixed(4),
         verticalArrangement = Arrangement.spacedBy(spacing.medium),
         horizontalArrangement = Arrangement.spacedBy(spacing.medium),
-        contentPadding = PaddingValues(LocalSpacing.current.medium),
+        contentPadding = PaddingValues(spacing.medium),
         modifier = modifier.fillMaxSize()
     ) {
         items(
@@ -521,12 +529,12 @@ private fun TelevisionUIModeContent(
                 onClick = {
                     if (experimentalMode) {
                         val initialIndex = ids.indexOfFirst { it == live.id }
-                        navigateToLivePlayList(ids, initialIndex)
+                        navigateToPlaylist(ids, initialIndex)
                     } else {
                         navigateToLive(live.id)
                     }
                 },
-                onLongClick = { onLongClickLive(live) },
+                onLongClick = { onLongClickItem(live) },
                 modifier = Modifier.fillMaxWidth()
             )
         }
@@ -539,6 +547,10 @@ private fun UnsupportedUIModeContent(
     modifier: Modifier = Modifier,
     description: String? = null,
 ) {
+    val scalable = LocalScalable.current
+    val spacing = with(scalable) {
+        LocalSpacing.current.scaled
+    }
     val device = remember(type) {
         when (type) {
             UI_MODE_TYPE_NORMAL -> "Normal"
@@ -554,7 +566,7 @@ private fun UnsupportedUIModeContent(
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(
-            LocalSpacing.current.medium,
+            spacing.medium,
             Alignment.CenterVertically
         ),
         modifier = modifier.fillMaxSize()

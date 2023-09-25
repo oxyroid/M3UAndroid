@@ -2,7 +2,6 @@ package com.m3u.features.favorite
 
 import android.content.res.Configuration
 import android.view.KeyEvent
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -20,11 +19,11 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.features.favorite.components.FavoriteItem
+import com.m3u.ui.ktx.interceptVolumeEvent
 import com.m3u.ui.model.LocalHelper
 import com.m3u.ui.model.LocalScalable
 import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.Scalable
-import com.m3u.ui.util.interceptVolumeEvent
 
 typealias NavigateToLive = (Int) -> Unit
 
@@ -77,7 +76,6 @@ fun FavouriteRoute(
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun FavoriteScreen(
     rowCount: Int,
