@@ -14,4 +14,5 @@
     <string name="tooltip_unrecord">停止录制</string>
     <string name="tooltip_cast">投屏</string>
     <string name="tooltip_enter_pip_mode">画中画模式</string>
+    <string name="dlna_devices">DLNA 设备</string>
 </resources>

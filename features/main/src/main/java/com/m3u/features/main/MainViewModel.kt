@@ -6,7 +6,7 @@ import com.m3u.core.architecture.configuration.Configuration
 import com.m3u.core.architecture.logger.BannerLoggerImpl
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.viewmodel.BaseViewModel
-import com.m3u.core.util.collection.replaceIf
+import com.m3u.core.util.replaceIf
 import com.m3u.core.util.coroutine.mapElement
 import com.m3u.data.database.entity.Feed
 import com.m3u.data.repository.FeedRepository

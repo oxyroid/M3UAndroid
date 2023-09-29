@@ -7,6 +7,7 @@ androidx-lifecycle = "2.6.2"
 androidx-compose = "1.6.0-alpha06"
 androidx-compose-material3 = "1.2.0-alpha08"
 androidx-navigation = "2.7.3"
+exifinterface = "1.3.6"
 google-accompanist = "0.33.1-alpha"
 google-dagger = "2.48"
 androidx-hilt-compiler = "1.1.0-alpha01"
@@ -19,6 +20,7 @@ io-coil = "2.4.0"
 androidx-room = "2.5.2"
 kotlinx-serialization-json = "1.6.0"
 lottie-compose = "6.1.0"
+mmupnp = "3.1.6"
 squareup-retrofit2 = "2.9.0"
 
 kotlin = "1.9.0"
@@ -27,6 +29,10 @@ dagger-plugin = "2.48"
 ksp-plugin = "1.9.0-1.0.13"
 
 compose_compiler = "1.5.2"
+junit = "4.13.2"
+androidx-test-ext-junit = "1.1.5"
+espresso-core = "3.5.1"
+material = "1.9.0"
 
 [libraries]
 androidx-core-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "androidx-core" }
@@ -34,6 +40,7 @@ androidx-core-core-splashscreen = { group = "androidx.core", name = "core-splash
 androidx-appcompat-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "androidx-appcompat" }
 androidx-activity-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "androidx-activity" }
 
+androidx-exifinterface = { module = "androidx.exifinterface:exifinterface", version.ref = "exifinterface" }
 androidx-lifecycle-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "androidx-lifecycle" }
 androidx-lifecycle-lifecycle-runtime-compose = { group = "androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "androidx-lifecycle" }
 
@@ -81,8 +88,13 @@ com-airbnb-android-lottie-compose = { group = "com.airbnb.android", name = "lott
 
 com-squareup-retrofit2-retrofit = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "squareup-retrofit2" }
 
+mmupnp = { module = "net.mm2d.mmupnp:mmupnp", version.ref = "mmupnp" }
 org-jetbrains-kotlin-kotlin-serialization = { group = "org.jetbrains.kotlin", name = "kotlin-serialization", version.ref = "kotlin" }
 org-jetbrains-kotlinx-kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinx-serialization-json" }
+junit = { group = "junit", name = "junit", version.ref = "junit" }
+androidx-test-ext-junit = { group = "androidx.test.ext", name = "junit", version.ref = "androidx-test-ext-junit" }
+espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espresso-core" }
+material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 
 [plugins]
 com-android-application = { id = "com.android.application", version.ref = "android-gradle-plugin" }

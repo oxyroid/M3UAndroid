@@ -13,19 +13,20 @@ import com.m3u.data.database.entity.Feed
 import com.m3u.data.database.entity.Live
 
 data class LiveState(
-    val init: Init = InitSpecial(),
+    val init: Init = InitSingle(),
     private val configuration: Configuration,
     val recording: Boolean = false,
     val message: Event<String> = handledEvent(),
     val player: Player? = null,
     val playerState: PlayerState = PlayerState(),
-    val muted: Boolean = false
+    val muted: Boolean = false,
+    val connectedLocations: List<String> = emptyList()
 ) {
     sealed class Init(
         open val feed: Feed? = null
     )
 
-    data class InitSpecial(
+    data class InitSingle(
         val live: Live? = null,
         override val feed: Feed? = null
     ) : Init()
@@ -41,7 +42,6 @@ data class LiveState(
         val videoSize: Rect = Rect(),
         val playerError: PlaybackException? = null
     )
-
 
     var experimentalMode: Boolean by configuration.experimentalMode
     @ClipMode var clipMode: Int by configuration.clipMode

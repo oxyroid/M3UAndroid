@@ -3,7 +3,7 @@ package com.m3u.data.database.entity
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import com.m3u.core.util.collection.Likable
+import com.m3u.core.util.Likable
 
 // called channel in user interface
 @Entity(tableName = "lives")

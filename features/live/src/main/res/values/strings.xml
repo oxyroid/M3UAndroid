@@ -14,4 +14,5 @@
     <string name="tooltip_unrecord">unrecord</string>
     <string name="tooltip_cast">cast screen</string>
     <string name="tooltip_enter_pip_mode">PIP mode</string>
+    <string name="dlna_devices">DLNA Devices</string>
 </resources>

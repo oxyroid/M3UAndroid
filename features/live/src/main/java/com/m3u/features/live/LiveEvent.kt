@@ -7,6 +7,10 @@ sealed interface LiveEvent {
     data class InitPlayList(val initialIndex: Int, val ids: List<Int>) : Init
 
     data object SearchDlnaDevices : LiveEvent
+    data object ClearDlnaDevices : LiveEvent
+    data object StopSearchDlnaDevices : LiveEvent
+    data class ConnectDlnaDevice(val location: String) : LiveEvent
+    data class DisconnectDlnaDevice(val location: String) : LiveEvent
     data object Record : LiveEvent
     data class InstallMedia(val url: String) : LiveEvent
     data object UninstallMedia : LiveEvent
