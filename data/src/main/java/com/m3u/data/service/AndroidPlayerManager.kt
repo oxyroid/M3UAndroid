@@ -73,13 +73,13 @@ class AndroidPlayerManager @Inject constructor(
             .build()
     }
 
-    override fun observePlayer(): Flow<Player?> = playerFlow.asStateFlow()
+    override fun observe(): Flow<Player?> = playerFlow.asStateFlow()
 
     private val playerFlow = MutableStateFlow<Player?>(null)
     private val player: Player? get() = playerFlow.value
 
     private val isSSLVerification by configuration.isSSLVerification
-    override fun initPlayer() {
+    override fun initialize() {
         playerFlow.value = ExoPlayer.Builder(context)
             .let {
                 if (isSSLVerification) it
@@ -138,9 +138,9 @@ class AndroidPlayerManager @Inject constructor(
         playbackState.value = state
     }
 
-    override fun onPlayerError(error: PlaybackException) {
-        super.onPlayerError(error)
-        when (error.errorCode) {
+    override fun onPlayerErrorChanged(error: PlaybackException?) {
+        super.onPlayerErrorChanged(error)
+        when (error?.errorCode) {
             PlaybackException.ERROR_CODE_BEHIND_LIVE_WINDOW -> {
                 player?.let {
                     it.seekToDefaultPosition()
@@ -150,6 +150,6 @@ class AndroidPlayerManager @Inject constructor(
 
             else -> {}
         }
-        playerError.value = error
+        super.playerError.value = error
     }
 }

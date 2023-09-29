@@ -1,4 +1,4 @@
-package com.m3u.features.setting.parts
+package com.m3u.features.setting.fragments
 
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -12,7 +12,7 @@ import com.m3u.ui.components.Button
 import com.m3u.ui.components.OuterColumn
 
 @Composable
-internal fun ScriptsPart(
+internal fun ScriptsFragment(
     importJavaScript: (Uri) -> Unit,
     modifier: Modifier = Modifier
 ) {

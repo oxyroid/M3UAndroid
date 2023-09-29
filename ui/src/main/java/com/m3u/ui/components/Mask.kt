@@ -113,7 +113,7 @@ fun rememberMaskState(
     @IntRange(from = 1) minDuration: Long = MaskDefaults.minDuration,
     coroutineScope: CoroutineScope = rememberCoroutineScope(),
     onChanged: (Boolean) -> Unit
-): MaskStateCoroutineImpl {
+): MaskState {
     val currentOnChanged by rememberUpdatedState(onChanged)
     return remember(minDuration, coroutineScope) {
         MaskStateCoroutineImpl(

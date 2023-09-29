@@ -5,7 +5,7 @@ import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.content.pm.PackageManager.GET_ACTIVITIES
 import android.os.Build
-import com.m3u.core.util.collection.forEachNotNull
+import com.m3u.core.util.forEachNotNull
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
 import java.io.PrintWriter

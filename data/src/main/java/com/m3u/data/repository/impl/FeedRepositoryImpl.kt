@@ -12,7 +12,7 @@ import com.m3u.core.architecture.logger.BannerLoggerImpl
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.execute
 import com.m3u.core.architecture.logger.sandBox
-import com.m3u.core.util.collection.belong
+import com.m3u.core.util.belong
 import com.m3u.core.wrapper.ProgressResource
 import com.m3u.core.wrapper.emitException
 import com.m3u.core.wrapper.emitMessage

@@ -9,20 +9,9 @@ import com.m3u.features.live.navigation.liveRoute
 
 sealed interface Destination {
     data object Root : Destination
-
-    data class Feed(
-        val url: String,
-    ) : Destination
-
-    data class Live(
-        val id: Int,
-    ) : Destination
-
-    data class LivePlayList(
-        val ids: List<Int>,
-        val initial: Int
-    ) : Destination
-
+    data class Feed(val url: String) : Destination
+    data class Live(val id: Int) : Destination
+    data class LivePlayList(val ids: List<Int>, val initial: Int) : Destination
     data object Console : Destination
     data object About: Destination
 }
@@ -41,10 +30,10 @@ inline infix fun <reified D : Destination> NavDestination?.destinationTo(clazz: 
 }
 
 inline infix fun <reified D : Destination> NavDestination?.notDestinationTo(clazz: Class<D>): Boolean {
-    return (this destinationTo clazz).not()
+    return !(this destinationTo clazz)
 }
 
-inline infix fun <reified D : Destination> NavDestination?.safeDestinationTo(
+inline fun <reified D : Destination> NavDestination?.safeDestinationTo(
     includeNullValue: Boolean
 ): Boolean {
     this ?: return includeNullValue

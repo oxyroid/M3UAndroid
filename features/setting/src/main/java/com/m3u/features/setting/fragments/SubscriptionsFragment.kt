@@ -1,4 +1,4 @@
-package com.m3u.features.setting.parts
+package com.m3u.features.setting.fragments
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -29,7 +29,7 @@ import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.LocalTheme
 
 @Composable
-internal fun FeedsPart(
+internal fun SubscriptionsFragment(
     title: String,
     url: String,
     mutedLives: List<Live>,

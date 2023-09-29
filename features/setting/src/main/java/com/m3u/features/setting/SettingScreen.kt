@@ -17,7 +17,10 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -36,12 +39,14 @@ import com.m3u.core.annotation.FeedStrategy
 import com.m3u.core.annotation.OnClipMode
 import com.m3u.core.annotation.OnFeedStrategy
 import com.m3u.data.database.entity.Live
-import com.m3u.features.setting.parts.FeedsPart
-import com.m3u.features.setting.parts.PreferencesPart
-import com.m3u.features.setting.parts.ScriptsPart
+import com.m3u.features.setting.fragments.PreferencesFragment
+import com.m3u.features.setting.fragments.ScriptsFragment
+import com.m3u.features.setting.fragments.SubscriptionsFragment
+import com.m3u.ui.TopLevelDestination
 import com.m3u.ui.model.LocalHelper
 import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.LocalTheme
+import com.m3u.ui.model.ScaffoldFob
 
 typealias NavigateToConsole = () -> Unit
 typealias NavigateToAbout = () -> Unit
@@ -62,7 +67,6 @@ fun SettingRoute(
             helper.actions = emptyList()
         }
     }
-
     val configuration = LocalConfiguration.current
     val type = configuration.uiMode and Configuration.UI_MODE_TYPE_MASK
     val useCommonUIMode = if (type == Configuration.UI_MODE_TYPE_NORMAL) true
@@ -164,7 +168,22 @@ private fun SettingScreen(
     navigateToAbout: NavigateToAbout,
     modifier: Modifier = Modifier
 ) {
-    var part: SettingPart by remember { mutableStateOf(SettingPart.PREFERENCE) }
+    val helper = LocalHelper.current
+    var fragment: SettingFragments by remember { mutableStateOf(SettingFragments.Root) }
+
+    DisposableEffect(fragment) {
+        helper.fab = ScaffoldFob(
+            relation = TopLevelDestination.Setting,
+            icon = Icons.Rounded.Settings
+        ) {
+            fragment = SettingFragments.Root
+        }
+            .takeUnless { fragment == SettingFragments.Root }
+        onDispose {
+            helper.fab = null
+        }
+    }
+
     Box(
         modifier = Modifier.testTag("features:setting")
     ) {
@@ -173,13 +192,13 @@ private fun SettingScreen(
             Configuration.ORIENTATION_PORTRAIT -> {
                 PortraitOrientationContent(
                     version = version,
-                    part = part,
+                    fragment = fragment,
                     title = title,
                     url = url,
                     godMode = godMode,
                     connectTimeout = connectTimeout,
                     scrollMode = scrollMode,
-                    onFold = { part = it },
+                    replaceFragment = { fragment = it },
                     onTitle = onTitle,
                     onUrl = onUrl,
                     onSubscribe = onSubscribe,
@@ -225,7 +244,7 @@ private fun SettingScreen(
             Configuration.ORIENTATION_LANDSCAPE -> {
                 LandscapeOrientationContent(
                     version = version,
-                    part = part,
+                    fragment = fragment,
                     title = title,
                     url = url,
                     godMode = godMode,
@@ -235,7 +254,7 @@ private fun SettingScreen(
                     connectTimeout = connectTimeout,
                     useCommonUIMode = useCommonUIMode,
                     useCommonUIModeEnable = useCommonUIModeEnable,
-                    onFold = { part = it },
+                    replaceFragment = { fragment = it },
                     onTitle = onTitle,
                     onUrl = onUrl,
                     onClipMode = onClipMode,
@@ -276,15 +295,15 @@ private fun SettingScreen(
             else -> {}
         }
     }
-    BackHandler(part != SettingPart.PREFERENCE) {
-        part = SettingPart.PREFERENCE
+    BackHandler(fragment != SettingFragments.Root) {
+        fragment = SettingFragments.Root
     }
 }
 
 @Composable
 private fun PortraitOrientationContent(
     version: String,
-    part: SettingPart,
+    fragment: SettingFragments,
     title: String,
     url: String,
     @FeedStrategy feedStrategy: Int,
@@ -298,7 +317,7 @@ private fun PortraitOrientationContent(
     onConnectTimeout: () -> Unit,
     mutedLives: List<Live>,
     onBannedLive: (Int) -> Unit,
-    onFold: (SettingPart) -> Unit,
+    replaceFragment: (SettingFragments) -> Unit,
     onTitle: (String) -> Unit,
     onUrl: (String) -> Unit,
     onSubscribe: () -> Unit,
@@ -327,7 +346,7 @@ private fun PortraitOrientationContent(
     modifier: Modifier = Modifier
 ) {
     Box {
-        PreferencesPart(
+        PreferencesFragment(
             version = version,
             feedStrategy = feedStrategy,
             useCommonUIMode = useCommonUIMode,
@@ -341,10 +360,10 @@ private fun PortraitOrientationContent(
             onUIMode = { },
             onGodMode = onGodMode,
             onFeedManagement = {
-                onFold(SettingPart.FEED)
+                replaceFragment(SettingFragments.Subscriptions)
             },
             onScriptManagement = {
-                onFold(SettingPart.SCRIPT)
+                replaceFragment(SettingFragments.Scripts)
             },
             navigateToConsole = navigateToConsole,
             experimentalMode = experimentalMode,
@@ -370,13 +389,13 @@ private fun PortraitOrientationContent(
         )
 
         AnimatedVisibility(
-            visible = part != SettingPart.PREFERENCE,
+            visible = fragment != SettingFragments.Root,
             enter = slideInHorizontally { it },
             exit = slideOutHorizontally { it }
         ) {
-            when (part) {
-                SettingPart.FEED -> {
-                    FeedsPart(
+            when (fragment) {
+                SettingFragments.Subscriptions -> {
+                    SubscriptionsFragment(
                         title = title,
                         url = url,
                         mutedLives = mutedLives,
@@ -388,8 +407,8 @@ private fun PortraitOrientationContent(
                     )
                 }
 
-                SettingPart.SCRIPT -> {
-                    ScriptsPart(
+                SettingFragments.Scripts -> {
+                    ScriptsFragment(
                         importJavaScript = importJavaScript,
                         modifier = modifier.background(LocalTheme.current.background)
                     )
@@ -404,12 +423,12 @@ private fun PortraitOrientationContent(
 @Composable
 private fun LandscapeOrientationContent(
     version: String,
-    part: SettingPart,
+    fragment: SettingFragments,
     title: String,
     url: String,
     godMode: Boolean,
     @ClipMode clipMode: Int,
-    onFold: (SettingPart) -> Unit,
+    replaceFragment: (SettingFragments) -> Unit,
     onTitle: (String) -> Unit,
     onUrl: (String) -> Unit,
     onSubscribe: () -> Unit,
@@ -453,13 +472,13 @@ private fun LandscapeOrientationContent(
         horizontalArrangement = Arrangement.spacedBy(spacing.medium, Alignment.Start),
         modifier = modifier.padding(horizontal = spacing.medium)
     ) {
-        PreferencesPart(
+        PreferencesFragment(
             version = version,
             godMode = godMode,
             clipMode = clipMode,
             onClipMode = onClipMode,
-            onFeedManagement = { onFold(SettingPart.FEED) },
-            onScriptManagement = { onFold(SettingPart.SCRIPT) },
+            onFeedManagement = { replaceFragment(SettingFragments.Subscriptions) },
+            onScriptManagement = { replaceFragment(SettingFragments.Scripts) },
             feedStrategy = feedStrategy,
             connectTimeout = connectTimeout,
             onFeedStrategy = onFeedStrategy,
@@ -493,9 +512,9 @@ private fun LandscapeOrientationContent(
                 .weight(1f)
         )
 
-        when (part) {
-            SettingPart.FEED -> {
-                FeedsPart(
+        when (fragment) {
+            SettingFragments.Subscriptions -> {
+                SubscriptionsFragment(
                     title = title,
                     url = url,
                     mutedLives = mutedLives,
@@ -509,8 +528,8 @@ private fun LandscapeOrientationContent(
                 )
             }
 
-            SettingPart.SCRIPT -> {
-                ScriptsPart(
+            SettingFragments.Scripts -> {
+                ScriptsFragment(
                     importJavaScript = importJavaScript,
                     modifier = Modifier
                         .fillMaxHeight()

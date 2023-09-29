@@ -72,7 +72,6 @@ val EmptyHelper = object : Helper() {
 
 val LocalHelper = staticCompositionLocalOf { EmptyHelper }
 
-
 data class ScaffoldAction(
     val icon: ImageVector,
     val contentDescription: String?,

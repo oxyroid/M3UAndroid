@@ -1,4 +1,4 @@
-package com.m3u.features.setting.parts
+package com.m3u.features.setting.fragments
 
 import android.content.Intent
 import android.net.Uri
@@ -36,7 +36,7 @@ import com.m3u.ui.model.LocalSpacing
 
 
 @Composable
-internal fun PreferencesPart(
+internal fun PreferencesFragment(
     version: String,
     @FeedStrategy feedStrategy: Int,
     @ConnectTimeout connectTimeout: Int,

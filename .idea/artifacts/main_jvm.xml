@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="main-jvm">
+    <output-path>$PROJECT_DIR$/features/main/build/libs</output-path>
+    <root id="archive" name="main-jvm.jar">
+      <element id="module-output" name="M3U.features.main.jvmMain" />
+    </root>
+  </artifact>
+</component>

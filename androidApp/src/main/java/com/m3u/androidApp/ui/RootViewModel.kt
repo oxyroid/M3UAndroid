@@ -65,7 +65,7 @@ class RootViewModel @Inject constructor(
 
     val childTitle: MutableStateFlow<String> = MutableStateFlow("")
     val actions: MutableStateFlow<List<ScaffoldAction>> = MutableStateFlow(emptyList())
-    val fab: MutableStateFlow<ScaffoldFob?> = MutableStateFlow(null)
+    val fob: MutableStateFlow<ScaffoldFob?> = MutableStateFlow(null)
 
     override fun onEvent(event: RootEvent) {
         when (event) {

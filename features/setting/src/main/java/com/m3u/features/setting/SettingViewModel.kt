@@ -6,7 +6,6 @@ import androidx.lifecycle.viewModelScope
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.workDataOf
-import com.m3u.core.annotation.AppPublisherImpl
 import com.m3u.core.annotation.ClipMode
 import com.m3u.core.annotation.ConnectTimeout
 import com.m3u.core.annotation.FeedStrategy
@@ -29,7 +28,7 @@ import javax.inject.Inject
 @HiltViewModel
 class SettingViewModel @Inject constructor(
     private val liveRepository: LiveRepository,
-    @AppPublisherImpl private val publisher: Publisher,
+    @Publisher.App private val publisher: Publisher,
     application: Application,
     configuration: Configuration,
     @BannerLoggerImpl private val logger: Logger,

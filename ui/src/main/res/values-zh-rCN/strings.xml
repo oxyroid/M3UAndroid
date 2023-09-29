@@ -11,4 +11,7 @@
 
     <string name="error_unknown">未知错误</string>
     <string name="cd_top_bar_on_back_pressed">返回</string>
+
+    <string name="theme_card_left">您</string>
+    <string name="theme_card_right">好</string>
 </resources>

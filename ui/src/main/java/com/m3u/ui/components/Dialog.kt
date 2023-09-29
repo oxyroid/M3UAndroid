@@ -153,10 +153,10 @@ fun DialogItem(
 fun AppDialog(
     visible: Boolean,
     onDismiss: () -> Unit,
-    content: @Composable ColumnScope.() -> Unit,
     modifier: Modifier = Modifier,
     border: BorderStroke = BorderStroke(2.dp, LocalTheme.current.divider.copy(alpha = 0.45f)),
     verticalArrangement: Arrangement.Vertical = Arrangement.Top,
+    content: @Composable ColumnScope.() -> Unit,
 ) {
     val theme = LocalTheme.current
     val spacing = LocalSpacing.current

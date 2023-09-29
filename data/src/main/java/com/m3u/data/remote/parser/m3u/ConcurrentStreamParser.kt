@@ -4,7 +4,7 @@ import android.content.Context
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.util.basic.splitOutOfQuotation
 import com.m3u.core.util.basic.trimBrackets
-import com.m3u.core.util.collection.loadLine
+import com.m3u.core.util.loadLine
 import com.m3u.data.remote.parser.Parser
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
