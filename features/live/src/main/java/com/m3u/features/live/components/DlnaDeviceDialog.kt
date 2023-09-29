@@ -27,12 +27,12 @@ import net.mm2d.upnp.Device
 fun DlnaDeviceDialog(
     isDevicesVisible: Boolean,
     devices: List<Device>?,
-    connectedLocations: List<String>,
+    connectedDevices: List<Device>,
     searching: Boolean,
     maskState: MaskState,
     onDismiss: OnDismiss,
-    connectDlnaDevice: (location: String) -> Unit,
-    disconnectDlnaDevice: (location: String) -> Unit,
+    connectDlnaDevice: (device: Device) -> Unit,
+    disconnectDlnaDevice: (device: Device) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
@@ -74,9 +74,9 @@ fun DlnaDeviceDialog(
             items(devices ?: emptyList()) { device ->
                 DlnaDeviceItem(
                     device = device,
-                    connected = device.location in connectedLocations,
-                    requestConnection = { connectDlnaDevice(device.location) },
-                    loseConnection = { disconnectDlnaDevice(device.location) }
+                    connected = device in connectedDevices,
+                    requestConnection = { connectDlnaDevice(device) },
+                    loseConnection = { disconnectDlnaDevice(device) }
                 )
             }
         }

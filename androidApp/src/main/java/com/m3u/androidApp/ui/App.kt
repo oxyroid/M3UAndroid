@@ -149,7 +149,7 @@ fun App(
                     )
                 }
             },
-            onBackPressed = appState::onBackClick.takeUnless { isBackPressedVisible }
+            onBackPressed = appState::onBackClick.takeIf { isBackPressedVisible }
         ) { padding ->
             Column(
                 modifier = Modifier

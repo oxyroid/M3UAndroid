@@ -100,7 +100,7 @@ internal fun LiveRoute(
         searching = searching,
         isDevicesVisible = isDevicesVisible,
         devices = devices,
-        connectedLocations = state.connectedLocations,
+        connectedDevices = state.connectedDevices,
         connectDlnaDevice = { viewModel.onEvent(LiveEvent.ConnectDlnaDevice(it)) },
         disconnectDlnaDevice = { viewModel.onEvent(LiveEvent.DisconnectDlnaDevice(it)) },
         onDismiss = { viewModel.onEvent(LiveEvent.ClearDlnaDevices) }

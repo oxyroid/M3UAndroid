@@ -92,8 +92,8 @@ class LiveViewModel @Inject constructor(
             LiveEvent.SearchDlnaDevices -> searchDlnaDevices()
             LiveEvent.StopSearchDlnaDevices -> stopSearchDlnaDevices()
             LiveEvent.ClearDlnaDevices -> clearDlnaDevices()
-            is LiveEvent.ConnectDlnaDevice -> connectDlnaDevice(event.location)
-            is LiveEvent.DisconnectDlnaDevice -> disconnectDlnaDevice(event.location)
+            is LiveEvent.ConnectDlnaDevice -> connectDlnaDevice(event.device)
+            is LiveEvent.DisconnectDlnaDevice -> disconnectDlnaDevice(event.device)
             LiveEvent.Record -> record()
             is LiveEvent.OnFavourite -> setFavourite(event.url)
             is LiveEvent.InstallMedia -> {
@@ -206,18 +206,35 @@ class LiveViewModel @Inject constructor(
         controlPoint.clearDeviceList()
     }
 
-    private fun connectDlnaDevice(location: String) {
+    private fun connectDlnaDevice(device: Device) {
+        // Browse Search CreateObject DestroyObject UpdateObject
+        // http://upnp.org/specs/av/UPnP-av-ContentDirectory-v4-Service.pdf
+        val browse = device.findAction("Browse")
+        browse?.invoke(
+            argumentValues = mapOf(
+                "ObjectID" to "0",
+                "BrowseFlag" to "BrowseDirectChildren",
+                "Filter" to "*",
+                "StartingIndex" to "0",
+                "RequestedCount" to "0",
+                "SortCriteria" to ""
+            ),
+            onResult = {
+                val result = it["Result"]
+
+            }
+        )
         writable.update {
             it.copy(
-                connectedLocations = it.connectedLocations + location
+                connectedDevices = it.connectedDevices + device
             )
         }
     }
 
-    private fun disconnectDlnaDevice(location: String) {
+    private fun disconnectDlnaDevice(device: Device) {
         writable.update {
             it.copy(
-                connectedLocations = it.connectedLocations - location
+                connectedDevices = it.connectedDevices - device
             )
         }
     }

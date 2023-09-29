@@ -11,6 +11,7 @@ import com.m3u.core.wrapper.Event
 import com.m3u.core.wrapper.handledEvent
 import com.m3u.data.database.entity.Feed
 import com.m3u.data.database.entity.Live
+import net.mm2d.upnp.Device
 
 data class LiveState(
     val init: Init = InitSingle(),
@@ -20,7 +21,7 @@ data class LiveState(
     val player: Player? = null,
     val playerState: PlayerState = PlayerState(),
     val muted: Boolean = false,
-    val connectedLocations: List<String> = emptyList()
+    val connectedDevices: List<Device> = emptyList()
 ) {
     sealed class Init(
         open val feed: Feed? = null
@@ -44,6 +45,7 @@ data class LiveState(
     )
 
     var experimentalMode: Boolean by configuration.experimentalMode
-    @ClipMode var clipMode: Int by configuration.clipMode
+    @ClipMode
+    var clipMode: Int by configuration.clipMode
     var fullInfoPlayer: Boolean by configuration.fullInfoPlayer
 }

@@ -1,5 +1,7 @@
 package com.m3u.features.live
 
+import net.mm2d.upnp.Device
+
 sealed interface LiveEvent {
     sealed interface Init : LiveEvent
 
@@ -9,8 +11,8 @@ sealed interface LiveEvent {
     data object SearchDlnaDevices : LiveEvent
     data object ClearDlnaDevices : LiveEvent
     data object StopSearchDlnaDevices : LiveEvent
-    data class ConnectDlnaDevice(val location: String) : LiveEvent
-    data class DisconnectDlnaDevice(val location: String) : LiveEvent
+    data class ConnectDlnaDevice(val device: Device) : LiveEvent
+    data class DisconnectDlnaDevice(val device: Device) : LiveEvent
     data object Record : LiveEvent
     data class InstallMedia(val url: String) : LiveEvent
     data object UninstallMedia : LiveEvent
