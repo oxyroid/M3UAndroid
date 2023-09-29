@@ -3,7 +3,6 @@
 package com.m3u.androidApp.di
 
 import com.m3u.androidApp.AppPublisher
-import com.m3u.core.annotation.AppPublisherImpl
 import com.m3u.core.architecture.Publisher
 import dagger.Binds
 import dagger.Module
@@ -16,6 +15,6 @@ import javax.inject.Singleton
 interface AppModule {
     @Binds
     @Singleton
-    @AppPublisherImpl
+    @Publisher.App
     fun bindPublisher(provider: AppPublisher): Publisher
 }
