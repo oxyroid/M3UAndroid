@@ -8,8 +8,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Card
 import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -23,6 +23,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.m3u.ui.components.OuterRow
+import com.m3u.ui.ktx.animateColor
 import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.LocalTheme
 import com.m3u.ui.ktx.animateDp
@@ -46,12 +47,16 @@ internal fun FeedItem(
         if (special) spacing.extraSmall
         else spacing.none
     }
-    Card(
+    val actualBorderColor by animateColor("FeedItemBorderColor") {
+        if (special) Color.Black.copy(alpha = 0.12f)
+        else Color.Transparent
+    }
+    Surface(
         shape = RoundedCornerShape(spacing.medium),
-        backgroundColor = actualBackgroundColor,
+        color = actualBackgroundColor,
         contentColor = actualContentColor,
         elevation = spacing.none,
-        border = BorderStroke(actualBorder, Color.Black.copy(alpha = 0.12f))
+        border = BorderStroke(actualBorder, actualBorderColor)
     ) {
         OuterRow(
             modifier = modifier
