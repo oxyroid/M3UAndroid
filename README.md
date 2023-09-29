@@ -32,6 +32,9 @@ beta packages**.
 
 View this [file](CONTRIBUTING.md) to learn about how to contribute this repository.
 
+### Literatures
+1. http://upnp.org/specs/av/UPnP-av-ContentDirectory-v4-Service.pdf
+
 ### About me
 
 I am a Chinese university student who is about to graduate and eager to find a **job** in Android

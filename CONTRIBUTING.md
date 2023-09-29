@@ -18,12 +18,12 @@ If you want to contribute to this repository, follow these steps:
    Create a new branch from the `master` branch or checkout existing branches.
 
 4. **Branch Naming Rules**
-    - Release Package is allowed in the `MASTER` branch only, and other contributors cannot change `MASTER` branch without PRs.
-    - Use the following naming conventions:
-        - Screen feature branch: `feature_{module-name}`
-        - Bug fix branch: `fix_{keyword}`
-        - Migrate platform branch: `{target-platform}_migrate`
-        - Other branch: `build_{keyword}`
+
+   If you want to code in new branch, use the following naming conventions:
+   - Screen feature branch: `feature_{module-name}`
+   - Bug fix branch: `fix_{keyword}`
+   - Migrate platform branch: `{target-platform}_migrate`
+   - Other branch: `build_{keyword}`
 
 5. **Coding in Your Branch**
    
@@ -34,16 +34,18 @@ If you want to contribute to this repository, follow these steps:
    Ensure that there are no warnings or errors in your code.
 
 7. **Commit Rules**
-   - Follow this format for your commits: "lower-case", "space after the colon", "end with a period".
-   - Use this format: `{catalog}: {description}.`.
-   - Examples:
-      - `feat: new screen feature.`
-      - `fix: bug fix.`
-      - `docs: markdown files or comments update.`
-      - `build: gradle files or project structure update.`
-      - `upgrade (master only): release new version.`
-      - `style: code style or naming update.`
-      - `etc.`
+
+   Follow this format for your commits: "lower-case", "space after the colon", "end with a period".
+   Use this format: `{catalog}: {description}.`.
+
+   Examples:
+   - `feat: new screen feature.`
+   - `fix: bug fix.`
+   - `docs: markdown files or comments update.`
+   - `build: gradle files or project structure update.`
+   - `upgrade (master only): release new version.`
+   - `style: code style or naming update.`
+   - etc.
 
 8. **Push Your Code**
 
