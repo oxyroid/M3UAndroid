@@ -132,5 +132,5 @@ private fun size(
 }
 
 object BlurDefaults {
-    const val DIMEN = 48f
+    const val DIMEN = 56f
 }

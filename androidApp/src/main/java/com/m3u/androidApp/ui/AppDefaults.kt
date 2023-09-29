@@ -19,11 +19,13 @@ object AppDefaults {
 
     @Composable
     fun isSystemBarScrollable(currentDestination: NavDestination?): Boolean =
-        currentDestination notDestinationTo Destination.Root::class.java
+//        currentDestination notDestinationTo Destination.Root::class.java
+        false
 
     @Composable
     fun isBackPressedVisible(currentDestination: NavDestination?): Boolean =
-        currentDestination.safeDestinationTo<Destination.Root>(true)
+        !currentDestination.safeDestinationTo<Destination.Root>(true)
+//        false
 
     @Composable
     fun isPlaying(currentDestination: NavDestination?): Boolean = remember(currentDestination) {
