@@ -1,6 +1,6 @@
 @file:Suppress("unused")
 
-package com.m3u.core.util.collection
+package com.m3u.core.util
 
 interface Likable<T> {
     infix fun like(another: T): Boolean = this == another
