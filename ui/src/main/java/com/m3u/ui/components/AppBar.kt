@@ -85,7 +85,7 @@ fun AppTopBarConsumer.consume(value: Float, min: Float, max: Float): Boolean = v
 @Composable
 fun AppTopBar(
     modifier: Modifier = Modifier,
-    text: String,
+    title: String,
     visible: Boolean,
     scrollable: Boolean,
     consumer: AppTopBarConsumer = AppTopBarDefaults.consumer,
@@ -208,7 +208,7 @@ fun AppTopBar(
                         )
                     }
                     Text(
-                        text = text,
+                        text = title,
                         style = MaterialTheme.typography.h6.copy(
                             fontSize = 21.sp
                         ),

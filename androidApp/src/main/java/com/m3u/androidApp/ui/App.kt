@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -24,18 +23,15 @@ import com.m3u.androidApp.components.BottomNavigationSheet
 import com.m3u.androidApp.components.OptimizeBanner
 import com.m3u.androidApp.components.PostDialog
 import com.m3u.androidApp.components.PostDialogStatus
-import com.m3u.androidApp.navigation.Destination
 import com.m3u.androidApp.navigation.M3UNavHost
-import com.m3u.androidApp.navigation.destinationTo
-import com.m3u.androidApp.navigation.notDestinationTo
-import com.m3u.androidApp.navigation.safeDestinationTo
+import com.m3u.core.util.withEach
 import com.m3u.data.database.entity.Post
 import com.m3u.ui.M3ULocalProvider
 import com.m3u.ui.components.AppTopBar
 import com.m3u.ui.components.IconButton
+import com.m3u.ui.ktx.EventHandler
 import com.m3u.ui.model.ABlackTheme
 import com.m3u.ui.model.DayTheme
-import com.m3u.ui.model.EmptyHelper
 import com.m3u.ui.model.Helper
 import com.m3u.ui.model.NightTheme
 import com.m3u.ui.model.ScaffoldAction
@@ -57,27 +53,51 @@ typealias HelperConnector = (
 fun App(
     appState: AppState = rememberAppState(),
     viewModel: RootViewModel = hiltViewModel(),
-    connector: HelperConnector = { _, _, _, _, _, _ -> EmptyHelper }
+    connector: HelperConnector = AppDefaults.EmptyHelperConnector
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val posts by viewModel.posts.collectAsStateWithLifecycle()
-    val post = state.post
-    val onPost: (Post?) -> Unit = { viewModel.onEvent(RootEvent.OnPost(it)) }
+    val actions by viewModel.actions.collectAsStateWithLifecycle()
+    val fob by viewModel.fob.collectAsStateWithLifecycle()
+    val childTitle by viewModel.childTitle.collectAsStateWithLifecycle()
 
     val topLevelDestinations = appState.topLevelDestinations
     val currentDestination = appState.currentComposableNavDestination
     val currentTopLevelDestination = appState.currentTopLevelDestination
+
+    val helper = connector(
+        { viewModel.childTitle.value = it },
+        viewModel.childTitle::value,
+        { viewModel.actions.value = it },
+        viewModel.actions::value,
+        { viewModel.fob.value = it },
+        viewModel.fob::value
+    )
+
+    val isSystemBarVisible = AppDefaults.isSystemBarVisible(currentDestination)
+    val isBackPressedVisible = AppDefaults.isBackPressedVisible(currentDestination)
+    val isSystemBarScrollable = AppDefaults.isSystemBarScrollable(currentDestination)
+    val isPlaying = AppDefaults.isPlaying(currentDestination)
+
+    val cinemaMode = state.cinemaMode
+    val theme = when {
+        cinemaMode -> ABlackTheme
+        isSystemInDarkTheme() -> NightTheme
+        else -> DayTheme
+    }
+
+    val post = state.post
+    val onPost: (Post?) -> Unit = { viewModel.onEvent(RootEvent.OnPost(it)) }
     val parentTitle = currentTopLevelDestination
         ?.titleTextId
         ?.let { stringResource(it) }
 
-    val childTitle by viewModel.childTitle.collectAsStateWithLifecycle()
-    val title by remember(parentTitle) {
-        derivedStateOf { parentTitle ?: childTitle }
+    val title: String by remember(parentTitle) {
+        derivedStateOf {
+            parentTitle ?: childTitle
+        }
     }
-    val fab by viewModel.fab.collectAsStateWithLifecycle()
-
-    var postDialogStatus = remember(post, posts) {
+    var dialogStatus = remember(post, posts) {
         if (post == null || post.temporal) PostDialogStatus.Idle
         else {
             val index = posts.indexOf(post)
@@ -94,41 +114,9 @@ fun App(
             }
         }
     }
-    LaunchedEffect(state.navigateTopLevelDestination) {
-        state.navigateTopLevelDestination.handle {
-            appState.navigateToTopLevelDestination(it)
-        }
-    }
-    val isSystemBarVisible =
-        currentDestination notDestinationTo Destination.Live::class.java &&
-                currentDestination notDestinationTo Destination.LivePlayList::class.java
-    val isBackPressedVisible = with(currentDestination) {
-        safeDestinationTo<Destination.Root>(true)
-    }
 
-    val cinemaMode = state.cinemaMode
-    val theme = when {
-        cinemaMode -> ABlackTheme
-        isSystemInDarkTheme() -> NightTheme
-        else -> DayTheme
-    }
-    val helper = connector(
-        { viewModel.childTitle.value = it },
-        viewModel.childTitle::value,
-        { viewModel.actions.value = it },
-        viewModel.actions::value,
-        { viewModel.fab.value = it },
-        viewModel.fab::value
-    )
-    M3ULocalProvider(
-        helper = helper,
-        theme = theme
-    ) {
+    M3ULocalProvider(theme, helper) {
         val scope = rememberCoroutineScope()
-        val isPlaying = remember(currentDestination) {
-            currentDestination destinationTo Destination.Live::class.java ||
-                    currentDestination destinationTo Destination.LivePlayList::class.java
-        }
         val useDarkIcons = when {
             cinemaMode -> false
             isPlaying -> false
@@ -144,28 +132,24 @@ fun App(
                 if (!cinemaMode && isPlaying) {
                     delay(800.milliseconds)
                 }
-                helper.detectDarkMode {
-                    useDarkIcons
-                }
+                helper.detectDarkMode { useDarkIcons }
             }
-
             onDispose {}
         }
         AppTopBar(
-            text = title,
+            title = title,
             visible = isSystemBarVisible,
-            scrollable = currentDestination notDestinationTo Destination.Root::class.java,
+            scrollable = isSystemBarScrollable,
             actions = {
-                val actions by viewModel.actions.collectAsStateWithLifecycle()
-                actions.forEach { action ->
+                actions.withEach {
                     IconButton(
-                        icon = action.icon,
-                        contentDescription = action.contentDescription,
-                        onClick = action.onClick
+                        icon = icon,
+                        contentDescription = contentDescription,
+                        onClick = onClick
                     )
                 }
             },
-            onBackPressed = if (isBackPressedVisible) null else appState::onBackClick
+            onBackPressed = appState::onBackClick.takeUnless { isBackPressedVisible }
         ) { padding ->
             Column(
                 modifier = Modifier
@@ -193,9 +177,9 @@ fun App(
                         )
 
                         BottomNavigationSheet(
+                            fob = fob,
                             destinations = topLevelDestinations,
                             destination = currentTopLevelDestination,
-                            fob = fab,
                             navigateToTopLevelDestination = {
                                 appState.navigateToTopLevelDestination(it)
                             },
@@ -205,15 +189,21 @@ fun App(
                 }
             }
         }
+
         PostDialog(
-            status = postDialogStatus,
+            status = dialogStatus,
             onDismiss = { onPost(null) },
             onNext = { viewModel.onEvent(RootEvent.OnNext) },
             onPrevious = { viewModel.onEvent(RootEvent.OnPrevious) },
             onRead = { viewModel.onEvent(RootEvent.OnRead) }
         )
-        BackHandler(postDialogStatus != PostDialogStatus.Idle) {
-            postDialogStatus = PostDialogStatus.Idle
+
+        EventHandler(state.navigateTopLevelDestination) {
+            appState.navigateToTopLevelDestination(it)
+        }
+
+        BackHandler(dialogStatus != PostDialogStatus.Idle) {
+            dialogStatus = PostDialogStatus.Idle
         }
     }
 }
