@@ -5,9 +5,6 @@ import com.m3u.core.annotation.ClipMode
 import com.m3u.core.annotation.ConnectTimeout
 import com.m3u.core.annotation.FeedStrategy
 
-/**
- * This is a static key-value configuration standard.
- */
 interface Configuration {
     @FeedStrategy
     val feedStrategy: MutableState<Int>
@@ -31,7 +28,6 @@ interface Configuration {
     val isSSLVerification: MutableState<Boolean>
     val initialTabIndex: MutableState<Int>
     val noPictureMode: MutableState<Boolean>
-    val silentMode: MutableState<Boolean>
 
     @ExperimentalConfiguration
     val cinemaMode: MutableState<Boolean>
@@ -55,7 +51,6 @@ interface Configuration {
         const val DEFAULT_FULL_INFO_PLAYER = false
         const val DEFAULT_INITIAL_TAB_INDEX = 0
         const val DEFAULT_NO_PICTURE_MODE = false
-        const val DEFAULT_SILENT_MODE = true
         const val DEFAULT_CINEMA_MODE = false
 
         const val FEED_STRATEGY = "feedStrategy"
@@ -73,7 +68,6 @@ interface Configuration {
         const val FULL_INFO_PLAYER = "fullInfoPlayer"
         const val INITIAL_TAB_INDEX = "initialTabIndex"
         const val NO_PICTURE_MODE = "noPictureMode"
-        const val SILENT_MODE = "silentMode"
         const val CINEMA_MODE = "cinemaMode"
     }
 }

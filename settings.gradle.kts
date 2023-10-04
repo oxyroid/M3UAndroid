@@ -31,3 +31,4 @@ include(
     ":features:scheme",
     ":features:about"
 )
+include(":benchmark")

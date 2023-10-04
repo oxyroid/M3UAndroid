@@ -18,6 +18,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.util.lerp
+import androidx.core.view.WindowInsetsCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -26,7 +27,7 @@ import androidx.media3.common.Player
 import com.m3u.core.annotation.ClipMode
 import com.m3u.core.util.basic.isNotEmpty
 import com.m3u.core.util.context.toast
-import com.m3u.features.live.components.DlnaDeviceDialog
+import com.m3u.features.live.components.DlnaDevicesBottomSheet
 import com.m3u.features.live.fragments.LiveFragment
 import com.m3u.ui.components.MaskState
 import com.m3u.ui.components.rememberMaskState
@@ -52,20 +53,24 @@ internal fun LiveRoute(
     val searching by viewModel.searching.collectAsStateWithLifecycle()
 
     val maskState = rememberMaskState { visible ->
-        helper.systemUiVisibility = visible
+        helper.detectWindowInsetController {
+            hide(WindowInsetsCompat.Type.navigationBars())
+            if (visible) show(WindowInsetsCompat.Type.statusBars())
+            else hide(WindowInsetsCompat.Type.statusBars())
+        }
     }
     var isPipMode by remember { mutableStateOf(false) }
 
     LifecycleEffect { event ->
         when (event) {
-            Lifecycle.Event.ON_CREATE -> {
-                helper.hideSystemUI()
+            Lifecycle.Event.ON_START -> {
                 helper.registerOnUserLeaveHintListener {
                     if (state.playerState.videoSize.isNotEmpty) {
                         maskState.sleep()
                         helper.enterPipMode(state.playerState.videoSize)
                     }
                 }
+                helper.systemUiVisibility = false
                 helper.registerOnPictureInPictureModeChangedListener { info ->
                     isPipMode = info.isInPictureInPictureMode
                 }
@@ -75,10 +80,7 @@ internal fun LiveRoute(
                 if (isPipMode) {
                     viewModel.onEvent(LiveEvent.UninstallMedia)
                 }
-            }
-
-            Lifecycle.Event.ON_DESTROY -> {
-                helper.showSystemUI()
+                helper.systemUiVisibility = true
                 helper.unregisterOnPictureInPictureModeChangedListener()
                 helper.unregisterOnUserLeaveHintListener()
             }
@@ -95,7 +97,8 @@ internal fun LiveRoute(
         viewModel.onEvent(init)
     }
 
-    DlnaDeviceDialog(
+    // TODO: replace with material3-carousel.
+    DlnaDevicesBottomSheet(
         maskState = maskState,
         searching = searching,
         isDevicesVisible = isDevicesVisible,
@@ -125,7 +128,7 @@ internal fun LiveRoute(
         onUninstallMedia = { viewModel.onEvent(LiveEvent.UninstallMedia) },
         muted = state.muted,
         onMuted = { viewModel.onEvent(LiveEvent.OnMuted) },
-        modifier = modifier,
+        modifier = modifier
     )
 }
 

@@ -6,8 +6,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material.LocalContentColor
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -42,8 +40,7 @@ internal fun LiveMask(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .align(Alignment.TopCenter)
-                    .statusBarsPadding(),
+                    .align(Alignment.TopCenter),
                 horizontalArrangement = Arrangement.End,
                 content = header
             )
@@ -54,9 +51,7 @@ internal fun LiveMask(
                 content = body
             )
             Column(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .navigationBarsPadding()
+                modifier = Modifier.align(Alignment.BottomCenter)
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),

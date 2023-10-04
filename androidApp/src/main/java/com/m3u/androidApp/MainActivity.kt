@@ -15,10 +15,11 @@ import androidx.core.util.Consumer
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import com.m3u.androidApp.ui.App
+import com.m3u.ui.model.Action
+import com.m3u.ui.model.Fob
 import com.m3u.ui.model.Helper
-import com.m3u.ui.model.ScaffoldAction
-import com.m3u.ui.model.ScaffoldFob
 import dagger.hilt.android.AndroidEntryPoint
+import kotlin.reflect.KMutableProperty0
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -34,14 +35,16 @@ class MainActivity : ComponentActivity() {
     }
 
     private var onUserLeaveHintCallback: (() -> Unit)? = null
+
     private fun createHelper(
-        setTitle: (String) -> Unit,
-        getTitle: () -> String,
-        setActions: (List<ScaffoldAction>) -> Unit,
-        getActions: () -> List<ScaffoldAction>,
-        setFab: (ScaffoldFob?) -> Unit,
-        getFab: () -> ScaffoldFob?
-    ): Helper = object : Helper() {
+        title: Method<String>,
+        actions: Method<List<Action>>,
+        fob: Method<Fob?>
+    ): Helper = object : Helper {
+        private val controller = WindowInsetsControllerCompat(window, window.decorView).apply {
+            systemBarsBehavior =
+                WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+        }
 
         override fun enterPipMode(size: Rect) {
             val params = PictureInPictureParams.Builder()
@@ -50,29 +53,24 @@ class MainActivity : ComponentActivity() {
             enterPictureInPictureMode(params)
         }
 
-        override var title: String
-            get() = getTitle()
-            set(value) = setTitle(value)
+        override var title: String by title
+        override var actions: List<Action> by actions
+        override var fob: Fob? by fob
 
-        override var actions: List<ScaffoldAction>
-            get() = getActions()
-            set(value) = setActions(value)
-
-        override var fab: ScaffoldFob?
-            get() = getFab()
-            set(value) = setFab(value)
-
-        override fun hideSystemUI() {
-            WindowInsetsControllerCompat(window, window.decorView).let { controller ->
-                controller.hide(WindowInsetsCompat.Type.systemBars())
-                controller.systemBarsBehavior =
-                    WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+        override var systemUiVisibility: Boolean = true
+            set(value) {
+                field = value
+                controller.apply {
+                    if (value) {
+                        show(WindowInsetsCompat.Type.systemBars())
+                    } else {
+                        hide(WindowInsetsCompat.Type.systemBars())
+                    }
+                }
             }
-        }
 
-        override fun showSystemUI() {
-            WindowInsetsControllerCompat(window, window.decorView)
-                .show(WindowInsetsCompat.Type.systemBars())
+        override fun detectWindowInsetController(handler: WindowInsetsControllerCompat.() -> Unit) {
+            handler(controller)
         }
 
         override fun detectDarkMode(handler: () -> Boolean) {
@@ -110,3 +108,5 @@ class MainActivity : ComponentActivity() {
         onUserLeaveHintCallback?.invoke()
     }
 }
+
+internal typealias Method<E> = KMutableProperty0<E>

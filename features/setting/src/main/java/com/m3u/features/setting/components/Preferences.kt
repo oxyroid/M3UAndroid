@@ -9,21 +9,24 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.Checkbox
-import androidx.compose.material.CheckboxDefaults
+import androidx.compose.material.ContentAlpha
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.ListItem
+import androidx.compose.material.LocalContentAlpha
 import androidx.compose.material.LocalContentColor
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
-import androidx.compose.material.minimumInteractiveComponentSize
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.PlainTooltip
+import androidx.compose.material3.Switch
 import androidx.compose.material3.TooltipBox
 import androidx.compose.material3.TooltipDefaults
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -38,9 +41,9 @@ import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.sp
 import com.m3u.core.util.basic.title
+import com.m3u.ui.ktx.animated
 import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.LocalTheme
-import com.m3u.ui.ktx.animated
 
 @OptIn(
     ExperimentalMaterialApi::class,
@@ -77,28 +80,39 @@ internal fun Preference(
     ) {
         ListItem(
             text = {
-                Text(
-                    text = title.title(),
-                    style = MaterialTheme.typography.subtitle1,
-                    fontWeight = FontWeight.Bold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
+                val contentAlpha = if (enabled) ContentAlpha.high else ContentAlpha.medium
+
+                CompositionLocalProvider(
+                    LocalContentAlpha provides contentAlpha
+                ) {
+                    Text(
+                        text = title.title(),
+                        style = MaterialTheme.typography.subtitle1,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
             },
             secondaryText = subtitle?.let {
                 @Composable {
-                    Text(
-                        text = it.capitalize(Locale.current),
-                        style = MaterialTheme.typography.subtitle2,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        lineHeight = 16.sp,
-                        modifier = Modifier
-                            .let {
-                                if (focus) it.basicMarquee()
-                                else it
-                            }
-                    )
+                    val contentAlpha = if (enabled) ContentAlpha.medium else ContentAlpha.disabled
+                    CompositionLocalProvider(
+                        LocalContentAlpha provides contentAlpha
+                    ) {
+                        Text(
+                            text = it.capitalize(Locale.current),
+                            style = MaterialTheme.typography.subtitle2,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            lineHeight = 16.sp,
+                            modifier = Modifier
+                                .let {
+                                    if (focus) it.basicMarquee()
+                                    else it
+                                }
+                        )
+                    }
                 }
             },
             singleLineSecondaryText = true,
@@ -144,11 +158,36 @@ internal fun CheckBoxPreference(
             Checkbox(
                 enabled = enabled,
                 checked = checked,
-                onCheckedChange = onCheckedChange,
-                colors = CheckboxDefaults.colors(
-                    checkmarkColor = LocalTheme.current.onPrimary,
-                    checkedColor = LocalTheme.current.primary,
-                )
+                onCheckedChange = onCheckedChange
+            )
+        }
+    )
+}
+
+@Composable
+internal fun SwitchPreference(
+    title: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+    subtitle: String? = null,
+    enabled: Boolean = true,
+) {
+    Preference(
+        title = title,
+        subtitle = subtitle,
+        enabled = enabled,
+        onClick = {
+            if (enabled) {
+                onCheckedChange(!checked)
+            }
+        },
+        modifier = modifier,
+        trailingContent = {
+            Switch(
+                enabled = enabled,
+                checked = checked,
+                onCheckedChange = onCheckedChange
             )
         }
     )
@@ -176,8 +215,6 @@ internal fun IconPreference(
                 tint = LocalContentColor.current.copy(alpha = 0.65f),
                 modifier = Modifier.minimumInteractiveComponentSize()
             )
-
-
         }
     )
 }

@@ -5,7 +5,7 @@ package com.m3u.features.console
 import android.app.Application
 import androidx.lifecycle.viewModelScope
 import com.m3u.core.architecture.Publisher
-import com.m3u.core.architecture.reader.FileReader
+import com.m3u.core.architecture.FileReader
 import com.m3u.core.architecture.viewmodel.BaseViewModel
 import com.m3u.features.console.command.CommandHandler
 import com.m3u.features.console.command.CommandResource

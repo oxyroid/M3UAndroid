@@ -3,8 +3,7 @@ package com.m3u.features.feed
 import android.app.Application
 import androidx.lifecycle.viewModelScope
 import com.m3u.core.architecture.configuration.Configuration
-import com.m3u.core.architecture.logger.BannerLoggerImpl
-import com.m3u.core.architecture.logger.Logger
+import com.m3u.core.architecture.Logger
 import com.m3u.core.architecture.viewmodel.BaseViewModel
 import com.m3u.core.wrapper.ProgressResource
 import com.m3u.core.wrapper.Resource
@@ -31,7 +30,7 @@ class FeedViewModel @Inject constructor(
     private val feedRepository: FeedRepository,
     private val mediaRepository: MediaRepository,
     configuration: Configuration,
-    @BannerLoggerImpl private val logger: Logger,
+    @Logger.Ui private val logger: Logger,
     application: Application,
 ) : BaseViewModel<FeedState, FeedEvent>(
     application = application,

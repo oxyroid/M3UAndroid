@@ -15,5 +15,4 @@ sealed interface SettingEvent {
     data class ImportJavaScript(val uri: Uri) : SettingEvent
 
     data object ScrollDefaultDestination : SettingEvent
-    data object OnSilentMode : SettingEvent
 }

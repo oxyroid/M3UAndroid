@@ -2,6 +2,8 @@ package com.m3u.features.live.fragments
 
 import android.graphics.Rect
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -31,6 +33,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
@@ -49,6 +52,7 @@ import com.m3u.ui.model.LocalHelper
 import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.LocalTheme
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 internal fun LiveFragment(
     player: Player?,
@@ -131,6 +135,7 @@ internal fun LiveFragment(
                     if (experimentalMode) {
                         MaskButton(
                             state = maskState,
+                            enabled = false,
                             icon = if (recording) Icons.Rounded.RadioButtonChecked
                             else Icons.Rounded.RadioButtonUnchecked,
                             tint = if (recording) LocalTheme.current.error
@@ -142,6 +147,7 @@ internal fun LiveFragment(
                         if (playback != Player.STATE_IDLE) {
                             MaskButton(
                                 state = maskState,
+                                enabled = false,
                                 icon = Icons.Rounded.Cast,
                                 onClick = searchDlnaDevices,
                                 contentDescription = stringResource(R.string.tooltip_cast)
@@ -186,12 +192,18 @@ internal fun LiveFragment(
                     ) {
                         Text(
                             text = feedTitle,
-                            style = MaterialTheme.typography.subtitle1
+                            style = MaterialTheme.typography.subtitle1,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.basicMarquee()
                         )
                         Text(
                             text = title,
                             style = MaterialTheme.typography.h5,
-                            fontWeight = FontWeight.ExtraBold
+                            fontWeight = FontWeight.ExtraBold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.basicMarquee()
                         )
                         val playbackDisplayText = playback.displayText
                         val exceptionDisplayText = playerError.displayText
@@ -204,14 +216,20 @@ internal fun LiveFragment(
                             Text(
                                 text = playbackDisplayText.uppercase(),
                                 style = MaterialTheme.typography.subtitle2,
-                                color = LocalContentColor.current.copy(alpha = 0.75f)
+                                color = LocalContentColor.current.copy(alpha = 0.75f),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.basicMarquee()
                             )
                         }
                         AnimatedVisibility(exceptionDisplayText.isNotEmpty()) {
                             Text(
                                 text = exceptionDisplayText,
                                 style = MaterialTheme.typography.subtitle2,
-                                color = LocalTheme.current.error
+                                color = LocalTheme.current.error,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.basicMarquee()
                             )
                         }
                         // TODO: implement servers ui here.

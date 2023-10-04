@@ -46,7 +46,7 @@ import com.m3u.ui.TopLevelDestination
 import com.m3u.ui.model.LocalHelper
 import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.LocalTheme
-import com.m3u.ui.model.ScaffoldFob
+import com.m3u.ui.model.Fob
 
 typealias NavigateToConsole = () -> Unit
 typealias NavigateToAbout = () -> Unit
@@ -114,8 +114,6 @@ fun SettingRoute(
         scrollDefaultDestination = { viewModel.onEvent(SettingEvent.ScrollDefaultDestination) },
         noPictureMode = state.noPictureMode,
         onNoPictureMode = { state.noPictureMode = !state.noPictureMode },
-        silentMode = state.silentMode,
-        onSilentMode = { viewModel.onEvent(SettingEvent.OnSilentMode) },
         cinemaMode = state.cinemaMode,
         onCinemaMode = { state.cinemaMode = !state.cinemaMode },
         importJavaScript = { viewModel.onEvent(SettingEvent.ImportJavaScript(it)) },
@@ -160,8 +158,6 @@ private fun SettingScreen(
     scrollDefaultDestination: () -> Unit,
     noPictureMode: Boolean,
     onNoPictureMode: () -> Unit,
-    silentMode: Boolean,
-    onSilentMode: () -> Unit,
     cinemaMode: Boolean,
     onCinemaMode: () -> Unit,
     importJavaScript: (Uri) -> Unit,
@@ -172,7 +168,7 @@ private fun SettingScreen(
     var fragment: SettingFragments by remember { mutableStateOf(SettingFragments.Root) }
 
     DisposableEffect(fragment) {
-        helper.fab = ScaffoldFob(
+        helper.fob = Fob(
             relation = TopLevelDestination.Setting,
             icon = Icons.Rounded.Settings
         ) {
@@ -180,7 +176,7 @@ private fun SettingScreen(
         }
             .takeUnless { fragment == SettingFragments.Root }
         onDispose {
-            helper.fab = null
+            helper.fob = null
         }
     }
 
@@ -226,8 +222,6 @@ private fun SettingScreen(
                     onInitialTabIndex = scrollDefaultDestination,
                     noPictureMode = noPictureMode,
                     onNoPictureMode = onNoPictureMode,
-                    silentMode = silentMode,
-                    onSilentMode = onSilentMode,
                     cinemaMode = cinemaMode,
                     onCinemaMode = onCinemaMode,
                     importJavaScript = importJavaScript,
@@ -279,8 +273,6 @@ private fun SettingScreen(
                     onInitialTabIndex = scrollDefaultDestination,
                     noPictureMode = noPictureMode,
                     onNoPictureMode = onNoPictureMode,
-                    silentMode = silentMode,
-                    onSilentMode = onSilentMode,
                     cinemaMode = cinemaMode,
                     onCinemaMode = onCinemaMode,
                     importJavaScript = importJavaScript,
@@ -337,14 +329,13 @@ private fun PortraitOrientationContent(
     onInitialTabIndex: () -> Unit,
     noPictureMode: Boolean,
     onNoPictureMode: () -> Unit,
-    silentMode: Boolean,
-    onSilentMode: () -> Unit,
     cinemaMode: Boolean,
     onCinemaMode: () -> Unit,
     importJavaScript: (Uri) -> Unit,
     navigateToAbout: NavigateToAbout,
     modifier: Modifier = Modifier
 ) {
+    // TODO: replace with material3-modal-side-sheet.
     Box {
         PreferencesFragment(
             version = version,
@@ -380,8 +371,6 @@ private fun PortraitOrientationContent(
             onInitialTabIndex = onInitialTabIndex,
             noPictureMode = noPictureMode,
             onNoPictureMode = onNoPictureMode,
-            silentMode = silentMode,
-            onSilentMode = onSilentMode,
             cinemaMode = cinemaMode,
             onCinemaMode = onCinemaMode,
             navigateToAbout = navigateToAbout,
@@ -458,8 +447,6 @@ private fun LandscapeOrientationContent(
     onInitialTabIndex: () -> Unit,
     noPictureMode: Boolean,
     onNoPictureMode: () -> Unit,
-    silentMode: Boolean,
-    onSilentMode: () -> Unit,
     cinemaMode: Boolean,
     onCinemaMode: () -> Unit,
     importJavaScript: (Uri) -> Unit,
@@ -468,6 +455,7 @@ private fun LandscapeOrientationContent(
 ) {
     val spacing = LocalSpacing.current
 
+    // TODO: replace with material3-modal-side-sheet.
     Row(
         horizontalArrangement = Arrangement.spacedBy(spacing.medium, Alignment.Start),
         modifier = modifier.padding(horizontal = spacing.medium)
@@ -502,8 +490,6 @@ private fun LandscapeOrientationContent(
             onInitialTabIndex = onInitialTabIndex,
             noPictureMode = noPictureMode,
             onNoPictureMode = onNoPictureMode,
-            silentMode = silentMode,
-            onSilentMode = onSilentMode,
             cinemaMode = cinemaMode,
             onCinemaMode = onCinemaMode,
             navigateToAbout = navigateToAbout,

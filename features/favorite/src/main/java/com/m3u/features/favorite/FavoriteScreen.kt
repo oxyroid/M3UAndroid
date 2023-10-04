@@ -90,6 +90,7 @@ private fun FavoriteScreen(
         LocalSpacing.current.scaled
     }
 
+    // TODO: replace with material3-carousel.
     when (configuration.orientation) {
         Configuration.ORIENTATION_PORTRAIT -> {
             val lives = remember(details) {

@@ -40,12 +40,11 @@
     <string name="initial_tab">initial Screen</string>
     <string name="no_picture_mode">no picture mode</string>
     <string name="no_picture_mode_description">may improve performance</string>
-    <string name="silent_mode">silent mode</string>
-    <string name="silent_mode_description">do not receive cloud announcements</string>
     <string name="system_setting">system setting</string>
     <string name="cinema_mode">cinema mode</string>
     <string name="cinema_mode_description">use OLED black theme</string>
     <string name="script_management_import_js">import Javascript</string>
     <string name="enqueue_subscribe">a subscription task has been added to the queue</string>
+    <string name="dropbox">dropbox</string>
     <string name="project_about">about project</string>
 </resources>

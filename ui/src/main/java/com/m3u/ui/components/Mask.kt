@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.Icon
@@ -56,8 +57,7 @@ interface MaskState {
     fun unlock()
 }
 
-@Stable
-class MaskStateCoroutineImpl(
+private class MaskStateCoroutineImpl(
     @IntRange(from = 1) private val minDuration: Long = MaskDefaults.minDuration,
     coroutineScope: CoroutineScope,
     private val onChanged: (Boolean) -> Unit
@@ -139,7 +139,9 @@ fun Mask(
     ) {
         CompositionLocalProvider(LocalContentColor provides contentColor) {
             OuterBox(
-                modifier = modifier.background(backgroundColor),
+                modifier = modifier
+                    .background(backgroundColor)
+                    .statusBarsPadding(),
                 content = content
             )
         }
@@ -176,6 +178,7 @@ fun MaskButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     tint: Color = Color.Unspecified,
+    enabled: Boolean = true,
     contentDescription: String,
 ) {
     val tooltipState = rememberTooltipState()
@@ -204,6 +207,7 @@ fun MaskButton(
     ) {
         IconButton(
             icon = icon,
+            enabled = enabled,
             contentDescription = null,
             onClick = {
                 currentKeepAlive()

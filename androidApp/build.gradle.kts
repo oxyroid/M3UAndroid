@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.org.jetbrains.kotlin.android)
     alias(libs.plugins.com.google.dagger.hilt.android)
     alias(libs.plugins.com.google.devtools.ksp)
+    alias(libs.plugins.androidx.baselineprofile)
 }
 
 android {
@@ -16,6 +17,7 @@ android {
         versionName = "1.12.0-beta06"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunnerArguments["androidx.benchmark.profiling.mode"] = "MethodTracing"
     }
     buildTypes {
         release {
@@ -26,6 +28,12 @@ android {
                 "proguard-rules.pro"
             )
         }
+        create("benchmark") {
+            initWith(buildTypes.getByName("release"))
+            signingConfig = signingConfigs.getByName("debug")
+            matchingFallbacks += listOf("release")
+            isDebuggable = false
+        }
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -33,7 +41,6 @@ android {
     }
     kotlinOptions {
         jvmTarget = "17"
-        freeCompilerArgs = listOf("-opt-in=kotlin.RequiresOptIn")
     }
     buildFeatures {
         compose = true

@@ -12,9 +12,8 @@ import coil.Coil
 import coil.request.ErrorResult
 import coil.request.ImageRequest
 import coil.request.SuccessResult
-import com.m3u.core.architecture.logger.FileLoggerImpl
-import com.m3u.core.architecture.logger.Logger
-import com.m3u.core.architecture.logger.executeResult
+import com.m3u.core.architecture.Logger
+import com.m3u.core.architecture.executeResult
 import com.m3u.core.wrapper.Resource
 import com.m3u.core.wrapper.emitException
 import com.m3u.core.wrapper.emitResource
@@ -29,7 +28,7 @@ import javax.inject.Inject
 
 class MediaRepositoryImpl @Inject constructor(
     @ApplicationContext private val context: Context,
-    @FileLoggerImpl private val logger: Logger
+    @Logger.File private val logger: Logger
 ) : MediaRepository {
     private val directory =
         Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)

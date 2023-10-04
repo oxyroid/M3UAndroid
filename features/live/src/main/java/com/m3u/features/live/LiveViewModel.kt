@@ -3,7 +3,8 @@ package com.m3u.features.live
 import android.app.Application
 import androidx.lifecycle.viewModelScope
 import com.m3u.core.architecture.configuration.Configuration
-import com.m3u.core.architecture.service.PlayerManager
+import com.m3u.core.architecture.Logger
+import com.m3u.data.service.PlayerManager
 import com.m3u.core.architecture.viewmodel.BaseViewModel
 import com.m3u.data.repository.FeedRepository
 import com.m3u.data.repository.LiveRepository
@@ -36,6 +37,7 @@ class LiveViewModel @Inject constructor(
     application: Application,
     configuration: Configuration,
     private val playerManager: PlayerManager,
+    private val logger: Logger
 ) : BaseViewModel<LiveState, LiveEvent>(
     application = application,
     emptyState = LiveState(
@@ -99,11 +101,11 @@ class LiveViewModel @Inject constructor(
             is LiveEvent.InstallMedia -> {
                 val url = event.url
                 if (url.isEmpty()) return
-                playerManager.installMedia(url)
+                playerManager.install(url)
             }
 
             LiveEvent.UninstallMedia -> {
-                playerManager.uninstallMedia()
+                playerManager.uninstall()
             }
 
             LiveEvent.OnMuted -> muted()
@@ -207,9 +209,19 @@ class LiveViewModel @Inject constructor(
     }
 
     private fun connectDlnaDevice(device: Device) {
+        val deviceList = device.deviceList
+        val deviceType = device.deviceType
+        val baseUrl = device.baseUrl
+        val friendlyName = device.friendlyName
+        val description = device.description
+        val ipAddress = device.ipAddress
+        val location = device.location
+        val modelUrl = device.modelUrl
+        val scopeId = device.scopeId
         // Browse Search CreateObject DestroyObject UpdateObject
         // http://upnp.org/specs/av/UPnP-av-ContentDirectory-v4-Service.pdf
-        val browse = device.findAction("Browse")
+        val serviceList = device.serviceList
+        val browse = device.findAction("MagicOn")
         browse?.invoke(
             argumentValues = mapOf(
                 "ObjectID" to "0",
@@ -221,7 +233,10 @@ class LiveViewModel @Inject constructor(
             ),
             onResult = {
                 val result = it["Result"]
-
+                logger.log(result.orEmpty())
+            },
+            onError = { cause ->
+                logger.log(cause)
             }
         )
         writable.update {

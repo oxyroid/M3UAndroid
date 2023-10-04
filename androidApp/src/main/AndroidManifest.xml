@@ -33,9 +33,12 @@
         android:theme="@style/Theme.M3U.Starting"
         android:usesCleartextTraffic="true"
         tools:targetApi="32">
+        <profileable
+            android:shell="true"
+            tools:targetApi="29" />
         <activity
             android:name=".MainActivity"
-            android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation"
+            android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation|locale|layoutDirection"
             android:exported="true"
             android:launchMode="singleInstance"
             android:supportsPictureInPicture="true">

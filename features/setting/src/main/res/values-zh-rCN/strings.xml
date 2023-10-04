@@ -44,12 +44,11 @@
     <string name="initial_tab">初始界面</string>
     <string name="no_picture_mode">无图模式</string>
     <string name="no_picture_mode_description">可能会对性能有所提升</string>
-    <string name="silent_mode">寂静模式</string>
-    <string name="silent_mode_description">不接收云端公告</string>
     <string name="system_setting">系统设置</string>
     <string name="cinema_mode">影院模式</string>
     <string name="cinema_mode_description">使用OLED纯黑主题</string>
     <string name="script_management_import_js">导入Javascript</string>
     <string name="enqueue_subscribe">订阅任务已添加至队列</string>
+    <string name="dropbox">dropbox</string>
     <string name="project_about">关于项目</string>
 </resources>

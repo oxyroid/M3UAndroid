@@ -22,7 +22,6 @@ import com.m3u.core.architecture.configuration.Configuration.Companion.DEFAULT_I
 import com.m3u.core.architecture.configuration.Configuration.Companion.DEFAULT_NO_PICTURE_MODE
 import com.m3u.core.architecture.configuration.Configuration.Companion.DEFAULT_ROW_COUNT
 import com.m3u.core.architecture.configuration.Configuration.Companion.DEFAULT_SCROLL_MODE
-import com.m3u.core.architecture.configuration.Configuration.Companion.DEFAULT_SILENT_MODE
 import com.m3u.core.architecture.configuration.Configuration.Companion.DEFAULT_SSL_VERIFICATION
 import com.m3u.core.architecture.configuration.Configuration.Companion.DEFAULT_USE_COMMON_UI_MODE
 import com.m3u.core.architecture.configuration.Configuration.Companion.EXPERIMENTAL_MODE
@@ -33,7 +32,6 @@ import com.m3u.core.architecture.configuration.Configuration.Companion.INITIAL_T
 import com.m3u.core.architecture.configuration.Configuration.Companion.NO_PICTURE_MODE
 import com.m3u.core.architecture.configuration.Configuration.Companion.ROW_COUNT
 import com.m3u.core.architecture.configuration.Configuration.Companion.SCROLL_MODE
-import com.m3u.core.architecture.configuration.Configuration.Companion.SILENT_MODE
 import com.m3u.core.architecture.configuration.Configuration.Companion.SSL_VERIFICATION
 import com.m3u.core.architecture.configuration.Configuration.Companion.USE_COMMON_UI_MODE
 import com.m3u.core.util.context.booleanAsState
@@ -84,8 +82,6 @@ class SharedConfiguration @Inject constructor(
         sharedPreferences.intAsState(DEFAULT_INITIAL_TAB_INDEX, INITIAL_TAB_INDEX)
     override val noPictureMode: MutableState<Boolean> =
         sharedPreferences.booleanAsState(DEFAULT_NO_PICTURE_MODE, NO_PICTURE_MODE)
-    override val silentMode: MutableState<Boolean> =
-        sharedPreferences.booleanAsState(DEFAULT_SILENT_MODE, SILENT_MODE)
     override val cinemaMode: MutableState<Boolean> =
         sharedPreferences.booleanAsState(DEFAULT_CINEMA_MODE, CINEMA_MODE)
 

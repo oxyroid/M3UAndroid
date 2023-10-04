@@ -44,10 +44,8 @@ import androidx.compose.material3.TabRowDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -86,9 +84,10 @@ import com.m3u.ui.model.LocalHelper
 import com.m3u.ui.model.LocalScalable
 import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.LocalTheme
-import com.m3u.ui.model.ScaffoldAction
-import com.m3u.ui.model.ScaffoldFob
+import com.m3u.ui.model.Action
+import com.m3u.ui.model.Fob
 import com.m3u.ui.model.Scalable
+import com.m3u.ui.model.repeatOnLifecycle
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -114,9 +113,9 @@ internal fun FeedRoute(
     LaunchedEffect(url) {
         viewModel.onEvent(FeedEvent.Observe(url))
     }
-    SideEffect {
-        helper.actions = listOf(
-            ScaffoldAction(
+    helper.repeatOnLifecycle {
+        actions = listOf(
+            Action(
                 icon = Icons.Rounded.Refresh,
                 contentDescription = "refresh",
                 onClick = {
@@ -136,11 +135,6 @@ internal fun FeedRoute(
     }
     BackHandler(state.query.isNotEmpty()) {
         viewModel.onEvent(FeedEvent.Query(""))
-    }
-    DisposableEffect(Unit) {
-        onDispose {
-            helper.fab = null
-        }
     }
     val interceptVolumeEventModifier = remember(state.godMode) {
         if (state.godMode) {
@@ -195,6 +189,7 @@ internal fun FeedRoute(
     )
 }
 
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
 private fun FeedScreen(
     query: String,
@@ -225,7 +220,7 @@ private fun FeedScreen(
     Column {
         val isAtTopState = remember {
             observableStateOf(true) { newValue ->
-                helper.fab = ScaffoldFob(
+                helper.fob = Fob(
                     icon = Icons.Rounded.ArrowCircleUp,
                     relation = TopLevelDestination.Main,
                     onClick = onScrollUp
@@ -619,23 +614,9 @@ private fun FeedPager(
                                     indication = null
                                 ) {
                                     coroutineScope.launch {
-                                        pagerState.animateScrollToPage(index)
+                                        pagerState.scrollToPage(index)
                                     }
                                 }
-//                                .let {
-//                                    if (!selected) it
-//                                    else it.drawBehind {
-//                                        drawRoundRect(
-//                                            brush = Brush.radialGradient(
-//                                                colors = listOf(
-//                                                    theme.tint,
-//                                                    theme.tint,
-//                                                    Color.Transparent
-//                                                )
-//                                            )
-//                                        )
-//                                    }
-//                                }
                                 .padding(
                                     horizontal = spacing.medium,
                                     vertical = spacing.small
@@ -653,7 +634,6 @@ private fun FeedPager(
                     }
                 },
                 divider = {},
-                edgePadding = spacing.small,
                 containerColor = theme.background,
                 contentColor = theme.onBackground,
                 modifier = Modifier.fillMaxWidth()

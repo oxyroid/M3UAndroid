@@ -28,6 +28,5 @@ data class SettingState(
     var fullInfoPlayer: Boolean by configuration.fullInfoPlayer
     var defaultDestination: Int by configuration.initialTabIndex
     var noPictureMode: Boolean by configuration.noPictureMode
-    var silentMode: Boolean by configuration.silentMode
     var cinemaMode: Boolean by configuration.cinemaMode
 }

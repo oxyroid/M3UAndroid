@@ -1,7 +1,7 @@
 package com.m3u.features.crash.screen.list
 
 import android.app.Application
-import com.m3u.core.architecture.reader.FileReader
+import com.m3u.core.architecture.FileReader
 import com.m3u.core.architecture.viewmodel.BaseViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.update

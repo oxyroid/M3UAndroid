@@ -31,11 +31,11 @@ import com.m3u.features.main.components.MainDialog
 import com.m3u.features.main.components.OnRename
 import com.m3u.features.main.components.OnUnsubscribe
 import com.m3u.features.main.model.FeedDetail
+import com.m3u.ui.ktx.interceptVolumeEvent
 import com.m3u.ui.model.LocalHelper
 import com.m3u.ui.model.LocalScalable
 import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.Scalable
-import com.m3u.ui.ktx.interceptVolumeEvent
 
 private typealias showDialog = (Feed) -> Unit
 typealias NavigateToFeed = (feed: Feed) -> Unit
@@ -213,6 +213,6 @@ private fun LandscapeOrientationContent(
 private fun Feed.calculateUiTitle(): AnnotatedString {
     return if (!this.isTemplated()) AnnotatedString(this.title)
     else AnnotatedString(
-        text = stringResource(R.string.imported_feed_title)
+        text = stringResource(R.string.imported_feed_title).uppercase()
     )
 }

@@ -34,7 +34,6 @@ import com.m3u.features.setting.components.Preference
 import com.m3u.features.setting.components.TextPreference
 import com.m3u.ui.model.LocalSpacing
 
-
 @Composable
 internal fun PreferencesFragment(
     version: String,
@@ -67,8 +66,6 @@ internal fun PreferencesFragment(
     onInitialTabIndex: () -> Unit,
     noPictureMode: Boolean,
     onNoPictureMode: () -> Unit,
-    silentMode: Boolean,
-    onSilentMode: () -> Unit,
     cinemaMode: Boolean,
     onCinemaMode: () -> Unit,
     modifier: Modifier = Modifier,
@@ -147,16 +144,6 @@ internal fun PreferencesFragment(
                     onCheckedChange = { newValue ->
                         if (newValue != fullInfoPlayer) {
                             onFullInfoPlayer()
-                        }
-                    }
-                )
-                CheckBoxPreference(
-                    title = stringResource(R.string.silent_mode),
-                    subtitle = stringResource(R.string.silent_mode_description),
-                    checked = silentMode,
-                    onCheckedChange = { newValue ->
-                        if (newValue != silentMode) {
-                            onSilentMode()
                         }
                     }
                 )
@@ -274,9 +261,16 @@ internal fun PreferencesFragment(
                         context.startActivity(intent)
                     }
                 )
+                // TODO: https://www.dropbox.com/developers/documentation/http/documentation#file_requests-list
+                Preference(
+                    title = stringResource(R.string.dropbox).uppercase(),
+                    onClick = navigateToAbout,
+                    enabled = false
+                )
                 Preference(
                     title = stringResource(R.string.project_about),
-                    onClick = navigateToAbout
+                    onClick = navigateToAbout,
+                    enabled = false
                 )
                 Preference(
                     title = stringResource(R.string.app_version),

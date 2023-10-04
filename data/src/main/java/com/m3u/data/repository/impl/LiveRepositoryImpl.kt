@@ -1,9 +1,8 @@
 package com.m3u.data.repository.impl
 
-import com.m3u.core.architecture.logger.FileLoggerImpl
-import com.m3u.core.architecture.logger.Logger
-import com.m3u.core.architecture.logger.execute
-import com.m3u.core.architecture.logger.sandBox
+import com.m3u.core.architecture.Logger
+import com.m3u.core.architecture.execute
+import com.m3u.core.architecture.sandBox
 import com.m3u.data.database.dao.LiveDao
 import com.m3u.data.database.entity.Live
 import com.m3u.data.repository.LiveRepository
@@ -13,7 +12,7 @@ import javax.inject.Inject
 
 class LiveRepositoryImpl @Inject constructor(
     private val liveDao: LiveDao,
-    @FileLoggerImpl private val logger: Logger
+    @Logger.File private val logger: Logger
 ) : LiveRepository {
     override fun observe(id: Int): Flow<Live?> = logger.execute {
         liveDao.observeById(id)

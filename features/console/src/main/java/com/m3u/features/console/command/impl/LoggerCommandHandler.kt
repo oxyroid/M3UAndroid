@@ -1,6 +1,6 @@
 package com.m3u.features.console.command.impl
 
-import com.m3u.core.architecture.reader.Reader
+import com.m3u.core.architecture.Reader
 import com.m3u.features.console.command.CommandHandler
 import java.io.File
 

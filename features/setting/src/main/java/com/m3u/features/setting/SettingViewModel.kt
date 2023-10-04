@@ -9,15 +9,13 @@ import androidx.work.workDataOf
 import com.m3u.core.annotation.ClipMode
 import com.m3u.core.annotation.ConnectTimeout
 import com.m3u.core.annotation.FeedStrategy
+import com.m3u.core.architecture.Logger
 import com.m3u.core.architecture.Publisher
 import com.m3u.core.architecture.configuration.Configuration
-import com.m3u.core.architecture.logger.BannerLoggerImpl
-import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.viewmodel.BaseViewModel
 import com.m3u.data.repository.LiveRepository
-import com.m3u.data.repository.PostRepository
 import com.m3u.data.repository.observeBanned
-import com.m3u.data.worker.SubscribeFeedWorker
+import com.m3u.data.worker.SubscriptionInBackgroundWorker
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -31,8 +29,7 @@ class SettingViewModel @Inject constructor(
     @Publisher.App private val publisher: Publisher,
     application: Application,
     configuration: Configuration,
-    @BannerLoggerImpl private val logger: Logger,
-    private val postRepository: PostRepository
+    @Logger.Ui private val logger: Logger,
 ) : BaseViewModel<SettingState, SettingEvent>(
     application = application,
     emptyState = SettingState(
@@ -67,24 +64,11 @@ class SettingViewModel @Inject constructor(
             SettingEvent.OnClipMode -> onClipMode()
             is SettingEvent.OnBannedLive -> onBannedLive(event.id)
             SettingEvent.ScrollDefaultDestination -> scrollDefaultDestination()
-            SettingEvent.OnSilentMode -> onSilentMode()
             is SettingEvent.ImportJavaScript -> importJavaScript(event.uri)
         }
     }
 
     private fun importJavaScript(uri: Uri) {
-    }
-
-    private fun onSilentMode() {
-        val target = !readable.silentMode
-        readable.silentMode = target
-        viewModelScope.launch {
-            if (target) {
-                postRepository.clear()
-            } else {
-                postRepository.fetchAll()
-            }
-        }
     }
 
     private fun scrollDefaultDestination() {
@@ -172,12 +156,12 @@ class SettingViewModel @Inject constructor(
             val strategy = readable.feedStrategy
             val workManager = WorkManager.getInstance(context)
             workManager.cancelAllWorkByTag(url)
-            val request = OneTimeWorkRequestBuilder<SubscribeFeedWorker>()
+            val request = OneTimeWorkRequestBuilder<SubscriptionInBackgroundWorker>()
                 .setInputData(
                     workDataOf(
-                        SubscribeFeedWorker.INPUT_STRING_TITLE to title,
-                        SubscribeFeedWorker.INPUT_STRING_URL to url,
-                        SubscribeFeedWorker.INPUT_INT_STRATEGY to strategy
+                        SubscriptionInBackgroundWorker.INPUT_STRING_TITLE to title,
+                        SubscriptionInBackgroundWorker.INPUT_STRING_URL to url,
+                        SubscriptionInBackgroundWorker.INPUT_INT_STRATEGY to strategy
                     )
                 )
                 .addTag(url)

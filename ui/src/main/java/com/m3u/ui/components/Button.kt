@@ -172,13 +172,14 @@ fun IconButton(
     contentDescription: String?,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
     tint: Color = LocalContentColor.current.copy(alpha = LocalContentAlpha.current),
 ) {
     IconButton(
         onClick = onClick,
+        enabled = enabled,
         modifier = modifier
     ) {
-
         Icon(
             imageVector = icon,
             contentDescription = contentDescription,

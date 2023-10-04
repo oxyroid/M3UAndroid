@@ -34,6 +34,7 @@ View this [file](CONTRIBUTING.md) to learn about how to contribute this reposito
 
 ### Literatures
 1. http://upnp.org/specs/av/UPnP-av-ContentDirectory-v4-Service.pdf
+2. https://developer.apple.com/documentation/http-live-streaming/example-playlists-for-http-live-streaming
 
 ### About me
 

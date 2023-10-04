@@ -16,7 +16,6 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -30,6 +29,7 @@ import com.m3u.ui.components.MonoText
 import com.m3u.ui.components.TextField
 import com.m3u.ui.model.LocalHelper
 import com.m3u.ui.model.LocalSpacing
+import com.m3u.ui.model.repeatOnLifecycle
 
 @Composable
 internal fun ConsoleRoute(
@@ -38,8 +38,8 @@ internal fun ConsoleRoute(
 ) {
     val helper = LocalHelper.current
     val title = stringResource(R.string.console_title)
-    SideEffect {
-        helper.title = title
+    helper.repeatOnLifecycle {
+        this.title = title
     }
     val state by viewModel.state.collectAsStateWithLifecycle()
     ConsoleScreen(
