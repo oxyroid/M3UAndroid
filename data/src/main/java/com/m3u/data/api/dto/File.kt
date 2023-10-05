@@ -10,11 +10,11 @@ data class File(
     @SerialName("_links")
     val links: Links,
     @SerialName("download_url")
-    val downloadUrl: String,
+    val downloadUrl: String = "",
     @SerialName("git_url")
-    val gitUrl: String,
+    val gitUrl: String = "",
     @SerialName("html_url")
-    val htmlUrl: String,
+    val htmlUrl: String = "",
     @SerialName("name")
     val name: String,
     @SerialName("path")

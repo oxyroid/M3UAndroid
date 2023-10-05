@@ -39,6 +39,9 @@ fun Helper.repeatOnLifecycle(
     state: Lifecycle.State = Lifecycle.State.STARTED,
     block: Helper.() -> Unit
 ) {
+    check(state != Lifecycle.State.CREATED || state != Lifecycle.State.INITIALIZED) {
+        "state cannot be CREATED or INITIALIZED!"
+    }
     LifecycleEffect { event ->
         val title = title
         val actions = actions

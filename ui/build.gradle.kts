@@ -47,7 +47,7 @@ dependencies {
     api(libs.androidx.compose.material.material.icons.extended)
     api(libs.androidx.compose.material3.material3)
     debugApi(libs.androidx.compose.ui.ui.tooling)
-    api(libs.androidx.compose.ui.ui.tooling.preview)
+    debugApi(libs.androidx.compose.ui.ui.tooling.preview)
 
     implementation(libs.androidx.tv.tv.foundation)
     implementation(libs.androidx.tv.tv.material)
@@ -57,8 +57,8 @@ dependencies {
     implementation(libs.androidx.media3.media3.ui)
     implementation(libs.androidx.media3.media3.exoplayer)
 
-    implementation(libs.io.coil.kt.coil)
-    implementation(libs.io.coil.kt.coil.compose)
+    api(libs.io.coil.kt.coil)
+    api(libs.io.coil.kt.coil.compose)
 
     implementation(libs.com.airbnb.android.lottie.compose)
 }

@@ -53,5 +53,5 @@ dependencies {
     implementation(libs.androidx.hilt.hilt.navigation.compose)
     ksp(libs.com.google.dagger.hilt.compiler)
 
-    implementation(libs.mmupnp)
+    implementation(libs.net.mm2d.mmupnp.mmupnp)
 }

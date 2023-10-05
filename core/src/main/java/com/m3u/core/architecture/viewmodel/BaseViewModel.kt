@@ -13,6 +13,16 @@ import kotlinx.coroutines.flow.asStateFlow
  * 2. ViewModel should change writable value to update current state.
  * 3. It also provides context but not making memory lacking.
  */
+@Deprecated(
+    "BaseViewModel is deprecated! Please use androidx ViewModel with hilt. " +
+            "Because its state and event cannot be modify internal with hilt!",
+    replaceWith = ReplaceWith(
+        expression = "AndroidViewModel",
+        imports = [
+            "androidx.lifecycle.AndroidViewModel"
+        ]
+    )
+)
 abstract class BaseViewModel<S, in E>(
     application: Application,
     emptyState: S

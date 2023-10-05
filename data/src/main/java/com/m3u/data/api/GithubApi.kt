@@ -2,9 +2,10 @@
 
 package com.m3u.data.api
 
-import com.m3u.data.api.dto.User
 import com.m3u.data.api.dto.File
 import com.m3u.data.api.dto.Release
+import com.m3u.data.api.dto.Tree
+import com.m3u.data.api.dto.User
 import retrofit2.http.GET
 import retrofit2.http.Path
 
@@ -15,11 +16,19 @@ interface GithubApi {
         @Path("repos") repos: String
     ): List<Release>
 
-    @GET("/repos/{author}/{repos}/contents")
+    @GET("/repos/{author}/{repos}/contents/{subpath}")
     suspend fun contents(
         @Path("author") author: String,
-        @Path("repos") repos: String
-    ): List<File>
+        @Path("repos") repos: String,
+        @Path("subpath") subpath: String = ""
+    ): File?
+
+    @GET("/repos/{author}/{repos}/trees/{sha}")
+    suspend fun tree(
+        @Path("author") author: String,
+        @Path("repos") repos: String,
+        @Path("sha") sha: String
+    ): Tree?
 
     @GET("/repos/{author}/{repos}/contributors")
     suspend fun contributors(

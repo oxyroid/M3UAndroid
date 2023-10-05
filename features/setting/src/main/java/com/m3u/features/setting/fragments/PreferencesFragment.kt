@@ -270,7 +270,7 @@ internal fun PreferencesFragment(
                 Preference(
                     title = stringResource(R.string.project_about),
                     onClick = navigateToAbout,
-                    enabled = false
+//                    enabled = false
                 )
                 Preference(
                     title = stringResource(R.string.app_version),
