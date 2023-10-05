@@ -19,7 +19,8 @@ interface Helper {
     var title: String
     var actions: List<Action>
     var fob: Fob?
-    var systemUiVisibility: Boolean
+    var statusBarsVisibility: Boolean
+    var navigationBarsVisibility: Boolean
     var onUserLeaveHint: (() -> Unit)?
     var onPipModeChanged: Consumer<PictureInPictureModeChangedInfo>?
     var darkMode: Boolean
@@ -38,15 +39,25 @@ private data class HelperBundle(
     val darkMode: Boolean
 )
 
-private fun Helper.loadBundle(properties: HelperBundle) {
-    title = properties.title
-    actions = properties.actions
-    fob = properties.fob
-    systemUiVisibility = properties.systemUiVisibility
-    onUserLeaveHint = properties.onUserLeaveHint
-    onPipModeChanged = properties.onPipModeChanged
-    darkMode = properties.darkMode
+private fun Helper.restore(bundle: HelperBundle) {
+    title = bundle.title
+    actions = bundle.actions
+    fob = bundle.fob
+    statusBarsVisibility = bundle.systemUiVisibility
+    onUserLeaveHint = bundle.onUserLeaveHint
+    onPipModeChanged = bundle.onPipModeChanged
+    darkMode = bundle.darkMode
 }
+
+private fun Helper.backup(): HelperBundle = HelperBundle(
+    title = title,
+    actions = actions,
+    fob = fob,
+    systemUiVisibility = statusBarsVisibility,
+    onUserLeaveHint = onUserLeaveHint,
+    onPipModeChanged = onPipModeChanged,
+    darkMode = darkMode
+)
 
 @Composable
 @SuppressLint("ComposableNaming")
@@ -57,24 +68,16 @@ fun Helper.repeatOnLifecycle(
     check(state != Lifecycle.State.CREATED && state != Lifecycle.State.INITIALIZED) {
         "state cannot be CREATED or INITIALIZED!"
     }
-    var properties: HelperBundle? = null
+    var bundle: HelperBundle? = null
     LifecycleEffect { event ->
         when (event) {
             Lifecycle.Event.upTo(state) -> {
-                properties = HelperBundle(
-                    title = title,
-                    actions = actions,
-                    fob = fob,
-                    systemUiVisibility = systemUiVisibility,
-                    onUserLeaveHint = onUserLeaveHint,
-                    onPipModeChanged = onPipModeChanged,
-                    darkMode = darkMode
-                )
+                bundle = backup()
                 block()
             }
 
             Lifecycle.Event.downFrom(state) -> {
-                properties?.let(::loadBundle)
+                bundle?.let(::restore)
             }
 
             else -> {}
@@ -100,10 +103,15 @@ val EmptyHelper = object : Helper {
             error("Cannot set fob")
         }
 
-    override var systemUiVisibility: Boolean
+    override var statusBarsVisibility: Boolean
         get() = error("Cannot get systemUiVisibility")
         set(_) {
             error("Cannot set systemUiVisibility")
+        }
+    override var navigationBarsVisibility: Boolean
+        get() = error("Cannot get navigationBarsVisibility")
+        set(_) {
+            error("Cannot set navigationBarsVisibility")
         }
 
     override var darkMode: Boolean

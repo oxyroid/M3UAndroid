@@ -40,6 +40,7 @@ import androidx.media3.common.Player
 import com.m3u.core.annotation.ClipMode
 import com.m3u.core.util.basic.isNotEmpty
 import com.m3u.features.live.R
+import com.m3u.features.live.components.CoverPlaceholder
 import com.m3u.features.live.components.LiveMask
 import com.m3u.ui.components.Background
 import com.m3u.ui.components.ExoPlayer
@@ -99,12 +100,12 @@ internal fun LiveFragment(
             )
 
             val shouldShowPlaceholder = cover.isNotEmpty() && videoSize.isEmpty
-            if (shouldShowPlaceholder) {
-                Image(
-                    model = cover,
-                    modifier = Modifier.fillMaxSize()
-                )
-            }
+
+            CoverPlaceholder(
+                visible = shouldShowPlaceholder,
+                cover = cover,
+                modifier = Modifier.align(Alignment.Center)
+            )
 
             LiveMask(
                 state = maskState,

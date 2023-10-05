@@ -5,6 +5,7 @@ import android.content.res.Configuration
 import android.graphics.Color
 import android.graphics.Rect
 import android.os.Bundle
+import android.util.Log
 import android.util.Rational
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
@@ -24,9 +25,11 @@ import kotlin.reflect.KMutableProperty0
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-    private val controller = WindowInsetsControllerCompat(window, window.decorView).apply {
-        systemBarsBehavior =
-            WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+    private val controller by lazy {
+        WindowInsetsControllerCompat(window, window.decorView).apply {
+            systemBarsBehavior =
+                WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+        }
     }
     private var actualOnUserLeaveHint: (() -> Unit)? = null
     private var actualOnPipModeChanged: Consumer<PictureInPictureModeChangedInfo>? = null
@@ -35,6 +38,7 @@ class MainActivity : ComponentActivity() {
         installSplashScreen()
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
+        applyConfiguration(resources.configuration)
         setContent {
             App(
                 connector = this::createHelper
@@ -47,7 +51,6 @@ class MainActivity : ComponentActivity() {
         actions: Method<List<Action>>,
         fob: Method<Fob?>
     ): Helper = object : Helper {
-
         override fun enterPipMode(size: Rect) {
             val params = PictureInPictureParams.Builder()
                 .setAspectRatio(Rational(size.width(), size.height()))
@@ -58,17 +61,19 @@ class MainActivity : ComponentActivity() {
         override var title: String by title
         override var actions: List<Action> by actions
         override var fob: Fob? by fob
-        override var systemUiVisibility: Boolean = true
+        override var statusBarsVisibility: Boolean = true
             set(value) {
                 field = value
                 controller.apply {
                     if (value) {
-                        show(WindowInsetsCompat.Type.systemBars())
+                        show(WindowInsetsCompat.Type.statusBars())
                     } else {
-                        hide(WindowInsetsCompat.Type.systemBars())
+                        hide(WindowInsetsCompat.Type.statusBars())
                     }
                 }
             }
+        override var navigationBarsVisibility: Boolean =
+            resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT
 
         override var darkMode: Boolean =
             resources.configuration.uiMode == Configuration.UI_MODE_NIGHT_YES
@@ -95,6 +100,29 @@ class MainActivity : ComponentActivity() {
     override fun onUserLeaveHint() {
         super.onUserLeaveHint()
         actualOnUserLeaveHint?.invoke()
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        applyConfiguration(newConfig)
+    }
+
+    private fun applyConfiguration(configuration: Configuration) {
+        Log.d(
+            "MainActivity",
+            "applyConfiguration: ${configuration.orientation == Configuration.ORIENTATION_PORTRAIT}"
+        )
+        when (configuration.orientation) {
+            Configuration.ORIENTATION_PORTRAIT -> {
+                controller.show(WindowInsetsCompat.Type.navigationBars())
+            }
+
+            Configuration.ORIENTATION_LANDSCAPE -> {
+                controller.hide(WindowInsetsCompat.Type.navigationBars())
+            }
+
+            else -> {}
+        }
     }
 }
 

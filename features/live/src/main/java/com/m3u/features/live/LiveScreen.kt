@@ -83,7 +83,7 @@ internal fun LiveRoute(
                 helper.enterPipMode(state.playerState.videoSize)
             }
         }
-        systemUiVisibility = false
+        statusBarsVisibility = false
         onPipModeChanged = Consumer { info ->
             isPipMode = info.isInPictureInPictureMode
         }

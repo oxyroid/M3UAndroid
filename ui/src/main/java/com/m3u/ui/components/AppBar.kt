@@ -63,25 +63,6 @@ import com.m3u.ui.model.LocalDuration
 import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.LocalTheme
 
-@Suppress("unused")
-interface AppTopBarConsumer {
-    fun Float.value(min: Float, max: Float): Boolean
-
-    object Never : AppTopBarConsumer {
-        override fun Float.value(min: Float, max: Float): Boolean = false
-    }
-
-    object Edges : AppTopBarConsumer {
-        override fun Float.value(min: Float, max: Float): Boolean = (this == min) || (this == max)
-    }
-
-    object Always : AppTopBarConsumer {
-        override fun Float.value(min: Float, max: Float): Boolean = (this != min) && (this != max)
-    }
-}
-
-fun AppTopBarConsumer.consume(value: Float, min: Float, max: Float): Boolean = value.value(min, max)
-
 @Composable
 fun AppTopBar(
     modifier: Modifier = Modifier,
@@ -237,7 +218,7 @@ internal object AppTopBarDefaults {
 
     @OptIn(ExperimentalLayoutApi::class)
     val windowInsets: WindowInsets
-        @Composable get() = WindowInsets.systemBarsIgnoringVisibility.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Top)
+        @Composable get() = WindowInsets.systemBarsIgnoringVisibility.only(WindowInsetsSides.Top)
 
     /**
      * Linear interpolator through point (1, 1).
@@ -246,3 +227,22 @@ internal object AppTopBarDefaults {
      */
     fun interpolator(slope: Float, input: Float): Float = lerp(input, 1f, 1 - slope)
 }
+
+@Suppress("unused")
+interface AppTopBarConsumer {
+    fun Float.value(min: Float, max: Float): Boolean
+
+    object Never : AppTopBarConsumer {
+        override fun Float.value(min: Float, max: Float): Boolean = false
+    }
+
+    object Edges : AppTopBarConsumer {
+        override fun Float.value(min: Float, max: Float): Boolean = (this == min) || (this == max)
+    }
+
+    object Always : AppTopBarConsumer {
+        override fun Float.value(min: Float, max: Float): Boolean = (this != min) && (this != max)
+    }
+}
+
+fun AppTopBarConsumer.consume(value: Float, min: Float, max: Float): Boolean = value.value(min, max)
