@@ -76,7 +76,6 @@ internal fun LiveRoute(
     }
 
     helper.repeatOnLifecycle {
-        maskState.active()
         onUserLeaveHint = {
             if (state.playerState.videoSize.isNotEmpty) {
                 maskState.sleep()
@@ -86,6 +85,9 @@ internal fun LiveRoute(
         statusBarsVisibility = false
         onPipModeChanged = Consumer { info ->
             isPipMode = info.isInPictureInPictureMode
+            if (!isPipMode) {
+                maskState.active()
+            }
         }
     }
 
