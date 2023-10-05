@@ -20,17 +20,32 @@ interface Helper {
     var actions: List<Action>
     var fob: Fob?
     var systemUiVisibility: Boolean
+    var onUserLeaveHint: (() -> Unit)?
+    var onPipModeChanged: Consumer<PictureInPictureModeChangedInfo>?
+    var darkMode: Boolean
 
     fun enterPipMode(size: Rect)
-    fun detectDarkMode(handler: () -> Boolean)
     fun detectWindowInsetController(handler: WindowInsetsControllerCompat.() -> Unit)
-    fun registerOnUserLeaveHintListener(callback: () -> Unit)
-    fun unregisterOnUserLeaveHintListener()
-    fun registerOnPictureInPictureModeChangedListener(
-        consumer: Consumer<PictureInPictureModeChangedInfo>
-    )
+}
 
-    fun unregisterOnPictureInPictureModeChangedListener()
+private data class HelperBundle(
+    val title: String,
+    val actions: List<Action>,
+    val fob: Fob?,
+    val systemUiVisibility: Boolean,
+    val onUserLeaveHint: (() -> Unit)?,
+    val onPipModeChanged: Consumer<PictureInPictureModeChangedInfo>?,
+    val darkMode: Boolean
+)
+
+private fun Helper.loadBundle(properties: HelperBundle) {
+    title = properties.title
+    actions = properties.actions
+    fob = properties.fob
+    systemUiVisibility = properties.systemUiVisibility
+    onUserLeaveHint = properties.onUserLeaveHint
+    onPipModeChanged = properties.onPipModeChanged
+    darkMode = properties.darkMode
 }
 
 @Composable
@@ -42,18 +57,24 @@ fun Helper.repeatOnLifecycle(
     check(state != Lifecycle.State.CREATED && state != Lifecycle.State.INITIALIZED) {
         "state cannot be CREATED or INITIALIZED!"
     }
+    var properties: HelperBundle? = null
     LifecycleEffect { event ->
-        val title = title
-        val actions = actions
-        val fob = fob
-        val systemUiVisibility = systemUiVisibility
         when (event) {
-            Lifecycle.Event.upTo(state) -> block()
+            Lifecycle.Event.upTo(state) -> {
+                properties = HelperBundle(
+                    title = title,
+                    actions = actions,
+                    fob = fob,
+                    systemUiVisibility = systemUiVisibility,
+                    onUserLeaveHint = onUserLeaveHint,
+                    onPipModeChanged = onPipModeChanged,
+                    darkMode = darkMode
+                )
+                block()
+            }
+
             Lifecycle.Event.downFrom(state) -> {
-                this@repeatOnLifecycle.title = title
-                this@repeatOnLifecycle.actions = actions
-                this@repeatOnLifecycle.fob = fob
-                this@repeatOnLifecycle.systemUiVisibility = systemUiVisibility
+                properties?.let(::loadBundle)
             }
 
             else -> {}
@@ -85,27 +106,28 @@ val EmptyHelper = object : Helper {
             error("Cannot set systemUiVisibility")
         }
 
+    override var darkMode: Boolean
+        get() = error("Cannot get darkMode")
+        set(_) {
+            error("Cannot set darkMode")
+        }
+
+    override var onUserLeaveHint: (() -> Unit)?
+        get() = error("Cannot get onUserLeaveHint")
+        set(_) {
+            error("Cannot set onUserLeaveHint")
+        }
+    override var onPipModeChanged: Consumer<PictureInPictureModeChangedInfo>?
+        get() = error("Cannot get onPipModeChanged")
+        set(_) {
+            error("Cannot set onPipModeChanged")
+        }
+
     override fun detectWindowInsetController(handler: WindowInsetsControllerCompat.() -> Unit) {
         error("detectWindowInsetController")
     }
 
     override fun enterPipMode(size: Rect) = error("Cannot enterPipMode")
-
-    override fun registerOnPictureInPictureModeChangedListener(
-        consumer: Consumer<PictureInPictureModeChangedInfo>
-    ) = error("addOnPictureInPictureModeChangedListener")
-
-
-    override fun unregisterOnPictureInPictureModeChangedListener() =
-        error("removeOnPictureInPictureModeChangedListener")
-
-    override fun registerOnUserLeaveHintListener(callback: () -> Unit) =
-        error("addOnUserLeaveHintListener")
-
-    override fun unregisterOnUserLeaveHintListener() = error("unregisterOnUserLeaveHintListener")
-    override fun detectDarkMode(handler: () -> Boolean) {
-        error("detectDarkMode")
-    }
 }
 
 val LocalHelper = staticCompositionLocalOf { EmptyHelper }

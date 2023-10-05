@@ -78,6 +78,7 @@ class AboutViewModel @Inject constructor(
             val i = line.indexOf("=")
             if (i == -1) null
             else line.take(i).trim()
-        }.sorted()
+        }
+            .sorted()
     }
 }

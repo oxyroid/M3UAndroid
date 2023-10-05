@@ -1,6 +1,7 @@
 package com.m3u.androidApp
 
 import android.app.PictureInPictureParams
+import android.content.res.Configuration
 import android.graphics.Color
 import android.graphics.Rect
 import android.os.Bundle
@@ -23,6 +24,13 @@ import kotlin.reflect.KMutableProperty0
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    private val controller = WindowInsetsControllerCompat(window, window.decorView).apply {
+        systemBarsBehavior =
+            WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+    }
+    private var actualOnUserLeaveHint: (() -> Unit)? = null
+    private var actualOnPipModeChanged: Consumer<PictureInPictureModeChangedInfo>? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         enableEdgeToEdge()
@@ -34,17 +42,11 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private var onUserLeaveHintCallback: (() -> Unit)? = null
-
     private fun createHelper(
         title: Method<String>,
         actions: Method<List<Action>>,
         fob: Method<Fob?>
     ): Helper = object : Helper {
-        private val controller = WindowInsetsControllerCompat(window, window.decorView).apply {
-            systemBarsBehavior =
-                WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-        }
 
         override fun enterPipMode(size: Rect) {
             val params = PictureInPictureParams.Builder()
@@ -56,7 +58,6 @@ class MainActivity : ComponentActivity() {
         override var title: String by title
         override var actions: List<Action> by actions
         override var fob: Fob? by fob
-
         override var systemUiVisibility: Boolean = true
             set(value) {
                 field = value
@@ -69,43 +70,31 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
+        override var darkMode: Boolean =
+            resources.configuration.uiMode == Configuration.UI_MODE_NIGHT_YES
+            set(value) {
+                enableEdgeToEdge(
+                    SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT) { !value },
+                    SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT) { true }
+                )
+                field = value
+            }
+        override var onUserLeaveHint: (() -> Unit)? by ::actualOnUserLeaveHint
+        override var onPipModeChanged: Consumer<PictureInPictureModeChangedInfo>?
+            get() = actualOnPipModeChanged
+            set(value) {
+                if (value != null) addOnPictureInPictureModeChangedListener(value)
+                else actualOnPipModeChanged?.let { removeOnPictureInPictureModeChangedListener(it) }
+            }
+
         override fun detectWindowInsetController(handler: WindowInsetsControllerCompat.() -> Unit) {
             handler(controller)
-        }
-
-        override fun detectDarkMode(handler: () -> Boolean) {
-            val darkMode = handler()
-            enableEdgeToEdge(
-                SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT) { !darkMode },
-                SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT) { true }
-            )
-        }
-
-        private var listener: Consumer<PictureInPictureModeChangedInfo>? = null
-
-        override fun registerOnPictureInPictureModeChangedListener(
-            consumer: Consumer<PictureInPictureModeChangedInfo>
-        ) {
-            this@MainActivity.addOnPictureInPictureModeChangedListener(consumer)
-            this.listener = consumer
-        }
-
-        override fun unregisterOnPictureInPictureModeChangedListener() {
-            this.listener?.let { removeOnPictureInPictureModeChangedListener(it) }
-        }
-
-        override fun registerOnUserLeaveHintListener(callback: () -> Unit) {
-            onUserLeaveHintCallback = callback
-        }
-
-        override fun unregisterOnUserLeaveHintListener() {
-            onUserLeaveHintCallback = null
         }
     }
 
     override fun onUserLeaveHint() {
         super.onUserLeaveHint()
-        onUserLeaveHintCallback?.invoke()
+        actualOnUserLeaveHint?.invoke()
     }
 }
 

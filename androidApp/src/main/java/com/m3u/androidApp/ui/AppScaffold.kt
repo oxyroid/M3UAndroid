@@ -20,10 +20,10 @@ import com.m3u.ui.M3ULocalProvider
 import com.m3u.ui.TopLevelDestination
 import com.m3u.ui.components.AppTopBar
 import com.m3u.ui.components.IconButton
-import com.m3u.ui.model.Helper
-import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.Action
 import com.m3u.ui.model.Fob
+import com.m3u.ui.model.Helper
+import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.Theme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -68,7 +68,7 @@ internal fun AppScaffold(
                 if (!cinemaMode && isPlaying) {
                     delay(800.milliseconds)
                 }
-                helper.detectDarkMode { useDarkIcons }
+                helper.darkMode = useDarkIcons
             }
             onDispose {}
         }

@@ -18,6 +18,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.util.lerp
+import androidx.core.util.Consumer
 import androidx.core.view.WindowInsetsCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
@@ -35,6 +36,7 @@ import com.m3u.ui.ktx.EventHandler
 import com.m3u.ui.ktx.LifecycleEffect
 import com.m3u.ui.model.LocalHelper
 import com.m3u.ui.model.LocalTheme
+import com.m3u.ui.model.repeatOnLifecycle
 import kotlin.math.absoluteValue
 
 @Composable
@@ -63,29 +65,27 @@ internal fun LiveRoute(
 
     LifecycleEffect { event ->
         when (event) {
-            Lifecycle.Event.ON_START -> {
-                helper.registerOnUserLeaveHintListener {
-                    if (state.playerState.videoSize.isNotEmpty) {
-                        maskState.sleep()
-                        helper.enterPipMode(state.playerState.videoSize)
-                    }
-                }
-                helper.systemUiVisibility = false
-                helper.registerOnPictureInPictureModeChangedListener { info ->
-                    isPipMode = info.isInPictureInPictureMode
-                }
-            }
-
             Lifecycle.Event.ON_STOP -> {
                 if (isPipMode) {
                     viewModel.onEvent(LiveEvent.UninstallMedia)
                 }
-                helper.systemUiVisibility = true
-                helper.unregisterOnPictureInPictureModeChangedListener()
-                helper.unregisterOnUserLeaveHintListener()
             }
 
             else -> {}
+        }
+    }
+
+    helper.repeatOnLifecycle {
+        maskState.active()
+        onUserLeaveHint = {
+            if (state.playerState.videoSize.isNotEmpty) {
+                maskState.sleep()
+                helper.enterPipMode(state.playerState.videoSize)
+            }
+        }
+        systemUiVisibility = false
+        onPipModeChanged = Consumer { info ->
+            isPipMode = info.isInPictureInPictureMode
         }
     }
 
