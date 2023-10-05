@@ -110,17 +110,20 @@ private class MaskStateCoroutineImpl(
 
 @Composable
 fun rememberMaskState(
+    activeDefault: Boolean = true,
     @IntRange(from = 1) minDuration: Long = MaskDefaults.minDuration,
     coroutineScope: CoroutineScope = rememberCoroutineScope(),
     onChanged: (Boolean) -> Unit
 ): MaskState {
     val currentOnChanged by rememberUpdatedState(onChanged)
-    return remember(minDuration, coroutineScope) {
+    return remember(activeDefault, minDuration, coroutineScope) {
         MaskStateCoroutineImpl(
             minDuration = minDuration,
             coroutineScope = coroutineScope,
             onChanged = currentOnChanged
-        )
+        ).apply {
+            if (activeDefault) active()
+        }
     }
 }
 

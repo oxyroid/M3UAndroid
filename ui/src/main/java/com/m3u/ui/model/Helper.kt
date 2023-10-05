@@ -2,6 +2,7 @@ package com.m3u.ui.model
 
 import android.annotation.SuppressLint
 import android.graphics.Rect
+import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
@@ -9,10 +10,12 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.core.app.PictureInPictureModeChangedInfo
 import androidx.core.util.Consumer
-import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.Lifecycle
 import com.m3u.ui.TopLevelDestination
 import com.m3u.ui.ktx.LifecycleEffect
+
+typealias OnUserLeaveHint = () -> Unit
+typealias OnPipModeChanged = Consumer<PictureInPictureModeChangedInfo>
 
 @Stable
 interface Helper {
@@ -21,29 +24,33 @@ interface Helper {
     var fob: Fob?
     var statusBarsVisibility: Boolean
     var navigationBarsVisibility: Boolean
-    var onUserLeaveHint: (() -> Unit)?
-    var onPipModeChanged: Consumer<PictureInPictureModeChangedInfo>?
+    var onUserLeaveHint: OnUserLeaveHint?
+    var onPipModeChanged: OnPipModeChanged?
     var darkMode: Boolean
 
     fun enterPipMode(size: Rect)
-    fun detectWindowInsetController(handler: WindowInsetsControllerCompat.() -> Unit)
 }
 
 private data class HelperBundle(
     val title: String,
     val actions: List<Action>,
     val fob: Fob?,
-    val systemUiVisibility: Boolean,
+    val statusBarsVisibility: Boolean,
+    val navigationBarsVisibility: Boolean,
     val onUserLeaveHint: (() -> Unit)?,
     val onPipModeChanged: Consumer<PictureInPictureModeChangedInfo>?,
     val darkMode: Boolean
-)
+) {
+    override fun toString(): String =
+        "(title=$title,fob=$fob,status=$statusBarsVisibility,nav=$navigationBarsVisibility,dark=$darkMode)"
+}
 
 private fun Helper.restore(bundle: HelperBundle) {
     title = bundle.title
     actions = bundle.actions
     fob = bundle.fob
-    statusBarsVisibility = bundle.systemUiVisibility
+    statusBarsVisibility = bundle.statusBarsVisibility
+    navigationBarsVisibility = bundle.navigationBarsVisibility
     onUserLeaveHint = bundle.onUserLeaveHint
     onPipModeChanged = bundle.onPipModeChanged
     darkMode = bundle.darkMode
@@ -53,7 +60,8 @@ private fun Helper.backup(): HelperBundle = HelperBundle(
     title = title,
     actions = actions,
     fob = fob,
-    systemUiVisibility = statusBarsVisibility,
+    statusBarsVisibility = statusBarsVisibility,
+    navigationBarsVisibility = navigationBarsVisibility,
     onUserLeaveHint = onUserLeaveHint,
     onPipModeChanged = onPipModeChanged,
     darkMode = darkMode
@@ -73,10 +81,12 @@ fun Helper.repeatOnLifecycle(
         when (event) {
             Lifecycle.Event.upTo(state) -> {
                 bundle = backup()
+                Log.d("Helper", "repeatOnLifecycle: backup -> $bundle")
                 block()
             }
 
             Lifecycle.Event.downFrom(state) -> {
+                Log.d("Helper", "repeatOnLifecycle: restore -> $bundle")
                 bundle?.let(::restore)
             }
 
@@ -120,20 +130,16 @@ val EmptyHelper = object : Helper {
             error("Cannot set darkMode")
         }
 
-    override var onUserLeaveHint: (() -> Unit)?
+    override var onUserLeaveHint: OnUserLeaveHint?
         get() = error("Cannot get onUserLeaveHint")
         set(_) {
             error("Cannot set onUserLeaveHint")
         }
-    override var onPipModeChanged: Consumer<PictureInPictureModeChangedInfo>?
+    override var onPipModeChanged: OnPipModeChanged?
         get() = error("Cannot get onPipModeChanged")
         set(_) {
             error("Cannot set onPipModeChanged")
         }
-
-    override fun detectWindowInsetController(handler: WindowInsetsControllerCompat.() -> Unit) {
-        error("detectWindowInsetController")
-    }
 
     override fun enterPipMode(size: Rect) = error("Cannot enterPipMode")
 }

@@ -5,21 +5,25 @@ import android.content.res.Configuration
 import android.graphics.Color
 import android.graphics.Rect
 import android.os.Bundle
-import android.util.Log
-import android.util.Rational
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.core.app.PictureInPictureModeChangedInfo
+import androidx.activity.viewModels
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
-import androidx.core.util.Consumer
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.core.view.WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
 import com.m3u.androidApp.ui.App
+import com.m3u.androidApp.ui.AppViewModel
+import com.m3u.core.util.basic.rational
+import com.m3u.core.util.context.isDarkMode
+import com.m3u.core.util.context.isPortraitMode
 import com.m3u.ui.model.Action
 import com.m3u.ui.model.Fob
 import com.m3u.ui.model.Helper
+import com.m3u.ui.model.OnPipModeChanged
+import com.m3u.ui.model.OnUserLeaveHint
 import dagger.hilt.android.AndroidEntryPoint
 import kotlin.reflect.KMutableProperty0
 
@@ -27,23 +31,35 @@ import kotlin.reflect.KMutableProperty0
 class MainActivity : ComponentActivity() {
     private val controller by lazy {
         WindowInsetsControllerCompat(window, window.decorView).apply {
-            systemBarsBehavior =
-                WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+            systemBarsBehavior = BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
         }
     }
-    private var actualOnUserLeaveHint: (() -> Unit)? = null
-    private var actualOnPipModeChanged: Consumer<PictureInPictureModeChangedInfo>? = null
+    private var actualOnUserLeaveHint: OnUserLeaveHint? = null
+    private var actualOnPipModeChanged: OnPipModeChanged? = null
+    private val viewModel: AppViewModel by viewModels()
+    private val helper by lazy {
+        createHelper(
+            title = viewModel.title::value,
+            actions = viewModel.actions::value,
+            fob = viewModel.fob::value
+        )
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
-        applyConfiguration(resources.configuration)
         setContent {
             App(
-                connector = this::createHelper
+                viewModel = viewModel,
+                helper = helper
             )
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        applyConfiguration(resources.configuration)
     }
 
     private fun createHelper(
@@ -53,7 +69,7 @@ class MainActivity : ComponentActivity() {
     ): Helper = object : Helper {
         override fun enterPipMode(size: Rect) {
             val params = PictureInPictureParams.Builder()
-                .setAspectRatio(Rational(size.width(), size.height()))
+                .setAspectRatio(size.rational)
                 .build()
             enterPictureInPictureMode(params)
         }
@@ -63,7 +79,6 @@ class MainActivity : ComponentActivity() {
         override var fob: Fob? by fob
         override var statusBarsVisibility: Boolean = true
             set(value) {
-                field = value
                 controller.apply {
                     if (value) {
                         show(WindowInsetsCompat.Type.statusBars())
@@ -71,30 +86,36 @@ class MainActivity : ComponentActivity() {
                         hide(WindowInsetsCompat.Type.statusBars())
                     }
                 }
+                field = value
             }
-        override var navigationBarsVisibility: Boolean =
-            resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT
+        override var navigationBarsVisibility: Boolean = resources.configuration.isPortraitMode
+            set(value) {
+                controller.apply {
+                    if (value) {
+                        show(WindowInsetsCompat.Type.navigationBars())
+                    } else {
+                        hide(WindowInsetsCompat.Type.navigationBars())
+                    }
+                }
+                field = value
+            }
 
-        override var darkMode: Boolean =
-            resources.configuration.uiMode == Configuration.UI_MODE_NIGHT_YES
+        override var darkMode: Boolean = resources.configuration.isDarkMode
             set(value) {
                 enableEdgeToEdge(
-                    SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT) { !value },
+                    SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT) { value },
                     SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT) { true }
                 )
                 field = value
             }
-        override var onUserLeaveHint: (() -> Unit)? by ::actualOnUserLeaveHint
-        override var onPipModeChanged: Consumer<PictureInPictureModeChangedInfo>?
+
+        override var onUserLeaveHint: OnUserLeaveHint? by ::actualOnUserLeaveHint
+        override var onPipModeChanged: OnPipModeChanged?
             get() = actualOnPipModeChanged
             set(value) {
                 if (value != null) addOnPictureInPictureModeChangedListener(value)
                 else actualOnPipModeChanged?.let { removeOnPictureInPictureModeChangedListener(it) }
             }
-
-        override fun detectWindowInsetController(handler: WindowInsetsControllerCompat.() -> Unit) {
-            handler(controller)
-        }
     }
 
     override fun onUserLeaveHint() {
@@ -107,23 +128,12 @@ class MainActivity : ComponentActivity() {
         applyConfiguration(newConfig)
     }
 
+    // FIXME:
+    //  1. orientation changing mistake in player screen when mask is sleeping.
+    //  2. window inset controller cannot take effect in orientation changing quickly.
     private fun applyConfiguration(configuration: Configuration) {
-        Log.d(
-            "MainActivity",
-            "applyConfiguration: ${configuration.orientation == Configuration.ORIENTATION_PORTRAIT}"
-        )
-        when (configuration.orientation) {
-            Configuration.ORIENTATION_PORTRAIT -> {
-                controller.show(WindowInsetsCompat.Type.navigationBars())
-            }
-
-            Configuration.ORIENTATION_LANDSCAPE -> {
-                controller.hide(WindowInsetsCompat.Type.navigationBars())
-            }
-
-            else -> {}
-        }
+        helper.navigationBarsVisibility = configuration.isPortraitMode
     }
 }
 
-internal typealias Method<E> = KMutableProperty0<E>
+typealias Method<E> = KMutableProperty0<E>

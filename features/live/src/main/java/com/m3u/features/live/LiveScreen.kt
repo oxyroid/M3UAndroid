@@ -18,8 +18,6 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.util.lerp
-import androidx.core.util.Consumer
-import androidx.core.view.WindowInsetsCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -36,6 +34,7 @@ import com.m3u.ui.ktx.EventHandler
 import com.m3u.ui.ktx.LifecycleEffect
 import com.m3u.ui.model.LocalHelper
 import com.m3u.ui.model.LocalTheme
+import com.m3u.ui.model.OnPipModeChanged
 import com.m3u.ui.model.repeatOnLifecycle
 import kotlin.math.absoluteValue
 
@@ -55,11 +54,8 @@ internal fun LiveRoute(
     val searching by viewModel.searching.collectAsStateWithLifecycle()
 
     val maskState = rememberMaskState { visible ->
-        helper.detectWindowInsetController {
-            hide(WindowInsetsCompat.Type.navigationBars())
-            if (visible) show(WindowInsetsCompat.Type.statusBars())
-            else hide(WindowInsetsCompat.Type.statusBars())
-        }
+        helper.statusBarsVisibility = visible
+        helper.navigationBarsVisibility = false
     }
     var isPipMode by remember { mutableStateOf(false) }
 
@@ -70,7 +66,6 @@ internal fun LiveRoute(
                     viewModel.onEvent(LiveEvent.UninstallMedia)
                 }
             }
-
             else -> {}
         }
     }
@@ -82,8 +77,9 @@ internal fun LiveRoute(
                 helper.enterPipMode(state.playerState.videoSize)
             }
         }
-        statusBarsVisibility = false
-        onPipModeChanged = Consumer { info ->
+        navigationBarsVisibility = false
+        darkMode = true
+        onPipModeChanged = OnPipModeChanged { info ->
             isPipMode = info.isInPictureInPictureMode
             if (!isPipMode) {
                 maskState.active()

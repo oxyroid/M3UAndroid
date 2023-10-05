@@ -19,7 +19,7 @@ import kotlinx.coroutines.flow.update
 import javax.inject.Inject
 
 @HiltViewModel
-class RootViewModel @Inject constructor(
+class AppViewModel @Inject constructor(
     application: Application,
     configuration: Configuration,
     private val publisher: AppPublisher,

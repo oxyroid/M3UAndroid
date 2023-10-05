@@ -1,6 +1,9 @@
 package com.m3u.androidApp.ui
 
-import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -53,13 +56,13 @@ internal fun AppScaffold(
 
     M3ULocalProvider(theme, helper) {
         val scope = rememberCoroutineScope()
-        val useDarkIcons = when {
-            cinemaMode -> false
-            isPlaying -> false
-            else -> !isSystemInDarkTheme()
+        val darkMode = when {
+            cinemaMode -> true
+            isPlaying -> true
+            else -> isSystemInDarkTheme()
         }
         DisposableEffect(
-            useDarkIcons,
+            darkMode,
             scope,
             isPlaying,
             cinemaMode
@@ -68,7 +71,7 @@ internal fun AppScaffold(
                 if (!cinemaMode && isPlaying) {
                     delay(800.milliseconds)
                 }
-                helper.darkMode = useDarkIcons
+                helper.darkMode = darkMode
             }
             onDispose {}
         }
@@ -108,14 +111,23 @@ internal fun AppScaffold(
                             .align(Alignment.BottomCenter)
                     )
                 }
-                AnimatedVisibility(isSystemBarVisible) {
-                    AppBottomSheet(
-                        fob = fob,
-                        destinations = topLevelDestinations,
-                        destination = currentTopLevelDestination,
-                        navigateToTopLevelDestination = navigateToTopLevelDestination,
-                        modifier = Modifier.fillMaxWidth()
-                    )
+                AnimatedContent(
+                    targetState = isSystemBarVisible,
+                    transitionSpec = {
+                        slideInVertically { it } togetherWith slideOutVertically { it }
+                    },
+                    label = "AppBottomSheet",
+                    modifier = Modifier.fillMaxWidth(),
+                ) { visible ->
+                    if (visible) {
+                        AppBottomSheet(
+                            fob = fob,
+                            destinations = topLevelDestinations,
+                            destination = currentTopLevelDestination,
+                            navigateToTopLevelDestination = navigateToTopLevelDestination,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
                 }
             }
         }

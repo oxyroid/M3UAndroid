@@ -17,14 +17,11 @@ import com.m3u.core.util.basic.title
 import com.m3u.ui.TopLevelDestination
 import com.m3u.ui.model.ABlackTheme
 import com.m3u.ui.model.DayTheme
-import com.m3u.ui.model.EmptyHelper
 import com.m3u.ui.model.NightTheme
 import com.m3u.ui.model.Theme
 import kotlinx.coroutines.flow.StateFlow
 
 object AppDefaults {
-    val EmptyHelperConnector: HelperConnector = { _, _, _ -> EmptyHelper }
-
     @Composable
     fun isSystemBarVisible(currentDestination: NavDestination?): Boolean =
         currentDestination notDestinationTo Destination.Live::class.java &&
