@@ -158,5 +158,4 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-
 typealias Method<E> = KMutableProperty0<E>
