@@ -24,7 +24,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import com.m3u.core.annotation.ClipMode
-import com.m3u.core.unspecified.ub
+import com.m3u.core.unspecified.u
 import com.m3u.core.util.basic.isNotEmpty
 import com.m3u.core.util.context.toast
 import com.m3u.features.live.components.DlnaDevicesBottomSheet
@@ -55,8 +55,8 @@ internal fun LiveRoute(
     val searching by viewModel.searching.collectAsStateWithLifecycle()
 
     val maskState = rememberMaskState { visible ->
-        helper.statusBarsVisibility = visible.ub
-        helper.navigationBarsVisibility = false.ub
+        helper.statusBarsVisibility = visible.u
+        helper.navigationBarsVisibility = false.u
     }
     var isPipMode by remember { mutableStateOf(false) }
 
@@ -80,8 +80,8 @@ internal fun LiveRoute(
             }
         }
         darkMode = true
-        statusBarsVisibility = false.ub
-        navigationBarsVisibility = false.ub
+        statusBarsVisibility = false.u
+        navigationBarsVisibility = false.u
         onPipModeChanged = OnPipModeChanged { info ->
             isPipMode = info.isInPictureInPictureMode
             if (!isPipMode) {

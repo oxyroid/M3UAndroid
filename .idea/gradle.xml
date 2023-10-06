@@ -24,6 +24,7 @@
             <option value="$PROJECT_DIR$/features/main" />
             <option value="$PROJECT_DIR$/features/scheme" />
             <option value="$PROJECT_DIR$/features/setting" />
+            <option value="$PROJECT_DIR$/lint" />
             <option value="$PROJECT_DIR$/ui" />
           </set>
         </option>

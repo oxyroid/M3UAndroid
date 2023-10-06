@@ -118,8 +118,7 @@ class MainActivity : ComponentActivity() {
         applyConfiguration()
     }
 
-    // FIXME:
-    //  1. window inset controller cannot take effect in orientation changing quickly.
+    @Helper.WindowInsetsAllowed
     private fun applyConfiguration() {
         val navigationBarsVisibility = helper.navigationBarsVisibility
         val statusBarsVisibility = helper.statusBarsVisibility
@@ -138,6 +137,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    @Helper.WindowInsetsAllowed
     private fun WindowInsetsControllerCompat.default(@InsetsType types: Int) {
         when (types) {
             WindowInsetsCompat.Type.navigationBars() -> {

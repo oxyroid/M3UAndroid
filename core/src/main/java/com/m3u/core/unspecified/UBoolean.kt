@@ -4,7 +4,7 @@ enum class UBoolean {
     True, False, Unspecified
 }
 
-val Boolean.ub: UBoolean get() = if (this) UBoolean.True else UBoolean.False
+val Boolean.u: UBoolean get() = if (this) UBoolean.True else UBoolean.False
 
 val UBoolean.actual: Boolean?
     get() = when (this) {

@@ -32,6 +32,8 @@ android {
 }
 
 dependencies {
+    lintPublish(project(":lint"))
+
     implementation(libs.androidx.core.core.ktx)
     implementation(libs.androidx.appcompat.appcompat)
     implementation(libs.androidx.compose.ui.ui)

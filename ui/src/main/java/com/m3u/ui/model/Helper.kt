@@ -20,6 +20,9 @@ typealias OnPipModeChanged = Consumer<PictureInPictureModeChangedInfo>
 
 @Stable
 interface Helper {
+    @Retention(AnnotationRetention.SOURCE)
+    annotation class WindowInsetsAllowed
+
     var title: String
     var actions: List<Action>
     var fob: Fob?

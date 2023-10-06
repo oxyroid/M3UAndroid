@@ -32,3 +32,4 @@ include(
     ":features:about"
 )
 include(":benchmark")
+include(":lint")
