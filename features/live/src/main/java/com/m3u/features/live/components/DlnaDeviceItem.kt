@@ -43,7 +43,7 @@ internal fun DlnaDeviceItem(
                 )
             }
         },
-        modifier = Modifier.clickable {
+        modifier = modifier.clickable {
             actualOnClick()
         }
     )

@@ -5,7 +5,6 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
 
 typealias ForegroundContent = @Composable () -> Unit
 typealias ForegroundDismiss = () -> Unit
@@ -17,7 +16,6 @@ data class Foreground(
 
 @Composable
 fun Foreground(
-    modifier: Modifier = Modifier,
     visible: Boolean = true,
     dismiss: ForegroundDismiss = {},
     content: ForegroundContent,

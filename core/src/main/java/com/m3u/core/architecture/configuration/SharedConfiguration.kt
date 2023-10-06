@@ -70,10 +70,12 @@ class SharedConfiguration @Inject constructor(
     @ClipMode
     override val clipMode: MutableState<Int> =
         sharedPreferences.intAsState(DEFAULT_CLIP_MODE, CLIP_MODE)
+    @ExperimentalConfiguration
     override val scrollMode: MutableState<Boolean> =
         sharedPreferences.booleanAsState(DEFAULT_SCROLL_MODE, SCROLL_MODE)
     override val autoRefresh: MutableState<Boolean> =
         sharedPreferences.booleanAsState(DEFAULT_AUTO_REFRESH, AUTO_REFRESH)
+    @ExperimentalConfiguration
     override val isSSLVerification: MutableState<Boolean> =
         sharedPreferences.booleanAsState(DEFAULT_SSL_VERIFICATION, SSL_VERIFICATION)
     override val fullInfoPlayer: MutableState<Boolean> =
@@ -82,6 +84,7 @@ class SharedConfiguration @Inject constructor(
         sharedPreferences.intAsState(DEFAULT_INITIAL_TAB_INDEX, INITIAL_TAB_INDEX)
     override val noPictureMode: MutableState<Boolean> =
         sharedPreferences.booleanAsState(DEFAULT_NO_PICTURE_MODE, NO_PICTURE_MODE)
+    @ExperimentalConfiguration
     override val cinemaMode: MutableState<Boolean> =
         sharedPreferences.booleanAsState(DEFAULT_CINEMA_MODE, CINEMA_MODE)
 

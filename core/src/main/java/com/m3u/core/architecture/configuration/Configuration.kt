@@ -50,7 +50,7 @@ interface Configuration {
         const val DEFAULT_SSL_VERIFICATION = true
         const val DEFAULT_FULL_INFO_PLAYER = false
         const val DEFAULT_INITIAL_TAB_INDEX = 0
-        const val DEFAULT_NO_PICTURE_MODE = false
+        const val DEFAULT_NO_PICTURE_MODE = true
         const val DEFAULT_CINEMA_MODE = false
 
         const val FEED_STRATEGY = "feedStrategy"

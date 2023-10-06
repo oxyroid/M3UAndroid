@@ -18,6 +18,7 @@ import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
 import androidx.media3.session.MediaSession
 import com.m3u.core.architecture.configuration.Configuration
+import com.m3u.core.architecture.configuration.ExperimentalConfiguration
 import com.m3u.data.contract.Certs
 import com.m3u.data.contract.SSL
 import com.m3u.data.service.PlayerManager
@@ -36,6 +37,7 @@ class PlayerManagerImpl @Inject constructor(
     private val playerFlow = MutableStateFlow<Player?>(null)
     private val player: Player? get() = playerFlow.value
 
+    @ExperimentalConfiguration
     private val isSSLVerification by configuration.isSSLVerification
 
     private val okHttpClient by lazy {

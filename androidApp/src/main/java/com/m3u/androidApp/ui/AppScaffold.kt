@@ -88,7 +88,8 @@ internal fun AppScaffold(
                     )
                 }
             },
-            onBackPressed = onBackPressed
+            onBackPressed = onBackPressed,
+            modifier = modifier
         ) { padding ->
             Column(
                 modifier = Modifier
