@@ -11,6 +11,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.core.app.PictureInPictureModeChangedInfo
 import androidx.core.util.Consumer
 import androidx.lifecycle.Lifecycle
+import com.m3u.core.unspecified.UBoolean
 import com.m3u.ui.TopLevelDestination
 import com.m3u.ui.ktx.LifecycleEffect
 
@@ -22,8 +23,8 @@ interface Helper {
     var title: String
     var actions: List<Action>
     var fob: Fob?
-    var statusBarsVisibility: Boolean
-    var navigationBarsVisibility: Boolean
+    var statusBarsVisibility: UBoolean
+    var navigationBarsVisibility: UBoolean
     var onUserLeaveHint: OnUserLeaveHint?
     var onPipModeChanged: OnPipModeChanged?
     var darkMode: Boolean
@@ -35,8 +36,8 @@ private data class HelperBundle(
     val title: String,
     val actions: List<Action>,
     val fob: Fob?,
-    val statusBarsVisibility: Boolean,
-    val navigationBarsVisibility: Boolean,
+    val statusBarsVisibility: UBoolean,
+    val navigationBarsVisibility: UBoolean,
     val onUserLeaveHint: (() -> Unit)?,
     val onPipModeChanged: Consumer<PictureInPictureModeChangedInfo>?,
     val darkMode: Boolean
@@ -113,12 +114,12 @@ val EmptyHelper = object : Helper {
             error("Cannot set fob")
         }
 
-    override var statusBarsVisibility: Boolean
+    override var statusBarsVisibility: UBoolean
         get() = error("Cannot get systemUiVisibility")
         set(_) {
             error("Cannot set systemUiVisibility")
         }
-    override var navigationBarsVisibility: Boolean
+    override var navigationBarsVisibility: UBoolean
         get() = error("Cannot get navigationBarsVisibility")
         set(_) {
             error("Cannot set navigationBarsVisibility")

@@ -12,10 +12,12 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsCompat.Type.InsetsType
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.core.view.WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
 import com.m3u.androidApp.ui.App
 import com.m3u.androidApp.ui.AppViewModel
+import com.m3u.core.unspecified.UBoolean
 import com.m3u.core.util.basic.rational
 import com.m3u.core.util.context.isDarkMode
 import com.m3u.core.util.context.isPortraitMode
@@ -59,7 +61,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
-        applyConfiguration(resources.configuration)
+        applyConfiguration()
     }
 
     private fun createHelper(
@@ -77,36 +79,24 @@ class MainActivity : ComponentActivity() {
         override var title: String by title
         override var actions: List<Action> by actions
         override var fob: Fob? by fob
-        override var statusBarsVisibility: Boolean = true
+        override var statusBarsVisibility: UBoolean = UBoolean.Unspecified
             set(value) {
-                controller.apply {
-                    if (value) {
-                        show(WindowInsetsCompat.Type.statusBars())
-                    } else {
-                        hide(WindowInsetsCompat.Type.statusBars())
-                    }
-                }
                 field = value
+                applyConfiguration()
             }
-        override var navigationBarsVisibility: Boolean = resources.configuration.isPortraitMode
+        override var navigationBarsVisibility: UBoolean = UBoolean.Unspecified
             set(value) {
-                controller.apply {
-                    if (value) {
-                        show(WindowInsetsCompat.Type.navigationBars())
-                    } else {
-                        hide(WindowInsetsCompat.Type.navigationBars())
-                    }
-                }
                 field = value
+                applyConfiguration()
             }
 
         override var darkMode: Boolean = resources.configuration.isDarkMode
             set(value) {
+                field = value
                 enableEdgeToEdge(
                     SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT) { value },
                     SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT) { true }
                 )
-                field = value
             }
 
         override var onUserLeaveHint: OnUserLeaveHint? by ::actualOnUserLeaveHint
@@ -125,15 +115,48 @@ class MainActivity : ComponentActivity() {
 
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
-        applyConfiguration(newConfig)
+        applyConfiguration()
     }
 
     // FIXME:
-    //  1. orientation changing mistake in player screen when mask is sleeping.
-    //  2. window inset controller cannot take effect in orientation changing quickly.
-    private fun applyConfiguration(configuration: Configuration) {
-        helper.navigationBarsVisibility = configuration.isPortraitMode
+    //  1. window inset controller cannot take effect in orientation changing quickly.
+    private fun applyConfiguration() {
+        val navigationBarsVisibility = helper.navigationBarsVisibility
+        val statusBarsVisibility = helper.statusBarsVisibility
+
+        controller.apply {
+            when (navigationBarsVisibility) {
+                UBoolean.True -> show(WindowInsetsCompat.Type.navigationBars())
+                UBoolean.False -> hide(WindowInsetsCompat.Type.navigationBars())
+                UBoolean.Unspecified -> default(WindowInsetsCompat.Type.navigationBars())
+            }
+            when (statusBarsVisibility) {
+                UBoolean.True -> show(WindowInsetsCompat.Type.statusBars())
+                UBoolean.False -> hide(WindowInsetsCompat.Type.statusBars())
+                UBoolean.Unspecified -> default(WindowInsetsCompat.Type.statusBars())
+            }
+        }
+    }
+
+    private fun WindowInsetsControllerCompat.default(@InsetsType types: Int) {
+        when (types) {
+            WindowInsetsCompat.Type.navigationBars() -> {
+                val configuration = resources.configuration
+                if (configuration.isPortraitMode) {
+                    show(WindowInsetsCompat.Type.navigationBars())
+                } else {
+                    hide(WindowInsetsCompat.Type.navigationBars())
+                }
+            }
+
+            WindowInsetsCompat.Type.statusBars() -> {
+                show(WindowInsetsCompat.Type.statusBars())
+            }
+
+            else -> {}
+        }
     }
 }
+
 
 typealias Method<E> = KMutableProperty0<E>

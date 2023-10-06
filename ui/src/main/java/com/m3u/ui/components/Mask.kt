@@ -70,8 +70,10 @@ private class MaskStateCoroutineImpl(
     override val visible: Boolean
         get() = locked || (currentTime - lastTime <= minDuration).also {
             if (it != last) {
+                if (last != null) {
+                    onChanged(it)
+                }
                 last = it
-                onChanged(it)
             }
         }
 
@@ -110,20 +112,17 @@ private class MaskStateCoroutineImpl(
 
 @Composable
 fun rememberMaskState(
-    activeDefault: Boolean = true,
     @IntRange(from = 1) minDuration: Long = MaskDefaults.minDuration,
     coroutineScope: CoroutineScope = rememberCoroutineScope(),
     onChanged: (Boolean) -> Unit
 ): MaskState {
     val currentOnChanged by rememberUpdatedState(onChanged)
-    return remember(activeDefault, minDuration, coroutineScope) {
+    return remember(minDuration, coroutineScope) {
         MaskStateCoroutineImpl(
             minDuration = minDuration,
             coroutineScope = coroutineScope,
             onChanged = currentOnChanged
-        ).apply {
-            if (activeDefault) active()
-        }
+        )
     }
 }
 
