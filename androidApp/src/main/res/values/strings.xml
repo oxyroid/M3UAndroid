@@ -1,7 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="title_feed_placeholder">--</string>
     <string name="label_crash">app crashes</string>
-
     <string name="features_scheme_import">Import as live</string>
 </resources>
