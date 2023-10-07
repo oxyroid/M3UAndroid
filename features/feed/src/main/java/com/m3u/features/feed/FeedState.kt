@@ -3,6 +3,7 @@ package com.m3u.features.feed
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import com.m3u.core.architecture.configuration.Configuration
+import com.m3u.core.architecture.configuration.ExperimentalConfiguration
 import com.m3u.core.wrapper.Event
 import com.m3u.core.wrapper.handledEvent
 import com.m3u.data.database.entity.Live
@@ -12,6 +13,7 @@ data class Channel(
     val lives: List<Live>
 )
 
+@OptIn(ExperimentalConfiguration::class)
 data class FeedState(
     val url: String = "",
     val channels: List<Channel> = emptyList(),

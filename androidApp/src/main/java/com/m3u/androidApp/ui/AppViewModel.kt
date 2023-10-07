@@ -5,6 +5,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import com.m3u.androidApp.AppPublisher
 import com.m3u.core.architecture.configuration.Configuration
+import com.m3u.core.architecture.configuration.ExperimentalConfiguration
 import com.m3u.core.architecture.viewmodel.BaseViewModel
 import com.m3u.core.wrapper.Event
 import com.m3u.core.wrapper.eventOf
@@ -61,6 +62,7 @@ class AppViewModel @Inject constructor(
     }
 }
 
+@OptIn(ExperimentalConfiguration::class)
 data class RootState(
     val navigateTopLevelDestination: Event<TopLevelDestination> = handledEvent(),
     private val configuration: Configuration

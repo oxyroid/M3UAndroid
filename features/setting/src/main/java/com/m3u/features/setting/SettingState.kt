@@ -9,6 +9,7 @@ import com.m3u.core.architecture.configuration.Configuration
 import com.m3u.core.architecture.configuration.ExperimentalConfiguration
 import com.m3u.data.database.entity.Live
 
+@OptIn(ExperimentalConfiguration::class)
 data class SettingState(
     private val configuration: Configuration,
     val version: String = "",
@@ -29,16 +30,13 @@ data class SettingState(
     @ClipMode
     var clipMode: Int by configuration.clipMode
 
-    @ExperimentalConfiguration
     var scrollMode: Boolean by configuration.scrollMode
     var autoRefresh: Boolean by configuration.autoRefresh
 
-    @ExperimentalConfiguration
     var isSSLVerification: Boolean by configuration.isSSLVerification
     var fullInfoPlayer: Boolean by configuration.fullInfoPlayer
     var defaultDestination: Int by configuration.initialTabIndex
     var noPictureMode: Boolean by configuration.noPictureMode
 
-    @ExperimentalConfiguration
     var cinemaMode: Boolean by configuration.cinemaMode
 }
