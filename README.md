@@ -10,7 +10,6 @@
 - [ ] Custom Script.
 - [x] i18n.
 - [ ] Desktop Platform.
-- [x] lint.
 
 ### Android Development
 
@@ -21,6 +20,7 @@ M3U is an app that attempts to use the latest libraries and tools. As a summary:
 - Uses Kotlin Coroutines throughout.
 - Uses many of the Architecture Components, including: Room, Lifecycle, Navigation.
 - Uses Hilt for dependency injection.
+- Uses Lint Checks for code scanning.
 
 ### Community
 
