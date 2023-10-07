@@ -10,6 +10,7 @@
 - [ ] Custom Script.
 - [x] i18n.
 - [ ] Desktop Platform.
+- [x] lint.
 
 ### Android Development
 
