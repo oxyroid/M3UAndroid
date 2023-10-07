@@ -1,4 +1,4 @@
-package com.m3u.lint.helper
+package com.m3u.lint.detectors
 
 import com.android.tools.lint.detector.api.Category
 import com.android.tools.lint.detector.api.Detector
@@ -13,7 +13,7 @@ import com.intellij.psi.PsiMethod
 import org.jetbrains.uast.UCallExpression
 import org.jetbrains.uast.getContainingUMethod
 
-class UseHelperInsteadOfWindowInsetsDetector : Detector(), SourceCodeScanner {
+class HelperDetector : Detector(), SourceCodeScanner {
     override fun getApplicableMethodNames(): List<String> = listOf("show", "hide")
 
     override fun visitMethodCall(context: JavaContext, node: UCallExpression, method: PsiMethod) {
@@ -98,7 +98,7 @@ class UseHelperInsteadOfWindowInsetsDetector : Detector(), SourceCodeScanner {
             category = Category.CORRECTNESS,
             severity = Severity.FATAL,
             implementation = Implementation(
-                UseHelperInsteadOfWindowInsetsDetector::class.java,
+                HelperDetector::class.java,
                 Scope.JAVA_FILE_SCOPE
             )
         )
