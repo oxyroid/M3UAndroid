@@ -24,7 +24,6 @@ import com.m3u.data.database.entity.Feed
 import com.m3u.data.database.entity.Live
 import com.m3u.data.parser.ConfusingFormatError
 import com.m3u.data.parser.PlaylistParser
-import com.m3u.data.parser.execute
 import com.m3u.data.parser.impl.toLive
 import com.m3u.data.repository.FeedRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -32,8 +31,13 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.withContext
+import okhttp3.OkHttpClient
+import okhttp3.Request
 import java.io.File
 import java.io.FileNotFoundException
+import java.io.InputStream
+import java.time.Duration
+import java.time.temporal.ChronoUnit
 import javax.inject.Inject
 
 class FeedRepositoryImpl @Inject constructor(
@@ -154,16 +158,28 @@ class FeedRepositoryImpl @Inject constructor(
         }
     }
 
+    private val client by lazy {
+        OkHttpClient.Builder()
+            .connectTimeout(Duration.of(connectTimeout.toLong(), ChronoUnit.MILLIS))
+            .build()
+    }
+
     @Throws(ConfusingFormatError::class)
-    private suspend fun networkParse(url: String): List<Live> = parse(url)
+    private suspend fun networkParse(url: String): List<Live> {
+        val request = Request.Builder()
+            .url(url)
+            .build()
+        val response = client.newCall(request).execute()
+        if (!response.isSuccessful) return emptyList()
+        val input = response.body?.byteStream()
+        return input?.use { parse(url, it) } ?: emptyList()
+    }
 
     @Throws(ConfusingFormatError::class)
     private suspend fun diskParse(url: String): List<Live> {
         val uri = Uri.parse(url)
-        val content = context.contentResolver.openInputStream(uri)?.use {
-            it.bufferedReader().readText()
-        }.orEmpty()
-        return parser.execute(content).map { it.toLive(url) }
+        val input = context.contentResolver.openInputStream(uri)
+        return input?.let { parse(url, it) } ?: emptyList()
     }
 
     override fun observeAll(): Flow<List<Feed>> = logger.execute {
@@ -186,10 +202,11 @@ class FeedRepositoryImpl @Inject constructor(
         }
     }
 
-    private suspend fun parse(url: String): List<Live> = parser.execute(
-        url = url,
-        connectTimeout = connectTimeout
-    )
+    private suspend fun parse(
+        url: String,
+        inputStream: InputStream
+    ): List<Live> = parser
+        .execute(inputStream)
         .map { it.toLive(url) }
 
     override suspend fun rename(url: String, target: String) = logger.sandBox {

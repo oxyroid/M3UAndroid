@@ -5,12 +5,10 @@ import com.m3u.core.architecture.Logger
 import com.m3u.core.util.basic.splitOutOfQuotation
 import com.m3u.core.util.basic.trimBrackets
 import com.m3u.core.util.loadLine
-import com.m3u.data.parser.ConfusingFormatError
 import com.m3u.data.parser.PlaylistParser
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.InputStream
-import java.net.URI
 import java.util.Properties
 import javax.inject.Inject
 
@@ -58,7 +56,7 @@ class PlaylistParserImpl @Inject constructor(
     }
 
     private fun M3UData.setUrl(url: String): M3UData = run {
-        if (URI.create(url).scheme == null) throwConfusingFormatError()
+        // if (URI.create(url).scheme == null) throwConfusingFormatError()
         copy(url = url)
     }
 
@@ -119,10 +117,6 @@ class PlaylistParserImpl @Inject constructor(
                 } else properties.loadLine(part)
             }
         return properties
-    }
-
-    private fun throwConfusingFormatError(): Nothing {
-        throw ConfusingFormatError
     }
 
     companion object {

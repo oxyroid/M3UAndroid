@@ -53,7 +53,11 @@ internal fun LiveItem(
     val theme = LocalTheme.current
 
     val scheme = remember(live) {
-        URI(live.url).scheme ?: context.getString(R.string.scheme_unknown).uppercase()
+        try {
+            URI(live.url).scheme
+        } catch (ignored: Exception) {
+            null
+        } ?: context.getString(R.string.scheme_unknown).uppercase()
     }
     Surface(
         shape = RoundedCornerShape(spacing.medium),
@@ -80,7 +84,7 @@ internal fun LiveItem(
                 )
                 .then(modifier)
         ) {
-            AnimatedVisibility (
+            AnimatedVisibility(
                 visible = !noPictureMode && !live.cover.isNullOrEmpty()
             ) {
                 Image(

@@ -10,10 +10,17 @@ import javax.inject.Inject
  * @see UiService
  */
 class UiLogger @Inject constructor(
-    private val uiService: UiService
+    private val uiService: UiService,
+    private val logger: Logger
 ) : Logger {
     override fun log(text: String) {
         uiService.snack(text)
+        logger.log(
+            """
+            UiLogger: $text
+            ${Thread.currentThread()}
+            """.trimIndent()
+        )
     }
 
     override fun log(throwable: Throwable) {
