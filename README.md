@@ -1,5 +1,5 @@
 # M3UAndroid
-![](docs/img/feat_live_2.png)
+![](docs/img/feat_live_3.png)
 ### Features
 
 - [x] M3U and M3U8 files.
