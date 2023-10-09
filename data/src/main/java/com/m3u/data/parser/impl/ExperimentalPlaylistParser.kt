@@ -10,7 +10,6 @@ import java.io.InputStream
 import javax.inject.Inject
 
 class ExperimentalPlaylistParser @Inject constructor() : PlaylistParser {
-
     override suspend fun execute(input: InputStream): List<M3UData> {
         val list = input.use {
             M3uParser.parse(it.reader())

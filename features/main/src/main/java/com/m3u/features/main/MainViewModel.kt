@@ -2,33 +2,27 @@ package com.m3u.features.main
 
 import android.app.Application
 import androidx.lifecycle.viewModelScope
-import com.m3u.core.architecture.configuration.Configuration
 import com.m3u.core.architecture.Logger
+import com.m3u.core.architecture.configuration.Configuration
 import com.m3u.core.architecture.viewmodel.BaseViewModel
-import com.m3u.core.util.coroutine.mapElement
-import com.m3u.core.util.replaceIf
-import com.m3u.data.database.entity.Feed
 import com.m3u.data.repository.FeedRepository
 import com.m3u.data.repository.LiveRepository
-import com.m3u.data.repository.observeByFeedUrl
 import com.m3u.features.main.model.FeedDetail
 import com.m3u.features.main.model.toDetail
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
     private val feedRepository: FeedRepository,
-    private val liveRepository: LiveRepository,
+    liveRepository: LiveRepository,
     application: Application,
     configuration: Configuration,
     @Logger.Ui private val logger: Logger
@@ -36,51 +30,34 @@ class MainViewModel @Inject constructor(
     application = application,
     emptyState = MainState(
         configuration = configuration
-    ),
+    )
 ) {
-    init {
-        var job: Job? = null
-        observeAllFeeds()
-            .mapElement(Feed::toDetail)
-            .onEach(::setAllDetails)
-            .onEach { details ->
-                job?.cancel()
-                job = viewModelScope.launch {
-                    details.forEach { detail ->
-                        val url = detail.feed.url
-                        observeSize(url)
-                            .onEach { count ->
-                                setCountFromExistedDetails(url, count)
-                            }
-                            .launchIn(this)
-                    }
-                }
+    private val counts: StateFlow<Map<String, Int>> = liveRepository
+        .observeAll()
+        .map { lives ->
+            lives
+                .groupBy { it.feedUrl }
+                .mapValues { it.value.size }
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = emptyMap()
+        )
+
+    val feeds: StateFlow<List<FeedDetail>> = feedRepository
+        .observeAll()
+        .distinctUntilChanged()
+        .combine(counts) { fs, cs ->
+            fs.map { f ->
+                f.toDetail(cs[f.url] ?: 0)
             }
-            .launchIn(viewModelScope)
-    }
-
-    private fun observeAllFeeds(): Flow<List<Feed>> = feedRepository.observeAll()
-
-    private fun observeSize(url: String): Flow<Int> = liveRepository
-        .observeByFeedUrl(url)
-        .map { it.size }
-
-    private fun setAllDetails(feeds: List<FeedDetail>) {
-        writable.update {
-            it.copy(
-                feeds = feeds
-            )
         }
-    }
-
-    private suspend fun setCountFromExistedDetails(url: String, count: Int) {
-        withContext(Dispatchers.IO) {
-            val predicate: (FeedDetail) -> Boolean = { it.feed.url == url }
-            val transform: (FeedDetail) -> FeedDetail = { it.copy(count = count) }
-            val feeds = readable.feeds.replaceIf(predicate, transform)
-            setAllDetails(feeds)
-        }
-    }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000L),
+            initialValue = emptyList()
+        )
 
     override fun onEvent(event: MainEvent) {
         when (event) {

@@ -100,7 +100,7 @@ private typealias OnRefresh = () -> Unit
 
 @Composable
 internal fun FeedRoute(
-    url: String,
+    feedUrl: String,
     navigateToLive: NavigateToLive,
     navigateToPlaylist: NavigateToPlaylist,
     modifier: Modifier = Modifier,
@@ -110,8 +110,8 @@ internal fun FeedRoute(
     val state by viewModel.state.collectAsStateWithLifecycle()
     var dialogStatus: DialogStatus by remember { mutableStateOf(DialogStatus.Idle) }
 
-    LaunchedEffect(url) {
-        viewModel.onEvent(FeedEvent.Observe(url))
+    LaunchedEffect(feedUrl) {
+        viewModel.onEvent(FeedEvent.Observe(feedUrl))
     }
     helper.repeatOnLifecycle {
         actions = listOf(
@@ -224,7 +224,7 @@ private fun FeedScreen(
                     icon = Icons.Rounded.ArrowCircleUp,
                     relation = TopLevelDestination.Main,
                     onClick = onScrollUp
-                ).takeIf { !newValue }
+                ).takeUnless { newValue }
             }
         }
         var hasElevation by remember { mutableStateOf(false) }

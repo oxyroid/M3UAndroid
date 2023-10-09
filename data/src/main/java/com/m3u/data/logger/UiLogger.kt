@@ -15,15 +15,17 @@ class UiLogger @Inject constructor(
 ) : Logger {
     override fun log(text: String) {
         uiService.snack(text)
-        logger.log(
-            """
-            UiLogger: $text
-            ${Thread.currentThread()}
-            """.trimIndent()
-        )
     }
 
     override fun log(throwable: Throwable) {
+        val info = throwable.stackTraceToString()
         throwable.message?.let(::log)
+        logger.log(
+            """
+            ${throwable.message}
+            $info
+            =====
+            """.trimIndent()
+        )
     }
 }

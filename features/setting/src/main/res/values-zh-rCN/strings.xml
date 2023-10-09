@@ -29,6 +29,8 @@
     <string name="label_muted_lives">屏蔽的频道</string>
     <string name="label_add_feed">新增订阅</string>
     <string name="label_parse_from_clipboard">解析剪贴板</string>
+    <string name="label_select_from_local_storage">选择文件</string>
+    <string name="label_selected_from_local_storage">已选择</string>
     <string name="label_parse_from_disk">解析本地文件</string>
     <string name="clip_mode">视频裁剪模式</string>
     <string name="clip_mode_adaptive">自适应</string>
@@ -51,4 +53,6 @@
     <string name="enqueue_subscribe">订阅任务已添加至队列</string>
     <string name="dropbox">dropbox</string>
     <string name="project_about">关于项目</string>
+    <string name="local_storage">本地导入</string>
+    <string name="error_unselected_file">还未选择文件</string>
 </resources>

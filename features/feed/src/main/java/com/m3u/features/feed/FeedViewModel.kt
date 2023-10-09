@@ -2,8 +2,8 @@ package com.m3u.features.feed
 
 import android.app.Application
 import androidx.lifecycle.viewModelScope
-import com.m3u.core.architecture.configuration.Configuration
 import com.m3u.core.architecture.Logger
+import com.m3u.core.architecture.configuration.Configuration
 import com.m3u.core.architecture.viewmodel.BaseViewModel
 import com.m3u.core.wrapper.ProgressResource
 import com.m3u.core.wrapper.Resource
@@ -40,7 +40,7 @@ class FeedViewModel @Inject constructor(
 ) {
     override fun onEvent(event: FeedEvent) {
         when (event) {
-            is FeedEvent.Observe -> observe(event.url)
+            is FeedEvent.Observe -> observe(event.feedUrl)
             FeedEvent.Refresh -> refresh()
             is FeedEvent.Favourite -> favourite(event)
             FeedEvent.ScrollUp -> scrollUp()
@@ -53,6 +53,11 @@ class FeedViewModel @Inject constructor(
     private var observeJob: Job? = null
     private fun observe(feedUrl: String) {
         observeJob?.cancel()
+        if (feedUrl.isEmpty()) {
+            val message = context.getString(R.string.error_observe_feed, "")
+            onMessage(message)
+            return
+        }
         observeJob = viewModelScope.launch {
             observeFeedDetail(feedUrl)
             observeFeedLives(feedUrl)
@@ -72,7 +77,6 @@ class FeedViewModel @Inject constructor(
                     val message = context.getString(R.string.error_observe_feed, feedUrl)
                     onMessage(message)
                 }
-
             }
             .launchIn(this)
     }

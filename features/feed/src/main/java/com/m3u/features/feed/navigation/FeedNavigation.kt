@@ -17,11 +17,11 @@ import com.m3u.features.feed.NavigateToPlaylist
 
 private const val FEED_ROUTE_PATH = "feed_route"
 private const val TYPE_URL = "url"
-const val feedRoute = "$FEED_ROUTE_PATH/{$TYPE_URL}"
-private fun createFeedRoute(url: String) = "$FEED_ROUTE_PATH/$url"
+const val feedRoute = "$FEED_ROUTE_PATH?$TYPE_URL={$TYPE_URL}"
+private fun createFeedRoute(url: String) = "$FEED_ROUTE_PATH?${TYPE_URL}=$url"
 
-fun NavController.navigateToFeed(url: String, navOptions: NavOptions? = null) {
-    val encodedUrl = Uri.encode(url)
+fun NavController.navigateToFeed(feedUrl: String, navOptions: NavOptions? = null) {
+    val encodedUrl = Uri.encode(feedUrl)
     val route = createFeedRoute(encodedUrl)
     this.navigate(route, navOptions)
 }
@@ -42,13 +42,13 @@ fun NavGraphBuilder.feedScreen(
         popEnterTransition = { fadeIn() },
         popExitTransition = { slideOutVertically { it } }
     ) { navBackStackEntry ->
-        val url = navBackStackEntry
+        val feedUrl = navBackStackEntry
             .arguments
             ?.getString(TYPE_URL)
             ?.let(Uri::decode)
-            ?: return@composable
+            .orEmpty()
         FeedRoute(
-            url = url,
+            feedUrl = feedUrl,
             navigateToLive = navigateToLive,
             navigateToPlaylist = navigateToPlayList
         )

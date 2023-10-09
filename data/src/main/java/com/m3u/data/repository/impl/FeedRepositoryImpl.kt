@@ -1,17 +1,17 @@
 package com.m3u.data.repository.impl
 
-import android.content.ContentResolver
 import android.content.Context
 import android.net.Uri
-import android.provider.OpenableColumns
 import androidx.compose.runtime.getValue
-import androidx.core.net.toFile
+import androidx.core.net.toUri
 import com.m3u.core.annotation.FeedStrategy
 import com.m3u.core.architecture.Logger
 import com.m3u.core.architecture.configuration.Configuration
 import com.m3u.core.architecture.execute
 import com.m3u.core.architecture.sandBox
 import com.m3u.core.util.belong
+import com.m3u.core.util.readContentFilename
+import com.m3u.core.util.readContentText
 import com.m3u.core.wrapper.ProgressResource
 import com.m3u.core.wrapper.emitException
 import com.m3u.core.wrapper.emitMessage
@@ -56,53 +56,28 @@ class FeedRepositoryImpl @Inject constructor(
         strategy: Int
     ): Flow<ProgressResource<Unit>> = flow {
         try {
+            var actualUrl: String = url
             val lives = when {
-                url.startsWith("http://") || url.startsWith("https://") -> networkParse(url)
+                url.startsWith("http://") || url.startsWith("https://") -> networkParseLives(url)
                 url.startsWith("file://") || url.startsWith("content://") -> {
                     val uri = Uri.parse(url) ?: run {
-                        emitMessage("Url is empty")
+                        emitMessage("Uri is empty")
                         return@flow
                     }
-                    val filename = when (uri.scheme) {
-                        ContentResolver.SCHEME_FILE -> uri.toFile().name
-                        ContentResolver.SCHEME_CONTENT -> {
-                            context.contentResolver.query(
-                                uri,
-                                null,
-                                null,
-                                null,
-                                null
-                            )?.use { cursor ->
-                                val index = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
-                                if (index == -1) null
-                                else cursor.getString(index)
-                            } ?: "File_${System.currentTimeMillis()}.txt"
-                        }
-
-                        else -> ""
-                    }
                     withContext(Dispatchers.IO) {
-                        val content = when (uri.scheme) {
-                            ContentResolver.SCHEME_FILE -> uri.toFile().readText()
-                            ContentResolver.SCHEME_CONTENT ->
-                                context.contentResolver.openInputStream(uri)?.use {
-                                    it.bufferedReader().readText()
-                                }.orEmpty()
-
-                            else -> ""
-                        }
+                        val filename = uri.readContentFilename(context)
+                            ?: "File_${System.currentTimeMillis()}.txt"
+                        val content = uri.readContentText(context).orEmpty()
                         val file = File(context.filesDir, filename)
-                        if (!file.exists()) {
-                            file.createNewFile()
-                        }
                         file.writeText(content)
+                        actualUrl = Uri.decode(file.toUri().toString())
+                        diskParseLives(file.toUri(), actualUrl)
                     }
-                    diskParse(url)
                 }
 
                 else -> emptyList()
             }
-            val feed = Feed(title, url)
+            val feed = Feed(title, actualUrl)
             feedDao.insert(feed)
             val cachedLives = liveDao.getByFeedUrl(url)
             val skippedUrls = mutableListOf<String>()
@@ -164,8 +139,7 @@ class FeedRepositoryImpl @Inject constructor(
             .build()
     }
 
-    @Throws(ConfusingFormatError::class)
-    private suspend fun networkParse(url: String): List<Live> {
+    private suspend fun networkParseLives(url: String): List<Live> {
         val request = Request.Builder()
             .url(url)
             .build()
@@ -175,11 +149,15 @@ class FeedRepositoryImpl @Inject constructor(
         return input?.use { parse(url, it) } ?: emptyList()
     }
 
-    @Throws(ConfusingFormatError::class)
-    private suspend fun diskParse(url: String): List<Live> {
-        val uri = Uri.parse(url)
+    private suspend fun diskParseLives(
+        uri: Uri,
+        url: String
+    ): List<Live> {
         val input = context.contentResolver.openInputStream(uri)
-        return input?.let { parse(url, it) } ?: emptyList()
+
+        return input?.use {
+            parse(url, it)
+        } ?: emptyList()
     }
 
     override fun observeAll(): Flow<List<Feed>> = logger.execute {
@@ -203,11 +181,15 @@ class FeedRepositoryImpl @Inject constructor(
     }
 
     private suspend fun parse(
-        url: String,
+        uri: String,
         inputStream: InputStream
-    ): List<Live> = parser
-        .execute(inputStream)
-        .map { it.toLive(url) }
+    ): List<Live> = try {
+        parser
+            .execute(inputStream)
+            .map { it.toLive(uri) }
+    } catch (e: Exception) {
+        emptyList()
+    }
 
     override suspend fun rename(url: String, target: String) = logger.sandBox {
         feedDao.rename(url, target)

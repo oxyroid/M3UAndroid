@@ -1,5 +1,6 @@
 package com.m3u.features.setting
 
+import android.net.Uri
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import com.m3u.core.annotation.ClipMode
@@ -15,8 +16,10 @@ data class SettingState(
     val version: String = "",
     val title: String = "",
     val url: String = "",
+    val uri: Uri = Uri.EMPTY,
     val mutedLives: List<Live> = emptyList(),
     val destinations: List<String> = emptyList(),
+    val localStorage: Boolean = false,
 ) {
     @FeedStrategy
     var feedStrategy: Int by configuration.feedStrategy
@@ -39,4 +42,12 @@ data class SettingState(
     var noPictureMode: Boolean by configuration.noPictureMode
 
     var cinemaMode: Boolean by configuration.cinemaMode
+
+
+    val actualUrl
+        get() = if (localStorage) {
+            uri.takeIf { uri != Uri.EMPTY }?.toString()
+        } else {
+            url
+        }
 }

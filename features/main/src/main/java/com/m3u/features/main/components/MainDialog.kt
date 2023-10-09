@@ -19,9 +19,9 @@ import com.m3u.features.main.R
 import com.m3u.ui.components.AppDialog
 import com.m3u.ui.components.DialogItem
 import com.m3u.ui.components.DialogTextField
+import com.m3u.ui.ktx.animateDp
 import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.LocalTheme
-import com.m3u.ui.ktx.animateDp
 
 internal typealias OnUpdateStatus = (MainDialog) -> Unit
 internal typealias OnUnsubscribe = (feedUrl: String) -> Unit
@@ -64,7 +64,7 @@ internal fun MainDialog(
             if (status is MainDialog.Selections) {
                 var renamedText by remember {
                     mutableStateOf(
-                        if (!currentStatus.feed.isTemplated()) currentStatus.feed.title
+                        if (!currentStatus.feed.specially) currentStatus.feed.title
                         else context.getString(R.string.imported_feed_title)
                     )
                 }
@@ -72,7 +72,7 @@ internal fun MainDialog(
                     text = renamedText,
                     onTextChange = { renamedText = it },
                     readOnly = !editMode,
-                    icon = Icons.Rounded.Edit.takeUnless { currentStatus.feed.isTemplated() },
+                    icon = Icons.Rounded.Edit.takeUnless { currentStatus.feed.specially },
                     iconTint = if (editMode) theme.tint else theme.onBackground,
                     onIconClick = {
                         val target = !editMode
@@ -87,7 +87,7 @@ internal fun MainDialog(
                         unsubscribe(currentStatus.feed.url)
                         update(MainDialog.Idle)
                     }
-                    if (!currentStatus.feed.isTemplated()) {
+                    if (!currentStatus.feed.specially) {
                         val clipboardManager = LocalClipboardManager.current
                         DialogItem(R.string.copy_feed_url) {
                             val annotatedString = AnnotatedString(currentStatus.feed.url)

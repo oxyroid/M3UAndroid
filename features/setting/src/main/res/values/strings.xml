@@ -25,6 +25,8 @@
     <string name="label_muted_lives">banned lives</string>
     <string name="label_add_feed">add playlist</string>
     <string name="label_parse_from_clipboard">parse clipboard</string>
+    <string name="label_select_from_local_storage">open file</string>
+    <string name="label_selected_from_local_storage">selected file</string>
     <string name="label_parse_from_disk">parse file</string>
     <string name="clip_mode">video clip mode</string>
     <string name="clip_mode_adaptive">adaptive</string>
@@ -47,4 +49,6 @@
     <string name="enqueue_subscribe">a subscription task has been added to the queue</string>
     <string name="dropbox">dropbox</string>
     <string name="project_about">about project</string>
+    <string name="local_storage">local storage</string>
+    <string name="error_unselected_file">no file selected yet</string>
 </resources>

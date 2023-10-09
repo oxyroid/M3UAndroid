@@ -65,10 +65,20 @@ class SettingViewModel @Inject constructor(
             is SettingEvent.OnBannedLive -> onBannedLive(event.id)
             SettingEvent.ScrollDefaultDestination -> scrollDefaultDestination()
             is SettingEvent.ImportJavaScript -> importJavaScript(event.uri)
+            SettingEvent.OnLocalStorage -> onLocalStorage()
+            is SettingEvent.OpenDocument -> openDocument(event.uri)
         }
     }
 
-    private fun importJavaScript(uri: Uri) {
+    private fun openDocument(uri: Uri?) {
+        writable.update {
+            it.copy(
+                uri = uri ?: Uri.EMPTY
+            )
+        }
+    }
+
+    private fun importJavaScript(uri: Uri?) {
     }
 
     private fun scrollDefaultDestination() {
@@ -151,30 +161,45 @@ class SettingViewModel @Inject constructor(
         if (title.isEmpty()) {
             val message = context.getString(R.string.error_empty_title)
             logger.log(message)
-        } else {
-            val url = readable.url
-            val strategy = readable.feedStrategy
-            val workManager = WorkManager.getInstance(context)
-            workManager.cancelAllWorkByTag(url)
-            val request = OneTimeWorkRequestBuilder<SubscriptionInBackgroundWorker>()
-                .setInputData(
-                    workDataOf(
-                        SubscriptionInBackgroundWorker.INPUT_STRING_TITLE to title,
-                        SubscriptionInBackgroundWorker.INPUT_STRING_URL to url,
-                        SubscriptionInBackgroundWorker.INPUT_INT_STRATEGY to strategy
-                    )
-                )
-                .addTag(url)
-                .build()
-            workManager.enqueue(request)
-            val message = context.getString(R.string.enqueue_subscribe)
+            return
+        }
+        val strategy = readable.feedStrategy
+        val url = readable.actualUrl
+        if (url == null) {
+            val message = context.getString(R.string.error_unselected_file)
             logger.log(message)
-            writable.update {
-                it.copy(
-                    title = "",
-                    url = "",
+            return
+        }
+
+        val workManager = WorkManager.getInstance(context)
+        workManager.cancelAllWorkByTag(url)
+        val request = OneTimeWorkRequestBuilder<SubscriptionInBackgroundWorker>()
+            .setInputData(
+                workDataOf(
+                    SubscriptionInBackgroundWorker.INPUT_STRING_TITLE to title,
+                    SubscriptionInBackgroundWorker.INPUT_STRING_URL to url,
+                    SubscriptionInBackgroundWorker.INPUT_INT_STRATEGY to strategy
                 )
-            }
+            )
+            .addTag(url)
+            .build()
+        workManager.enqueue(request)
+        val message = context.getString(R.string.enqueue_subscribe)
+        logger.log(message)
+        writable.update {
+            it.copy(
+                title = "",
+                url = "",
+                uri = Uri.EMPTY
+            )
+        }
+    }
+
+    private fun onLocalStorage() {
+        writable.update {
+            it.copy(
+                localStorage = !it.localStorage
+            )
         }
     }
 }

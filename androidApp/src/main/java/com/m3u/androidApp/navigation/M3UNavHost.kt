@@ -43,8 +43,10 @@ fun M3UNavHost(
             currentPage = currentPage,
             onCurrentPage = onCurrentPage,
             navigateToFeed = { feed ->
-                helper.title = if (!feed.isTemplated()) feed.title
-                else context.getString(R.string.imported_feed_title)
+                helper.title = feed.title.ifEmpty {
+                    if (feed.specially) context.getString(R.string.imported_feed_title)
+                    else ""
+                }
                 navigateToDestination(Destination.Feed(feed.url))
             },
             navigateToLive = { id ->

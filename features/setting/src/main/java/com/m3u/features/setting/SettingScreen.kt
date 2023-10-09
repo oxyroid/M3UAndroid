@@ -43,10 +43,10 @@ import com.m3u.features.setting.fragments.PreferencesFragment
 import com.m3u.features.setting.fragments.ScriptsFragment
 import com.m3u.features.setting.fragments.SubscriptionsFragment
 import com.m3u.ui.TopLevelDestination
+import com.m3u.ui.model.Fob
 import com.m3u.ui.model.LocalHelper
 import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.LocalTheme
-import com.m3u.ui.model.Fob
 
 typealias NavigateToConsole = () -> Unit
 typealias NavigateToAbout = () -> Unit
@@ -78,6 +78,7 @@ fun SettingRoute(
         version = state.version,
         title = state.title,
         url = state.url,
+        uri = state.uri.takeUnless { it == Uri.EMPTY },
         feedStrategy = state.feedStrategy,
         godMode = state.godMode,
         clipMode = state.clipMode,
@@ -118,6 +119,9 @@ fun SettingRoute(
         onCinemaMode = { state.cinemaMode = !state.cinemaMode },
         importJavaScript = { viewModel.onEvent(SettingEvent.ImportJavaScript(it)) },
         navigateToAbout = navigateToAbout,
+        localStorage = state.localStorage,
+        onLocalStorage = { viewModel.onEvent(SettingEvent.OnLocalStorage) },
+        openDocument = { viewModel.onEvent(SettingEvent.OpenDocument(it)) },
         modifier = modifier.fillMaxSize()
     )
 }
@@ -127,6 +131,7 @@ private fun SettingScreen(
     version: String,
     title: String,
     url: String,
+    uri: Uri?,
     @FeedStrategy feedStrategy: Int,
     godMode: Boolean,
     @ClipMode clipMode: Int,
@@ -162,6 +167,9 @@ private fun SettingScreen(
     onCinemaMode: () -> Unit,
     importJavaScript: (Uri) -> Unit,
     navigateToAbout: NavigateToAbout,
+    localStorage: Boolean,
+    onLocalStorage: () -> Unit,
+    openDocument: (Uri?) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val helper = LocalHelper.current
@@ -191,6 +199,7 @@ private fun SettingScreen(
                     fragment = fragment,
                     title = title,
                     url = url,
+                    uri = uri,
                     godMode = godMode,
                     connectTimeout = connectTimeout,
                     scrollMode = scrollMode,
@@ -226,6 +235,9 @@ private fun SettingScreen(
                     onCinemaMode = onCinemaMode,
                     importJavaScript = importJavaScript,
                     navigateToAbout = navigateToAbout,
+                    localStorage = localStorage,
+                    onLocalStorage = onLocalStorage,
+                    openDocument = openDocument,
                     modifier = modifier
                         .fillMaxWidth()
                         .scrollable(
@@ -241,6 +253,7 @@ private fun SettingScreen(
                     fragment = fragment,
                     title = title,
                     url = url,
+                    uri = uri,
                     godMode = godMode,
                     clipMode = clipMode,
                     scrollMode = scrollMode,
@@ -277,6 +290,9 @@ private fun SettingScreen(
                     onCinemaMode = onCinemaMode,
                     importJavaScript = importJavaScript,
                     navigateToAbout = navigateToAbout,
+                    localStorage = localStorage,
+                    onLocalStorage = onLocalStorage,
+                    openDocument = openDocument,
                     modifier = modifier.scrollable(
                         orientation = Orientation.Vertical,
                         state = rememberScrollableState { it }
@@ -298,6 +314,7 @@ private fun PortraitOrientationContent(
     fragment: SettingFragments,
     title: String,
     url: String,
+    uri: Uri?,
     @FeedStrategy feedStrategy: Int,
     godMode: Boolean,
     @ClipMode clipMode: Int,
@@ -333,6 +350,9 @@ private fun PortraitOrientationContent(
     onCinemaMode: () -> Unit,
     importJavaScript: (Uri) -> Unit,
     navigateToAbout: NavigateToAbout,
+    localStorage: Boolean,
+    onLocalStorage: () -> Unit,
+    openDocument: (Uri?) -> Unit,
     modifier: Modifier = Modifier
 ) {
     // TODO: replace with material3-modal-side-sheet.
@@ -387,11 +407,15 @@ private fun PortraitOrientationContent(
                     SubscriptionsFragment(
                         title = title,
                         url = url,
+                        uri = uri,
                         mutedLives = mutedLives,
                         onBannedLive = onBannedLive,
                         onTitle = onTitle,
                         onUrl = onUrl,
                         onSubscribe = onSubscribe,
+                        localStorage = localStorage,
+                        onLocalStorage = onLocalStorage,
+                        openDocument = openDocument,
                         modifier = modifier.background(LocalTheme.current.background)
                     )
                 }
@@ -415,6 +439,7 @@ private fun LandscapeOrientationContent(
     fragment: SettingFragments,
     title: String,
     url: String,
+    uri: Uri?,
     godMode: Boolean,
     @ClipMode clipMode: Int,
     replaceFragment: (SettingFragments) -> Unit,
@@ -451,6 +476,9 @@ private fun LandscapeOrientationContent(
     onCinemaMode: () -> Unit,
     importJavaScript: (Uri) -> Unit,
     navigateToAbout: NavigateToAbout,
+    localStorage: Boolean,
+    onLocalStorage: () -> Unit,
+    openDocument: (Uri?) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
@@ -503,11 +531,15 @@ private fun LandscapeOrientationContent(
                 SubscriptionsFragment(
                     title = title,
                     url = url,
+                    uri = uri,
                     mutedLives = mutedLives,
                     onBannedLive = onBannedLive,
                     onTitle = onTitle,
                     onUrl = onUrl,
                     onSubscribe = onSubscribe,
+                    localStorage = localStorage,
+                    onLocalStorage = onLocalStorage,
+                    openDocument = openDocument,
                     modifier = Modifier
                         .fillMaxHeight()
                         .weight(1f)

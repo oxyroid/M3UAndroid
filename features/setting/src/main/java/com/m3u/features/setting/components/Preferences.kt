@@ -9,6 +9,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material.ContentAlpha
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.ListItem
@@ -35,6 +36,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.capitalize
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.intl.Locale
@@ -144,6 +146,13 @@ internal fun CheckBoxPreference(
     subtitle: String? = null,
     enabled: Boolean = true,
 ) {
+    val combined = Modifier
+        .toggleable(
+            value = checked,
+            onValueChange = { onCheckedChange(it) },
+            role = Role.Checkbox
+        )
+        .then(modifier)
     Preference(
         title = title,
         subtitle = subtitle,
@@ -153,12 +162,12 @@ internal fun CheckBoxPreference(
                 onCheckedChange(!checked)
             }
         },
-        modifier = modifier,
+        modifier = combined,
         trailingContent = {
             Checkbox(
                 enabled = enabled,
                 checked = checked,
-                onCheckedChange = onCheckedChange
+                onCheckedChange = null
             )
         }
     )

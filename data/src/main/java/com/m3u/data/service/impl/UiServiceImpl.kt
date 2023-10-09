@@ -1,7 +1,10 @@
 package com.m3u.data.service.impl
 
 import com.m3u.data.service.UiService
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -30,12 +33,23 @@ class UiServiceImpl @Inject constructor() : UiService {
     private val _toaster = MutableStateFlow("")
     override val toaster: StateFlow<String> get() = _toaster.asStateFlow()
 
+    private var job: Job? = null
     private suspend fun MutableStateFlow<String>.notify(
         value: String,
         duration: Duration = 3.seconds
     ) {
-        this.value = value
-        delay(duration)
-        this.value = ""
+        job?.cancel()
+        job = coroutineScope {
+            launch {
+                this@notify.value = value
+                delay(duration)
+            }.apply {
+                invokeOnCompletion {
+                    if (it !is CancellationException) {
+                        this@notify.value = ""
+                    }
+                }
+            }
+        }
     }
 }

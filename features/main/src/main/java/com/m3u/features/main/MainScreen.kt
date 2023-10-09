@@ -49,6 +49,7 @@ fun MainRoute(
 ) {
     val helper = LocalHelper.current
     val state: MainState by viewModel.state.collectAsStateWithLifecycle()
+    val feeds by viewModel.feeds.collectAsStateWithLifecycle()
     val rowCount = state.rowCount
     fun onRowCount(target: Int) {
         state.rowCount = target
@@ -74,7 +75,7 @@ fun MainRoute(
         LocalScalable provides Scalable(1f / rowCount)
     ) {
         MainScreen(
-            feeds = state.feeds,
+            feeds = feeds,
             rowCount = rowCount,
             navigateToFeed = navigateToFeed,
             unsubscribe = { viewModel.onEvent(MainEvent.UnsubscribeFeedByUrl(it)) },
@@ -156,7 +157,7 @@ fun PortraitOrientationContent(
             FeedItem(
                 label = detail.feed.calculateUiTitle(),
                 number = detail.count,
-                special = detail.feed.isTemplated(),
+                special = detail.feed.specially,
                 modifier = Modifier.fillParentMaxWidth(),
                 onClick = {
                     navigateToFeed(detail.feed)
@@ -196,7 +197,7 @@ private fun LandscapeOrientationContent(
             FeedItem(
                 label = detail.feed.calculateUiTitle(),
                 number = detail.count,
-                special = detail.feed.isTemplated(),
+                special = detail.feed.specially,
                 modifier = Modifier.fillMaxWidth(),
                 onClick = {
                     navigateToFeed(detail.feed)
@@ -211,8 +212,11 @@ private fun LandscapeOrientationContent(
 
 @Composable
 private fun Feed.calculateUiTitle(): AnnotatedString {
-    return if (!this.isTemplated()) AnnotatedString(this.title)
-    else AnnotatedString(
-        text = stringResource(R.string.imported_feed_title).uppercase()
+    val actual = title.ifEmpty {
+        if (specially) stringResource(R.string.imported_feed_title)
+        else ""
+    }
+    return AnnotatedString(
+        text = actual.uppercase()
     )
 }

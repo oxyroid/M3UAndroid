@@ -13,7 +13,11 @@ data class Feed(
     @ColumnInfo(name = "url")
     val url: String
 ) {
-    fun isTemplated(): Boolean = url == URL_IMPORTED
+    // FIXME
+    val specially: Boolean
+        get() =
+            url == URL_IMPORTED || (!url.startsWith("http://")
+                    && !url.startsWith("https://"))
 
     companion object {
         const val URL_IMPORTED = "imported"
