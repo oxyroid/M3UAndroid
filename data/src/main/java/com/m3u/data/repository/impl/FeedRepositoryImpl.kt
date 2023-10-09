@@ -2,11 +2,9 @@ package com.m3u.data.repository.impl
 
 import android.content.Context
 import android.net.Uri
-import androidx.compose.runtime.getValue
 import androidx.core.net.toUri
 import com.m3u.core.annotation.FeedStrategy
 import com.m3u.core.architecture.Logger
-import com.m3u.core.architecture.configuration.Configuration
 import com.m3u.core.architecture.execute
 import com.m3u.core.architecture.sandBox
 import com.m3u.core.util.belong
@@ -36,19 +34,16 @@ import okhttp3.Request
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.InputStream
-import java.time.Duration
-import java.time.temporal.ChronoUnit
 import javax.inject.Inject
 
 class FeedRepositoryImpl @Inject constructor(
     private val feedDao: FeedDao,
     private val liveDao: LiveDao,
     @Logger.Ui private val logger: Logger,
-    configuration: Configuration,
+    private val client: OkHttpClient,
     @PlaylistParser.Experimental private val parser: PlaylistParser,
     @ApplicationContext private val context: Context
 ) : FeedRepository {
-    private val connectTimeout by configuration.connectTimeout
 
     override fun subscribe(
         title: String,
@@ -65,9 +60,11 @@ class FeedRepositoryImpl @Inject constructor(
                         return@flow
                     }
                     withContext(Dispatchers.IO) {
-                        val filename = uri.readContentFilename(context)
-                            ?: "File_${System.currentTimeMillis()}.txt"
-                        val content = uri.readContentText(context).orEmpty()
+                        val contentResolver = context.contentResolver
+                        val filename = uri
+                            .readContentFilename(contentResolver)
+                            ?: filenameWithTimezone
+                        val content = uri.readContentText(contentResolver).orEmpty()
                         val file = File(context.filesDir, filename)
                         file.writeText(content)
                         actualUrl = Uri.decode(file.toUri().toString())
@@ -98,7 +95,8 @@ class FeedRepositoryImpl @Inject constructor(
             }
             val existedUrls = when (strategy) {
                 FeedStrategy.ALL -> skippedUrls
-                FeedStrategy.SKIP_FAVORITE -> groupedLives.getValue(true)
+                FeedStrategy.SKIP_FAVORITE -> groupedLives
+                    .getValue(true)
                     .map { it.url } + skippedUrls
 
                 else -> emptyList()
@@ -133,12 +131,6 @@ class FeedRepositoryImpl @Inject constructor(
         }
     }
 
-    private val client by lazy {
-        OkHttpClient.Builder()
-            .connectTimeout(Duration.of(connectTimeout.toLong(), ChronoUnit.MILLIS))
-            .build()
-    }
-
     private suspend fun networkParseLives(url: String): List<Live> {
         val request = Request.Builder()
             .url(url)
@@ -154,10 +146,7 @@ class FeedRepositoryImpl @Inject constructor(
         url: String
     ): List<Live> {
         val input = context.contentResolver.openInputStream(uri)
-
-        return input?.use {
-            parse(url, it)
-        } ?: emptyList()
+        return input?.use { parse(url, it) } ?: emptyList()
     }
 
     override fun observeAll(): Flow<List<Feed>> = logger.execute {
@@ -194,4 +183,6 @@ class FeedRepositoryImpl @Inject constructor(
     override suspend fun rename(url: String, target: String) = logger.sandBox {
         feedDao.rename(url, target)
     }
+
+    private val filenameWithTimezone: String get() = "File_${System.currentTimeMillis()}"
 }

@@ -1,15 +1,16 @@
 package com.m3u.core.util
 
 import android.content.ContentResolver
-import android.content.Context
 import android.net.Uri
 import android.provider.OpenableColumns
 import androidx.core.net.toFile
 
-fun Uri.readContentFilename(context: Context): String? = when (scheme) {
+fun Uri.readContentFilename(
+    contentResolver: ContentResolver
+): String? = when (scheme) {
     ContentResolver.SCHEME_FILE -> toFile().name
     ContentResolver.SCHEME_CONTENT -> {
-        context.contentResolver.query(
+        contentResolver.query(
             this,
             null,
             null,
@@ -28,11 +29,13 @@ fun Uri.readContentFilename(context: Context): String? = when (scheme) {
     else -> null
 }
 
-fun Uri.readContentText(context: Context): String? {
+fun Uri.readContentText(
+    contentResolver: ContentResolver
+): String? {
     return when (scheme) {
         ContentResolver.SCHEME_FILE -> toFile().readText()
         ContentResolver.SCHEME_CONTENT ->
-            context.contentResolver.openInputStream(this)?.use {
+            contentResolver.openInputStream(this)?.use {
                 it.bufferedReader().readText()
             }
 

@@ -11,7 +11,7 @@ import com.m3u.core.wrapper.eventOf
 import com.m3u.data.repository.FeedRepository
 import com.m3u.data.repository.LiveRepository
 import com.m3u.data.repository.MediaRepository
-import com.m3u.data.repository.observeBannedByFeedUrl
+import com.m3u.data.repository.observeAll
 import com.m3u.data.repository.refresh
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineScope
@@ -82,10 +82,8 @@ class FeedViewModel @Inject constructor(
     }
 
     private fun CoroutineScope.observeFeedLives(feedUrl: String) {
-        liveRepository.observeBannedByFeedUrl(
-            feedUrl = feedUrl,
-            banned = false
-        )
+        liveRepository
+            .observeAll { !it.banned && it.feedUrl == feedUrl }
             .combine(queryStateFlow) { origin, query ->
                 val remainedLives = origin.filter {
                     it.title.contains(query, true)

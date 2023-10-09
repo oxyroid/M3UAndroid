@@ -92,7 +92,7 @@ fun TextButton(
     textRes: Int,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    backgroundColor: Color = Color.Transparent,
+    backgroundColor: Color = LocalTheme.current.surface,
     contentColor: Color = LocalTheme.current.primary,
     disabledContentColor: Color = LocalTheme.current.onSurface.copy(alpha = 0.38f),
     onClick: () -> Unit
@@ -113,7 +113,7 @@ fun TextButton(
     text: String,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    backgroundColor: Color = Color.Transparent,
+    backgroundColor: Color = LocalTheme.current.surface,
     contentColor: Color = LocalTheme.current.primary,
     disabledContentColor: Color = LocalTheme.current.onSurface.copy(alpha = 0.38f),
     onClick: () -> Unit

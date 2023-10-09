@@ -30,7 +30,6 @@
     <string name="label_add_feed">新增订阅</string>
     <string name="label_parse_from_clipboard">解析剪贴板</string>
     <string name="label_select_from_local_storage">选择文件</string>
-    <string name="label_selected_from_local_storage">已选择</string>
     <string name="label_parse_from_disk">解析本地文件</string>
     <string name="clip_mode">视频裁剪模式</string>
     <string name="clip_mode_adaptive">自适应</string>

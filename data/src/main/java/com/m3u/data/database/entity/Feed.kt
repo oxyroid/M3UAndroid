@@ -3,6 +3,7 @@ package com.m3u.data.database.entity
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import com.m3u.core.util.basic.startsWithAny
 
 // called playlist in user interface
 @Entity(tableName = "feeds")
@@ -13,11 +14,9 @@ data class Feed(
     @ColumnInfo(name = "url")
     val url: String
 ) {
-    // FIXME
     val specially: Boolean
-        get() =
-            url == URL_IMPORTED || (!url.startsWith("http://")
-                    && !url.startsWith("https://"))
+        get() = url == URL_IMPORTED ||
+                url.startsWithAny("file://", "content://")
 
     companion object {
         const val URL_IMPORTED = "imported"

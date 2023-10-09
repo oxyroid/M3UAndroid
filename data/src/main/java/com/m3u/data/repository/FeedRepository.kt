@@ -8,10 +8,10 @@ import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 
-interface FeedRepository {
-    fun observe(url: String): Flow<Feed?>
-    fun observeAll(): Flow<List<Feed>>
-    suspend fun get(url: String): Feed?
+@Suppress("PARAMETER_NAME_CHANGED_ON_OVERRIDE")
+interface FeedRepository : Repository<Feed, String> {
+    override fun observe(url: String): Flow<Feed?>
+    override suspend fun get(url: String): Feed?
     fun subscribe(
         title: String,
         url: String,

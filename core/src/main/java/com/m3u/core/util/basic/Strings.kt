@@ -52,3 +52,10 @@ fun String.splitOutOfQuotation(delimiter: Char): List<String> {
     list.add(substring(start))
     return list
 }
+
+fun String.startsWithAny(vararg prefix: String): Boolean {
+    prefix.forEach {
+        if (startsWith(it)) return true
+    }
+    return false
+}

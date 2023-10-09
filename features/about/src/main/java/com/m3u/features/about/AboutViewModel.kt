@@ -25,6 +25,7 @@ import javax.inject.Inject
 class AboutViewModel @Inject constructor(
     application: Application,
     private val api: GithubApi,
+    private val client: OkHttpClient,
     @Publisher.App private val publisher: Publisher,
     private val logger: Logger
 ) : AndroidViewModel(application) {
@@ -58,7 +59,7 @@ class AboutViewModel @Inject constructor(
 
     private suspend fun fetchVersionCatalogs(): List<String> = withContext(Dispatchers.IO) {
         logger.execute {
-            val response = OkHttpClient()
+            val response = client
                 .newCall(
                     Request.Builder()
                         .url("https://raw.githubusercontent.com/realOxy/M3UAndroid/master/gradle/libs.versions.toml")

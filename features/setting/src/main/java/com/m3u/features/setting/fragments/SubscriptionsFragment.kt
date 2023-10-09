@@ -3,6 +3,7 @@ package com.m3u.features.setting.fragments
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -19,8 +20,7 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.OpenInNew
-import androidx.compose.material.icons.rounded.Cancel
-import androidx.compose.material3.Checkbox
+import androidx.compose.material3.Switch
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -29,12 +29,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.m3u.core.util.readContentFilename
 import com.m3u.data.database.entity.Live
 import com.m3u.features.setting.R
 import com.m3u.features.setting.components.MutedLiveItem
@@ -112,65 +114,49 @@ internal fun SubscriptionsFragment(
         }
 
         item {
-            if (!localStorage) {
-                LabelField(
-                    text = url,
-                    placeholder = stringResource(R.string.placeholder_url).uppercase(),
-                    onValueChange = onUrl,
-                    keyboardActions = KeyboardActions(
-                        onDone = {
-                            onSubscribe()
-                        }
-                    ),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .focusRequester(focusRequester)
-                )
-            } else {
-                LocalStorageButton(
-                    uri = uri,
-                    openDocument = openDocument
-                )
-            }
-        }
-
-        item {
-            Row(
-                Modifier
-                    .fillMaxWidth()
-                    .height(56.dp)
-                    .clip(RoundedCornerShape(25))
-                    .toggleable(
-                        value = localStorage,
-                        onValueChange = { onLocalStorage() },
-                        role = Role.Checkbox
+            Crossfade(
+                targetState = localStorage,
+                label = "url"
+            ) { localStorage ->
+                if (!localStorage) {
+                    LabelField(
+                        text = url,
+                        placeholder = stringResource(R.string.placeholder_url).uppercase(),
+                        onValueChange = onUrl,
+                        keyboardActions = KeyboardActions(
+                            onDone = {
+                                onSubscribe()
+                            }
+                        ),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .focusRequester(focusRequester)
                     )
-                    .padding(horizontal = 16.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Checkbox(
-                    checked = localStorage,
-                    onCheckedChange = null
-                )
-                Text(
-                    text = stringResource(R.string.local_storage),
-                    style = MaterialTheme.typography.subtitle1,
-                    modifier = Modifier.padding(start = 16.dp)
-                )
+                } else {
+                    LocalStorageButton(
+                        uri = uri,
+                        openDocument = openDocument,
+                    )
+                }
             }
         }
 
         item {
-            val resId = R.string.label_subscribe
-            Button(
-                text = stringResource(resId),
-                onClick = onSubscribe,
-                modifier = Modifier.fillMaxWidth()
+            LocalStorageSwitch(
+                checked = localStorage,
+                onChanged = onLocalStorage
             )
         }
+
         item {
-            if (!localStorage) {
+            Column {
+                Button(
+                    text = stringResource(R.string.label_subscribe),
+                    onClick = onSubscribe,
+                    modifier = Modifier.fillMaxWidth()
+                )
                 ClipboardButton(
+                    enabled = !localStorage,
                     onTitle = onTitle,
                     onUrl = onUrl
                 )
@@ -180,11 +166,41 @@ internal fun SubscriptionsFragment(
 }
 
 @Composable
+fun LocalStorageSwitch(
+    checked: Boolean,
+    onChanged: () -> Unit,
+) {
+    val spacing = LocalSpacing.current
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(56.dp)
+            .clip(RoundedCornerShape(25))
+            .toggleable(
+                value = checked,
+                onValueChange = { onChanged() },
+                role = Role.Checkbox
+            )
+            .padding(horizontal = spacing.medium),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(spacing.medium)
+    ) {
+        Text(
+            text = stringResource(R.string.local_storage),
+            style = MaterialTheme.typography.subtitle1,
+            modifier = Modifier.weight(1f)
+        )
+        Switch(checked = checked, onCheckedChange = null)
+    }
+}
+
+@Composable
 private fun LocalStorageButton(
     uri: Uri?,
     openDocument: (Uri?) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
     val selected = uri != null
     val theme = LocalTheme.current
     val spacing = LocalSpacing.current
@@ -192,9 +208,10 @@ private fun LocalStorageButton(
         ActivityResultContracts.GetContent(),
         openDocument
     )
-    val icon = if (selected) Icons.Rounded.Cancel else Icons.AutoMirrored.Rounded.OpenInNew
-    val text = if (selected) R.string.label_selected_from_local_storage
-    else R.string.label_select_from_local_storage
+    val icon = Icons.AutoMirrored.Rounded.OpenInNew
+    val text = if (selected) remember(uri) {
+        uri?.readContentFilename(context.contentResolver).orEmpty()
+    } else stringResource(R.string.label_select_from_local_storage)
     Row(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
@@ -206,10 +223,7 @@ private fun LocalStorageButton(
             .toggleable(
                 value = selected,
                 onValueChange = {
-                    if (!it) openDocument(null)
-                    else {
-                        launcher.launch("*/*")
-                    }
+                    launcher.launch("*/*")
                 },
                 enabled = true,
                 role = Role.Checkbox
@@ -220,7 +234,7 @@ private fun LocalStorageButton(
             )
     ) {
         Text(
-            text = stringResource(text).uppercase(),
+            text = text.uppercase(),
             style = TextStyle(
                 fontSize = 14.sp,
                 fontFamily = MaterialTheme.typography.body1.fontFamily,
@@ -236,12 +250,14 @@ private fun LocalStorageButton(
 
 @Composable
 private fun ClipboardButton(
+    enabled: Boolean,
     onTitle: (String) -> Unit,
     onUrl: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val clipboardManager = LocalClipboardManager.current
     TextButton(
+        enabled = enabled,
         text = stringResource(R.string.label_parse_from_clipboard),
         onClick = {
             val clipboardUrl = clipboardManager.getText()?.text.orEmpty()
