@@ -7,7 +7,6 @@ import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.androidApp.navigation.M3UNavHost
-import com.m3u.ui.components.ForegroundHost
 import com.m3u.ui.ktx.EventHandler
 import com.m3u.ui.model.EmptyHelper
 import com.m3u.ui.model.Helper
@@ -44,8 +43,8 @@ fun App(
         title = title,
         snacker = snacker,
         actions = actions,
-        topLevelDestinations = topLevelDestinations,
-        currentTopLevelDestination = currentTopLevelDestination,
+        destinations = topLevelDestinations,
+        destination = currentTopLevelDestination,
         fob = fob,
         isSystemBarVisible = isSystemBarVisible,
         isSystemBarScrollable = isSystemBarScrollable,
@@ -55,8 +54,7 @@ fun App(
         theme = theme,
         helper = helper,
         cinemaMode = cinemaMode,
-        isPlaying = isPlaying,
-        foreground = { ForegroundHost() }
+        isPlaying = isPlaying
     ) {
         M3UNavHost(
             navController = appState.navController,

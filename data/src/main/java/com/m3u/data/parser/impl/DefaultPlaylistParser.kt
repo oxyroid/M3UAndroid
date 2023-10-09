@@ -12,7 +12,7 @@ import java.io.InputStream
 import java.util.Properties
 import javax.inject.Inject
 
-class PlaylistParserImpl @Inject constructor(
+class DefaultPlaylistParser @Inject constructor(
     private val logger: Logger
 ) : PlaylistParser {
     private val pattern = Regex("#EXTINF:-?\\d+,")
@@ -126,8 +126,8 @@ class PlaylistParserImpl @Inject constructor(
         private const val M3U_TVG_DURATION = "duration"
 
         private const val M3U_TVG_LOGO_MARK = "tvg-logo"
-        private const val M3U_TVG_ID_MARK = "tvg-id"
-        private const val M3U_TVG_NAME_MARK = "tvg-name"
-        private const val M3U_GROUP_TITLE_MARK = "group-title"
+        const val M3U_TVG_ID_MARK = "tvg-id"
+        const val M3U_TVG_NAME_MARK = "tvg-name"
+        const val M3U_GROUP_TITLE_MARK = "group-title"
     }
 }

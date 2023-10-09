@@ -66,4 +66,6 @@ dependencies {
     implementation(libs.androidx.work.work.runtime.ktx)
     implementation(libs.androidx.hilt.hilt.work)
     ksp(libs.androidx.hilt.hilt.compiler)
+
+    implementation("com.github.bjoernpetersen:m3u-parser:1.3.0")
 }

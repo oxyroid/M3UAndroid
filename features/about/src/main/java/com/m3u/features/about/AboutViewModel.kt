@@ -32,7 +32,7 @@ class AboutViewModel @Inject constructor(
     internal val contributors: StateFlow<List<Contributor>> = _contributors.asStateFlow()
 
     private val _dependencies: MutableStateFlow<List<String>> = MutableStateFlow(emptyList())
-    val dependencies: StateFlow<List<String>> = _dependencies.asStateFlow()
+    internal val dependencies: StateFlow<List<String>> = _dependencies.asStateFlow()
 
     init {
         refresh()
@@ -71,14 +71,14 @@ class AboutViewModel @Inject constructor(
         } ?: emptyList()
     }
 
-    private fun List<String>.readTomlDependencies(): List<String> {
+    private fun List<String>.readTomlDependencies(): List<String> = logger.execute {
         val start = indexOf { it.startsWith(("[libraries]")) } + 1
         val end = indexOf(start) { it.startsWith(("[plugins]")) }
-        return subList(start, end).mapNotNull { line ->
+        subList(start, end).mapNotNull { line ->
             val i = line.indexOf("=")
             if (i == -1) null
             else line.take(i).trim()
         }
             .sorted()
-    }
+    } ?: emptyList()
 }

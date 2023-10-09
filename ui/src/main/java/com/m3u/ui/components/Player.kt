@@ -2,7 +2,6 @@ package com.m3u.ui.components
 
 import android.view.ViewGroup
 import androidx.annotation.OptIn
-import androidx.compose.foundation.background
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.Immutable
@@ -10,7 +9,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
@@ -77,9 +75,10 @@ fun ExoPlayer(
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.MATCH_PARENT
                 )
+                setShutterBackgroundColor(0xffffff)
             }
         },
-        modifier = modifier.background(Color.Black)
+        modifier = modifier
     ) { view ->
         view.apply {
             setPlayer(player)

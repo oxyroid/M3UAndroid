@@ -74,7 +74,7 @@ class SettingViewModel @Inject constructor(
     private fun scrollDefaultDestination() {
         val max = publisher.destinationsCount
         val current = readable.defaultDestination
-        val target = (current + 1).takeIf { it <= max } ?: 0
+        val target = (current + 1).takeIf { it < max } ?: 0
         readable.defaultDestination = target
     }
 

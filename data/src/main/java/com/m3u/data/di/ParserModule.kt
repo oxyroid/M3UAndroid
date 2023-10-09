@@ -3,7 +3,8 @@
 package com.m3u.data.di
 
 import com.m3u.data.parser.PlaylistParser
-import com.m3u.data.parser.impl.PlaylistParserImpl
+import com.m3u.data.parser.impl.DefaultPlaylistParser
+import com.m3u.data.parser.impl.ExperimentalPlaylistParser
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -13,5 +14,10 @@ import dagger.hilt.components.SingletonComponent
 @InstallIn(SingletonComponent::class)
 interface ParserModule {
     @Binds
-    fun bindPlaylistParser(parser: PlaylistParserImpl): PlaylistParser
+    @PlaylistParser.Default
+    fun bindPlaylistParser(parser: DefaultPlaylistParser): PlaylistParser
+
+    @Binds
+    @PlaylistParser.Experimental
+    fun bindExperimentalPlaylistParser(parser: ExperimentalPlaylistParser): PlaylistParser
 }

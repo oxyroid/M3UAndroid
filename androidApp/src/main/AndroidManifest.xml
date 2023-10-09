@@ -51,22 +51,6 @@
 
         </activity>
 
-        <service
-            android:name="com.m3u.features.scheme.SchemeReceiverService"
-            android:description="@string/features_scheme_import"
-            android:exported="true"
-            android:permission="android.permission.INTERNET">
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-
-                <data android:scheme="rtmp" />
-                <data android:scheme="https" />
-            </intent-filter>
-        </service>
-
         <activity
             android:name="com.m3u.features.crash.CrashActivity"
             android:label="@string/label_crash"

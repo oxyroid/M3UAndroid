@@ -55,10 +55,8 @@ fun NavGraphBuilder.liveScreen(
                 nullable = false
             },
         ),
-        enterTransition = { fadeIn() },
-        exitTransition = { fadeOut() },
-        popEnterTransition = { fadeIn() },
-        popExitTransition = { fadeOut() }
+        enterTransition = { slideInVertically { it } + fadeIn() },
+        exitTransition = { slideOutVertically { it } + fadeOut() }
     ) { navBackStackEntry ->
         val id = navBackStackEntry
             .arguments

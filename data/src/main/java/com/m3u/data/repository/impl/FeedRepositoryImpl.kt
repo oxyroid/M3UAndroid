@@ -45,7 +45,7 @@ class FeedRepositoryImpl @Inject constructor(
     private val liveDao: LiveDao,
     @Logger.Ui private val logger: Logger,
     configuration: Configuration,
-    private val parser: PlaylistParser,
+    @PlaylistParser.Experimental private val parser: PlaylistParser,
     @ApplicationContext private val context: Context
 ) : FeedRepository {
     private val connectTimeout by configuration.connectTimeout

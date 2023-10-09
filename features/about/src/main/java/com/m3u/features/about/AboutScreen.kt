@@ -63,7 +63,7 @@ private fun AboutScreen(
                 )
             }
             items(dependencies) { dependency ->
-                MonoText(dependency)
+                MonoText(dependency, maxLines = 1)
             }
         }
     }

@@ -15,7 +15,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.util.lerp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -27,12 +26,10 @@ import com.m3u.core.annotation.ClipMode
 import com.m3u.core.unspecified.UBoolean
 import com.m3u.core.unspecified.u
 import com.m3u.core.util.basic.isNotEmpty
-import com.m3u.core.util.context.toast
 import com.m3u.features.live.components.DlnaDevicesBottomSheet
 import com.m3u.features.live.fragments.LiveFragment
 import com.m3u.ui.components.MaskState
 import com.m3u.ui.components.rememberMaskState
-import com.m3u.ui.ktx.EventHandler
 import com.m3u.ui.ktx.LifecycleEffect
 import com.m3u.ui.model.LocalHelper
 import com.m3u.ui.model.LocalTheme
@@ -47,7 +44,6 @@ internal fun LiveRoute(
     onBackPressed: () -> Unit,
     viewModel: LiveViewModel = hiltViewModel(),
 ) {
-    val context = LocalContext.current
     val helper = LocalHelper.current
 
     val state: LiveState by viewModel.state.collectAsStateWithLifecycle()
@@ -89,10 +85,6 @@ internal fun LiveRoute(
                 maskState.active()
             }
         }
-    }
-
-    EventHandler(state.message) {
-        context.toast(it)
     }
 
     LaunchedEffect(init) {

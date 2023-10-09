@@ -37,8 +37,8 @@ internal fun AppScaffold(
     title: String,
     snacker: String,
     actions: List<Action>,
-    topLevelDestinations: List<TopLevelDestination>,
-    currentTopLevelDestination: TopLevelDestination?,
+    destinations: List<TopLevelDestination>,
+    destination: TopLevelDestination?,
     fob: Fob?,
     isSystemBarVisible: Boolean,
     isSystemBarScrollable: Boolean,
@@ -123,8 +123,8 @@ internal fun AppScaffold(
                     if (visible) {
                         AppBottomSheet(
                             fob = fob,
-                            destinations = topLevelDestinations,
-                            destination = currentTopLevelDestination,
+                            destinations = destinations,
+                            destination = destination,
                             navigateToTopLevelDestination = navigateToTopLevelDestination,
                             modifier = Modifier.fillMaxWidth()
                         )

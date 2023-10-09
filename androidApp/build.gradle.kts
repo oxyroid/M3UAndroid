@@ -66,7 +66,6 @@ dependencies {
     implementation(project(":features:live"))
     implementation(project(":features:console"))
     implementation(project(":features:crash"))
-    implementation(project(":features:scheme"))
     implementation(project(":features:about"))
 
     implementation(libs.androidx.core.core.ktx)
