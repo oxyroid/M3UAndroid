@@ -33,9 +33,6 @@ android {
         arg("room.schemaLocation", "${projectDir}/schemas")
         arg("ksp.incremental", "true")
     }
-    lint {
-        baseline = file("lint-baseline.xml")
-    }
 }
 
 dependencies {

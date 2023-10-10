@@ -2,17 +2,15 @@
 androidx-core = "1.12.0"
 androidx-core-splashscreen = "1.0.1"
 androidx-appcompat = "1.6.1"
-androidx-activity = "1.8.0-rc01"
+androidx-activity = "1.8.0"
 androidx-lifecycle = "2.6.2"
-androidx-compose = "1.6.0-alpha06"
-androidx-compose-material3 = "1.2.0-alpha08"
-androidx-navigation = "2.7.3"
+androidx-compose = "1.6.0-alpha07"
+androidx-compose-material3 = "1.2.0-alpha09"
+androidx-navigation = "2.7.4"
 androidx-baselineprofile-benchmark = "1.2.0-rc01"
 androidx-exifinterface = "1.3.6"
-androidx-hilt-compiler = "1.1.0-alpha01"
-androidx-hilt-work = "1.1.0-alpha01"
-androidx-hilt-navigation-compose = "1.1.0-alpha01"
-androidx-tv = "1.0.0-alpha09"
+androidx-hilt = "1.1.0-beta01"
+androidx-tv = "1.0.0-alpha10"
 androidx-media3 = "1.1.1"
 androidx-work = "2.8.1"
 androidx-room = "2.5.2"
@@ -35,7 +33,7 @@ compose_compiler = "1.5.2"
 junit = "4.13.2"
 androidx-test-ext-junit = "1.1.5"
 espresso-core = "3.5.1"
-com-google-android-material = "1.9.0"
+com-google-android-material = "1.10.0"
 androidx-test-uiautomator = "2.2.0"
 androidx-benchmark = "1.1.1"
 
@@ -70,9 +68,9 @@ androidx-tv-tv-material = { group = "androidx.tv", name = "tv-material", version
 
 com-google-dagger-hilt-android = { group = "com.google.dagger", name = "hilt-android", version.ref = "google-dagger" }
 com-google-dagger-hilt-compiler = { group = "com.google.dagger", name = "hilt-compiler", version.ref = "google-dagger" }
-androidx-hilt-hilt-compiler = { group = "androidx.hilt", name = "hilt-compiler", version.ref = "androidx-hilt-compiler" }
-androidx-hilt-hilt-work = { group = "androidx.hilt", name = "hilt-work", version.ref = "androidx-hilt-work" }
-androidx-hilt-hilt-navigation-compose = { group = "androidx.hilt", name = "hilt-navigation-compose", version.ref = "androidx-hilt-navigation-compose" }
+androidx-hilt-hilt-compiler = { group = "androidx.hilt", name = "hilt-compiler", version.ref = "androidx-hilt" }
+androidx-hilt-hilt-work = { group = "androidx.hilt", name = "hilt-work", version.ref = "androidx-hilt" }
+androidx-hilt-hilt-navigation-compose = { group = "androidx.hilt", name = "hilt-navigation-compose", version.ref = "androidx-hilt" }
 
 androidx-media3-media3-ui = { group = "androidx.media3", name = "media3-ui", version.ref = "androidx-media3" }
 androidx-media3-media3-session = { group = "androidx.media3", name = "media3-session", version.ref = "androidx-media3" }
