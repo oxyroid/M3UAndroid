@@ -1,0 +1,20 @@
+{
+  "version": 3,
+  "artifactType": {
+    "type": "APK",
+    "kind": "Directory"
+  },
+  "applicationId": "com.m3u.androidApp",
+  "variantName": "debug",
+  "elements": [
+    {
+      "type": "SINGLE",
+      "filters": [],
+      "attributes": [],
+      "versionCode": 67,
+      "versionName": "1.12.1",
+      "outputFile": "androidApp-debug.apk"
+    }
+  ],
+  "elementType": "File"
+}

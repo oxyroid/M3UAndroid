@@ -232,6 +232,7 @@ private fun LocalStorageButton(
                 horizontal = spacing.medium,
                 vertical = 12.5.dp
             )
+            .then(modifier)
     ) {
         Text(
             text = text.uppercase(),

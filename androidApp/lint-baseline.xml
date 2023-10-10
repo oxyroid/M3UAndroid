@@ -1,0 +1,224 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<issues format="6" by="lint 8.1.0" type="baseline" client="gradle" dependencies="false" name="AGP (8.1.0)" variant="all" version="8.1.0">
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.activity:activity-compose than 1.8.0-rc01 is available: 1.8.0"
+        errorLine1="androidx-activity = &quot;1.8.0-rc01&quot;"
+        errorLine2="                    ~~~~~~~~~~~~">
+        <location
+            file="$HOME/StudioProjects/M3UAndroid/gradle/libs.versions.toml"
+            line="5"
+            column="21"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.compose.animation:animation than 1.6.0-alpha06 is available: 1.6.0-alpha07"
+        errorLine1="androidx-compose = &quot;1.6.0-alpha06&quot;"
+        errorLine2="                   ~~~~~~~~~~~~~~~">
+        <location
+            file="$HOME/StudioProjects/M3UAndroid/gradle/libs.versions.toml"
+            line="7"
+            column="20"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.compose.material:material than 1.6.0-alpha06 is available: 1.6.0-alpha07"
+        errorLine1="androidx-compose = &quot;1.6.0-alpha06&quot;"
+        errorLine2="                   ~~~~~~~~~~~~~~~">
+        <location
+            file="$HOME/StudioProjects/M3UAndroid/gradle/libs.versions.toml"
+            line="7"
+            column="20"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.compose.material:material-icons-extended than 1.6.0-alpha06 is available: 1.6.0-alpha07"
+        errorLine1="androidx-compose = &quot;1.6.0-alpha06&quot;"
+        errorLine2="                   ~~~~~~~~~~~~~~~">
+        <location
+            file="$HOME/StudioProjects/M3UAndroid/gradle/libs.versions.toml"
+            line="7"
+            column="20"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.compose.runtime:runtime than 1.6.0-alpha06 is available: 1.6.0-alpha07"
+        errorLine1="androidx-compose = &quot;1.6.0-alpha06&quot;"
+        errorLine2="                   ~~~~~~~~~~~~~~~">
+        <location
+            file="$HOME/StudioProjects/M3UAndroid/gradle/libs.versions.toml"
+            line="7"
+            column="20"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.compose.ui:ui than 1.6.0-alpha06 is available: 1.6.0-alpha07"
+        errorLine1="androidx-compose = &quot;1.6.0-alpha06&quot;"
+        errorLine2="                   ~~~~~~~~~~~~~~~">
+        <location
+            file="$HOME/StudioProjects/M3UAndroid/gradle/libs.versions.toml"
+            line="7"
+            column="20"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.compose.ui:ui-tooling than 1.6.0-alpha06 is available: 1.6.0-alpha07"
+        errorLine1="androidx-compose = &quot;1.6.0-alpha06&quot;"
+        errorLine2="                   ~~~~~~~~~~~~~~~">
+        <location
+            file="$HOME/StudioProjects/M3UAndroid/gradle/libs.versions.toml"
+            line="7"
+            column="20"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.compose.ui:ui-tooling-preview than 1.6.0-alpha06 is available: 1.6.0-alpha07"
+        errorLine1="androidx-compose = &quot;1.6.0-alpha06&quot;"
+        errorLine2="                   ~~~~~~~~~~~~~~~">
+        <location
+            file="$HOME/StudioProjects/M3UAndroid/gradle/libs.versions.toml"
+            line="7"
+            column="20"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.compose.ui:ui-util than 1.6.0-alpha06 is available: 1.6.0-alpha07"
+        errorLine1="androidx-compose = &quot;1.6.0-alpha06&quot;"
+        errorLine2="                   ~~~~~~~~~~~~~~~">
+        <location
+            file="$HOME/StudioProjects/M3UAndroid/gradle/libs.versions.toml"
+            line="7"
+            column="20"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="Upgrade `androidx.compose.foundation` for keyboard and mouse support"
+        errorLine1="androidx-compose = &quot;1.6.0-alpha06&quot;"
+        errorLine2="                   ~~~~~~~~~~~~~~~">
+        <location
+            file="$HOME/StudioProjects/M3UAndroid/gradle/libs.versions.toml"
+            line="7"
+            column="20"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.compose.material3:material3 than 1.2.0-alpha08 is available: 1.2.0-alpha09"
+        errorLine1="androidx-compose-material3 = &quot;1.2.0-alpha08&quot;"
+        errorLine2="                             ~~~~~~~~~~~~~~~">
+        <location
+            file="$HOME/StudioProjects/M3UAndroid/gradle/libs.versions.toml"
+            line="8"
+            column="30"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.navigation:navigation-compose than 2.7.3 is available: 2.7.4"
+        errorLine1="androidx-navigation = &quot;2.7.3&quot;"
+        errorLine2="                      ~~~~~~~">
+        <location
+            file="$HOME/StudioProjects/M3UAndroid/gradle/libs.versions.toml"
+            line="9"
+            column="23"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.hilt:hilt-compiler than 1.1.0-alpha01 is available: 1.1.0-beta01"
+        errorLine1="androidx-hilt-compiler = &quot;1.1.0-alpha01&quot;"
+        errorLine2="                         ~~~~~~~~~~~~~~~">
+        <location
+            file="$HOME/StudioProjects/M3UAndroid/gradle/libs.versions.toml"
+            line="12"
+            column="26"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.hilt:hilt-work than 1.1.0-alpha01 is available: 1.1.0-beta01"
+        errorLine1="androidx-hilt-work = &quot;1.1.0-alpha01&quot;"
+        errorLine2="                     ~~~~~~~~~~~~~~~">
+        <location
+            file="$HOME/StudioProjects/M3UAndroid/gradle/libs.versions.toml"
+            line="13"
+            column="22"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.hilt:hilt-navigation-compose than 1.1.0-alpha01 is available: 1.1.0-beta01"
+        errorLine1="androidx-hilt-navigation-compose = &quot;1.1.0-alpha01&quot;"
+        errorLine2="                                   ~~~~~~~~~~~~~~~">
+        <location
+            file="$HOME/StudioProjects/M3UAndroid/gradle/libs.versions.toml"
+            line="14"
+            column="36"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.tv:tv-foundation than 1.0.0-alpha09 is available: 1.0.0-alpha10"
+        errorLine1="androidx-tv = &quot;1.0.0-alpha09&quot;"
+        errorLine2="              ~~~~~~~~~~~~~~~">
+        <location
+            file="$HOME/StudioProjects/M3UAndroid/gradle/libs.versions.toml"
+            line="15"
+            column="15"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.tv:tv-material than 1.0.0-alpha09 is available: 1.0.0-alpha10"
+        errorLine1="androidx-tv = &quot;1.0.0-alpha09&quot;"
+        errorLine2="              ~~~~~~~~~~~~~~~">
+        <location
+            file="$HOME/StudioProjects/M3UAndroid/gradle/libs.versions.toml"
+            line="15"
+            column="15"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of org.jetbrains.kotlin:kotlin-serialization than 1.9.0 is available: 1.9.10"
+        errorLine1="kotlin = &quot;1.9.0&quot;"
+        errorLine2="         ~~~~~~~">
+        <location
+            file="$HOME/StudioProjects/M3UAndroid/gradle/libs.versions.toml"
+            line="29"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of com.google.android.material:material than 1.9.0 is available: 1.10.0"
+        errorLine1="com-google-android-material = &quot;1.9.0&quot;"
+        errorLine2="                              ~~~~~~~">
+        <location
+            file="$HOME/StudioProjects/M3UAndroid/gradle/libs.versions.toml"
+            line="38"
+            column="31"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.features_scheme_import` appears to be unused"
+        errorLine1="    &lt;string name=&quot;features_scheme_import&quot;>Import as live&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="4"
+            column="13"/>
+    </issue>
+
+</issues>

@@ -40,6 +40,7 @@ androidx-test-uiautomator = "2.2.0"
 androidx-benchmark = "1.1.1"
 
 lint = "31.1.2"
+parser-m3u = "1.3.0"
 
 [libraries]
 androidx-core-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "androidx-core" }
@@ -110,6 +111,8 @@ androidx-test-uiautomator-uiautomator = { group = "androidx.test.uiautomator", n
 androidx-benchmark-benchmark-macro-junit4 = { group = "androidx.benchmark", name = "benchmark-macro-junit4", version.ref = "androidx-benchmark" }
 
 com-android-tools-lint-lint-api = { group = "com.android.tools.lint", name = "lint-api", version.ref = "lint" }
+
+parser-m3u = { group = "com.github.bjoernpetersen", name = "m3u-parser", version.ref = "parser-m3u" }
 
 [plugins]
 com-android-application = { id = "com.android.application", version.ref = "android-gradle-plugin" }

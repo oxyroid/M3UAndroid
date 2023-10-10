@@ -1,5 +1,8 @@
+@file:SuppressLint("UseHelperIssue")
+
 package com.m3u.androidApp
 
+import android.annotation.SuppressLint
 import android.app.PictureInPictureParams
 import android.content.res.Configuration
 import android.graphics.Color
@@ -40,7 +43,7 @@ class MainActivity : ComponentActivity() {
     private var actualOnPipModeChanged: OnPipModeChanged? = null
     private val viewModel: AppViewModel by viewModels()
     private val helper by lazy {
-        createHelper(
+        helper(
             title = viewModel.title::value,
             actions = viewModel.actions::value,
             fob = viewModel.fob::value
@@ -64,7 +67,7 @@ class MainActivity : ComponentActivity() {
         applyConfiguration()
     }
 
-    private fun createHelper(
+    private fun helper(
         title: Method<String>,
         actions: Method<List<Action>>,
         fob: Method<Fob?>
@@ -104,7 +107,9 @@ class MainActivity : ComponentActivity() {
             get() = actualOnPipModeChanged
             set(value) {
                 if (value != null) addOnPictureInPictureModeChangedListener(value)
-                else actualOnPipModeChanged?.let { removeOnPictureInPictureModeChangedListener(it) }
+                else actualOnPipModeChanged?.let {
+                    removeOnPictureInPictureModeChangedListener(it)
+                }
             }
     }
 
@@ -118,7 +123,6 @@ class MainActivity : ComponentActivity() {
         applyConfiguration()
     }
 
-    @Helper.WindowInsetsAllowed
     private fun applyConfiguration() {
         val navigationBarsVisibility = helper.navigationBarsVisibility
         val statusBarsVisibility = helper.statusBarsVisibility
@@ -137,7 +141,6 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    @Helper.WindowInsetsAllowed
     private fun WindowInsetsControllerCompat.default(@InsetsType types: Int) {
         when (types) {
             WindowInsetsCompat.Type.navigationBars() -> {
