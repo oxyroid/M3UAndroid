@@ -2,6 +2,7 @@ package com.m3u.ui.ktx
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
@@ -18,7 +19,7 @@ fun Color.animated(label: String): State<Color> = animateColorAsState(
 
 @Composable
 inline fun animateColor(label: String, producer: () -> Color): State<Color> = animateColorAsState(
-    targetValue = producer.invoke(),
+    targetValue = producer(),
     tween(LocalDuration.current.medium),
     label = label
 )
@@ -32,7 +33,14 @@ fun Dp.animated(label: String): State<Dp> = animateDpAsState(
 
 @Composable
 inline fun animateDp(label: String, producer: () -> Dp): State<Dp> = animateDpAsState(
-    targetValue = producer.invoke(),
+    targetValue = producer(),
+    tween(LocalDuration.current.medium),
+    label = label
+)
+
+@Composable
+inline fun animateInt(label: String, producer: () -> Int): State<Int> = animateIntAsState(
+    targetValue = producer(),
     tween(LocalDuration.current.medium),
     label = label
 )

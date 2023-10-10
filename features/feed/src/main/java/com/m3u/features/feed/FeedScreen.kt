@@ -39,7 +39,7 @@ import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.pullrefresh.PullRefreshIndicator
 import androidx.compose.material.pullrefresh.pullRefresh
 import androidx.compose.material.pullrefresh.rememberPullRefreshState
-import androidx.compose.material3.ScrollableTabRow
+import androidx.compose.material3.PrimaryScrollableTabRow
 import androidx.compose.material3.TabRowDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -79,13 +79,13 @@ import com.m3u.ui.ktx.animateDp
 import com.m3u.ui.ktx.blurEdges
 import com.m3u.ui.ktx.interceptVolumeEvent
 import com.m3u.ui.ktx.isAtTop
+import com.m3u.ui.model.Action
+import com.m3u.ui.model.Fob
 import com.m3u.ui.model.LocalDuration
 import com.m3u.ui.model.LocalHelper
 import com.m3u.ui.model.LocalScalable
 import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.LocalTheme
-import com.m3u.ui.model.Action
-import com.m3u.ui.model.Fob
 import com.m3u.ui.model.Scalable
 import com.m3u.ui.model.repeatOnLifecycle
 import kotlinx.coroutines.delay
@@ -243,6 +243,7 @@ private fun FeedScreen(
             TextField(
                 text = query,
                 onValueChange = onQuery,
+                fontWeight = FontWeight.Bold,
                 height = 32.dp,
                 placeholder = stringResource(R.string.query_placeholder).capitalize(Locale.current),
                 modifier = Modifier
@@ -591,7 +592,7 @@ private fun FeedPager(
         val pagerState = rememberPagerState { channels.size }
         val coroutineScope = rememberCoroutineScope()
         if (channels.size > 1) {
-            ScrollableTabRow(
+            PrimaryScrollableTabRow(
                 selectedTabIndex = pagerState.currentPage,
                 indicator = { tabPositions ->
                     val index = pagerState.currentPage

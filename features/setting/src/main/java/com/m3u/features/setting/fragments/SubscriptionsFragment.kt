@@ -5,6 +5,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.background
+import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -66,7 +67,9 @@ internal fun SubscriptionsFragment(
     val focusRequester = remember { FocusRequester() }
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(spacing.small),
-        modifier = modifier.padding(spacing.medium)
+        modifier = modifier
+            .padding(spacing.medium)
+            .focusGroup()
     ) {
         if (mutedLives.isNotEmpty()) {
             item {

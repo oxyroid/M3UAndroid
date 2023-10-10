@@ -4,8 +4,6 @@
 package com.m3u.ui.components
 
 import androidx.annotation.DrawableRes
-import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -65,6 +63,10 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.m3u.ui.ktx.EffectType
+import com.m3u.ui.ktx.animateDp
+import com.m3u.ui.ktx.animateInt
+import com.m3u.ui.ktx.borderEffect
 import com.m3u.ui.model.LocalDuration
 import com.m3u.ui.model.LocalTheme
 import kotlinx.coroutines.delay
@@ -94,14 +96,14 @@ fun TextField(
     val duration = LocalDuration.current
     val bringIntoViewRequester = remember { BringIntoViewRequester() }
     val interactionSource = remember { MutableInteractionSource() }
-    val interactionSourceState by interactionSource.collectIsFocusedAsState()
+    val interactionSourceFocus by interactionSource.collectIsFocusedAsState()
     val scope = rememberCoroutineScope()
 
     val imeVisible = WindowInsets.isImeVisible
 
     // Bring the composable into view (visible to user).
-    LaunchedEffect(imeVisible, interactionSourceState) {
-        if (imeVisible && interactionSourceState) {
+    LaunchedEffect(imeVisible, interactionSourceFocus) {
+        if (imeVisible && interactionSourceFocus) {
             scope.launch {
                 delay(duration.fast.toLong())
                 bringIntoViewRequester.bringIntoView()
@@ -149,6 +151,11 @@ fun TextField(
                     Modifier
                         .clip(shape)
                         .background(if (isError) LocalTheme.current.error else background)
+                        .borderEffect(
+                            type = EffectType.PRESS,
+                            source = interactionSource,
+                            shape = shape
+                        )
                         .height(height)
                         .padding(horizontal = 12.dp),
                     contentAlignment = if (singleLine) Alignment.CenterStart else Alignment.TopStart,
@@ -169,7 +176,8 @@ fun TextField(
                                 color = contentColor.copy(.35f),
                                 fontSize = fontSize,
                                 maxLines = if (singleLine) 1 else Int.MAX_VALUE,
-                                overflow = TextOverflow.Ellipsis
+                                overflow = TextOverflow.Ellipsis,
+                                fontWeight = FontWeight.Medium
                             )
                         }
                     }
@@ -258,6 +266,11 @@ fun TextField(
                     Modifier
                         .clip(shape)
                         .background(if (isError) theme.error else backgroundColor)
+                        .borderEffect(
+                            type = EffectType.PRESS,
+                            source = interactionSource,
+                            shape = shape
+                        )
                         .height(height)
                         .padding(horizontal = 12.dp),
                     contentAlignment = if (singleLine) Alignment.CenterStart else Alignment.TopStart,
@@ -278,7 +291,8 @@ fun TextField(
                                 color = contentColor.copy(.35f),
                                 fontSize = fontSize,
                                 maxLines = if (singleLine) 1 else Int.MAX_VALUE,
-                                overflow = TextOverflow.Ellipsis
+                                overflow = TextOverflow.Ellipsis,
+                                fontWeight = FontWeight.Medium
                             )
                         }
                     }
@@ -367,6 +381,11 @@ fun LabelField(
                     Modifier
                         .clip(shape)
                         .background(background)
+                        .borderEffect(
+                            type = EffectType.PRESS,
+                            source = interactionSource,
+                            shape = shape
+                        )
                         .height(height),
                 ) {
                     icon?.let {
@@ -391,8 +410,12 @@ fun LabelField(
                     ) {
                         val hasText = textFieldValue.text.isNotEmpty()
 
-                        val animPlaceholder: Dp by animateDpAsState(if (isFocused.value || hasText) 6.dp else 14.dp)
-                        val animPlaceHolderFontSize: Int by animateIntAsState(if (isFocused.value || hasText) 12 else 14)
+                        val animPlaceholder: Dp by animateDp("PlaceholderTranslationY") {
+                            if (isFocused.value || hasText) 6.dp else 14.dp
+                        }
+                        val animPlaceHolderFontSize: Int by animateInt("PlaceholderFontSize") {
+                            if (isFocused.value || hasText) 12 else 14
+                        }
 
                         Text(
                             modifier = Modifier
@@ -404,7 +427,8 @@ fun LabelField(
                             fontSize = animPlaceHolderFontSize.sp,
                             fontFamily = MaterialTheme.typography.body1.fontFamily,
                             maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
+                            overflow = TextOverflow.Ellipsis,
+                            fontWeight = FontWeight.Medium
                         )
 
                         Box(
@@ -443,13 +467,13 @@ fun LabelField(
     val duration = LocalDuration.current
     val bringIntoViewRequester = remember { BringIntoViewRequester() }
     val interactionSource = remember { MutableInteractionSource() }
-    val interactionSourceState by interactionSource.collectIsFocusedAsState()
+    val interactionSourceFocus by interactionSource.collectIsFocusedAsState()
     val scope = rememberCoroutineScope()
     val imeVisible = WindowInsets.isImeVisible
 
     // Bring the composable into view (visible to user).
-    LaunchedEffect(imeVisible, interactionSourceState) {
-        if (imeVisible && interactionSourceState) {
+    LaunchedEffect(imeVisible, interactionSourceFocus) {
+        if (imeVisible && interactionSourceFocus) {
             scope.launch {
                 delay(duration.fast.toLong())
                 bringIntoViewRequester.bringIntoView()
@@ -502,6 +526,11 @@ fun LabelField(
                     modifier = Modifier
                         .clip(shape)
                         .background(background)
+                        .borderEffect(
+                            type = EffectType.PRESS,
+                            source = interactionSource,
+                            shape = shape
+                        )
                         .height(height)
                 ) {
                     icon?.let {
@@ -527,8 +556,12 @@ fun LabelField(
                     ) {
                         val hasText = text.isNotEmpty()
 
-                        val animPlaceholder: Dp by animateDpAsState(if (isFocused.value || hasText) 6.dp else 14.dp)
-                        val animPlaceHolderFontSize: Int by animateIntAsState(if (isFocused.value || hasText) 12 else 14)
+                        val animPlaceholder: Dp by animateDp("PlaceholderTranslationY") {
+                            if (isFocused.value || hasText) 6.dp else 14.dp
+                        }
+                        val animPlaceHolderFontSize: Int by animateInt("PlaceholderFontSize") {
+                            if (isFocused.value || hasText) 12 else 14
+                        }
 
                         Text(
                             modifier = Modifier
@@ -540,7 +573,8 @@ fun LabelField(
                             fontSize = animPlaceHolderFontSize.sp,
                             fontFamily = MaterialTheme.typography.body1.fontFamily,
                             maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
+                            overflow = TextOverflow.Ellipsis,
+                            fontWeight = FontWeight.Medium
                         )
 
                         Box(
