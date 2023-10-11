@@ -19,8 +19,9 @@ import androidx.compose.ui.Modifier
 import com.m3u.androidApp.components.AppBottomSheet
 import com.m3u.androidApp.components.AppSnackHost
 import com.m3u.core.util.withEach
+import com.m3u.ui.Destination
 import com.m3u.ui.M3ULocalProvider
-import com.m3u.ui.TopLevelDestination
+import com.m3u.ui.NavigateTo
 import com.m3u.ui.components.AppTopBar
 import com.m3u.ui.components.IconButton
 import com.m3u.ui.model.Action
@@ -37,8 +38,7 @@ internal fun AppScaffold(
     title: String,
     snacker: String,
     actions: List<Action>,
-    destinations: List<TopLevelDestination>,
-    destination: TopLevelDestination?,
+    rootDestination: Destination.Root?,
     fob: Fob?,
     isSystemBarVisible: Boolean,
     isSystemBarScrollable: Boolean,
@@ -46,7 +46,7 @@ internal fun AppScaffold(
     helper: Helper,
     cinemaMode: Boolean,
     isPlaying: Boolean,
-    navigateToTopLevelDestination: (TopLevelDestination) -> Unit,
+    navigateTo: NavigateTo,
     modifier: Modifier = Modifier,
     onBackPressed: (() -> Unit)? = null,
     foreground: @Composable () -> Unit = {},
@@ -123,9 +123,8 @@ internal fun AppScaffold(
                     if (visible) {
                         AppBottomSheet(
                             fob = fob,
-                            destinations = destinations,
-                            destination = destination,
-                            navigateToTopLevelDestination = navigateToTopLevelDestination,
+                            rootDestination = rootDestination,
+                            navigateTo = navigateTo,
                             modifier = Modifier.fillMaxWidth()
                         )
                     }

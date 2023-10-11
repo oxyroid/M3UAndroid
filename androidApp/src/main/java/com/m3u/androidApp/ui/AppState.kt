@@ -7,31 +7,28 @@ import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.m3u.androidApp.navigation.Destination
-import com.m3u.ui.TopLevelDestination
-import com.m3u.androidApp.navigation.notDestinationTo
 import com.m3u.androidApp.navigation.popupToRoot
-import com.m3u.androidApp.navigation.rootNavigationRoute
+import com.m3u.androidApp.navigation.rootRoute
+import com.m3u.features.about.navigation.aboutRoute
 import com.m3u.features.about.navigation.navigateToAbout
+import com.m3u.features.console.navigation.consoleRoute
 import com.m3u.features.console.navigation.navigateToConsole
+import com.m3u.features.feed.navigation.feedRoute
 import com.m3u.features.feed.navigation.navigateToFeed
+import com.m3u.features.live.navigation.livePlaylistRoute
+import com.m3u.features.live.navigation.liveRoute
 import com.m3u.features.live.navigation.navigateToLive
 import com.m3u.features.live.navigation.navigateToLivePlayList
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
-
-typealias NavigateToDestination = (destination: Destination) -> Unit
+import com.m3u.ui.Destination
 
 @Composable
 fun rememberAppState(
-    coroutineScope: CoroutineScope = rememberCoroutineScope(),
     navController: NavHostController = rememberNavController()
 ): AppState {
     DisposableEffect(navController) {
@@ -43,16 +40,16 @@ fun rememberAppState(
             navController.removeOnDestinationChangedListener(listener)
         }
     }
-    return remember(coroutineScope, navController) {
-        AppState(coroutineScope, navController)
+    return remember(navController) {
+        AppState(navController)
     }
 }
 
 @Stable
 class AppState(
-    private val coroutineScope: CoroutineScope,
     val navController: NavHostController
 ) {
+    // Current Root Destination Page.
     // Initially, we stored the "pagerState" here. However, we encountered an unexpected behavior
     // with "scrollToPage/animateScrollToPage". This function did not update the pagerState#currentPage as intended.
     // This issue arose due to the pager being invisible while navigating through child screens.
@@ -73,39 +70,28 @@ class AppState(
     // It's important to note that this solution might not be the optimal one, and further improvements could be explored.
 
     var currentPage by mutableIntStateOf(0)
-    val currentComposableNavDestination: NavDestination?
+
+    val navDestination: NavDestination?
         @Composable get() = navController.currentBackStackEntryAsState().value?.destination
 
-    private val currentNavDestination: NavDestination?
-        get() = navController.currentBackStackEntry?.destination
-
-    val currentTopLevelDestination: TopLevelDestination?
-        @Composable get() = when (currentComposableNavDestination?.route) {
-            rootNavigationRoute -> topLevelDestinations[currentPage]
+    val rootDestination: Destination.Root?
+        @Composable get() = when (navDestination?.route) {
+            rootRoute -> rootDestinations[currentPage]
             else -> null
         }
 
-    val topLevelDestinations: List<TopLevelDestination> = TopLevelDestination.values().asList()
-
-    fun navigateToTopLevelDestination(destination: TopLevelDestination) {
-        coroutineScope.launch {
-            if (currentNavDestination notDestinationTo Destination.Root::class.java) {
-                navController.popupToRoot()
-            }
-            val index = topLevelDestinations.indexOf(destination)
-            currentPage = index
-        }
-    }
-
-    fun navigateToDestination(destination: Destination) {
+    fun navigateTo(destination: Destination) {
         when (destination) {
-            Destination.Root -> navController.popupToRoot()
+            is Destination.Root -> {
+                navController.popupToRoot()
+                currentPage = rootDestinations.indexOf(destination)
+            }
+
             is Destination.Feed -> navController.navigateToFeed(destination.url)
             is Destination.Live -> navController.navigateToLive(destination.id)
-            is Destination.LivePlayList -> navController.navigateToLivePlayList(
-                destination.ids,
-                destination.initial
-            )
+            is Destination.LivePlayList -> with(destination) {
+                navController.navigateToLivePlayList(ids, initial)
+            }
 
             Destination.Console -> navController.navigateToConsole()
             Destination.About -> navController.navigateToAbout()
@@ -115,4 +101,20 @@ class AppState(
     fun onBackClick() {
         navController.popBackStack()
     }
+
+    private val rootDestinations: List<Destination.Root> = Destination.Root.entries
+}
+
+inline infix fun <reified D : Destination> NavDestination.destinationTo(clazz: Class<D>): Boolean {
+    val targetRoute = when (clazz.name) {
+        Destination.Root::class.java.name -> rootRoute
+        Destination.Live::class.java.name -> liveRoute
+        Destination.LivePlayList::class.java.name -> livePlaylistRoute
+        Destination.Feed::class.java.name -> feedRoute
+        Destination.Console::class.java.name -> consoleRoute
+        Destination.About::class.java.name -> aboutRoute
+        else -> rootRoute
+    }
+
+    return route == targetRoute
 }

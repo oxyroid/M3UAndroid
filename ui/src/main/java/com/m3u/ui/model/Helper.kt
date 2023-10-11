@@ -12,7 +12,7 @@ import androidx.core.app.PictureInPictureModeChangedInfo
 import androidx.core.util.Consumer
 import androidx.lifecycle.Lifecycle
 import com.m3u.core.unspecified.UBoolean
-import com.m3u.ui.TopLevelDestination
+import com.m3u.ui.Destination
 import com.m3u.ui.ktx.LifecycleEffect
 
 typealias OnUserLeaveHint = () -> Unit
@@ -156,7 +156,7 @@ data class Action(
 
 @Immutable
 data class Fob(
-    val relation: TopLevelDestination,
+    val rootDestination: Destination.Root,
     val icon: ImageVector,
     val onClick: () -> Unit
 )

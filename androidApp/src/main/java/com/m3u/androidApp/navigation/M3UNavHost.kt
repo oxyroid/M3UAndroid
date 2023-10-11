@@ -9,14 +9,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
-import com.m3u.androidApp.ui.NavigateToDestination
 import com.m3u.features.about.navigation.aboutScreen
 import com.m3u.features.console.navigation.consoleScreen
 import com.m3u.features.feed.navigation.feedScreen
 import com.m3u.features.live.navigation.livePlaylistScreen
 import com.m3u.features.live.navigation.liveScreen
 import com.m3u.features.main.R
-import com.m3u.ui.TopLevelDestination
+import com.m3u.ui.Destination
+import com.m3u.ui.NavigateTo
 import com.m3u.ui.model.LocalHelper
 
 @Composable
@@ -24,10 +24,9 @@ fun M3UNavHost(
     navController: NavHostController,
     currentPage: Int,
     onCurrentPage: (Int) -> Unit,
-    destinations: List<TopLevelDestination>,
-    navigateToDestination: NavigateToDestination,
+    navigateTo: NavigateTo,
     modifier: Modifier = Modifier,
-    startDestination: String = rootNavigationRoute
+    startDestination: String = rootRoute
 ) {
     val helper = LocalHelper.current
     val context = LocalContext.current
@@ -39,7 +38,6 @@ fun M3UNavHost(
         modifier = modifier,
     ) {
         rootGraph(
-            destinations = destinations,
             currentPage = currentPage,
             onCurrentPage = onCurrentPage,
             navigateToFeed = { feed ->
@@ -47,16 +45,16 @@ fun M3UNavHost(
                     if (feed.specially) context.getString(R.string.imported_feed_title)
                     else ""
                 }
-                navigateToDestination(Destination.Feed(feed.url))
+                navigateTo(Destination.Feed(feed.url))
             },
             navigateToLive = { id ->
-                navigateToDestination(Destination.Live(id))
+                navigateTo(Destination.Live(id))
             },
             navigateToConsole = {
-                navigateToDestination(Destination.Console)
+                navigateTo(Destination.Console)
             },
             navigateToAbout = {
-                navigateToDestination(Destination.About)
+                navigateTo(Destination.About)
             }
         )
 
@@ -72,10 +70,10 @@ fun M3UNavHost(
         )
         feedScreen(
             navigateToLive = { id ->
-                navigateToDestination(Destination.Live(id))
+                navigateTo(Destination.Live(id))
             },
             navigateToPlayList = { ids, initial ->
-                navigateToDestination(Destination.LivePlayList(ids, initial))
+                navigateTo(Destination.LivePlayList(ids, initial))
             }
         )
         consoleScreen()

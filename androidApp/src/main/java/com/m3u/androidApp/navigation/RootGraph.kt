@@ -21,21 +21,20 @@ import com.m3u.features.main.NavigateToFeed
 import com.m3u.features.setting.NavigateToAbout
 import com.m3u.features.setting.NavigateToConsole
 import com.m3u.features.setting.SettingRoute
-import com.m3u.ui.TopLevelDestination
+import com.m3u.ui.Destination
 import com.m3u.ui.ktx.Edge
 import com.m3u.ui.ktx.blurEdges
 import com.m3u.ui.model.LocalTheme
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 
-const val rootNavigationRoute = "root_route"
+const val rootRoute = "root_route"
 
 fun NavController.popupToRoot() {
-    this.popBackStack(rootNavigationRoute, false)
+    this.popBackStack(rootRoute, false)
 }
 
 fun NavGraphBuilder.rootGraph(
-    destinations: List<TopLevelDestination>,
     currentPage: Int,
     onCurrentPage: (Int) -> Unit,
     navigateToFeed: NavigateToFeed,
@@ -43,13 +42,10 @@ fun NavGraphBuilder.rootGraph(
     navigateToConsole: NavigateToConsole,
     navigateToAbout: NavigateToAbout,
 ) {
-    composable(
-        route = rootNavigationRoute
-    ) {
+    composable(rootRoute) {
         RootGraph(
             currentPage = currentPage,
             onCurrentPage = onCurrentPage,
-            destinations = destinations,
             navigateToFeed = navigateToFeed,
             navigateToLive = navigateToLive,
             navigateToConsole = navigateToConsole,
@@ -63,16 +59,14 @@ fun NavGraphBuilder.rootGraph(
 private fun RootGraph(
     currentPage: Int,
     onCurrentPage: (Int) -> Unit,
-    destinations: List<TopLevelDestination>,
     navigateToFeed: NavigateToFeed,
     navigateToLive: NavigateToLive,
     navigateToConsole: NavigateToConsole,
     navigateToAbout: NavigateToAbout,
     modifier: Modifier = Modifier
 ) {
-    val pagerState = rememberPagerState {
-        destinations.size
-    }
+    val destinations = Destination.Root.entries
+    val pagerState = rememberPagerState { destinations.size }
     val actualOnCurrentPage by rememberUpdatedState(onCurrentPage)
 
     LaunchedEffect(pagerState) {
@@ -115,7 +109,7 @@ private fun RootGraph(
             )
     ) { pagerIndex ->
         when (destinations[pagerIndex]) {
-            TopLevelDestination.Main -> {
+            Destination.Root.Main -> {
                 MainRoute(
                     navigateToFeed = navigateToFeed,
                     isCurrentPage = pagerState.currentPage == pagerIndex,
@@ -123,7 +117,7 @@ private fun RootGraph(
                 )
             }
 
-            TopLevelDestination.Favourite -> {
+            Destination.Root.Favourite -> {
                 FavouriteRoute(
                     navigateToLive = navigateToLive,
                     isCurrentPage = pagerState.currentPage == pagerIndex,
@@ -131,7 +125,7 @@ private fun RootGraph(
                 )
             }
 
-            TopLevelDestination.Setting -> {
+            Destination.Root.Setting -> {
                 SettingRoute(
                     navigateToConsole = navigateToConsole,
                     navigateToAbout = navigateToAbout,

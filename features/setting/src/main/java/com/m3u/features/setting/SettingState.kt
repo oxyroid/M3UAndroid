@@ -18,7 +18,6 @@ data class SettingState(
     val url: String = "",
     val uri: Uri = Uri.EMPTY,
     val mutedLives: List<Live> = emptyList(),
-    val destinations: List<String> = emptyList(),
     val localStorage: Boolean = false,
 ) {
     @FeedStrategy
@@ -38,7 +37,7 @@ data class SettingState(
 
     var isSSLVerification: Boolean by configuration.isSSLVerification
     var fullInfoPlayer: Boolean by configuration.fullInfoPlayer
-    var defaultDestination: Int by configuration.initialTabIndex
+    var initialRootDestination: Int by configuration.initialRootDestination
     var noPictureMode: Boolean by configuration.noPictureMode
 
     var cinemaMode: Boolean by configuration.cinemaMode
@@ -48,6 +47,6 @@ data class SettingState(
         get() = if (localStorage) {
             uri.takeIf { uri != Uri.EMPTY }?.toString()
         } else {
-            url
+            url.ifEmpty { null }
         }
 }

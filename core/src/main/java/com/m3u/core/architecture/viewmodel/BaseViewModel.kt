@@ -2,10 +2,12 @@ package com.m3u.core.architecture.viewmodel
 
 import android.app.Application
 import android.content.Context
+import androidx.annotation.StringRes
 import androidx.lifecycle.AndroidViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import java.io.File
 
 /**
  * MVI architecture ViewModel.
@@ -21,6 +23,11 @@ abstract class BaseViewModel<S, in E>(
     protected val readable: S get() = writable.value
     override val state: StateFlow<S> = writable.asStateFlow()
     override fun onEvent(event: E) {}
+    protected val cacheDir: File get() = context.cacheDir
 
-    protected val context: Context get() = getApplication()
+    private val context: Context get() = getApplication()
+
+    protected fun string(@StringRes resId: Int): String = context.getString(resId)
+    protected fun string(@StringRes resId: Int, vararg formatArgs: Any?): String =
+        context.getString(resId, formatArgs)
 }

@@ -50,4 +50,5 @@
     <string name="project_about">about project</string>
     <string name="local_storage">local storage</string>
     <string name="error_unselected_file">no file selected yet</string>
+    <string name="error_blank_url">blank url</string>
 </resources>

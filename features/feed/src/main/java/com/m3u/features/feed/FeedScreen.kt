@@ -71,7 +71,7 @@ import com.m3u.data.database.entity.Live
 import com.m3u.features.feed.components.DialogStatus
 import com.m3u.features.feed.components.FeedDialog
 import com.m3u.features.feed.components.LiveItem
-import com.m3u.ui.TopLevelDestination
+import com.m3u.ui.Destination
 import com.m3u.ui.components.TextField
 import com.m3u.ui.ktx.Edge
 import com.m3u.ui.ktx.EventHandler
@@ -222,7 +222,7 @@ private fun FeedScreen(
             observableStateOf(true) { newValue ->
                 helper.fob = Fob(
                     icon = Icons.Rounded.ArrowCircleUp,
-                    relation = TopLevelDestination.Main,
+                    rootDestination = Destination.Root.Main,
                     onClick = onScrollUp
                 ).takeUnless { newValue }
             }
@@ -391,7 +391,7 @@ private fun PortraitOrientationContent(
         isAtTopState.value = state.isAtTop
     }
     EventHandler(scrollUp) {
-        state.scrollToItem(0)
+        state.animateScrollToItem(0)
     }
     LazyVerticalGrid(
         state = state,
@@ -447,7 +447,7 @@ fun NormalLand(
         isAtTopState.value = state.isAtTop
     }
     EventHandler(scrollUp) {
-        state.scrollToItem(0)
+        state.animateScrollToItem(0)
     }
 
     LazyVerticalGrid(
@@ -507,7 +507,7 @@ private fun TelevisionUIModeContent(
         isAtTopState.value = state.isAtTop
     }
     EventHandler(scrollUp) {
-        state.scrollToItem(0)
+        state.animateScrollToItem(0)
     }
     TvLazyVerticalGrid(
         state = state,
@@ -615,7 +615,7 @@ private fun FeedPager(
                                     indication = null
                                 ) {
                                     coroutineScope.launch {
-                                        pagerState.scrollToPage(index)
+                                        pagerState.animateScrollToPage(index)
                                     }
                                 }
                                 .padding(

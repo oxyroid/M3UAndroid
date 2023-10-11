@@ -42,7 +42,7 @@ import com.m3u.data.database.entity.Live
 import com.m3u.features.setting.fragments.PreferencesFragment
 import com.m3u.features.setting.fragments.ScriptsFragment
 import com.m3u.features.setting.fragments.SubscriptionsFragment
-import com.m3u.ui.TopLevelDestination
+import com.m3u.ui.Destination
 import com.m3u.ui.model.Fob
 import com.m3u.ui.model.LocalHelper
 import com.m3u.ui.model.LocalSpacing
@@ -109,9 +109,7 @@ fun SettingRoute(
         onSSLVerification = { state.isSSLVerification = !state.isSSLVerification },
         fullInfoPlayer = state.fullInfoPlayer,
         onFullInfoPlayer = { state.fullInfoPlayer = !state.fullInfoPlayer },
-        defaultDestination = remember(state.defaultDestination, state.destinations) {
-            state.destinations.getOrNull(state.defaultDestination).orEmpty()
-        },
+        initialRootDestination = state.initialRootDestination,
         scrollDefaultDestination = { viewModel.onEvent(SettingEvent.ScrollDefaultDestination) },
         noPictureMode = state.noPictureMode,
         onNoPictureMode = { state.noPictureMode = !state.noPictureMode },
@@ -159,7 +157,7 @@ private fun SettingScreen(
     onSSLVerification: () -> Unit,
     fullInfoPlayer: Boolean,
     onFullInfoPlayer: () -> Unit,
-    defaultDestination: String,
+    initialRootDestination: Int,
     scrollDefaultDestination: () -> Unit,
     noPictureMode: Boolean,
     onNoPictureMode: () -> Unit,
@@ -177,7 +175,7 @@ private fun SettingScreen(
 
     DisposableEffect(fragment) {
         helper.fob = Fob(
-            relation = TopLevelDestination.Setting,
+            rootDestination = Destination.Root.Setting,
             icon = Icons.Rounded.Settings
         ) {
             fragment = SettingFragments.Root
@@ -227,7 +225,7 @@ private fun SettingScreen(
                     onSSLVerificationEnabled = onSSLVerification,
                     fullInfoPlayer = fullInfoPlayer,
                     onFullInfoPlayer = onFullInfoPlayer,
-                    initialTabTitle = defaultDestination,
+                    initialRootDestination = initialRootDestination,
                     onInitialTabIndex = scrollDefaultDestination,
                     noPictureMode = noPictureMode,
                     onNoPictureMode = onNoPictureMode,
@@ -282,7 +280,7 @@ private fun SettingScreen(
                     onSSLVerificationEnabled = onSSLVerification,
                     fullInfoPlayer = fullInfoPlayer,
                     onFullInfoPlayer = onFullInfoPlayer,
-                    initialTabTitle = defaultDestination,
+                    initialRootDestination = initialRootDestination,
                     onInitialTabIndex = scrollDefaultDestination,
                     noPictureMode = noPictureMode,
                     onNoPictureMode = onNoPictureMode,
@@ -342,7 +340,7 @@ private fun PortraitOrientationContent(
     onSSLVerificationEnabled: () -> Unit,
     fullInfoPlayer: Boolean,
     onFullInfoPlayer: () -> Unit,
-    initialTabTitle: String,
+    initialRootDestination: Int,
     onInitialTabIndex: () -> Unit,
     noPictureMode: Boolean,
     onNoPictureMode: () -> Unit,
@@ -370,12 +368,8 @@ private fun PortraitOrientationContent(
             onClipMode = onClipMode,
             onUIMode = { },
             onGodMode = onGodMode,
-            onFeedManagement = {
-                replaceFragment(SettingFragments.Subscriptions)
-            },
-            onScriptManagement = {
-                replaceFragment(SettingFragments.Scripts)
-            },
+            onFeedManagement = { replaceFragment(SettingFragments.Subscriptions) },
+            onScriptManagement = { replaceFragment(SettingFragments.Scripts) },
             navigateToConsole = navigateToConsole,
             experimentalMode = experimentalMode,
             onExperimentalMode = onExperimentalMode,
@@ -387,7 +381,7 @@ private fun PortraitOrientationContent(
             onSSLVerificationEnabled = onSSLVerificationEnabled,
             fullInfoPlayer = fullInfoPlayer,
             onFullInfoPlayer = onFullInfoPlayer,
-            initialTabTitle = initialTabTitle,
+            initialRootDestination = initialRootDestination,
             onInitialTabIndex = onInitialTabIndex,
             noPictureMode = noPictureMode,
             onNoPictureMode = onNoPictureMode,
@@ -468,7 +462,7 @@ private fun LandscapeOrientationContent(
     onSSLVerificationEnabled: () -> Unit,
     fullInfoPlayer: Boolean,
     onFullInfoPlayer: () -> Unit,
-    initialTabTitle: String,
+    initialRootDestination: Int,
     onInitialTabIndex: () -> Unit,
     noPictureMode: Boolean,
     onNoPictureMode: () -> Unit,
@@ -514,7 +508,7 @@ private fun LandscapeOrientationContent(
             onSSLVerificationEnabled = onSSLVerificationEnabled,
             fullInfoPlayer = fullInfoPlayer,
             onFullInfoPlayer = onFullInfoPlayer,
-            initialTabTitle = initialTabTitle,
+            initialRootDestination = initialRootDestination,
             onInitialTabIndex = onInitialTabIndex,
             noPictureMode = noPictureMode,
             onNoPictureMode = onNoPictureMode,

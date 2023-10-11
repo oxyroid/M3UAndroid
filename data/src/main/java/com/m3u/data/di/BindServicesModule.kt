@@ -5,9 +5,10 @@ package com.m3u.data.di
 import android.app.NotificationManager
 import android.content.Context
 import androidx.core.app.NotificationManagerCompat
-import com.m3u.data.service.UiService
+import androidx.work.WorkManager
 import com.m3u.data.service.NotificationService
 import com.m3u.data.service.PlayerManager
+import com.m3u.data.service.UiService
 import com.m3u.data.service.impl.NotificationServiceImpl
 import com.m3u.data.service.impl.PlayerManagerImpl
 import com.m3u.data.service.impl.UiServiceImpl
@@ -21,10 +22,10 @@ import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
-interface ServiceModule {
+interface BindServicesModule {
     @Binds
     @Singleton
-    fun bindPlayerService(service: PlayerManagerImpl): PlayerManager
+    fun bindPlayerManager(service: PlayerManagerImpl): PlayerManager
 
     @Binds
     @Singleton
@@ -37,7 +38,13 @@ interface ServiceModule {
 
 @Module
 @InstallIn(SingletonComponent::class)
-object SystemServiceModule {
+object ProvidedServicesModule {
+    @Provides
+    @Singleton
+    fun provideWorkManager(@ApplicationContext context: Context): WorkManager {
+        return WorkManager.getInstance(context)
+    }
+
     @Provides
     @Singleton
     fun provideNotificationManagerCompat(@ApplicationContext context: Context): NotificationManagerCompat {

@@ -20,19 +20,18 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import com.m3u.core.util.basic.title
-import com.m3u.ui.NavigateToTopLevelDestination
-import com.m3u.ui.TopLevelDestination
+import com.m3u.ui.Destination
+import com.m3u.ui.NavigateTo
 import com.m3u.ui.components.NavigationSheet
 import com.m3u.ui.ktx.animateColor
 import com.m3u.ui.ktx.animated
-import com.m3u.ui.model.LocalTheme
 import com.m3u.ui.model.Fob
+import com.m3u.ui.model.LocalTheme
 
 @Composable
 fun AppBottomSheet(
-    destinations: List<TopLevelDestination>,
-    navigateToTopLevelDestination: NavigateToTopLevelDestination,
-    destination: TopLevelDestination?,
+    navigateTo: NavigateTo,
+    rootDestination: Destination.Root?,
     fob: Fob?,
     modifier: Modifier = Modifier,
     backgroundColor: Color = BottomSheetDefaults.backgroundColor(),
@@ -40,6 +39,7 @@ fun AppBottomSheet(
     unselectedColor: Color = BottomSheetDefaults.unselectedColor(),
     fobbedColor: Color = BottomSheetDefaults.fobbedColor(),
 ) {
+    val destinations = Destination.Root.entries
     val actualBackgroundColor by backgroundColor.animated("BottomNavigationSheetBackground")
     val actualContentColor by unselectedColor.animated("BottomNavigationSheetContent")
 
@@ -49,8 +49,8 @@ fun AppBottomSheet(
         contentColor = actualContentColor,
         elevation = LocalAbsoluteElevation.current
     ) {
-        val relation = fob?.relation
-        val actualActiveDestination = destination ?: relation
+        val relation = fob?.rootDestination
+        val actualActiveDestination = rootDestination ?: relation
         destinations.forEach { default ->
             val fobbed = default == relation
             val selected = default == actualActiveDestination
@@ -66,7 +66,7 @@ fun AppBottomSheet(
                     if (fobbed && fob != null) {
                         fob.onClick()
                     } else {
-                        navigateToTopLevelDestination(default)
+                        navigateTo(default)
                     }
                 },
                 selectedColor = actualSelectedColor,

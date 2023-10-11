@@ -39,10 +39,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.isUnspecified
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
-import com.m3u.ui.ktx.animateColor
+import com.m3u.core.util.compose.ifUnspecified
+import com.m3u.ui.ktx.animated
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -193,10 +193,11 @@ fun MaskButton(
         }
     }
 
-    val animatedColor by animateColor("MaskButtonTint") {
-        if (tint.isUnspecified) LocalContentColor.current.copy(alpha = LocalContentAlpha.current)
-        else tint
+    val animatedColor by tint.ifUnspecified {
+        LocalContentColor.current.copy(alpha = LocalContentAlpha.current)
     }
+        .animated("MaskButtonTint")
+
     val currentKeepAlive by rememberUpdatedState(state::active)
     TooltipBox(
         positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),

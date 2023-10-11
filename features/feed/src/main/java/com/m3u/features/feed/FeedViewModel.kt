@@ -54,7 +54,7 @@ class FeedViewModel @Inject constructor(
     private fun observe(feedUrl: String) {
         observeJob?.cancel()
         if (feedUrl.isEmpty()) {
-            val message = context.getString(R.string.error_observe_feed, "")
+            val message = string(R.string.error_observe_feed, "")
             onMessage(message)
             return
         }
@@ -74,7 +74,7 @@ class FeedViewModel @Inject constructor(
                         )
                     }
                 } else {
-                    val message = context.getString(R.string.error_observe_feed, feedUrl)
+                    val message = string(R.string.error_observe_feed, feedUrl)
                     onMessage(message)
                 }
             }

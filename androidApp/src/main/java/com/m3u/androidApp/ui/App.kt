@@ -22,34 +22,32 @@ fun App(
     val actions by viewModel.actions.collectAsStateWithLifecycle()
     val fob by viewModel.fob.collectAsStateWithLifecycle()
 
-    val topLevelDestinations = appState.topLevelDestinations
-    val currentDestination = appState.currentComposableNavDestination
-    val currentTopLevelDestination = appState.currentTopLevelDestination
+    val navDestination = appState.navDestination
+    val rootDestination = appState.rootDestination
 
-    val isSystemBarVisible = AppDefaults.isSystemBarVisible(currentDestination)
-    val isBackPressedVisible = AppDefaults.isBackPressedVisible(currentDestination)
-    val isSystemBarScrollable = AppDefaults.isSystemBarScrollable(currentDestination)
-    val isPlaying = AppDefaults.isPlaying(currentDestination)
+    val isSystemBarVisible = AppDefaults.isSystemBarVisible(navDestination)
+    val isBackPressedVisible = AppDefaults.isBackPressedVisible(navDestination)
+    val isSystemBarScrollable = AppDefaults.isSystemBarScrollable(navDestination)
+    val isPlaying = AppDefaults.isPlaying(navDestination)
 
     val cinemaMode = state.cinemaMode
 
     val theme = AppDefaults.theme(state.cinemaMode)
     val title: String by AppDefaults.title(
-        destination = currentTopLevelDestination,
-        default = viewModel.title
+        rootDestination = rootDestination,
+        destination = viewModel.title.collectAsStateWithLifecycle()
     )
 
     AppScaffold(
         title = title,
         snacker = snacker,
         actions = actions,
-        destinations = topLevelDestinations,
-        destination = currentTopLevelDestination,
+        rootDestination = rootDestination,
         fob = fob,
         isSystemBarVisible = isSystemBarVisible,
         isSystemBarScrollable = isSystemBarScrollable,
         onBackPressed = appState::onBackClick.takeIf { isBackPressedVisible },
-        navigateToTopLevelDestination = appState::navigateToTopLevelDestination,
+        navigateTo = appState::navigateTo,
         modifier = Modifier.fillMaxSize(),
         theme = theme,
         helper = helper,
@@ -60,13 +58,12 @@ fun App(
             navController = appState.navController,
             currentPage = appState.currentPage,
             onCurrentPage = { appState.currentPage = it },
-            destinations = topLevelDestinations,
-            navigateToDestination = appState::navigateToDestination,
+            navigateTo = appState::navigateTo,
             modifier = Modifier.fillMaxSize()
         )
     }
 
-    EventHandler(state.navigateTopLevelDestination) {
-        appState.navigateToTopLevelDestination(it)
+    EventHandler(state.rootDestination) {
+        appState.navigateTo(it)
     }
 }

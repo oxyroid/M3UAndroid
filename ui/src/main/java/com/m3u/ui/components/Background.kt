@@ -8,10 +8,10 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.isUnspecified
 import androidx.compose.ui.unit.dp
-import com.m3u.ui.model.LocalTheme
+import com.m3u.core.util.compose.ifUnspecified
 import com.m3u.ui.ktx.animated
+import com.m3u.ui.model.LocalTheme
 
 @Composable
 fun Background(
@@ -20,7 +20,9 @@ fun Background(
     contentColor: Color = LocalTheme.current.onBackground,
     content: @Composable () -> Unit
 ) {
-    val actualBackgroundColor by (if (color.isUnspecified) Color.Transparent else color).animated("BackgroundBackground")
+    val actualBackgroundColor by color
+        .ifUnspecified { Color.Transparent }
+        .animated("BackgroundBackground")
     val actualContentColor by contentColor.animated("BackgroundContent")
     Surface(
         color = actualBackgroundColor,

@@ -70,7 +70,7 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch {
             val feed = feedRepository.unsubscribe(url)
             if (feed == null) {
-                val message = context.getString(R.string.error_unsubscribe_feed)
+                val message = string(R.string.error_unsubscribe_feed)
                 logger.log(message)
             }
         }

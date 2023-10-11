@@ -16,6 +16,7 @@ import com.m3u.core.architecture.viewmodel.BaseViewModel
 import com.m3u.data.repository.LiveRepository
 import com.m3u.data.repository.observeAll
 import com.m3u.data.worker.SubscriptionInBackgroundWorker
+import com.m3u.ui.Destination
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -27,17 +28,15 @@ import javax.inject.Inject
 class SettingViewModel @Inject constructor(
     private val liveRepository: LiveRepository,
     @Publisher.App private val publisher: Publisher,
+    private val workManager: WorkManager,
     application: Application,
     configuration: Configuration,
-    @Logger.Ui private val logger: Logger,
+    @Logger.Ui private val logger: Logger
 ) : BaseViewModel<SettingState, SettingEvent>(
     application = application,
     emptyState = SettingState(
         version = publisher.versionName,
-        configuration = configuration,
-        destinations = List(publisher.destinationsCount) {
-            publisher.getDestination(it)
-        }
+        configuration = configuration
     )
 ) {
     init {
@@ -83,10 +82,10 @@ class SettingViewModel @Inject constructor(
     }
 
     private fun scrollDefaultDestination() {
-        val max = publisher.destinationsCount
-        val current = readable.defaultDestination
-        val target = (current + 1).takeIf { it < max } ?: 0
-        readable.defaultDestination = target
+        val total = Destination.Root.entries.size
+        val current = readable.initialRootDestination
+        val target = (current + 1).takeIf { it < total } ?: 0
+        readable.initialRootDestination = target
     }
 
     private fun onBannedLive(liveId: Int) {
@@ -160,19 +159,21 @@ class SettingViewModel @Inject constructor(
     private fun subscribe() {
         val title = writable.value.title
         if (title.isEmpty()) {
-            val message = context.getString(R.string.error_empty_title)
+            val message = string(R.string.error_empty_title)
             logger.log(message)
             return
         }
         val strategy = readable.feedStrategy
         val url = readable.actualUrl
         if (url == null) {
-            val message = context.getString(R.string.error_unselected_file)
+            val message = when {
+                readable.localStorage -> string(R.string.error_unselected_file)
+                else -> string(R.string.error_blank_url)
+            }
             logger.log(message)
             return
         }
 
-        val workManager = WorkManager.getInstance(context)
         workManager.cancelAllWorkByTag(url)
         val request = OneTimeWorkRequestBuilder<SubscriptionInBackgroundWorker>()
             .setInputData(
@@ -185,7 +186,7 @@ class SettingViewModel @Inject constructor(
             .addTag(url)
             .build()
         workManager.enqueue(request)
-        val message = context.getString(R.string.enqueue_subscribe)
+        val message = string(R.string.enqueue_subscribe)
         logger.log(message)
         writable.update {
             it.copy(

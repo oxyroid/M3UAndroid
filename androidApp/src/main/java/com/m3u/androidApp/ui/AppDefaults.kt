@@ -7,25 +7,21 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavDestination
-import com.m3u.androidApp.navigation.Destination
-import com.m3u.androidApp.navigation.destinationTo
-import com.m3u.androidApp.navigation.notDestinationTo
-import com.m3u.androidApp.navigation.safeDestinationTo
 import com.m3u.core.util.basic.title
-import com.m3u.ui.TopLevelDestination
+import com.m3u.ui.Destination
 import com.m3u.ui.model.ABlackTheme
 import com.m3u.ui.model.DayTheme
 import com.m3u.ui.model.NightTheme
 import com.m3u.ui.model.Theme
-import kotlinx.coroutines.flow.StateFlow
 
 object AppDefaults {
     @Composable
-    fun isSystemBarVisible(currentDestination: NavDestination?): Boolean =
-        currentDestination notDestinationTo Destination.Live::class.java &&
-                currentDestination notDestinationTo Destination.LivePlayList::class.java
+    fun isSystemBarVisible(currentDestination: NavDestination?): Boolean {
+        currentDestination ?: return true
+        return !(currentDestination destinationTo Destination.Live::class.java ||
+                currentDestination destinationTo Destination.LivePlayList::class.java)
+    }
 
     @Composable
     fun isSystemBarScrollable(currentDestination: NavDestination?): Boolean =
@@ -33,26 +29,30 @@ object AppDefaults {
         false
 
     @Composable
-    fun isBackPressedVisible(currentDestination: NavDestination?): Boolean =
-        !currentDestination.safeDestinationTo<Destination.Root>(true)
-//        false
+    fun isBackPressedVisible(currentDestination: NavDestination?): Boolean {
+        currentDestination ?: return false
+        return !(currentDestination destinationTo Destination.Root::class.java)
+    }
 
     @Composable
     fun isPlaying(currentDestination: NavDestination?): Boolean = remember(currentDestination) {
-        currentDestination destinationTo Destination.Live::class.java ||
-                currentDestination destinationTo Destination.LivePlayList::class.java
+        if (currentDestination == null) false
+        else {
+            currentDestination destinationTo Destination.Live::class.java ||
+                    currentDestination destinationTo Destination.LivePlayList::class.java
+        }
     }
 
     @Composable
     fun title(
-        destination: TopLevelDestination?,
-        default: StateFlow<String>
+        rootDestination: Destination.Root?,
+        destination: State<String>
     ): State<String> {
         val context = LocalContext.current
-        val defaultValue by default.collectAsStateWithLifecycle()
-        return remember(destination) {
+        val defaultValue by destination
+        return remember(rootDestination) {
             derivedStateOf {
-                (destination
+                (rootDestination
                     ?.titleTextId
                     ?.let(context::getString)
                     ?: defaultValue)

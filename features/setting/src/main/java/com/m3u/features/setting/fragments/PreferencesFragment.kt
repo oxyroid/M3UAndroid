@@ -32,6 +32,7 @@ import com.m3u.features.setting.components.CheckBoxPreference
 import com.m3u.features.setting.components.IconPreference
 import com.m3u.features.setting.components.Preference
 import com.m3u.features.setting.components.TextPreference
+import com.m3u.ui.Destination
 import com.m3u.ui.model.LocalSpacing
 
 @Composable
@@ -62,7 +63,7 @@ internal fun PreferencesFragment(
     onAutoRefresh: () -> Unit,
     isSSLVerificationEnabled: Boolean,
     onSSLVerificationEnabled: () -> Unit,
-    initialTabTitle: String,
+    initialRootDestination: Int,
     onInitialTabIndex: () -> Unit,
     noPictureMode: Boolean,
     onNoPictureMode: () -> Unit,
@@ -114,7 +115,7 @@ internal fun PreferencesFragment(
                 )
                 TextPreference(
                     title = stringResource(R.string.initial_tab),
-                    content = initialTabTitle,
+                    content = stringResource(Destination.Root.entries[initialRootDestination].iconTextId),
                     onClick = onInitialTabIndex
                 )
                 CheckBoxPreference(

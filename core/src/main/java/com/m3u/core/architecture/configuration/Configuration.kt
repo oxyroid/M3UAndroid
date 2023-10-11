@@ -26,7 +26,7 @@ interface Configuration {
 
     @ExperimentalConfiguration
     val isSSLVerification: MutableState<Boolean>
-    val initialTabIndex: MutableState<Int>
+    val initialRootDestination: MutableState<Int>
     val noPictureMode: MutableState<Boolean>
 
     @ExperimentalConfiguration
@@ -49,7 +49,7 @@ interface Configuration {
         const val DEFAULT_AUTO_REFRESH = false
         const val DEFAULT_SSL_VERIFICATION = true
         const val DEFAULT_FULL_INFO_PLAYER = false
-        const val DEFAULT_INITIAL_TAB_INDEX = 0
+        const val DEFAULT_INITIAL_ROOT_DESTINATION = 0
         const val DEFAULT_NO_PICTURE_MODE = true
         const val DEFAULT_CINEMA_MODE = false
 
@@ -66,7 +66,7 @@ interface Configuration {
         const val AUTO_REFRESH = "autoRefresh"
         const val SSL_VERIFICATION = "sslVerification"
         const val FULL_INFO_PLAYER = "fullInfoPlayer"
-        const val INITIAL_TAB_INDEX = "initialTabIndex"
+        const val INITIAL_ROOT_DESTINATION = "initialRootDestination"
         const val NO_PICTURE_MODE = "noPictureMode"
         const val CINEMA_MODE = "cinemaMode"
     }

@@ -18,7 +18,7 @@ import com.m3u.core.architecture.configuration.Configuration.Companion.DEFAULT_E
 import com.m3u.core.architecture.configuration.Configuration.Companion.DEFAULT_FEED_STRATEGY
 import com.m3u.core.architecture.configuration.Configuration.Companion.DEFAULT_FULL_INFO_PLAYER
 import com.m3u.core.architecture.configuration.Configuration.Companion.DEFAULT_GOD_MODE
-import com.m3u.core.architecture.configuration.Configuration.Companion.DEFAULT_INITIAL_TAB_INDEX
+import com.m3u.core.architecture.configuration.Configuration.Companion.DEFAULT_INITIAL_ROOT_DESTINATION
 import com.m3u.core.architecture.configuration.Configuration.Companion.DEFAULT_NO_PICTURE_MODE
 import com.m3u.core.architecture.configuration.Configuration.Companion.DEFAULT_ROW_COUNT
 import com.m3u.core.architecture.configuration.Configuration.Companion.DEFAULT_SCROLL_MODE
@@ -28,7 +28,7 @@ import com.m3u.core.architecture.configuration.Configuration.Companion.EXPERIMEN
 import com.m3u.core.architecture.configuration.Configuration.Companion.FEED_STRATEGY
 import com.m3u.core.architecture.configuration.Configuration.Companion.FULL_INFO_PLAYER
 import com.m3u.core.architecture.configuration.Configuration.Companion.GOD_MODE
-import com.m3u.core.architecture.configuration.Configuration.Companion.INITIAL_TAB_INDEX
+import com.m3u.core.architecture.configuration.Configuration.Companion.INITIAL_ROOT_DESTINATION
 import com.m3u.core.architecture.configuration.Configuration.Companion.NO_PICTURE_MODE
 import com.m3u.core.architecture.configuration.Configuration.Companion.ROW_COUNT
 import com.m3u.core.architecture.configuration.Configuration.Companion.SCROLL_MODE
@@ -80,8 +80,8 @@ class SharedConfiguration @Inject constructor(
         sharedPreferences.booleanAsState(DEFAULT_SSL_VERIFICATION, SSL_VERIFICATION)
     override val fullInfoPlayer: MutableState<Boolean> =
         sharedPreferences.booleanAsState(DEFAULT_FULL_INFO_PLAYER, FULL_INFO_PLAYER)
-    override val initialTabIndex: MutableState<Int> =
-        sharedPreferences.intAsState(DEFAULT_INITIAL_TAB_INDEX, INITIAL_TAB_INDEX)
+    override val initialRootDestination: MutableState<Int> =
+        sharedPreferences.intAsState(DEFAULT_INITIAL_ROOT_DESTINATION, INITIAL_ROOT_DESTINATION)
     override val noPictureMode: MutableState<Boolean> =
         sharedPreferences.booleanAsState(DEFAULT_NO_PICTURE_MODE, NO_PICTURE_MODE)
     @ExperimentalConfiguration

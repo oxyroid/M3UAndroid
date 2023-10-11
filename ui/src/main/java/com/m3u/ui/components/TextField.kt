@@ -63,10 +63,10 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.m3u.ui.ktx.EffectType
+import com.m3u.ui.ktx.InteractionType
 import com.m3u.ui.ktx.animateDp
 import com.m3u.ui.ktx.animateInt
-import com.m3u.ui.ktx.borderEffect
+import com.m3u.ui.ktx.interactionBorder
 import com.m3u.ui.model.LocalDuration
 import com.m3u.ui.model.LocalTheme
 import kotlinx.coroutines.delay
@@ -151,8 +151,8 @@ fun TextField(
                     Modifier
                         .clip(shape)
                         .background(if (isError) LocalTheme.current.error else background)
-                        .borderEffect(
-                            type = EffectType.PRESS,
+                        .interactionBorder(
+                            type = InteractionType.PRESS,
                             source = interactionSource,
                             shape = shape
                         )
@@ -266,8 +266,8 @@ fun TextField(
                     Modifier
                         .clip(shape)
                         .background(if (isError) theme.error else backgroundColor)
-                        .borderEffect(
-                            type = EffectType.PRESS,
+                        .interactionBorder(
+                            type = InteractionType.PRESS,
                             source = interactionSource,
                             shape = shape
                         )
@@ -381,8 +381,8 @@ fun LabelField(
                     Modifier
                         .clip(shape)
                         .background(background)
-                        .borderEffect(
-                            type = EffectType.PRESS,
+                        .interactionBorder(
+                            type = InteractionType.PRESS,
                             source = interactionSource,
                             shape = shape
                         )
@@ -526,8 +526,8 @@ fun LabelField(
                     modifier = Modifier
                         .clip(shape)
                         .background(background)
-                        .borderEffect(
-                            type = EffectType.PRESS,
+                        .interactionBorder(
+                            type = InteractionType.PRESS,
                             source = interactionSource,
                             shape = shape
                         )

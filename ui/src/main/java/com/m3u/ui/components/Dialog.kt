@@ -20,7 +20,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.isUnspecified
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -28,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import com.m3u.core.util.compose.ifUnspecified
 import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.LocalTheme
 
@@ -54,12 +54,8 @@ fun DialogTextField(
             text = text,
             onValueChange = onTextChange,
             backgroundColor = if (readOnly) Color.Transparent
-            else {
-                if (backgroundColor.isUnspecified) theme.surface
-                else backgroundColor
-            },
-            contentColor = if (contentColor.isUnspecified) theme.onSurface
-            else contentColor,
+            else backgroundColor.ifUnspecified { theme.surface },
+            contentColor = contentColor.ifUnspecified { theme.onSurface },
             readOnly = readOnly,
             fontWeight = FontWeight.ExtraBold,
             fontSize = 20.sp,
@@ -69,8 +65,7 @@ fun DialogTextField(
         if (onIconClick != null && icon != null) {
             IconButton(
                 icon = icon,
-                tint = if (iconTint.isUnspecified) LocalTheme.current.onBackground
-                else iconTint,
+                tint = iconTint.ifUnspecified { LocalTheme.current.onBackground },
                 onClick = onIconClick,
                 contentDescription = null
             )
@@ -91,10 +86,8 @@ fun DialogItem(
     Surface(
         shape = RoundedCornerShape(spacing.medium),
         elevation = 0.dp,
-        color = if (color.isUnspecified) theme.surface
-        else color,
-        contentColor = if (contentColor.isUnspecified) theme.onSurface
-        else contentColor
+        color = color.ifUnspecified { theme.surface },
+        contentColor = contentColor.ifUnspecified { theme.onSurface }
     ) {
         Row(
             horizontalArrangement = Arrangement.Start,
