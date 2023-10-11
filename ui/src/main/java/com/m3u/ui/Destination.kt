@@ -10,7 +10,7 @@ import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.ui.graphics.vector.ImageVector
 
-typealias NavigateTo = (Destination) -> Unit
+typealias Navigate = (Destination) -> Unit
 
 sealed interface Destination {
     enum class Root(

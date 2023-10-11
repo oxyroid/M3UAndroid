@@ -112,7 +112,7 @@ private fun RootGraph(
             Destination.Root.Main -> {
                 MainRoute(
                     navigateToFeed = navigateToFeed,
-                    isCurrentPage = pagerState.currentPage == pagerIndex,
+                    isCurrentPage = currentPage == pagerIndex,
                     modifier = Modifier.fillMaxSize()
                 )
             }
@@ -120,7 +120,7 @@ private fun RootGraph(
             Destination.Root.Favourite -> {
                 FavouriteRoute(
                     navigateToLive = navigateToLive,
-                    isCurrentPage = pagerState.currentPage == pagerIndex,
+                    isCurrentPage = currentPage == pagerIndex,
                     modifier = Modifier.fillMaxSize()
                 )
             }
@@ -129,7 +129,7 @@ private fun RootGraph(
                 SettingRoute(
                     navigateToConsole = navigateToConsole,
                     navigateToAbout = navigateToAbout,
-                    isCurrentPage = pagerState.currentPage == pagerIndex,
+                    isCurrentPage = currentPage == pagerIndex,
                     modifier = Modifier.fillMaxSize()
                 )
             }

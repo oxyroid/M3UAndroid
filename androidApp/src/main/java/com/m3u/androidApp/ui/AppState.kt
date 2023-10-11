@@ -80,7 +80,7 @@ class AppState(
             else -> null
         }
 
-    fun navigateTo(destination: Destination) {
+    fun navigate(destination: Destination) {
         when (destination) {
             is Destination.Root -> {
                 navController.popupToRoot()

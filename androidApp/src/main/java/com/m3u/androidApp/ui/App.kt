@@ -35,7 +35,7 @@ fun App(
     val theme = AppDefaults.theme(state.cinemaMode)
     val title: String by AppDefaults.title(
         rootDestination = rootDestination,
-        destination = viewModel.title.collectAsStateWithLifecycle()
+        defState = viewModel.title.collectAsStateWithLifecycle()
     )
 
     AppScaffold(
@@ -47,7 +47,7 @@ fun App(
         isSystemBarVisible = isSystemBarVisible,
         isSystemBarScrollable = isSystemBarScrollable,
         onBackPressed = appState::onBackClick.takeIf { isBackPressedVisible },
-        navigateTo = appState::navigateTo,
+        navigate = appState::navigate,
         modifier = Modifier.fillMaxSize(),
         theme = theme,
         helper = helper,
@@ -58,12 +58,12 @@ fun App(
             navController = appState.navController,
             currentPage = appState.currentPage,
             onCurrentPage = { appState.currentPage = it },
-            navigateTo = appState::navigateTo,
+            navigate = appState::navigate,
             modifier = Modifier.fillMaxSize()
         )
     }
 
-    EventHandler(state.rootDestination) {
-        appState.navigateTo(it)
+    EventHandler(state.rootDestination) { root ->
+        appState.navigate(root)
     }
 }

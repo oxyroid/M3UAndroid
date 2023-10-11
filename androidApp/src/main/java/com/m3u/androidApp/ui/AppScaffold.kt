@@ -21,7 +21,7 @@ import com.m3u.androidApp.components.AppSnackHost
 import com.m3u.core.util.withEach
 import com.m3u.ui.Destination
 import com.m3u.ui.M3ULocalProvider
-import com.m3u.ui.NavigateTo
+import com.m3u.ui.Navigate
 import com.m3u.ui.components.AppTopBar
 import com.m3u.ui.components.IconButton
 import com.m3u.ui.model.Action
@@ -46,7 +46,7 @@ internal fun AppScaffold(
     helper: Helper,
     cinemaMode: Boolean,
     isPlaying: Boolean,
-    navigateTo: NavigateTo,
+    navigate: Navigate,
     modifier: Modifier = Modifier,
     onBackPressed: (() -> Unit)? = null,
     foreground: @Composable () -> Unit = {},
@@ -124,7 +124,7 @@ internal fun AppScaffold(
                         AppBottomSheet(
                             fob = fob,
                             rootDestination = rootDestination,
-                            navigateTo = navigateTo,
+                            navigate = navigate,
                             modifier = Modifier.fillMaxWidth()
                         )
                     }

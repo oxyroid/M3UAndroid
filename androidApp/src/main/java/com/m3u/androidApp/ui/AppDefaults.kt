@@ -46,10 +46,10 @@ object AppDefaults {
     @Composable
     fun title(
         rootDestination: Destination.Root?,
-        destination: State<String>
+        defState: State<String>
     ): State<String> {
         val context = LocalContext.current
-        val defaultValue by destination
+        val defaultValue by defState
         return remember(rootDestination) {
             derivedStateOf {
                 (rootDestination

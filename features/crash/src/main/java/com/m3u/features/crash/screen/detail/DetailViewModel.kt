@@ -21,7 +21,7 @@ class DetailViewModel @Inject constructor(
     }
 
     private fun init(path: String) {
-        val file = File(context.cacheDir, path)
+        val file = File(cacheDir, path)
         val text = file.readText()
         writable.update {
             it.copy(

@@ -21,7 +21,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import com.m3u.core.util.basic.title
 import com.m3u.ui.Destination
-import com.m3u.ui.NavigateTo
+import com.m3u.ui.Navigate
 import com.m3u.ui.components.NavigationSheet
 import com.m3u.ui.ktx.animateColor
 import com.m3u.ui.ktx.animated
@@ -30,7 +30,7 @@ import com.m3u.ui.model.LocalTheme
 
 @Composable
 fun AppBottomSheet(
-    navigateTo: NavigateTo,
+    navigate: Navigate,
     rootDestination: Destination.Root?,
     fob: Fob?,
     modifier: Modifier = Modifier,
@@ -66,7 +66,7 @@ fun AppBottomSheet(
                     if (fobbed && fob != null) {
                         fob.onClick()
                     } else {
-                        navigateTo(default)
+                        navigate(default)
                     }
                 },
                 selectedColor = actualSelectedColor,

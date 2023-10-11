@@ -16,7 +16,7 @@ import com.m3u.features.live.navigation.livePlaylistScreen
 import com.m3u.features.live.navigation.liveScreen
 import com.m3u.features.main.R
 import com.m3u.ui.Destination
-import com.m3u.ui.NavigateTo
+import com.m3u.ui.Navigate
 import com.m3u.ui.model.LocalHelper
 
 @Composable
@@ -24,7 +24,7 @@ fun M3UNavHost(
     navController: NavHostController,
     currentPage: Int,
     onCurrentPage: (Int) -> Unit,
-    navigateTo: NavigateTo,
+    navigate: Navigate,
     modifier: Modifier = Modifier,
     startDestination: String = rootRoute
 ) {
@@ -45,16 +45,16 @@ fun M3UNavHost(
                     if (feed.specially) context.getString(R.string.imported_feed_title)
                     else ""
                 }
-                navigateTo(Destination.Feed(feed.url))
+                navigate(Destination.Feed(feed.url))
             },
             navigateToLive = { id ->
-                navigateTo(Destination.Live(id))
+                navigate(Destination.Live(id))
             },
             navigateToConsole = {
-                navigateTo(Destination.Console)
+                navigate(Destination.Console)
             },
             navigateToAbout = {
-                navigateTo(Destination.About)
+                navigate(Destination.About)
             }
         )
 
@@ -70,10 +70,10 @@ fun M3UNavHost(
         )
         feedScreen(
             navigateToLive = { id ->
-                navigateTo(Destination.Live(id))
+                navigate(Destination.Live(id))
             },
             navigateToPlayList = { ids, initial ->
-                navigateTo(Destination.LivePlayList(ids, initial))
+                navigate(Destination.LivePlayList(ids, initial))
             }
         )
         consoleScreen()
