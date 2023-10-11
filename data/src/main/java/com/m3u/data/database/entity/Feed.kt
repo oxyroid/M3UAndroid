@@ -14,7 +14,7 @@ data class Feed(
     @ColumnInfo(name = "url")
     val url: String
 ) {
-    val specially: Boolean
+    val local: Boolean
         get() = url == URL_IMPORTED ||
                 url.startsWithAny("file://", "content://")
 

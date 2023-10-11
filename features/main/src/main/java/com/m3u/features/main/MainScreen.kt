@@ -157,7 +157,7 @@ fun PortraitOrientationContent(
             FeedItem(
                 label = detail.feed.calculateUiTitle(),
                 number = detail.count,
-                special = detail.feed.specially,
+                local = detail.feed.local,
                 modifier = Modifier.fillParentMaxWidth(),
                 onClick = {
                     navigateToFeed(detail.feed)
@@ -197,7 +197,7 @@ private fun LandscapeOrientationContent(
             FeedItem(
                 label = detail.feed.calculateUiTitle(),
                 number = detail.count,
-                special = detail.feed.specially,
+                local = detail.feed.local,
                 modifier = Modifier.fillMaxWidth(),
                 onClick = {
                     navigateToFeed(detail.feed)
@@ -213,7 +213,7 @@ private fun LandscapeOrientationContent(
 @Composable
 private fun Feed.calculateUiTitle(): AnnotatedString {
     val actual = title.ifEmpty {
-        if (specially) stringResource(R.string.imported_feed_title)
+        if (local) stringResource(R.string.imported_feed_title)
         else ""
     }
     return AnnotatedString(

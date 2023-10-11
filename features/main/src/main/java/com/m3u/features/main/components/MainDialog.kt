@@ -62,17 +62,21 @@ internal fun MainDialog(
             val context = LocalContext.current
             val currentStatus = remember { status as MainDialog.Selections }
             if (status is MainDialog.Selections) {
-                var renamedText by remember {
+                val editable = with(currentStatus.feed) {
+                    !local || title.isNotEmpty()
+                }
+                var renamedText by remember(currentStatus) {
                     mutableStateOf(
-                        if (!currentStatus.feed.specially) currentStatus.feed.title
-                        else context.getString(R.string.imported_feed_title)
+                        with(currentStatus.feed) {
+                            if (editable) title else context.getString(R.string.imported_feed_title)
+                        }
                     )
                 }
                 DialogTextField(
                     text = renamedText,
                     onTextChange = { renamedText = it },
                     readOnly = !editMode,
-                    icon = Icons.Rounded.Edit.takeUnless { currentStatus.feed.specially },
+                    icon = Icons.Rounded.Edit.takeIf { editable },
                     iconTint = if (editMode) theme.tint else theme.onBackground,
                     onIconClick = {
                         val target = !editMode
@@ -87,7 +91,7 @@ internal fun MainDialog(
                         unsubscribe(currentStatus.feed.url)
                         update(MainDialog.Idle)
                     }
-                    if (!currentStatus.feed.specially) {
+                    if (!currentStatus.feed.local) {
                         val clipboardManager = LocalClipboardManager.current
                         DialogItem(R.string.copy_feed_url) {
                             val annotatedString = AnnotatedString(currentStatus.feed.url)

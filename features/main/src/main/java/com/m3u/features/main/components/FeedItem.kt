@@ -8,9 +8,13 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.ContentAlpha
+import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.DriveFileMove
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -34,7 +38,7 @@ import com.m3u.ui.model.LocalTheme
 internal fun FeedItem(
     label: AnnotatedString,
     number: Int,
-    special: Boolean,
+    local: Boolean,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -43,12 +47,12 @@ internal fun FeedItem(
     val theme = LocalTheme.current
     val actualBackgroundColor by theme.surface.animated("FeedItemBackground")
     val actualContentColor by theme.onSurface.animated("FeedItemContent")
-    val actualBorder by animateDp("FeedItemBorder") {
-        if (special) spacing.extraSmall
+    val actualBorderDp by animateDp("FeedItemBorder") {
+        if (local) spacing.extraSmall
         else spacing.none
     }
     val actualBorderColor by animateColor("FeedItemBorderColor") {
-        if (special) Color.Black.copy(alpha = 0.12f)
+        if (local) Color.Black.copy(alpha = 0.12f)
         else Color.Transparent
     }
     Surface(
@@ -56,7 +60,7 @@ internal fun FeedItem(
         color = actualBackgroundColor,
         contentColor = actualContentColor,
         elevation = spacing.none,
-        border = BorderStroke(actualBorder, actualBorderColor)
+        border = BorderStroke(actualBorderDp, actualBorderColor)
     ) {
         OuterRow(
             modifier = modifier
@@ -66,6 +70,13 @@ internal fun FeedItem(
                 ),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            if (local) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Rounded.DriveFileMove,
+                    contentDescription = null,
+                    tint = actualContentColor.copy(alpha = ContentAlpha.medium)
+                )
+            }
             Text(
                 text = label,
                 style = MaterialTheme.typography.body1,
