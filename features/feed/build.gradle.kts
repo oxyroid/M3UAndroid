@@ -58,4 +58,6 @@ dependencies {
     ksp(libs.androidx.hilt.hilt.compiler)
 
     implementation(libs.androidx.work.work.runtime.ktx)
+
+    implementation(libs.com.google.accompanist.accompanist.permissions)
 }

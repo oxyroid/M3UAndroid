@@ -39,12 +39,11 @@ class MediaRepositoryImpl @Inject constructor(
             val bitmap = drawable.toBitmap()
             val name = "Picture_${System.currentTimeMillis()}.png"
             val file = File(directory, name)
-            if (!file.exists()) {
-                withContext(Dispatchers.IO) {
-                    file.createNewFile()
-                }
-            }
             withContext(Dispatchers.IO) {
+                if (!directory.exists()) {
+                    directory.mkdirs()
+                }
+                file.createNewFile()
                 file.outputStream().buffered().use {
                     bitmap.compress(Bitmap.CompressFormat.PNG, 100, it)
                     it.flush()

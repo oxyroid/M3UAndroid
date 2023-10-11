@@ -2,6 +2,7 @@
 
 package com.m3u.features.feed
 
+import android.Manifest
 import android.content.res.Configuration.ORIENTATION_LANDSCAPE
 import android.content.res.Configuration.ORIENTATION_PORTRAIT
 import android.content.res.Configuration.UI_MODE_TYPE_APPLIANCE
@@ -65,6 +66,9 @@ import androidx.tv.foundation.lazy.grid.TvGridCells
 import androidx.tv.foundation.lazy.grid.TvLazyVerticalGrid
 import androidx.tv.foundation.lazy.grid.items
 import androidx.tv.foundation.lazy.grid.rememberTvLazyGridState
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.PermissionStatus
+import com.google.accompanist.permissions.rememberPermissionState
 import com.m3u.core.util.compose.observableStateOf
 import com.m3u.core.wrapper.Event
 import com.m3u.data.database.entity.Live
@@ -98,6 +102,7 @@ private typealias OnLongClickItem = (Live) -> Unit
 private typealias OnScrollUp = () -> Unit
 private typealias OnRefresh = () -> Unit
 
+@OptIn(ExperimentalPermissionsApi::class)
 @Composable
 internal fun FeedRoute(
     feedUrl: String,
@@ -109,6 +114,9 @@ internal fun FeedRoute(
     val helper = LocalHelper.current
     val state by viewModel.state.collectAsStateWithLifecycle()
     var dialogStatus: DialogStatus by remember { mutableStateOf(DialogStatus.Idle) }
+    val writeExternalPermissionState = rememberPermissionState(
+        Manifest.permission.WRITE_EXTERNAL_STORAGE
+    )
 
     LaunchedEffect(feedUrl) {
         viewModel.onEvent(FeedEvent.Observe(feedUrl))
@@ -185,7 +193,13 @@ internal fun FeedRoute(
         onUpdate = { dialogStatus = it },
         onFavorite = { id, target -> viewModel.onEvent(FeedEvent.Favourite(id, target)) },
         onBanned = { id, target -> viewModel.onEvent(FeedEvent.Mute(id, target)) },
-        onSavePicture = { viewModel.onEvent(FeedEvent.SavePicture(it)) }
+        onSavePicture = { id ->
+            if (writeExternalPermissionState.status is PermissionStatus.Denied) {
+                writeExternalPermissionState.launchPermissionRequest()
+                return@FeedDialog
+            }
+            viewModel.onEvent(FeedEvent.SavePicture(id))
+        }
     )
 }
 

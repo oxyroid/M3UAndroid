@@ -40,33 +40,32 @@ internal fun FeedDialog(
             onUpdate(DialogStatus.Idle)
         },
         modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(LocalSpacing.current.small),
-        content = {
-            if (status is DialogStatus.Selections) {
-                DialogTextField(
-                    text = status.live.title,
-                )
-                val favourite = status.live.favourite
-                DialogItem(
-                    if (favourite) R.string.dialog_favourite_cancel_title
-                    else R.string.dialog_favourite_title
-                ) {
+        verticalArrangement = Arrangement.spacedBy(LocalSpacing.current.small)
+    ) {
+        if (status is DialogStatus.Selections) {
+            DialogTextField(
+                text = status.live.title,
+            )
+            val favourite = status.live.favourite
+            DialogItem(
+                if (favourite) R.string.dialog_favourite_cancel_title
+                else R.string.dialog_favourite_title
+            ) {
+                onUpdate(DialogStatus.Idle)
+                onFavorite(status.live.id, !favourite)
+            }
+            DialogItem(R.string.dialog_mute_title) {
+                onUpdate(DialogStatus.Idle)
+                onBanned(status.live.id, true)
+            }
+            if (!status.live.cover.isNullOrEmpty()) {
+                DialogItem(R.string.dialog_save_picture_title) {
                     onUpdate(DialogStatus.Idle)
-                    onFavorite(status.live.id, !favourite)
-                }
-                DialogItem(R.string.dialog_mute_title) {
-                    onUpdate(DialogStatus.Idle)
-                    onBanned(status.live.id, true)
-                }
-                if (!status.live.cover.isNullOrEmpty()) {
-                    DialogItem(R.string.dialog_save_picture_title) {
-                        onUpdate(DialogStatus.Idle)
-                        onSavePicture(status.live.id)
-                    }
+                    onSavePicture(status.live.id)
                 }
             }
         }
-    )
+    }
 }
 
 internal sealed class DialogStatus {
