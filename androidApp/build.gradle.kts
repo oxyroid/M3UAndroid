@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.com.google.dagger.hilt.android)
     alias(libs.plugins.com.google.devtools.ksp)
     alias(libs.plugins.androidx.baselineprofile)
+    alias(libs.plugins.com.google.gms.google.services)
 }
 
 android {
@@ -84,4 +85,9 @@ dependencies {
     implementation(libs.androidx.work.work.runtime.ktx)
     ksp(libs.androidx.hilt.hilt.compiler)
     implementation(libs.androidx.hilt.hilt.work)
+
+    debugImplementation(libs.com.squareup.leakcanary.leakcanary.android)
+
+    implementation(platform("com.google.firebase:firebase-bom:32.3.1"))
+    implementation("com.google.firebase:firebase-analytics-ktx")
 }
