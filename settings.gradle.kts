@@ -32,3 +32,4 @@ include(
 )
 include(":benchmark")
 include(":lint")
+include(":i18n")

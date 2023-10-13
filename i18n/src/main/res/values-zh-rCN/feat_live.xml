@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="feat_live_playback_state_idle">空闲</string>
+    <string name="feat_live_playback_state_buffering">缓冲中</string>
+    <string name="feat_live_playback_state_ready">就绪</string>
+    <string name="feat_live_playback_state_ended">结束</string>
+    <string name="feat_live_tooltip_on_back_pressed">返回</string>
+    <string name="feat_live_tooltip_mute">静音</string>
+    <string name="feat_live_tooltip_unmute">取消静音</string>
+    <string name="feat_live_tooltip_favourite">收藏</string>
+    <string name="feat_live_tooltip_unfavourite">取消收藏</string>
+    <string name="feat_live_tooltip_record">录制</string>
+    <string name="feat_live_tooltip_unrecord">停止录制</string>
+    <string name="feat_live_tooltip_cast">投屏</string>
+    <string name="feat_live_tooltip_enter_pip_mode">画中画模式</string>
+    <string name="feat_live_dlna_devices">DLNA 设备</string>
+</resources>

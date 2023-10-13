@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import com.m3u.i18n.R as I18R
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
@@ -70,7 +71,7 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch {
             val feed = feedRepository.unsubscribe(url)
             if (feed == null) {
-                val message = string(R.string.error_unsubscribe_feed)
+                val message = string(I18R.string.feat_main_error_unsubscribe_feed)
                 logger.log(message)
             }
         }

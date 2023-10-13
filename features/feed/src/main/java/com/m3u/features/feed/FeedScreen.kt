@@ -94,6 +94,7 @@ import com.m3u.ui.model.Scalable
 import com.m3u.ui.model.repeatOnLifecycle
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import com.m3u.i18n.R as I18R
 
 internal typealias NavigateToLive = (liveId: Int) -> Unit
 internal typealias NavigateToPlaylist = (playlist: List<Int>, initial: Int) -> Unit
@@ -259,7 +260,7 @@ private fun FeedScreen(
                 onValueChange = onQuery,
                 fontWeight = FontWeight.Bold,
                 height = 32.dp,
-                placeholder = stringResource(R.string.query_placeholder).capitalize(Locale.current),
+                placeholder = stringResource(I18R.string.feat_feed_query_placeholder).capitalize(Locale.current),
                 modifier = Modifier
                     .padding(spacing.medium)
                     .fillMaxWidth()

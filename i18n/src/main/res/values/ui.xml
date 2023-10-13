@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="ui_app_name">M3U</string>
+
+    <string name="ui_destination_main">For You</string>
+    <string name="ui_destination_favourite">Favourite</string>
+    <string name="ui_destination_setting">Settings</string>
+
+    <string name="ui_title_setting">Settings</string>
+    <string name="ui_title_favourite">Favourite</string>
+
+    <string name="ui_error_unknown">unknown error</string>
+    <string name="ui_cd_top_bar_on_back_pressed">back</string>
+
+    <string name="ui_theme_card_left">ho</string>
+    <string name="ui_theme_card_right">la</string>
+</resources>

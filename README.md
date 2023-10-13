@@ -1,5 +1,12 @@
 # M3UAndroid
 ![](docs/img/feat_live_3.png)
+
+### 📢 Translations Wanted 📢
+
+Please submit a pull request if you want to help with translation.
+
+App strings ([ENGLISH](i18n/src/main/res/values), [Simplified Chinese](i18n/src/main/res/values-zh-rCN))
+
 ### Features
 
 - [x] M3U and M3U8 files.

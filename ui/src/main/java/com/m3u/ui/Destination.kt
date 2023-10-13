@@ -9,6 +9,7 @@ import androidx.compose.material.icons.rounded.Collections
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.ui.graphics.vector.ImageVector
+import com.m3u.i18n.R as I18R
 
 typealias Navigate = (Destination) -> Unit
 
@@ -22,20 +23,20 @@ sealed interface Destination {
         Main(
             selectedIcon = Icons.Rounded.Home,
             unselectedIcon = Icons.Outlined.Home,
-            iconTextId = R.string.destination_main,
-            titleTextId = R.string.app_name
+            iconTextId = I18R.string.ui_destination_main,
+            titleTextId = I18R.string.ui_app_name
         ),
         Favourite(
             selectedIcon = Icons.Rounded.Collections,
             unselectedIcon = Icons.Outlined.Collections,
-            iconTextId = R.string.destination_favourite,
-            titleTextId = R.string.title_favourite
+            iconTextId = I18R.string.ui_destination_favourite,
+            titleTextId = I18R.string.ui_title_favourite
         ),
         Setting(
             selectedIcon = Icons.Rounded.Settings,
             unselectedIcon = Icons.Outlined.Settings,
-            iconTextId = R.string.destination_setting,
-            titleTextId = R.string.title_setting
+            iconTextId = I18R.string.ui_destination_setting,
+            titleTextId = I18R.string.ui_title_setting
         );
 
         companion object : Key<Root>

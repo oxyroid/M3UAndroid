@@ -15,13 +15,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import com.m3u.data.database.entity.Feed
-import com.m3u.features.main.R
 import com.m3u.ui.components.AppDialog
 import com.m3u.ui.components.DialogItem
 import com.m3u.ui.components.DialogTextField
 import com.m3u.ui.ktx.animateDp
 import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.LocalTheme
+import com.m3u.i18n.R as I18R
 
 internal typealias OnUpdateStatus = (MainDialog) -> Unit
 internal typealias OnUnsubscribe = (feedUrl: String) -> Unit
@@ -68,7 +68,7 @@ internal fun MainDialog(
                 var renamedText by remember(currentStatus) {
                     mutableStateOf(
                         with(currentStatus.feed) {
-                            if (editable) title else context.getString(R.string.imported_feed_title)
+                            if (editable) title else context.getString(I18R.string.feat_main_imported_feed_title)
                         }
                     )
                 }
@@ -87,13 +87,13 @@ internal fun MainDialog(
                     }
                 )
                 if (!editMode) {
-                    DialogItem(R.string.unsubscribe_feed) {
+                    DialogItem(I18R.string.feat_main_unsubscribe_feed) {
                         unsubscribe(currentStatus.feed.url)
                         update(MainDialog.Idle)
                     }
                     if (!currentStatus.feed.local) {
                         val clipboardManager = LocalClipboardManager.current
-                        DialogItem(R.string.copy_feed_url) {
+                        DialogItem(I18R.string.feat_main_copy_feed_url) {
                             val annotatedString = AnnotatedString(currentStatus.feed.url)
                             clipboardManager.setText(annotatedString)
                             update(MainDialog.Idle)

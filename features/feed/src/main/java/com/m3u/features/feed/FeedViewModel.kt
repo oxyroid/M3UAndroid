@@ -23,6 +23,7 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import com.m3u.i18n.R as I18R
 
 @HiltViewModel
 class FeedViewModel @Inject constructor(
@@ -54,7 +55,7 @@ class FeedViewModel @Inject constructor(
     private fun observe(feedUrl: String) {
         observeJob?.cancel()
         if (feedUrl.isEmpty()) {
-            val message = string(R.string.error_observe_feed, "")
+            val message = string(I18R.string.feat_feed_error_observe_feed, "")
             onMessage(message)
             return
         }
@@ -74,7 +75,7 @@ class FeedViewModel @Inject constructor(
                         )
                     }
                 } else {
-                    val message = string(R.string.error_observe_feed, feedUrl)
+                    val message = string(I18R.string.feat_feed_error_observe_feed, feedUrl)
                     onMessage(message)
                 }
             }

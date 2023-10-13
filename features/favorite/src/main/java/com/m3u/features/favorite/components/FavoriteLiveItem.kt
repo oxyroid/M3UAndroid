@@ -25,7 +25,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import com.m3u.data.database.entity.Live
-import com.m3u.features.favorite.R
 import com.m3u.ui.components.Image
 import com.m3u.ui.components.TextBadge
 import com.m3u.ui.model.LocalScalable
@@ -33,6 +32,7 @@ import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.LocalTheme
 import com.m3u.ui.ktx.animated
 import java.net.URI
+import com.m3u.i18n.R as I18R
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -52,7 +52,7 @@ internal fun FavoriteItem(
     val actualBackgroundColor by theme.surface.animated("FavoriteItemBackground")
     val actualContentColor by theme.onSurface.animated("FavoriteItemContent")
     val scheme = remember(live) {
-        URI(live.url).scheme ?: context.getString(R.string.scheme_unknown).uppercase()
+        URI(live.url).scheme ?: context.getString(I18R.string.feat_feed_scheme_unknown).uppercase()
     }
     Surface(
         shape = RoundedCornerShape(spacing.medium),

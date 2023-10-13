@@ -5,5 +5,5 @@ plugins {
 }
 dependencies {
     compileOnly("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
-    compileOnly("com.android.tools.lint:lint:31.1.2")
+    compileOnly(libs.com.android.tools.lint.lint.api)
 }

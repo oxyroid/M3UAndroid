@@ -14,10 +14,10 @@ import com.m3u.features.console.navigation.consoleScreen
 import com.m3u.features.feed.navigation.feedScreen
 import com.m3u.features.live.navigation.livePlaylistScreen
 import com.m3u.features.live.navigation.liveScreen
-import com.m3u.features.main.R
 import com.m3u.ui.Destination
 import com.m3u.ui.Navigate
 import com.m3u.ui.model.LocalHelper
+import com.m3u.i18n.R as I18R
 
 @Composable
 fun M3UNavHost(
@@ -42,7 +42,7 @@ fun M3UNavHost(
             onCurrentPage = onCurrentPage,
             navigateToFeed = { feed ->
                 helper.title = feed.title.ifEmpty {
-                    if (feed.local) context.getString(R.string.imported_feed_title)
+                    if (feed.local) context.getString(I18R.string.feat_main_imported_feed_title)
                     else ""
                 }
                 navigate(Destination.Feed(feed.url))

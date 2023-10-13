@@ -19,6 +19,7 @@ import com.m3u.ui.components.MonoText
 import com.m3u.ui.model.LocalHelper
 import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.repeatOnLifecycle
+import com.m3u.i18n.R as I18R
 
 @Composable
 internal fun AboutRoute(
@@ -26,7 +27,7 @@ internal fun AboutRoute(
     viewModel: AboutViewModel = hiltViewModel()
 ) {
     val helper = LocalHelper.current
-    val title = stringResource(R.string.about_title)
+    val title = stringResource(I18R.string.feat_about_title)
     helper.repeatOnLifecycle {
         this.title = title
     }

@@ -30,6 +30,7 @@ import com.m3u.ui.components.TextField
 import com.m3u.ui.model.LocalHelper
 import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.repeatOnLifecycle
+import com.m3u.i18n.R as I18R
 
 @Composable
 internal fun ConsoleRoute(
@@ -37,7 +38,7 @@ internal fun ConsoleRoute(
     viewModel: ConsoleViewModel = hiltViewModel()
 ) {
     val helper = LocalHelper.current
-    val title = stringResource(R.string.console_title)
+    val title = stringResource(I18R.string.feat_console_title)
     helper.repeatOnLifecycle {
         this.title = title
     }

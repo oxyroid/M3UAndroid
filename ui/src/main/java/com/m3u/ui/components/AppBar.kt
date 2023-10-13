@@ -57,7 +57,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.lerp
-import com.m3u.ui.R
+import com.m3u.i18n.R as I18R
 import com.m3u.ui.ktx.animated
 import com.m3u.ui.model.LocalDuration
 import com.m3u.ui.model.LocalSpacing
@@ -183,7 +183,7 @@ fun AppTopBar(
                     ) {
                         IconButton(
                             icon = Icons.AutoMirrored.Rounded.ArrowBack,
-                            contentDescription = stringResource(R.string.cd_top_bar_on_back_pressed),
+                            contentDescription = stringResource(I18R.string.ui_cd_top_bar_on_back_pressed),
                             onClick = { if (progress > 0) onBackPressed?.invoke() },
                             modifier = Modifier.wrapContentSize()
                         )

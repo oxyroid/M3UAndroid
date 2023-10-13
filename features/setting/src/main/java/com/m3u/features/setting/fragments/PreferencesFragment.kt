@@ -27,13 +27,13 @@ import com.m3u.core.annotation.OnClipMode
 import com.m3u.core.annotation.OnFeedStrategy
 import com.m3u.features.setting.NavigateToAbout
 import com.m3u.features.setting.NavigateToConsole
-import com.m3u.features.setting.R
 import com.m3u.features.setting.components.CheckBoxPreference
 import com.m3u.features.setting.components.IconPreference
 import com.m3u.features.setting.components.Preference
 import com.m3u.features.setting.components.TextPreference
 import com.m3u.ui.Destination
 import com.m3u.ui.model.LocalSpacing
+import com.m3u.i18n.R as I18R
 
 @Composable
 internal fun PreferencesFragment(
@@ -84,43 +84,43 @@ internal fun PreferencesFragment(
                 verticalArrangement = Arrangement.spacedBy(1.dp)
             ) {
                 Preference(
-                    title = stringResource(R.string.feed_management),
+                    title = stringResource(I18R.string.feat_setting_feed_management),
                     enabled = true,
                     onClick = onFeedManagement
                 )
 
                 TextPreference(
-                    title = stringResource(R.string.sync_mode),
+                    title = stringResource(I18R.string.feat_setting_sync_mode),
                     content = when (feedStrategy) {
-                        FeedStrategy.ALL -> stringResource(R.string.sync_mode_all)
-                        FeedStrategy.SKIP_FAVORITE -> stringResource(R.string.sync_mode_skip_favourite)
+                        FeedStrategy.ALL -> stringResource(I18R.string.feat_setting_sync_mode_all)
+                        FeedStrategy.SKIP_FAVORITE -> stringResource(I18R.string.feat_setting_sync_mode_skip_favourite)
                         else -> ""
                     },
                     onClick = onFeedStrategy
                 )
                 TextPreference(
-                    title = stringResource(R.string.clip_mode),
+                    title = stringResource(I18R.string.feat_setting_clip_mode),
                     content = when (clipMode) {
-                        ClipMode.ADAPTIVE -> stringResource(R.string.clip_mode_adaptive)
-                        ClipMode.CLIP -> stringResource(R.string.clip_mode_clip)
-                        ClipMode.STRETCHED -> stringResource(R.string.clip_mode_stretched)
+                        ClipMode.ADAPTIVE -> stringResource(I18R.string.feat_setting_clip_mode_adaptive)
+                        ClipMode.CLIP -> stringResource(I18R.string.feat_setting_clip_mode_clip)
+                        ClipMode.STRETCHED -> stringResource(I18R.string.feat_setting_clip_mode_stretched)
                         else -> ""
                     },
                     onClick = onClipMode
                 )
                 TextPreference(
-                    title = stringResource(R.string.connect_timeout),
+                    title = stringResource(I18R.string.feat_setting_connect_timeout),
                     content = "${connectTimeout / 1000}s",
                     onClick = onConnectTimeout
                 )
                 TextPreference(
-                    title = stringResource(R.string.initial_tab),
+                    title = stringResource(I18R.string.feat_setting_initial_tab),
                     content = stringResource(Destination.Root.entries[initialRootDestination].iconTextId),
                     onClick = onInitialTabIndex
                 )
                 CheckBoxPreference(
-                    title = stringResource(R.string.auto_refresh),
-                    subtitle = stringResource(R.string.auto_refresh_description),
+                    title = stringResource(I18R.string.feat_setting_auto_refresh),
+                    subtitle = stringResource(I18R.string.feat_setting_auto_refresh_description),
                     checked = autoRefresh,
                     onCheckedChange = { newValue ->
                         if (newValue != autoRefresh) {
@@ -129,8 +129,8 @@ internal fun PreferencesFragment(
                     }
                 )
                 CheckBoxPreference(
-                    title = stringResource(R.string.no_picture_mode),
-                    subtitle = stringResource(R.string.no_picture_mode_description),
+                    title = stringResource(I18R.string.feat_setting_no_picture_mode),
+                    subtitle = stringResource(I18R.string.feat_setting_no_picture_mode_description),
                     checked = noPictureMode,
                     onCheckedChange = { newValue ->
                         if (newValue != noPictureMode) {
@@ -139,8 +139,8 @@ internal fun PreferencesFragment(
                     }
                 )
                 CheckBoxPreference(
-                    title = stringResource(R.string.full_info_player),
-                    subtitle = stringResource(R.string.full_info_player_description),
+                    title = stringResource(I18R.string.feat_setting_full_info_player),
+                    subtitle = stringResource(I18R.string.feat_setting_full_info_player_description),
                     checked = fullInfoPlayer,
                     onCheckedChange = { newValue ->
                         if (newValue != fullInfoPlayer) {
@@ -149,8 +149,8 @@ internal fun PreferencesFragment(
                     }
                 )
                 CheckBoxPreference(
-                    title = stringResource(R.string.god_mode),
-                    subtitle = stringResource(R.string.god_mode_description),
+                    title = stringResource(I18R.string.feat_setting_god_mode),
+                    subtitle = stringResource(I18R.string.feat_setting_god_mode_description),
                     checked = godMode,
                     onCheckedChange = { newValue ->
                         if (newValue != godMode) {
@@ -159,9 +159,9 @@ internal fun PreferencesFragment(
                     }
                 )
                 CheckBoxPreference(
-                    title = stringResource(R.string.common_ui_mode),
-                    subtitle = if (useCommonUIModeEnable) stringResource(R.string.common_ui_mode_description)
-                    else stringResource(R.string.common_ui_mode_disabled_description),
+                    title = stringResource(I18R.string.feat_setting_common_ui_mode),
+                    subtitle = if (useCommonUIModeEnable) stringResource(I18R.string.feat_setting_common_ui_mode_description)
+                    else stringResource(I18R.string.feat_setting_common_ui_mode_disabled_description),
                     enabled = useCommonUIModeEnable,
                     checked = useCommonUIMode,
                     onCheckedChange = { newValue ->
@@ -181,8 +181,8 @@ internal fun PreferencesFragment(
                 verticalArrangement = Arrangement.spacedBy(1.dp)
             ) {
                 CheckBoxPreference(
-                    title = stringResource(R.string.experimental_mode),
-                    subtitle = stringResource(R.string.experimental_mode_description),
+                    title = stringResource(I18R.string.feat_setting_experimental_mode),
+                    subtitle = stringResource(I18R.string.feat_setting_experimental_mode_description),
                     checked = experimentalMode,
                     onCheckedChange = { newValue ->
                         if (newValue != experimentalMode) {
@@ -203,8 +203,8 @@ internal fun PreferencesFragment(
                         verticalArrangement = Arrangement.spacedBy(1.dp)
                     ) {
                         CheckBoxPreference(
-                            title = stringResource(R.string.cinema_mode),
-                            subtitle = stringResource(R.string.cinema_mode_description),
+                            title = stringResource(I18R.string.feat_setting_cinema_mode),
+                            subtitle = stringResource(I18R.string.feat_setting_cinema_mode_description),
                             checked = cinemaMode,
                             onCheckedChange = { newValue ->
                                 if (newValue != cinemaMode) {
@@ -213,16 +213,16 @@ internal fun PreferencesFragment(
                             }
                         )
                         Preference(
-                            title = stringResource(R.string.script_management),
+                            title = stringResource(I18R.string.feat_setting_script_management),
                             enabled = true,
                             onClick = onScriptManagement
                         )
                         Preference(
-                            title = stringResource(R.string.console_editor),
+                            title = stringResource(I18R.string.feat_setting_console_editor),
                             onClick = navigateToConsole
                         )
                         CheckBoxPreference(
-                            title = stringResource(R.string.scroll_mode),
+                            title = stringResource(I18R.string.feat_setting_scroll_mode),
                             checked = scrollMode,
                             onCheckedChange = { newValue ->
                                 if (newValue != scrollMode) {
@@ -231,8 +231,8 @@ internal fun PreferencesFragment(
                             }
                         )
                         CheckBoxPreference(
-                            title = stringResource(R.string.ssl_verification_enabled),
-                            subtitle = stringResource(R.string.ssl_verification_enabled_description),
+                            title = stringResource(I18R.string.feat_setting_ssl_verification_enabled),
+                            subtitle = stringResource(I18R.string.feat_setting_ssl_verification_enabled_description),
                             checked = isSSLVerificationEnabled,
                             onCheckedChange = { newValue ->
                                 if (newValue != isSSLVerificationEnabled) {
@@ -253,7 +253,7 @@ internal fun PreferencesFragment(
             ) {
                 val context = LocalContext.current
                 IconPreference(
-                    title = stringResource(R.string.system_setting),
+                    title = stringResource(I18R.string.feat_setting_system_setting),
                     imageVector = Icons.AutoMirrored.Rounded.OpenInNew,
                     onClick = {
                         val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
@@ -264,17 +264,17 @@ internal fun PreferencesFragment(
                 )
                 // TODO: https://www.dropbox.com/developers/documentation/http/documentation#file_requests-list
                 Preference(
-                    title = stringResource(R.string.dropbox).uppercase(),
+                    title = stringResource(I18R.string.feat_setting_dropbox).uppercase(),
                     onClick = navigateToAbout,
                     enabled = false
                 )
                 Preference(
-                    title = stringResource(R.string.project_about),
+                    title = stringResource(I18R.string.feat_setting_project_about),
                     onClick = navigateToAbout,
 //                    enabled = false
                 )
                 Preference(
-                    title = stringResource(R.string.app_version),
+                    title = stringResource(I18R.string.feat_setting_app_version),
                     subtitle = version
                 )
             }

@@ -23,6 +23,7 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import com.m3u.i18n.R as I18R
 
 @HiltViewModel
 class SettingViewModel @Inject constructor(
@@ -159,7 +160,7 @@ class SettingViewModel @Inject constructor(
     private fun subscribe() {
         val title = writable.value.title
         if (title.isEmpty()) {
-            val message = string(R.string.error_empty_title)
+            val message = string(I18R.string.feat_setting_error_empty_title)
             logger.log(message)
             return
         }
@@ -167,8 +168,8 @@ class SettingViewModel @Inject constructor(
         val url = readable.actualUrl
         if (url == null) {
             val message = when {
-                readable.localStorage -> string(R.string.error_unselected_file)
-                else -> string(R.string.error_blank_url)
+                readable.localStorage -> string(I18R.string.feat_setting_error_unselected_file)
+                else -> string(I18R.string.feat_setting_error_blank_url)
             }
             logger.log(message)
             return
@@ -186,7 +187,7 @@ class SettingViewModel @Inject constructor(
             .addTag(url)
             .build()
         workManager.enqueue(request)
-        val message = string(R.string.enqueue_subscribe)
+        val message = string(I18R.string.feat_setting_enqueue_subscribe)
         logger.log(message)
         writable.update {
             it.copy(

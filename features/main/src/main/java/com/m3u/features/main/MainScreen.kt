@@ -36,6 +36,7 @@ import com.m3u.ui.model.LocalHelper
 import com.m3u.ui.model.LocalScalable
 import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.Scalable
+import com.m3u.i18n.R as I18R
 
 private typealias showDialog = (Feed) -> Unit
 typealias NavigateToFeed = (feed: Feed) -> Unit
@@ -213,7 +214,7 @@ private fun LandscapeOrientationContent(
 @Composable
 private fun Feed.calculateUiTitle(): AnnotatedString {
     val actual = title.ifEmpty {
-        if (local) stringResource(R.string.imported_feed_title)
+        if (local) stringResource(I18R.string.feat_main_imported_feed_title)
         else ""
     }
     return AnnotatedString(

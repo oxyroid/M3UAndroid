@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <string name="muted_lives_feed">banned lives</string>
-    <string name="unsubscribe_feed">unsubscribe</string>
-    <string name="error_unsubscribe_feed">cannot unsubscribe</string>
-    <string name="copy_feed_url">copy url</string>
-    <string name="rename_feed">rename</string>
-    <string name="imported_feed_title">imported</string>
-</resources>

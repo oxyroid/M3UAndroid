@@ -24,12 +24,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.m3u.features.live.R
 import com.m3u.ui.components.CircularProgressIndicator
 import com.m3u.ui.components.MaskState
 import com.m3u.ui.components.OnDismiss
 import com.m3u.ui.model.LocalSpacing
 import net.mm2d.upnp.Device
+import com.m3u.i18n.R as I18R
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -67,7 +67,7 @@ fun DlnaDevicesBottomSheet(
                 )
             ) {
                 Text(
-                    text = stringResource(R.string.dlna_devices),
+                    text = stringResource(I18R.string.feat_live_dlna_devices),
                     fontWeight = FontWeight.Bold,
                     style = MaterialTheme.typography.h6,
                     modifier = Modifier.weight(1f)

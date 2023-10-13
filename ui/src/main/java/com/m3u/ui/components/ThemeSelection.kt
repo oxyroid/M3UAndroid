@@ -41,7 +41,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.m3u.ui.R
+import com.m3u.i18n.R as I18R
 import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.LocalTheme
 import com.m3u.ui.model.SugarColors
@@ -236,8 +236,8 @@ private fun ColorPiece(
             modifier = Modifier.fillMaxSize()
         ) {
             Text(
-                text = if (left) stringResource(R.string.theme_card_left)
-                else stringResource(R.string.theme_card_right),
+                text = if (left) stringResource(I18R.string.ui_theme_card_left)
+                else stringResource(I18R.string.ui_theme_card_right),
                 style = MaterialTheme.typography.bodyLarge
                     .copy(
                         fontSize = if (left) 16.sp

@@ -14,11 +14,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import com.m3u.data.database.entity.Live
-import com.m3u.features.feed.R
 import com.m3u.ui.components.DialogTextField
 import com.m3u.ui.components.DialogItem
 import com.m3u.ui.components.AppDialog
 import com.m3u.ui.model.LocalSpacing
+import com.m3u.i18n.R as I18R
 
 internal typealias OnUpdateDialogStatus = (DialogStatus) -> Unit
 internal typealias OnFavoriteLive = (liveId: Int, target: Boolean) -> Unit
@@ -48,18 +48,18 @@ internal fun FeedDialog(
             )
             val favourite = status.live.favourite
             DialogItem(
-                if (favourite) R.string.dialog_favourite_cancel_title
-                else R.string.dialog_favourite_title
+                if (favourite) I18R.string.feat_feed_dialog_favourite_cancel_title
+                else I18R.string.feat_feed_dialog_favourite_title
             ) {
                 onUpdate(DialogStatus.Idle)
                 onFavorite(status.live.id, !favourite)
             }
-            DialogItem(R.string.dialog_mute_title) {
+            DialogItem(I18R.string.feat_feed_dialog_mute_title) {
                 onUpdate(DialogStatus.Idle)
                 onBanned(status.live.id, true)
             }
             if (!status.live.cover.isNullOrEmpty()) {
-                DialogItem(R.string.dialog_save_picture_title) {
+                DialogItem(I18R.string.feat_feed_dialog_save_picture_title) {
                     onUpdate(DialogStatus.Idle)
                     onSavePicture(status.live.id)
                 }

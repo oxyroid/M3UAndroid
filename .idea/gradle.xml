@@ -23,6 +23,7 @@
             <option value="$PROJECT_DIR$/features/live" />
             <option value="$PROJECT_DIR$/features/main" />
             <option value="$PROJECT_DIR$/features/setting" />
+            <option value="$PROJECT_DIR$/i18n" />
             <option value="$PROJECT_DIR$/lint" />
             <option value="$PROJECT_DIR$/ui" />
           </set>

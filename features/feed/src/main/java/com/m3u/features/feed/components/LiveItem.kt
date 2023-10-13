@@ -28,13 +28,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import com.m3u.data.database.entity.Live
-import com.m3u.features.feed.R
 import com.m3u.ui.components.Image
 import com.m3u.ui.components.TextBadge
 import com.m3u.ui.model.LocalScalable
 import com.m3u.ui.model.LocalSpacing
 import com.m3u.ui.model.LocalTheme
 import java.net.URI
+import com.m3u.i18n.R as I18R
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -57,7 +57,7 @@ internal fun LiveItem(
             URI(live.url).scheme
         } catch (ignored: Exception) {
             null
-        } ?: context.getString(R.string.scheme_unknown).uppercase()
+        } ?: context.getString(I18R.string.feat_feed_scheme_unknown).uppercase()
     }
     Surface(
         shape = RoundedCornerShape(spacing.medium),
