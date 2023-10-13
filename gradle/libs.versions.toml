@@ -17,7 +17,6 @@ androidx-room = "2.5.2"
 
 google-accompanist = "0.33.1-alpha"
 google-dagger = "2.48"
-google-services = "4.4.0"
 
 io-coil = "2.4.0"
 kotlinx-serialization-json = "1.6.0"
@@ -126,7 +125,6 @@ com-google-dagger-hilt-android = { id = "com.google.dagger.hilt.android", versio
 com-google-devtools-ksp = { id = "com.google.devtools.ksp", version.ref = "ksp-plugin" }
 com-android-test = { id = "com.android.test", version.ref = "android-gradle-plugin" }
 androidx-baselineprofile = { id = "androidx.baselineprofile", version.ref = "androidx-baselineprofile-benchmark" }
-com-google-gms-google-services = { id = "com.google.gms.google-services", version.ref = "google-services" }
 
 [bundles]
 androidx-compose = ["androidx-compose-ui-ui", "androidx-compose-ui-ui-util", "androidx-compose-runtime-runtime", "androidx-compose-foundation-foundation", "androidx-compose-animation-animation", "androidx-compose-material-material"]

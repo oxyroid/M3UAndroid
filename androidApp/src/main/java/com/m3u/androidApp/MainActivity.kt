@@ -18,9 +18,6 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsCompat.Type.InsetsType
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.core.view.WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-import com.google.firebase.analytics.FirebaseAnalytics
-import com.google.firebase.analytics.ktx.analytics
-import com.google.firebase.ktx.Firebase
 import com.m3u.androidApp.ui.App
 import com.m3u.androidApp.ui.AppViewModel
 import com.m3u.core.unspecified.UBoolean
@@ -37,7 +34,6 @@ import kotlin.reflect.KMutableProperty0
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-    private lateinit var analytics: FirebaseAnalytics
     private val controller by lazy {
         WindowInsetsControllerCompat(window, window.decorView).apply {
             systemBarsBehavior = BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
@@ -55,7 +51,6 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        analytics = Firebase.analytics
         installSplashScreen()
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
