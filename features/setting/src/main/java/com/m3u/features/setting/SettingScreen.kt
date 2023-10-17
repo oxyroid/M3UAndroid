@@ -21,7 +21,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -42,11 +41,13 @@ import com.m3u.data.database.entity.Live
 import com.m3u.features.setting.fragments.PreferencesFragment
 import com.m3u.features.setting.fragments.ScriptsFragment
 import com.m3u.features.setting.fragments.SubscriptionsFragment
+import com.m3u.material.model.LocalSpacing
+import com.m3u.material.model.LocalTheme
 import com.m3u.ui.Destination
-import com.m3u.ui.model.Fob
-import com.m3u.ui.model.LocalHelper
-import com.m3u.ui.model.LocalSpacing
-import com.m3u.ui.model.LocalTheme
+import com.m3u.ui.EventHandler
+import com.m3u.ui.Fob
+import com.m3u.ui.LocalHelper
+import com.m3u.ui.ResumeEvent
 
 typealias NavigateToConsole = () -> Unit
 typealias NavigateToAbout = () -> Unit
@@ -54,7 +55,7 @@ typealias NavigateToAbout = () -> Unit
 @Composable
 fun SettingRoute(
     modifier: Modifier = Modifier,
-    isCurrentPage: Boolean,
+    resume: ResumeEvent,
     viewModel: SettingViewModel = hiltViewModel(),
     navigateToConsole: NavigateToConsole,
     navigateToAbout: NavigateToAbout
@@ -62,10 +63,8 @@ fun SettingRoute(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val helper = LocalHelper.current
 
-    LaunchedEffect(isCurrentPage) {
-        if (isCurrentPage) {
-            helper.actions = emptyList()
-        }
+    EventHandler(resume) {
+        helper.actions = emptyList()
     }
     val configuration = LocalConfiguration.current
     val type = configuration.uiMode and Configuration.UI_MODE_TYPE_MASK
@@ -78,7 +77,7 @@ fun SettingRoute(
         version = state.version,
         title = state.title,
         url = state.url,
-        uri = state.uri.takeUnless { it == Uri.EMPTY },
+        uri = state.uri,
         feedStrategy = state.feedStrategy,
         godMode = state.godMode,
         clipMode = state.clipMode,
@@ -129,7 +128,7 @@ private fun SettingScreen(
     version: String,
     title: String,
     url: String,
-    uri: Uri?,
+    uri: Uri,
     @FeedStrategy feedStrategy: Int,
     godMode: Boolean,
     @ClipMode clipMode: Int,
@@ -167,7 +166,7 @@ private fun SettingScreen(
     navigateToAbout: NavigateToAbout,
     localStorage: Boolean,
     onLocalStorage: () -> Unit,
-    openDocument: (Uri?) -> Unit,
+    openDocument: (Uri) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val helper = LocalHelper.current
@@ -312,7 +311,7 @@ private fun PortraitOrientationContent(
     fragment: SettingFragments,
     title: String,
     url: String,
-    uri: Uri?,
+    uri: Uri,
     @FeedStrategy feedStrategy: Int,
     godMode: Boolean,
     @ClipMode clipMode: Int,
@@ -350,7 +349,7 @@ private fun PortraitOrientationContent(
     navigateToAbout: NavigateToAbout,
     localStorage: Boolean,
     onLocalStorage: () -> Unit,
-    openDocument: (Uri?) -> Unit,
+    openDocument: (Uri) -> Unit,
     modifier: Modifier = Modifier
 ) {
     // TODO: replace with material3-modal-side-sheet.
@@ -433,7 +432,7 @@ private fun LandscapeOrientationContent(
     fragment: SettingFragments,
     title: String,
     url: String,
-    uri: Uri?,
+    uri: Uri,
     godMode: Boolean,
     @ClipMode clipMode: Int,
     replaceFragment: (SettingFragments) -> Unit,
@@ -472,7 +471,7 @@ private fun LandscapeOrientationContent(
     navigateToAbout: NavigateToAbout,
     localStorage: Boolean,
     onLocalStorage: () -> Unit,
-    openDocument: (Uri?) -> Unit,
+    openDocument: (Uri) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current

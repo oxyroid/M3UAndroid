@@ -8,12 +8,15 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
+import com.m3u.core.wrapper.Event
+import com.m3u.core.wrapper.eventOf
 import com.m3u.features.favorite.FavouriteRoute
 import com.m3u.features.favorite.NavigateToLive
 import com.m3u.features.main.MainRoute
@@ -21,10 +24,11 @@ import com.m3u.features.main.NavigateToFeed
 import com.m3u.features.setting.NavigateToAbout
 import com.m3u.features.setting.NavigateToConsole
 import com.m3u.features.setting.SettingRoute
+import com.m3u.material.ktx.Edge
+import com.m3u.material.ktx.blurEdges
+import com.m3u.material.model.LocalTheme
 import com.m3u.ui.Destination
-import com.m3u.ui.ktx.Edge
-import com.m3u.ui.ktx.blurEdges
-import com.m3u.ui.model.LocalTheme
+import com.m3u.ui.ResumeEvent
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 
@@ -112,7 +116,7 @@ private fun RootGraph(
             Destination.Root.Main -> {
                 MainRoute(
                     navigateToFeed = navigateToFeed,
-                    isCurrentPage = currentPage == pagerIndex,
+                    resume = rememberResumeEvent(currentPage, pagerIndex),
                     modifier = Modifier.fillMaxSize()
                 )
             }
@@ -120,7 +124,7 @@ private fun RootGraph(
             Destination.Root.Favourite -> {
                 FavouriteRoute(
                     navigateToLive = navigateToLive,
-                    isCurrentPage = currentPage == pagerIndex,
+                    resume = rememberResumeEvent(currentPage, pagerIndex),
                     modifier = Modifier.fillMaxSize()
                 )
             }
@@ -129,7 +133,7 @@ private fun RootGraph(
                 SettingRoute(
                     navigateToConsole = navigateToConsole,
                     navigateToAbout = navigateToAbout,
-                    isCurrentPage = currentPage == pagerIndex,
+                    resume = rememberResumeEvent(currentPage, pagerIndex),
                     modifier = Modifier.fillMaxSize()
                 )
             }
@@ -143,3 +147,10 @@ private data class PagerStateSnapshot(
     val settled: Int,
     val scrolling: Boolean
 )
+
+@Composable
+private fun rememberResumeEvent(currentPage: Int, targetPage: Int): ResumeEvent =
+    remember(currentPage, targetPage) {
+        if (currentPage == targetPage) eventOf(Unit)
+        else Event.Handled()
+    }

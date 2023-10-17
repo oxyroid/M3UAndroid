@@ -12,10 +12,10 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import com.m3u.ui.components.Mask
-import com.m3u.ui.components.MaskPanel
-import com.m3u.ui.components.MaskState
-import com.m3u.ui.model.LocalSpacing
+import com.m3u.material.components.Mask
+import com.m3u.material.components.MaskPanel
+import com.m3u.material.components.MaskState
+import com.m3u.material.model.LocalSpacing
 
 @Composable
 internal fun LiveMask(

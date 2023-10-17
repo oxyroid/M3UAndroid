@@ -9,11 +9,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavDestination
 import com.m3u.core.util.basic.title
+import com.m3u.material.model.ABlackTheme
+import com.m3u.material.model.DayTheme
+import com.m3u.material.model.NightTheme
+import com.m3u.material.model.Theme
 import com.m3u.ui.Destination
-import com.m3u.ui.model.ABlackTheme
-import com.m3u.ui.model.DayTheme
-import com.m3u.ui.model.NightTheme
-import com.m3u.ui.model.Theme
 
 object AppDefaults {
     @Composable

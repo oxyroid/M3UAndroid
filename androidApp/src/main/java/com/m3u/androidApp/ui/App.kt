@@ -7,9 +7,9 @@ import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.androidApp.navigation.M3UNavHost
-import com.m3u.ui.ktx.EventHandler
-import com.m3u.ui.model.EmptyHelper
-import com.m3u.ui.model.Helper
+import com.m3u.ui.EmptyHelper
+import com.m3u.ui.EventHandler
+import com.m3u.ui.Helper
 
 @Composable
 fun App(

@@ -10,9 +10,9 @@ import com.m3u.core.wrapper.Event
 import com.m3u.core.wrapper.eventOf
 import com.m3u.core.wrapper.handledEvent
 import com.m3u.data.service.UiService
+import com.m3u.ui.Action
 import com.m3u.ui.Destination
-import com.m3u.ui.model.Action
-import com.m3u.ui.model.Fob
+import com.m3u.ui.Fob
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update

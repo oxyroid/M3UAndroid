@@ -75,26 +75,27 @@ import com.m3u.data.database.entity.Live
 import com.m3u.features.feed.components.DialogStatus
 import com.m3u.features.feed.components.FeedDialog
 import com.m3u.features.feed.components.LiveItem
-import com.m3u.ui.Destination
-import com.m3u.ui.components.TextField
-import com.m3u.ui.ktx.Edge
-import com.m3u.ui.ktx.EventHandler
-import com.m3u.ui.ktx.animateDp
-import com.m3u.ui.ktx.blurEdges
-import com.m3u.ui.ktx.interceptVolumeEvent
-import com.m3u.ui.ktx.isAtTop
-import com.m3u.ui.model.Action
-import com.m3u.ui.model.Fob
-import com.m3u.ui.model.LocalDuration
-import com.m3u.ui.model.LocalHelper
-import com.m3u.ui.model.LocalScalable
-import com.m3u.ui.model.LocalSpacing
-import com.m3u.ui.model.LocalTheme
-import com.m3u.ui.model.Scalable
-import com.m3u.ui.model.repeatOnLifecycle
+import com.m3u.material.components.TextField
+import com.m3u.material.ktx.Edge
+import com.m3u.material.ktx.animateDp
+import com.m3u.material.ktx.blurEdges
+import com.m3u.material.ktx.interceptVolumeEvent
+import com.m3u.material.ktx.isAtTop
+import com.m3u.material.model.LocalDuration
+import com.m3u.material.model.LocalScalable
+import com.m3u.material.model.LocalSpacing
+import com.m3u.material.model.LocalTheme
+import com.m3u.material.model.Scalable
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import com.m3u.i18n.R as I18R
+import com.m3u.i18n.R.string
+import com.m3u.ui.Action
+import com.m3u.ui.Destination
+import com.m3u.ui.EventHandler
+import com.m3u.ui.Fob
+import com.m3u.ui.LocalHelper
+import com.m3u.ui.isAtTop
+import com.m3u.ui.repeatOnLifecycle
 
 internal typealias NavigateToLive = (liveId: Int) -> Unit
 internal typealias NavigateToPlaylist = (playlist: List<Int>, initial: Int) -> Unit
@@ -260,7 +261,7 @@ private fun FeedScreen(
                 onValueChange = onQuery,
                 fontWeight = FontWeight.Bold,
                 height = 32.dp,
-                placeholder = stringResource(I18R.string.feat_feed_query_placeholder).capitalize(Locale.current),
+                placeholder = stringResource(string.feat_feed_query_placeholder).capitalize(Locale.current),
                 modifier = Modifier
                     .padding(spacing.medium)
                     .fillMaxWidth()

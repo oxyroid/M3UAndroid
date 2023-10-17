@@ -4,9 +4,26 @@ enum class UBoolean {
     True, False, Unspecified
 }
 
-val Boolean.u: UBoolean get() = if (this) UBoolean.True else UBoolean.False
+@Deprecated(
+    "Replace with Boolean.unspecifiable",
+    replaceWith = ReplaceWith(
+        "this.unspecifiable",
+        "com.m3u.core.unspecified.unspecifiable"
+    )
+)
+val Boolean.u: UBoolean get() = unspecifiable
+val Boolean.unspecifiable: UBoolean get() = if (this) UBoolean.True else UBoolean.False
 
-val UBoolean.actual: Boolean?
+@Deprecated(
+    "Replace with UBoolean.specified",
+    replaceWith = ReplaceWith(
+        "this.specified",
+        "com.m3u.core.unspecified.specified"
+    )
+)
+val UBoolean.actual: Boolean? get() = specified
+
+val UBoolean.specified: Boolean?
     get() = when (this) {
         UBoolean.True -> true
         UBoolean.False -> false

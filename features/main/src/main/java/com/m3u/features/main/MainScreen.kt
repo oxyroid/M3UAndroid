@@ -14,7 +14,6 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -31,12 +30,14 @@ import com.m3u.features.main.components.MainDialog
 import com.m3u.features.main.components.OnRename
 import com.m3u.features.main.components.OnUnsubscribe
 import com.m3u.features.main.model.FeedDetail
-import com.m3u.ui.ktx.interceptVolumeEvent
-import com.m3u.ui.model.LocalHelper
-import com.m3u.ui.model.LocalScalable
-import com.m3u.ui.model.LocalSpacing
-import com.m3u.ui.model.Scalable
-import com.m3u.i18n.R as I18R
+import com.m3u.material.ktx.interceptVolumeEvent
+import com.m3u.material.model.LocalScalable
+import com.m3u.material.model.LocalSpacing
+import com.m3u.material.model.Scalable
+import com.m3u.i18n.R.string
+import com.m3u.ui.EventHandler
+import com.m3u.ui.LocalHelper
+import com.m3u.ui.ResumeEvent
 
 private typealias showDialog = (Feed) -> Unit
 typealias NavigateToFeed = (feed: Feed) -> Unit
@@ -44,7 +45,7 @@ typealias NavigateToFeed = (feed: Feed) -> Unit
 @Composable
 fun MainRoute(
     navigateToFeed: NavigateToFeed,
-    isCurrentPage: Boolean,
+    resume: ResumeEvent,
     modifier: Modifier = Modifier,
     viewModel: MainViewModel = hiltViewModel()
 ) {
@@ -55,10 +56,9 @@ fun MainRoute(
     fun onRowCount(target: Int) {
         state.rowCount = target
     }
-    LaunchedEffect(isCurrentPage) {
-        if (isCurrentPage) {
-            helper.actions = emptyList()
-        }
+
+    EventHandler(resume) {
+        helper.actions = emptyList()
     }
 
     val interceptVolumeEventModifier = remember(state.godMode) {
@@ -214,7 +214,7 @@ private fun LandscapeOrientationContent(
 @Composable
 private fun Feed.calculateUiTitle(): AnnotatedString {
     val actual = title.ifEmpty {
-        if (local) stringResource(I18R.string.feat_main_imported_feed_title)
+        if (local) stringResource(string.feat_main_imported_feed_title)
         else ""
     }
     return AnnotatedString(

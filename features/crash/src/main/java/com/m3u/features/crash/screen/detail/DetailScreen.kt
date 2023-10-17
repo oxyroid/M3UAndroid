@@ -9,9 +9,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.m3u.ui.components.Background
-import com.m3u.ui.components.MonoText
-import com.m3u.ui.model.LocalSpacing
+import com.m3u.material.components.Background
+import com.m3u.material.model.LocalSpacing
+import com.m3u.ui.MonoText
 
 @Composable
 internal fun DetailScreen(

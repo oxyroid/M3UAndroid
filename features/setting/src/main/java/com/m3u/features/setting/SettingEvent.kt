@@ -12,8 +12,8 @@ sealed interface SettingEvent {
     data object OnConnectTimeout : SettingEvent
     data object OnClipMode : SettingEvent
     data class OnBannedLive(val id: Int) : SettingEvent
-    data class ImportJavaScript(val uri: Uri?) : SettingEvent
-    data class OpenDocument(val uri: Uri?) : SettingEvent
+    data class ImportJavaScript(val uri: Uri = Uri.EMPTY) : SettingEvent
+    data class OpenDocument(val uri: Uri = Uri.EMPTY) : SettingEvent
     data object ScrollDefaultDestination : SettingEvent
     data object OnLocalStorage : SettingEvent
 }

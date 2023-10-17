@@ -12,12 +12,12 @@ import com.m3u.core.annotation.FeedStrategy
 import com.m3u.core.wrapper.ProgressResource
 import com.m3u.data.R
 import com.m3u.data.repository.FeedRepository
+import com.m3u.i18n.R.string
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.supervisorScope
-import com.m3u.i18n.R as I18R
 
 @HiltWorker
 class SubscriptionInBackgroundWorker @AssistedInject constructor(
@@ -34,7 +34,7 @@ class SubscriptionInBackgroundWorker @AssistedInject constructor(
         url ?: return@coroutineScope Result.failure()
         createChannel()
         if (title.isEmpty()) {
-            val message = context.getString(I18R.string.data_error_empty_title)
+            val message = context.getString(string.data_error_empty_title)
             val data = workDataOf("message" to message)
             failure(message)
             Result.failure(data)

@@ -4,7 +4,7 @@ import androidx.annotation.FloatRange
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.m3u.features.main.R
-import com.m3u.ui.components.ProgressLottie
+import com.m3u.material.components.ProgressLottie
 
 @Composable
 internal fun Loading(

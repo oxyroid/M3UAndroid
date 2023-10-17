@@ -18,8 +18,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.m3u.features.about.model.Contributor
-import com.m3u.ui.model.LocalSpacing
-import com.m3u.ui.model.LocalTheme
+import com.m3u.material.model.LocalSpacing
+import com.m3u.material.model.LocalTheme
 
 @Composable
 @OptIn(ExperimentalMaterialApi::class)

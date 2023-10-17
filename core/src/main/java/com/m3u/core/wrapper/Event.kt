@@ -1,6 +1,9 @@
 package com.m3u.core.wrapper
 
+import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.Stable
 
+@Stable
 sealed class Event<out T> private constructor(
     private val data: T? = null
 ) {
@@ -25,6 +28,7 @@ sealed class Event<out T> private constructor(
     /**
      * Event which cannot be consumed
      */
+    @Immutable
     class Handled<out T> : Event<T>() {
         override var isHandled: Boolean = true
     }
@@ -34,6 +38,7 @@ sealed class Event<out T> private constructor(
      * @see eventOf
      * @hide
      */
+    @Stable
     class Regular<out T>(data: T) : Event<T>(data)
 }
 

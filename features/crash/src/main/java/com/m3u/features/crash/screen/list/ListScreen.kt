@@ -11,7 +11,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.features.crash.components.FileItem
 import com.m3u.features.crash.screen.list.navigation.NavigateToDetail
-import com.m3u.ui.components.Background
+import com.m3u.material.components.Background
 
 @Composable
 internal fun ListScreen(

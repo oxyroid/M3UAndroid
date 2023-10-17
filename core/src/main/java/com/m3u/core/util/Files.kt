@@ -7,7 +7,8 @@ import androidx.core.net.toFile
 
 fun Uri.readContentFilename(
     contentResolver: ContentResolver
-): String? = when (scheme) {
+): String? = if (this == Uri.EMPTY) null
+else when (scheme) {
     ContentResolver.SCHEME_FILE -> toFile().name
     ContentResolver.SCHEME_CONTENT -> {
         contentResolver.query(
@@ -25,20 +26,17 @@ fun Uri.readContentFilename(
             } else null
         }
     }
-
     else -> null
 }
 
 fun Uri.readContentText(
     contentResolver: ContentResolver
-): String? {
-    return when (scheme) {
-        ContentResolver.SCHEME_FILE -> toFile().readText()
-        ContentResolver.SCHEME_CONTENT ->
-            contentResolver.openInputStream(this)?.use {
-                it.bufferedReader().readText()
-            }
-
-        else -> null
-    }
+): String? = if (this == Uri.EMPTY) null
+else when (scheme) {
+    ContentResolver.SCHEME_FILE -> toFile().readText()
+    ContentResolver.SCHEME_CONTENT ->
+        contentResolver.openInputStream(this)?.use {
+            it.bufferedReader().readText()
+        }
+    else -> null
 }

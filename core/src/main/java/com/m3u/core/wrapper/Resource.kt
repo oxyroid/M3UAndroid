@@ -2,6 +2,8 @@
 
 package com.m3u.core.wrapper
 
+import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.Stable
 import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.channelFlow
@@ -9,11 +11,15 @@ import kotlinx.coroutines.flow.flow
 import kotlin.experimental.ExperimentalTypeInference
 
 sealed class Resource<out T> {
+    @Immutable
     data object Loading : Resource<Nothing>()
+
+    @Stable
     data class Success<out T>(
         val data: T
     ) : Resource<T>()
 
+    @Stable
     data class Failure<out T>(
         val message: String?
     ) : Resource<T>()

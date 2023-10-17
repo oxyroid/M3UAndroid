@@ -20,6 +20,7 @@ google-dagger = "2.48"
 
 io-coil = "2.4.0"
 kotlinx-serialization-json = "1.6.0"
+kotlinx-datetime = "0.4.1"
 lottie-compose = "6.1.0"
 net-mm2d-mmupnp = "3.1.6"
 squareup-retrofit2 = "2.9.0"
@@ -103,6 +104,7 @@ net-mm2d-mmupnp-mmupnp = { module = "net.mm2d.mmupnp:mmupnp", version.ref = "net
 
 org-jetbrains-kotlin-kotlin-serialization = { group = "org.jetbrains.kotlin", name = "kotlin-serialization", version.ref = "kotlin" }
 org-jetbrains-kotlinx-kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinx-serialization-json" }
+org-jetbrains-kotlinx-kotlinx-datetime = { group = "org.jetbrains.kotlinx", name = "kotlinx-datetime", version.ref = "kotlinx-datetime" }
 
 com-google-android-material-material = { group = "com.google.android.material", name = "material", version.ref = "com-google-android-material" }
 

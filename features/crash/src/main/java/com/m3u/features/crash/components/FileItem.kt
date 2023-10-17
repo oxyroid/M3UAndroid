@@ -10,8 +10,8 @@ import androidx.compose.material.icons.rounded.Adb
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
-import com.m3u.ui.components.Background
-import com.m3u.ui.model.LocalTheme
+import com.m3u.material.components.Background
+import com.m3u.material.model.LocalTheme
 import java.io.File
 
 @OptIn(ExperimentalMaterialApi::class)

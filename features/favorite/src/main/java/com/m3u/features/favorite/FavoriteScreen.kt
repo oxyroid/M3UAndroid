@@ -11,7 +11,6 @@ import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -19,18 +18,20 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.features.favorite.components.FavoriteItem
-import com.m3u.ui.ktx.interceptVolumeEvent
-import com.m3u.ui.model.LocalHelper
-import com.m3u.ui.model.LocalScalable
-import com.m3u.ui.model.LocalSpacing
-import com.m3u.ui.model.Scalable
+import com.m3u.material.ktx.interceptVolumeEvent
+import com.m3u.material.model.LocalScalable
+import com.m3u.material.model.LocalSpacing
+import com.m3u.material.model.Scalable
+import com.m3u.ui.EventHandler
+import com.m3u.ui.LocalHelper
+import com.m3u.ui.ResumeEvent
 
 typealias NavigateToLive = (Int) -> Unit
 
 @Composable
 fun FavouriteRoute(
     navigateToLive: NavigateToLive,
-    isCurrentPage: Boolean,
+    resume: ResumeEvent,
     modifier: Modifier = Modifier,
     viewModel: FavouriteViewModel = hiltViewModel()
 ) {
@@ -41,10 +42,8 @@ fun FavouriteRoute(
     fun onRowCount(target: Int) {
         state.rowCount = target
     }
-    LaunchedEffect(isCurrentPage) {
-        if (isCurrentPage) {
-            helper.actions = emptyList()
-        }
+    EventHandler(resume) {
+        helper.actions = emptyList()
     }
 
     val interceptVolumeEventModifier = remember(state.godMode) {

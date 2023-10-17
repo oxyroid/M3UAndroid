@@ -24,11 +24,11 @@ import com.m3u.core.unspecified.UBoolean
 import com.m3u.core.util.basic.rational
 import com.m3u.core.util.context.isDarkMode
 import com.m3u.core.util.context.isPortraitMode
-import com.m3u.ui.model.Action
-import com.m3u.ui.model.Fob
-import com.m3u.ui.model.Helper
-import com.m3u.ui.model.OnPipModeChanged
-import com.m3u.ui.model.OnUserLeaveHint
+import com.m3u.ui.Action
+import com.m3u.ui.Fob
+import com.m3u.ui.Helper
+import com.m3u.ui.OnPipModeChanged
+import com.m3u.ui.OnUserLeaveHint
 import dagger.hilt.android.AndroidEntryPoint
 import kotlin.reflect.KMutableProperty0
 

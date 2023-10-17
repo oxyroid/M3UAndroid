@@ -5,6 +5,7 @@ package com.m3u.core.util.context
 import android.content.SharedPreferences
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
+import com.m3u.core.util.compose.observableStateOf
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 
@@ -76,23 +77,7 @@ private fun <T> SharedPreferences.delegateAsState(
     defaultValue: T,
     getter: SharedPreferences.(String, T) -> T,
     setter: SharedPreferences.Editor.(String, T) -> SharedPreferences.Editor
-): MutableState<T> = StateDelegator(
+): MutableState<T> = observableStateOf(
     delegate = mutableStateOf(getter(key, defaultValue)),
-    onUpdate = { edit().setter(key, it).apply() },
+    onChanged = { edit().setter(key, it).apply() }
 )
-
-private class StateDelegator<T>(
-    private val delegate: MutableState<T>,
-    private val onUpdate: (T) -> Unit
-) : MutableState<T> {
-    override var value: T
-        get() = delegate.value
-        set(value) {
-            onUpdate(value)
-            delegate.value = value
-        }
-
-    override fun component1(): T = delegate.component1()
-
-    override fun component2(): (T) -> Unit = delegate.component2()
-}

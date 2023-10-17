@@ -13,8 +13,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
-import com.m3u.ui.model.LocalSpacing
-import com.m3u.ui.model.LocalTheme
+import com.m3u.material.model.LocalSpacing
+import com.m3u.material.model.LocalTheme
 
 @Composable
 fun AppSnackHost(

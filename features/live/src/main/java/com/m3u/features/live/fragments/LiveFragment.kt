@@ -41,17 +41,17 @@ import com.m3u.core.annotation.ClipMode
 import com.m3u.core.util.basic.isNotEmpty
 import com.m3u.features.live.components.CoverPlaceholder
 import com.m3u.features.live.components.LiveMask
-import com.m3u.ui.components.Background
-import com.m3u.ui.components.ExoPlayer
-import com.m3u.ui.components.Image
-import com.m3u.ui.components.MaskButton
-import com.m3u.ui.components.MaskCircleButton
-import com.m3u.ui.components.MaskState
-import com.m3u.ui.components.rememberPlayerState
-import com.m3u.ui.model.LocalHelper
-import com.m3u.ui.model.LocalSpacing
-import com.m3u.ui.model.LocalTheme
-import com.m3u.i18n.R as I18R
+import com.m3u.material.components.Background
+import com.m3u.material.components.Image
+import com.m3u.material.components.MaskButton
+import com.m3u.material.components.MaskCircleButton
+import com.m3u.material.components.MaskState
+import com.m3u.material.model.LocalSpacing
+import com.m3u.material.model.LocalTheme
+import com.m3u.i18n.R.string
+import com.m3u.ui.LocalHelper
+import com.m3u.ui.Player
+import com.m3u.ui.rememberPlayerState
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -94,7 +94,7 @@ internal fun LiveFragment(
                 onUninstallMedia = onUninstallMedia
             )
 
-            ExoPlayer(
+            Player(
                 state = state,
                 modifier = Modifier.fillMaxSize()
             )
@@ -114,7 +114,7 @@ internal fun LiveFragment(
                         state = maskState,
                         icon = Icons.AutoMirrored.Rounded.ArrowBack,
                         onClick = onBackPressed,
-                        contentDescription = stringResource(I18R.string.feat_live_tooltip_on_back_pressed)
+                        contentDescription = stringResource(string.feat_live_tooltip_on_back_pressed)
                     )
                     Spacer(modifier = Modifier.weight(1f))
                     MaskButton(
@@ -122,16 +122,16 @@ internal fun LiveFragment(
                         icon = if (muted) Icons.AutoMirrored.Rounded.VolumeMute
                         else Icons.AutoMirrored.Rounded.VolumeUp,
                         onClick = onMuted,
-                        contentDescription = if (muted) stringResource(I18R.string.feat_live_tooltip_unmute)
-                        else stringResource(I18R.string.feat_live_tooltip_mute)
+                        contentDescription = if (muted) stringResource(string.feat_live_tooltip_unmute)
+                        else stringResource(string.feat_live_tooltip_mute)
                     )
                     MaskButton(
                         state = maskState,
                         icon = Icons.Rounded.Star,
                         tint = if (stared) Color.Yellow else Color.Unspecified,
                         onClick = onFavourite,
-                        contentDescription = if (stared) stringResource(I18R.string.feat_live_tooltip_unfavourite)
-                        else stringResource(I18R.string.feat_live_tooltip_favourite)
+                        contentDescription = if (stared) stringResource(string.feat_live_tooltip_unfavourite)
+                        else stringResource(string.feat_live_tooltip_favourite)
                     )
                     if (experimentalMode) {
                         MaskButton(
@@ -142,8 +142,8 @@ internal fun LiveFragment(
                             tint = if (recording) LocalTheme.current.error
                             else Color.Unspecified,
                             onClick = onRecord,
-                            contentDescription = if (recording) stringResource(I18R.string.feat_live_tooltip_unrecord)
-                            else stringResource(I18R.string.feat_live_tooltip_record)
+                            contentDescription = if (recording) stringResource(string.feat_live_tooltip_unrecord)
+                            else stringResource(string.feat_live_tooltip_record)
                         )
                         if (playback != Player.STATE_IDLE) {
                             MaskButton(
@@ -151,7 +151,7 @@ internal fun LiveFragment(
                                 enabled = false,
                                 icon = Icons.Rounded.Cast,
                                 onClick = searchDlnaDevices,
-                                contentDescription = stringResource(I18R.string.feat_live_tooltip_cast)
+                                contentDescription = stringResource(string.feat_live_tooltip_cast)
                             )
                         }
                     }
@@ -163,7 +163,7 @@ internal fun LiveFragment(
                                 helper.enterPipMode(videoSize)
                                 maskState.sleep()
                             },
-                            contentDescription = stringResource(I18R.string.feat_live_tooltip_enter_pip_mode)
+                            contentDescription = stringResource(string.feat_live_tooltip_enter_pip_mode)
                         )
                     }
                 },
@@ -255,10 +255,10 @@ private val PlaybackException?.displayText: String
 
 private val @Player.State Int.displayText: String
     @Composable get() = when (this) {
-        Player.STATE_IDLE -> I18R.string.feat_live_playback_state_idle
-        Player.STATE_BUFFERING -> I18R.string.feat_live_playback_state_buffering
+        Player.STATE_IDLE -> string.feat_live_playback_state_idle
+        Player.STATE_BUFFERING -> string.feat_live_playback_state_buffering
         Player.STATE_READY -> null
-        Player.STATE_ENDED -> I18R.string.feat_live_playback_state_ended
+        Player.STATE_ENDED -> string.feat_live_playback_state_ended
         else -> null
     }
         ?.let { stringResource(it) }

@@ -1,4 +1,9 @@
 package com.m3u.data.api
 
-interface DropboxApi {
+import retrofit2.http.POST
+
+internal interface DropboxApi {
+    // limitation: 150MB
+    @POST("files/upload")
+    suspend fun upload()
 }

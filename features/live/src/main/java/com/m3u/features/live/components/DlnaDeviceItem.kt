@@ -14,7 +14,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import com.m3u.ui.model.LocalTheme
+import com.m3u.material.model.LocalTheme
 import net.mm2d.upnp.Device
 
 @OptIn(ExperimentalMaterialApi::class)

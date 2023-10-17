@@ -40,18 +40,18 @@ import androidx.compose.ui.unit.sp
 import com.m3u.core.util.readContentFilename
 import com.m3u.data.database.entity.Live
 import com.m3u.features.setting.components.MutedLiveItem
-import com.m3u.ui.components.Button
-import com.m3u.ui.components.LabelField
-import com.m3u.ui.components.TextButton
-import com.m3u.ui.model.LocalSpacing
-import com.m3u.ui.model.LocalTheme
-import com.m3u.i18n.R as I18R
+import com.m3u.material.components.Button
+import com.m3u.material.components.LabelField
+import com.m3u.material.components.TextButton
+import com.m3u.material.model.LocalSpacing
+import com.m3u.material.model.LocalTheme
+import com.m3u.i18n.R.string
 
 @Composable
 internal fun SubscriptionsFragment(
     title: String,
     url: String,
-    uri: Uri?,
+    uri: Uri,
     localStorage: Boolean,
     mutedLives: List<Live>,
     onBannedLive: (Int) -> Unit,
@@ -59,7 +59,7 @@ internal fun SubscriptionsFragment(
     onUrl: (String) -> Unit,
     onSubscribe: () -> Unit,
     onLocalStorage: () -> Unit,
-    openDocument: (Uri?) -> Unit,
+    openDocument: (Uri) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
@@ -80,7 +80,7 @@ internal fun SubscriptionsFragment(
                     verticalArrangement = Arrangement.spacedBy(1.dp)
                 ) {
                     Text(
-                        text = stringResource(I18R.string.feat_setting_label_muted_lives),
+                        text = stringResource(string.feat_setting_label_muted_lives),
                         style = MaterialTheme.typography.button,
                         color = theme.onTint,
                         modifier = Modifier
@@ -105,7 +105,7 @@ internal fun SubscriptionsFragment(
         item {
             LabelField(
                 text = title,
-                placeholder = stringResource(I18R.string.feat_setting_placeholder_title).uppercase(),
+                placeholder = stringResource(string.feat_setting_placeholder_title).uppercase(),
                 onValueChange = onTitle,
                 keyboardActions = KeyboardActions(
                     onNext = {
@@ -124,7 +124,7 @@ internal fun SubscriptionsFragment(
                 if (!localStorage) {
                     LabelField(
                         text = url,
-                        placeholder = stringResource(I18R.string.feat_setting_placeholder_url).uppercase(),
+                        placeholder = stringResource(string.feat_setting_placeholder_url).uppercase(),
                         onValueChange = onUrl,
                         keyboardActions = KeyboardActions(
                             onDone = {
@@ -154,7 +154,7 @@ internal fun SubscriptionsFragment(
         item {
             Column {
                 Button(
-                    text = stringResource(I18R.string.feat_setting_label_subscribe),
+                    text = stringResource(string.feat_setting_label_subscribe),
                     onClick = onSubscribe,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -189,7 +189,7 @@ fun LocalStorageSwitch(
         horizontalArrangement = Arrangement.spacedBy(spacing.medium)
     ) {
         Text(
-            text = stringResource(I18R.string.feat_setting_local_storage),
+            text = stringResource(string.feat_setting_local_storage),
             style = MaterialTheme.typography.subtitle1,
             modifier = Modifier.weight(1f)
         )
@@ -199,22 +199,21 @@ fun LocalStorageSwitch(
 
 @Composable
 private fun LocalStorageButton(
-    uri: Uri?,
-    openDocument: (Uri?) -> Unit,
+    uri: Uri,
+    openDocument: (Uri) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-    val selected = uri != null
+    val selected = uri != Uri.EMPTY
     val theme = LocalTheme.current
     val spacing = LocalSpacing.current
     val launcher = rememberLauncherForActivityResult(
-        ActivityResultContracts.GetContent(),
-        openDocument
-    )
+        ActivityResultContracts.GetContent()
+    ) { openDocument(it ?: Uri.EMPTY) }
     val icon = Icons.AutoMirrored.Rounded.OpenInNew
     val text = if (selected) remember(uri) {
-        uri?.readContentFilename(context.contentResolver).orEmpty()
-    } else stringResource(I18R.string.feat_setting_label_select_from_local_storage)
+        uri.readContentFilename(context.contentResolver).orEmpty()
+    } else stringResource(string.feat_setting_label_select_from_local_storage)
     Row(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
@@ -262,7 +261,7 @@ private fun ClipboardButton(
     val clipboardManager = LocalClipboardManager.current
     TextButton(
         enabled = enabled,
-        text = stringResource(I18R.string.feat_setting_label_parse_from_clipboard),
+        text = stringResource(string.feat_setting_label_parse_from_clipboard),
         onClick = {
             val clipboardUrl = clipboardManager.getText()?.text.orEmpty()
             val clipboardTitle = run {

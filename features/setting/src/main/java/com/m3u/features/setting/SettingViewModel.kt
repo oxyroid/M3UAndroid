@@ -16,14 +16,14 @@ import com.m3u.core.architecture.viewmodel.BaseViewModel
 import com.m3u.data.repository.LiveRepository
 import com.m3u.data.repository.observeAll
 import com.m3u.data.worker.SubscriptionInBackgroundWorker
-import com.m3u.ui.Destination
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-import com.m3u.i18n.R as I18R
+import com.m3u.i18n.R.string
+import com.m3u.ui.Destination
 
 @HiltViewModel
 class SettingViewModel @Inject constructor(
@@ -71,15 +71,15 @@ class SettingViewModel @Inject constructor(
         }
     }
 
-    private fun openDocument(uri: Uri?) {
+    private fun openDocument(uri: Uri) {
         writable.update {
             it.copy(
-                uri = uri ?: Uri.EMPTY
+                uri = uri
             )
         }
     }
 
-    private fun importJavaScript(uri: Uri?) {
+    private fun importJavaScript(uri: Uri) {
     }
 
     private fun scrollDefaultDestination() {
@@ -160,7 +160,7 @@ class SettingViewModel @Inject constructor(
     private fun subscribe() {
         val title = writable.value.title
         if (title.isEmpty()) {
-            val message = string(I18R.string.feat_setting_error_empty_title)
+            val message = string(string.feat_setting_error_empty_title)
             logger.log(message)
             return
         }
@@ -168,8 +168,8 @@ class SettingViewModel @Inject constructor(
         val url = readable.actualUrl
         if (url == null) {
             val message = when {
-                readable.localStorage -> string(I18R.string.feat_setting_error_unselected_file)
-                else -> string(I18R.string.feat_setting_error_blank_url)
+                readable.localStorage -> string(string.feat_setting_error_unselected_file)
+                else -> string(string.feat_setting_error_blank_url)
             }
             logger.log(message)
             return
@@ -187,7 +187,7 @@ class SettingViewModel @Inject constructor(
             .addTag(url)
             .build()
         workManager.enqueue(request)
-        val message = string(I18R.string.feat_setting_enqueue_subscribe)
+        val message = string(string.feat_setting_enqueue_subscribe)
         logger.log(message)
         writable.update {
             it.copy(

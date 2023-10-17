@@ -16,19 +16,21 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import com.m3u.androidApp.components.AppBottomSheet
 import com.m3u.androidApp.components.AppSnackHost
 import com.m3u.core.util.withEach
+import com.m3u.i18n.R.string
+import com.m3u.material.components.AppTopBar
+import com.m3u.material.components.IconButton
+import com.m3u.material.model.LocalSpacing
+import com.m3u.material.model.Theme
+import com.m3u.ui.Action
 import com.m3u.ui.Destination
+import com.m3u.ui.Fob
+import com.m3u.ui.Helper
 import com.m3u.ui.M3ULocalProvider
 import com.m3u.ui.Navigate
-import com.m3u.ui.components.AppTopBar
-import com.m3u.ui.components.IconButton
-import com.m3u.ui.model.Action
-import com.m3u.ui.model.Fob
-import com.m3u.ui.model.Helper
-import com.m3u.ui.model.LocalSpacing
-import com.m3u.ui.model.Theme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
@@ -89,6 +91,7 @@ internal fun AppScaffold(
                 }
             },
             onBackPressed = onBackPressed,
+            onBackPressedContentDescription = stringResource(string.ui_cd_top_bar_on_back_pressed),
             modifier = modifier
         ) { padding ->
             Column(

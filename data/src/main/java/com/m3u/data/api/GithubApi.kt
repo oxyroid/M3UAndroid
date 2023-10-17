@@ -2,10 +2,10 @@
 
 package com.m3u.data.api
 
-import com.m3u.data.api.dto.File
-import com.m3u.data.api.dto.Release
-import com.m3u.data.api.dto.Tree
-import com.m3u.data.api.dto.User
+import com.m3u.data.api.dto.github.File
+import com.m3u.data.api.dto.github.Release
+import com.m3u.data.api.dto.github.Tree
+import com.m3u.data.api.dto.github.User
 import retrofit2.http.GET
 import retrofit2.http.Path
 

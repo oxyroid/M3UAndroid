@@ -24,13 +24,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.m3u.ui.components.Background
-import com.m3u.ui.components.MonoText
-import com.m3u.ui.components.TextField
-import com.m3u.ui.model.LocalHelper
-import com.m3u.ui.model.LocalSpacing
-import com.m3u.ui.model.repeatOnLifecycle
-import com.m3u.i18n.R as I18R
+import com.m3u.material.components.Background
+import com.m3u.material.components.TextField
+import com.m3u.material.model.LocalSpacing
+import com.m3u.i18n.R.string
+import com.m3u.ui.LocalHelper
+import com.m3u.ui.MonoText
+import com.m3u.ui.repeatOnLifecycle
 
 @Composable
 internal fun ConsoleRoute(
@@ -38,7 +38,7 @@ internal fun ConsoleRoute(
     viewModel: ConsoleViewModel = hiltViewModel()
 ) {
     val helper = LocalHelper.current
-    val title = stringResource(I18R.string.feat_console_title)
+    val title = stringResource(string.feat_console_title)
     helper.repeatOnLifecycle {
         this.title = title
     }

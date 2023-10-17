@@ -22,7 +22,7 @@ import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
-object ApiModule {
+internal object ApiModule {
     @Provides
     @Singleton
     fun provideOkhttpClient(

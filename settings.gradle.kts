@@ -19,7 +19,7 @@ rootProject.name = "M3U"
 include(":androidApp")
 include(":core")
 include(":data")
-include(":ui")
+include(":material")
 include(
     ":features:main",
     ":features:setting",
@@ -33,3 +33,4 @@ include(
 include(":benchmark")
 include(":lint")
 include(":i18n")
+include(":ui")

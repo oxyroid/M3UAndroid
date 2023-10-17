@@ -14,12 +14,12 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.features.about.components.ContributorItem
 import com.m3u.features.about.model.Contributor
-import com.m3u.ui.components.Background
-import com.m3u.ui.components.MonoText
-import com.m3u.ui.model.LocalHelper
-import com.m3u.ui.model.LocalSpacing
-import com.m3u.ui.model.repeatOnLifecycle
-import com.m3u.i18n.R as I18R
+import com.m3u.material.components.Background
+import com.m3u.material.model.LocalSpacing
+import com.m3u.i18n.R.string
+import com.m3u.ui.LocalHelper
+import com.m3u.ui.MonoText
+import com.m3u.ui.repeatOnLifecycle
 
 @Composable
 internal fun AboutRoute(
@@ -27,7 +27,7 @@ internal fun AboutRoute(
     viewModel: AboutViewModel = hiltViewModel()
 ) {
     val helper = LocalHelper.current
-    val title = stringResource(I18R.string.feat_about_title)
+    val title = stringResource(string.feat_about_title)
     helper.repeatOnLifecycle {
         this.title = title
     }

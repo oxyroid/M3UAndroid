@@ -3,7 +3,7 @@ package com.m3u.features.console
 import androidx.compose.material.LocalContentColor
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
-import com.m3u.ui.model.LocalTheme
+import com.m3u.material.model.LocalTheme
 
 sealed class MonoStyle(
     val prefix: String

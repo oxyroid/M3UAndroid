@@ -24,17 +24,17 @@ import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import com.m3u.core.annotation.ClipMode
 import com.m3u.core.unspecified.UBoolean
-import com.m3u.core.unspecified.u
+import com.m3u.core.unspecified.unspecifiable
 import com.m3u.core.util.basic.isNotEmpty
 import com.m3u.features.live.components.DlnaDevicesBottomSheet
 import com.m3u.features.live.fragments.LiveFragment
-import com.m3u.ui.components.MaskState
-import com.m3u.ui.components.rememberMaskState
-import com.m3u.ui.ktx.LifecycleEffect
-import com.m3u.ui.model.LocalHelper
-import com.m3u.ui.model.LocalTheme
-import com.m3u.ui.model.OnPipModeChanged
-import com.m3u.ui.model.repeatOnLifecycle
+import com.m3u.material.components.MaskState
+import com.m3u.material.components.rememberMaskState
+import com.m3u.material.ktx.LifecycleEffect
+import com.m3u.material.model.LocalTheme
+import com.m3u.ui.LocalHelper
+import com.m3u.ui.OnPipModeChanged
+import com.m3u.ui.repeatOnLifecycle
 import kotlin.math.absoluteValue
 
 @Composable
@@ -52,7 +52,7 @@ internal fun LiveRoute(
     val searching by viewModel.searching.collectAsStateWithLifecycle()
 
     val maskState = rememberMaskState { visible ->
-        helper.statusBarsVisibility = visible.u
+        helper.statusBarsVisibility = visible.unspecifiable
         helper.navigationBarsVisibility = UBoolean.False
     }
     var isPipMode by remember { mutableStateOf(false) }

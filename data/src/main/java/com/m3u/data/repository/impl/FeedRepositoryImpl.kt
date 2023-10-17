@@ -34,7 +34,7 @@ import java.io.File
 import java.io.FileNotFoundException
 import java.io.InputStream
 import javax.inject.Inject
-import com.m3u.i18n.R as I18R
+import com.m3u.i18n.R.string
 
 class FeedRepositoryImpl @Inject constructor(
     private val feedDao: FeedDao,
@@ -124,7 +124,7 @@ class FeedRepositoryImpl @Inject constructor(
             liveDao.insert(live)
             emitResource(Unit)
         } catch (e: FileNotFoundException) {
-            error(context.getString(I18R.string.data_error_file_not_found))
+            error(context.getString(string.data_error_file_not_found))
         } catch (e: Exception) {
             logger.log(e)
             emitException(e)

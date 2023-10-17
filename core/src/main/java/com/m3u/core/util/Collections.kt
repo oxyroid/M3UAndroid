@@ -119,3 +119,5 @@ inline fun <E> List<E>.indexOf(start: Int = 0, predicate: (E) -> Boolean): Int {
     }
     return -1
 }
+
+inline fun <E> Iterable<E>.contains(predicate: (E) -> Boolean): Boolean = find(predicate) != null

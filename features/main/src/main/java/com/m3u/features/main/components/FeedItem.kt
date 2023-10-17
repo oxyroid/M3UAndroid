@@ -26,12 +26,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.m3u.ui.components.OuterRow
-import com.m3u.ui.ktx.animateColor
-import com.m3u.ui.ktx.animateDp
-import com.m3u.ui.ktx.animated
-import com.m3u.ui.model.LocalSpacing
-import com.m3u.ui.model.LocalTheme
+import com.m3u.material.components.OuterRow
+import com.m3u.material.ktx.animateColor
+import com.m3u.material.ktx.animateDp
+import com.m3u.material.ktx.animated
+import com.m3u.material.model.LocalSpacing
+import com.m3u.material.model.LocalTheme
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable

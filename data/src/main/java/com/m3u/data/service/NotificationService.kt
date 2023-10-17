@@ -5,6 +5,7 @@ import androidx.annotation.DrawableRes
 import androidx.annotation.IntDef
 import androidx.core.app.NotificationCompat
 
+// TODO: combine to ui-service
 interface NotificationService {
     fun post(
         notificationId: Int,
