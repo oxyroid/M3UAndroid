@@ -62,7 +62,7 @@ afterEvaluate {
             create<MavenPublication>("release") {
                 groupId = "com.m3u"
                 artifactId = "material"
-                version = android.defaultConfig.versionName
+                version = "1.0.0"
 
                 from(components["release"])
             }
