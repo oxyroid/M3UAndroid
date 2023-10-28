@@ -13,6 +13,7 @@ object Certs {
                 chain: Array<out X509Certificate>?,
                 authType: String?
             ) {
+                // do nothing
             }
 
             @SuppressLint("TrustAllX509TrustManager")
@@ -20,6 +21,7 @@ object Certs {
                 chain: Array<out X509Certificate>?,
                 authType: String?
             ) {
+                // do nothing
             }
 
             override fun getAcceptedIssuers(): Array<X509Certificate> {

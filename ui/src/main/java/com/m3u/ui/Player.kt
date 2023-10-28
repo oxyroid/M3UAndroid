@@ -30,10 +30,10 @@ data class PlayerState(
 fun rememberPlayerState(
     player: Player?,
     url: String,
+    onInstallMedia: (String) -> Unit,
     @ClipMode clipMode: Int = ClipMode.ADAPTIVE,
     keepScreenOn: Boolean = true,
-    onInstallMedia: (String) -> Unit,
-    onUninstallMedia: () -> Unit
+    onUninstallMedia: () -> Unit,
 ): PlayerState {
     val currentOnInstallMedia by rememberUpdatedState(onInstallMedia)
     val currentOnUninstallMedia by rememberUpdatedState(onUninstallMedia)

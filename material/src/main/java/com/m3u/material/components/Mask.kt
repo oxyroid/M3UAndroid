@@ -178,10 +178,10 @@ fun MaskButton(
     state: MaskState,
     icon: ImageVector,
     onClick: () -> Unit,
+    contentDescription: String,
     modifier: Modifier = Modifier,
     tint: Color = Color.Unspecified,
-    enabled: Boolean = true,
-    contentDescription: String,
+    enabled: Boolean = true
 ) {
     val tooltipState = rememberTooltipState()
 

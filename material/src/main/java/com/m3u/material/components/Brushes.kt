@@ -18,11 +18,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TileMode
 import com.m3u.material.model.LocalTheme
 import com.m3u.material.model.StepColor
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableList
 
 @Stable
 @Composable
 fun animatedRadialBrush(
-    colors: List<StepColor> = M3UBrushDefaults.createDefaultStepColors(),
+    colors: ImmutableList<StepColor> = M3UBrushDefaults.createDefaultStepColors(),
     center: Offset = Offset.Unspecified,
     radius: Float = Float.POSITIVE_INFINITY,
     tileMode: TileMode = TileMode.Clamp,
@@ -48,7 +51,7 @@ fun animatedRadialBrush(
 @Stable
 @Composable
 fun animatedLinearBrush(
-    colors: List<StepColor> = M3UBrushDefaults.createDefaultStepColors(),
+    colors: ImmutableList<StepColor> = M3UBrushDefaults.createDefaultStepColors(),
     start: Offset = Offset.Zero,
     end: Offset = Offset.Infinite,
     tileMode: TileMode = TileMode.Clamp,
@@ -74,7 +77,7 @@ fun animatedLinearBrush(
 @Stable
 @Composable
 fun animatedSweepBrush(
-    colors: List<StepColor> = M3UBrushDefaults.createDefaultStepColors(),
+    colors: ImmutableList<StepColor> = M3UBrushDefaults.createDefaultStepColors(),
     center: Offset = Offset.Unspecified,
     durationMillis: Int = M3UBrushDefaults.durationMillis,
     easing: Easing = LinearEasing,
@@ -105,13 +108,13 @@ object M3UBrushDefaults {
 
     @Composable
     fun createDefaultStepColors(
-        colors: List<Color> = listOf(color1(), color2(), color3())
-    ): List<StepColor> = colors.map { StepColor(it, step) }
+        colors: ImmutableList<Color> = persistentListOf(color1(), color2(), color3())
+    ): ImmutableList<StepColor> = colors.map { StepColor(it, step) }.toImmutableList()
 
     @Composable
     fun createStepColors(
-        colors: List<Pair<Color, Int>>
-    ): List<StepColor> = colors.map { StepColor(it.first, it.second) }
+        colors: ImmutableList<Pair<Color, Int>>
+    ): ImmutableList<StepColor> = colors.map { StepColor(it.first, it.second) }.toImmutableList()
 
 
     @Composable
@@ -129,13 +132,13 @@ private fun List<StepColor>.stepColor(index: Int): StepColor {
 
 @Composable
 private fun InfiniteTransition.animateColors(
-    colors: List<StepColor>,
+    colors: ImmutableList<StepColor>,
     durationMillis: Int,
     easing: Easing,
     repeatMode: RepeatMode
-): List<Color> {
-    return colors.mapIndexed { index, stepColor ->
-        this.animateColor(
+): ImmutableList<Color> = colors
+    .mapIndexed { index, stepColor ->
+        animateColor(
             initialValue = stepColor.color,
             targetValue = colors.stepColor(index).color,
             animationSpec = infiniteRepeatable(
@@ -144,7 +147,8 @@ private fun InfiniteTransition.animateColors(
                     easing = easing
                 ),
                 repeatMode = repeatMode
-            )
+            ),
+            label = "${label}_$index"
         ).value
     }
-}
+    .toImmutableList()

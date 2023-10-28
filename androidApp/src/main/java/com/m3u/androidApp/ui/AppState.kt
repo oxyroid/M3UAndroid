@@ -14,15 +14,15 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.m3u.androidApp.navigation.popupToRoot
-import com.m3u.androidApp.navigation.rootRoute
-import com.m3u.features.about.navigation.aboutRoute
+import com.m3u.androidApp.navigation.ROOT_ROUTE
+import com.m3u.features.about.navigation.ABOUT_ROUTE
 import com.m3u.features.about.navigation.navigateToAbout
-import com.m3u.features.console.navigation.consoleRoute
+import com.m3u.features.console.navigation.CONSOLE_ROUTE
 import com.m3u.features.console.navigation.navigateToConsole
-import com.m3u.features.feed.navigation.feedRoute
+import com.m3u.features.feed.navigation.FEED_ROUTE
 import com.m3u.features.feed.navigation.navigateToFeed
-import com.m3u.features.live.navigation.livePlaylistRoute
-import com.m3u.features.live.navigation.liveRoute
+import com.m3u.features.live.navigation.LIVE_PLAYLIST_ROUTE
+import com.m3u.features.live.navigation.LIVE_ROUTE
 import com.m3u.features.live.navigation.navigateToLive
 import com.m3u.features.live.navigation.navigateToLivePlayList
 import com.m3u.ui.Destination
@@ -76,7 +76,7 @@ class AppState(
 
     val rootDestination: Destination.Root?
         @Composable get() = when (navDestination?.route) {
-            rootRoute -> rootDestinations[currentPage]
+            ROOT_ROUTE -> rootDestinations[currentPage]
             else -> null
         }
 
@@ -107,13 +107,13 @@ class AppState(
 
 inline infix fun <reified D : Destination> NavDestination.destinationTo(clazz: Class<D>): Boolean {
     val targetRoute = when (clazz.name) {
-        Destination.Root::class.java.name -> rootRoute
-        Destination.Live::class.java.name -> liveRoute
-        Destination.LivePlayList::class.java.name -> livePlaylistRoute
-        Destination.Feed::class.java.name -> feedRoute
-        Destination.Console::class.java.name -> consoleRoute
-        Destination.About::class.java.name -> aboutRoute
-        else -> rootRoute
+        Destination.Root::class.java.name -> ROOT_ROUTE
+        Destination.Live::class.java.name -> LIVE_ROUTE
+        Destination.LivePlayList::class.java.name -> LIVE_PLAYLIST_ROUTE
+        Destination.Feed::class.java.name -> FEED_ROUTE
+        Destination.Console::class.java.name -> CONSOLE_ROUTE
+        Destination.About::class.java.name -> ABOUT_ROUTE
+        else -> ROOT_ROUTE
     }
 
     return route == targetRoute

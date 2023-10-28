@@ -26,7 +26,7 @@ fun M3UNavHost(
     onCurrentPage: (Int) -> Unit,
     navigate: Navigate,
     modifier: Modifier = Modifier,
-    startDestination: String = rootRoute
+    startDestination: String = ROOT_ROUTE
 ) {
     val helper = LocalHelper.current
     val context = LocalContext.current

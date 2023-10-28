@@ -75,20 +75,16 @@ import com.m3u.data.database.entity.Live
 import com.m3u.features.feed.components.DialogStatus
 import com.m3u.features.feed.components.FeedDialog
 import com.m3u.features.feed.components.LiveItem
+import com.m3u.i18n.R.string
 import com.m3u.material.components.TextField
 import com.m3u.material.ktx.Edge
-import com.m3u.material.ktx.animateDp
 import com.m3u.material.ktx.blurEdges
 import com.m3u.material.ktx.interceptVolumeEvent
 import com.m3u.material.ktx.isAtTop
-import com.m3u.material.model.LocalDuration
 import com.m3u.material.model.LocalScalable
 import com.m3u.material.model.LocalSpacing
 import com.m3u.material.model.LocalTheme
 import com.m3u.material.model.Scalable
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import com.m3u.i18n.R.string
 import com.m3u.ui.Action
 import com.m3u.ui.Destination
 import com.m3u.ui.EventHandler
@@ -96,6 +92,9 @@ import com.m3u.ui.Fob
 import com.m3u.ui.LocalHelper
 import com.m3u.ui.isAtTop
 import com.m3u.ui.repeatOnLifecycle
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.coroutines.launch
 
 internal typealias NavigateToLive = (liveId: Int) -> Unit
 internal typealias NavigateToPlaylist = (playlist: List<Int>, initial: Int) -> Unit
@@ -124,7 +123,7 @@ internal fun FeedRoute(
         viewModel.onEvent(FeedEvent.Observe(feedUrl))
     }
     helper.repeatOnLifecycle {
-        actions = listOf(
+        actions = persistentListOf(
             Action(
                 icon = Icons.Rounded.Refresh,
                 contentDescription = "refresh",
@@ -214,7 +213,7 @@ private fun FeedScreen(
     scrollMode: Boolean,
     noPictureMode: Boolean,
     rowCount: Int,
-    channels: List<Channel>,
+    channels: ImmutableList<Channel>,
     scrollUp: Event<Unit>,
     refreshing: Boolean,
     onRefresh: OnRefresh,
@@ -228,7 +227,6 @@ private fun FeedScreen(
     val theme = LocalTheme.current
     val configuration = LocalConfiguration.current
     val spacing = LocalSpacing.current
-    val duration = LocalDuration.current
     val state = rememberPullRefreshState(
         refreshing = refreshing,
         onRefresh = onRefresh
@@ -243,16 +241,7 @@ private fun FeedScreen(
                 ).takeUnless { newValue }
             }
         }
-        var hasElevation by remember { mutableStateOf(false) }
-        val surfaceElevation by animateDp("FeedScreenSearchElevation") {
-            if (!isAtTopState.value && hasElevation) spacing.medium else spacing.none
-        }
-        LaunchedEffect(Unit) {
-            delay(duration.medium.toLong())
-            hasElevation = true
-        }
         Surface(
-            elevation = surfaceElevation,
             color = theme.background,
             contentColor = theme.onBackground
         ) {
@@ -272,9 +261,9 @@ private fun FeedScreen(
         ) {
             when (configuration.orientation) {
                 ORIENTATION_LANDSCAPE -> {
-                    FeedPager(channels) {
+                    FeedPager(channels) { lives ->
                         LandscapeOrientationContent(
-                            lives = it,
+                            lives = lives,
                             useCommonUIMode = useCommonUIMode,
                             scrollMode = scrollMode,
                             noPictureMode = noPictureMode,
@@ -326,7 +315,7 @@ private fun LandscapeOrientationContent(
     scrollMode: Boolean,
     noPictureMode: Boolean,
     rowCount: Int,
-    lives: List<Live>,
+    lives: ImmutableList<Live>,
     scrollUp: Event<Unit>,
     isAtTopState: MutableState<Boolean>,
     navigateToLive: NavigateToLive,
@@ -342,7 +331,7 @@ private fun LandscapeOrientationContent(
     }
 
     if (useCommonUIMode || type == UI_MODE_TYPE_NORMAL) {
-        NormalLand(
+        NormalLandscapeOrientationContent(
             lives = lives,
             rowCount = rowCount,
             noPictureMode = noPictureMode,
@@ -441,7 +430,7 @@ private fun PortraitOrientationContent(
 }
 
 @Composable
-fun NormalLand(
+fun NormalLandscapeOrientationContent(
     lives: List<Live>,
     rowCount: Int,
     noPictureMode: Boolean,
@@ -596,9 +585,9 @@ private fun UnsupportedUIModeContent(
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun FeedPager(
-    channels: List<Channel>,
+    channels: ImmutableList<Channel>,
     modifier: Modifier = Modifier,
-    content: @Composable (List<Live>) -> Unit,
+    content: @Composable (ImmutableList<Live>) -> Unit,
 ) {
     val spacing = LocalSpacing.current
     val theme = LocalTheme.current

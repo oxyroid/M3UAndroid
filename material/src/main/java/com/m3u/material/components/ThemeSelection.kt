@@ -52,9 +52,9 @@ fun ThemeSelection(
     selected: Boolean,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
-    modifier: Modifier = Modifier,
     leftContentDescription: String,
     rightContentDescription: String,
+    modifier: Modifier = Modifier,
 ) {
     val spacing = LocalSpacing.current
     val alpha by animateFloatAsState(

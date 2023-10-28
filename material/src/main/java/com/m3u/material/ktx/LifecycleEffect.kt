@@ -42,5 +42,6 @@ fun <T> rememberUpdatedStateWithLifecycle(
             EmptyCoroutineContext -> this@produceState.value = updater()
             else -> withContext(context) { this@produceState.value = updater() }
         }
+
     }
 }

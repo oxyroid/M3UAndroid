@@ -18,12 +18,12 @@ private const val LIVE_ROUTE_PATH = "live_route"
 private const val LIVE_PLAYLIST_ROUTE_PATH = "live_playlist_route"
 
 private const val TYPE_ID = "id"
-const val liveRoute = "$LIVE_ROUTE_PATH/{$TYPE_ID}"
+const val LIVE_ROUTE = "$LIVE_ROUTE_PATH/{$TYPE_ID}"
 private fun createLiveRoute(id: Int) = "$LIVE_ROUTE_PATH/$id"
 
 private const val TYPE_INITIAL_INDEX = "index"
 private const val TYPE_IDS = "ids"
-const val livePlaylistRoute = "$LIVE_PLAYLIST_ROUTE_PATH/{$TYPE_IDS}/{$TYPE_INITIAL_INDEX}"
+const val LIVE_PLAYLIST_ROUTE = "$LIVE_PLAYLIST_ROUTE_PATH/{$TYPE_IDS}/{$TYPE_INITIAL_INDEX}"
 
 private fun createLivePlaylistRoute(ids: List<Int>, initialIndex: Int) =
     "$LIVE_PLAYLIST_ROUTE_PATH/${IntIterativeTransferable.transfer(ids)}/$initialIndex"
@@ -48,7 +48,7 @@ fun NavGraphBuilder.liveScreen(
     onBackPressed: () -> Unit
 ) {
     composable(
-        route = liveRoute,
+        route = LIVE_ROUTE,
         arguments = listOf(
             navArgument(TYPE_ID) {
                 type = NavType.IntType
@@ -73,7 +73,7 @@ fun NavGraphBuilder.livePlaylistScreen(
     onBackPressed: () -> Unit
 ) {
     composable(
-        route = livePlaylistRoute,
+        route = LIVE_PLAYLIST_ROUTE,
         arguments = listOf(
             navArgument(TYPE_IDS) {
                 type = NavType.StringType

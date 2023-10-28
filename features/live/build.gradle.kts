@@ -55,3 +55,15 @@ dependencies {
 
     implementation(libs.net.mm2d.mmupnp.mmupnp)
 }
+
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
+    val path = project.buildDir.absolutePath + "/compose_metrics"
+    compilerOptions.freeCompilerArgs.addAll(
+        "-P",
+        "plugin:androidx.compose.compiler.plugins.kotlin:metricsDestination=$path",
+    )
+    compilerOptions.freeCompilerArgs.addAll(
+        "-P",
+        "plugin:androidx.compose.compiler.plugins.kotlin:reportsDestination=$path",
+    )
+}

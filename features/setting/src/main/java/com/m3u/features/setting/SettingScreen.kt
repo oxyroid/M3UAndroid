@@ -48,6 +48,7 @@ import com.m3u.ui.EventHandler
 import com.m3u.ui.Fob
 import com.m3u.ui.LocalHelper
 import com.m3u.ui.ResumeEvent
+import kotlinx.collections.immutable.persistentListOf
 
 typealias NavigateToConsole = () -> Unit
 typealias NavigateToAbout = () -> Unit
@@ -64,7 +65,7 @@ fun SettingRoute(
     val helper = LocalHelper.current
 
     EventHandler(resume) {
-        helper.actions = emptyList()
+        helper.actions = persistentListOf()
     }
     val configuration = LocalConfiguration.current
     val type = configuration.uiMode and Configuration.UI_MODE_TYPE_MASK

@@ -8,15 +8,15 @@ import androidx.navigation.NavOptions
 import androidx.navigation.compose.composable
 import com.m3u.features.about.AboutRoute
 
-const val aboutRoute = "about_route"
+const val ABOUT_ROUTE = "about_route"
 
 fun NavController.navigateToAbout(navOptions: NavOptions? = null) {
-    this.navigate(aboutRoute, navOptions)
+    this.navigate(ABOUT_ROUTE, navOptions)
 }
 
 fun NavGraphBuilder.aboutScreen() {
     composable(
-        route = aboutRoute,
+        route = ABOUT_ROUTE,
         enterTransition = { slideInVertically { it } },
         exitTransition = { slideOutVertically { it } },
         popEnterTransition = { slideInVertically { it } },

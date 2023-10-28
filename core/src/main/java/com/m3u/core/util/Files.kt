@@ -5,38 +5,31 @@ import android.net.Uri
 import android.provider.OpenableColumns
 import androidx.core.net.toFile
 
-fun Uri.readContentFilename(
-    contentResolver: ContentResolver
-): String? = if (this == Uri.EMPTY) null
-else when (scheme) {
-    ContentResolver.SCHEME_FILE -> toFile().name
-    ContentResolver.SCHEME_CONTENT -> {
-        contentResolver.query(
-            this,
-            null,
-            null,
-            null,
-            null
-        )?.use { cursor ->
+fun Uri.readFileName(resolver: ContentResolver): String? {
+    return if (this == Uri.EMPTY) null
+    else if (scheme == ContentResolver.SCHEME_FILE) toFile().name
+    else if (scheme != ContentResolver.SCHEME_CONTENT) null
+    else {
+        val cursor = resolver.query(this, null, null, null, null)
+        cursor?.use {
             if (cursor.moveToFirst()) {
-                val index = cursor.getColumnIndexOrThrow(
-                    OpenableColumns.DISPLAY_NAME
-                )
+                val index = cursor.getColumnIndexOrThrow(OpenableColumns.DISPLAY_NAME)
                 cursor.getString(index)
             } else null
         }
     }
-    else -> null
+
 }
 
-fun Uri.readContentText(
-    contentResolver: ContentResolver
-): String? = if (this == Uri.EMPTY) null
-else when (scheme) {
-    ContentResolver.SCHEME_FILE -> toFile().readText()
-    ContentResolver.SCHEME_CONTENT ->
-        contentResolver.openInputStream(this)?.use {
-            it.bufferedReader().readText()
-        }
-    else -> null
+fun Uri.readFileContent(resolver: ContentResolver): String? {
+    return if (this == Uri.EMPTY) null
+    else when (scheme) {
+        ContentResolver.SCHEME_FILE -> toFile().readText()
+        ContentResolver.SCHEME_CONTENT ->
+            resolver.openInputStream(this)?.use {
+                it.bufferedReader().readText()
+            }
+
+        else -> null
+    }
 }

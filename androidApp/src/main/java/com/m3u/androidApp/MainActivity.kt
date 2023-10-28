@@ -18,6 +18,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsCompat.Type.InsetsType
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.core.view.WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+import androidx.lifecycle.lifecycleScope
 import com.m3u.androidApp.ui.App
 import com.m3u.androidApp.ui.AppViewModel
 import com.m3u.core.unspecified.UBoolean
@@ -30,6 +31,8 @@ import com.m3u.ui.Helper
 import com.m3u.ui.OnPipModeChanged
 import com.m3u.ui.OnUserLeaveHint
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.coroutines.launch
 import kotlin.reflect.KMutableProperty0
 
 @AndroidEntryPoint
@@ -54,6 +57,7 @@ class MainActivity : ComponentActivity() {
         installSplashScreen()
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
+        lifecycleScope.launch { }
         setContent {
             App(
                 viewModel = viewModel,
@@ -69,7 +73,7 @@ class MainActivity : ComponentActivity() {
 
     private fun helper(
         title: Method<String>,
-        actions: Method<List<Action>>,
+        actions: Method<ImmutableList<Action>>,
         fob: Method<Fob?>
     ): Helper = object : Helper {
         override fun enterPipMode(size: Rect) {
@@ -80,7 +84,7 @@ class MainActivity : ComponentActivity() {
         }
 
         override var title: String by title
-        override var actions: List<Action> by actions
+        override var actions: ImmutableList<Action> by actions
         override var fob: Fob? by fob
         override var statusBarsVisibility: UBoolean = UBoolean.Unspecified
             set(value) {

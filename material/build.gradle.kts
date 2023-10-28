@@ -54,6 +54,7 @@ dependencies {
     api(libs.io.coil.kt.coil.compose)
 
     implementation(libs.com.airbnb.android.lottie.compose)
+    api("org.jetbrains.kotlinx:kotlinx-collections-immutable:0.3.6")
 }
 
 afterEvaluate {
@@ -68,4 +69,16 @@ afterEvaluate {
             }
         }
     }
+}
+
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
+    val path = project.buildDir.absolutePath + "/compose_metrics"
+    compilerOptions.freeCompilerArgs.addAll(
+        "-P",
+        "plugin:androidx.compose.compiler.plugins.kotlin:metricsDestination=$path",
+    )
+    compilerOptions.freeCompilerArgs.addAll(
+        "-P",
+        "plugin:androidx.compose.compiler.plugins.kotlin:reportsDestination=$path",
+    )
 }

@@ -17,7 +17,7 @@ import com.m3u.features.feed.NavigateToPlaylist
 
 private const val FEED_ROUTE_PATH = "feed_route"
 private const val TYPE_URL = "url"
-const val feedRoute = "$FEED_ROUTE_PATH?$TYPE_URL={$TYPE_URL}"
+const val FEED_ROUTE = "$FEED_ROUTE_PATH?$TYPE_URL={$TYPE_URL}"
 private fun createFeedRoute(url: String) = "$FEED_ROUTE_PATH?${TYPE_URL}=$url"
 
 fun NavController.navigateToFeed(feedUrl: String, navOptions: NavOptions? = null) {
@@ -31,7 +31,7 @@ fun NavGraphBuilder.feedScreen(
     navigateToPlayList: NavigateToPlaylist
 ) {
     composable(
-        route = feedRoute,
+        route = FEED_ROUTE,
         arguments = listOf(
             navArgument(TYPE_URL) {
                 type = NavType.StringType

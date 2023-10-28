@@ -32,10 +32,10 @@ import com.m3u.ui.ResumeEvent
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 
-const val rootRoute = "root_route"
+const val ROOT_ROUTE = "root_route"
 
 fun NavController.popupToRoot() {
-    this.popBackStack(rootRoute, false)
+    this.popBackStack(ROOT_ROUTE, false)
 }
 
 fun NavGraphBuilder.rootGraph(
@@ -46,7 +46,7 @@ fun NavGraphBuilder.rootGraph(
     navigateToConsole: NavigateToConsole,
     navigateToAbout: NavigateToAbout,
 ) {
-    composable(rootRoute) {
+    composable(ROOT_ROUTE) {
         RootGraph(
             currentPage = currentPage,
             onCurrentPage = onCurrentPage,

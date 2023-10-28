@@ -25,6 +25,7 @@ import com.m3u.material.model.Scalable
 import com.m3u.ui.EventHandler
 import com.m3u.ui.LocalHelper
 import com.m3u.ui.ResumeEvent
+import kotlinx.collections.immutable.persistentListOf
 
 typealias NavigateToLive = (Int) -> Unit
 
@@ -43,7 +44,7 @@ fun FavouriteRoute(
         state.rowCount = target
     }
     EventHandler(resume) {
-        helper.actions = emptyList()
+        helper.actions = persistentListOf()
     }
 
     val interceptVolumeEventModifier = remember(state.godMode) {

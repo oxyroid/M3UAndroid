@@ -37,7 +37,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.m3u.core.util.readContentFilename
+import com.m3u.core.util.readFileName
 import com.m3u.data.database.entity.Live
 import com.m3u.features.setting.components.MutedLiveItem
 import com.m3u.material.components.Button
@@ -212,7 +212,7 @@ private fun LocalStorageButton(
     ) { openDocument(it ?: Uri.EMPTY) }
     val icon = Icons.AutoMirrored.Rounded.OpenInNew
     val text = if (selected) remember(uri) {
-        uri.readContentFilename(context.contentResolver).orEmpty()
+        uri.readFileName(context.contentResolver).orEmpty()
     } else stringResource(string.feat_setting_label_select_from_local_storage)
     Row(
         horizontalArrangement = Arrangement.SpaceBetween,

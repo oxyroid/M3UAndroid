@@ -18,11 +18,11 @@ import java.io.File
 abstract class BaseViewModel<S, in E>(
     application: Application,
     emptyState: S
-) : AndroidViewModel(application), PlatformViewModel<S, E> {
+) : AndroidViewModel(application) {
     protected val writable: MutableStateFlow<S> = MutableStateFlow(emptyState)
     protected val readable: S get() = writable.value
-    override val state: StateFlow<S> = writable.asStateFlow()
-    override fun onEvent(event: E) {}
+    val state: StateFlow<S> = writable.asStateFlow()
+    abstract fun onEvent(event: E)
     protected val cacheDir: File get() = context.cacheDir
 
     private val context: Context get() = getApplication()

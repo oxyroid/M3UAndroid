@@ -76,6 +76,7 @@ fun DialogTextField(
 @Composable
 fun DialogItem(
     text: String,
+    modifier: Modifier = Modifier,
     color: Color = Color.Unspecified,
     contentColor: Color = Color.Unspecified,
     onClick: () -> Unit,
@@ -90,7 +91,7 @@ fun DialogItem(
     ) {
         Row(
             horizontalArrangement = Arrangement.Start,
-            modifier = Modifier
+            modifier = modifier
                 .clickable(onClick = onClick)
                 .padding(spacing.medium)
                 .fillMaxWidth()
@@ -107,12 +108,12 @@ fun DialogItem(
 @Composable
 fun DialogTextField(
     resId: Int,
-    color: Color = LocalTheme.current.onBackground,
     onTextChange: (String) -> Unit,
+    color: Color = LocalTheme.current.onBackground,
     icon: ImageVector? = null,
     iconTint: Color = color,
     readOnly: Boolean = true,
-    onIconClick: (() -> Unit)? = null,
+    onIconClick: (() -> Unit)? = null
 ) {
     DialogTextField(
         text = stringResource(id = resId),

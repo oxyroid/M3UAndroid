@@ -63,10 +63,10 @@ import com.m3u.material.model.LocalTheme
 
 @Composable
 fun AppTopBar(
-    modifier: Modifier = Modifier,
     title: String,
     visible: Boolean,
     scrollable: Boolean,
+    modifier: Modifier = Modifier,
     consumer: AppTopBarConsumer = AppTopBarDefaults.consumer,
     windowInsets: WindowInsets = AppTopBarDefaults.windowInsets,
     onBackPressed: (() -> Unit)? = null,

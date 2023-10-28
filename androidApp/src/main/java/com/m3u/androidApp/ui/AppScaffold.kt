@@ -19,7 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.m3u.androidApp.components.AppBottomSheet
 import com.m3u.androidApp.components.AppSnackHost
-import com.m3u.core.util.withEach
+import com.m3u.core.util.collections.withEach
 import com.m3u.i18n.R.string
 import com.m3u.material.components.AppTopBar
 import com.m3u.material.components.IconButton
@@ -31,6 +31,7 @@ import com.m3u.ui.Fob
 import com.m3u.ui.Helper
 import com.m3u.ui.M3ULocalProvider
 import com.m3u.ui.Navigate
+import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
@@ -39,7 +40,7 @@ import kotlin.time.Duration.Companion.milliseconds
 internal fun AppScaffold(
     title: String,
     snacker: String,
-    actions: List<Action>,
+    actions: ImmutableList<Action>,
     rootDestination: Destination.Root?,
     fob: Fob?,
     isSystemBarVisible: Boolean,

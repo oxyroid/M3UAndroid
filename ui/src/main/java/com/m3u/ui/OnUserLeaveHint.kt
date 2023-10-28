@@ -13,6 +13,7 @@ import androidx.core.util.Consumer
 import androidx.lifecycle.Lifecycle
 import com.m3u.core.unspecified.UBoolean
 import com.m3u.material.ktx.LifecycleEffect
+import kotlinx.collections.immutable.ImmutableList
 
 typealias OnUserLeaveHint = () -> Unit
 typealias OnPipModeChanged = Consumer<PictureInPictureModeChangedInfo>
@@ -20,7 +21,7 @@ typealias OnPipModeChanged = Consumer<PictureInPictureModeChangedInfo>
 @Stable
 interface Helper {
     var title: String
-    var actions: List<Action>
+    var actions: ImmutableList<Action>
     var fob: Fob?
     var statusBarsVisibility: UBoolean
     var navigationBarsVisibility: UBoolean
@@ -33,7 +34,7 @@ interface Helper {
 
 private data class HelperBundle(
     val title: String,
-    val actions: List<Action>,
+    val actions: ImmutableList<Action>,
     val fob: Fob?,
     val statusBarsVisibility: UBoolean,
     val navigationBarsVisibility: UBoolean,
@@ -102,7 +103,7 @@ val EmptyHelper = object : Helper {
             error("Cannot set title")
         }
 
-    override var actions: List<Action>
+    override var actions: ImmutableList<Action>
         get() = error("Cannot get actions")
         set(_) {
             error("Cannot set actions")

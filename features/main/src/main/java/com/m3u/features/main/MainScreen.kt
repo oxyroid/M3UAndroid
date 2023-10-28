@@ -38,6 +38,7 @@ import com.m3u.i18n.R.string
 import com.m3u.ui.EventHandler
 import com.m3u.ui.LocalHelper
 import com.m3u.ui.ResumeEvent
+import kotlinx.collections.immutable.persistentListOf
 
 private typealias showDialog = (Feed) -> Unit
 typealias NavigateToFeed = (feed: Feed) -> Unit
@@ -58,7 +59,7 @@ fun MainRoute(
     }
 
     EventHandler(resume) {
-        helper.actions = emptyList()
+        helper.actions = persistentListOf()
     }
 
     val interceptVolumeEventModifier = remember(state.godMode) {

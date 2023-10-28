@@ -20,8 +20,8 @@ import com.m3u.material.model.LocalTheme
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Selection(
-    modifier: Modifier = Modifier,
     onClick: () -> Unit,
+    modifier: Modifier = Modifier,
     content: @Composable BoxScope.() -> Unit
 ) {
     val theme = LocalTheme.current

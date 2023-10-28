@@ -4,7 +4,6 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.snapshots.StateFactoryMarker
 
-// TODO: Move to material/ui module.
 @StateFactoryMarker
 fun <T> observableStateOf(
     delegate: MutableState<T>,

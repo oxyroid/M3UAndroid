@@ -26,6 +26,8 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import javax.inject.Inject
 
+private const val BITMAP_QUALITY = 100
+
 class MediaRepositoryImpl @Inject constructor(
     @ApplicationContext private val context: Context,
     @Logger.File private val logger: Logger
@@ -45,7 +47,7 @@ class MediaRepositoryImpl @Inject constructor(
                 }
                 file.createNewFile()
                 file.outputStream().buffered().use {
-                    bitmap.compress(Bitmap.CompressFormat.PNG, 100, it)
+                    bitmap.compress(Bitmap.CompressFormat.PNG, BITMAP_QUALITY, it)
                     it.flush()
                 }
             }

@@ -14,6 +14,8 @@ import com.m3u.ui.Action
 import com.m3u.ui.Destination
 import com.m3u.ui.Fob
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 import javax.inject.Inject
@@ -36,7 +38,7 @@ class AppViewModel @Inject constructor(
     val snacker = uiService.snacker
 
     val title: MutableStateFlow<String> = MutableStateFlow("")
-    val actions: MutableStateFlow<List<Action>> = MutableStateFlow(emptyList())
+    val actions: MutableStateFlow<ImmutableList<Action>> = MutableStateFlow(persistentListOf())
     val fob: MutableStateFlow<Fob?> = MutableStateFlow(null)
 
     override fun onEvent(event: Unit) {
