@@ -57,6 +57,7 @@
             android:label="@string/app_label_crash"
             android:launchMode="singleInstance" />
 
+        <service android:name="com.m3u.dlna.DLNACastService"/>
         <provider
             android:name="androidx.startup.InitializationProvider"
             android:authorities="${applicationId}.androidx-startup"

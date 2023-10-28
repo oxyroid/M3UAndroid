@@ -72,7 +72,7 @@ internal fun LiveFragment(
     stared: Boolean,
     onRecord: () -> Unit,
     onFavourite: () -> Unit,
-    searchDlnaDevices: () -> Unit,
+    openDlnaDevices: () -> Unit,
     onBackPressed: () -> Unit,
     onInstallMedia: (String) -> Unit,
     onUninstallMedia: () -> Unit,
@@ -148,9 +148,8 @@ internal fun LiveFragment(
                         if (playback != Player.STATE_IDLE) {
                             MaskButton(
                                 state = maskState,
-                                enabled = false,
                                 icon = Icons.Rounded.Cast,
-                                onClick = searchDlnaDevices,
+                                onClick = openDlnaDevices,
                                 contentDescription = stringResource(string.feat_live_tooltip_cast)
                             )
                         }

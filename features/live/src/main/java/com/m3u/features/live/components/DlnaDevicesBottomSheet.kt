@@ -1,15 +1,12 @@
 package com.m3u.features.live.components
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.WindowInsetsSides
-import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.sizeIn
-import androidx.compose.foundation.layout.systemBarsIgnoringVisibility
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.MaterialTheme
@@ -24,34 +21,39 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.m3u.i18n.R.string
 import com.m3u.material.components.CircularProgressIndicator
 import com.m3u.material.components.MaskState
 import com.m3u.material.components.OnDismiss
 import com.m3u.material.model.LocalSpacing
-import net.mm2d.upnp.Device
-import com.m3u.i18n.R.string
+import org.fourthline.cling.model.meta.Device
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DlnaDevicesBottomSheet(
     isDevicesVisible: Boolean,
-    devices: List<Device>?,
-    connectedDevices: List<Device>,
+    devices: List<Device<*, *, *>>?,
+    connected: Device<*, *, *>?,
     searching: Boolean,
     maskState: MaskState,
     onDismiss: OnDismiss,
-    connectDlnaDevice: (device: Device) -> Unit,
-    disconnectDlnaDevice: (device: Device) -> Unit,
+    connectDlnaDevice: (device: Device<*, *, *>) -> Unit,
+    disconnectDlnaDevice: (device: Device<*, *, *>) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
     val state = rememberModalBottomSheetState()
+
+    LaunchedEffect(isDevicesVisible) {
+        if (isDevicesVisible) state.show()
+        else state.hide()
+    }
     if (isDevicesVisible) {
         ModalBottomSheet(
             sheetState = state,
             onDismissRequest = onDismiss,
             modifier = modifier,
-            windowInsets = WindowInsets.systemBarsIgnoringVisibility.only(WindowInsetsSides.Top)
+            windowInsets = WindowInsets(0)
         ) {
             LaunchedEffect(devices, state.isVisible) {
                 if (state.isVisible) state.expand()
@@ -83,15 +85,17 @@ fun DlnaDevicesBottomSheet(
                     .sizeIn(
                         maxHeight = 320.dp
                     )
-                    .navigationBarsPadding()
             ) {
                 items(devices ?: emptyList()) { device ->
                     DlnaDeviceItem(
                         device = device,
-                        connected = device in connectedDevices,
+                        connected = device == connected,
                         requestConnection = { connectDlnaDevice(device) },
                         loseConnection = { disconnectDlnaDevice(device) }
                     )
+                }
+                item { 
+                    Spacer(modifier = Modifier.height(56.dp))
                 }
             }
         }

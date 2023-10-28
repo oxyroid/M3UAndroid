@@ -1,7 +1,6 @@
 package com.m3u.data.service.impl
 
 import com.m3u.data.service.UiService
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.coroutineScope
@@ -45,9 +44,7 @@ class UiServiceImpl @Inject constructor() : UiService {
                 delay(duration)
             }.apply {
                 invokeOnCompletion {
-                    if (it !is CancellationException) {
-                        this@notify.value = ""
-                    }
+                    this@notify.value = ""
                 }
             }
         }

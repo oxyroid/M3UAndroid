@@ -15,12 +15,12 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import com.m3u.material.model.LocalTheme
-import net.mm2d.upnp.Device
+import org.fourthline.cling.model.meta.Device
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 internal fun DlnaDeviceItem(
-    device: Device,
+    device: Device<*, *, *>,
     connected: Boolean,
     requestConnection: () -> Unit,
     loseConnection: () -> Unit,
@@ -31,7 +31,7 @@ internal fun DlnaDeviceItem(
 
     ListItem(
         text = {
-            Text(device.friendlyName)
+            Text(device.displayString)
         },
         trailing = {
             Crossfade(connected, label = "icon") { connected ->

@@ -50,6 +50,10 @@ android {
     composeOptions {
         kotlinCompilerExtensionVersion = libs.versions.compose.compiler.get()
     }
+
+    packaging {
+        resources.excludes += "META-INF/beans.xml"
+    }
 }
 
 hilt {
@@ -59,6 +63,7 @@ hilt {
 dependencies {
     implementation(project(":core"))
     implementation(project(":data"))
+    implementation(project(":dlna"))
     implementation(project(":ui"))
     implementation(project(":features:main"))
     implementation(project(":features:favorite"))

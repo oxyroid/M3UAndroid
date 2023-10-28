@@ -8,6 +8,7 @@ import android.content.res.Configuration
 import android.graphics.Color
 import android.graphics.Rect
 import android.os.Bundle
+import android.view.ViewConfiguration
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
@@ -149,7 +150,9 @@ class MainActivity : ComponentActivity() {
         when (types) {
             WindowInsetsCompat.Type.navigationBars() -> {
                 val configuration = resources.configuration
-                if (configuration.isPortraitMode) {
+                val atBottom =
+                    ViewConfiguration.get(this@MainActivity).hasPermanentMenuKey()
+                if (configuration.isPortraitMode || !atBottom) {
                     show(WindowInsetsCompat.Type.navigationBars())
                 } else {
                     hide(WindowInsetsCompat.Type.navigationBars())

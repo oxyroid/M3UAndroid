@@ -97,10 +97,10 @@ internal fun LiveRoute(
         searching = searching,
         isDevicesVisible = isDevicesVisible,
         devices = devices,
-        connectedDevices = state.connectedDevices,
+        connected = state.connected,
         connectDlnaDevice = { viewModel.onEvent(LiveEvent.ConnectDlnaDevice(it)) },
         disconnectDlnaDevice = { viewModel.onEvent(LiveEvent.DisconnectDlnaDevice(it)) },
-        onDismiss = { viewModel.onEvent(LiveEvent.ClearDlnaDevices) }
+        onDismiss = { viewModel.onEvent(LiveEvent.CloseDlnaDevices) }
     )
 
     LiveScreen(
@@ -109,7 +109,7 @@ internal fun LiveRoute(
         clipMode = state.clipMode,
         fullInfoPlayer = state.fullInfoPlayer,
         recording = state.recording,
-        searchDlnaDevices = { viewModel.onEvent(LiveEvent.SearchDlnaDevices) },
+        openDlnaDevices = { viewModel.onEvent(LiveEvent.OpenDlnaDevices) },
         onRecord = { viewModel.onEvent(LiveEvent.Record) },
         onFavourite = { viewModel.onEvent(LiveEvent.OnFavourite(it)) },
         onBackPressed = onBackPressed,
@@ -133,7 +133,7 @@ private fun LiveScreen(
     @ClipMode clipMode: Int,
     fullInfoPlayer: Boolean,
     recording: Boolean,
-    searchDlnaDevices: () -> Unit,
+    openDlnaDevices: () -> Unit,
     onRecord: () -> Unit,
     onFavourite: (String) -> Unit,
     onBackPressed: () -> Unit,
@@ -172,7 +172,7 @@ private fun LiveScreen(
                 stared = favourite,
                 onRecord = onRecord,
                 onFavourite = { onFavourite(url) },
-                searchDlnaDevices = searchDlnaDevices,
+                openDlnaDevices = openDlnaDevices,
                 onBackPressed = onBackPressed,
                 onInstallMedia = onInstallMedia,
                 onUninstallMedia = onUninstallMedia,
@@ -214,7 +214,7 @@ private fun LiveScreen(
                     stared = favourite,
                     onRecord = onRecord,
                     onFavourite = { onFavourite(url) },
-                    searchDlnaDevices = searchDlnaDevices,
+                    openDlnaDevices = openDlnaDevices,
                     onBackPressed = onBackPressed,
                     onInstallMedia = onInstallMedia,
                     onUninstallMedia = onUninstallMedia,

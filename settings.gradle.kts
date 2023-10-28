@@ -15,6 +15,10 @@ dependencyResolutionManagement {
         maven("https://androidx.dev/storage/compose-compiler/repository/")
         maven("https://jitpack.io")
         maven("https://plugins.gradle.org/m2/")
+        maven {
+            setUrl("http://4thline.org/m2")
+            isAllowInsecureProtocol = true
+        }
     }
 }
 rootProject.name = "M3U"
@@ -36,3 +40,5 @@ include(":benchmark")
 include(":lint")
 include(":i18n")
 include(":ui")
+include(":dlna")
+

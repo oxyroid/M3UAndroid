@@ -2,31 +2,30 @@ package com.m3u.features.live
 
 import android.app.Application
 import androidx.lifecycle.viewModelScope
-import com.m3u.core.architecture.configuration.Configuration
 import com.m3u.core.architecture.Logger
-import com.m3u.data.service.PlayerManager
+import com.m3u.core.architecture.configuration.Configuration
 import com.m3u.core.architecture.viewmodel.BaseViewModel
 import com.m3u.data.repository.FeedRepository
 import com.m3u.data.repository.LiveRepository
+import com.m3u.data.service.PlayerManager
+import com.m3u.dlna.DLNACastManager
+import com.m3u.dlna.OnDeviceRegistryListener
+import com.m3u.dlna.control.DeviceControl
+import com.m3u.dlna.control.OnDeviceControlListener
+import com.m3u.dlna.control.ServiceActionCallback
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.channels.trySendBlocking
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import net.mm2d.upnp.ControlPoint
-import net.mm2d.upnp.ControlPointFactory
-import net.mm2d.upnp.Device
+import org.fourthline.cling.model.meta.Device
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -37,13 +36,17 @@ class LiveViewModel @Inject constructor(
     application: Application,
     configuration: Configuration,
     private val playerManager: PlayerManager,
-    private val logger: Logger
+    private val logger: Logger,
+    @Logger.Ui private val uiLogger: Logger
 ) : BaseViewModel<LiveState, LiveEvent>(
     application = application,
     emptyState = LiveState(
         configuration = configuration
     )
-) {
+), OnDeviceRegistryListener, OnDeviceControlListener {
+    private val _devices = MutableStateFlow<List<Device<*, *, *>>>(emptyList())
+    val devices = _devices.asStateFlow()
+
     init {
         playerManager
             .observe()
@@ -83,17 +86,12 @@ class LiveViewModel @Inject constructor(
             .launchIn(viewModelScope)
     }
 
-    private val controlPoint = ControlPointFactory.create().apply {
-        initialize()
-    }
-
     override fun onEvent(event: LiveEvent) {
         when (event) {
             is LiveEvent.InitSpecial -> initSpecial(event.liveId)
             is LiveEvent.InitPlayList -> initPlaylist(event.ids, event.initialIndex)
-            LiveEvent.SearchDlnaDevices -> searchDlnaDevices()
-            LiveEvent.StopSearchDlnaDevices -> stopSearchDlnaDevices()
-            LiveEvent.ClearDlnaDevices -> clearDlnaDevices()
+            LiveEvent.OpenDlnaDevices -> openDlnaDevices()
+            LiveEvent.CloseDlnaDevices -> closeDlnaDevices()
             is LiveEvent.ConnectDlnaDevice -> connectDlnaDevice(event.device)
             is LiveEvent.DisconnectDlnaDevice -> disconnectDlnaDevice(event.device)
             LiveEvent.Record -> record()
@@ -164,94 +162,33 @@ class LiveViewModel @Inject constructor(
     private val _searching: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val searching = _searching.asStateFlow()
 
-    val devices: StateFlow<List<Device>?> = callbackFlow {
-        val listener = object : ControlPoint.DiscoveryListener {
-            override fun onDiscover(device: Device) {
-                trySendBlocking(controlPoint.deviceList)
-            }
-
-            override fun onLost(device: Device) {
-                trySendBlocking(controlPoint.deviceList)
-            }
-        }
-        controlPoint.addDiscoveryListener(listener)
-        awaitClose {
-            controlPoint.removeDiscoveryListener(listener)
-            controlPoint.clearDeviceList()
-        }
-    }
-        .combine(isDevicesVisible) { d, v -> d.takeIf { v } }
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000L),
-            initialValue = null
-        )
-
-    private fun searchDlnaDevices() {
+    private fun openDlnaDevices() {
+        DLNACastManager.bindCastService(getApplication())
+        DLNACastManager.registerDeviceListener(this)
         viewModelScope.launch {
             delay(800.milliseconds)
-            controlPoint.start()
-            controlPoint.search()
             _searching.value = true
         }
         _isDevicesVisible.value = true
     }
 
-    private fun stopSearchDlnaDevices() {
-        controlPoint.stop()
+    private fun closeDlnaDevices() {
         _searching.value = false
-    }
-
-    private fun clearDlnaDevices() {
-        stopSearchDlnaDevices()
         _isDevicesVisible.value = false
-        controlPoint.clearDeviceList()
+        _devices.value = emptyList()
+        DLNACastManager.unbindCastService(getApplication())
+        DLNACastManager.unregisterListener(this)
     }
 
-    private fun connectDlnaDevice(device: Device) {
-        val deviceList = device.deviceList
-        val deviceType = device.deviceType
-        val baseUrl = device.baseUrl
-        val friendlyName = device.friendlyName
-        val description = device.description
-        val ipAddress = device.ipAddress
-        val location = device.location
-        val modelUrl = device.modelUrl
-        val scopeId = device.scopeId
-        // Browse Search CreateObject DestroyObject UpdateObject
-        // http://upnp.org/specs/av/UPnP-av-ContentDirectory-v4-Service.pdf
-        val serviceList = device.serviceList
-        val browse = device.findAction("MagicOn")
-        browse?.invoke(
-            argumentValues = mapOf(
-                "ObjectID" to "0",
-                "BrowseFlag" to "BrowseDirectChildren",
-                "Filter" to "*",
-                "StartingIndex" to "0",
-                "RequestedCount" to "0",
-                "SortCriteria" to ""
-            ),
-            onResult = {
-                val result = it["Result"]
-                logger.log(result.orEmpty())
-            },
-            onError = { cause ->
-                logger.log(cause)
-            }
-        )
-        writable.update {
-            it.copy(
-                connectedDevices = it.connectedDevices + device
-            )
-        }
+    private var controlPoint: DeviceControl? = null
+
+    private fun connectDlnaDevice(device: Device<*, *, *>) {
+        controlPoint = DLNACastManager.connectDevice(device, this)
     }
 
-    private fun disconnectDlnaDevice(device: Device) {
-        writable.update {
-            it.copy(
-                connectedDevices = it.connectedDevices - device
-            )
-        }
+    private fun disconnectDlnaDevice(device: Device<*, *, *>) {
+        controlPoint?.stop()
+        DLNACastManager.disconnectDevice(device)
     }
 
     private fun record() {
@@ -275,6 +212,7 @@ class LiveViewModel @Inject constructor(
         val target = !readable.muted
         val volume = if (target) 0f else 1f
         readable.player?.volume = volume
+        controlPoint?.setMute(target)
         writable.update {
             it.copy(
                 muted = target
@@ -282,8 +220,53 @@ class LiveViewModel @Inject constructor(
         }
     }
 
-    override fun onCleared() {
-        super.onCleared()
-        controlPoint.terminate()
+    override fun onDeviceAdded(device: Device<*, *, *>) {
+        _devices.update { it + device }
+    }
+
+    override fun onDeviceRemoved(device: Device<*, *, *>) {
+        _devices.update { it - device }
+    }
+
+    override fun onConnected(device: Device<*, *, *>) {
+        writable.update { it.copy(connected = device) }
+        val url = when (val init = readable.init) {
+            is LiveState.InitSingle -> init.live?.url ?: return
+            is LiveState.InitPlayList -> {
+                unsupportedInScrollMode()
+                return
+            }
+        }
+        val title = when (val init = readable.init) {
+            is LiveState.InitSingle -> init.live?.title ?: return
+            is LiveState.InitPlayList -> {
+                unsupportedInScrollMode()
+                return
+            }
+        }
+
+        controlPoint?.setAVTransportURI(
+            uri = url,
+            title = title,
+            callback = object : ServiceActionCallback<Unit> {
+                override fun onSuccess(result: Unit) {
+                    logger.log("ok: url=$url, title=$title")
+                    controlPoint?.play()
+                }
+
+                override fun onFailure(msg: String) {
+                    logger.log(msg)
+                }
+            }
+        )
+    }
+
+    override fun onDisconnected(device: Device<*, *, *>) {
+        writable.update { it.copy(connected = null) }
+        controlPoint = null
+    }
+
+    private fun unsupportedInScrollMode() {
+        uiLogger.log("this feature is unsupported when scroll mode is on.")
     }
 }

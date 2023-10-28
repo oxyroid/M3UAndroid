@@ -41,6 +41,7 @@ dependencies {
     implementation(project(":core"))
     implementation(project(":data"))
     implementation(project(":ui"))
+    implementation(project(":dlna"))
 
     implementation(libs.androidx.core.core.ktx)
 
@@ -52,8 +53,6 @@ dependencies {
     implementation(libs.com.google.dagger.hilt.android)
     implementation(libs.androidx.hilt.hilt.navigation.compose)
     ksp(libs.com.google.dagger.hilt.compiler)
-
-    implementation(libs.net.mm2d.mmupnp.mmupnp)
 }
 
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {

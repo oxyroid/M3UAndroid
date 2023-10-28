@@ -9,7 +9,7 @@ import com.m3u.core.annotation.ClipMode
 import com.m3u.core.architecture.configuration.Configuration
 import com.m3u.data.database.entity.Feed
 import com.m3u.data.database.entity.Live
-import net.mm2d.upnp.Device
+import org.fourthline.cling.model.meta.Device
 
 data class LiveState(
     val init: Init = InitSingle(),
@@ -18,7 +18,7 @@ data class LiveState(
     val player: Player? = null,
     val playerState: PlayerState = PlayerState(),
     val muted: Boolean = false,
-    val connectedDevices: List<Device> = emptyList()
+    val connected: Device<*, *, *>? = null
 ) {
     sealed class Init(
         open val feed: Feed? = null
