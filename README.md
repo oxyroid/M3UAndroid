@@ -13,7 +13,7 @@ App strings ([ENGLISH](i18n/src/main/res/values), [Simplified Chinese](i18n/src/
 - [x] HTTPS and RTMP stream.
 - [x] Android TV.
 - [ ] Android Car.
-- [ ] DLNA Protocol.
+- [x] DLNA Protocol.
 - [ ] Custom Script.
 - [x] i18n.
 - [ ] Desktop Platform.
