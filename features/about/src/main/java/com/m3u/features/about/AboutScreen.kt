@@ -36,16 +36,16 @@ internal fun AboutRoute(
     val dependencies by viewModel.dependencies.collectAsStateWithLifecycle()
 
     AboutScreen(
-        contributors = contributors,
-        dependencies = dependencies,
+        contributorsFactory = { contributors },
+        dependenciesFactory = { dependencies },
         modifier = modifier.fillMaxSize()
     )
 }
 
 @Composable
 private fun AboutScreen(
-    contributors: List<Contributor>,
-    dependencies: List<String>,
+    contributorsFactory: () -> List<Contributor>,
+    dependenciesFactory: () -> List<String>,
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
@@ -55,6 +55,8 @@ private fun AboutScreen(
             verticalArrangement = Arrangement.spacedBy(spacing.small),
             contentPadding = PaddingValues(horizontal = spacing.medium)
         ) {
+            val contributors = contributorsFactory()
+            val dependencies = dependenciesFactory()
             items(contributors) { contributor ->
                 ContributorItem(
                     contributor = contributor,

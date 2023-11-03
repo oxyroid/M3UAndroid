@@ -3337,7 +3337,7 @@ HSPLandroidx/compose/runtime/collection/MutableVector$VectorListIterator;->hasNe
 PLandroidx/compose/runtime/collection/MutableVector$VectorListIterator;->hasNext()Z
 HSPLandroidx/compose/runtime/collection/MutableVector$VectorListIterator;->next()Ljava/lang/Object;
 PLandroidx/compose/runtime/collection/MutableVector$VectorListIterator;->next()Ljava/lang/Object;
-Landroidx/compose/runtime/external/kotlinx/collections/immutable/List;
+Landroidx/compose/runtime/external/kotlinx/collections/immutable/ImmutableList;
 Landroidx/compose/runtime/external/kotlinx/collections/immutable/ImmutableSet;
 Landroidx/compose/runtime/external/kotlinx/collections/immutable/PersistentList;
 Landroidx/compose/runtime/external/kotlinx/collections/immutable/PersistentMap;
