@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace = "com.m3u.data"
-    compileSdk = 33
+    compileSdk = 34
     defaultConfig {
         minSdk = 26
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"

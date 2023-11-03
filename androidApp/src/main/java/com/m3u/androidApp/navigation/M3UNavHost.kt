@@ -72,7 +72,7 @@ fun M3UNavHost(
             navigateToLive = { id ->
                 navigate(Destination.Live(id))
             },
-            navigateToPlayList = { ids, initial ->
+            navigateToPlaylist = { ids, initial ->
                 navigate(Destination.LivePlayList(ids, initial))
             }
         )

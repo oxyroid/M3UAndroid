@@ -36,7 +36,7 @@ fun NavController.navigateToLive(id: Int) {
     this.navigate(route, navOptions)
 }
 
-fun NavController.navigateToLivePlayList(ids: List<Int>, initialIndex: Int) {
+fun NavController.navigateToPlaylist(ids: List<Int>, initialIndex: Int) {
     val navOptions = navOptions {
         launchSingleTop = true
     }

@@ -15,7 +15,6 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.layout.ContentScale
 import coil.compose.SubcomposeAsyncImage
-import com.m3u.material.model.LocalScalable
 import com.m3u.material.model.LocalSpacing
 import com.m3u.material.model.LocalTheme
 
@@ -28,10 +27,7 @@ fun Image(
     contentDescription: String? = null,
     contentScale: ContentScale = ContentScale.Fit,
 ) {
-    val scalable = LocalScalable.current
-    val spacing = with(scalable) {
-        LocalSpacing.current.scaled
-    }
+    val spacing = LocalSpacing.current
     SubcomposeAsyncImage(
         model = model,
         contentDescription = contentDescription,
@@ -57,9 +53,7 @@ fun Image(
                 Text(
                     text = errorPlaceholder.orEmpty(),
                     style = MaterialTheme.typography.h5,
-                    fontSize = with(scalable) {
-                        MaterialTheme.typography.h5.fontSize.scaled
-                    }
+                    fontSize = MaterialTheme.typography.h5.fontSize
                 )
             }
         }

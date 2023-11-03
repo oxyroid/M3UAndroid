@@ -62,7 +62,6 @@ private fun ConsoleScreen(
     onExecute: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-
     Background(
         color = Color.Black,
         contentColor = Color.White

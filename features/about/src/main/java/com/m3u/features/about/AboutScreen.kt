@@ -14,13 +14,12 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.features.about.components.ContributorItem
 import com.m3u.features.about.model.Contributor
+import com.m3u.i18n.R.string
 import com.m3u.material.components.Background
 import com.m3u.material.model.LocalSpacing
-import com.m3u.i18n.R.string
 import com.m3u.ui.LocalHelper
 import com.m3u.ui.MonoText
 import com.m3u.ui.repeatOnLifecycle
-import kotlinx.collections.immutable.ImmutableList
 
 @Composable
 internal fun AboutRoute(
@@ -37,16 +36,16 @@ internal fun AboutRoute(
     val dependencies by viewModel.dependencies.collectAsStateWithLifecycle()
 
     AboutScreen(
-        contributors = contributors,
-        dependencies = dependencies,
+        contributorsFactory = { contributors },
+        dependenciesFactory = { dependencies },
         modifier = modifier.fillMaxSize()
     )
 }
 
 @Composable
 private fun AboutScreen(
-    contributors: ImmutableList<Contributor>,
-    dependencies: ImmutableList<String>,
+    contributorsFactory: () -> List<Contributor>,
+    dependenciesFactory: () -> List<String>,
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
@@ -56,6 +55,8 @@ private fun AboutScreen(
             verticalArrangement = Arrangement.spacedBy(spacing.small),
             contentPadding = PaddingValues(horizontal = spacing.medium)
         ) {
+            val contributors = contributorsFactory()
+            val dependencies = dependenciesFactory()
             items(contributors) { contributor ->
                 ContributorItem(
                     contributor = contributor,

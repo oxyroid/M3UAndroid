@@ -3,44 +3,28 @@ package com.m3u.features.main
 import android.content.res.Configuration
 import android.view.KeyEvent
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.AnnotatedString
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.data.database.entity.Feed
-import com.m3u.features.main.components.FeedItem
+import com.m3u.features.main.components.FeedGallery
 import com.m3u.features.main.components.MainDialog
 import com.m3u.features.main.components.OnRename
 import com.m3u.features.main.components.OnUnsubscribe
 import com.m3u.features.main.model.FeedDetail
+import com.m3u.material.components.Background
 import com.m3u.material.ktx.interceptVolumeEvent
-import com.m3u.material.model.LocalScalable
-import com.m3u.material.model.LocalSpacing
-import com.m3u.material.model.Scalable
-import com.m3u.i18n.R.string
 import com.m3u.ui.EventHandler
 import com.m3u.ui.LocalHelper
 import com.m3u.ui.ResumeEvent
-import kotlinx.collections.immutable.persistentListOf
 
-private typealias showDialog = (Feed) -> Unit
 typealias NavigateToFeed = (feed: Feed) -> Unit
 
 @Composable
@@ -59,7 +43,7 @@ fun MainRoute(
     }
 
     EventHandler(resume) {
-        helper.actions = persistentListOf()
+        helper.actions = emptyList()
     }
 
     val interceptVolumeEventModifier = remember(state.godMode) {
@@ -73,152 +57,53 @@ fun MainRoute(
         } else Modifier
     }
 
-    CompositionLocalProvider(
-        LocalScalable provides Scalable(1f / rowCount)
-    ) {
-        MainScreen(
-            feeds = feeds,
-            rowCount = rowCount,
-            navigateToFeed = navigateToFeed,
-            unsubscribe = { viewModel.onEvent(MainEvent.UnsubscribeFeedByUrl(it)) },
-            rename = { feedUrl, target -> viewModel.onEvent(MainEvent.Rename(feedUrl, target)) },
-            modifier = modifier
-                .fillMaxSize()
-                .then(interceptVolumeEventModifier),
-        )
-    }
+    MainScreen(
+        feedsFactory = { feeds },
+        rowCount = rowCount,
+        navigateToFeed = navigateToFeed,
+        unsubscribe = { viewModel.onEvent(MainEvent.UnsubscribeFeedByUrl(it)) },
+        rename = { feedUrl, target -> viewModel.onEvent(MainEvent.Rename(feedUrl, target)) },
+        modifier = modifier
+            .fillMaxSize()
+            .then(interceptVolumeEventModifier),
+    )
 }
 
 @Composable
 private fun MainScreen(
     rowCount: Int,
-    feeds: List<FeedDetail>,
+    feedsFactory: () -> List<FeedDetail>,
     navigateToFeed: NavigateToFeed,
     unsubscribe: OnUnsubscribe,
     rename: OnRename,
     modifier: Modifier = Modifier
 ) {
-    var dialog: MainDialog by remember {
-        mutableStateOf(MainDialog.Idle)
-    }
+    var dialog: MainDialog by remember { mutableStateOf(MainDialog.Idle) }
     val configuration = LocalConfiguration.current
 
-    when (configuration.orientation) {
-        Configuration.ORIENTATION_PORTRAIT -> {
-            PortraitOrientationContent(
-                feeds = feeds,
-                navigateToFeed = navigateToFeed,
-                showDialog = { dialog = MainDialog.Selections(it) },
-                modifier = modifier.fillMaxSize()
-            )
+    val actualRowCount = remember(rowCount, configuration.orientation) {
+        when (configuration.orientation) {
+            Configuration.ORIENTATION_PORTRAIT -> rowCount
+            else -> rowCount + 2
         }
-
-        Configuration.ORIENTATION_LANDSCAPE -> {
-            LandscapeOrientationContent(
-                rowCount = rowCount,
-                feeds = feeds,
-                navigateToFeed = navigateToFeed,
-                showDialog = { dialog = MainDialog.Selections(it) },
-                modifier = modifier.fillMaxSize()
-            )
-        }
-
-        else -> {}
     }
-
-    MainDialog(
-        status = dialog,
-        update = { dialog = it },
-        unsubscribe = unsubscribe,
-        rename = rename
-    )
+    Background {
+        FeedGallery(
+            rowCount = actualRowCount,
+            feedDetailsFactory = feedsFactory,
+            navigateToFeed = navigateToFeed,
+            onMenu = { dialog = MainDialog.Selections(it) },
+            modifier = modifier
+        )
+        MainDialog(
+            status = dialog,
+            update = { dialog = it },
+            unsubscribe = unsubscribe,
+            rename = rename
+        )
+    }
 
     BackHandler(dialog != MainDialog.Idle) {
         dialog = MainDialog.Idle
     }
-}
-
-@Composable
-fun PortraitOrientationContent(
-    feeds: List<FeedDetail>,
-    navigateToFeed: NavigateToFeed,
-    showDialog: showDialog,
-    modifier: Modifier = Modifier
-) {
-    val spacing = LocalSpacing.current
-    LazyColumn(
-        modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(LocalSpacing.current.medium),
-        verticalArrangement = Arrangement.spacedBy(spacing.small)
-    ) {
-        items(
-            items = feeds,
-            key = { it.feed.url },
-            contentType = {}
-        ) { detail ->
-            FeedItem(
-                label = detail.feed.calculateUiTitle(),
-                number = detail.count,
-                local = detail.feed.local,
-                modifier = Modifier.fillParentMaxWidth(),
-                onClick = {
-                    navigateToFeed(detail.feed)
-                },
-                onLongClick = {
-                    showDialog(detail.feed)
-                }
-            )
-        }
-    }
-}
-
-@Composable
-private fun LandscapeOrientationContent(
-    rowCount: Int,
-    feeds: List<FeedDetail>,
-    navigateToFeed: NavigateToFeed,
-    showDialog: showDialog,
-    modifier: Modifier = Modifier
-) {
-    val scalable = LocalScalable.current
-    val spacing = with(scalable) {
-        LocalSpacing.current.scaled
-    }
-    LazyVerticalGrid(
-        columns = GridCells.Fixed(rowCount + 2),
-        contentPadding = PaddingValues(LocalSpacing.current.medium),
-        verticalArrangement = Arrangement.spacedBy(spacing.medium),
-        horizontalArrangement = Arrangement.spacedBy(spacing.medium),
-        modifier = modifier.fillMaxSize()
-    ) {
-        items(
-            items = feeds,
-            key = { it.feed.url },
-            contentType = {}
-        ) { detail ->
-            FeedItem(
-                label = detail.feed.calculateUiTitle(),
-                number = detail.count,
-                local = detail.feed.local,
-                modifier = Modifier.fillMaxWidth(),
-                onClick = {
-                    navigateToFeed(detail.feed)
-                },
-                onLongClick = {
-                    showDialog(detail.feed)
-                }
-            )
-        }
-    }
-}
-
-@Composable
-private fun Feed.calculateUiTitle(): AnnotatedString {
-    val actual = title.ifEmpty {
-        if (local) stringResource(string.feat_main_imported_feed_title)
-        else ""
-    }
-    return AnnotatedString(
-        text = actual.uppercase()
-    )
 }

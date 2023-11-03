@@ -14,11 +14,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import com.m3u.data.database.entity.Live
-import com.m3u.material.components.DialogTextField
-import com.m3u.material.components.DialogItem
-import com.m3u.material.components.AppDialog
-import com.m3u.material.model.LocalSpacing
 import com.m3u.i18n.R.string
+import com.m3u.material.components.AppDialog
+import com.m3u.material.components.DialogItem
+import com.m3u.material.components.DialogTextField
+import com.m3u.material.model.LocalSpacing
 
 internal typealias OnUpdateDialogStatus = (DialogStatus) -> Unit
 internal typealias OnFavoriteLive = (liveId: Int, target: Boolean) -> Unit

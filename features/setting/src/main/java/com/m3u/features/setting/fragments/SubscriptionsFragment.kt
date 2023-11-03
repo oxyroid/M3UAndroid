@@ -53,7 +53,7 @@ internal fun SubscriptionsFragment(
     url: String,
     uri: Uri,
     localStorage: Boolean,
-    mutedLives: List<Live>,
+    mutedLivesFactory: () -> List<Live>,
     onBannedLive: (Int) -> Unit,
     onTitle: (String) -> Unit,
     onUrl: (String) -> Unit,
@@ -71,6 +71,7 @@ internal fun SubscriptionsFragment(
             .padding(spacing.medium)
             .focusGroup()
     ) {
+        val mutedLives = mutedLivesFactory()
         if (mutedLives.isNotEmpty()) {
             item {
                 Column(

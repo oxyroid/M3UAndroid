@@ -2,30 +2,20 @@ package com.m3u.features.favorite
 
 import android.content.res.Configuration
 import android.view.KeyEvent
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
-import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
-import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.m3u.features.favorite.components.FavoriteItem
+import com.m3u.data.database.entity.Live
+import com.m3u.features.favorite.components.FavouriteGallery
 import com.m3u.material.ktx.interceptVolumeEvent
-import com.m3u.material.model.LocalScalable
-import com.m3u.material.model.LocalSpacing
-import com.m3u.material.model.Scalable
 import com.m3u.ui.EventHandler
 import com.m3u.ui.LocalHelper
 import com.m3u.ui.ResumeEvent
-import kotlinx.collections.immutable.persistentListOf
 
 typealias NavigateToLive = (Int) -> Unit
 
@@ -44,7 +34,7 @@ fun FavouriteRoute(
         state.rowCount = target
     }
     EventHandler(resume) {
-        helper.actions = persistentListOf()
+        helper.actions = emptyList()
     }
 
     val interceptVolumeEventModifier = remember(state.godMode) {
@@ -60,96 +50,36 @@ fun FavouriteRoute(
             }
         } else Modifier
     }
-
-    CompositionLocalProvider(
-        LocalScalable provides Scalable(1f / rowCount)
-    ) {
-        FavoriteScreen(
-            rowCount = rowCount,
-            noPictureMode = state.noPictureMode,
-            details = state.details,
-            navigateToLive = navigateToLive,
-            modifier = modifier
-                .fillMaxSize()
-                .then(interceptVolumeEventModifier)
-        )
-    }
+    FavoriteScreen(
+        rowCount = rowCount,
+        noPictureMode = state.noPictureMode,
+        livesFactory = { state.details.flatMap { it.value } },
+        navigateToLive = navigateToLive,
+        modifier = modifier
+            .fillMaxSize()
+            .then(interceptVolumeEventModifier)
+    )
 }
 
 @Composable
 private fun FavoriteScreen(
     rowCount: Int,
     noPictureMode: Boolean,
-    details: LiveDetails,
+    livesFactory: () -> List<Live>,
     navigateToLive: NavigateToLive,
     modifier: Modifier = Modifier
 ) {
     val configuration = LocalConfiguration.current
-    val scalable = LocalScalable.current
-    val spacing = with(scalable) {
-        LocalSpacing.current.scaled
+    val actualRowCount = when (configuration.orientation) {
+        Configuration.ORIENTATION_PORTRAIT -> rowCount
+        Configuration.ORIENTATION_LANDSCAPE -> rowCount + 2
+        else -> rowCount + 2
     }
-
-    // TODO: replace with material3-carousel.
-    when (configuration.orientation) {
-        Configuration.ORIENTATION_PORTRAIT -> {
-            val lives = remember(details) {
-                details.flatMap { it.value }
-            }
-            LazyVerticalStaggeredGrid(
-                columns = StaggeredGridCells.Fixed(rowCount),
-                verticalItemSpacing = spacing.medium,
-                horizontalArrangement = Arrangement.spacedBy(spacing.medium),
-                contentPadding = PaddingValues(LocalSpacing.current.medium),
-                modifier = modifier.fillMaxSize()
-            ) {
-                items(
-                    items = lives,
-                    contentType = { it.cover.isNullOrEmpty() },
-                    key = { it.id }
-                ) { live ->
-                    FavoriteItem(
-                        live = live,
-                        noPictureMode = noPictureMode,
-                        onClick = {
-                            navigateToLive(live.id)
-                        },
-                        onLongClick = {},
-                        modifier = Modifier.fillMaxSize()
-                    )
-                }
-            }
-        }
-
-        Configuration.ORIENTATION_LANDSCAPE -> {
-            val lives = remember(details) {
-                details.flatMap { it.value }
-            }
-            LazyVerticalStaggeredGrid(
-                columns = StaggeredGridCells.Fixed(rowCount + 2),
-                verticalItemSpacing = spacing.medium,
-                horizontalArrangement = Arrangement.spacedBy(spacing.medium),
-                contentPadding = PaddingValues(LocalSpacing.current.medium),
-                modifier = modifier.fillMaxSize(),
-            ) {
-                items(
-                    items = lives,
-                    key = { it.id },
-                    contentType = { it.cover.isNullOrEmpty() }
-                ) { live ->
-                    FavoriteItem(
-                        live = live,
-                        noPictureMode = noPictureMode,
-                        onClick = {
-                            navigateToLive(live.id)
-                        },
-                        onLongClick = {},
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-            }
-        }
-
-        else -> {}
-    }
+    FavouriteGallery(
+        livesFactory = livesFactory,
+        rowCount = actualRowCount,
+        noPictureMode = noPictureMode,
+        navigateToLive = navigateToLive,
+        modifier = modifier
+    )
 }

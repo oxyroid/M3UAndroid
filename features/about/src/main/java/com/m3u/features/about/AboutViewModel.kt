@@ -11,9 +11,6 @@ import com.m3u.data.api.GithubApi
 import com.m3u.features.about.model.Contributor
 import com.m3u.features.about.model.toContributor
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.collections.immutable.ImmutableList
-import kotlinx.collections.immutable.persistentListOf
-import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -32,11 +29,12 @@ class AboutViewModel @Inject constructor(
     @Publisher.App private val publisher: Publisher,
     private val logger: Logger
 ) : AndroidViewModel(application) {
-    private val _contributors: MutableStateFlow<ImmutableList<Contributor>> = MutableStateFlow(persistentListOf())
-    internal val contributors: StateFlow<ImmutableList<Contributor>> = _contributors.asStateFlow()
+    private val _contributors: MutableStateFlow<List<Contributor>> =
+        MutableStateFlow(emptyList())
+    internal val contributors: StateFlow<List<Contributor>> = _contributors.asStateFlow()
 
-    private val _dependencies: MutableStateFlow<ImmutableList<String>> = MutableStateFlow(persistentListOf())
-    internal val dependencies: StateFlow<ImmutableList<String>> = _dependencies.asStateFlow()
+    private val _dependencies: MutableStateFlow<List<String>> = MutableStateFlow(emptyList())
+    internal val dependencies: StateFlow<List<String>> = _dependencies.asStateFlow()
 
     init {
         refresh()
@@ -54,10 +52,9 @@ class AboutViewModel @Inject constructor(
                 _contributors.value = users
                     .map { it.toContributor() }
                     .sortedByDescending { it.contributions }
-                    .toPersistentList()
             }
             val catalogs = fetchVersionCatalogs()
-            _dependencies.value = catalogs.readTomlDependencies().toPersistentList()
+            _dependencies.value = catalogs.readTomlDependencies()
         }
     }
 
