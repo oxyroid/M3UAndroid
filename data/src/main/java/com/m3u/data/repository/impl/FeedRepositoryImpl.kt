@@ -57,8 +57,8 @@ class FeedRepositoryImpl @Inject constructor(
                 return@flow
             }
             val lives = when {
-                url.isNetworkUrl -> acquireNetwork(url)
-                url.isAndroidUrl -> acquireAndroid(url)
+                url.isNetworkUrl -> acquireNetwork(actualUrl)
+                url.isAndroidUrl -> acquireAndroid(actualUrl)
                 else -> emptyList()
             }
 

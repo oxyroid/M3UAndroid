@@ -173,13 +173,14 @@ private fun SettingScreen(
     var fragment: SettingFragments by remember { mutableStateOf(SettingFragments.Root) }
 
     DisposableEffect(fragment) {
-        helper.fob = Fob(
+        helper.fob = if (fragment == SettingFragments.Root) null
+        else Fob(
             rootDestination = Destination.Root.Setting,
             icon = Icons.Rounded.Settings
         ) {
             fragment = SettingFragments.Root
         }
-            .takeUnless { fragment == SettingFragments.Root }
+
         onDispose {
             helper.fob = null
         }

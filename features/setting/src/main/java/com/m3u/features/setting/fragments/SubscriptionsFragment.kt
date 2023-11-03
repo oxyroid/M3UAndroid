@@ -40,12 +40,12 @@ import androidx.compose.ui.unit.sp
 import com.m3u.core.util.readFileName
 import com.m3u.data.database.entity.Live
 import com.m3u.features.setting.components.MutedLiveItem
+import com.m3u.i18n.R.string
 import com.m3u.material.components.Button
 import com.m3u.material.components.LabelField
 import com.m3u.material.components.TextButton
 import com.m3u.material.model.LocalSpacing
 import com.m3u.material.model.LocalTheme
-import com.m3u.i18n.R.string
 
 @Composable
 internal fun SubscriptionsFragment(
@@ -65,15 +65,15 @@ internal fun SubscriptionsFragment(
     val spacing = LocalSpacing.current
     val theme = LocalTheme.current
     val focusRequester = remember { FocusRequester() }
+    val mutedLives = mutedLivesFactory()
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(spacing.small),
         modifier = modifier
             .padding(spacing.medium)
             .focusGroup()
     ) {
-        val mutedLives = mutedLivesFactory()
-        if (mutedLives.isNotEmpty()) {
-            item {
+        item {
+            if (mutedLives.isNotEmpty()) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
