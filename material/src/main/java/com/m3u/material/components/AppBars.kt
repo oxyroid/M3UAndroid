@@ -1,7 +1,6 @@
 package com.m3u.material.components
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.fadeIn
@@ -121,14 +120,14 @@ fun AppTopBar(
             // it should be between 1~2 times [maxHeightDp].
             // Because the AppBar will place between 1~2 times [maxHeightDp].
             // The [visible] param means the AppBar should be invisible(spacing.none) or not.
-            val contentPaddingTop by animateDpAsState(
-                if (!visible) minHeightDp
-                else with(density) {
-                    offsetHeightPx.toDp()
-                },
-                label = "TopBarContentPaddingTop"
-            )
-
+            val contentPaddingTop by remember(visible) {
+                derivedStateOf {
+                    if (!visible) minHeightDp
+                    else with(density) {
+                        offsetHeightPx.toDp()
+                    }
+                }
+            }
             val direction = LocalLayoutDirection.current
             // Child Content
             content(

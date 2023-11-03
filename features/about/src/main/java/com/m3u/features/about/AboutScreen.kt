@@ -20,7 +20,6 @@ import com.m3u.i18n.R.string
 import com.m3u.ui.LocalHelper
 import com.m3u.ui.MonoText
 import com.m3u.ui.repeatOnLifecycle
-import kotlinx.collections.immutable.ImmutableList
 
 @Composable
 internal fun AboutRoute(
@@ -45,8 +44,8 @@ internal fun AboutRoute(
 
 @Composable
 private fun AboutScreen(
-    contributors: ImmutableList<Contributor>,
-    dependencies: ImmutableList<String>,
+    contributors: List<Contributor>,
+    dependencies: List<String>,
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current

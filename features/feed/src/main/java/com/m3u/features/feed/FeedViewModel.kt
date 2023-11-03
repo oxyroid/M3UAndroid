@@ -15,7 +15,6 @@ import com.m3u.data.repository.observeAll
 import com.m3u.data.repository.refresh
 import com.m3u.i18n.R.string
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -86,19 +85,17 @@ class FeedViewModel @Inject constructor(
     private fun CoroutineScope.observeFeedLives(feedUrl: String) {
         liveRepository
             .observeAll { !it.banned && it.feedUrl == feedUrl }
-            .combine(queryStateFlow) { origin, query ->
-                val remainedLives = origin.filter {
-                    it.title.contains(query, true)
-                }
-                remainedLives
+            .combine(queryStateFlow) { all, query ->
+                all
+                    .filter { it.title.contains(query, true) }
                     .groupBy { it.group }
                     .toList()
-                    .map { Channel(it.first, it.second.toPersistentList()) }
+                    .map { Channel(it.first, it.second) }
             }
             .onEach { lives ->
                 writable.update {
                     it.copy(
-                        channels = lives.toPersistentList()
+                        channels = lives
                     )
                 }
             }

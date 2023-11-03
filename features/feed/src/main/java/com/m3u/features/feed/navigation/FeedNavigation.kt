@@ -28,7 +28,7 @@ fun NavController.navigateToFeed(feedUrl: String, navOptions: NavOptions? = null
 
 fun NavGraphBuilder.feedScreen(
     navigateToLive: NavigateToLive,
-    navigateToPlayList: NavigateToPlaylist
+    navigateToPlaylist: NavigateToPlaylist
 ) {
     composable(
         route = FEED_ROUTE,
@@ -50,7 +50,7 @@ fun NavGraphBuilder.feedScreen(
         FeedRoute(
             feedUrl = feedUrl,
             navigateToLive = navigateToLive,
-            navigateToPlaylist = navigateToPlayList
+            navigateToPlaylist = navigateToPlaylist
         )
     }
 }

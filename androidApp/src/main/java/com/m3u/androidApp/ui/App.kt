@@ -41,7 +41,7 @@ fun App(
     AppScaffold(
         title = title,
         snacker = snacker,
-        actions = actions,
+        actionsFactory = { actions },
         rootDestination = rootDestination,
         fob = fob,
         isSystemBarVisible = isSystemBarVisible,

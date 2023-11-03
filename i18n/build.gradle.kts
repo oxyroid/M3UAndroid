@@ -5,7 +5,7 @@ plugins {
 
 android {
     namespace = "com.m3u.i18n"
-    compileSdk = 33
+    compileSdk = 34
 
     defaultConfig {
         minSdk = 26

@@ -24,7 +24,7 @@ import com.m3u.features.feed.navigation.navigateToFeed
 import com.m3u.features.live.navigation.LIVE_PLAYLIST_ROUTE
 import com.m3u.features.live.navigation.LIVE_ROUTE
 import com.m3u.features.live.navigation.navigateToLive
-import com.m3u.features.live.navigation.navigateToLivePlayList
+import com.m3u.features.live.navigation.navigateToPlaylist
 import com.m3u.ui.Destination
 
 @Composable
@@ -90,7 +90,7 @@ class AppState(
             is Destination.Feed -> navController.navigateToFeed(destination.url)
             is Destination.Live -> navController.navigateToLive(destination.id)
             is Destination.LivePlayList -> with(destination) {
-                navController.navigateToLivePlayList(ids, initial)
+                navController.navigateToPlaylist(ids, initial)
             }
 
             Destination.Console -> navController.navigateToConsole()

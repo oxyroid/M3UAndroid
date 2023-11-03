@@ -1,6 +1,5 @@
 package com.m3u.material.components
 
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.LocalAbsoluteElevation
 import androidx.compose.material.Surface
 import androidx.compose.runtime.Composable
@@ -27,7 +26,7 @@ fun Background(
     Surface(
         color = actualBackgroundColor,
         contentColor = actualContentColor,
-        modifier = modifier.fillMaxSize()
+        modifier = modifier
     ) {
         CompositionLocalProvider(LocalAbsoluteElevation provides 0.dp) {
             content()

@@ -31,7 +31,6 @@ import com.m3u.ui.Fob
 import com.m3u.ui.Helper
 import com.m3u.ui.M3ULocalProvider
 import com.m3u.ui.Navigate
-import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
@@ -40,7 +39,7 @@ import kotlin.time.Duration.Companion.milliseconds
 internal fun AppScaffold(
     title: String,
     snacker: String,
-    actions: ImmutableList<Action>,
+    actionsFactory: () -> List<Action>,
     rootDestination: Destination.Root?,
     fob: Fob?,
     isSystemBarVisible: Boolean,
@@ -83,6 +82,7 @@ internal fun AppScaffold(
             visible = isSystemBarVisible,
             scrollable = isSystemBarScrollable,
             actions = {
+                val actions = actionsFactory()
                 actions.withEach {
                     IconButton(
                         icon = icon,

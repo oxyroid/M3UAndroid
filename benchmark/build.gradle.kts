@@ -5,7 +5,7 @@ plugins {
 
 android {
     namespace = "com.m3u.benchmark"
-    compileSdk = 33
+    compileSdk = 34
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8

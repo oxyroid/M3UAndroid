@@ -48,7 +48,6 @@ import com.m3u.ui.EventHandler
 import com.m3u.ui.Fob
 import com.m3u.ui.LocalHelper
 import com.m3u.ui.ResumeEvent
-import kotlinx.collections.immutable.persistentListOf
 
 typealias NavigateToConsole = () -> Unit
 typealias NavigateToAbout = () -> Unit
@@ -65,7 +64,7 @@ fun SettingRoute(
     val helper = LocalHelper.current
 
     EventHandler(resume) {
-        helper.actions = persistentListOf()
+        helper.actions = emptyList()
     }
     val configuration = LocalConfiguration.current
     val type = configuration.uiMode and Configuration.UI_MODE_TYPE_MASK
@@ -88,7 +87,7 @@ fun SettingRoute(
         useCommonUIModeEnable = useCommonUIModeEnable,
         navigateToConsole = navigateToConsole,
         experimentalMode = state.experimentalMode,
-        mutedLives = state.mutedLives,
+        mutedLivesFactory = { state.mutedLives },
         onGodMode = { state.godMode = !state.godMode },
         onConnectTimeout = { viewModel.onEvent(SettingEvent.OnConnectTimeout) },
         onTitle = { viewModel.onEvent(SettingEvent.OnTitle(it)) },
@@ -144,7 +143,7 @@ private fun SettingScreen(
     onFeedStrategy: OnFeedStrategy,
     useCommonUIMode: Boolean,
     useCommonUIModeEnable: Boolean,
-    mutedLives: List<Live>,
+    mutedLivesFactory: () -> List<Live>,
     onBannedLive: (Int) -> Unit,
     onUIMode: () -> Unit,
     onClipMode: OnClipMode,
@@ -217,7 +216,7 @@ private fun SettingScreen(
                     useCommonUIModeEnable = useCommonUIModeEnable,
                     experimentalMode = experimentalMode,
                     onExperimentalMode = onExperimentalMode,
-                    mutedLives = mutedLives,
+                    mutedLivesFactory = mutedLivesFactory,
                     onBannedLive = onBannedLive,
                     autoRefresh = autoRefresh,
                     onAutoRefresh = onAutoRefresh,
@@ -272,7 +271,7 @@ private fun SettingScreen(
                     navigateToConsole = navigateToConsole,
                     experimentalMode = experimentalMode,
                     onExperimentalMode = onExperimentalMode,
-                    mutedLives = mutedLives,
+                    mutedLivesFactory = mutedLivesFactory,
                     onBannedLive = onBannedLive,
                     autoRefresh = autoRefresh,
                     onAutoRefresh = onAutoRefresh,
@@ -322,7 +321,7 @@ private fun PortraitOrientationContent(
     onGodMode: () -> Unit,
     onClipMode: OnClipMode,
     onConnectTimeout: () -> Unit,
-    mutedLives: List<Live>,
+    mutedLivesFactory: () -> List<Live>,
     onBannedLive: (Int) -> Unit,
     replaceFragment: (SettingFragments) -> Unit,
     onTitle: (String) -> Unit,
@@ -402,7 +401,7 @@ private fun PortraitOrientationContent(
                         title = title,
                         url = url,
                         uri = uri,
-                        mutedLives = mutedLives,
+                        mutedLivesFactory = mutedLivesFactory,
                         onBannedLive = onBannedLive,
                         onTitle = onTitle,
                         onUrl = onUrl,
@@ -451,7 +450,7 @@ private fun LandscapeOrientationContent(
     onGodMode: () -> Unit,
     onClipMode: OnClipMode,
     onScrollMode: () -> Unit,
-    mutedLives: List<Live>,
+    mutedLivesFactory: () -> List<Live>,
     onBannedLive: (Int) -> Unit,
     navigateToConsole: NavigateToConsole,
     experimentalMode: Boolean,
@@ -526,7 +525,7 @@ private fun LandscapeOrientationContent(
                     title = title,
                     url = url,
                     uri = uri,
-                    mutedLives = mutedLives,
+                    mutedLivesFactory = mutedLivesFactory,
                     onBannedLive = onBannedLive,
                     onTitle = onTitle,
                     onUrl = onUrl,

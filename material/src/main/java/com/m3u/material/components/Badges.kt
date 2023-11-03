@@ -10,7 +10,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import com.m3u.material.model.LocalScalable
 import com.m3u.material.model.LocalSpacing
 import com.m3u.material.model.LocalTheme
 
@@ -23,10 +22,8 @@ fun TextBadge(
     icon: (@Composable () -> Unit)? = null,
 ) {
     val theme = LocalTheme.current
-    val scalable = LocalScalable.current
-    val spacing = with(scalable) {
-        LocalSpacing.current.scaled
-    }
+    val spacing = LocalSpacing.current
+
     Surface(
         modifier = modifier,
         color = color,
@@ -40,9 +37,7 @@ fun TextBadge(
             Text(
                 text = text.uppercase(),
                 style = MaterialTheme.typography.subtitle2,
-                fontSize = with(scalable) {
-                    MaterialTheme.typography.subtitle2.fontSize.scaled
-                },
+                fontSize = MaterialTheme.typography.subtitle2.fontSize,
                 color = theme.onTint,
                 modifier = Modifier.padding(
                     horizontal = spacing.extraSmall

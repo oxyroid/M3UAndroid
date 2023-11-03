@@ -28,13 +28,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import com.m3u.data.database.entity.Live
+import com.m3u.i18n.R.string
 import com.m3u.material.components.Image
 import com.m3u.material.components.TextBadge
-import com.m3u.material.model.LocalScalable
 import com.m3u.material.model.LocalSpacing
 import com.m3u.material.model.LocalTheme
 import java.net.URI
-import com.m3u.i18n.R.string
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -46,10 +45,8 @@ internal fun LiveItem(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-    val scalable = LocalScalable.current
-    val spacing = with(scalable) {
-        LocalSpacing.current.scaled
-    }
+    val spacing = LocalSpacing.current
+
     val theme = LocalTheme.current
 
     val scheme = remember(live) {
@@ -106,9 +103,7 @@ internal fun LiveItem(
                     Text(
                         text = live.title,
                         style = MaterialTheme.typography.subtitle1,
-                        fontSize = with(scalable) {
-                            MaterialTheme.typography.subtitle1.fontSize.scaled
-                        },
+                        fontSize = MaterialTheme.typography.subtitle1.fontSize,
                         overflow = TextOverflow.Ellipsis,
                         maxLines = 1,
                         fontWeight = FontWeight.Bold
@@ -126,9 +121,7 @@ internal fun LiveItem(
                             text = live.url,
                             maxLines = 1,
                             style = MaterialTheme.typography.subtitle2,
-                            fontSize = with(scalable) {
-                                MaterialTheme.typography.subtitle2.fontSize.scaled
-                            },
+                            fontSize = MaterialTheme.typography.subtitle2.fontSize,
                             overflow = TextOverflow.Ellipsis
                         )
                     }

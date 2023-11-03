@@ -32,7 +32,6 @@ import com.m3u.ui.Helper
 import com.m3u.ui.OnPipModeChanged
 import com.m3u.ui.OnUserLeaveHint
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.launch
 import kotlin.reflect.KMutableProperty0
 
@@ -74,7 +73,7 @@ class MainActivity : ComponentActivity() {
 
     private fun helper(
         title: Method<String>,
-        actions: Method<ImmutableList<Action>>,
+        actions: Method<List<Action>>,
         fob: Method<Fob?>
     ): Helper = object : Helper {
         override fun enterPipMode(size: Rect) {
@@ -85,7 +84,7 @@ class MainActivity : ComponentActivity() {
         }
 
         override var title: String by title
-        override var actions: ImmutableList<Action> by actions
+        override var actions: List<Action> by actions
         override var fob: Fob? by fob
         override var statusBarsVisibility: UBoolean = UBoolean.Unspecified
             set(value) {

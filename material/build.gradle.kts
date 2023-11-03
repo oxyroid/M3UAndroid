@@ -6,7 +6,7 @@ plugins {
 
 android {
     namespace = "com.m3u.material"
-    compileSdk = 33
+    compileSdk = 34
     defaultConfig {
         minSdk = 26
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -54,7 +54,6 @@ dependencies {
     api(libs.io.coil.kt.coil.compose)
 
     implementation(libs.com.airbnb.android.lottie.compose)
-    api("org.jetbrains.kotlinx:kotlinx-collections-immutable:0.3.6")
 }
 
 afterEvaluate {
