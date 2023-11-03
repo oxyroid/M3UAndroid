@@ -23,6 +23,7 @@ internal fun FavouriteGallery(
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
+    val lives = livesFactory()
     LazyVerticalStaggeredGrid(
         columns = StaggeredGridCells.Fixed(rowCount),
         verticalItemSpacing = spacing.medium,
@@ -30,7 +31,6 @@ internal fun FavouriteGallery(
         contentPadding = PaddingValues(spacing.medium),
         modifier = modifier.fillMaxSize(),
     ) {
-        val lives = livesFactory()
         items(
             items = lives,
             key = { it.id },

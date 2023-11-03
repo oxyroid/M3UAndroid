@@ -28,6 +28,7 @@ internal fun FeedGallery(
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
+    val details = feedDetailsFactory()
     LazyVerticalGrid(
         columns = GridCells.Fixed(rowCount),
         contentPadding = PaddingValues(LocalSpacing.current.medium),
@@ -35,7 +36,6 @@ internal fun FeedGallery(
         horizontalArrangement = Arrangement.spacedBy(spacing.medium),
         modifier = modifier.fillMaxSize()
     ) {
-        val details = feedDetailsFactory()
         items(
             items = details,
             key = { it.feed.url },

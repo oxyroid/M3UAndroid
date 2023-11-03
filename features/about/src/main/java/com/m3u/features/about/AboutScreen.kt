@@ -51,12 +51,12 @@ private fun AboutScreen(
     val spacing = LocalSpacing.current
     val handler = LocalUriHandler.current
     Background(modifier) {
+        val contributors = contributorsFactory()
+        val dependencies = dependenciesFactory()
         LazyColumn(
             verticalArrangement = Arrangement.spacedBy(spacing.small),
             contentPadding = PaddingValues(horizontal = spacing.medium)
         ) {
-            val contributors = contributorsFactory()
-            val dependencies = dependenciesFactory()
             items(contributors) { contributor ->
                 ContributorItem(
                     contributor = contributor,
