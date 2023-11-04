@@ -54,20 +54,16 @@ object Utils {
         if (!wifiManager.isWifiEnabled) return WIFI_DISABLED
         val wifiInfo = wifiManager.connectionInfo ?: return WIFI_NO_CONNECT
         return if (wifiInfo.ssid == WifiManager.UNKNOWN_SSID) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                if (context.checkSelfPermission(permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                    if (wifiManager.configuredNetworks != null) {
-                        for (config in wifiManager.configuredNetworks) {
-                            if (config.networkId == wifiInfo.networkId) {
-                                return config.SSID.replace("\"".toRegex(), "")
-                            }
+            if (context.checkSelfPermission(permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                if (wifiManager.configuredNetworks != null) {
+                    for (config in wifiManager.configuredNetworks) {
+                        if (config.networkId == wifiInfo.networkId) {
+                            return config.SSID.replace("\"".toRegex(), "")
                         }
                     }
-                } else {
-                    PERMISSION_DENIED
                 }
             } else {
-                return WIFI_NO_CONNECT
+                PERMISSION_DENIED
             }
             UNKNOWN
         } else {
