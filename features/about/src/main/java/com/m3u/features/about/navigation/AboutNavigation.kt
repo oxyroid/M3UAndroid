@@ -2,6 +2,7 @@ package com.m3u.features.about.navigation
 
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavOptions
@@ -14,7 +15,9 @@ fun NavController.navigateToAbout(navOptions: NavOptions? = null) {
     this.navigate(ABOUT_ROUTE, navOptions)
 }
 
-fun NavGraphBuilder.aboutScreen() {
+fun NavGraphBuilder.aboutScreen(
+    contentPadding: PaddingValues
+) {
     composable(
         route = ABOUT_ROUTE,
         enterTransition = { slideInVertically { it } },
@@ -22,6 +25,6 @@ fun NavGraphBuilder.aboutScreen() {
         popEnterTransition = { slideInVertically { it } },
         popExitTransition = { slideOutVertically { it } }
     ) {
-        AboutRoute()
+        AboutRoute(contentPadding)
     }
 }

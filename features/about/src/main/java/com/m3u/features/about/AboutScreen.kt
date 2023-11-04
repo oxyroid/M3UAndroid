@@ -16,6 +16,7 @@ import com.m3u.features.about.components.ContributorItem
 import com.m3u.features.about.model.Contributor
 import com.m3u.i18n.R.string
 import com.m3u.material.components.Background
+import com.m3u.material.ktx.plus
 import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.LocalHelper
 import com.m3u.ui.MonoText
@@ -23,6 +24,7 @@ import com.m3u.ui.repeatOnLifecycle
 
 @Composable
 internal fun AboutRoute(
+    contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
     viewModel: AboutViewModel = hiltViewModel()
 ) {
@@ -36,6 +38,7 @@ internal fun AboutRoute(
     val dependencies by viewModel.dependencies.collectAsStateWithLifecycle()
 
     AboutScreen(
+        contentPadding = contentPadding,
         contributorsFactory = { contributors },
         dependenciesFactory = { dependencies },
         modifier = modifier.fillMaxSize()
@@ -46,6 +49,7 @@ private typealias DependenciesFactory = () -> List<String>
 
 @Composable
 private fun AboutScreen(
+    contentPadding: PaddingValues,
     contributorsFactory: ContributorsFactory,
     dependenciesFactory: DependenciesFactory,
     modifier: Modifier = Modifier
@@ -57,7 +61,7 @@ private fun AboutScreen(
         val dependencies = dependenciesFactory()
         LazyColumn(
             verticalArrangement = Arrangement.spacedBy(spacing.small),
-            contentPadding = PaddingValues(horizontal = spacing.medium)
+            contentPadding = contentPadding + PaddingValues(horizontal = spacing.medium)
         ) {
             items(contributors) { contributor ->
                 ContributorItem(

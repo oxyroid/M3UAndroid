@@ -81,6 +81,6 @@ fun M3UNavHost(
             }
         )
         consoleScreen()
-        aboutScreen()
+        aboutScreen(contentPadding)
     }
 }
