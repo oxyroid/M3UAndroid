@@ -14,9 +14,9 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.features.about.components.ContributorItem
 import com.m3u.features.about.model.Contributor
+import com.m3u.i18n.R.string
 import com.m3u.material.components.Background
 import com.m3u.material.model.LocalSpacing
-import com.m3u.i18n.R.string
 import com.m3u.ui.LocalHelper
 import com.m3u.ui.MonoText
 import com.m3u.ui.repeatOnLifecycle
@@ -41,11 +41,13 @@ internal fun AboutRoute(
         modifier = modifier.fillMaxSize()
     )
 }
+private typealias ContributorsFactory = () -> List<Contributor>
+private typealias DependenciesFactory = () -> List<String>
 
 @Composable
 private fun AboutScreen(
-    contributorsFactory: () -> List<Contributor>,
-    dependenciesFactory: () -> List<String>,
+    contributorsFactory: ContributorsFactory,
+    dependenciesFactory: DependenciesFactory,
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current

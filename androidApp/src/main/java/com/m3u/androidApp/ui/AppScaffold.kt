@@ -25,7 +25,7 @@ import com.m3u.material.components.AppTopBar
 import com.m3u.material.components.IconButton
 import com.m3u.material.model.LocalSpacing
 import com.m3u.material.model.Theme
-import com.m3u.ui.Action
+import com.m3u.ui.ActionsFactory
 import com.m3u.ui.Destination
 import com.m3u.ui.Fob
 import com.m3u.ui.Helper
@@ -39,7 +39,7 @@ import kotlin.time.Duration.Companion.milliseconds
 internal fun AppScaffold(
     title: String,
     snacker: String,
-    actionsFactory: () -> List<Action>,
+    actionsFactory: ActionsFactory,
     rootDestination: Destination.Root?,
     fob: Fob?,
     isSystemBarVisible: Boolean,

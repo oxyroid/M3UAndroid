@@ -153,6 +153,8 @@ data class Action(
     val onClick: () -> Unit
 )
 
+typealias ActionsFactory =  () -> List<Action>
+
 @Immutable
 data class Fob(
     val rootDestination: Destination.Root,

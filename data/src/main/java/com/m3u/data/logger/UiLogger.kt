@@ -1,6 +1,7 @@
 package com.m3u.data.logger
 
 import com.m3u.core.architecture.Logger
+import com.m3u.data.service.Message
 import com.m3u.data.service.UiService
 import javax.inject.Inject
 
@@ -14,7 +15,7 @@ class UiLogger @Inject constructor(
     private val logger: Logger
 ) : Logger {
     override fun log(text: String) {
-        uiService.snack(text)
+        uiService.snack(Message(text))
     }
 
     override fun log(throwable: Throwable) {

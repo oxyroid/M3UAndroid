@@ -37,7 +37,7 @@ import com.m3u.core.annotation.ConnectTimeout
 import com.m3u.core.annotation.FeedStrategy
 import com.m3u.core.annotation.OnClipMode
 import com.m3u.core.annotation.OnFeedStrategy
-import com.m3u.data.database.entity.Live
+import com.m3u.features.setting.fragments.MutedLivesFactory
 import com.m3u.features.setting.fragments.PreferencesFragment
 import com.m3u.features.setting.fragments.ScriptsFragment
 import com.m3u.features.setting.fragments.SubscriptionsFragment
@@ -143,7 +143,7 @@ private fun SettingScreen(
     onFeedStrategy: OnFeedStrategy,
     useCommonUIMode: Boolean,
     useCommonUIModeEnable: Boolean,
-    mutedLivesFactory: () -> List<Live>,
+    mutedLivesFactory: MutedLivesFactory,
     onBannedLive: (Int) -> Unit,
     onUIMode: () -> Unit,
     onClipMode: OnClipMode,
@@ -322,7 +322,7 @@ private fun PortraitOrientationContent(
     onGodMode: () -> Unit,
     onClipMode: OnClipMode,
     onConnectTimeout: () -> Unit,
-    mutedLivesFactory: () -> List<Live>,
+    mutedLivesFactory: MutedLivesFactory,
     onBannedLive: (Int) -> Unit,
     replaceFragment: (SettingFragments) -> Unit,
     onTitle: (String) -> Unit,
@@ -451,7 +451,7 @@ private fun LandscapeOrientationContent(
     onGodMode: () -> Unit,
     onClipMode: OnClipMode,
     onScrollMode: () -> Unit,
-    mutedLivesFactory: () -> List<Live>,
+    mutedLivesFactory: MutedLivesFactory,
     onBannedLive: (Int) -> Unit,
     navigateToConsole: NavigateToConsole,
     experimentalMode: Boolean,

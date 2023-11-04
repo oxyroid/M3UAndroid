@@ -4,7 +4,6 @@ package com.m3u.core.util.context
 
 import android.content.SharedPreferences
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.mutableStateOf
 import com.m3u.core.util.compose.observableStateOf
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
@@ -78,6 +77,6 @@ private fun <T> SharedPreferences.delegateAsState(
     getter: SharedPreferences.(String, T) -> T,
     setter: SharedPreferences.Editor.(String, T) -> SharedPreferences.Editor
 ): MutableState<T> = observableStateOf(
-    delegate = mutableStateOf(getter(key, defaultValue)),
+    value = getter(key, defaultValue),
     onChanged = { edit().setter(key, it).apply() }
 )

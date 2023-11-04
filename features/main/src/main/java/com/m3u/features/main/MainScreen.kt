@@ -61,7 +61,7 @@ fun MainRoute(
         feedsFactory = { feeds },
         rowCount = rowCount,
         navigateToFeed = navigateToFeed,
-        unsubscribe = { viewModel.onEvent(MainEvent.UnsubscribeFeedByUrl(it)) },
+        unsubscribe = { viewModel.onEvent(MainEvent.Unsubscribe(it)) },
         rename = { feedUrl, target -> viewModel.onEvent(MainEvent.Rename(feedUrl, target)) },
         modifier = modifier
             .fillMaxSize()
@@ -69,10 +69,12 @@ fun MainRoute(
     )
 }
 
+private typealias FeedsFactory = () -> List<FeedDetail>
+
 @Composable
 private fun MainScreen(
     rowCount: Int,
-    feedsFactory: () -> List<FeedDetail>,
+    feedsFactory: FeedsFactory,
     navigateToFeed: NavigateToFeed,
     unsubscribe: OnUnsubscribe,
     rename: OnRename,

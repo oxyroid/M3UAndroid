@@ -63,7 +63,7 @@ fun NavGraphBuilder.liveScreen(
             ?.getInt(TYPE_ID)
             ?: return@composable
         LiveRoute(
-            init = LiveEvent.InitSpecial(id),
+            init = LiveEvent.InitOne(id),
             onBackPressed = onBackPressed
         )
     }

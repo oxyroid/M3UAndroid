@@ -9,7 +9,9 @@ import com.m3u.data.repository.FeedRepository
 import com.m3u.data.repository.LiveRepository
 import com.m3u.features.main.model.FeedDetail
 import com.m3u.features.main.model.toDetail
+import com.m3u.i18n.R.string
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -17,8 +19,8 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
-import com.m3u.i18n.R.string
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
@@ -50,8 +52,10 @@ class MainViewModel @Inject constructor(
         .observeAll()
         .distinctUntilChanged()
         .combine(counts) { fs, cs ->
-            fs.map { f ->
-                f.toDetail(cs[f.url] ?: 0)
+            withContext(Dispatchers.Default) {
+                fs.map { f ->
+                    f.toDetail(cs[f.url] ?: FeedDetail.DEFAULT_COUNT)
+                }
             }
         }
         .stateIn(
@@ -62,12 +66,12 @@ class MainViewModel @Inject constructor(
 
     override fun onEvent(event: MainEvent) {
         when (event) {
-            is MainEvent.UnsubscribeFeedByUrl -> unsubscribeFeedByUrl(event.url)
+            is MainEvent.Unsubscribe -> unsubscribe(event.url)
             is MainEvent.Rename -> rename(event.feedUrl, event.target)
         }
     }
 
-    private fun unsubscribeFeedByUrl(url: String) {
+    private fun unsubscribe(url: String) {
         viewModelScope.launch {
             val feed = feedRepository.unsubscribe(url)
             if (feed == null) {

@@ -12,19 +12,16 @@ import com.m3u.data.database.entity.Live
 import org.fourthline.cling.model.meta.Device
 
 data class LiveState(
-    val init: Init = InitSingle(),
+    val init: Init = InitOne(),
     private val configuration: Configuration,
     val recording: Boolean = false,
-    val player: Player? = null,
-    val playerState: PlayerState = PlayerState(),
-    val muted: Boolean = false,
     val connected: Device<*, *, *>? = null
 ) {
     sealed class Init(
         open val feed: Feed? = null
     )
 
-    data class InitSingle(
+    data class InitOne(
         val live: Live? = null,
         override val feed: Feed? = null
     ) : Init()
@@ -38,8 +35,11 @@ data class LiveState(
     data class PlayerState(
         val playback: @Player.State Int = Player.STATE_IDLE,
         val videoSize: Rect = Rect(),
-        val playerError: PlaybackException? = null
-    )
+        val playerError: PlaybackException? = null,
+        val player: Player? = null,
+    ) {
+        val muted: Boolean get() = player?.volume == 0f
+    }
 
     var experimentalMode: Boolean by configuration.experimentalMode
 

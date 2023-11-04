@@ -28,7 +28,7 @@ fun M3ULocalProvider(
         )
     ) {
         MaterialTheme(
-            typography = Typography,
+            typography = AppTypography,
             colors = MaterialTheme.colors.copy(
                 surface = theme.surface,
                 onSurface = theme.onSurface,
@@ -47,6 +47,5 @@ fun M3ULocalProvider(
                 }
             }
         }
-
     }
 }

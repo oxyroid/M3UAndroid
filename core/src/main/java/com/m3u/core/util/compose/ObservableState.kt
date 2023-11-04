@@ -6,18 +6,11 @@ import androidx.compose.runtime.snapshots.StateFactoryMarker
 
 @StateFactoryMarker
 fun <T> observableStateOf(
-    delegate: MutableState<T>,
-    onChanged: (T) -> Unit
-): MutableState<T> {
-    return ObservableState(delegate, onChanged)
-}
-
-@StateFactoryMarker
-fun <T> observableStateOf(
     value: T,
     onChanged: (T) -> Unit
 ): MutableState<T> {
-    return ObservableState(mutableStateOf(value), onChanged)
+    val delegate = mutableStateOf(value)
+    return ObservableState(delegate, onChanged)
 }
 
 private class ObservableState<T>(

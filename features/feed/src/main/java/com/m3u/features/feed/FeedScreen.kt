@@ -27,6 +27,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.material.ContentAlpha
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.icons.Icons
@@ -463,9 +464,10 @@ private fun FeedPager(
                                 text = title,
                                 style = MaterialTheme.typography.subtitle1,
                                 color = theme.onBackground.copy(
-                                    alpha = 1.0f.takeIf { selected } ?: 0.65f
+                                    alpha = if (selected) ContentAlpha.high
+                                    else ContentAlpha.medium
                                 ),
-                                fontWeight = FontWeight.ExtraBold.takeIf { selected }
+                                fontWeight = if (selected) FontWeight.ExtraBold else null
                             )
                         }
                     }

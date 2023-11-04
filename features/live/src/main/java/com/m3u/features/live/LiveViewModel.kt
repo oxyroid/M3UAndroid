@@ -18,6 +18,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.launchIn
@@ -47,84 +48,63 @@ class LiveViewModel @Inject constructor(
     private val _devices = MutableStateFlow<List<Device<*, *, *>>>(emptyList())
     val devices = _devices.asStateFlow()
 
+    val playerState: StateFlow<LiveState.PlayerState> = combine(
+        playerManager.observe(),
+        playerManager.playbackState,
+        playerManager.videoSize,
+        playerManager.playerError
+    ) { player, playback, videoSize, playerError ->
+        LiveState.PlayerState(
+            playback = playback,
+            videoSize = videoSize,
+            playerError = playerError,
+            player = player
+        )
+    }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = LiveState.PlayerState()
+        )
+
     init {
-        playerManager
-            .observe()
-            .onEach { player ->
-                writable.update {
-                    it.copy(
-                        player = player,
-                        muted = player?.volume == 0f
-                    )
-                }
-            }
-            .launchIn(viewModelScope)
-
         playerManager.initialize()
-
-        combine(
-            playerManager.playbackState,
-            playerManager.videoSize,
-            playerManager.playerError
-        ) { playback, videoSize, playerError ->
-            LiveState.PlayerState(
-                playback = playback,
-                videoSize = videoSize,
-                playerError = playerError
-            )
-        }
-            .stateIn(
-                scope = viewModelScope,
-                started = SharingStarted.WhileSubscribed(5_000),
-                initialValue = LiveState.PlayerState()
-            )
-            .onEach { playerState ->
-                writable.value = readable.copy(
-                    playerState = playerState
-                )
-            }
-            .launchIn(viewModelScope)
     }
 
     override fun onEvent(event: LiveEvent) {
         when (event) {
-            is LiveEvent.InitSpecial -> initSpecial(event.liveId)
+            is LiveEvent.InitOne -> initOne(event.liveId)
             is LiveEvent.InitPlayList -> initPlaylist(event.ids, event.initialIndex)
             LiveEvent.OpenDlnaDevices -> openDlnaDevices()
             LiveEvent.CloseDlnaDevices -> closeDlnaDevices()
             is LiveEvent.ConnectDlnaDevice -> connectDlnaDevice(event.device)
             is LiveEvent.DisconnectDlnaDevice -> disconnectDlnaDevice(event.device)
             LiveEvent.Record -> record()
-            is LiveEvent.OnFavourite -> setFavourite(event.url)
-            is LiveEvent.InstallMedia -> {
-                val url = event.url
-                if (url.isEmpty()) return
-                playerManager.install(url)
-            }
-
-            LiveEvent.UninstallMedia -> {
-                playerManager.uninstall()
-            }
-
-            LiveEvent.OnMuted -> muted()
+            is LiveEvent.OnFavourite -> onFavourite(event.url)
+            is LiveEvent.InstallMedia -> installMedia(event.url)
+            LiveEvent.UninstallMedia -> uninstallMedia()
+            LiveEvent.OnMuted -> onMuted()
         }
     }
 
     private var initJob: Job? = null
-    private fun initSpecial(id: Int) {
+    private fun initOne(id: Int) {
         initJob?.cancel()
         initJob = viewModelScope.launch {
-            liveRepository.observe(id)
+            liveRepository
+                .observe(id)
                 .onEach { live ->
-                    if (live != null) {
-                        val feed = feedRepository.get(live.feedUrl)
-                        writable.update {
+                    writable.update {
+                        if (live != null) {
+                            val feed = feedRepository.get(live.feedUrl)
                             it.copy(
-                                init = LiveState.InitSingle(
+                                init = LiveState.InitOne(
                                     live = live,
                                     feed = feed
                                 )
                             )
+                        } else {
+                            it.copy(init = LiveState.InitOne())
                         }
                     }
                 }
@@ -137,7 +117,7 @@ class LiveViewModel @Inject constructor(
         initJob = viewModelScope.launch {
             val lives = when (val init = readable.init) {
                 is LiveState.InitPlayList -> init.lives
-                is LiveState.InitSingle -> init.live?.let(::listOf) ?: emptyList()
+                is LiveState.InitOne -> init.live?.let(::listOf) ?: emptyList()
             }.toMutableList()
             ids.forEach { id ->
                 val live = liveRepository.get(id)
@@ -199,7 +179,7 @@ class LiveViewModel @Inject constructor(
         }
     }
 
-    private fun setFavourite(url: String) {
+    private fun onFavourite(url: String) {
         viewModelScope.launch {
             val live = liveRepository.getByUrl(url) ?: return@launch
             val id = live.id
@@ -208,16 +188,11 @@ class LiveViewModel @Inject constructor(
         }
     }
 
-    private fun muted() {
-        val target = !readable.muted
+    private fun onMuted() {
+        val target = !playerState.value.muted
         val volume = if (target) 0f else 1f
-        readable.player?.volume = volume
+        playerState.value.player?.volume = volume
         controlPoint?.setMute(target)
-        writable.update {
-            it.copy(
-                muted = target
-            )
-        }
     }
 
     override fun onDeviceAdded(device: Device<*, *, *>) {
@@ -231,14 +206,14 @@ class LiveViewModel @Inject constructor(
     override fun onConnected(device: Device<*, *, *>) {
         writable.update { it.copy(connected = device) }
         val url = when (val init = readable.init) {
-            is LiveState.InitSingle -> init.live?.url ?: return
+            is LiveState.InitOne -> init.live?.url ?: return
             is LiveState.InitPlayList -> {
                 unsupportedInScrollMode()
                 return
             }
         }
         val title = when (val init = readable.init) {
-            is LiveState.InitSingle -> init.live?.title ?: return
+            is LiveState.InitOne -> init.live?.title ?: return
             is LiveState.InitPlayList -> {
                 unsupportedInScrollMode()
                 return
@@ -264,6 +239,15 @@ class LiveViewModel @Inject constructor(
     override fun onDisconnected(device: Device<*, *, *>) {
         writable.update { it.copy(connected = null) }
         controlPoint = null
+    }
+
+    private fun installMedia(url: String) {
+        if (url.isEmpty()) return
+        playerManager.install(url)
+    }
+
+    private fun uninstallMedia() {
+        playerManager.uninstall()
     }
 
     private fun unsupportedInScrollMode() {

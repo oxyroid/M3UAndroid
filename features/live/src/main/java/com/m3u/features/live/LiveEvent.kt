@@ -5,7 +5,7 @@ import org.fourthline.cling.model.meta.Device
 sealed interface LiveEvent {
     sealed interface Init : LiveEvent
 
-    data class InitSpecial(val liveId: Int) : Init
+    data class InitOne(val liveId: Int) : Init
     data class InitPlayList(val initialIndex: Int, val ids: List<Int>) : Init
 
     data object OpenDlnaDevices : LiveEvent

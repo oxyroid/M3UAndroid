@@ -22,7 +22,7 @@ object AppFont {
     )
 }
 
-val Typography = Typography(
+val AppTypography = Typography(
     defaultFontFamily = AppFont.TitilliumWeb,
     h1 = TextStyle(
         fontSize = 24.sp,

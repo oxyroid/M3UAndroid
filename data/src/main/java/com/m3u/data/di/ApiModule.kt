@@ -4,7 +4,6 @@ package com.m3u.data.di
 
 import com.m3u.core.architecture.configuration.SharedConfiguration
 import com.m3u.core.util.serialization.asConverterFactory
-import com.m3u.data.api.DropboxApi
 import com.m3u.data.api.GithubApi
 import com.m3u.data.contract.Apis
 import dagger.Module
@@ -57,14 +56,6 @@ internal object ApiModule {
         builder: Retrofit.Builder
     ): GithubApi = builder
         .baseUrl(Apis.GITHUB_BASE_URL)
-        .build()
-        .create()
-
-    @Provides
-    fun provideDropboxApi(
-        builder: Retrofit.Builder
-    ): DropboxApi = builder
-        .baseUrl(Apis.DROPBOX_BASE_URL)
         .build()
         .create()
 }

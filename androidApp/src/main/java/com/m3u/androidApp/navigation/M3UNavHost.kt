@@ -7,7 +7,6 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import com.m3u.features.about.navigation.aboutScreen
 import com.m3u.features.console.navigation.consoleScreen
@@ -15,13 +14,13 @@ import com.m3u.features.feed.navigation.feedScreen
 import com.m3u.features.live.navigation.livePlaylistScreen
 import com.m3u.features.live.navigation.liveScreen
 import com.m3u.i18n.R.string
+import com.m3u.material.model.LocalNavController
 import com.m3u.ui.Destination
 import com.m3u.ui.LocalHelper
 import com.m3u.ui.Navigate
 
 @Composable
 fun M3UNavHost(
-    navController: NavHostController,
     currentPage: Int,
     onCurrentPage: (Int) -> Unit,
     navigate: Navigate,
@@ -30,6 +29,7 @@ fun M3UNavHost(
 ) {
     val helper = LocalHelper.current
     val context = LocalContext.current
+    val navController = LocalNavController.current
     NavHost(
         navController = navController,
         startDestination = startDestination,

@@ -47,13 +47,15 @@ import com.m3u.material.components.TextButton
 import com.m3u.material.model.LocalSpacing
 import com.m3u.material.model.LocalTheme
 
+internal typealias MutedLivesFactory = () -> List<Live>
+
 @Composable
 internal fun SubscriptionsFragment(
     title: String,
     url: String,
     uri: Uri,
     localStorage: Boolean,
-    mutedLivesFactory: () -> List<Live>,
+    mutedLivesFactory: MutedLivesFactory,
     onBannedLive: (Int) -> Unit,
     onTitle: (String) -> Unit,
     onUrl: (String) -> Unit,

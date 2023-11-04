@@ -47,6 +47,7 @@ internal fun LiveRoute(
     val helper = LocalHelper.current
 
     val state: LiveState by viewModel.state.collectAsStateWithLifecycle()
+    val playerState: LiveState.PlayerState by viewModel.playerState.collectAsStateWithLifecycle()
     val devices by viewModel.devices.collectAsStateWithLifecycle()
     val isDevicesVisible by viewModel.isDevicesVisible.collectAsStateWithLifecycle()
     val searching by viewModel.searching.collectAsStateWithLifecycle()
@@ -71,9 +72,9 @@ internal fun LiveRoute(
 
     helper.repeatOnLifecycle {
         onUserLeaveHint = {
-            if (state.playerState.videoSize.isNotEmpty) {
+            if (playerState.videoSize.isNotEmpty) {
                 maskState.sleep()
-                helper.enterPipMode(state.playerState.videoSize)
+                helper.enterPipMode(playerState.videoSize)
             }
         }
         darkMode = true
@@ -114,13 +115,13 @@ internal fun LiveRoute(
         onFavourite = { viewModel.onEvent(LiveEvent.OnFavourite(it)) },
         onBackPressed = onBackPressed,
         maskState = maskState,
-        player = state.player,
-        playback = state.playerState.playback,
-        videoSize = state.playerState.videoSize,
-        playerError = state.playerState.playerError,
+        player = playerState.player,
+        playback = playerState.playback,
+        videoSize = playerState.videoSize,
+        playerError = playerState.playerError,
         onInstallMedia = { viewModel.onEvent(LiveEvent.InstallMedia(it)) },
         onUninstallMedia = { viewModel.onEvent(LiveEvent.UninstallMedia) },
-        muted = state.muted,
+        muted = playerState.muted,
         onMuted = { viewModel.onEvent(LiveEvent.OnMuted) },
         modifier = modifier
     )
@@ -151,7 +152,7 @@ private fun LiveScreen(
 ) {
     val theme = LocalTheme.current
     when (init) {
-        is LiveState.InitSingle -> {
+        is LiveState.InitOne -> {
             val live = init.live
             val url = live?.url.orEmpty()
             val favourite = live?.favourite ?: false
@@ -160,10 +161,10 @@ private fun LiveScreen(
                 playback = playback,
                 videoSize = videoSize,
                 playerError = playerError,
-                title = init.live?.title.orEmpty(),
+                title = init.live?.title ?: "--",
                 url = url,
                 cover = init.live?.cover.orEmpty(),
-                feedTitle = init.feed?.title.orEmpty(),
+                feedTitle = init.feed?.title ?: "--",
                 maskState = maskState,
                 experimentalMode = experimentalMode,
                 fullInfoPlayer = fullInfoPlayer,
