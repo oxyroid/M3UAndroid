@@ -2,6 +2,7 @@ package com.m3u.features.favorite
 
 import android.content.res.Configuration
 import android.view.KeyEvent
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -23,6 +24,7 @@ typealias NavigateToLive = (Int) -> Unit
 fun FavouriteRoute(
     navigateToLive: NavigateToLive,
     resume: ResumeEvent,
+    contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
     viewModel: FavouriteViewModel = hiltViewModel()
 ) {
@@ -51,6 +53,7 @@ fun FavouriteRoute(
         } else Modifier
     }
     FavoriteScreen(
+        contentPadding = contentPadding,
         rowCount = rowCount,
         noPictureMode = state.noPictureMode,
         livesFactory = { state.details.flatMap { it.value } },
@@ -63,6 +66,7 @@ fun FavouriteRoute(
 
 @Composable
 private fun FavoriteScreen(
+    contentPadding: PaddingValues,
     rowCount: Int,
     noPictureMode: Boolean,
     livesFactory: () -> List<Live>,
@@ -76,6 +80,7 @@ private fun FavoriteScreen(
         else -> rowCount + 2
     }
     FavouriteGallery(
+        contentPadding = contentPadding,
         livesFactory = livesFactory,
         rowCount = actualRowCount,
         noPictureMode = noPictureMode,

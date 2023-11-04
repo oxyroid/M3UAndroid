@@ -42,10 +42,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.font.FontWeight
@@ -59,6 +61,7 @@ import com.m3u.material.ktx.animated
 import com.m3u.material.model.LocalDuration
 import com.m3u.material.model.LocalSpacing
 import com.m3u.material.model.LocalTheme
+import dev.chrisbanes.haze.haze
 
 @Composable
 fun AppTopBar(
@@ -75,6 +78,7 @@ fun AppTopBar(
 ) {
     val density = LocalDensity.current
     val spacing = LocalSpacing.current
+    val configuration = LocalConfiguration.current
 
     val maxHeightDp = AppTopBarDefaults.TopBarHeight
     val minHeightDp = Dp.Hairline
@@ -129,35 +133,51 @@ fun AppTopBar(
                 }
             }
             val direction = LocalLayoutDirection.current
+            val actualBackgroundColor by LocalTheme.current.background.animated("AppBarBackground")
+            val actualContentColor by LocalTheme.current.onBackground.animated("AppBarContent")
             // Child Content
-            content(
-                PaddingValues(
-                    start = spacing.none + if (!visible) spacing.none
-                    else windowInsets.asPaddingValues().calculateStartPadding(direction),
-                    top = contentPaddingTop + if (!visible) spacing.none
-                    else windowInsets.asPaddingValues().calculateTopPadding(),
-                    end = spacing.none + if (!visible) spacing.none
-                    else windowInsets.asPaddingValues().calculateEndPadding(direction),
-                    bottom = spacing.none + if (!visible) spacing.none
-                    else windowInsets.asPaddingValues().calculateBottomPadding()
-                )
-            )
+            Box(
+                modifier = Modifier
+                    .let {
+                        if (visible) it.haze(
+                            area = with(density) {
+                                arrayOf(
+                                    Rect(
+                                        0f,
+                                        0f,
+                                        configuration.screenWidthDp.dp.toPx(),
+                                        maxHeightPx
+                                    )
+                                )
+                            },
+                            backgroundColor = actualBackgroundColor,
+                            blurRadius = 2.dp
+                        )
+                        else it
+                    }
 
+            ) {
+                content(
+                    PaddingValues(
+                        start = spacing.none + if (!visible) spacing.none
+                        else windowInsets.asPaddingValues().calculateStartPadding(direction),
+                        top = contentPaddingTop + if (!visible) spacing.none
+                        else windowInsets.asPaddingValues().calculateTopPadding(),
+                        end = spacing.none + if (!visible) spacing.none
+                        else windowInsets.asPaddingValues().calculateEndPadding(direction),
+                        bottom = spacing.none + if (!visible) spacing.none
+                        else windowInsets.asPaddingValues().calculateBottomPadding()
+                    )
+                )
+            }
             // AppBar
             val progress by remember { derivedStateOf { offsetHeightPx / maxHeightPx } }
             val duration = LocalDuration.current
-            val actualBackgroundColor by LocalTheme.current.background.animated("AppBarBackground")
-            val actualContentColor by LocalTheme.current.onBackground.animated("AppBarContent")
             Surface(
                 elevation = LocalAbsoluteElevation.current,
-                color = actualBackgroundColor,
-                contentColor = actualContentColor
+                color = Color.Transparent,
+                contentColor = actualContentColor,
             ) {
-                val alpha by remember {
-                    derivedStateOf {
-                        progress * 2 - 1
-                    }
-                }
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -166,10 +186,7 @@ fun AppTopBar(
                             else it
                         }
                         .padding(horizontal = spacing.medium)
-                        .height(contentPaddingTop)
-                        .graphicsLayer {
-                            this.alpha = alpha
-                        },
+                        .height(contentPaddingTop),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     AnimatedVisibility(

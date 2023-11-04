@@ -21,27 +21,27 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.material.BackdropScaffold
+import androidx.compose.material.BackdropValue
 import androidx.compose.material.ContentAlpha
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ArrowCircleUp
 import androidx.compose.material.icons.rounded.Refresh
-import androidx.compose.material.pullrefresh.PullRefreshIndicator
-import androidx.compose.material.pullrefresh.pullRefresh
-import androidx.compose.material.pullrefresh.rememberPullRefreshState
+import androidx.compose.material.rememberBackdropScaffoldState
 import androidx.compose.material3.PrimaryScrollableTabRow
 import androidx.compose.material3.TabRowDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -49,7 +49,14 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.capitalize
 import androidx.compose.ui.text.font.FontWeight
@@ -71,8 +78,7 @@ import com.m3u.features.feed.components.TvFeedGallery
 import com.m3u.i18n.R.string
 import com.m3u.material.components.Background
 import com.m3u.material.components.TextField
-import com.m3u.material.ktx.Edge
-import com.m3u.material.ktx.blurEdges
+import com.m3u.material.ktx.animateColor
 import com.m3u.material.ktx.interceptVolumeEvent
 import com.m3u.material.ktx.isAtTop
 import com.m3u.material.model.LocalSpacing
@@ -96,6 +102,7 @@ private typealias OnRefresh = () -> Unit
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 internal fun FeedRoute(
+    contentPadding: PaddingValues,
     feedUrl: String,
     navigateToLive: NavigateToLive,
     navigateToPlaylist: NavigateToPlaylist,
@@ -163,16 +170,10 @@ internal fun FeedRoute(
             dialogStatus = DialogStatus.Selections(it)
         },
         onScrollUp = { viewModel.onEvent(FeedEvent.ScrollUp) },
+        contentPadding = contentPadding,
         modifier = modifier
             .fillMaxSize()
             .then(interceptVolumeEventModifier)
-            .blurEdges(
-                color = LocalTheme.current.background,
-                edges = listOf(
-                    Edge.Top,
-                    Edge.Bottom
-                )
-            )
     )
 
     FeedDialog(
@@ -207,17 +208,14 @@ private fun FeedScreen(
     navigateToPlaylist: NavigateToPlaylist,
     onMenu: OnMenu,
     onScrollUp: OnScrollUp,
+    contentPadding: PaddingValues,
     modifier: Modifier = Modifier
 ) {
     val helper = LocalHelper.current
     val theme = LocalTheme.current
     val configuration = LocalConfiguration.current
     val spacing = LocalSpacing.current
-    val pullRefreshState = rememberPullRefreshState(
-        refreshing = refreshing,
-        onRefresh = onRefresh
-    )
-    Column(modifier) {
+    Box(modifier) {
         val isAtTopState = remember {
             observableStateOf(true) { newValue ->
                 helper.fob = if (newValue) null
@@ -230,154 +228,117 @@ private fun FeedScreen(
                 }
             }
         }
-        Background(
-            modifier = Modifier
-                .padding(spacing.medium)
-                .fillMaxWidth()
-        ) {
-            TextField(
-                text = query,
-                onValueChange = onQuery,
-                fontWeight = FontWeight.Bold,
-                height = 32.dp,
-                placeholder = stringResource(string.feat_feed_query_placeholder).capitalize(Locale.current),
-            )
-        }
-        Box(
-            modifier = Modifier
-                .pullRefresh(pullRefreshState)
-                .fillMaxWidth()
-                .weight(1f)
-        ) {
-            FeedPager(channelsFactory) { livesFactory ->
-                val type = configuration.uiMode and UI_MODE_TYPE_MASK
-                when {
-                    !useCommonUIMode && type == UI_MODE_TYPE_TELEVISION -> {
-                        val state = rememberTvLazyGridState()
-                        LaunchedEffect(state.isAtTop) {
-                            isAtTopState.value = state.isAtTop
-                        }
-                        EventHandler(scrollUp) {
-                            state.animateScrollToItem(0)
-                        }
-                        TvFeedGallery(
-                            state = state,
-                            rowCount = 4,
-                            livesFactory = livesFactory,
-                            noPictureMode = noPictureMode,
-                            scrollMode = scrollMode,
-                            navigateToLive = navigateToLive,
-                            navigateToPlaylist = navigateToPlaylist,
-                            onMenu = onMenu
-                        )
-                    }
 
-                    else -> {
-                        val state = rememberLazyGridState()
-                        LaunchedEffect(state.isAtTop) {
-                            isAtTopState.value = state.isAtTop
-                        }
-                        EventHandler(scrollUp) {
-                            state.animateScrollToItem(0)
-                        }
-                        val actualRowCount = remember(configuration.orientation, rowCount) {
-                            when (configuration.orientation) {
-                                ORIENTATION_LANDSCAPE -> rowCount + 2
-                                ORIENTATION_PORTRAIT -> rowCount
-                                else -> rowCount
-                            }
-                        }
-                        LiveGallery(
-                            state = state,
-                            rowCount = actualRowCount,
-                            livesFactory = livesFactory,
-                            noPictureMode = noPictureMode,
-                            scrollMode = scrollMode,
-                            navigateToLive = navigateToLive,
-                            navigateToPlaylist = navigateToPlaylist,
-                            onMenu = onMenu,
-                            modifier = modifier
-                        )
-                    }
+        val scaffoldState = rememberBackdropScaffoldState(BackdropValue.Concealed)
+        val connection = remember {
+            object : NestedScrollConnection {
+                override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+                    return if (scaffoldState.isRevealed) available
+                    else Offset.Zero
                 }
             }
-
-            PullRefreshIndicator(
-                refreshing = refreshing,
-                state = pullRefreshState,
-                modifier = Modifier.align(Alignment.TopCenter),
-                scale = true,
-                contentColor = theme.onTint,
-                backgroundColor = theme.tint
-            )
         }
-    }
-}
+        val currentColor by animateColor("color") { theme.background }
+        val currentContentColor by animateColor("color") { theme.onBackground }
+        val focusManager = LocalFocusManager.current
 
+        BackdropScaffold(
+            scaffoldState = scaffoldState,
+            appBar = { /*TODO*/ },
+            frontLayerShape = RectangleShape,
+            peekHeight = 0.dp,
+            backLayerContent = {
+                LaunchedEffect(scaffoldState.currentValue) {
+                    if (scaffoldState.isConcealed) {
+                        focusManager.clearFocus()
+                    }
+                }
+                Box(
+                    modifier = Modifier
+                        .padding(spacing.medium)
+                        .padding(contentPadding)
+                        .fillMaxWidth()
+                ) {
+                    TextField(
+                        text = query,
+                        onValueChange = onQuery,
+                        fontWeight = FontWeight.Bold,
+                        height = 32.dp,
+                        placeholder = stringResource(string.feat_feed_query_placeholder).capitalize(
+                            Locale.current
+                        )
+                    )
+                }
+            },
+            frontLayerContent = {
+                Background(
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    FeedPager(channelsFactory) { livesFactory ->
+                        val type = configuration.uiMode and UI_MODE_TYPE_MASK
+                        when {
+                            !useCommonUIMode && type == UI_MODE_TYPE_TELEVISION -> {
+                                val state = rememberTvLazyGridState()
+                                LaunchedEffect(state.isAtTop) {
+                                    isAtTopState.value = state.isAtTop
+                                }
+                                EventHandler(scrollUp) {
+                                    state.animateScrollToItem(0)
+                                }
+                                TvFeedGallery(
+                                    state = state,
+                                    rowCount = 4,
+                                    livesFactory = livesFactory,
+                                    noPictureMode = noPictureMode,
+                                    scrollMode = scrollMode,
+                                    navigateToLive = navigateToLive,
+                                    navigateToPlaylist = navigateToPlaylist,
+                                    contentPadding = contentPadding,
+                                    onMenu = onMenu
+                                )
+                            }
 
-@Composable
-fun NormalLandscapeOrientationContent(
-    livesFactory: () -> List<Live>,
-    rowCount: Int,
-    noPictureMode: Boolean,
-    isAtTopState: MutableState<Boolean>,
-    scrollUp: Event<Unit>,
-    scrollMode: Boolean,
-    navigateToLive: (Int) -> Unit,
-    navigateToPlaylist: (List<Int>, Int) -> Unit,
-    onMenu: (Live) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val state = rememberLazyGridState()
-    LaunchedEffect(state.isAtTop) {
-        isAtTopState.value = state.isAtTop
+                            else -> {
+                                val state = rememberLazyGridState()
+                                LaunchedEffect(state.isAtTop) {
+                                    isAtTopState.value = state.isAtTop
+                                }
+                                EventHandler(scrollUp) {
+                                    state.animateScrollToItem(0)
+                                }
+                                val actualRowCount = remember(configuration.orientation, rowCount) {
+                                    when (configuration.orientation) {
+                                        ORIENTATION_LANDSCAPE -> rowCount + 2
+                                        ORIENTATION_PORTRAIT -> rowCount
+                                        else -> rowCount
+                                    }
+                                }
+                                LiveGallery(
+                                    state = state,
+                                    rowCount = actualRowCount,
+                                    livesFactory = livesFactory,
+                                    noPictureMode = noPictureMode,
+                                    scrollMode = scrollMode,
+                                    navigateToLive = navigateToLive,
+                                    navigateToPlaylist = navigateToPlaylist,
+                                    onMenu = onMenu,
+                                    contentPadding = contentPadding,
+                                    modifier = modifier
+                                )
+                            }
+                        }
+                    }
+                }
+            },
+            backLayerBackgroundColor = currentColor,
+            backLayerContentColor = currentContentColor,
+            frontLayerScrimColor = Color.Transparent,
+            modifier = Modifier
+                .nestedScroll(
+                    connection = connection,
+                )
+        )
     }
-    EventHandler(scrollUp) {
-        state.animateScrollToItem(0)
-    }
-
-    LiveGallery(
-        state = state,
-        rowCount = rowCount + 2,
-        livesFactory = livesFactory,
-        noPictureMode = noPictureMode,
-        scrollMode = scrollMode,
-        navigateToLive = navigateToLive,
-        navigateToPlaylist = navigateToPlaylist,
-        onMenu = onMenu,
-        modifier = modifier
-    )
-}
-
-@Composable
-private fun TelevisionUIModeContent(
-    livesFactory: () -> List<Live>,
-    scrollMode: Boolean,
-    noPictureMode: Boolean,
-    isAtTopState: MutableState<Boolean>,
-    scrollUp: Event<Unit>,
-    navigateToLive: (Int) -> Unit,
-    navigateToPlaylist: (List<Int>, Int) -> Unit,
-    onMenu: (Live) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val state = rememberTvLazyGridState()
-    LaunchedEffect(state.isAtTop) {
-        isAtTopState.value = state.isAtTop
-    }
-    EventHandler(scrollUp) {
-        state.animateScrollToItem(0)
-    }
-    TvFeedGallery(
-        state = state,
-        rowCount = 4,
-        livesFactory = livesFactory,
-        noPictureMode = noPictureMode,
-        scrollMode = scrollMode,
-        navigateToLive = navigateToLive,
-        navigateToPlaylist = navigateToPlaylist,
-        onMenu = onMenu
-    )
 }
 
 @Composable

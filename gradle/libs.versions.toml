@@ -46,6 +46,7 @@ servlet = "3.1.0"
 #noinspection GradleDependency
 jetty = "8.1.21.v20160908"
 nanohttpd = "2.3.1"
+haze = "0.2.0"
 
 [libraries]
 androidx-core-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "androidx-core" }
@@ -132,6 +133,7 @@ jetty-servlet = { group = "org.eclipse.jetty", name = "jetty-servlet", version.r
 jetty-client = { group = "org.eclipse.jetty", name = "jetty-client", version.ref = "jetty" }
 
 nanohttpd = { group = "org.nanohttpd", name = "nanohttpd", version.ref = "nanohttpd" }
+haze = { group = "dev.chrisbanes.haze", name = "haze-jetpack-compose", version.ref = "haze" }
 
 [plugins]
 com-android-application = { id = "com.android.application", version.ref = "android-gradle-plugin" }

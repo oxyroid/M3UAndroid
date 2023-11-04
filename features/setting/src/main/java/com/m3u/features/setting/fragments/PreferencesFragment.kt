@@ -8,6 +8,7 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -38,6 +39,7 @@ import com.m3u.ui.Destination
 
 @Composable
 internal fun PreferencesFragment(
+    contentPadding: PaddingValues,
     version: String,
     @FeedStrategy feedStrategy: Int,
     @ConnectTimeout connectTimeout: Int,
@@ -75,6 +77,7 @@ internal fun PreferencesFragment(
     val spacing = LocalSpacing.current
     LazyColumn(
         modifier = modifier,
+        contentPadding = contentPadding,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         item {

@@ -3,6 +3,7 @@ package com.m3u.features.main
 import android.content.res.Configuration
 import android.view.KeyEvent
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -31,6 +32,7 @@ typealias NavigateToFeed = (feed: Feed) -> Unit
 fun MainRoute(
     navigateToFeed: NavigateToFeed,
     resume: ResumeEvent,
+    contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
     viewModel: MainViewModel = hiltViewModel()
 ) {
@@ -60,6 +62,7 @@ fun MainRoute(
     MainScreen(
         feedsFactory = { feeds },
         rowCount = rowCount,
+        contentPadding = contentPadding,
         navigateToFeed = navigateToFeed,
         unsubscribe = { viewModel.onEvent(MainEvent.Unsubscribe(it)) },
         rename = { feedUrl, target -> viewModel.onEvent(MainEvent.Rename(feedUrl, target)) },
@@ -75,6 +78,7 @@ private typealias FeedsFactory = () -> List<FeedDetail>
 private fun MainScreen(
     rowCount: Int,
     feedsFactory: FeedsFactory,
+    contentPadding: PaddingValues,
     navigateToFeed: NavigateToFeed,
     unsubscribe: OnUnsubscribe,
     rename: OnRename,
@@ -95,6 +99,7 @@ private fun MainScreen(
             feedDetailsFactory = feedsFactory,
             navigateToFeed = navigateToFeed,
             onMenu = { dialog = MainDialog.Selections(it) },
+            contentPadding = contentPadding,
             modifier = modifier
         )
         MainDialog(

@@ -11,11 +11,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.m3u.data.database.entity.Live
 import com.m3u.features.favorite.NavigateToLive
+import com.m3u.material.ktx.plus
 import com.m3u.material.model.LocalSpacing
 
 // TODO: replace with material3-carousel.
 @Composable
 internal fun FavouriteGallery(
+    contentPadding: PaddingValues,
     livesFactory: () -> List<Live>,
     rowCount: Int,
     noPictureMode: Boolean,
@@ -28,7 +30,7 @@ internal fun FavouriteGallery(
         columns = StaggeredGridCells.Fixed(rowCount),
         verticalItemSpacing = spacing.medium,
         horizontalArrangement = Arrangement.spacedBy(spacing.medium),
-        contentPadding = PaddingValues(spacing.medium),
+        contentPadding = PaddingValues(spacing.medium) + contentPadding,
         modifier = modifier.fillMaxSize(),
     ) {
         items(

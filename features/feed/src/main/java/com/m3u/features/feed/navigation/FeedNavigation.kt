@@ -5,6 +5,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavOptions
@@ -28,7 +29,8 @@ fun NavController.navigateToFeed(feedUrl: String, navOptions: NavOptions? = null
 
 fun NavGraphBuilder.feedScreen(
     navigateToLive: NavigateToLive,
-    navigateToPlaylist: NavigateToPlaylist
+    navigateToPlaylist: NavigateToPlaylist,
+    contentPadding: PaddingValues,
 ) {
     composable(
         route = FEED_ROUTE,
@@ -50,7 +52,8 @@ fun NavGraphBuilder.feedScreen(
         FeedRoute(
             feedUrl = feedUrl,
             navigateToLive = navigateToLive,
-            navigateToPlaylist = navigateToPlaylist
+            navigateToPlaylist = navigateToPlaylist,
+            contentPadding = contentPadding
         )
     }
 }

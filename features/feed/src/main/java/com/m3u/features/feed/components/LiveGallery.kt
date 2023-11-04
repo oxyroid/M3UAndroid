@@ -10,6 +10,7 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.tv.foundation.lazy.grid.TvGridCells
 import androidx.tv.foundation.lazy.grid.TvLazyGridState
 import androidx.tv.foundation.lazy.grid.TvLazyVerticalGrid
@@ -17,6 +18,7 @@ import androidx.tv.foundation.lazy.grid.items
 import com.m3u.data.database.entity.Live
 import com.m3u.features.feed.NavigateToLive
 import com.m3u.features.feed.NavigateToPlaylist
+import com.m3u.material.ktx.plus
 import com.m3u.material.model.LocalSpacing
 
 @Composable
@@ -29,7 +31,8 @@ internal fun LiveGallery(
     navigateToLive: NavigateToLive,
     navigateToPlaylist: NavigateToPlaylist,
     onMenu: (Live) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(0.dp),
 ) {
     val spacing = LocalSpacing.current
     val lives = livesFactory()
@@ -38,7 +41,7 @@ internal fun LiveGallery(
         columns = GridCells.Fixed(rowCount),
         verticalArrangement = Arrangement.spacedBy(spacing.medium),
         horizontalArrangement = Arrangement.spacedBy(spacing.medium),
-        contentPadding = PaddingValues(spacing.medium),
+        contentPadding = PaddingValues(spacing.medium) + contentPadding,
         modifier = modifier.fillMaxSize()
     ) {
         items(
@@ -64,6 +67,7 @@ internal fun LiveGallery(
         }
     }
 }
+
 @Composable
 internal fun TvFeedGallery(
     state: TvLazyGridState,
@@ -74,7 +78,8 @@ internal fun TvFeedGallery(
     navigateToLive: NavigateToLive,
     navigateToPlaylist: NavigateToPlaylist,
     onMenu: (Live) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(0.dp),
 ) {
     val spacing = LocalSpacing.current
     val lives = livesFactory()
@@ -83,7 +88,7 @@ internal fun TvFeedGallery(
         columns = TvGridCells.Fixed(rowCount),
         verticalArrangement = Arrangement.spacedBy(spacing.medium),
         horizontalArrangement = Arrangement.spacedBy(spacing.medium),
-        contentPadding = PaddingValues(spacing.medium),
+        contentPadding = PaddingValues(spacing.medium) + contentPadding,
         modifier = modifier.fillMaxSize()
     ) {
         items(

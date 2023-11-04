@@ -54,6 +54,7 @@ dependencies {
     api(libs.io.coil.kt.coil.compose)
 
     implementation(libs.com.airbnb.android.lottie.compose)
+    api(libs.haze)
 }
 
 afterEvaluate {

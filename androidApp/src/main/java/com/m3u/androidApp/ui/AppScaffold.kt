@@ -8,6 +8,7 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -52,7 +53,7 @@ internal fun AppScaffold(
     modifier: Modifier = Modifier,
     onBackPressed: (() -> Unit)? = null,
     foreground: @Composable () -> Unit = {},
-    content: @Composable () -> Unit
+    content: @Composable (PaddingValues) -> Unit
 ) {
     val spacing = LocalSpacing.current
 
@@ -96,9 +97,7 @@ internal fun AppScaffold(
             modifier = modifier
         ) { padding ->
             Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding),
+                modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.Bottom,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
@@ -107,7 +106,7 @@ internal fun AppScaffold(
                         .fillMaxWidth()
                         .weight(1f)
                 ) {
-                    content()
+                    content(padding)
                     AppSnackHost(
                         message = snacker,
                         modifier = Modifier

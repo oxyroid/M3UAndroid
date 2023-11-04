@@ -3,6 +3,7 @@ package com.m3u.features.setting.fragments
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.runtime.Composable
@@ -13,6 +14,7 @@ import com.m3u.i18n.R.string
 
 @Composable
 internal fun ScriptsFragment(
+    contentPadding: PaddingValues,
     importJavaScript: (Uri) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -26,6 +28,7 @@ internal fun ScriptsFragment(
         modifier = modifier
     ) {
         LazyColumn(
+            contentPadding = contentPadding,
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f)

@@ -55,7 +55,7 @@ fun App(
         helper = helper,
         cinemaMode = cinemaMode,
         isPlaying = isPlaying
-    ) {
+    ) { contentPadding ->
         CompositionLocalProvider(
             LocalNavController provides appState.navController
         ) {
@@ -63,6 +63,7 @@ fun App(
                 currentPage = appState.currentPage,
                 onCurrentPage = { appState.currentPage = it },
                 navigate = appState::navigate,
+                contentPadding = contentPadding,
                 modifier = Modifier.fillMaxSize()
             )
         }

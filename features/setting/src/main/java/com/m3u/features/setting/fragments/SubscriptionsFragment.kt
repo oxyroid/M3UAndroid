@@ -8,6 +8,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -44,6 +45,7 @@ import com.m3u.i18n.R.string
 import com.m3u.material.components.Button
 import com.m3u.material.components.LabelField
 import com.m3u.material.components.TextButton
+import com.m3u.material.ktx.plus
 import com.m3u.material.model.LocalSpacing
 import com.m3u.material.model.LocalTheme
 
@@ -51,6 +53,7 @@ internal typealias MutedLivesFactory = () -> List<Live>
 
 @Composable
 internal fun SubscriptionsFragment(
+    contentPadding: PaddingValues,
     title: String,
     url: String,
     uri: Uri,
@@ -69,10 +72,9 @@ internal fun SubscriptionsFragment(
     val focusRequester = remember { FocusRequester() }
     val mutedLives = mutedLivesFactory()
     LazyColumn(
+        contentPadding = PaddingValues(spacing.medium) + contentPadding,
         verticalArrangement = Arrangement.spacedBy(spacing.small),
-        modifier = modifier
-            .padding(spacing.medium)
-            .focusGroup()
+        modifier = modifier.focusGroup()
     ) {
         item {
             if (mutedLives.isNotEmpty()) {

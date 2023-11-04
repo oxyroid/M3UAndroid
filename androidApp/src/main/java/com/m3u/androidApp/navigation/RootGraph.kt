@@ -2,6 +2,7 @@ package com.m3u.androidApp.navigation
 
 import android.util.Log
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -25,7 +26,7 @@ import com.m3u.features.setting.NavigateToAbout
 import com.m3u.features.setting.NavigateToConsole
 import com.m3u.features.setting.SettingRoute
 import com.m3u.material.ktx.Edge
-import com.m3u.material.ktx.blurEdges
+import com.m3u.material.ktx.blurEdge
 import com.m3u.material.model.LocalTheme
 import com.m3u.ui.Destination
 import com.m3u.ui.ResumeEvent
@@ -41,6 +42,7 @@ fun NavController.popupToRoot() {
 fun NavGraphBuilder.rootGraph(
     currentPage: Int,
     onCurrentPage: (Int) -> Unit,
+    contentPadding: PaddingValues,
     navigateToFeed: NavigateToFeed,
     navigateToLive: NavigateToLive,
     navigateToConsole: NavigateToConsole,
@@ -50,6 +52,7 @@ fun NavGraphBuilder.rootGraph(
         RootGraph(
             currentPage = currentPage,
             onCurrentPage = onCurrentPage,
+            contentPadding = contentPadding,
             navigateToFeed = navigateToFeed,
             navigateToLive = navigateToLive,
             navigateToConsole = navigateToConsole,
@@ -63,6 +66,7 @@ fun NavGraphBuilder.rootGraph(
 private fun RootGraph(
     currentPage: Int,
     onCurrentPage: (Int) -> Unit,
+    contentPadding: PaddingValues,
     navigateToFeed: NavigateToFeed,
     navigateToLive: NavigateToLive,
     navigateToConsole: NavigateToConsole,
@@ -107,8 +111,8 @@ private fun RootGraph(
         state = pagerState,
         modifier = modifier
             .fillMaxSize()
-            .blurEdges(
-                edges = listOf(Edge.Top, Edge.Bottom),
+            .blurEdge(
+                edge = Edge.Bottom,
                 color = LocalTheme.current.background
             )
     ) { pagerIndex ->
@@ -117,6 +121,7 @@ private fun RootGraph(
                 MainRoute(
                     navigateToFeed = navigateToFeed,
                     resume = rememberResumeEvent(currentPage, pagerIndex),
+                    contentPadding = contentPadding,
                     modifier = Modifier.fillMaxSize()
                 )
             }
@@ -125,6 +130,7 @@ private fun RootGraph(
                 FavouriteRoute(
                     navigateToLive = navigateToLive,
                     resume = rememberResumeEvent(currentPage, pagerIndex),
+                    contentPadding = contentPadding,
                     modifier = Modifier.fillMaxSize()
                 )
             }
@@ -133,6 +139,7 @@ private fun RootGraph(
                 SettingRoute(
                     navigateToConsole = navigateToConsole,
                     navigateToAbout = navigateToAbout,
+                    contentPadding = contentPadding,
                     resume = rememberResumeEvent(currentPage, pagerIndex),
                     modifier = Modifier.fillMaxSize()
                 )

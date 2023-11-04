@@ -15,6 +15,7 @@ import com.m3u.data.database.entity.Feed
 import com.m3u.features.main.NavigateToFeed
 import com.m3u.features.main.model.FeedDetail
 import com.m3u.i18n.R
+import com.m3u.material.ktx.plus
 import com.m3u.material.model.LocalSpacing
 
 internal typealias OnMenu = (Feed) -> Unit
@@ -25,13 +26,14 @@ internal fun FeedGallery(
     feedDetailsFactory: () -> List<FeedDetail>,
     navigateToFeed: NavigateToFeed,
     onMenu: OnMenu,
+    contentPadding: PaddingValues,
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
     val details = feedDetailsFactory()
     LazyVerticalGrid(
         columns = GridCells.Fixed(rowCount),
-        contentPadding = PaddingValues(LocalSpacing.current.medium),
+        contentPadding = PaddingValues(LocalSpacing.current.medium) + contentPadding,
         verticalArrangement = Arrangement.spacedBy(spacing.medium),
         horizontalArrangement = Arrangement.spacedBy(spacing.medium),
         modifier = modifier.fillMaxSize()

@@ -12,6 +12,7 @@ import androidx.compose.foundation.gestures.rememberScrollableState
 import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -56,6 +57,7 @@ typealias NavigateToAbout = () -> Unit
 fun SettingRoute(
     modifier: Modifier = Modifier,
     resume: ResumeEvent,
+    contentPadding: PaddingValues,
     viewModel: SettingViewModel = hiltViewModel(),
     navigateToConsole: NavigateToConsole,
     navigateToAbout: NavigateToAbout
@@ -74,6 +76,7 @@ fun SettingRoute(
 
     val controller = LocalSoftwareKeyboardController.current
     SettingScreen(
+        contentPadding = contentPadding,
         version = state.version,
         title = state.title,
         url = state.url,
@@ -125,6 +128,7 @@ fun SettingRoute(
 
 @Composable
 private fun SettingScreen(
+    contentPadding: PaddingValues,
     version: String,
     title: String,
     url: String,
@@ -193,6 +197,7 @@ private fun SettingScreen(
         when (configuration.orientation) {
             Configuration.ORIENTATION_PORTRAIT -> {
                 PortraitOrientationContent(
+                    contentPadding = contentPadding,
                     version = version,
                     fragment = fragment,
                     title = title,
@@ -247,6 +252,7 @@ private fun SettingScreen(
 
             Configuration.ORIENTATION_LANDSCAPE -> {
                 LandscapeOrientationContent(
+                    contentPadding = contentPadding,
                     version = version,
                     fragment = fragment,
                     title = title,
@@ -308,6 +314,7 @@ private fun SettingScreen(
 
 @Composable
 private fun PortraitOrientationContent(
+    contentPadding: PaddingValues,
     version: String,
     fragment: SettingFragments,
     title: String,
@@ -356,6 +363,7 @@ private fun PortraitOrientationContent(
     // TODO: replace with material3-modal-side-sheet.
     Box {
         PreferencesFragment(
+            contentPadding = contentPadding,
             version = version,
             feedStrategy = feedStrategy,
             useCommonUIMode = useCommonUIMode,
@@ -399,6 +407,7 @@ private fun PortraitOrientationContent(
             when (fragment) {
                 SettingFragments.Subscriptions -> {
                     SubscriptionsFragment(
+                        contentPadding = contentPadding,
                         title = title,
                         url = url,
                         uri = uri,
@@ -416,6 +425,7 @@ private fun PortraitOrientationContent(
 
                 SettingFragments.Scripts -> {
                     ScriptsFragment(
+                        contentPadding = contentPadding,
                         importJavaScript = importJavaScript,
                         modifier = modifier.background(LocalTheme.current.background)
                     )
@@ -429,6 +439,7 @@ private fun PortraitOrientationContent(
 
 @Composable
 private fun LandscapeOrientationContent(
+    contentPadding: PaddingValues,
     version: String,
     fragment: SettingFragments,
     title: String,
@@ -483,6 +494,7 @@ private fun LandscapeOrientationContent(
         modifier = modifier.padding(horizontal = spacing.medium)
     ) {
         PreferencesFragment(
+            contentPadding = contentPadding,
             version = version,
             godMode = godMode,
             clipMode = clipMode,
@@ -523,6 +535,7 @@ private fun LandscapeOrientationContent(
         when (fragment) {
             SettingFragments.Subscriptions -> {
                 SubscriptionsFragment(
+                    contentPadding = contentPadding,
                     title = title,
                     url = url,
                     uri = uri,
@@ -542,6 +555,7 @@ private fun LandscapeOrientationContent(
 
             SettingFragments.Scripts -> {
                 ScriptsFragment(
+                    contentPadding = contentPadding,
                     importJavaScript = importJavaScript,
                     modifier = Modifier
                         .fillMaxHeight()

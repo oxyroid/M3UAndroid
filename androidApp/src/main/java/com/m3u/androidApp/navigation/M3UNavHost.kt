@@ -4,6 +4,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -24,6 +25,7 @@ fun M3UNavHost(
     currentPage: Int,
     onCurrentPage: (Int) -> Unit,
     navigate: Navigate,
+    contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
     startDestination: String = ROOT_ROUTE
 ) {
@@ -40,6 +42,7 @@ fun M3UNavHost(
         rootGraph(
             currentPage = currentPage,
             onCurrentPage = onCurrentPage,
+            contentPadding = contentPadding,
             navigateToFeed = { feed ->
                 helper.title = feed.title.ifEmpty {
                     if (feed.local) context.getString(string.feat_main_imported_feed_title)
@@ -69,6 +72,7 @@ fun M3UNavHost(
             }
         )
         feedScreen(
+            contentPadding = contentPadding,
             navigateToLive = { id ->
                 navigate(Destination.Live(id))
             },
