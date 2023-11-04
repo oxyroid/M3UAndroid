@@ -3,10 +3,8 @@ package com.m3u.dlna.control
 import android.os.Handler
 import android.os.Looper
 import com.m3u.dlna.control.action.SetNextAVTransportURI
-import com.m3u.dlna.Logger
 import org.fourthline.cling.controlpoint.ActionCallback
 import org.fourthline.cling.controlpoint.ControlPoint
-import org.fourthline.cling.model.ModelUtil
 import org.fourthline.cling.model.action.ActionInvocation
 import org.fourthline.cling.model.message.UpnpResponse
 import org.fourthline.cling.model.meta.Service
@@ -56,19 +54,19 @@ private object Actions {
     const val GetMute = "GetMute"
 }
 
-private val logger = Logger.create("ActionCallback")
 
 internal class ActionCallbackWrapper(
     private val actionCallback: ActionCallback,
-    private val logging: Boolean = true,
 ) : ActionCallback(actionCallback.actionInvocation) {
     override fun success(invocation: ActionInvocation<out Service<*, *>>?) {
-        if (logging) logger.i("${invocation?.action?.name} [success] ${invocation?.outputMap?.toString()}")
         actionCallback.success(invocation)
     }
 
-    override fun failure(invocation: ActionInvocation<out Service<*, *>>?, operation: UpnpResponse?, defaultMsg: String?) {
-        if (logging) logger.w("${invocation?.action?.name} [failure] $defaultMsg")
+    override fun failure(
+        invocation: ActionInvocation<out Service<*, *>>?,
+        operation: UpnpResponse?,
+        defaultMsg: String?
+    ) {
         actionCallback.failure(invocation, operation, defaultMsg)
     }
 }
@@ -78,27 +76,33 @@ internal abstract class BaseServiceExecutor(
     protected val service: Service<*, *>?,
 ) {
     private val handler = Handler(Looper.getMainLooper())
-    protected abstract val logger: Logger
 
     protected fun invalidServiceAction(actionName: String): Boolean {
-        val result = service?.getAction(actionName) == null
-        if (result) logger.w("[Unsupported]$actionName")
-        return result
+        return service?.getAction(actionName) == null
     }
 
-    protected fun executeAction(actionCallback: ActionCallback, logging: Boolean = true) {
-        controlPoint.execute(ActionCallbackWrapper(actionCallback, logging))
+    protected fun executeAction(actionCallback: ActionCallback) {
+        controlPoint.execute(ActionCallbackWrapper(actionCallback))
     }
 
     fun subscribe(subscriptionCallback: SubscriptionListener, lastChangeParser: LastChangeParser) {
-        controlPoint.execute(CastSubscriptionCallback(service, callback = subscriptionCallback, lastChangeParser = lastChangeParser))
+        controlPoint.execute(
+            CastSubscriptionCallback(
+                service,
+                callback = subscriptionCallback,
+                lastChangeParser = lastChangeParser
+            )
+        )
     }
 
     protected fun <T> notifySuccess(listener: ServiceActionCallback<T>?, result: T) {
         listener?.run { notify { onSuccess(result) } }
     }
 
-    protected fun <T> notifyFailure(listener: ServiceActionCallback<T>?, exception: String = "Service not support this action.") {
+    protected fun <T> notifyFailure(
+        listener: ServiceActionCallback<T>?,
+        exception: String = "Service not support this action."
+    ) {
         listener?.run { notify { onFailure(exception) } }
     }
 
@@ -117,47 +121,58 @@ internal abstract class BaseServiceExecutor(
         controlPoint: ControlPoint,
         service: Service<*, *>?,
     ) : BaseServiceExecutor(controlPoint, service), AvTransportServiceAction {
-        override val logger = Logger.create("AvTransportService")
-        override fun setAVTransportURI(uri: String, title: String, callback: ServiceActionCallback<Unit>?) {
-            logger.i("${Actions.SetAVTransportURI}: $title, $uri")
+        override fun setAVTransportURI(
+            uri: String,
+            title: String,
+            callback: ServiceActionCallback<Unit>?
+        ) {
             if (invalidServiceAction(Actions.SetAVTransportURI)) {
                 notifyFailure(callback)
                 return
             }
             val metadata = MetadataUtils.create(uri, title)
-            logger.i("${Actions.SetAVTransportURI}: $metadata")
             executeAction(object : SetAVTransportURI(service, uri, metadata) {
                 override fun success(invocation: ActionInvocation<*>?) {
                     notifySuccess(callback, result = Unit)
                 }
 
-                override fun failure(invocation: ActionInvocation<*>?, operation: UpnpResponse?, defaultMsg: String?) {
+                override fun failure(
+                    invocation: ActionInvocation<*>?,
+                    operation: UpnpResponse?,
+                    defaultMsg: String?
+                ) {
                     notifyFailure(callback, defaultMsg ?: "Error")
                 }
             })
         }
 
-        override fun setNextAVTransportURI(uri: String, title: String, callback: ServiceActionCallback<Unit>?) {
-            logger.i("${Actions.SetNextAVTransportURI}: $title, $uri")
+        override fun setNextAVTransportURI(
+            uri: String,
+            title: String,
+            callback: ServiceActionCallback<Unit>?
+        ) {
             if (invalidServiceAction(Actions.SetNextAVTransportURI)) {
                 notifyFailure(callback)
                 return
             }
             val metadata = MetadataUtils.create(uri, title)
-            logger.i("${Actions.SetNextAVTransportURI}: $metadata")
-            executeAction(object : SetNextAVTransportURI(service = service, uri = uri, metadata = metadata) {
+            executeAction(object :
+                SetNextAVTransportURI(service = service, uri = uri, metadata = metadata) {
                 override fun success(invocation: ActionInvocation<*>?) {
                     notifySuccess(callback, result = Unit)
                 }
 
-                override fun failure(invocation: ActionInvocation<*>?, operation: UpnpResponse?, defaultMsg: String?) {
+                override fun failure(
+                    invocation: ActionInvocation<*>?,
+                    operation: UpnpResponse?,
+                    defaultMsg: String?
+                ) {
                     notifyFailure(callback, defaultMsg ?: "Error")
                 }
             })
         }
 
         override fun play(speed: String, callback: ServiceActionCallback<Unit>?) {
-            logger.i(Actions.Play)
             if (invalidServiceAction(Actions.Play)) {
                 notifyFailure(callback)
                 return
@@ -167,14 +182,17 @@ internal abstract class BaseServiceExecutor(
                     notifySuccess(callback, result = Unit)
                 }
 
-                override fun failure(invocation: ActionInvocation<*>?, operation: UpnpResponse?, defaultMsg: String?) {
+                override fun failure(
+                    invocation: ActionInvocation<*>?,
+                    operation: UpnpResponse?,
+                    defaultMsg: String?
+                ) {
                     notifyFailure(callback, defaultMsg ?: "Error")
                 }
             })
         }
 
         override fun pause(callback: ServiceActionCallback<Unit>?) {
-            logger.i(Actions.Pause)
             if (invalidServiceAction(Actions.Pause)) {
                 notifyFailure(callback)
                 return
@@ -184,14 +202,17 @@ internal abstract class BaseServiceExecutor(
                     notifySuccess(callback, result = Unit)
                 }
 
-                override fun failure(invocation: ActionInvocation<*>?, operation: UpnpResponse?, defaultMsg: String?) {
+                override fun failure(
+                    invocation: ActionInvocation<*>?,
+                    operation: UpnpResponse?,
+                    defaultMsg: String?
+                ) {
                     notifyFailure(callback, defaultMsg ?: "Error")
                 }
             })
         }
 
         override fun stop(callback: ServiceActionCallback<Unit>?) {
-            logger.i(Actions.Stop)
             if (invalidServiceAction(Actions.Stop)) {
                 notifyFailure(callback)
                 return
@@ -201,14 +222,17 @@ internal abstract class BaseServiceExecutor(
                     notifySuccess(callback, result = Unit)
                 }
 
-                override fun failure(invocation: ActionInvocation<*>?, operation: UpnpResponse?, defaultMsg: String?) {
+                override fun failure(
+                    invocation: ActionInvocation<*>?,
+                    operation: UpnpResponse?,
+                    defaultMsg: String?
+                ) {
                     notifyFailure(callback, defaultMsg ?: "Error")
                 }
             })
         }
 
         override fun seek(millSeconds: Long, callback: ServiceActionCallback<Unit>?) {
-            logger.i("${Actions.Seek}: ${ModelUtil.toTimeString(millSeconds / 1000)}")
             if (invalidServiceAction(Actions.Seek)) {
                 notifyFailure(callback)
                 return
@@ -218,14 +242,17 @@ internal abstract class BaseServiceExecutor(
                     notifySuccess(callback, result = Unit)
                 }
 
-                override fun failure(invocation: ActionInvocation<*>?, operation: UpnpResponse?, defaultMsg: String?) {
+                override fun failure(
+                    invocation: ActionInvocation<*>?,
+                    operation: UpnpResponse?,
+                    defaultMsg: String?
+                ) {
                     notifyFailure(callback, defaultMsg ?: "Error")
                 }
             })
         }
 
         override fun next(callback: ServiceActionCallback<Unit>?) {
-            logger.i(Actions.Next)
             if (invalidServiceAction(Actions.Next)) {
                 notifyFailure(callback)
                 return
@@ -235,14 +262,17 @@ internal abstract class BaseServiceExecutor(
                     notifySuccess(callback, result = Unit)
                 }
 
-                override fun failure(invocation: ActionInvocation<*>?, operation: UpnpResponse?, defaultMsg: String?) {
+                override fun failure(
+                    invocation: ActionInvocation<*>?,
+                    operation: UpnpResponse?,
+                    defaultMsg: String?
+                ) {
                     notifyFailure(callback, defaultMsg ?: "Error")
                 }
             })
         }
 
         override fun previous(callback: ServiceActionCallback<Unit>?) {
-            logger.i(Actions.Previous)
             if (invalidServiceAction(Actions.Previous)) {
                 notifyFailure(callback)
                 return
@@ -252,7 +282,11 @@ internal abstract class BaseServiceExecutor(
                     notifySuccess(callback, result = Unit)
                 }
 
-                override fun failure(invocation: ActionInvocation<*>?, operation: UpnpResponse?, defaultMsg: String?) {
+                override fun failure(
+                    invocation: ActionInvocation<*>?,
+                    operation: UpnpResponse?,
+                    defaultMsg: String?
+                ) {
                     notifyFailure(callback, defaultMsg ?: "Error")
                 }
             })
@@ -265,18 +299,24 @@ internal abstract class BaseServiceExecutor(
                 return
             }
             executeAction(object : GetPositionInfo(service) {
-                override fun received(invocation: ActionInvocation<*>?, positionInfo: PositionInfo) {
+                override fun received(
+                    invocation: ActionInvocation<*>?,
+                    positionInfo: PositionInfo
+                ) {
                     notifySuccess(callback, result = positionInfo)
                 }
 
-                override fun failure(invocation: ActionInvocation<*>?, operation: UpnpResponse?, defaultMsg: String?) {
+                override fun failure(
+                    invocation: ActionInvocation<*>?,
+                    operation: UpnpResponse?,
+                    defaultMsg: String?
+                ) {
                     notifyFailure(callback, defaultMsg ?: "Error")
                 }
-            }, logging = false)
+            })
         }
 
         override fun getMediaInfo(callback: ServiceActionCallback<MediaInfo>?) {
-            logger.i(Actions.GetMediaInfo)
             if (invalidServiceAction(Actions.GetMediaInfo)) {
                 notifyFailure(callback)
                 return
@@ -286,40 +326,45 @@ internal abstract class BaseServiceExecutor(
                     notifySuccess(callback, result = mediaInfo)
                 }
 
-                override fun failure(invocation: ActionInvocation<*>?, operation: UpnpResponse?, defaultMsg: String?) {
+                override fun failure(
+                    invocation: ActionInvocation<*>?,
+                    operation: UpnpResponse?,
+                    defaultMsg: String?
+                ) {
                     notifyFailure(callback, defaultMsg ?: "Error")
                 }
             })
         }
 
         override fun getTransportInfo(callback: ServiceActionCallback<TransportInfo>?) {
-            logger.i(Actions.GetTransportInfo)
             if (invalidServiceAction(Actions.GetTransportInfo)) {
                 notifyFailure(callback)
                 return
             }
             executeAction(object : GetTransportInfo(service) {
-                override fun received(invocation: ActionInvocation<*>?, transportInfo: TransportInfo) {
+                override fun received(
+                    invocation: ActionInvocation<*>?,
+                    transportInfo: TransportInfo
+                ) {
                     notifySuccess(callback, result = transportInfo)
                 }
 
-                override fun failure(invocation: ActionInvocation<*>?, operation: UpnpResponse?, defaultMsg: String?) {
+                override fun failure(
+                    invocation: ActionInvocation<*>?,
+                    operation: UpnpResponse?,
+                    defaultMsg: String?
+                ) {
                     notifyFailure(callback, defaultMsg ?: "Error")
                 }
             })
         }
     }
 
-    // ---------------------------------------------------------------------------------------------------------
-    // RendererService
-    // ---------------------------------------------------------------------------------------------------------
     internal class RendererServiceExecutorImpl(
         controlPoint: ControlPoint,
         service: Service<*, *>?,
     ) : BaseServiceExecutor(controlPoint, service), RendererServiceAction {
-        override val logger: Logger = Logger.create("RendererService")
         override fun setVolume(volume: Int, callback: ServiceActionCallback<Unit>?) {
-            logger.i("${Actions.SetVolume}: $volume")
             if (invalidServiceAction(Actions.SetVolume)) {
                 notifyFailure(callback)
                 return
@@ -329,14 +374,17 @@ internal abstract class BaseServiceExecutor(
                     notifySuccess(callback, result = Unit)
                 }
 
-                override fun failure(invocation: ActionInvocation<*>?, operation: UpnpResponse?, defaultMsg: String?) {
+                override fun failure(
+                    invocation: ActionInvocation<*>?,
+                    operation: UpnpResponse?,
+                    defaultMsg: String?
+                ) {
                     notifyFailure(callback, defaultMsg ?: "Error")
                 }
             })
         }
 
         override fun getVolume(callback: ServiceActionCallback<Int>?) {
-            logger.i(Actions.GetVolume)
             if (invalidServiceAction(Actions.GetVolume)) {
                 notifyFailure(callback)
                 return
@@ -346,14 +394,17 @@ internal abstract class BaseServiceExecutor(
                     notifySuccess(callback, result = currentVolume)
                 }
 
-                override fun failure(invocation: ActionInvocation<*>?, operation: UpnpResponse?, defaultMsg: String?) {
+                override fun failure(
+                    invocation: ActionInvocation<*>?,
+                    operation: UpnpResponse?,
+                    defaultMsg: String?
+                ) {
                     notifyFailure(callback, defaultMsg ?: "Error")
                 }
             })
         }
 
         override fun setMute(mute: Boolean, callback: ServiceActionCallback<Unit>?) {
-            logger.i("${Actions.SetMute}: $mute")
             if (invalidServiceAction(Actions.SetMute)) {
                 notifyFailure(callback)
                 return
@@ -363,14 +414,17 @@ internal abstract class BaseServiceExecutor(
                     notifySuccess(callback, result = Unit)
                 }
 
-                override fun failure(invocation: ActionInvocation<*>?, operation: UpnpResponse?, defaultMsg: String?) {
+                override fun failure(
+                    invocation: ActionInvocation<*>?,
+                    operation: UpnpResponse?,
+                    defaultMsg: String?
+                ) {
                     notifyFailure(callback, defaultMsg ?: "Error")
                 }
             })
         }
 
         override fun getMute(callback: ServiceActionCallback<Boolean>?) {
-            logger.i(Actions.GetMute)
             if (invalidServiceAction(Actions.GetMute)) {
                 notifyFailure(callback)
                 return
@@ -380,32 +434,47 @@ internal abstract class BaseServiceExecutor(
                     notifySuccess(callback, result = currentMute)
                 }
 
-                override fun failure(invocation: ActionInvocation<*>?, operation: UpnpResponse?, defaultMsg: String?) {
+                override fun failure(
+                    invocation: ActionInvocation<*>?,
+                    operation: UpnpResponse?,
+                    defaultMsg: String?
+                ) {
                     notifyFailure(callback, defaultMsg ?: "Error")
                 }
             })
         }
     }
 
-    // ---------------------------------------------------------------------------------------------------------
-    // ContentService
-    // ---------------------------------------------------------------------------------------------------------
     internal class ContentServiceExecutorImpl(
         controlPoint: ControlPoint,
         service: Service<*, *>?,
     ) : BaseServiceExecutor(controlPoint, service), ContentServiceAction {
-        override val logger: Logger = Logger.create("ContentService")
-        override fun browse(objectId: String, flag: BrowseFlag, filter: String, firstResult: Int, maxResults: Int, callback: ServiceActionCallback<DIDLContent>?) {
+        override fun browse(
+            objectId: String,
+            flag: BrowseFlag,
+            filter: String,
+            firstResult: Int,
+            maxResults: Int,
+            callback: ServiceActionCallback<DIDLContent>?
+        ) {
             if (invalidServiceAction("Browse")) {
                 notifyFailure(callback)
                 return
             }
-            executeAction(object : Browse(service, objectId, flag, filter, firstResult.toLong(), maxResults.toLong()) {
-                override fun received(actionInvocation: ActionInvocation<out Service<*, *>>?, didl: DIDLContent) {
+            executeAction(object :
+                Browse(service, objectId, flag, filter, firstResult.toLong(), maxResults.toLong()) {
+                override fun received(
+                    actionInvocation: ActionInvocation<out Service<*, *>>?,
+                    didl: DIDLContent
+                ) {
                     notifySuccess(callback, result = didl)
                 }
 
-                override fun failure(invocation: ActionInvocation<*>?, operation: UpnpResponse?, defaultMsg: String?) {
+                override fun failure(
+                    invocation: ActionInvocation<*>?,
+                    operation: UpnpResponse?,
+                    defaultMsg: String?
+                ) {
                     notifyFailure(callback, defaultMsg ?: "Error")
                 }
 
@@ -413,17 +482,38 @@ internal abstract class BaseServiceExecutor(
             })
         }
 
-        override fun search(containerId: String, searchCriteria: String, filter: String, firstResult: Int, maxResults: Int, callback: ServiceActionCallback<DIDLContent>?) {
+        override fun search(
+            containerId: String,
+            searchCriteria: String,
+            filter: String,
+            firstResult: Int,
+            maxResults: Int,
+            callback: ServiceActionCallback<DIDLContent>?
+        ) {
             if (invalidServiceAction("Search")) {
                 notifyFailure(callback)
                 return
             }
-            executeAction(object : Search(service, containerId, searchCriteria, filter, firstResult.toLong(), maxResults.toLong()) {
-                override fun received(actionInvocation: ActionInvocation<out Service<*, *>>?, didl: DIDLContent) {
+            executeAction(object : Search(
+                service,
+                containerId,
+                searchCriteria,
+                filter,
+                firstResult.toLong(),
+                maxResults.toLong()
+            ) {
+                override fun received(
+                    actionInvocation: ActionInvocation<out Service<*, *>>?,
+                    didl: DIDLContent
+                ) {
                     notifySuccess(callback, result = didl)
                 }
 
-                override fun failure(invocation: ActionInvocation<*>?, operation: UpnpResponse?, defaultMsg: String?) {
+                override fun failure(
+                    invocation: ActionInvocation<*>?,
+                    operation: UpnpResponse?,
+                    defaultMsg: String?
+                ) {
                     notifyFailure(callback, defaultMsg ?: "Error")
                 }
 

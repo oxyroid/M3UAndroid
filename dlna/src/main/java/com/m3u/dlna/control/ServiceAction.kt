@@ -11,9 +11,6 @@ interface ServiceActionCallback<T> {
     fun onFailure(msg: String)
 }
 
-// --------------------------------------------------------------------------------
-// ---- AvService
-// --------------------------------------------------------------------------------
 interface AvTransportServiceAction {
     fun setAVTransportURI(uri: String, title: String, callback: ServiceActionCallback<Unit>? = null)
     fun setNextAVTransportURI(uri: String, title: String, callback: ServiceActionCallback<Unit>? = null)

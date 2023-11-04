@@ -8,11 +8,12 @@ import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
 import android.os.IBinder
-import com.m3u.dlna.http.LocalServer
+import android.util.Log
 import com.m3u.dlna.control.CastControlImpl
 import com.m3u.dlna.control.DeviceControl
 import com.m3u.dlna.control.EmptyDeviceControl
 import com.m3u.dlna.control.OnDeviceControlListener
+import com.m3u.dlna.http.LocalServer
 import org.fourthline.cling.android.AndroidUpnpService
 import org.fourthline.cling.model.message.header.STAllHeader
 import org.fourthline.cling.model.message.header.UDADeviceTypeHeader
@@ -32,7 +33,6 @@ object DLNACastManager : OnDeviceRegistryListener {
     val SERVICE_TYPE_CONTENT_DIRECTORY: ServiceType = UDAServiceType("ContentDirectory")
     val SERVICE_CONNECTION_MANAGER: ServiceType = UDAServiceType("ConnectionManager")
 
-    private val logger = Logger.create("CastManager")
     private val deviceRegistryImpl = DeviceRegistryImpl(this)
     private var searchDeviceType: DeviceType? = null
     private var upnpService: AndroidUpnpService? = null
@@ -40,19 +40,21 @@ object DLNACastManager : OnDeviceRegistryListener {
 
     fun bindCastService(context: Context) {
         applicationContext = context.applicationContext
-        if (context is Application || context is Activity) {
-            context.bindService(Intent(context, DLNACastService::class.java), serviceConnection, Service.BIND_AUTO_CREATE)
-        } else {
-            logger.e("bindCastService only support Application or Activity implementation.")
+        check(context is Application || context is Activity) {
+            "bindCastService only support Application or Activity implementation."
         }
+        context.bindService(
+            Intent(context, DLNACastService::class.java),
+            serviceConnection,
+            Service.BIND_AUTO_CREATE
+        )
     }
 
     fun unbindCastService(context: Context) {
-        if (context is Application || context is Activity) {
-            context.unbindService(serviceConnection)
-        } else {
-            logger.e("bindCastService only support Application or Activity implementation.")
+        check(context is Application || context is Activity) {
+            "bindCastService only support Application or Activity implementation."
         }
+        context.unbindService(serviceConnection)
     }
 
     private val serviceConnection: ServiceConnection = object : ServiceConnection {
@@ -60,7 +62,7 @@ object DLNACastManager : OnDeviceRegistryListener {
             val upnpServiceBinder = iBinder as AndroidUpnpService
             if (upnpService !== upnpServiceBinder) {
                 upnpService = upnpServiceBinder
-                logger.i(String.format("onServiceConnected: [%s]", componentName.shortClassName))
+                Log.i("DLNACastManager", "onServiceConnected: [${componentName.shortClassName}]")
                 val registry = upnpServiceBinder.registry
                 // add registry listener
                 val collection = registry.listeners
@@ -72,12 +74,12 @@ object DLNACastManager : OnDeviceRegistryListener {
         }
 
         override fun onServiceDisconnected(componentName: ComponentName) {
-            logger.w(String.format("[%s] onServiceDisconnected", componentName.shortClassName))
+            Log.i("DLNACastManager", "onServiceDisconnected: [${componentName.shortClassName}]")
             removeRegistryListener()
         }
 
         override fun onBindingDied(componentName: ComponentName) {
-            logger.w(String.format("[%s] onBindingDied", componentName.shortClassName))
+            Log.i("DLNACastManager", "onBindingDied: [${componentName.shortClassName}]")
             removeRegistryListener()
         }
 
@@ -87,9 +89,6 @@ object DLNACastManager : OnDeviceRegistryListener {
         }
     }
 
-    // -----------------------------------------------------------------------------------------
-    // ---- register or unregister device listener
-    // -----------------------------------------------------------------------------------------
     private val registerDeviceListeners: MutableList<OnDeviceRegistryListener> = ArrayList()
 
     fun registerDeviceListener(listener: OnDeviceRegistryListener?) {
@@ -121,11 +120,9 @@ object DLNACastManager : OnDeviceRegistryListener {
         }
     }
 
-    private fun checkDeviceType(device: Device<*, *, *>): Boolean = searchDeviceType == null || searchDeviceType == device.type
+    private fun checkDeviceType(device: Device<*, *, *>): Boolean =
+        searchDeviceType == null || searchDeviceType == device.type
 
-    // -----------------------------------------------------------------------------------------
-    // ---- LocalServer
-    // -----------------------------------------------------------------------------------------
     var localServer: LocalServer? = null
         private set
 
@@ -142,17 +139,15 @@ object DLNACastManager : OnDeviceRegistryListener {
         localServer?.stopServer()
     }
 
-    // -----------------------------------------------------------------------------------------
-    // ---- Action
-    // -----------------------------------------------------------------------------------------
     fun search(type: DeviceType? = null) {
         upnpService?.get()?.also { service ->
             searchDeviceType = type
-            service.registry.devices?.filter { searchDeviceType == null || searchDeviceType != it.type }?.onEach {
-                // notify device removed without type check.
-                registerDeviceListeners.forEach { listener -> listener.onDeviceRemoved(it) }
-                service.registry.removeDevice(it.identity.udn)
-            }
+            service.registry.devices?.filter { searchDeviceType == null || searchDeviceType != it.type }
+                ?.onEach {
+                    // notify device removed without type check.
+                    registerDeviceListeners.forEach { listener -> listener.onDeviceRemoved(it) }
+                    service.registry.removeDevice(it.identity.udn)
+                }
             // when search device, clear all founded first.
             // service.registry.removeAllRemoteDevices()
 
