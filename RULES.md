@@ -9,3 +9,4 @@
 5. If you want to create a new string resource, you can do so by creating it in the i18n module and
    then accessing it using `import <package>.i18n.R.string`.
 6. If you wish to apply additional dependencies, consider using version catalogs.
+7. Never use AndroidViewModel, use context in UI layer or Data layer.
