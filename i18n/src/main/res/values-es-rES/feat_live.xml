@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="feat_live_playback_state_idle">idle</string>
+    <string name="feat_live_playback_state_buffering">almacenando</string>
+    <string name="feat_live_playback_state_ready">listo</string>
+    <string name="feat_live_playback_state_ended">completado</string>
+
+    <string name="feat_live_tooltip_on_back_pressed">atrás</string>
+    <string name="feat_live_tooltip_mute">silenciar</string>
+    <string name="feat_live_tooltip_unmute">no silenciar</string>
+    <string name="feat_live_tooltip_favourite">favourito</string>
+    <string name="feat_live_tooltip_unfavourite">no favorito</string>
+    <string name="feat_live_tooltip_record">grabar</string>
+    <string name="feat_live_tooltip_unrecord">dejar de grabar</string>
+    <string name="feat_live_tooltip_cast">emitir en pantalla</string>
+    <string name="feat_live_tooltip_enter_pip_mode">modo PIP</string>
+    <string name="feat_live_dlna_devices">Dispositivos DLNA</string>
+</resources>
