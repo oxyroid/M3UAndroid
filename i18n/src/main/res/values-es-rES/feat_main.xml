@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="feat_main_muted_lives_feed">directos bloqueados</string>
+    <string name="feat_main_unsubscribe_feed">desuscribirse</string>
+    <string name="feat_main_error_unsubscribe_feed">no se puede desuscribir</string>
+    <string name="feat_main_copy_feed_url">copiar url</string>
+    <string name="feat_main_rename_feed">renombrar</string>
+    <string name="feat_main_imported_feed_title">importado</string>
+</resources>
