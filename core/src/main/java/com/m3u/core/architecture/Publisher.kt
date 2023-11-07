@@ -7,6 +7,7 @@ interface Publisher {
     val repository: String get() = "M3UAndroid"
     val applicationID: String
     val versionName: String
+    val versionCode: Int
     val debug: Boolean
 
     @Qualifier

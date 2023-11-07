@@ -29,18 +29,19 @@ import com.m3u.core.annotation.OnFeedStrategy
 import com.m3u.core.util.basic.title
 import com.m3u.features.setting.NavigateToAbout
 import com.m3u.features.setting.NavigateToConsole
-import com.m3u.material.model.LocalSpacing
 import com.m3u.i18n.R.string
 import com.m3u.material.components.CheckBoxPreference
 import com.m3u.material.components.IconPreference
 import com.m3u.material.components.Preference
 import com.m3u.material.components.TextPreference
+import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.Destination
 
 @Composable
 internal fun PreferencesFragment(
     contentPadding: PaddingValues,
-    version: String,
+    versionName: String,
+    versionCode: Int,
     @FeedStrategy feedStrategy: Int,
     @ConnectTimeout connectTimeout: Int,
     @ClipMode clipMode: Int,
@@ -218,11 +219,14 @@ internal fun PreferencesFragment(
                         )
                         Preference(
                             title = stringResource(string.feat_setting_script_management).title(),
-                            enabled = true,
+                            subtitle = stringResource(string.feat_setting_not_implementation).title(),
+                            enabled = false,
                             onClick = onScriptManagement
                         )
                         Preference(
                             title = stringResource(string.feat_setting_console_editor).title(),
+                            subtitle = stringResource(string.feat_setting_not_implementation).title(),
+                            enabled = false,
                             onClick = navigateToConsole
                         )
                         CheckBoxPreference(
@@ -279,7 +283,7 @@ internal fun PreferencesFragment(
                 )
                 Preference(
                     title = stringResource(string.feat_setting_app_version).title(),
-                    subtitle = version
+                    subtitle = "$versionName ($versionCode)"
                 )
             }
         }

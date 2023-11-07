@@ -13,7 +13,8 @@ import com.m3u.data.database.entity.Live
 @OptIn(ExperimentalConfiguration::class)
 data class SettingState(
     private val configuration: Configuration,
-    val version: String = "",
+    val versionName: String = "",
+    val versionCode: Int = -1,
     val title: String = "",
     val url: String = "",
     val uri: Uri = Uri.EMPTY,

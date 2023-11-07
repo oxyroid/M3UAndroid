@@ -77,7 +77,8 @@ fun SettingRoute(
     val controller = LocalSoftwareKeyboardController.current
     SettingScreen(
         contentPadding = contentPadding,
-        version = state.version,
+        versionName = state.versionName,
+        versionCode = state.versionCode,
         title = state.title,
         url = state.url,
         uri = state.uri,
@@ -129,7 +130,8 @@ fun SettingRoute(
 @Composable
 private fun SettingScreen(
     contentPadding: PaddingValues,
-    version: String,
+    versionName: String,
+    versionCode: Int,
     title: String,
     url: String,
     uri: Uri,
@@ -198,7 +200,8 @@ private fun SettingScreen(
             Configuration.ORIENTATION_PORTRAIT -> {
                 PortraitOrientationContent(
                     contentPadding = contentPadding,
-                    version = version,
+                    versionName = versionName,
+                    versionCode = versionCode,
                     fragment = fragment,
                     title = title,
                     url = url,
@@ -253,7 +256,8 @@ private fun SettingScreen(
             Configuration.ORIENTATION_LANDSCAPE -> {
                 LandscapeOrientationContent(
                     contentPadding = contentPadding,
-                    version = version,
+                    versionName = versionName,
+                    versionCode = versionCode,
                     fragment = fragment,
                     title = title,
                     url = url,
@@ -315,7 +319,8 @@ private fun SettingScreen(
 @Composable
 private fun PortraitOrientationContent(
     contentPadding: PaddingValues,
-    version: String,
+    versionName: String,
+    versionCode: Int,
     fragment: SettingFragments,
     title: String,
     url: String,
@@ -364,7 +369,8 @@ private fun PortraitOrientationContent(
     Box {
         PreferencesFragment(
             contentPadding = contentPadding,
-            version = version,
+            versionName = versionName,
+            versionCode = versionCode,
             feedStrategy = feedStrategy,
             useCommonUIMode = useCommonUIMode,
             useCommonUIModeEnable = useCommonUIModeEnable,
@@ -440,7 +446,8 @@ private fun PortraitOrientationContent(
 @Composable
 private fun LandscapeOrientationContent(
     contentPadding: PaddingValues,
-    version: String,
+    versionName: String,
+    versionCode: Int,
     fragment: SettingFragments,
     title: String,
     url: String,
@@ -495,7 +502,8 @@ private fun LandscapeOrientationContent(
     ) {
         PreferencesFragment(
             contentPadding = contentPadding,
-            version = version,
+            versionName = versionName,
+            versionCode = versionCode,
             godMode = godMode,
             clipMode = clipMode,
             onClipMode = onClipMode,

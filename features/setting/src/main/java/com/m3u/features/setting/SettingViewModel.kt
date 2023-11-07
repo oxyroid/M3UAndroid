@@ -36,7 +36,8 @@ class SettingViewModel @Inject constructor(
 ) : BaseViewModel<SettingState, SettingEvent>(
     application = application,
     emptyState = SettingState(
-        version = publisher.versionName,
+        versionName = publisher.versionName,
+        versionCode = publisher.versionCode,
         configuration = configuration
     )
 ) {
