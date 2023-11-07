@@ -97,18 +97,14 @@ internal fun LiveItem(
                 modifier = Modifier.padding(spacing.medium),
                 verticalArrangement = Arrangement.spacedBy(spacing.small)
             ) {
-                AnimatedVisibility(
-                    visible = live.title.isNotEmpty()
-                ) {
-                    Text(
-                        text = live.title,
-                        style = MaterialTheme.typography.subtitle1,
-                        fontSize = MaterialTheme.typography.subtitle1.fontSize,
-                        overflow = TextOverflow.Ellipsis,
-                        maxLines = 1,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
+                Text(
+                    text = live.title,
+                    style = MaterialTheme.typography.subtitle1,
+                    fontSize = MaterialTheme.typography.subtitle1.fontSize,
+                    overflow = TextOverflow.Ellipsis,
+                    maxLines = 1,
+                    fontWeight = FontWeight.Bold
+                )
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(spacing.extraSmall)
