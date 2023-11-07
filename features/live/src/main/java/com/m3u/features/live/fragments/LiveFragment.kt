@@ -17,7 +17,7 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material.icons.automirrored.rounded.VolumeMute
+import androidx.compose.material.icons.automirrored.rounded.VolumeOff
 import androidx.compose.material.icons.automirrored.rounded.VolumeUp
 import androidx.compose.material.icons.rounded.Cast
 import androidx.compose.material.icons.rounded.PictureInPicture
@@ -41,6 +41,7 @@ import com.m3u.core.annotation.ClipMode
 import com.m3u.core.util.basic.isNotEmpty
 import com.m3u.features.live.components.CoverPlaceholder
 import com.m3u.features.live.components.LiveMask
+import com.m3u.i18n.R.string
 import com.m3u.material.components.Background
 import com.m3u.material.components.Image
 import com.m3u.material.components.MaskButton
@@ -48,7 +49,6 @@ import com.m3u.material.components.MaskCircleButton
 import com.m3u.material.components.MaskState
 import com.m3u.material.model.LocalSpacing
 import com.m3u.material.model.LocalTheme
-import com.m3u.i18n.R.string
 import com.m3u.ui.LocalHelper
 import com.m3u.ui.Player
 import com.m3u.ui.rememberPlayerState
@@ -57,7 +57,7 @@ import com.m3u.ui.rememberPlayerState
 @Composable
 internal fun LiveFragment(
     player: Player?,
-    playback: @Player.State Int,
+    playState: @Player.State Int,
     videoSize: Rect,
     playerError: PlaybackException?,
     title: String,
@@ -80,6 +80,7 @@ internal fun LiveFragment(
     onMuted: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val theme = LocalTheme.current
     Background(
         color = Color.Black,
         contentColor = Color.White
@@ -119,11 +120,12 @@ internal fun LiveFragment(
                     Spacer(modifier = Modifier.weight(1f))
                     MaskButton(
                         state = maskState,
-                        icon = if (muted) Icons.AutoMirrored.Rounded.VolumeMute
+                        icon = if (muted) Icons.AutoMirrored.Rounded.VolumeOff
                         else Icons.AutoMirrored.Rounded.VolumeUp,
                         onClick = onMuted,
                         contentDescription = if (muted) stringResource(string.feat_live_tooltip_unmute)
-                        else stringResource(string.feat_live_tooltip_mute)
+                        else stringResource(string.feat_live_tooltip_mute),
+                        tint = if (muted) theme.error else Color.Unspecified
                     )
                     MaskButton(
                         state = maskState,
@@ -139,13 +141,13 @@ internal fun LiveFragment(
                             enabled = false,
                             icon = if (recording) Icons.Rounded.RadioButtonChecked
                             else Icons.Rounded.RadioButtonUnchecked,
-                            tint = if (recording) LocalTheme.current.error
+                            tint = if (recording) theme.error
                             else Color.Unspecified,
                             onClick = onRecord,
                             contentDescription = if (recording) stringResource(string.feat_live_tooltip_unrecord)
                             else stringResource(string.feat_live_tooltip_record)
                         )
-                        if (playback != Player.STATE_IDLE) {
+                        if (playState != Player.STATE_IDLE) {
                             MaskButton(
                                 state = maskState,
                                 icon = Icons.Rounded.Cast,
@@ -205,16 +207,18 @@ internal fun LiveFragment(
                             overflow = TextOverflow.Ellipsis,
                             modifier = Modifier.basicMarquee()
                         )
-                        val playbackDisplayText = playback.displayText
-                        val exceptionDisplayText = playerError.displayText
-                        if (playbackDisplayText.isNotEmpty() || exceptionDisplayText.isNotEmpty()) {
+                        val playStateDisplayText =
+                            LiveFragmentDefaults.playStateDisplayText(playState)
+                        val exceptionDisplayText =
+                            LiveFragmentDefaults.playbackExceptionDisplayText(playerError)
+                        if (playStateDisplayText.isNotEmpty() || exceptionDisplayText.isNotEmpty()) {
                             Spacer(
                                 modifier = Modifier.height(spacing.small)
                             )
                         }
-                        AnimatedVisibility(playbackDisplayText.isNotEmpty()) {
+                        AnimatedVisibility(playStateDisplayText.isNotEmpty()) {
                             Text(
-                                text = playbackDisplayText.uppercase(),
+                                text = playStateDisplayText.uppercase(),
                                 style = MaterialTheme.typography.subtitle2,
                                 color = LocalContentColor.current.copy(alpha = 0.75f),
                                 maxLines = 1,
@@ -226,7 +230,7 @@ internal fun LiveFragment(
                             Text(
                                 text = exceptionDisplayText,
                                 style = MaterialTheme.typography.subtitle2,
-                                color = LocalTheme.current.error,
+                                color = theme.error,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,
                                 modifier = Modifier.basicMarquee()
@@ -246,14 +250,15 @@ internal fun LiveFragment(
     }
 }
 
-private val PlaybackException?.displayText: String
-    @Composable get() = when (this) {
+private object LiveFragmentDefaults {
+    @Composable
+    fun playbackExceptionDisplayText(e: PlaybackException?): String = when (e) {
         null -> ""
-        else -> "[$errorCode] $errorCodeName"
+        else -> "[${e.errorCode}] ${e.errorCodeName}"
     }
 
-private val @Player.State Int.displayText: String
-    @Composable get() = when (this) {
+    @Composable
+    fun playStateDisplayText(@Player.State state: Int): String = when (state) {
         Player.STATE_IDLE -> string.feat_live_playback_state_idle
         Player.STATE_BUFFERING -> string.feat_live_playback_state_buffering
         Player.STATE_READY -> null
@@ -262,3 +267,4 @@ private val @Player.State Int.displayText: String
     }
         ?.let { stringResource(it) }
         .orEmpty()
+}
