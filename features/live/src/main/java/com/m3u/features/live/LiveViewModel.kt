@@ -48,17 +48,20 @@ class LiveViewModel @Inject constructor(
     private val _devices = MutableStateFlow<List<Device<*, *, *>>>(emptyList())
     val devices = _devices.asStateFlow()
 
+    private val muted: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val playerState: StateFlow<LiveState.PlayerState> = combine(
         playerManager.observe(),
         playerManager.playbackState,
         playerManager.videoSize,
-        playerManager.playerError
-    ) { player, playback, videoSize, playerError ->
+        playerManager.playerError,
+        muted
+    ) { player, playState, videoSize, playerError, muted ->
         LiveState.PlayerState(
-            playback = playback,
+            playState = playState,
             videoSize = videoSize,
             playerError = playerError,
-            player = player
+            player = player,
+            muted = muted
         )
     }
         .stateIn(
@@ -192,6 +195,8 @@ class LiveViewModel @Inject constructor(
         val target = !playerState.value.muted
         val volume = if (target) 0f else 1f
         playerState.value.player?.volume = volume
+        muted.update { target }
+
         controlPoint?.setMute(target)
     }
 
