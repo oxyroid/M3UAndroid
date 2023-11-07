@@ -5,7 +5,12 @@
 
 Please submit a pull request if you want to help with translation.
 
-App strings ([ENGLISH](i18n/src/main/res/values), [Simplified Chinese](i18n/src/main/res/values-zh-rCN))
+Official:
+- [ENGLISH](i18n/src/main/res/values)
+- [Simplified Chinese](i18n/src/main/res/values-zh-rCN)
+
+From PRs:
+- [Spanish](i18n/src/main/res/values-es-rES), thanks [@sguinetti](https://github.com/sguinetti/M3UAndroid)
 
 ### Features
 
