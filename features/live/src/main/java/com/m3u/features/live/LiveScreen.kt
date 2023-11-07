@@ -116,7 +116,7 @@ internal fun LiveRoute(
         onBackPressed = onBackPressed,
         maskState = maskState,
         player = playerState.player,
-        playback = playerState.playback,
+        playState = playerState.playState,
         videoSize = playerState.videoSize,
         playerError = playerState.playerError,
         onInstallMedia = { viewModel.onEvent(LiveEvent.InstallMedia(it)) },
@@ -141,7 +141,7 @@ private fun LiveScreen(
     maskState: MaskState,
     experimentalMode: Boolean,
     player: Player?,
-    playback: @Player.State Int,
+    playState: @Player.State Int,
     videoSize: Rect,
     playerError: PlaybackException?,
     onInstallMedia: (String) -> Unit,
@@ -158,7 +158,7 @@ private fun LiveScreen(
             val favourite = live?.favourite ?: false
             LiveFragment(
                 player = player,
-                playback = playback,
+                playState = playState,
                 videoSize = videoSize,
                 playerError = playerError,
                 title = init.live?.title ?: "--",
@@ -200,7 +200,7 @@ private fun LiveScreen(
                 val favourite = live.favourite
                 LiveFragment(
                     player = player,
-                    playback = playback,
+                    playState = playState,
                     videoSize = videoSize,
                     playerError = playerError,
                     title = live.title,
