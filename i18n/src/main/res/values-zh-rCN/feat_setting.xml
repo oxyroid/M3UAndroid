@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="feat_setting_not_implementation">此功能当前版本不可用</string>
     <string name="feat_setting_placeholder_url">订阅链接</string>
     <string name="feat_setting_app_version">应用版本</string>
     <string name="feat_setting_label_subscribe">订阅</string>

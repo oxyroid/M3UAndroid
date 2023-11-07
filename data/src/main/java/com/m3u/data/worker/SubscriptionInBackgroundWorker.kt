@@ -76,11 +76,13 @@ class SubscriptionInBackgroundWorker @AssistedInject constructor(
     }
 
     private fun sendProgress(value: Int) {
+        return
         builder.setContentText("$value")
         manager.notify(id, builder.build())
     }
 
     private fun success() {
+        return
         builder
             .setContentText("completed")
             .setOngoing(false)
@@ -88,6 +90,7 @@ class SubscriptionInBackgroundWorker @AssistedInject constructor(
     }
 
     private fun failure(message: String?) {
+        return
         builder
             .setContentText(message.orEmpty())
             .setOngoing(false)

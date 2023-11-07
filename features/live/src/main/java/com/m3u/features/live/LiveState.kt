@@ -33,13 +33,12 @@ data class LiveState(
     ) : Init()
 
     data class PlayerState(
-        val playback: @Player.State Int = Player.STATE_IDLE,
+        val playState: @Player.State Int = Player.STATE_IDLE,
         val videoSize: Rect = Rect(),
         val playerError: PlaybackException? = null,
         val player: Player? = null,
-    ) {
-        val muted: Boolean get() = player?.volume == 0f
-    }
+        val muted: Boolean = false
+    )
 
     var experimentalMode: Boolean by configuration.experimentalMode
 
