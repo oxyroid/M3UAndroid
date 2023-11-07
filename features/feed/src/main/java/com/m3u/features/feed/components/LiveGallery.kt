@@ -21,11 +21,13 @@ import com.m3u.features.feed.NavigateToPlaylist
 import com.m3u.material.ktx.plus
 import com.m3u.material.model.LocalSpacing
 
+internal typealias LivesFactory = () -> List<Live>
+
 @Composable
 internal fun LiveGallery(
     state: LazyGridState,
     rowCount: Int,
-    livesFactory: () -> List<Live>,
+    livesFactory: LivesFactory,
     noPictureMode: Boolean,
     scrollMode: Boolean,
     navigateToLive: NavigateToLive,
@@ -72,7 +74,7 @@ internal fun LiveGallery(
 internal fun TvFeedGallery(
     state: TvLazyGridState,
     rowCount: Int,
-    livesFactory: () -> List<Live>,
+    livesFactory: LivesFactory,
     noPictureMode: Boolean,
     scrollMode: Boolean,
     navigateToLive: NavigateToLive,

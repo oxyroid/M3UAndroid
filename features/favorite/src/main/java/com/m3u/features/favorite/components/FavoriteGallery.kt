@@ -14,11 +14,13 @@ import com.m3u.features.favorite.NavigateToLive
 import com.m3u.material.ktx.plus
 import com.m3u.material.model.LocalSpacing
 
+
+internal typealias LivesFactory = () -> List<Live>
 // TODO: replace with material3-carousel.
 @Composable
 internal fun FavouriteGallery(
     contentPadding: PaddingValues,
-    livesFactory: () -> List<Live>,
+    livesFactory: LivesFactory,
     rowCount: Int,
     noPictureMode: Boolean,
     navigateToLive: NavigateToLive,

@@ -11,8 +11,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.m3u.data.database.entity.Live
 import com.m3u.features.favorite.components.FavouriteGallery
+import com.m3u.features.favorite.components.LivesFactory
 import com.m3u.material.ktx.interceptVolumeEvent
 import com.m3u.ui.EventHandler
 import com.m3u.ui.LocalHelper
@@ -69,7 +69,7 @@ private fun FavoriteScreen(
     contentPadding: PaddingValues,
     rowCount: Int,
     noPictureMode: Boolean,
-    livesFactory: () -> List<Live>,
+    livesFactory: LivesFactory,
     navigateToLive: NavigateToLive,
     modifier: Modifier = Modifier
 ) {

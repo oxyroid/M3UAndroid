@@ -50,7 +50,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
@@ -256,7 +255,6 @@ private fun FeedScreen(
                 Box(
                     modifier = Modifier
                         .padding(spacing.medium)
-                        .padding(contentPadding)
                         .fillMaxWidth()
                 ) {
                     TextField(
@@ -293,7 +291,6 @@ private fun FeedScreen(
                                     scrollMode = scrollMode,
                                     navigateToLive = navigateToLive,
                                     navigateToPlaylist = navigateToPlaylist,
-                                    contentPadding = contentPadding,
                                     onMenu = onMenu
                                 )
                             }
@@ -322,7 +319,6 @@ private fun FeedScreen(
                                     navigateToLive = navigateToLive,
                                     navigateToPlaylist = navigateToPlaylist,
                                     onMenu = onMenu,
-                                    contentPadding = contentPadding,
                                     modifier = modifier
                                 )
                             }
@@ -332,8 +328,8 @@ private fun FeedScreen(
             },
             backLayerBackgroundColor = currentColor,
             backLayerContentColor = currentContentColor,
-            frontLayerScrimColor = Color.Transparent,
             modifier = Modifier
+                .padding(top = contentPadding.calculateTopPadding())
                 .nestedScroll(
                     connection = connection,
                 )
