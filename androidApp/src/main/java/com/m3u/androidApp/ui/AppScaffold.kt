@@ -22,8 +22,8 @@ import com.m3u.androidApp.components.AppBottomSheet
 import com.m3u.androidApp.components.AppSnackHost
 import com.m3u.core.util.collections.withEach
 import com.m3u.i18n.R.string
-import com.m3u.material.components.AppTopBar
 import com.m3u.material.components.IconButton
+import com.m3u.material.components.Scaffold
 import com.m3u.material.model.LocalSpacing
 import com.m3u.material.model.Theme
 import com.m3u.ui.ActionsFactory
@@ -78,7 +78,7 @@ internal fun AppScaffold(
             }
             onDispose {}
         }
-        AppTopBar(
+        Scaffold(
             title = title,
             visible = isSystemBarVisible,
             scrollable = isSystemBarScrollable,

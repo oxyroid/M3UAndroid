@@ -7,6 +7,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -21,7 +22,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.statusBarsIgnoringVisibility
 import androidx.compose.foundation.layout.systemBarsIgnoringVisibility
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.wrapContentSize
@@ -64,8 +65,9 @@ import com.m3u.material.model.LocalSpacing
 import com.m3u.material.model.LocalTheme
 import dev.chrisbanes.haze.haze
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun AppTopBar(
+fun Scaffold(
     title: String,
     visible: Boolean,
     scrollable: Boolean,
@@ -75,7 +77,7 @@ fun AppTopBar(
     onBackPressed: (() -> Unit)? = null,
     onBackPressedContentDescription: String? = null,
     actions: @Composable RowScope.() -> Unit = {},
-    content: @Composable (PaddingValues) -> Unit
+    content: @Composable BoxScope.(PaddingValues) -> Unit
 ) {
     val density = LocalDensity.current
     val spacing = LocalSpacing.current
@@ -147,7 +149,7 @@ fun AppTopBar(
                                         0f,
                                         0f,
                                         configuration.screenWidthDp.dp.toPx(),
-                                        WindowInsets.statusBars.getTop(density) + maxHeightPx
+                                        WindowInsets.statusBarsIgnoringVisibility.getTop(density) + maxHeightPx
                                     )
                                 )
                             },
