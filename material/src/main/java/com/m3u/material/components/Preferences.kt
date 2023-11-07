@@ -124,7 +124,8 @@ fun Preference(
                 .focusable()
                 .clickable(
                     enabled = enabled,
-                    onClick = onClick
+                    onClick = onClick,
+                    role = Role.Button
                 )
                 .background(actualBackgroundColor)
                 .padding(
