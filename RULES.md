@@ -10,3 +10,4 @@
    then accessing it using `import <package>.i18n.R.string`.
 6. If you wish to apply additional dependencies, consider using version catalogs.
 7. Never use AndroidViewModel, use context in UI layer or Data layer.
+8. Never use Painter to inflate drawable resources, use `ImageVector.vectorResource` instead.
