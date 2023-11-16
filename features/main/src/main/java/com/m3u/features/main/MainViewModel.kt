@@ -1,15 +1,12 @@
 package com.m3u.features.main
 
-import android.app.Application
 import androidx.lifecycle.viewModelScope
-import com.m3u.core.architecture.Logger
 import com.m3u.core.architecture.configuration.Configuration
 import com.m3u.core.architecture.viewmodel.BaseViewModel
 import com.m3u.data.repository.FeedRepository
 import com.m3u.data.repository.LiveRepository
 import com.m3u.features.main.model.FeedDetail
 import com.m3u.features.main.model.toDetail
-import com.m3u.i18n.R.string
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
@@ -26,11 +23,8 @@ import javax.inject.Inject
 class MainViewModel @Inject constructor(
     private val feedRepository: FeedRepository,
     liveRepository: LiveRepository,
-    application: Application,
     configuration: Configuration,
-    @Logger.Ui private val logger: Logger
-) : BaseViewModel<MainState, MainEvent>(
-    application = application,
+) : BaseViewModel<MainState, MainEvent, MainMessage>(
     emptyState = MainState(
         configuration = configuration
     )
@@ -75,8 +69,7 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch {
             val feed = feedRepository.unsubscribe(url)
             if (feed == null) {
-                val message = string(string.feat_main_error_unsubscribe_feed)
-                logger.log(message)
+                onMessage(MainMessage.ErrorCannotUnsubscribe)
             }
         }
     }

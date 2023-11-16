@@ -1,13 +1,13 @@
 package com.m3u.core.architecture.viewmodel
 
-import android.app.Application
-import android.content.Context
-import androidx.annotation.StringRes
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
+import com.m3u.core.wrapper.Event
+import com.m3u.core.wrapper.eventOf
+import com.m3u.core.wrapper.handledEvent
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import java.io.File
+import kotlinx.coroutines.flow.update
 
 /**
  * MVI architecture ViewModel.
@@ -15,19 +15,16 @@ import java.io.File
  * 2. ViewModel should change writable value to update current state.
  * 3. It also provides context but not making memory lacking.
  */
-abstract class BaseViewModel<S, in E>(
-    application: Application,
+abstract class BaseViewModel<S, in E, M>(
     emptyState: S
-) : AndroidViewModel(application) {
+) : ViewModel() {
     protected val writable: MutableStateFlow<S> = MutableStateFlow(emptyState)
     protected val readable: S get() = writable.value
     val state: StateFlow<S> = writable.asStateFlow()
     abstract fun onEvent(event: E)
-    protected val cacheDir: File get() = context.cacheDir
-
-    private val context: Context get() = getApplication()
-
-    protected fun string(@StringRes resId: Int): String = context.getString(resId)
-    protected fun string(@StringRes resId: Int, vararg formatArgs: Any?): String =
-        context.getString(resId, formatArgs)
+    private val _message: MutableStateFlow<Event<M>> = MutableStateFlow(handledEvent())
+    val message: StateFlow<Event<M>> = _message.asStateFlow()
+    fun onMessage(message: M) {
+        _message.update { eventOf(message) }
+    }
 }

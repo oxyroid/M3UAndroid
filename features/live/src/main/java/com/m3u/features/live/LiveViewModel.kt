@@ -34,13 +34,12 @@ import kotlin.time.Duration.Companion.milliseconds
 class LiveViewModel @Inject constructor(
     private val liveRepository: LiveRepository,
     private val feedRepository: FeedRepository,
-    application: Application,
     configuration: Configuration,
     private val playerManager: PlayerManager,
     private val logger: Logger,
-    @Logger.Ui private val uiLogger: Logger
-) : BaseViewModel<LiveState, LiveEvent>(
-    application = application,
+    @Logger.Ui private val uiLogger: Logger,
+    private val application: Application
+) : BaseViewModel<LiveState, LiveEvent, Unit>(
     emptyState = LiveState(
         configuration = configuration
     )
@@ -146,7 +145,7 @@ class LiveViewModel @Inject constructor(
     val searching = _searching.asStateFlow()
 
     private fun openDlnaDevices() {
-        DLNACastManager.bindCastService(getApplication())
+        DLNACastManager.bindCastService(application)
         DLNACastManager.registerDeviceListener(this)
         viewModelScope.launch {
             delay(800.milliseconds)
@@ -159,7 +158,7 @@ class LiveViewModel @Inject constructor(
         _searching.value = false
         _isDevicesVisible.value = false
         _devices.value = emptyList()
-        DLNACastManager.unbindCastService(getApplication())
+        DLNACastManager.unbindCastService(application)
         DLNACastManager.unregisterListener(this)
     }
 

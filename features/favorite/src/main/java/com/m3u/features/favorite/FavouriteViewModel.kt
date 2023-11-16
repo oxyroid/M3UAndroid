@@ -1,9 +1,8 @@
 package com.m3u.features.favorite
 
-import android.app.Application
 import androidx.lifecycle.viewModelScope
-import com.m3u.core.architecture.viewmodel.BaseViewModel
 import com.m3u.core.architecture.configuration.Configuration
+import com.m3u.core.architecture.viewmodel.BaseViewModel
 import com.m3u.core.util.collections.filterNotNullKeys
 import com.m3u.data.repository.FeedRepository
 import com.m3u.data.repository.LiveRepository
@@ -18,10 +17,8 @@ import javax.inject.Inject
 class FavouriteViewModel @Inject constructor(
     liveRepository: LiveRepository,
     feedRepository: FeedRepository,
-    application: Application,
     configuration: Configuration,
-) : BaseViewModel<FavoriteState, FavoriteEvent>(
-    application = application,
+) : BaseViewModel<FavoriteState, FavoriteEvent, Unit>(
     emptyState = FavoriteState(
         configuration = configuration
     )

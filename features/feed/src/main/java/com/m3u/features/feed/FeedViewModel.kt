@@ -1,11 +1,10 @@
 package com.m3u.features.feed
 
-import android.app.Application
 import androidx.lifecycle.viewModelScope
 import com.m3u.core.architecture.Logger
 import com.m3u.core.architecture.configuration.Configuration
 import com.m3u.core.architecture.viewmodel.BaseViewModel
-import com.m3u.core.wrapper.ProgressResource
+import com.m3u.core.wrapper.Process
 import com.m3u.core.wrapper.Resource
 import com.m3u.core.wrapper.eventOf
 import com.m3u.data.repository.FeedRepository
@@ -13,7 +12,6 @@ import com.m3u.data.repository.LiveRepository
 import com.m3u.data.repository.MediaRepository
 import com.m3u.data.repository.observeAll
 import com.m3u.data.repository.refresh
-import com.m3u.i18n.R.string
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -31,10 +29,8 @@ class FeedViewModel @Inject constructor(
     private val feedRepository: FeedRepository,
     private val mediaRepository: MediaRepository,
     configuration: Configuration,
-    @Logger.Ui private val logger: Logger,
-    application: Application,
-) : BaseViewModel<FeedState, FeedEvent>(
-    application = application,
+    @Logger.Ui private val logger: Logger
+) : BaseViewModel<FeedState, FeedEvent, FeedMessage>(
     emptyState = FeedState(
         configuration = configuration
     )
@@ -55,8 +51,12 @@ class FeedViewModel @Inject constructor(
     private fun observe(feedUrl: String) {
         observeJob?.cancel()
         if (feedUrl.isEmpty()) {
-            val message = string(string.feat_feed_error_observe_feed, "")
-            onMessage(message)
+            val error = FeedMessage.FeedUrlNotFound
+            writable.update {
+                it.copy(
+                    error = eventOf(error)
+                )
+            }
             return
         }
         observeJob = viewModelScope.launch {
@@ -75,8 +75,7 @@ class FeedViewModel @Inject constructor(
                         )
                     }
                 } else {
-                    val message = string(string.feat_feed_error_observe_feed, feedUrl)
-                    onMessage(message)
+                    onMessage(FeedMessage.FeedNotFound(feedUrl))
                 }
             }
             .launchIn(this)
@@ -105,20 +104,21 @@ class FeedViewModel @Inject constructor(
     private fun refresh() {
         val url = readable.url
         feedRepository.refresh(url, readable.strategy)
-            .onEach { resource ->
+            .onEach { progress ->
                 writable.update {
-                    when (resource) {
-                        is ProgressResource.Loading -> it.copy(
+                    when (progress) {
+                        is Process.Loading -> it.copy(
                             fetching = true
                         )
 
-                        is ProgressResource.Success -> it.copy(
+                        is Process.Success -> it.copy(
                             fetching = false
                         )
 
-                        is ProgressResource.Failure -> {
-                            val message = resource.message.orEmpty()
-                            onMessage(message)
+                        is Process.Failure -> {
+                            val message = progress.message.orEmpty()
+                            logger.log(message)
+
                             it.copy(
                                 fetching = false
                             )
@@ -150,23 +150,23 @@ class FeedViewModel @Inject constructor(
         viewModelScope.launch {
             val live = liveRepository.get(id)
             if (live == null) {
-                onMessage("Target live is not existed!")
+                onMessage(FeedMessage.LiveNotFound)
             } else {
                 val url = live.cover
                 if (url.isNullOrEmpty()) {
-                    onMessage("Target live has no cover to save")
+                    onMessage(FeedMessage.LiveCoverNotFound)
                 } else {
                     mediaRepository.savePicture(url)
                         .onEach { resource ->
                             when (resource) {
                                 Resource.Loading -> {}
-                                is Resource.Success -> {
-                                    onMessage("Saved to ${resource.data.absolutePath}")
-                                }
+                                is Resource.Success -> onMessage(
+                                    FeedMessage.LiveCoverSaved(
+                                        resource.data.absolutePath
+                                    )
+                                )
 
-                                is Resource.Failure -> {
-                                    onMessage(resource.message)
-                                }
+                                is Resource.Failure -> logger.log(resource.message.orEmpty())
                             }
                         }
                         .launchIn(this)
@@ -181,16 +181,11 @@ class FeedViewModel @Inject constructor(
             val target = event.target
             val live = liveRepository.get(id)
             if (live == null) {
-                onMessage("channel is not existed!")
+                onMessage(FeedMessage.LiveNotFound)
             } else {
                 liveRepository.setBanned(live.id, target)
             }
         }
-    }
-
-
-    private fun onMessage(message: String?) {
-        logger.log(message.orEmpty())
     }
 
     private val queryStateFlow = MutableStateFlow("")

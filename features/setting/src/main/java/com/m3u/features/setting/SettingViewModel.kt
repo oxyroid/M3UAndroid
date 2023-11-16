@@ -1,6 +1,5 @@
 package com.m3u.features.setting
 
-import android.app.Application
 import android.net.Uri
 import androidx.lifecycle.viewModelScope
 import androidx.work.OneTimeWorkRequestBuilder
@@ -9,32 +8,27 @@ import androidx.work.workDataOf
 import com.m3u.core.annotation.ClipMode
 import com.m3u.core.annotation.ConnectTimeout
 import com.m3u.core.annotation.FeedStrategy
-import com.m3u.core.architecture.Logger
 import com.m3u.core.architecture.Publisher
 import com.m3u.core.architecture.configuration.Configuration
 import com.m3u.core.architecture.viewmodel.BaseViewModel
 import com.m3u.data.repository.LiveRepository
 import com.m3u.data.repository.observeAll
-import com.m3u.data.worker.SubscriptionInBackgroundWorker
+import com.m3u.data.worker.SubscriptionWorker
+import com.m3u.ui.Destination
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-import com.m3u.i18n.R.string
-import com.m3u.ui.Destination
 
 @HiltViewModel
 class SettingViewModel @Inject constructor(
     private val liveRepository: LiveRepository,
     @Publisher.App private val publisher: Publisher,
     private val workManager: WorkManager,
-    application: Application,
-    configuration: Configuration,
-    @Logger.Ui private val logger: Logger
-) : BaseViewModel<SettingState, SettingEvent>(
-    application = application,
+    configuration: Configuration
+) : BaseViewModel<SettingState, SettingEvent, SettingMessage>(
     emptyState = SettingState(
         versionName = publisher.versionName,
         versionCode = publisher.versionCode,
@@ -47,7 +41,7 @@ class SettingViewModel @Inject constructor(
             .onEach { lives ->
                 writable.update {
                     it.copy(
-                        mutedLives = lives
+                        banneds = lives
                     )
                 }
             }
@@ -64,7 +58,7 @@ class SettingViewModel @Inject constructor(
             SettingEvent.OnConnectTimeout -> onConnectTimeout()
             SettingEvent.OnExperimentalMode -> onExperimentalMode()
             SettingEvent.OnClipMode -> onClipMode()
-            is SettingEvent.OnBannedLive -> onBannedLive(event.id)
+            is SettingEvent.OnBanned -> onBanned(event.id)
             SettingEvent.ScrollDefaultDestination -> scrollDefaultDestination()
             is SettingEvent.ImportJavaScript -> importJavaScript(event.uri)
             SettingEvent.OnLocalStorage -> onLocalStorage()
@@ -90,9 +84,9 @@ class SettingViewModel @Inject constructor(
         readable.initialRootDestination = target
     }
 
-    private fun onBannedLive(liveId: Int) {
-        val bannedLive = readable.mutedLives.find { it.id == liveId }
-        if (bannedLive != null) {
+    private fun onBanned(liveId: Int) {
+        val banned = readable.banneds.find { it.id == liveId }
+        if (banned != null) {
             viewModelScope.launch {
                 liveRepository.setBanned(liveId, false)
             }
@@ -161,35 +155,33 @@ class SettingViewModel @Inject constructor(
     private fun subscribe() {
         val title = writable.value.title
         if (title.isEmpty()) {
-            val message = string(string.feat_setting_error_empty_title)
-            logger.log(message)
+            onMessage(SettingMessage.EmptyTitle)
             return
         }
-        val strategy = readable.feedStrategy
         val url = readable.actualUrl
         if (url == null) {
-            val message = when {
-                readable.localStorage -> string(string.feat_setting_error_unselected_file)
-                else -> string(string.feat_setting_error_blank_url)
+            val warning = when {
+                readable.localStorage -> SettingMessage.EmptyFile
+                else -> SettingMessage.EmptyUrl
             }
-            logger.log(message)
+            onMessage(warning)
             return
         }
 
+        val strategy = readable.feedStrategy
         workManager.cancelAllWorkByTag(url)
-        val request = OneTimeWorkRequestBuilder<SubscriptionInBackgroundWorker>()
+        val request = OneTimeWorkRequestBuilder<SubscriptionWorker>()
             .setInputData(
                 workDataOf(
-                    SubscriptionInBackgroundWorker.INPUT_STRING_TITLE to title,
-                    SubscriptionInBackgroundWorker.INPUT_STRING_URL to url,
-                    SubscriptionInBackgroundWorker.INPUT_INT_STRATEGY to strategy
+                    SubscriptionWorker.INPUT_STRING_TITLE to title,
+                    SubscriptionWorker.INPUT_STRING_URL to url,
+                    SubscriptionWorker.INPUT_INT_STRATEGY to strategy
                 )
             )
             .addTag(url)
             .build()
         workManager.enqueue(request)
-        val message = string(string.feat_setting_enqueue_subscribe)
-        logger.log(message)
+        onMessage(SettingMessage.Enqueued)
         writable.update {
             it.copy(
                 title = "",

@@ -1,17 +1,16 @@
 package com.m3u.features.crash.screen.detail
 
-import android.app.Application
+import com.m3u.core.architecture.FilePath
 import com.m3u.core.architecture.viewmodel.BaseViewModel
+import com.m3u.data.io.crash.CrashFilePathCacher
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.update
-import java.io.File
 import javax.inject.Inject
 
 @HiltViewModel
 class DetailViewModel @Inject constructor(
-    application: Application
-) : BaseViewModel<DetailState, DetailEvent>(
-    application = application,
+    private val cacher: CrashFilePathCacher
+) : BaseViewModel<DetailState, DetailEvent, Unit>(
     emptyState = DetailState()
 ) {
     override fun onEvent(event: DetailEvent) {
@@ -21,7 +20,8 @@ class DetailViewModel @Inject constructor(
     }
 
     private fun init(path: String) {
-        val file = File(cacheDir, path)
+        val filePath = FilePath(path)
+        val file = cacher.read(filePath) ?: return
         val text = file.readText()
         writable.update {
             it.copy(

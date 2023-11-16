@@ -1,11 +1,10 @@
 package com.m3u.features.about
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.m3u.core.architecture.Logger
 import com.m3u.core.architecture.Publisher
 import com.m3u.core.architecture.execute
+import com.m3u.core.architecture.viewmodel.BaseViewModel
 import com.m3u.core.util.collections.indexOf
 import com.m3u.data.api.GithubApi
 import com.m3u.features.about.model.Contributor
@@ -23,12 +22,11 @@ import javax.inject.Inject
 
 @HiltViewModel
 class AboutViewModel @Inject constructor(
-    application: Application,
     private val api: GithubApi,
     private val client: OkHttpClient,
     @Publisher.App private val publisher: Publisher,
     private val logger: Logger
-) : AndroidViewModel(application) {
+) : BaseViewModel<Unit, Unit, Unit>(Unit) {
     private val _contributors: MutableStateFlow<List<Contributor>> =
         MutableStateFlow(emptyList())
     internal val contributors: StateFlow<List<Contributor>> = _contributors.asStateFlow()
@@ -83,4 +81,8 @@ class AboutViewModel @Inject constructor(
         }
             .sorted()
     } ?: emptyList()
+
+    override fun onEvent(event: Unit) {
+
+    }
 }

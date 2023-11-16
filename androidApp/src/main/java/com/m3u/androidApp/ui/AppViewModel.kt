@@ -1,6 +1,5 @@
 package com.m3u.androidApp.ui
 
-import android.app.Application
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import com.m3u.core.architecture.configuration.Configuration
@@ -20,11 +19,9 @@ import javax.inject.Inject
 
 @HiltViewModel
 class AppViewModel @Inject constructor(
-    application: Application,
     configuration: Configuration,
     uiService: UiService
-) : BaseViewModel<RootState, Unit>(
-    application = application,
+) : BaseViewModel<RootState, Unit, Unit>(
     emptyState = RootState(
         configuration = configuration
     )
