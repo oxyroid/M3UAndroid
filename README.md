@@ -6,7 +6,7 @@
 Please submit a pull request if you want to help with translation.
 
 Official:
-- [ENGLISH](i18n/src/main/res/values)
+- [English](i18n/src/main/res/values)
 - [Simplified Chinese](i18n/src/main/res/values-zh-rCN)
 
 From PRs:
@@ -21,7 +21,7 @@ From PRs:
 - [x] DLNA Protocol.
 - [ ] Custom Script.
 - [x] i18n.
-- [ ] Desktop Platform.
+- [ ] Multiplatform.
 
 ### Android Development
 
@@ -37,7 +37,7 @@ M3U is an app that attempts to use the latest libraries and tools. As a summary:
 
 ### Community
 
-M3U is my first elaborate Android project and is also my first cross-platform application project.
+M3U is my first elaborate Android project and is also my first jetpack compose application project.
 
 You can join the [Telegram Channel](https://t.me/m3u_android) for update information and **alpha &
 beta packages**.
@@ -48,15 +48,12 @@ View this [file](CONTRIBUTING.md) to learn about how to contribute this reposito
 
 Refer to the [file](RULES.md) to learn about the code style rules for this repository.
 
-### Literatures
-1. http://upnp.org/specs/av/UPnP-av-ContentDirectory-v4-Service.pdf
-2. https://developer.apple.com/documentation/http-live-streaming/example-playlists-for-http-live-streaming
+### About The Author
 
-### About me
-
-I am a Chinese university student who is about to graduate and eager to find a **job** in Android
-Software Development,
-If you are interested in offering me a job, please contact [@sortBy](https://t.me/sortBy).
+I am a Chinese university student who is about to graduate and ~~eager to find a **job** in Android
+Software Development~~ work at [DiDi](https://github.com/didi),
+~~If you are interested in offering me a job~~
+If you want to provide feedback, please contact [@sortBy](https://t.me/sortBy).
 
 ### License
 
