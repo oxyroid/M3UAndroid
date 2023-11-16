@@ -1,10 +1,14 @@
+@file:OptIn(ExperimentalFoundationApi::class)
+
 package com.m3u.androidApp.navigation
 
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.pager.PagerState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -22,8 +26,7 @@ import com.m3u.ui.Navigate
 
 @Composable
 fun M3UNavHost(
-    currentPage: Int,
-    onCurrentPage: (Int) -> Unit,
+    pagerState: PagerState,
     navigate: Navigate,
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
@@ -40,8 +43,7 @@ fun M3UNavHost(
         modifier = modifier,
     ) {
         rootGraph(
-            currentPage = currentPage,
-            onCurrentPage = onCurrentPage,
+            pagerState = pagerState,
             contentPadding = contentPadding,
             navigateToFeed = { feed ->
                 helper.title = feed.title.ifEmpty {

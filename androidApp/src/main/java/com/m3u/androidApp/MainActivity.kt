@@ -9,11 +9,14 @@ import android.graphics.Color
 import android.graphics.Rect
 import android.os.Bundle
 import android.view.ViewConfiguration
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsCompat.Type.InsetsType
@@ -22,17 +25,22 @@ import androidx.core.view.WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_B
 import androidx.lifecycle.lifecycleScope
 import com.m3u.androidApp.ui.App
 import com.m3u.androidApp.ui.AppViewModel
+import com.m3u.androidApp.ui.rememberAppState
+import com.m3u.core.architecture.Logger
 import com.m3u.core.unspecified.UBoolean
 import com.m3u.core.util.basic.rational
 import com.m3u.core.util.context.isDarkMode
 import com.m3u.core.util.context.isPortraitMode
 import com.m3u.ui.Action
+import com.m3u.ui.Destination
 import com.m3u.ui.Fob
 import com.m3u.ui.Helper
 import com.m3u.ui.OnPipModeChanged
 import com.m3u.ui.OnUserLeaveHint
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 import kotlin.reflect.KMutableProperty0
 
 @AndroidEntryPoint
@@ -53,6 +61,11 @@ class MainActivity : ComponentActivity() {
         )
     }
 
+    @Inject
+    @Logger.Ui
+    lateinit var logger: Logger
+
+    @OptIn(ExperimentalFoundationApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         enableEdgeToEdge()
@@ -60,6 +73,11 @@ class MainActivity : ComponentActivity() {
         lifecycleScope.launch { }
         setContent {
             App(
+                appState = rememberAppState(
+                    pagerState = rememberPagerState {
+                        Destination.Root.entries.size
+                    }
+                ),
                 viewModel = viewModel,
                 helper = helper
             )
@@ -115,6 +133,16 @@ class MainActivity : ComponentActivity() {
                     removeOnPictureInPictureModeChangedListener(it)
                 }
             }
+
+        override fun toast(message: String) {
+            lifecycleScope.launch(Dispatchers.Main) {
+                Toast.makeText(this@MainActivity, message, Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        override fun snake(message: String) {
+            logger.log(message)
+        }
     }
 
     override fun onUserLeaveHint() {

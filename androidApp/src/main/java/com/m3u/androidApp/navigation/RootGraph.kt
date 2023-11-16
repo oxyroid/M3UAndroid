@@ -5,12 +5,10 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.pager.PagerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavController
@@ -39,9 +37,9 @@ fun NavController.popupToRoot() {
     this.popBackStack(ROOT_ROUTE, false)
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 fun NavGraphBuilder.rootGraph(
-    currentPage: Int,
-    onCurrentPage: (Int) -> Unit,
+    pagerState: PagerState,
     contentPadding: PaddingValues,
     navigateToFeed: NavigateToFeed,
     navigateToLive: NavigateToLive,
@@ -50,8 +48,7 @@ fun NavGraphBuilder.rootGraph(
 ) {
     composable(ROOT_ROUTE) {
         RootGraph(
-            currentPage = currentPage,
-            onCurrentPage = onCurrentPage,
+            pagerState = pagerState,
             contentPadding = contentPadding,
             navigateToFeed = navigateToFeed,
             navigateToLive = navigateToLive,
@@ -64,8 +61,7 @@ fun NavGraphBuilder.rootGraph(
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun RootGraph(
-    currentPage: Int,
-    onCurrentPage: (Int) -> Unit,
+    pagerState: PagerState,
     contentPadding: PaddingValues,
     navigateToFeed: NavigateToFeed,
     navigateToLive: NavigateToLive,
@@ -74,39 +70,23 @@ private fun RootGraph(
     modifier: Modifier = Modifier
 ) {
     val destinations = Destination.Root.entries
-    val pagerState = rememberPagerState { destinations.size }
-    val actualOnCurrentPage by rememberUpdatedState(onCurrentPage)
-
     LaunchedEffect(pagerState) {
         snapshotFlow {
-            PagerStateSnapshot(
-                pagerState.currentPage,
-                pagerState.targetPage,
-                pagerState.settledPage,
-                pagerState.isScrollInProgress
-            )
+            with(pagerState) {
+                PagerStateSnapshot(
+                    currentPage,
+                    targetPage,
+                    settledPage,
+                    isScrollInProgress
+                )
+            }
         }
             .onEach {
                 Log.e("PagerState", "$it")
             }
             .launchIn(this)
-
-        snapshotFlow {
-            // FIXME:
-            //  When a user scrolls the page using gestures on the root screen, it may be 0.
-            //  But we cannot use pageState#currentPage because it will not work
-            //  when we selects a bottom bar item from 0 -> 2
-            pagerState.targetPage
-        }
-            .onEach(actualOnCurrentPage)
-            .launchIn(this)
     }
 
-    LaunchedEffect(currentPage) {
-        if (currentPage != pagerState.currentPage) {
-            pagerState.animateScrollToPage(currentPage)
-        }
-    }
     HorizontalPager(
         state = pagerState,
         modifier = modifier
@@ -120,7 +100,7 @@ private fun RootGraph(
             Destination.Root.Main -> {
                 MainRoute(
                     navigateToFeed = navigateToFeed,
-                    resume = rememberResumeEvent(currentPage, pagerIndex),
+                    resume = rememberResumeEvent(pagerState.targetPage, pagerIndex),
                     contentPadding = contentPadding,
                     modifier = Modifier.fillMaxSize()
                 )
@@ -129,7 +109,7 @@ private fun RootGraph(
             Destination.Root.Favourite -> {
                 FavouriteRoute(
                     navigateToLive = navigateToLive,
-                    resume = rememberResumeEvent(currentPage, pagerIndex),
+                    resume = rememberResumeEvent(pagerState.targetPage, pagerIndex),
                     contentPadding = contentPadding,
                     modifier = Modifier.fillMaxSize()
                 )
@@ -140,7 +120,7 @@ private fun RootGraph(
                     navigateToConsole = navigateToConsole,
                     navigateToAbout = navigateToAbout,
                     contentPadding = contentPadding,
-                    resume = rememberResumeEvent(currentPage, pagerIndex),
+                    resume = rememberResumeEvent(pagerState.targetPage, pagerIndex),
                     modifier = Modifier.fillMaxSize()
                 )
             }

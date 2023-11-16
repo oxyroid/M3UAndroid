@@ -52,7 +52,6 @@ internal fun AppScaffold(
     navigate: Navigate,
     modifier: Modifier = Modifier,
     onBackPressed: (() -> Unit)? = null,
-    foreground: @Composable () -> Unit = {},
     content: @Composable (PaddingValues) -> Unit
 ) {
     val spacing = LocalSpacing.current
@@ -134,6 +133,5 @@ internal fun AppScaffold(
                 }
             }
         }
-        foreground()
     }
 }

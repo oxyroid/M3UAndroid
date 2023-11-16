@@ -1,20 +1,21 @@
 package com.m3u.androidApp.ui
 
 import android.util.Log
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.pager.PagerState
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.Stable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.m3u.androidApp.navigation.popupToRoot
 import com.m3u.androidApp.navigation.ROOT_ROUTE
+import com.m3u.androidApp.navigation.popupToRoot
 import com.m3u.features.about.navigation.ABOUT_ROUTE
 import com.m3u.features.about.navigation.navigateToAbout
 import com.m3u.features.console.navigation.CONSOLE_ROUTE
@@ -26,10 +27,15 @@ import com.m3u.features.live.navigation.LIVE_ROUTE
 import com.m3u.features.live.navigation.navigateToLive
 import com.m3u.features.live.navigation.navigateToPlaylist
 import com.m3u.ui.Destination
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 
 @Composable
+@OptIn(ExperimentalFoundationApi::class)
 fun rememberAppState(
-    navController: NavHostController = rememberNavController()
+    navController: NavHostController = rememberNavController(),
+    pagerState: PagerState = rememberPagerState { Destination.Root.entries.size },
+    coroutineScope: CoroutineScope = rememberCoroutineScope()
 ): AppState {
     DisposableEffect(navController) {
         val listener = NavController.OnDestinationChangedListener { _, destination, _ ->
@@ -40,14 +46,17 @@ fun rememberAppState(
             navController.removeOnDestinationChangedListener(listener)
         }
     }
-    return remember(navController) {
-        AppState(navController)
+    return remember(navController, pagerState, coroutineScope) {
+        AppState(navController, pagerState, coroutineScope)
     }
 }
 
 @Stable
+@OptIn(ExperimentalFoundationApi::class)
 class AppState(
-    val navController: NavHostController
+    val navController: NavHostController,
+    val pagerState: PagerState,
+    val coroutineScope: CoroutineScope
 ) {
     // Current Root Destination Page.
     // Initially, we stored the "pagerState" here. However, we encountered an unexpected behavior
@@ -69,14 +78,12 @@ class AppState(
     //
     // It's important to note that this solution might not be the optimal one, and further improvements could be explored.
 
-    var currentPage by mutableIntStateOf(0)
-
     val navDestination: NavDestination?
         @Composable get() = navController.currentBackStackEntryAsState().value?.destination
 
     val rootDestination: Destination.Root?
         @Composable get() = when (navDestination?.route) {
-            ROOT_ROUTE -> rootDestinations[currentPage]
+            ROOT_ROUTE -> rootDestinations[pagerState.currentPage]
             else -> null
         }
 
@@ -84,7 +91,10 @@ class AppState(
         when (destination) {
             is Destination.Root -> {
                 navController.popupToRoot()
-                currentPage = rootDestinations.indexOf(destination)
+                coroutineScope.launch {
+                    val page = rootDestinations.indexOf(destination)
+                    pagerState.scrollToPage(page)
+                }
             }
 
             is Destination.Feed -> navController.navigateToFeed(destination.url)
