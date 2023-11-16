@@ -8,10 +8,6 @@ interface Logger {
 
     @Qualifier
     @Retention(AnnotationRetention.BINARY)
-    annotation class File
-
-    @Qualifier
-    @Retention(AnnotationRetention.BINARY)
     annotation class Ui
 }
 

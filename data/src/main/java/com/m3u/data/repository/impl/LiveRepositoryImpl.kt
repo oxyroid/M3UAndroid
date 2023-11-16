@@ -12,7 +12,7 @@ import javax.inject.Inject
 
 class LiveRepositoryImpl @Inject constructor(
     private val liveDao: LiveDao,
-    @Logger.File private val logger: Logger
+    private val logger: Logger
 ) : LiveRepository {
     override fun observe(id: Int): Flow<Live?> = logger.execute {
         liveDao.observeById(id)

@@ -57,30 +57,3 @@ suspend fun <T> ProducerScope<Resource<T>>.sendMessage(message: String?) =
 
 suspend fun <T> ProducerScope<Resource<T>>.sendException(exception: Exception?) =
     sendMessage(exception?.message)
-
-sealed class ProgressResource<out T> {
-    data class Loading(val value: Int) : ProgressResource<Nothing>()
-    data class Success<out T>(
-        val data: T
-    ) : ProgressResource<T>()
-
-    data class Failure<out T>(
-        val message: String?
-    ) : ProgressResource<T>()
-}
-
-@JvmName("emitProgressProgress")
-suspend fun <T> FlowCollector<ProgressResource<T>>.emitProgress(value: Int) =
-    emit(ProgressResource.Loading(value))
-
-@JvmName("emitProgressResource")
-suspend fun <T> FlowCollector<ProgressResource<T>>.emitResource(value: T) =
-    emit(ProgressResource.Success(value))
-
-@JvmName("emitProgressMessage")
-suspend fun <T> FlowCollector<ProgressResource<T>>.emitMessage(message: String?) =
-    emit(ProgressResource.Failure(message))
-
-@JvmName("emitProgressException")
-suspend fun <T> FlowCollector<ProgressResource<T>>.emitException(exception: Exception?) =
-    emitMessage(exception?.message)

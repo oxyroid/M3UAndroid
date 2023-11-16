@@ -22,6 +22,7 @@ data class FeedState(
     val query: String = "",
     val fetching: Boolean = false,
     val scrollUp: Event<Unit> = handledEvent(),
+    val error: Event<FeedMessage> = handledEvent(),
     private val configuration: Configuration
 ) {
     val strategy: Int by configuration.feedStrategy

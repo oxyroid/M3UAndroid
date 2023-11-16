@@ -16,7 +16,7 @@ import com.m3u.material.components.IconButton
 @Composable
 internal fun MutedLiveItem(
     live: Live,
-    onBannedLive: () -> Unit,
+    onBanned: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     ListItem(
@@ -42,7 +42,7 @@ internal fun MutedLiveItem(
             IconButton(
                 icon = Icons.Rounded.Close,
                 contentDescription = "voice",
-                onClick = onBannedLive
+                onClick = onBanned
             )
         },
         modifier = modifier

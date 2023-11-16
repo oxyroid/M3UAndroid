@@ -9,22 +9,23 @@ import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import com.m3u.core.annotation.FeedStrategy
-import com.m3u.core.wrapper.ProgressResource
+import com.m3u.core.architecture.Logger
 import com.m3u.data.R
 import com.m3u.data.repository.FeedRepository
 import com.m3u.i18n.R.string
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.supervisorScope
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.launchIn
 
 @HiltWorker
-class SubscriptionInBackgroundWorker @AssistedInject constructor(
+class SubscriptionWorker @AssistedInject constructor(
     @Assisted private val context: Context,
     @Assisted params: WorkerParameters,
     private val feedRepository: FeedRepository,
     private val manager: NotificationManager,
+    private val logger: Logger
 ) : CoroutineWorker(context, params) {
     private val title = inputData.getString(INPUT_STRING_TITLE)
     private val url = inputData.getString(INPUT_STRING_URL)
@@ -36,11 +37,16 @@ class SubscriptionInBackgroundWorker @AssistedInject constructor(
         if (title.isEmpty()) {
             val message = context.getString(string.data_error_empty_title)
             val data = workDataOf("message" to message)
-            failure(message)
             Result.failure(data)
         } else {
             try {
-                collectFlow(title, url, strategy)
+                feedRepository
+                    .subscribe(title, url, strategy)
+                    .catch {
+                        logger.log(it)
+                        throw it
+                    }
+                    .launchIn(this)
                 Result.success()
             } catch (e: Exception) {
                 Result.failure()
@@ -48,59 +54,17 @@ class SubscriptionInBackgroundWorker @AssistedInject constructor(
         }
     }
 
+    @Suppress("UNUSED")
     private val builder = Notification.Builder(context, CHANNEL_ID)
         .setSmallIcon(R.drawable.round_file_download_24)
         .setContentTitle(title.orEmpty())
         .setContentText(url.orEmpty())
         .setOngoing(true)
 
-    private val id: Int = System.currentTimeMillis().toInt()
-
-    private suspend fun collectFlow(
-        title: String,
-        url: String,
-        strategy: Int
-    ) = supervisorScope {
-        feedRepository
-            .subscribe(title, url, strategy)
-            .collect { resource ->
-                when (resource) {
-                    is ProgressResource.Loading -> sendProgress(resource.value)
-                    is ProgressResource.Success -> success()
-                    is ProgressResource.Failure -> failure(resource.message)
-                }
-                if (resource !is ProgressResource.Loading) {
-                    cancel()
-                }
-            }
-    }
-
-    private fun sendProgress(value: Int) {
-        return
-        builder.setContentText("$value")
-        manager.notify(id, builder.build())
-    }
-
-    private fun success() {
-        return
-        builder
-            .setContentText("completed")
-            .setOngoing(false)
-        manager.notify(id, builder.build())
-    }
-
-    private fun failure(message: String?) {
-        return
-        builder
-            .setContentText(message.orEmpty())
-            .setOngoing(false)
-
-        manager.notify(id, builder.build())
-    }
-
     private fun createChannel() {
-        val channel =
-            NotificationChannel(CHANNEL_ID, NOTIFICATION_NAME, NotificationManager.IMPORTANCE_LOW)
+        val channel = NotificationChannel(
+            CHANNEL_ID, NOTIFICATION_NAME, NotificationManager.IMPORTANCE_LOW
+        )
         channel.description = "display subscribe task progress"
         manager.createNotificationChannel(channel)
     }

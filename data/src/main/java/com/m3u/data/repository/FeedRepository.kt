@@ -1,7 +1,7 @@
 package com.m3u.data.repository
 
 import com.m3u.core.annotation.FeedStrategy
-import com.m3u.core.wrapper.ProgressResource
+import com.m3u.core.wrapper.Process
 import com.m3u.data.database.entity.Feed
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
@@ -17,7 +17,7 @@ interface FeedRepository : ReadOnlyRepository<Feed, String> {
         title: String,
         url: String,
         @FeedStrategy strategy: Int = FeedStrategy.ALL
-    ): Flow<ProgressResource<Unit>>
+    ): Flow<Process<Unit>>
 
     suspend fun unsubscribe(url: String): Feed?
 
@@ -27,13 +27,13 @@ interface FeedRepository : ReadOnlyRepository<Feed, String> {
 fun FeedRepository.refresh(
     url: String,
     @FeedStrategy strategy: Int
-): Flow<ProgressResource<Unit>> = channelFlow {
+): Flow<Process<Unit>> = channelFlow {
     try {
         val feed = get(url) ?: error("Cannot find feed: $url")
         subscribe(feed.title, url, strategy)
             .onEach(::send)
             .launchIn(this)
     } catch (e: Exception) {
-        send(ProgressResource.Failure(e.message))
+        send(Process.Failure(e.message))
     }
 }

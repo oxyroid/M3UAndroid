@@ -29,6 +29,8 @@ interface Helper {
     var darkMode: Boolean
 
     fun enterPipMode(size: Rect)
+    fun toast(message: String)
+    fun snake(message: String)
 }
 
 private data class HelperBundle(
@@ -142,6 +144,13 @@ val EmptyHelper = object : Helper {
         }
 
     override fun enterPipMode(size: Rect) = error("Cannot enterPipMode")
+    override fun toast(message: String) {
+        error("Cannot toast: $message")
+    }
+
+    override fun snake(message: String) {
+        error("Cannot snake: $message")
+    }
 }
 
 val LocalHelper = staticCompositionLocalOf { EmptyHelper }
@@ -153,7 +162,7 @@ data class Action(
     val onClick: () -> Unit
 )
 
-typealias ActionsFactory =  () -> List<Action>
+typealias ActionsFactory = () -> List<Action>
 
 @Immutable
 data class Fob(

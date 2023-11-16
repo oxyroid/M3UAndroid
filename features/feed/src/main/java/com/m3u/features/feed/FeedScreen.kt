@@ -55,6 +55,7 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.capitalize
@@ -108,12 +109,27 @@ internal fun FeedRoute(
     modifier: Modifier = Modifier,
     viewModel: FeedViewModel = hiltViewModel()
 ) {
+    val context = LocalContext.current
     val helper = LocalHelper.current
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val message by viewModel.message.collectAsStateWithLifecycle()
     var dialogStatus: DialogStatus by remember { mutableStateOf(DialogStatus.Idle) }
     val writeExternalPermissionState = rememberPermissionState(
         Manifest.permission.WRITE_EXTERNAL_STORAGE
     )
+    EventHandler(message) {
+        when (it) {
+            FeedMessage.FeedUrlNotFound -> context.getString(string.feat_feed_error_feed_url_not_found)
+            FeedMessage.LiveCoverNotFound -> context.getString(string.feat_feed_error_live_cover_not_found)
+            FeedMessage.LiveNotFound -> context.getString(string.feat_feed_error_live_not_found)
+            is FeedMessage.LiveCoverSaved -> context.getString(string.feat_feed_success_save_cover, it.path)
+            is FeedMessage.FeedNotFound -> context.getString(
+                string.feat_feed_error_feed_not_found,
+                it.feedUrl
+            )
+        }
+            .let(helper::snake)
+    }
 
     LaunchedEffect(feedUrl) {
         viewModel.onEvent(FeedEvent.Observe(feedUrl))

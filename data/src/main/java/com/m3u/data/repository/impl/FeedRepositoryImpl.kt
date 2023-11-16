@@ -9,13 +9,14 @@ import com.m3u.core.architecture.execute
 import com.m3u.core.architecture.sandBox
 import com.m3u.core.util.basic.startsWithAny
 import com.m3u.core.util.belong
-import com.m3u.core.util.readFileName
 import com.m3u.core.util.readFileContent
-import com.m3u.core.wrapper.ProgressResource
+import com.m3u.core.util.readFileName
+import com.m3u.core.wrapper.Process
 import com.m3u.core.wrapper.emitException
 import com.m3u.core.wrapper.emitMessage
-import com.m3u.core.wrapper.emitProgress
 import com.m3u.core.wrapper.emitResource
+import com.m3u.core.wrapper.process
+import com.m3u.core.wrapper.processFlow
 import com.m3u.data.database.dao.FeedDao
 import com.m3u.data.database.dao.LiveDao
 import com.m3u.data.database.entity.Feed
@@ -49,12 +50,12 @@ class FeedRepositoryImpl @Inject constructor(
         title: String,
         url: String,
         strategy: Int
-    ): Flow<ProgressResource<Unit>> = flow {
+    ): Flow<Process<Unit>> = processFlow {
         try {
             val actualUrl = url.actualUrl()
             if (actualUrl == null) {
                 emitMessage("wrong url")
-                return@flow
+                return@processFlow
             }
             val lives = when {
                 url.isNetworkUrl -> acquireNetwork(actualUrl)
@@ -69,8 +70,8 @@ class FeedRepositoryImpl @Inject constructor(
                 prev = liveDao.getByFeedUrl(url),
                 lives = lives,
                 strategy = strategy
-            ) { progress ->
-                emitProgress(progress)
+            ) { value ->
+                emit(Process.Loading(value.process))
             }
 
             emitResource(Unit)
@@ -86,7 +87,7 @@ class FeedRepositoryImpl @Inject constructor(
         prev: List<Live>,
         lives: List<Live>,
         @FeedStrategy strategy: Int,
-        onProgress: (Int) -> Unit
+        onProcess: (Int) -> Unit
     ) {
         val skippedUrls = mutableListOf<String>()
         val grouped by lazy {
@@ -109,6 +110,7 @@ class FeedRepositoryImpl @Inject constructor(
             FeedStrategy.SKIP_FAVORITE -> grouped
                 .getValue(true)
                 .map { it.url } + skippedUrls
+
             else -> emptyList()
         }
         var progress = 0
@@ -117,7 +119,7 @@ class FeedRepositoryImpl @Inject constructor(
             .forEach {
                 liveDao.insert(it)
                 progress++
-                onProgress(progress)
+                onProcess(progress)
             }
     }
 

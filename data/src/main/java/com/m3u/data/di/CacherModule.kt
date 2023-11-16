@@ -2,8 +2,8 @@
 
 package com.m3u.data.di
 
-import com.m3u.core.architecture.FileReader
-import com.m3u.data.reader.LogFileReader
+import com.m3u.core.architecture.FilePathCacher
+import com.m3u.data.io.crash.CrashFilePathCacher
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -12,8 +12,8 @@ import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
-interface ReaderModule {
+interface CacherModule {
     @Binds
     @Singleton
-    fun bindFileReader(reader: LogFileReader): FileReader
+    fun bindFilePathCacher(cacher: CrashFilePathCacher): FilePathCacher
 }

@@ -30,7 +30,7 @@ private const val BITMAP_QUALITY = 100
 
 class MediaRepositoryImpl @Inject constructor(
     @ApplicationContext private val context: Context,
-    @Logger.File private val logger: Logger
+    private val logger: Logger
 ) : MediaRepository {
     private val directory =
         Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)

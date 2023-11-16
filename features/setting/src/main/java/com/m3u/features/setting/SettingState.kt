@@ -18,8 +18,8 @@ data class SettingState(
     val title: String = "",
     val url: String = "",
     val uri: Uri = Uri.EMPTY,
-    val mutedLives: List<Live> = emptyList(),
-    val localStorage: Boolean = false,
+    val banneds: List<Live> = emptyList(),
+    val localStorage: Boolean = false
 ) {
     @FeedStrategy
     var feedStrategy: Int by configuration.feedStrategy

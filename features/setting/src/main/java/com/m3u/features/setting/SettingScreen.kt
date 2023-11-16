@@ -29,6 +29,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -42,6 +43,7 @@ import com.m3u.features.setting.fragments.MutedLivesFactory
 import com.m3u.features.setting.fragments.PreferencesFragment
 import com.m3u.features.setting.fragments.ScriptsFragment
 import com.m3u.features.setting.fragments.SubscriptionsFragment
+import com.m3u.i18n.R.string
 import com.m3u.material.model.LocalSpacing
 import com.m3u.material.model.LocalTheme
 import com.m3u.ui.Destination
@@ -63,11 +65,24 @@ fun SettingRoute(
     navigateToAbout: NavigateToAbout
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val message by viewModel.message.collectAsStateWithLifecycle()
     val helper = LocalHelper.current
+    val context = LocalContext.current
 
     EventHandler(resume) {
         helper.actions = emptyList()
     }
+    EventHandler(message) { value ->
+        when (value) {
+            SettingMessage.EmptyTitle -> string.feat_setting_error_empty_title
+            SettingMessage.EmptyUrl -> string.feat_setting_error_blank_url
+            SettingMessage.EmptyFile -> string.feat_setting_error_unselected_file
+            SettingMessage.Enqueued -> string.feat_setting_enqueue_subscribe
+        }
+            .let(context::getString)
+            .let(helper::snake)
+    }
+
     val configuration = LocalConfiguration.current
     val type = configuration.uiMode and Configuration.UI_MODE_TYPE_MASK
     val useCommonUIMode = if (type == Configuration.UI_MODE_TYPE_NORMAL) true
@@ -91,7 +106,7 @@ fun SettingRoute(
         useCommonUIModeEnable = useCommonUIModeEnable,
         navigateToConsole = navigateToConsole,
         experimentalMode = state.experimentalMode,
-        mutedLivesFactory = { state.mutedLives },
+        mutedLivesFactory = { state.banneds },
         onGodMode = { state.godMode = !state.godMode },
         onConnectTimeout = { viewModel.onEvent(SettingEvent.OnConnectTimeout) },
         onTitle = { viewModel.onEvent(SettingEvent.OnTitle(it)) },
@@ -104,7 +119,7 @@ fun SettingRoute(
         onFeedStrategy = { viewModel.onEvent(SettingEvent.OnSyncMode) },
         onUIMode = { viewModel.onEvent(SettingEvent.OnUseCommonUIMode) },
         onExperimentalMode = { viewModel.onEvent(SettingEvent.OnExperimentalMode) },
-        onBannedLive = { viewModel.onEvent(SettingEvent.OnBannedLive(it)) },
+        onBanned = { viewModel.onEvent(SettingEvent.OnBanned(it)) },
         onClipMode = { viewModel.onEvent(SettingEvent.OnClipMode) },
         autoRefresh = state.autoRefresh,
         onAutoRefresh = { state.autoRefresh = !state.autoRefresh },
@@ -150,7 +165,7 @@ private fun SettingScreen(
     useCommonUIMode: Boolean,
     useCommonUIModeEnable: Boolean,
     mutedLivesFactory: MutedLivesFactory,
-    onBannedLive: (Int) -> Unit,
+    onBanned: (Int) -> Unit,
     onUIMode: () -> Unit,
     onClipMode: OnClipMode,
     navigateToConsole: NavigateToConsole,
@@ -226,7 +241,7 @@ private fun SettingScreen(
                     experimentalMode = experimentalMode,
                     onExperimentalMode = onExperimentalMode,
                     mutedLivesFactory = mutedLivesFactory,
-                    onBannedLive = onBannedLive,
+                    onBanned = onBanned,
                     autoRefresh = autoRefresh,
                     onAutoRefresh = onAutoRefresh,
                     isSSLVerificationEnabled = isSSLVerification,
@@ -283,7 +298,7 @@ private fun SettingScreen(
                     experimentalMode = experimentalMode,
                     onExperimentalMode = onExperimentalMode,
                     mutedLivesFactory = mutedLivesFactory,
-                    onBannedLive = onBannedLive,
+                    onBanned = onBanned,
                     autoRefresh = autoRefresh,
                     onAutoRefresh = onAutoRefresh,
                     isSSLVerificationEnabled = isSSLVerification,
@@ -335,7 +350,7 @@ private fun PortraitOrientationContent(
     onClipMode: OnClipMode,
     onConnectTimeout: () -> Unit,
     mutedLivesFactory: MutedLivesFactory,
-    onBannedLive: (Int) -> Unit,
+    onBanned: (Int) -> Unit,
     replaceFragment: (SettingFragments) -> Unit,
     onTitle: (String) -> Unit,
     onUrl: (String) -> Unit,
@@ -418,7 +433,7 @@ private fun PortraitOrientationContent(
                         url = url,
                         uri = uri,
                         mutedLivesFactory = mutedLivesFactory,
-                        onBannedLive = onBannedLive,
+                        onBanned = onBanned,
                         onTitle = onTitle,
                         onUrl = onUrl,
                         onSubscribe = onSubscribe,
@@ -470,7 +485,7 @@ private fun LandscapeOrientationContent(
     onClipMode: OnClipMode,
     onScrollMode: () -> Unit,
     mutedLivesFactory: MutedLivesFactory,
-    onBannedLive: (Int) -> Unit,
+    onBanned: (Int) -> Unit,
     navigateToConsole: NavigateToConsole,
     experimentalMode: Boolean,
     onExperimentalMode: () -> Unit,
@@ -548,7 +563,7 @@ private fun LandscapeOrientationContent(
                     url = url,
                     uri = uri,
                     mutedLivesFactory = mutedLivesFactory,
-                    onBannedLive = onBannedLive,
+                    onBanned = onBanned,
                     onTitle = onTitle,
                     onUrl = onUrl,
                     onSubscribe = onSubscribe,

@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
 buildscript {
     dependencies {
         classpath(libs.org.jetbrains.kotlin.kotlin.serialization)
@@ -26,5 +28,10 @@ subprojects {
 
     dependencies {
         detektPlugins("com.twitter.compose.rules:detekt:0.0.26")
+    }
+    tasks.withType<KotlinCompile>().configureEach {
+        kotlinOptions {
+            freeCompilerArgs += "-Xcontext-receivers"
+        }
     }
 }

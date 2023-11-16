@@ -5,7 +5,7 @@
     <string name="feat_feed_dialog_favourite_title">marcar favorito</string>
     <string name="feat_feed_dialog_favourite_cancel_title">quitar favorito</string>
     <string name="feat_feed_dialog_mute_title">bloquear</string>
-    <string name="feat_feed_error_observe_feed">el playlist no existe (%s)</string>
+    <string name="feat_feed_error_feed_not_found">el playlist no existe (%s)</string>
     <string name="feat_feed_dialog_save_picture_title">guardar a álbum</string>
     <string name="feat_feed_query_placeholder">ingrese palabra clave</string>
 </resources>

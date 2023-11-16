@@ -1,16 +1,15 @@
 package com.m3u.features.console.command.impl
 
-import com.m3u.core.architecture.Reader
+import com.m3u.core.architecture.FilePathCacher
 import com.m3u.features.console.command.CommandHandler
-import java.io.File
 
 internal class LoggerCommandHandler(
     input: String,
-    reader: Reader<File>
+    cacher: FilePathCacher
 ) : CommandHandler(input) {
     init {
         path("list") {
-            val files = reader.read()
+            val files = cacher.readAll()
             val text = if (param.isNullOrEmpty()) {
                 files.joinToString(
                     separator = "\n",

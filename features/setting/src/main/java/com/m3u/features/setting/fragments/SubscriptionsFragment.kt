@@ -59,7 +59,7 @@ internal fun SubscriptionsFragment(
     uri: Uri,
     localStorage: Boolean,
     mutedLivesFactory: MutedLivesFactory,
-    onBannedLive: (Int) -> Unit,
+    onBanned: (Int) -> Unit,
     onTitle: (String) -> Unit,
     onUrl: (String) -> Unit,
     onSubscribe: () -> Unit,
@@ -99,7 +99,7 @@ internal fun SubscriptionsFragment(
                     mutedLives.forEach { live ->
                         MutedLiveItem(
                             live = live,
-                            onBannedLive = { onBannedLive(live.id) },
+                            onBanned = { onBanned(live.id) },
                             modifier = Modifier.background(theme.surface)
                         )
                     }

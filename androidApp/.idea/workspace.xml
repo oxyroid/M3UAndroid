@@ -1,0 +1,298 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="492841aa-55e7-4ba6-85db-60eb66c55b46" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/../.idea/artifacts/console_jvm.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../.idea/artifacts/crash_jvm.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../.idea/artifacts/data_jvm.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../.idea/artifacts/favorite_jvm.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../.idea/artifacts/feed_jvm.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../.idea/artifacts/live_jvm.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../.idea/artifacts/main_jvm.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../.idea/artifacts/setting_jvm.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../core/src/jvmMain/kotlin/com/m3u/core/architecture/PlatformLocals.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../data/src/jvmMain/kotlin/com/m3u/data/database/M3UDatabase.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../data/src/jvmMain/kotlin/com/m3u/data/database/dao/FeedDao.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../data/src/jvmMain/kotlin/com/m3u/data/database/dao/LiveDao.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../data/src/jvmMain/kotlin/com/m3u/data/database/dao/PostDao.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../data/src/jvmMain/kotlin/com/m3u/data/database/entity/Feed.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../data/src/jvmMain/kotlin/com/m3u/data/database/entity/Live.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../data/src/jvmMain/kotlin/com/m3u/data/database/entity/Post.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../data/src/main/kotlin/com/m3u/data/database/M3UDatabase.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../data/src/main/kotlin/com/m3u/data/database/dao/FeedDao.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../data/src/main/kotlin/com/m3u/data/database/dao/LiveDao.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../data/src/main/kotlin/com/m3u/data/database/dao/PostDao.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../data/src/main/kotlin/com/m3u/data/database/entity/Live.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../data/src/main/kotlin/com/m3u/data/database/entity/Post.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../features/console/src/commonMain/kotlin/com/m3u/features/console/ConsoleEvent.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../features/console/src/commonMain/kotlin/com/m3u/features/console/ConsoleScreen.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../features/console/src/commonMain/kotlin/com/m3u/features/console/ConsoleState.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../features/console/src/commonMain/kotlin/com/m3u/features/console/ConsoleViewModel.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../features/console/src/commonMain/kotlin/com/m3u/features/console/MonoStyle.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../features/console/src/commonMain/kotlin/com/m3u/features/console/command/CommandHandler.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../features/console/src/commonMain/kotlin/com/m3u/features/console/command/CommandResource.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../features/console/src/commonMain/kotlin/com/m3u/features/console/command/CommandScope.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../features/console/src/commonMain/kotlin/com/m3u/features/console/command/impl/EmptyCommandHandler.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../features/console/src/commonMain/kotlin/com/m3u/features/console/command/impl/LoggerCommandHandler.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../features/console/src/commonMain/kotlin/com/m3u/features/console/command/impl/UpnpCommandHandler.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../features/console/src/commonMain/kotlin/com/m3u/features/console/navigation/ConsoleNavigation.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../features/console/src/commonMain/res/values-en/strings.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../features/console/src/commonMain/res/values/strings.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../features/crash/src/commonMain/kotlin/com/m3u/features/crash/CrashActivity.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../features/crash/src/commonMain/kotlin/com/m3u/features/crash/CrashApp.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../features/crash/src/commonMain/kotlin/com/m3u/features/crash/CrashHandler.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../features/crash/src/commonMain/kotlin/com/m3u/features/crash/components/FileItem.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../features/crash/src/commonMain/kotlin/com/m3u/features/crash/navigation/Destination.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../features/crash/src/commonMain/kotlin/com/m3u/features/crash/screen/detail/DetailEvent.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../features/crash/src/commonMain/kotlin/com/m3u/features/crash/screen/detail/DetailScreen.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../features/crash/src/commonMain/kotlin/com/m3u/features/crash/screen/detail/DetailState.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../features/crash/src/commonMain/kotlin/com/m3u/features/crash/screen/detail/DetailViewModel.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../features/crash/src/commonMain/kotlin/com/m3u/features/crash/screen/list/ListEvent.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../features/crash/src/commonMain/kotlin/com/m3u/features/crash/screen/list/ListScreen.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../features/crash/src/commonMain/kotlin/com/m3u/features/crash/screen/list/ListState.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../features/crash/src/commonMain/kotlin/com/m3u/features/crash/screen/list/ListViewModel.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../features/crash/src/commonMain/kotlin/com/m3u/features/crash/screen/list/navigation/ListNavigation.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../features/favorite/src/commonMain/kotlin/com/m3u/features/favorite/FavoriteEvent.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../features/favorite/src/commonMain/kotlin/com/m3u/features/favorite/FavoriteScreen.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../features/favorite/src/commonMain/kotlin/com/m3u/features/favorite/FavoriteState.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../features/favorite/src/commonMain/kotlin/com/m3u/features/favorite/FavouriteViewModel.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../features/favorite/src/commonMain/kotlin/com/m3u/features/favorite/components/FavoriteLiveItem.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../features/favorite/src/commonMain/res/values-en/strings.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../features/favorite/src/commonMain/res/values/strings.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../features/feed/src/commonMain/kotlin/com/m3u/features/feed/FeedEvent.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../features/feed/src/commonMain/kotlin/com/m3u/features/feed/FeedScreen.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../features/feed/src/commonMain/kotlin/com/m3u/features/feed/FeedState.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../features/feed/src/commonMain/kotlin/com/m3u/features/feed/FeedViewModel.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../features/feed/src/commonMain/kotlin/com/m3u/features/feed/components/FeedDialog.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../features/feed/src/commonMain/kotlin/com/m3u/features/feed/components/LiveItem.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../features/feed/src/commonMain/kotlin/com/m3u/features/feed/navigation/FeedNavigation.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../features/feed/src/commonMain/res/values-en/strings.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../features/feed/src/commonMain/res/values/strings.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../features/live/src/commonMain/kotlin/com/m3u/features/live/LiveEvent.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../features/live/src/commonMain/kotlin/com/m3u/features/live/LiveScreen.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../features/live/src/commonMain/kotlin/com/m3u/features/live/LiveState.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../features/live/src/commonMain/kotlin/com/m3u/features/live/LiveViewModel.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../features/live/src/commonMain/kotlin/com/m3u/features/live/navigation/LiveNavigation.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../features/live/src/commonMain/res/values-en/strings.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../features/live/src/commonMain/res/values/strings.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../features/main/src/commonMain/kotlin/com/m3u/features/main/MainEvent.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../features/main/src/commonMain/kotlin/com/m3u/features/main/MainScreen.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../features/main/src/commonMain/kotlin/com/m3u/features/main/MainState.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../features/main/src/commonMain/kotlin/com/m3u/features/main/MainViewModel.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../features/main/src/commonMain/kotlin/com/m3u/features/main/components/FeedItem.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../features/main/src/commonMain/kotlin/com/m3u/features/main/components/MainDialog.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../features/main/src/commonMain/kotlin/com/m3u/features/main/model/FeedDetail.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../features/main/src/commonMain/res/values-en/strings.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../features/main/src/commonMain/res/values/strings.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../features/setting/src/commonMain/kotlin/com/m3u/features/setting/SettingEvent.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../features/setting/src/commonMain/kotlin/com/m3u/features/setting/SettingPart.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../features/setting/src/commonMain/kotlin/com/m3u/features/setting/SettingScreen.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../features/setting/src/commonMain/kotlin/com/m3u/features/setting/SettingState.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../features/setting/src/commonMain/kotlin/com/m3u/features/setting/SettingViewModel.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../features/setting/src/commonMain/kotlin/com/m3u/features/setting/components/MutedLiveItem.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../features/setting/src/commonMain/kotlin/com/m3u/features/setting/components/Preferences.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../features/setting/src/commonMain/kotlin/com/m3u/features/setting/parts/FeedsPart.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../features/setting/src/commonMain/kotlin/com/m3u/features/setting/parts/PreferencesPart.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../features/setting/src/commonMain/kotlin/com/m3u/features/setting/parts/ScriptsPart.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../features/setting/src/commonMain/res/values-en/strings.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../features/setting/src/commonMain/res/values/strings.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../ui/src/androidMain/kotlin/com/m3u/ui/components/SheetDialog.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../ui/src/jvmMain/kotlin/com/m3u/ui/components/SheetDialog.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../.idea/gradle.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../.idea/gradle.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/build.gradle.kts" beforeDir="false" afterPath="$PROJECT_DIR$/build.gradle.kts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/AndroidManifest.xml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/AndroidManifest.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/m3u/androidApp/MainActivity.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/m3u/androidApp/MainActivity.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/m3u/androidApp/ui/RootViewModel.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/m3u/androidApp/ui/RootViewModel.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../core/build.gradle.kts" beforeDir="false" afterPath="$PROJECT_DIR$/../core/build.gradle.kts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../core/src/androidMain/kotlin/com/m3u/core/architecture/PlatformViewModel.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../core/src/androidMain/kotlin/com/m3u/core/architecture/PlatformViewModel.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../core/src/androidMain/kotlin/com/m3u/core/architecture/player/PlatformPlayer.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../core/src/androidMain/kotlin/com/m3u/core/architecture/player/PlatformPlayer.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../core/src/commonMain/kotlin/com/m3u/core/architecture/PlatformViewModel.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../core/src/commonMain/kotlin/com/m3u/core/architecture/PlatformViewModel.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../core/src/jvmMain/kotlin/com/m3u/core/architecture/PlatformViewModel.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../core/src/jvmMain/kotlin/com/m3u/core/architecture/PlatformViewModel.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../data/build.gradle.kts" beforeDir="false" afterPath="$PROJECT_DIR$/../data/build.gradle.kts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../data/src/main/java/com/m3u/data/database/M3UDatabase.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../data/src/commonMain/kotlin/com/m3u/data/database/M3UDatabase.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../data/src/main/java/com/m3u/data/database/dao/FeedDao.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../data/src/commonMain/kotlin/com/m3u/data/database/dao/FeedDao.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../data/src/main/java/com/m3u/data/database/dao/LiveDao.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../data/src/commonMain/kotlin/com/m3u/data/database/dao/LiveDao.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../data/src/main/java/com/m3u/data/database/dao/PostDao.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../data/src/commonMain/kotlin/com/m3u/data/database/dao/PostDao.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../data/src/main/java/com/m3u/data/database/entity/Feed.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../data/src/commonMain/kotlin/com/m3u/data/database/entity/Feed.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../data/src/main/java/com/m3u/data/database/entity/Live.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../data/src/commonMain/kotlin/com/m3u/data/database/entity/Live.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../data/src/main/java/com/m3u/data/database/entity/Post.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../data/src/commonMain/kotlin/com/m3u/data/database/entity/Post.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../data/src/main/java/com/m3u/data/koin/DataModule.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../data/src/commonMain/kotlin/com/m3u/data/koin/DataModule.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../data/src/main/java/com/m3u/data/remote/api/RemoteApi.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../data/src/commonMain/kotlin/com/m3u/data/remote/api/RemoteApi.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../data/src/main/java/com/m3u/data/remote/api/dto/Content.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../data/src/commonMain/kotlin/com/m3u/data/remote/api/dto/Content.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../data/src/main/java/com/m3u/data/remote/api/dto/Release.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../data/src/commonMain/kotlin/com/m3u/data/remote/api/dto/Release.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../data/src/main/java/com/m3u/data/remote/parser/Parser.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../data/src/commonMain/kotlin/com/m3u/data/remote/parser/Parser.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../data/src/main/java/com/m3u/data/remote/parser/m3u/InvalidatePlaylistError.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../data/src/commonMain/kotlin/com/m3u/data/remote/parser/m3u/InvalidatePlaylistError.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../data/src/main/java/com/m3u/data/remote/parser/m3u/M3UData.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../data/src/commonMain/kotlin/com/m3u/data/remote/parser/m3u/M3UData.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../data/src/main/java/com/m3u/data/remote/parser/m3u/PlaylistParser.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../data/src/commonMain/kotlin/com/m3u/data/remote/parser/m3u/PlaylistParser.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../data/src/main/java/com/m3u/data/remote/parser/post/Output.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../data/src/commonMain/kotlin/com/m3u/data/remote/parser/post/Output.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../data/src/main/java/com/m3u/data/remote/parser/post/PostParser.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../data/src/commonMain/kotlin/com/m3u/data/remote/parser/post/PostParser.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../data/src/main/java/com/m3u/data/remote/parser/post/impl/s1/Output1.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../data/src/commonMain/kotlin/com/m3u/data/remote/parser/post/impl/s1/Output1.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../data/src/main/java/com/m3u/data/remote/parser/post/impl/s1/PostParser1.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../data/src/commonMain/kotlin/com/m3u/data/remote/parser/post/impl/s1/PostParser1.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../data/src/main/java/com/m3u/data/remote/parser/post/impl/unsupported/UnsupportedPostParser.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../data/src/commonMain/kotlin/com/m3u/data/remote/parser/post/impl/unsupported/UnsupportedPostParser.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../data/src/main/java/com/m3u/data/remote/parser/udp/AndroidUdpDiscover.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../data/src/main/java/com/m3u/data/remote/parser/udp/UdpDiscover.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../data/src/main/java/com/m3u/data/repository/FeedRepository.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../data/src/commonMain/kotlin/com/m3u/data/repository/FeedRepository.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../data/src/main/java/com/m3u/data/repository/LiveRepository.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../data/src/commonMain/kotlin/com/m3u/data/repository/LiveRepository.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../data/src/main/java/com/m3u/data/repository/MediaRepository.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../data/src/commonMain/kotlin/com/m3u/data/repository/MediaRepository.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../data/src/main/java/com/m3u/data/repository/PostRepository.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../data/src/commonMain/kotlin/com/m3u/data/repository/PostRepository.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../data/src/main/java/com/m3u/data/repository/RemoteRepository.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../data/src/commonMain/kotlin/com/m3u/data/repository/RemoteRepository.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../data/src/main/java/com/m3u/data/repository/impl/FeedRepositoryImpl.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../data/src/commonMain/kotlin/com/m3u/data/repository/impl/FeedRepositoryImpl.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../data/src/main/java/com/m3u/data/repository/impl/LiveRepositoryImpl.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../data/src/commonMain/kotlin/com/m3u/data/repository/impl/LiveRepositoryImpl.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../data/src/main/java/com/m3u/data/repository/impl/MediaRepositoryImpl.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../data/src/commonMain/kotlin/com/m3u/data/repository/impl/MediaRepositoryImpl.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../data/src/main/java/com/m3u/data/repository/impl/PostRepositoryImpl.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../data/src/commonMain/kotlin/com/m3u/data/repository/impl/PostRepositoryImpl.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../data/src/main/java/com/m3u/data/repository/impl/RemoteRepositoryImpl.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../data/src/commonMain/kotlin/com/m3u/data/repository/impl/RemoteRepositoryImpl.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../data/src/main/java/com/m3u/data/service/DefaultToaster.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../data/src/commonMain/kotlin/com/m3u/data/service/DefaultToaster.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../desktopApp/build.gradle.kts" beforeDir="false" afterPath="$PROJECT_DIR$/../desktopApp/build.gradle.kts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../desktopApp/src/main/java/com/m3u/desktopApp/main.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../desktopApp/src/main/java/com/m3u/desktopApp/main.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../domain/.gitignore" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../domain/build.gradle.kts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../features/console/build.gradle.kts" beforeDir="false" afterPath="$PROJECT_DIR$/../features/console/build.gradle.kts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../features/console/src/main/AndroidManifest.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../features/console/src/main/java/com/m3u/features/console/ConsoleEvent.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../features/console/src/main/java/com/m3u/features/console/ConsoleScreen.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../features/console/src/main/java/com/m3u/features/console/ConsoleState.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../features/console/src/main/java/com/m3u/features/console/ConsoleViewModel.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../features/console/src/main/java/com/m3u/features/console/MonoStyle.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../features/console/src/main/java/com/m3u/features/console/command/CommandHandler.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../features/console/src/main/java/com/m3u/features/console/command/CommandResource.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../features/console/src/main/java/com/m3u/features/console/command/CommandScope.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../features/console/src/main/java/com/m3u/features/console/command/impl/EmptyCommandHandler.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../features/console/src/main/java/com/m3u/features/console/command/impl/LoggerCommandHandler.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../features/console/src/main/java/com/m3u/features/console/command/impl/UpnpCommandHandler.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../features/console/src/main/java/com/m3u/features/console/navigation/ConsoleNavigation.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../features/console/src/main/res/values-en/strings.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../features/console/src/main/res/values/strings.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../features/crash/build.gradle.kts" beforeDir="false" afterPath="$PROJECT_DIR$/../features/crash/build.gradle.kts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../features/crash/src/main/AndroidManifest.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../features/crash/src/main/java/com/m3u/features/crash/CrashActivity.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../features/crash/src/main/java/com/m3u/features/crash/CrashApp.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../features/crash/src/main/java/com/m3u/features/crash/CrashHandler.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../features/crash/src/main/java/com/m3u/features/crash/components/FileItem.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../features/crash/src/main/java/com/m3u/features/crash/navigation/Destination.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../features/crash/src/main/java/com/m3u/features/crash/screen/detail/DetailEvent.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../features/crash/src/main/java/com/m3u/features/crash/screen/detail/DetailScreen.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../features/crash/src/main/java/com/m3u/features/crash/screen/detail/DetailState.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../features/crash/src/main/java/com/m3u/features/crash/screen/detail/DetailViewModel.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../features/crash/src/main/java/com/m3u/features/crash/screen/list/ListEvent.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../features/crash/src/main/java/com/m3u/features/crash/screen/list/ListScreen.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../features/crash/src/main/java/com/m3u/features/crash/screen/list/ListState.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../features/crash/src/main/java/com/m3u/features/crash/screen/list/ListViewModel.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../features/crash/src/main/java/com/m3u/features/crash/screen/list/navigation/ListNavigation.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../features/favorite/build.gradle.kts" beforeDir="false" afterPath="$PROJECT_DIR$/../features/favorite/build.gradle.kts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../features/favorite/src/main/AndroidManifest.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../features/favorite/src/main/java/com/m3u/features/favorite/FavoriteEvent.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../features/favorite/src/main/java/com/m3u/features/favorite/FavoriteScreen.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../features/favorite/src/main/java/com/m3u/features/favorite/FavoriteState.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../features/favorite/src/main/java/com/m3u/features/favorite/FavouriteViewModel.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../features/favorite/src/main/java/com/m3u/features/favorite/components/FavoriteLiveItem.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../features/favorite/src/main/res/values-en/strings.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../features/favorite/src/main/res/values/strings.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../features/feed/build.gradle.kts" beforeDir="false" afterPath="$PROJECT_DIR$/../features/feed/build.gradle.kts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../features/feed/src/main/AndroidManifest.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../features/feed/src/main/java/com/m3u/features/feed/FeedEvent.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../features/feed/src/main/java/com/m3u/features/feed/FeedScreen.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../features/feed/src/main/java/com/m3u/features/feed/FeedState.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../features/feed/src/main/java/com/m3u/features/feed/FeedViewModel.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../features/feed/src/main/java/com/m3u/features/feed/components/FeedDialog.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../features/feed/src/main/java/com/m3u/features/feed/components/LiveItem.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../features/feed/src/main/java/com/m3u/features/feed/navigation/FeedNavigation.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../features/feed/src/main/res/values-en/strings.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../features/feed/src/main/res/values/strings.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../features/live/build.gradle.kts" beforeDir="false" afterPath="$PROJECT_DIR$/../features/live/build.gradle.kts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../features/live/src/main/AndroidManifest.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../features/live/src/main/java/com/m3u/features/live/LiveEvent.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../features/live/src/main/java/com/m3u/features/live/LiveScreen.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../features/live/src/main/java/com/m3u/features/live/LiveState.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../features/live/src/main/java/com/m3u/features/live/LiveViewModel.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../features/live/src/main/java/com/m3u/features/live/navigation/LiveNavigation.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../features/live/src/main/res/values-en/strings.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../features/live/src/main/res/values/strings.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../features/main/build.gradle.kts" beforeDir="false" afterPath="$PROJECT_DIR$/../features/main/build.gradle.kts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../features/main/src/main/AndroidManifest.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../features/main/src/main/java/com/m3u/features/main/MainEvent.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../features/main/src/main/java/com/m3u/features/main/MainScreen.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../features/main/src/main/java/com/m3u/features/main/MainState.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../features/main/src/main/java/com/m3u/features/main/MainViewModel.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../features/main/src/main/java/com/m3u/features/main/components/FeedItem.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../features/main/src/main/java/com/m3u/features/main/components/MainDialog.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../features/main/src/main/java/com/m3u/features/main/model/FeedDetail.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../features/main/src/main/res/values-en/strings.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../features/main/src/main/res/values/strings.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../features/scheme/.gitignore" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../features/scheme/build.gradle.kts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../features/scheme/consumer-rules.pro" beforeDir="false" afterPath="$PROJECT_DIR$/../data/src/main/kotlin/com/m3u/data/database/entity/Feed.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../features/scheme/proguard-rules.pro" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../features/scheme/src/main/AndroidManifest.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../features/scheme/src/main/java/com/m3u/features/scheme/SchemeReceiverService.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../features/setting/build.gradle.kts" beforeDir="false" afterPath="$PROJECT_DIR$/../features/setting/build.gradle.kts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../features/setting/src/main/AndroidManifest.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../features/setting/src/main/java/com/m3u/features/setting/SettingEvent.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../features/setting/src/main/java/com/m3u/features/setting/SettingPart.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../features/setting/src/main/java/com/m3u/features/setting/SettingScreen.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../features/setting/src/main/java/com/m3u/features/setting/SettingState.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../features/setting/src/main/java/com/m3u/features/setting/SettingViewModel.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../features/setting/src/main/java/com/m3u/features/setting/components/MutedLiveItem.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../features/setting/src/main/java/com/m3u/features/setting/components/Preferences.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../features/setting/src/main/java/com/m3u/features/setting/parts/FeedsPart.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../features/setting/src/main/java/com/m3u/features/setting/parts/PreferencesPart.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../features/setting/src/main/java/com/m3u/features/setting/parts/ScriptsPart.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../features/setting/src/main/res/values-en/strings.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../features/setting/src/main/res/values/strings.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../gradle/libs.versions.toml" beforeDir="false" afterPath="$PROJECT_DIR$/../gradle/libs.versions.toml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../settings.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/../settings.gradle" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ui/build.gradle.kts" beforeDir="false" afterPath="$PROJECT_DIR$/../ui/build.gradle.kts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ui/src/commonMain/kotlin/com/m3u/ui/components/AppBar.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../ui/src/commonMain/kotlin/com/m3u/ui/components/AppBar.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ui/src/commonMain/kotlin/com/m3u/ui/components/Dialog.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../ui/src/commonMain/kotlin/com/m3u/ui/components/Dialog.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ui/src/commonMain/kotlin/com/m3u/ui/components/NavigationSheet.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../ui/src/commonMain/kotlin/com/m3u/ui/components/NavigationSheet.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ui/src/commonMain/kotlin/com/m3u/ui/components/Player.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../ui/src/commonMain/kotlin/com/m3u/ui/components/Player.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ui/src/commonMain/kotlin/com/m3u/ui/components/TextField.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../ui/src/commonMain/kotlin/com/m3u/ui/components/TextField.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ui/src/commonMain/kotlin/com/m3u/ui/model/Helper.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../ui/src/commonMain/kotlin/com/m3u/ui/model/Helper.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ui/src/jvmMain/kotlin/com/m3u/ui/components/ExoPlayer.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../ui/src/jvmMain/kotlin/com/m3u/ui/components/ExoPlayer.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ui/src/jvmMain/kotlin/com/m3u/ui/components/NavigationSheetDefaults.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../ui/src/jvmMain/kotlin/com/m3u/ui/components/NavigationSheetDefaults.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ui/src/main/java/com/m3u/ui/components/AppTopBarDefaults.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../ui/src/androidMain/kotlin/com/m3u/ui/components/AppTopBarDefaults.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ui/src/main/java/com/m3u/ui/components/ExoPlayer.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../ui/src/androidMain/kotlin/com/m3u/ui/components/Player.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ui/src/main/java/com/m3u/ui/components/Image.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../ui/src/androidMain/kotlin/com/m3u/ui/components/Image.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ui/src/main/java/com/m3u/ui/components/NavigationSheetDefaults.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../ui/src/androidMain/kotlin/com/m3u/ui/components/NavigationSheetDefaults.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ui/src/main/java/com/m3u/ui/util/ScrollableState.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../ui/src/androidMain/kotlin/com/m3u/ui/util/ScrollableState.kt" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="ExternalProjectsData">
+    <projectState path="$PROJECT_DIR$">
+      <ProjectState />
+    </projectState>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/.." />
+  </component>
+  <component name="ProjectId" id="2STD44tVGANKXvaeVBDua1DR1dt" />
+  <component name="ProjectViewState">
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "WebServerToolWindowFactoryState": "false",
+    "vue.rearranger.settings.migration": "true"
+  }
+}]]></component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="492841aa-55e7-4ba6-85db-60eb66c55b46" name="Changes" comment="" />
+      <created>1689161484484</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1689161484484</updated>
+      <workItem from="1689161486620" duration="24000" />
+    </task>
+    <servers />
+  </component>
+</project>

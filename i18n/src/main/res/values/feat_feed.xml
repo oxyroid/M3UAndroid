@@ -5,7 +5,11 @@
     <string name="feat_feed_dialog_favourite_title">like</string>
     <string name="feat_feed_dialog_favourite_cancel_title">cancel like</string>
     <string name="feat_feed_dialog_mute_title">ban</string>
-    <string name="feat_feed_error_observe_feed">playlist is not existed (%s)</string>
+    <string name="feat_feed_error_feed_not_found">playlist is not existed (%s)</string>
     <string name="feat_feed_dialog_save_picture_title">save to gallery</string>
     <string name="feat_feed_query_placeholder">enter key word</string>
+    <string name="feat_feed_error_feed_url_not_found">playlist url is not existed</string>
+    <string name="feat_feed_error_live_cover_not_found">cover is not existed</string>
+    <string name="feat_feed_error_live_not_found">live is not existed</string>
+    <string name="feat_feed_success_save_cover">saved to (%s)</string>
 </resources>

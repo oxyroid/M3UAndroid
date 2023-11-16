@@ -1,11 +1,11 @@
-package com.m3u.data.logger
+package com.m3u.data.io.crash
 
 import android.content.Context
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
-import android.content.pm.PackageManager.GET_ACTIVITIES
 import android.os.Build
-import com.m3u.core.architecture.Logger
+import com.m3u.core.architecture.FilePath
+import com.m3u.core.architecture.FilePathCacher
 import com.m3u.core.util.collections.forEachNotNull
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
@@ -13,30 +13,55 @@ import java.io.PrintWriter
 import java.io.StringWriter
 import javax.inject.Inject
 
-/**
- * An uncaught error file collector.
- * Write messages to application cache dir.
- *
- * This implement is an android platform version.
- */
-class FileLogger @Inject constructor(
+class CrashFilePathCacher @Inject constructor(
     @ApplicationContext private val context: Context
-) : Logger {
+) : FilePathCacher {
+    private val dir = context.cacheDir
+    override fun readAll(): List<File> {
+        if (!dir.exists() || dir.isFile) return emptyList()
+        return dir.list()
+            ?.filter { it.endsWith(".txt") }
+            ?.map { File(it) }
+            ?: emptyList()
+    }
+
+    override fun read(key: FilePath): File? {
+        if (!dir.exists() || dir.isFile) return null
+        val filePath = key.path
+        return dir
+            .listFiles { file -> file.startsWith(filePath) }
+            ?.firstOrNull()
+    }
+
+    override fun write(value: Throwable) {
+        val infoMap = mutableMapOf<String, String>()
+        infoMap["name"] = packageInfo.versionName
+        infoMap["code"] = packageInfo.code
+
+        readSystemConfiguration().forEach(infoMap::put)
+
+        val info = infoMap.joinToString()
+        val trace = getStackTraceMessage(value)
+
+        val text = buildString {
+            appendLine(info)
+            appendLine(trace)
+        }
+        writeToFile(text)
+    }
+
     private val packageInfo: PackageInfo
         get() {
             val packageManager = context.packageManager
             return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 packageManager.getPackageInfo(
                     context.packageName,
-                    PackageManager.PackageInfoFlags.of(GET_ACTIVITIES.toLong())
+                    PackageManager.PackageInfoFlags.of(PackageManager.GET_ACTIVITIES.toLong())
                 )
             } else {
-                @Suppress("DEPRECATION")
-                packageManager.getPackageInfo(context.packageName, GET_ACTIVITIES)
+                packageManager.getPackageInfo(context.packageName, PackageManager.GET_ACTIVITIES)
             }
         }
-
-    private val dir: File = context.cacheDir
 
     private val PackageInfo.code: String
         get() = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
@@ -91,26 +116,5 @@ class FileLogger @Inject constructor(
             file.createNewFile()
         }
         file.appendText("[${System.currentTimeMillis()}] $text")
-    }
-
-    override fun log(throwable: Throwable) {
-        val infoMap = mutableMapOf<String, String>()
-        infoMap["name"] = packageInfo.versionName
-        infoMap["code"] = packageInfo.code
-
-        readSystemConfiguration().forEach(infoMap::put)
-
-        val info = infoMap.joinToString()
-        val trace = getStackTraceMessage(throwable)
-
-        val text = buildString {
-            appendLine(info)
-            appendLine(trace)
-        }
-        writeToFile(text)
-    }
-
-    override fun log(text: String) {
-        writeInfoToFile(text)
     }
 }
