@@ -3,9 +3,9 @@
     <style name="Theme.M3U" parent="android:Theme.Material.Light.NoActionBar">
     </style>
     <style name="Theme.M3U.Starting" parent="Theme.SplashScreen.IconBackground">
-        <item name="windowSplashScreenBackground">@color/background</item>
-        <item name="windowSplashScreenAnimatedIcon">@drawable/news_avd_v02</item>
-        <item name="windowSplashScreenAnimationDuration">200</item>
+        <item name="windowSplashScreenBackground">#96b650</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/splash</item>
+        <item name="windowSplashScreenAnimationDuration">400</item>
         <item name="postSplashScreenTheme">@style/Theme.M3U</item>
     </style>
 </resources>
