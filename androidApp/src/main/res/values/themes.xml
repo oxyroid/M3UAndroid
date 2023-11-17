@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.M3U" parent="android:Theme.Material.Light.NoActionBar">
-    </style>
+    <style name="Theme.M3U" parent="android:Theme.Material.Light.NoActionBar"/>
     <style name="Theme.M3U.Starting" parent="Theme.SplashScreen.IconBackground">
         <item name="windowSplashScreenBackground">#96b650</item>
         <item name="windowSplashScreenAnimatedIcon">@drawable/splash</item>
