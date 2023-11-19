@@ -1,5 +1,6 @@
 # M3UAndroid
-![](docs/img/feat_live_3.png)
+![Player](docs/img/player.png)
+![Tablet](docs/img/tablet.jpg)
 
 ### 📢 Translations Wanted 📢
 

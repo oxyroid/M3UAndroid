@@ -82,7 +82,6 @@ fun AppTheme(
     typography: Typography,
     content: @Composable () -> Unit
 ) {
-
     val context = LocalContext.current
     val useDynamicColors = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
     val colors = when {
