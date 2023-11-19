@@ -3,7 +3,6 @@ package com.m3u.material.components
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.animateIntAsState
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
@@ -16,17 +15,17 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.DarkMode
 import androidx.compose.material.icons.rounded.LightMode
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.ElevatedCard
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -41,14 +40,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.m3u.material.model.LocalSpacing
-import com.m3u.material.model.LocalTheme
 import com.m3u.material.model.SugarColors
-import com.m3u.material.model.Theme
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ThemeSelection(
-    theme: Theme,
+    colorScheme: ColorScheme,
+    isDark: Boolean,
     selected: Boolean,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
@@ -83,8 +80,8 @@ fun ThemeSelection(
     ) {
         OutlinedCard(
             colors = CardDefaults.outlinedCardColors(
-                containerColor = theme.background,
-                contentColor = theme.onBackground
+                containerColor = colorScheme.background,
+                contentColor = colorScheme.onBackground
             ),
             elevation = CardDefaults.outlinedCardElevation(
                 defaultElevation = elevation.dp
@@ -132,26 +129,26 @@ fun ThemeSelection(
                         .padding(spacing.small)
                 ) {
                     ColorPiece(
-                        containerColor = theme.primary,
-                        contentColor = theme.onPrimary,
+                        containerColor = colorScheme.primary,
+                        contentColor = colorScheme.onPrimary,
                         left = true,
                         contentDescription = leftContentDescription
                     )
                     ColorPiece(
-                        containerColor = theme.tint,
-                        contentColor = theme.onTint,
+                        containerColor = colorScheme.secondary,
+                        contentColor = colorScheme.onSecondary,
                         left = false,
                         contentDescription = rightContentDescription
                     )
                 }
                 Text(
-                    text = theme.name,
+                    text = "color",
                     style = MaterialTheme.typography.titleMedium,
-                    color = theme.onPrimary,
+                    color = colorScheme.tertiary,
                     textAlign = TextAlign.Center,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(theme.primary)
+                        .background(colorScheme.onTertiary)
                 )
             }
         }
@@ -159,12 +156,12 @@ fun ThemeSelection(
         Crossfade(selected, label = "icon") { selected ->
             if (!selected) {
                 Icon(
-                    imageVector = when (theme.isDark) {
+                    imageVector = when (isDark) {
                         true -> Icons.Rounded.DarkMode
                         false -> Icons.Rounded.LightMode
                     },
                     contentDescription = "",
-                    tint = when (theme.isDark) {
+                    tint = when (isDark) {
                         true -> SugarColors.Tee
                         false -> SugarColors.Yellow
                     }
@@ -174,13 +171,12 @@ fun ThemeSelection(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ThemeAddSelection(
     modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
-    val theme = LocalTheme.current
+    val theme = MaterialTheme.colorScheme
     Box(
         contentAlignment = Alignment.Center
     ) {

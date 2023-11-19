@@ -1,8 +1,5 @@
-@file:OptIn(ExperimentalFoundationApi::class)
-
 package com.m3u.androidApp.ui
 
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -36,7 +33,6 @@ fun App(
 
     val cinemaMode = state.cinemaMode
 
-    val theme = AppDefaults.theme(state.cinemaMode)
     val title: String by AppDefaults.title(
         rootDestination = rootDestination,
         defState = viewModel.title.collectAsStateWithLifecycle()
@@ -53,7 +49,6 @@ fun App(
         onBackPressed = appState::onBackClick.takeIf { isBackPressedVisible },
         navigate = appState::navigate,
         modifier = Modifier.fillMaxSize(),
-        theme = theme,
         helper = helper,
         cinemaMode = cinemaMode,
         isPlaying = isPlaying

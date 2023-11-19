@@ -2,7 +2,6 @@ package com.m3u.features.live.fragments
 
 import android.graphics.Rect
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -12,9 +11,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.LocalContentColor
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.VolumeOff
@@ -25,6 +21,9 @@ import androidx.compose.material.icons.rounded.RadioButtonChecked
 import androidx.compose.material.icons.rounded.RadioButtonUnchecked
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Star
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
@@ -48,12 +47,10 @@ import com.m3u.material.components.MaskButton
 import com.m3u.material.components.MaskCircleButton
 import com.m3u.material.components.MaskState
 import com.m3u.material.model.LocalSpacing
-import com.m3u.material.model.LocalTheme
 import com.m3u.ui.LocalHelper
 import com.m3u.ui.Player
 import com.m3u.ui.rememberPlayerState
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 internal fun LiveFragment(
     player: Player?,
@@ -80,7 +77,7 @@ internal fun LiveFragment(
     onMuted: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val theme = LocalTheme.current
+    val theme = MaterialTheme.colorScheme
     Background(
         color = Color.Black,
         contentColor = Color.White
@@ -194,14 +191,14 @@ internal fun LiveFragment(
                     ) {
                         Text(
                             text = feedTitle,
-                            style = MaterialTheme.typography.subtitle1,
+                            style = MaterialTheme.typography.titleSmall,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                             modifier = Modifier.basicMarquee()
                         )
                         Text(
                             text = title,
-                            style = MaterialTheme.typography.h5,
+                            style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.ExtraBold,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
@@ -219,7 +216,7 @@ internal fun LiveFragment(
                         AnimatedVisibility(playStateDisplayText.isNotEmpty()) {
                             Text(
                                 text = playStateDisplayText.uppercase(),
-                                style = MaterialTheme.typography.subtitle2,
+                                style = MaterialTheme.typography.bodyMedium,
                                 color = LocalContentColor.current.copy(alpha = 0.75f),
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,
@@ -229,7 +226,7 @@ internal fun LiveFragment(
                         AnimatedVisibility(exceptionDisplayText.isNotEmpty()) {
                             Text(
                                 text = exceptionDisplayText,
-                                style = MaterialTheme.typography.subtitle2,
+                                style = MaterialTheme.typography.bodyMedium,
                                 color = theme.error,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,

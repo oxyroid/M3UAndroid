@@ -1,17 +1,14 @@
 @file:Suppress("unused")
-@file:OptIn(ExperimentalFoundationApi::class, ExperimentalLayoutApi::class)
 
 package com.m3u.material.components
 
 import android.util.Log
 import androidx.annotation.DrawableRes
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -28,10 +25,9 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.selection.LocalTextSelectionColors
 import androidx.compose.foundation.text.selection.TextSelectionColors
-import androidx.compose.material.LocalContentAlpha
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Text
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -69,7 +65,6 @@ import com.m3u.material.ktx.animateDp
 import com.m3u.material.ktx.animateInt
 import com.m3u.material.ktx.interactionBorder
 import com.m3u.material.model.LocalDuration
-import com.m3u.material.model.LocalTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -112,7 +107,7 @@ fun TextField(
         }
     }
 
-    val theme = LocalTheme.current
+    val theme = MaterialTheme.colorScheme
     CompositionLocalProvider(
         LocalTextSelectionColors provides TextSelectionColors(
             handleColor = theme.primary,
@@ -124,7 +119,7 @@ fun TextField(
             singleLine = singleLine,
             enabled = enabled,
             textStyle = TextStyle(
-                fontFamily = MaterialTheme.typography.body1.fontFamily,
+                fontFamily = MaterialTheme.typography.bodyMedium.fontFamily,
                 fontSize = fontSize,
                 color = contentColor,
                 fontWeight = fontWeight
@@ -146,12 +141,12 @@ fun TextField(
                 .bringIntoViewRequester(bringIntoViewRequester)
                 .fillMaxWidth(),
             readOnly = readOnly,
-            cursorBrush = SolidColor(contentColor.copy(LocalContentAlpha.current)),
+            cursorBrush = SolidColor(contentColor),
             decorationBox = { innerTextField ->
                 Box(
                     Modifier
                         .clip(shape)
-                        .background(if (isError) LocalTheme.current.error else background)
+                        .background(if (isError) MaterialTheme.colorScheme.error else background)
                         .interactionBorder(
                             type = InteractionType.PRESS,
                             source = interactionSource,
@@ -227,7 +222,7 @@ fun TextField(
         }
     }
 
-    val theme = LocalTheme.current
+    val theme = MaterialTheme.colorScheme
     CompositionLocalProvider(
         LocalTextSelectionColors provides TextSelectionColors(
             handleColor = theme.primary,
@@ -239,7 +234,7 @@ fun TextField(
             singleLine = singleLine,
             enabled = enabled,
             textStyle = TextStyle(
-                fontFamily = MaterialTheme.typography.body1.fontFamily,
+                fontFamily = MaterialTheme.typography.bodyMedium.fontFamily,
                 fontSize = fontSize,
                 color = contentColor,
                 fontWeight = fontWeight
@@ -261,7 +256,7 @@ fun TextField(
                 .bringIntoViewRequester(bringIntoViewRequester)
                 .fillMaxWidth(),
             readOnly = readOnly,
-            cursorBrush = SolidColor(contentColor.copy(LocalContentAlpha.current)),
+            cursorBrush = SolidColor(contentColor),
             decorationBox = { innerTextField ->
                 Box(
                     Modifier
@@ -342,7 +337,7 @@ fun LabelField(
 
     val fontSize = TextFieldDefaults.MinimizeLabelFontSize
 
-    val theme = LocalTheme.current
+    val theme = MaterialTheme.colorScheme
     CompositionLocalProvider(
         LocalTextSelectionColors provides TextSelectionColors(
             handleColor = theme.primary,
@@ -373,7 +368,7 @@ fun LabelField(
             readOnly = readOnly,
             textStyle = TextStyle(
                 fontSize = fontSize,
-                fontFamily = MaterialTheme.typography.body1.fontFamily,
+                fontFamily = MaterialTheme.typography.bodyMedium.fontFamily,
                 fontWeight = FontWeight.Medium,
                 color = contentColor,
             ),
@@ -426,7 +421,7 @@ fun LabelField(
                             text = placeholder,
                             color = contentColor.copy(alpha = .35f),
                             fontSize = animPlaceHolderFontSize.sp,
-                            fontFamily = MaterialTheme.typography.body1.fontFamily,
+                            fontFamily = MaterialTheme.typography.bodyMedium.fontFamily,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                             fontWeight = FontWeight.Medium
@@ -488,7 +483,7 @@ fun LabelField(
 
     val fontSize = TextFieldDefaults.MinimizeLabelFontSize
 
-    val theme = LocalTheme.current
+    val theme = MaterialTheme.colorScheme
     CompositionLocalProvider(
         LocalTextSelectionColors provides TextSelectionColors(
             handleColor = theme.primary,
@@ -519,7 +514,7 @@ fun LabelField(
             readOnly = readOnly,
             textStyle = TextStyle(
                 fontSize = fontSize,
-                fontFamily = MaterialTheme.typography.body1.fontFamily,
+                fontFamily = MaterialTheme.typography.bodyMedium.fontFamily,
                 fontWeight = FontWeight.Medium,
                 color = contentColor,
             ),
@@ -573,7 +568,7 @@ fun LabelField(
                             text = placeholder,
                             color = contentColor.copy(alpha = .35f),
                             fontSize = animPlaceHolderFontSize.sp,
-                            fontFamily = MaterialTheme.typography.body1.fontFamily,
+                            fontFamily = MaterialTheme.typography.bodyMedium.fontFamily,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                             fontWeight = FontWeight.Medium
@@ -603,10 +598,10 @@ private object TextFieldDefaults {
     val Height = 48.dp
 
     @Composable
-    fun backgroundColor() = LocalTheme.current.surface
+    fun backgroundColor() = MaterialTheme.colorScheme.surface
 
     @Composable
-    fun contentColor() = LocalTheme.current.onSurface
+    fun contentColor() = MaterialTheme.colorScheme.onSurface
 
     @Composable
     fun shape() = RoundedCornerShape(25)

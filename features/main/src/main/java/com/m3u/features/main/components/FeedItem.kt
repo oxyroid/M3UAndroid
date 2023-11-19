@@ -1,20 +1,18 @@
 package com.m3u.features.main.components
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.ContentAlpha
-import androidx.compose.material.Icon
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Surface
-import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.DriveFileMove
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -31,9 +29,7 @@ import com.m3u.material.ktx.animateColor
 import com.m3u.material.ktx.animateDp
 import com.m3u.material.ktx.animated
 import com.m3u.material.model.LocalSpacing
-import com.m3u.material.model.LocalTheme
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 internal fun FeedItem(
     label: AnnotatedString,
@@ -44,7 +40,7 @@ internal fun FeedItem(
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
-    val theme = LocalTheme.current
+    val theme = MaterialTheme.colorScheme
     val actualBackgroundColor by theme.surface.animated("FeedItemBackground")
     val actualContentColor by theme.onSurface.animated("FeedItemContent")
     val actualBorderDp by animateDp("FeedItemBorder") {
@@ -59,7 +55,7 @@ internal fun FeedItem(
         shape = RoundedCornerShape(spacing.medium),
         color = actualBackgroundColor,
         contentColor = actualContentColor,
-        elevation = spacing.none,
+        tonalElevation = spacing.none,
         border = BorderStroke(actualBorderDp, actualBorderColor)
     ) {
         OuterRow(
@@ -74,12 +70,12 @@ internal fun FeedItem(
                 Icon(
                     imageVector = Icons.AutoMirrored.Rounded.DriveFileMove,
                     contentDescription = null,
-                    tint = actualContentColor.copy(alpha = ContentAlpha.medium)
+                    tint = actualContentColor
                 )
             }
             Text(
                 text = label,
-                style = MaterialTheme.typography.body1,
+                style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.SemiBold,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
@@ -97,7 +93,7 @@ internal fun FeedItem(
                 Text(
                     color = actualOnPrimaryColor,
                     text = number.toString(),
-                    style = MaterialTheme.typography.subtitle2,
+                    style = MaterialTheme.typography.bodyMedium,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.padding(

@@ -45,12 +45,12 @@ import com.m3u.features.setting.fragments.ScriptsFragment
 import com.m3u.features.setting.fragments.SubscriptionsFragment
 import com.m3u.i18n.R.string
 import com.m3u.material.model.LocalSpacing
-import com.m3u.material.model.LocalTheme
 import com.m3u.ui.Destination
 import com.m3u.ui.EventHandler
 import com.m3u.ui.Fob
 import com.m3u.ui.LocalHelper
 import com.m3u.ui.ResumeEvent
+import androidx.compose.material3.MaterialTheme
 
 typealias NavigateToConsole = () -> Unit
 typealias NavigateToAbout = () -> Unit
@@ -440,7 +440,7 @@ private fun PortraitOrientationContent(
                         localStorage = localStorage,
                         onLocalStorage = onLocalStorage,
                         openDocument = openDocument,
-                        modifier = modifier.background(LocalTheme.current.background)
+                        modifier = modifier.background(MaterialTheme.colorScheme.background)
                     )
                 }
 
@@ -448,7 +448,7 @@ private fun PortraitOrientationContent(
                     ScriptsFragment(
                         contentPadding = contentPadding,
                         importJavaScript = importJavaScript,
-                        modifier = modifier.background(LocalTheme.current.background)
+                        modifier = modifier.background(MaterialTheme.colorScheme.background)
                     )
                 }
 

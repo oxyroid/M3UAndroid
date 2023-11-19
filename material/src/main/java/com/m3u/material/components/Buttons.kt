@@ -11,16 +11,15 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Button
-import androidx.compose.material.ButtonDefaults
-import androidx.compose.material.Icon
-import androidx.compose.material.IconButton
-import androidx.compose.material.LocalContentAlpha
-import androidx.compose.material.LocalContentColor
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.ProvideTextStyle
-import androidx.compose.material.Text
-import androidx.compose.material.TextButton
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ProvideTextStyle
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
@@ -33,15 +32,14 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.m3u.material.model.LocalTheme
 
 @Composable
 fun Button(
     textRes: Int,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    backgroundColor: Color = LocalTheme.current.primary,
-    contentColor: Color = LocalTheme.current.onPrimary,
+    backgroundColor: Color = MaterialTheme.colorScheme.primary,
+    contentColor: Color = MaterialTheme.colorScheme.onPrimary,
     disabledBackgroundColor: Color = backgroundColor.copy(alpha = 0.12f),
     disabledContentColor: Color = backgroundColor.copy(alpha = 0.38f),
     onClick: () -> Unit
@@ -63,8 +61,8 @@ fun Button(
     text: String,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    backgroundColor: Color = LocalTheme.current.primary,
-    contentColor: Color = LocalTheme.current.onPrimary,
+    backgroundColor: Color = MaterialTheme.colorScheme.primary,
+    contentColor: Color = MaterialTheme.colorScheme.onPrimary,
     disabledBackgroundColor: Color = backgroundColor.copy(alpha = 0.12f),
     disabledContentColor: Color = backgroundColor.copy(alpha = 0.38f),
     onClick: () -> Unit
@@ -75,9 +73,9 @@ fun Button(
         enabled = enabled,
         modifier = modifier,
         colors = ButtonDefaults.buttonColors(
-            backgroundColor = backgroundColor,
+            containerColor = backgroundColor,
             contentColor = contentColor,
-            disabledBackgroundColor = disabledBackgroundColor,
+            disabledContainerColor = disabledBackgroundColor,
             disabledContentColor = disabledContentColor
         )
     ) {
@@ -92,9 +90,9 @@ fun TextButton(
     textRes: Int,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    backgroundColor: Color = LocalTheme.current.surface,
-    contentColor: Color = LocalTheme.current.primary,
-    disabledContentColor: Color = LocalTheme.current.onSurface.copy(alpha = 0.38f),
+    backgroundColor: Color = MaterialTheme.colorScheme.surface,
+    contentColor: Color = MaterialTheme.colorScheme.primary,
+    disabledContentColor: Color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
     onClick: () -> Unit
 ) {
     TextButton(
@@ -113,9 +111,9 @@ fun TextButton(
     text: String,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    backgroundColor: Color = LocalTheme.current.surface,
-    contentColor: Color = LocalTheme.current.primary,
-    disabledContentColor: Color = LocalTheme.current.onSurface.copy(alpha = 0.38f),
+    backgroundColor: Color = MaterialTheme.colorScheme.surface,
+    contentColor: Color = MaterialTheme.colorScheme.primary,
+    disabledContentColor: Color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
     onClick: () -> Unit
 ) {
     TextButtonLayout(
@@ -127,7 +125,6 @@ fun TextButton(
         onClick = onClick
     ) {
         Text(
-            style = MaterialTheme.typography.button,
             text = text.uppercase(),
             fontSize = 14.sp,
             maxLines = 1
@@ -140,8 +137,8 @@ fun TextButtonLayout(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     backgroundColor: Color = Color.Transparent,
-    contentColor: Color = LocalTheme.current.primary,
-    disabledContentColor: Color = LocalTheme.current.onSurface.copy(alpha = 0.38f),
+    contentColor: Color = MaterialTheme.colorScheme.primary,
+    disabledContentColor: Color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
     onClick: () -> Unit = {},
     text: @Composable RowScope.() -> Unit,
 ) {
@@ -151,7 +148,7 @@ fun TextButtonLayout(
         modifier = modifier,
         enabled = enabled,
         colors = ButtonDefaults.textButtonColors(
-            backgroundColor = backgroundColor,
+            containerColor = backgroundColor,
             contentColor = contentColor,
             disabledContentColor = disabledContentColor
         ),
@@ -173,7 +170,7 @@ fun IconButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    tint: Color = LocalContentColor.current.copy(alpha = LocalContentAlpha.current),
+    tint: Color = LocalContentColor.current,
 ) {
     IconButton(
         onClick = onClick,
@@ -209,7 +206,7 @@ fun BrushButton(
             ),
     ) {
         CompositionLocalProvider(LocalContentColor provides Color.White) {
-            ProvideTextStyle(value = MaterialTheme.typography.subtitle1) {
+            ProvideTextStyle(value = MaterialTheme.typography.titleSmall) {
                 Row(
                     Modifier
                         .defaultMinSize(

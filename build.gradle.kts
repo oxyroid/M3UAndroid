@@ -19,9 +19,7 @@ subprojects {
     apply(plugin = "io.gitlab.arturbosch.detekt")
 
     detekt {
-        source.setFrom(
-            "src/main/java"
-        )
+        source.setFrom("src/main/java")
         config.setFrom("$rootDir/config/detekt.yml")
         buildUponDefaultConfig = true
     }
@@ -32,6 +30,11 @@ subprojects {
     tasks.withType<KotlinCompile>().configureEach {
         kotlinOptions {
             freeCompilerArgs += "-Xcontext-receivers"
+            freeCompilerArgs += "-opt-in=androidx.compose.foundation.ExperimentalFoundationApi"
+            freeCompilerArgs += "-opt-in=androidx.compose.foundation.layout.ExperimentalLayoutApi"
+            freeCompilerArgs += "-opt-in=androidx.compose.material3.ExperimentalMaterial3Api"
+            freeCompilerArgs += "-opt-in=androidx.media3.common.util.UnstableApi"
+            freeCompilerArgs += "-opt-in=androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi"
         }
     }
 }

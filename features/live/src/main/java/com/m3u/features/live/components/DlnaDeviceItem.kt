@@ -2,22 +2,20 @@ package com.m3u.features.live.components
 
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.clickable
-import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material.ListItem
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Cast
 import androidx.compose.material.icons.rounded.CastConnected
 import androidx.compose.material3.Icon
+import androidx.compose.material3.ListItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import com.m3u.material.model.LocalTheme
 import org.fourthline.cling.model.meta.Device
+import androidx.compose.material3.MaterialTheme
 
-@OptIn(ExperimentalMaterialApi::class)
 @Composable
 internal fun DlnaDeviceItem(
     device: Device<*, *, *>,
@@ -26,14 +24,14 @@ internal fun DlnaDeviceItem(
     loseConnection: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val theme = LocalTheme.current
+    val theme = MaterialTheme.colorScheme
     val actualOnClick by rememberUpdatedState(if (connected) loseConnection else requestConnection)
 
     ListItem(
-        text = {
+        headlineContent = {
             Text(device.displayString)
         },
-        trailing = {
+        trailingContent = {
             Crossfade(connected, label = "icon") { connected ->
                 Icon(
                     imageVector = if (connected) Icons.Rounded.CastConnected

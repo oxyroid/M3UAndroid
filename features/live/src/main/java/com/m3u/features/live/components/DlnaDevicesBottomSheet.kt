@@ -9,10 +9,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Text
-import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -28,7 +27,6 @@ import com.m3u.material.components.OnDismiss
 import com.m3u.material.model.LocalSpacing
 import org.fourthline.cling.model.meta.Device
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DlnaDevicesBottomSheet(
     isDevicesVisible: Boolean,
@@ -71,7 +69,7 @@ fun DlnaDevicesBottomSheet(
                 Text(
                     text = stringResource(string.feat_live_dlna_devices),
                     fontWeight = FontWeight.Bold,
-                    style = MaterialTheme.typography.h6,
+                    style = MaterialTheme.typography.titleMedium,
                     modifier = Modifier.weight(1f)
                 )
                 AnimatedVisibility(
@@ -94,7 +92,7 @@ fun DlnaDevicesBottomSheet(
                         loseConnection = { disconnectDlnaDevice(device) }
                     )
                 }
-                item { 
+                item {
                     Spacer(modifier = Modifier.height(56.dp))
                 }
             }

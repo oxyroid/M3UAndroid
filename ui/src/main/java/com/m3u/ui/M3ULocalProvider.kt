@@ -1,50 +1,29 @@
 package com.m3u.ui
 
-import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.material.MaterialTheme
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.remember
 import com.m3u.material.components.Background
-import com.m3u.material.model.DayTheme
-import com.m3u.material.model.LocalTheme
-import com.m3u.material.model.NightTheme
-import com.m3u.material.model.Theme
-import androidx.compose.material3.MaterialTheme as Material3Theme
+import com.m3u.material.model.AppTheme
 
 @Composable
 fun M3ULocalProvider(
-    theme: Theme = if (isSystemInDarkTheme()) NightTheme else DayTheme,
     helper: Helper = EmptyHelper,
     content: @Composable () -> Unit
 ) {
-    Material3Theme(
-        colorScheme = Material3Theme.colorScheme.copy(
-            surface = theme.surface,
-            onSurface = theme.onSurface,
-            background = theme.background,
-            onBackground = theme.onBackground,
-            primary = theme.tint,
-            onPrimary = theme.onTint,
-        )
+    val prevTypography = MaterialTheme.typography
+    val typography = remember(prevTypography) {
+        prevTypography.withFontFamily(FontFamilies.Titillium)
+    }
+    AppTheme(
+        typography = typography
     ) {
-        MaterialTheme(
-            typography = AppTypography,
-            colors = MaterialTheme.colors.copy(
-                surface = theme.surface,
-                onSurface = theme.onSurface,
-                background = theme.background,
-                onBackground = theme.onBackground,
-                primary = theme.tint,
-                onPrimary = theme.onTint,
-            )
+        CompositionLocalProvider(
+            LocalHelper provides helper
         ) {
-            CompositionLocalProvider(
-                LocalTheme provides theme,
-                LocalHelper provides helper
-            ) {
-                Background {
-                    content()
-                }
+            Background {
+                content()
             }
         }
     }

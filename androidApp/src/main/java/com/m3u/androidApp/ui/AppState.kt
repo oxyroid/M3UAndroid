@@ -1,7 +1,6 @@
 package com.m3u.androidApp.ui
 
 import android.util.Log
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
@@ -31,7 +30,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
 @Composable
-@OptIn(ExperimentalFoundationApi::class)
 fun rememberAppState(
     navController: NavHostController = rememberNavController(),
     pagerState: PagerState = rememberPagerState { Destination.Root.entries.size },
@@ -52,7 +50,6 @@ fun rememberAppState(
 }
 
 @Stable
-@OptIn(ExperimentalFoundationApi::class)
 class AppState(
     val navController: NavHostController,
     val pagerState: PagerState,

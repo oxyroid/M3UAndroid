@@ -1,9 +1,9 @@
 package com.m3u.features.console
 
-import androidx.compose.material.LocalContentColor
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
-import com.m3u.material.model.LocalTheme
 
 sealed class MonoStyle(
     val prefix: String
@@ -16,8 +16,8 @@ sealed class MonoStyle(
     val color: Color
         @Composable get() = when (this) {
             Input -> Color.Yellow
-            Error -> LocalTheme.current.error
-            HighLight -> LocalTheme.current.primary
+            Error -> MaterialTheme.colorScheme.error
+            HighLight -> MaterialTheme.colorScheme.primary
             Common -> LocalContentColor.current
         }
 

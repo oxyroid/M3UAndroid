@@ -12,7 +12,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.selection.LocalTextSelectionColors
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.text.selection.TextSelectionColors
-import androidx.compose.material.MaterialTheme
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -89,7 +89,7 @@ private fun ConsoleScreen(
                         SelectionContainer {
                             MonoText(
                                 text = MonoStyle.get(command).actual(command),
-                                style = MaterialTheme.typography.subtitle2,
+                                style = MaterialTheme.typography.bodyMedium,
                                 color = MonoStyle.get(command).color,
                                 modifier = Modifier.padding(horizontal = LocalSpacing.current.medium),
                             )

@@ -1,31 +1,26 @@
 package com.m3u.androidApp.ui
 
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import com.m3u.androidApp.components.AppBottomSheet
+import com.m3u.androidApp.components.AppNavigation
 import com.m3u.androidApp.components.AppSnackHost
 import com.m3u.core.util.collections.withEach
 import com.m3u.i18n.R.string
 import com.m3u.material.components.IconButton
-import com.m3u.material.components.Scaffold
+import com.m3u.material.components.NavigationScaffold
+import com.m3u.material.components.ToolkitScaffold
 import com.m3u.material.model.LocalSpacing
-import com.m3u.material.model.Theme
 import com.m3u.ui.ActionsFactory
 import com.m3u.ui.Destination
 import com.m3u.ui.Fob
@@ -45,7 +40,6 @@ internal fun AppScaffold(
     fob: Fob?,
     isSystemBarVisible: Boolean,
     isSystemBarScrollable: Boolean,
-    theme: Theme,
     helper: Helper,
     cinemaMode: Boolean,
     isPlaying: Boolean,
@@ -56,7 +50,10 @@ internal fun AppScaffold(
 ) {
     val spacing = LocalSpacing.current
 
-    M3ULocalProvider(theme, helper) {
+    val windowSizeClass = helper.windowSizeClass
+    val useNavRail = windowSizeClass.widthSizeClass > WindowWidthSizeClass.Compact
+
+    M3ULocalProvider(helper) {
         val scope = rememberCoroutineScope()
         val darkMode = when {
             cinemaMode -> true
@@ -77,61 +74,51 @@ internal fun AppScaffold(
             }
             onDispose {}
         }
-        Scaffold(
-            title = title,
+        NavigationScaffold(
+            useNavRail = useNavRail,
             visible = isSystemBarVisible,
-            scrollable = isSystemBarScrollable,
-            actions = {
-                val actions = actionsFactory()
-                actions.withEach {
-                    IconButton(
-                        icon = icon,
-                        contentDescription = contentDescription,
-                        onClick = onClick
-                    )
-                }
+            navigation = {
+                AppNavigation(
+                    navigate = navigate,
+                    rootDestination = rootDestination,
+                    fob = fob,
+                    useNavRail = useNavRail
+                )
             },
-            onBackPressed = onBackPressed,
-            onBackPressedContentDescription = stringResource(string.ui_cd_top_bar_on_back_pressed),
-            modifier = modifier
-        ) { padding ->
-            Column(
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.Bottom,
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f)
-                ) {
-                    content(padding)
-                    AppSnackHost(
-                        message = snacker,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(spacing.small)
-                            .align(Alignment.BottomCenter)
-                    )
-                }
-                AnimatedContent(
-                    targetState = isSystemBarVisible,
-                    transitionSpec = {
-                        slideInVertically { it } togetherWith slideOutVertically { it }
+            content = {
+                ToolkitScaffold(
+                    title = title,
+                    visible = isSystemBarVisible,
+                    scrollable = isSystemBarScrollable,
+                    actions = {
+                        val actions = actionsFactory()
+                        actions.withEach {
+                            IconButton(
+                                icon = icon,
+                                contentDescription = contentDescription,
+                                onClick = onClick
+                            )
+                        }
                     },
-                    label = "AppBottomSheet",
-                    modifier = Modifier.fillMaxWidth(),
-                ) { visible ->
-                    if (visible) {
-                        AppBottomSheet(
-                            fob = fob,
-                            rootDestination = rootDestination,
-                            navigate = navigate,
-                            modifier = Modifier.fillMaxWidth()
+                    onBackPressed = onBackPressed,
+                    onBackPressedContentDescription = stringResource(string.ui_cd_top_bar_on_back_pressed),
+                    modifier = modifier
+                ) { padding ->
+                    Box {
+                        val navRailModifier = if (useNavRail) Modifier.navigationBarsPadding()
+                        else Modifier
+                        content(padding)
+                        AppSnackHost(
+                            message = snacker,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(spacing.small)
+                                .align(Alignment.BottomCenter)
+                                .then(navRailModifier)
                         )
                     }
                 }
             }
-        }
+        )
     }
 }

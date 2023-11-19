@@ -1,11 +1,11 @@
 package com.m3u.features.live
 
 import android.graphics.Rect
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.pager.VerticalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -31,7 +31,6 @@ import com.m3u.features.live.fragments.LiveFragment
 import com.m3u.material.components.MaskState
 import com.m3u.material.components.rememberMaskState
 import com.m3u.material.ktx.LifecycleEffect
-import com.m3u.material.model.LocalTheme
 import com.m3u.ui.LocalHelper
 import com.m3u.ui.OnPipModeChanged
 import com.m3u.ui.repeatOnLifecycle
@@ -127,7 +126,6 @@ internal fun LiveRoute(
     )
 }
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun LiveScreen(
     init: LiveState.Init,
@@ -150,7 +148,7 @@ private fun LiveScreen(
     onMuted: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val theme = LocalTheme.current
+    val theme = MaterialTheme.colorScheme
     when (init) {
         is LiveState.InitOne -> {
             val live = init.live

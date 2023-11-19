@@ -1,7 +1,8 @@
 package com.m3u.material.components
 
-import androidx.compose.material.LocalAbsoluteElevation
-import androidx.compose.material.Surface
+import androidx.compose.material3.LocalAbsoluteTonalElevation
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
@@ -10,13 +11,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.m3u.material.ktx.animated
 import com.m3u.material.ktx.ifUnspecified
-import com.m3u.material.model.LocalTheme
 
 @Composable
 fun Background(
     modifier: Modifier = Modifier,
-    color: Color = LocalTheme.current.background,
-    contentColor: Color = LocalTheme.current.onBackground,
+    color: Color = MaterialTheme.colorScheme.background,
+    contentColor: Color = MaterialTheme.colorScheme.onBackground,
     content: @Composable () -> Unit
 ) {
     val actualBackgroundColor by color
@@ -28,7 +28,7 @@ fun Background(
         contentColor = actualContentColor,
         modifier = modifier
     ) {
-        CompositionLocalProvider(LocalAbsoluteElevation provides 0.dp) {
+        CompositionLocalProvider(LocalAbsoluteTonalElevation provides 0.dp) {
             content()
         }
     }

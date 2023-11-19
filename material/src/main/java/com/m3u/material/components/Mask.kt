@@ -14,14 +14,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material.Icon
-import androidx.compose.material.LocalContentAlpha
-import androidx.compose.material.LocalContentColor
-import androidx.compose.material.Surface
-import androidx.compose.material.Text
-import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.PlainTooltip
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.material3.TooltipBox
 import androidx.compose.material3.TooltipDefaults
 import androidx.compose.material3.rememberTooltipState
@@ -172,7 +169,6 @@ fun MaskPanel(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MaskButton(
     state: MaskState,
@@ -194,7 +190,7 @@ fun MaskButton(
     }
 
     val animatedColor by tint.ifUnspecified {
-        LocalContentColor.current.copy(alpha = LocalContentAlpha.current)
+        LocalContentColor.current
     }
         .animated("MaskButtonTint")
 
@@ -222,7 +218,6 @@ fun MaskButton(
     }
 }
 
-@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun MaskCircleButton(
     state: MaskState,

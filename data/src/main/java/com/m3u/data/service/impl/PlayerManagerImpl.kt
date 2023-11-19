@@ -30,7 +30,6 @@ import okhttp3.OkHttpClient
 import javax.inject.Inject
 
 @OptIn(UnstableApi::class)
-@kotlin.OptIn(ExperimentalConfiguration::class)
 class PlayerManagerImpl @Inject constructor(
     @ApplicationContext private val context: Context,
     configuration: Configuration
@@ -38,6 +37,7 @@ class PlayerManagerImpl @Inject constructor(
     private val playerFlow = MutableStateFlow<Player?>(null)
     private val player: Player? get() = playerFlow.value
 
+    @kotlin.OptIn(ExperimentalConfiguration::class)
     private val isSSLVerification by configuration.isSSLVerification
 
     private val okHttpClient by lazy {

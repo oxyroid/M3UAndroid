@@ -28,15 +28,17 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+//noinspection UsingMaterialAndMaterial3Libraries
 import androidx.compose.material.BackdropScaffold
+//noinspection UsingMaterialAndMaterial3Libraries
 import androidx.compose.material.BackdropValue
-import androidx.compose.material.ContentAlpha
 import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material.MaterialTheme
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ArrowCircleUp
 import androidx.compose.material.icons.rounded.Refresh
+//noinspection UsingMaterialAndMaterial3Libraries
 import androidx.compose.material.rememberBackdropScaffoldState
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PrimaryScrollableTabRow
 import androidx.compose.material3.TabRowDefaults
 import androidx.compose.material3.Text
@@ -82,7 +84,6 @@ import com.m3u.material.ktx.animateColor
 import com.m3u.material.ktx.interceptVolumeEvent
 import com.m3u.material.ktx.isAtTop
 import com.m3u.material.model.LocalSpacing
-import com.m3u.material.model.LocalTheme
 import com.m3u.ui.Action
 import com.m3u.ui.Destination
 import com.m3u.ui.EventHandler
@@ -122,7 +123,11 @@ internal fun FeedRoute(
             FeedMessage.FeedUrlNotFound -> context.getString(string.feat_feed_error_feed_url_not_found)
             FeedMessage.LiveCoverNotFound -> context.getString(string.feat_feed_error_live_cover_not_found)
             FeedMessage.LiveNotFound -> context.getString(string.feat_feed_error_live_not_found)
-            is FeedMessage.LiveCoverSaved -> context.getString(string.feat_feed_success_save_cover, it.path)
+            is FeedMessage.LiveCoverSaved -> context.getString(
+                string.feat_feed_success_save_cover,
+                it.path
+            )
+
             is FeedMessage.FeedNotFound -> context.getString(
                 string.feat_feed_error_feed_not_found,
                 it.feedUrl
@@ -206,7 +211,6 @@ internal fun FeedRoute(
     )
 }
 
-@OptIn(ExperimentalMaterialApi::class)
 @Composable
 private fun FeedScreen(
     query: String,
@@ -227,7 +231,7 @@ private fun FeedScreen(
     modifier: Modifier = Modifier
 ) {
     val helper = LocalHelper.current
-    val theme = LocalTheme.current
+    val theme = MaterialTheme.colorScheme
     val configuration = LocalConfiguration.current
     val spacing = LocalSpacing.current
     Box(modifier) {
@@ -388,7 +392,6 @@ private fun UnsupportedUIModeContent(
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun FeedPager(
     channelsFactory: () -> List<Channel>,
@@ -396,7 +399,7 @@ private fun FeedPager(
     content: @Composable (livesFactory: () -> List<Live>) -> Unit,
 ) {
     val spacing = LocalSpacing.current
-    val theme = LocalTheme.current
+    val theme = MaterialTheme.colorScheme
     Column(modifier) {
         val channels = channelsFactory()
         val pagerState = rememberPagerState { channels.size }
@@ -435,11 +438,8 @@ private fun FeedPager(
                         ) {
                             Text(
                                 text = title,
-                                style = MaterialTheme.typography.subtitle1,
-                                color = theme.onBackground.copy(
-                                    alpha = if (selected) ContentAlpha.high
-                                    else ContentAlpha.medium
-                                ),
+                                style = MaterialTheme.typography.titleSmall,
+                                color = theme.onBackground,
                                 fontWeight = if (selected) FontWeight.ExtraBold else null
                             )
                         }
