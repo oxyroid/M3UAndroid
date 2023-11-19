@@ -7,10 +7,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.Card
-import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Text
+import androidx.compose.material3.Card
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -19,17 +18,15 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.m3u.features.about.model.Contributor
 import com.m3u.material.model.LocalSpacing
-import com.m3u.material.model.LocalTheme
 
 @Composable
-@OptIn(ExperimentalMaterialApi::class)
 internal fun ContributorItem(
     contributor: Contributor,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
-    val theme = LocalTheme.current
+    val theme = MaterialTheme.colorScheme
     Card(
         modifier = modifier.fillMaxWidth(),
         onClick = onClick
@@ -50,11 +47,11 @@ internal fun ContributorItem(
                 Text(
                     text = contributor.name,
                     color = theme.primary,
-                    style = MaterialTheme.typography.subtitle1
+                    style = MaterialTheme.typography.titleSmall
                 )
                 Text(
                     text = contributor.contributions.toString(),
-                    style = MaterialTheme.typography.subtitle2
+                    style = MaterialTheme.typography.bodyMedium
                 )
             }
         }

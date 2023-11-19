@@ -3,6 +3,7 @@ package com.m3u.ui
 import android.annotation.SuppressLint
 import android.graphics.Rect
 import android.util.Log
+import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
@@ -27,6 +28,9 @@ interface Helper {
     var onUserLeaveHint: OnUserLeaveHint?
     var onPipModeChanged: OnPipModeChanged?
     var darkMode: Boolean
+
+    @get:Composable
+    val windowSizeClass: WindowSizeClass
 
     fun enterPipMode(size: Rect)
     fun toast(message: String)
@@ -142,6 +146,9 @@ val EmptyHelper = object : Helper {
         set(_) {
             error("Cannot set onPipModeChanged")
         }
+
+    override val windowSizeClass: WindowSizeClass
+        @Composable get() = error("Cannot get windowSizeClass")
 
     override fun enterPipMode(size: Rect) = error("Cannot enterPipMode")
     override fun toast(message: String) {

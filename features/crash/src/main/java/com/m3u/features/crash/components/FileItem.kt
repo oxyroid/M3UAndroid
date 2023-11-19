@@ -1,49 +1,46 @@
 package com.m3u.features.crash.components
 
-import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material.Icon
-import androidx.compose.material.ListItem
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Adb
+import androidx.compose.material3.Icon
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import com.m3u.material.components.Background
-import com.m3u.material.model.LocalTheme
 import java.io.File
 
-@OptIn(ExperimentalMaterialApi::class)
 @Composable
 internal fun FileItem(
     file: File,
     modifier: Modifier = Modifier
 ) {
     Background(
-        color = LocalTheme.current.surface,
-        contentColor = LocalTheme.current.onSurface
+        color = MaterialTheme.colorScheme.surface,
+        contentColor = MaterialTheme.colorScheme.onSurface
     ) {
         ListItem(
             modifier = modifier,
-            icon = {
+            leadingContent = {
                 Icon(
                     imageVector = Icons.Rounded.Adb,
                     contentDescription = file.name
                 )
             },
-            text = {
+            headlineContent = {
                 Text(
                     text = file.nameWithoutExtension,
-                    style = MaterialTheme.typography.subtitle1,
+                    style = MaterialTheme.typography.titleSmall,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
             },
-            secondaryText = {
+            supportingContent = {
                 Text(
                     text = file.path,
-                    style = MaterialTheme.typography.subtitle2,
+                    style = MaterialTheme.typography.bodyMedium,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )

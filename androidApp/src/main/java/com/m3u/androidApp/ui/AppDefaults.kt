@@ -1,6 +1,5 @@
 package com.m3u.androidApp.ui
 
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.derivedStateOf
@@ -9,10 +8,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavDestination
 import com.m3u.core.util.basic.title
-import com.m3u.material.model.ABlackTheme
-import com.m3u.material.model.DayTheme
-import com.m3u.material.model.NightTheme
-import com.m3u.material.model.Theme
 import com.m3u.ui.Destination
 
 object AppDefaults {
@@ -61,10 +56,10 @@ object AppDefaults {
         }
     }
 
-    @Composable
-    fun theme(cinemaMode: Boolean): Theme = when {
-        cinemaMode -> ABlackTheme
-        isSystemInDarkTheme() -> NightTheme
-        else -> DayTheme
-    }
+//    @Composable
+//    fun theme(cinemaMode: Boolean): Theme = when {
+//        cinemaMode -> ABlackTheme
+//        isSystemInDarkTheme() -> NightTheme
+//        else -> DayTheme
+//    }
 }

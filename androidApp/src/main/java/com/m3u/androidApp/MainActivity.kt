@@ -15,8 +15,10 @@ import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.material3.windowsizeclass.WindowSizeClass
+import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
+import androidx.compose.runtime.Composable
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsCompat.Type.InsetsType
@@ -65,7 +67,6 @@ class MainActivity : ComponentActivity() {
     @Logger.Ui
     lateinit var logger: Logger
 
-    @OptIn(ExperimentalFoundationApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         enableEdgeToEdge()
@@ -133,6 +134,9 @@ class MainActivity : ComponentActivity() {
                     removeOnPictureInPictureModeChangedListener(it)
                 }
             }
+
+        override val windowSizeClass: WindowSizeClass
+            @Composable get() = calculateWindowSizeClass(activity = this@MainActivity)
 
         override fun toast(message: String) {
             lifecycleScope.launch(Dispatchers.Main) {

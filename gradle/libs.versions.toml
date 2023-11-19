@@ -65,11 +65,11 @@ androidx-compose-ui-ui-tooling-preview = { group = "androidx.compose.ui", name =
 androidx-compose-runtime-runtime = { group = "androidx.compose.runtime", name = "runtime", version.ref = "androidx-compose" }
 androidx-compose-foundation-foundation = { group = "androidx.compose.foundation", name = "foundation", version.ref = "androidx-compose" }
 androidx-compose-animation-animation = { group = "androidx.compose.animation", name = "animation", version.ref = "androidx-compose" }
-androidx-compose-material-material = { group = "androidx.compose.material", name = "material", version.ref = "androidx-compose" }
 androidx-compose-material-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended", version.ref = "androidx-compose" }
 androidx-navigation-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "androidx-navigation" }
 
 androidx-compose-material3-material3 = { group = "androidx.compose.material3", name = "material3", version.ref = "androidx-compose-material3" }
+androidx-compose-material3-material3-window-size-clazz = { group = "androidx.compose.material3", name = "material3-window-size-class", version.ref = "androidx-compose-material3" }
 
 androidx-tv-tv-foundation = { group = "androidx.tv", name = "tv-foundation", version.ref = "androidx-tv" }
 androidx-tv-tv-material = { group = "androidx.tv", name = "tv-material", version.ref = "androidx-tv" }
@@ -145,4 +145,4 @@ com-android-test = { id = "com.android.test", version.ref = "android-gradle-plug
 androidx-baselineprofile = { id = "androidx.baselineprofile", version.ref = "androidx-baselineprofile-benchmark" }
 
 [bundles]
-androidx-compose = ["androidx-compose-ui-ui", "androidx-compose-ui-ui-util", "androidx-compose-runtime-runtime", "androidx-compose-foundation-foundation", "androidx-compose-animation-animation", "androidx-compose-material-material"]
+androidx-compose = ["androidx-compose-ui-ui", "androidx-compose-ui-ui-util", "androidx-compose-runtime-runtime", "androidx-compose-foundation-foundation", "androidx-compose-animation-animation"]

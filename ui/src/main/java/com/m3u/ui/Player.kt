@@ -7,6 +7,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
@@ -15,6 +16,9 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import com.m3u.core.annotation.ClipMode
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.milliseconds
 
 @Immutable
 data class PlayerState(
@@ -91,8 +95,12 @@ fun Player(
             }
         }
     }
+    val scope = rememberCoroutineScope()
     DisposableEffect(player, url) {
-        state.onInstallMedia(url)
+        scope.launch {
+            delay(150.milliseconds)
+            state.onInstallMedia(url)
+        }
         onDispose {
             state.onUninstallMedia()
         }

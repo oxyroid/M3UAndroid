@@ -17,12 +17,12 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.material.Icon
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.OpenInNew
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -47,7 +47,6 @@ import com.m3u.material.components.LabelField
 import com.m3u.material.components.TextButton
 import com.m3u.material.ktx.plus
 import com.m3u.material.model.LocalSpacing
-import com.m3u.material.model.LocalTheme
 
 internal typealias MutedLivesFactory = () -> List<Live>
 
@@ -68,7 +67,7 @@ internal fun SubscriptionsFragment(
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
-    val theme = LocalTheme.current
+    val theme = MaterialTheme.colorScheme
     val focusRequester = remember { FocusRequester() }
     val mutedLives = mutedLivesFactory()
     LazyColumn(
@@ -86,11 +85,10 @@ internal fun SubscriptionsFragment(
                 ) {
                     Text(
                         text = stringResource(string.feat_setting_label_muted_lives),
-                        style = MaterialTheme.typography.button,
-                        color = theme.onTint,
+                        color = theme.onPrimary,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(theme.tint)
+                            .background(theme.primary)
                             .padding(
                                 vertical = spacing.extraSmall,
                                 horizontal = spacing.medium
@@ -195,7 +193,7 @@ fun LocalStorageSwitch(
     ) {
         Text(
             text = stringResource(string.feat_setting_local_storage),
-            style = MaterialTheme.typography.subtitle1,
+            style = MaterialTheme.typography.titleSmall,
             modifier = Modifier.weight(1f)
         )
         Switch(checked = checked, onCheckedChange = null)
@@ -210,7 +208,7 @@ private fun LocalStorageButton(
 ) {
     val context = LocalContext.current
     val selected = uri != Uri.EMPTY
-    val theme = LocalTheme.current
+    val theme = MaterialTheme.colorScheme
     val spacing = LocalSpacing.current
     val launcher = rememberLauncherForActivityResult(
         ActivityResultContracts.GetContent()
@@ -245,7 +243,7 @@ private fun LocalStorageButton(
             text = text.uppercase(),
             style = TextStyle(
                 fontSize = 14.sp,
-                fontFamily = MaterialTheme.typography.body1.fontFamily,
+                fontFamily = MaterialTheme.typography.bodyMedium.fontFamily,
                 fontWeight = FontWeight.Medium
             )
         )

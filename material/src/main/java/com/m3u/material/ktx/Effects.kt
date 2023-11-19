@@ -11,7 +11,7 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.Dp
 import com.m3u.material.model.LocalSpacing
-import com.m3u.material.model.LocalTheme
+import androidx.compose.material3.MaterialTheme
 
 fun Modifier.interaction(
     type: InteractionType,
@@ -26,7 +26,7 @@ fun Modifier.interactionBorder(
     width: Dp = Dp.Unspecified,
     shape: Shape = RectangleShape
 ): Modifier = interaction(type, source) { visible ->
-    val actualColor = color.ifUnspecified { LocalTheme.current.primary }
+    val actualColor = color.ifUnspecified { MaterialTheme.colorScheme.primary }
     val actualDp = width.ifUnspecified { LocalSpacing.current.extraSmall }
     val currentColor by animateColor("BorderEffectColor") {
         if (visible) actualColor else Color.Transparent

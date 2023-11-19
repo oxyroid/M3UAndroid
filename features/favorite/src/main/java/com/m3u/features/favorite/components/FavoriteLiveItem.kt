@@ -1,7 +1,6 @@
 package com.m3u.features.favorite.components
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -9,14 +8,10 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.LocalContentAlpha
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Surface
-import androidx.compose.material.Text
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedCard
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -28,12 +23,9 @@ import com.m3u.data.database.entity.Live
 import com.m3u.i18n.R.string
 import com.m3u.material.components.Image
 import com.m3u.material.components.TextBadge
-import com.m3u.material.ktx.animated
 import com.m3u.material.model.LocalSpacing
-import com.m3u.material.model.LocalTheme
 import java.net.URI
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 internal fun FavoriteItem(
     live: Live,
@@ -45,18 +37,9 @@ internal fun FavoriteItem(
     val context = LocalContext.current
     val spacing = LocalSpacing.current
 
-    val theme = LocalTheme.current
-    val actualBackgroundColor by theme.surface.animated("FavoriteItemBackground")
-    val actualContentColor by theme.onSurface.animated("FavoriteItemContent")
-    val scheme = remember(live) {
-        URI(live.url).scheme ?: context.getString(string.feat_feed_scheme_unknown).uppercase()
-    }
-    Surface(
-        shape = RoundedCornerShape(spacing.medium),
-        color = actualBackgroundColor,
-        contentColor = actualContentColor,
-        elevation = spacing.none
-    ) {
+    val scheme = remember(live.url) { URI(live.url).scheme ?: context.getString(string.feat_feed_scheme_unknown) }
+
+    OutlinedCard {
         Column(
             modifier = Modifier
                 .combinedClickable(
@@ -81,8 +64,8 @@ internal fun FavoriteItem(
             ) {
                 Text(
                     text = live.title,
-                    style = MaterialTheme.typography.subtitle1,
-                    fontSize = MaterialTheme.typography.subtitle1.fontSize,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontSize = MaterialTheme.typography.titleSmall.fontSize,
                     overflow = TextOverflow.Ellipsis,
                     maxLines = 1,
                     fontWeight = FontWeight.Bold
@@ -93,17 +76,13 @@ internal fun FavoriteItem(
                     horizontalArrangement = Arrangement.spacedBy(spacing.extraSmall)
                 ) {
                     TextBadge(scheme)
-                    CompositionLocalProvider(
-                        LocalContentAlpha provides 0.6f
-                    ) {
-                        Text(
-                            text = live.url,
-                            maxLines = 1,
-                            style = MaterialTheme.typography.subtitle2,
-                            fontSize = MaterialTheme.typography.subtitle2.fontSize,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
+                    Text(
+                        text = live.url,
+                        maxLines = 1,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontSize = MaterialTheme.typography.bodyMedium.fontSize,
+                        overflow = TextOverflow.Ellipsis
+                    )
                 }
             }
         }

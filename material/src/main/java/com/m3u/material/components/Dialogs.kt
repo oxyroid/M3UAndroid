@@ -13,9 +13,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Surface
-import androidx.compose.material.Text
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -29,7 +29,6 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.m3u.material.ktx.ifUnspecified
 import com.m3u.material.model.LocalSpacing
-import com.m3u.material.model.LocalTheme
 
 @Composable
 fun DialogTextField(
@@ -43,7 +42,7 @@ fun DialogTextField(
     readOnly: Boolean = true,
     onIconClick: (() -> Unit)? = null,
 ) {
-    val theme = LocalTheme.current
+    val theme = MaterialTheme.colorScheme
     val spacing = LocalSpacing.current
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -65,7 +64,7 @@ fun DialogTextField(
         if (onIconClick != null && icon != null) {
             IconButton(
                 icon = icon,
-                tint = iconTint.ifUnspecified { LocalTheme.current.onBackground },
+                tint = iconTint.ifUnspecified { MaterialTheme.colorScheme.onBackground },
                 onClick = onIconClick,
                 contentDescription = null
             )
@@ -81,11 +80,11 @@ fun DialogItem(
     contentColor: Color = Color.Unspecified,
     onClick: () -> Unit,
 ) {
-    val theme = LocalTheme.current
+    val theme = MaterialTheme.colorScheme
     val spacing = LocalSpacing.current
     Surface(
         shape = RoundedCornerShape(spacing.medium),
-        elevation = 0.dp,
+        tonalElevation = 0.dp,
         color = color.ifUnspecified { theme.surface },
         contentColor = contentColor.ifUnspecified { theme.onSurface }
     ) {
@@ -98,7 +97,7 @@ fun DialogItem(
         ) {
             Text(
                 text = text.uppercase(),
-                style = MaterialTheme.typography.subtitle1,
+                style = MaterialTheme.typography.titleSmall,
                 maxLines = 1
             )
         }
@@ -109,7 +108,7 @@ fun DialogItem(
 fun DialogTextField(
     resId: Int,
     onTextChange: (String) -> Unit,
-    color: Color = LocalTheme.current.onBackground,
+    color: Color = MaterialTheme.colorScheme.onBackground,
     icon: ImageVector? = null,
     iconTint: Color = color,
     readOnly: Boolean = true,
@@ -146,11 +145,14 @@ fun AppDialog(
     visible: Boolean,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
-    border: BorderStroke = BorderStroke(2.dp, LocalTheme.current.divider.copy(alpha = 0.45f)),
+    border: BorderStroke = BorderStroke(
+        2.dp,
+        MaterialTheme.colorScheme.outline
+    ),
     verticalArrangement: Arrangement.Vertical = Arrangement.Top,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    val theme = LocalTheme.current
+    val theme = MaterialTheme.colorScheme
     val spacing = LocalSpacing.current
 
     if (visible) {
@@ -165,7 +167,7 @@ fun AppDialog(
                 contentColor = theme.onBackground,
                 shape = RoundedCornerShape(LocalSpacing.current.medium),
                 border = border,
-                elevation = spacing.medium,
+                tonalElevation = spacing.medium,
                 modifier = Modifier
                     .padding(spacing.medium)
                     .fillMaxWidth()

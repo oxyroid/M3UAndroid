@@ -211,6 +211,7 @@ internal fun PreferencesFragment(
                             title = stringResource(string.feat_setting_cinema_mode).title(),
                             subtitle = stringResource(string.feat_setting_cinema_mode_description).title(),
                             checked = cinemaMode,
+                            enabled = false,
                             onCheckedChange = { newValue ->
                                 if (newValue != cinemaMode) {
                                     onCinemaMode()

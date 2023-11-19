@@ -44,6 +44,9 @@ dependencies {
 
     implementation(libs.androidx.core.core.ktx)
 
+    // for m2 BackdropScaffold only
+    implementation("androidx.compose.material:material:${libs.versions.androidx.compose}")
+
     implementation(libs.androidx.lifecycle.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.lifecycle.runtime.compose)
 

@@ -1,6 +1,5 @@
 package com.m3u.material.components
 
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
@@ -8,24 +7,19 @@ import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.selection.toggleable
-import androidx.compose.material.ContentAlpha
-import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material.ListItem
-import androidx.compose.material.LocalContentAlpha
-import androidx.compose.material.LocalContentColor
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Text
 import androidx.compose.material3.Checkbox
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.Switch
+import androidx.compose.material3.Text
 import androidx.compose.material3.TooltipBox
 import androidx.compose.material3.TooltipDefaults
 import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -36,19 +30,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.capitalize
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.sp
 import com.m3u.material.ktx.animated
 import com.m3u.material.model.LocalSpacing
-import com.m3u.material.model.LocalTheme
 
-@OptIn(
-    ExperimentalMaterialApi::class,
-    ExperimentalFoundationApi::class,
-    ExperimentalMaterial3Api::class
-)
 @Composable
 fun Preference(
     title: String,
@@ -58,7 +44,7 @@ fun Preference(
     onClick: () -> Unit = {},
     trailingContent: @Composable () -> Unit = {}
 ) {
-    val theme = LocalTheme.current
+    val theme = MaterialTheme.colorScheme
     var focus by remember { mutableStateOf(false) }
     val actualBackgroundColor by theme.surface.animated("FoldPreferenceBackground")
 
@@ -78,44 +64,30 @@ fun Preference(
         }
     ) {
         ListItem(
-            text = {
-                val contentAlpha = if (enabled) ContentAlpha.high else ContentAlpha.medium
-
-                CompositionLocalProvider(
-                    LocalContentAlpha provides contentAlpha
-                ) {
+            headlineContent = {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            },
+            supportingContent = {
+                if (subtitle != null) {
                     Text(
-                        text = title,
-                        style = MaterialTheme.typography.subtitle1,
-                        fontWeight = FontWeight.Bold,
+                        text = subtitle.capitalize(Locale.current),
+                        style = MaterialTheme.typography.bodyMedium,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier
+                            .let {
+                                if (focus) it.basicMarquee()
+                                else it
+                            }
                     )
                 }
             },
-            secondaryText = subtitle?.let {
-                @Composable {
-                    val contentAlpha = if (enabled) ContentAlpha.medium else ContentAlpha.disabled
-                    CompositionLocalProvider(
-                        LocalContentAlpha provides contentAlpha
-                    ) {
-                        Text(
-                            text = it.capitalize(Locale.current),
-                            style = MaterialTheme.typography.subtitle2,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            lineHeight = 16.sp,
-                            modifier = Modifier
-                                .let {
-                                    if (focus) it.basicMarquee()
-                                    else it
-                                }
-                        )
-                    }
-                }
-            },
-            singleLineSecondaryText = true,
-            trailing = trailingContent,
+            trailingContent = trailingContent,
             modifier = modifier
                 .fillMaxWidth()
                 .onFocusChanged {
@@ -253,8 +225,8 @@ fun TextPreference(
         trailingContent = {
             Text(
                 text = content.uppercase(),
-                style = MaterialTheme.typography.button,
-                color = LocalTheme.current.tint,
+                color = MaterialTheme.colorScheme.primary,
+                style = MaterialTheme.typography.bodyMedium,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.padding(

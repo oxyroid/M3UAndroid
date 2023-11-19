@@ -1,11 +1,11 @@
 package com.m3u.androidApp.navigation
 
 import android.util.Log
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
@@ -25,7 +25,6 @@ import com.m3u.features.setting.NavigateToConsole
 import com.m3u.features.setting.SettingRoute
 import com.m3u.material.ktx.Edge
 import com.m3u.material.ktx.blurEdge
-import com.m3u.material.model.LocalTheme
 import com.m3u.ui.Destination
 import com.m3u.ui.ResumeEvent
 import kotlinx.coroutines.flow.launchIn
@@ -37,7 +36,6 @@ fun NavController.popupToRoot() {
     this.popBackStack(ROOT_ROUTE, false)
 }
 
-@OptIn(ExperimentalFoundationApi::class)
 fun NavGraphBuilder.rootGraph(
     pagerState: PagerState,
     contentPadding: PaddingValues,
@@ -58,7 +56,6 @@ fun NavGraphBuilder.rootGraph(
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun RootGraph(
     pagerState: PagerState,
@@ -93,7 +90,7 @@ private fun RootGraph(
             .fillMaxSize()
             .blurEdge(
                 edge = Edge.Bottom,
-                color = LocalTheme.current.background
+                color = MaterialTheme.colorScheme.background
             )
     ) { pagerIndex ->
         when (destinations[pagerIndex]) {

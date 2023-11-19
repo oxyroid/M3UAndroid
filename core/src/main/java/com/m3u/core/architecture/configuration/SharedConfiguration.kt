@@ -91,4 +91,10 @@ class SharedConfiguration @Inject constructor(
     companion object {
         private const val SHARED_SETTINGS = "shared_settings"
     }
+
+    init {
+        // disabled from 1.13.0-alpha01 (74), because it is not implemented in material-3.
+        @OptIn(ExperimentalConfiguration::class)
+        cinemaMode.value = false
+    }
 }

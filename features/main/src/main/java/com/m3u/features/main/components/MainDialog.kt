@@ -4,6 +4,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -15,13 +16,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import com.m3u.data.database.entity.Feed
+import com.m3u.i18n.R.string
 import com.m3u.material.components.AppDialog
 import com.m3u.material.components.DialogItem
 import com.m3u.material.components.DialogTextField
 import com.m3u.material.ktx.animateDp
 import com.m3u.material.model.LocalSpacing
-import com.m3u.material.model.LocalTheme
-import com.m3u.i18n.R.string
 
 internal typealias OnUpdateStatus = (MainDialog) -> Unit
 internal typealias OnUnsubscribe = (feedUrl: String) -> Unit
@@ -53,12 +53,12 @@ internal fun MainDialog(
         },
         border = BorderStroke(
             borderWidth,
-            LocalTheme.current.divider.copy(alpha = 0.45f)
+            MaterialTheme.colorScheme.outline
         ),
         verticalArrangement = Arrangement.spacedBy(LocalSpacing.current.small),
         modifier = modifier,
         content = {
-            val theme = LocalTheme.current
+            val theme = MaterialTheme.colorScheme
             val context = LocalContext.current
             val currentStatus = remember { status as MainDialog.Selections }
             if (status is MainDialog.Selections) {
@@ -77,7 +77,7 @@ internal fun MainDialog(
                     onTextChange = { renamedText = it },
                     readOnly = !editMode,
                     icon = Icons.Rounded.Edit.takeIf { editable },
-                    iconTint = if (editMode) theme.tint else theme.onBackground,
+                    iconTint = if (editMode) theme.primary else theme.onBackground,
                     onIconClick = {
                         val target = !editMode
                         if (!target && renamedText != currentStatus.feed.title) {
