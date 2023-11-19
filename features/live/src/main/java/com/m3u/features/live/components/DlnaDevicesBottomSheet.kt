@@ -86,7 +86,7 @@ fun DlnaDevicesBottomSheet(
             ) {
                 items(devices ?: emptyList()) { device ->
                     DlnaDeviceItem(
-                        device = device,
+                        deviceFactory = { device },
                         connected = device == connected,
                         requestConnection = { connectDlnaDevice(device) },
                         loseConnection = { disconnectDlnaDevice(device) }

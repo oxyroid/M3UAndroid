@@ -11,9 +11,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.OpenInNew
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -85,7 +85,7 @@ internal fun PreferencesFragment(
             Column(
                 modifier = Modifier
                     .padding(spacing.medium)
-                    .clip(RoundedCornerShape(spacing.medium)),
+                    .clip(MaterialTheme.shapes.medium),
                 verticalArrangement = Arrangement.spacedBy(1.dp)
             ) {
                 Preference(
@@ -182,7 +182,7 @@ internal fun PreferencesFragment(
             Column(
                 modifier = Modifier
                     .padding(spacing.medium)
-                    .clip(RoundedCornerShape(spacing.medium)),
+                    .clip(MaterialTheme.shapes.medium),
                 verticalArrangement = Arrangement.spacedBy(1.dp)
             ) {
                 CheckBoxPreference(
@@ -258,7 +258,7 @@ internal fun PreferencesFragment(
             Column(
                 modifier = Modifier
                     .padding(spacing.medium)
-                    .clip(RoundedCornerShape(spacing.medium)),
+                    .clip(MaterialTheme.shapes.medium),
                 verticalArrangement = Arrangement.spacedBy(1.dp)
             ) {
                 val context = LocalContext.current

@@ -9,7 +9,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -25,6 +24,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.selection.LocalTextSelectionColors
 import androidx.compose.foundation.text.selection.TextSelectionColors
+import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -35,7 +35,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusDirection
@@ -143,8 +142,8 @@ fun TextField(
             readOnly = readOnly,
             cursorBrush = SolidColor(contentColor),
             decorationBox = { innerTextField ->
-                Box(
-                    Modifier
+                ElevatedCard(
+                    modifier = Modifier
                         .clip(shape)
                         .background(if (isError) MaterialTheme.colorScheme.error else background)
                         .interactionBorder(
@@ -154,7 +153,6 @@ fun TextField(
                         )
                         .height(height)
                         .padding(horizontal = 12.dp),
-                    contentAlignment = if (singleLine) Alignment.CenterStart else Alignment.TopStart,
                 ) {
                     Box(
                         Modifier
@@ -258,8 +256,8 @@ fun TextField(
             readOnly = readOnly,
             cursorBrush = SolidColor(contentColor),
             decorationBox = { innerTextField ->
-                Box(
-                    Modifier
+                ElevatedCard(
+                    modifier = Modifier
                         .clip(shape)
                         .background(if (isError) theme.error else backgroundColor)
                         .interactionBorder(
@@ -269,7 +267,6 @@ fun TextField(
                         )
                         .height(height)
                         .padding(horizontal = 12.dp),
-                    contentAlignment = if (singleLine) Alignment.CenterStart else Alignment.TopStart,
                 ) {
                     Box(
                         Modifier
@@ -373,7 +370,7 @@ fun LabelField(
                 color = contentColor,
             ),
             decorationBox = { innerTextField ->
-                Row(
+                ElevatedCard(
                     Modifier
                         .clip(shape)
                         .background(background)
@@ -519,7 +516,7 @@ fun LabelField(
                 color = contentColor,
             ),
             decorationBox = { innerTextField ->
-                Row(
+                ElevatedCard(
                     modifier = Modifier
                         .clip(shape)
                         .background(background)

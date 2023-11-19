@@ -199,7 +199,7 @@ fun ToolkitScaffold(
                 }
                 Text(
                     text = title,
-                    style = MaterialTheme.typography.headlineSmall,
+                    style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.ExtraBold,
                     textAlign = TextAlign.Start,
                     maxLines = 1,

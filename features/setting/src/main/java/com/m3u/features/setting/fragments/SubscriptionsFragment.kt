@@ -55,7 +55,7 @@ internal fun SubscriptionsFragment(
     contentPadding: PaddingValues,
     title: String,
     url: String,
-    uri: Uri,
+    uriFactory: () -> Uri,
     localStorage: Boolean,
     mutedLivesFactory: MutedLivesFactory,
     onBanned: (Int) -> Unit,
@@ -140,7 +140,7 @@ internal fun SubscriptionsFragment(
                     )
                 } else {
                     LocalStorageButton(
-                        uri = uri,
+                        uriFactory = uriFactory,
                         openDocument = openDocument,
                     )
                 }
@@ -202,10 +202,11 @@ fun LocalStorageSwitch(
 
 @Composable
 private fun LocalStorageButton(
-    uri: Uri,
+    uriFactory: () -> Uri,
     openDocument: (Uri) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val uri = uriFactory()
     val context = LocalContext.current
     val selected = uri != Uri.EMPTY
     val theme = MaterialTheme.colorScheme

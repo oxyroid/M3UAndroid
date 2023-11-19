@@ -1,6 +1,5 @@
 package com.m3u.material.components
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
@@ -8,8 +7,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.LocalAbsoluteTonalElevation
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PlainTooltip
@@ -17,7 +18,6 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TooltipBox
 import androidx.compose.material3.TooltipDefaults
-import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -27,12 +27,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.capitalize
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextOverflow
-import com.m3u.material.ktx.animated
 import com.m3u.material.model.LocalSpacing
 
 @Composable
@@ -44,9 +45,7 @@ fun Preference(
     onClick: () -> Unit = {},
     trailingContent: @Composable () -> Unit = {}
 ) {
-    val theme = MaterialTheme.colorScheme
     var focus by remember { mutableStateOf(false) }
-    val actualBackgroundColor by theme.surface.animated("FoldPreferenceBackground")
 
     TooltipBox(
         state = rememberTooltipState(),
@@ -63,47 +62,46 @@ fun Preference(
             }
         }
     ) {
-        ListItem(
-            headlineContent = {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleMedium,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            },
-            supportingContent = {
-                if (subtitle != null) {
+        ElevatedCard(shape = RectangleShape) {
+            ListItem(
+                headlineContent = {
                     Text(
-                        text = subtitle.capitalize(Locale.current),
-                        style = MaterialTheme.typography.bodyMedium,
+                        text = title,
+                        style = MaterialTheme.typography.titleMedium,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier
-                            .let {
-                                if (focus) it.basicMarquee()
-                                else it
-                            }
                     )
-                }
-            },
-            trailingContent = trailingContent,
-            modifier = modifier
-                .fillMaxWidth()
-                .onFocusChanged {
-                    focus = it.hasFocus
-                }
-                .focusable()
-                .clickable(
-                    enabled = enabled,
-                    onClick = onClick,
-                    role = Role.Button
-                )
-                .background(actualBackgroundColor)
-                .padding(
-                    start = LocalSpacing.current.small
-                )
-        )
+                },
+                supportingContent = {
+                    if (subtitle != null) {
+                        Text(
+                            text = subtitle.capitalize(Locale.current),
+                            style = MaterialTheme.typography.bodyMedium,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier
+                                .let {
+                                    if (focus) it.basicMarquee()
+                                    else it
+                                }
+                        )
+                    }
+                },
+                trailingContent = trailingContent,
+                tonalElevation = LocalAbsoluteTonalElevation.current,
+                modifier = modifier
+                    .fillMaxWidth()
+                    .onFocusChanged {
+                        focus = it.hasFocus
+                    }
+                    .focusable()
+                    .clickable(
+                        enabled = enabled,
+                        onClick = onClick,
+                        role = Role.Button
+                    )
+            )
+        }
     }
 }
 
@@ -198,8 +196,7 @@ fun IconPreference(
             Icon(
                 imageVector = imageVector,
                 contentDescription = null,
-                tint = LocalContentColor.current.copy(alpha = 0.65f),
-                modifier = Modifier.minimumInteractiveComponentSize()
+                tint = LocalContentColor.current.copy(alpha = 0.65f)
             )
         }
     )
@@ -227,6 +224,7 @@ fun TextPreference(
                 text = content.uppercase(),
                 color = MaterialTheme.colorScheme.primary,
                 style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Bold,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.padding(

@@ -1,6 +1,5 @@
 package com.m3u.features.main.components
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
@@ -9,24 +8,22 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.DriveFileMove
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
+import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.m3u.material.components.OuterRow
-import com.m3u.material.ktx.animateColor
-import com.m3u.material.ktx.animateDp
 import com.m3u.material.ktx.animated
 import com.m3u.material.model.LocalSpacing
 
@@ -41,22 +38,11 @@ internal fun FeedItem(
 ) {
     val spacing = LocalSpacing.current
     val theme = MaterialTheme.colorScheme
-    val actualBackgroundColor by theme.surface.animated("FeedItemBackground")
     val actualContentColor by theme.onSurface.animated("FeedItemContent")
-    val actualBorderDp by animateDp("FeedItemBorder") {
-        if (local) spacing.extraSmall
-        else spacing.none
-    }
-    val actualBorderColor by animateColor("FeedItemBorderColor") {
-        if (local) Color.Black.copy(alpha = 0.12f)
-        else Color.Transparent
-    }
-    Surface(
+
+    OutlinedCard(
         shape = RoundedCornerShape(spacing.medium),
-        color = actualBackgroundColor,
-        contentColor = actualContentColor,
-        tonalElevation = spacing.none,
-        border = BorderStroke(actualBorderDp, actualBorderColor)
+        border = CardDefaults.outlinedCardBorder(local)
     ) {
         OuterRow(
             modifier = modifier

@@ -1,6 +1,5 @@
 package com.m3u.features.live.fragments
 
-import android.graphics.Rect
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.layout.Arrangement
@@ -38,6 +37,7 @@ import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import com.m3u.core.annotation.ClipMode
 import com.m3u.core.util.basic.isNotEmpty
+import com.m3u.features.live.LiveState
 import com.m3u.features.live.components.CoverPlaceholder
 import com.m3u.features.live.components.LiveMask
 import com.m3u.i18n.R.string
@@ -53,10 +53,7 @@ import com.m3u.ui.rememberPlayerState
 
 @Composable
 internal fun LiveFragment(
-    player: Player?,
-    playState: @Player.State Int,
-    videoSize: Rect,
-    playerError: PlaybackException?,
+    playerState: LiveState.PlayerState,
     title: String,
     feedTitle: String,
     url: String,
@@ -73,7 +70,6 @@ internal fun LiveFragment(
     onBackPressed: () -> Unit,
     onInstallMedia: (String) -> Unit,
     onUninstallMedia: () -> Unit,
-    muted: Boolean,
     onMuted: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -85,7 +81,7 @@ internal fun LiveFragment(
         Box(modifier) {
             val helper = LocalHelper.current
             val state = rememberPlayerState(
-                player = player,
+                player = playerState.player,
                 url = url,
                 clipMode = clipMode,
                 onInstallMedia = onInstallMedia,
@@ -97,7 +93,7 @@ internal fun LiveFragment(
                 modifier = Modifier.fillMaxSize()
             )
 
-            val shouldShowPlaceholder = cover.isNotEmpty() && videoSize.isEmpty
+            val shouldShowPlaceholder = cover.isNotEmpty() && playerState.videoSize.isEmpty
 
             CoverPlaceholder(
                 visible = shouldShowPlaceholder,
@@ -117,12 +113,12 @@ internal fun LiveFragment(
                     Spacer(modifier = Modifier.weight(1f))
                     MaskButton(
                         state = maskState,
-                        icon = if (muted) Icons.AutoMirrored.Rounded.VolumeOff
+                        icon = if (playerState.muted) Icons.AutoMirrored.Rounded.VolumeOff
                         else Icons.AutoMirrored.Rounded.VolumeUp,
                         onClick = onMuted,
-                        contentDescription = if (muted) stringResource(string.feat_live_tooltip_unmute)
+                        contentDescription = if (playerState.muted) stringResource(string.feat_live_tooltip_unmute)
                         else stringResource(string.feat_live_tooltip_mute),
-                        tint = if (muted) theme.error else Color.Unspecified
+                        tint = if (playerState.muted) theme.error else Color.Unspecified
                     )
                     MaskButton(
                         state = maskState,
@@ -144,7 +140,7 @@ internal fun LiveFragment(
                             contentDescription = if (recording) stringResource(string.feat_live_tooltip_unrecord)
                             else stringResource(string.feat_live_tooltip_record)
                         )
-                        if (playState != Player.STATE_IDLE) {
+                        if (playerState.playState != Player.STATE_IDLE) {
                             MaskButton(
                                 state = maskState,
                                 icon = Icons.Rounded.Cast,
@@ -153,12 +149,12 @@ internal fun LiveFragment(
                             )
                         }
                     }
-                    if (videoSize.isNotEmpty) {
+                    if (playerState.videoSize.isNotEmpty) {
                         MaskButton(
                             state = maskState,
                             icon = Icons.Rounded.PictureInPicture,
                             onClick = {
-                                helper.enterPipMode(videoSize)
+                                helper.enterPipMode(playerState.videoSize)
                                 maskState.sleep()
                             },
                             contentDescription = stringResource(string.feat_live_tooltip_enter_pip_mode)
@@ -205,9 +201,9 @@ internal fun LiveFragment(
                             modifier = Modifier.basicMarquee()
                         )
                         val playStateDisplayText =
-                            LiveFragmentDefaults.playStateDisplayText(playState)
+                            LiveFragmentDefaults.playStateDisplayText(playerState.playState)
                         val exceptionDisplayText =
-                            LiveFragmentDefaults.playbackExceptionDisplayText(playerError)
+                            LiveFragmentDefaults.playbackExceptionDisplayText(playerState.playerError)
                         if (playStateDisplayText.isNotEmpty() || exceptionDisplayText.isNotEmpty()) {
                             Spacer(
                                 modifier = Modifier.height(spacing.small)
@@ -238,8 +234,8 @@ internal fun LiveFragment(
                     }
                 }
             )
-            LaunchedEffect(playerError) {
-                if (playerError != null) {
+            LaunchedEffect(playerState.playerError) {
+                if (playerState.playerError != null) {
                     maskState.active()
                 }
             }

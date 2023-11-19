@@ -1,6 +1,7 @@
 package com.m3u.features.live
 
 import android.graphics.Rect
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.media3.common.PlaybackException
@@ -32,6 +33,7 @@ data class LiveState(
         val initialIndex: Int = 0
     ) : Init()
 
+    @Immutable
     data class PlayerState(
         val playState: @Player.State Int = Player.STATE_IDLE,
         val videoSize: Rect = Rect(),
