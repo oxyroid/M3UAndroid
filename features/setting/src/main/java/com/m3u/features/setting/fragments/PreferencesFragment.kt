@@ -209,7 +209,8 @@ internal fun PreferencesFragment(
                     ) {
                         CheckBoxPreference(
                             title = stringResource(string.feat_setting_cinema_mode).title(),
-                            subtitle = stringResource(string.feat_setting_cinema_mode_description).title(),
+                            subtitle = stringResource(string.feat_setting_not_implementation).title(),
+//                            subtitle = stringResource(string.feat_setting_cinema_mode_description).title(),
                             checked = cinemaMode,
                             enabled = false,
                             onCheckedChange = { newValue ->

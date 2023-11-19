@@ -6,16 +6,12 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.ColorScheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import com.m3u.androidApp.components.AppNavigation
 import com.m3u.androidApp.components.AppSnackHost
@@ -49,8 +45,6 @@ internal fun AppScaffold(
     isPlaying: Boolean,
     navigate: Navigate,
     modifier: Modifier = Modifier,
-    colorScheme: ColorScheme = if (!isSystemInDarkTheme()) dynamicLightColorScheme(LocalContext.current)
-    else dynamicDarkColorScheme(LocalContext.current),
     onBackPressed: (() -> Unit)? = null,
     content: @Composable (PaddingValues) -> Unit
 ) {
@@ -59,7 +53,7 @@ internal fun AppScaffold(
     val windowSizeClass = helper.windowSizeClass
     val useNavRail = windowSizeClass.widthSizeClass > WindowWidthSizeClass.Compact
 
-    M3ULocalProvider(colorScheme, helper) {
+    M3ULocalProvider(helper) {
         val scope = rememberCoroutineScope()
         val darkMode = when {
             cinemaMode -> true
