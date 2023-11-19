@@ -52,7 +52,7 @@ fun AppNavigation(
             ) {
                 Content(
                     navigate = navigate,
-                    destinations = destinations,
+                    destinationsFactory = { destinations },
                     rootDestination = rootDestination,
                     fob = fob,
                     selectedColor = selectedColor,
@@ -69,7 +69,7 @@ fun AppNavigation(
             ) {
                 Content(
                     navigate = navigate,
-                    destinations = destinations,
+                    destinationsFactory = { destinations },
                     rootDestination = rootDestination,
                     fob = fob,
                     selectedColor = selectedColor,
@@ -85,7 +85,7 @@ fun AppNavigation(
 @Composable
 private fun Content(
     navigate: Navigate,
-    destinations: List<Destination.Root>,
+    destinationsFactory: () -> List<Destination.Root>,
     rootDestination: Destination.Root?,
     fob: Fob?,
     selectedColor: Color,
@@ -94,6 +94,7 @@ private fun Content(
 ) {
     val relation = fob?.rootDestination
     val actualActiveDestination = rootDestination ?: relation
+    val destinations = destinationsFactory()
     destinations.forEach { default ->
         val fobbed = default == relation
         val selected = default == actualActiveDestination

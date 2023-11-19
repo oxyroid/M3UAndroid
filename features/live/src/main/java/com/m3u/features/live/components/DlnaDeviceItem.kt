@@ -18,7 +18,7 @@ import androidx.compose.material3.MaterialTheme
 
 @Composable
 internal fun DlnaDeviceItem(
-    device: Device<*, *, *>,
+    deviceFactory: () -> Device<*, *, *>,
     connected: Boolean,
     requestConnection: () -> Unit,
     loseConnection: () -> Unit,
@@ -29,7 +29,7 @@ internal fun DlnaDeviceItem(
 
     ListItem(
         headlineContent = {
-            Text(device.displayString)
+            Text(deviceFactory().displayString)
         },
         trailingContent = {
             Crossfade(connected, label = "icon") { connected ->

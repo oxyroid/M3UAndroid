@@ -1,6 +1,5 @@
 package com.m3u.features.live
 
-import android.graphics.Rect
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.pager.VerticalPager
@@ -20,8 +19,6 @@ import androidx.compose.ui.util.lerp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.media3.common.PlaybackException
-import androidx.media3.common.Player
 import com.m3u.core.annotation.ClipMode
 import com.m3u.core.unspecified.UBoolean
 import com.m3u.core.unspecified.unspecifiable
@@ -114,13 +111,9 @@ internal fun LiveRoute(
         onFavourite = { viewModel.onEvent(LiveEvent.OnFavourite(it)) },
         onBackPressed = onBackPressed,
         maskState = maskState,
-        player = playerState.player,
-        playState = playerState.playState,
-        videoSize = playerState.videoSize,
-        playerError = playerState.playerError,
+        playerState = playerState,
         onInstallMedia = { viewModel.onEvent(LiveEvent.InstallMedia(it)) },
         onUninstallMedia = { viewModel.onEvent(LiveEvent.UninstallMedia) },
-        muted = playerState.muted,
         onMuted = { viewModel.onEvent(LiveEvent.OnMuted) },
         modifier = modifier
     )
@@ -138,13 +131,9 @@ private fun LiveScreen(
     onBackPressed: () -> Unit,
     maskState: MaskState,
     experimentalMode: Boolean,
-    player: Player?,
-    playState: @Player.State Int,
-    videoSize: Rect,
-    playerError: PlaybackException?,
+    playerState: LiveState.PlayerState,
     onInstallMedia: (String) -> Unit,
     onUninstallMedia: () -> Unit,
-    muted: Boolean,
     onMuted: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -155,10 +144,7 @@ private fun LiveScreen(
             val url = live?.url.orEmpty()
             val favourite = live?.favourite ?: false
             LiveFragment(
-                player = player,
-                playState = playState,
-                videoSize = videoSize,
-                playerError = playerError,
+                playerState = playerState,
                 title = init.live?.title ?: "--",
                 url = url,
                 cover = init.live?.cover.orEmpty(),
@@ -175,7 +161,6 @@ private fun LiveScreen(
                 onBackPressed = onBackPressed,
                 onInstallMedia = onInstallMedia,
                 onUninstallMedia = onUninstallMedia,
-                muted = muted,
                 onMuted = onMuted,
                 modifier = modifier
                     .fillMaxSize()
@@ -197,10 +182,7 @@ private fun LiveScreen(
                 val url = live.url
                 val favourite = live.favourite
                 LiveFragment(
-                    player = player,
-                    playState = playState,
-                    videoSize = videoSize,
-                    playerError = playerError,
+                    playerState = playerState,
                     title = live.title,
                     feedTitle = init.feed?.title.orEmpty(),
                     url = url,
@@ -217,7 +199,6 @@ private fun LiveScreen(
                     onBackPressed = onBackPressed,
                     onInstallMedia = onInstallMedia,
                     onUninstallMedia = onUninstallMedia,
-                    muted = muted,
                     onMuted = onMuted,
                     modifier = Modifier
                         .fillMaxSize()
