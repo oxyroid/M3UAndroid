@@ -1,5 +1,4 @@
 # M3UAndroid
-![Player](docs/img/player.png)
 ![Tablet](docs/img/tablet.jpg)
 
 ### 📢 Translations Wanted 📢
@@ -13,13 +12,15 @@ Official:
 From PRs:
 - [Spanish](i18n/src/main/res/values-es-rES), thanks [@sguinetti](https://github.com/sguinetti/M3UAndroid)
 
-### Features
+### Features & Roadmap
 
-- [x] M3U and M3U8 files.
-- [x] HTTPS and RTMP stream.
-- [x] Android TV.
-- [ ] Android Car.
-- [x] DLNA Protocol.
+- [x] Playlist Management.
+- [x] Streaming media analysis capabilities.
+- [x] Android Tablet, Desktop adaptation.
+- [ ] Android TV, Car adaptation.
+- [x] DLNA screencast.
+- [ ] AirPlay screencast.
+- [ ] Steam segment recording.
 - [ ] Custom Script.
 - [x] i18n.
 - [ ] Multiplatform.
@@ -30,6 +31,7 @@ M3U is an app that attempts to use the latest libraries and tools. As a summary:
 
 - Entirely written in Kotlin.
 - UI completely written in Jetpack Compose.
+- Material3 design system.
 - Uses Kotlin Coroutines throughout.
 - Uses many of the Architecture Components, including: Room, Lifecycle, Navigation.
 - Uses Hilt for dependency injection.
@@ -47,13 +49,11 @@ beta packages**.
 
 View this [file](CONTRIBUTING.md) to learn about how to contribute this repository.
 
-Refer to the [file](RULES.md) to learn about the code style rules for this repository.
+Refer to the [file](RULES.md) to learn about the Code Specification of this repository.
 
-### About The Author
+### About
 
-I am a Chinese university student who is about to graduate and ~~eager to find a **job** in Android
-Software Development~~ work at [DiDi](https://github.com/didi),
-~~If you are interested in offering me a job~~
+I am a Chinese university student who is about to graduate and work at the [DiDi](https://github.com/didi) company,
 If you want to provide feedback, please contact [@sortBy](https://t.me/sortBy).
 
 ### License
