@@ -43,6 +43,7 @@ data class SettingState(
 
     var cinemaMode: Boolean by configuration.cinemaMode
 
+    var useDynamicColors: Boolean by configuration.useDynamicColors
 
     val actualUrl
         get() = if (localStorage) {

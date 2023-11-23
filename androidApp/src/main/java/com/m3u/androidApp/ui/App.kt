@@ -41,6 +41,7 @@ fun App(
     AppScaffold(
         title = title,
         snacker = snacker.value,
+        useDynamicColors = state.useDynamicColors,
         actionsFactory = { actions },
         rootDestination = rootDestination,
         fob = fob,

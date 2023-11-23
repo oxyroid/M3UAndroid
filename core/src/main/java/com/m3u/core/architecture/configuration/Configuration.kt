@@ -1,5 +1,7 @@
 package com.m3u.core.architecture.configuration
 
+import android.os.Build
+import androidx.annotation.ChecksSdkIntAtLeast
 import androidx.compose.runtime.MutableState
 import com.m3u.core.annotation.ClipMode
 import com.m3u.core.annotation.ConnectTimeout
@@ -31,6 +33,7 @@ interface Configuration {
 
     @ExperimentalConfiguration
     val cinemaMode: MutableState<Boolean>
+    val useDynamicColors: MutableState<Boolean>
 
     companion object {
         @FeedStrategy
@@ -52,6 +55,8 @@ interface Configuration {
         const val DEFAULT_INITIAL_ROOT_DESTINATION = 0
         const val DEFAULT_NO_PICTURE_MODE = true
         const val DEFAULT_CINEMA_MODE = false
+        @ChecksSdkIntAtLeast(api = Build.VERSION_CODES.S)
+        val DEFAULT_USE_DYNAMIC_COLORS = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
 
         const val FEED_STRATEGY = "feedStrategy"
         const val USE_COMMON_UI_MODE = "useCommonUIMode"
@@ -69,5 +74,6 @@ interface Configuration {
         const val INITIAL_ROOT_DESTINATION = "initialRootDestination"
         const val NO_PICTURE_MODE = "noPictureMode"
         const val CINEMA_MODE = "cinemaMode"
+        const val USE_DYNAMIC_COLORS = "use-dynamic-colors"
     }
 }

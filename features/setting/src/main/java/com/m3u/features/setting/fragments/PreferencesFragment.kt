@@ -26,6 +26,7 @@ import com.m3u.core.annotation.ConnectTimeout
 import com.m3u.core.annotation.FeedStrategy
 import com.m3u.core.annotation.OnClipMode
 import com.m3u.core.annotation.OnFeedStrategy
+import com.m3u.core.architecture.configuration.Configuration
 import com.m3u.core.util.basic.title
 import com.m3u.features.setting.NavigateToAbout
 import com.m3u.features.setting.NavigateToConsole
@@ -47,6 +48,8 @@ internal fun PreferencesFragment(
     @ClipMode clipMode: Int,
     useCommonUIMode: Boolean,
     useCommonUIModeEnable: Boolean,
+    useDynamicColors: Boolean,
+    onUseDynamicColors: () -> Unit,
     experimentalMode: Boolean,
     godMode: Boolean,
     scrollMode: Boolean,
@@ -172,6 +175,20 @@ internal fun PreferencesFragment(
                     onCheckedChange = { newValue ->
                         if (newValue != useCommonUIMode) {
                             onUIMode()
+                        }
+                    }
+                )
+                val dynamicColorsAvailable = Configuration.DEFAULT_USE_DYNAMIC_COLORS
+                CheckBoxPreference(
+                    title = stringResource(string.feat_setting_use_dynamic_colors).title(),
+                    subtitle = stringResource(string.feat_setting_use_dynamic_colors_unavailable)
+                        .title()
+                        .takeUnless { dynamicColorsAvailable },
+                    enabled = dynamicColorsAvailable,
+                    checked = useDynamicColors,
+                    onCheckedChange = { newValue ->
+                        if (newValue != useDynamicColors) {
+                            onUseDynamicColors()
                         }
                     }
                 )

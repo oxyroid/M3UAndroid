@@ -52,4 +52,6 @@
     <string name="feat_setting_local_storage">local storage</string>
     <string name="feat_setting_error_unselected_file">no file selected yet</string>
     <string name="feat_setting_error_blank_url">blank url</string>
+    <string name="feat_setting_use_dynamic_colors">dynamic colors</string>
+    <string name="feat_setting_use_dynamic_colors_unavailable">it is available on Android 12 and above</string>
 </resources>

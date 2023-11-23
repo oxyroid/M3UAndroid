@@ -3,8 +3,8 @@ package com.m3u.material.components
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.selection.toggleable
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
@@ -33,7 +33,7 @@ import androidx.compose.ui.text.capitalize
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextOverflow
-import com.m3u.material.model.LocalSpacing
+import androidx.compose.ui.unit.dp
 
 @Composable
 fun Preference(
@@ -64,7 +64,8 @@ fun Preference(
         ElevatedCard(
             shape = RectangleShape,
             enabled = enabled,
-            onClick = onClick
+            onClick = onClick,
+            elevation = CardDefaults.elevatedCardElevation(8.dp)
         ) {
             ListItem(
                 headlineContent = {
@@ -225,10 +226,7 @@ fun TextPreference(
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Bold,
                 maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.padding(
-                    horizontal = LocalSpacing.current.small
-                )
+                overflow = TextOverflow.Ellipsis
             )
         }
     )

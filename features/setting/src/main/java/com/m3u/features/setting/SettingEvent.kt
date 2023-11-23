@@ -16,4 +16,5 @@ sealed interface SettingEvent {
     data class OpenDocument(val uri: Uri = Uri.EMPTY) : SettingEvent
     data object ScrollDefaultDestination : SettingEvent
     data object OnLocalStorage : SettingEvent
+    data object OnUseDynamicColors : SettingEvent
 }

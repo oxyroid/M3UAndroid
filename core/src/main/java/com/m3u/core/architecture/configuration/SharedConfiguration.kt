@@ -24,6 +24,7 @@ import com.m3u.core.architecture.configuration.Configuration.Companion.DEFAULT_R
 import com.m3u.core.architecture.configuration.Configuration.Companion.DEFAULT_SCROLL_MODE
 import com.m3u.core.architecture.configuration.Configuration.Companion.DEFAULT_SSL_VERIFICATION
 import com.m3u.core.architecture.configuration.Configuration.Companion.DEFAULT_USE_COMMON_UI_MODE
+import com.m3u.core.architecture.configuration.Configuration.Companion.DEFAULT_USE_DYNAMIC_COLORS
 import com.m3u.core.architecture.configuration.Configuration.Companion.EXPERIMENTAL_MODE
 import com.m3u.core.architecture.configuration.Configuration.Companion.FEED_STRATEGY
 import com.m3u.core.architecture.configuration.Configuration.Companion.FULL_INFO_PLAYER
@@ -34,6 +35,7 @@ import com.m3u.core.architecture.configuration.Configuration.Companion.ROW_COUNT
 import com.m3u.core.architecture.configuration.Configuration.Companion.SCROLL_MODE
 import com.m3u.core.architecture.configuration.Configuration.Companion.SSL_VERIFICATION
 import com.m3u.core.architecture.configuration.Configuration.Companion.USE_COMMON_UI_MODE
+import com.m3u.core.architecture.configuration.Configuration.Companion.USE_DYNAMIC_COLORS
 import com.m3u.core.util.context.booleanAsState
 import com.m3u.core.util.context.intAsState
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -87,6 +89,8 @@ class SharedConfiguration @Inject constructor(
     @ExperimentalConfiguration
     override val cinemaMode: MutableState<Boolean> =
         sharedPreferences.booleanAsState(DEFAULT_CINEMA_MODE, CINEMA_MODE)
+    override val useDynamicColors: MutableState<Boolean> =
+        sharedPreferences.booleanAsState(DEFAULT_USE_DYNAMIC_COLORS, USE_DYNAMIC_COLORS)
 
     companion object {
         private const val SHARED_SETTINGS = "shared_settings"

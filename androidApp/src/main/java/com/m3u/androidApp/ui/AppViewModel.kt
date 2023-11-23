@@ -66,4 +66,5 @@ data class RootState(
 ) {
     var cinemaMode: Boolean by configuration.cinemaMode
     var initialRootDestination: Int by configuration.initialRootDestination
+    var useDynamicColors: Boolean by configuration.useDynamicColors
 }

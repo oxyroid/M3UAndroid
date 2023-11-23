@@ -63,6 +63,7 @@ class SettingViewModel @Inject constructor(
             is SettingEvent.ImportJavaScript -> importJavaScript(event.uri)
             SettingEvent.OnLocalStorage -> onLocalStorage()
             is SettingEvent.OpenDocument -> openDocument(event.uri)
+            SettingEvent.OnUseDynamicColors -> onUseDynamicColors()
         }
     }
 
@@ -196,5 +197,10 @@ class SettingViewModel @Inject constructor(
                 localStorage = !it.localStorage
             )
         }
+    }
+
+    private fun onUseDynamicColors() {
+        val newValue = !readable.useDynamicColors
+        readable.useDynamicColors = newValue
     }
 }

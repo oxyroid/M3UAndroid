@@ -35,6 +35,7 @@ import kotlin.time.Duration.Companion.milliseconds
 internal fun AppScaffold(
     title: String,
     snacker: String,
+    useDynamicColors: Boolean,
     actionsFactory: ActionsFactory,
     rootDestination: Destination.Root?,
     fob: Fob?,
@@ -53,7 +54,10 @@ internal fun AppScaffold(
     val windowSizeClass = helper.windowSizeClass
     val useNavRail = windowSizeClass.widthSizeClass > WindowWidthSizeClass.Compact
 
-    M3ULocalProvider(helper) {
+    M3ULocalProvider(
+        helper = helper,
+        useDynamicColors = useDynamicColors
+    ) {
         val scope = rememberCoroutineScope()
         val darkMode = when {
             cinemaMode -> true

@@ -56,4 +56,6 @@
     <string name="feat_setting_local_storage">本地导入</string>
     <string name="feat_setting_error_unselected_file">还未选择文件</string>
     <string name="feat_setting_error_blank_url">目标地址为空</string>
+    <string name="feat_setting_use_dynamic_colors">动态配色</string>
+    <string name="feat_setting_use_dynamic_colors_unavailable">仅在 Android 12 及更高版本可用</string>
 </resources>
