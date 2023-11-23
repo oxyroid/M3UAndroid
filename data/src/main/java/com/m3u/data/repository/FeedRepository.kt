@@ -30,6 +30,11 @@ fun FeedRepository.refresh(
 ): Flow<Process<Unit>> = channelFlow {
     try {
         val feed = get(url) ?: error("Cannot find feed: $url")
+        if (feed.local) {
+            // refreshing is not needed for local storage feed.
+            send(Process.Success(Unit))
+            return@channelFlow
+        }
         subscribe(feed.title, url, strategy)
             .onEach(::send)
             .launchIn(this)
