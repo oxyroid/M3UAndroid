@@ -4,12 +4,8 @@ import androidx.lifecycle.ViewModel
 import com.m3u.core.wrapper.Circuit
 import com.m3u.core.wrapper.Event
 import com.m3u.core.wrapper.Message
-import com.m3u.core.wrapper.Percent
-import com.m3u.core.wrapper.Process
-import com.m3u.core.wrapper.Resource
 import com.m3u.core.wrapper.eventOf
 import com.m3u.core.wrapper.handledEvent
-import com.m3u.core.wrapper.pt
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -33,30 +29,6 @@ abstract class BaseViewModel<S, in E, M : Message>(
     val message: StateFlow<Event<M>> = _message.asStateFlow()
     fun onMessage(message: M) {
         _message.update { eventOf(message) }
-    }
-}
-
-fun <T> Resource<T>.circuit(): Circuit<T> {
-    return when (this) {
-        is Resource.Success -> Circuit(data = { data })
-        is Resource.Failure -> Circuit(message = { message })
-        else -> Circuit()
-    }
-}
-
-fun <T> Process<T>.circuit(): Circuit<T> {
-    return when (this) {
-        is Process.Success -> Circuit(data = { data })
-        is Process.Failure -> Circuit(message = { message })
-        is Process.Loading -> Circuit()
-    }
-}
-
-fun Process<*>.percentCircuit(): Circuit<Percent> {
-    return when (this) {
-        is Process.Success -> Circuit(data = { 100.pt })
-        is Process.Failure -> Circuit(message = { message })
-        is Process.Loading -> Circuit(data = { value })
     }
 }
 

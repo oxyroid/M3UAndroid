@@ -25,6 +25,14 @@ sealed class Resource<out T> {
     ) : Resource<T>()
 }
 
+fun <T> Resource<T>.circuit(): Circuit<T> {
+    return when (this) {
+        is Resource.Success -> Circuit(data = { data })
+        is Resource.Failure -> Circuit(message = { message })
+        else -> Circuit()
+    }
+}
+
 @OptIn(ExperimentalTypeInference::class)
 fun <T> resourceFlow(@BuilderInference block: suspend FlowCollector<Resource<T>>.() -> Unit) =
     flow {

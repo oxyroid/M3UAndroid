@@ -5,10 +5,10 @@ import com.m3u.core.architecture.Logger
 import com.m3u.core.architecture.configuration.Configuration
 import com.m3u.core.architecture.viewmodel.BaseViewModel
 import com.m3u.core.architecture.viewmodel.catch
-import com.m3u.core.architecture.viewmodel.circuit
 import com.m3u.core.architecture.viewmodel.map
 import com.m3u.core.architecture.viewmodel.onEach
 import com.m3u.core.wrapper.Process
+import com.m3u.core.wrapper.circuit
 import com.m3u.core.wrapper.eventOf
 import com.m3u.data.repository.FeedRepository
 import com.m3u.data.repository.LiveRepository
