@@ -1,4 +1,6 @@
 # M3UAndroid
+![Player](docs/img/player.png)
+![Player](docs/img/main.jpg)
 ![Tablet](docs/img/tablet.jpg)
 
 ### 📢 Translations Wanted 📢
