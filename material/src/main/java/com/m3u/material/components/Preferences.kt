@@ -1,7 +1,6 @@
 package com.m3u.material.components
 
 import androidx.compose.foundation.basicMarquee
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -62,7 +61,11 @@ fun Preference(
             }
         }
     ) {
-        ElevatedCard(shape = RectangleShape) {
+        ElevatedCard(
+            shape = RectangleShape,
+            enabled = enabled,
+            onClick = onClick
+        ) {
             ListItem(
                 headlineContent = {
                     Text(
@@ -95,11 +98,6 @@ fun Preference(
                         focus = it.hasFocus
                     }
                     .focusable()
-                    .clickable(
-                        enabled = enabled,
-                        onClick = onClick,
-                        role = Role.Button
-                    )
             )
         }
     }
@@ -118,7 +116,8 @@ fun CheckBoxPreference(
         .toggleable(
             value = checked,
             onValueChange = { onCheckedChange(it) },
-            role = Role.Checkbox
+            role = Role.Checkbox,
+            enabled = enabled
         )
         .then(modifier)
     Preference(

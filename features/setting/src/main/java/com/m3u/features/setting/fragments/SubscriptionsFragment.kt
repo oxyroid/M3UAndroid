@@ -192,7 +192,7 @@ fun LocalStorageSwitch(
         horizontalArrangement = Arrangement.spacedBy(spacing.medium)
     ) {
         Text(
-            text = stringResource(string.feat_setting_local_storage),
+            text = stringResource(string.feat_setting_local_storage).uppercase(),
             style = MaterialTheme.typography.titleSmall,
             modifier = Modifier.weight(1f)
         )
