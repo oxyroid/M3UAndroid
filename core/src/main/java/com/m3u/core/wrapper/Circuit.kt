@@ -1,5 +1,11 @@
 package com.m3u.core.wrapper
 
+/**
+ * flow-style data-message object wrapper.
+ * @see Resource.circuit
+ * @see Process.circuit
+ * @see Process.percentCircuit
+ */
 class Circuit<T>(
     val data: () -> T? = { null },
     val message: () -> String? = { null }
