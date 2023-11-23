@@ -2,23 +2,24 @@ package com.m3u.material.ktx
 
 import androidx.compose.foundation.border
 import androidx.compose.foundation.interaction.InteractionSource
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.composed
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.Dp
 import com.m3u.material.model.LocalSpacing
-import androidx.compose.material3.MaterialTheme
 
+@Composable
 fun Modifier.interaction(
     type: InteractionType,
     source: InteractionSource,
-    block: @Composable Modifier.(visible: Boolean) -> Modifier
-): Modifier = composed { block(type.visibleIn(source)) }
+    factory: @Composable Modifier.(visible: Boolean) -> Modifier
+): Modifier = this then factory(type.visibleIn(source))
 
+@Composable
 fun Modifier.interactionBorder(
     type: InteractionType,
     source: InteractionSource,
@@ -26,12 +27,12 @@ fun Modifier.interactionBorder(
     width: Dp = Dp.Unspecified,
     shape: Shape = RectangleShape
 ): Modifier = interaction(type, source) { visible ->
-    val actualColor = color.ifUnspecified { MaterialTheme.colorScheme.primary }
-    val actualDp = width.ifUnspecified { LocalSpacing.current.extraSmall }
-    val currentColor by animateColor("BorderEffectColor") {
+    val actualColor = color.ifUnspecified { InteractionDefaults.BorderColor }
+    val actualDp = width.ifUnspecified { InteractionDefaults.BorderWidth }
+    val currentColor by animateColor("interaction-border-color") {
         if (visible) actualColor else Color.Transparent
     }
-    val currentWidth by animateDp("BorderEffectWidth") {
+    val currentWidth by animateDp("interaction-border-width") {
         if (visible) actualDp else Dp.Hairline
     }
     border(
@@ -39,4 +40,9 @@ fun Modifier.interactionBorder(
         color = currentColor,
         shape = shape
     )
+}
+
+private object InteractionDefaults {
+    val BorderColor @Composable get() = MaterialTheme.colorScheme.primary
+    val BorderWidth @Composable get() = LocalSpacing.current.extraSmall
 }
