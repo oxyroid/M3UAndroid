@@ -12,7 +12,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.data.database.entity.Feed
@@ -21,11 +20,11 @@ import com.m3u.features.main.components.MainDialog
 import com.m3u.features.main.components.OnRename
 import com.m3u.features.main.components.OnUnsubscribe
 import com.m3u.features.main.model.FeedDetail
-import com.m3u.i18n.R
 import com.m3u.material.components.Background
 import com.m3u.material.ktx.interceptVolumeEvent
 import com.m3u.ui.EventHandler
 import com.m3u.ui.LocalHelper
+import com.m3u.ui.MessageEventHandler
 import com.m3u.ui.ResumeEvent
 
 typealias NavigateToFeed = (feed: Feed) -> Unit
@@ -38,7 +37,6 @@ fun MainRoute(
     modifier: Modifier = Modifier,
     viewModel: MainViewModel = hiltViewModel()
 ) {
-    val context = LocalContext.current
     val helper = LocalHelper.current
     val message by viewModel.message.collectAsStateWithLifecycle()
     val state: MainState by viewModel.state.collectAsStateWithLifecycle()
@@ -48,12 +46,8 @@ fun MainRoute(
         state.rowCount = target
     }
 
-    EventHandler(message) {
-        when (it) {
-            MainMessage.ErrorCannotUnsubscribe -> context.getString(R.string.feat_main_error_unsubscribe_feed)
-        }
-            .let(helper::snake)
-    }
+    MessageEventHandler(message)
+
     EventHandler(resume) {
         helper.actions = emptyList()
     }

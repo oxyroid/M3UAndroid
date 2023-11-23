@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.m3u.core.architecture.Logger
 import com.m3u.core.architecture.configuration.Configuration
 import com.m3u.core.architecture.viewmodel.BaseViewModel
+import com.m3u.core.wrapper.EmptyMessage
 import com.m3u.data.repository.FeedRepository
 import com.m3u.data.repository.LiveRepository
 import com.m3u.data.service.PlayerManager
@@ -39,7 +40,7 @@ class LiveViewModel @Inject constructor(
     private val logger: Logger,
     @Logger.Ui private val uiLogger: Logger,
     private val application: Application
-) : BaseViewModel<LiveState, LiveEvent, Unit>(
+) : BaseViewModel<LiveState, LiveEvent, EmptyMessage>(
     emptyState = LiveState(
         configuration = configuration
     )

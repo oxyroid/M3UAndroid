@@ -113,7 +113,6 @@ class SettingViewModel @Inject constructor(
         readable.experimentalMode = newValue
     }
 
-
     private fun onConnectTimeout() {
         val newValue = when (readable.connectTimeout) {
             ConnectTimeout.LONG -> ConnectTimeout.SHORT

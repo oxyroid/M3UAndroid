@@ -4,14 +4,18 @@ import androidx.lifecycle.viewModelScope
 import com.m3u.core.architecture.Logger
 import com.m3u.core.architecture.configuration.Configuration
 import com.m3u.core.architecture.viewmodel.BaseViewModel
+import com.m3u.core.architecture.viewmodel.catch
+import com.m3u.core.architecture.viewmodel.circuit
+import com.m3u.core.architecture.viewmodel.map
+import com.m3u.core.architecture.viewmodel.onEach
 import com.m3u.core.wrapper.Process
-import com.m3u.core.wrapper.Resource
 import com.m3u.core.wrapper.eventOf
 import com.m3u.data.repository.FeedRepository
 import com.m3u.data.repository.LiveRepository
 import com.m3u.data.repository.MediaRepository
 import com.m3u.data.repository.observeAll
 import com.m3u.data.repository.refresh
+import com.m3u.features.feed.FeedMessage.LiveCoverSaved
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -66,7 +70,8 @@ class FeedViewModel @Inject constructor(
     }
 
     private fun CoroutineScope.observeFeedDetail(feedUrl: String) {
-        feedRepository.observe(feedUrl)
+        feedRepository
+            .observe(feedUrl)
             .onEach { feed ->
                 if (feed != null) {
                     writable.update {
@@ -103,27 +108,16 @@ class FeedViewModel @Inject constructor(
 
     private fun refresh() {
         val url = readable.url
-        feedRepository.refresh(url, readable.strategy)
-            .onEach { progress ->
-                writable.update {
-                    when (progress) {
-                        is Process.Loading -> it.copy(
-                            fetching = true
-                        )
-
-                        is Process.Success -> it.copy(
-                            fetching = false
-                        )
-
-                        is Process.Failure -> {
-                            val message = progress.message.orEmpty()
-                            logger.log(message)
-
-                            it.copy(
-                                fetching = false
-                            )
-                        }
-                    }
+        feedRepository
+            .refresh(url, readable.strategy)
+            .onEach { process ->
+                writable.update { prev ->
+                    process
+                        .circuit()
+                        .catch { logger.log(it) }
+                    prev.copy(
+                        fetching = process is Process.Loading
+                    )
                 }
             }
             .launchIn(viewModelScope)
@@ -151,27 +145,23 @@ class FeedViewModel @Inject constructor(
             val live = liveRepository.get(id)
             if (live == null) {
                 onMessage(FeedMessage.LiveNotFound)
-            } else {
-                val url = live.cover
-                if (url.isNullOrEmpty()) {
-                    onMessage(FeedMessage.LiveCoverNotFound)
-                } else {
-                    mediaRepository.savePicture(url)
-                        .onEach { resource ->
-                            when (resource) {
-                                Resource.Loading -> {}
-                                is Resource.Success -> onMessage(
-                                    FeedMessage.LiveCoverSaved(
-                                        resource.data.absolutePath
-                                    )
-                                )
-
-                                is Resource.Failure -> logger.log(resource.message.orEmpty())
-                            }
-                        }
-                        .launchIn(this)
-                }
+                return@launch
             }
+            val url = live.cover
+            if (url.isNullOrEmpty()) {
+                onMessage(FeedMessage.LiveCoverNotFound)
+                return@launch
+            }
+            mediaRepository
+                .savePicture(url)
+                .onEach { resource ->
+                    resource
+                        .circuit()
+                        .map { LiveCoverSaved(absolutePath) }
+                        .onEach { onMessage(it) }
+                        .catch { logger.log(it) }
+                }
+                .launchIn(this)
         }
     }
 

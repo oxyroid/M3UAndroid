@@ -5,6 +5,7 @@ import androidx.compose.runtime.setValue
 import com.m3u.core.architecture.configuration.Configuration
 import com.m3u.core.architecture.configuration.ExperimentalConfiguration
 import com.m3u.core.architecture.viewmodel.BaseViewModel
+import com.m3u.core.wrapper.EmptyMessage
 import com.m3u.core.wrapper.Event
 import com.m3u.core.wrapper.eventOf
 import com.m3u.core.wrapper.handledEvent
@@ -21,7 +22,7 @@ import javax.inject.Inject
 class AppViewModel @Inject constructor(
     configuration: Configuration,
     uiService: UiService
-) : BaseViewModel<RootState, Unit, Unit>(
+) : BaseViewModel<RootState, Unit, EmptyMessage>(
     emptyState = RootState(
         configuration = configuration
     )

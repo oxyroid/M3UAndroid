@@ -6,6 +6,7 @@ import com.m3u.core.architecture.Publisher
 import com.m3u.core.architecture.execute
 import com.m3u.core.architecture.viewmodel.BaseViewModel
 import com.m3u.core.util.collections.indexOf
+import com.m3u.core.wrapper.EmptyMessage
 import com.m3u.data.api.GithubApi
 import com.m3u.features.about.model.Contributor
 import com.m3u.features.about.model.toContributor
@@ -26,7 +27,7 @@ class AboutViewModel @Inject constructor(
     private val client: OkHttpClient,
     @Publisher.App private val publisher: Publisher,
     private val logger: Logger
-) : BaseViewModel<Unit, Unit, Unit>(Unit) {
+) : BaseViewModel<Unit, Unit, EmptyMessage>(Unit) {
     private val _contributors: MutableStateFlow<List<Contributor>> =
         MutableStateFlow(emptyList())
     internal val contributors: StateFlow<List<Contributor>> = _contributors.asStateFlow()

@@ -57,7 +57,6 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.capitalize
@@ -89,6 +88,7 @@ import com.m3u.ui.Destination
 import com.m3u.ui.EventHandler
 import com.m3u.ui.Fob
 import com.m3u.ui.LocalHelper
+import com.m3u.ui.MessageEventHandler
 import com.m3u.ui.isAtTop
 import com.m3u.ui.repeatOnLifecycle
 import kotlinx.coroutines.launch
@@ -110,7 +110,6 @@ internal fun FeedRoute(
     modifier: Modifier = Modifier,
     viewModel: FeedViewModel = hiltViewModel()
 ) {
-    val context = LocalContext.current
     val helper = LocalHelper.current
     val state by viewModel.state.collectAsStateWithLifecycle()
     val message by viewModel.message.collectAsStateWithLifecycle()
@@ -118,27 +117,13 @@ internal fun FeedRoute(
     val writeExternalPermissionState = rememberPermissionState(
         Manifest.permission.WRITE_EXTERNAL_STORAGE
     )
-    EventHandler(message) {
-        when (it) {
-            FeedMessage.FeedUrlNotFound -> context.getString(string.feat_feed_error_feed_url_not_found)
-            FeedMessage.LiveCoverNotFound -> context.getString(string.feat_feed_error_live_cover_not_found)
-            FeedMessage.LiveNotFound -> context.getString(string.feat_feed_error_live_not_found)
-            is FeedMessage.LiveCoverSaved -> context.getString(
-                string.feat_feed_success_save_cover,
-                it.path
-            )
 
-            is FeedMessage.FeedNotFound -> context.getString(
-                string.feat_feed_error_feed_not_found,
-                it.feedUrl
-            )
-        }
-            .let(helper::snake)
-    }
+    MessageEventHandler(message)
 
     LaunchedEffect(feedUrl) {
         viewModel.onEvent(FeedEvent.Observe(feedUrl))
     }
+
     helper.repeatOnLifecycle {
         actions = listOf(
             Action(
@@ -150,6 +135,7 @@ internal fun FeedRoute(
             )
         )
     }
+
     LaunchedEffect(state.autoRefresh, state.url) {
         if (state.url.isNotEmpty() && state.autoRefresh) {
             viewModel.onEvent(FeedEvent.Refresh)

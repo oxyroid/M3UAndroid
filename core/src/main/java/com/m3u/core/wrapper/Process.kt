@@ -5,25 +5,24 @@ import kotlinx.coroutines.flow.flow
 import kotlin.experimental.ExperimentalTypeInference
 
 sealed class Process<out T> {
-    data class Loading(val value: ProcessValue) : Process<Nothing>()
+    data class Loading(val value: Percent) : Process<Nothing>()
     data class Success<out T>(val data: T) : Process<T>()
     data class Failure<out T>(val message: String?) : Process<T>()
 }
 
 @JvmInline
-value class ProcessValue(val value: Int) {
+value class Percent(val value: Int) {
     init {
         check(value in 0..100)
     }
 }
 
-context(FlowCollector<Process<T>>)
-val <T> Int.process: ProcessValue get() = ProcessValue(this)
+val Int.pt: Percent get() = Percent(this)
 
 @OptIn(ExperimentalTypeInference::class)
 fun <T> processFlow(@BuilderInference block: suspend FlowCollector<Process<T>>.() -> Unit) =
-    flow<Process<T>> {
-        emit(Process.Loading(0.process))
+    flow {
+        emit(Process.Loading(0.pt))
         block()
     }
 

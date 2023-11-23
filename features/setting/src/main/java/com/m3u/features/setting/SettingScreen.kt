@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Settings
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
@@ -29,7 +30,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -43,14 +43,13 @@ import com.m3u.features.setting.fragments.MutedLivesFactory
 import com.m3u.features.setting.fragments.PreferencesFragment
 import com.m3u.features.setting.fragments.ScriptsFragment
 import com.m3u.features.setting.fragments.SubscriptionsFragment
-import com.m3u.i18n.R.string
 import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.Destination
 import com.m3u.ui.EventHandler
 import com.m3u.ui.Fob
 import com.m3u.ui.LocalHelper
+import com.m3u.ui.MessageEventHandler
 import com.m3u.ui.ResumeEvent
-import androidx.compose.material3.MaterialTheme
 
 typealias NavigateToConsole = () -> Unit
 typealias NavigateToAbout = () -> Unit
@@ -67,21 +66,12 @@ fun SettingRoute(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val message by viewModel.message.collectAsStateWithLifecycle()
     val helper = LocalHelper.current
-    val context = LocalContext.current
 
     EventHandler(resume) {
         helper.actions = emptyList()
     }
-    EventHandler(message) { value ->
-        when (value) {
-            SettingMessage.EmptyTitle -> string.feat_setting_error_empty_title
-            SettingMessage.EmptyUrl -> string.feat_setting_error_blank_url
-            SettingMessage.EmptyFile -> string.feat_setting_error_unselected_file
-            SettingMessage.Enqueued -> string.feat_setting_enqueue_subscribe
-        }
-            .let(context::getString)
-            .let(helper::snake)
-    }
+
+    MessageEventHandler(message)
 
     val configuration = LocalConfiguration.current
     val type = configuration.uiMode and Configuration.UI_MODE_TYPE_MASK

@@ -15,7 +15,7 @@ import com.m3u.core.wrapper.Process
 import com.m3u.core.wrapper.emitException
 import com.m3u.core.wrapper.emitMessage
 import com.m3u.core.wrapper.emitResource
-import com.m3u.core.wrapper.process
+import com.m3u.core.wrapper.pt
 import com.m3u.core.wrapper.processFlow
 import com.m3u.data.database.dao.FeedDao
 import com.m3u.data.database.dao.LiveDao
@@ -71,7 +71,7 @@ class FeedRepositoryImpl @Inject constructor(
                 lives = lives,
                 strategy = strategy
             ) { value ->
-                emit(Process.Loading(value.process))
+                emit(Process.Loading(value.pt))
             }
 
             emitResource(Unit)
