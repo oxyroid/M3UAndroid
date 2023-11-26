@@ -13,6 +13,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      - permissions: write-all
       - uses: actions/checkout@v3
       - name: Create a Release
         uses: elgohr/Github-Release-Action@v5
