@@ -37,7 +37,6 @@ include(
     ":features:about"
 )
 include(":benchmark")
-include(":lint")
 include(":i18n")
 include(":ui")
 include(":dlna")

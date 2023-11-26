@@ -33,8 +33,6 @@ android {
 }
 
 dependencies {
-    lintPublish(project(":lint"))
-    lintChecks(project(":lint"))
     api(project(":i18n"))
 
     implementation(libs.androidx.core.core.ktx)
