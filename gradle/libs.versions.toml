@@ -74,6 +74,8 @@ androidx-compose-material3-material3-window-size-clazz = { group = "androidx.com
 androidx-tv-tv-foundation = { group = "androidx.tv", name = "tv-foundation", version.ref = "androidx-tv" }
 androidx-tv-tv-material = { group = "androidx.tv", name = "tv-material", version.ref = "androidx-tv" }
 
+androidx-compose-ui-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4", version.ref = "androidx-compose" }
+
 com-google-dagger-hilt-android = { group = "com.google.dagger", name = "hilt-android", version.ref = "google-dagger" }
 com-google-dagger-hilt-compiler = { group = "com.google.dagger", name = "hilt-compiler", version.ref = "google-dagger" }
 

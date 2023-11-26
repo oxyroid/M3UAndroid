@@ -29,14 +29,15 @@
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/ui_app_name"
+        android:requestLegacyExternalStorage="true"
         android:supportsRtl="true"
         android:theme="@style/Theme.M3U.Starting"
         android:usesCleartextTraffic="true"
-        android:requestLegacyExternalStorage="true"
         tools:targetApi="32">
         <profileable
             android:shell="true"
             tools:targetApi="29" />
+
         <activity
             android:name=".MainActivity"
             android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation|locale|layoutDirection"
@@ -57,7 +58,8 @@
             android:label="@string/app_label_crash"
             android:launchMode="singleInstance" />
 
-        <service android:name="com.m3u.dlna.DLNACastService"/>
+        <service android:name="com.m3u.dlna.DLNACastService" />
+
         <provider
             android:name="androidx.startup.InitializationProvider"
             android:authorities="${applicationId}.androidx-startup"

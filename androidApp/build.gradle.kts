@@ -92,6 +92,9 @@ dependencies {
     implementation(libs.androidx.hilt.hilt.work)
 
     debugImplementation(libs.com.squareup.leakcanary.leakcanary.android)
+
+    // https://raw.githubusercontent.com/imDazui/Tvlist-awesome-m3u-m3u8/master/m3u/全国景区源.m3u8
+    androidTestImplementation(libs.androidx.compose.ui.ui.test.junit4)
 }
 
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {

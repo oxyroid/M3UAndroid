@@ -22,6 +22,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import com.m3u.core.util.basic.title
@@ -197,7 +198,8 @@ private fun RowScope.Content(
                     style = MaterialTheme.typography.labelSmall,
                     fontWeight = FontWeight.Bold
                 )
-            }
+            },
+            modifier = Modifier.testTag("destination")
         )
     }
 }
@@ -226,7 +228,7 @@ private fun RailItem(
             selected = selected,
             onClick = onClick,
             icon = icon,
-            modifier = modifier,
+            modifier = modifier.testTag("destination"),
             enabled = enabled,
             label = label,
             alwaysShowLabel = false,
