@@ -71,7 +71,6 @@ class MainActivity : ComponentActivity() {
         installSplashScreen()
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
-        lifecycleScope.launch { }
         setContent {
             App(
                 appState = rememberAppState(

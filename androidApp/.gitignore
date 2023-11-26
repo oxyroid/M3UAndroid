@@ -1,6 +1,4 @@
 /build
 *.apk
-/src/test
-/src/androidTest
 /release
 /debug

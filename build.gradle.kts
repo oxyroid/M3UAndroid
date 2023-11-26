@@ -33,7 +33,6 @@ subprojects {
             freeCompilerArgs += "-opt-in=androidx.compose.foundation.ExperimentalFoundationApi"
             freeCompilerArgs += "-opt-in=androidx.compose.foundation.layout.ExperimentalLayoutApi"
             freeCompilerArgs += "-opt-in=androidx.compose.material3.ExperimentalMaterial3Api"
-            freeCompilerArgs += "-opt-in=androidx.media3.common.util.UnstableApi"
             freeCompilerArgs += "-opt-in=androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi"
         }
     }
