@@ -20,4 +20,4 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
         with:
-          title: ${{ github.event.head_commit.message }}
+          title: ${{ github.event.workflow_run.head_commit.message }}
