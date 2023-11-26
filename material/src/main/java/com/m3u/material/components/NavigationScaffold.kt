@@ -24,59 +24,55 @@ fun NavigationScaffold(
     navigation: @Composable () -> Unit,
     content: @Composable () -> Unit
 ) {
-    when {
-        useNavRail -> {
-            Row(
-                modifier = Modifier.fillMaxSize(),
-                horizontalArrangement = Arrangement.Start,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                AnimatedContent(
-                    targetState = visible,
-                    transitionSpec = {
-                        slideInHorizontally { -it } togetherWith slideOutHorizontally { -it }
-                    },
-                    label = "AppBottomSheet",
-                    modifier = Modifier.fillMaxHeight(),
-                ) { visible ->
-                    if (visible) {
-                        navigation()
-                    }
-                }
-                Box(
-                    modifier = Modifier
-                        .fillMaxHeight()
-                        .weight(1f)
-                ) {
-                    content()
+    if (useNavRail) {
+        Row(
+            modifier = Modifier.fillMaxSize(),
+            horizontalArrangement = Arrangement.Start,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            AnimatedContent(
+                targetState = visible,
+                transitionSpec = {
+                    slideInHorizontally { -it } togetherWith slideOutHorizontally { -it }
+                },
+                label = "navigation",
+                modifier = Modifier.fillMaxHeight(),
+            ) { visible ->
+                if (visible) {
+                    navigation()
                 }
             }
-        }
-
-        else -> {
-            Column(
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.Bottom,
-                horizontalAlignment = Alignment.CenterHorizontally
+            Box(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .weight(1f)
             ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f)
-                ) {
-                    content()
-                }
-                AnimatedContent(
-                    targetState = visible,
-                    transitionSpec = {
-                        slideInVertically { it } togetherWith slideOutVertically { it }
-                    },
-                    label = "AppBottomSheet",
-                    modifier = Modifier.fillMaxWidth(),
-                ) { visible ->
-                    if (visible) {
-                        navigation()
-                    }
+                content()
+            }
+        }
+    } else {
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.Bottom,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+            ) {
+                content()
+            }
+            AnimatedContent(
+                targetState = visible,
+                transitionSpec = {
+                    slideInVertically { it } togetherWith slideOutVertically { it }
+                },
+                label = "navigation",
+                modifier = Modifier.fillMaxWidth(),
+            ) { visible ->
+                if (visible) {
+                    navigation()
                 }
             }
         }

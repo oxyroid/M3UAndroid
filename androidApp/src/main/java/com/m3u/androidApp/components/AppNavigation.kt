@@ -2,9 +2,13 @@ package com.m3u.androidApp.components
 
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.NavigationRail
 import androidx.compose.material3.NavigationRailItem
 import androidx.compose.material3.NavigationRailItemDefaults
@@ -50,7 +54,7 @@ fun AppNavigation(
                 containerColor = actualBackgroundColor,
                 contentColor = actualContentColor
             ) {
-                Content(
+                RailContent(
                     navigate = navigate,
                     destinationsFactory = { destinations },
                     rootDestination = rootDestination,
@@ -80,10 +84,8 @@ fun AppNavigation(
     }
 }
 
-// invoked in column or row scopes only!
-// BottomAppBar, NavigationRail etc.
 @Composable
-private fun Content(
+private fun ColumnScope.RailContent(
     navigate: Navigate,
     destinationsFactory: () -> List<Destination.Root>,
     rootDestination: Destination.Root?,
@@ -105,7 +107,7 @@ private fun Content(
             if (fobbed) fobbedColor else selectedColor
         }
 
-        NavigationBarItem(
+        RailItem(
             selected = selected,
             onClick = {
                 if (fobbed && fob != null) {
@@ -141,7 +143,67 @@ private fun Content(
 }
 
 @Composable
-private fun NavigationBarItem(
+private fun RowScope.Content(
+    navigate: Navigate,
+    destinationsFactory: () -> List<Destination.Root>,
+    rootDestination: Destination.Root?,
+    fob: Fob?,
+    selectedColor: Color,
+    fobbedColor: Color,
+    modifier: Modifier = Modifier
+) {
+    val relation = fob?.rootDestination
+    val actualActiveDestination = rootDestination ?: relation
+    val destinations = destinationsFactory()
+    destinations.forEach { default ->
+        val fobbed = default == relation
+        val selected = default == actualActiveDestination
+        val iconTextId = default.iconTextId
+        val selectedIcon = fob?.icon.takeIf { fobbed } ?: default.selectedIcon
+        val unselectedIcon = fob?.icon.takeIf { fobbed } ?: default.unselectedIcon
+        val actualSelectedColor by animateColor("BottomNavigationSheetSelected") {
+            if (fobbed) fobbedColor else selectedColor
+        }
+
+        NavigationBarItem(
+            selected = selected,
+            onClick = {
+                if (fobbed && fob != null) {
+                    fob.onClick()
+                } else {
+                    navigate(default)
+                }
+            },
+            colors = NavigationBarItemDefaults.colors(
+                selectedTextColor = actualSelectedColor,
+                selectedIconColor = actualSelectedColor
+            ),
+            icon = {
+                val icon = if (selected) selectedIcon
+                else unselectedIcon
+                Crossfade(
+                    targetState = icon,
+                    label = "BottomNavigationSheetIcon"
+                ) { actualIcon ->
+                    Icon(
+                        imageVector = actualIcon,
+                        contentDescription = stringResource(iconTextId)
+                    )
+                }
+            },
+            label = {
+                Text(
+                    text = stringResource(iconTextId).title(),
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        )
+    }
+}
+
+@Composable
+private fun RailItem(
     selected: Boolean,
     onClick: () -> Unit,
     icon: @Composable () -> Unit,
@@ -160,7 +222,6 @@ private fun NavigationBarItem(
             }
         }
     ) {
-        // TODO: common navigation item style
         NavigationRailItem(
             selected = selected,
             onClick = onClick,

@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.graphics.Rect
 import android.util.Log
 import androidx.compose.material3.windowsizeclass.WindowSizeClass
+import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
@@ -36,6 +37,9 @@ interface Helper {
     fun toast(message: String)
     fun snake(message: String)
 }
+
+val Helper.useRailNav: Boolean
+    @Composable get() = windowSizeClass.widthSizeClass > WindowWidthSizeClass.Compact
 
 private data class HelperBundle(
     val title: String,

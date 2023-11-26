@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -86,7 +87,8 @@ fun DialogItem(
         shape = RoundedCornerShape(spacing.medium),
         tonalElevation = 0.dp,
         color = color.ifUnspecified { theme.surface },
-        contentColor = contentColor.ifUnspecified { theme.onSurface }
+        contentColor = contentColor.ifUnspecified { theme.onSurface },
+        modifier = Modifier.semantics(mergeDescendants = true) {  }
     ) {
         Row(
             horizontalArrangement = Arrangement.Start,

@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.rememberCoroutineScope
@@ -27,6 +26,7 @@ import com.m3u.ui.Fob
 import com.m3u.ui.Helper
 import com.m3u.ui.M3ULocalProvider
 import com.m3u.ui.Navigate
+import com.m3u.ui.useRailNav
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
@@ -50,9 +50,7 @@ internal fun AppScaffold(
     content: @Composable (PaddingValues) -> Unit
 ) {
     val spacing = LocalSpacing.current
-
-    val windowSizeClass = helper.windowSizeClass
-    val useNavRail = windowSizeClass.widthSizeClass > WindowWidthSizeClass.Compact
+    val useNavRail = helper.useRailNav
 
     M3ULocalProvider(
         helper = helper,
