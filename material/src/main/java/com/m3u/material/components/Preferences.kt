@@ -39,9 +39,9 @@ fun Preference(
     title: String,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    subtitle: String? = null,
+    content: String? = null,
     onClick: () -> Unit = {},
-    trailingContent: @Composable () -> Unit = {}
+    trailing: @Composable () -> Unit = {}
 ) {
     var focus by remember { mutableStateOf(false) }
 
@@ -49,10 +49,10 @@ fun Preference(
         state = rememberTooltipState(),
         positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
         tooltip = {
-            if (!subtitle.isNullOrEmpty()) {
+            if (!content.isNullOrEmpty()) {
                 PlainTooltip {
                     Text(
-                        text = subtitle.capitalize(Locale.current)
+                        text = content.capitalize(Locale.current)
                     )
                 }
             }
@@ -62,7 +62,7 @@ fun Preference(
             shape = RectangleShape,
             enabled = enabled,
             onClick = onClick,
-            elevation = CardDefaults.elevatedCardElevation(8.dp)
+            elevation = CardDefaults.elevatedCardElevation(4.dp)
         ) {
             ListItem(
                 headlineContent = {
@@ -74,9 +74,9 @@ fun Preference(
                     )
                 },
                 supportingContent = {
-                    if (subtitle != null) {
+                    if (content != null) {
                         Text(
-                            text = subtitle.capitalize(Locale.current),
+                            text = content.capitalize(Locale.current),
                             style = MaterialTheme.typography.bodyMedium,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
@@ -88,7 +88,7 @@ fun Preference(
                         )
                     }
                 },
-                trailingContent = trailingContent,
+                trailingContent = trailing,
                 tonalElevation = LocalAbsoluteTonalElevation.current,
                 modifier = modifier
                     .fillMaxWidth()
@@ -105,30 +105,30 @@ fun Preference(
 fun CheckBoxPreference(
     title: String,
     checked: Boolean,
-    onCheckedChange: (Boolean) -> Unit,
+    onChanged: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
-    subtitle: String? = null,
+    content: String? = null,
     enabled: Boolean = true,
 ) {
     val combined = Modifier
         .toggleable(
             value = checked,
-            onValueChange = { onCheckedChange(it) },
+            onValueChange = { onChanged(it) },
             role = Role.Checkbox,
             enabled = enabled
         )
         .then(modifier)
     Preference(
         title = title,
-        subtitle = subtitle,
+        content = content,
         enabled = enabled,
         onClick = {
             if (enabled) {
-                onCheckedChange(!checked)
+                onChanged(!checked)
             }
         },
         modifier = combined,
-        trailingContent = {
+        trailing = {
             Checkbox(
                 enabled = enabled,
                 checked = checked,
@@ -142,29 +142,29 @@ fun CheckBoxPreference(
 fun SwitchPreference(
     title: String,
     checked: Boolean,
-    onCheckedChange: (Boolean) -> Unit,
+    onChanged: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
-    subtitle: String? = null,
+    content: String? = null,
     enabled: Boolean = true,
 ) {
     val combined = Modifier
         .toggleable(
             value = checked,
-            onValueChange = { onCheckedChange(it) },
+            onValueChange = { onChanged(it) },
             role = Role.Checkbox
         )
         .then(modifier)
     Preference(
         title = title,
-        subtitle = subtitle,
+        content = content,
         enabled = enabled,
         onClick = {
             if (enabled) {
-                onCheckedChange(!checked)
+                onChanged(!checked)
             }
         },
         modifier = combined,
-        trailingContent = {
+        trailing = {
             Switch(
                 enabled = enabled,
                 checked = checked,
@@ -180,16 +180,16 @@ fun IconPreference(
     imageVector: ImageVector,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    subtitle: String? = null,
+    content: String? = null,
     enabled: Boolean = true,
 ) {
     Preference(
         title = title,
-        subtitle = subtitle,
+        content = content,
         enabled = enabled,
         onClick = onClick,
         modifier = modifier,
-        trailingContent = {
+        trailing = {
             Icon(
                 imageVector = imageVector,
                 contentDescription = null,
@@ -202,23 +202,23 @@ fun IconPreference(
 @Composable
 fun TextPreference(
     title: String,
-    content: String,
+    trailing: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    subtitle: String? = null,
+    content: String? = null,
     enabled: Boolean = true,
 ) {
     Preference(
         title = title,
-        subtitle = subtitle,
+        content = content,
         enabled = enabled,
         onClick = {
             if (enabled) onClick()
         },
         modifier = modifier,
-        trailingContent = {
+        trailing = {
             Text(
-                text = content.uppercase(),
+                text = trailing.uppercase(),
                 color = MaterialTheme.colorScheme.primary,
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Bold,

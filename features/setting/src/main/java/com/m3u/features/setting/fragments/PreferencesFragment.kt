@@ -30,8 +30,8 @@ import com.m3u.core.architecture.configuration.Configuration
 import com.m3u.core.util.basic.title
 import com.m3u.features.setting.NavigateToAbout
 import com.m3u.features.setting.NavigateToConsole
+import com.m3u.features.setting.components.CheckBoxSharedPreference
 import com.m3u.i18n.R.string
-import com.m3u.material.components.CheckBoxPreference
 import com.m3u.material.components.IconPreference
 import com.m3u.material.components.Preference
 import com.m3u.material.components.TextPreference
@@ -99,7 +99,7 @@ internal fun PreferencesFragment(
 
                 TextPreference(
                     title = stringResource(string.feat_setting_sync_mode).title(),
-                    content = when (feedStrategy) {
+                    trailing = when (feedStrategy) {
                         FeedStrategy.ALL -> stringResource(string.feat_setting_sync_mode_all)
                         FeedStrategy.SKIP_FAVORITE -> stringResource(string.feat_setting_sync_mode_skip_favourite)
                         else -> ""
@@ -108,7 +108,7 @@ internal fun PreferencesFragment(
                 )
                 TextPreference(
                     title = stringResource(string.feat_setting_clip_mode).title(),
-                    content = when (clipMode) {
+                    trailing = when (clipMode) {
                         ClipMode.ADAPTIVE -> stringResource(string.feat_setting_clip_mode_adaptive)
                         ClipMode.CLIP -> stringResource(string.feat_setting_clip_mode_clip)
                         ClipMode.STRETCHED -> stringResource(string.feat_setting_clip_mode_stretched)
@@ -118,81 +118,56 @@ internal fun PreferencesFragment(
                 )
                 TextPreference(
                     title = stringResource(string.feat_setting_connect_timeout).title(),
-                    content = "${connectTimeout / 1000}s",
+                    trailing = "${connectTimeout / 1000}s",
                     onClick = onConnectTimeout
                 )
                 TextPreference(
                     title = stringResource(string.feat_setting_initial_tab).title(),
-                    content = stringResource(Destination.Root.entries[initialRootDestination].iconTextId).title(),
+                    trailing = stringResource(Destination.Root.entries[initialRootDestination].iconTextId).title(),
                     onClick = onInitialTabIndex
                 )
-                CheckBoxPreference(
-                    title = stringResource(string.feat_setting_auto_refresh).title(),
-                    subtitle = stringResource(string.feat_setting_auto_refresh_description).title(),
+                CheckBoxSharedPreference(
+                    title = string.feat_setting_auto_refresh,
+                    content = string.feat_setting_auto_refresh_description,
                     checked = autoRefresh,
-                    onCheckedChange = { newValue ->
-                        if (newValue != autoRefresh) {
-                            onAutoRefresh()
-                        }
-                    }
+                    onChanged = onAutoRefresh
                 )
-                CheckBoxPreference(
-                    title = stringResource(string.feat_setting_no_picture_mode).title(),
-                    subtitle = stringResource(string.feat_setting_no_picture_mode_description).title(),
+                CheckBoxSharedPreference(
+                    title = string.feat_setting_no_picture_mode,
+                    content = string.feat_setting_no_picture_mode_description,
                     checked = noPictureMode,
-                    onCheckedChange = { newValue ->
-                        if (newValue != noPictureMode) {
-                            onNoPictureMode()
-                        }
-                    }
+                    onChanged = onNoPictureMode
                 )
-                CheckBoxPreference(
-                    title = stringResource(string.feat_setting_full_info_player).title(),
-                    subtitle = stringResource(string.feat_setting_full_info_player_description).title(),
+                CheckBoxSharedPreference(
+                    title = string.feat_setting_full_info_player,
+                    content = string.feat_setting_full_info_player_description,
                     checked = fullInfoPlayer,
-                    onCheckedChange = { newValue ->
-                        if (newValue != fullInfoPlayer) {
-                            onFullInfoPlayer()
-                        }
-                    }
+                    onChanged = onFullInfoPlayer
                 )
-                CheckBoxPreference(
-                    title = stringResource(string.feat_setting_god_mode).title(),
-                    subtitle = stringResource(string.feat_setting_god_mode_description).title(),
+                CheckBoxSharedPreference(
+                    title = string.feat_setting_god_mode,
+                    content = string.feat_setting_god_mode_description,
                     checked = godMode,
-                    onCheckedChange = { newValue ->
-                        if (newValue != godMode) {
-                            onGodMode()
-                        }
-                    }
+                    onChanged = onGodMode
                 )
-                CheckBoxPreference(
-                    title = stringResource(string.feat_setting_common_ui_mode).title(),
-                    subtitle = if (useCommonUIModeEnable) stringResource(string.feat_setting_common_ui_mode_description).title()
-                    else stringResource(string.feat_setting_common_ui_mode_disabled_description).title(),
+                CheckBoxSharedPreference(
+                    title = string.feat_setting_common_ui_mode,
+                    content = if (useCommonUIModeEnable) string.feat_setting_common_ui_mode_description
+                    else string.feat_setting_common_ui_mode_disabled_description,
                     enabled = useCommonUIModeEnable,
                     checked = useCommonUIMode,
-                    onCheckedChange = { newValue ->
-                        if (newValue != useCommonUIMode) {
-                            onUIMode()
-                        }
-                    }
+                    onChanged = onUIMode
                 )
-                val dynamicColorsAvailable = Configuration.DEFAULT_USE_DYNAMIC_COLORS
-                CheckBoxPreference(
-                    title = stringResource(string.feat_setting_use_dynamic_colors).title(),
-                    subtitle = stringResource(string.feat_setting_use_dynamic_colors_unavailable)
-                        .title()
-                        .takeUnless { dynamicColorsAvailable },
-                    enabled = dynamicColorsAvailable,
+                val useDynamicColorsAvailable = Configuration.DEFAULT_USE_DYNAMIC_COLORS
+                CheckBoxSharedPreference(
+                    title = string.feat_setting_use_dynamic_colors,
+                    content = string
+                        .feat_setting_use_dynamic_colors_unavailable
+                        .takeUnless { useDynamicColorsAvailable },
                     checked = useDynamicColors,
-                    onCheckedChange = { newValue ->
-                        if (newValue != useDynamicColors) {
-                            onUseDynamicColors()
-                        }
-                    }
+                    onChanged = onUseDynamicColors,
+                    enabled = useDynamicColorsAvailable
                 )
-
             }
         }
         item {
@@ -202,15 +177,11 @@ internal fun PreferencesFragment(
                     .clip(MaterialTheme.shapes.medium),
                 verticalArrangement = Arrangement.spacedBy(1.dp)
             ) {
-                CheckBoxPreference(
-                    title = stringResource(string.feat_setting_experimental_mode).title(),
-                    subtitle = stringResource(string.feat_setting_experimental_mode_description).title(),
+                CheckBoxSharedPreference(
+                    title = string.feat_setting_experimental_mode,
+                    content = string.feat_setting_experimental_mode_description,
                     checked = experimentalMode,
-                    onCheckedChange = { newValue ->
-                        if (newValue != experimentalMode) {
-                            onExperimentalMode()
-                        }
-                    }
+                    onChanged = onExperimentalMode
                 )
                 AnimatedVisibility(
                     visible = experimentalMode,
@@ -224,48 +195,36 @@ internal fun PreferencesFragment(
                     Column(
                         verticalArrangement = Arrangement.spacedBy(1.dp)
                     ) {
-                        CheckBoxPreference(
-                            title = stringResource(string.feat_setting_cinema_mode).title(),
-                            subtitle = stringResource(string.feat_setting_not_implementation).title(),
-//                            subtitle = stringResource(string.feat_setting_cinema_mode_description).title(),
+                        CheckBoxSharedPreference(
+                            title = string.feat_setting_cinema_mode,
+                            content = string.feat_setting_not_implementation,
+//                            subtitle = string.feat_setting_cinema_mode_description,
                             checked = cinemaMode,
-                            enabled = false,
-                            onCheckedChange = { newValue ->
-                                if (newValue != cinemaMode) {
-                                    onCinemaMode()
-                                }
-                            }
+                            onChanged = onCinemaMode,
+                            enabled = false
                         )
                         Preference(
                             title = stringResource(string.feat_setting_script_management).title(),
-                            subtitle = stringResource(string.feat_setting_not_implementation).title(),
+                            content = stringResource(string.feat_setting_not_implementation).title(),
                             enabled = false,
                             onClick = onScriptManagement
                         )
                         Preference(
                             title = stringResource(string.feat_setting_console_editor).title(),
-                            subtitle = stringResource(string.feat_setting_not_implementation).title(),
+                            content = stringResource(string.feat_setting_not_implementation).title(),
                             enabled = false,
                             onClick = navigateToConsole
                         )
-                        CheckBoxPreference(
-                            title = stringResource(string.feat_setting_scroll_mode).title(),
+                        CheckBoxSharedPreference(
+                            title = string.feat_setting_scroll_mode,
                             checked = scrollMode,
-                            onCheckedChange = { newValue ->
-                                if (newValue != scrollMode) {
-                                    onScrollMode()
-                                }
-                            }
+                            onChanged = onScrollMode
                         )
-                        CheckBoxPreference(
-                            title = stringResource(string.feat_setting_ssl_verification_enabled).title(),
-                            subtitle = stringResource(string.feat_setting_ssl_verification_enabled_description).title(),
+                        CheckBoxSharedPreference(
+                            title = string.feat_setting_ssl_verification_enabled,
+                            content = string.feat_setting_ssl_verification_enabled_description,
                             checked = isSSLVerificationEnabled,
-                            onCheckedChange = { newValue ->
-                                if (newValue != isSSLVerificationEnabled) {
-                                    onSSLVerificationEnabled()
-                                }
-                            }
+                            onChanged = onSSLVerificationEnabled
                         )
                     }
                 }
@@ -302,7 +261,7 @@ internal fun PreferencesFragment(
                 )
                 Preference(
                     title = stringResource(string.feat_setting_app_version).title(),
-                    subtitle = "$versionName ($versionCode)"
+                    content = "$versionName ($versionCode)"
                 )
             }
         }
