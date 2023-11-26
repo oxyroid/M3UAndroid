@@ -5,6 +5,10 @@ on:
       - 'master'
     tags:
       - 'v*'
+
+env:
+  GH_TOKEN: ${{ github.token }}
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -15,4 +19,4 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
         with:
-          title: MyReleaseMessage
+          title: ${{ github.event.head_commit.message }}
