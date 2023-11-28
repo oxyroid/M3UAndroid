@@ -55,7 +55,7 @@ Refer to the [file](RULES.md) to learn about the Code Specification of this repo
 
 ### About
 
-I am a Chinese university student who is about to graduate and work at the [DiDi](https://github.com/didi) company,
+I am a Chinese university student who is about to graduate,
 If you want to provide feedback, please contact [@sortBy](https://t.me/sortBy).
 
 ### License
