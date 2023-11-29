@@ -1,15 +1,14 @@
 package com.m3u.features.setting.components
 
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Close
+import androidx.compose.foundation.clickable
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
 import com.m3u.data.database.entity.Live
-import com.m3u.material.components.IconButton
 
 @Composable
 internal fun MutedLiveItem(
@@ -36,13 +35,13 @@ internal fun MutedLiveItem(
                 overflow = TextOverflow.Ellipsis
             )
         },
-        trailingContent = {
-            IconButton(
-                icon = Icons.Rounded.Close,
-                contentDescription = "voice",
+        modifier = Modifier
+            .clickable(
+                enabled = true,
+                onClickLabel = null,
+                role = Role.Button,
                 onClick = onBanned
             )
-        },
-        modifier = modifier
+            .then(modifier)
     )
 }
