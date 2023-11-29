@@ -1,4 +1,4 @@
-@file:OptIn(ExperimentalFoundationApi::class, ExperimentalMaterialApi::class)
+@file:OptIn(ExperimentalMaterialApi::class)
 
 package com.m3u.features.feed
 
@@ -15,7 +15,6 @@ import android.content.res.Configuration.UI_MODE_TYPE_VR_HEADSET
 import android.content.res.Configuration.UI_MODE_TYPE_WATCH
 import android.view.KeyEvent
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -66,7 +65,6 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.tv.foundation.lazy.grid.rememberTvLazyGridState
-import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.PermissionStatus
 import com.google.accompanist.permissions.rememberPermissionState
 import com.m3u.core.util.compose.observableStateOf
@@ -100,7 +98,6 @@ private typealias OnMenu = (Live) -> Unit
 private typealias OnScrollUp = () -> Unit
 private typealias OnRefresh = () -> Unit
 
-@OptIn(ExperimentalPermissionsApi::class)
 @Composable
 internal fun FeedRoute(
     contentPadding: PaddingValues,
@@ -267,10 +264,7 @@ private fun FeedScreen(
                         text = query,
                         onValueChange = onQuery,
                         fontWeight = FontWeight.Bold,
-                        height = 32.dp,
-                        placeholder = stringResource(string.feat_feed_query_placeholder).capitalize(
-                            Locale.current
-                        )
+                        placeholder = stringResource(string.feat_feed_query_placeholder).capitalize(Locale.current)
                     )
                 }
             },
@@ -334,6 +328,7 @@ private fun FeedScreen(
             },
             backLayerBackgroundColor = currentColor,
             backLayerContentColor = currentContentColor,
+            frontLayerScrimColor = currentColor.copy(alpha = 0.45f),
             modifier = Modifier
                 .padding(top = contentPadding.calculateTopPadding())
                 .nestedScroll(
