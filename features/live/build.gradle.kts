@@ -35,6 +35,9 @@ android {
     composeOptions {
         kotlinCompilerExtensionVersion = libs.versions.compose.compiler.get()
     }
+    packaging {
+        resources.excludes += "META-INF/**"
+    }
 }
 
 dependencies {
@@ -53,16 +56,4 @@ dependencies {
     implementation(libs.com.google.dagger.hilt.android)
     implementation(libs.androidx.hilt.hilt.navigation.compose)
     ksp(libs.com.google.dagger.hilt.compiler)
-}
-
-tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
-    val path = project.buildDir.absolutePath + "/compose_metrics"
-    compilerOptions.freeCompilerArgs.addAll(
-        "-P",
-        "plugin:androidx.compose.compiler.plugins.kotlin:metricsDestination=$path",
-    )
-    compilerOptions.freeCompilerArgs.addAll(
-        "-P",
-        "plugin:androidx.compose.compiler.plugins.kotlin:reportsDestination=$path",
-    )
 }

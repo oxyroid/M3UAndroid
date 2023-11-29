@@ -55,15 +55,3 @@ dependencies {
     ksp(libs.androidx.hilt.hilt.compiler)
     implementation(libs.androidx.hilt.hilt.work)
 }
-
-tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
-    val path = project.buildDir.absolutePath + "/compose_metrics"
-    compilerOptions.freeCompilerArgs.addAll(
-        "-P",
-        "plugin:androidx.compose.compiler.plugins.kotlin:metricsDestination=$path",
-    )
-    compilerOptions.freeCompilerArgs.addAll(
-        "-P",
-        "plugin:androidx.compose.compiler.plugins.kotlin:reportsDestination=$path",
-    )
-}

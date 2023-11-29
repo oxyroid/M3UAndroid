@@ -4,7 +4,6 @@ plugins {
     alias(libs.plugins.com.google.dagger.hilt.android)
     alias(libs.plugins.com.google.devtools.ksp)
     alias(libs.plugins.androidx.baselineprofile)
-    id("io.gitlab.arturbosch.detekt")
 }
 
 android {
@@ -94,21 +93,4 @@ dependencies {
     debugImplementation(libs.com.squareup.leakcanary.leakcanary.android)
 
     androidTestImplementation(libs.androidx.compose.ui.ui.test.junit4)
-}
-
-tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
-    val path = project.buildDir.absolutePath + "/compose_metrics"
-    compilerOptions.freeCompilerArgs.addAll(
-        "-P",
-        "plugin:androidx.compose.compiler.plugins.kotlin:metricsDestination=$path",
-    )
-    compilerOptions.freeCompilerArgs.addAll(
-        "-P",
-        "plugin:androidx.compose.compiler.plugins.kotlin:reportsDestination=$path",
-    )
-}
-
-detekt {
-    config.setFrom("detekt.yml")
-    allRules = true
 }
