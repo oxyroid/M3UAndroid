@@ -1,10 +1,11 @@
 package com.m3u.material.components
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -33,7 +34,7 @@ fun NavigationScaffold(
             AnimatedContent(
                 targetState = visible,
                 transitionSpec = {
-                    slideInHorizontally { -it } togetherWith slideOutHorizontally { -it }
+                    fadeIn() togetherWith fadeOut()
                 },
                 label = "navigation",
                 modifier = Modifier.fillMaxHeight(),
@@ -66,7 +67,8 @@ fun NavigationScaffold(
             AnimatedContent(
                 targetState = visible,
                 transitionSpec = {
-                    slideInVertically { it } togetherWith slideOutVertically { it }
+                    slideInHorizontally(animationSpec = tween(delayMillis = 400)) { -it } togetherWith
+                            slideOutHorizontally(animationSpec = tween(delayMillis = 400)) { -it }
                 },
                 label = "navigation",
                 modifier = Modifier.fillMaxWidth(),

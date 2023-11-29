@@ -14,8 +14,8 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
-import com.m3u.core.wrapper.Event
 import com.m3u.core.wrapper.eventOf
+import com.m3u.core.wrapper.handledEvent
 import com.m3u.features.favorite.FavouriteRoute
 import com.m3u.features.favorite.NavigateToLive
 import com.m3u.features.main.MainRoute
@@ -136,5 +136,5 @@ private data class PagerStateSnapshot(
 private fun rememberResumeEvent(currentPage: Int, targetPage: Int): ResumeEvent =
     remember(currentPage, targetPage) {
         if (currentPage == targetPage) eventOf(Unit)
-        else Event.Handled()
+        else handledEvent()
     }

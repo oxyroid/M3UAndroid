@@ -4,13 +4,14 @@ package com.m3u.material.components
 
 import android.util.Log
 import androidx.annotation.DrawableRes
-import androidx.compose.foundation.Image
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.isImeVisible
@@ -24,10 +25,10 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.selection.LocalTextSelectionColors
 import androidx.compose.foundation.text.selection.TextSelectionColors
-import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -35,6 +36,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusDirection
@@ -42,13 +44,12 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -61,7 +62,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.m3u.material.ktx.InteractionType
 import com.m3u.material.ktx.animateDp
-import com.m3u.material.ktx.animateInt
 import com.m3u.material.ktx.interactionBorder
 import com.m3u.material.model.LocalDuration
 import kotlinx.coroutines.delay
@@ -71,7 +71,7 @@ import kotlinx.coroutines.launch
 fun TextField(
     textFieldValue: TextFieldValue,
     modifier: Modifier = Modifier,
-    background: Color = TextFieldDefaults.backgroundColor(),
+    backgroundColor: Color = TextFieldDefaults.backgroundColor(),
     contentColor: Color = TextFieldDefaults.contentColor(),
     shape: Shape = TextFieldDefaults.shape(),
     placeholder: String = "",
@@ -83,7 +83,6 @@ fun TextField(
     keyboardActions: KeyboardActions? = null,
     fontSize: TextUnit = TextFieldDefaults.TextFontSize,
     fontWeight: FontWeight? = null,
-    height: Dp = TextFieldDefaults.Height,
     isError: Boolean = false,
     onValueChange: (TextFieldValue) -> Unit = {},
 ) {
@@ -142,38 +141,39 @@ fun TextField(
             readOnly = readOnly,
             cursorBrush = SolidColor(contentColor),
             decorationBox = { innerTextField ->
-                ElevatedCard(
-                    modifier = Modifier
+                Box(
+                    Modifier
                         .clip(shape)
-                        .background(if (isError) MaterialTheme.colorScheme.error else background)
+                        .background(
+                            if (isError) MaterialTheme.colorScheme.error
+                            else backgroundColor
+                        )
                         .interactionBorder(
                             type = InteractionType.PRESS,
                             source = interactionSource,
                             shape = shape
                         )
-                        .height(height)
-                        .padding(horizontal = 12.dp),
+                        .fillMaxWidth()
+                        .defaultMinSize(minHeight = 48.dp)
+                        .padding(
+                            top = if (singleLine) 0.dp else 12.5.dp,
+                            bottom = if (singleLine) 2.5.dp else 12.5.dp,
+                            start = 12.dp,
+                            end = 12.dp
+                        ),
+                    contentAlignment = Alignment.CenterStart
                 ) {
-                    Box(
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(
-                                top = if (singleLine) 0.dp else 12.5.dp,
-                                bottom = if (singleLine) 2.5.dp else 12.5.dp
-                            )
-                    ) {
-                        innerTextField()
+                    innerTextField()
 
-                        if (textFieldValue.text.isEmpty()) {
-                            Text(
-                                text = placeholder,
-                                color = contentColor.copy(.35f),
-                                fontSize = fontSize,
-                                maxLines = if (singleLine) 1 else Int.MAX_VALUE,
-                                overflow = TextOverflow.Ellipsis,
-                                fontWeight = FontWeight.Medium
-                            )
-                        }
+                    if (textFieldValue.text.isEmpty()) {
+                        Text(
+                            text = placeholder,
+                            color = contentColor.copy(.35f),
+                            fontSize = fontSize,
+                            maxLines = if (singleLine) 1 else Int.MAX_VALUE,
+                            overflow = TextOverflow.Ellipsis,
+                            fontWeight = FontWeight.Medium
+                        )
                     }
                 }
             }
@@ -196,7 +196,6 @@ fun TextField(
     enabled: Boolean = true,
     keyboardActions: KeyboardActions? = null,
     fontSize: TextUnit = TextFieldDefaults.TextFontSize,
-    height: Dp = TextFieldDefaults.Height,
     fontWeight: FontWeight? = null,
     isError: Boolean = false,
     onValueChange: (String) -> Unit = {},
@@ -256,38 +255,39 @@ fun TextField(
             readOnly = readOnly,
             cursorBrush = SolidColor(contentColor),
             decorationBox = { innerTextField ->
-                ElevatedCard(
-                    modifier = Modifier
+                Box(
+                    Modifier
                         .clip(shape)
-                        .background(if (isError) theme.error else backgroundColor)
+                        .background(
+                            if (isError) MaterialTheme.colorScheme.error
+                            else backgroundColor
+                        )
                         .interactionBorder(
                             type = InteractionType.PRESS,
                             source = interactionSource,
                             shape = shape
                         )
-                        .height(height)
-                        .padding(horizontal = 12.dp),
+                        .fillMaxWidth()
+                        .defaultMinSize(minHeight = 48.dp)
+                        .padding(
+                            top = if (singleLine) 0.dp else 12.5.dp,
+                            bottom = if (singleLine) 2.5.dp else 12.5.dp,
+                            start = 12.dp,
+                            end = 12.dp
+                        ),
+                    contentAlignment = Alignment.CenterStart
                 ) {
-                    Box(
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(
-                                top = if (singleLine) 0.dp else 12.5.dp,
-                                bottom = if (singleLine) 2.5.dp else 12.5.dp
-                            )
-                    ) {
-                        innerTextField()
+                    innerTextField()
 
-                        if (text.isEmpty()) {
-                            Text(
-                                text = placeholder,
-                                color = contentColor.copy(.35f),
-                                fontSize = fontSize,
-                                maxLines = if (singleLine) 1 else Int.MAX_VALUE,
-                                overflow = TextOverflow.Ellipsis,
-                                fontWeight = FontWeight.Medium
-                            )
-                        }
+                    if (text.isEmpty()) {
+                        Text(
+                            text = placeholder,
+                            color = contentColor.copy(.35f),
+                            fontSize = fontSize,
+                            maxLines = if (singleLine) 1 else Int.MAX_VALUE,
+                            overflow = TextOverflow.Ellipsis,
+                            fontWeight = FontWeight.Medium
+                        )
                     }
                 }
             }
@@ -299,11 +299,10 @@ fun TextField(
 fun LabelField(
     textFieldValue: TextFieldValue,
     modifier: Modifier = Modifier,
-    background: Color = TextFieldDefaults.backgroundColor(),
+    backgroundColor: Color = TextFieldDefaults.backgroundColor(),
     contentColor: Color = TextFieldDefaults.contentColor(),
     shape: Shape = TextFieldDefaults.shape(),
     placeholder: String = "",
-    height: Dp = TextFieldDefaults.Height,
     readOnly: Boolean = false,
     enabled: Boolean = true,
     imeAction: ImeAction = ImeAction.Done,
@@ -370,45 +369,47 @@ fun LabelField(
                 color = contentColor,
             ),
             decorationBox = { innerTextField ->
-                ElevatedCard(
-                    Modifier
+                Row(
+                    modifier = Modifier
                         .clip(shape)
-                        .background(background)
+                        .background(backgroundColor)
                         .interactionBorder(
                             type = InteractionType.PRESS,
                             source = interactionSource,
                             shape = shape
-                        )
-                        .height(height),
+                        ),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    icon?.let {
-                        Image(
+                    icon?.let { icon ->
+                        Icon(
                             modifier = Modifier
                                 .size(48.dp)
                                 .padding(15.dp),
-                            painter = painterResource(id = icon),
+                            imageVector = ImageVector.vectorResource(icon),
                             contentDescription = null,
-                            colorFilter = ColorFilter.tint(contentColor)
+                            tint = contentColor
                         )
                     }
+
                     Box(
                         Modifier
-                            .weight(1f)
-                            .fillMaxHeight()
+                            .fillMaxWidth()
+                            .defaultMinSize(minHeight = 48.dp)
                             .padding(
                                 start = if (icon == null) 15.dp else 0.dp,
-                                bottom = 0.dp,
                                 end = 15.dp
-                            )
+                            ),
+                        contentAlignment = Alignment.CenterStart
                     ) {
                         val hasText = textFieldValue.text.isNotEmpty()
 
                         val animPlaceholder: Dp by animateDp("PlaceholderTranslationY") {
-                            if (isFocused.value || hasText) 6.dp else 14.dp
+                            if (isFocused.value || hasText) (-6).dp else 0.dp
                         }
-                        val animPlaceHolderFontSize: Int by animateInt("PlaceholderFontSize") {
-                            if (isFocused.value || hasText) 12 else 14
-                        }
+                        val animPlaceHolderFontSize: Float by animateFloatAsState(
+                            targetValue = if (isFocused.value || hasText) 12f else 14f,
+                            label = "PlaceholderFontSize"
+                        )
 
                         Text(
                             modifier = Modifier
@@ -444,11 +445,10 @@ fun LabelField(
 fun LabelField(
     text: String,
     modifier: Modifier = Modifier,
-    background: Color = TextFieldDefaults.backgroundColor(),
+    backgroundColor: Color = TextFieldDefaults.backgroundColor(),
     contentColor: Color = TextFieldDefaults.contentColor(),
     shape: Shape = TextFieldDefaults.shape(),
     placeholder: String = "",
-    height: Dp = TextFieldDefaults.Height,
     readOnly: Boolean = false,
     enabled: Boolean = true,
     imeAction: ImeAction = ImeAction.Done,
@@ -516,46 +516,47 @@ fun LabelField(
                 color = contentColor,
             ),
             decorationBox = { innerTextField ->
-                ElevatedCard(
+                Row(
                     modifier = Modifier
                         .clip(shape)
-                        .background(background)
+                        .background(backgroundColor)
                         .interactionBorder(
                             type = InteractionType.PRESS,
                             source = interactionSource,
                             shape = shape
-                        )
-                        .height(height)
+                        ),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    icon?.let {
+                    icon?.let { icon ->
                         Icon(
-                            imageVector = icon,
-                            contentDescription = null,
                             modifier = Modifier
                                 .size(48.dp)
                                 .padding(15.dp),
+                            imageVector = icon,
+                            contentDescription = null,
                             tint = contentColor
                         )
                     }
 
                     Box(
                         Modifier
-                            .weight(1f)
-                            .fillMaxHeight()
+                            .fillMaxWidth()
+                            .defaultMinSize(minHeight = 48.dp)
                             .padding(
                                 start = if (icon == null) 15.dp else 0.dp,
-                                bottom = 0.dp,
                                 end = 15.dp
-                            )
+                            ),
+                        contentAlignment = Alignment.CenterStart
                     ) {
                         val hasText = text.isNotEmpty()
 
                         val animPlaceholder: Dp by animateDp("PlaceholderTranslationY") {
-                            if (isFocused.value || hasText) 6.dp else 14.dp
+                            if (isFocused.value || hasText) (-6).dp else 0.dp
                         }
-                        val animPlaceHolderFontSize: Int by animateInt("PlaceholderFontSize") {
-                            if (isFocused.value || hasText) 12 else 14
-                        }
+                        val animPlaceHolderFontSize: Float by animateFloatAsState(
+                            targetValue = if (isFocused.value || hasText) 12f else 14f,
+                            label = "PlaceholderFontSize"
+                        )
 
                         Text(
                             modifier = Modifier
@@ -592,10 +593,8 @@ private object TextFieldDefaults {
     val LabelFontSize = 18.sp
     val MinimizeLabelFontSize = 14.sp
 
-    val Height = 48.dp
-
     @Composable
-    fun backgroundColor() = MaterialTheme.colorScheme.surface
+    fun backgroundColor() = MaterialTheme.colorScheme.surfaceColorAtElevation(4.dp)
 
     @Composable
     fun contentColor() = MaterialTheme.colorScheme.onSurface

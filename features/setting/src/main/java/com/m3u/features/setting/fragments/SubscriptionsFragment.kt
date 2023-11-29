@@ -5,6 +5,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -23,6 +24,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -209,30 +211,32 @@ private fun LocalStorageButton(
     val uri = uriFactory()
     val context = LocalContext.current
     val selected = uri != Uri.EMPTY
-    val theme = MaterialTheme.colorScheme
     val spacing = LocalSpacing.current
     val launcher = rememberLauncherForActivityResult(
         ActivityResultContracts.GetContent()
-    ) { openDocument(it ?: Uri.EMPTY) }
+    ) {
+        openDocument(it ?: Uri.EMPTY)
+    }
     val icon = Icons.AutoMirrored.Rounded.OpenInNew
     val text = if (selected) remember(uri) {
         uri.readFileName(context.contentResolver).orEmpty()
     } else stringResource(string.feat_setting_label_select_from_local_storage)
+    val color = MaterialTheme.colorScheme.surfaceColorAtElevation(4.dp)
+    val contentColor = MaterialTheme.colorScheme.onSurface
     Row(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
-            .clip(RoundedCornerShape(25))
-            .background(theme.surface)
+            .clip(MaterialTheme.shapes.medium)
+            .background(color)
             .height(48.dp)
             .fillMaxWidth()
-            .toggleable(
-                value = selected,
-                onValueChange = {
-                    launcher.launch("*/*")
+            .clickable (
+                onClick = {
+                    launcher.launch("audio/*")
                 },
                 enabled = true,
-                role = Role.Checkbox
+                role = Role.Button
             )
             .padding(
                 horizontal = spacing.medium,
@@ -246,7 +250,8 @@ private fun LocalStorageButton(
                 fontSize = 14.sp,
                 fontFamily = MaterialTheme.typography.bodyMedium.fontFamily,
                 fontWeight = FontWeight.Medium
-            )
+            ),
+            color = contentColor
         )
         Icon(
             imageVector = icon,
