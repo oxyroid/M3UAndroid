@@ -1,10 +1,7 @@
 package com.m3u.features.live.navigation
 
-import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavType
@@ -45,7 +42,6 @@ fun NavController.navigateToPlaylist(ids: List<Int>, initialIndex: Int) {
     this.navigate(route, navOptions)
 }
 
-@OptIn(ExperimentalAnimationApi::class)
 fun NavGraphBuilder.liveScreen(
     onBackPressed: () -> Unit
 ) {
@@ -58,7 +54,9 @@ fun NavGraphBuilder.liveScreen(
             },
         ),
         enterTransition = { fadeIn() },
-        exitTransition = { fadeOut() }
+        exitTransition = { fadeOut() },
+        popEnterTransition = { fadeIn() },
+        popExitTransition = { fadeOut() }
     ) { navBackStackEntry ->
         val id = navBackStackEntry
             .arguments
@@ -86,10 +84,10 @@ fun NavGraphBuilder.livePlaylistScreen(
                 nullable = false
             },
         ),
-        enterTransition = { slideInVertically { it } },
+        enterTransition = { fadeIn() },
         exitTransition = { fadeOut() },
         popEnterTransition = { fadeIn() },
-        popExitTransition = { slideOutVertically { it } }
+        popExitTransition = { fadeOut() }
     ) { navBackStackEntry ->
         val ids = navBackStackEntry
             .arguments

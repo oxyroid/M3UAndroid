@@ -33,7 +33,8 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.M3U.Starting"
         android:usesCleartextTraffic="true"
-        tools:targetApi="32">
+        android:enableOnBackInvokedCallback="true"
+        tools:targetApi="tiramisu">
         <profileable
             android:shell="true"
             tools:targetApi="29" />
