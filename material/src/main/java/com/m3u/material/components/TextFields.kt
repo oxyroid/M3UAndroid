@@ -404,7 +404,7 @@ fun LabelField(
                         val hasText = textFieldValue.text.isNotEmpty()
 
                         val animPlaceholder: Dp by animateDp("PlaceholderTranslationY") {
-                            if (isFocused.value || hasText) (-6).dp else 0.dp
+                            if (isFocused.value || hasText) (-10).dp else 0.dp
                         }
                         val animPlaceHolderFontSize: Float by animateFloatAsState(
                             targetValue = if (isFocused.value || hasText) 12f else 14f,
@@ -427,7 +427,7 @@ fun LabelField(
 
                         Box(
                             Modifier
-                                .padding(top = 21.dp)
+                                .padding(top = -animPlaceholder)
                                 .fillMaxWidth()
                                 .height(18.dp),
                         ) {
@@ -551,7 +551,7 @@ fun LabelField(
                         val hasText = text.isNotEmpty()
 
                         val animPlaceholder: Dp by animateDp("PlaceholderTranslationY") {
-                            if (isFocused.value || hasText) (-6).dp else 0.dp
+                            if (isFocused.value || hasText) (-10).dp else 0.dp
                         }
                         val animPlaceHolderFontSize: Float by animateFloatAsState(
                             targetValue = if (isFocused.value || hasText) 12f else 14f,
@@ -574,7 +574,7 @@ fun LabelField(
 
                         Box(
                             Modifier
-                                .padding(top = 21.dp)
+                                .padding(top = -animPlaceholder)
                                 .fillMaxWidth()
                                 .height(18.dp),
                         ) {
