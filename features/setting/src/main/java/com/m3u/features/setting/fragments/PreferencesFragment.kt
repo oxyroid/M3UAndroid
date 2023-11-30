@@ -20,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.m3u.core.annotation.ClipMode
 import com.m3u.core.annotation.ConnectTimeout
@@ -30,6 +31,7 @@ import com.m3u.core.architecture.configuration.Configuration
 import com.m3u.core.util.basic.title
 import com.m3u.features.setting.NavigateToAbout
 import com.m3u.features.setting.NavigateToConsole
+import com.m3u.features.setting.SettingFragment
 import com.m3u.features.setting.components.CheckBoxSharedPreference
 import com.m3u.i18n.R.string
 import com.m3u.material.components.IconPreference
@@ -40,6 +42,7 @@ import com.m3u.ui.Destination
 
 @Composable
 internal fun PreferencesFragment(
+    fragment: SettingFragment,
     contentPadding: PaddingValues,
     versionName: String,
     versionCode: Int,
@@ -68,8 +71,8 @@ internal fun PreferencesFragment(
     navigateToAbout: NavigateToAbout,
     autoRefresh: Boolean,
     onAutoRefresh: () -> Unit,
-    isSSLVerificationEnabled: Boolean,
-    onSSLVerificationEnabled: () -> Unit,
+    isSSLVerification: Boolean,
+    onSSLVerification: () -> Unit,
     initialRootDestination: Int,
     onInitialTabIndex: () -> Unit,
     noPictureMode: Boolean,
@@ -94,7 +97,9 @@ internal fun PreferencesFragment(
                 Preference(
                     title = stringResource(string.feat_setting_feed_management).title(),
                     enabled = true,
-                    onClick = onFeedManagement
+                    onClick = onFeedManagement,
+                    elevation = if (fragment == SettingFragment.Subscriptions) 1.dp
+                    else Dp.Unspecified
                 )
 
                 TextPreference(
@@ -223,8 +228,8 @@ internal fun PreferencesFragment(
                         CheckBoxSharedPreference(
                             title = string.feat_setting_ssl_verification_enabled,
                             content = string.feat_setting_ssl_verification_enabled_description,
-                            checked = isSSLVerificationEnabled,
-                            onChanged = onSSLVerificationEnabled
+                            checked = isSSLVerification,
+                            onChanged = onSSLVerification
                         )
                     }
                 }

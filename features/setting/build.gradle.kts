@@ -54,4 +54,6 @@ dependencies {
     implementation(libs.androidx.work.work.runtime.ktx)
     ksp(libs.androidx.hilt.hilt.compiler)
     implementation(libs.androidx.hilt.hilt.work)
+
+    implementation(libs.androidx.compose.material3.material3.adaptive)
 }

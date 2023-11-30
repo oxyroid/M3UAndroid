@@ -6,6 +6,7 @@ androidx-activity = "1.8.1"
 androidx-lifecycle = "2.6.2"
 androidx-compose = "1.6.0-beta01"
 androidx-compose-material3 = "1.2.0-alpha11"
+androidx-compose-material3-adaptive = "1.0.0-alpha01"
 androidx-navigation = "2.7.5"
 androidx-baselineprofile-benchmark = "1.2.1"
 androidx-hilt = "1.1.0"
@@ -66,6 +67,7 @@ androidx-navigation-navigation-compose = { group = "androidx.navigation", name =
 
 androidx-compose-material3-material3 = { group = "androidx.compose.material3", name = "material3", version.ref = "androidx-compose-material3" }
 androidx-compose-material3-material3-window-size-clazz = { group = "androidx.compose.material3", name = "material3-window-size-class", version.ref = "androidx-compose-material3" }
+androidx-compose-material3-material3-adaptive = { group = "androidx.compose.material3", name = "material3-adaptive", version.ref = "androidx-compose-material3-adaptive" }
 
 androidx-tv-tv-foundation = { group = "androidx.tv", name = "tv-foundation", version.ref = "androidx-tv" }
 androidx-tv-tv-material = { group = "androidx.tv", name = "tv-material", version.ref = "androidx-tv" }

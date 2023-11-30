@@ -3,31 +3,21 @@ package com.m3u.features.setting
 import android.content.res.Configuration
 import android.net.Uri
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.Orientation
-import androidx.compose.foundation.gestures.rememberScrollableState
-import androidx.compose.foundation.gestures.scrollable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.preferKeepClear
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Settings
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.adaptive.AnimatedPane
+import androidx.compose.material3.adaptive.ListDetailPaneScaffold
+import androidx.compose.material3.adaptive.ListDetailPaneScaffoldRole
+import androidx.compose.material3.adaptive.rememberListDetailPaneScaffoldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -43,7 +33,6 @@ import com.m3u.features.setting.fragments.MutedLivesFactory
 import com.m3u.features.setting.fragments.PreferencesFragment
 import com.m3u.features.setting.fragments.ScriptsFragment
 import com.m3u.features.setting.fragments.SubscriptionsFragment
-import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.Destination
 import com.m3u.ui.EventHandler
 import com.m3u.ui.Fob
@@ -185,15 +174,17 @@ private fun SettingScreen(
     modifier: Modifier = Modifier
 ) {
     val helper = LocalHelper.current
-    var fragment: SettingFragments by remember { mutableStateOf(SettingFragments.Root) }
+    var fragment: SettingFragment by rememberSaveable { mutableStateOf(SettingFragment.Root) }
+    val scaffoldState = rememberListDetailPaneScaffoldState()
 
     DisposableEffect(fragment) {
-        helper.fob = if (fragment == SettingFragments.Root) null
+        helper.fob = if (fragment == SettingFragment.Root) null
         else Fob(
             rootDestination = Destination.Root.Setting,
             icon = Icons.Rounded.Settings
         ) {
-            fragment = SettingFragments.Root
+            fragment = SettingFragment.Root
+            scaffoldState.navigateBack()
         }
 
         onDispose {
@@ -201,47 +192,45 @@ private fun SettingScreen(
         }
     }
 
-    Box(
-        modifier = Modifier.testTag("features:setting")
-    ) {
-        val configuration = LocalConfiguration.current
-        when (configuration.orientation) {
-            Configuration.ORIENTATION_PORTRAIT -> {
-                PortraitOrientationContent(
+    ListDetailPaneScaffold(
+        scaffoldState = scaffoldState,
+        listPane = {
+            AnimatedPane(Modifier.fillMaxSize()) {
+                PreferencesFragment(
+                    fragment = fragment,
                     contentPadding = contentPadding,
                     versionName = versionName,
                     versionCode = versionCode,
-                    fragment = fragment,
-                    title = title,
-                    url = url,
-                    uriFactory = uriFactory,
-                    godMode = godMode,
-                    connectTimeout = connectTimeout,
-                    scrollMode = scrollMode,
-                    replaceFragment = { fragment = it },
-                    onTitle = onTitle,
-                    onUrl = onUrl,
-                    onSubscribe = onSubscribe,
                     feedStrategy = feedStrategy,
-                    clipMode = clipMode,
-                    onClipMode = onClipMode,
-                    onConnectTimeout = onConnectTimeout,
-                    onFeedStrategy = onFeedStrategy,
-                    onGodMode = onGodMode,
-                    onScrollMode = onScrollMode,
                     useCommonUIMode = useCommonUIMode,
-                    navigateToConsole = navigateToConsole,
                     useCommonUIModeEnable = useCommonUIModeEnable,
                     useDynamicColors = useDynamicColors,
                     onUseDynamicColors = onUseDynamicColors,
+                    godMode = godMode,
+                    clipMode = clipMode,
+                    connectTimeout = connectTimeout,
+                    onConnectTimeout = onConnectTimeout,
+                    onFeedStrategy = onFeedStrategy,
+                    onClipMode = onClipMode,
+                    onUIMode = { },
+                    onGodMode = onGodMode,
+                    onFeedManagement = {
+                        scaffoldState.navigateTo(ListDetailPaneScaffoldRole.Detail)
+                        fragment = SettingFragment.Subscriptions
+                    },
+                    onScriptManagement = {
+                        scaffoldState.navigateTo(ListDetailPaneScaffoldRole.Detail)
+                        fragment = (SettingFragment.Scripts)
+                    },
+                    navigateToConsole = navigateToConsole,
                     experimentalMode = experimentalMode,
                     onExperimentalMode = onExperimentalMode,
-                    mutedLivesFactory = mutedLivesFactory,
-                    onBanned = onBanned,
+                    scrollMode = scrollMode,
+                    onScrollMode = onScrollMode,
                     autoRefresh = autoRefresh,
                     onAutoRefresh = onAutoRefresh,
-                    isSSLVerificationEnabled = isSSLVerification,
-                    onSSLVerificationEnabled = onSSLVerification,
+                    isSSLVerification = isSSLVerification,
+                    onSSLVerification = onSSLVerification,
                     fullInfoPlayer = fullInfoPlayer,
                     onFullInfoPlayer = onFullInfoPlayer,
                     initialRootDestination = initialRootDestination,
@@ -250,349 +239,54 @@ private fun SettingScreen(
                     onNoPictureMode = onNoPictureMode,
                     cinemaMode = cinemaMode,
                     onCinemaMode = onCinemaMode,
-                    importJavaScript = importJavaScript,
                     navigateToAbout = navigateToAbout,
-                    localStorage = localStorage,
-                    onLocalStorage = onLocalStorage,
-                    openDocument = openDocument,
-                    modifier = modifier
-                        .fillMaxWidth()
-                        .scrollable(
-                            orientation = Orientation.Vertical,
-                            state = rememberScrollableState { it }
-                        )
+                    modifier = Modifier.fillMaxSize()
                 )
             }
+        },
+        detailPane = {
+            if (fragment != SettingFragment.Root) {
+                AnimatedPane(Modifier.preferKeepClear()) {
+                    when (fragment) {
+                        SettingFragment.Subscriptions -> {
+                            SubscriptionsFragment(
+                                contentPadding = contentPadding,
+                                title = title,
+                                url = url,
+                                uriFactory = uriFactory,
+                                mutedLivesFactory = mutedLivesFactory,
+                                onBanned = onBanned,
+                                onTitle = onTitle,
+                                onUrl = onUrl,
+                                onSubscribe = onSubscribe,
+                                localStorage = localStorage,
+                                onLocalStorage = onLocalStorage,
+                                openDocument = openDocument,
+                                modifier = modifier.fillMaxSize()
+                            )
 
-            Configuration.ORIENTATION_LANDSCAPE -> {
-                LandscapeOrientationContent(
-                    contentPadding = contentPadding,
-                    versionName = versionName,
-                    versionCode = versionCode,
-                    fragment = fragment,
-                    title = title,
-                    url = url,
-                    uriFactory = uriFactory,
-                    godMode = godMode,
-                    clipMode = clipMode,
-                    scrollMode = scrollMode,
-                    feedStrategy = feedStrategy,
-                    connectTimeout = connectTimeout,
-                    useCommonUIMode = useCommonUIMode,
-                    useCommonUIModeEnable = useCommonUIModeEnable,
-                    useDynamicColors = useDynamicColors,
-                    onUseDynamicColors = onUseDynamicColors,
-                    replaceFragment = { fragment = it },
-                    onTitle = onTitle,
-                    onUrl = onUrl,
-                    onClipMode = onClipMode,
-                    onScrollMode = onScrollMode,
-                    onSubscribe = onSubscribe,
-                    onFeedStrategy = onFeedStrategy,
-                    onGodMode = onGodMode,
-                    onConnectTimeout = onConnectTimeout,
-                    onUIMode = onUIMode,
-                    navigateToConsole = navigateToConsole,
-                    experimentalMode = experimentalMode,
-                    onExperimentalMode = onExperimentalMode,
-                    mutedLivesFactory = mutedLivesFactory,
-                    onBanned = onBanned,
-                    autoRefresh = autoRefresh,
-                    onAutoRefresh = onAutoRefresh,
-                    isSSLVerificationEnabled = isSSLVerification,
-                    onSSLVerificationEnabled = onSSLVerification,
-                    fullInfoPlayer = fullInfoPlayer,
-                    onFullInfoPlayer = onFullInfoPlayer,
-                    initialRootDestination = initialRootDestination,
-                    onInitialTabIndex = scrollDefaultDestination,
-                    noPictureMode = noPictureMode,
-                    onNoPictureMode = onNoPictureMode,
-                    cinemaMode = cinemaMode,
-                    onCinemaMode = onCinemaMode,
-                    importJavaScript = importJavaScript,
-                    navigateToAbout = navigateToAbout,
-                    localStorage = localStorage,
-                    onLocalStorage = onLocalStorage,
-                    openDocument = openDocument,
-                    modifier = modifier.scrollable(
-                        orientation = Orientation.Vertical,
-                        state = rememberScrollableState { it }
-                    )
-                )
-            }
+                        }
 
-            else -> {}
-        }
-    }
-    BackHandler(fragment != SettingFragments.Root) {
-        fragment = SettingFragments.Root
-    }
-}
+                        SettingFragment.Scripts -> {
+                            ScriptsFragment(
+                                contentPadding = contentPadding,
+                                importJavaScript = importJavaScript,
+                                modifier = modifier.fillMaxSize()
+                            )
+                        }
 
-@Composable
-private fun PortraitOrientationContent(
-    contentPadding: PaddingValues,
-    versionName: String,
-    versionCode: Int,
-    fragment: SettingFragments,
-    title: String,
-    url: String,
-    uriFactory: () -> Uri,
-    @FeedStrategy feedStrategy: Int,
-    godMode: Boolean,
-    @ClipMode clipMode: Int,
-    @ConnectTimeout connectTimeout: Int,
-    useCommonUIMode: Boolean,
-    useCommonUIModeEnable: Boolean,
-    useDynamicColors: Boolean,
-    onUseDynamicColors: () -> Unit,
-    onGodMode: () -> Unit,
-    onClipMode: OnClipMode,
-    onConnectTimeout: () -> Unit,
-    mutedLivesFactory: MutedLivesFactory,
-    onBanned: (Int) -> Unit,
-    replaceFragment: (SettingFragments) -> Unit,
-    onTitle: (String) -> Unit,
-    onUrl: (String) -> Unit,
-    onSubscribe: () -> Unit,
-    onFeedStrategy: OnFeedStrategy,
-    navigateToConsole: NavigateToConsole,
-    experimentalMode: Boolean,
-    onScrollMode: () -> Unit,
-    scrollMode: Boolean,
-    onExperimentalMode: () -> Unit,
-    autoRefresh: Boolean,
-    onAutoRefresh: () -> Unit,
-    isSSLVerificationEnabled: Boolean,
-    onSSLVerificationEnabled: () -> Unit,
-    fullInfoPlayer: Boolean,
-    onFullInfoPlayer: () -> Unit,
-    initialRootDestination: Int,
-    onInitialTabIndex: () -> Unit,
-    noPictureMode: Boolean,
-    onNoPictureMode: () -> Unit,
-    cinemaMode: Boolean,
-    onCinemaMode: () -> Unit,
-    importJavaScript: (Uri) -> Unit,
-    navigateToAbout: NavigateToAbout,
-    localStorage: Boolean,
-    onLocalStorage: () -> Unit,
-    openDocument: (Uri) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    // TODO: replace with material3-modal-side-sheet.
-    Box {
-        PreferencesFragment(
-            contentPadding = contentPadding,
-            versionName = versionName,
-            versionCode = versionCode,
-            feedStrategy = feedStrategy,
-            useCommonUIMode = useCommonUIMode,
-            useCommonUIModeEnable = useCommonUIModeEnable,
-            useDynamicColors = useDynamicColors,
-            onUseDynamicColors = onUseDynamicColors,
-            godMode = godMode,
-            clipMode = clipMode,
-            connectTimeout = connectTimeout,
-            onConnectTimeout = onConnectTimeout,
-            onFeedStrategy = onFeedStrategy,
-            onClipMode = onClipMode,
-            onUIMode = { },
-            onGodMode = onGodMode,
-            onFeedManagement = { replaceFragment(SettingFragments.Subscriptions) },
-            onScriptManagement = { replaceFragment(SettingFragments.Scripts) },
-            navigateToConsole = navigateToConsole,
-            experimentalMode = experimentalMode,
-            onExperimentalMode = onExperimentalMode,
-            scrollMode = scrollMode,
-            onScrollMode = onScrollMode,
-            autoRefresh = autoRefresh,
-            onAutoRefresh = onAutoRefresh,
-            isSSLVerificationEnabled = isSSLVerificationEnabled,
-            onSSLVerificationEnabled = onSSLVerificationEnabled,
-            fullInfoPlayer = fullInfoPlayer,
-            onFullInfoPlayer = onFullInfoPlayer,
-            initialRootDestination = initialRootDestination,
-            onInitialTabIndex = onInitialTabIndex,
-            noPictureMode = noPictureMode,
-            onNoPictureMode = onNoPictureMode,
-            cinemaMode = cinemaMode,
-            onCinemaMode = onCinemaMode,
-            navigateToAbout = navigateToAbout,
-            modifier = modifier
-        )
-
-        AnimatedVisibility(
-            visible = fragment != SettingFragments.Root,
-            enter = slideInHorizontally { it },
-            exit = slideOutHorizontally { it }
-        ) {
-            when (fragment) {
-                SettingFragments.Subscriptions -> {
-                    SubscriptionsFragment(
-                        contentPadding = contentPadding,
-                        title = title,
-                        url = url,
-                        uriFactory = uriFactory,
-                        mutedLivesFactory = mutedLivesFactory,
-                        onBanned = onBanned,
-                        onTitle = onTitle,
-                        onUrl = onUrl,
-                        onSubscribe = onSubscribe,
-                        localStorage = localStorage,
-                        onLocalStorage = onLocalStorage,
-                        openDocument = openDocument,
-                        modifier = modifier.background(MaterialTheme.colorScheme.background)
-                    )
+                        else -> {}
+                    }
                 }
-
-                SettingFragments.Scripts -> {
-                    ScriptsFragment(
-                        contentPadding = contentPadding,
-                        importJavaScript = importJavaScript,
-                        modifier = modifier.background(MaterialTheme.colorScheme.background)
-                    )
-                }
-
-                else -> {}
             }
-        }
-    }
-}
+        },
+        modifier = Modifier
+            .fillMaxSize()
+            .testTag("feature:setting")
+    )
 
-@Composable
-private fun LandscapeOrientationContent(
-    contentPadding: PaddingValues,
-    versionName: String,
-    versionCode: Int,
-    fragment: SettingFragments,
-    title: String,
-    url: String,
-    uriFactory: () -> Uri,
-    godMode: Boolean,
-    @ClipMode clipMode: Int,
-    replaceFragment: (SettingFragments) -> Unit,
-    onTitle: (String) -> Unit,
-    onUrl: (String) -> Unit,
-    onSubscribe: () -> Unit,
-    @FeedStrategy feedStrategy: Int,
-    @ConnectTimeout connectTimeout: Int,
-    onFeedStrategy: OnFeedStrategy,
-    onConnectTimeout: () -> Unit,
-    useCommonUIMode: Boolean,
-    useCommonUIModeEnable: Boolean,
-    useDynamicColors: Boolean,
-    onUseDynamicColors: () -> Unit,
-    scrollMode: Boolean,
-    onUIMode: () -> Unit,
-    onGodMode: () -> Unit,
-    onClipMode: OnClipMode,
-    onScrollMode: () -> Unit,
-    mutedLivesFactory: MutedLivesFactory,
-    onBanned: (Int) -> Unit,
-    navigateToConsole: NavigateToConsole,
-    experimentalMode: Boolean,
-    onExperimentalMode: () -> Unit,
-    autoRefresh: Boolean,
-    onAutoRefresh: () -> Unit,
-    isSSLVerificationEnabled: Boolean,
-    onSSLVerificationEnabled: () -> Unit,
-    fullInfoPlayer: Boolean,
-    onFullInfoPlayer: () -> Unit,
-    initialRootDestination: Int,
-    onInitialTabIndex: () -> Unit,
-    noPictureMode: Boolean,
-    onNoPictureMode: () -> Unit,
-    cinemaMode: Boolean,
-    onCinemaMode: () -> Unit,
-    importJavaScript: (Uri) -> Unit,
-    navigateToAbout: NavigateToAbout,
-    localStorage: Boolean,
-    onLocalStorage: () -> Unit,
-    openDocument: (Uri) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val spacing = LocalSpacing.current
-
-    // TODO: replace with material3-modal-side-sheet.
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(spacing.medium, Alignment.Start),
-        modifier = modifier.padding(horizontal = spacing.medium)
-    ) {
-        PreferencesFragment(
-            contentPadding = contentPadding,
-            versionName = versionName,
-            versionCode = versionCode,
-            godMode = godMode,
-            clipMode = clipMode,
-            onClipMode = onClipMode,
-            onFeedManagement = { replaceFragment(SettingFragments.Subscriptions) },
-            onScriptManagement = { replaceFragment(SettingFragments.Scripts) },
-            feedStrategy = feedStrategy,
-            connectTimeout = connectTimeout,
-            onFeedStrategy = onFeedStrategy,
-            onConnectTimeout = onConnectTimeout,
-            useCommonUIMode = useCommonUIMode,
-            useCommonUIModeEnable = useCommonUIModeEnable,
-            useDynamicColors = useDynamicColors,
-            onUseDynamicColors = onUseDynamicColors,
-            onUIMode = onUIMode,
-            onGodMode = onGodMode,
-            navigateToConsole = navigateToConsole,
-            experimentalMode = experimentalMode,
-            onExperimentalMode = onExperimentalMode,
-            scrollMode = scrollMode,
-            onScrollMode = onScrollMode,
-            autoRefresh = autoRefresh,
-            onAutoRefresh = onAutoRefresh,
-            isSSLVerificationEnabled = isSSLVerificationEnabled,
-            onSSLVerificationEnabled = onSSLVerificationEnabled,
-            fullInfoPlayer = fullInfoPlayer,
-            onFullInfoPlayer = onFullInfoPlayer,
-            initialRootDestination = initialRootDestination,
-            onInitialTabIndex = onInitialTabIndex,
-            noPictureMode = noPictureMode,
-            onNoPictureMode = onNoPictureMode,
-            cinemaMode = cinemaMode,
-            onCinemaMode = onCinemaMode,
-            navigateToAbout = navigateToAbout,
-            modifier = Modifier
-                .fillMaxHeight()
-                .weight(1f)
-        )
-
-        when (fragment) {
-            SettingFragments.Subscriptions -> {
-                SubscriptionsFragment(
-                    contentPadding = contentPadding,
-                    title = title,
-                    url = url,
-                    uriFactory = uriFactory,
-                    mutedLivesFactory = mutedLivesFactory,
-                    onBanned = onBanned,
-                    onTitle = onTitle,
-                    onUrl = onUrl,
-                    onSubscribe = onSubscribe,
-                    localStorage = localStorage,
-                    onLocalStorage = onLocalStorage,
-                    openDocument = openDocument,
-                    modifier = Modifier
-                        .fillMaxHeight()
-                        .weight(1f)
-                )
-            }
-
-            SettingFragments.Scripts -> {
-                ScriptsFragment(
-                    contentPadding = contentPadding,
-                    importJavaScript = importJavaScript,
-                    modifier = Modifier
-                        .fillMaxHeight()
-                        .weight(1f)
-                )
-            }
-
-            else -> {}
-        }
+    BackHandler(fragment != SettingFragment.Root) {
+        fragment = SettingFragment.Root
+        scaffoldState.navigateBack()
     }
 }

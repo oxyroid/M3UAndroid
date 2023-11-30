@@ -33,7 +33,9 @@ import androidx.compose.ui.text.capitalize
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.m3u.material.ktx.ifUnspecified
 
 @Composable
 fun Preference(
@@ -41,6 +43,7 @@ fun Preference(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     content: String? = null,
+    elevation: Dp = Dp.Unspecified,
     onClick: () -> Unit = {},
     trailing: @Composable () -> Unit = {}
 ) {
@@ -63,7 +66,7 @@ fun Preference(
             shape = RectangleShape,
             enabled = enabled,
             onClick = onClick,
-            elevation = CardDefaults.elevatedCardElevation(4.dp)
+            elevation = CardDefaults.elevatedCardElevation(elevation.ifUnspecified { 4.dp })
         ) {
             ListItem(
                 headlineContent = {
@@ -92,7 +95,7 @@ fun Preference(
                 trailingContent = trailing,
                 tonalElevation = LocalAbsoluteTonalElevation.current,
                 modifier = modifier
-                    .semantics(mergeDescendants = true) {  }
+                    .semantics(mergeDescendants = true) { }
                     .fillMaxWidth()
                     .onFocusChanged {
                         focus = it.hasFocus
@@ -110,6 +113,7 @@ fun CheckBoxPreference(
     onChanged: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
     content: String? = null,
+    elevation: Dp = Dp.Unspecified,
     enabled: Boolean = true,
 ) {
     val combined = Modifier
@@ -124,6 +128,7 @@ fun CheckBoxPreference(
         title = title,
         content = content,
         enabled = enabled,
+        elevation = elevation,
         onClick = {
             if (enabled) {
                 onChanged(!checked)
@@ -147,6 +152,7 @@ fun SwitchPreference(
     onChanged: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
     content: String? = null,
+    elevation: Dp = Dp.Unspecified,
     enabled: Boolean = true,
 ) {
     val combined = Modifier
@@ -159,6 +165,7 @@ fun SwitchPreference(
     Preference(
         title = title,
         content = content,
+        elevation = elevation,
         enabled = enabled,
         onClick = {
             if (enabled) {
@@ -183,6 +190,7 @@ fun IconPreference(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     content: String? = null,
+    elevation: Dp = Dp.Unspecified,
     enabled: Boolean = true,
 ) {
     Preference(
@@ -190,6 +198,7 @@ fun IconPreference(
         content = content,
         enabled = enabled,
         onClick = onClick,
+        elevation = elevation,
         modifier = modifier,
         trailing = {
             Icon(
@@ -208,12 +217,14 @@ fun TextPreference(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     content: String? = null,
+    elevation: Dp = Dp.Unspecified,
     enabled: Boolean = true,
 ) {
     Preference(
         title = title,
         content = content,
         enabled = enabled,
+        elevation = elevation,
         onClick = {
             if (enabled) onClick()
         },

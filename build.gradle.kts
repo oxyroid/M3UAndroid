@@ -19,7 +19,8 @@ subprojects {
                 "-opt-in=androidx.compose.foundation.layout.ExperimentalLayoutApi",
                 "-opt-in=androidx.compose.material3.ExperimentalMaterial3Api",
                 "-opt-in=com.google.accompanist.permissions.ExperimentalPermissionsApi",
-                "-opt-in=androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi"
+                "-opt-in=androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi",
+                "-opt-in=androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi"
             )
         }
         val path = project.buildDir.absolutePath + "/compose_metrics"
