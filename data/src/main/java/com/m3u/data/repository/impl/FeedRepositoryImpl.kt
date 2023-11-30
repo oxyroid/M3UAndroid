@@ -15,8 +15,8 @@ import com.m3u.core.wrapper.Process
 import com.m3u.core.wrapper.emitException
 import com.m3u.core.wrapper.emitMessage
 import com.m3u.core.wrapper.emitResource
-import com.m3u.core.wrapper.pt
 import com.m3u.core.wrapper.processFlow
+import com.m3u.core.wrapper.pt
 import com.m3u.data.database.dao.FeedDao
 import com.m3u.data.database.dao.LiveDao
 import com.m3u.data.database.entity.Feed
@@ -113,14 +113,16 @@ class FeedRepositoryImpl @Inject constructor(
 
             else -> emptyList()
         }
-        var progress = 0
-        lives
-            .filterNot { it.url in existedUrls }
-            .forEach {
-                liveDao.insert(it)
-                progress++
-                onProcess(progress)
-            }
+        var count = 0
+
+        val needToBeInsertedLives = lives.filterNot { it.url in existedUrls }
+        val total = needToBeInsertedLives.size
+
+        needToBeInsertedLives.forEach { live ->
+            liveDao.insert(live)
+            count++
+            onProcess(count / total * 100)
+        }
     }
 
     private suspend fun acquireNetwork(url: String): List<Live> {
