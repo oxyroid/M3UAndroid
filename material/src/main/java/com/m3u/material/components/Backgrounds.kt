@@ -1,12 +1,15 @@
 package com.m3u.material.components
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.material3.LocalAbsoluteTonalElevation
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.m3u.material.ktx.animated
@@ -17,18 +20,23 @@ fun Background(
     modifier: Modifier = Modifier,
     color: Color = MaterialTheme.colorScheme.background,
     contentColor: Color = MaterialTheme.colorScheme.onBackground,
-    content: @Composable () -> Unit
+    content: @Composable BoxScope.() -> Unit
 ) {
-    val actualBackgroundColor by color
+    val actualColor by color
         .ifUnspecified { Color.Transparent }
         .animated("BackgroundBackground")
     val actualContentColor by contentColor.animated("BackgroundContent")
-    Surface(
-        color = actualBackgroundColor,
-        contentColor = actualContentColor,
-        modifier = modifier
+    Box(
+        modifier = Modifier
+            .drawBehind {
+                drawRect(actualColor)
+            }
+            .then(modifier)
     ) {
-        CompositionLocalProvider(LocalAbsoluteTonalElevation provides 0.dp) {
+        CompositionLocalProvider(
+            LocalAbsoluteTonalElevation provides 0.dp,
+            LocalContentColor provides actualContentColor
+        ) {
             content()
         }
     }
