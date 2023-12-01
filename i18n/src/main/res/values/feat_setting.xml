@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="feat_setting_not_implementation">this feature is not available for current version</string>
     <string name="feat_setting_placeholder_url">playlist link</string>
     <string name="feat_setting_app_version">app version</string>
     <string name="feat_setting_label_subscribe">subscribe</string>
@@ -54,4 +53,5 @@
     <string name="feat_setting_error_blank_url">blank url</string>
     <string name="feat_setting_use_dynamic_colors">dynamic colors</string>
     <string name="feat_setting_use_dynamic_colors_unavailable">it is available on Android 12 and above</string>
+    <string name="feat_setting_not_implementation">this feature is not available for current version</string>
 </resources>

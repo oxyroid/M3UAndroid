@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="feat_setting_not_implementation">此功能当前版本不可用</string>
     <string name="feat_setting_placeholder_url">订阅链接</string>
     <string name="feat_setting_app_version">应用版本</string>
     <string name="feat_setting_label_subscribe">订阅</string>
@@ -58,4 +57,5 @@
     <string name="feat_setting_error_blank_url">目标地址为空</string>
     <string name="feat_setting_use_dynamic_colors">动态配色</string>
     <string name="feat_setting_use_dynamic_colors_unavailable">仅在 Android 12 及更高版本可用</string>
+    <string name="feat_setting_not_implementation">此功能当前版本不可用</string>
 </resources>

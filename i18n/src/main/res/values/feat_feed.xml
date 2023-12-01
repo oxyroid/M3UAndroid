@@ -12,4 +12,5 @@
     <string name="feat_feed_error_live_cover_not_found">cover is not existed</string>
     <string name="feat_feed_error_live_not_found">live is not existed</string>
     <string name="feat_feed_success_save_cover">saved to (%s)</string>
+    <string name="feat_feed_prompt_add_playlist">go \"Settings - Playlist Management\" to add your first playlist</string>
 </resources>

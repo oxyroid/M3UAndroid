@@ -3,25 +3,39 @@ package com.m3u.features.main
 import android.content.res.Configuration
 import android.view.KeyEvent
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.TipsAndUpdates
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.semantics
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.m3u.core.util.basic.title
 import com.m3u.data.database.entity.Feed
 import com.m3u.features.main.components.FeedGallery
 import com.m3u.features.main.components.MainDialog
 import com.m3u.features.main.components.OnRename
 import com.m3u.features.main.components.OnUnsubscribe
 import com.m3u.features.main.model.FeedDetailHolder
+import com.m3u.i18n.R
 import com.m3u.material.components.Background
 import com.m3u.material.ktx.interceptVolumeEvent
+import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.EventHandler
 import com.m3u.ui.LocalHelper
 import com.m3u.ui.MessageEventHandler
@@ -91,21 +105,29 @@ private fun MainScreen(
     var dialog: MainDialog by remember { mutableStateOf(MainDialog.Idle) }
     val configuration = LocalConfiguration.current
 
+    val details = feedDetailHolder.details
+
     val actualRowCount = remember(rowCount, configuration.orientation) {
         when (configuration.orientation) {
             Configuration.ORIENTATION_PORTRAIT -> rowCount
             else -> rowCount + 2
         }
     }
-    Background {
-        FeedGallery(
-            rowCount = actualRowCount,
-            feedDetailHolder = feedDetailHolder,
-            navigateToFeed = navigateToFeed,
-            onMenu = { dialog = MainDialog.Selections(it) },
-            contentPadding = contentPadding,
-            modifier = modifier
-        )
+    Background(modifier) {
+        if (details.isNotEmpty()) {
+            FeedGallery(
+                rowCount = actualRowCount,
+                feedDetailHolder = feedDetailHolder,
+                navigateToFeed = navigateToFeed,
+                onMenu = { dialog = MainDialog.Selections(it) },
+                contentPadding = contentPadding,
+                modifier = Modifier.fillMaxSize()
+            )
+        } else {
+            FeedGalleryPlaceholder(
+                modifier = Modifier.fillMaxSize()
+            )
+        }
         MainDialog(
             status = dialog,
             update = { dialog = it },
@@ -116,5 +138,23 @@ private fun MainScreen(
 
     BackHandler(dialog != MainDialog.Idle) {
         dialog = MainDialog.Idle
+    }
+}
+
+@Composable
+private fun FeedGalleryPlaceholder(modifier: Modifier = Modifier) {
+    val spacing = LocalSpacing.current
+    Row(
+        modifier.semantics(mergeDescendants = true) { },
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center
+    ) {
+        Icon(
+            imageVector = Icons.Rounded.TipsAndUpdates,
+            contentDescription = null
+        )
+        Spacer(modifier = Modifier.size(spacing.medium))
+        val text = stringResource(R.string.feat_feed_prompt_add_playlist).title()
+        Text(remember(text) { text })
     }
 }
