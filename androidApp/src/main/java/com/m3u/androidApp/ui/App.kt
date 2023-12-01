@@ -11,6 +11,7 @@ import com.m3u.androidApp.navigation.M3UNavHost
 import com.m3u.material.model.LocalNavController
 import com.m3u.ui.EmptyHelper
 import com.m3u.ui.Helper
+import com.m3u.ui.rememberActionHolder
 
 @Composable
 fun App(
@@ -38,11 +39,13 @@ fun App(
         defState = viewModel.title.collectAsStateWithLifecycle()
     )
 
+    val actionHolder = rememberActionHolder(actions)
+
     AppScaffold(
         title = title,
         snacker = snacker.value,
         useDynamicColors = state.useDynamicColors,
-        actionsFactory = { actions },
+        actionHolder = actionHolder,
         rootDestination = rootDestination,
         fob = fob,
         isSystemBarVisible = isSystemBarVisible,

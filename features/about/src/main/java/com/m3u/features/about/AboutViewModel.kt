@@ -9,6 +9,7 @@ import com.m3u.core.util.collections.indexOf
 import com.m3u.core.wrapper.EmptyMessage
 import com.m3u.data.api.GithubApi
 import com.m3u.features.about.model.Contributor
+import com.m3u.features.about.model.Dependency
 import com.m3u.features.about.model.toContributor
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -32,8 +33,8 @@ class AboutViewModel @Inject constructor(
         MutableStateFlow(emptyList())
     internal val contributors: StateFlow<List<Contributor>> = _contributors.asStateFlow()
 
-    private val _dependencies: MutableStateFlow<List<String>> = MutableStateFlow(emptyList())
-    internal val dependencies: StateFlow<List<String>> = _dependencies.asStateFlow()
+    private val _dependencies: MutableStateFlow<List<Dependency>> = MutableStateFlow(emptyList())
+    internal val dependencies: StateFlow<List<Dependency>> = _dependencies.asStateFlow()
 
     init {
         refresh()
@@ -72,7 +73,7 @@ class AboutViewModel @Inject constructor(
         } ?: emptyList()
     }
 
-    private fun List<String>.readTomlDependencies(): List<String> = logger.execute {
+    private fun List<String>.readTomlDependencies(): List<Dependency> = logger.execute {
         val start = indexOf { it.startsWith(("[libraries]")) } + 1
         val end = indexOf(start) { it.startsWith(("[plugins]")) }
         subList(start, end).mapNotNull { line ->
@@ -81,6 +82,7 @@ class AboutViewModel @Inject constructor(
             else line.take(i).trim()
         }
             .sorted()
+            .map { Dependency(it) }
     } ?: emptyList()
 
     override fun onEvent(event: Unit) {

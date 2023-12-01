@@ -33,6 +33,12 @@ android {
         arg("room.schemaLocation", "${projectDir}/schemas")
         arg("ksp.incremental", "true")
     }
+    buildFeatures {
+        compose = true
+    }
+    composeOptions {
+        kotlinCompilerExtensionVersion = libs.versions.compose.compiler.get()
+    }
 }
 
 dependencies {

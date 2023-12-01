@@ -31,6 +31,8 @@ import com.m3u.material.ktx.animated
 import com.m3u.ui.Destination
 import com.m3u.ui.Fob
 import com.m3u.ui.Navigate
+import com.m3u.ui.RootDestinationHolder
+import com.m3u.ui.rememberRootDestinationHolder
 
 @Composable
 fun AppNavigation(
@@ -44,7 +46,7 @@ fun AppNavigation(
     unselectedColor: Color = AppNavigationDefaults.unselectedColor(),
     fobbedColor: Color = AppNavigationDefaults.fobbedColor(),
 ) {
-    val destinations = Destination.Root.entries
+    val destinationHolder = rememberRootDestinationHolder(Destination.Root.entries)
     val actualBackgroundColor by backgroundColor.animated("BottomNavigationSheetBackground")
     val actualContentColor by unselectedColor.animated("BottomNavigationSheetContent")
 
@@ -57,7 +59,7 @@ fun AppNavigation(
             ) {
                 RailContent(
                     navigate = navigate,
-                    destinationsFactory = { destinations },
+                    destinationHolder = destinationHolder,
                     rootDestination = rootDestination,
                     fob = fob,
                     selectedColor = selectedColor,
@@ -74,7 +76,7 @@ fun AppNavigation(
             ) {
                 Content(
                     navigate = navigate,
-                    destinationsFactory = { destinations },
+                    destinationHolder = destinationHolder,
                     rootDestination = rootDestination,
                     fob = fob,
                     selectedColor = selectedColor,
@@ -88,7 +90,7 @@ fun AppNavigation(
 @Composable
 private fun ColumnScope.RailContent(
     navigate: Navigate,
-    destinationsFactory: () -> List<Destination.Root>,
+    destinationHolder: RootDestinationHolder,
     rootDestination: Destination.Root?,
     fob: Fob?,
     selectedColor: Color,
@@ -97,13 +99,13 @@ private fun ColumnScope.RailContent(
 ) {
     val relation = fob?.rootDestination
     val actualActiveDestination = rootDestination ?: relation
-    val destinations = destinationsFactory()
-    destinations.forEach { default ->
-        val fobbed = default == relation
-        val selected = default == actualActiveDestination
-        val iconTextId = default.iconTextId
-        val selectedIcon = fob?.icon.takeIf { fobbed } ?: default.selectedIcon
-        val unselectedIcon = fob?.icon.takeIf { fobbed } ?: default.unselectedIcon
+    val roots = destinationHolder.roots
+    roots.forEach { root ->
+        val fobbed = root == relation
+        val selected = root == actualActiveDestination
+        val iconTextId = root.iconTextId
+        val selectedIcon = fob?.icon.takeIf { fobbed } ?: root.selectedIcon
+        val unselectedIcon = fob?.icon.takeIf { fobbed } ?: root.unselectedIcon
         val actualSelectedColor by animateColor("BottomNavigationSheetSelected") {
             if (fobbed) fobbedColor else selectedColor
         }
@@ -114,7 +116,7 @@ private fun ColumnScope.RailContent(
                 if (fobbed && fob != null) {
                     fob.onClick()
                 } else {
-                    navigate(default)
+                    navigate(root)
                 }
             },
             selectedColor = actualSelectedColor,
@@ -146,7 +148,7 @@ private fun ColumnScope.RailContent(
 @Composable
 private fun RowScope.Content(
     navigate: Navigate,
-    destinationsFactory: () -> List<Destination.Root>,
+    destinationHolder: RootDestinationHolder,
     rootDestination: Destination.Root?,
     fob: Fob?,
     selectedColor: Color,
@@ -155,13 +157,13 @@ private fun RowScope.Content(
 ) {
     val relation = fob?.rootDestination
     val actualActiveDestination = rootDestination ?: relation
-    val destinations = destinationsFactory()
-    destinations.forEach { default ->
-        val fobbed = default == relation
-        val selected = default == actualActiveDestination
-        val iconTextId = default.iconTextId
-        val selectedIcon = fob?.icon.takeIf { fobbed } ?: default.selectedIcon
-        val unselectedIcon = fob?.icon.takeIf { fobbed } ?: default.unselectedIcon
+    val roots = destinationHolder.roots
+    roots.forEach { root ->
+        val fobbed = root == relation
+        val selected = root == actualActiveDestination
+        val iconTextId = root.iconTextId
+        val selectedIcon = fob?.icon.takeIf { fobbed } ?: root.selectedIcon
+        val unselectedIcon = fob?.icon.takeIf { fobbed } ?: root.unselectedIcon
         val actualSelectedColor by animateColor("BottomNavigationSheetSelected") {
             if (fobbed) fobbedColor else selectedColor
         }
@@ -172,7 +174,7 @@ private fun RowScope.Content(
                 if (fobbed && fob != null) {
                     fob.onClick()
                 } else {
-                    navigate(default)
+                    navigate(root)
                 }
             },
             colors = NavigationBarItemDefaults.colors(

@@ -15,10 +15,24 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import org.fourthline.cling.model.meta.Device
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.remember
+
+@Immutable
+internal data class DeviceWrapper(
+    val device: Device<*, *, *>?
+)
+
+@Composable
+internal fun rememberDeviceWrapper(device: Device<*, *, *>?): DeviceWrapper {
+    return remember(device) {
+        DeviceWrapper(device)
+    }
+}
 
 @Composable
 internal fun DlnaDeviceItem(
-    deviceFactory: () -> Device<*, *, *>,
+    deviceWrapper: DeviceWrapper,
     connected: Boolean,
     requestConnection: () -> Unit,
     loseConnection: () -> Unit,
@@ -29,7 +43,7 @@ internal fun DlnaDeviceItem(
 
     ListItem(
         headlineContent = {
-            Text(deviceFactory().displayString)
+            Text(deviceWrapper.device?.displayString.orEmpty())
         },
         trailingContent = {
             Crossfade(connected, label = "icon") { connected ->

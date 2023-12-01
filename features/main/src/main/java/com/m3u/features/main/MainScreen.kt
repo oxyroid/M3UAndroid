@@ -19,7 +19,7 @@ import com.m3u.features.main.components.FeedGallery
 import com.m3u.features.main.components.MainDialog
 import com.m3u.features.main.components.OnRename
 import com.m3u.features.main.components.OnUnsubscribe
-import com.m3u.features.main.model.FeedDetail
+import com.m3u.features.main.model.FeedDetailHolder
 import com.m3u.material.components.Background
 import com.m3u.material.ktx.interceptVolumeEvent
 import com.m3u.ui.EventHandler
@@ -28,10 +28,12 @@ import com.m3u.ui.MessageEventHandler
 import com.m3u.ui.ResumeEvent
 
 typealias NavigateToFeed = (feed: Feed) -> Unit
+typealias NavigateToSettingSubscription = () -> Unit
 
 @Composable
 fun MainRoute(
     navigateToFeed: NavigateToFeed,
+    navigateToSettingSubscription: NavigateToSettingSubscription,
     resume: ResumeEvent,
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
@@ -40,7 +42,7 @@ fun MainRoute(
     val helper = LocalHelper.current
     val message by viewModel.message.collectAsStateWithLifecycle()
     val state: MainState by viewModel.state.collectAsStateWithLifecycle()
-    val feeds by viewModel.feeds.collectAsStateWithLifecycle()
+    val feedDetailHolder by viewModel.feeds.collectAsStateWithLifecycle()
     val rowCount = state.rowCount
     fun onRowCount(target: Int) {
         state.rowCount = target
@@ -64,7 +66,7 @@ fun MainRoute(
     }
 
     MainScreen(
-        feedsFactory = { feeds },
+        feedDetailHolder = feedDetailHolder,
         rowCount = rowCount,
         contentPadding = contentPadding,
         navigateToFeed = navigateToFeed,
@@ -76,12 +78,10 @@ fun MainRoute(
     )
 }
 
-private typealias FeedsFactory = () -> List<FeedDetail>
-
 @Composable
 private fun MainScreen(
     rowCount: Int,
-    feedsFactory: FeedsFactory,
+    feedDetailHolder: FeedDetailHolder,
     contentPadding: PaddingValues,
     navigateToFeed: NavigateToFeed,
     unsubscribe: OnUnsubscribe,
@@ -100,7 +100,7 @@ private fun MainScreen(
     Background {
         FeedGallery(
             rowCount = actualRowCount,
-            feedDetailsFactory = feedsFactory,
+            feedDetailHolder = feedDetailHolder,
             navigateToFeed = navigateToFeed,
             onMenu = { dialog = MainDialog.Selections(it) },
             contentPadding = contentPadding,

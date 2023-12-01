@@ -8,10 +8,25 @@ import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.rounded.Collections
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.Settings
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.m3u.i18n.R.string
 
 typealias Navigate = (Destination) -> Unit
+
+@Immutable
+data class RootDestinationHolder(
+    val roots: List<Destination.Root>
+)
+
+@Composable
+fun rememberRootDestinationHolder(roots: List<Destination.Root>): RootDestinationHolder {
+    return remember(roots) {
+        RootDestinationHolder(roots)
+    }
+}
 
 sealed interface Destination {
     enum class Root(
@@ -38,36 +53,20 @@ sealed interface Destination {
             iconTextId = string.ui_destination_setting,
             titleTextId = string.ui_title_setting
         );
-
-        companion object : Key<Root>
     }
 
-    data class Feed(val url: String) : AbstractDestinationElement(Feed) {
-        companion object : Key<Feed>
-    }
+    data class Feed(val url: String) : Destination
 
-    data class Live(val id: Int) : AbstractDestinationElement(Live) {
-        companion object : Key<Live>
-    }
+    data class Live(val id: Int) : Destination
 
     data class LivePlayList(
         val ids: List<Int>,
         val initial: Int
-    ) : AbstractDestinationElement(LivePlayList) {
-        companion object : Key<LivePlayList>
-    }
+    ) : Destination
 
-    data object Console : AbstractDestinationElement(Console), Key<Console>
+    data object Console : Destination
 
-    data object About : AbstractDestinationElement(About), Key<About>
+    data object About : Destination
 
-    interface Key<D : Destination>
-
-    sealed interface Element : Destination {
-        val key: Key<*>
-    }
 }
 
-sealed class AbstractDestinationElement(
-    override val key: Destination.Key<*>
-) : Destination.Element

@@ -1,6 +1,8 @@
 package com.m3u.data.database.entity
 
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.remember
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
@@ -32,4 +34,16 @@ data class Live(
     override infix fun like(another: Live): Boolean =
         this.url == another.url && this.feedUrl == another.feedUrl && this.cover == another.cover
                 && this.group == another.group && this.title == another.title
+}
+
+@Immutable
+data class LiveHolder(
+    val lives: List<Live>
+)
+
+@Composable
+fun rememberLiveHolder(lives: List<Live>): LiveHolder {
+    return remember(lives) {
+        LiveHolder(lives)
+    }
 }

@@ -24,6 +24,8 @@ import com.m3u.core.unspecified.UBoolean
 import com.m3u.core.unspecified.unspecifiable
 import com.m3u.core.util.basic.isNotEmpty
 import com.m3u.features.live.components.DlnaDevicesBottomSheet
+import com.m3u.features.live.components.rememberDeviceHolder
+import com.m3u.features.live.components.rememberDeviceWrapper
 import com.m3u.features.live.fragments.LiveFragment
 import com.m3u.material.components.MaskState
 import com.m3u.material.components.rememberMaskState
@@ -93,8 +95,8 @@ internal fun LiveRoute(
         maskState = maskState,
         searching = searching,
         isDevicesVisible = isDevicesVisible,
-        devices = devices,
-        connected = state.connected,
+        deviceHolder = rememberDeviceHolder(devices),
+        connected = rememberDeviceWrapper(state.connected),
         connectDlnaDevice = { viewModel.onEvent(LiveEvent.ConnectDlnaDevice(it)) },
         disconnectDlnaDevice = { viewModel.onEvent(LiveEvent.DisconnectDlnaDevice(it)) },
         onDismiss = { viewModel.onEvent(LiveEvent.CloseDlnaDevices) }

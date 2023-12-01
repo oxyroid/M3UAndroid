@@ -57,6 +57,9 @@ fun M3UNavHost(
             },
             navigateToAbout = {
                 navigate(Destination.About)
+            },
+            navigateToSettingSubscription = {
+                navigate(Destination.Root.Setting)
             }
         )
 

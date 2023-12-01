@@ -11,8 +11,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.m3u.data.database.entity.LiveHolder
+import com.m3u.data.database.entity.rememberLiveHolder
 import com.m3u.features.favorite.components.FavouriteGallery
-import com.m3u.features.favorite.components.LivesFactory
 import com.m3u.material.ktx.interceptVolumeEvent
 import com.m3u.ui.EventHandler
 import com.m3u.ui.LocalHelper
@@ -30,6 +31,10 @@ fun FavouriteRoute(
 ) {
     val helper = LocalHelper.current
     val state by viewModel.state.collectAsStateWithLifecycle()
+
+    val lives = remember(state.details) {
+        state.details.flatMap { it.value }
+    }
 
     val rowCount = state.rowCount
     fun onRowCount(target: Int) {
@@ -56,7 +61,7 @@ fun FavouriteRoute(
         contentPadding = contentPadding,
         rowCount = rowCount,
         noPictureMode = state.noPictureMode,
-        livesFactory = { state.details.flatMap { it.value } },
+        liveHolder = rememberLiveHolder(lives),
         navigateToLive = navigateToLive,
         modifier = modifier
             .fillMaxSize()
@@ -69,7 +74,7 @@ private fun FavoriteScreen(
     contentPadding: PaddingValues,
     rowCount: Int,
     noPictureMode: Boolean,
-    livesFactory: LivesFactory,
+    liveHolder: LiveHolder,
     navigateToLive: NavigateToLive,
     modifier: Modifier = Modifier
 ) {
@@ -81,7 +86,7 @@ private fun FavoriteScreen(
     }
     FavouriteGallery(
         contentPadding = contentPadding,
-        livesFactory = livesFactory,
+        liveHolder = liveHolder,
         rowCount = actualRowCount,
         noPictureMode = noPictureMode,
         navigateToLive = navigateToLive,

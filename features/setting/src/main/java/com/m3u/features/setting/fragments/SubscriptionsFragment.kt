@@ -42,6 +42,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.m3u.core.util.readFileName
 import com.m3u.data.database.entity.Live
+import com.m3u.features.setting.UriWrapper
 import com.m3u.features.setting.components.MutedLiveItem
 import com.m3u.i18n.R.string
 import com.m3u.material.components.Button
@@ -50,16 +51,16 @@ import com.m3u.material.components.TextButton
 import com.m3u.material.ktx.plus
 import com.m3u.material.model.LocalSpacing
 
-internal typealias MutedLivesFactory = () -> List<Live>
+internal typealias MutedLiveHolder = () -> List<Live>
 
 @Composable
 internal fun SubscriptionsFragment(
     contentPadding: PaddingValues,
     title: String,
     url: String,
-    uriFactory: () -> Uri,
+    uriWrapper: UriWrapper,
     localStorage: Boolean,
-    mutedLivesFactory: MutedLivesFactory,
+    mutedLiveHolder: MutedLiveHolder,
     onBanned: (Int) -> Unit,
     onTitle: (String) -> Unit,
     onUrl: (String) -> Unit,
@@ -71,7 +72,7 @@ internal fun SubscriptionsFragment(
     val spacing = LocalSpacing.current
     val theme = MaterialTheme.colorScheme
     val focusRequester = remember { FocusRequester() }
-    val mutedLives = mutedLivesFactory()
+    val mutedLives = mutedLiveHolder()
     LazyColumn(
         contentPadding = PaddingValues(spacing.medium) + contentPadding,
         verticalArrangement = Arrangement.spacedBy(spacing.small),
@@ -142,7 +143,8 @@ internal fun SubscriptionsFragment(
                     )
                 } else {
                     LocalStorageButton(
-                        uriFactory = uriFactory,
+                        uriWrapper = uriWrapper,
+                        onTitle = onTitle,
                         openDocument = openDocument,
                     )
                 }
@@ -204,22 +206,39 @@ fun LocalStorageSwitch(
 
 @Composable
 private fun LocalStorageButton(
-    uriFactory: () -> Uri,
+    uriWrapper: UriWrapper,
+    onTitle: (String) -> Unit,
     openDocument: (Uri) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val uri = uriFactory()
+    val uri = uriWrapper.uri
     val context = LocalContext.current
     val selected = uri != Uri.EMPTY
     val spacing = LocalSpacing.current
     val launcher = rememberLauncherForActivityResult(
         ActivityResultContracts.GetContent()
-    ) {
-        openDocument(it ?: Uri.EMPTY)
+    ) { result ->
+        if (result == null) {
+            openDocument(Uri.EMPTY)
+            onTitle("")
+        } else {
+            try {
+                val filename = result.readFileName(context.contentResolver)
+                    ?: "Feed_${System.currentTimeMillis()}"
+                val title = filename
+                    .split(".")
+                    .dropLast(1)
+                    .joinToString(separator = "", prefix = "", postfix = "")
+                onTitle(title)
+            } catch (ignored: Exception) {
+            }
+            openDocument(result)
+        }
+        openDocument(result ?: Uri.EMPTY)
     }
     val icon = Icons.AutoMirrored.Rounded.OpenInNew
     val text = if (selected) remember(uri) {
-        uri.readFileName(context.contentResolver).orEmpty()
+        uri?.readFileName(context.contentResolver).orEmpty()
     } else stringResource(string.feat_setting_label_select_from_local_storage)
     val color = MaterialTheme.colorScheme.surfaceColorAtElevation(4.dp)
     val contentColor = MaterialTheme.colorScheme.onSurface
@@ -231,7 +250,7 @@ private fun LocalStorageButton(
             .background(color)
             .height(48.dp)
             .fillMaxWidth()
-            .clickable (
+            .clickable(
                 onClick = {
                     launcher.launch("audio/*")
                 },

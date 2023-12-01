@@ -29,7 +29,7 @@ import com.m3u.core.annotation.ConnectTimeout
 import com.m3u.core.annotation.FeedStrategy
 import com.m3u.core.annotation.OnClipMode
 import com.m3u.core.annotation.OnFeedStrategy
-import com.m3u.features.setting.fragments.MutedLivesFactory
+import com.m3u.features.setting.fragments.MutedLiveHolder
 import com.m3u.features.setting.fragments.PreferencesFragment
 import com.m3u.features.setting.fragments.ScriptsFragment
 import com.m3u.features.setting.fragments.SubscriptionsFragment
@@ -75,7 +75,7 @@ fun SettingRoute(
         versionCode = state.versionCode,
         title = state.title,
         url = state.url,
-        uriFactory = { state.uri },
+        uriWrapper = rememberUriWrapper(state.uri),
         feedStrategy = state.feedStrategy,
         godMode = state.godMode,
         clipMode = state.clipMode,
@@ -85,7 +85,7 @@ fun SettingRoute(
         useCommonUIModeEnable = useCommonUIModeEnable,
         navigateToConsole = navigateToConsole,
         experimentalMode = state.experimentalMode,
-        mutedLivesFactory = { state.banneds },
+        mutedLiveHolder = { state.banneds },
         onGodMode = { state.godMode = !state.godMode },
         onConnectTimeout = { viewModel.onEvent(SettingEvent.OnConnectTimeout) },
         onTitle = { viewModel.onEvent(SettingEvent.OnTitle(it)) },
@@ -130,7 +130,7 @@ private fun SettingScreen(
     versionCode: Int,
     title: String,
     url: String,
-    uriFactory: () -> Uri,
+    uriWrapper: UriWrapper,
     @FeedStrategy feedStrategy: Int,
     godMode: Boolean,
     @ClipMode clipMode: Int,
@@ -147,7 +147,7 @@ private fun SettingScreen(
     useCommonUIModeEnable: Boolean,
     useDynamicColors: Boolean,
     onUseDynamicColors: () -> Unit,
-    mutedLivesFactory: MutedLivesFactory,
+    mutedLiveHolder: MutedLiveHolder,
     onBanned: (Int) -> Unit,
     onUIMode: () -> Unit,
     onClipMode: OnClipMode,
@@ -253,8 +253,8 @@ private fun SettingScreen(
                                 contentPadding = contentPadding,
                                 title = title,
                                 url = url,
-                                uriFactory = uriFactory,
-                                mutedLivesFactory = mutedLivesFactory,
+                                uriWrapper = uriWrapper,
+                                mutedLiveHolder = mutedLiveHolder,
                                 onBanned = onBanned,
                                 onTitle = onTitle,
                                 onUrl = onUrl,

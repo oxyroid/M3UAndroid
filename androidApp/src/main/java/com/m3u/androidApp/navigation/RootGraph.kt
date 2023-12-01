@@ -20,6 +20,7 @@ import com.m3u.features.favorite.FavouriteRoute
 import com.m3u.features.favorite.NavigateToLive
 import com.m3u.features.main.MainRoute
 import com.m3u.features.main.NavigateToFeed
+import com.m3u.features.main.NavigateToSettingSubscription
 import com.m3u.features.setting.NavigateToAbout
 import com.m3u.features.setting.NavigateToConsole
 import com.m3u.features.setting.SettingRoute
@@ -43,6 +44,7 @@ fun NavGraphBuilder.rootGraph(
     navigateToLive: NavigateToLive,
     navigateToConsole: NavigateToConsole,
     navigateToAbout: NavigateToAbout,
+    navigateToSettingSubscription: NavigateToSettingSubscription,
 ) {
     composable(ROOT_ROUTE) {
         RootGraph(
@@ -51,7 +53,8 @@ fun NavGraphBuilder.rootGraph(
             navigateToFeed = navigateToFeed,
             navigateToLive = navigateToLive,
             navigateToConsole = navigateToConsole,
-            navigateToAbout = navigateToAbout
+            navigateToAbout = navigateToAbout,
+            navigateToSettingSubscription = navigateToSettingSubscription
         )
     }
 }
@@ -64,6 +67,7 @@ private fun RootGraph(
     navigateToLive: NavigateToLive,
     navigateToConsole: NavigateToConsole,
     navigateToAbout: NavigateToAbout,
+    navigateToSettingSubscription: NavigateToSettingSubscription,
     modifier: Modifier = Modifier
 ) {
     val destinations = Destination.Root.entries
@@ -97,6 +101,7 @@ private fun RootGraph(
             Destination.Root.Main -> {
                 MainRoute(
                     navigateToFeed = navigateToFeed,
+                    navigateToSettingSubscription = navigateToSettingSubscription,
                     resume = rememberResumeEvent(pagerState.targetPage, pagerIndex),
                     contentPadding = contentPadding,
                     modifier = Modifier.fillMaxSize()

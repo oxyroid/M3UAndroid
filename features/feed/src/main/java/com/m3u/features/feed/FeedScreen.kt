@@ -70,6 +70,8 @@ import com.google.accompanist.permissions.rememberPermissionState
 import com.m3u.core.util.compose.observableStateOf
 import com.m3u.core.wrapper.Event
 import com.m3u.data.database.entity.Live
+import com.m3u.data.database.entity.LiveHolder
+import com.m3u.data.database.entity.rememberLiveHolder
 import com.m3u.features.feed.components.DialogStatus
 import com.m3u.features.feed.components.FeedDialog
 import com.m3u.features.feed.components.LiveGallery
@@ -163,7 +165,7 @@ internal fun FeedRoute(
         scrollMode = state.scrollMode,
         noPictureMode = state.noPictureMode,
         rowCount = rowCount,
-        channelsFactory = { state.channels },
+        channelHolder = rememberChannelHolder(state.channels),
         scrollUp = state.scrollUp,
         refreshing = state.fetching,
         onRefresh = { viewModel.onEvent(FeedEvent.Refresh) },
@@ -202,7 +204,7 @@ private fun FeedScreen(
     scrollMode: Boolean,
     noPictureMode: Boolean,
     rowCount: Int,
-    channelsFactory: () -> List<Channel>,
+    channelHolder: ChannelHolder,
     scrollUp: Event<Unit>,
     refreshing: Boolean,
     onRefresh: OnRefresh,
@@ -264,7 +266,9 @@ private fun FeedScreen(
                         text = query,
                         onValueChange = onQuery,
                         fontWeight = FontWeight.Bold,
-                        placeholder = stringResource(string.feat_feed_query_placeholder).capitalize(Locale.current)
+                        placeholder = stringResource(string.feat_feed_query_placeholder).capitalize(
+                            Locale.current
+                        )
                     )
                 }
             },
@@ -272,7 +276,7 @@ private fun FeedScreen(
                 Background(
                     modifier = Modifier.fillMaxSize()
                 ) {
-                    FeedPager(channelsFactory) { livesFactory ->
+                    FeedPager(channelHolder) { liveHolder ->
                         val type = configuration.uiMode and UI_MODE_TYPE_MASK
                         when {
                             !useCommonUIMode && type == UI_MODE_TYPE_TELEVISION -> {
@@ -286,7 +290,7 @@ private fun FeedScreen(
                                 TvFeedGallery(
                                     state = state,
                                     rowCount = 4,
-                                    livesFactory = livesFactory,
+                                    liveHolder = liveHolder,
                                     noPictureMode = noPictureMode,
                                     scrollMode = scrollMode,
                                     navigateToLive = navigateToLive,
@@ -313,7 +317,7 @@ private fun FeedScreen(
                                 LiveGallery(
                                     state = state,
                                     rowCount = actualRowCount,
-                                    livesFactory = livesFactory,
+                                    liveHolder = liveHolder,
                                     noPictureMode = noPictureMode,
                                     scrollMode = scrollMode,
                                     navigateToLive = navigateToLive,
@@ -375,14 +379,14 @@ private fun UnsupportedUIModeContent(
 
 @Composable
 private fun FeedPager(
-    channelsFactory: () -> List<Channel>,
+    channelHolder: ChannelHolder,
     modifier: Modifier = Modifier,
-    content: @Composable (livesFactory: () -> List<Live>) -> Unit,
+    content: @Composable (liveHolder: LiveHolder) -> Unit,
 ) {
     val spacing = LocalSpacing.current
     val theme = MaterialTheme.colorScheme
     Column(modifier) {
-        val channels = channelsFactory()
+        val channels = channelHolder.channels
         val pagerState = rememberPagerState { channels.size }
         val coroutineScope = rememberCoroutineScope()
         if (channels.size > 1) {
@@ -435,7 +439,9 @@ private fun FeedPager(
         HorizontalPager(
             state = pagerState
         ) { pager ->
-            content { channels[pager].lives }
+            content(
+                rememberLiveHolder(channels[pager].lives)
+            )
         }
     }
 }

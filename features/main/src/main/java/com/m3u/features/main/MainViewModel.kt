@@ -6,6 +6,7 @@ import com.m3u.core.architecture.viewmodel.BaseViewModel
 import com.m3u.data.repository.FeedRepository
 import com.m3u.data.repository.LiveRepository
 import com.m3u.features.main.model.FeedDetail
+import com.m3u.features.main.model.FeedDetailHolder
 import com.m3u.features.main.model.toDetail
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -42,7 +43,7 @@ class MainViewModel @Inject constructor(
             initialValue = emptyMap()
         )
 
-    val feeds: StateFlow<List<FeedDetail>> = feedRepository
+    internal val feeds: StateFlow<FeedDetailHolder> = feedRepository
         .observeAll()
         .distinctUntilChanged()
         .combine(counts) { fs, cs ->
@@ -52,10 +53,11 @@ class MainViewModel @Inject constructor(
                 }
             }
         }
+        .map { FeedDetailHolder(it) }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000L),
-            initialValue = emptyList()
+            initialValue = FeedDetailHolder()
         )
 
     override fun onEvent(event: MainEvent) {

@@ -13,7 +13,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.features.about.components.ContributorItem
-import com.m3u.features.about.model.Contributor
+import com.m3u.features.about.model.ContributorHolder
+import com.m3u.features.about.model.DependencyHolder
+import com.m3u.features.about.model.rememberContributorHolder
+import com.m3u.features.about.model.rememberDependencyHolder
 import com.m3u.i18n.R.string
 import com.m3u.material.components.Background
 import com.m3u.material.ktx.plus
@@ -39,26 +42,24 @@ internal fun AboutRoute(
 
     AboutScreen(
         contentPadding = contentPadding,
-        contributorsFactory = { contributors },
-        dependenciesFactory = { dependencies },
+        contributorHolder = rememberContributorHolder(contributors),
+        dependencyHolder = rememberDependencyHolder(dependencies),
         modifier = modifier.fillMaxSize()
     )
 }
-private typealias ContributorsFactory = () -> List<Contributor>
-private typealias DependenciesFactory = () -> List<String>
 
 @Composable
 private fun AboutScreen(
     contentPadding: PaddingValues,
-    contributorsFactory: ContributorsFactory,
-    dependenciesFactory: DependenciesFactory,
+    contributorHolder: ContributorHolder,
+    dependencyHolder: DependencyHolder,
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
     val handler = LocalUriHandler.current
     Background(modifier) {
-        val contributors = contributorsFactory()
-        val dependencies = dependenciesFactory()
+        val contributors = contributorHolder.contributions
+        val dependencies = dependencyHolder.dependencies
         LazyColumn(
             verticalArrangement = Arrangement.spacedBy(spacing.small),
             contentPadding = contentPadding + PaddingValues(horizontal = spacing.medium)
@@ -72,7 +73,10 @@ private fun AboutScreen(
                 )
             }
             items(dependencies) { dependency ->
-                MonoText(dependency, maxLines = 1)
+                MonoText(
+                    text = dependency.name,
+                    maxLines = 1
+                )
             }
         }
     }

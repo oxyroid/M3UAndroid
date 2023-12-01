@@ -9,25 +9,24 @@ import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import com.m3u.data.database.entity.Live
+import com.m3u.data.database.entity.LiveHolder
 import com.m3u.features.favorite.NavigateToLive
 import com.m3u.material.ktx.plus
 import com.m3u.material.model.LocalSpacing
 
 
-internal typealias LivesFactory = () -> List<Live>
 // TODO: replace with material3-carousel.
 @Composable
 internal fun FavouriteGallery(
     contentPadding: PaddingValues,
-    livesFactory: LivesFactory,
+    liveHolder: LiveHolder,
     rowCount: Int,
     noPictureMode: Boolean,
     navigateToLive: NavigateToLive,
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
-    val lives = livesFactory()
+    val lives = liveHolder.lives
     LazyVerticalStaggeredGrid(
         columns = StaggeredGridCells.Fixed(rowCount),
         verticalItemSpacing = spacing.medium,

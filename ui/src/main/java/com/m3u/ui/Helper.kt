@@ -8,6 +8,7 @@ import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.core.app.PictureInPictureModeChangedInfo
@@ -173,7 +174,17 @@ data class Action(
     val onClick: () -> Unit
 )
 
-typealias ActionsFactory = () -> List<Action>
+@Immutable
+data class ActionHolder(
+    val actions: List<Action>
+)
+
+@Composable
+fun rememberActionHolder(actions: List<Action>): ActionHolder {
+    return remember(actions) {
+        ActionHolder(actions)
+    }
+}
 
 @Immutable
 data class Fob(

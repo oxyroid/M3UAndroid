@@ -1,6 +1,8 @@
 package com.m3u.data.database.entity
 
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.remember
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
@@ -23,4 +25,14 @@ data class Feed(
     companion object {
         const val URL_IMPORTED = "imported"
     }
+}
+
+@Immutable
+data class FeedHolder(
+    val feeds: List<Feed>
+)
+
+@Composable
+fun rememberFeedHolder(feeds: List<Feed>): FeedHolder {
+    return remember(feeds) { FeedHolder(feeds) }
 }

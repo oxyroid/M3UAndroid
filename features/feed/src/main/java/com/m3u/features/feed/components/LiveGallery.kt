@@ -16,18 +16,17 @@ import androidx.tv.foundation.lazy.grid.TvLazyGridState
 import androidx.tv.foundation.lazy.grid.TvLazyVerticalGrid
 import androidx.tv.foundation.lazy.grid.items
 import com.m3u.data.database.entity.Live
+import com.m3u.data.database.entity.LiveHolder
 import com.m3u.features.feed.NavigateToLive
 import com.m3u.features.feed.NavigateToPlaylist
 import com.m3u.material.ktx.plus
 import com.m3u.material.model.LocalSpacing
 
-internal typealias LivesFactory = () -> List<Live>
-
 @Composable
 internal fun LiveGallery(
     state: LazyGridState,
     rowCount: Int,
-    livesFactory: LivesFactory,
+    liveHolder: LiveHolder,
     noPictureMode: Boolean,
     scrollMode: Boolean,
     navigateToLive: NavigateToLive,
@@ -37,7 +36,7 @@ internal fun LiveGallery(
     contentPadding: PaddingValues = PaddingValues(0.dp),
 ) {
     val spacing = LocalSpacing.current
-    val lives = livesFactory()
+    val lives = liveHolder.lives
     LazyVerticalGrid(
         state = state,
         columns = GridCells.Fixed(rowCount),
@@ -74,7 +73,7 @@ internal fun LiveGallery(
 internal fun TvFeedGallery(
     state: TvLazyGridState,
     rowCount: Int,
-    livesFactory: LivesFactory,
+    liveHolder: LiveHolder,
     noPictureMode: Boolean,
     scrollMode: Boolean,
     navigateToLive: NavigateToLive,
@@ -84,7 +83,7 @@ internal fun TvFeedGallery(
     contentPadding: PaddingValues = PaddingValues(0.dp),
 ) {
     val spacing = LocalSpacing.current
-    val lives = livesFactory()
+    val lives = liveHolder.lives
     TvLazyVerticalGrid(
         state = state,
         columns = TvGridCells.Fixed(rowCount),

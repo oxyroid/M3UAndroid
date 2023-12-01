@@ -1,7 +1,9 @@
 package com.m3u.features.feed
 
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import com.m3u.core.architecture.configuration.Configuration
 import com.m3u.core.architecture.configuration.ExperimentalConfiguration
@@ -14,6 +16,18 @@ data class Channel(
     val title: String,
     val lives: List<Live>
 )
+
+@Immutable
+data class ChannelHolder(
+    val channels: List<Channel>
+)
+
+@Composable
+fun rememberChannelHolder(channels: List<Channel>): ChannelHolder {
+    return remember(channels) {
+        ChannelHolder(channels)
+    }
+}
 
 @OptIn(ExperimentalConfiguration::class)
 data class FeedState(

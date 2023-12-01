@@ -20,7 +20,7 @@ import com.m3u.material.components.IconButton
 import com.m3u.material.components.NavigationScaffold
 import com.m3u.material.components.ToolkitScaffold
 import com.m3u.material.model.LocalSpacing
-import com.m3u.ui.ActionsFactory
+import com.m3u.ui.ActionHolder
 import com.m3u.ui.Destination
 import com.m3u.ui.Fob
 import com.m3u.ui.Helper
@@ -36,7 +36,7 @@ internal fun AppScaffold(
     title: String,
     snacker: String,
     useDynamicColors: Boolean,
-    actionsFactory: ActionsFactory,
+    actionHolder: ActionHolder,
     rootDestination: Destination.Root?,
     fob: Fob?,
     isSystemBarVisible: Boolean,
@@ -93,7 +93,7 @@ internal fun AppScaffold(
                     visible = isSystemBarVisible,
                     scrollable = isSystemBarScrollable,
                     actions = {
-                        val actions = actionsFactory()
+                        val actions = actionHolder.actions
                         actions.withEach {
                             IconButton(
                                 icon = icon,
