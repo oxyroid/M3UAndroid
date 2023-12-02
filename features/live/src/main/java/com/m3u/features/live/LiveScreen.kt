@@ -6,10 +6,12 @@ import androidx.compose.foundation.pager.VerticalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -51,6 +53,9 @@ fun LiveRoute(
     val isDevicesVisible by viewModel.isDevicesVisible.collectAsStateWithLifecycle()
     val searching by viewModel.searching.collectAsStateWithLifecycle()
 
+    val volume by viewModel.volume.collectAsStateWithLifecycle()
+    var light by rememberSaveable { mutableStateOf(helper.brightness) }
+
     val maskState = rememberMaskState { visible ->
         helper.statusBarsVisibility = visible.unspecifiable
         helper.navigationBarsVisibility = UBoolean.False
@@ -91,6 +96,17 @@ fun LiveRoute(
         viewModel.onEvent(init)
     }
 
+    LaunchedEffect(light) {
+        helper.brightness = light
+    }
+
+    DisposableEffect(Unit) {
+        val prev = helper.brightness
+        onDispose {
+            helper.brightness = prev
+        }
+    }
+
     Background(
         color = Color.Black,
         contentColor = Color.White
@@ -121,7 +137,10 @@ fun LiveRoute(
             playerState = playerState,
             onInstallMedia = { viewModel.onEvent(LiveEvent.InstallMedia(it)) },
             onUninstallMedia = { viewModel.onEvent(LiveEvent.UninstallMedia) },
-            onMuted = { viewModel.onEvent(LiveEvent.OnMuted) },
+            light = light,
+            volume = volume,
+            onLight = { light = it },
+            onVolume = { viewModel.onEvent(LiveEvent.OnVolume(it)) },
             modifier = modifier
         )
     }
@@ -142,7 +161,10 @@ private fun LiveScreen(
     playerState: LiveState.PlayerState,
     onInstallMedia: (String) -> Unit,
     onUninstallMedia: () -> Unit,
-    onMuted: () -> Unit,
+    volume: Float,
+    light: Float,
+    onVolume: (Float) -> Unit,
+    onLight: (Float) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val theme = MaterialTheme.colorScheme
@@ -169,7 +191,10 @@ private fun LiveScreen(
                 onBackPressed = onBackPressed,
                 onInstallMedia = onInstallMedia,
                 onUninstallMedia = onUninstallMedia,
-                onMuted = onMuted,
+                light = light,
+                volume = volume,
+                onLight = onLight,
+                onVolume = onVolume,
                 modifier = modifier
                     .fillMaxSize()
                     .background(Color.Black)
@@ -207,7 +232,10 @@ private fun LiveScreen(
                     onBackPressed = onBackPressed,
                     onInstallMedia = onInstallMedia,
                     onUninstallMedia = onUninstallMedia,
-                    onMuted = onMuted,
+                    volume = volume,
+                    light = light,
+                    onVolume = onVolume,
+                    onLight = onLight,
                     modifier = Modifier
                         .fillMaxSize()
                         .background(Color.Black)
@@ -232,3 +260,4 @@ private fun Modifier.scrollableGroup(
     scaleX = scale
     scaleY = scale
 }
+

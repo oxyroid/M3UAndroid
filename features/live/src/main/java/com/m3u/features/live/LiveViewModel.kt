@@ -29,6 +29,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.fourthline.cling.model.meta.Device
 import javax.inject.Inject
+import kotlin.math.roundToInt
 import kotlin.time.Duration.Companion.milliseconds
 
 @HiltViewModel
@@ -48,20 +49,20 @@ class LiveViewModel @Inject constructor(
     private val _devices = MutableStateFlow<List<Device<*, *, *>>>(emptyList())
     val devices = _devices.asStateFlow()
 
-    private val muted: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    private val _volume: MutableStateFlow<Float> = MutableStateFlow(1f)
+    val volume = _volume.asStateFlow()
+
     val playerState: StateFlow<LiveState.PlayerState> = combine(
         playerManager.observe(),
         playerManager.playbackState,
         playerManager.videoSize,
-        playerManager.playerError,
-        muted
-    ) { player, playState, videoSize, playerError, muted ->
+        playerManager.playerError
+    ) { player, playState, videoSize, playerError ->
         LiveState.PlayerState(
             playState = playState,
             videoSize = videoSize,
             playerError = playerError,
-            player = player,
-            muted = muted
+            player = player
         )
     }
         .stateIn(
@@ -86,7 +87,7 @@ class LiveViewModel @Inject constructor(
             is LiveEvent.OnFavourite -> onFavourite(event.url)
             is LiveEvent.InstallMedia -> installMedia(event.url)
             LiveEvent.UninstallMedia -> uninstallMedia()
-            LiveEvent.OnMuted -> onMuted()
+            is LiveEvent.OnVolume -> onVolume(event.volume)
         }
     }
 
@@ -191,13 +192,11 @@ class LiveViewModel @Inject constructor(
         }
     }
 
-    private fun onMuted() {
-        val target = !playerState.value.muted
-        val volume = if (target) 0f else 1f
-        playerState.value.player?.volume = volume
-        muted.update { target }
+    private fun onVolume(target: Float) {
+        _volume.update { target }
 
-        controlPoint?.setMute(target)
+        playerState.value.player?.volume = target
+        controlPoint?.setVolume((target * 100).roundToInt(), null)
     }
 
     override fun onDeviceAdded(device: Device<*, *, *>) {
@@ -243,6 +242,7 @@ class LiveViewModel @Inject constructor(
 
     override fun onDisconnected(device: Device<*, *, *>) {
         writable.update { it.copy(connected = null) }
+        controlPoint?.stop()
         controlPoint = null
     }
 

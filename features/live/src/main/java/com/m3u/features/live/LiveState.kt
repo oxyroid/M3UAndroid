@@ -39,7 +39,6 @@ data class LiveState(
         val videoSize: Rect = Rect(),
         val playerError: PlaybackException? = null,
         val player: Player? = null,
-        val muted: Boolean = false
     )
 
     var experimentalMode: Boolean by configuration.experimentalMode

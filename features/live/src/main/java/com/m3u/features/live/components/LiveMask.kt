@@ -1,11 +1,16 @@
 package com.m3u.features.live.components
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsIgnoringVisibility
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -28,36 +33,35 @@ internal fun LiveMask(
     CompositionLocalProvider(
         LocalContentColor provides Color.White
     ) {
-        MaskPanel(
-            state = state,
-            modifier = modifier
-        )
-        Mask(
-            state = state,
-            backgroundColor = Color.Black.copy(alpha = 0.54f),
-            modifier = modifier
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .align(Alignment.TopCenter),
-                horizontalArrangement = Arrangement.End,
-                content = header
-            )
-            Row(
-                modifier = Modifier.fillMaxSize(),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically,
-                content = body
-            )
-            Column(
-                modifier = Modifier.align(Alignment.BottomCenter)
+        Box(modifier) {
+            MaskPanel(state)
+            Mask(
+                state = state,
+                backgroundColor = Color.Black.copy(alpha = 0.54f),
             ) {
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(LocalSpacing.current.medium),
-                    content = footer
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(WindowInsets.navigationBarsIgnoringVisibility.asPaddingValues())
+                        .align(Alignment.TopCenter),
+                    horizontalArrangement = Arrangement.End,
+                    content = header
                 )
+                Row(
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically,
+                    content = body
+                )
+                Column(
+                    modifier = Modifier.align(Alignment.BottomCenter)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(LocalSpacing.current.medium),
+                        content = footer
+                    )
+                }
             }
         }
     }

@@ -30,6 +30,7 @@ interface Helper {
     var onUserLeaveHint: OnUserLeaveHint?
     var onPipModeChanged: OnPipModeChanged?
     var darkMode: Boolean
+    var brightness: Float
 
     @get:Composable
     val windowSizeClass: WindowSizeClass
@@ -150,6 +151,12 @@ val EmptyHelper = object : Helper {
         get() = error("Cannot get onPipModeChanged")
         set(_) {
             error("Cannot set onPipModeChanged")
+        }
+
+    override var brightness: Float
+        get() = error("Cannot get brightness")
+        set(_) {
+            error("Cannot set brightness")
         }
 
     override val windowSizeClass: WindowSizeClass

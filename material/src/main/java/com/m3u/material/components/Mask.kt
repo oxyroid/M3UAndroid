@@ -26,6 +26,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
+import androidx.compose.runtime.State
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -46,12 +48,17 @@ import kotlinx.coroutines.launch
 
 @Stable
 interface MaskState {
-    val visible: Boolean
+    val visible: State<Boolean>
     fun touch()
     fun active()
     fun sleep()
     fun lock()
     fun unlock()
+}
+
+fun MaskState.lockAndActive() {
+    lock()
+    active()
 }
 
 private class MaskStateCoroutineImpl(
@@ -64,13 +71,15 @@ private class MaskStateCoroutineImpl(
     private var locked: Boolean by mutableStateOf(false)
 
     private var last: Boolean? = null
-    override val visible: Boolean
-        get() = locked || (currentTime - lastTime <= minDuration).also {
-            if (it != last) {
-                if (last != null) {
-                    onChanged(it)
+    override val visible: State<Boolean>
+        get() = derivedStateOf {
+            locked || (currentTime - lastTime <= minDuration).also {
+                if (it != last) {
+                    if (last != null) {
+                        onChanged(it)
+                    }
+                    last = it
                 }
-                last = it
             }
         }
 
@@ -87,7 +96,7 @@ private class MaskStateCoroutineImpl(
     private val systemClock: Long get() = System.currentTimeMillis() / 1000
 
     override fun touch() {
-        lastTime = if (!visible) currentTime else 0
+        lastTime = if (!visible.value) currentTime else 0
     }
 
     override fun active() {
@@ -131,8 +140,9 @@ fun Mask(
     contentColor: Color = LocalContentColor.current,
     content: @Composable BoxScope.() -> Unit
 ) {
+    val visible by state.visible
     AnimatedVisibility(
-        visible = state.visible,
+        visible = visible,
         enter = fadeIn(),
         exit = fadeOut()
     ) {

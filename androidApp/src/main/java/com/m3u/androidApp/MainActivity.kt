@@ -9,6 +9,7 @@ import android.graphics.Color
 import android.graphics.Rect
 import android.os.Bundle
 import android.os.Parcelable
+import android.util.Log
 import android.view.ViewConfiguration
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -161,6 +162,15 @@ class MainActivity : ComponentActivity() {
                 if (value != null) addOnPictureInPictureModeChangedListener(value)
                 else actualOnPipModeChanged?.let {
                     removeOnPictureInPictureModeChangedListener(it)
+                }
+            }
+
+        override var brightness: Float
+            get() = window.attributes.screenBrightness
+            set(value) {
+                Log.e("TAG", "helper: $value")
+                window.attributes = window.attributes.apply {
+                    screenBrightness = value
                 }
             }
 
