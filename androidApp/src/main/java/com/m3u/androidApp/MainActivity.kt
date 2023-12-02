@@ -8,6 +8,7 @@ import android.content.res.Configuration
 import android.graphics.Color
 import android.graphics.Rect
 import android.os.Bundle
+import android.os.Parcelable
 import android.view.ViewConfiguration
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -19,11 +20,13 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsCompat.Type.InsetsType
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.core.view.WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import com.m3u.androidApp.ui.App
 import com.m3u.androidApp.ui.AppViewModel
@@ -33,17 +36,27 @@ import com.m3u.core.unspecified.UBoolean
 import com.m3u.core.util.basic.rational
 import com.m3u.core.util.context.isDarkMode
 import com.m3u.core.util.context.isPortraitMode
+import com.m3u.features.live.LiveEvent
+import com.m3u.features.live.LiveRoute
 import com.m3u.ui.Action
 import com.m3u.ui.Destination
 import com.m3u.ui.Fob
 import com.m3u.ui.Helper
+import com.m3u.ui.M3ULocalProvider
 import com.m3u.ui.OnPipModeChanged
 import com.m3u.ui.OnUserLeaveHint
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.parcelize.Parcelize
 import javax.inject.Inject
 import kotlin.reflect.KMutableProperty0
+
+@Parcelize
+sealed class ComposeLaunchMode : Parcelable {
+    data object Application : ComposeLaunchMode()
+    data class Player(val destination: Destination.Live) : ComposeLaunchMode()
+}
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -71,16 +84,33 @@ class MainActivity : ComponentActivity() {
         installSplashScreen()
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
+        val launchMode = getComposeLaunchMode()
         setContent {
-            App(
-                appState = rememberAppState(
-                    pagerState = rememberPagerState {
-                        Destination.Root.entries.size
-                    }
-                ),
-                viewModel = viewModel,
-                helper = helper
+            val appState = rememberAppState(
+                pagerState = rememberPagerState { Destination.Root.entries.size }
             )
+            when (launchMode) {
+                ComposeLaunchMode.Application -> {
+                    App(
+                        appState = appState,
+                        viewModel = viewModel,
+                        helper = helper
+                    )
+                }
+
+                is ComposeLaunchMode.Player -> {
+                    val state by viewModel.state.collectAsStateWithLifecycle()
+                    M3ULocalProvider(
+                        helper = helper,
+                        useDynamicColors = state.useDynamicColors
+                    ) {
+                        LiveRoute(
+                            init = LiveEvent.InitOne(launchMode.destination.id),
+                            onBackPressed = { finish() }
+                        )
+                    }
+                }
+            }
         }
     }
 
@@ -195,6 +225,20 @@ class MainActivity : ComponentActivity() {
 
             else -> {}
         }
+    }
+
+    private fun getComposeLaunchMode(): ComposeLaunchMode {
+        return try {
+            @Suppress("DEPRECATION")
+            checkNotNull(intent.getParcelableExtra(COMPOSE_LAUNCH_MODE))
+        } catch (e: Exception) {
+            e.printStackTrace()
+            ComposeLaunchMode.Application
+        }
+    }
+
+    companion object {
+        const val COMPOSE_LAUNCH_MODE = "compose-launch-mode"
     }
 }
 

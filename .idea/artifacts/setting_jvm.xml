@@ -1,8 +1,0 @@
-<component name="ArtifactManager">
-  <artifact type="jar" name="setting-jvm">
-    <output-path>$PROJECT_DIR$/features/setting/build/libs</output-path>
-    <root id="archive" name="setting-jvm.jar">
-      <element id="module-output" name="M3U.features.setting.jvmMain" />
-    </root>
-  </artifact>
-</component>

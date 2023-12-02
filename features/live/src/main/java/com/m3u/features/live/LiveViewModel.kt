@@ -258,4 +258,9 @@ class LiveViewModel @Inject constructor(
     private fun unsupportedInScrollMode() {
         uiLogger.log("this feature is unsupported when scroll mode is on.")
     }
+
+    override fun onCleared() {
+        super.onCleared()
+        playerManager.destroy()
+    }
 }

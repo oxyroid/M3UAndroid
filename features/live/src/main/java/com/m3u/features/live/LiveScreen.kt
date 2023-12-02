@@ -27,6 +27,7 @@ import com.m3u.features.live.components.DlnaDevicesBottomSheet
 import com.m3u.features.live.components.rememberDeviceHolder
 import com.m3u.features.live.components.rememberDeviceWrapper
 import com.m3u.features.live.fragments.LiveFragment
+import com.m3u.material.components.Background
 import com.m3u.material.components.MaskState
 import com.m3u.material.components.rememberMaskState
 import com.m3u.material.ktx.LifecycleEffect
@@ -36,7 +37,7 @@ import com.m3u.ui.repeatOnLifecycle
 import kotlin.math.absoluteValue
 
 @Composable
-internal fun LiveRoute(
+fun LiveRoute(
     init: LiveEvent.Init,
     modifier: Modifier = Modifier,
     onBackPressed: () -> Unit,
@@ -90,35 +91,40 @@ internal fun LiveRoute(
         viewModel.onEvent(init)
     }
 
-    // TODO: replace with material3-carousel.
-    DlnaDevicesBottomSheet(
-        maskState = maskState,
-        searching = searching,
-        isDevicesVisible = isDevicesVisible,
-        deviceHolder = rememberDeviceHolder(devices),
-        connected = rememberDeviceWrapper(state.connected),
-        connectDlnaDevice = { viewModel.onEvent(LiveEvent.ConnectDlnaDevice(it)) },
-        disconnectDlnaDevice = { viewModel.onEvent(LiveEvent.DisconnectDlnaDevice(it)) },
-        onDismiss = { viewModel.onEvent(LiveEvent.CloseDlnaDevices) }
-    )
+    Background(
+        color = Color.Black,
+        contentColor = Color.White
+    ) {
+        // TODO: replace with material3-carousel.
+        DlnaDevicesBottomSheet(
+            maskState = maskState,
+            searching = searching,
+            isDevicesVisible = isDevicesVisible,
+            deviceHolder = rememberDeviceHolder(devices),
+            connected = rememberDeviceWrapper(state.connected),
+            connectDlnaDevice = { viewModel.onEvent(LiveEvent.ConnectDlnaDevice(it)) },
+            disconnectDlnaDevice = { viewModel.onEvent(LiveEvent.DisconnectDlnaDevice(it)) },
+            onDismiss = { viewModel.onEvent(LiveEvent.CloseDlnaDevices) }
+        )
 
-    LiveScreen(
-        init = state.init,
-        experimentalMode = state.experimentalMode,
-        clipMode = state.clipMode,
-        fullInfoPlayer = state.fullInfoPlayer,
-        recording = state.recording,
-        openDlnaDevices = { viewModel.onEvent(LiveEvent.OpenDlnaDevices) },
-        onRecord = { viewModel.onEvent(LiveEvent.Record) },
-        onFavourite = { viewModel.onEvent(LiveEvent.OnFavourite(it)) },
-        onBackPressed = onBackPressed,
-        maskState = maskState,
-        playerState = playerState,
-        onInstallMedia = { viewModel.onEvent(LiveEvent.InstallMedia(it)) },
-        onUninstallMedia = { viewModel.onEvent(LiveEvent.UninstallMedia) },
-        onMuted = { viewModel.onEvent(LiveEvent.OnMuted) },
-        modifier = modifier
-    )
+        LiveScreen(
+            init = state.init,
+            experimentalMode = state.experimentalMode,
+            clipMode = state.clipMode,
+            fullInfoPlayer = state.fullInfoPlayer,
+            recording = state.recording,
+            openDlnaDevices = { viewModel.onEvent(LiveEvent.OpenDlnaDevices) },
+            onRecord = { viewModel.onEvent(LiveEvent.Record) },
+            onFavourite = { viewModel.onEvent(LiveEvent.OnFavourite(it)) },
+            onBackPressed = onBackPressed,
+            maskState = maskState,
+            playerState = playerState,
+            onInstallMedia = { viewModel.onEvent(LiveEvent.InstallMedia(it)) },
+            onUninstallMedia = { viewModel.onEvent(LiveEvent.UninstallMedia) },
+            onMuted = { viewModel.onEvent(LiveEvent.OnMuted) },
+            modifier = modifier
+        )
+    }
 }
 
 @Composable

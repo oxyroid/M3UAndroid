@@ -1,8 +1,0 @@
-<component name="ArtifactManager">
-  <artifact type="jar" name="console-jvm">
-    <output-path>$PROJECT_DIR$/features/console/build/libs</output-path>
-    <root id="archive" name="console-jvm.jar">
-      <element id="module-output" name="M3U.features.console.jvmMain" />
-    </root>
-  </artifact>
-</component>

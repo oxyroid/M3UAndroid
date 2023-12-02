@@ -26,6 +26,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import okhttp3.OkHttpClient
 import javax.inject.Inject
 
@@ -96,6 +97,12 @@ class PlayerManagerImpl @Inject constructor(
         super.mutablePlaybackState.value = Player.STATE_IDLE
         super.mutablePlaybackError.value = null
         super.mutableVideoSize.value = Rect()
+    }
+
+    override fun destroy() {
+        uninstall()
+        player?.release()
+        playerFlow.update { null }
     }
 
     override fun onVideoSizeChanged(size: VideoSize) {

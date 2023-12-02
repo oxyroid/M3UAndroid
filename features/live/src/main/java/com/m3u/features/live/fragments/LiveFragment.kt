@@ -91,7 +91,6 @@ internal fun LiveFragment(
 
             Player(
                 state = state,
-                startColor = MaterialTheme.colorScheme.background,
                 modifier = Modifier.fillMaxSize()
             )
 

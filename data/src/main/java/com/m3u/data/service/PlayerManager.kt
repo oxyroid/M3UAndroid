@@ -20,4 +20,5 @@ abstract class PlayerManager {
     abstract fun install(url: String)
     abstract fun uninstall()
     abstract fun initialize()
+    abstract fun destroy()
 }

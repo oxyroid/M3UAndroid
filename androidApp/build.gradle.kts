@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.com.google.dagger.hilt.android)
     alias(libs.plugins.com.google.devtools.ksp)
     alias(libs.plugins.androidx.baselineprofile)
+    id("kotlin-parcelize")
 }
 
 android {
@@ -93,4 +94,7 @@ dependencies {
     debugImplementation(libs.com.squareup.leakcanary.leakcanary.android)
 
     androidTestImplementation(libs.androidx.compose.ui.ui.test.junit4)
+
+    implementation(libs.androidx.compose.material3.material3.adaptive)
+    implementation(libs.androidx.compose.material3.material3.adaptive.navigation.suite)
 }

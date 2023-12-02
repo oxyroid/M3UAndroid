@@ -1,8 +1,0 @@
-<component name="ArtifactManager">
-  <artifact type="jar" name="live-jvm">
-    <output-path>$PROJECT_DIR$/features/live/build/libs</output-path>
-    <root id="archive" name="live-jvm.jar">
-      <element id="module-output" name="M3U.features.live.jvmMain" />
-    </root>
-  </artifact>
-</component>

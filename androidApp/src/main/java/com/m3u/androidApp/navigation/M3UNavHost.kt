@@ -1,5 +1,6 @@
 package com.m3u.androidApp.navigation
 
+import android.content.Intent
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
@@ -10,11 +11,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.compose.NavHost
+import com.m3u.androidApp.ComposeLaunchMode
+import com.m3u.androidApp.MainActivity
 import com.m3u.features.about.navigation.aboutScreen
 import com.m3u.features.console.navigation.consoleScreen
 import com.m3u.features.feed.navigation.feedScreen
-import com.m3u.features.live.navigation.livePlaylistScreen
-import com.m3u.features.live.navigation.liveScreen
 import com.m3u.i18n.R.string
 import com.m3u.material.model.LocalNavController
 import com.m3u.ui.Destination
@@ -37,7 +38,7 @@ fun M3UNavHost(
         startDestination = startDestination,
         exitTransition = { slideOutVertically { -it / 5 } + fadeOut() },
         popEnterTransition = { slideInVertically { -it / 5 } + fadeIn() },
-        modifier = modifier,
+        modifier = modifier
     ) {
         rootGraph(
             pagerState = pagerState,
@@ -50,7 +51,12 @@ fun M3UNavHost(
                 navigate(Destination.Feed(feed.url))
             },
             navigateToLive = { id ->
-                navigate(Destination.Live(id))
+                val launchMode = ComposeLaunchMode.Player(Destination.Live(id))
+                context.startActivity(
+                    Intent(context, MainActivity::class.java).apply {
+                        putExtra(MainActivity.COMPOSE_LAUNCH_MODE, launchMode)
+                    }
+                )
             },
             navigateToConsole = {
                 navigate(Destination.Console)
@@ -63,20 +69,15 @@ fun M3UNavHost(
             }
         )
 
-        liveScreen(
-            onBackPressed = {
-                navController.popBackStack()
-            }
-        )
-        livePlaylistScreen(
-            onBackPressed = {
-                navController.popBackStack()
-            }
-        )
         feedScreen(
             contentPadding = contentPadding,
             navigateToLive = { id ->
-                navigate(Destination.Live(id))
+                val launchMode = ComposeLaunchMode.Player(Destination.Live(id))
+                context.startActivity(
+                    Intent(context, MainActivity::class.java).apply {
+                        putExtra(MainActivity.COMPOSE_LAUNCH_MODE, launchMode)
+                    }
+                )
             },
             navigateToPlaylist = { ids, initial ->
                 navigate(Destination.LivePlayList(ids, initial))

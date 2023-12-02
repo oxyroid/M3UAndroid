@@ -14,8 +14,6 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.calculateEndPadding
-import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -56,6 +54,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.lerp
 import com.m3u.material.ktx.animated
+import com.m3u.material.ktx.plus
 import com.m3u.material.model.LocalDuration
 import com.m3u.material.model.LocalSpacing
 import dev.chrisbanes.haze.haze
@@ -63,7 +62,6 @@ import dev.chrisbanes.haze.haze
 @Composable
 fun ToolkitScaffold(
     title: String,
-    visible: Boolean,
     scrollable: Boolean,
     modifier: Modifier = Modifier,
     consumer: AppTopBarConsumer = AppTopBarDefaults.consumer,
@@ -118,10 +116,9 @@ fun ToolkitScaffold(
         // it should be between 1~2 times [maxHeightDp].
         // Because the AppBar will place between 1~2 times [maxHeightDp].
         // The [visible] param means the AppBar should be invisible(spacing.none) or not.
-        val contentPaddingTop by remember(visible) {
+        val contentPaddingTop by remember {
             derivedStateOf {
-                if (!visible) minHeightDp
-                else with(density) {
+                with(density) {
                     offsetHeightPx.toDp()
                 }
             }
@@ -132,36 +129,23 @@ fun ToolkitScaffold(
         // Child Content
         Box(
             modifier = Modifier
-                .let {
-                    if (visible) it.haze(
-                        area = with(density) {
-                            arrayOf(
-                                Rect(
-                                    0f,
-                                    0f,
-                                    configuration.screenWidthDp.dp.toPx(),
-                                    WindowInsets.statusBarsIgnoringVisibility.getTop(density) + maxHeightPx
-                                )
+                .haze(
+                    area = with(density) {
+                        arrayOf(
+                            Rect(
+                                0f,
+                                0f,
+                                configuration.screenWidthDp.dp.toPx(),
+                                WindowInsets.statusBarsIgnoringVisibility.getTop(density) + maxHeightPx
                             )
-                        },
-                        backgroundColor = actualBackgroundColor,
-                        blurRadius = 2.dp
-                    )
-                    else it
-                }
-
+                        )
+                    },
+                    backgroundColor = actualBackgroundColor,
+                    blurRadius = 2.dp
+                )
         ) {
             content(
-                PaddingValues(
-                    start = spacing.none + if (!visible) spacing.none
-                    else windowInsets.asPaddingValues().calculateStartPadding(direction),
-                    top = contentPaddingTop + if (!visible) spacing.none
-                    else windowInsets.asPaddingValues().calculateTopPadding(),
-                    end = spacing.none + if (!visible) spacing.none
-                    else windowInsets.asPaddingValues().calculateEndPadding(direction),
-                    bottom = spacing.none + if (!visible) spacing.none
-                    else windowInsets.asPaddingValues().calculateBottomPadding()
-                )
+                windowInsets.asPaddingValues() + PaddingValues(top = contentPaddingTop)
             )
         }
         // AppBar
@@ -170,15 +154,12 @@ fun ToolkitScaffold(
         Surface(
             tonalElevation = LocalAbsoluteTonalElevation.current,
             color = Color.Transparent,
-            contentColor = actualContentColor,
+            contentColor = actualContentColor
         ) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .let {
-                        if (visible) it.windowInsetsPadding(windowInsets)
-                        else it
-                    }
+                    .windowInsetsPadding(windowInsets)
                     .padding(horizontal = spacing.medium)
                     .height(contentPaddingTop),
                 verticalAlignment = Alignment.CenterVertically,
@@ -221,7 +202,6 @@ internal object AppTopBarDefaults {
     val TopBarHeight = 64.dp
     const val ScaleSlope = 0.35f
     val consumer = AppTopBarConsumer.Always
-
 
     val windowInsets: WindowInsets
         @Composable get() = WindowInsets.systemBarsIgnoringVisibility.only(WindowInsetsSides.Top)

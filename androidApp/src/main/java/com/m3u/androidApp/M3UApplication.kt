@@ -20,8 +20,9 @@ class M3UApplication : Application(), Configuration.Provider {
         Thread.setDefaultUncaughtExceptionHandler(handler)
     }
 
-    override fun getWorkManagerConfiguration(): Configuration =
+    override val workManagerConfiguration: Configuration by lazy {
         Configuration.Builder()
             .setWorkerFactory(workerFactory)
             .build()
+    }
 }

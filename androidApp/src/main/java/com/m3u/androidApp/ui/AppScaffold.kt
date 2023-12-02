@@ -1,23 +1,32 @@
 package com.m3u.androidApp.ui
 
+import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.PlainTooltip
+import androidx.compose.material3.Text
+import androidx.compose.material3.TooltipBox
+import androidx.compose.material3.TooltipDefaults
+import androidx.compose.material3.adaptive.navigation.suite.NavigationSuiteScaffold
+import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import com.m3u.androidApp.components.AppNavigation
+import androidx.compose.ui.text.font.FontWeight
 import com.m3u.androidApp.components.AppSnackHost
+import com.m3u.core.util.basic.title
 import com.m3u.core.util.collections.withEach
 import com.m3u.i18n.R.string
 import com.m3u.material.components.IconButton
-import com.m3u.material.components.NavigationScaffold
 import com.m3u.material.components.ToolkitScaffold
 import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.ActionHolder
@@ -39,11 +48,9 @@ internal fun AppScaffold(
     actionHolder: ActionHolder,
     rootDestination: Destination.Root?,
     fob: Fob?,
-    isSystemBarVisible: Boolean,
     isSystemBarScrollable: Boolean,
     helper: Helper,
     cinemaMode: Boolean,
-    isPlaying: Boolean,
     navigate: Navigate,
     modifier: Modifier = Modifier,
     onBackPressed: (() -> Unit)? = null,
@@ -59,68 +66,109 @@ internal fun AppScaffold(
         val scope = rememberCoroutineScope()
         val darkMode = when {
             cinemaMode -> true
-            isPlaying -> true
             else -> isSystemInDarkTheme()
         }
         DisposableEffect(
             darkMode,
             scope,
-            isPlaying,
             cinemaMode
         ) {
             scope.launch {
-                if (!cinemaMode && isPlaying) {
+                if (!cinemaMode) {
                     delay(800.milliseconds)
                 }
                 helper.darkMode = darkMode
             }
             onDispose {}
         }
-        NavigationScaffold(
-            useNavRail = useNavRail,
-            visible = isSystemBarVisible,
-            navigation = {
-                AppNavigation(
-                    navigate = navigate,
-                    rootDestination = rootDestination,
-                    fob = fob,
-                    useNavRail = useNavRail
-                )
-            },
-            content = {
-                ToolkitScaffold(
-                    title = title,
-                    visible = isSystemBarVisible,
-                    scrollable = isSystemBarScrollable,
-                    actions = {
-                        val actions = actionHolder.actions
-                        actions.withEach {
-                            IconButton(
-                                icon = icon,
-                                contentDescription = contentDescription,
-                                onClick = onClick
+        NavigationSuiteScaffold(
+            navigationSuiteItems = {
+                val relation = fob?.rootDestination
+                val actualActiveDestination = rootDestination ?: relation
+                val roots = Destination.Root.entries
+                roots.forEach { root ->
+                    val fobbed = root == relation
+                    val selected = root == actualActiveDestination
+                    val iconTextId = root.iconTextId
+                    val selectedIcon = fob?.icon.takeIf { fobbed } ?: root.selectedIcon
+                    val unselectedIcon = fob?.icon.takeIf { fobbed } ?: root.unselectedIcon
+
+                    item(
+                        alwaysShowLabel = false,
+                        selected = actualActiveDestination == root,
+                        label = {
+                            Text(
+                                text = stringResource(iconTextId).title(),
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold
                             )
+                        },
+                        icon = {
+                            val contentDestination = stringResource(root.titleTextId)
+                            TooltipBox(
+                                positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+                                state = rememberTooltipState(),
+                                tooltip = {
+                                    PlainTooltip {
+                                        Text(contentDestination)
+                                    }
+                                }
+                            ) {
+                                val icon = if (selected) selectedIcon
+                                else unselectedIcon
+                                Crossfade(
+                                    targetState = icon,
+                                    label = "app-scaffold-navigation-suite-scaffold"
+                                ) { actualIcon ->
+                                    Icon(
+                                        imageVector = actualIcon,
+                                        contentDescription = contentDestination
+                                    )
+                                }
+                            }
+                        },
+                        onClick = {
+                            if (fobbed) {
+                                fob?.onClick?.invoke()
+                            } else {
+                                navigate(root)
+                            }
                         }
-                    },
-                    onBackPressed = onBackPressed,
-                    onBackPressedContentDescription = stringResource(string.ui_cd_top_bar_on_back_pressed),
-                    modifier = modifier
-                ) { padding ->
-                    Box {
-                        val navRailModifier = if (useNavRail) Modifier.navigationBarsPadding()
-                        else Modifier
-                        content(padding)
-                        AppSnackHost(
-                            message = snacker,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(spacing.small)
-                                .align(Alignment.BottomCenter)
-                                .then(navRailModifier)
-                        )
-                    }
+                    )
                 }
             }
-        )
+        ) {
+            ToolkitScaffold(
+                title = title,
+                scrollable = isSystemBarScrollable,
+                actions = {
+                    val actions = actionHolder.actions
+                    actions.withEach {
+                        IconButton(
+                            icon = icon,
+                            contentDescription = contentDescription,
+                            onClick = onClick
+                        )
+                    }
+                },
+                onBackPressed = onBackPressed,
+                onBackPressedContentDescription = stringResource(string.ui_cd_top_bar_on_back_pressed),
+                modifier = modifier
+            ) { padding ->
+                Box {
+                    val navRailModifier = if (useNavRail) Modifier.navigationBarsPadding()
+                    else Modifier
+                    content(padding)
+                    AppSnackHost(
+                        message = snacker,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(spacing.small)
+                            .align(Alignment.BottomCenter)
+                            .then(navRailModifier)
+                    )
+                }
+            }
+        }
     }
 }

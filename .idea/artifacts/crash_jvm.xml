@@ -1,8 +1,0 @@
-<component name="ArtifactManager">
-  <artifact type="jar" name="crash-jvm">
-    <output-path>$PROJECT_DIR$/features/crash/build/libs</output-path>
-    <root id="archive" name="crash-jvm.jar">
-      <element id="module-output" name="M3U.features.crash.jvmMain" />
-    </root>
-  </artifact>
-</component>

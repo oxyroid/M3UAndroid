@@ -18,9 +18,7 @@ fun TextBadge(
 ) {
     val spacing = LocalSpacing.current
 
-    Card(
-        modifier = modifier
-    ) {
+    Card(modifier) {
         Row(
             verticalAlignment = Alignment.CenterVertically
         ) {

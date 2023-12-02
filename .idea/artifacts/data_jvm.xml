@@ -1,8 +1,0 @@
-<component name="ArtifactManager">
-  <artifact type="jar" name="data-jvm">
-    <output-path>$PROJECT_DIR$/data/build/libs</output-path>
-    <root id="archive" name="data-jvm.jar">
-      <element id="module-output" name="M3U.data.jvmMain" />
-    </root>
-  </artifact>
-</component>

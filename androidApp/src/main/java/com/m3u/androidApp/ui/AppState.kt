@@ -21,10 +21,6 @@ import com.m3u.features.console.navigation.CONSOLE_ROUTE
 import com.m3u.features.console.navigation.navigateToConsole
 import com.m3u.features.feed.navigation.FEED_ROUTE
 import com.m3u.features.feed.navigation.navigateToFeed
-import com.m3u.features.live.navigation.LIVE_PLAYLIST_ROUTE
-import com.m3u.features.live.navigation.LIVE_ROUTE
-import com.m3u.features.live.navigation.navigateToLive
-import com.m3u.features.live.navigation.navigateToPlaylist
 import com.m3u.ui.Destination
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -95,11 +91,7 @@ class AppState(
             }
 
             is Destination.Feed -> navController.navigateToFeed(destination.url)
-            is Destination.Live -> navController.navigateToLive(destination.id)
-            is Destination.LivePlayList -> with(destination) {
-                navController.navigateToPlaylist(ids, initial)
-            }
-
+            is Destination.Live, is Destination.LivePlayList -> {}
             Destination.Console -> navController.navigateToConsole()
             Destination.About -> navController.navigateToAbout()
         }
@@ -115,13 +107,10 @@ class AppState(
 inline infix fun <reified D : Destination> NavDestination.destinationTo(clazz: Class<D>): Boolean {
     val targetRoute = when (clazz.name) {
         Destination.Root::class.java.name -> ROOT_ROUTE
-        Destination.Live::class.java.name -> LIVE_ROUTE
-        Destination.LivePlayList::class.java.name -> LIVE_PLAYLIST_ROUTE
         Destination.Feed::class.java.name -> FEED_ROUTE
         Destination.Console::class.java.name -> CONSOLE_ROUTE
         Destination.About::class.java.name -> ABOUT_ROUTE
         else -> ROOT_ROUTE
     }
-
     return route == targetRoute
 }

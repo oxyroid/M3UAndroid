@@ -1,5 +1,6 @@
 package com.m3u.ui
 
+import android.os.Parcelable
 import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Collections
@@ -13,6 +14,7 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.m3u.i18n.R.string
+import kotlinx.parcelize.Parcelize
 
 typealias Navigate = (Destination) -> Unit
 
@@ -57,16 +59,17 @@ sealed interface Destination {
 
     data class Feed(val url: String) : Destination
 
-    data class Live(val id: Int) : Destination
+    @Parcelize
+    data class Live(val id: Int) : Destination, Parcelable
 
+    @Parcelize
     data class LivePlayList(
         val ids: List<Int>,
         val initial: Int
-    ) : Destination
+    ) : Destination, Parcelable
 
     data object Console : Destination
 
     data object About : Destination
-
 }
 

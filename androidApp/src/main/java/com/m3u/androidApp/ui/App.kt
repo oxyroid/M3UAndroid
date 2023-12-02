@@ -27,10 +27,8 @@ fun App(
     val navDestination = appState.navDestination
     val rootDestination = appState.rootDestination
 
-    val isSystemBarVisible = AppDefaults.isSystemBarVisible(navDestination)
     val isBackPressedVisible = AppDefaults.isBackPressedVisible(navDestination)
     val isSystemBarScrollable = AppDefaults.isSystemBarScrollable(navDestination)
-    val isPlaying = AppDefaults.isPlaying(navDestination)
 
     val cinemaMode = state.cinemaMode
 
@@ -48,14 +46,12 @@ fun App(
         actionHolder = actionHolder,
         rootDestination = rootDestination,
         fob = fob,
-        isSystemBarVisible = isSystemBarVisible,
         isSystemBarScrollable = isSystemBarScrollable,
         onBackPressed = appState::onBackClick.takeIf { isBackPressedVisible },
         navigate = appState::navigate,
         modifier = Modifier.fillMaxSize(),
         helper = helper,
         cinemaMode = cinemaMode,
-        isPlaying = isPlaying
     ) { contentPadding ->
         CompositionLocalProvider(
             LocalNavController provides appState.navController,

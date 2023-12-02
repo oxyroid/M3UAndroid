@@ -1,8 +1,0 @@
-<component name="ArtifactManager">
-  <artifact type="jar" name="feed-jvm">
-    <output-path>$PROJECT_DIR$/features/feed/build/libs</output-path>
-    <root id="archive" name="feed-jvm.jar">
-      <element id="module-output" name="M3U.features.feed.jvmMain" />
-    </root>
-  </artifact>
-</component>

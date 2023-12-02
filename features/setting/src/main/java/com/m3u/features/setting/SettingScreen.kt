@@ -5,13 +5,12 @@ import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.preferKeepClear
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.adaptive.AnimatedPane
 import androidx.compose.material3.adaptive.ListDetailPaneScaffold
 import androidx.compose.material3.adaptive.ListDetailPaneScaffoldRole
-import androidx.compose.material3.adaptive.rememberListDetailPaneScaffoldState
+import androidx.compose.material3.adaptive.calculateListDetailPaneScaffoldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
@@ -175,7 +174,12 @@ private fun SettingScreen(
 ) {
     val helper = LocalHelper.current
     var fragment: SettingFragment by rememberSaveable { mutableStateOf(SettingFragment.Root) }
-    val scaffoldState = rememberListDetailPaneScaffoldState()
+    var currentPaneDestination by rememberSaveable {
+        mutableStateOf(ListDetailPaneScaffoldRole.List)
+    }
+    val scaffoldState = calculateListDetailPaneScaffoldState(
+        currentPaneDestination = currentPaneDestination
+    )
 
     DisposableEffect(fragment) {
         helper.fob = if (fragment == SettingFragment.Root) null
@@ -184,7 +188,7 @@ private fun SettingScreen(
             icon = Icons.Rounded.Settings
         ) {
             fragment = SettingFragment.Root
-            scaffoldState.navigateBack()
+            currentPaneDestination = ListDetailPaneScaffoldRole.List
         }
 
         onDispose {
@@ -215,11 +219,11 @@ private fun SettingScreen(
                     onUIMode = { },
                     onGodMode = onGodMode,
                     onFeedManagement = {
-                        scaffoldState.navigateTo(ListDetailPaneScaffoldRole.Detail)
+                        currentPaneDestination = ListDetailPaneScaffoldRole.Detail
                         fragment = SettingFragment.Subscriptions
                     },
                     onScriptManagement = {
-                        scaffoldState.navigateTo(ListDetailPaneScaffoldRole.Detail)
+                        currentPaneDestination = ListDetailPaneScaffoldRole.Detail
                         fragment = (SettingFragment.Scripts)
                     },
                     navigateToConsole = navigateToConsole,
@@ -246,7 +250,7 @@ private fun SettingScreen(
         },
         detailPane = {
             if (fragment != SettingFragment.Root) {
-                AnimatedPane(Modifier.preferKeepClear()) {
+                AnimatedPane(Modifier) {
                     when (fragment) {
                         SettingFragment.Subscriptions -> {
                             SubscriptionsFragment(
@@ -287,6 +291,6 @@ private fun SettingScreen(
 
     BackHandler(fragment != SettingFragment.Root) {
         fragment = SettingFragment.Root
-        scaffoldState.navigateBack()
+        currentPaneDestination = ListDetailPaneScaffoldRole.List
     }
 }
