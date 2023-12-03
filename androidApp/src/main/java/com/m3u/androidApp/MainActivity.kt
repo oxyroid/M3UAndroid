@@ -135,12 +135,12 @@ class MainActivity : ComponentActivity() {
         override var title: String by title
         override var actions: List<Action> by actions
         override var fob: Fob? by fob
-        override var statusBarsVisibility: UBoolean = UBoolean.Unspecified
+        override var statusBarVisibility: UBoolean = UBoolean.Unspecified
             set(value) {
                 field = value
                 applyConfiguration()
             }
-        override var navigationBarsVisibility: UBoolean = UBoolean.Unspecified
+        override var navigationBarVisibility: UBoolean = UBoolean.Unspecified
             set(value) {
                 field = value
                 applyConfiguration()
@@ -199,8 +199,8 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun applyConfiguration() {
-        val navigationBarsVisibility = helper.navigationBarsVisibility
-        val statusBarsVisibility = helper.statusBarsVisibility
+        val navigationBarsVisibility = helper.navigationBarVisibility
+        val statusBarsVisibility = helper.statusBarVisibility
 
         controller.apply {
             when (navigationBarsVisibility) {

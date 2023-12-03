@@ -57,8 +57,8 @@ fun LiveRoute(
     var light by rememberSaveable { mutableStateOf(helper.brightness) }
 
     val maskState = rememberMaskState { visible ->
-        helper.statusBarsVisibility = visible.unspecifiable
-        helper.navigationBarsVisibility = UBoolean.False
+        helper.statusBarVisibility = visible.unspecifiable
+        helper.navigationBarVisibility = UBoolean.False
     }
     var isPipMode by remember { mutableStateOf(false) }
 
@@ -82,8 +82,8 @@ fun LiveRoute(
             }
         }
         darkMode = true
-        statusBarsVisibility = UBoolean.False
-        navigationBarsVisibility = UBoolean.False
+        statusBarVisibility = UBoolean.False
+        navigationBarVisibility = UBoolean.False
         onPipModeChanged = OnPipModeChanged { info ->
             isPipMode = info.isInPictureInPictureMode
             if (!isPipMode) {

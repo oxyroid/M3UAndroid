@@ -2,13 +2,15 @@ package com.m3u.ui
 
 import android.annotation.SuppressLint
 import android.graphics.Rect
-import android.util.Log
 import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.core.app.PictureInPictureModeChangedInfo
@@ -25,8 +27,8 @@ interface Helper {
     var title: String
     var actions: List<Action>
     var fob: Fob?
-    var statusBarsVisibility: UBoolean
-    var navigationBarsVisibility: UBoolean
+    var statusBarVisibility: UBoolean
+    var navigationBarVisibility: UBoolean
     var onUserLeaveHint: OnUserLeaveHint?
     var onPipModeChanged: OnPipModeChanged?
     var darkMode: Boolean
@@ -61,8 +63,8 @@ private fun Helper.restore(bundle: HelperBundle) {
     title = bundle.title
     actions = bundle.actions
     fob = bundle.fob
-    statusBarsVisibility = bundle.statusBarsVisibility
-    navigationBarsVisibility = bundle.navigationBarsVisibility
+    statusBarVisibility = bundle.statusBarsVisibility
+    navigationBarVisibility = bundle.navigationBarsVisibility
     onUserLeaveHint = bundle.onUserLeaveHint
     onPipModeChanged = bundle.onPipModeChanged
     darkMode = bundle.darkMode
@@ -72,8 +74,8 @@ private fun Helper.backup(): HelperBundle = HelperBundle(
     title = title,
     actions = actions,
     fob = fob,
-    statusBarsVisibility = statusBarsVisibility,
-    navigationBarsVisibility = navigationBarsVisibility,
+    statusBarsVisibility = statusBarVisibility,
+    navigationBarsVisibility = navigationBarVisibility,
     onUserLeaveHint = onUserLeaveHint,
     onPipModeChanged = onPipModeChanged,
     darkMode = darkMode
@@ -88,18 +90,17 @@ fun Helper.repeatOnLifecycle(
     check(state != Lifecycle.State.CREATED && state != Lifecycle.State.INITIALIZED) {
         "state cannot be CREATED or INITIALIZED!"
     }
-    var bundle: HelperBundle? = null
+    var bundle: HelperBundle? by remember { mutableStateOf(null) }
+
     LifecycleEffect { event ->
         when (event) {
             Lifecycle.Event.upTo(state) -> {
                 bundle = backup()
-                Log.d("Helper", "repeatOnLifecycle: backup -> $bundle")
                 block()
             }
 
             Lifecycle.Event.downFrom(state) -> {
-                Log.d("Helper", "repeatOnLifecycle: restore -> $bundle")
-                bundle?.let(::restore)
+                bundle?.let { restore(it) }
             }
 
             else -> {}
@@ -125,12 +126,12 @@ val EmptyHelper = object : Helper {
             error("Cannot set fob")
         }
 
-    override var statusBarsVisibility: UBoolean
+    override var statusBarVisibility: UBoolean
         get() = error("Cannot get systemUiVisibility")
         set(_) {
             error("Cannot set systemUiVisibility")
         }
-    override var navigationBarsVisibility: UBoolean
+    override var navigationBarVisibility: UBoolean
         get() = error("Cannot get navigationBarsVisibility")
         set(_) {
             error("Cannot set navigationBarsVisibility")
