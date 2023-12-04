@@ -38,7 +38,7 @@ dependencies {
     implementation(libs.androidx.appcompat.appcompat)
     implementation(libs.androidx.compose.ui.ui)
     api(libs.androidx.compose.runtime.runtime)
-    implementation(libs.org.jetbrains.kotlinx.kotlinx.serialization.json)
+    implementation(libs.kotlinx.serialization.json)
     implementation(libs.com.squareup.retrofit2.retrofit)
     implementation(libs.androidx.media3.media3.exoplayer)
     implementation(libs.androidx.media3.media3.session)

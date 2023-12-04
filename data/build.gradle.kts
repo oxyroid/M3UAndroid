@@ -1,8 +1,8 @@
 plugins {
     alias(libs.plugins.com.android.library)
-    alias(libs.plugins.org.jetbrains.kotlin.android)
     alias(libs.plugins.com.google.devtools.ksp)
-    id("kotlinx-serialization")
+    alias(libs.plugins.org.jetbrains.kotlin.android)
+    alias(libs.plugins.org.jetbrains.kotlin.serialization)
 }
 
 android {
@@ -51,8 +51,10 @@ dependencies {
     implementation(libs.androidx.room.room.ktx)
     ksp(libs.androidx.room.room.compiler)
 
-    implementation(libs.org.jetbrains.kotlinx.kotlinx.serialization.json)
-    implementation(libs.org.jetbrains.kotlinx.kotlinx.datetime)
+    implementation(libs.kotlinx.serialization.json)
+    implementation(libs.kotlinx.serialization.yaml)
+
+    implementation(libs.kotlinx.datetime)
 
     implementation(libs.io.coil.kt.coil)
 

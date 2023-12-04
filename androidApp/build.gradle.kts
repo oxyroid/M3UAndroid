@@ -52,7 +52,10 @@ android {
     }
 
     packaging {
-        resources.excludes += "META-INF/**"
+        resources.excludes += setOf(
+            "/META-INF/beans.xml",
+            "/META-INF/{AL2.0,LGPL2.1}"
+        )
     }
 }
 
