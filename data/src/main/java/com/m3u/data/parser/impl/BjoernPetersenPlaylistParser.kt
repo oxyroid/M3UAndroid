@@ -11,7 +11,9 @@ import net.bjoernpetersen.m3u.model.M3uEntry
 import java.io.InputStream
 import javax.inject.Inject
 
-class ExperimentalPlaylistParser @Inject constructor() : PlaylistParser {
+class BjoernPetersenPlaylistParser @Inject constructor() : PlaylistParser {
+    override val engine: String = "bjoern-petersen"
+
     override suspend fun execute(input: InputStream): Playlist {
         val list = input.use {
             M3uParser.parse(it.reader())

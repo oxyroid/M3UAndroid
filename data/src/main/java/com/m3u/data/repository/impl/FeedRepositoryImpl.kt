@@ -22,7 +22,7 @@ import com.m3u.data.database.dao.LiveDao
 import com.m3u.data.database.entity.Feed
 import com.m3u.data.database.entity.Live
 import com.m3u.data.parser.PlaylistParser
-import com.m3u.data.parser.impl.toLive
+import com.m3u.data.parser.model.toLive
 import com.m3u.data.repository.FeedRepository
 import com.m3u.i18n.R.string
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -42,7 +42,7 @@ class FeedRepositoryImpl @Inject constructor(
     private val liveDao: LiveDao,
     @Logger.Ui private val logger: Logger,
     private val client: OkHttpClient,
-    @PlaylistParser.Experimental private val parser: PlaylistParser,
+    @PlaylistParser.BjoernPetersen private val parser: PlaylistParser,
     @ApplicationContext private val context: Context
 ) : FeedRepository {
 

@@ -2,6 +2,8 @@
 
 package com.m3u.data.di
 
+import com.charleskorn.kaml.Yaml
+import com.charleskorn.kaml.YamlConfiguration
 import com.m3u.core.architecture.configuration.SharedConfiguration
 import com.m3u.core.util.serialization.asConverterFactory
 import com.m3u.data.api.GithubApi
@@ -40,6 +42,13 @@ internal object ApiModule {
         ignoreUnknownKeys = true
         coerceInputValues = true
     }
+
+    @Provides
+    fun provideYaml(): Yaml = Yaml(
+        configuration = YamlConfiguration(
+            strictMode = false
+        )
+    )
 
     @Provides
     @Singleton

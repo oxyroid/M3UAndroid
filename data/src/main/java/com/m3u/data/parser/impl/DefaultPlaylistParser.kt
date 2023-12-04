@@ -5,7 +5,9 @@ import com.m3u.core.architecture.Logger
 import com.m3u.core.util.basic.splitOutOfQuotation
 import com.m3u.core.util.basic.trimBrackets
 import com.m3u.core.util.loadLine
+import com.m3u.data.parser.Playlist
 import com.m3u.data.parser.PlaylistParser
+import com.m3u.data.parser.model.M3UData
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.InputStream
@@ -15,9 +17,11 @@ import javax.inject.Inject
 class DefaultPlaylistParser @Inject constructor(
     private val logger: Logger
 ) : PlaylistParser {
+    override val engine: String = "default"
+
     private val pattern = Regex("#EXTINF:-?\\d+,")
 
-    override suspend fun execute(input: InputStream): List<M3UData> = buildList {
+    override suspend fun execute(input: InputStream): Playlist = buildList {
         withContext(Dispatchers.IO) {
             var block: M3UData? = null
             input
