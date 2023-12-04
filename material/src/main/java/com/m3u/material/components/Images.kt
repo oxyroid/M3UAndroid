@@ -25,6 +25,7 @@ fun Image(
     shape: Shape = RectangleShape,
     contentDescription: String? = null,
     contentScale: ContentScale = ContentScale.Fit,
+    transparentPlaceholder: Boolean = false
 ) {
     val spacing = LocalSpacing.current
     SubcomposeAsyncImage(
@@ -33,26 +34,30 @@ fun Image(
         modifier = modifier.clip(shape),
         contentScale = contentScale,
         loading = {
-            Surface(
-                modifier = Modifier.fillMaxSize(),
-                shape = shape,
-                color = MaterialTheme.colorScheme.secondary
-            ) {
+            if (!transparentPlaceholder) {
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    shape = shape,
+                    color = MaterialTheme.colorScheme.secondary
+                ) {
 
+                }
             }
         },
         error = {
-            Box(
-                modifier = Modifier
-                    .clip(shape)
-                    .background(MaterialTheme.colorScheme.secondary)
-                    .padding(spacing.small),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = errorPlaceholder.orEmpty(),
-                    style = MaterialTheme.typography.bodySmall
-                )
+            if (!transparentPlaceholder) {
+                Box(
+                    modifier = Modifier
+                        .clip(shape)
+                        .background(MaterialTheme.colorScheme.secondary)
+                        .padding(spacing.small),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = errorPlaceholder.orEmpty(),
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
             }
         }
     )

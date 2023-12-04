@@ -6,6 +6,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -14,6 +15,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
 import com.m3u.material.components.Image
 import com.m3u.material.model.LocalDuration
+import com.m3u.material.model.LocalSpacing
 
 @Composable
 internal fun CoverPlaceholder(
@@ -23,6 +25,7 @@ internal fun CoverPlaceholder(
 ) {
     val configuration = LocalConfiguration.current
     val duration = LocalDuration.current
+    val spacing = LocalSpacing.current
     val size = remember(configuration.screenHeightDp) {
         configuration.screenHeightDp.dp
     }
@@ -40,11 +43,13 @@ internal fun CoverPlaceholder(
         ) + fadeOut(
             animationSpec = tween(duration.slow)
         ),
-        modifier = modifier
+        modifier = modifier.padding(spacing.medium)
     ) {
+
         Image(
             model = cover,
-            modifier = Modifier.size(size)
+            modifier = Modifier.size(size),
+            transparentPlaceholder = true
         )
     }
 }
