@@ -1,20 +1,20 @@
 package com.m3u.data.parser.impl
 
+import com.m3u.data.parser.Playlist
 import com.m3u.data.parser.PlaylistParser
 import com.m3u.data.parser.impl.DefaultPlaylistParser.Companion.M3U_GROUP_TITLE_MARK
 import com.m3u.data.parser.impl.DefaultPlaylistParser.Companion.M3U_TVG_ID_MARK
 import com.m3u.data.parser.impl.DefaultPlaylistParser.Companion.M3U_TVG_NAME_MARK
+import com.m3u.data.parser.model.M3UData
 import net.bjoernpetersen.m3u.M3uParser
 import net.bjoernpetersen.m3u.model.M3uEntry
 import java.io.InputStream
 import javax.inject.Inject
 
 class ExperimentalPlaylistParser @Inject constructor() : PlaylistParser {
-    override suspend fun execute(input: InputStream): List<M3UData> {
+    override suspend fun execute(input: InputStream): Playlist {
         val list = input.use {
-            M3uParser
-                .parse(it.reader())
-                .let { entries -> M3uParser.resolveNestedPlaylists(entries) }
+            M3uParser.parse(it.reader())
         }
         return list.map { it.toM3UData() }
     }
