@@ -15,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.m3u.androidApp.components.AppNavigation
 import com.m3u.androidApp.components.AppSnackHost
+import com.m3u.core.unspecified.unspecifiable
 import com.m3u.core.util.collections.withEach
 import com.m3u.i18n.R.string
 import com.m3u.material.components.IconButton
@@ -70,7 +71,7 @@ internal fun AppScaffold(
                 if (!cinemaMode) {
                     delay(800.milliseconds)
                 }
-                helper.darkMode = darkMode
+                helper.darkMode = darkMode.unspecifiable
             }
             onDispose {}
         }

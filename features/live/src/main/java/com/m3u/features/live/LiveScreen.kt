@@ -83,7 +83,7 @@ fun LiveRoute(
                 helper.enterPipMode(playerState.videoSize)
             }
         }
-        darkMode = true
+        darkMode = true.unspecifiable
         statusBarVisibility = UBoolean.False
         navigationBarVisibility = UBoolean.False
         onPipModeChanged = OnPipModeChanged { info ->

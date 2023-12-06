@@ -18,6 +18,7 @@ import androidx.core.util.Consumer
 import androidx.lifecycle.Lifecycle
 import com.m3u.core.unspecified.UBoolean
 import com.m3u.material.ktx.LifecycleEffect
+import com.m3u.material.ktx.log
 
 typealias OnUserLeaveHint = () -> Unit
 typealias OnPipModeChanged = Consumer<PictureInPictureModeChangedInfo>
@@ -31,7 +32,7 @@ interface Helper {
     var navigationBarVisibility: UBoolean
     var onUserLeaveHint: OnUserLeaveHint?
     var onPipModeChanged: OnPipModeChanged?
-    var darkMode: Boolean
+    var darkMode: UBoolean
     var brightness: Float
 
     @get:Composable
@@ -53,7 +54,7 @@ private data class HelperBundle(
     val navigationBarsVisibility: UBoolean,
     val onUserLeaveHint: (() -> Unit)?,
     val onPipModeChanged: Consumer<PictureInPictureModeChangedInfo>?,
-    val darkMode: Boolean
+    val darkMode: UBoolean
 ) {
     override fun toString(): String =
         "(title=$title,fob=$fob,status=$statusBarsVisibility,nav=$navigationBarsVisibility,dark=$darkMode)"
@@ -96,10 +97,12 @@ fun Helper.repeatOnLifecycle(
         when (event) {
             Lifecycle.Event.upTo(state) -> {
                 bundle = backup()
+                log("helper-repeatOnLifecycle", "backup:" + bundle?.darkMode)
                 block()
             }
 
             Lifecycle.Event.downFrom(state) -> {
+                log("helper-repeatOnLifecycle", "restore:" + bundle?.darkMode)
                 bundle?.let { restore(it) }
             }
 
@@ -137,7 +140,7 @@ val EmptyHelper = object : Helper {
             error("Cannot set navigationBarsVisibility")
         }
 
-    override var darkMode: Boolean
+    override var darkMode: UBoolean
         get() = error("Cannot get darkMode")
         set(_) {
             error("Cannot set darkMode")

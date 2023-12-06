@@ -34,6 +34,7 @@ import com.m3u.androidApp.ui.AppViewModel
 import com.m3u.androidApp.ui.rememberAppState
 import com.m3u.core.architecture.Logger
 import com.m3u.core.unspecified.UBoolean
+import com.m3u.core.unspecified.specified
 import com.m3u.core.util.basic.rational
 import com.m3u.core.util.context.isDarkMode
 import com.m3u.core.util.context.isPortraitMode
@@ -146,11 +147,13 @@ class MainActivity : ComponentActivity() {
                 applyConfiguration()
             }
 
-        override var darkMode: Boolean = resources.configuration.isDarkMode
+        override var darkMode: UBoolean = UBoolean.Unspecified
             set(value) {
                 field = value
                 enableEdgeToEdge(
-                    SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT) { value },
+                    SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT) {
+                        value.specified ?: resources.configuration.isDarkMode
+                    },
                     SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT) { true }
                 )
             }
