@@ -1,4 +1,4 @@
-package com.m3u.data.io.crash
+package com.m3u.data.io
 
 import android.content.Context
 import android.content.pm.PackageInfo

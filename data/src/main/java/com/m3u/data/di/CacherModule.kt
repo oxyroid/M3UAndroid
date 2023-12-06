@@ -3,7 +3,7 @@
 package com.m3u.data.di
 
 import com.m3u.core.architecture.FilePathCacher
-import com.m3u.data.io.crash.CrashFilePathCacher
+import com.m3u.data.io.CrashFilePathCacher
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn

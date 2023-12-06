@@ -3,7 +3,7 @@ package com.m3u.features.crash.screen.detail
 import com.m3u.core.architecture.FilePath
 import com.m3u.core.architecture.viewmodel.BaseViewModel
 import com.m3u.core.wrapper.EmptyMessage
-import com.m3u.data.io.crash.CrashFilePathCacher
+import com.m3u.data.io.CrashFilePathCacher
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.update
 import javax.inject.Inject
