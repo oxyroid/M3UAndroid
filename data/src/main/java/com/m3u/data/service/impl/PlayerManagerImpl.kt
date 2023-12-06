@@ -1,4 +1,5 @@
 @file:kotlin.OptIn(ExperimentalConfiguration::class)
+@file:OptIn(UnstableApi::class)
 
 package com.m3u.data.service.impl
 
@@ -48,7 +49,6 @@ private data class PlayerPayload(
     val timeout: Long
 )
 
-@OptIn(UnstableApi::class)
 class PlayerManagerImpl @Inject constructor(
     @ApplicationContext private val context: Context,
     private val configuration: Configuration
@@ -139,7 +139,7 @@ class PlayerManagerImpl @Inject constructor(
 
     override fun onVideoSizeChanged(size: VideoSize) {
         super.onVideoSizeChanged(size)
-        super.mutableVideoSize.value = Rect(0, 0, size.width, size.height)
+        super.mutableVideoSize.value = size.toRect()
     }
 
     override fun onPlaybackStateChanged(state: Int) {
@@ -160,5 +160,9 @@ class PlayerManagerImpl @Inject constructor(
             else -> {}
         }
         super.mutablePlaybackError.value = error
+    }
+
+    private fun VideoSize.toRect(): Rect {
+        return Rect(0, 0, width, height)
     }
 }
