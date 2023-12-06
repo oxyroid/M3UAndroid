@@ -37,17 +37,12 @@ class UiServiceImpl @Inject constructor() : UiService {
     private suspend fun MutableStateFlow<Message>.notify(
         value: Message,
         duration: Duration = 3.seconds
-    ) {
+    ) = coroutineScope {
         job?.cancel()
-        job = coroutineScope {
-            launch {
-                this@notify.value = value
-                delay(duration)
-            }.apply {
-                invokeOnCompletion {
-                    this@notify.value = Message.Empty
-                }
-            }
+        job = launch {
+            this@notify.value = value
+            delay(duration)
+            this@notify.value = Message.Empty
         }
     }
 }
