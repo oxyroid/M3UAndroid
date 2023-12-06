@@ -3,9 +3,13 @@ package com.m3u.core.architecture.configuration
 import android.os.Build
 import androidx.annotation.ChecksSdkIntAtLeast
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.State
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.snapshotFlow
 import com.m3u.core.annotation.ClipMode
 import com.m3u.core.annotation.ConnectTimeout
 import com.m3u.core.annotation.FeedStrategy
+import kotlinx.coroutines.flow.Flow
 
 interface Configuration {
     @FeedStrategy
@@ -55,6 +59,7 @@ interface Configuration {
         const val DEFAULT_INITIAL_ROOT_DESTINATION = 0
         const val DEFAULT_NO_PICTURE_MODE = true
         const val DEFAULT_CINEMA_MODE = false
+
         @ChecksSdkIntAtLeast(api = Build.VERSION_CODES.S)
         val DEFAULT_USE_DYNAMIC_COLORS = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
 
@@ -76,4 +81,9 @@ interface Configuration {
         const val CINEMA_MODE = "cinemaMode"
         const val USE_DYNAMIC_COLORS = "use-dynamic-colors"
     }
+}
+
+fun <T> Configuration.observeAsFlow(selector: (Configuration) -> State<T>): Flow<T> {
+    val state by selector(this@Configuration)
+    return snapshotFlow { state }
 }
