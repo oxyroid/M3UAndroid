@@ -79,9 +79,9 @@ internal fun LiveFragment(
     recording: Boolean,
     stared: Boolean,
     volume: Float,
-    light: Float,
+    brightness: Float,
     onVolume: (Float) -> Unit,
-    onLight: (Float) -> Unit,
+    onBrightness: (Float) -> Unit,
     onRecord: () -> Unit,
     onFavourite: () -> Unit,
     openDlnaDevices: () -> Unit,
@@ -95,7 +95,7 @@ internal fun LiveFragment(
     // because they will be updated frequently,
     // they must be wrapped with rememberUpdatedState when using them.
     val currentVolume by rememberUpdatedState(volume)
-    val currentLight by rememberUpdatedState(light)
+    val currentLight by rememberUpdatedState(brightness)
 
     Background(
         color = Color.Black,
@@ -142,7 +142,7 @@ internal fun LiveFragment(
                             state = maskState,
                             icon = when (gesture) {
                                 MaskGesture.LIGHT -> when {
-                                    light < 0.5f -> Icons.Rounded.DarkMode
+                                    brightness < 0.5f -> Icons.Rounded.DarkMode
                                     else -> Icons.Rounded.LightMode
                                 }
 
@@ -282,8 +282,8 @@ internal fun LiveFragment(
                                 (currentVolume - (deltaPixel / maxHeight.value)).coerceIn(0f..1f)
                             )
                         },
-                        light = { deltaPixel ->
-                            onLight(
+                        brightness = { deltaPixel ->
+                            onBrightness(
                                 (currentLight - deltaPixel / maxHeight.value).coerceIn(0f..1f)
                             )
                         },
@@ -316,7 +316,7 @@ private object LiveFragmentDefaults {
     @Composable
     fun Modifier.detectVerticalMaskGestures(
         volume: (pixel: Float) -> Unit,
-        light: (pixel: Float) -> Unit,
+        brightness: (pixel: Float) -> Unit,
         onDragStart: ((MaskGesture) -> Unit)? = null,
         onDragEnd: (() -> Unit)? = null
     ): Modifier {
@@ -340,7 +340,7 @@ private object LiveFragmentDefaults {
                 },
                 onVerticalDrag = { _, dragAmount ->
                     when (gesture) {
-                        MaskGesture.LIGHT -> light(dragAmount)
+                        MaskGesture.LIGHT -> brightness(dragAmount)
                         MaskGesture.VOLUME -> volume(dragAmount)
                         null -> {}
                     }

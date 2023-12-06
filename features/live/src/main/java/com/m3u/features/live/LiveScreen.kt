@@ -58,19 +58,9 @@ fun LiveRoute(
     val searching by viewModel.searching.collectAsStateWithLifecycle()
 
     val volume by viewModel.volume.collectAsStateWithLifecycle()
-    var light by rememberSaveable { mutableFloatStateOf(helper.brightness) }
+    var brightness by rememberSaveable { mutableFloatStateOf(helper.brightness) }
 
     val maskState = rememberMaskState()
-
-    LaunchedEffect(Unit) {
-        snapshotFlow { maskState }
-            .onEach {
-                val visible = it.visible
-                helper.statusBarVisibility = visible.unspecifiable
-                helper.navigationBarVisibility = UBoolean.False
-            }
-            .launchIn(this)
-    }
 
     var isPipMode by remember { mutableStateOf(false) }
 
@@ -108,8 +98,19 @@ fun LiveRoute(
         viewModel.onEvent(init)
     }
 
-    LaunchedEffect(light) {
-        helper.brightness = light
+    LaunchedEffect(Unit) {
+        snapshotFlow { brightness }
+            .onEach { helper.brightness = it }
+            .launchIn(this)
+    }
+
+    LaunchedEffect(Unit) {
+        snapshotFlow { maskState.visible }
+            .onEach { visible ->
+                helper.statusBarVisibility = visible.unspecifiable
+                helper.navigationBarVisibility = UBoolean.False
+            }
+            .launchIn(this)
     }
 
     DisposableEffect(Unit) {
@@ -149,9 +150,9 @@ fun LiveRoute(
             playerState = playerState,
             onInstallMedia = { viewModel.onEvent(LiveEvent.InstallMedia(it)) },
             onUninstallMedia = { viewModel.onEvent(LiveEvent.UninstallMedia) },
-            light = light,
+            brightness = brightness,
             volume = volume,
-            onLight = { light = it },
+            onBrightness = { brightness = it },
             onVolume = { viewModel.onEvent(LiveEvent.OnVolume(it)) },
             modifier = modifier
         )
@@ -174,9 +175,9 @@ private fun LiveScreen(
     onInstallMedia: (String) -> Unit,
     onUninstallMedia: () -> Unit,
     volume: Float,
-    light: Float,
+    brightness: Float,
     onVolume: (Float) -> Unit,
-    onLight: (Float) -> Unit,
+    onBrightness: (Float) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val theme = MaterialTheme.colorScheme
@@ -203,9 +204,9 @@ private fun LiveScreen(
                 onBackPressed = onBackPressed,
                 onInstallMedia = onInstallMedia,
                 onUninstallMedia = onUninstallMedia,
-                light = light,
+                brightness = brightness,
                 volume = volume,
-                onLight = onLight,
+                onBrightness = onBrightness,
                 onVolume = onVolume,
                 modifier = modifier
                     .fillMaxSize()
@@ -245,9 +246,9 @@ private fun LiveScreen(
                     onInstallMedia = onInstallMedia,
                     onUninstallMedia = onUninstallMedia,
                     volume = volume,
-                    light = light,
+                    brightness = brightness,
                     onVolume = onVolume,
-                    onLight = onLight,
+                    onBrightness = onBrightness,
                     modifier = Modifier
                         .fillMaxSize()
                         .background(Color.Black)

@@ -15,8 +15,6 @@ import android.content.res.Configuration.UI_MODE_TYPE_VR_HEADSET
 import android.content.res.Configuration.UI_MODE_TYPE_WATCH
 import android.view.KeyEvent
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -32,6 +30,8 @@ import androidx.compose.material.BackdropScaffold
 //noinspection UsingMaterialAndMaterial3Libraries
 import androidx.compose.material.BackdropValue
 import androidx.compose.material.ExperimentalMaterialApi
+//noinspection UsingMaterialAndMaterial3Libraries
+import androidx.compose.material.Tab
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ArrowCircleUp
 import androidx.compose.material.icons.rounded.Refresh
@@ -51,6 +51,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
@@ -383,7 +384,6 @@ private fun FeedPager(
     modifier: Modifier = Modifier,
     content: @Composable (liveHolder: LiveHolder) -> Unit,
 ) {
-    val spacing = LocalSpacing.current
     val theme = MaterialTheme.colorScheme
     Column(modifier) {
         val channels = channelHolder.channels
@@ -404,44 +404,33 @@ private fun FeedPager(
                     val keys = remember(channels) { channels.map { it.title } }
                     keys.forEachIndexed { index, title ->
                         val selected = pagerState.currentPage == index
-                        Box(
-                            contentAlignment = Alignment.Center,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable(
-                                    interactionSource = remember { MutableInteractionSource() },
-                                    indication = null
-                                ) {
-                                    coroutineScope.launch {
-                                        pagerState.animateScrollToPage(index)
-                                    }
+                        Tab(
+                            selected = selected,
+                            onClick = {
+                                coroutineScope.launch {
+                                    pagerState.animateScrollToPage(index)
                                 }
-                                .padding(
-                                    horizontal = spacing.medium,
-                                    vertical = spacing.small
+                            },
+                            text = {
+                                Text(
+                                    text = title,
+                                    style = MaterialTheme.typography.titleSmall,
+                                    color = if (selected) theme.onBackground else Color.Unspecified
                                 )
-                        ) {
-                            Text(
-                                text = title,
-                                style = MaterialTheme.typography.titleSmall,
-                                color = theme.onBackground,
-                                fontWeight = if (selected) FontWeight.ExtraBold else null
-                            )
-                        }
+                            },
+                            icon = null
+                        )
                     }
                 },
                 divider = {},
-                containerColor = theme.background,
-                contentColor = theme.onBackground,
                 modifier = Modifier.fillMaxWidth()
             )
         }
+        val holders = List(channels.size) { rememberLiveHolder(channels[it].lives) }
         HorizontalPager(
             state = pagerState
         ) { pager ->
-            content(
-                rememberLiveHolder(channels[pager].lives)
-            )
+            content(holders[pager])
         }
     }
 }
