@@ -34,6 +34,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.M3U.Starting"
         android:usesCleartextTraffic="true"
+        android:appCategory="video"
         tools:targetApi="tiramisu">
 
         <activity
