@@ -81,10 +81,11 @@ private fun DialogItem(
     modifier: Modifier = Modifier
 ) {
     Row(
-        modifier = modifier
-            .semantics(mergeDescendants = true) {  }
+        modifier = Modifier
+            .semantics(mergeDescendants = true) { }
             .fillMaxWidth()
             .clickable(onClick = onUpdate)
+            .then(modifier)
             .padding(LocalSpacing.current.medium)
     ) {
         Text(

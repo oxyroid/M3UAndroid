@@ -199,7 +199,7 @@ private fun SettingScreen(
     ListDetailPaneScaffold(
         scaffoldState = scaffoldState,
         listPane = {
-            AnimatedPane(Modifier.fillMaxSize()) {
+            AnimatedPane(Modifier) {
                 PreferencesFragment(
                     fragment = fragment,
                     contentPadding = contentPadding,
@@ -266,7 +266,7 @@ private fun SettingScreen(
                                 localStorage = localStorage,
                                 onLocalStorage = onLocalStorage,
                                 openDocument = openDocument,
-                                modifier = modifier.fillMaxSize()
+                                modifier = Modifier.fillMaxSize()
                             )
 
                         }
@@ -275,7 +275,7 @@ private fun SettingScreen(
                             ScriptsFragment(
                                 contentPadding = contentPadding,
                                 importJavaScript = importJavaScript,
-                                modifier = modifier.fillMaxSize()
+                                modifier = Modifier.fillMaxSize()
                             )
                         }
 
@@ -284,7 +284,7 @@ private fun SettingScreen(
                 }
             }
         },
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .testTag("feature:setting")
     )

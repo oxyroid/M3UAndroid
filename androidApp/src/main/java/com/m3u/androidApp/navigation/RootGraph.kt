@@ -1,6 +1,5 @@
 package com.m3u.androidApp.navigation
 
-import android.util.Log
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.pager.HorizontalPager
@@ -26,6 +25,7 @@ import com.m3u.features.setting.NavigateToConsole
 import com.m3u.features.setting.SettingRoute
 import com.m3u.material.ktx.Edge
 import com.m3u.material.ktx.blurEdge
+import com.m3u.material.ktx.log
 import com.m3u.ui.Destination
 import com.m3u.ui.ResumeEvent
 import kotlinx.coroutines.flow.launchIn
@@ -82,9 +82,7 @@ private fun RootGraph(
                 )
             }
         }
-            .onEach {
-                Log.e("PagerState", "$it")
-            }
+            .onEach { log("pager", it) }
             .launchIn(this)
     }
 
