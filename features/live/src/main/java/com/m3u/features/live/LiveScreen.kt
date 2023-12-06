@@ -9,10 +9,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
@@ -36,6 +38,8 @@ import com.m3u.material.ktx.LifecycleEffect
 import com.m3u.ui.LocalHelper
 import com.m3u.ui.OnPipModeChanged
 import com.m3u.ui.repeatOnLifecycle
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlin.math.absoluteValue
 
 @Composable
@@ -54,12 +58,20 @@ fun LiveRoute(
     val searching by viewModel.searching.collectAsStateWithLifecycle()
 
     val volume by viewModel.volume.collectAsStateWithLifecycle()
-    var light by rememberSaveable { mutableStateOf(helper.brightness) }
+    var light by rememberSaveable { mutableFloatStateOf(helper.brightness) }
 
-    val maskState = rememberMaskState { visible ->
-        helper.statusBarVisibility = visible.unspecifiable
-        helper.navigationBarVisibility = UBoolean.False
+    val maskState = rememberMaskState()
+
+    LaunchedEffect(Unit) {
+        snapshotFlow { maskState }
+            .onEach {
+                val visible = it.visible
+                helper.statusBarVisibility = visible.unspecifiable
+                helper.navigationBarVisibility = UBoolean.False
+            }
+            .launchIn(this)
     }
+
     var isPipMode by remember { mutableStateOf(false) }
 
     LifecycleEffect { event ->
@@ -87,7 +99,7 @@ fun LiveRoute(
         onPipModeChanged = OnPipModeChanged { info ->
             isPipMode = info.isInPictureInPictureMode
             if (!isPipMode) {
-                maskState.active()
+                maskState.wake()
             }
         }
     }

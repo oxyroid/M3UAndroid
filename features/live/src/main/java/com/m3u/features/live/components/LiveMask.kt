@@ -37,7 +37,7 @@ internal fun LiveMask(
             MaskPanel(state)
             Mask(
                 state = state,
-                backgroundColor = Color.Black.copy(alpha = 0.54f),
+                color = Color.Black.copy(alpha = 0.54f),
             ) {
                 Row(
                     modifier = Modifier

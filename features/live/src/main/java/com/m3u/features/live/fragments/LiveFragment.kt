@@ -59,11 +59,11 @@ import com.m3u.material.components.Image
 import com.m3u.material.components.MaskButton
 import com.m3u.material.components.MaskCircleButton
 import com.m3u.material.components.MaskState
-import com.m3u.material.components.lockAndActive
 import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.LocalHelper
 import com.m3u.ui.Player
 import com.m3u.ui.rememberPlayerState
+import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
 internal fun LiveFragment(
@@ -288,11 +288,11 @@ internal fun LiveFragment(
                             )
                         },
                         onDragStart = {
-                            maskState.lockAndActive()
+                            maskState.lock()
                             gesture = it
                         },
                         onDragEnd = {
-                            maskState.unlock()
+                            maskState.unlock(400.milliseconds)
                             gesture = null
                         }
                     )
@@ -301,7 +301,7 @@ internal fun LiveFragment(
 
             LaunchedEffect(playerState.playerError) {
                 if (playerState.playerError != null) {
-                    maskState.active()
+                    maskState.wake()
                 }
             }
         }
