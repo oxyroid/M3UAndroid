@@ -3,21 +3,12 @@ package com.m3u.ui
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.font.toFontFamily
 
 object FontFamilies {
-    val Titillium = FontFamily(
-        Font(R.font.titillium_web_regular),
-        Font(R.font.titillium_web_italic, style = FontStyle.Italic),
-        Font(R.font.titillium_web_medium, FontWeight.Medium),
-        Font(R.font.titillium_web_medium_italic, FontWeight.Medium, style = FontStyle.Italic),
-        Font(R.font.titillium_web_bold, FontWeight.Bold),
-        Font(R.font.titillium_web_bold_italic, FontWeight.Bold, style = FontStyle.Italic),
-    )
-    val JetbrainsMono = FontFamily(
-        Font(R.font.jb_mono_medium)
-    )
+    val GoogleSans = Font(R.font.google_sans).toFontFamily()
+    val JetbrainsMono = Font(R.font.jb_mono_medium).toFontFamily()
 }
 
 fun Typography.withFontFamily(
@@ -42,19 +33,24 @@ fun Typography.withFontFamily(
         fontFamily = fontFamily
     ),
     titleLarge = titleLarge.copy(
-        fontFamily = fontFamily
+        fontFamily = fontFamily,
+        fontWeight = FontWeight.Bold
     ),
     titleMedium = titleMedium.copy(
-        fontFamily = fontFamily
+        fontFamily = fontFamily,
+        fontWeight = FontWeight.Bold
     ),
     titleSmall = titleSmall.copy(
-        fontFamily = fontFamily
+        fontFamily = fontFamily,
+        fontWeight = FontWeight.Medium
     ),
     labelLarge = labelLarge.copy(
-        fontFamily = fontFamily
+        fontFamily = fontFamily,
+        fontWeight = FontWeight.Bold
     ),
     labelMedium = labelMedium.copy(
-        fontFamily = fontFamily
+        fontFamily = fontFamily,
+        fontWeight = FontWeight.Bold
     ),
     labelSmall = labelSmall.copy(
         fontFamily = fontFamily
