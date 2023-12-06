@@ -126,7 +126,7 @@ internal fun LiveFragment(
 
             BoxWithConstraints {
                 var gesture: MaskGesture? by rememberSaveable { mutableStateOf(null) }
-                val muted = volume == 0f
+                val muted = currentVolume == 0f
                 LiveMask(
                     state = maskState,
                     header = {
@@ -137,16 +137,35 @@ internal fun LiveFragment(
                             contentDescription = stringResource(string.feat_live_tooltip_on_back_pressed)
                         )
                         Spacer(modifier = Modifier.weight(1f))
+
                         MaskButton(
                             state = maskState,
-                            icon = if (muted) Icons.AutoMirrored.Rounded.VolumeOff
-                            else Icons.AutoMirrored.Rounded.VolumeUp,
+                            icon = when (gesture) {
+                                MaskGesture.LIGHT -> when {
+                                    light < 0.5f -> Icons.Rounded.Brightness2
+                                    else -> Icons.Rounded.Brightness7
+                                }
+
+                                MaskGesture.VOLUME -> when {
+                                    volume == 0f -> Icons.AutoMirrored.Rounded.VolumeOff
+                                    volume < 0.5f -> Icons.AutoMirrored.Rounded.VolumeDown
+                                    else -> Icons.AutoMirrored.Rounded.VolumeUp
+
+                                }
+
+                                null -> if (muted) Icons.AutoMirrored.Rounded.VolumeOff
+                                else Icons.AutoMirrored.Rounded.VolumeUp
+                            },
                             onClick = {
                                 onVolume(if (volume != 0f) 0f else 1f)
                             },
                             contentDescription = if (muted) stringResource(string.feat_live_tooltip_unmute)
                             else stringResource(string.feat_live_tooltip_mute),
-                            tint = if (muted) theme.error else Color.Unspecified
+                            tint = when (gesture) {
+                                null -> if (muted) theme.error else Color.Unspecified
+                                MaskGesture.VOLUME -> if (muted) theme.error else Color.Unspecified
+                                MaskGesture.LIGHT -> Color.Unspecified
+                            }
                         )
                         MaskButton(
                             state = maskState,
@@ -156,26 +175,24 @@ internal fun LiveFragment(
                             contentDescription = if (stared) stringResource(string.feat_live_tooltip_unfavourite)
                             else stringResource(string.feat_live_tooltip_favourite)
                         )
-                        if (experimentalMode) {
+                        MaskButton(
+                            state = maskState,
+                            enabled = false,
+                            icon = if (recording) Icons.Rounded.RadioButtonChecked
+                            else Icons.Rounded.RadioButtonUnchecked,
+                            tint = if (recording) theme.error
+                            else Color.Unspecified,
+                            onClick = onRecord,
+                            contentDescription = if (recording) stringResource(string.feat_live_tooltip_unrecord)
+                            else stringResource(string.feat_live_tooltip_record)
+                        )
+                        if (playerState.playState != Player.STATE_IDLE) {
                             MaskButton(
                                 state = maskState,
-                                enabled = false,
-                                icon = if (recording) Icons.Rounded.RadioButtonChecked
-                                else Icons.Rounded.RadioButtonUnchecked,
-                                tint = if (recording) theme.error
-                                else Color.Unspecified,
-                                onClick = onRecord,
-                                contentDescription = if (recording) stringResource(string.feat_live_tooltip_unrecord)
-                                else stringResource(string.feat_live_tooltip_record)
+                                icon = Icons.Rounded.Cast,
+                                onClick = openDlnaDevices,
+                                contentDescription = stringResource(string.feat_live_tooltip_cast)
                             )
-                            if (playerState.playState != Player.STATE_IDLE) {
-                                MaskButton(
-                                    state = maskState,
-                                    icon = Icons.Rounded.Cast,
-                                    onClick = openDlnaDevices,
-                                    contentDescription = stringResource(string.feat_live_tooltip_cast)
-                                )
-                            }
                         }
                         if (playerState.videoSize.isNotEmpty) {
                             MaskButton(
@@ -190,24 +207,9 @@ internal fun LiveFragment(
                         }
                     },
                     body = {
-                        val icon = when (gesture) {
-                            MaskGesture.LIGHT -> when {
-                                light < 0.5f -> Icons.Rounded.Brightness2
-                                else -> Icons.Rounded.Brightness7
-                            }
-
-                            MaskGesture.VOLUME -> when {
-                                volume == 0f -> Icons.AutoMirrored.Rounded.VolumeOff
-                                volume < 0.5f -> Icons.AutoMirrored.Rounded.VolumeDown
-                                else -> Icons.AutoMirrored.Rounded.VolumeUp
-
-                            }
-
-                            null -> Icons.Rounded.Refresh
-                        }
                         MaskCircleButton(
                             state = maskState,
-                            icon = icon,
+                            icon = Icons.Rounded.Refresh,
                             onClick = {
                                 onInstallMedia(state.url)
                             }
