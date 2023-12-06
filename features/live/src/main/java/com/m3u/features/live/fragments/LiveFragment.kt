@@ -17,9 +17,9 @@ import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.VolumeDown
 import androidx.compose.material.icons.automirrored.rounded.VolumeOff
 import androidx.compose.material.icons.automirrored.rounded.VolumeUp
-import androidx.compose.material.icons.rounded.Brightness2
-import androidx.compose.material.icons.rounded.Brightness7
 import androidx.compose.material.icons.rounded.Cast
+import androidx.compose.material.icons.rounded.DarkMode
+import androidx.compose.material.icons.rounded.LightMode
 import androidx.compose.material.icons.rounded.PictureInPicture
 import androidx.compose.material.icons.rounded.RadioButtonChecked
 import androidx.compose.material.icons.rounded.RadioButtonUnchecked
@@ -142,19 +142,15 @@ internal fun LiveFragment(
                             state = maskState,
                             icon = when (gesture) {
                                 MaskGesture.LIGHT -> when {
-                                    light < 0.5f -> Icons.Rounded.Brightness2
-                                    else -> Icons.Rounded.Brightness7
+                                    light < 0.5f -> Icons.Rounded.DarkMode
+                                    else -> Icons.Rounded.LightMode
                                 }
 
-                                MaskGesture.VOLUME -> when {
+                                else -> when {
                                     volume == 0f -> Icons.AutoMirrored.Rounded.VolumeOff
                                     volume < 0.5f -> Icons.AutoMirrored.Rounded.VolumeDown
                                     else -> Icons.AutoMirrored.Rounded.VolumeUp
-
                                 }
-
-                                null -> if (muted) Icons.AutoMirrored.Rounded.VolumeOff
-                                else Icons.AutoMirrored.Rounded.VolumeUp
                             },
                             onClick = {
                                 onVolume(if (volume != 0f) 0f else 1f)
