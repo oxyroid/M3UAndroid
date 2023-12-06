@@ -4,9 +4,9 @@ import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.selection.toggleable
+import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
-import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.LocalAbsoluteTonalElevation
@@ -62,11 +62,14 @@ fun Preference(
             }
         }
     ) {
-        ElevatedCard(
+        Card(
             shape = RectangleShape,
             enabled = enabled,
             onClick = onClick,
-            elevation = CardDefaults.elevatedCardElevation(elevation.ifUnspecified { 4.dp })
+            elevation = CardDefaults.cardElevation(
+                defaultElevation = elevation.ifUnspecified { 3.dp },
+                disabledElevation = 1.dp
+            )
         ) {
             ListItem(
                 headlineContent = {
@@ -84,11 +87,8 @@ fun Preference(
                             style = MaterialTheme.typography.bodyMedium,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier
-                                .let {
-                                    if (focus) it.basicMarquee()
-                                    else it
-                                }
+                            modifier = Modifier then if (focus) Modifier.basicMarquee()
+                            else Modifier
                         )
                     }
                 },

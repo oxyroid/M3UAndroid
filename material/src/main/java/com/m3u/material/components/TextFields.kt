@@ -2,7 +2,6 @@
 
 package com.m3u.material.components
 
-import android.util.Log
 import androidx.annotation.DrawableRes
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
@@ -466,7 +465,6 @@ fun LabelField(
 
     // Bring the composable into view (visible to user).
     LaunchedEffect(imeVisible, interactionSourceFocus) {
-        Log.e("TAG", "ime: $imeVisible")
         if (imeVisible && interactionSourceFocus) {
             scope.launch {
                 delay(duration.fast.toLong())

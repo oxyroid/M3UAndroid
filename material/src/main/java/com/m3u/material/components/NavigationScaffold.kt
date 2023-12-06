@@ -1,12 +1,5 @@
 package com.m3u.material.components
 
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,7 +14,6 @@ import androidx.compose.ui.Modifier
 @Composable
 fun NavigationScaffold(
     useNavRail: Boolean,
-    visible: Boolean,
     navigation: @Composable () -> Unit,
     content: @Composable () -> Unit
 ) {
@@ -31,18 +23,7 @@ fun NavigationScaffold(
             horizontalArrangement = Arrangement.Start,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            AnimatedContent(
-                targetState = visible,
-                transitionSpec = {
-                    fadeIn() togetherWith fadeOut()
-                },
-                label = "navigation",
-                modifier = Modifier.fillMaxHeight(),
-            ) { visible ->
-                if (visible) {
-                    navigation()
-                }
-            }
+            navigation()
             Box(
                 modifier = Modifier
                     .fillMaxHeight()
@@ -64,19 +45,7 @@ fun NavigationScaffold(
             ) {
                 content()
             }
-            AnimatedContent(
-                targetState = visible,
-                transitionSpec = {
-                    slideInHorizontally(animationSpec = tween(delayMillis = 400)) { -it } togetherWith
-                            slideOutHorizontally(animationSpec = tween(delayMillis = 400)) { -it }
-                },
-                label = "navigation",
-                modifier = Modifier.fillMaxWidth(),
-            ) { visible ->
-                if (visible) {
-                    navigation()
-                }
-            }
+            navigation()
         }
     }
 }

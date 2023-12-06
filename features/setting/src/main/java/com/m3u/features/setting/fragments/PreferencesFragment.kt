@@ -20,7 +20,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.m3u.core.annotation.ClipMode
 import com.m3u.core.annotation.ConnectTimeout
@@ -47,7 +46,7 @@ internal fun PreferencesFragment(
     versionName: String,
     versionCode: Int,
     @FeedStrategy feedStrategy: Int,
-    @ConnectTimeout connectTimeout: Int,
+    @ConnectTimeout connectTimeout: Long,
     @ClipMode clipMode: Int,
     useCommonUIMode: Boolean,
     useCommonUIModeEnable: Boolean,
@@ -96,12 +95,9 @@ internal fun PreferencesFragment(
             ) {
                 Preference(
                     title = stringResource(string.feat_setting_feed_management).title(),
-                    enabled = true,
-                    onClick = onFeedManagement,
-                    elevation = if (fragment == SettingFragment.Subscriptions) 1.dp
-                    else Dp.Unspecified
+                    enabled = fragment != SettingFragment.Subscriptions,
+                    onClick = onFeedManagement
                 )
-
                 TextPreference(
                     title = stringResource(string.feat_setting_sync_mode).title(),
                     trailing = when (feedStrategy) {
