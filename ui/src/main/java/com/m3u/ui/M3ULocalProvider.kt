@@ -16,7 +16,7 @@ fun M3ULocalProvider(
 ) {
     val prevTypography = MaterialTheme.typography
     val typography = remember(prevTypography) {
-        prevTypography.withFontFamily(FontFamilies.Titillium)
+        prevTypography.withFontFamily(FontFamilies.GoogleSans)
     }
     AppTheme(
         useDynamicColors = useDynamicColors,

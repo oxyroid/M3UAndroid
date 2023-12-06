@@ -27,7 +27,7 @@ data class SettingState(
     var useCommonUIMode: Boolean by configuration.useCommonUIMode
 
     @ConnectTimeout
-    var connectTimeout: Int by configuration.connectTimeout
+    var connectTimeout: Long by configuration.connectTimeout
     var experimentalMode: Boolean by configuration.experimentalMode
 
     @ClipMode

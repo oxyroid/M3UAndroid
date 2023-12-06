@@ -9,7 +9,7 @@ package com.m3u.core.annotation
 @Retention(AnnotationRetention.SOURCE)
 annotation class ConnectTimeout {
     companion object {
-        const val SHORT = 8000
-        const val LONG = 20000
+        const val SHORT = 8000L
+        const val LONG = 20000L
     }
 }

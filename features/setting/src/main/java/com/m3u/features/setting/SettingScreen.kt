@@ -133,7 +133,7 @@ private fun SettingScreen(
     @FeedStrategy feedStrategy: Int,
     godMode: Boolean,
     @ClipMode clipMode: Int,
-    @ConnectTimeout connectTimeout: Int,
+    @ConnectTimeout connectTimeout: Long,
     scrollMode: Boolean,
     onGodMode: () -> Unit,
     onConnectTimeout: () -> Unit,

@@ -38,6 +38,7 @@ import com.m3u.core.architecture.configuration.Configuration.Companion.USE_COMMO
 import com.m3u.core.architecture.configuration.Configuration.Companion.USE_DYNAMIC_COLORS
 import com.m3u.core.util.context.booleanAsState
 import com.m3u.core.util.context.intAsState
+import com.m3u.core.util.context.longAsState
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 
@@ -62,8 +63,8 @@ class SharedConfiguration @Inject constructor(
         sharedPreferences.intAsState(DEFAULT_ROW_COUNT, ROW_COUNT)
 
     @ConnectTimeout
-    override val connectTimeout: MutableState<Int> =
-        sharedPreferences.intAsState(DEFAULT_CONNECT_TIMEOUT, CONNECT_TIMEOUT)
+    override val connectTimeout: MutableState<Long> =
+        sharedPreferences.longAsState(DEFAULT_CONNECT_TIMEOUT, CONNECT_TIMEOUT)
     override val godMode: MutableState<Boolean> =
         sharedPreferences.booleanAsState(DEFAULT_GOD_MODE, GOD_MODE)
     override val experimentalMode: MutableState<Boolean> =

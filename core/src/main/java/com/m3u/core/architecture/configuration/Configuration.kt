@@ -14,7 +14,7 @@ interface Configuration {
     val rowCount: MutableState<Int>
 
     @ConnectTimeout
-    val connectTimeout: MutableState<Int>
+    val connectTimeout: MutableState<Long>
     val godMode: MutableState<Boolean>
     val experimentalMode: MutableState<Boolean>
 
