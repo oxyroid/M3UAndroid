@@ -54,7 +54,7 @@ interface Configuration {
         const val DEFAULT_CLIP_MODE = ClipMode.ADAPTIVE
         const val DEFAULT_SCROLL_MODE = false
         const val DEFAULT_AUTO_REFRESH = false
-        const val DEFAULT_SSL_VERIFICATION = true
+        const val DEFAULT_SSL_VERIFICATION = false
         const val DEFAULT_FULL_INFO_PLAYER = false
         const val DEFAULT_INITIAL_ROOT_DESTINATION = 0
         const val DEFAULT_NO_PICTURE_MODE = true
