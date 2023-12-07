@@ -1,6 +1,5 @@
 package com.m3u.features.about
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -93,13 +92,7 @@ private fun AboutScreen(
                             imageVector = Icons.Rounded.Commit,
                             contentDescription = null
                         )
-                    },
-                    modifier = Modifier
-                        .clickable {
-                            handler.openUri(
-                                "https://mvnrepository.com/artifact/${library.group}/${library.name}"
-                            )
-                        }
+                    }
                 )
                 HorizontalDivider()
             }
