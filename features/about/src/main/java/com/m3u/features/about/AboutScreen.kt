@@ -1,10 +1,17 @@
 package com.m3u.features.about
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Commit
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -12,11 +19,10 @@ import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.m3u.data.parser.VersionCatalogParser
 import com.m3u.features.about.components.ContributorItem
 import com.m3u.features.about.model.ContributorHolder
-import com.m3u.features.about.model.DependencyHolder
 import com.m3u.features.about.model.rememberContributorHolder
-import com.m3u.features.about.model.rememberDependencyHolder
 import com.m3u.i18n.R.string
 import com.m3u.material.components.Background
 import com.m3u.material.ktx.plus
@@ -38,12 +44,12 @@ internal fun AboutRoute(
     }
 
     val contributors by viewModel.contributors.collectAsStateWithLifecycle()
-    val dependencies by viewModel.dependencies.collectAsStateWithLifecycle()
+    val libraries by viewModel.libraries.collectAsStateWithLifecycle()
 
     AboutScreen(
         contentPadding = contentPadding,
         contributorHolder = rememberContributorHolder(contributors),
-        dependencyHolder = rememberDependencyHolder(dependencies),
+        libraries = libraries,
         modifier = modifier.fillMaxSize()
     )
 }
@@ -52,14 +58,13 @@ internal fun AboutRoute(
 private fun AboutScreen(
     contentPadding: PaddingValues,
     contributorHolder: ContributorHolder,
-    dependencyHolder: DependencyHolder,
+    libraries: List<VersionCatalogParser.Entity.Library>,
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
     val handler = LocalUriHandler.current
     Background(modifier) {
         val contributors = contributorHolder.contributions
-        val dependencies = dependencyHolder.dependencies
         LazyColumn(
             verticalArrangement = Arrangement.spacedBy(spacing.small),
             contentPadding = contentPadding + PaddingValues(horizontal = spacing.medium)
@@ -72,11 +77,31 @@ private fun AboutScreen(
                     }
                 )
             }
-            items(dependencies) { dependency ->
-                MonoText(
-                    text = dependency.name,
-                    maxLines = 1
+            items(libraries) { library ->
+                ListItem(
+                    headlineContent = {
+                        Text(text = library.key)
+                    },
+                    supportingContent = {
+                        Text(text = library.group + ":" + library.name)
+                    },
+                    trailingContent = {
+                        MonoText(text = library.ref)
+                    },
+                    leadingContent = {
+                        Icon(
+                            imageVector = Icons.Rounded.Commit,
+                            contentDescription = null
+                        )
+                    },
+                    modifier = Modifier
+                        .clickable {
+                            handler.openUri(
+                                "https://mvnrepository.com/artifact/${library.group}/${library.name}"
+                            )
+                        }
                 )
+                HorizontalDivider()
             }
         }
     }

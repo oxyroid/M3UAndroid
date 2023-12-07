@@ -5,17 +5,20 @@ import com.m3u.core.architecture.Logger
 import com.m3u.core.architecture.Publisher
 import com.m3u.core.architecture.execute
 import com.m3u.core.architecture.viewmodel.BaseViewModel
-import com.m3u.core.util.collections.indexOf
 import com.m3u.core.wrapper.EmptyMessage
 import com.m3u.data.api.GithubApi
+import com.m3u.data.parser.VersionCatalogParser
 import com.m3u.features.about.model.Contributor
-import com.m3u.features.about.model.Dependency
 import com.m3u.features.about.model.toContributor
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
@@ -25,6 +28,7 @@ import javax.inject.Inject
 @HiltViewModel
 class AboutViewModel @Inject constructor(
     private val api: GithubApi,
+    private val parser: VersionCatalogParser,
     private val client: OkHttpClient,
     @Publisher.App private val publisher: Publisher,
     private val logger: Logger
@@ -33,8 +37,28 @@ class AboutViewModel @Inject constructor(
         MutableStateFlow(emptyList())
     internal val contributors: StateFlow<List<Contributor>> = _contributors.asStateFlow()
 
-    private val _dependencies: MutableStateFlow<List<Dependency>> = MutableStateFlow(emptyList())
-    internal val dependencies: StateFlow<List<Dependency>> = _dependencies.asStateFlow()
+    private val versionCatalog: MutableStateFlow<List<VersionCatalogParser.Entity>> =
+        MutableStateFlow(emptyList())
+    internal val libraries = versionCatalog
+        .map { entities ->
+            val versions = entities.filterIsInstance<VersionCatalogParser.Entity.Version>()
+            entities.mapNotNull { prev ->
+                when (prev) {
+                    is VersionCatalogParser.Entity.Library -> {
+                        prev.copy(
+                            ref = versions.find { it.key == prev.ref }?.value ?: prev.ref
+                        )
+                    }
+
+                    else -> null
+                }
+            }
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Lazily,
+            initialValue = emptyList()
+        )
 
     init {
         refresh()
@@ -53,37 +77,20 @@ class AboutViewModel @Inject constructor(
                     .map { it.toContributor() }
                     .sortedByDescending { it.contributions }
             }
-            val catalogs = fetchVersionCatalogs()
-            _dependencies.value = catalogs.readTomlDependencies()
+            val request = Request.Builder()
+                .url("https://raw.githubusercontent.com/realOxy/M3UAndroid/master/gradle/libs.versions.toml")
+                .build()
+            val response = withContext(Dispatchers.IO) {
+                client
+                    .newCall(request)
+                    .execute()
+            }
+            val input = response.body?.byteStream()
+            versionCatalog.update {
+                input?.use { parser.execute(it) } ?: emptyList()
+            }
         }
     }
-
-    private suspend fun fetchVersionCatalogs(): List<String> = withContext(Dispatchers.IO) {
-        logger.execute {
-            val response = client
-                .newCall(
-                    Request.Builder()
-                        .url("https://raw.githubusercontent.com/realOxy/M3UAndroid/master/gradle/libs.versions.toml")
-                        .build()
-                )
-                .execute()
-            if (!response.isSuccessful) return@execute emptyList()
-            val content = response.body?.bytes()?.decodeToString().orEmpty()
-            content.lines()
-        } ?: emptyList()
-    }
-
-    private fun List<String>.readTomlDependencies(): List<Dependency> = logger.execute {
-        val start = indexOf { it.startsWith(("[libraries]")) } + 1
-        val end = indexOf(start) { it.startsWith(("[plugins]")) }
-        subList(start, end).mapNotNull { line ->
-            val i = line.indexOf("=")
-            if (i == -1) null
-            else line.take(i).trim()
-        }
-            .sorted()
-            .map { Dependency(it) }
-    } ?: emptyList()
 
     override fun onEvent(event: Unit) {
 
