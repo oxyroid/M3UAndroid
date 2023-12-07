@@ -20,6 +20,7 @@ class CrashHandler @Inject constructor(
         if (handler != null) {
             cacher.write(throwable)
             context.toast("Uncaught error occurred!")
+            throwable.printStackTrace()
             val pendingIntent = PendingIntent.getActivity(
                 context,
                 192837,
