@@ -80,9 +80,11 @@ dependencies {
     implementation(libs.androidx.core.core.ktx)
     implementation(libs.androidx.appcompat.appcompat)
     implementation(libs.androidx.activity.activity.compose)
+    implementation(libs.androidx.startup.startup.runtime)
 
     implementation(libs.androidx.lifecycle.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.lifecycle.runtime.compose)
+    implementation(libs.androidx.lifecycle.lifecycle.process)
 
     implementation(libs.androidx.core.core.splashscreen)
 

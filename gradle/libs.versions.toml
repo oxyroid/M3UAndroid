@@ -15,6 +15,7 @@ androidx-tv = "1.0.0-alpha10"
 androidx-media3 = "1.2.0"
 androidx-work = "2.9.0"
 androidx-room = "2.6.1"
+androidx-startup = "1.1.1"
 
 google-accompanist = "0.33.1-alpha"
 google-dagger = "2.48"
@@ -56,6 +57,7 @@ androidx-activity-activity-compose = { group = "androidx.activity", name = "acti
 
 androidx-lifecycle-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "androidx-lifecycle" }
 androidx-lifecycle-lifecycle-runtime-compose = { group = "androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "androidx-lifecycle" }
+androidx-lifecycle-lifecycle-process = { group = "androidx.lifecycle", name = "lifecycle-process", version.ref = "androidx-lifecycle" }
 
 androidx-compose-ui-ui = { group = "androidx.compose.ui", name = "ui", version.ref = "androidx-compose" }
 androidx-compose-ui-ui-util = { group = "androidx.compose.ui", name = "ui-util", version.ref = "androidx-compose" }
@@ -76,6 +78,8 @@ androidx-tv-tv-foundation = { group = "androidx.tv", name = "tv-foundation", ver
 androidx-tv-tv-material = { group = "androidx.tv", name = "tv-material", version.ref = "androidx-tv" }
 
 androidx-compose-ui-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4", version.ref = "androidx-compose" }
+
+androidx-startup-startup-runtime = { group = "androidx.startup", name = "startup-runtime", version.ref = "androidx-startup" }
 
 com-google-dagger-hilt-android = { group = "com.google.dagger", name = "hilt-android", version.ref = "google-dagger" }
 com-google-dagger-hilt-compiler = { group = "com.google.dagger", name = "hilt-compiler", version.ref = "google-dagger" }
