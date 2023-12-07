@@ -17,10 +17,8 @@ import androidx.compose.material.icons.rounded.Animation
 import androidx.compose.material.icons.rounded.Backup
 import androidx.compose.material.icons.rounded.BatchPrediction
 import androidx.compose.material.icons.rounded.Chair
-import androidx.compose.material.icons.rounded.Cloud
 import androidx.compose.material.icons.rounded.ColorLens
 import androidx.compose.material.icons.rounded.Dangerous
-import androidx.compose.material.icons.rounded.DataSaverOn
 import androidx.compose.material.icons.rounded.Details
 import androidx.compose.material.icons.rounded.DeviceHub
 import androidx.compose.material.icons.rounded.Edit
@@ -28,15 +26,11 @@ import androidx.compose.material.icons.rounded.Extension
 import androidx.compose.material.icons.rounded.FitScreen
 import androidx.compose.material.icons.rounded.HideImage
 import androidx.compose.material.icons.rounded.Info
-import androidx.compose.material.icons.rounded.Javascript
 import androidx.compose.material.icons.rounded.MusicNote
 import androidx.compose.material.icons.rounded.Pages
 import androidx.compose.material.icons.rounded.PermDeviceInformation
-import androidx.compose.material.icons.rounded.QueuePlayNext
 import androidx.compose.material.icons.rounded.Refresh
-import androidx.compose.material.icons.rounded.Report
 import androidx.compose.material.icons.rounded.SafetyCheck
-import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Source
 import androidx.compose.material.icons.rounded.Sync
 import androidx.compose.material.icons.rounded.Timer

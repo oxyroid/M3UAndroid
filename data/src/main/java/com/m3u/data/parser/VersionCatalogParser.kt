@@ -6,6 +6,7 @@ interface VersionCatalogParser : Parser<InputStream, List<VersionCatalogParser.E
     sealed interface Entity {
 
         data class Version(val key: String, val value: String) : Entity
+
         data class Library(
             val key: String,
             val group: String,

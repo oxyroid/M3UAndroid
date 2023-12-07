@@ -22,7 +22,9 @@ class VersionCatalogParserImpl @Inject constructor(
                     line.startsWith("[bundles]") -> parser = null
                     else -> {
                         try {
-                            parser?.parse(line)?.let { result += it }
+                            if (!line.startsWith("#")) {
+                                parser?.parse(line)?.let { result += it }
+                            }
                         } catch (e: Exception) {
                             logger.log("cannot decode line: $line")
                             logger.log(e)
