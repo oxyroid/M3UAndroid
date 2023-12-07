@@ -1,5 +1,6 @@
 package com.m3u.benchmark
 
+import androidx.benchmark.macro.CompilationMode
 import androidx.benchmark.macro.StartupMode
 import androidx.benchmark.macro.StartupTimingMetric
 import androidx.benchmark.macro.junit4.MacrobenchmarkRule
@@ -26,11 +27,17 @@ class ExampleStartupBenchmark {
     val benchmarkRule = MacrobenchmarkRule()
 
     @Test
-    fun startup() = benchmarkRule.measureRepeated(
+    fun startUpWithBaseline() = startup(CompilationMode.Partial())
+
+    @Test
+    fun startUpWithoutBaseline() = startup(CompilationMode.None())
+
+    fun startup(mode: CompilationMode) = benchmarkRule.measureRepeated(
         packageName = "com.m3u.androidApp",
         metrics = listOf(StartupTimingMetric()),
         iterations = 5,
-        startupMode = StartupMode.COLD
+        startupMode = StartupMode.COLD,
+        compilationMode = mode
     ) {
         pressHome()
         startActivityAndWait()
