@@ -66,6 +66,10 @@
             <meta-data
                 android:name="com.m3u.androidApp.startup.ComposeInitializer"
                 android:value="androidx.startup"/>
+            <meta-data
+                android:name="androidx.work.WorkManagerInitializer"
+                android:value="androidx.startup"
+                tools:node="remove" />
         </provider>
 
         <provider
