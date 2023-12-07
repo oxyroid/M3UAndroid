@@ -45,7 +45,8 @@ fun Preference(
     content: String? = null,
     elevation: Dp = Dp.Unspecified,
     onClick: () -> Unit = {},
-    trailing: @Composable () -> Unit = {}
+    icon: ImageVector? = null,
+    trailing: @Composable (() -> Unit)? = null
 ) {
     var focus by remember { mutableStateOf(false) }
 
@@ -93,6 +94,11 @@ fun Preference(
                     }
                 },
                 trailingContent = trailing,
+                leadingContent = {
+                    icon?.let {
+                        Icon(imageVector = it, contentDescription = null)
+                    }
+                },
                 tonalElevation = LocalAbsoluteTonalElevation.current,
                 modifier = modifier
                     .semantics(mergeDescendants = true) { }
@@ -106,6 +112,7 @@ fun Preference(
     }
 }
 
+
 @Composable
 fun CheckBoxPreference(
     title: String,
@@ -115,6 +122,7 @@ fun CheckBoxPreference(
     content: String? = null,
     elevation: Dp = Dp.Unspecified,
     enabled: Boolean = true,
+    icon: ImageVector? = null,
 ) {
     val combined = Modifier
         .toggleable(
@@ -141,7 +149,8 @@ fun CheckBoxPreference(
                 checked = checked,
                 onCheckedChange = null
             )
-        }
+        },
+        icon = icon
     )
 }
 
@@ -154,6 +163,7 @@ fun SwitchPreference(
     content: String? = null,
     elevation: Dp = Dp.Unspecified,
     enabled: Boolean = true,
+    icon: ImageVector? = null,
 ) {
     val combined = Modifier
         .toggleable(
@@ -179,7 +189,8 @@ fun SwitchPreference(
                 checked = checked,
                 onCheckedChange = null
             )
-        }
+        },
+        icon = icon
     )
 }
 
@@ -192,6 +203,7 @@ fun IconPreference(
     content: String? = null,
     elevation: Dp = Dp.Unspecified,
     enabled: Boolean = true,
+    icon: ImageVector? = null,
 ) {
     Preference(
         title = title,
@@ -206,7 +218,8 @@ fun IconPreference(
                 contentDescription = null,
                 tint = LocalContentColor.current.copy(alpha = 0.65f)
             )
-        }
+        },
+        icon = icon
     )
 }
 
@@ -219,6 +232,7 @@ fun TextPreference(
     content: String? = null,
     elevation: Dp = Dp.Unspecified,
     enabled: Boolean = true,
+    icon: ImageVector? = null,
 ) {
     Preference(
         title = title,
@@ -238,6 +252,7 @@ fun TextPreference(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
-        }
+        },
+        icon = icon
     )
 }

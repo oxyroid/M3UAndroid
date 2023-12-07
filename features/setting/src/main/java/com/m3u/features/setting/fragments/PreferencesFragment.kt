@@ -13,6 +13,33 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.OpenInNew
+import androidx.compose.material.icons.rounded.Animation
+import androidx.compose.material.icons.rounded.Backup
+import androidx.compose.material.icons.rounded.BatchPrediction
+import androidx.compose.material.icons.rounded.Chair
+import androidx.compose.material.icons.rounded.Cloud
+import androidx.compose.material.icons.rounded.ColorLens
+import androidx.compose.material.icons.rounded.Dangerous
+import androidx.compose.material.icons.rounded.DataSaverOn
+import androidx.compose.material.icons.rounded.Details
+import androidx.compose.material.icons.rounded.DeviceHub
+import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.material.icons.rounded.Extension
+import androidx.compose.material.icons.rounded.FitScreen
+import androidx.compose.material.icons.rounded.HideImage
+import androidx.compose.material.icons.rounded.Info
+import androidx.compose.material.icons.rounded.Javascript
+import androidx.compose.material.icons.rounded.MusicNote
+import androidx.compose.material.icons.rounded.Pages
+import androidx.compose.material.icons.rounded.PermDeviceInformation
+import androidx.compose.material.icons.rounded.QueuePlayNext
+import androidx.compose.material.icons.rounded.Refresh
+import androidx.compose.material.icons.rounded.Report
+import androidx.compose.material.icons.rounded.SafetyCheck
+import androidx.compose.material.icons.rounded.Settings
+import androidx.compose.material.icons.rounded.Source
+import androidx.compose.material.icons.rounded.Sync
+import androidx.compose.material.icons.rounded.Timer
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -81,6 +108,8 @@ internal fun PreferencesFragment(
     modifier: Modifier = Modifier,
 ) {
     val spacing = LocalSpacing.current
+    val context = LocalContext.current
+
     LazyColumn(
         modifier = modifier,
         contentPadding = contentPadding,
@@ -95,11 +124,13 @@ internal fun PreferencesFragment(
             ) {
                 Preference(
                     title = stringResource(string.feat_setting_feed_management).title(),
+                    icon = Icons.Rounded.MusicNote,
                     enabled = fragment != SettingFragment.Subscriptions,
                     onClick = onFeedManagement
                 )
                 TextPreference(
                     title = stringResource(string.feat_setting_sync_mode).title(),
+                    icon = Icons.Rounded.Sync,
                     trailing = when (feedStrategy) {
                         FeedStrategy.ALL -> stringResource(string.feat_setting_sync_mode_all)
                         FeedStrategy.SKIP_FAVORITE -> stringResource(string.feat_setting_sync_mode_skip_favourite)
@@ -109,6 +140,7 @@ internal fun PreferencesFragment(
                 )
                 TextPreference(
                     title = stringResource(string.feat_setting_clip_mode).title(),
+                    icon = Icons.Rounded.FitScreen,
                     trailing = when (clipMode) {
                         ClipMode.ADAPTIVE -> stringResource(string.feat_setting_clip_mode_adaptive)
                         ClipMode.CLIP -> stringResource(string.feat_setting_clip_mode_clip)
@@ -119,35 +151,41 @@ internal fun PreferencesFragment(
                 )
                 TextPreference(
                     title = stringResource(string.feat_setting_connect_timeout).title(),
+                    icon = Icons.Rounded.Timer,
                     trailing = "${connectTimeout / 1000}s",
                     onClick = onConnectTimeout
                 )
                 TextPreference(
                     title = stringResource(string.feat_setting_initial_tab).title(),
+                    icon = Icons.Rounded.Pages,
                     trailing = stringResource(Destination.Root.entries[initialRootDestination].iconTextId).title(),
                     onClick = onInitialTabIndex
                 )
                 CheckBoxSharedPreference(
                     title = string.feat_setting_auto_refresh,
                     content = string.feat_setting_auto_refresh_description,
+                    icon = Icons.Rounded.Refresh,
                     checked = autoRefresh,
                     onChanged = onAutoRefresh
                 )
                 CheckBoxSharedPreference(
                     title = string.feat_setting_no_picture_mode,
                     content = string.feat_setting_no_picture_mode_description,
+                    icon = Icons.Rounded.HideImage,
                     checked = noPictureMode,
                     onChanged = onNoPictureMode
                 )
                 CheckBoxSharedPreference(
                     title = string.feat_setting_full_info_player,
                     content = string.feat_setting_full_info_player_description,
+                    icon = Icons.Rounded.Details,
                     checked = fullInfoPlayer,
                     onChanged = onFullInfoPlayer
                 )
                 CheckBoxSharedPreference(
                     title = string.feat_setting_god_mode,
                     content = string.feat_setting_god_mode_description,
+                    icon = Icons.Rounded.DeviceHub,
                     checked = godMode,
                     onChanged = onGodMode
                 )
@@ -155,6 +193,7 @@ internal fun PreferencesFragment(
                     title = string.feat_setting_common_ui_mode,
                     content = if (useCommonUIModeEnable) string.feat_setting_common_ui_mode_description
                     else string.feat_setting_common_ui_mode_disabled_description,
+                    icon = Icons.Rounded.Animation,
                     enabled = useCommonUIModeEnable,
                     checked = useCommonUIMode,
                     onChanged = onUIMode
@@ -165,6 +204,7 @@ internal fun PreferencesFragment(
                     content = string
                         .feat_setting_use_dynamic_colors_unavailable
                         .takeUnless { useDynamicColorsAvailable },
+                    icon = Icons.Rounded.ColorLens,
                     checked = useDynamicColors,
                     onChanged = onUseDynamicColors,
                     enabled = useDynamicColorsAvailable
@@ -181,6 +221,7 @@ internal fun PreferencesFragment(
                 CheckBoxSharedPreference(
                     title = string.feat_setting_experimental_mode,
                     content = string.feat_setting_experimental_mode_description,
+                    icon = Icons.Rounded.Dangerous,
                     checked = experimentalMode,
                     onChanged = onExperimentalMode
                 )
@@ -200,6 +241,7 @@ internal fun PreferencesFragment(
                             title = string.feat_setting_cinema_mode,
                             content = string.feat_setting_not_implementation,
 //                            subtitle = string.feat_setting_cinema_mode_description,
+                            icon = Icons.Rounded.Chair,
                             checked = cinemaMode,
                             onChanged = onCinemaMode,
                             enabled = false
@@ -207,23 +249,27 @@ internal fun PreferencesFragment(
                         Preference(
                             title = stringResource(string.feat_setting_script_management).title(),
                             content = stringResource(string.feat_setting_not_implementation).title(),
+                            icon = Icons.Rounded.Extension,
                             enabled = false,
                             onClick = onScriptManagement
                         )
                         Preference(
                             title = stringResource(string.feat_setting_console_editor).title(),
                             content = stringResource(string.feat_setting_not_implementation).title(),
+                            icon = Icons.Rounded.Edit,
                             enabled = false,
                             onClick = navigateToConsole
                         )
                         CheckBoxSharedPreference(
                             title = string.feat_setting_scroll_mode,
+                            icon = Icons.Rounded.BatchPrediction,
                             checked = scrollMode,
                             onChanged = onScrollMode
                         )
                         CheckBoxSharedPreference(
                             title = string.feat_setting_ssl_verification_enabled,
                             content = string.feat_setting_ssl_verification_enabled_description,
+                            icon = Icons.Rounded.SafetyCheck,
                             checked = isSSLVerification,
                             onChanged = onSSLVerification
                         )
@@ -238,31 +284,35 @@ internal fun PreferencesFragment(
                     .clip(MaterialTheme.shapes.medium),
                 verticalArrangement = Arrangement.spacedBy(1.dp)
             ) {
-                val context = LocalContext.current
                 IconPreference(
                     title = stringResource(string.feat_setting_system_setting).title(),
                     imageVector = Icons.AutoMirrored.Rounded.OpenInNew,
+                    icon = Icons.Rounded.PermDeviceInformation,
                     onClick = {
-                        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                            data = Uri.fromParts("package", context.packageName, null)
-                        }
+                        val intent =
+                            Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                                data = Uri.fromParts("package", context.packageName, null)
+                            }
                         context.startActivity(intent)
                     }
                 )
                 // TODO: https://www.dropbox.com/developers/documentation/http/documentation#file_requests-list
                 Preference(
                     title = stringResource(string.feat_setting_dropbox).uppercase(),
+                    icon = Icons.Rounded.Backup,
                     onClick = navigateToAbout,
                     enabled = false
                 )
                 Preference(
                     title = stringResource(string.feat_setting_project_about).title(),
+                    icon = Icons.Rounded.Source,
                     onClick = navigateToAbout,
 //                    enabled = false
                 )
                 Preference(
                     title = stringResource(string.feat_setting_app_version).title(),
-                    content = "$versionName ($versionCode)"
+                    content = "$versionName ($versionCode)",
+                    icon = Icons.Rounded.Info,
                 )
             }
         }
