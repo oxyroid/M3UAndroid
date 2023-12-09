@@ -25,7 +25,7 @@
     <string name="feat_setting_label_muted_lives">directos bloqueados</string>
     <string name="feat_setting_label_add_feed">añadir playlist</string>
     <string name="feat_setting_label_parse_from_clipboard">obtener del portapapeles</string>
-    <string name="feat_setting_label_select_from_local_storage">seleccionar file</string>
+    <string name="feat_setting_label_select_from_local_storage">seleccionar archivo</string>
     <string name="feat_setting_label_parse_from_disk">obtener del archivo</string>
     <string name="feat_setting_clip_mode">modo de video clip</string>
     <string name="feat_setting_clip_mode_adaptive">adaptativo</string>
