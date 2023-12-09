@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="feat_live_playback_state_idle">idle</string>
-    <string name="feat_live_playback_state_buffering">almacenando</string>
+    <string name="feat_live_playback_state_idle">en pausa</string>
+    <string name="feat_live_playback_state_buffering">cargando</string>
     <string name="feat_live_playback_state_ready">listo</string>
     <string name="feat_live_playback_state_ended">completado</string>
 
