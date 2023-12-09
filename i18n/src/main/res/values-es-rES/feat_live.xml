@@ -8,7 +8,7 @@
     <string name="feat_live_tooltip_on_back_pressed">atrás</string>
     <string name="feat_live_tooltip_mute">silenciar</string>
     <string name="feat_live_tooltip_unmute">no silenciar</string>
-    <string name="feat_live_tooltip_favourite">favourito</string>
+    <string name="feat_live_tooltip_favourite">favorito</string>
     <string name="feat_live_tooltip_unfavourite">no favorito</string>
     <string name="feat_live_tooltip_record">grabar</string>
     <string name="feat_live_tooltip_unrecord">dejar de grabar</string>

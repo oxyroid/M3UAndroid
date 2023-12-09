@@ -7,7 +7,7 @@
     <string name="ui_destination_setting">Ajustes</string>
 
     <string name="ui_title_setting">Ajustes</string>
-    <string name="ui_title_favourite">Favouritos</string>
+    <string name="ui_title_favourite">Favoritos</string>
 
     <string name="ui_error_unknown">error desconocido</string>
     <string name="ui_cd_top_bar_on_back_pressed">atrás</string>
