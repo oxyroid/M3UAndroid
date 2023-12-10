@@ -9,7 +9,7 @@
     <string name="feat_setting_placeholder_title">nombre de playlist</string>
     <string name="feat_setting_label_subscribing">suscribiendo</string>
     <string name="feat_setting_sync_mode_all">todo</string>
-    <string name="feat_setting_sync_mode_skip_favourite">saltar favourito</string>
+    <string name="feat_setting_sync_mode_skip_favourite">saltar favorito</string>
     <string name="feat_setting_sync_mode">forma de sincronizado</string>
     <string name="feat_setting_common_ui_mode">modo UI</string>
     <string name="feat_setting_common_ui_mode_description">usar modo UI de dispositivo móvil</string>
@@ -25,13 +25,13 @@
     <string name="feat_setting_label_muted_lives">directos bloqueados</string>
     <string name="feat_setting_label_add_feed">añadir playlist</string>
     <string name="feat_setting_label_parse_from_clipboard">obtener del portapapeles</string>
-    <string name="feat_setting_label_select_from_local_storage">seleccionar file</string>
+    <string name="feat_setting_label_select_from_local_storage">seleccionar archivo</string>
     <string name="feat_setting_label_parse_from_disk">obtener del archivo</string>
     <string name="feat_setting_clip_mode">modo de video clip</string>
     <string name="feat_setting_clip_mode_adaptive">adaptativo</string>
     <string name="feat_setting_clip_mode_clip">clip</string>
     <string name="feat_setting_clip_mode_stretched">estirado</string>
-    <string name="feat_setting_scroll_mode">desplazarse para cambiar vidas</string>
+    <string name="feat_setting_scroll_mode">deslizar para cambiar directos</string>
     <string name="feat_setting_auto_refresh">autorefrescar</string>
     <string name="feat_setting_auto_refresh_description">se actualiza automáticamente al ingresar lista de reproducción</string>
     <string name="feat_setting_ssl_verification_enabled">validar certificado SSL</string>
@@ -45,10 +45,13 @@
     <string name="feat_setting_cinema_mode">modo cine</string>
     <string name="feat_setting_cinema_mode_description">usar tema oscuro OLED</string>
     <string name="feat_setting_script_management_import_js">importar Javascript</string>
-    <string name="feat_setting_enqueue_subscribe">se añadió una tarea de suscripción a la cola</string>
+    <string name="feat_setting_enqueue_subscribe">la suscripción fue realizada e incluida a la lista</string>
     <string name="feat_setting_dropbox">dropbox</string>
     <string name="feat_setting_project_about">acerca del proyecto</string>
     <string name="feat_setting_local_storage">almacenamiento local</string>
     <string name="feat_setting_error_unselected_file">aún no se seleccionó al archivo</string>
     <string name="feat_setting_error_blank_url">url en blanco</string>
+    <string name="feat_setting_use_dynamic_colors">colores dinámicos</string>
+    <string name="feat_setting_use_dynamic_colors_unavailable">está disponible en Android 12 y posteriores</string>
+    <string name="feat_setting_not_implementation">está característica no está disponible para esta versión</string>
 </resources>
