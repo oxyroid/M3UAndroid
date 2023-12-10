@@ -29,12 +29,10 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -44,8 +42,6 @@ import com.m3u.material.ktx.animated
 import com.m3u.material.ktx.ifUnspecified
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlin.time.Duration
 
@@ -127,15 +123,8 @@ fun Mask(
     contentColor: Color = LocalContentColor.current,
     content: @Composable BoxScope.() -> Unit
 ) {
-    val visible by produceState(
-        initialValue = state.visible
-    ) {
-        snapshotFlow { state.visible }
-            .onEach { value = it }
-            .launchIn(this)
-    }
     AnimatedVisibility(
-        visible = visible,
+        visible = state.visible,
         enter = fadeIn(),
         exit = fadeOut()
     ) {
