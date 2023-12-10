@@ -9,37 +9,34 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
-/**
- * This is an example startup benchmark.
- *
- * It navigates to the device's home screen, and launches the default activity.
- *
- * Before running this benchmark:
- * 1) switch your app's active build variant in the Studio (affects Studio runs only)
- * 2) add `<profileable android:shell="true" />` to your app's manifest, within the `<application>` tag
- *
- * Run this benchmark from Studio to see startup measurements, and captured system traces
- * for investigating your app's performance.
- */
 @RunWith(AndroidJUnit4::class)
 class ExampleStartupBenchmark {
     @get:Rule
     val benchmarkRule = MacrobenchmarkRule()
 
     @Test
-    fun startUpWithBaseline() = startup(CompilationMode.Partial())
+    fun startUpWithBaseline() = startUp(CompilationMode.Partial())
 
     @Test
-    fun startUpWithoutBaseline() = startup(CompilationMode.None())
+    fun startUpWithoutBaseline() = startUp(CompilationMode.None())
 
-    fun startup(mode: CompilationMode) = benchmarkRule.measureRepeated(
+    private fun startUp(mode: CompilationMode) = benchmarkRule.measureRepeated(
         packageName = "com.m3u.androidApp",
         metrics = listOf(StartupTimingMetric()),
-        iterations = 5,
+        iterations = 3,
         startupMode = StartupMode.COLD,
         compilationMode = mode
     ) {
+        val width = device.displayWidth
+        val height = device.displayHeight
         pressHome()
         startActivityAndWait()
+        device.swipe(width / 3 * 2, height / 2, width / 3, height / 2, 50)
+        Thread.sleep(2000)
+        device.swipe(width / 3 * 2, height / 2, width / 3, height / 2, 50)
+        Thread.sleep(2000)
+        device.swipe(width / 2, height / 3 * 2, width / 2, height / 3, 50)
+        Thread.sleep(2000)
+        device.swipe(width / 2, height / 3, width / 2, height / 3 * 2, 50)
     }
 }

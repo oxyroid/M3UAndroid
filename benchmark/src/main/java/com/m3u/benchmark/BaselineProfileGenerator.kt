@@ -19,12 +19,5 @@ class BaselineProfileGenerator {
     ) {
         pressHome()
         startActivityAndWait()
-        this.device.drag(
-            15,
-            15,
-            45,
-            15,
-            20
-        )
     }
 }
