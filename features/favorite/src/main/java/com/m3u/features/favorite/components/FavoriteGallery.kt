@@ -8,7 +8,9 @@ import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import com.m3u.core.architecture.configuration.LocalConfiguration
 import com.m3u.data.database.entity.LiveHolder
 import com.m3u.features.favorite.NavigateToLive
 import com.m3u.material.ktx.plus
@@ -21,11 +23,12 @@ internal fun FavouriteGallery(
     contentPadding: PaddingValues,
     liveHolder: LiveHolder,
     rowCount: Int,
-    noPictureMode: Boolean,
     navigateToLive: NavigateToLive,
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
+    val configuration = LocalConfiguration.current
+    val noPictureMode by configuration.noPictureMode
     val lives = liveHolder.lives
     LazyVerticalStaggeredGrid(
         columns = StaggeredGridCells.Fixed(rowCount),

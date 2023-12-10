@@ -3,7 +3,6 @@ package com.m3u.features.live
 import android.app.Application
 import androidx.lifecycle.viewModelScope
 import com.m3u.core.architecture.Logger
-import com.m3u.core.architecture.configuration.Configuration
 import com.m3u.core.architecture.viewmodel.BaseViewModel
 import com.m3u.core.wrapper.EmptyMessage
 import com.m3u.data.repository.FeedRepository
@@ -36,15 +35,12 @@ import kotlin.time.Duration.Companion.milliseconds
 class LiveViewModel @Inject constructor(
     private val liveRepository: LiveRepository,
     private val feedRepository: FeedRepository,
-    configuration: Configuration,
     private val playerManager: PlayerManager,
     private val logger: Logger,
     @Logger.Ui private val uiLogger: Logger,
     private val application: Application
 ) : BaseViewModel<LiveState, LiveEvent, EmptyMessage>(
-    emptyState = LiveState(
-        configuration = configuration
-    )
+    emptyState = LiveState()
 ), OnDeviceRegistryListener, OnDeviceControlListener {
     private val _devices = MutableStateFlow<List<Device<*, *, *>>>(emptyList())
     val devices = _devices.asStateFlow()

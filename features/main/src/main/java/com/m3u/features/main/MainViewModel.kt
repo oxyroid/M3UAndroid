@@ -1,7 +1,6 @@
 package com.m3u.features.main
 
 import androidx.lifecycle.viewModelScope
-import com.m3u.core.architecture.configuration.Configuration
 import com.m3u.core.architecture.viewmodel.BaseViewModel
 import com.m3u.data.repository.FeedRepository
 import com.m3u.data.repository.LiveRepository
@@ -24,11 +23,8 @@ import javax.inject.Inject
 class MainViewModel @Inject constructor(
     private val feedRepository: FeedRepository,
     liveRepository: LiveRepository,
-    configuration: Configuration,
 ) : BaseViewModel<MainState, MainEvent, MainMessage>(
-    emptyState = MainState(
-        configuration = configuration
-    )
+    emptyState = MainState()
 ) {
     private val counts: StateFlow<Map<String, Int>> = liveRepository
         .observeAll()

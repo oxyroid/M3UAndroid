@@ -1,7 +1,6 @@
 package com.m3u.features.favorite
 
 import androidx.lifecycle.viewModelScope
-import com.m3u.core.architecture.configuration.Configuration
 import com.m3u.core.architecture.viewmodel.BaseViewModel
 import com.m3u.core.util.collections.filterNotNullKeys
 import com.m3u.core.wrapper.EmptyMessage
@@ -17,12 +16,9 @@ import javax.inject.Inject
 @HiltViewModel
 class FavouriteViewModel @Inject constructor(
     liveRepository: LiveRepository,
-    feedRepository: FeedRepository,
-    configuration: Configuration,
+    feedRepository: FeedRepository
 ) : BaseViewModel<FavoriteState, FavoriteEvent, EmptyMessage>(
-    emptyState = FavoriteState(
-        configuration = configuration
-    )
+    emptyState = FavoriteState()
 ) {
     init {
         liveRepository

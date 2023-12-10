@@ -7,10 +7,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalConfiguration as LocalSystemConfiguration
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.m3u.core.architecture.configuration.LocalConfiguration
 import com.m3u.data.database.entity.LiveHolder
 import com.m3u.data.database.entity.rememberLiveHolder
 import com.m3u.features.favorite.components.FavouriteGallery
@@ -30,29 +32,29 @@ fun FavouriteRoute(
     viewModel: FavouriteViewModel = hiltViewModel()
 ) {
     val helper = LocalHelper.current
+    val configuration = LocalConfiguration.current
     val state by viewModel.state.collectAsStateWithLifecycle()
 
     val lives = remember(state.details) {
         state.details.flatMap { it.value }
     }
 
-    val rowCount = state.rowCount
-    fun onRowCount(target: Int) {
-        state.rowCount = target
-    }
+    var rowCount by configuration.rowCount
+    val godMode by configuration.godMode
+
     EventHandler(resume) {
         helper.actions = emptyList()
     }
 
-    val interceptVolumeEventModifier = remember(state.godMode) {
-        if (state.godMode) {
+    val interceptVolumeEventModifier = remember(godMode) {
+        if (godMode) {
             Modifier.interceptVolumeEvent { event ->
                 when (event) {
                     KeyEvent.KEYCODE_VOLUME_UP ->
-                        onRowCount((rowCount - 1).coerceAtLeast(1))
+                        rowCount = (rowCount - 1).coerceAtLeast(1)
 
                     KeyEvent.KEYCODE_VOLUME_DOWN ->
-                        onRowCount((rowCount + 1).coerceAtMost(3))
+                        rowCount = (rowCount + 1).coerceAtMost(3)
                 }
             }
         } else Modifier
@@ -60,7 +62,6 @@ fun FavouriteRoute(
     FavoriteScreen(
         contentPadding = contentPadding,
         rowCount = rowCount,
-        noPictureMode = state.noPictureMode,
         liveHolder = rememberLiveHolder(lives),
         navigateToLive = navigateToLive,
         modifier = modifier
@@ -73,13 +74,12 @@ fun FavouriteRoute(
 private fun FavoriteScreen(
     contentPadding: PaddingValues,
     rowCount: Int,
-    noPictureMode: Boolean,
     liveHolder: LiveHolder,
     navigateToLive: NavigateToLive,
     modifier: Modifier = Modifier
 ) {
-    val configuration = LocalConfiguration.current
-    val actualRowCount = when (configuration.orientation) {
+    val systemConfiguration = LocalSystemConfiguration.current
+    val actualRowCount = when (systemConfiguration.orientation) {
         Configuration.ORIENTATION_PORTRAIT -> rowCount
         Configuration.ORIENTATION_LANDSCAPE -> rowCount + 2
         else -> rowCount + 2
@@ -88,7 +88,6 @@ private fun FavoriteScreen(
         contentPadding = contentPadding,
         liveHolder = liveHolder,
         rowCount = actualRowCount,
-        noPictureMode = noPictureMode,
         navigateToLive = navigateToLive,
         modifier = modifier
     )

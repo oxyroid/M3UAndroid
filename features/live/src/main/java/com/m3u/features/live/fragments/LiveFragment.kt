@@ -47,7 +47,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
-import com.m3u.core.annotation.ClipMode
+import com.m3u.core.architecture.configuration.LocalConfiguration
 import com.m3u.core.util.basic.isNotEmpty
 import com.m3u.features.live.LiveState
 import com.m3u.features.live.components.CoverPlaceholder
@@ -73,9 +73,6 @@ internal fun LiveFragment(
     url: String,
     cover: String,
     maskState: MaskState,
-    experimentalMode: Boolean,
-    @ClipMode clipMode: Int,
-    fullInfoPlayer: Boolean,
     recording: Boolean,
     stared: Boolean,
     volume: Float,
@@ -91,6 +88,10 @@ internal fun LiveFragment(
     modifier: Modifier = Modifier
 ) {
     val theme = MaterialTheme.colorScheme
+    val configuration = LocalConfiguration.current
+
+    val clipMode by configuration.clipMode
+    val fullInfoPlayer by configuration.fullInfoPlayer
 
     // because they will be updated frequently,
     // they must be wrapped with rememberUpdatedState when using them.

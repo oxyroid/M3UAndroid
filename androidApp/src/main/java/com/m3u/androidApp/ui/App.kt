@@ -8,6 +8,7 @@ import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.androidApp.navigation.M3UNavHost
+import com.m3u.core.architecture.configuration.Configuration
 import com.m3u.material.model.LocalNavController
 import com.m3u.ui.EmptyHelper
 import com.m3u.ui.Helper
@@ -15,11 +16,11 @@ import com.m3u.ui.rememberActionHolder
 
 @Composable
 fun App(
+    configuration: Configuration,
     appState: AppState = rememberAppState(),
     viewModel: AppViewModel = hiltViewModel(),
-    helper: Helper = EmptyHelper
+    helper: Helper = EmptyHelper,
 ) {
-    val state by viewModel.state.collectAsStateWithLifecycle()
     val snacker by viewModel.snacker.collectAsStateWithLifecycle()
     val actions by viewModel.actions.collectAsStateWithLifecycle()
     val fob by viewModel.fob.collectAsStateWithLifecycle()
@@ -29,8 +30,6 @@ fun App(
 
     val isBackPressedVisible = AppDefaults.isBackPressedVisible(navDestination)
     val isSystemBarScrollable = AppDefaults.isSystemBarScrollable(navDestination)
-
-    val cinemaMode = state.cinemaMode
 
     val title: String by AppDefaults.title(
         rootDestination = rootDestination,
@@ -42,7 +41,6 @@ fun App(
     AppScaffold(
         title = title,
         snacker = snacker.value,
-        useDynamicColors = state.useDynamicColors,
         actionHolder = actionHolder,
         rootDestination = rootDestination,
         fob = fob,
@@ -51,7 +49,7 @@ fun App(
         navigate = appState::navigate,
         modifier = Modifier.fillMaxSize(),
         helper = helper,
-        cinemaMode = cinemaMode,
+        configuration = configuration
     ) { contentPadding ->
         CompositionLocalProvider(
             LocalNavController provides appState.navController,

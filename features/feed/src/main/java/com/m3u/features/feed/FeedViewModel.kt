@@ -1,5 +1,6 @@
 package com.m3u.features.feed
 
+import androidx.compose.runtime.getValue
 import androidx.lifecycle.viewModelScope
 import com.m3u.core.architecture.Logger
 import com.m3u.core.architecture.configuration.Configuration
@@ -32,12 +33,10 @@ class FeedViewModel @Inject constructor(
     private val liveRepository: LiveRepository,
     private val feedRepository: FeedRepository,
     private val mediaRepository: MediaRepository,
-    configuration: Configuration,
+    private val configuration: Configuration,
     @Logger.Ui private val logger: Logger
 ) : BaseViewModel<FeedState, FeedEvent, FeedMessage>(
-    emptyState = FeedState(
-        configuration = configuration
-    )
+    emptyState = FeedState()
 ) {
     override fun onEvent(event: FeedEvent) {
         when (event) {
@@ -108,8 +107,9 @@ class FeedViewModel @Inject constructor(
 
     private fun refresh() {
         val url = readable.url
+        val feedStrategy by configuration.feedStrategy
         feedRepository
-            .refresh(url, readable.strategy)
+            .refresh(url, feedStrategy)
             .onEach { process ->
                 writable.update { prev ->
                     process

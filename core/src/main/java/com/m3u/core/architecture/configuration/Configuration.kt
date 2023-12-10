@@ -3,6 +3,7 @@ package com.m3u.core.architecture.configuration
 import android.os.Build
 import androidx.annotation.ChecksSdkIntAtLeast
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.snapshotFlow
@@ -11,6 +12,7 @@ import com.m3u.core.annotation.ConnectTimeout
 import com.m3u.core.annotation.FeedStrategy
 import kotlinx.coroutines.flow.Flow
 
+@Stable
 interface Configuration {
     @FeedStrategy
     val feedStrategy: MutableState<Int>
@@ -32,7 +34,7 @@ interface Configuration {
 
     @ExperimentalConfiguration
     val isSSLVerification: MutableState<Boolean>
-    val initialRootDestination: MutableState<Int>
+    val rootDestination: MutableState<Int>
     val noPictureMode: MutableState<Boolean>
 
     @ExperimentalConfiguration

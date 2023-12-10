@@ -1,20 +1,17 @@
 package com.m3u.features.setting
 
 import android.net.Uri
+import androidx.compose.runtime.getValue
 import androidx.lifecycle.viewModelScope
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.workDataOf
-import com.m3u.core.annotation.ClipMode
-import com.m3u.core.annotation.ConnectTimeout
-import com.m3u.core.annotation.FeedStrategy
 import com.m3u.core.architecture.Publisher
 import com.m3u.core.architecture.configuration.Configuration
 import com.m3u.core.architecture.viewmodel.BaseViewModel
 import com.m3u.data.repository.LiveRepository
 import com.m3u.data.repository.observeAll
 import com.m3u.data.worker.SubscriptionWorker
-import com.m3u.ui.Destination
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -27,12 +24,11 @@ class SettingViewModel @Inject constructor(
     private val liveRepository: LiveRepository,
     @Publisher.App private val publisher: Publisher,
     private val workManager: WorkManager,
-    configuration: Configuration
+    private val configuration: Configuration
 ) : BaseViewModel<SettingState, SettingEvent, SettingMessage>(
     emptyState = SettingState(
         versionName = publisher.versionName,
-        versionCode = publisher.versionCode,
-        configuration = configuration
+        versionCode = publisher.versionCode
     )
 ) {
     init {
@@ -53,17 +49,10 @@ class SettingViewModel @Inject constructor(
             SettingEvent.Subscribe -> subscribe()
             is SettingEvent.OnTitle -> onTitle(event.title)
             is SettingEvent.OnUrl -> onUrl(event.url)
-            SettingEvent.OnSyncMode -> onSyncMode()
-            SettingEvent.OnUseCommonUIMode -> onUseCommonUIMode()
-            SettingEvent.OnConnectTimeout -> onConnectTimeout()
-            SettingEvent.OnExperimentalMode -> onExperimentalMode()
-            SettingEvent.OnClipMode -> onClipMode()
             is SettingEvent.OnBanned -> onBanned(event.id)
-            SettingEvent.ScrollDefaultDestination -> scrollDefaultDestination()
             is SettingEvent.ImportJavaScript -> importJavaScript(event.uri)
             SettingEvent.OnLocalStorage -> onLocalStorage()
             is SettingEvent.OpenDocument -> openDocument(event.uri)
-            SettingEvent.OnUseDynamicColors -> onUseDynamicColors()
         }
     }
 
@@ -78,13 +67,6 @@ class SettingViewModel @Inject constructor(
     private fun importJavaScript(uri: Uri) {
     }
 
-    private fun scrollDefaultDestination() {
-        val total = Destination.Root.entries.size
-        val current = readable.initialRootDestination
-        val target = (current + 1).takeIf { it < total } ?: 0
-        readable.initialRootDestination = target
-    }
-
     private fun onBanned(liveId: Int) {
         val banned = readable.banneds.find { it.id == liveId }
         if (banned != null) {
@@ -92,40 +74,6 @@ class SettingViewModel @Inject constructor(
                 liveRepository.setBanned(liveId, false)
             }
         }
-    }
-
-    private fun onClipMode() {
-        val newValue = when (readable.clipMode) {
-            ClipMode.ADAPTIVE -> ClipMode.CLIP
-            ClipMode.CLIP -> ClipMode.STRETCHED
-            ClipMode.STRETCHED -> ClipMode.ADAPTIVE
-            else -> ClipMode.ADAPTIVE
-        }
-        readable.clipMode = newValue
-    }
-
-    private fun onExperimentalMode() {
-        val newValue = !readable.experimentalMode
-        if (!newValue) {
-            // reset experimental ones to default value
-            readable.scrollMode = Configuration.DEFAULT_SCROLL_MODE
-            readable.cinemaMode = Configuration.DEFAULT_CINEMA_MODE
-        }
-        readable.experimentalMode = newValue
-    }
-
-    private fun onConnectTimeout() {
-        val newValue = when (readable.connectTimeout) {
-            ConnectTimeout.LONG -> ConnectTimeout.SHORT
-            ConnectTimeout.SHORT -> ConnectTimeout.LONG
-            else -> ConnectTimeout.SHORT
-        }
-        readable.connectTimeout = newValue
-    }
-
-    private fun onUseCommonUIMode() {
-        val newValue = !readable.useCommonUIMode
-        readable.useCommonUIMode = newValue
     }
 
     private fun onTitle(title: String) {
@@ -144,14 +92,6 @@ class SettingViewModel @Inject constructor(
         }
     }
 
-    private fun onSyncMode() {
-        val newValue = when (readable.feedStrategy) {
-            FeedStrategy.ALL -> FeedStrategy.SKIP_FAVORITE
-            else -> FeedStrategy.ALL
-        }
-        readable.feedStrategy = newValue
-    }
-
     private fun subscribe() {
         val title = writable.value.title
         if (title.isEmpty()) {
@@ -168,7 +108,7 @@ class SettingViewModel @Inject constructor(
             return
         }
 
-        val strategy = readable.feedStrategy
+        val strategy by configuration.feedStrategy
         workManager.cancelAllWorkByTag(url)
         val request = OneTimeWorkRequestBuilder<SubscriptionWorker>()
             .setInputData(
@@ -197,10 +137,5 @@ class SettingViewModel @Inject constructor(
                 localStorage = !it.localStorage
             )
         }
-    }
-
-    private fun onUseDynamicColors() {
-        val newValue = !readable.useDynamicColors
-        readable.useDynamicColors = newValue
     }
 }

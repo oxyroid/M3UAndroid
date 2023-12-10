@@ -9,12 +9,15 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.m3u.androidApp.components.AppNavigation
 import com.m3u.androidApp.components.AppSnackHost
+import com.m3u.core.architecture.configuration.Configuration
+import com.m3u.core.architecture.configuration.ExperimentalConfiguration
 import com.m3u.core.unspecified.unspecifiable
 import com.m3u.core.util.collections.withEach
 import com.m3u.i18n.R.string
@@ -38,13 +41,12 @@ import kotlin.time.Duration.Companion.milliseconds
 internal fun AppScaffold(
     title: String,
     snacker: String,
-    useDynamicColors: Boolean,
     actionHolder: ActionHolder,
     rootDestination: Destination.Root?,
     fob: Fob?,
     isSystemBarScrollable: Boolean,
     helper: Helper,
-    cinemaMode: Boolean,
+    configuration: Configuration,
     navigate: Navigate,
     modifier: Modifier = Modifier,
     onBackPressed: (() -> Unit)? = null,
@@ -55,9 +57,11 @@ internal fun AppScaffold(
 
     M3ULocalProvider(
         helper = helper,
-        useDynamicColors = useDynamicColors
+        configuration = configuration
     ) {
         val scope = rememberCoroutineScope()
+        @OptIn(ExperimentalConfiguration::class)
+        val cinemaMode by configuration.cinemaMode
         val darkMode = when {
             cinemaMode -> true
             else -> isSystemInDarkTheme()

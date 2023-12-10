@@ -21,13 +21,11 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsCompat.Type.InsetsType
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.core.view.WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import com.m3u.androidApp.ui.App
 import com.m3u.androidApp.ui.AppViewModel
@@ -79,6 +77,9 @@ class MainActivity : ComponentActivity() {
     }
 
     @Inject
+    lateinit var configuration: com.m3u.core.architecture.configuration.Configuration
+
+    @Inject
     @Logger.Ui
     lateinit var logger: Logger
 
@@ -96,15 +97,15 @@ class MainActivity : ComponentActivity() {
                     App(
                         appState = appState,
                         viewModel = viewModel,
-                        helper = helper
+                        helper = helper,
+                        configuration = configuration
                     )
                 }
 
                 is ComposeLaunchMode.Player -> {
-                    val state by viewModel.state.collectAsStateWithLifecycle()
                     M3ULocalProvider(
                         helper = helper,
-                        useDynamicColors = state.useDynamicColors
+                        configuration = configuration
                     ) {
                         LiveRoute(
                             init = LiveEvent.InitOne(launchMode.destination.id),

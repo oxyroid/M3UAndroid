@@ -23,7 +23,6 @@ import androidx.compose.ui.util.lerp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.m3u.core.annotation.ClipMode
 import com.m3u.core.unspecified.UBoolean
 import com.m3u.core.unspecified.unspecifiable
 import com.m3u.core.util.basic.isNotEmpty
@@ -138,9 +137,6 @@ fun LiveRoute(
 
         LiveScreen(
             init = state.init,
-            experimentalMode = state.experimentalMode,
-            clipMode = state.clipMode,
-            fullInfoPlayer = state.fullInfoPlayer,
             recording = state.recording,
             openDlnaDevices = { viewModel.onEvent(LiveEvent.OpenDlnaDevices) },
             onRecord = { viewModel.onEvent(LiveEvent.Record) },
@@ -162,15 +158,12 @@ fun LiveRoute(
 @Composable
 private fun LiveScreen(
     init: LiveState.Init,
-    @ClipMode clipMode: Int,
-    fullInfoPlayer: Boolean,
     recording: Boolean,
     openDlnaDevices: () -> Unit,
     onRecord: () -> Unit,
     onFavourite: (String) -> Unit,
     onBackPressed: () -> Unit,
     maskState: MaskState,
-    experimentalMode: Boolean,
     playerState: LiveState.PlayerState,
     onInstallMedia: (String) -> Unit,
     onUninstallMedia: () -> Unit,
@@ -193,9 +186,6 @@ private fun LiveScreen(
                 cover = init.live?.cover.orEmpty(),
                 feedTitle = init.feed?.title ?: "--",
                 maskState = maskState,
-                experimentalMode = experimentalMode,
-                fullInfoPlayer = fullInfoPlayer,
-                clipMode = clipMode,
                 recording = recording,
                 stared = favourite,
                 onRecord = onRecord,
@@ -234,9 +224,6 @@ private fun LiveScreen(
                     url = url,
                     cover = live.cover.orEmpty(),
                     maskState = maskState,
-                    experimentalMode = experimentalMode,
-                    fullInfoPlayer = fullInfoPlayer,
-                    clipMode = clipMode,
                     recording = recording,
                     stared = favourite,
                     onRecord = onRecord,

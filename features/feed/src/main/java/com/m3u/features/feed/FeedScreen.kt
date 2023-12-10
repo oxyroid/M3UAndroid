@@ -56,7 +56,7 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalConfiguration as LocalSystemConfiguration
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.capitalize
@@ -68,6 +68,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.tv.foundation.lazy.grid.rememberTvLazyGridState
 import com.google.accompanist.permissions.PermissionStatus
 import com.google.accompanist.permissions.rememberPermissionState
+import com.m3u.core.architecture.configuration.LocalConfiguration
 import com.m3u.core.util.compose.observableStateOf
 import com.m3u.core.wrapper.Event
 import com.m3u.data.database.entity.Live
@@ -111,12 +112,18 @@ internal fun FeedRoute(
     viewModel: FeedViewModel = hiltViewModel()
 ) {
     val helper = LocalHelper.current
+    val configuration = LocalConfiguration.current
+
     val state by viewModel.state.collectAsStateWithLifecycle()
     val message by viewModel.message.collectAsStateWithLifecycle()
     var dialogStatus: DialogStatus by remember { mutableStateOf(DialogStatus.Idle) }
     val writeExternalPermissionState = rememberPermissionState(
         Manifest.permission.WRITE_EXTERNAL_STORAGE
     )
+
+    val autoRefresh by configuration.autoRefresh
+    var rowCount by configuration.rowCount
+    val godMode by configuration.godMode
 
     MessageEventHandler(message)
 
@@ -136,24 +143,21 @@ internal fun FeedRoute(
         )
     }
 
-    LaunchedEffect(state.autoRefresh, state.url) {
-        if (state.url.isNotEmpty() && state.autoRefresh) {
+    LaunchedEffect(autoRefresh, state.url) {
+        if (state.url.isNotEmpty() && autoRefresh) {
             viewModel.onEvent(FeedEvent.Refresh)
         }
     }
-    val rowCount = state.rowCount
-    fun onRowCount(target: Int) {
-        state.rowCount = target
-    }
+
     BackHandler(state.query.isNotEmpty()) {
         viewModel.onEvent(FeedEvent.Query(""))
     }
-    val interceptVolumeEventModifier = remember(state.godMode) {
-        if (state.godMode) {
+    val interceptVolumeEventModifier = remember(godMode) {
+        if (godMode) {
             Modifier.interceptVolumeEvent { event ->
                 when (event) {
-                    KeyEvent.KEYCODE_VOLUME_UP -> onRowCount((rowCount - 1).coerceAtLeast(1))
-                    KeyEvent.KEYCODE_VOLUME_DOWN -> onRowCount((rowCount + 1).coerceAtMost(3))
+                    KeyEvent.KEYCODE_VOLUME_UP -> rowCount = (rowCount - 1).coerceAtLeast(1)
+                    KeyEvent.KEYCODE_VOLUME_DOWN -> rowCount = (rowCount + 1).coerceAtMost(3)
                 }
             }
         } else Modifier
@@ -162,9 +166,6 @@ internal fun FeedRoute(
     FeedScreen(
         query = state.query,
         onQuery = { viewModel.onEvent(FeedEvent.Query(it)) },
-        useCommonUIMode = state.useCommonUIMode,
-        scrollMode = state.scrollMode,
-        noPictureMode = state.noPictureMode,
         rowCount = rowCount,
         channelHolder = rememberChannelHolder(state.channels),
         scrollUp = state.scrollUp,
@@ -201,9 +202,6 @@ internal fun FeedRoute(
 private fun FeedScreen(
     query: String,
     onQuery: (String) -> Unit,
-    useCommonUIMode: Boolean,
-    scrollMode: Boolean,
-    noPictureMode: Boolean,
     rowCount: Int,
     channelHolder: ChannelHolder,
     scrollUp: Event<Unit>,
@@ -219,6 +217,7 @@ private fun FeedScreen(
     val helper = LocalHelper.current
     val theme = MaterialTheme.colorScheme
     val configuration = LocalConfiguration.current
+    val systemConfiguration = LocalSystemConfiguration.current
     val spacing = LocalSpacing.current
     Box(modifier) {
         val isAtTopState = remember {
@@ -278,7 +277,8 @@ private fun FeedScreen(
                     modifier = Modifier.fillMaxSize()
                 ) {
                     FeedPager(channelHolder) { liveHolder ->
-                        val type = configuration.uiMode and UI_MODE_TYPE_MASK
+                        val type = systemConfiguration.uiMode and UI_MODE_TYPE_MASK
+                        val useCommonUIMode by configuration.useCommonUIMode
                         when {
                             !useCommonUIMode && type == UI_MODE_TYPE_TELEVISION -> {
                                 val state = rememberTvLazyGridState()
@@ -292,8 +292,6 @@ private fun FeedScreen(
                                     state = state,
                                     rowCount = 4,
                                     liveHolder = liveHolder,
-                                    noPictureMode = noPictureMode,
-                                    scrollMode = scrollMode,
                                     navigateToLive = navigateToLive,
                                     navigateToPlaylist = navigateToPlaylist,
                                     onMenu = onMenu
@@ -308,8 +306,8 @@ private fun FeedScreen(
                                 EventHandler(scrollUp) {
                                     state.animateScrollToItem(0)
                                 }
-                                val actualRowCount = remember(configuration.orientation, rowCount) {
-                                    when (configuration.orientation) {
+                                val actualRowCount = remember(systemConfiguration.orientation, rowCount) {
+                                    when (systemConfiguration.orientation) {
                                         ORIENTATION_LANDSCAPE -> rowCount + 2
                                         ORIENTATION_PORTRAIT -> rowCount
                                         else -> rowCount
@@ -319,8 +317,6 @@ private fun FeedScreen(
                                     state = state,
                                     rowCount = actualRowCount,
                                     liveHolder = liveHolder,
-                                    noPictureMode = noPictureMode,
-                                    scrollMode = scrollMode,
                                     navigateToLive = navigateToLive,
                                     navigateToPlaylist = navigateToPlaylist,
                                     onMenu = onMenu,

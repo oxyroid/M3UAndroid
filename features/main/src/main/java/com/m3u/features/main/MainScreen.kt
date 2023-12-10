@@ -29,7 +29,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalConfiguration as LocalSystemConfiguration
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -38,6 +38,7 @@ import androidx.compose.ui.text.capitalize
 import androidx.compose.ui.text.intl.Locale
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.m3u.core.architecture.configuration.LocalConfiguration
 import com.m3u.data.database.entity.Feed
 import com.m3u.features.main.components.FeedGallery
 import com.m3u.features.main.components.MainDialog
@@ -67,13 +68,14 @@ fun MainRoute(
     viewModel: MainViewModel = hiltViewModel()
 ) {
     val helper = LocalHelper.current
+    val configuration = LocalConfiguration.current
+
     val message by viewModel.message.collectAsStateWithLifecycle()
     val state: MainState by viewModel.state.collectAsStateWithLifecycle()
     val feedDetailHolder by viewModel.feeds.collectAsStateWithLifecycle()
-    val rowCount = state.rowCount
-    fun onRowCount(target: Int) {
-        state.rowCount = target
-    }
+
+    var rowCount by configuration.rowCount
+    val godMode by configuration.godMode
 
     MessageEventHandler(message)
 
@@ -81,12 +83,12 @@ fun MainRoute(
         helper.actions = emptyList()
     }
 
-    val interceptVolumeEventModifier = remember(state.godMode) {
-        if (state.godMode) {
+    val interceptVolumeEventModifier = remember(godMode) {
+        if (godMode) {
             Modifier.interceptVolumeEvent { event ->
                 when (event) {
-                    KeyEvent.KEYCODE_VOLUME_UP -> onRowCount((rowCount - 1).coerceAtLeast(1))
-                    KeyEvent.KEYCODE_VOLUME_DOWN -> onRowCount((rowCount + 1).coerceAtMost(3))
+                    KeyEvent.KEYCODE_VOLUME_UP -> rowCount = (rowCount - 1).coerceAtLeast(1)
+                    KeyEvent.KEYCODE_VOLUME_DOWN -> rowCount = (rowCount + 1).coerceAtMost(3)
                 }
             }
         } else Modifier
@@ -116,12 +118,12 @@ private fun MainScreen(
     modifier: Modifier = Modifier
 ) {
     var dialog: MainDialog by remember { mutableStateOf(MainDialog.Idle) }
-    val configuration = LocalConfiguration.current
+    val systemConfiguration = LocalSystemConfiguration.current
 
     val details = feedDetailHolder.details
 
-    val actualRowCount = remember(rowCount, configuration.orientation) {
-        when (configuration.orientation) {
+    val actualRowCount = remember(rowCount, systemConfiguration.orientation) {
+        when (systemConfiguration.orientation) {
             Configuration.ORIENTATION_PORTRAIT -> rowCount
             else -> rowCount + 2
         }

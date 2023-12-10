@@ -85,7 +85,7 @@ class SharedConfiguration @Inject constructor(
         sharedPreferences.booleanAsState(DEFAULT_SSL_VERIFICATION, SSL_VERIFICATION)
     override val fullInfoPlayer: MutableState<Boolean> =
         sharedPreferences.booleanAsState(DEFAULT_FULL_INFO_PLAYER, FULL_INFO_PLAYER)
-    override val initialRootDestination: MutableState<Int> =
+    override val rootDestination: MutableState<Int> =
         sharedPreferences.intAsState(DEFAULT_INITIAL_ROOT_DESTINATION, INITIAL_ROOT_DESTINATION)
     override val noPictureMode: MutableState<Boolean> =
         sharedPreferences.booleanAsState(DEFAULT_NO_PICTURE_MODE, NO_PICTURE_MODE)
