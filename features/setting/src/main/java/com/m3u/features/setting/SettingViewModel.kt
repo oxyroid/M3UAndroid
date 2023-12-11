@@ -1,7 +1,6 @@
 package com.m3u.features.setting
 
 import android.net.Uri
-import androidx.compose.runtime.getValue
 import androidx.lifecycle.viewModelScope
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
@@ -108,14 +107,13 @@ class SettingViewModel @Inject constructor(
             return
         }
 
-        val strategy by configuration.feedStrategy
         workManager.cancelAllWorkByTag(url)
         val request = OneTimeWorkRequestBuilder<SubscriptionWorker>()
             .setInputData(
                 workDataOf(
                     SubscriptionWorker.INPUT_STRING_TITLE to title,
                     SubscriptionWorker.INPUT_STRING_URL to url,
-                    SubscriptionWorker.INPUT_INT_STRATEGY to strategy
+                    SubscriptionWorker.INPUT_INT_STRATEGY to configuration.feedStrategy
                 )
             )
             .addTag(url)

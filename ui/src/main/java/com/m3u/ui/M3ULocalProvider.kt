@@ -3,7 +3,6 @@ package com.m3u.ui
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import com.m3u.core.architecture.configuration.Configuration
 import com.m3u.core.architecture.configuration.LocalConfiguration
@@ -24,9 +23,8 @@ fun M3ULocalProvider(
         LocalHelper provides helper,
         LocalConfiguration provides configuration
     ) {
-        val useDynamicColors by configuration.useDynamicColors
         AppTheme(
-            useDynamicColors = useDynamicColors,
+            useDynamicColors = configuration.useDynamicColors,
             typography = typography
         ) {
             Background {

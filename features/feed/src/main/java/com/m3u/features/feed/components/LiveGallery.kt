@@ -9,7 +9,6 @@ import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.tv.foundation.lazy.grid.TvGridCells
@@ -42,9 +41,6 @@ internal fun LiveGallery(
 
     val lives = liveHolder.lives
 
-    val noPictureMode by configuration.noPictureMode
-    val scrollMode by configuration.scrollMode
-
     LazyVerticalGrid(
         state = state,
         columns = GridCells.Fixed(rowCount),
@@ -60,9 +56,9 @@ internal fun LiveGallery(
         ) { live ->
             LiveItem(
                 live = live,
-                noPictureMode = noPictureMode,
+                noPictureMode = configuration.noPictureMode,
                 onClick = {
-                    if (scrollMode) {
+                    if (configuration.scrollMode) {
                         val ids = lives.map { it.id }
                         val initialIndex = ids.indexOfFirst { it == live.id }
                         navigateToPlaylist(ids, initialIndex)
@@ -93,9 +89,6 @@ internal fun TvFeedGallery(
     val configuration = LocalConfiguration.current
     val lives = liveHolder.lives
 
-    val noPictureMode by configuration.noPictureMode
-    val scrollMode by configuration.scrollMode
-
     TvLazyVerticalGrid(
         state = state,
         columns = TvGridCells.Fixed(rowCount),
@@ -111,9 +104,9 @@ internal fun TvFeedGallery(
         ) { live ->
             LiveItem(
                 live = live,
-                noPictureMode = noPictureMode,
+                noPictureMode = configuration.noPictureMode,
                 onClick = {
-                    if (scrollMode) {
+                    if (configuration.scrollMode) {
                         val ids = lives.map { it.id }
                         val initialIndex = ids.indexOfFirst { it == live.id }
                         navigateToPlaylist(ids, initialIndex)

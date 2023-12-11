@@ -36,8 +36,6 @@ import androidx.compose.material.icons.rounded.Sync
 import androidx.compose.material.icons.rounded.Timer
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -98,34 +96,32 @@ internal fun PreferencesFragment(
                     enabled = fragment != SettingFragment.Subscriptions,
                     onClick = navigateToPlaylistManagement
                 )
-                var feedStrategy by configuration.feedStrategy
                 TextPreference(
                     title = stringResource(string.feat_setting_sync_mode).title(),
                     icon = Icons.Rounded.Sync,
-                    trailing = when (feedStrategy) {
+                    trailing = when (configuration.feedStrategy) {
                         FeedStrategy.ALL -> stringResource(string.feat_setting_sync_mode_all)
                         FeedStrategy.SKIP_FAVORITE -> stringResource(string.feat_setting_sync_mode_skip_favourite)
                         else -> ""
                     }.title(),
                     onClick = {
-                        feedStrategy = when (feedStrategy) {
+                        configuration.feedStrategy = when (configuration.feedStrategy) {
                             FeedStrategy.ALL -> FeedStrategy.SKIP_FAVORITE
                             else -> FeedStrategy.ALL
                         }
                     }
                 )
-                var clipMode by configuration.clipMode
                 TextPreference(
                     title = stringResource(string.feat_setting_clip_mode).title(),
                     icon = Icons.Rounded.FitScreen,
-                    trailing = when (clipMode) {
+                    trailing = when (configuration.clipMode) {
                         ClipMode.ADAPTIVE -> stringResource(string.feat_setting_clip_mode_adaptive)
                         ClipMode.CLIP -> stringResource(string.feat_setting_clip_mode_clip)
                         ClipMode.STRETCHED -> stringResource(string.feat_setting_clip_mode_stretched)
                         else -> ""
                     }.title(),
                     onClick = {
-                        clipMode = when (clipMode) {
+                        configuration.clipMode = when (configuration.clipMode) {
                             ClipMode.ADAPTIVE -> ClipMode.CLIP
                             ClipMode.CLIP -> ClipMode.STRETCHED
                             ClipMode.STRETCHED -> ClipMode.ADAPTIVE
@@ -133,73 +129,66 @@ internal fun PreferencesFragment(
                         }
                     }
                 )
-                var connectTimeout by configuration.connectTimeout
                 TextPreference(
                     title = stringResource(string.feat_setting_connect_timeout).title(),
                     icon = Icons.Rounded.Timer,
-                    trailing = "${connectTimeout / 1000}s",
+                    trailing = "${configuration.connectTimeout / 1000}s",
                     onClick = {
-                        connectTimeout = when (connectTimeout) {
+                        configuration.connectTimeout = when (configuration.connectTimeout) {
                             ConnectTimeout.LONG -> ConnectTimeout.SHORT
                             ConnectTimeout.SHORT -> ConnectTimeout.LONG
                             else -> ConnectTimeout.SHORT
                         }
                     }
                 )
-                var rootDestination by configuration.rootDestination
                 TextPreference(
                     title = stringResource(string.feat_setting_initial_tab).title(),
                     icon = Icons.Rounded.Pages,
-                    trailing = stringResource(Destination.Root.entries[rootDestination].iconTextId).title(),
+                    trailing = stringResource(Destination.Root.entries[configuration.rootDestination].iconTextId).title(),
                     onClick = {
                         val total = Destination.Root.entries.size
-                        rootDestination = (rootDestination + 1).takeIf { it < total } ?: 0
+                        val prev = configuration.rootDestination
+                        configuration.rootDestination = (prev + 1).takeIf { it < total } ?: 0
                     }
                 )
-                var autoRefresh by configuration.autoRefresh
                 CheckBoxSharedPreference(
                     title = string.feat_setting_auto_refresh,
                     content = string.feat_setting_auto_refresh_description,
                     icon = Icons.Rounded.Refresh,
-                    checked = autoRefresh,
-                    onChanged = { autoRefresh = !autoRefresh }
+                    checked = configuration.autoRefresh,
+                    onChanged = { configuration.autoRefresh = !configuration.autoRefresh }
                 )
-                var noPictureMode by configuration.noPictureMode
                 CheckBoxSharedPreference(
                     title = string.feat_setting_no_picture_mode,
                     content = string.feat_setting_no_picture_mode_description,
                     icon = Icons.Rounded.HideImage,
-                    checked = noPictureMode,
-                    onChanged = { noPictureMode = !noPictureMode }
+                    checked = configuration.noPictureMode,
+                    onChanged = { configuration.noPictureMode = !configuration.noPictureMode }
                 )
-                var fullInfoPlayer by configuration.fullInfoPlayer
                 CheckBoxSharedPreference(
                     title = string.feat_setting_full_info_player,
                     content = string.feat_setting_full_info_player_description,
                     icon = Icons.Rounded.Details,
-                    checked = fullInfoPlayer,
-                    onChanged = { fullInfoPlayer = !fullInfoPlayer }
+                    checked = configuration.fullInfoPlayer,
+                    onChanged = { configuration.fullInfoPlayer = !configuration.fullInfoPlayer }
                 )
-                var godMode by configuration.godMode
                 CheckBoxSharedPreference(
                     title = string.feat_setting_god_mode,
                     content = string.feat_setting_god_mode_description,
                     icon = Icons.Rounded.DeviceHub,
-                    checked = godMode,
-                    onChanged = { godMode = !godMode }
+                    checked = configuration.godMode,
+                    onChanged = { configuration.godMode = !configuration.godMode }
                 )
-                var useCommonUIMode by configuration.useCommonUIMode
                 CheckBoxSharedPreference(
                     title = string.feat_setting_common_ui_mode,
                     content = if (useCommonUIModeEnable) string.feat_setting_common_ui_mode_description
                     else string.feat_setting_common_ui_mode_disabled_description,
                     icon = Icons.Rounded.Animation,
                     enabled = useCommonUIModeEnable,
-                    checked = useCommonUIMode,
-                    onChanged = { useCommonUIMode = !useCommonUIMode }
+                    checked = configuration.useCommonUIMode,
+                    onChanged = { configuration.useCommonUIMode = !configuration.useCommonUIMode }
                 )
                 val useDynamicColorsAvailable = Configuration.DEFAULT_USE_DYNAMIC_COLORS
-                var useDynamicColors by configuration.useDynamicColors
 
                 CheckBoxSharedPreference(
                     title = string.feat_setting_use_dynamic_colors,
@@ -207,9 +196,16 @@ internal fun PreferencesFragment(
                         .feat_setting_use_dynamic_colors_unavailable
                         .takeUnless { useDynamicColorsAvailable },
                     icon = Icons.Rounded.ColorLens,
-                    checked = useDynamicColors,
-                    onChanged = { useDynamicColors = !useDynamicColors },
+                    checked = configuration.useDynamicColors,
+                    onChanged = {
+                        configuration.useDynamicColors = !configuration.useDynamicColors
+                    },
                     enabled = useDynamicColorsAvailable
+                )
+                CheckBoxSharedPreference(
+                    title = string.feat_setting_zap_mode,
+                    checked = configuration.zapMode,
+                    onChanged = { configuration.zapMode = !configuration.zapMode }
                 )
             }
         }
@@ -220,16 +216,15 @@ internal fun PreferencesFragment(
                     .clip(MaterialTheme.shapes.medium),
                 verticalArrangement = Arrangement.spacedBy(1.dp)
             ) {
-                var experimentalMode by configuration.experimentalMode
                 CheckBoxSharedPreference(
                     title = string.feat_setting_experimental_mode,
                     content = string.feat_setting_experimental_mode_description,
                     icon = Icons.Rounded.Dangerous,
-                    checked = experimentalMode,
-                    onChanged = { experimentalMode = !experimentalMode }
+                    checked = configuration.experimentalMode,
+                    onChanged = { configuration.experimentalMode = !configuration.experimentalMode }
                 )
                 AnimatedVisibility(
-                    visible = experimentalMode,
+                    visible = configuration.experimentalMode,
                     enter = expandVertically(
                         expandFrom = Alignment.Bottom
                     ),
@@ -240,14 +235,13 @@ internal fun PreferencesFragment(
                     Column(
                         verticalArrangement = Arrangement.spacedBy(1.dp)
                     ) {
-                        var cinemaMode by configuration.cinemaMode
                         CheckBoxSharedPreference(
                             title = string.feat_setting_cinema_mode,
                             content = string.feat_setting_not_implementation,
 //                            subtitle = string.feat_setting_cinema_mode_description,
                             icon = Icons.Rounded.Chair,
-                            checked = cinemaMode,
-                            onChanged = { cinemaMode = !cinemaMode },
+                            checked = configuration.cinemaMode,
+                            onChanged = { configuration.cinemaMode = !configuration.cinemaMode },
                             enabled = false
                         )
                         Preference(
@@ -264,20 +258,20 @@ internal fun PreferencesFragment(
                             enabled = false,
                             onClick = navigateToConsole
                         )
-                        var scrollMode by configuration.scrollMode
                         CheckBoxSharedPreference(
                             title = string.feat_setting_scroll_mode,
                             icon = Icons.Rounded.BatchPrediction,
-                            checked = scrollMode,
-                            onChanged = { scrollMode = !scrollMode }
+                            checked = configuration.scrollMode,
+                            onChanged = { configuration.scrollMode = !configuration.scrollMode }
                         )
-                        var isSSLVerification by configuration.isSSLVerification
                         CheckBoxSharedPreference(
                             title = string.feat_setting_ssl_verification_enabled,
                             content = string.feat_setting_ssl_verification_enabled_description,
                             icon = Icons.Rounded.SafetyCheck,
-                            checked = isSSLVerification,
-                            onChanged = { isSSLVerification = !isSSLVerification }
+                            checked = configuration.isSSLVerification,
+                            onChanged = {
+                                configuration.isSSLVerification = !configuration.isSSLVerification
+                            }
                         )
                     }
                 }

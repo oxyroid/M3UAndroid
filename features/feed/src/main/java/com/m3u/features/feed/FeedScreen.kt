@@ -121,10 +121,6 @@ internal fun FeedRoute(
         Manifest.permission.WRITE_EXTERNAL_STORAGE
     )
 
-    val autoRefresh by configuration.autoRefresh
-    var rowCount by configuration.rowCount
-    val godMode by configuration.godMode
-
     MessageEventHandler(message)
 
     LaunchedEffect(feedUrl) {
@@ -143,8 +139,8 @@ internal fun FeedRoute(
         )
     }
 
-    LaunchedEffect(autoRefresh, state.url) {
-        if (state.url.isNotEmpty() && autoRefresh) {
+    LaunchedEffect(configuration.autoRefresh, state.url) {
+        if (state.url.isNotEmpty() && configuration.autoRefresh) {
             viewModel.onEvent(FeedEvent.Refresh)
         }
     }
@@ -152,12 +148,12 @@ internal fun FeedRoute(
     BackHandler(state.query.isNotEmpty()) {
         viewModel.onEvent(FeedEvent.Query(""))
     }
-    val interceptVolumeEventModifier = remember(godMode) {
-        if (godMode) {
+    val interceptVolumeEventModifier = remember(configuration.godMode) {
+        if (configuration.godMode) {
             Modifier.interceptVolumeEvent { event ->
                 when (event) {
-                    KeyEvent.KEYCODE_VOLUME_UP -> rowCount = (rowCount - 1).coerceAtLeast(1)
-                    KeyEvent.KEYCODE_VOLUME_DOWN -> rowCount = (rowCount + 1).coerceAtMost(3)
+                    KeyEvent.KEYCODE_VOLUME_UP -> configuration.rowCount = (configuration.rowCount - 1).coerceAtLeast(1)
+                    KeyEvent.KEYCODE_VOLUME_DOWN -> configuration.rowCount = (configuration.rowCount + 1).coerceAtMost(3)
                 }
             }
         } else Modifier
@@ -166,7 +162,7 @@ internal fun FeedRoute(
     FeedScreen(
         query = state.query,
         onQuery = { viewModel.onEvent(FeedEvent.Query(it)) },
-        rowCount = rowCount,
+        rowCount = configuration.rowCount,
         channelHolder = rememberChannelHolder(state.channels),
         scrollUp = state.scrollUp,
         refreshing = state.fetching,
@@ -278,9 +274,8 @@ private fun FeedScreen(
                 ) {
                     FeedPager(channelHolder) { liveHolder ->
                         val type = systemConfiguration.uiMode and UI_MODE_TYPE_MASK
-                        val useCommonUIMode by configuration.useCommonUIMode
                         when {
-                            !useCommonUIMode && type == UI_MODE_TYPE_TELEVISION -> {
+                            !configuration.useCommonUIMode && type == UI_MODE_TYPE_TELEVISION -> {
                                 val state = rememberTvLazyGridState()
                                 LaunchedEffect(state.isAtTop) {
                                     isAtTopState.value = state.isAtTop

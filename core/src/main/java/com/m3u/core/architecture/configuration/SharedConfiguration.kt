@@ -2,7 +2,8 @@ package com.m3u.core.architecture.configuration
 
 import android.content.Context
 import android.content.SharedPreferences
-import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import com.m3u.core.annotation.ClipMode
 import com.m3u.core.annotation.ConnectTimeout
 import com.m3u.core.annotation.FeedStrategy
@@ -25,6 +26,7 @@ import com.m3u.core.architecture.configuration.Configuration.Companion.DEFAULT_S
 import com.m3u.core.architecture.configuration.Configuration.Companion.DEFAULT_SSL_VERIFICATION
 import com.m3u.core.architecture.configuration.Configuration.Companion.DEFAULT_USE_COMMON_UI_MODE
 import com.m3u.core.architecture.configuration.Configuration.Companion.DEFAULT_USE_DYNAMIC_COLORS
+import com.m3u.core.architecture.configuration.Configuration.Companion.DEFAULT_ZAP_MODE
 import com.m3u.core.architecture.configuration.Configuration.Companion.EXPERIMENTAL_MODE
 import com.m3u.core.architecture.configuration.Configuration.Companion.FEED_STRATEGY
 import com.m3u.core.architecture.configuration.Configuration.Companion.FULL_INFO_PLAYER
@@ -36,6 +38,7 @@ import com.m3u.core.architecture.configuration.Configuration.Companion.SCROLL_MO
 import com.m3u.core.architecture.configuration.Configuration.Companion.SSL_VERIFICATION
 import com.m3u.core.architecture.configuration.Configuration.Companion.USE_COMMON_UI_MODE
 import com.m3u.core.architecture.configuration.Configuration.Companion.USE_DYNAMIC_COLORS
+import com.m3u.core.architecture.configuration.Configuration.Companion.ZAP_MODE
 import com.m3u.core.util.context.booleanAsState
 import com.m3u.core.util.context.intAsState
 import com.m3u.core.util.context.longAsState
@@ -54,47 +57,49 @@ class SharedConfiguration @Inject constructor(
         context.getSharedPreferences(SHARED_SETTINGS, Context.MODE_PRIVATE)
 
     @FeedStrategy
-    override val feedStrategy: MutableState<Int> =
-        sharedPreferences.intAsState(DEFAULT_FEED_STRATEGY, FEED_STRATEGY)
-    override val useCommonUIMode: MutableState<Boolean> =
-        sharedPreferences.booleanAsState(DEFAULT_USE_COMMON_UI_MODE, USE_COMMON_UI_MODE)
+    override var feedStrategy: Int by
+    sharedPreferences.intAsState(DEFAULT_FEED_STRATEGY, FEED_STRATEGY)
+    override var useCommonUIMode: Boolean by
+    sharedPreferences.booleanAsState(DEFAULT_USE_COMMON_UI_MODE, USE_COMMON_UI_MODE)
 
-    override val rowCount: MutableState<Int> =
-        sharedPreferences.intAsState(DEFAULT_ROW_COUNT, ROW_COUNT)
+    override var rowCount: Int by
+    sharedPreferences.intAsState(DEFAULT_ROW_COUNT, ROW_COUNT)
 
     @ConnectTimeout
-    override val connectTimeout: MutableState<Long> =
-        sharedPreferences.longAsState(DEFAULT_CONNECT_TIMEOUT, CONNECT_TIMEOUT)
-    override val godMode: MutableState<Boolean> =
-        sharedPreferences.booleanAsState(DEFAULT_GOD_MODE, GOD_MODE)
-    override val experimentalMode: MutableState<Boolean> =
-        sharedPreferences.booleanAsState(DEFAULT_EXPERIMENTAL_MODE, EXPERIMENTAL_MODE)
+    override var connectTimeout: Long by
+    sharedPreferences.longAsState(DEFAULT_CONNECT_TIMEOUT, CONNECT_TIMEOUT)
+    override var godMode: Boolean by
+    sharedPreferences.booleanAsState(DEFAULT_GOD_MODE, GOD_MODE)
+    override var experimentalMode: Boolean by
+    sharedPreferences.booleanAsState(DEFAULT_EXPERIMENTAL_MODE, EXPERIMENTAL_MODE)
 
     @ClipMode
-    override val clipMode: MutableState<Int> =
-        sharedPreferences.intAsState(DEFAULT_CLIP_MODE, CLIP_MODE)
+    override var clipMode: Int by
+    sharedPreferences.intAsState(DEFAULT_CLIP_MODE, CLIP_MODE)
 
     @ExperimentalConfiguration
-    override val scrollMode: MutableState<Boolean> =
-        sharedPreferences.booleanAsState(DEFAULT_SCROLL_MODE, SCROLL_MODE)
-    override val autoRefresh: MutableState<Boolean> =
-        sharedPreferences.booleanAsState(DEFAULT_AUTO_REFRESH, AUTO_REFRESH)
+    override var scrollMode: Boolean by
+    sharedPreferences.booleanAsState(DEFAULT_SCROLL_MODE, SCROLL_MODE)
+    override var autoRefresh: Boolean by
+    sharedPreferences.booleanAsState(DEFAULT_AUTO_REFRESH, AUTO_REFRESH)
 
     @ExperimentalConfiguration
-    override val isSSLVerification: MutableState<Boolean> =
-        sharedPreferences.booleanAsState(DEFAULT_SSL_VERIFICATION, SSL_VERIFICATION)
-    override val fullInfoPlayer: MutableState<Boolean> =
-        sharedPreferences.booleanAsState(DEFAULT_FULL_INFO_PLAYER, FULL_INFO_PLAYER)
-    override val rootDestination: MutableState<Int> =
-        sharedPreferences.intAsState(DEFAULT_INITIAL_ROOT_DESTINATION, INITIAL_ROOT_DESTINATION)
-    override val noPictureMode: MutableState<Boolean> =
-        sharedPreferences.booleanAsState(DEFAULT_NO_PICTURE_MODE, NO_PICTURE_MODE)
+    override var isSSLVerification: Boolean by
+    sharedPreferences.booleanAsState(DEFAULT_SSL_VERIFICATION, SSL_VERIFICATION)
+    override var fullInfoPlayer: Boolean by
+    sharedPreferences.booleanAsState(DEFAULT_FULL_INFO_PLAYER, FULL_INFO_PLAYER)
+    override var rootDestination: Int by
+    sharedPreferences.intAsState(DEFAULT_INITIAL_ROOT_DESTINATION, INITIAL_ROOT_DESTINATION)
+    override var noPictureMode: Boolean by
+    sharedPreferences.booleanAsState(DEFAULT_NO_PICTURE_MODE, NO_PICTURE_MODE)
 
     @ExperimentalConfiguration
-    override val cinemaMode: MutableState<Boolean> =
-        sharedPreferences.booleanAsState(DEFAULT_CINEMA_MODE, CINEMA_MODE)
-    override val useDynamicColors: MutableState<Boolean> =
-        sharedPreferences.booleanAsState(DEFAULT_USE_DYNAMIC_COLORS, USE_DYNAMIC_COLORS)
+    override var cinemaMode: Boolean by
+    sharedPreferences.booleanAsState(DEFAULT_CINEMA_MODE, CINEMA_MODE)
+    override var useDynamicColors: Boolean by
+    sharedPreferences.booleanAsState(DEFAULT_USE_DYNAMIC_COLORS, USE_DYNAMIC_COLORS)
+
+    override var zapMode: Boolean by sharedPreferences.booleanAsState(DEFAULT_ZAP_MODE, ZAP_MODE)
 
     companion object {
         private const val SHARED_SETTINGS = "shared_settings"
@@ -103,6 +108,6 @@ class SharedConfiguration @Inject constructor(
     init {
         // disabled from 1.13.0-alpha01 (74), because it is not implemented in material-3.
         @OptIn(ExperimentalConfiguration::class)
-        cinemaMode.value = false
+        cinemaMode = false
     }
 }

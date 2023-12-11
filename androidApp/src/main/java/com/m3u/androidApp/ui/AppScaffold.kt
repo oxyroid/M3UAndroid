@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.SideEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -55,24 +54,23 @@ internal fun AppScaffold(
     val spacing = LocalSpacing.current
     val useNavRail = helper.useRailNav
 
+    @OptIn(ExperimentalConfiguration::class)
     M3ULocalProvider(
         helper = helper,
         configuration = configuration
     ) {
         val scope = rememberCoroutineScope()
-        @OptIn(ExperimentalConfiguration::class)
-        val cinemaMode by configuration.cinemaMode
         val darkMode = when {
-            cinemaMode -> true
+            configuration.cinemaMode -> true
             else -> isSystemInDarkTheme()
         }
         DisposableEffect(
             darkMode,
             scope,
-            cinemaMode
+            configuration.cinemaMode
         ) {
             scope.launch {
-                if (!cinemaMode) {
+                if (!configuration.cinemaMode) {
                     delay(800.milliseconds)
                 }
                 helper.darkMode = darkMode.unspecifiable

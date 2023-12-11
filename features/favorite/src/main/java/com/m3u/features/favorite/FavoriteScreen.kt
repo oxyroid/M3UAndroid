@@ -7,9 +7,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalConfiguration as LocalSystemConfiguration
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.core.architecture.configuration.LocalConfiguration
@@ -20,6 +18,7 @@ import com.m3u.material.ktx.interceptVolumeEvent
 import com.m3u.ui.EventHandler
 import com.m3u.ui.LocalHelper
 import com.m3u.ui.ResumeEvent
+import androidx.compose.ui.platform.LocalConfiguration as LocalSystemConfiguration
 
 typealias NavigateToLive = (Int) -> Unit
 
@@ -39,29 +38,26 @@ fun FavouriteRoute(
         state.details.flatMap { it.value }
     }
 
-    var rowCount by configuration.rowCount
-    val godMode by configuration.godMode
-
     EventHandler(resume) {
         helper.actions = emptyList()
     }
 
-    val interceptVolumeEventModifier = remember(godMode) {
-        if (godMode) {
+    val interceptVolumeEventModifier = remember(configuration.godMode) {
+        if (configuration.godMode) {
             Modifier.interceptVolumeEvent { event ->
                 when (event) {
                     KeyEvent.KEYCODE_VOLUME_UP ->
-                        rowCount = (rowCount - 1).coerceAtLeast(1)
+                        configuration.rowCount = (configuration.rowCount - 1).coerceAtLeast(1)
 
                     KeyEvent.KEYCODE_VOLUME_DOWN ->
-                        rowCount = (rowCount + 1).coerceAtMost(3)
+                        configuration.rowCount = (configuration.rowCount + 1).coerceAtMost(3)
                 }
             }
         } else Modifier
     }
     FavoriteScreen(
         contentPadding = contentPadding,
-        rowCount = rowCount,
+        rowCount = configuration.rowCount,
         liveHolder = rememberLiveHolder(lives),
         navigateToLive = navigateToLive,
         modifier = modifier

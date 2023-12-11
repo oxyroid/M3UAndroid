@@ -29,7 +29,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.platform.LocalConfiguration as LocalSystemConfiguration
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -54,6 +53,7 @@ import com.m3u.ui.LocalHelper
 import com.m3u.ui.MessageEventHandler
 import com.m3u.ui.MonoText
 import com.m3u.ui.ResumeEvent
+import androidx.compose.ui.platform.LocalConfiguration as LocalSystemConfiguration
 
 typealias NavigateToFeed = (feed: Feed) -> Unit
 typealias NavigateToSettingSubscription = () -> Unit
@@ -74,21 +74,21 @@ fun MainRoute(
     val state: MainState by viewModel.state.collectAsStateWithLifecycle()
     val feedDetailHolder by viewModel.feeds.collectAsStateWithLifecycle()
 
-    var rowCount by configuration.rowCount
-    val godMode by configuration.godMode
-
     MessageEventHandler(message)
 
     EventHandler(resume) {
         helper.actions = emptyList()
     }
 
-    val interceptVolumeEventModifier = remember(godMode) {
-        if (godMode) {
+    val interceptVolumeEventModifier = remember(configuration.godMode) {
+        if (configuration.godMode) {
             Modifier.interceptVolumeEvent { event ->
                 when (event) {
-                    KeyEvent.KEYCODE_VOLUME_UP -> rowCount = (rowCount - 1).coerceAtLeast(1)
-                    KeyEvent.KEYCODE_VOLUME_DOWN -> rowCount = (rowCount + 1).coerceAtMost(3)
+                    KeyEvent.KEYCODE_VOLUME_UP -> configuration.rowCount =
+                        (configuration.rowCount - 1).coerceAtLeast(1)
+
+                    KeyEvent.KEYCODE_VOLUME_DOWN -> configuration.rowCount =
+                        (configuration.rowCount + 1).coerceAtMost(3)
                 }
             }
         } else Modifier
@@ -96,7 +96,7 @@ fun MainRoute(
 
     MainScreen(
         feedDetailHolder = feedDetailHolder,
-        rowCount = rowCount,
+        rowCount = configuration.rowCount,
         contentPadding = contentPadding,
         navigateToFeed = navigateToFeed,
         unsubscribe = { viewModel.onEvent(MainEvent.Unsubscribe(it)) },

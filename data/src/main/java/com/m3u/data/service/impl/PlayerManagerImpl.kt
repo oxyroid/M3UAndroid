@@ -37,6 +37,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.plus
@@ -61,8 +62,8 @@ class PlayerManagerImpl @Inject constructor(
     private val scope = CoroutineScope(Dispatchers.Main) + Job()
 
     override fun initialize() {
-        val isSSLVerification = configuration.observeAsFlow { it.isSSLVerification }
-        val timeout = configuration.observeAsFlow { it.connectTimeout }
+        val isSSLVerification = configuration.observeAsFlow().map { it.isSSLVerification }
+        val timeout = configuration.observeAsFlow().map { it.connectTimeout }
 
         combine(isSSLVerification, timeout) { i, t -> PlayerPayload(i, t) }
             .distinctUntilChanged()

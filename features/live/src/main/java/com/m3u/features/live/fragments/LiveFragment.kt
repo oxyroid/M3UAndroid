@@ -90,9 +90,6 @@ internal fun LiveFragment(
     val theme = MaterialTheme.colorScheme
     val configuration = LocalConfiguration.current
 
-    val clipMode by configuration.clipMode
-    val fullInfoPlayer by configuration.fullInfoPlayer
-
     // because they will be updated frequently,
     // they must be wrapped with rememberUpdatedState when using them.
     val currentVolume by rememberUpdatedState(volume)
@@ -107,7 +104,7 @@ internal fun LiveFragment(
             val state = rememberPlayerState(
                 player = playerState.player,
                 url = url,
-                clipMode = clipMode,
+                clipMode = configuration.clipMode,
                 onInstallMedia = onInstallMedia,
                 onUninstallMedia = onUninstallMedia
             )
@@ -214,7 +211,7 @@ internal fun LiveFragment(
                     },
                     footer = {
                         val spacing = LocalSpacing.current
-                        if (fullInfoPlayer && cover.isNotEmpty()) {
+                        if (configuration.fullInfoPlayer && cover.isNotEmpty()) {
                             Image(
                                 model = cover,
                                 modifier = Modifier

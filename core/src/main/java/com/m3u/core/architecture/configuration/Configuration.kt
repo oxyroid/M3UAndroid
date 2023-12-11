@@ -2,10 +2,7 @@ package com.m3u.core.architecture.configuration
 
 import android.os.Build
 import androidx.annotation.ChecksSdkIntAtLeast
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.Stable
-import androidx.compose.runtime.State
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.snapshotFlow
 import com.m3u.core.annotation.ClipMode
 import com.m3u.core.annotation.ConnectTimeout
@@ -15,31 +12,33 @@ import kotlinx.coroutines.flow.Flow
 @Stable
 interface Configuration {
     @FeedStrategy
-    val feedStrategy: MutableState<Int>
-    val useCommonUIMode: MutableState<Boolean>
-    val rowCount: MutableState<Int>
+    var feedStrategy: Int
+    var useCommonUIMode: Boolean
+    var rowCount: Int
 
     @ConnectTimeout
-    val connectTimeout: MutableState<Long>
-    val godMode: MutableState<Boolean>
-    val experimentalMode: MutableState<Boolean>
+    var connectTimeout: Long
+    var godMode: Boolean
+    var experimentalMode: Boolean
 
     @ClipMode
-    val clipMode: MutableState<Int>
-    val autoRefresh: MutableState<Boolean>
-    val fullInfoPlayer: MutableState<Boolean>
+    var clipMode: Int
+    var autoRefresh: Boolean
+    var fullInfoPlayer: Boolean
 
     @ExperimentalConfiguration
-    val scrollMode: MutableState<Boolean>
+    var scrollMode: Boolean
 
     @ExperimentalConfiguration
-    val isSSLVerification: MutableState<Boolean>
-    val rootDestination: MutableState<Int>
-    val noPictureMode: MutableState<Boolean>
+    var isSSLVerification: Boolean
+    var rootDestination: Int
+    var noPictureMode: Boolean
 
     @ExperimentalConfiguration
-    val cinemaMode: MutableState<Boolean>
-    val useDynamicColors: MutableState<Boolean>
+    var cinemaMode: Boolean
+    var useDynamicColors: Boolean
+
+    var zapMode: Boolean
 
     companion object {
         @FeedStrategy
@@ -63,7 +62,9 @@ interface Configuration {
         const val DEFAULT_CINEMA_MODE = false
 
         @ChecksSdkIntAtLeast(api = Build.VERSION_CODES.S)
-        val DEFAULT_USE_DYNAMIC_COLORS = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+        var DEFAULT_USE_DYNAMIC_COLORS = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+
+        const val DEFAULT_ZAP_MODE = false
 
         const val FEED_STRATEGY = "feedStrategy"
         const val USE_COMMON_UI_MODE = "useCommonUIMode"
@@ -82,10 +83,8 @@ interface Configuration {
         const val NO_PICTURE_MODE = "noPictureMode"
         const val CINEMA_MODE = "cinemaMode"
         const val USE_DYNAMIC_COLORS = "use-dynamic-colors"
+        const val ZAP_MODE = "zap-mode"
     }
 }
 
-fun <T> Configuration.observeAsFlow(selector: (Configuration) -> State<T>): Flow<T> {
-    val state by selector(this@Configuration)
-    return snapshotFlow { state }
-}
+fun Configuration.observeAsFlow(): Flow<Configuration> = snapshotFlow { this }

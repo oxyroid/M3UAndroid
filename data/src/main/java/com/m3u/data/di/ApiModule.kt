@@ -29,7 +29,7 @@ internal object ApiModule {
     fun provideOkhttpClient(
         configuration: SharedConfiguration
     ): OkHttpClient {
-        val connectTimeout = configuration.connectTimeout.value
+        val connectTimeout = configuration.connectTimeout
         val duration = Duration.of(connectTimeout, ChronoUnit.MILLIS)
         return OkHttpClient.Builder()
             .connectTimeout(duration)

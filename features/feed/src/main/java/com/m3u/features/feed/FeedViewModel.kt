@@ -1,6 +1,5 @@
 package com.m3u.features.feed
 
-import androidx.compose.runtime.getValue
 import androidx.lifecycle.viewModelScope
 import com.m3u.core.architecture.Logger
 import com.m3u.core.architecture.configuration.Configuration
@@ -107,9 +106,8 @@ class FeedViewModel @Inject constructor(
 
     private fun refresh() {
         val url = readable.url
-        val feedStrategy by configuration.feedStrategy
         feedRepository
-            .refresh(url, feedStrategy)
+            .refresh(url, configuration.feedStrategy)
             .onEach { process ->
                 writable.update { prev ->
                     process
