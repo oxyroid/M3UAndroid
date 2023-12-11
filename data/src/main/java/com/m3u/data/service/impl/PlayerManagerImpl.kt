@@ -21,8 +21,8 @@ import androidx.media3.exoplayer.source.MediaSource
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
 import androidx.media3.exoplayer.trackselection.TrackSelector
 import androidx.media3.session.MediaSession
-import com.m3u.core.architecture.pref.Pref
 import com.m3u.core.architecture.pref.ExperimentalPref
+import com.m3u.core.architecture.pref.Pref
 import com.m3u.core.architecture.pref.observeAsFlow
 import com.m3u.data.contract.Certs
 import com.m3u.data.contract.SSL
@@ -34,7 +34,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
@@ -63,10 +62,9 @@ class PlayerManagerImpl @Inject constructor(
 
     @kotlin.OptIn(ExperimentalPref::class)
     override fun initialize() {
-        val isSSLVerification = pref.observeAsFlow().map { it.isSSLVerification }
-        val timeout = pref.observeAsFlow().map { it.connectTimeout }
-
-        combine(isSSLVerification, timeout) { i, t -> PlayerPayload(i, t) }
+        pref
+            .observeAsFlow()
+            .map { PlayerPayload(it.isSSLVerification, it.connectTimeout) }
             .distinctUntilChanged()
             .onEach { payload ->
                 val msf = DefaultMediaSourceFactory(context)

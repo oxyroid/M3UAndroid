@@ -31,6 +31,7 @@ import com.m3u.androidApp.ui.App
 import com.m3u.androidApp.ui.AppViewModel
 import com.m3u.androidApp.ui.rememberAppState
 import com.m3u.core.architecture.Logger
+import com.m3u.core.architecture.pref.Pref
 import com.m3u.core.unspecified.UBoolean
 import com.m3u.core.unspecified.specified
 import com.m3u.core.util.basic.rational
@@ -77,7 +78,7 @@ class MainActivity : ComponentActivity() {
     }
 
     @Inject
-    lateinit var pref: com.m3u.core.architecture.pref.Pref
+    lateinit var pref: Pref
 
     @Inject
     @Logger.Ui

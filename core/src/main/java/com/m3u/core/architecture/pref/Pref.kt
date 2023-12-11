@@ -87,4 +87,7 @@ interface Pref {
     }
 }
 
-fun Pref.observeAsFlow(): Flow<Pref> = snapshotFlow { this }
+fun Pref.observeAsFlow(): Flow<Pref> = when (this) {
+    is SharedPref -> snapshotFlow { this }
+    else -> error("Pref.observeAsFlow only be allowed when it is SharedPref.")
+}
