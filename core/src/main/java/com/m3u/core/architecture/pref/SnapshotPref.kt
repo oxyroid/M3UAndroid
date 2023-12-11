@@ -45,7 +45,7 @@ import com.m3u.core.util.context.longAsState
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 
-class SharedPref @Inject constructor(
+class SnapshotPref @Inject constructor(
     @ApplicationContext context: Context
 ) : Pref {
     private val sharedPreferences: SharedPreferences =

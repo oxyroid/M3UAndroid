@@ -3,7 +3,7 @@
 package com.m3u.core.architecture.pref.di
 
 import com.m3u.core.architecture.pref.Pref
-import com.m3u.core.architecture.pref.SharedPref
+import com.m3u.core.architecture.pref.SnapshotPref
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -15,7 +15,5 @@ import javax.inject.Singleton
 interface ConfigurationModule {
     @Binds
     @Singleton
-    fun bindConfiguration(
-        configuration: SharedPref
-    ): Pref
+    fun bindPref(pref: SnapshotPref): Pref
 }
