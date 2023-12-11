@@ -77,7 +77,7 @@ class MainActivity : ComponentActivity() {
     }
 
     @Inject
-    lateinit var configuration: com.m3u.core.architecture.configuration.Configuration
+    lateinit var pref: com.m3u.core.architecture.pref.Pref
 
     @Inject
     @Logger.Ui
@@ -98,14 +98,14 @@ class MainActivity : ComponentActivity() {
                         appState = appState,
                         viewModel = viewModel,
                         helper = helper,
-                        configuration = configuration
+                        pref = pref
                     )
                 }
 
                 is ComposeLaunchMode.Player -> {
                     M3ULocalProvider(
                         helper = helper,
-                        configuration = configuration
+                        pref = pref
                     ) {
                         LiveRoute(
                             init = LiveEvent.InitOne(launchMode.destination.id),

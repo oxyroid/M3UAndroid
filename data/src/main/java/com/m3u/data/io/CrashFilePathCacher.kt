@@ -38,7 +38,7 @@ class CrashFilePathCacher @Inject constructor(
         infoMap["name"] = packageInfo.versionName
         infoMap["code"] = packageInfo.code
 
-        readSystemConfiguration().forEach(infoMap::put)
+        readconfiguration().forEach(infoMap::put)
 
         val info = infoMap.joinToString()
         val trace = getStackTraceMessage(value)
@@ -71,7 +71,7 @@ class CrashFilePathCacher @Inject constructor(
             versionCode.toString()
         }
 
-    private fun readSystemConfiguration(): Map<String, String> = buildMap {
+    private fun readconfiguration(): Map<String, String> = buildMap {
         Build::class.java.declaredFields.forEachNotNull { field ->
             try {
                 field.isAccessible = true

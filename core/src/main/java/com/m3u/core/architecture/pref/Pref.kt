@@ -1,4 +1,4 @@
-package com.m3u.core.architecture.configuration
+package com.m3u.core.architecture.pref
 
 import android.os.Build
 import androidx.annotation.ChecksSdkIntAtLeast
@@ -10,7 +10,7 @@ import com.m3u.core.annotation.FeedStrategy
 import kotlinx.coroutines.flow.Flow
 
 @Stable
-interface Configuration {
+interface Pref {
     @FeedStrategy
     var feedStrategy: Int
     var useCommonUIMode: Boolean
@@ -26,15 +26,15 @@ interface Configuration {
     var autoRefresh: Boolean
     var fullInfoPlayer: Boolean
 
-    @ExperimentalConfiguration
+    @ExperimentalPref
     var scrollMode: Boolean
 
-    @ExperimentalConfiguration
+    @ExperimentalPref
     var isSSLVerification: Boolean
     var rootDestination: Int
     var noPictureMode: Boolean
 
-    @ExperimentalConfiguration
+    @ExperimentalPref
     var cinemaMode: Boolean
     var useDynamicColors: Boolean
 
@@ -87,4 +87,4 @@ interface Configuration {
     }
 }
 
-fun Configuration.observeAsFlow(): Flow<Configuration> = snapshotFlow { this }
+fun Pref.observeAsFlow(): Flow<Pref> = snapshotFlow { this }

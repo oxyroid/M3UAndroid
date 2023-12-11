@@ -4,7 +4,7 @@ package com.m3u.data.di
 
 import com.charleskorn.kaml.Yaml
 import com.charleskorn.kaml.YamlConfiguration
-import com.m3u.core.architecture.configuration.SharedConfiguration
+import com.m3u.core.architecture.pref.SharedPref
 import com.m3u.core.util.serialization.asConverterFactory
 import com.m3u.data.api.GithubApi
 import com.m3u.data.contract.Apis
@@ -27,7 +27,7 @@ internal object ApiModule {
     @Provides
     @Singleton
     fun provideOkhttpClient(
-        configuration: SharedConfiguration
+        configuration: SharedPref
     ): OkHttpClient {
         val connectTimeout = configuration.connectTimeout
         val duration = Duration.of(connectTimeout, ChronoUnit.MILLIS)

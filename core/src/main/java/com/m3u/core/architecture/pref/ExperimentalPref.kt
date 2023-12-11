@@ -1,6 +1,6 @@
-package com.m3u.core.architecture.configuration
+package com.m3u.core.architecture.pref
 
 @MustBeDocumented
 @Retention(AnnotationRetention.BINARY)
 @RequiresOptIn(level = RequiresOptIn.Level.WARNING)
-annotation class ExperimentalConfiguration
+annotation class ExperimentalPref

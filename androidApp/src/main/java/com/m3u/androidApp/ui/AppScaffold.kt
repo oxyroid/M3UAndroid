@@ -15,8 +15,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.m3u.androidApp.components.AppNavigation
 import com.m3u.androidApp.components.AppSnackHost
-import com.m3u.core.architecture.configuration.Configuration
-import com.m3u.core.architecture.configuration.ExperimentalConfiguration
+import com.m3u.core.architecture.pref.Pref
+import com.m3u.core.architecture.pref.ExperimentalPref
 import com.m3u.core.unspecified.unspecifiable
 import com.m3u.core.util.collections.withEach
 import com.m3u.i18n.R.string
@@ -45,7 +45,7 @@ internal fun AppScaffold(
     fob: Fob?,
     isSystemBarScrollable: Boolean,
     helper: Helper,
-    configuration: Configuration,
+    pref: Pref,
     navigate: Navigate,
     modifier: Modifier = Modifier,
     onBackPressed: (() -> Unit)? = null,
@@ -54,23 +54,23 @@ internal fun AppScaffold(
     val spacing = LocalSpacing.current
     val useNavRail = helper.useRailNav
 
-    @OptIn(ExperimentalConfiguration::class)
+    @OptIn(ExperimentalPref::class)
     M3ULocalProvider(
         helper = helper,
-        configuration = configuration
+        pref = pref
     ) {
         val scope = rememberCoroutineScope()
         val darkMode = when {
-            configuration.cinemaMode -> true
+            pref.cinemaMode -> true
             else -> isSystemInDarkTheme()
         }
         DisposableEffect(
             darkMode,
             scope,
-            configuration.cinemaMode
+            pref.cinemaMode
         ) {
             scope.launch {
-                if (!configuration.cinemaMode) {
+                if (!pref.cinemaMode) {
                     delay(800.milliseconds)
                 }
                 helper.darkMode = darkMode.unspecifiable

@@ -1,6 +1,6 @@
 package com.m3u.features.main
 
-import android.content.res.Configuration
+import android.content.res.Configuration.ORIENTATION_PORTRAIT
 import android.view.KeyEvent
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
@@ -37,7 +37,7 @@ import androidx.compose.ui.text.capitalize
 import androidx.compose.ui.text.intl.Locale
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.m3u.core.architecture.configuration.LocalConfiguration
+import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.data.database.entity.Feed
 import com.m3u.features.main.components.FeedGallery
 import com.m3u.features.main.components.MainDialog
@@ -53,7 +53,7 @@ import com.m3u.ui.LocalHelper
 import com.m3u.ui.MessageEventHandler
 import com.m3u.ui.MonoText
 import com.m3u.ui.ResumeEvent
-import androidx.compose.ui.platform.LocalConfiguration as LocalSystemConfiguration
+import androidx.compose.ui.platform.LocalConfiguration as LocalConfiguration
 
 typealias NavigateToFeed = (feed: Feed) -> Unit
 typealias NavigateToSettingSubscription = () -> Unit
@@ -68,7 +68,7 @@ fun MainRoute(
     viewModel: MainViewModel = hiltViewModel()
 ) {
     val helper = LocalHelper.current
-    val configuration = LocalConfiguration.current
+    val pref = LocalPref.current
 
     val message by viewModel.message.collectAsStateWithLifecycle()
     val state: MainState by viewModel.state.collectAsStateWithLifecycle()
@@ -80,15 +80,15 @@ fun MainRoute(
         helper.actions = emptyList()
     }
 
-    val interceptVolumeEventModifier = remember(configuration.godMode) {
-        if (configuration.godMode) {
+    val interceptVolumeEventModifier = remember(pref.godMode) {
+        if (pref.godMode) {
             Modifier.interceptVolumeEvent { event ->
                 when (event) {
-                    KeyEvent.KEYCODE_VOLUME_UP -> configuration.rowCount =
-                        (configuration.rowCount - 1).coerceAtLeast(1)
+                    KeyEvent.KEYCODE_VOLUME_UP -> pref.rowCount =
+                        (pref.rowCount - 1).coerceAtLeast(1)
 
-                    KeyEvent.KEYCODE_VOLUME_DOWN -> configuration.rowCount =
-                        (configuration.rowCount + 1).coerceAtMost(3)
+                    KeyEvent.KEYCODE_VOLUME_DOWN -> pref.rowCount =
+                        (pref.rowCount + 1).coerceAtMost(3)
                 }
             }
         } else Modifier
@@ -96,7 +96,7 @@ fun MainRoute(
 
     MainScreen(
         feedDetailHolder = feedDetailHolder,
-        rowCount = configuration.rowCount,
+        rowCount = pref.rowCount,
         contentPadding = contentPadding,
         navigateToFeed = navigateToFeed,
         unsubscribe = { viewModel.onEvent(MainEvent.Unsubscribe(it)) },
@@ -118,13 +118,13 @@ private fun MainScreen(
     modifier: Modifier = Modifier
 ) {
     var dialog: MainDialog by remember { mutableStateOf(MainDialog.Idle) }
-    val systemConfiguration = LocalSystemConfiguration.current
+    val configuration = LocalConfiguration.current
 
     val details = feedDetailHolder.details
 
-    val actualRowCount = remember(rowCount, systemConfiguration.orientation) {
-        when (systemConfiguration.orientation) {
-            Configuration.ORIENTATION_PORTRAIT -> rowCount
+    val actualRowCount = remember(rowCount, configuration.orientation) {
+        when (configuration.orientation) {
+            ORIENTATION_PORTRAIT -> rowCount
             else -> rowCount + 2
         }
     }

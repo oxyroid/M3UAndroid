@@ -6,7 +6,7 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.workDataOf
 import com.m3u.core.architecture.Publisher
-import com.m3u.core.architecture.configuration.Configuration
+import com.m3u.core.architecture.pref.Pref
 import com.m3u.core.architecture.viewmodel.BaseViewModel
 import com.m3u.data.repository.LiveRepository
 import com.m3u.data.repository.observeAll
@@ -23,7 +23,7 @@ class SettingViewModel @Inject constructor(
     private val liveRepository: LiveRepository,
     @Publisher.App private val publisher: Publisher,
     private val workManager: WorkManager,
-    private val configuration: Configuration
+    private val pref: Pref
 ) : BaseViewModel<SettingState, SettingEvent, SettingMessage>(
     emptyState = SettingState(
         versionName = publisher.versionName,
@@ -113,7 +113,7 @@ class SettingViewModel @Inject constructor(
                 workDataOf(
                     SubscriptionWorker.INPUT_STRING_TITLE to title,
                     SubscriptionWorker.INPUT_STRING_URL to url,
-                    SubscriptionWorker.INPUT_INT_STRATEGY to configuration.feedStrategy
+                    SubscriptionWorker.INPUT_INT_STRATEGY to pref.feedStrategy
                 )
             )
             .addTag(url)

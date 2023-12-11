@@ -47,7 +47,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
-import com.m3u.core.architecture.configuration.LocalConfiguration
+import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.core.util.basic.isNotEmpty
 import com.m3u.features.live.LiveState
 import com.m3u.features.live.components.CoverPlaceholder
@@ -88,7 +88,7 @@ internal fun LiveFragment(
     modifier: Modifier = Modifier
 ) {
     val theme = MaterialTheme.colorScheme
-    val configuration = LocalConfiguration.current
+    val pref = LocalPref.current
 
     // because they will be updated frequently,
     // they must be wrapped with rememberUpdatedState when using them.
@@ -104,7 +104,7 @@ internal fun LiveFragment(
             val state = rememberPlayerState(
                 player = playerState.player,
                 url = url,
-                clipMode = configuration.clipMode,
+                clipMode = pref.clipMode,
                 onInstallMedia = onInstallMedia,
                 onUninstallMedia = onUninstallMedia
             )
@@ -211,7 +211,7 @@ internal fun LiveFragment(
                     },
                     footer = {
                         val spacing = LocalSpacing.current
-                        if (configuration.fullInfoPlayer && cover.isNotEmpty()) {
+                        if (pref.fullInfoPlayer && cover.isNotEmpty()) {
                             Image(
                                 model = cover,
                                 modifier = Modifier

@@ -56,7 +56,7 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.platform.LocalConfiguration as LocalSystemConfiguration
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.capitalize
@@ -68,7 +68,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.tv.foundation.lazy.grid.rememberTvLazyGridState
 import com.google.accompanist.permissions.PermissionStatus
 import com.google.accompanist.permissions.rememberPermissionState
-import com.m3u.core.architecture.configuration.LocalConfiguration
+import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.core.util.compose.observableStateOf
 import com.m3u.core.wrapper.Event
 import com.m3u.data.database.entity.Live
@@ -112,7 +112,7 @@ internal fun FeedRoute(
     viewModel: FeedViewModel = hiltViewModel()
 ) {
     val helper = LocalHelper.current
-    val configuration = LocalConfiguration.current
+    val pref = LocalPref.current
 
     val state by viewModel.state.collectAsStateWithLifecycle()
     val message by viewModel.message.collectAsStateWithLifecycle()
@@ -139,8 +139,8 @@ internal fun FeedRoute(
         )
     }
 
-    LaunchedEffect(configuration.autoRefresh, state.url) {
-        if (state.url.isNotEmpty() && configuration.autoRefresh) {
+    LaunchedEffect(pref.autoRefresh, state.url) {
+        if (state.url.isNotEmpty() && pref.autoRefresh) {
             viewModel.onEvent(FeedEvent.Refresh)
         }
     }
@@ -148,12 +148,12 @@ internal fun FeedRoute(
     BackHandler(state.query.isNotEmpty()) {
         viewModel.onEvent(FeedEvent.Query(""))
     }
-    val interceptVolumeEventModifier = remember(configuration.godMode) {
-        if (configuration.godMode) {
+    val interceptVolumeEventModifier = remember(pref.godMode) {
+        if (pref.godMode) {
             Modifier.interceptVolumeEvent { event ->
                 when (event) {
-                    KeyEvent.KEYCODE_VOLUME_UP -> configuration.rowCount = (configuration.rowCount - 1).coerceAtLeast(1)
-                    KeyEvent.KEYCODE_VOLUME_DOWN -> configuration.rowCount = (configuration.rowCount + 1).coerceAtMost(3)
+                    KeyEvent.KEYCODE_VOLUME_UP -> pref.rowCount = (pref.rowCount - 1).coerceAtLeast(1)
+                    KeyEvent.KEYCODE_VOLUME_DOWN -> pref.rowCount = (pref.rowCount + 1).coerceAtMost(3)
                 }
             }
         } else Modifier
@@ -162,7 +162,7 @@ internal fun FeedRoute(
     FeedScreen(
         query = state.query,
         onQuery = { viewModel.onEvent(FeedEvent.Query(it)) },
-        rowCount = configuration.rowCount,
+        rowCount = pref.rowCount,
         channelHolder = rememberChannelHolder(state.channels),
         scrollUp = state.scrollUp,
         refreshing = state.fetching,
@@ -212,8 +212,8 @@ private fun FeedScreen(
 ) {
     val helper = LocalHelper.current
     val theme = MaterialTheme.colorScheme
+    val pref = LocalPref.current
     val configuration = LocalConfiguration.current
-    val systemConfiguration = LocalSystemConfiguration.current
     val spacing = LocalSpacing.current
     Box(modifier) {
         val isAtTopState = remember {
@@ -273,9 +273,9 @@ private fun FeedScreen(
                     modifier = Modifier.fillMaxSize()
                 ) {
                     FeedPager(channelHolder) { liveHolder ->
-                        val type = systemConfiguration.uiMode and UI_MODE_TYPE_MASK
+                        val type = configuration.uiMode and UI_MODE_TYPE_MASK
                         when {
-                            !configuration.useCommonUIMode && type == UI_MODE_TYPE_TELEVISION -> {
+                            !pref.useCommonUIMode && type == UI_MODE_TYPE_TELEVISION -> {
                                 val state = rememberTvLazyGridState()
                                 LaunchedEffect(state.isAtTop) {
                                     isAtTopState.value = state.isAtTop
@@ -301,8 +301,8 @@ private fun FeedScreen(
                                 EventHandler(scrollUp) {
                                     state.animateScrollToItem(0)
                                 }
-                                val actualRowCount = remember(systemConfiguration.orientation, rowCount) {
-                                    when (systemConfiguration.orientation) {
+                                val actualRowCount = remember(configuration.orientation, rowCount) {
+                                    when (configuration.orientation) {
                                         ORIENTATION_LANDSCAPE -> rowCount + 2
                                         ORIENTATION_PORTRAIT -> rowCount
                                         else -> rowCount

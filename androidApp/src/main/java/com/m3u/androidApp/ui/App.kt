@@ -8,7 +8,7 @@ import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.androidApp.navigation.M3UNavHost
-import com.m3u.core.architecture.configuration.Configuration
+import com.m3u.core.architecture.pref.Pref
 import com.m3u.material.model.LocalNavController
 import com.m3u.ui.EmptyHelper
 import com.m3u.ui.Helper
@@ -16,7 +16,7 @@ import com.m3u.ui.rememberActionHolder
 
 @Composable
 fun App(
-    configuration: Configuration,
+    pref: Pref,
     appState: AppState = rememberAppState(),
     viewModel: AppViewModel = hiltViewModel(),
     helper: Helper = EmptyHelper,
@@ -49,7 +49,7 @@ fun App(
         navigate = appState::navigate,
         modifier = Modifier.fillMaxSize(),
         helper = helper,
-        configuration = configuration
+        pref = pref
     ) { contentPadding ->
         CompositionLocalProvider(
             LocalNavController provides appState.navController,

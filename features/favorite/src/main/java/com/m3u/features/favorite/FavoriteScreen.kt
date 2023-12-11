@@ -8,9 +8,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.m3u.core.architecture.configuration.LocalConfiguration
+import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.data.database.entity.LiveHolder
 import com.m3u.data.database.entity.rememberLiveHolder
 import com.m3u.features.favorite.components.FavouriteGallery
@@ -18,7 +19,6 @@ import com.m3u.material.ktx.interceptVolumeEvent
 import com.m3u.ui.EventHandler
 import com.m3u.ui.LocalHelper
 import com.m3u.ui.ResumeEvent
-import androidx.compose.ui.platform.LocalConfiguration as LocalSystemConfiguration
 
 typealias NavigateToLive = (Int) -> Unit
 
@@ -31,7 +31,7 @@ fun FavouriteRoute(
     viewModel: FavouriteViewModel = hiltViewModel()
 ) {
     val helper = LocalHelper.current
-    val configuration = LocalConfiguration.current
+    val pref = LocalPref.current
     val state by viewModel.state.collectAsStateWithLifecycle()
 
     val lives = remember(state.details) {
@@ -42,22 +42,22 @@ fun FavouriteRoute(
         helper.actions = emptyList()
     }
 
-    val interceptVolumeEventModifier = remember(configuration.godMode) {
-        if (configuration.godMode) {
+    val interceptVolumeEventModifier = remember(pref.godMode) {
+        if (pref.godMode) {
             Modifier.interceptVolumeEvent { event ->
                 when (event) {
                     KeyEvent.KEYCODE_VOLUME_UP ->
-                        configuration.rowCount = (configuration.rowCount - 1).coerceAtLeast(1)
+                        pref.rowCount = (pref.rowCount - 1).coerceAtLeast(1)
 
                     KeyEvent.KEYCODE_VOLUME_DOWN ->
-                        configuration.rowCount = (configuration.rowCount + 1).coerceAtMost(3)
+                        pref.rowCount = (pref.rowCount + 1).coerceAtMost(3)
                 }
             }
         } else Modifier
     }
     FavoriteScreen(
         contentPadding = contentPadding,
-        rowCount = configuration.rowCount,
+        rowCount = pref.rowCount,
         liveHolder = rememberLiveHolder(lives),
         navigateToLive = navigateToLive,
         modifier = modifier
@@ -74,8 +74,8 @@ private fun FavoriteScreen(
     navigateToLive: NavigateToLive,
     modifier: Modifier = Modifier
 ) {
-    val systemConfiguration = LocalSystemConfiguration.current
-    val actualRowCount = when (systemConfiguration.orientation) {
+    val configuration = LocalConfiguration.current
+    val actualRowCount = when (configuration.orientation) {
         Configuration.ORIENTATION_PORTRAIT -> rowCount
         Configuration.ORIENTATION_LANDSCAPE -> rowCount + 2
         else -> rowCount + 2

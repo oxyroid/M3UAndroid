@@ -1,4 +1,4 @@
-@file:kotlin.OptIn(ExperimentalConfiguration::class)
+@file:kotlin.OptIn(ExperimentalPref::class)
 @file:OptIn(UnstableApi::class)
 
 package com.m3u.data.service.impl
@@ -21,9 +21,9 @@ import androidx.media3.exoplayer.source.MediaSource
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
 import androidx.media3.exoplayer.trackselection.TrackSelector
 import androidx.media3.session.MediaSession
-import com.m3u.core.architecture.configuration.Configuration
-import com.m3u.core.architecture.configuration.ExperimentalConfiguration
-import com.m3u.core.architecture.configuration.observeAsFlow
+import com.m3u.core.architecture.pref.Pref
+import com.m3u.core.architecture.pref.ExperimentalPref
+import com.m3u.core.architecture.pref.observeAsFlow
 import com.m3u.data.contract.Certs
 import com.m3u.data.contract.SSL
 import com.m3u.data.service.PlayerManager
@@ -52,7 +52,7 @@ private data class PlayerPayload(
 
 class PlayerManagerImpl @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val configuration: Configuration
+    private val pref: Pref
 ) : PlayerManager(), Player.Listener, MediaSession.Callback {
     private val player = MutableStateFlow<Player?>(null)
     private val currentPlayer: Player? get() = player.value
@@ -61,9 +61,10 @@ class PlayerManagerImpl @Inject constructor(
 
     private val scope = CoroutineScope(Dispatchers.Main) + Job()
 
+    @kotlin.OptIn(ExperimentalPref::class)
     override fun initialize() {
-        val isSSLVerification = configuration.observeAsFlow().map { it.isSSLVerification }
-        val timeout = configuration.observeAsFlow().map { it.connectTimeout }
+        val isSSLVerification = pref.observeAsFlow().map { it.isSSLVerification }
+        val timeout = pref.observeAsFlow().map { it.connectTimeout }
 
         combine(isSSLVerification, timeout) { i, t -> PlayerPayload(i, t) }
             .distinctUntilChanged()

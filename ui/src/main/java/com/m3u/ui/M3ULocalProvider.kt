@@ -4,15 +4,15 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
-import com.m3u.core.architecture.configuration.Configuration
-import com.m3u.core.architecture.configuration.LocalConfiguration
+import com.m3u.core.architecture.pref.Pref
+import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.material.components.Background
 import com.m3u.material.model.AppTheme
 
 @Composable
 fun M3ULocalProvider(
     helper: Helper = EmptyHelper,
-    configuration: Configuration,
+    pref: Pref,
     content: @Composable () -> Unit
 ) {
     val prevTypography = MaterialTheme.typography
@@ -21,10 +21,10 @@ fun M3ULocalProvider(
     }
     CompositionLocalProvider(
         LocalHelper provides helper,
-        LocalConfiguration provides configuration
+        LocalPref provides pref
     ) {
         AppTheme(
-            useDynamicColors = configuration.useDynamicColors,
+            useDynamicColors = pref.useDynamicColors,
             typography = typography
         ) {
             Background {

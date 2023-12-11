@@ -1,9 +1,9 @@
 @file:Suppress("unused")
 
-package com.m3u.core.architecture.configuration.di
+package com.m3u.core.architecture.pref.di
 
-import com.m3u.core.architecture.configuration.Configuration
-import com.m3u.core.architecture.configuration.SharedConfiguration
+import com.m3u.core.architecture.pref.Pref
+import com.m3u.core.architecture.pref.SharedPref
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -16,6 +16,6 @@ interface ConfigurationModule {
     @Binds
     @Singleton
     fun bindConfiguration(
-        configuration: SharedConfiguration
-    ): Configuration
+        configuration: SharedPref
+    ): Pref
 }

@@ -15,8 +15,8 @@ import androidx.tv.foundation.lazy.grid.TvGridCells
 import androidx.tv.foundation.lazy.grid.TvLazyGridState
 import androidx.tv.foundation.lazy.grid.TvLazyVerticalGrid
 import androidx.tv.foundation.lazy.grid.items
-import com.m3u.core.architecture.configuration.ExperimentalConfiguration
-import com.m3u.core.architecture.configuration.LocalConfiguration
+import com.m3u.core.architecture.pref.ExperimentalPref
+import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.data.database.entity.Live
 import com.m3u.data.database.entity.LiveHolder
 import com.m3u.features.feed.NavigateToLive
@@ -24,7 +24,7 @@ import com.m3u.features.feed.NavigateToPlaylist
 import com.m3u.material.ktx.plus
 import com.m3u.material.model.LocalSpacing
 
-@OptIn(ExperimentalConfiguration::class)
+@OptIn(ExperimentalPref::class)
 @Composable
 internal fun LiveGallery(
     state: LazyGridState,
@@ -37,7 +37,7 @@ internal fun LiveGallery(
     contentPadding: PaddingValues = PaddingValues(0.dp),
 ) {
     val spacing = LocalSpacing.current
-    val configuration = LocalConfiguration.current
+    val pref = LocalPref.current
 
     val lives = liveHolder.lives
 
@@ -56,9 +56,9 @@ internal fun LiveGallery(
         ) { live ->
             LiveItem(
                 live = live,
-                noPictureMode = configuration.noPictureMode,
+                noPictureMode = pref.noPictureMode,
                 onClick = {
-                    if (configuration.scrollMode) {
+                    if (pref.scrollMode) {
                         val ids = lives.map { it.id }
                         val initialIndex = ids.indexOfFirst { it == live.id }
                         navigateToPlaylist(ids, initialIndex)
@@ -73,7 +73,7 @@ internal fun LiveGallery(
     }
 }
 
-@OptIn(ExperimentalConfiguration::class)
+@OptIn(ExperimentalPref::class)
 @Composable
 internal fun TvFeedGallery(
     state: TvLazyGridState,
@@ -86,7 +86,7 @@ internal fun TvFeedGallery(
     contentPadding: PaddingValues = PaddingValues(0.dp),
 ) {
     val spacing = LocalSpacing.current
-    val configuration = LocalConfiguration.current
+    val pref = LocalPref.current
     val lives = liveHolder.lives
 
     TvLazyVerticalGrid(
@@ -104,9 +104,9 @@ internal fun TvFeedGallery(
         ) { live ->
             LiveItem(
                 live = live,
-                noPictureMode = configuration.noPictureMode,
+                noPictureMode = pref.noPictureMode,
                 onClick = {
-                    if (configuration.scrollMode) {
+                    if (pref.scrollMode) {
                         val ids = lives.map { it.id }
                         val initialIndex = ids.indexOfFirst { it == live.id }
                         navigateToPlaylist(ids, initialIndex)
