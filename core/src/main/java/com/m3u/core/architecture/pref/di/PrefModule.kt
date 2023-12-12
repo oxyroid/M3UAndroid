@@ -12,7 +12,7 @@ import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
-interface ConfigurationModule {
+interface PrefModule {
     @Binds
     @Singleton
     fun bindPref(pref: SnapshotPref): Pref

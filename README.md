@@ -53,10 +53,9 @@ View this [file](CONTRIBUTING.md) to learn about how to contribute this reposito
 
 Refer to the [file](RULES.md) to learn about the Code Specification of this repository.
 
-### About
+### Star History
 
-I am a Chinese university student who is about to graduate,
-If you want to provide feedback, please contact [@sortBy](https://t.me/sortBy).
+[![Star History Chart](https://api.star-history.com/svg?repos=realOxy/M3UAndroid&type=Date)](https://star-history.com/#realOxy/M3UAndroid&Date)
 
 ### License
 
