@@ -34,6 +34,7 @@ interface Helper {
     var onPipModeChanged: OnPipModeChanged?
     var darkMode: UBoolean
     var brightness: Float
+    val isInPipMode: Boolean
 
     @get:Composable
     val windowSizeClass: WindowSizeClass
@@ -41,6 +42,8 @@ interface Helper {
     fun enterPipMode(size: Rect)
     fun toast(message: String)
     fun snake(message: String)
+    fun play(url: String)
+    fun replay()
 }
 
 val Helper.useRailNav: Boolean
@@ -163,6 +166,9 @@ val EmptyHelper = object : Helper {
             error("Cannot set brightness")
         }
 
+    override val isInPipMode: Boolean
+        get() = error("Cannot get isInPipMode")
+
     override val windowSizeClass: WindowSizeClass
         @Composable get() = error("Cannot get windowSizeClass")
 
@@ -173,6 +179,14 @@ val EmptyHelper = object : Helper {
 
     override fun snake(message: String) {
         error("Cannot snake: $message")
+    }
+
+    override fun play(url: String) {
+        error("Cannot play stream: $url")
+    }
+
+    override fun replay() {
+        error("Cannot replay")
     }
 }
 

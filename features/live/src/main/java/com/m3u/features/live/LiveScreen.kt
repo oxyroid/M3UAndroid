@@ -1,28 +1,24 @@
 package com.m3u.features.live
 
+import android.graphics.Rect
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.pager.VerticalPager
-import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.util.lerp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.core.unspecified.UBoolean
 import com.m3u.core.unspecified.unspecifiable
 import com.m3u.core.util.basic.isNotEmpty
@@ -39,19 +35,19 @@ import com.m3u.ui.OnPipModeChanged
 import com.m3u.ui.repeatOnLifecycle
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-import kotlin.math.absoluteValue
 
 @Composable
 fun LiveRoute(
-    init: LiveEvent.Init,
     modifier: Modifier = Modifier,
     onBackPressed: () -> Unit,
     viewModel: LiveViewModel = hiltViewModel(),
 ) {
     val helper = LocalHelper.current
+    val pref = LocalPref.current
 
     val state: LiveState by viewModel.state.collectAsStateWithLifecycle()
     val playerState: LiveState.PlayerState by viewModel.playerState.collectAsStateWithLifecycle()
+    val metadata: LiveState.Metadata by viewModel.metadata.collectAsStateWithLifecycle()
     val devices by viewModel.devices.collectAsStateWithLifecycle()
     val isDevicesVisible by viewModel.isDevicesVisible.collectAsStateWithLifecycle()
     val searching by viewModel.searching.collectAsStateWithLifecycle()
@@ -61,7 +57,8 @@ fun LiveRoute(
 
     val maskState = rememberMaskState()
 
-    var isPipMode by remember { mutableStateOf(false) }
+    var isPipMode by rememberSaveable { mutableStateOf(false) }
+    var isAutoZappingMode by rememberSaveable { mutableStateOf(true) }
 
     LifecycleEffect { event ->
         when (event) {
@@ -70,18 +67,11 @@ fun LiveRoute(
                     viewModel.onEvent(LiveEvent.UninstallMedia)
                 }
             }
-
             else -> {}
         }
     }
 
     helper.repeatOnLifecycle {
-        onUserLeaveHint = {
-            if (playerState.videoSize.isNotEmpty) {
-                maskState.sleep()
-                helper.enterPipMode(playerState.videoSize)
-            }
-        }
         darkMode = true.unspecifiable
         statusBarVisibility = UBoolean.False
         navigationBarVisibility = UBoolean.False
@@ -89,12 +79,19 @@ fun LiveRoute(
             isPipMode = info.isInPictureInPictureMode
             if (!isPipMode) {
                 maskState.wake()
+                isAutoZappingMode = false
             }
         }
     }
 
-    LaunchedEffect(init) {
-        viewModel.onEvent(init)
+    LaunchedEffect(pref.zappingMode, playerState.videoSize) {
+        val videoSize = playerState.videoSize
+        if (isAutoZappingMode && pref.zappingMode && !isPipMode) {
+            maskState.sleep()
+            val rect = if (videoSize.isNotEmpty) videoSize
+            else Rect(0, 0, 1920, 1080)
+            helper.enterPipMode(rect)
+        }
     }
 
     LaunchedEffect(Unit) {
@@ -136,7 +133,6 @@ fun LiveRoute(
         )
 
         LiveScreen(
-            init = state.init,
             recording = state.recording,
             openDlnaDevices = { viewModel.onEvent(LiveEvent.OpenDlnaDevices) },
             onRecord = { viewModel.onEvent(LiveEvent.Record) },
@@ -144,12 +140,12 @@ fun LiveRoute(
             onBackPressed = onBackPressed,
             maskState = maskState,
             playerState = playerState,
-            onInstallMedia = { viewModel.onEvent(LiveEvent.InstallMedia(it)) },
-            onUninstallMedia = { viewModel.onEvent(LiveEvent.UninstallMedia) },
+            metadata = metadata,
             brightness = brightness,
             volume = volume,
             onBrightness = { brightness = it },
             onVolume = { viewModel.onEvent(LiveEvent.OnVolume(it)) },
+            replay = { helper.replay() },
             modifier = modifier
         )
     }
@@ -157,7 +153,6 @@ fun LiveRoute(
 
 @Composable
 private fun LiveScreen(
-    init: LiveState.Init,
     recording: Boolean,
     openDlnaDevices: () -> Unit,
     onRecord: () -> Unit,
@@ -165,99 +160,42 @@ private fun LiveScreen(
     onBackPressed: () -> Unit,
     maskState: MaskState,
     playerState: LiveState.PlayerState,
-    onInstallMedia: (String) -> Unit,
-    onUninstallMedia: () -> Unit,
+    metadata: LiveState.Metadata,
     volume: Float,
     brightness: Float,
     onVolume: (Float) -> Unit,
     onBrightness: (Float) -> Unit,
+    replay: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val theme = MaterialTheme.colorScheme
-    when (init) {
-        is LiveState.InitOne -> {
-            val live = init.live
-            val url = live?.url.orEmpty()
-            val favourite = live?.favourite ?: false
-            LiveFragment(
-                playerState = playerState,
-                title = init.live?.title ?: "--",
-                url = url,
-                cover = init.live?.cover.orEmpty(),
-                feedTitle = init.feed?.title ?: "--",
-                maskState = maskState,
-                recording = recording,
-                stared = favourite,
-                onRecord = onRecord,
-                onFavourite = { onFavourite(url) },
-                openDlnaDevices = openDlnaDevices,
-                onBackPressed = onBackPressed,
-                onInstallMedia = onInstallMedia,
-                onUninstallMedia = onUninstallMedia,
-                brightness = brightness,
-                volume = volume,
-                onBrightness = onBrightness,
-                onVolume = onVolume,
-                modifier = modifier
-                    .fillMaxSize()
-                    .background(Color.Black)
-                    .testTag("features:live")
-            )
-        }
-
-        is LiveState.InitPlayList -> {
-            // TODO: move pager into mask
-            val pagerState = rememberPagerState(init.initialIndex) { init.lives.size }
-            VerticalPager(
-                state = pagerState,
-                modifier = modifier
-                    .fillMaxSize()
-                    .background(theme.background)
-            ) { pageIndex ->
-                val live = init.lives[pageIndex]
-                val url = live.url
-                val favourite = live.favourite
-                LiveFragment(
-                    playerState = playerState,
-                    title = live.title,
-                    feedTitle = init.feed?.title.orEmpty(),
-                    url = url,
-                    cover = live.cover.orEmpty(),
-                    maskState = maskState,
-                    recording = recording,
-                    stared = favourite,
-                    onRecord = onRecord,
-                    onFavourite = { onFavourite(url) },
-                    openDlnaDevices = openDlnaDevices,
-                    onBackPressed = onBackPressed,
-                    onInstallMedia = onInstallMedia,
-                    onUninstallMedia = onUninstallMedia,
-                    volume = volume,
-                    brightness = brightness,
-                    onVolume = onVolume,
-                    onBrightness = onBrightness,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(Color.Black)
-                        .scrollableGroup(
-                            current = pagerState.currentPage - pageIndex,
-                            offsetFraction = pagerState.currentPageOffsetFraction
-                        )
-                )
-            }
-        }
-    }
+    val live = metadata.live
+    val feed = metadata.feed
+    val url = live?.url.orEmpty()
+    val title = live?.title ?: "--"
+    val cover = live?.cover.orEmpty()
+    val feedTitle = feed?.title ?: "--"
+    val favourite = live?.favourite ?: false
+    LiveFragment(
+        playerState = playerState,
+        title = title,
+        url = url,
+        cover = cover,
+        feedTitle = feedTitle,
+        maskState = maskState,
+        recording = recording,
+        stared = favourite,
+        onRecord = onRecord,
+        onFavourite = { onFavourite(url) },
+        openDlnaDevices = openDlnaDevices,
+        onBackPressed = onBackPressed,
+        replay = replay,
+        brightness = brightness,
+        volume = volume,
+        onBrightness = onBrightness,
+        onVolume = onVolume,
+        modifier = modifier
+            .fillMaxSize()
+            .background(Color.Black)
+            .testTag("features:live")
+    )
 }
-
-private fun Modifier.scrollableGroup(
-    current: Int,
-    offsetFraction: Float
-): Modifier = graphicsLayer {
-    val offset = current + offsetFraction
-        .absoluteValue
-        .coerceIn(0f, 1f)
-    val scale = lerp(1f, 0.8f, offset)
-    scaleX = scale
-    scaleY = scale
-}
-

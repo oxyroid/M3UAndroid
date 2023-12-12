@@ -1,8 +1,5 @@
-@file:SuppressLint("UseHelperIssue")
+package com.m3u.features.live
 
-package com.m3u.androidApp
-
-import android.annotation.SuppressLint
 import android.app.PictureInPictureParams
 import android.content.res.Configuration
 import android.graphics.Color
@@ -15,20 +12,12 @@ import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.activity.viewModels
-import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.runtime.Composable
-import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.WindowInsetsCompat.Type.InsetsType
 import androidx.core.view.WindowInsetsControllerCompat
-import androidx.core.view.WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
 import androidx.lifecycle.lifecycleScope
-import com.m3u.androidApp.ui.App
-import com.m3u.androidApp.ui.AppViewModel
-import com.m3u.androidApp.ui.rememberAppState
 import com.m3u.core.architecture.Logger
 import com.m3u.core.architecture.pref.Pref
 import com.m3u.core.unspecified.UBoolean
@@ -38,33 +27,33 @@ import com.m3u.core.util.context.isDarkMode
 import com.m3u.core.util.context.isPortraitMode
 import com.m3u.data.service.PlayerManager
 import com.m3u.ui.Action
-import com.m3u.ui.Destination
 import com.m3u.ui.Fob
 import com.m3u.ui.Helper
+import com.m3u.ui.M3ULocalProvider
 import com.m3u.ui.OnPipModeChanged
 import com.m3u.ui.OnUserLeaveHint
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-import kotlin.reflect.KMutableProperty0
 
 @AndroidEntryPoint
-class MainActivity : ComponentActivity() {
+class PlayerActivity : ComponentActivity() {
     private val controller by lazy {
         WindowInsetsControllerCompat(window, window.decorView).apply {
-            systemBarsBehavior = BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+            systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
         }
     }
     private var actualOnUserLeaveHint: OnUserLeaveHint? = null
     private var actualOnPipModeChanged: OnPipModeChanged? = null
-    private val viewModel: AppViewModel by viewModels()
     private val helper by lazy {
-        helper(
-            title = viewModel.title::value,
-            actions = viewModel.actions::value,
-            fob = viewModel.fob::value
-        )
+        helper()
+    }
+
+    companion object {
+        // FIXME: the property is worked only when activity has one instance at most.
+        var isInPipMode: Boolean = false
+            private set
     }
 
     @Inject
@@ -78,34 +67,26 @@ class MainActivity : ComponentActivity() {
     lateinit var playerManager: PlayerManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        installSplashScreen()
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
+
         setContent {
-            App(
-                appState = rememberAppState(
-                    pagerState = rememberPagerState { Destination.Root.entries.size }
-                ),
-                viewModel = viewModel,
+            M3ULocalProvider(
                 helper = helper,
                 pref = pref
-            )
+            ) {
+                LiveRoute(
+                    onBackPressed = { finish() }
+                )
+            }
         }
     }
 
-    override fun onResume() {
-        super.onResume()
-        applyConfiguration()
-    }
-
-    private fun helper(
-        title: Method<String>,
-        actions: Method<List<Action>>,
-        fob: Method<Fob?>
-    ): Helper = object : Helper {
+    private fun helper(): Helper = object : Helper {
         init {
             addOnPictureInPictureModeChangedListener { info ->
                 isInPipMode = info.isInPictureInPictureMode
+                PlayerActivity.isInPipMode = info.isInPictureInPictureMode
             }
         }
         override fun enterPipMode(size: Rect) {
@@ -119,9 +100,9 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        override var title: String by title
-        override var actions: List<Action> by actions
-        override var fob: Fob? by fob
+        override var title: String = ""
+        override var actions: List<Action> = emptyList()
+        override var fob: Fob? = null
         override var statusBarVisibility: UBoolean = UBoolean.Unspecified
             set(value) {
                 field = value
@@ -166,11 +147,11 @@ class MainActivity : ComponentActivity() {
         override var isInPipMode: Boolean = false
 
         override val windowSizeClass: WindowSizeClass
-            @Composable get() = calculateWindowSizeClass(activity = this@MainActivity)
+            @Composable get() = calculateWindowSizeClass(activity = this@PlayerActivity)
 
         override fun toast(message: String) {
             lifecycleScope.launch(Dispatchers.Main) {
-                Toast.makeText(this@MainActivity, message, Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@PlayerActivity, message, Toast.LENGTH_SHORT).show()
             }
         }
 
@@ -215,12 +196,12 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun WindowInsetsControllerCompat.default(@InsetsType types: Int) {
+    private fun WindowInsetsControllerCompat.default(@WindowInsetsCompat.Type.InsetsType types: Int) {
         when (types) {
             WindowInsetsCompat.Type.navigationBars() -> {
                 val configuration = resources.configuration
                 val atBottom =
-                    ViewConfiguration.get(this@MainActivity).hasPermanentMenuKey()
+                    ViewConfiguration.get(this@PlayerActivity).hasPermanentMenuKey()
                 if (configuration.isPortraitMode || !atBottom) {
                     show(WindowInsetsCompat.Type.navigationBars())
                 } else {
@@ -236,5 +217,3 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
-
-private typealias Method<E> = KMutableProperty0<E>

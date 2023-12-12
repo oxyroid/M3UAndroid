@@ -3,11 +3,6 @@ package com.m3u.features.live
 import org.fourthline.cling.model.meta.Device
 
 sealed interface LiveEvent {
-    sealed interface Init : LiveEvent
-
-    data class InitOne(val liveId: Int) : Init
-    data class InitPlayList(val initialIndex: Int, val ids: List<Int>) : Init
-
     data object OpenDlnaDevices : LiveEvent
     data object CloseDlnaDevices : LiveEvent
     data class ConnectDlnaDevice(val device: Device<*, *, *>) : LiveEvent

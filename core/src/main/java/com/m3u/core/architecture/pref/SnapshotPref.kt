@@ -19,26 +19,24 @@ import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_EXPERIMENTAL_MODE
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_FEED_STRATEGY
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_FULL_INFO_PLAYER
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_GOD_MODE
-import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_INITIAL_ROOT_DESTINATION
+import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_ROOT_DESTINATION
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_NO_PICTURE_MODE
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_ROW_COUNT
-import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_SCROLL_MODE
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_SSL_VERIFICATION
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_USE_COMMON_UI_MODE
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_USE_DYNAMIC_COLORS
-import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_ZAP_MODE
+import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_ZAPPING_MODE
 import com.m3u.core.architecture.pref.Pref.Companion.EXPERIMENTAL_MODE
 import com.m3u.core.architecture.pref.Pref.Companion.FEED_STRATEGY
 import com.m3u.core.architecture.pref.Pref.Companion.FULL_INFO_PLAYER
 import com.m3u.core.architecture.pref.Pref.Companion.GOD_MODE
-import com.m3u.core.architecture.pref.Pref.Companion.INITIAL_ROOT_DESTINATION
+import com.m3u.core.architecture.pref.Pref.Companion.ROOT_DESTINATION
 import com.m3u.core.architecture.pref.Pref.Companion.NO_PICTURE_MODE
 import com.m3u.core.architecture.pref.Pref.Companion.ROW_COUNT
-import com.m3u.core.architecture.pref.Pref.Companion.SCROLL_MODE
 import com.m3u.core.architecture.pref.Pref.Companion.SSL_VERIFICATION
 import com.m3u.core.architecture.pref.Pref.Companion.USE_COMMON_UI_MODE
 import com.m3u.core.architecture.pref.Pref.Companion.USE_DYNAMIC_COLORS
-import com.m3u.core.architecture.pref.Pref.Companion.ZAP_MODE
+import com.m3u.core.architecture.pref.Pref.Companion.ZAPPING_MODE
 import com.m3u.core.util.context.booleanAsState
 import com.m3u.core.util.context.intAsState
 import com.m3u.core.util.context.longAsState
@@ -72,9 +70,6 @@ class SnapshotPref @Inject constructor(
     override var clipMode: Int by
     sharedPreferences.intAsState(DEFAULT_CLIP_MODE, CLIP_MODE)
 
-    @ExperimentalPref
-    override var scrollMode: Boolean by
-    sharedPreferences.booleanAsState(DEFAULT_SCROLL_MODE, SCROLL_MODE)
     override var autoRefresh: Boolean by
     sharedPreferences.booleanAsState(DEFAULT_AUTO_REFRESH, AUTO_REFRESH)
 
@@ -84,7 +79,7 @@ class SnapshotPref @Inject constructor(
     override var fullInfoPlayer: Boolean by
     sharedPreferences.booleanAsState(DEFAULT_FULL_INFO_PLAYER, FULL_INFO_PLAYER)
     override var rootDestination: Int by
-    sharedPreferences.intAsState(DEFAULT_INITIAL_ROOT_DESTINATION, INITIAL_ROOT_DESTINATION)
+    sharedPreferences.intAsState(DEFAULT_ROOT_DESTINATION, ROOT_DESTINATION)
     override var noPictureMode: Boolean by
     sharedPreferences.booleanAsState(DEFAULT_NO_PICTURE_MODE, NO_PICTURE_MODE)
 
@@ -94,7 +89,8 @@ class SnapshotPref @Inject constructor(
     override var useDynamicColors: Boolean by
     sharedPreferences.booleanAsState(DEFAULT_USE_DYNAMIC_COLORS, USE_DYNAMIC_COLORS)
 
-    override var zapMode: Boolean by sharedPreferences.booleanAsState(DEFAULT_ZAP_MODE, ZAP_MODE)
+    override var zappingMode: Boolean by
+    sharedPreferences.booleanAsState(DEFAULT_ZAPPING_MODE, ZAPPING_MODE)
 
     companion object {
         private const val SHARED_SETTINGS = "shared_settings"

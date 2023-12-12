@@ -24,6 +24,7 @@
     <application
         android:name=".M3UApplication"
         android:allowBackup="true"
+        android:appCategory="video"
         android:banner="@mipmap/ic_launcher"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:enableOnBackInvokedCallback="true"
@@ -34,13 +35,13 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.M3U.Starting"
         android:usesCleartextTraffic="true"
-        android:appCategory="video"
         tools:targetApi="tiramisu">
 
         <activity
             android:name=".MainActivity"
             android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation|locale|layoutDirection"
             android:exported="true"
+            android:launchMode="singleInstance"
             android:supportsPictureInPicture="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -50,6 +51,13 @@
             </intent-filter>
 
         </activity>
+        <activity
+            android:name="com.m3u.features.live.PlayerActivity"
+            android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation|locale|layoutDirection"
+            android:exported="true"
+            android:theme="@style/Theme.M3U"
+            android:launchMode="singleTop"
+            android:supportsPictureInPicture="true" />
 
         <activity
             android:name="com.m3u.features.crash.CrashActivity"
@@ -65,7 +73,7 @@
             tools:node="merge">
             <meta-data
                 android:name="com.m3u.androidApp.startup.ComposeInitializer"
-                android:value="androidx.startup"/>
+                android:value="androidx.startup" />
             <meta-data
                 android:name="androidx.work.WorkManagerInitializer"
                 android:value="androidx.startup"

@@ -17,9 +17,7 @@ import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.datasource.okhttp.OkHttpDataSource
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
-import androidx.media3.exoplayer.source.MediaSource
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
-import androidx.media3.exoplayer.trackselection.TrackSelector
 import androidx.media3.session.MediaSession
 import com.m3u.core.architecture.pref.ExperimentalPref
 import com.m3u.core.architecture.pref.Pref
@@ -33,11 +31,13 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.plus
 import okhttp3.OkHttpClient
@@ -51,90 +51,97 @@ private data class PlayerPayload(
 
 class PlayerManagerImpl @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val pref: Pref
+    pref: Pref
 ) : PlayerManager(), Player.Listener, MediaSession.Callback {
     private val player = MutableStateFlow<Player?>(null)
-    private val currentPlayer: Player? get() = player.value
 
     override fun observe(): Flow<Player?> = player.asStateFlow()
 
     private val scope = CoroutineScope(Dispatchers.Main) + Job()
 
-    @kotlin.OptIn(ExperimentalPref::class)
-    override fun initialize() {
-        pref
-            .observeAsFlow()
-            .map { PlayerPayload(it.isSSLVerification, it.connectTimeout) }
-            .distinctUntilChanged()
-            .onEach { payload ->
-                val msf = DefaultMediaSourceFactory(context)
-                    .setDataSourceFactory(
-                        if (payload.isSSLVerification) DefaultDataSource.Factory(context)
-                        else DefaultDataSource.Factory(
-                            context,
-                            OkHttpDataSource.Factory(
-                                OkHttpClient.Builder()
-                                    .sslSocketFactory(SSL.TLSTrustAll.socketFactory, Certs.TrustAll)
-                                    .hostnameVerifier { _, _ -> true }
-                                    .connectTimeout(payload.timeout, TimeUnit.MILLISECONDS)
-                                    .callTimeout(payload.timeout, TimeUnit.MILLISECONDS)
-                                    .readTimeout(payload.timeout, TimeUnit.MILLISECONDS)
-                                    .writeTimeout(payload.timeout, TimeUnit.MILLISECONDS)
-                                    .build()
-                            )
-                        )
-                    )
-                player.update {
-                    createPlayer(
-                        factory = msf,
-                        trackSelector = DefaultTrackSelector(context).apply {
-                            setParameters(buildUponParameters().setMaxVideoSizeSd())
-                        }
-                    )
-                }
+    private val _url = MutableStateFlow<String?>(null)
+    override val url: StateFlow<String?> = _url.asStateFlow()
+
+    private val payload = pref
+        .observeAsFlow()
+        .map { PlayerPayload(it.isSSLVerification, it.connectTimeout) }
+        .distinctUntilChanged()
+        .onEach { payload ->
+            player.update {
+                createPlayer(payload)
             }
-            .launchIn(scope)
+        }
+        .stateIn(
+            scope = scope,
+            started = SharingStarted.Lazily,
+            initialValue = PlayerPayload(pref.isSSLVerification, pref.connectTimeout)
+        )
+
+    private fun createPlayer(payload: PlayerPayload): Player {
+        val msf = DefaultMediaSourceFactory(context)
+            .setDataSourceFactory(
+                if (payload.isSSLVerification) DefaultDataSource.Factory(context)
+                else DefaultDataSource.Factory(
+                    context,
+                    OkHttpDataSource.Factory(
+                        OkHttpClient.Builder()
+                            .sslSocketFactory(SSL.TLSTrustAll.socketFactory, Certs.TrustAll)
+                            .hostnameVerifier { _, _ -> true }
+                            .connectTimeout(payload.timeout, TimeUnit.MILLISECONDS)
+                            .callTimeout(payload.timeout, TimeUnit.MILLISECONDS)
+                            .readTimeout(payload.timeout, TimeUnit.MILLISECONDS)
+                            .writeTimeout(payload.timeout, TimeUnit.MILLISECONDS)
+                            .build()
+                    )
+                )
+            )
+        val trackSelector = DefaultTrackSelector(context).apply {
+            setParameters(buildUponParameters().setMaxVideoSizeSd())
+        }
+        return ExoPlayer.Builder(context)
+            .setMediaSourceFactory(msf)
+            .setTrackSelector(trackSelector)
+            .build()
+            .apply {
+                val attributes = AudioAttributes.Builder()
+                    .setUsage(C.USAGE_MEDIA)
+                    .setContentType(C.AUDIO_CONTENT_TYPE_MOVIE)
+                    .build()
+                setAudioAttributes(attributes, true)
+                playWhenReady = true
+            }
     }
 
-    private fun createPlayer(
-        factory: MediaSource.Factory,
-        trackSelector: TrackSelector
-    ): Player = ExoPlayer.Builder(context)
-        .setMediaSourceFactory(factory)
-        .setTrackSelector(trackSelector)
-        .build()
-        .apply {
-            val attributes = AudioAttributes.Builder()
-                .setUsage(C.USAGE_MEDIA)
-                .setContentType(C.AUDIO_CONTENT_TYPE_MOVIE)
-                .build()
-            setAudioAttributes(attributes, true)
-            playWhenReady = true
-        }
-
-    override fun install(url: String) {
-        player.value?.let {
-            it.addListener(this)
-            val mediaItem = MediaItem.fromUri(url)
-            it.setMediaItem(mediaItem)
-            it.prepare()
+    override fun play(url: String) {
+        player.update { prev ->
+            if (prev != null) {
+                stop()
+            }
+            _url.update { url }
+            createPlayer(payload.value).also {
+                it.addListener(this)
+                val mediaItem = MediaItem.fromUri(url)
+                it.setMediaItem(mediaItem)
+                it.prepare()
+            }
         }
     }
 
-    override fun uninstall() {
-        currentPlayer?.let {
-            it.removeListener(this)
-            it.stop()
+    override fun stop() {
+        _url.update { null }
+        player.update {
+            it?.removeListener(this)
+            it?.stop()
+            it?.release()
+            null
         }
         super.mutablePlaybackState.value = Player.STATE_IDLE
         super.mutablePlaybackError.value = null
         super.mutableVideoSize.value = Rect()
     }
 
-    override fun destroy() {
-        uninstall()
-        currentPlayer?.release()
-        player.update { null }
+    override fun replay() {
+        url.value?.let { play(it) }
     }
 
     override fun onVideoSizeChanged(size: VideoSize) {
@@ -151,7 +158,7 @@ class PlayerManagerImpl @Inject constructor(
         super.onPlayerErrorChanged(error)
         when (error?.errorCode) {
             PlaybackException.ERROR_CODE_BEHIND_LIVE_WINDOW -> {
-                currentPlayer?.let {
+                player.value?.let {
                     it.seekToDefaultPosition()
                     it.prepare()
                 }

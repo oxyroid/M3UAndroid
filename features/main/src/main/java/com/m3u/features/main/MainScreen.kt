@@ -29,6 +29,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -53,7 +54,6 @@ import com.m3u.ui.LocalHelper
 import com.m3u.ui.MessageEventHandler
 import com.m3u.ui.MonoText
 import com.m3u.ui.ResumeEvent
-import androidx.compose.ui.platform.LocalConfiguration as LocalConfiguration
 
 typealias NavigateToFeed = (feed: Feed) -> Unit
 typealias NavigateToSettingSubscription = () -> Unit
@@ -71,7 +71,6 @@ fun MainRoute(
     val pref = LocalPref.current
 
     val message by viewModel.message.collectAsStateWithLifecycle()
-    val state: MainState by viewModel.state.collectAsStateWithLifecycle()
     val feedDetailHolder by viewModel.feeds.collectAsStateWithLifecycle()
 
     MessageEventHandler(message)

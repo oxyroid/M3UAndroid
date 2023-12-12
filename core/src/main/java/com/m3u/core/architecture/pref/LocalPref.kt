@@ -4,7 +4,7 @@ import androidx.compose.runtime.compositionLocalOf
 
 val LocalPref = compositionLocalOf<Pref> { MockPref }
 
-private object MockPref: Pref {
+private object MockPref : Pref {
     override var feedStrategy: Int = Pref.DEFAULT_FEED_STRATEGY
     override var useCommonUIMode: Boolean = Pref.DEFAULT_USE_COMMON_UI_MODE
     override var rowCount: Int = Pref.DEFAULT_ROW_COUNT
@@ -17,15 +17,12 @@ private object MockPref: Pref {
     override var fullInfoPlayer: Boolean = Pref.DEFAULT_FULL_INFO_PLAYER
 
     @ExperimentalPref
-    override var scrollMode: Boolean = Pref.DEFAULT_SCROLL_MODE
-
-    @ExperimentalPref
     override var isSSLVerification: Boolean = Pref.DEFAULT_SSL_VERIFICATION
-    override var rootDestination: Int = Pref.DEFAULT_INITIAL_ROOT_DESTINATION
+    override var rootDestination: Int = Pref.DEFAULT_ROOT_DESTINATION
     override var noPictureMode: Boolean = Pref.DEFAULT_NO_PICTURE_MODE
 
     @ExperimentalPref
     override var cinemaMode: Boolean = Pref.DEFAULT_CINEMA_MODE
     override var useDynamicColors: Boolean = Pref.DEFAULT_USE_DYNAMIC_COLORS
-    override var zapMode: Boolean = Pref.DEFAULT_ZAP_MODE
+    override var zappingMode: Boolean = Pref.DEFAULT_ZAPPING_MODE
 }

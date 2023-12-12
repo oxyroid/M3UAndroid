@@ -5,14 +5,11 @@ import androidx.annotation.OptIn
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -24,46 +21,33 @@ import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import com.m3u.core.annotation.ClipMode
 import com.m3u.material.ktx.ifUnspecified
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import kotlin.time.Duration.Companion.milliseconds
 
 @Immutable
 data class PlayerState(
     val player: Player?,
     val url: String,
     @ClipMode val clipMode: Int,
-    val keepScreenOn: Boolean,
-    val onInstallMedia: (String) -> Unit,
-    val onUninstallMedia: () -> Unit
+    val keepScreenOn: Boolean
 )
 
 @Composable
 fun rememberPlayerState(
     player: Player?,
     url: String,
-    onInstallMedia: (String) -> Unit,
     @ClipMode clipMode: Int = ClipMode.ADAPTIVE,
     keepScreenOn: Boolean = true,
-    onUninstallMedia: () -> Unit,
 ): PlayerState {
-    val currentOnInstallMedia by rememberUpdatedState(onInstallMedia)
-    val currentOnUninstallMedia by rememberUpdatedState(onUninstallMedia)
     return remember(
         player,
         url,
         clipMode,
-        keepScreenOn,
-        currentOnInstallMedia,
-        currentOnUninstallMedia
+        keepScreenOn
     ) {
         PlayerState(
             player,
             url,
             clipMode,
-            keepScreenOn,
-            currentOnInstallMedia,
-            currentOnUninstallMedia
+            keepScreenOn
         )
     }
 }
@@ -76,7 +60,6 @@ fun Player(
     startColor: Color = Color.Unspecified,
 ) {
     val player = state.player
-    val url = state.url
     val keepScreenOn = state.keepScreenOn
     val clipMode = state.clipMode
     var actualColor by remember(startColor) { mutableStateOf(startColor) }
@@ -88,7 +71,6 @@ fun Player(
     LaunchedEffect(startColor) {
         actualColor = Color.Black
     }
-
     AndroidView(
         factory = { context ->
             PlayerView(context).apply {
@@ -104,7 +86,13 @@ fun Player(
     ) { view ->
         view.apply {
             setShutterBackgroundColor(currentShutterColor.toArgb())
-            setPlayer(player)
+            player?.let { currentPlayer ->
+                PlayerView.switchTargetView(
+                    currentPlayer,
+                    null,
+                    this
+                )
+            }
             setKeepScreenOn(keepScreenOn)
             resizeMode = when (clipMode) {
                 ClipMode.ADAPTIVE -> AspectRatioFrameLayout.RESIZE_MODE_FIT
@@ -112,16 +100,6 @@ fun Player(
                 ClipMode.STRETCHED -> AspectRatioFrameLayout.RESIZE_MODE_FILL
                 else -> AspectRatioFrameLayout.RESIZE_MODE_FIT
             }
-        }
-    }
-    val scope = rememberCoroutineScope()
-    DisposableEffect(player, url) {
-        scope.launch {
-            delay(150.milliseconds)
-            state.onInstallMedia(url)
-        }
-        onDispose {
-            state.onUninstallMedia()
         }
     }
 }

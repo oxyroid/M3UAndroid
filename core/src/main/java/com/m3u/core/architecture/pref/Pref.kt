@@ -27,9 +27,6 @@ interface Pref {
     var fullInfoPlayer: Boolean
 
     @ExperimentalPref
-    var scrollMode: Boolean
-
-    @ExperimentalPref
     var isSSLVerification: Boolean
     var rootDestination: Int
     var noPictureMode: Boolean
@@ -38,7 +35,7 @@ interface Pref {
     var cinemaMode: Boolean
     var useDynamicColors: Boolean
 
-    var zapMode: Boolean
+    var zappingMode: Boolean
 
     companion object {
         @FeedStrategy
@@ -53,37 +50,35 @@ interface Pref {
 
         @ClipMode
         const val DEFAULT_CLIP_MODE = ClipMode.ADAPTIVE
-        const val DEFAULT_SCROLL_MODE = false
         const val DEFAULT_AUTO_REFRESH = false
         const val DEFAULT_SSL_VERIFICATION = false
         const val DEFAULT_FULL_INFO_PLAYER = false
-        const val DEFAULT_INITIAL_ROOT_DESTINATION = 0
+        const val DEFAULT_ROOT_DESTINATION = 0
         const val DEFAULT_NO_PICTURE_MODE = true
         const val DEFAULT_CINEMA_MODE = false
 
         @ChecksSdkIntAtLeast(api = Build.VERSION_CODES.S)
         var DEFAULT_USE_DYNAMIC_COLORS = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
 
-        const val DEFAULT_ZAP_MODE = false
+        const val DEFAULT_ZAPPING_MODE = false
 
-        const val FEED_STRATEGY = "feedStrategy"
-        const val USE_COMMON_UI_MODE = "useCommonUIMode"
+        const val FEED_STRATEGY = "feed-strategy"
+        const val USE_COMMON_UI_MODE = "use-common-ui-mode"
         const val ROW_COUNT = "rowCount"
 
-        const val CONNECT_TIMEOUT = "connectTimeout"
-        const val GOD_MODE = "godMode"
-        const val EXPERIMENTAL_MODE = "experimentalMode"
+        const val CONNECT_TIMEOUT = "connect-timeout"
+        const val GOD_MODE = "god-mode"
+        const val EXPERIMENTAL_MODE = "experimental-mode"
 
-        const val CLIP_MODE = "clipMode"
-        const val SCROLL_MODE = "scrollMode"
-        const val AUTO_REFRESH = "autoRefresh"
-        const val SSL_VERIFICATION = "sslVerification"
-        const val FULL_INFO_PLAYER = "fullInfoPlayer"
-        const val INITIAL_ROOT_DESTINATION = "initialRootDestination"
-        const val NO_PICTURE_MODE = "noPictureMode"
-        const val CINEMA_MODE = "cinemaMode"
+        const val CLIP_MODE = "clip-mode"
+        const val AUTO_REFRESH = "auto-refresh"
+        const val SSL_VERIFICATION = "ssl-verification"
+        const val FULL_INFO_PLAYER = "full-info-player"
+        const val ROOT_DESTINATION = "root-destination"
+        const val NO_PICTURE_MODE = "no-picture-mode"
+        const val CINEMA_MODE = "cinema-mode"
         const val USE_DYNAMIC_COLORS = "use-dynamic-colors"
-        const val ZAP_MODE = "zap-mode"
+        const val ZAPPING_MODE = "zapping-mode"
     }
 }
 

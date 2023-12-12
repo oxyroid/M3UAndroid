@@ -46,7 +46,6 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -123,7 +122,6 @@ fun ToolkitScaffold(
                 }
             }
         }
-        val direction = LocalLayoutDirection.current
         val actualBackgroundColor by MaterialTheme.colorScheme.background.animated("AppBarBackground")
         val actualContentColor by MaterialTheme.colorScheme.onBackground.animated("AppBarContent")
         // Child Content

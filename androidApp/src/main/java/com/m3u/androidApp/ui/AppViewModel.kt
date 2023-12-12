@@ -15,7 +15,6 @@ class AppViewModel @Inject constructor(
 ) : BaseViewModel<Any, Unit, EmptyMessage>(
     emptyState = Any()
 ) {
-
     val snacker = uiService.snacker
 
     val title: MutableStateFlow<String> = MutableStateFlow("")

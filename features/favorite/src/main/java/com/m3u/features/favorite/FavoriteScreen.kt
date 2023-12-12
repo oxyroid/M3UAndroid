@@ -20,7 +20,7 @@ import com.m3u.ui.EventHandler
 import com.m3u.ui.LocalHelper
 import com.m3u.ui.ResumeEvent
 
-typealias NavigateToLive = (Int) -> Unit
+typealias NavigateToLive = () -> Unit
 
 @Composable
 fun FavouriteRoute(

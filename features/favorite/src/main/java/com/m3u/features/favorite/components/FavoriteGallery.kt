@@ -14,7 +14,7 @@ import com.m3u.data.database.entity.LiveHolder
 import com.m3u.features.favorite.NavigateToLive
 import com.m3u.material.ktx.plus
 import com.m3u.material.model.LocalSpacing
-
+import com.m3u.ui.LocalHelper
 
 // TODO: replace with material3-carousel.
 @Composable
@@ -27,6 +27,7 @@ internal fun FavouriteGallery(
 ) {
     val spacing = LocalSpacing.current
     val pref = LocalPref.current
+    val helper = LocalHelper.current
     val lives = liveHolder.lives
     LazyVerticalStaggeredGrid(
         columns = StaggeredGridCells.Fixed(rowCount),
@@ -44,7 +45,8 @@ internal fun FavouriteGallery(
                 live = live,
                 noPictureMode = pref.noPictureMode,
                 onClick = {
-                    navigateToLive(live.id)
+                    helper.play(live.url)
+                    navigateToLive()
                 },
                 onLongClick = {},
                 modifier = Modifier.fillMaxWidth()

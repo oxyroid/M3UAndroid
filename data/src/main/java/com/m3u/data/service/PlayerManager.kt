@@ -17,8 +17,9 @@ abstract class PlayerManager {
     protected val mutablePlaybackError = MutableStateFlow<PlaybackException?>(null)
     val playerError: StateFlow<PlaybackException?> = mutablePlaybackError.asStateFlow()
 
-    abstract fun install(url: String)
-    abstract fun uninstall()
-    abstract fun initialize()
-    abstract fun destroy()
+    abstract val url: StateFlow<String?>
+
+    abstract fun play(url: String)
+    abstract fun stop()
+    abstract fun replay()
 }

@@ -15,7 +15,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.OpenInNew
 import androidx.compose.material.icons.rounded.Animation
 import androidx.compose.material.icons.rounded.Backup
-import androidx.compose.material.icons.rounded.BatchPrediction
 import androidx.compose.material.icons.rounded.Chair
 import androidx.compose.material.icons.rounded.ColorLens
 import androidx.compose.material.icons.rounded.Dangerous
@@ -206,8 +205,8 @@ internal fun PreferencesFragment(
                 CheckBoxSharedPreference(
                     title = string.feat_setting_zap_mode,
                     icon = Icons.Rounded.PictureInPicture,
-                    checked = pref.zapMode,
-                    onChanged = { pref.zapMode = !pref.zapMode }
+                    checked = pref.zappingMode,
+                    onChanged = { pref.zappingMode = !pref.zappingMode }
                 )
             }
         }
@@ -259,12 +258,6 @@ internal fun PreferencesFragment(
                             icon = Icons.Rounded.Edit,
                             enabled = false,
                             onClick = navigateToConsole
-                        )
-                        CheckBoxSharedPreference(
-                            title = string.feat_setting_scroll_mode,
-                            icon = Icons.Rounded.BatchPrediction,
-                            checked = pref.scrollMode,
-                            onChanged = { pref.scrollMode = !pref.scrollMode }
                         )
                         CheckBoxSharedPreference(
                             title = string.feat_setting_ssl_verification_enabled,

@@ -15,23 +15,20 @@ import androidx.tv.foundation.lazy.grid.TvGridCells
 import androidx.tv.foundation.lazy.grid.TvLazyGridState
 import androidx.tv.foundation.lazy.grid.TvLazyVerticalGrid
 import androidx.tv.foundation.lazy.grid.items
-import com.m3u.core.architecture.pref.ExperimentalPref
 import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.data.database.entity.Live
 import com.m3u.data.database.entity.LiveHolder
-import com.m3u.features.feed.NavigateToLive
-import com.m3u.features.feed.NavigateToPlaylist
 import com.m3u.material.ktx.plus
 import com.m3u.material.model.LocalSpacing
 
-@OptIn(ExperimentalPref::class)
+typealias PlayStream = (url: String) -> Unit
+
 @Composable
 internal fun LiveGallery(
     state: LazyGridState,
     rowCount: Int,
     liveHolder: LiveHolder,
-    navigateToLive: NavigateToLive,
-    navigateToPlaylist: NavigateToPlaylist,
+    play: PlayStream,
     onMenu: (Live) -> Unit,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(0.dp),
@@ -58,13 +55,7 @@ internal fun LiveGallery(
                 live = live,
                 noPictureMode = pref.noPictureMode,
                 onClick = {
-                    if (pref.scrollMode) {
-                        val ids = lives.map { it.id }
-                        val initialIndex = ids.indexOfFirst { it == live.id }
-                        navigateToPlaylist(ids, initialIndex)
-                    } else {
-                        navigateToLive(live.id)
-                    }
+                    play(live.url)
                 },
                 onLongClick = { onMenu(live) },
                 modifier = Modifier.fillMaxWidth(),
@@ -73,14 +64,12 @@ internal fun LiveGallery(
     }
 }
 
-@OptIn(ExperimentalPref::class)
 @Composable
 internal fun TvFeedGallery(
     state: TvLazyGridState,
     rowCount: Int,
     liveHolder: LiveHolder,
-    navigateToLive: NavigateToLive,
-    navigateToPlaylist: NavigateToPlaylist,
+    play: PlayStream,
     onMenu: (Live) -> Unit,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(0.dp),
@@ -106,13 +95,7 @@ internal fun TvFeedGallery(
                 live = live,
                 noPictureMode = pref.noPictureMode,
                 onClick = {
-                    if (pref.scrollMode) {
-                        val ids = lives.map { it.id }
-                        val initialIndex = ids.indexOfFirst { it == live.id }
-                        navigateToPlaylist(ids, initialIndex)
-                    } else {
-                        navigateToLive(live.id)
-                    }
+                    play(live.url)
                 },
                 onLongClick = { onMenu(live) },
                 modifier = Modifier.fillMaxWidth(),

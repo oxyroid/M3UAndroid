@@ -95,8 +95,7 @@ import com.m3u.ui.isAtTop
 import com.m3u.ui.repeatOnLifecycle
 import kotlinx.coroutines.launch
 
-internal typealias NavigateToLive = (liveId: Int) -> Unit
-internal typealias NavigateToPlaylist = (playlist: List<Int>, initial: Int) -> Unit
+internal typealias NavigateToLive = () -> Unit
 
 private typealias OnMenu = (Live) -> Unit
 private typealias OnScrollUp = () -> Unit
@@ -107,7 +106,6 @@ internal fun FeedRoute(
     contentPadding: PaddingValues,
     feedUrl: String,
     navigateToLive: NavigateToLive,
-    navigateToPlaylist: NavigateToPlaylist,
     modifier: Modifier = Modifier,
     viewModel: FeedViewModel = hiltViewModel()
 ) {
@@ -152,8 +150,11 @@ internal fun FeedRoute(
         if (pref.godMode) {
             Modifier.interceptVolumeEvent { event ->
                 when (event) {
-                    KeyEvent.KEYCODE_VOLUME_UP -> pref.rowCount = (pref.rowCount - 1).coerceAtLeast(1)
-                    KeyEvent.KEYCODE_VOLUME_DOWN -> pref.rowCount = (pref.rowCount + 1).coerceAtMost(3)
+                    KeyEvent.KEYCODE_VOLUME_UP -> pref.rowCount =
+                        (pref.rowCount - 1).coerceAtLeast(1)
+
+                    KeyEvent.KEYCODE_VOLUME_DOWN -> pref.rowCount =
+                        (pref.rowCount + 1).coerceAtMost(3)
                 }
             }
         } else Modifier
@@ -168,7 +169,6 @@ internal fun FeedRoute(
         refreshing = state.fetching,
         onRefresh = { viewModel.onEvent(FeedEvent.Refresh) },
         navigateToLive = navigateToLive,
-        navigateToPlaylist = navigateToPlaylist,
         onMenu = {
             dialogStatus = DialogStatus.Selections(it)
         },
@@ -204,7 +204,6 @@ private fun FeedScreen(
     refreshing: Boolean,
     onRefresh: OnRefresh,
     navigateToLive: NavigateToLive,
-    navigateToPlaylist: NavigateToPlaylist,
     onMenu: OnMenu,
     onScrollUp: OnScrollUp,
     contentPadding: PaddingValues,
@@ -262,9 +261,7 @@ private fun FeedScreen(
                         text = query,
                         onValueChange = onQuery,
                         fontWeight = FontWeight.Bold,
-                        placeholder = stringResource(string.feat_feed_query_placeholder).capitalize(
-                            Locale.current
-                        )
+                        placeholder = stringResource(string.feat_feed_query_placeholder).capitalize(Locale.current)
                     )
                 }
             },
@@ -287,8 +284,10 @@ private fun FeedScreen(
                                     state = state,
                                     rowCount = 4,
                                     liveHolder = liveHolder,
-                                    navigateToLive = navigateToLive,
-                                    navigateToPlaylist = navigateToPlaylist,
+                                    play = { url ->
+                                        helper.play(url)
+                                        navigateToLive()
+                                    },
                                     onMenu = onMenu
                                 )
                             }
@@ -312,8 +311,10 @@ private fun FeedScreen(
                                     state = state,
                                     rowCount = actualRowCount,
                                     liveHolder = liveHolder,
-                                    navigateToLive = navigateToLive,
-                                    navigateToPlaylist = navigateToPlaylist,
+                                    play = { url ->
+                                        helper.play(url)
+                                        navigateToLive()
+                                    },
                                     onMenu = onMenu,
                                     modifier = modifier
                                 )

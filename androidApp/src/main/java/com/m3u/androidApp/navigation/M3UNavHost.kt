@@ -11,11 +11,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.compose.NavHost
-import com.m3u.androidApp.ComposeLaunchMode
-import com.m3u.androidApp.MainActivity
+import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.features.about.navigation.aboutScreen
 import com.m3u.features.console.navigation.consoleScreen
 import com.m3u.features.feed.navigation.feedScreen
+import com.m3u.features.live.PlayerActivity
 import com.m3u.i18n.R.string
 import com.m3u.material.model.LocalNavController
 import com.m3u.ui.Destination
@@ -32,6 +32,7 @@ fun M3UNavHost(
 ) {
     val helper = LocalHelper.current
     val context = LocalContext.current
+    val pref = LocalPref.current
     val navController = LocalNavController.current
     NavHost(
         navController = navController,
@@ -50,12 +51,10 @@ fun M3UNavHost(
                 }
                 navigate(Destination.Feed(feed.url))
             },
-            navigateToLive = { id ->
-                val launchMode = ComposeLaunchMode.Player(Destination.Live(id))
+            navigateToLive = {
+                if (pref.zappingMode && PlayerActivity.isInPipMode) return@rootGraph
                 context.startActivity(
-                    Intent(context, MainActivity::class.java).apply {
-                        putExtra(MainActivity.COMPOSE_LAUNCH_MODE, launchMode)
-                    }
+                    Intent(context, PlayerActivity::class.java)
                 )
             },
             navigateToConsole = {
@@ -71,16 +70,11 @@ fun M3UNavHost(
 
         feedScreen(
             contentPadding = contentPadding,
-            navigateToLive = { id ->
-                val launchMode = ComposeLaunchMode.Player(Destination.Live(id))
+            navigateToLive = {
+                if (pref.zappingMode && PlayerActivity.isInPipMode) return@feedScreen
                 context.startActivity(
-                    Intent(context, MainActivity::class.java).apply {
-                        putExtra(MainActivity.COMPOSE_LAUNCH_MODE, launchMode)
-                    }
+                    Intent(context, PlayerActivity::class.java)
                 )
-            },
-            navigateToPlaylist = { ids, initial ->
-                navigate(Destination.LivePlayList(ids, initial))
             }
         )
         consoleScreen()

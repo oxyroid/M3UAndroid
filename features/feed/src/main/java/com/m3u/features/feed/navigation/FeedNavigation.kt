@@ -14,7 +14,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.m3u.features.feed.FeedRoute
 import com.m3u.features.feed.NavigateToLive
-import com.m3u.features.feed.NavigateToPlaylist
 
 private const val FEED_ROUTE_PATH = "feed_route"
 private const val TYPE_URL = "url"
@@ -29,7 +28,6 @@ fun NavController.navigateToFeed(feedUrl: String, navOptions: NavOptions? = null
 
 fun NavGraphBuilder.feedScreen(
     navigateToLive: NavigateToLive,
-    navigateToPlaylist: NavigateToPlaylist,
     contentPadding: PaddingValues,
 ) {
     composable(
@@ -52,7 +50,6 @@ fun NavGraphBuilder.feedScreen(
         FeedRoute(
             feedUrl = feedUrl,
             navigateToLive = navigateToLive,
-            navigateToPlaylist = navigateToPlaylist,
             contentPadding = contentPadding
         )
     }

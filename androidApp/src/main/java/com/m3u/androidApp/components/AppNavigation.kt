@@ -2,8 +2,8 @@ package com.m3u.androidApp.components
 
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -88,7 +88,7 @@ fun AppNavigation(
 }
 
 @Composable
-private fun ColumnScope.RailContent(
+private fun RailContent(
     navigate: Navigate,
     destinationHolder: RootDestinationHolder,
     rootDestination: Destination.Root?,
@@ -100,53 +100,55 @@ private fun ColumnScope.RailContent(
     val relation = fob?.rootDestination
     val actualActiveDestination = rootDestination ?: relation
     val roots = destinationHolder.roots
-    roots.forEach { root ->
-        val fobbed = root == relation
-        val selected = root == actualActiveDestination
-        val iconTextId = root.iconTextId
-        val selectedIcon = fob?.icon.takeIf { fobbed } ?: root.selectedIcon
-        val unselectedIcon = fob?.icon.takeIf { fobbed } ?: root.unselectedIcon
-        val actualSelectedColor by animateColor("BottomNavigationSheetSelected") {
-            if (fobbed) fobbedColor else selectedColor
-        }
+    Column(modifier) {
+        roots.forEach { root ->
+            val fobbed = root == relation
+            val selected = root == actualActiveDestination
+            val iconTextId = root.iconTextId
+            val selectedIcon = fob?.icon.takeIf { fobbed } ?: root.selectedIcon
+            val unselectedIcon = fob?.icon.takeIf { fobbed } ?: root.unselectedIcon
+            val actualSelectedColor by animateColor("BottomNavigationSheetSelected") {
+                if (fobbed) fobbedColor else selectedColor
+            }
 
-        RailItem(
-            selected = selected,
-            onClick = {
-                if (fobbed && fob != null) {
-                    fob.onClick()
-                } else {
-                    navigate(root)
-                }
-            },
-            selectedColor = actualSelectedColor,
-            contentDestination = stringResource(iconTextId),
-            icon = {
-                val icon = if (selected) selectedIcon
-                else unselectedIcon
-                Crossfade(
-                    targetState = icon,
-                    label = "BottomNavigationSheetIcon"
-                ) { actualIcon ->
-                    Icon(
-                        imageVector = actualIcon,
-                        contentDescription = stringResource(iconTextId)
+            RailItem(
+                selected = selected,
+                onClick = {
+                    if (fobbed && fob != null) {
+                        fob.onClick()
+                    } else {
+                        navigate(root)
+                    }
+                },
+                selectedColor = actualSelectedColor,
+                contentDestination = stringResource(iconTextId),
+                icon = {
+                    val icon = if (selected) selectedIcon
+                    else unselectedIcon
+                    Crossfade(
+                        targetState = icon,
+                        label = "BottomNavigationSheetIcon"
+                    ) { actualIcon ->
+                        Icon(
+                            imageVector = actualIcon,
+                            contentDescription = stringResource(iconTextId)
+                        )
+                    }
+                },
+                label = {
+                    Text(
+                        text = stringResource(iconTextId).title(),
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold
                     )
                 }
-            },
-            label = {
-                Text(
-                    text = stringResource(iconTextId).title(),
-                    style = MaterialTheme.typography.labelSmall,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-        )
+            )
+        }
     }
 }
 
 @Composable
-private fun RowScope.Content(
+private fun Content(
     navigate: Navigate,
     destinationHolder: RootDestinationHolder,
     rootDestination: Destination.Root?,
@@ -158,51 +160,53 @@ private fun RowScope.Content(
     val relation = fob?.rootDestination
     val actualActiveDestination = rootDestination ?: relation
     val roots = destinationHolder.roots
-    roots.forEach { root ->
-        val fobbed = root == relation
-        val selected = root == actualActiveDestination
-        val iconTextId = root.iconTextId
-        val selectedIcon = fob?.icon.takeIf { fobbed } ?: root.selectedIcon
-        val unselectedIcon = fob?.icon.takeIf { fobbed } ?: root.unselectedIcon
-        val actualSelectedColor by animateColor("BottomNavigationSheetSelected") {
-            if (fobbed) fobbedColor else selectedColor
-        }
+    Row(modifier) {
+        roots.forEach { root ->
+            val fobbed = root == relation
+            val selected = root == actualActiveDestination
+            val iconTextId = root.iconTextId
+            val selectedIcon = fob?.icon.takeIf { fobbed } ?: root.selectedIcon
+            val unselectedIcon = fob?.icon.takeIf { fobbed } ?: root.unselectedIcon
+            val actualSelectedColor by animateColor("BottomNavigationSheetSelected") {
+                if (fobbed) fobbedColor else selectedColor
+            }
 
-        NavigationBarItem(
-            selected = selected,
-            onClick = {
-                if (fobbed && fob != null) {
-                    fob.onClick()
-                } else {
-                    navigate(root)
-                }
-            },
-            colors = NavigationBarItemDefaults.colors(
-                selectedTextColor = actualSelectedColor,
-                selectedIconColor = actualSelectedColor
-            ),
-            icon = {
-                val icon = if (selected) selectedIcon
-                else unselectedIcon
-                Crossfade(
-                    targetState = icon,
-                    label = "BottomNavigationSheetIcon"
-                ) { actualIcon ->
-                    Icon(
-                        imageVector = actualIcon,
-                        contentDescription = stringResource(iconTextId)
+            NavigationBarItem(
+                selected = selected,
+                onClick = {
+                    if (fobbed && fob != null) {
+                        fob.onClick()
+                    } else {
+                        navigate(root)
+                    }
+                },
+                colors = NavigationBarItemDefaults.colors(
+                    selectedTextColor = actualSelectedColor,
+                    selectedIconColor = actualSelectedColor
+                ),
+                icon = {
+                    val icon = if (selected) selectedIcon
+                    else unselectedIcon
+                    Crossfade(
+                        targetState = icon,
+                        label = "BottomNavigationSheetIcon"
+                    ) { actualIcon ->
+                        Icon(
+                            imageVector = actualIcon,
+                            contentDescription = stringResource(iconTextId)
+                        )
+                    }
+                },
+                label = {
+                    Text(
+                        text = stringResource(iconTextId).title(),
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold
                     )
-                }
-            },
-            label = {
-                Text(
-                    text = stringResource(iconTextId).title(),
-                    style = MaterialTheme.typography.labelSmall,
-                    fontWeight = FontWeight.Bold
-                )
-            },
-            modifier = Modifier.testTag("destination")
-        )
+                },
+                modifier = Modifier.testTag("destination")
+            )
+        }
     }
 }
 

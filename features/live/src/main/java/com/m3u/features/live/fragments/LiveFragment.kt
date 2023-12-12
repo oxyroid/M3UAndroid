@@ -83,8 +83,7 @@ internal fun LiveFragment(
     onFavourite: () -> Unit,
     openDlnaDevices: () -> Unit,
     onBackPressed: () -> Unit,
-    onInstallMedia: (String) -> Unit,
-    onUninstallMedia: () -> Unit,
+    replay: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val theme = MaterialTheme.colorScheme
@@ -104,9 +103,7 @@ internal fun LiveFragment(
             val state = rememberPlayerState(
                 player = playerState.player,
                 url = url,
-                clipMode = pref.clipMode,
-                onInstallMedia = onInstallMedia,
-                onUninstallMedia = onUninstallMedia
+                clipMode = pref.clipMode
             )
 
             Player(
@@ -204,9 +201,7 @@ internal fun LiveFragment(
                         MaskCircleButton(
                             state = maskState,
                             icon = Icons.Rounded.Refresh,
-                            onClick = {
-                                onInstallMedia(state.url)
-                            }
+                            onClick = replay
                         )
                     },
                     footer = {
