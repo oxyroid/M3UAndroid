@@ -55,7 +55,13 @@ Refer to the [file](RULES.md) to learn about the Code Specification of this repo
 
 ### Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=realOxy/M3UAndroid&type=Date)](https://star-history.com/#realOxy/M3UAndroid&Date)
+<a href="https://star-history.com/#realOxy/M3UAndroid&Date">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=realOxy/M3UAndroid&type=Date&theme=dark" />
+    <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=realOxy/M3UAndroid&type=Date" />
+    <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=realOxy/M3UAndroid&type=Date" />
+  </picture>
+</a>
 
 ### License
 
