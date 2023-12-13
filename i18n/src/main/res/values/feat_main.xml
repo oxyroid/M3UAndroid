@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="feat_main_muted_lives_feed">banned lives</string>
-    <string name="feat_main_unsubscribe_feed">unsubscribe</string>
-    <string name="feat_main_error_unsubscribe_feed">cannot unsubscribe</string>
-    <string name="feat_main_copy_feed_url">copy url</string>
-    <string name="feat_main_rename_feed">rename</string>
-    <string name="feat_main_imported_feed_title">imported</string>
+    <string name="feat_main_muted_streams_playlist">banned streams</string>
+    <string name="feat_main_unsubscribe_playlist">unsubscribe</string>
+    <string name="feat_main_error_unsubscribe_playlist">cannot unsubscribe</string>
+    <string name="feat_main_copy_playlist_url">copy url</string>
+    <string name="feat_main_rename_playlist">rename</string>
+    <string name="feat_main_imported_playlist_title">imported</string>
 </resources>

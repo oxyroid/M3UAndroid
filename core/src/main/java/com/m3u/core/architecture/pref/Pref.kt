@@ -6,13 +6,13 @@ import androidx.compose.runtime.Stable
 import androidx.compose.runtime.snapshotFlow
 import com.m3u.core.annotation.ClipMode
 import com.m3u.core.annotation.ConnectTimeout
-import com.m3u.core.annotation.FeedStrategy
+import com.m3u.core.annotation.PlaylistStrategy
 import kotlinx.coroutines.flow.Flow
 
 @Stable
 interface Pref {
-    @FeedStrategy
-    var feedStrategy: Int
+    @PlaylistStrategy
+    var playlistStrategy: Int
     var useCommonUIMode: Boolean
     var rowCount: Int
 
@@ -42,8 +42,8 @@ interface Pref {
     var screencast: Boolean
 
     companion object {
-        @FeedStrategy
-        const val DEFAULT_FEED_STRATEGY = FeedStrategy.SKIP_FAVORITE
+        @PlaylistStrategy
+        const val DEFAULT_PLAYLIST_STRATEGY = PlaylistStrategy.SKIP_FAVORITE
         const val DEFAULT_USE_COMMON_UI_MODE = false
         const val DEFAULT_ROW_COUNT = 1
 
@@ -70,7 +70,7 @@ interface Pref {
         const val DEFAULT_RECORD = false
         const val DEFAULT_SCREENCAST = true
 
-        const val FEED_STRATEGY = "feed-strategy"
+        const val PLAYLIST_STRATEGY = "playlist-strategy"
         const val USE_COMMON_UI_MODE = "use-common-ui-mode"
         const val ROW_COUNT = "rowCount"
 

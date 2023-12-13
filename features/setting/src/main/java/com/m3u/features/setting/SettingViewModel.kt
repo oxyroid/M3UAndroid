@@ -8,7 +8,7 @@ import androidx.work.workDataOf
 import com.m3u.core.architecture.Publisher
 import com.m3u.core.architecture.pref.Pref
 import com.m3u.core.architecture.viewmodel.BaseViewModel
-import com.m3u.data.repository.LiveRepository
+import com.m3u.data.repository.StreamRepository
 import com.m3u.data.repository.observeAll
 import com.m3u.data.worker.SubscriptionWorker
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -20,7 +20,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class SettingViewModel @Inject constructor(
-    private val liveRepository: LiveRepository,
+    private val streamRepository: StreamRepository,
     @Publisher.App private val publisher: Publisher,
     private val workManager: WorkManager,
     private val pref: Pref
@@ -31,12 +31,12 @@ class SettingViewModel @Inject constructor(
     )
 ) {
     init {
-        liveRepository
+        streamRepository
             .observeAll { it.banned }
-            .onEach { lives ->
+            .onEach { streams ->
                 writable.update {
                     it.copy(
-                        banneds = lives
+                        banneds = streams
                     )
                 }
             }
@@ -66,11 +66,11 @@ class SettingViewModel @Inject constructor(
     private fun importJavaScript(uri: Uri) {
     }
 
-    private fun onBanned(liveId: Int) {
-        val banned = readable.banneds.find { it.id == liveId }
+    private fun onBanned(streamId: Int) {
+        val banned = readable.banneds.find { it.id == streamId }
         if (banned != null) {
             viewModelScope.launch {
-                liveRepository.setBanned(liveId, false)
+                streamRepository.setBanned(streamId, false)
             }
         }
     }
@@ -113,7 +113,7 @@ class SettingViewModel @Inject constructor(
                 workDataOf(
                     SubscriptionWorker.INPUT_STRING_TITLE to title,
                     SubscriptionWorker.INPUT_STRING_URL to url,
-                    SubscriptionWorker.INPUT_INT_STRATEGY to pref.feedStrategy
+                    SubscriptionWorker.INPUT_INT_STRATEGY to pref.playlistStrategy
                 )
             )
             .addTag(url)

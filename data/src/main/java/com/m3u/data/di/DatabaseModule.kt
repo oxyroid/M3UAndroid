@@ -5,8 +5,8 @@ package com.m3u.data.di
 import android.content.Context
 import androidx.room.Room
 import com.m3u.data.database.M3UDatabase
-import com.m3u.data.database.dao.FeedDao
-import com.m3u.data.database.dao.LiveDao
+import com.m3u.data.database.dao.PlaylistDao
+import com.m3u.data.database.dao.StreamDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -32,13 +32,13 @@ object DatabaseModule {
 
     @Provides
     @Singleton
-    fun provideLiveDao(
+    fun provideStreamDao(
         database: M3UDatabase
-    ): LiveDao = database.liveDao()
+    ): StreamDao = database.streamDao()
 
     @Provides
     @Singleton
-    fun provideFeedDao(
+    fun providePlaylistDao(
         database: M3UDatabase
-    ): FeedDao = database.feedDao()
+    ): PlaylistDao = database.playlistDao()
 }

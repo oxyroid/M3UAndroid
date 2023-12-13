@@ -19,15 +19,15 @@
     <string name="feat_setting_common_ui_mode_disabled_description">手机设备不可调整</string>
 
     <string name="feat_setting_script_management">脚本管理</string>
-    <string name="feat_setting_feed_management">订阅管理</string>
+    <string name="feat_setting_playlist_management">订阅管理</string>
     <string name="feat_setting_connect_timeout">最大超时时间</string>
     <string name="feat_setting_god_mode">上帝模式</string>
     <string name="feat_setting_god_mode_description">通过物理按键调节界面</string>
     <string name="feat_setting_console_editor">console editor</string>
     <string name="feat_setting_experimental_mode">试验特性</string>
     <string name="feat_setting_experimental_mode_description">不稳定的功能可能引发致命错误</string>
-    <string name="feat_setting_label_muted_lives">屏蔽的频道</string>
-    <string name="feat_setting_label_add_feed">新增订阅</string>
+    <string name="feat_setting_label_muted_streams">屏蔽的频道</string>
+    <string name="feat_setting_label_add_playlist">新增订阅</string>
     <string name="feat_setting_label_parse_from_clipboard">解析剪贴板</string>
     <string name="feat_setting_label_select_from_local_storage">选择文件</string>
     <string name="feat_setting_label_parse_from_disk">解析本地文件</string>

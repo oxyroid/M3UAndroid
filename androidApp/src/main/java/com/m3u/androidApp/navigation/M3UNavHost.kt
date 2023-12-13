@@ -15,8 +15,8 @@ import androidx.navigation.compose.NavHost
 import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.features.about.navigation.aboutScreen
 import com.m3u.features.console.navigation.consoleScreen
-import com.m3u.features.feed.navigation.feedScreen
-import com.m3u.features.live.PlayerActivity
+import com.m3u.features.playlist.navigation.playlistScreen
+import com.m3u.features.stream.PlayerActivity
 import com.m3u.i18n.R.string
 import com.m3u.material.model.LocalNavController
 import com.m3u.ui.Destination
@@ -45,14 +45,14 @@ fun M3UNavHost(
         rootGraph(
             pagerState = pagerState,
             contentPadding = contentPadding,
-            navigateToFeed = { feed ->
-                helper.title = feed.title.ifEmpty {
-                    if (feed.local) context.getString(string.feat_main_imported_feed_title)
+            navigateToPlaylist = { playlist ->
+                helper.title = playlist.title.ifEmpty {
+                    if (playlist.local) context.getString(string.feat_main_imported_playlist_title)
                     else ""
                 }
-                navigate(Destination.Feed(feed.url))
+                navigate(Destination.Playlist(playlist.url))
             },
-            navigateToLive = {
+            navigateToStream = {
                 if (pref.zappingMode && PlayerActivity.isInPipMode) return@rootGraph
                 val options = ActivityOptions.makeCustomAnimation(
                     context,
@@ -75,10 +75,10 @@ fun M3UNavHost(
             }
         )
 
-        feedScreen(
+        playlistScreen(
             contentPadding = contentPadding,
-            navigateToLive = {
-                if (pref.zappingMode && PlayerActivity.isInPipMode) return@feedScreen
+            navigateToStream = {
+                if (pref.zappingMode && PlayerActivity.isInPipMode) return@playlistScreen
                 val options = ActivityOptions.makeCustomAnimation(
                     context,
                     0,

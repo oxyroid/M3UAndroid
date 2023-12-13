@@ -41,9 +41,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.m3u.core.util.readFileName
-import com.m3u.data.database.entity.Live
+import com.m3u.data.database.entity.Stream
 import com.m3u.features.setting.UriWrapper
-import com.m3u.features.setting.components.MutedLiveItem
+import com.m3u.features.setting.components.MutedStreamItem
 import com.m3u.i18n.R.string
 import com.m3u.material.components.Button
 import com.m3u.material.components.LabelField
@@ -51,7 +51,7 @@ import com.m3u.material.components.TextButton
 import com.m3u.material.ktx.plus
 import com.m3u.material.model.LocalSpacing
 
-internal typealias MutedLiveHolder = () -> List<Live>
+internal typealias MutedStreamHolder = () -> List<Stream>
 
 @Composable
 internal fun SubscriptionsFragment(
@@ -60,7 +60,7 @@ internal fun SubscriptionsFragment(
     url: String,
     uriWrapper: UriWrapper,
     localStorage: Boolean,
-    mutedLiveHolder: MutedLiveHolder,
+    streamHolder: MutedStreamHolder,
     onBanned: (Int) -> Unit,
     onTitle: (String) -> Unit,
     onUrl: (String) -> Unit,
@@ -72,14 +72,14 @@ internal fun SubscriptionsFragment(
     val spacing = LocalSpacing.current
     val theme = MaterialTheme.colorScheme
     val focusRequester = remember { FocusRequester() }
-    val mutedLives = mutedLiveHolder()
+    val streams = streamHolder()
     LazyColumn(
         contentPadding = PaddingValues(spacing.medium) + contentPadding,
         verticalArrangement = Arrangement.spacedBy(spacing.small),
         modifier = modifier.focusGroup()
     ) {
         item {
-            if (mutedLives.isNotEmpty()) {
+            if (streams.isNotEmpty()) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -87,7 +87,7 @@ internal fun SubscriptionsFragment(
                     verticalArrangement = Arrangement.spacedBy(1.dp)
                 ) {
                     Text(
-                        text = stringResource(string.feat_setting_label_muted_lives),
+                        text = stringResource(string.feat_setting_label_muted_streams),
                         color = theme.onPrimary,
                         modifier = Modifier
                             .fillMaxWidth()
@@ -97,10 +97,10 @@ internal fun SubscriptionsFragment(
                                 horizontal = spacing.medium
                             )
                     )
-                    mutedLives.forEach { live ->
-                        MutedLiveItem(
-                            live = live,
-                            onBanned = { onBanned(live.id) },
+                    streams.forEach { stream ->
+                        MutedStreamItem(
+                            stream = stream,
+                            onBanned = { onBanned(stream.id) },
                             modifier = Modifier.background(theme.surface)
                         )
                     }
@@ -224,7 +224,7 @@ private fun LocalStorageButton(
         } else {
             try {
                 val filename = result.readFileName(context.contentResolver)
-                    ?: "Feed_${System.currentTimeMillis()}"
+                    ?: "Playlist_${System.currentTimeMillis()}"
                 val title = filename
                     .split(".")
                     .dropLast(1)
@@ -295,7 +295,7 @@ private fun ClipboardButton(
             val clipboardTitle = run {
                 val filePath = clipboardUrl.split("/")
                 val fileSplit = filePath.lastOrNull()?.split(".") ?: emptyList()
-                fileSplit.firstOrNull() ?: "Feed_${System.currentTimeMillis()}"
+                fileSplit.firstOrNull() ?: "Playlist_${System.currentTimeMillis()}"
             }
             onTitle(clipboardTitle)
             onUrl(clipboardUrl)

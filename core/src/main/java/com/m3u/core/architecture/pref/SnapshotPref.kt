@@ -6,7 +6,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import com.m3u.core.annotation.ClipMode
 import com.m3u.core.annotation.ConnectTimeout
-import com.m3u.core.annotation.FeedStrategy
+import com.m3u.core.annotation.PlaylistStrategy
 import com.m3u.core.architecture.pref.Pref.Companion.AUTO_REFRESH
 import com.m3u.core.architecture.pref.Pref.Companion.BRIGHTNESS_GESTURE
 import com.m3u.core.architecture.pref.Pref.Companion.CINEMA_MODE
@@ -18,7 +18,7 @@ import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_CINEMA_MODE
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_CLIP_MODE
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_CONNECT_TIMEOUT
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_EXPERIMENTAL_MODE
-import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_FEED_STRATEGY
+import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_PLAYLIST_STRATEGY
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_FULL_INFO_PLAYER
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_GOD_MODE
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_NO_PICTURE_MODE
@@ -32,7 +32,7 @@ import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_USE_DYNAMIC_COLORS
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_VOLUME_GESTURE
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_ZAPPING_MODE
 import com.m3u.core.architecture.pref.Pref.Companion.EXPERIMENTAL_MODE
-import com.m3u.core.architecture.pref.Pref.Companion.FEED_STRATEGY
+import com.m3u.core.architecture.pref.Pref.Companion.PLAYLIST_STRATEGY
 import com.m3u.core.architecture.pref.Pref.Companion.FULL_INFO_PLAYER
 import com.m3u.core.architecture.pref.Pref.Companion.GOD_MODE
 import com.m3u.core.architecture.pref.Pref.Companion.NO_PICTURE_MODE
@@ -57,9 +57,9 @@ class SnapshotPref @Inject constructor(
     private val sharedPreferences: SharedPreferences =
         context.getSharedPreferences(SHARED_SETTINGS, Context.MODE_PRIVATE)
 
-    @FeedStrategy
-    override var feedStrategy: Int by
-    sharedPreferences.intAsState(DEFAULT_FEED_STRATEGY, FEED_STRATEGY)
+    @PlaylistStrategy
+    override var playlistStrategy: Int by
+    sharedPreferences.intAsState(DEFAULT_PLAYLIST_STRATEGY, PLAYLIST_STRATEGY)
     override var useCommonUIMode: Boolean by
     sharedPreferences.booleanAsState(DEFAULT_USE_COMMON_UI_MODE, USE_COMMON_UI_MODE)
 

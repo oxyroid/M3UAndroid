@@ -1,6 +1,6 @@
 package com.m3u.data.parser.model
 
-import com.m3u.data.database.entity.Live
+import com.m3u.data.database.entity.Stream
 
 data class M3UData(
     val id: String = "",
@@ -12,12 +12,12 @@ data class M3UData(
     val duration: Double = -1.0
 )
 
-fun M3UData.toLive(
-    feedUrl: String
-): Live = Live(
+fun M3UData.toStream(
+    playlistUrl: String
+): Stream = Stream(
     url = url,
     group = group,
     title = title,
     cover = cover,
-    feedUrl = feedUrl
+    playlistUrl = playlistUrl
 )

@@ -7,8 +7,8 @@ import com.m3u.core.architecture.pref.observeAsFlow
 import com.m3u.core.architecture.viewmodel.BaseViewModel
 import com.m3u.core.util.collections.filterNotNullKeys
 import com.m3u.core.wrapper.EmptyMessage
-import com.m3u.data.repository.FeedRepository
-import com.m3u.data.repository.LiveRepository
+import com.m3u.data.repository.PlaylistRepository
+import com.m3u.data.repository.StreamRepository
 import com.m3u.data.service.PlayerManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
@@ -22,25 +22,25 @@ import javax.inject.Inject
 
 @HiltViewModel
 class FavouriteViewModel @Inject constructor(
-    liveRepository: LiveRepository,
-    feedRepository: FeedRepository,
+    streamRepository: StreamRepository,
+    playlistRepository: PlaylistRepository,
     pref: Pref,
     playerManager: PlayerManager
 ) : BaseViewModel<FavoriteState, FavoriteEvent, EmptyMessage>(
     emptyState = FavoriteState()
 ) {
     init {
-        liveRepository
+        streamRepository
             .observeAll()
-            .map { lives ->
-                lives.filter { it.favourite }
+            .map { streams ->
+                streams.filter { it.favourite }
             }
-            .onEach { lives ->
+            .onEach { streams ->
                 writable.update { state ->
                     state.copy(
-                        details = lives
-                            .groupBy { it.feedUrl }
-                            .mapKeys { feedRepository.get(it.key)?.title }
+                        details = streams
+                            .groupBy { it.playlistUrl }
+                            .mapKeys { playlistRepository.get(it.key)?.title }
                             .filterNotNullKeys()
                     )
                 }
@@ -60,10 +60,10 @@ class FavouriteViewModel @Inject constructor(
     val floating = combine(
         zappingMode,
         playerManager.url,
-        liveRepository.observeAll()
-    ) { zappingMode, url, lives ->
+        streamRepository.observeAll()
+    ) { zappingMode, url, streams ->
         if (!zappingMode) null
-        else lives.find { it.url == url }
+        else streams.find { it.url == url }
     }
         .stateIn(
             scope = viewModelScope,

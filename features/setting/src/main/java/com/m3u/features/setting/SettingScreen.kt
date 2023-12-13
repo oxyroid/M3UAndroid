@@ -23,7 +23,7 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.m3u.features.setting.fragments.MutedLiveHolder
+import com.m3u.features.setting.fragments.MutedStreamHolder
 import com.m3u.features.setting.fragments.PreferencesFragment
 import com.m3u.features.setting.fragments.ScriptsFragment
 import com.m3u.features.setting.fragments.SubscriptionsFragment
@@ -70,7 +70,7 @@ fun SettingRoute(
         uriWrapper = rememberUriWrapper(state.uri),
         useCommonUIModeEnable = useCommonUIModeEnable,
         navigateToConsole = navigateToConsole,
-        mutedLiveHolder = { state.banneds },
+        mutedStreamHolder = { state.banneds },
         onTitle = { viewModel.onEvent(SettingEvent.OnTitle(it)) },
         onUrl = { viewModel.onEvent(SettingEvent.OnUrl(it)) },
         onSubscribe = {
@@ -99,7 +99,7 @@ private fun SettingScreen(
     onUrl: (String) -> Unit,
     onSubscribe: () -> Unit,
     useCommonUIModeEnable: Boolean,
-    mutedLiveHolder: MutedLiveHolder,
+    mutedStreamHolder: MutedStreamHolder,
     onBanned: (Int) -> Unit,
     importJavaScript: (Uri) -> Unit,
     navigateToConsole: NavigateToConsole,
@@ -167,7 +167,7 @@ private fun SettingScreen(
                                 title = title,
                                 url = url,
                                 uriWrapper = uriWrapper,
-                                mutedLiveHolder = mutedLiveHolder,
+                                streamHolder = mutedStreamHolder,
                                 onBanned = onBanned,
                                 onTitle = onTitle,
                                 onUrl = onUrl,

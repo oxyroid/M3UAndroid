@@ -2,10 +2,10 @@
 
 package com.m3u.data.di
 
-import com.m3u.data.parser.PlaylistParser
+import com.m3u.data.parser.M3UPlaylistParser
 import com.m3u.data.parser.VersionCatalogParser
-import com.m3u.data.parser.impl.BjoernPetersenPlaylistParser
-import com.m3u.data.parser.impl.DefaultPlaylistParser
+import com.m3u.data.parser.impl.BjoernPetersenM3UPlaylistParser
+import com.m3u.data.parser.impl.DefaultM3UPlaylistParser
 import com.m3u.data.parser.impl.VersionCatalogParserImpl
 import dagger.Binds
 import dagger.Module
@@ -16,12 +16,12 @@ import dagger.hilt.components.SingletonComponent
 @InstallIn(SingletonComponent::class)
 interface ParserModule {
     @Binds
-    @PlaylistParser.Default
-    fun bindPlaylistParser(parser: DefaultPlaylistParser): PlaylistParser
+    @M3UPlaylistParser.Default
+    fun bindM3UPlaylistParser(parser: DefaultM3UPlaylistParser): M3UPlaylistParser
 
     @Binds
-    @PlaylistParser.BjoernPetersen
-    fun bindBjoernPetersenPlaylistParser(parser: BjoernPetersenPlaylistParser): PlaylistParser
+    @M3UPlaylistParser.BjoernPetersen
+    fun bindBjoernPetersenM3UPlaylistParser(parser: BjoernPetersenM3UPlaylistParser): M3UPlaylistParser
 
     @Binds
     fun bindVersionCatalogParser(parser: VersionCatalogParserImpl): VersionCatalogParser

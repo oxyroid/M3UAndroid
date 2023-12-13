@@ -2,10 +2,10 @@ package com.m3u.features.main
 
 import androidx.lifecycle.viewModelScope
 import com.m3u.core.architecture.viewmodel.BaseViewModel
-import com.m3u.data.repository.FeedRepository
-import com.m3u.data.repository.LiveRepository
-import com.m3u.features.main.model.FeedDetail
-import com.m3u.features.main.model.FeedDetailHolder
+import com.m3u.data.repository.PlaylistRepository
+import com.m3u.data.repository.StreamRepository
+import com.m3u.features.main.model.PlaylistDetail
+import com.m3u.features.main.model.PlaylistDetailHolder
 import com.m3u.features.main.model.toDetail
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -21,16 +21,16 @@ import javax.inject.Inject
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
-    private val feedRepository: FeedRepository,
-    liveRepository: LiveRepository,
+    private val playlistRepository: PlaylistRepository,
+    streamRepository: StreamRepository,
 ) : BaseViewModel<MainState, MainEvent, MainMessage>(
     emptyState = MainState()
 ) {
-    private val counts: StateFlow<Map<String, Int>> = liveRepository
+    private val counts: StateFlow<Map<String, Int>> = streamRepository
         .observeAll()
-        .map { lives ->
-            lives
-                .groupBy { it.feedUrl }
+        .map { streams ->
+            streams
+                .groupBy { it.playlistUrl }
                 .mapValues { it.value.size }
         }
         .stateIn(
@@ -39,42 +39,42 @@ class MainViewModel @Inject constructor(
             initialValue = emptyMap()
         )
 
-    internal val feeds: StateFlow<FeedDetailHolder> = feedRepository
+    internal val playlists: StateFlow<PlaylistDetailHolder> = playlistRepository
         .observeAll()
         .distinctUntilChanged()
         .combine(counts) { fs, cs ->
             withContext(Dispatchers.Default) {
                 fs.map { f ->
-                    f.toDetail(cs[f.url] ?: FeedDetail.DEFAULT_COUNT)
+                    f.toDetail(cs[f.url] ?: PlaylistDetail.DEFAULT_COUNT)
                 }
             }
         }
-        .map { FeedDetailHolder(it) }
+        .map { PlaylistDetailHolder(it) }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000L),
-            initialValue = FeedDetailHolder()
+            initialValue = PlaylistDetailHolder()
         )
 
     override fun onEvent(event: MainEvent) {
         when (event) {
             is MainEvent.Unsubscribe -> unsubscribe(event.url)
-            is MainEvent.Rename -> rename(event.feedUrl, event.target)
+            is MainEvent.Rename -> rename(event.playlistUrl, event.target)
         }
     }
 
     private fun unsubscribe(url: String) {
         viewModelScope.launch {
-            val feed = feedRepository.unsubscribe(url)
-            if (feed == null) {
+            val playlist = playlistRepository.unsubscribe(url)
+            if (playlist == null) {
                 onMessage(MainMessage.ErrorCannotUnsubscribe)
             }
         }
     }
 
-    private fun rename(feedUrl: String, target: String) {
+    private fun rename(playlistUrl: String, target: String) {
         viewModelScope.launch {
-            feedRepository.rename(feedUrl, target)
+            playlistRepository.rename(playlistUrl, target)
         }
     }
 }

@@ -1,9 +1,9 @@
 package com.m3u.features.favorite
 
-import com.m3u.data.database.entity.Live
+import com.m3u.data.database.entity.Stream
 
-typealias LiveDetails = Map<String, List<Live>>
+typealias StreamDetails = Map<String, List<Stream>>
 
 data class FavoriteState(
-    val details: LiveDetails = emptyMap(),
+    val details: StreamDetails = emptyMap(),
 )

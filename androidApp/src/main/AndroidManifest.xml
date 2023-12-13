@@ -52,7 +52,7 @@
 
         </activity>
         <activity
-            android:name="com.m3u.features.live.PlayerActivity"
+            android:name="com.m3u.features.stream.PlayerActivity"
             android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation|locale|layoutDirection"
             android:exported="true"
             android:theme="@style/Theme.M3U"

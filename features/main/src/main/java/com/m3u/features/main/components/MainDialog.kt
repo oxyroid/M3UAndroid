@@ -15,7 +15,7 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
-import com.m3u.data.database.entity.Feed
+import com.m3u.data.database.entity.Playlist
 import com.m3u.i18n.R.string
 import com.m3u.material.components.AppDialog
 import com.m3u.material.components.DialogItem
@@ -24,13 +24,13 @@ import com.m3u.material.ktx.animateDp
 import com.m3u.material.model.LocalSpacing
 
 internal typealias OnUpdateStatus = (MainDialog) -> Unit
-internal typealias OnUnsubscribe = (feedUrl: String) -> Unit
-internal typealias OnRename = (feedUrl: String, target: String) -> Unit
+internal typealias OnUnsubscribe = (playlistUrl: String) -> Unit
+internal typealias OnRename = (playlistUrl: String, target: String) -> Unit
 
 internal sealed class MainDialog {
     data object Idle : MainDialog()
     data class Selections(
-        val feed: Feed
+        val playlist: Playlist
     ) : MainDialog()
 }
 
@@ -62,13 +62,13 @@ internal fun MainDialog(
             val context = LocalContext.current
             val currentStatus = remember { status as MainDialog.Selections }
             if (status is MainDialog.Selections) {
-                val editable = with(currentStatus.feed) {
+                val editable = with(currentStatus.playlist) {
                     !local || title.isNotEmpty()
                 }
                 var renamedText by remember(currentStatus) {
                     mutableStateOf(
-                        with(currentStatus.feed) {
-                            if (editable) title else context.getString(string.feat_main_imported_feed_title)
+                        with(currentStatus.playlist) {
+                            if (editable) title else context.getString(string.feat_main_imported_playlist_title)
                         }
                     )
                 }
@@ -80,21 +80,21 @@ internal fun MainDialog(
                     iconTint = if (editMode) theme.primary else theme.onBackground,
                     onIconClick = {
                         val target = !editMode
-                        if (!target && renamedText != currentStatus.feed.title) {
-                            rename(currentStatus.feed.url, renamedText)
+                        if (!target && renamedText != currentStatus.playlist.title) {
+                            rename(currentStatus.playlist.url, renamedText)
                         }
                         editMode = target
                     }
                 )
                 if (!editMode) {
-                    DialogItem(string.feat_main_unsubscribe_feed) {
-                        unsubscribe(currentStatus.feed.url)
+                    DialogItem(string.feat_main_unsubscribe_playlist) {
+                        unsubscribe(currentStatus.playlist.url)
                         update(MainDialog.Idle)
                     }
-                    if (!currentStatus.feed.local) {
+                    if (!currentStatus.playlist.local) {
                         val clipboardManager = LocalClipboardManager.current
-                        DialogItem(string.feat_main_copy_feed_url) {
-                            val annotatedString = AnnotatedString(currentStatus.feed.url)
+                        DialogItem(string.feat_main_copy_playlist_url) {
+                            val annotatedString = AnnotatedString(currentStatus.playlist.url)
                             clipboardManager.setText(annotatedString)
                             update(MainDialog.Idle)
                         }

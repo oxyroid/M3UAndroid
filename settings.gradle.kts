@@ -29,8 +29,8 @@ include(":material")
 include(
     ":features:main",
     ":features:setting",
-    ":features:live",
-    ":features:feed",
+    ":features:stream",
+    ":features:playlist",
     ":features:favorite",
     ":features:console",
     ":features:crash",

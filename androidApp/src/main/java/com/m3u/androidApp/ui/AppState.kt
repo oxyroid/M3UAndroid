@@ -19,8 +19,8 @@ import com.m3u.features.about.navigation.ABOUT_ROUTE
 import com.m3u.features.about.navigation.navigateToAbout
 import com.m3u.features.console.navigation.CONSOLE_ROUTE
 import com.m3u.features.console.navigation.navigateToConsole
-import com.m3u.features.feed.navigation.FEED_ROUTE
-import com.m3u.features.feed.navigation.navigateToFeed
+import com.m3u.features.playlist.navigation.PLAYLIST_ROUTE
+import com.m3u.features.playlist.navigation.navigateToPlaylist
 import com.m3u.ui.Destination
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -49,7 +49,7 @@ fun rememberAppState(
 class AppState(
     val navController: NavHostController,
     val pagerState: PagerState,
-    val coroutineScope: CoroutineScope
+    private val coroutineScope: CoroutineScope
 ) {
     // Current Root Destination Page.
     // Initially, we stored the "pagerState" here. However, we encountered an unexpected behavior
@@ -90,8 +90,8 @@ class AppState(
                 }
             }
 
-            is Destination.Feed -> navController.navigateToFeed(destination.url)
-            is Destination.Live, is Destination.LivePlayList -> {}
+            is Destination.Playlist -> navController.navigateToPlaylist(destination.url)
+            is Destination.Stream -> {}
             Destination.Console -> navController.navigateToConsole()
             Destination.About -> navController.navigateToAbout()
         }
@@ -107,7 +107,7 @@ class AppState(
 inline infix fun <reified D : Destination> NavDestination.destinationTo(clazz: Class<D>): Boolean {
     val targetRoute = when (clazz.name) {
         Destination.Root::class.java.name -> ROOT_ROUTE
-        Destination.Feed::class.java.name -> FEED_ROUTE
+        Destination.Playlist::class.java.name -> PLAYLIST_ROUTE
         Destination.Console::class.java.name -> CONSOLE_ROUTE
         Destination.About::class.java.name -> ABOUT_ROUTE
         else -> ROOT_ROUTE

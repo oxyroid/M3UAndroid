@@ -2,11 +2,11 @@
 
 package com.m3u.data.di
 
-import com.m3u.data.repository.FeedRepository
-import com.m3u.data.repository.LiveRepository
+import com.m3u.data.repository.PlaylistRepository
+import com.m3u.data.repository.StreamRepository
 import com.m3u.data.repository.MediaRepository
-import com.m3u.data.repository.impl.FeedRepositoryImpl
-import com.m3u.data.repository.impl.LiveRepositoryImpl
+import com.m3u.data.repository.impl.PlaylistRepositoryImpl
+import com.m3u.data.repository.impl.StreamRepositoryImpl
 import com.m3u.data.repository.impl.MediaRepositoryImpl
 import dagger.Binds
 import dagger.Module
@@ -19,15 +19,15 @@ import javax.inject.Singleton
 interface RepositoryModule {
     @Binds
     @Singleton
-    fun bindFeedRepository(
-        repository: FeedRepositoryImpl
-    ): FeedRepository
+    fun bindPlaylistRepository(
+        repository: PlaylistRepositoryImpl
+    ): PlaylistRepository
 
     @Binds
     @Singleton
-    fun bindLiveRepository(
-        repository: LiveRepositoryImpl
-    ): LiveRepository
+    fun bindStreamRepository(
+        repository: StreamRepositoryImpl
+    ): StreamRepository
 
     @Binds
     @Singleton

@@ -16,9 +16,9 @@ import androidx.navigation.compose.composable
 import com.m3u.core.wrapper.eventOf
 import com.m3u.core.wrapper.handledEvent
 import com.m3u.features.favorite.FavouriteRoute
-import com.m3u.features.favorite.NavigateToLive
+import com.m3u.features.favorite.NavigateToStream
 import com.m3u.features.main.MainRoute
-import com.m3u.features.main.NavigateToFeed
+import com.m3u.features.main.NavigateToPlaylist
 import com.m3u.features.main.NavigateToSettingSubscription
 import com.m3u.features.setting.NavigateToAbout
 import com.m3u.features.setting.NavigateToConsole
@@ -40,8 +40,8 @@ fun NavController.popupToRoot() {
 fun NavGraphBuilder.rootGraph(
     pagerState: PagerState,
     contentPadding: PaddingValues,
-    navigateToFeed: NavigateToFeed,
-    navigateToLive: NavigateToLive,
+    navigateToPlaylist: NavigateToPlaylist,
+    navigateToStream: NavigateToStream,
     navigateToConsole: NavigateToConsole,
     navigateToAbout: NavigateToAbout,
     navigateToSettingSubscription: NavigateToSettingSubscription,
@@ -50,8 +50,8 @@ fun NavGraphBuilder.rootGraph(
         RootGraph(
             pagerState = pagerState,
             contentPadding = contentPadding,
-            navigateToFeed = navigateToFeed,
-            navigateToLive = navigateToLive,
+            navigateToPlaylist = navigateToPlaylist,
+            navigateToStream = navigateToStream,
             navigateToConsole = navigateToConsole,
             navigateToAbout = navigateToAbout,
             navigateToSettingSubscription = navigateToSettingSubscription
@@ -63,8 +63,8 @@ fun NavGraphBuilder.rootGraph(
 private fun RootGraph(
     pagerState: PagerState,
     contentPadding: PaddingValues,
-    navigateToFeed: NavigateToFeed,
-    navigateToLive: NavigateToLive,
+    navigateToPlaylist: NavigateToPlaylist,
+    navigateToStream: NavigateToStream,
     navigateToConsole: NavigateToConsole,
     navigateToAbout: NavigateToAbout,
     navigateToSettingSubscription: NavigateToSettingSubscription,
@@ -98,7 +98,7 @@ private fun RootGraph(
         when (destinations[pagerIndex]) {
             Destination.Root.Main -> {
                 MainRoute(
-                    navigateToFeed = navigateToFeed,
+                    navigateToPlaylist = navigateToPlaylist,
                     navigateToSettingSubscription = navigateToSettingSubscription,
                     resume = rememberResumeEvent(pagerState.targetPage, pagerIndex),
                     contentPadding = contentPadding,
@@ -108,7 +108,7 @@ private fun RootGraph(
 
             Destination.Root.Favourite -> {
                 FavouriteRoute(
-                    navigateToLive = navigateToLive,
+                    navigateToStream = navigateToStream,
                     resume = rememberResumeEvent(pagerState.targetPage, pagerIndex),
                     contentPadding = contentPadding,
                     modifier = Modifier.fillMaxSize()

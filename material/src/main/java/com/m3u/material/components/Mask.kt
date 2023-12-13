@@ -184,10 +184,9 @@ fun MaskButton(
 ) {
     val tooltipState = rememberTooltipState()
 
-    val animatedColor by tint.ifUnspecified {
-        LocalContentColor.current
-    }
-        .animated("MaskButtonTint")
+    val animatedColor by tint
+        .ifUnspecified { LocalContentColor.current }
+        .animated("mask-button-tint")
 
     val currentKeepAlive by rememberUpdatedState(state::wake)
     TooltipBox(

@@ -12,19 +12,19 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.core.architecture.pref.LocalPref
-import com.m3u.data.database.entity.LiveHolder
-import com.m3u.data.database.entity.rememberLiveHolder
+import com.m3u.data.database.entity.StreamHolder
+import com.m3u.data.database.entity.rememberStreamHolder
 import com.m3u.features.favorite.components.FavouriteGallery
 import com.m3u.material.ktx.interceptVolumeEvent
 import com.m3u.ui.EventHandler
 import com.m3u.ui.LocalHelper
 import com.m3u.ui.ResumeEvent
 
-typealias NavigateToLive = () -> Unit
+typealias NavigateToStream = () -> Unit
 
 @Composable
 fun FavouriteRoute(
-    navigateToLive: NavigateToLive,
+    navigateToStream: NavigateToStream,
     resume: ResumeEvent,
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
@@ -35,7 +35,7 @@ fun FavouriteRoute(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val floating by viewModel.floating.collectAsStateWithLifecycle()
 
-    val lives = remember(state.details) {
+    val streams = remember(state.details) {
         state.details.flatMap { it.value }
     }
 
@@ -59,11 +59,11 @@ fun FavouriteRoute(
     FavoriteScreen(
         contentPadding = contentPadding,
         rowCount = pref.rowCount,
-        liveHolder = rememberLiveHolder(
-            lives = lives,
+        streamHolder = rememberStreamHolder(
+            streams = streams,
             floating = floating
         ),
-        navigateToLive = navigateToLive,
+        navigateToStream = navigateToStream,
         modifier = modifier
             .fillMaxSize()
             .then(interceptVolumeEventModifier)
@@ -74,8 +74,8 @@ fun FavouriteRoute(
 private fun FavoriteScreen(
     contentPadding: PaddingValues,
     rowCount: Int,
-    liveHolder: LiveHolder,
-    navigateToLive: NavigateToLive,
+    streamHolder: StreamHolder,
+    navigateToStream: NavigateToStream,
     modifier: Modifier = Modifier
 ) {
     val configuration = LocalConfiguration.current
@@ -86,9 +86,9 @@ private fun FavoriteScreen(
     }
     FavouriteGallery(
         contentPadding = contentPadding,
-        liveHolder = liveHolder,
+        streamHolder = streamHolder,
         rowCount = actualRowCount,
-        navigateToLive = navigateToLive,
+        navigateToStream = navigateToStream,
         modifier = modifier
     )
 }

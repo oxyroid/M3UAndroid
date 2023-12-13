@@ -10,8 +10,8 @@ import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.m3u.core.architecture.pref.LocalPref
-import com.m3u.data.database.entity.LiveHolder
-import com.m3u.features.favorite.NavigateToLive
+import com.m3u.data.database.entity.StreamHolder
+import com.m3u.features.favorite.NavigateToStream
 import com.m3u.material.ktx.plus
 import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.LocalHelper
@@ -20,16 +20,16 @@ import com.m3u.ui.LocalHelper
 @Composable
 internal fun FavouriteGallery(
     contentPadding: PaddingValues,
-    liveHolder: LiveHolder,
+    streamHolder: StreamHolder,
     rowCount: Int,
-    navigateToLive: NavigateToLive,
+    navigateToStream: NavigateToStream,
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
     val pref = LocalPref.current
     val helper = LocalHelper.current
-    val lives = liveHolder.lives
-    val floating = liveHolder.floating
+    val streams = streamHolder.streams
+    val floating = streamHolder.floating
     LazyVerticalStaggeredGrid(
         columns = StaggeredGridCells.Fixed(rowCount),
         verticalItemSpacing = spacing.medium,
@@ -38,17 +38,17 @@ internal fun FavouriteGallery(
         modifier = modifier.fillMaxSize(),
     ) {
         items(
-            items = lives,
+            items = streams,
             key = { it.id },
             contentType = { it.cover.isNullOrEmpty() }
-        ) { live ->
+        ) { stream ->
             FavoriteItem(
-                live = live,
+                stream = stream,
                 noPictureMode = pref.noPictureMode,
-                border = floating != live,
+                border = floating != stream,
                 onClick = {
-                    helper.play(live.url)
-                    navigateToLive()
+                    helper.play(stream.url)
+                    navigateToStream()
                 },
                 onLongClick = {},
                 modifier = Modifier.fillMaxWidth()

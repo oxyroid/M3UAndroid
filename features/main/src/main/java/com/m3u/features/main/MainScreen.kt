@@ -39,12 +39,12 @@ import androidx.compose.ui.text.intl.Locale
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.core.architecture.pref.LocalPref
-import com.m3u.data.database.entity.Feed
-import com.m3u.features.main.components.FeedGallery
+import com.m3u.data.database.entity.Playlist
+import com.m3u.features.main.components.PlaylistGallery
 import com.m3u.features.main.components.MainDialog
 import com.m3u.features.main.components.OnRename
 import com.m3u.features.main.components.OnUnsubscribe
-import com.m3u.features.main.model.FeedDetailHolder
+import com.m3u.features.main.model.PlaylistDetailHolder
 import com.m3u.i18n.R
 import com.m3u.material.components.Background
 import com.m3u.material.ktx.interceptVolumeEvent
@@ -55,12 +55,12 @@ import com.m3u.ui.MessageEventHandler
 import com.m3u.ui.MonoText
 import com.m3u.ui.ResumeEvent
 
-typealias NavigateToFeed = (feed: Feed) -> Unit
+typealias NavigateToPlaylist = (playlist: Playlist) -> Unit
 typealias NavigateToSettingSubscription = () -> Unit
 
 @Composable
 fun MainRoute(
-    navigateToFeed: NavigateToFeed,
+    navigateToPlaylist: NavigateToPlaylist,
     navigateToSettingSubscription: NavigateToSettingSubscription,
     resume: ResumeEvent,
     contentPadding: PaddingValues,
@@ -71,7 +71,7 @@ fun MainRoute(
     val pref = LocalPref.current
 
     val message by viewModel.message.collectAsStateWithLifecycle()
-    val feedDetailHolder by viewModel.feeds.collectAsStateWithLifecycle()
+    val playlistDetailHolder by viewModel.playlists.collectAsStateWithLifecycle()
 
     MessageEventHandler(message)
 
@@ -94,12 +94,12 @@ fun MainRoute(
     }
 
     MainScreen(
-        feedDetailHolder = feedDetailHolder,
+        playlistDetailHolder = playlistDetailHolder,
         rowCount = pref.rowCount,
         contentPadding = contentPadding,
-        navigateToFeed = navigateToFeed,
+        navigateToPlaylist = navigateToPlaylist,
         unsubscribe = { viewModel.onEvent(MainEvent.Unsubscribe(it)) },
-        rename = { feedUrl, target -> viewModel.onEvent(MainEvent.Rename(feedUrl, target)) },
+        rename = { playlistUrl, target -> viewModel.onEvent(MainEvent.Rename(playlistUrl, target)) },
         modifier = modifier
             .fillMaxSize()
             .then(interceptVolumeEventModifier),
@@ -109,9 +109,9 @@ fun MainRoute(
 @Composable
 private fun MainScreen(
     rowCount: Int,
-    feedDetailHolder: FeedDetailHolder,
+    playlistDetailHolder: PlaylistDetailHolder,
     contentPadding: PaddingValues,
-    navigateToFeed: NavigateToFeed,
+    navigateToPlaylist: NavigateToPlaylist,
     unsubscribe: OnUnsubscribe,
     rename: OnRename,
     modifier: Modifier = Modifier
@@ -119,7 +119,7 @@ private fun MainScreen(
     var dialog: MainDialog by remember { mutableStateOf(MainDialog.Idle) }
     val configuration = LocalConfiguration.current
 
-    val details = feedDetailHolder.details
+    val details = playlistDetailHolder.details
 
     val actualRowCount = remember(rowCount, configuration.orientation) {
         when (configuration.orientation) {
@@ -129,16 +129,16 @@ private fun MainScreen(
     }
     Background(modifier) {
         if (details.isNotEmpty()) {
-            FeedGallery(
+            PlaylistGallery(
                 rowCount = actualRowCount,
-                feedDetailHolder = feedDetailHolder,
-                navigateToFeed = navigateToFeed,
+                playlistDetailHolder = playlistDetailHolder,
+                navigateToPlaylist = navigateToPlaylist,
                 onMenu = { dialog = MainDialog.Selections(it) },
                 contentPadding = contentPadding,
                 modifier = Modifier.fillMaxSize()
             )
         } else {
-            FeedGalleryPlaceholder(
+            PlaylistGalleryPlaceholder(
                 modifier = Modifier.align(Alignment.Center)
             )
         }
@@ -156,7 +156,7 @@ private fun MainScreen(
 }
 
 @Composable
-private fun FeedGalleryPlaceholder(
+private fun PlaylistGalleryPlaceholder(
     modifier: Modifier = Modifier
 ) {
     val feedback = LocalHapticFeedback.current
@@ -166,12 +166,12 @@ private fun FeedGalleryPlaceholder(
 
     val cornerSize by animateDpAsState(
         targetValue = if (expanded) spacing.medium else spacing.large,
-        label = "feed-gallery-placeholder-corner-size"
+        label = "playlist-gallery-placeholder-corner-size"
     )
 
     val elevation by animateDpAsState(
         targetValue = if (expanded) spacing.small else spacing.medium,
-        label = "feed-gallery-placeholder-elevation"
+        label = "playlist-gallery-placeholder-elevation"
     )
 
     val shape = RoundedCornerShape(cornerSize)
@@ -193,13 +193,13 @@ private fun FeedGalleryPlaceholder(
         targetValue = with(MaterialTheme.colorScheme) {
             if (expanded) primary else surface
         },
-        label = "feed-gallery-placeholder-container-color"
+        label = "playlist-gallery-placeholder-container-color"
     )
     val currentContentColor by animateColorAsState(
         targetValue = with(MaterialTheme.colorScheme) {
             if (expanded) onPrimary else onSurface
         },
-        label = "feed-gallery-placeholder-container-color"
+        label = "playlist-gallery-placeholder-container-color"
     )
     ElevatedCard(
         modifier = combined,
@@ -221,7 +221,7 @@ private fun FeedGalleryPlaceholder(
         }
         val message = @Composable {
             val text =
-                stringResource(R.string.feat_feed_prompt_add_playlist)
+                stringResource(R.string.feat_playlist_prompt_add_playlist)
                     .capitalize(Locale.current)
             MonoText(
                 text = text,
@@ -235,7 +235,7 @@ private fun FeedGalleryPlaceholder(
         ) {
             AnimatedContent(
                 targetState = expanded,
-                label = "feed-gallery-placeholder-content"
+                label = "playlist-gallery-placeholder-content"
             ) { expanded ->
                 if (expanded) {
                     message()

@@ -52,7 +52,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.m3u.core.annotation.ClipMode
 import com.m3u.core.annotation.ConnectTimeout
-import com.m3u.core.annotation.FeedStrategy
+import com.m3u.core.annotation.PlaylistStrategy
 import com.m3u.core.architecture.pref.ExperimentalPref
 import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_USE_DYNAMIC_COLORS
@@ -99,7 +99,7 @@ internal fun PreferencesFragment(
                 verticalArrangement = Arrangement.spacedBy(1.dp)
             ) {
                 Preference(
-                    title = stringResource(string.feat_setting_feed_management).title(),
+                    title = stringResource(string.feat_setting_playlist_management).title(),
                     icon = Icons.Rounded.MusicNote,
                     enabled = fragment != SettingFragment.Subscriptions,
                     onClick = navigateToPlaylistManagement
@@ -107,15 +107,15 @@ internal fun PreferencesFragment(
                 TextPreference(
                     title = stringResource(string.feat_setting_sync_mode).title(),
                     icon = Icons.Rounded.Sync,
-                    trailing = when (pref.feedStrategy) {
-                        FeedStrategy.ALL -> stringResource(string.feat_setting_sync_mode_all)
-                        FeedStrategy.SKIP_FAVORITE -> stringResource(string.feat_setting_sync_mode_skip_favourite)
+                    trailing = when (pref.playlistStrategy) {
+                        PlaylistStrategy.ALL -> stringResource(string.feat_setting_sync_mode_all)
+                        PlaylistStrategy.SKIP_FAVORITE -> stringResource(string.feat_setting_sync_mode_skip_favourite)
                         else -> ""
                     }.title(),
                     onClick = {
-                        pref.feedStrategy = when (pref.feedStrategy) {
-                            FeedStrategy.ALL -> FeedStrategy.SKIP_FAVORITE
-                            else -> FeedStrategy.ALL
+                        pref.playlistStrategy = when (pref.playlistStrategy) {
+                            PlaylistStrategy.ALL -> PlaylistStrategy.SKIP_FAVORITE
+                            else -> PlaylistStrategy.ALL
                         }
                     }
                 )

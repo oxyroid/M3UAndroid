@@ -5,7 +5,7 @@ import androidx.compose.runtime.compositionLocalOf
 val LocalPref = compositionLocalOf<Pref> { MockPref }
 
 private object MockPref : Pref {
-    override var feedStrategy: Int = Pref.DEFAULT_FEED_STRATEGY
+    override var playlistStrategy: Int = Pref.DEFAULT_PLAYLIST_STRATEGY
     override var useCommonUIMode: Boolean = Pref.DEFAULT_USE_COMMON_UI_MODE
     override var rowCount: Int = Pref.DEFAULT_ROW_COUNT
     override var connectTimeout: Long = Pref.DEFAULT_CONNECT_TIMEOUT

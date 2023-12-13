@@ -7,5 +7,5 @@ sealed class MainMessage(
     resId: Int,
     vararg formatArgs: Any
 ) : Message(resId, *formatArgs) {
-    data object ErrorCannotUnsubscribe : MainMessage(string.feat_main_error_unsubscribe_feed)
+    data object ErrorCannotUnsubscribe : MainMessage(string.feat_main_error_unsubscribe_playlist)
 }

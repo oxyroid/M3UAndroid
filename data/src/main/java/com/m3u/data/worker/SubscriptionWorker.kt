@@ -8,10 +8,10 @@ import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
-import com.m3u.core.annotation.FeedStrategy
+import com.m3u.core.annotation.PlaylistStrategy
 import com.m3u.core.architecture.Logger
 import com.m3u.data.R
-import com.m3u.data.repository.FeedRepository
+import com.m3u.data.repository.PlaylistRepository
 import com.m3u.i18n.R.string
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
@@ -23,13 +23,13 @@ import kotlinx.coroutines.flow.launchIn
 class SubscriptionWorker @AssistedInject constructor(
     @Assisted private val context: Context,
     @Assisted params: WorkerParameters,
-    private val feedRepository: FeedRepository,
+    private val playlistRepository: PlaylistRepository,
     private val manager: NotificationManager,
     private val logger: Logger
 ) : CoroutineWorker(context, params) {
     private val title = inputData.getString(INPUT_STRING_TITLE)
     private val url = inputData.getString(INPUT_STRING_URL)
-    private val strategy = inputData.getInt(INPUT_INT_STRATEGY, FeedStrategy.SKIP_FAVORITE)
+    private val strategy = inputData.getInt(INPUT_INT_STRATEGY, PlaylistStrategy.SKIP_FAVORITE)
     override suspend fun doWork(): Result = coroutineScope {
         title ?: return@coroutineScope Result.failure()
         url ?: return@coroutineScope Result.failure()
@@ -40,7 +40,7 @@ class SubscriptionWorker @AssistedInject constructor(
             Result.failure(data)
         } else {
             try {
-                feedRepository
+                playlistRepository
                     .subscribe(title, url, strategy)
                     .catch {
                         logger.log(it)

@@ -19,10 +19,10 @@
             <option value="$PROJECT_DIR$/features/console" />
             <option value="$PROJECT_DIR$/features/crash" />
             <option value="$PROJECT_DIR$/features/favorite" />
-            <option value="$PROJECT_DIR$/features/feed" />
-            <option value="$PROJECT_DIR$/features/live" />
             <option value="$PROJECT_DIR$/features/main" />
+            <option value="$PROJECT_DIR$/features/playlist" />
             <option value="$PROJECT_DIR$/features/setting" />
+            <option value="$PROJECT_DIR$/features/stream" />
             <option value="$PROJECT_DIR$/i18n" />
             <option value="$PROJECT_DIR$/material" />
             <option value="$PROJECT_DIR$/ui" />

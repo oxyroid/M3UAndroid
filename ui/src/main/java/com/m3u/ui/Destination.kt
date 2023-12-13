@@ -57,16 +57,10 @@ sealed interface Destination {
         );
     }
 
-    data class Feed(val url: String) : Destination
+    data class Playlist(val url: String) : Destination
 
     @Parcelize
-    data class Live(val id: Int) : Destination, Parcelable
-
-    @Parcelize
-    data class LivePlayList(
-        val ids: List<Int>,
-        val initial: Int
-    ) : Destination, Parcelable
+    data class Stream(val id: Int) : Destination, Parcelable
 
     data object Console : Destination
 

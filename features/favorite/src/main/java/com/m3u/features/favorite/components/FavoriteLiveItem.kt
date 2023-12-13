@@ -20,7 +20,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import com.m3u.data.database.entity.Live
+import com.m3u.data.database.entity.Stream
 import com.m3u.i18n.R.string
 import com.m3u.material.components.Image
 import com.m3u.material.components.TextBadge
@@ -29,7 +29,7 @@ import java.net.URI
 
 @Composable
 internal fun FavoriteItem(
-    live: Live,
+    stream: Stream,
     noPictureMode: Boolean,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
@@ -39,7 +39,7 @@ internal fun FavoriteItem(
     val context = LocalContext.current
     val spacing = LocalSpacing.current
 
-    val scheme = remember(live.url) { URI(live.url).scheme ?: context.getString(string.feat_feed_scheme_unknown) }
+    val scheme = remember(stream.url) { URI(stream.url).scheme ?: context.getString(string.feat_playlist_scheme_unknown) }
 
     OutlinedCard(
         border = CardDefaults.outlinedCardBorder(border)
@@ -52,10 +52,10 @@ internal fun FavoriteItem(
                 )
                 .then(modifier)
         ) {
-            AnimatedVisibility(!noPictureMode && !live.cover.isNullOrEmpty()) {
+            AnimatedVisibility(!noPictureMode && !stream.cover.isNullOrEmpty()) {
                 Image(
-                    model = live.cover,
-                    errorPlaceholder = live.title,
+                    model = stream.cover,
+                    errorPlaceholder = stream.title,
                     contentScale = ContentScale.Crop,
                     modifier = Modifier
                         .fillMaxWidth()
@@ -67,7 +67,7 @@ internal fun FavoriteItem(
                 verticalArrangement = Arrangement.spacedBy(spacing.small)
             ) {
                 Text(
-                    text = live.title,
+                    text = stream.title,
                     style = MaterialTheme.typography.titleSmall,
                     fontSize = MaterialTheme.typography.titleSmall.fontSize,
                     overflow = TextOverflow.Ellipsis,
@@ -81,7 +81,7 @@ internal fun FavoriteItem(
                 ) {
                     TextBadge(scheme)
                     Text(
-                        text = live.url,
+                        text = stream.url,
                         maxLines = 1,
                         style = MaterialTheme.typography.bodyMedium,
                         fontSize = MaterialTheme.typography.bodyMedium.fontSize,
