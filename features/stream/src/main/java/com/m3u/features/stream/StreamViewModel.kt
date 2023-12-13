@@ -39,11 +39,13 @@ class StreamViewModel @Inject constructor(
     emptyState = StreamState()
 ), OnDeviceRegistryListener, OnDeviceControlListener {
     private val _devices = MutableStateFlow<List<Device<*, *, *>>>(emptyList())
+    // searched screencast devices
     val devices = _devices.asStateFlow()
 
     private val _volume: MutableStateFlow<Float> = MutableStateFlow(1f)
     val volume = _volume.asStateFlow()
 
+    // playlist and stream info
     val metadata: StateFlow<StreamState.Metadata> = combine(
         playerManager.url,
         streamRepository.observeAll(),
@@ -59,6 +61,7 @@ class StreamViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5_000)
         )
 
+    // stream playing state
     val playerState: StateFlow<StreamState.PlayerState> = combine(
         playerManager.observe(),
         playerManager.playbackState,
@@ -92,9 +95,11 @@ class StreamViewModel @Inject constructor(
     }
 
     private val _isDevicesVisible: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    // show searching devices dialog or not
     val isDevicesVisible = _isDevicesVisible.asStateFlow()
 
     private val _searching: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    // searching or not
     val searching = _searching.asStateFlow()
 
     private fun openDlnaDevices() {
