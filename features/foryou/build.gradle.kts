@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.m3u.features.main"
+    namespace = "com.m3u.features.foryou"
     compileSdk = 34
     defaultConfig {
         minSdk = 26

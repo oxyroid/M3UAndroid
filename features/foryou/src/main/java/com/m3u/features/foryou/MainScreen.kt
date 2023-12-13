@@ -1,4 +1,4 @@
-package com.m3u.features.main
+package com.m3u.features.foryou
 
 import android.content.res.Configuration.ORIENTATION_PORTRAIT
 import android.view.KeyEvent
@@ -40,11 +40,11 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.data.database.entity.Playlist
-import com.m3u.features.main.components.PlaylistGallery
-import com.m3u.features.main.components.MainDialog
-import com.m3u.features.main.components.OnRename
-import com.m3u.features.main.components.OnUnsubscribe
-import com.m3u.features.main.model.PlaylistDetailHolder
+import com.m3u.features.foryou.components.PlaylistGallery
+import com.m3u.features.foryou.components.MainDialog
+import com.m3u.features.foryou.components.OnRename
+import com.m3u.features.foryou.components.OnUnsubscribe
+import com.m3u.features.foryou.model.PlaylistDetailHolder
 import com.m3u.i18n.R
 import com.m3u.material.components.Background
 import com.m3u.material.ktx.interceptVolumeEvent

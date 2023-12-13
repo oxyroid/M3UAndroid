@@ -1,9 +1,9 @@
-package com.m3u.features.main.components
+package com.m3u.features.foryou.components
 
 import androidx.annotation.FloatRange
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import com.m3u.features.main.R
+import com.m3u.features.foryou.R
 import com.m3u.material.components.ProgressLottie
 
 @Composable

@@ -1,4 +1,4 @@
-package com.m3u.features.main.components
+package com.m3u.features.foryou.components
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement

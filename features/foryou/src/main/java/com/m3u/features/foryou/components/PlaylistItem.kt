@@ -1,4 +1,4 @@
-package com.m3u.features.main.components
+package com.m3u.features.foryou.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable

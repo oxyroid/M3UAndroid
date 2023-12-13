@@ -69,7 +69,7 @@ dependencies {
     implementation(project(":data"))
     implementation(project(":dlna"))
     implementation(project(":ui"))
-    implementation(project(":features:main"))
+    implementation(project(":features:foryou"))
     implementation(project(":features:favorite"))
     implementation(project(":features:setting"))
     implementation(project(":features:playlist"))

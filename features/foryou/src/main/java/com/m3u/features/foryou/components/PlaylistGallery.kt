@@ -1,4 +1,4 @@
-package com.m3u.features.main.components
+package com.m3u.features.foryou.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
@@ -12,8 +12,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import com.m3u.data.database.entity.Playlist
-import com.m3u.features.main.NavigateToPlaylist
-import com.m3u.features.main.model.PlaylistDetailHolder
+import com.m3u.features.foryou.NavigateToPlaylist
+import com.m3u.features.foryou.model.PlaylistDetailHolder
 import com.m3u.i18n.R.string
 import com.m3u.material.ktx.plus
 import com.m3u.material.model.LocalSpacing

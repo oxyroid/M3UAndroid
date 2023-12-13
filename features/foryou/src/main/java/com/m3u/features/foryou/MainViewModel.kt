@@ -1,12 +1,12 @@
-package com.m3u.features.main
+package com.m3u.features.foryou
 
 import androidx.lifecycle.viewModelScope
 import com.m3u.core.architecture.viewmodel.BaseViewModel
 import com.m3u.data.repository.PlaylistRepository
 import com.m3u.data.repository.StreamRepository
-import com.m3u.features.main.model.PlaylistDetail
-import com.m3u.features.main.model.PlaylistDetailHolder
-import com.m3u.features.main.model.toDetail
+import com.m3u.features.foryou.model.PlaylistDetail
+import com.m3u.features.foryou.model.PlaylistDetailHolder
+import com.m3u.features.foryou.model.toDetail
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted

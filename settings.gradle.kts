@@ -27,7 +27,7 @@ include(":core")
 include(":data")
 include(":material")
 include(
-    ":features:main",
+    ":features:foryou",
     ":features:setting",
     ":features:stream",
     ":features:playlist",

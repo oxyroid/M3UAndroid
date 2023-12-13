@@ -1,4 +1,4 @@
-package com.m3u.features.main
+package com.m3u.features.foryou
 
 import com.m3u.core.wrapper.Message
 import com.m3u.i18n.R.string

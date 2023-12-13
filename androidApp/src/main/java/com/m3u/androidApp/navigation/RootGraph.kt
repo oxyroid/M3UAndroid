@@ -17,9 +17,9 @@ import com.m3u.core.wrapper.eventOf
 import com.m3u.core.wrapper.handledEvent
 import com.m3u.features.favorite.FavouriteRoute
 import com.m3u.features.favorite.NavigateToStream
-import com.m3u.features.main.MainRoute
-import com.m3u.features.main.NavigateToPlaylist
-import com.m3u.features.main.NavigateToSettingSubscription
+import com.m3u.features.foryou.MainRoute
+import com.m3u.features.foryou.NavigateToPlaylist
+import com.m3u.features.foryou.NavigateToSettingSubscription
 import com.m3u.features.setting.NavigateToAbout
 import com.m3u.features.setting.NavigateToConsole
 import com.m3u.features.setting.SettingRoute

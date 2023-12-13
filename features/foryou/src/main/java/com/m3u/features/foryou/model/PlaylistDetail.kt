@@ -1,4 +1,4 @@
-package com.m3u.features.main.model
+package com.m3u.features.foryou.model
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable

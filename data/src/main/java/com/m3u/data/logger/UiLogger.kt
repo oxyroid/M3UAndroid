@@ -8,7 +8,7 @@ import javax.inject.Inject
 
 /**
  * A collector of banner service.
- * Its messages will be destreamr to users just like a global snack bar.
+ * Its messages will be deliver to users just like a global snack bar.
  * @see UiService
  */
 class UiLogger @Inject constructor(
