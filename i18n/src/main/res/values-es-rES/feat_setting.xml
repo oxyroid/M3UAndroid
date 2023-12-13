@@ -53,4 +53,6 @@
     <string name="feat_setting_use_dynamic_colors">colores dinámicos</string>
     <string name="feat_setting_use_dynamic_colors_unavailable">está disponible en Android 12 y posteriores</string>
     <string name="feat_setting_not_implementation">está característica no está disponible para esta versión</string>
+    <string name="feat_setting_zapping_mode">Modo zapeo</string>
+    <string name="feat_setting_zapping_mode_description">Vista rápida de los directos antes de reproducirlos</string>
 </resources>

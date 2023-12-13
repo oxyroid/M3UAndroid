@@ -212,8 +212,8 @@ internal fun PreferencesFragment(
                     onChanged = { pref.fullInfoPlayer = !pref.fullInfoPlayer }
                 )
                 CheckBoxSharedPreference(
-                    title = string.feat_setting_zap_mode,
-                    content = string.feat_setting_zap_mode_description,
+                    title = string.feat_setting_zapping_mode,
+                    content = string.feat_setting_zapping_mode_description,
                     icon = Icons.Rounded.PictureInPicture,
                     checked = pref.zappingMode,
                     onChanged = { pref.zappingMode = !pref.zappingMode }
