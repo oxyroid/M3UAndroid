@@ -22,7 +22,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 //noinspection UsingMaterialAndMaterial3Libraries
@@ -30,8 +30,6 @@ import androidx.compose.material.BackdropScaffold
 //noinspection UsingMaterialAndMaterial3Libraries
 import androidx.compose.material.BackdropValue
 import androidx.compose.material.ExperimentalMaterialApi
-//noinspection UsingMaterialAndMaterial3Libraries
-import androidx.compose.material.Tab
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ArrowCircleUp
 import androidx.compose.material.icons.rounded.Refresh
@@ -39,6 +37,7 @@ import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.rememberBackdropScaffoldState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PrimaryScrollableTabRow
+import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRowDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -56,7 +55,9 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.capitalize
@@ -275,7 +276,7 @@ private fun PlaylistScreen(
                 Background(
                     modifier = Modifier.fillMaxSize()
                 ) {
-                    PlaylistPager(channelHolder) { streamHolder ->
+                    PlaylistPager(channelHolder) { streamHolder, padding ->
                         val type = configuration.uiMode and UI_MODE_TYPE_MASK
                         when {
                             !pref.useCommonUIMode && type == UI_MODE_TYPE_TELEVISION -> {
@@ -294,12 +295,13 @@ private fun PlaylistScreen(
                                         helper.play(url)
                                         navigateToStream()
                                     },
-                                    onMenu = onMenu
+                                    onMenu = onMenu,
+                                    contentPadding = padding
                                 )
                             }
 
                             else -> {
-                                val state = rememberLazyGridState()
+                                val state = rememberLazyStaggeredGridState()
                                 LaunchedEffect(state.isAtTop) {
                                     isAtTopState.value = state.isAtTop
                                 }
@@ -323,7 +325,8 @@ private fun PlaylistScreen(
                                         navigateToStream()
                                     },
                                     onMenu = onMenu,
-                                    modifier = modifier
+                                    modifier = modifier,
+                                    contentPadding = padding
                                 )
                             }
                         }
@@ -333,12 +336,85 @@ private fun PlaylistScreen(
             backLayerBackgroundColor = currentColor,
             backLayerContentColor = currentContentColor,
             frontLayerScrimColor = currentColor.copy(alpha = 0.45f),
+            frontLayerBackgroundColor = Color.Transparent,
             modifier = Modifier
                 .padding(top = contentPadding.calculateTopPadding())
                 .nestedScroll(
                     connection = connection,
                 )
         )
+    }
+}
+
+@Composable
+private fun PlaylistPager(
+    channelHolder: ChannelHolder,
+    modifier: Modifier = Modifier,
+    content: @Composable (streamHolder: StreamHolder, PaddingValues) -> Unit,
+) {
+    val theme = MaterialTheme.colorScheme
+    val density = LocalDensity.current
+    Box(modifier) {
+        val channels = channelHolder.channels
+        val floating = channelHolder.floating
+        val pagerState = rememberPagerState { channels.size }
+        val coroutineScope = rememberCoroutineScope()
+        val holders = List(channels.size) {
+            rememberStreamHolder(
+                streams = channels[it].streams,
+                floating = floating
+            )
+        }
+        var tabRowHeight by remember { mutableStateOf(0.dp) }
+        HorizontalPager(pagerState) { pager ->
+            content(
+                holders[pager].copy(floating = floating),
+                PaddingValues(top = tabRowHeight)
+            )
+        }
+        if (channels.size > 1) {
+            PrimaryScrollableTabRow(
+                selectedTabIndex = pagerState.currentPage,
+                containerColor = Color.Transparent,
+                indicator = { tabPositions ->
+                    val index = pagerState.currentPage
+                    with(TabRowDefaults) {
+                        Modifier.tabIndicatorOffset(
+                            currentTabPosition = tabPositions[index]
+                        )
+                    }
+                },
+                tabs = {
+                    val keys = remember(channels) { channels.map { it.title } }
+                    keys.forEachIndexed { index, title ->
+                        val selected = pagerState.currentPage == index
+                        Tab(
+                            selected = selected,
+                            onClick = {
+                                coroutineScope.launch {
+                                    pagerState.animateScrollToPage(index)
+                                }
+                            },
+                            text = {
+                                Text(
+                                    text = title,
+                                    style = MaterialTheme.typography.titleSmall,
+                                    color = if (selected) theme.onBackground else Color.Unspecified
+                                )
+                            },
+                            icon = null
+                        )
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .onGloballyPositioned {
+                        tabRowHeight = with(density) {
+                            it.size.height.toDp()
+                        }
+                    }
+            )
+        }
     }
 }
 
@@ -373,69 +449,6 @@ private fun UnsupportedUIModeContent(
         Text("Unsupported UI Mode: $device")
         if (description != null) {
             Text(description)
-        }
-    }
-}
-
-@Composable
-private fun PlaylistPager(
-    channelHolder: ChannelHolder,
-    modifier: Modifier = Modifier,
-    content: @Composable (streamHolder: StreamHolder) -> Unit,
-) {
-    val theme = MaterialTheme.colorScheme
-    Column(modifier) {
-        val channels = channelHolder.channels
-        val floating = channelHolder.floating
-        val pagerState = rememberPagerState { channels.size }
-        val coroutineScope = rememberCoroutineScope()
-        if (channels.size > 1) {
-            PrimaryScrollableTabRow(
-                selectedTabIndex = pagerState.currentPage,
-                indicator = { tabPositions ->
-                    val index = pagerState.currentPage
-                    with(TabRowDefaults) {
-                        Modifier.tabIndicatorOffset(
-                            currentTabPosition = tabPositions[index]
-                        )
-                    }
-                },
-                tabs = {
-                    val keys = remember(channels) { channels.map { it.title } }
-                    keys.forEachIndexed { index, title ->
-                        val selected = pagerState.currentPage == index
-                        Tab(
-                            selected = selected,
-                            onClick = {
-                                coroutineScope.launch {
-                                    pagerState.animateScrollToPage(index)
-                                }
-                            },
-                            text = {
-                                Text(
-                                    text = title,
-                                    style = MaterialTheme.typography.titleSmall,
-                                    color = if (selected) theme.onBackground else Color.Unspecified
-                                )
-                            },
-                            icon = null
-                        )
-                    }
-                },
-                divider = {},
-                modifier = Modifier.fillMaxWidth()
-            )
-        }
-        val holders = List(channels.size) {
-            rememberStreamHolder(
-                streams = channels[it].streams,
-                floating = floating
-            )
-        }
-        HorizontalPager(
-            state = pagerState
-        ) { pager ->
-            content(holders[pager].copy(floating = floating))
         }
     }
 }
