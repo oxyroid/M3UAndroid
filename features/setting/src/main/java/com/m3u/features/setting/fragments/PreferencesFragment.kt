@@ -166,13 +166,6 @@ internal fun PreferencesFragment(
                     onChanged = { pref.noPictureMode = !pref.noPictureMode }
                 )
                 CheckBoxSharedPreference(
-                    title = string.feat_setting_full_info_player,
-                    content = string.feat_setting_full_info_player_description,
-                    icon = Icons.Rounded.Details,
-                    checked = pref.fullInfoPlayer,
-                    onChanged = { pref.fullInfoPlayer = !pref.fullInfoPlayer }
-                )
-                CheckBoxSharedPreference(
                     title = string.feat_setting_god_mode,
                     content = string.feat_setting_god_mode_description,
                     icon = Icons.Rounded.DeviceHub,
@@ -202,8 +195,25 @@ internal fun PreferencesFragment(
                     },
                     enabled = useDynamicColorsAvailable
                 )
+            }
+        }
+        item {
+            Column(
+                modifier = Modifier
+                    .padding(spacing.medium)
+                    .clip(MaterialTheme.shapes.medium),
+                verticalArrangement = Arrangement.spacedBy(1.dp)
+            ) {
+                CheckBoxSharedPreference(
+                    title = string.feat_setting_full_info_player,
+                    content = string.feat_setting_full_info_player_description,
+                    icon = Icons.Rounded.Details,
+                    checked = pref.fullInfoPlayer,
+                    onChanged = { pref.fullInfoPlayer = !pref.fullInfoPlayer }
+                )
                 CheckBoxSharedPreference(
                     title = string.feat_setting_zap_mode,
+                    content = string.feat_setting_zap_mode_description,
                     icon = Icons.Rounded.PictureInPicture,
                     checked = pref.zappingMode,
                     onChanged = { pref.zappingMode = !pref.zappingMode }
