@@ -7,16 +7,17 @@ import androidx.compose.material.icons.rounded.Cast
 import androidx.compose.material.icons.rounded.CastConnected
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import org.fourthline.cling.model.meta.Device
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.runtime.Immutable
-import androidx.compose.runtime.remember
 
 @Immutable
 internal data class DeviceWrapper(
@@ -38,7 +39,6 @@ internal fun DlnaDeviceItem(
     loseConnection: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val theme = MaterialTheme.colorScheme
     val actualOnClick by rememberUpdatedState(if (connected) loseConnection else requestConnection)
 
     ListItem(
@@ -51,7 +51,8 @@ internal fun DlnaDeviceItem(
                     imageVector = if (connected) Icons.Rounded.CastConnected
                     else Icons.Rounded.Cast,
                     contentDescription = null,
-                    tint = if (connected) theme.primary else Color.Unspecified
+                    tint = if (connected) MaterialTheme.colorScheme.primary
+                    else LocalContentColor.current
                 )
             }
         },

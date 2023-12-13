@@ -31,7 +31,7 @@ import kotlin.time.Duration.Companion.milliseconds
 @HiltViewModel
 class StreamViewModel @Inject constructor(
     private val streamRepository: StreamRepository,
-    private val playlistRepository: PlaylistRepository,
+    playlistRepository: PlaylistRepository,
     private val playerManager: PlayerManager,
     private val logger: Logger,
     private val application: Application
@@ -190,7 +190,10 @@ class StreamViewModel @Inject constructor(
     }
 
     override fun onCleared() {
-        super.onCleared()
+        closeDlnaDevices()
         playerManager.stop()
+        controlPoint?.stop()
+        controlPoint = null
+        super.onCleared()
     }
 }
