@@ -18,7 +18,6 @@ import androidx.core.util.Consumer
 import androidx.lifecycle.Lifecycle
 import com.m3u.core.unspecified.UBoolean
 import com.m3u.material.ktx.LifecycleEffect
-import com.m3u.material.ktx.log
 
 typealias OnUserLeaveHint = () -> Unit
 typealias OnPipModeChanged = Consumer<PictureInPictureModeChangedInfo>
@@ -100,12 +99,10 @@ fun Helper.repeatOnLifecycle(
         when (event) {
             Lifecycle.Event.upTo(state) -> {
                 bundle = backup()
-                log("helper-repeatOnLifecycle", "backup:" + bundle?.darkMode)
                 block()
             }
 
             Lifecycle.Event.downFrom(state) -> {
-                log("helper-repeatOnLifecycle", "restore:" + bundle?.darkMode)
                 bundle?.let { restore(it) }
             }
 

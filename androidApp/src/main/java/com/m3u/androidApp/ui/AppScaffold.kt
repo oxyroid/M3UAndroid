@@ -8,22 +8,20 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.m3u.androidApp.components.AppNavigation
 import com.m3u.androidApp.components.AppSnackHost
-import com.m3u.core.architecture.pref.Pref
 import com.m3u.core.architecture.pref.ExperimentalPref
+import com.m3u.core.architecture.pref.Pref
 import com.m3u.core.unspecified.unspecifiable
 import com.m3u.core.util.collections.withEach
 import com.m3u.i18n.R.string
 import com.m3u.material.components.IconButton
 import com.m3u.material.components.NavigationScaffold
 import com.m3u.material.components.ToolkitScaffold
-import com.m3u.material.ktx.log
 import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.ActionHolder
 import com.m3u.ui.Destination
@@ -80,9 +78,6 @@ internal fun AppScaffold(
         NavigationScaffold(
             useNavRail = useNavRail,
             navigation = {
-                SideEffect {
-                    log()
-                }
                 AppNavigation(
                     navigate = navigate,
                     rootDestination = rootDestination,

@@ -4,12 +4,16 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyGridState
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.staggeredgrid.LazyStaggeredGridState
+import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
+import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
+import androidx.compose.foundation.lazy.staggeredgrid.items
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.tv.foundation.lazy.grid.TvGridCells
 import androidx.tv.foundation.lazy.grid.TvLazyGridState
@@ -20,12 +24,13 @@ import com.m3u.data.database.entity.Stream
 import com.m3u.data.database.entity.StreamHolder
 import com.m3u.material.ktx.plus
 import com.m3u.material.model.LocalSpacing
+import dev.chrisbanes.haze.haze
 
 typealias PlayStream = (url: String) -> Unit
 
 @Composable
 internal fun StreamGallery(
-    state: LazyGridState,
+    state: LazyStaggeredGridState,
     rowCount: Int,
     streamHolder: StreamHolder,
     play: PlayStream,
@@ -35,17 +40,34 @@ internal fun StreamGallery(
 ) {
     val spacing = LocalSpacing.current
     val pref = LocalPref.current
+    val density = LocalDensity.current
+    val configuration = LocalConfiguration.current
 
     val streams = streamHolder.streams
     val floating = streamHolder.floating
 
-    LazyVerticalGrid(
+    LazyVerticalStaggeredGrid(
         state = state,
-        columns = GridCells.Fixed(rowCount),
-        verticalArrangement = Arrangement.spacedBy(spacing.medium),
+        columns = StaggeredGridCells.Fixed(rowCount),
+        verticalItemSpacing = spacing.medium,
         horizontalArrangement = Arrangement.spacedBy(spacing.medium),
         contentPadding = PaddingValues(spacing.medium) + contentPadding,
-        modifier = modifier.fillMaxSize()
+        modifier = modifier
+            .fillMaxSize()
+            .haze(
+                area = with(density) {
+                    arrayOf(
+                        Rect(
+                            0f,
+                            0f,
+                            configuration.screenWidthDp.dp.toPx(),
+                            contentPadding.calculateTopPadding().toPx()
+                        )
+                    )
+                },
+                backgroundColor = MaterialTheme.colorScheme.background,
+                blurRadius = 2.dp
+            )
     ) {
         items(
             items = streams,
@@ -78,6 +100,9 @@ internal fun TvStreamGallery(
 ) {
     val spacing = LocalSpacing.current
     val pref = LocalPref.current
+    val density = LocalDensity.current
+    val configuration = LocalConfiguration.current
+
     val streams = streamHolder.streams
     val floating = streamHolder.floating
 
@@ -87,7 +112,22 @@ internal fun TvStreamGallery(
         verticalArrangement = Arrangement.spacedBy(spacing.medium),
         horizontalArrangement = Arrangement.spacedBy(spacing.medium),
         contentPadding = PaddingValues(spacing.medium) + contentPadding,
-        modifier = modifier.fillMaxSize()
+        modifier = modifier
+            .fillMaxSize()
+            .haze(
+                area = with(density) {
+                    arrayOf(
+                        Rect(
+                            0f,
+                            0f,
+                            configuration.screenWidthDp.dp.toPx(),
+                            contentPadding.calculateTopPadding().toPx()
+                        )
+                    )
+                },
+                backgroundColor = MaterialTheme.colorScheme.background,
+                blurRadius = 2.dp
+            )
     ) {
         items(
             items = streams,
