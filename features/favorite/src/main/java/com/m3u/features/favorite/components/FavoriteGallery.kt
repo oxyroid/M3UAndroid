@@ -29,6 +29,7 @@ internal fun FavouriteGallery(
     val pref = LocalPref.current
     val helper = LocalHelper.current
     val lives = liveHolder.lives
+    val floating = liveHolder.floating
     LazyVerticalStaggeredGrid(
         columns = StaggeredGridCells.Fixed(rowCount),
         verticalItemSpacing = spacing.medium,
@@ -44,6 +45,7 @@ internal fun FavouriteGallery(
             FavoriteItem(
                 live = live,
                 noPictureMode = pref.noPictureMode,
+                border = floating != live,
                 onClick = {
                     helper.play(live.url)
                     navigateToLive()

@@ -56,7 +56,7 @@ class AboutViewModel @Inject constructor(
         }
         .stateIn(
             scope = viewModelScope,
-            started = SharingStarted.Lazily,
+            started = SharingStarted.WhileSubscribed(5_000),
             initialValue = emptyList()
         )
 

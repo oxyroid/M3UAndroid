@@ -3,6 +3,7 @@ package com.m3u.features.feed
 import androidx.lifecycle.viewModelScope
 import com.m3u.core.architecture.Logger
 import com.m3u.core.architecture.pref.Pref
+import com.m3u.core.architecture.pref.observeAsFlow
 import com.m3u.core.architecture.viewmodel.BaseViewModel
 import com.m3u.core.architecture.viewmodel.catch
 import com.m3u.core.architecture.viewmodel.map
@@ -15,14 +16,17 @@ import com.m3u.data.repository.LiveRepository
 import com.m3u.data.repository.MediaRepository
 import com.m3u.data.repository.observeAll
 import com.m3u.data.repository.refresh
+import com.m3u.data.service.PlayerManager
 import com.m3u.features.feed.FeedMessage.LiveCoverSaved
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -32,6 +36,7 @@ class FeedViewModel @Inject constructor(
     private val liveRepository: LiveRepository,
     private val feedRepository: FeedRepository,
     private val mediaRepository: MediaRepository,
+    private val playerManager: PlayerManager,
     private val pref: Pref,
     @Logger.Ui private val logger: Logger
 ) : BaseViewModel<FeedState, FeedEvent, FeedMessage>(
@@ -48,6 +53,28 @@ class FeedViewModel @Inject constructor(
             is FeedEvent.Query -> query(event)
         }
     }
+
+    private val zappingMode = pref
+        .observeAsFlow { it.zappingMode }
+        .stateIn(
+            scope = viewModelScope,
+            initialValue = Pref.DEFAULT_ZAPPING_MODE,
+            started = SharingStarted.WhileSubscribed(5_000)
+        )
+
+    val floating = combine(
+        zappingMode,
+        playerManager.url,
+        liveRepository.observeAll()
+    ) { zappingMode, url, lives ->
+        if (!zappingMode) null
+        else lives.find { it.url == url }
+    }
+        .stateIn(
+            scope = viewModelScope,
+            initialValue = null,
+            started = SharingStarted.WhileSubscribed(5_000)
+        )
 
     private var observeJob: Job? = null
     private fun observe(feedUrl: String) {

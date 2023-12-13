@@ -27,6 +27,7 @@ import com.m3u.features.live.components.rememberDeviceHolder
 import com.m3u.features.live.components.rememberDeviceWrapper
 import com.m3u.features.live.fragments.LiveFragment
 import com.m3u.material.components.Background
+import com.m3u.material.components.Interceptor
 import com.m3u.material.components.MaskState
 import com.m3u.material.components.rememberMaskState
 import com.m3u.material.ktx.LifecycleEffect
@@ -67,6 +68,7 @@ fun LiveRoute(
                     viewModel.onEvent(LiveEvent.UninstallMedia)
                 }
             }
+
             else -> {}
         }
     }
@@ -117,11 +119,8 @@ fun LiveRoute(
     }
 
     LaunchedEffect(isPipMode) {
-        if (isPipMode) {
-            maskState.intercept { false }
-        } else {
-            maskState.intercept(null)
-        }
+        val interceptor: Interceptor? = if (isPipMode) { _ -> false } else null
+        maskState.intercept(interceptor)
     }
 
     Background(

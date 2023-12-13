@@ -38,12 +38,16 @@ data class Live(
 
 @Immutable
 data class LiveHolder(
-    val lives: List<Live>
+    val lives: List<Live> = emptyList(),
+    val floating: Live? = null
 )
 
 @Composable
-fun rememberLiveHolder(lives: List<Live>): LiveHolder {
-    return remember(lives) {
-        LiveHolder(lives)
+fun rememberLiveHolder(
+    lives: List<Live>,
+    floating: Live? = null
+): LiveHolder {
+    return remember(lives, floating) {
+        LiveHolder(lives, floating)
     }
 }

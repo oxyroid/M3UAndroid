@@ -37,6 +37,7 @@ internal fun LiveGallery(
     val pref = LocalPref.current
 
     val lives = liveHolder.lives
+    val floating = liveHolder.floating
 
     LazyVerticalGrid(
         state = state,
@@ -53,6 +54,7 @@ internal fun LiveGallery(
         ) { live ->
             LiveItem(
                 live = live,
+                border = floating != live,
                 noPictureMode = pref.noPictureMode,
                 onClick = {
                     play(live.url)
@@ -77,6 +79,7 @@ internal fun TvFeedGallery(
     val spacing = LocalSpacing.current
     val pref = LocalPref.current
     val lives = liveHolder.lives
+    val floating = liveHolder.floating
 
     TvLazyVerticalGrid(
         state = state,
@@ -93,6 +96,7 @@ internal fun TvFeedGallery(
         ) { live ->
             LiveItem(
                 live = live,
+                border = floating != live,
                 noPictureMode = pref.noPictureMode,
                 onClick = {
                     play(live.url)

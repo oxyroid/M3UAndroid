@@ -1,6 +1,7 @@
 package com.m3u.features.feed.components
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -8,7 +9,10 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
@@ -34,7 +38,8 @@ internal fun LiveItem(
     noPictureMode: Boolean,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    border: Boolean = true,
 ) {
     val context = LocalContext.current
     val spacing = LocalSpacing.current
@@ -50,7 +55,7 @@ internal fun LiveItem(
 
     OutlinedCard(
         modifier = Modifier.semantics(mergeDescendants = true) { },
-        border = CardDefaults.outlinedCardBorder(!favourite)
+        border = CardDefaults.outlinedCardBorder(border)
     ) {
         Column(
             modifier = Modifier
@@ -76,14 +81,33 @@ internal fun LiveItem(
                 modifier = Modifier.padding(spacing.medium),
                 verticalArrangement = Arrangement.spacedBy(spacing.small)
             ) {
-                Text(
-                    text = live.title,
-                    style = MaterialTheme.typography.titleSmall,
-                    fontSize = MaterialTheme.typography.titleSmall.fontSize,
-                    overflow = TextOverflow.Ellipsis,
-                    maxLines = 1,
-                    fontWeight = FontWeight.Bold
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = live.title,
+                        style = MaterialTheme.typography.titleSmall,
+                        fontSize = MaterialTheme.typography.titleSmall.fontSize,
+                        overflow = TextOverflow.Ellipsis,
+                        maxLines = 1,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Crossfade(
+                        targetState = favourite,
+                        label = "live-item-favourite"
+                    ) { favourite ->
+                        if (favourite) {
+                            Icon(
+                                imageVector = Icons.Rounded.Star,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.tertiary
+                            )
+                        }
+                    }
+                }
+
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(spacing.extraSmall)

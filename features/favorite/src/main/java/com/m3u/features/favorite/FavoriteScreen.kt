@@ -33,6 +33,7 @@ fun FavouriteRoute(
     val helper = LocalHelper.current
     val pref = LocalPref.current
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val floating by viewModel.floating.collectAsStateWithLifecycle()
 
     val lives = remember(state.details) {
         state.details.flatMap { it.value }
@@ -58,7 +59,10 @@ fun FavouriteRoute(
     FavoriteScreen(
         contentPadding = contentPadding,
         rowCount = pref.rowCount,
-        liveHolder = rememberLiveHolder(lives),
+        liveHolder = rememberLiveHolder(
+            lives = lives,
+            floating = floating
+        ),
         navigateToLive = navigateToLive,
         modifier = modifier
             .fillMaxSize()

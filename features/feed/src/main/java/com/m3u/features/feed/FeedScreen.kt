@@ -114,6 +114,7 @@ internal fun FeedRoute(
 
     val state by viewModel.state.collectAsStateWithLifecycle()
     val message by viewModel.message.collectAsStateWithLifecycle()
+    val floating by viewModel.floating.collectAsStateWithLifecycle()
     var dialogStatus: DialogStatus by remember { mutableStateOf(DialogStatus.Idle) }
     val writeExternalPermissionState = rememberPermissionState(
         Manifest.permission.WRITE_EXTERNAL_STORAGE
@@ -164,7 +165,10 @@ internal fun FeedRoute(
         query = state.query,
         onQuery = { viewModel.onEvent(FeedEvent.Query(it)) },
         rowCount = pref.rowCount,
-        channelHolder = rememberChannelHolder(state.channels),
+        channelHolder = rememberChannelHolder(
+            channels = state.channels,
+            floating = floating
+        ),
         scrollUp = state.scrollUp,
         refreshing = state.fetching,
         onRefresh = { viewModel.onEvent(FeedEvent.Refresh) },
@@ -261,7 +265,9 @@ private fun FeedScreen(
                         text = query,
                         onValueChange = onQuery,
                         fontWeight = FontWeight.Bold,
-                        placeholder = stringResource(string.feat_feed_query_placeholder).capitalize(Locale.current)
+                        placeholder = stringResource(string.feat_feed_query_placeholder).capitalize(
+                            Locale.current
+                        )
                     )
                 }
             },
@@ -300,8 +306,9 @@ private fun FeedScreen(
                                 EventHandler(scrollUp) {
                                     state.animateScrollToItem(0)
                                 }
-                                val actualRowCount = remember(configuration.orientation, rowCount) {
-                                    when (configuration.orientation) {
+                                val orientation = configuration.orientation
+                                val actualRowCount = remember(orientation, rowCount) {
+                                    when (orientation) {
                                         ORIENTATION_LANDSCAPE -> rowCount + 2
                                         ORIENTATION_PORTRAIT -> rowCount
                                         else -> rowCount
@@ -379,6 +386,7 @@ private fun FeedPager(
     val theme = MaterialTheme.colorScheme
     Column(modifier) {
         val channels = channelHolder.channels
+        val floating = channelHolder.floating
         val pagerState = rememberPagerState { channels.size }
         val coroutineScope = rememberCoroutineScope()
         if (channels.size > 1) {
@@ -418,11 +426,16 @@ private fun FeedPager(
                 modifier = Modifier.fillMaxWidth()
             )
         }
-        val holders = List(channels.size) { rememberLiveHolder(channels[it].lives) }
+        val holders = List(channels.size) {
+            rememberLiveHolder(
+                lives = channels[it].lives,
+                floating = floating
+            )
+        }
         HorizontalPager(
             state = pagerState
         ) { pager ->
-            content(holders[pager])
+            content(holders[pager].copy(floating = floating))
         }
     }
 }

@@ -15,19 +15,24 @@ data class Channel(
 
 @Immutable
 data class ChannelHolder(
-    val channels: List<Channel>
+    val channels: List<Channel>,
+    val floating: Live? = null
 )
 
 @Composable
-fun rememberChannelHolder(channels: List<Channel>): ChannelHolder {
-    return remember(channels) {
-        ChannelHolder(channels)
+fun rememberChannelHolder(
+    channels: List<Channel>,
+    floating: Live? = null
+): ChannelHolder {
+    return remember(channels, floating) {
+        ChannelHolder(channels, floating)
     }
 }
 
 data class FeedState(
     val url: String = "",
     val channels: List<Channel> = emptyList(),
+    val floating: Live? = null,
     val query: String = "",
     val fetching: Boolean = false,
     val scrollUp: Event<Unit> = handledEvent(),
