@@ -99,6 +99,7 @@ class StreamViewModel @Inject constructor(
 
     private fun openDlnaDevices() {
         DLNACastManager.bindCastService(application)
+        binded = true
         DLNACastManager.registerDeviceListener(this)
         viewModelScope.launch {
             delay(800.milliseconds)
@@ -107,7 +108,12 @@ class StreamViewModel @Inject constructor(
         _isDevicesVisible.value = true
     }
 
+    @Volatile
+    private var binded = false
+
     private fun closeDlnaDevices() {
+        if (!binded) return
+        binded = false
         _searching.value = false
         _isDevicesVisible.value = false
         _devices.value = emptyList()
