@@ -69,7 +69,6 @@ class PlayerActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
-
         setContent {
             M3ULocalProvider(
                 helper = helper,
@@ -89,6 +88,7 @@ class PlayerActivity : ComponentActivity() {
                 PlayerActivity.isInPipMode = info.isInPictureInPictureMode
             }
         }
+
         override fun enterPipMode(size: Rect) {
             val params = PictureInPictureParams.Builder()
                 .setAspectRatio(size.rational)

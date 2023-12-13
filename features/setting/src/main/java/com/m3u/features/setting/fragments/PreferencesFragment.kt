@@ -13,8 +13,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.OpenInNew
+import androidx.compose.material.icons.automirrored.rounded.VolumeUp
 import androidx.compose.material.icons.rounded.Animation
 import androidx.compose.material.icons.rounded.Backup
+import androidx.compose.material.icons.rounded.BrightnessMedium
+import androidx.compose.material.icons.rounded.Cast
 import androidx.compose.material.icons.rounded.Chair
 import androidx.compose.material.icons.rounded.ColorLens
 import androidx.compose.material.icons.rounded.Dangerous
@@ -31,11 +34,16 @@ import androidx.compose.material.icons.rounded.PermDeviceInformation
 import androidx.compose.material.icons.rounded.PictureInPicture
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.SafetyCheck
+import androidx.compose.material.icons.rounded.SlowMotionVideo
 import androidx.compose.material.icons.rounded.Source
 import androidx.compose.material.icons.rounded.Sync
 import androidx.compose.material.icons.rounded.Timer
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -198,26 +206,70 @@ internal fun PreferencesFragment(
             }
         }
         item {
+            var expended by rememberSaveable { mutableStateOf(false) }
             Column(
                 modifier = Modifier
                     .padding(spacing.medium)
                     .clip(MaterialTheme.shapes.medium),
                 verticalArrangement = Arrangement.spacedBy(1.dp)
             ) {
-                CheckBoxSharedPreference(
-                    title = string.feat_setting_full_info_player,
-                    content = string.feat_setting_full_info_player_description,
-                    icon = Icons.Rounded.Details,
-                    checked = pref.fullInfoPlayer,
-                    onChanged = { pref.fullInfoPlayer = !pref.fullInfoPlayer }
+                Preference(
+                    title = stringResource(string.feat_setting_optional_player_features).title(),
+                    icon = Icons.Rounded.Extension,
+                    onClick = { expended = !expended }
                 )
-                CheckBoxSharedPreference(
-                    title = string.feat_setting_zapping_mode,
-                    content = string.feat_setting_zapping_mode_description,
-                    icon = Icons.Rounded.PictureInPicture,
-                    checked = pref.zappingMode,
-                    onChanged = { pref.zappingMode = !pref.zappingMode }
-                )
+                AnimatedVisibility(
+                    visible = expended,
+                    enter = expandVertically(
+                        expandFrom = Alignment.Bottom
+                    ),
+                    exit = shrinkVertically(
+                        shrinkTowards = Alignment.Bottom
+                    )
+                ) {
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(1.dp)
+                    ) {
+                        CheckBoxSharedPreference(
+                            title = string.feat_setting_full_info_player,
+                            content = string.feat_setting_full_info_player_description,
+                            icon = Icons.Rounded.Details,
+                            checked = pref.fullInfoPlayer,
+                            onChanged = { pref.fullInfoPlayer = !pref.fullInfoPlayer }
+                        )
+                        CheckBoxSharedPreference(
+                            title = string.feat_setting_zapping_mode,
+                            content = string.feat_setting_zapping_mode_description,
+                            icon = Icons.Rounded.PictureInPicture,
+                            checked = pref.zappingMode,
+                            onChanged = { pref.zappingMode = !pref.zappingMode }
+                        )
+                        CheckBoxSharedPreference(
+                            title = string.feat_setting_gesture_brightness,
+                            icon = Icons.Rounded.BrightnessMedium,
+                            checked = pref.brightnessGesture,
+                            onChanged = { pref.brightnessGesture = !pref.brightnessGesture }
+                        )
+                        CheckBoxSharedPreference(
+                            title = string.feat_setting_gesture_volume,
+                            icon = Icons.AutoMirrored.Rounded.VolumeUp,
+                            checked = pref.volumeGesture,
+                            onChanged = { pref.volumeGesture = !pref.volumeGesture }
+                        )
+                        CheckBoxSharedPreference(
+                            title = string.feat_setting_record,
+                            icon = Icons.Rounded.SlowMotionVideo,
+                            checked = pref.record,
+                            onChanged = { pref.record = !pref.record }
+                        )
+                        CheckBoxSharedPreference(
+                            title = string.feat_setting_screencast,
+                            icon = Icons.Rounded.Cast,
+                            checked = pref.screencast,
+                            onChanged = { pref.screencast = !pref.screencast }
+                        )
+                    }
+                }
             }
         }
         item {

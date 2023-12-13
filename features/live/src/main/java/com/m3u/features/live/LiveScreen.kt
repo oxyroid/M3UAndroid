@@ -55,20 +55,18 @@ fun LiveRoute(
 
     val volume by viewModel.volume.collectAsStateWithLifecycle()
     var brightness by rememberSaveable { mutableFloatStateOf(helper.brightness) }
-
-    val maskState = rememberMaskState()
-
     var isPipMode by rememberSaveable { mutableStateOf(false) }
     var isAutoZappingMode by rememberSaveable { mutableStateOf(true) }
+
+    val maskState = rememberMaskState()
 
     LifecycleEffect { event ->
         when (event) {
             Lifecycle.Event.ON_STOP -> {
                 if (isPipMode) {
-                    viewModel.onEvent(LiveEvent.UninstallMedia)
+                    viewModel.onEvent(LiveEvent.Stop)
                 }
             }
-
             else -> {}
         }
     }

@@ -8,10 +8,12 @@ import com.m3u.core.annotation.ClipMode
 import com.m3u.core.annotation.ConnectTimeout
 import com.m3u.core.annotation.FeedStrategy
 import com.m3u.core.architecture.pref.Pref.Companion.AUTO_REFRESH
+import com.m3u.core.architecture.pref.Pref.Companion.BRIGHTNESS_GESTURE
 import com.m3u.core.architecture.pref.Pref.Companion.CINEMA_MODE
 import com.m3u.core.architecture.pref.Pref.Companion.CLIP_MODE
 import com.m3u.core.architecture.pref.Pref.Companion.CONNECT_TIMEOUT
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_AUTO_REFRESH
+import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_BRIGHTNESS_GESTURE
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_CINEMA_MODE
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_CLIP_MODE
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_CONNECT_TIMEOUT
@@ -19,23 +21,29 @@ import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_EXPERIMENTAL_MODE
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_FEED_STRATEGY
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_FULL_INFO_PLAYER
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_GOD_MODE
-import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_ROOT_DESTINATION
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_NO_PICTURE_MODE
+import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_RECORD
+import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_ROOT_DESTINATION
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_ROW_COUNT
+import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_SCREENCAST
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_SSL_VERIFICATION
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_USE_COMMON_UI_MODE
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_USE_DYNAMIC_COLORS
+import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_VOLUME_GESTURE
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_ZAPPING_MODE
 import com.m3u.core.architecture.pref.Pref.Companion.EXPERIMENTAL_MODE
 import com.m3u.core.architecture.pref.Pref.Companion.FEED_STRATEGY
 import com.m3u.core.architecture.pref.Pref.Companion.FULL_INFO_PLAYER
 import com.m3u.core.architecture.pref.Pref.Companion.GOD_MODE
-import com.m3u.core.architecture.pref.Pref.Companion.ROOT_DESTINATION
 import com.m3u.core.architecture.pref.Pref.Companion.NO_PICTURE_MODE
+import com.m3u.core.architecture.pref.Pref.Companion.RECORD
+import com.m3u.core.architecture.pref.Pref.Companion.ROOT_DESTINATION
 import com.m3u.core.architecture.pref.Pref.Companion.ROW_COUNT
+import com.m3u.core.architecture.pref.Pref.Companion.SCREENCAST
 import com.m3u.core.architecture.pref.Pref.Companion.SSL_VERIFICATION
 import com.m3u.core.architecture.pref.Pref.Companion.USE_COMMON_UI_MODE
 import com.m3u.core.architecture.pref.Pref.Companion.USE_DYNAMIC_COLORS
+import com.m3u.core.architecture.pref.Pref.Companion.VOLUME_GESTURE
 import com.m3u.core.architecture.pref.Pref.Companion.ZAPPING_MODE
 import com.m3u.core.util.context.booleanAsState
 import com.m3u.core.util.context.intAsState
@@ -91,6 +99,18 @@ class SnapshotPref @Inject constructor(
 
     override var zappingMode: Boolean by
     sharedPreferences.booleanAsState(DEFAULT_ZAPPING_MODE, ZAPPING_MODE)
+
+    override var brightnessGesture: Boolean by
+    sharedPreferences.booleanAsState(DEFAULT_BRIGHTNESS_GESTURE, BRIGHTNESS_GESTURE)
+
+    override var volumeGesture: Boolean by
+    sharedPreferences.booleanAsState(DEFAULT_VOLUME_GESTURE, VOLUME_GESTURE)
+
+    override var record: Boolean by
+    sharedPreferences.booleanAsState(DEFAULT_RECORD, RECORD)
+
+    override var screencast: Boolean by
+    sharedPreferences.booleanAsState(DEFAULT_SCREENCAST, SCREENCAST)
 
     companion object {
         private const val SHARED_SETTINGS = "shared_settings"

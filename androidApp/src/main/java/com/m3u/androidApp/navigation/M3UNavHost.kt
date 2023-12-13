@@ -1,5 +1,6 @@
 package com.m3u.androidApp.navigation
 
+import android.app.ActivityOptions
 import android.content.Intent
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -53,8 +54,14 @@ fun M3UNavHost(
             },
             navigateToLive = {
                 if (pref.zappingMode && PlayerActivity.isInPipMode) return@rootGraph
+                val options = ActivityOptions.makeCustomAnimation(
+                    context,
+                    0,
+                    0
+                )
                 context.startActivity(
-                    Intent(context, PlayerActivity::class.java)
+                    Intent(context, PlayerActivity::class.java),
+                    options.toBundle()
                 )
             },
             navigateToConsole = {
@@ -72,8 +79,14 @@ fun M3UNavHost(
             contentPadding = contentPadding,
             navigateToLive = {
                 if (pref.zappingMode && PlayerActivity.isInPipMode) return@feedScreen
+                val options = ActivityOptions.makeCustomAnimation(
+                    context,
+                    0,
+                    0
+                )
                 context.startActivity(
-                    Intent(context, PlayerActivity::class.java)
+                    Intent(context, PlayerActivity::class.java),
+                    options.toBundle()
                 )
             }
         )

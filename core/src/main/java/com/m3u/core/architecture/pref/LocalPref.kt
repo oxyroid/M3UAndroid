@@ -25,4 +25,8 @@ private object MockPref : Pref {
     override var cinemaMode: Boolean = Pref.DEFAULT_CINEMA_MODE
     override var useDynamicColors: Boolean = Pref.DEFAULT_USE_DYNAMIC_COLORS
     override var zappingMode: Boolean = Pref.DEFAULT_ZAPPING_MODE
+    override var brightnessGesture: Boolean = Pref.DEFAULT_BRIGHTNESS_GESTURE
+    override var volumeGesture: Boolean = Pref.DEFAULT_VOLUME_GESTURE
+    override var record: Boolean = Pref.DEFAULT_RECORD
+    override var screencast: Boolean = Pref.DEFAULT_SCREENCAST
 }

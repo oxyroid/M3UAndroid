@@ -166,18 +166,20 @@ internal fun LiveFragment(
                             contentDescription = if (stared) stringResource(string.feat_live_tooltip_unfavourite)
                             else stringResource(string.feat_live_tooltip_favourite)
                         )
-                        MaskButton(
-                            state = maskState,
-                            enabled = false,
-                            icon = if (recording) Icons.Rounded.RadioButtonChecked
-                            else Icons.Rounded.RadioButtonUnchecked,
-                            tint = if (recording) theme.error
-                            else Color.Unspecified,
-                            onClick = onRecord,
-                            contentDescription = if (recording) stringResource(string.feat_live_tooltip_unrecord)
-                            else stringResource(string.feat_live_tooltip_record)
-                        )
-                        if (playerState.playState != Player.STATE_IDLE) {
+                        if (pref.record) {
+                            MaskButton(
+                                state = maskState,
+                                enabled = false,
+                                icon = if (recording) Icons.Rounded.RadioButtonChecked
+                                else Icons.Rounded.RadioButtonUnchecked,
+                                tint = if (recording) theme.error
+                                else Color.Unspecified,
+                                onClick = onRecord,
+                                contentDescription = if (recording) stringResource(string.feat_live_tooltip_unrecord)
+                                else stringResource(string.feat_live_tooltip_record)
+                            )
+                        }
+                        if (pref.screencast && playerState.playState != Player.STATE_IDLE) {
                             MaskButton(
                                 state = maskState,
                                 icon = Icons.Rounded.Cast,
@@ -271,20 +273,24 @@ internal fun LiveFragment(
                     },
                     modifier = Modifier.detectVerticalMaskGestures(
                         volume = { deltaPixel ->
+                            if (!pref.volumeGesture) return@detectVerticalMaskGestures
                             onVolume(
                                 (currentVolume - (deltaPixel / maxHeight.value)).coerceIn(0f..1f)
                             )
                         },
                         brightness = { deltaPixel ->
+                            if (!pref.brightnessGesture) return@detectVerticalMaskGestures
                             onBrightness(
                                 (currentLight - deltaPixel / maxHeight.value).coerceIn(0f..1f)
                             )
                         },
                         onDragStart = {
+                            if (!pref.volumeGesture && !pref.brightnessGesture) return@detectVerticalMaskGestures
                             maskState.lock()
                             gesture = it
                         },
                         onDragEnd = {
+                            if (!pref.volumeGesture && !pref.brightnessGesture) return@detectVerticalMaskGestures
                             maskState.unlock(400.milliseconds)
                             gesture = null
                         }

@@ -36,6 +36,10 @@ interface Pref {
     var useDynamicColors: Boolean
 
     var zappingMode: Boolean
+    var brightnessGesture: Boolean
+    var volumeGesture: Boolean
+    var record: Boolean
+    var screencast: Boolean
 
     companion object {
         @FeedStrategy
@@ -61,6 +65,10 @@ interface Pref {
         var DEFAULT_USE_DYNAMIC_COLORS = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
 
         const val DEFAULT_ZAPPING_MODE = false
+        const val DEFAULT_BRIGHTNESS_GESTURE = true
+        const val DEFAULT_VOLUME_GESTURE = true
+        const val DEFAULT_RECORD = false
+        const val DEFAULT_SCREENCAST = true
 
         const val FEED_STRATEGY = "feed-strategy"
         const val USE_COMMON_UI_MODE = "use-common-ui-mode"
@@ -79,6 +87,10 @@ interface Pref {
         const val CINEMA_MODE = "cinema-mode"
         const val USE_DYNAMIC_COLORS = "use-dynamic-colors"
         const val ZAPPING_MODE = "zapping-mode"
+        const val BRIGHTNESS_GESTURE = "brightness-gesture"
+        const val VOLUME_GESTURE = "volume-gesture"
+        const val RECORD = "record"
+        const val SCREENCAST = "screencast"
     }
 }
 

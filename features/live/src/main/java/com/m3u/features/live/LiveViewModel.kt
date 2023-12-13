@@ -85,8 +85,7 @@ class LiveViewModel @Inject constructor(
             is LiveEvent.DisconnectDlnaDevice -> disconnectDlnaDevice(event.device)
             LiveEvent.Record -> record()
             is LiveEvent.OnFavourite -> onFavourite(event.url)
-            is LiveEvent.InstallMedia -> installMedia(event.url)
-            LiveEvent.UninstallMedia -> uninstallMedia()
+            LiveEvent.Stop -> stop()
             is LiveEvent.OnVolume -> onVolume(event.volume)
         }
     }
@@ -185,12 +184,7 @@ class LiveViewModel @Inject constructor(
         controlPoint = null
     }
 
-    private fun installMedia(url: String) {
-        if (url.isEmpty()) return
-        playerManager.play(url)
-    }
-
-    private fun uninstallMedia() {
+    private fun stop() {
         playerManager.stop()
     }
 
