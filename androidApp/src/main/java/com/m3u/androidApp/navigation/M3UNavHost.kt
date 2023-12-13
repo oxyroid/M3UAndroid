@@ -47,7 +47,7 @@ fun M3UNavHost(
             contentPadding = contentPadding,
             navigateToPlaylist = { playlist ->
                 helper.title = playlist.title.ifEmpty {
-                    if (playlist.local) context.getString(string.feat_main_imported_playlist_title)
+                    if (playlist.local) context.getString(string.feat_foryou_imported_playlist_title)
                     else ""
                 }
                 navigate(Destination.Playlist(playlist.url))

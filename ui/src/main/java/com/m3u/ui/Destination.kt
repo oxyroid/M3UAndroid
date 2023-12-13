@@ -37,10 +37,10 @@ sealed interface Destination {
         @StringRes val iconTextId: Int,
         @StringRes val titleTextId: Int
     ) : Destination {
-        Main(
+        Foryou(
             selectedIcon = Icons.Rounded.Home,
             unselectedIcon = Icons.Outlined.Home,
-            iconTextId = string.ui_destination_main,
+            iconTextId = string.ui_destination_foryou,
             titleTextId = string.ui_app_name
         ),
         Favourite(

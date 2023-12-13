@@ -225,7 +225,7 @@ private fun PlaylistScreen(
                 else {
                     Fob(
                         icon = Icons.Rounded.ArrowCircleUp,
-                        rootDestination = Destination.Root.Main,
+                        rootDestination = Destination.Root.Foryou,
                         onClick = onScrollUp
                     )
                 }

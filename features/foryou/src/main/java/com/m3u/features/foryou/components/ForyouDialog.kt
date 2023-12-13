@@ -23,32 +23,32 @@ import com.m3u.material.components.DialogTextField
 import com.m3u.material.ktx.animateDp
 import com.m3u.material.model.LocalSpacing
 
-internal typealias OnUpdateStatus = (MainDialog) -> Unit
+internal typealias OnUpdateStatus = (ForyouDialog) -> Unit
 internal typealias OnUnsubscribe = (playlistUrl: String) -> Unit
 internal typealias OnRename = (playlistUrl: String, target: String) -> Unit
 
-internal sealed class MainDialog {
-    data object Idle : MainDialog()
+internal sealed class ForyouDialog {
+    data object Idle : ForyouDialog()
     data class Selections(
         val playlist: Playlist
-    ) : MainDialog()
+    ) : ForyouDialog()
 }
 
 @Composable
-internal fun MainDialog(
-    status: MainDialog,
+internal fun ForyouDialog(
+    status: ForyouDialog,
     update: OnUpdateStatus,
     unsubscribe: OnUnsubscribe,
     rename: OnRename,
     modifier: Modifier = Modifier
 ) {
     var editMode by remember { mutableStateOf(false) }
-    val borderWidth by animateDp("MainDialogBorder") { if (editMode) 6.dp else 2.dp }
+    val borderWidth by animateDp("foryou-dialog-border") { if (editMode) 6.dp else 2.dp }
     AppDialog(
-        visible = status is MainDialog.Selections,
+        visible = status is ForyouDialog.Selections,
         onDismiss = {
             if (!editMode) {
-                update(MainDialog.Idle)
+                update(ForyouDialog.Idle)
             }
         },
         border = BorderStroke(
@@ -60,15 +60,15 @@ internal fun MainDialog(
         content = {
             val theme = MaterialTheme.colorScheme
             val context = LocalContext.current
-            val currentStatus = remember { status as MainDialog.Selections }
-            if (status is MainDialog.Selections) {
+            val currentStatus = remember { status as ForyouDialog.Selections }
+            if (status is ForyouDialog.Selections) {
                 val editable = with(currentStatus.playlist) {
                     !local || title.isNotEmpty()
                 }
                 var renamedText by remember(currentStatus) {
                     mutableStateOf(
                         with(currentStatus.playlist) {
-                            if (editable) title else context.getString(string.feat_main_imported_playlist_title)
+                            if (editable) title else context.getString(string.feat_foryou_imported_playlist_title)
                         }
                     )
                 }
@@ -87,16 +87,16 @@ internal fun MainDialog(
                     }
                 )
                 if (!editMode) {
-                    DialogItem(string.feat_main_unsubscribe_playlist) {
+                    DialogItem(string.feat_foryou_unsubscribe_playlist) {
                         unsubscribe(currentStatus.playlist.url)
-                        update(MainDialog.Idle)
+                        update(ForyouDialog.Idle)
                     }
                     if (!currentStatus.playlist.local) {
                         val clipboardManager = LocalClipboardManager.current
-                        DialogItem(string.feat_main_copy_playlist_url) {
+                        DialogItem(string.feat_foryou_copy_playlist_url) {
                             val annotatedString = AnnotatedString(currentStatus.playlist.url)
                             clipboardManager.setText(annotatedString)
-                            update(MainDialog.Idle)
+                            update(ForyouDialog.Idle)
                         }
                     }
                 }

@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <string name="feat_main_muted_streams_playlist">directos bloqueados</string>
-    <string name="feat_main_unsubscribe_playlist">desuscribirse</string>
-    <string name="feat_main_error_unsubscribe_playlist">no se puede desuscribir</string>
-    <string name="feat_main_copy_playlist_url">copiar url</string>
-    <string name="feat_main_rename_playlist">renombrar</string>
-    <string name="feat_main_imported_playlist_title">importado</string>
-</resources>

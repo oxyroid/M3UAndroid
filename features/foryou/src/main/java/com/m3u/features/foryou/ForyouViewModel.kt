@@ -20,11 +20,11 @@ import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 @HiltViewModel
-class MainViewModel @Inject constructor(
+class ForyouViewModel @Inject constructor(
     private val playlistRepository: PlaylistRepository,
     streamRepository: StreamRepository,
-) : BaseViewModel<MainState, MainEvent, MainMessage>(
-    emptyState = MainState()
+) : BaseViewModel<ForyouState, ForyouEvent, ForyouMessage>(
+    emptyState = ForyouState()
 ) {
     private val counts: StateFlow<Map<String, Int>> = streamRepository
         .observeAll()
@@ -56,10 +56,10 @@ class MainViewModel @Inject constructor(
             initialValue = PlaylistDetailHolder()
         )
 
-    override fun onEvent(event: MainEvent) {
+    override fun onEvent(event: ForyouEvent) {
         when (event) {
-            is MainEvent.Unsubscribe -> unsubscribe(event.url)
-            is MainEvent.Rename -> rename(event.playlistUrl, event.target)
+            is ForyouEvent.Unsubscribe -> unsubscribe(event.url)
+            is ForyouEvent.Rename -> rename(event.playlistUrl, event.target)
         }
     }
 
@@ -67,7 +67,7 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch {
             val playlist = playlistRepository.unsubscribe(url)
             if (playlist == null) {
-                onMessage(MainMessage.ErrorCannotUnsubscribe)
+                onMessage(ForyouMessage.ErrorCannotUnsubscribe)
             }
         }
     }

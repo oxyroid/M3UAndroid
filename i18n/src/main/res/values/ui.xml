@@ -2,7 +2,7 @@
 <resources>
     <string name="ui_app_name">M3U</string>
 
-    <string name="ui_destination_main">For You</string>
+    <string name="ui_destination_foryou">For You</string>
     <string name="ui_destination_favourite">Favourite</string>
     <string name="ui_destination_setting">Settings</string>
 

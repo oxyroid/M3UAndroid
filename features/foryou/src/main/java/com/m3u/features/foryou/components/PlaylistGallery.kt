@@ -59,7 +59,7 @@ internal fun PlaylistGallery(
 @Composable
 private fun Playlist.calculateUiTitle(): AnnotatedString {
     val actual = title.ifEmpty {
-        if (local) stringResource(string.feat_main_imported_playlist_title)
+        if (local) stringResource(string.feat_foryou_imported_playlist_title)
         else ""
     }
     return AnnotatedString(actual.uppercase())

@@ -2,7 +2,7 @@
 <resources>
     <string name="ui_app_name">M3U</string>
 
-    <string name="ui_destination_main">主页</string>
+    <string name="ui_destination_foryou">主页</string>
     <string name="ui_destination_favourite">喜欢</string>
     <string name="ui_destination_setting">设置</string>
 

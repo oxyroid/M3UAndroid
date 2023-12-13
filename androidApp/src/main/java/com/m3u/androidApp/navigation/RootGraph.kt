@@ -17,7 +17,7 @@ import com.m3u.core.wrapper.eventOf
 import com.m3u.core.wrapper.handledEvent
 import com.m3u.features.favorite.FavouriteRoute
 import com.m3u.features.favorite.NavigateToStream
-import com.m3u.features.foryou.MainRoute
+import com.m3u.features.foryou.ForyouRoute
 import com.m3u.features.foryou.NavigateToPlaylist
 import com.m3u.features.foryou.NavigateToSettingSubscription
 import com.m3u.features.setting.NavigateToAbout
@@ -96,8 +96,8 @@ private fun RootGraph(
             )
     ) { pagerIndex ->
         when (destinations[pagerIndex]) {
-            Destination.Root.Main -> {
-                MainRoute(
+            Destination.Root.Foryou -> {
+                ForyouRoute(
                     navigateToPlaylist = navigateToPlaylist,
                     navigateToSettingSubscription = navigateToSettingSubscription,
                     resume = rememberResumeEvent(pagerState.targetPage, pagerIndex),

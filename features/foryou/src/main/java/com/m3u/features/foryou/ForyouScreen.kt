@@ -41,7 +41,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.data.database.entity.Playlist
 import com.m3u.features.foryou.components.PlaylistGallery
-import com.m3u.features.foryou.components.MainDialog
+import com.m3u.features.foryou.components.ForyouDialog
 import com.m3u.features.foryou.components.OnRename
 import com.m3u.features.foryou.components.OnUnsubscribe
 import com.m3u.features.foryou.model.PlaylistDetailHolder
@@ -59,13 +59,13 @@ typealias NavigateToPlaylist = (playlist: Playlist) -> Unit
 typealias NavigateToSettingSubscription = () -> Unit
 
 @Composable
-fun MainRoute(
+fun ForyouRoute(
     navigateToPlaylist: NavigateToPlaylist,
     navigateToSettingSubscription: NavigateToSettingSubscription,
     resume: ResumeEvent,
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
-    viewModel: MainViewModel = hiltViewModel()
+    viewModel: ForyouViewModel = hiltViewModel()
 ) {
     val helper = LocalHelper.current
     val pref = LocalPref.current
@@ -93,13 +93,13 @@ fun MainRoute(
         } else Modifier
     }
 
-    MainScreen(
+    ForyouScreen(
         playlistDetailHolder = playlistDetailHolder,
         rowCount = pref.rowCount,
         contentPadding = contentPadding,
         navigateToPlaylist = navigateToPlaylist,
-        unsubscribe = { viewModel.onEvent(MainEvent.Unsubscribe(it)) },
-        rename = { playlistUrl, target -> viewModel.onEvent(MainEvent.Rename(playlistUrl, target)) },
+        unsubscribe = { viewModel.onEvent(ForyouEvent.Unsubscribe(it)) },
+        rename = { playlistUrl, target -> viewModel.onEvent(ForyouEvent.Rename(playlistUrl, target)) },
         modifier = modifier
             .fillMaxSize()
             .then(interceptVolumeEventModifier),
@@ -107,7 +107,7 @@ fun MainRoute(
 }
 
 @Composable
-private fun MainScreen(
+private fun ForyouScreen(
     rowCount: Int,
     playlistDetailHolder: PlaylistDetailHolder,
     contentPadding: PaddingValues,
@@ -116,7 +116,7 @@ private fun MainScreen(
     rename: OnRename,
     modifier: Modifier = Modifier
 ) {
-    var dialog: MainDialog by remember { mutableStateOf(MainDialog.Idle) }
+    var dialog: ForyouDialog by remember { mutableStateOf(ForyouDialog.Idle) }
     val configuration = LocalConfiguration.current
 
     val details = playlistDetailHolder.details
@@ -133,7 +133,7 @@ private fun MainScreen(
                 rowCount = actualRowCount,
                 playlistDetailHolder = playlistDetailHolder,
                 navigateToPlaylist = navigateToPlaylist,
-                onMenu = { dialog = MainDialog.Selections(it) },
+                onMenu = { dialog = ForyouDialog.Selections(it) },
                 contentPadding = contentPadding,
                 modifier = Modifier.fillMaxSize()
             )
@@ -142,7 +142,7 @@ private fun MainScreen(
                 modifier = Modifier.align(Alignment.Center)
             )
         }
-        MainDialog(
+        ForyouDialog(
             status = dialog,
             update = { dialog = it },
             unsubscribe = unsubscribe,
@@ -150,8 +150,8 @@ private fun MainScreen(
         )
     }
 
-    BackHandler(dialog != MainDialog.Idle) {
-        dialog = MainDialog.Idle
+    BackHandler(dialog != ForyouDialog.Idle) {
+        dialog = ForyouDialog.Idle
     }
 }
 
