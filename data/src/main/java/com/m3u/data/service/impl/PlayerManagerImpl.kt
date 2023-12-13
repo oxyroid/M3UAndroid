@@ -35,7 +35,6 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -63,9 +62,7 @@ class PlayerManagerImpl @Inject constructor(
     override val url: StateFlow<String?> = _url.asStateFlow()
 
     private val payload = pref
-        .observeAsFlow()
-        .map { PlayerPayload(it.isSSLVerification, it.connectTimeout) }
-        .distinctUntilChanged()
+        .observeAsFlow { PlayerPayload(it.isSSLVerification, it.connectTimeout) }
         .onEach { payload ->
             player.update {
                 createPlayer(payload)
@@ -73,7 +70,7 @@ class PlayerManagerImpl @Inject constructor(
         }
         .stateIn(
             scope = scope,
-            started = SharingStarted.Lazily,
+            started = SharingStarted.WhileSubscribed(5_000),
             initialValue = PlayerPayload(pref.isSSLVerification, pref.connectTimeout)
         )
 

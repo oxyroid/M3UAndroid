@@ -82,7 +82,7 @@ interface Pref {
     }
 }
 
-fun Pref.observeAsFlow(): Flow<Pref> = when (this) {
-    is SnapshotPref -> snapshotFlow { this }
+fun <R> Pref.observeAsFlow(block: (Pref) -> R): Flow<R> = when (this) {
+    is SnapshotPref -> snapshotFlow { block(this) }
     else -> error("Pref.observeAsFlow only be allowed when it is snapshot pref.")
 }
