@@ -88,6 +88,7 @@ internal fun LiveFragment(
 ) {
     val theme = MaterialTheme.colorScheme
     val pref = LocalPref.current
+    val helper = LocalHelper.current
 
     // because they will be updated frequently,
     // they must be wrapped with rememberUpdatedState when using them.
@@ -99,7 +100,6 @@ internal fun LiveFragment(
         contentColor = Color.White
     ) {
         Box(modifier) {
-            val helper = LocalHelper.current
             val state = rememberPlayerState(
                 player = playerState.player,
                 url = url,

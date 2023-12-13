@@ -45,6 +45,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.time.Duration
 
+typealias Interceptor = (Boolean) -> Boolean
+
 @Stable
 interface MaskState {
     val visible: Boolean
@@ -52,6 +54,7 @@ interface MaskState {
     fun sleep()
     fun lock()
     fun unlock(delay: Duration = Duration.ZERO)
+    fun intercept(interceptor: Interceptor?)
 }
 
 fun MaskState.toggle() {
@@ -67,7 +70,8 @@ private class MaskStateCoroutineImpl(
     private var locked: Boolean by mutableStateOf(false)
 
     override val visible: Boolean by derivedStateOf {
-        locked || (currentTime - lastTime <= minDuration)
+        val before = (locked || (currentTime - lastTime <= minDuration))
+        interceptor?.invoke(before) ?: before
     }
 
     init {
@@ -99,6 +103,13 @@ private class MaskStateCoroutineImpl(
             delay(delay)
             locked = false
         }
+    }
+
+    @Volatile
+    private var interceptor: Interceptor? = null
+
+    override fun intercept(interceptor: Interceptor?) {
+        this.interceptor = interceptor
     }
 }
 

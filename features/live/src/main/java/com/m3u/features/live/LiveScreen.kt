@@ -116,6 +116,14 @@ fun LiveRoute(
         }
     }
 
+    LaunchedEffect(isPipMode) {
+        if (isPipMode) {
+            maskState.intercept { false }
+        } else {
+            maskState.intercept(null)
+        }
+    }
+
     Background(
         color = Color.Black,
         contentColor = Color.White
