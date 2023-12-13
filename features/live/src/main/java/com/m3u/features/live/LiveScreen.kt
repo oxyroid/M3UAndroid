@@ -188,7 +188,7 @@ private fun LiveScreen(
         feedTitle = feedTitle,
         maskState = maskState,
         recording = recording,
-        stared = favourite,
+        favourite = favourite,
         onRecord = onRecord,
         onFavourite = { onFavourite(url) },
         openDlnaDevices = openDlnaDevices,

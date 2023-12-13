@@ -20,7 +20,6 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -45,13 +44,15 @@ class LiveViewModel @Inject constructor(
     private val _volume: MutableStateFlow<Float> = MutableStateFlow(1f)
     val volume = _volume.asStateFlow()
 
-    val metadata: StateFlow<LiveState.Metadata> = playerManager
-        .url
-        .map { url ->
-            val live = url?.let { liveRepository.getByUrl(it) }
-            val feed = live?.feedUrl?.let { feedRepository.get(it) }
-            LiveState.Metadata(feed, live)
-        }
+    val metadata: StateFlow<LiveState.Metadata> = combine(
+        playerManager.url,
+        liveRepository.observeAll(),
+        feedRepository.observeAll()
+    ) { url, lives, feeds ->
+        val live = lives.find { it.url == url }
+        val feed = feeds.find { it.url == live?.feedUrl }
+        LiveState.Metadata(feed, live)
+    }
         .stateIn(
             scope = viewModelScope,
             initialValue = LiveState.Metadata(),

@@ -74,7 +74,7 @@ internal fun LiveFragment(
     cover: String,
     maskState: MaskState,
     recording: Boolean,
-    stared: Boolean,
+    favourite: Boolean,
     volume: Float,
     brightness: Float,
     onVolume: (Float) -> Unit,
@@ -161,9 +161,9 @@ internal fun LiveFragment(
                         MaskButton(
                             state = maskState,
                             icon = Icons.Rounded.Star,
-                            tint = if (stared) Color.Yellow else Color.Unspecified,
+                            tint = if (favourite) Color.Yellow else Color.Unspecified,
                             onClick = onFavourite,
-                            contentDescription = if (stared) stringResource(string.feat_live_tooltip_unfavourite)
+                            contentDescription = if (favourite) stringResource(string.feat_live_tooltip_unfavourite)
                             else stringResource(string.feat_live_tooltip_favourite)
                         )
                         if (pref.record) {
