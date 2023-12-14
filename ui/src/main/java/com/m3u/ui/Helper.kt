@@ -34,6 +34,7 @@ interface Helper {
     var darkMode: UBoolean
     var brightness: Float
     val isInPipMode: Boolean
+    var screenOrientation: Int
 
     @get:Composable
     val windowSizeClass: WindowSizeClass
@@ -165,6 +166,12 @@ val EmptyHelper = object : Helper {
 
     override val isInPipMode: Boolean
         get() = error("Cannot get isInPipMode")
+
+    override var screenOrientation: Int
+        get() = error("Cannot get screenOrientation")
+        set(_) {
+            error("Cannot set screenOrientation")
+        }
 
     override val windowSizeClass: WindowSizeClass
         @Composable get() = error("Cannot get windowSizeClass")

@@ -29,4 +29,5 @@ private object MockPref : Pref {
     override var volumeGesture: Boolean = Pref.DEFAULT_VOLUME_GESTURE
     override var record: Boolean = Pref.DEFAULT_RECORD
     override var screencast: Boolean = Pref.DEFAULT_SCREENCAST
+    override var screenRotating: Boolean = Pref.DEFAULT_SCREEN_ROTATING
 }

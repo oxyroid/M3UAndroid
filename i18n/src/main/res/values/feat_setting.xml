@@ -59,5 +59,7 @@
     <string name="feat_setting_gesture_volume">volume gesture</string>
     <string name="feat_setting_record">segment recording</string>
     <string name="feat_setting_screencast">screencast</string>
+    <string name="feat_setting_screen_rotating">screen rotating</string>
+    <string name="feat_setting_screen_rotating_description">available when system rotating is unlocked</string>
     <string name="feat_setting_optional_player_features">optional player features</string>
 </resources>

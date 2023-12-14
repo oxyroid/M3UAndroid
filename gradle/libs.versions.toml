@@ -48,6 +48,7 @@ jetty = "8.1.21.v20160908"
 nanohttpd = "2.3.1"
 haze = "0.2.0"
 kaml = "0.55.0"
+fastlane = "2.1.1"
 
 [libraries]
 androidx-core-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "androidx-core" }
@@ -140,6 +141,7 @@ jetty-client = { group = "org.eclipse.jetty", name = "jetty-client", version.ref
 
 nanohttpd = { group = "org.nanohttpd", name = "nanohttpd", version.ref = "nanohttpd" }
 haze = { group = "dev.chrisbanes.haze", name = "haze-jetpack-compose", version.ref = "haze" }
+fastlane-screengrab = { group = "tools.fastlane", name = "screengrab", version.ref = "fastlane" }
 
 [plugins]
 com-android-application = { id = "com.android.application", version.ref = "android-gradle-plugin" }

@@ -40,6 +40,7 @@ interface Pref {
     var volumeGesture: Boolean
     var record: Boolean
     var screencast: Boolean
+    var screenRotating: Boolean
 
     companion object {
         @PlaylistStrategy
@@ -69,6 +70,7 @@ interface Pref {
         const val DEFAULT_VOLUME_GESTURE = true
         const val DEFAULT_RECORD = false
         const val DEFAULT_SCREENCAST = true
+        const val DEFAULT_SCREEN_ROTATING = false
 
         const val PLAYLIST_STRATEGY = "playlist-strategy"
         const val USE_COMMON_UI_MODE = "use-common-ui-mode"
@@ -91,6 +93,7 @@ interface Pref {
         const val VOLUME_GESTURE = "volume-gesture"
         const val RECORD = "record"
         const val SCREENCAST = "screencast"
+        const val SCREEN_ROTATING = "screen-rotating"
     }
 }
 

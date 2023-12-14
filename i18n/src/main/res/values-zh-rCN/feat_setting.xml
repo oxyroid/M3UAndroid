@@ -63,5 +63,7 @@
     <string name="feat_setting_gesture_volume">音量手势</string>
     <string name="feat_setting_record">片段录制</string>
     <string name="feat_setting_screencast">投屏</string>
+    <string name="feat_setting_screen_rotating">屏幕旋转</string>
+    <string name="feat_setting_screen_rotating_description">只有当系统屏幕旋转解锁时可用</string>
     <string name="feat_setting_optional_player_features">可选播放器功能</string>
 </resources>

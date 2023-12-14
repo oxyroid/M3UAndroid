@@ -1,5 +1,10 @@
 package com.m3u.features.stream.fragments
 
+import android.content.pm.ActivityInfo
+import android.database.ContentObserver
+import android.os.Handler
+import android.os.Looper
+import android.provider.Settings
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
@@ -7,7 +12,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
@@ -24,14 +31,17 @@ import androidx.compose.material.icons.rounded.PictureInPicture
 import androidx.compose.material.icons.rounded.RadioButtonChecked
 import androidx.compose.material.icons.rounded.RadioButtonUnchecked
 import androidx.compose.material.icons.rounded.Refresh
+import androidx.compose.material.icons.rounded.ScreenRotationAlt
 import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -40,6 +50,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -221,7 +232,8 @@ internal fun StreamFragment(
                             verticalArrangement = Arrangement.Bottom,
                             modifier = Modifier
                                 .semantics(mergeDescendants = true) { }
-                                .fillMaxSize()
+                                .fillMaxHeight()
+                                .weight(1f)
                         ) {
                             Text(
                                 text = playlistTitle,
@@ -269,6 +281,32 @@ internal fun StreamFragment(
                             }
                             // TODO: implement servers ui here.
 
+                        }
+                        Row(
+                            horizontalArrangement = Arrangement.End,
+                            verticalAlignment = Alignment.Bottom,
+                            modifier = Modifier.fillMaxHeight()
+                        ) {
+                            val autoRotating by StreamFragmentDefaults.IsAutoRotatingEnabled
+                            LaunchedEffect(autoRotating) {
+                                if (autoRotating) {
+                                    helper.screenOrientation =
+                                        ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+                                }
+                            }
+                            if (pref.screenRotating && !autoRotating) {
+                                MaskButton(
+                                    state = maskState,
+                                    icon = Icons.Rounded.ScreenRotationAlt,
+                                    onClick = {
+                                        helper.screenOrientation = when (helper.screenOrientation) {
+                                            ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE -> ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+                                            else -> ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+                                        }
+                                    },
+                                    contentDescription = stringResource(string.feat_stream_screen_rotating)
+                                )
+                            }
                         }
                     },
                     modifier = Modifier.detectVerticalMaskGestures(
@@ -364,4 +402,36 @@ private object StreamFragmentDefaults {
     }
         ?.let { stringResource(it) }
         .orEmpty()
+
+    val IsAutoRotatingEnabled: State<Boolean>
+        @Composable get() {
+            val context = LocalContext.current
+            val contentResolver = context.contentResolver
+            return produceState(
+                initialValue = Settings.System.getInt(
+                    contentResolver,
+                    Settings.System.ACCELEROMETER_ROTATION
+                ) == 1
+            ) {
+                val uri = Settings.System.getUriFor(Settings.System.ACCELEROMETER_ROTATION)
+                val handler = Handler(Looper.getMainLooper())
+                val observer = object : ContentObserver(handler) {
+                    override fun onChange(selfChange: Boolean) {
+                        super.onChange(selfChange)
+                        value = Settings.System.getInt(
+                            contentResolver,
+                            Settings.System.ACCELEROMETER_ROTATION
+                        ) == 1
+                    }
+                }
+                contentResolver.registerContentObserver(
+                    uri,
+                    true,
+                    observer
+                )
+                awaitDispose {
+                    contentResolver.unregisterContentObserver(observer)
+                }
+            }
+        }
 }

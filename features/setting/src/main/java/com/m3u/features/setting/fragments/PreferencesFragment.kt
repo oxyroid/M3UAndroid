@@ -34,6 +34,7 @@ import androidx.compose.material.icons.rounded.PermDeviceInformation
 import androidx.compose.material.icons.rounded.PictureInPicture
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.SafetyCheck
+import androidx.compose.material.icons.rounded.ScreenRotation
 import androidx.compose.material.icons.rounded.SlowMotionVideo
 import androidx.compose.material.icons.rounded.Source
 import androidx.compose.material.icons.rounded.Sync
@@ -261,6 +262,13 @@ internal fun PreferencesFragment(
                             icon = Icons.Rounded.SlowMotionVideo,
                             checked = pref.record,
                             onChanged = { pref.record = !pref.record }
+                        )
+                        CheckBoxSharedPreference(
+                            title = string.feat_setting_screen_rotating,
+                            content = string.feat_setting_screen_rotating_description,
+                            icon = Icons.Rounded.ScreenRotation,
+                            checked = pref.screenRotating,
+                            onChanged = { pref.screenRotating = !pref.screenRotating }
                         )
                         CheckBoxSharedPreference(
                             title = string.feat_setting_screencast,

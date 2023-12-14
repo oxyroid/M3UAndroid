@@ -108,6 +108,7 @@ class MainActivity : ComponentActivity() {
                 isInPipMode = info.isInPictureInPictureMode
             }
         }
+
         override fun enterPipMode(size: Rect) {
             val params = PictureInPictureParams.Builder()
                 .setAspectRatio(size.rational)
@@ -164,6 +165,12 @@ class MainActivity : ComponentActivity() {
             }
 
         override var isInPipMode: Boolean = false
+
+        override var screenOrientation: Int
+            get() = this@MainActivity.requestedOrientation
+            set(value) {
+                this@MainActivity.requestedOrientation = value
+            }
 
         override val windowSizeClass: WindowSizeClass
             @Composable get() = calculateWindowSizeClass(activity = this@MainActivity)

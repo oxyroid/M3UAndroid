@@ -1,6 +1,7 @@
 package com.m3u.features.stream
 
 import android.app.PictureInPictureParams
+import android.content.pm.ActivityInfo
 import android.content.res.Configuration
 import android.graphics.Color
 import android.graphics.Rect
@@ -68,6 +69,7 @@ class PlayerActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
+        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_USER
         super.onCreate(savedInstanceState)
         setContent {
             M3ULocalProvider(
@@ -145,6 +147,12 @@ class PlayerActivity : ComponentActivity() {
             }
 
         override var isInPipMode: Boolean = false
+
+        override var screenOrientation: Int
+            get() = this@PlayerActivity.requestedOrientation
+            set(value) {
+                this@PlayerActivity.requestedOrientation = value
+            }
 
         override val windowSizeClass: WindowSizeClass
             @Composable get() = calculateWindowSizeClass(activity = this@PlayerActivity)
