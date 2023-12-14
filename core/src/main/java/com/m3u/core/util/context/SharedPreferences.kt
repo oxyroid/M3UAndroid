@@ -6,6 +6,8 @@ import android.content.SharedPreferences
 import androidx.compose.runtime.MutableState
 import androidx.core.content.edit
 import com.m3u.core.util.compose.observableStateOf
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 
@@ -81,3 +83,15 @@ private fun <T> SharedPreferences.delegateAsState(
     value = getter(key, defaultValue),
     onChanged = { edit { setter(key, it) } }
 )
+
+private fun <T> SharedPreferences.delegateAsFlow(
+    key: String,
+    defaultValue: T,
+    getter: SharedPreferences.(String, T) -> T
+): Flow<T> = callbackFlow {
+    registerOnSharedPreferenceChangeListener { sharedPreferences, innerKey ->
+        if (innerKey == key) {
+            getter(sharedPreferences, key, defaultValue)
+        }
+    }
+}

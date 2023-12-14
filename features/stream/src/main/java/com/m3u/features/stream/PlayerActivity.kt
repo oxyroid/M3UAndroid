@@ -69,7 +69,6 @@ class PlayerActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
-        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_USER
         super.onCreate(savedInstanceState)
         setContent {
             M3ULocalProvider(
