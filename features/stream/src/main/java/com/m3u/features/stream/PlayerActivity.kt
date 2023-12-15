@@ -1,7 +1,6 @@
 package com.m3u.features.stream
 
 import android.app.PictureInPictureParams
-import android.content.pm.ActivityInfo
 import android.content.res.Configuration
 import android.graphics.Color
 import android.graphics.Rect
