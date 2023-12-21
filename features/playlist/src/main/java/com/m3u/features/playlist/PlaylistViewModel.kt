@@ -21,6 +21,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -77,18 +78,13 @@ class PlaylistViewModel @Inject constructor(
     private var observeJob: Job? = null
     private fun observe(playlistUrl: String) {
         if (playlistUrl.isEmpty()) {
-            val error = PlaylistMessage.PlaylistUrlNotFound
-            writable.update {
-                it.copy(
-                    error = eventOf(error)
-                )
-            }
+            onMessage(PlaylistMessage.PlaylistUrlNotFound)
             return
         }
         observeJob?.cancel()
         observeJob = playlistRepository
             .observeWithStreams(playlistUrl)
-            .combine(queryStateFlow) { current, query ->
+            .combine(_query) { current, query ->
                 val playlist = current?.playlist
                 val streams = current?.streams ?: emptyList()
                 val channels = streams.toChannels(query)
@@ -175,17 +171,11 @@ class PlaylistViewModel @Inject constructor(
         }
     }
 
-    private val queryStateFlow = MutableStateFlow("")
+    private val _query = MutableStateFlow("")
+    val query = _query.asStateFlow()
     private fun query(event: PlaylistEvent.Query) {
         val text = event.text
-        viewModelScope.launch {
-            queryStateFlow.emit(text)
-        }
-        writable.update {
-            it.copy(
-                query = text
-            )
-        }
+        _query.update { text }
     }
 
     private fun List<Stream>.toChannels(query: CharSequence): List<Channel> =

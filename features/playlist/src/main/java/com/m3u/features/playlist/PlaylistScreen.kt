@@ -116,6 +116,8 @@ internal fun PlaylistRoute(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val message by viewModel.message.collectAsStateWithLifecycle()
     val floating by viewModel.floating.collectAsStateWithLifecycle()
+    val query by viewModel.query.collectAsStateWithLifecycle()
+
     var dialogStatus: DialogStatus by remember { mutableStateOf(DialogStatus.Idle) }
     val writeExternalPermissionState = rememberPermissionState(
         Manifest.permission.WRITE_EXTERNAL_STORAGE
@@ -145,7 +147,7 @@ internal fun PlaylistRoute(
         }
     }
 
-    BackHandler(state.query.isNotEmpty()) {
+    BackHandler(query.isNotEmpty()) {
         viewModel.onEvent(PlaylistEvent.Query(""))
     }
     val interceptVolumeEventModifier = remember(pref.godMode) {
@@ -163,7 +165,7 @@ internal fun PlaylistRoute(
     }
 
     PlaylistScreen(
-        query = state.query,
+        query = query,
         onQuery = { viewModel.onEvent(PlaylistEvent.Query(it)) },
         rowCount = pref.rowCount,
         channelHolder = rememberChannelHolder(
@@ -419,6 +421,7 @@ private fun PlaylistPager(
 }
 
 @Composable
+@Suppress("UNUSED")
 private fun UnsupportedUIModeContent(
     type: Int,
     modifier: Modifier = Modifier,

@@ -152,7 +152,7 @@ class PlaylistRepositoryImpl @Inject constructor(
 
     override fun observeWithStreams(url: String): Flow<PlaylistWithStreams?> = logger.execute {
         playlistDao.observeByUrlWithStreams(url)
-    } ?: flow {  }
+    } ?: flow { }
 
     override suspend fun get(url: String): Playlist? = logger.execute {
         playlistDao.getByUrl(url)
@@ -174,8 +174,18 @@ class PlaylistRepositoryImpl @Inject constructor(
         playlistDao.rename(url, target)
     }
 
-    private val String.isNetworkUrl: Boolean get() = this.startsWithAny("http://", "https://")
-    private val String.isAndroidUrl: Boolean get() = this.startsWithAny("file://", "content://")
+    private val String.isNetworkUrl: Boolean
+        get() = this.startsWithAny(
+            "http://",
+            "https://",
+            ignoreCase = true
+        )
+    private val String.isAndroidUrl: Boolean
+        get() = this.startsWithAny(
+            "file://",
+            "content://",
+            ignoreCase = true
+        )
 
     private suspend fun String.actualUrl(): String? {
         return if (isNetworkUrl) this

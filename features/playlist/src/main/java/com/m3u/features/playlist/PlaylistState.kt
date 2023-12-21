@@ -32,9 +32,6 @@ fun rememberChannelHolder(
 data class PlaylistState(
     val url: String = "",
     val channels: List<Channel> = emptyList(),
-    val floating: Stream? = null,
-    val query: String = "",
     val fetching: Boolean = false,
-    val scrollUp: Event<Unit> = handledEvent(),
-    val error: Event<PlaylistMessage> = handledEvent(),
+    val scrollUp: Event<Unit> = handledEvent()
 )

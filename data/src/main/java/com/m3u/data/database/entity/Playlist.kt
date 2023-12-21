@@ -18,8 +18,11 @@ data class Playlist(
     val url: String
 ) {
     val local: Boolean
-        get() = url == URL_IMPORTED ||
-                url.startsWithAny("file://", "content://")
+        get() = url == URL_IMPORTED || url.startsWithAny(
+            "file://",
+            "content://",
+            ignoreCase = true
+        )
 
     companion object {
         const val URL_IMPORTED = "imported"

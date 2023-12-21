@@ -63,7 +63,7 @@ interface Pref {
         const val DEFAULT_CINEMA_MODE = false
 
         @ChecksSdkIntAtLeast(api = Build.VERSION_CODES.S)
-        var DEFAULT_USE_DYNAMIC_COLORS = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+        val DEFAULT_USE_DYNAMIC_COLORS = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
 
         const val DEFAULT_ZAPPING_MODE = false
         const val DEFAULT_BRIGHTNESS_GESTURE = true

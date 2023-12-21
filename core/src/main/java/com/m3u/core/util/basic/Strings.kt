@@ -53,9 +53,9 @@ fun String.splitOutOfQuotation(delimiter: Char): List<String> {
     return list
 }
 
-fun String.startsWithAny(vararg prefix: String): Boolean {
+fun String.startsWithAny(vararg prefix: String, ignoreCase: Boolean = false): Boolean {
     prefix.forEach {
-        if (startsWith(it)) return true
+        if (startsWith(it, ignoreCase)) return true
     }
     return false
 }
