@@ -5,21 +5,19 @@ import com.m3u.core.architecture.Logger
 import com.m3u.core.architecture.pref.Pref
 import com.m3u.core.architecture.pref.observeAsFlow
 import com.m3u.core.architecture.viewmodel.BaseViewModel
-import com.m3u.core.architecture.viewmodel.catch
-import com.m3u.core.architecture.viewmodel.map
-import com.m3u.core.architecture.viewmodel.onEach
-import com.m3u.core.wrapper.Process
-import com.m3u.core.wrapper.circuit
+import com.m3u.core.wrapper.chain
+import com.m3u.core.wrapper.chainmap
 import com.m3u.core.wrapper.eventOf
+import com.m3u.core.wrapper.failure
+import com.m3u.core.wrapper.success
+import com.m3u.data.database.entity.Stream
+import com.m3u.data.repository.MediaRepository
 import com.m3u.data.repository.PlaylistRepository
 import com.m3u.data.repository.StreamRepository
-import com.m3u.data.repository.MediaRepository
-import com.m3u.data.repository.observeAll
 import com.m3u.data.repository.refresh
 import com.m3u.data.service.PlayerManager
 import com.m3u.features.playlist.PlaylistMessage.StreamCoverSaved
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -78,7 +76,6 @@ class PlaylistViewModel @Inject constructor(
 
     private var observeJob: Job? = null
     private fun observe(playlistUrl: String) {
-        observeJob?.cancel()
         if (playlistUrl.isEmpty()) {
             val error = PlaylistMessage.PlaylistUrlNotFound
             writable.update {
@@ -88,63 +85,41 @@ class PlaylistViewModel @Inject constructor(
             }
             return
         }
-        observeJob = viewModelScope.launch {
-            observePlaylistDetail(playlistUrl)
-            observestreams(playlistUrl)
-        }
-    }
-
-    private fun CoroutineScope.observePlaylistDetail(playlistUrl: String) {
-        playlistRepository
-            .observe(playlistUrl)
-            .onEach { playlist ->
-                if (playlist != null) {
-                    writable.update {
-                        it.copy(
-                            url = playlist.url
-                        )
-                    }
-                } else {
-                    onMessage(PlaylistMessage.PlaylistNotFound(playlistUrl))
-                }
+        observeJob?.cancel()
+        observeJob = playlistRepository
+            .observeWithStreams(playlistUrl)
+            .combine(queryStateFlow) { current, query ->
+                val playlist = current?.playlist
+                val streams = current?.streams ?: emptyList()
+                val channels = streams.toChannels(query)
+                playlist to channels
             }
-            .launchIn(this)
-    }
-
-    private fun CoroutineScope.observestreams(playlistUrl: String) {
-        streamRepository
-            .observeAll { !it.banned && it.playlistUrl == playlistUrl }
-            .combine(queryStateFlow) { all, query ->
-                all
-                    .filter { it.title.contains(query, true) }
-                    .groupBy { it.group }
-                    .toList()
-                    .map { Channel(it.first, it.second) }
-            }
-            .onEach { streams ->
-                writable.update {
-                    it.copy(
-                        channels = streams
+            .onEach { result ->
+                val playlist = result.first
+                val channels = result.second
+                writable.update { prev ->
+                    prev.copy(
+                        url = playlist?.url.orEmpty(),
+                        channels = channels
                     )
                 }
             }
-            .launchIn(this)
+            .launchIn(viewModelScope)
     }
 
     private fun refresh() {
         val url = readable.url
         playlistRepository
             .refresh(url, pref.playlistStrategy)
-            .onEach { process ->
+            .chain()
+            .onEach {
                 writable.update { prev ->
-                    process
-                        .circuit()
-                        .catch { logger.log(it) }
                     prev.copy(
-                        fetching = process is Process.Loading
+                        fetching = !it.isCompleted
                     )
                 }
             }
+            .failure(logger::log)
             .launchIn(viewModelScope)
     }
 
@@ -179,13 +154,10 @@ class PlaylistViewModel @Inject constructor(
             }
             mediaRepository
                 .savePicture(url)
-                .onEach { resource ->
-                    resource
-                        .circuit()
-                        .map { StreamCoverSaved(absolutePath) }
-                        .onEach { onMessage(it) }
-                        .catch { logger.log(it) }
-                }
+                .chain()
+                .chainmap { StreamCoverSaved(it.absolutePath) }
+                .success { onMessage(it) }
+                .failure(logger::log)
                 .launchIn(this)
         }
     }
@@ -215,4 +187,10 @@ class PlaylistViewModel @Inject constructor(
             )
         }
     }
+
+    private fun List<Stream>.toChannels(query: CharSequence): List<Channel> =
+        filter { it.title.contains(query, true) }
+            .groupBy { it.group }
+            .toList()
+            .map { Channel(it.first, it.second) }
 }

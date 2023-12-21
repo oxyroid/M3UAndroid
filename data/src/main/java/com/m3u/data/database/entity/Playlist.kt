@@ -1,11 +1,11 @@
 package com.m3u.data.database.entity
 
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
-import androidx.compose.runtime.remember
 import androidx.room.ColumnInfo
+import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import androidx.room.Relation
 import com.m3u.core.util.basic.startsWithAny
 
 @Entity(tableName = "playlists")
@@ -26,12 +26,12 @@ data class Playlist(
     }
 }
 
-@Immutable
-data class PlaylistHolder(
-    val playlists: List<Playlist>
+data class PlaylistWithStreams(
+    @Embedded
+    val playlist: Playlist,
+    @Relation(
+        parentColumn = "url",
+        entityColumn = "playlistUrl"
+    )
+    val streams: List<Stream>
 )
-
-@Composable
-fun rememberPlaylistHolder(playlists: List<Playlist>): PlaylistHolder {
-    return remember(playlists) { PlaylistHolder(playlists) }
-}

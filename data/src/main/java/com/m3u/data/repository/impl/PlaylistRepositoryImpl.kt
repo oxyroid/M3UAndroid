@@ -20,6 +20,7 @@ import com.m3u.core.wrapper.pt
 import com.m3u.data.database.dao.PlaylistDao
 import com.m3u.data.database.dao.StreamDao
 import com.m3u.data.database.entity.Playlist
+import com.m3u.data.database.entity.PlaylistWithStreams
 import com.m3u.data.database.entity.Stream
 import com.m3u.data.parser.M3UPlaylistParser
 import com.m3u.data.parser.model.toStream
@@ -148,6 +149,10 @@ class PlaylistRepositoryImpl @Inject constructor(
     override fun observe(url: String): Flow<Playlist?> = logger.execute {
         playlistDao.observeByUrl(url)
     } ?: flow { }
+
+    override fun observeWithStreams(url: String): Flow<PlaylistWithStreams?> = logger.execute {
+        playlistDao.observeByUrlWithStreams(url)
+    } ?: flow {  }
 
     override suspend fun get(url: String): Playlist? = logger.execute {
         playlistDao.getByUrl(url)

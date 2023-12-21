@@ -10,22 +10,6 @@ sealed class Process<out T> {
     data class Failure<out T>(val message: String?) : Process<T>()
 }
 
-fun <T> Process<T>.circuit(): Circuit<T> {
-    return when (this) {
-        is Process.Success -> Circuit(data = { data })
-        is Process.Failure -> Circuit(message = { message })
-        is Process.Loading -> Circuit()
-    }
-}
-
-fun Process<*>.percentCircuit(): Circuit<Percent> {
-    return when (this) {
-        is Process.Success -> Circuit(data = { 100.pt })
-        is Process.Failure -> Circuit(message = { message })
-        is Process.Loading -> Circuit(data = { value })
-    }
-}
-
 @JvmInline
 value class Percent(val value: Int) {
     init {
