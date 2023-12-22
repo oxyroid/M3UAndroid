@@ -40,9 +40,12 @@ import androidx.compose.material.icons.rounded.Source
 import androidx.compose.material.icons.rounded.Sync
 import androidx.compose.material.icons.rounded.Timer
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.TriStateCheckbox
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -50,6 +53,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.unit.dp
 import com.m3u.core.annotation.ClipMode
 import com.m3u.core.annotation.ConnectTimeout
@@ -217,7 +221,7 @@ internal fun PreferencesFragment(
                 Preference(
                     title = stringResource(string.feat_setting_optional_player_features).title(),
                     icon = Icons.Rounded.Extension,
-                    onClick = { expended = !expended }
+                    onClick = { expended = !expended },
                 )
                 AnimatedVisibility(
                     visible = expended,
@@ -287,12 +291,26 @@ internal fun PreferencesFragment(
                     .clip(MaterialTheme.shapes.medium),
                 verticalArrangement = Arrangement.spacedBy(1.dp)
             ) {
-                CheckBoxSharedPreference(
-                    title = string.feat_setting_experimental_mode,
-                    content = string.feat_setting_experimental_mode_description,
+                val toggleableState by remember {
+                    derivedStateOf {
+                        when {
+                            !pref.experimentalMode -> ToggleableState.Off
+                            with(pref) { !cinemaMode || !isSSLVerification } -> ToggleableState.Indeterminate
+                            else -> ToggleableState.On
+                        }
+                    }
+                }
+                Preference(
+                    title = stringResource(string.feat_setting_experimental_mode).title(),
+                    content = stringResource(string.feat_setting_experimental_mode_description),
                     icon = Icons.Rounded.Dangerous,
-                    checked = pref.experimentalMode,
-                    onChanged = { pref.experimentalMode = !pref.experimentalMode }
+                    onClick = { pref.experimentalMode = !pref.experimentalMode },
+                    trailing = {
+                        TriStateCheckbox(
+                            state = toggleableState,
+                            onClick = null
+                        )
+                    }
                 )
                 AnimatedVisibility(
                     visible = pref.experimentalMode,
@@ -308,12 +326,10 @@ internal fun PreferencesFragment(
                     ) {
                         CheckBoxSharedPreference(
                             title = string.feat_setting_cinema_mode,
-                            content = string.feat_setting_not_implementation,
-//                            subtitle = string.feat_setting_cinema_mode_description,
+                            content = string.feat_setting_cinema_mode_description,
                             icon = Icons.Rounded.Chair,
                             checked = pref.cinemaMode,
-                            onChanged = { pref.cinemaMode = !pref.cinemaMode },
-                            enabled = false
+                            onChanged = { pref.cinemaMode = !pref.cinemaMode }
                         )
                         Preference(
                             title = stringResource(string.feat_setting_script_management).title(),

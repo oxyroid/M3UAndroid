@@ -5,14 +5,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.WindowInsetsSides
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.navigationBars
-import androidx.compose.foundation.layout.only
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -44,7 +38,6 @@ internal fun PlayerMask(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(WindowInsets.navigationBars.asPaddingValues())
                         .align(Alignment.TopCenter),
                     horizontalArrangement = Arrangement.End,
                     content = header
@@ -57,11 +50,6 @@ internal fun PlayerMask(
                 )
                 Column(
                     modifier = Modifier
-                        .padding(
-                            WindowInsets.navigationBars
-                                .only(WindowInsetsSides.Horizontal)
-                                .asPaddingValues()
-                        )
                         .align(Alignment.BottomCenter)
                 ) {
                     Row(

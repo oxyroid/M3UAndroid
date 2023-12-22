@@ -46,7 +46,7 @@
     <string name="feat_setting_no_picture_mode_description">可能会对性能有所提升</string>
     <string name="feat_setting_system_setting">系统设置</string>
     <string name="feat_setting_cinema_mode">影院模式</string>
-    <string name="feat_setting_cinema_mode_description">使用OLED纯黑主题</string>
+    <string name="feat_setting_cinema_mode_description">总是使用黑夜主题</string>
     <string name="feat_setting_script_management_import_js">导入Javascript</string>
     <string name="feat_setting_enqueue_subscribe">订阅任务已添加至队列</string>
     <string name="feat_setting_dropbox">dropbox</string>
@@ -57,7 +57,7 @@
     <string name="feat_setting_use_dynamic_colors">动态配色</string>
     <string name="feat_setting_use_dynamic_colors_unavailable">仅在 Android 12 及更高版本可用</string>
     <string name="feat_setting_not_implementation">此功能当前版本不可用</string>
-    <string name="feat_setting_zapping_mode">快速预览</string>
+    <string name="feat_setting_zapping_mode">换台模式</string>
     <string name="feat_setting_zapping_mode_description">开启小窗预览而不是直接播放</string>
     <string name="feat_setting_gesture_brightness">亮度手势</string>
     <string name="feat_setting_gesture_volume">音量手势</string>

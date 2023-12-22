@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
 plugins {
     alias(libs.plugins.com.android.library)
     alias(libs.plugins.org.jetbrains.kotlin.android)
@@ -63,4 +65,12 @@ dependencies {
     implementation(libs.androidx.work.work.runtime.ktx)
 
     implementation(libs.com.google.accompanist.accompanist.permissions)
+}
+
+tasks.withType<KotlinCompile>().configureEach {
+    kotlinOptions {
+        freeCompilerArgs += listOf(
+            "-opt-in=androidx.compose.material.ExperimentalMaterialApi"
+        )
+    }
 }

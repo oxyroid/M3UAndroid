@@ -12,7 +12,7 @@ import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
@@ -143,7 +143,7 @@ fun Mask(
             OuterBox(
                 modifier = modifier
                     .background(color)
-                    .statusBarsPadding(),
+                    .systemBarsPadding(),
                 content = content
             )
         }
@@ -167,7 +167,8 @@ fun MaskPanel(
                 onClick = state::toggle,
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null
-            ),
+            )
+            .systemBarsPadding(),
         content = content
     )
 }

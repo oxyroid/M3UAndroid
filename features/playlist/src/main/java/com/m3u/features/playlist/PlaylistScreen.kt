@@ -1,7 +1,8 @@
-@file:OptIn(ExperimentalMaterialApi::class)
-
 package com.m3u.features.playlist
 
+//noinspection UsingMaterialAndMaterial3Libraries
+//noinspection UsingMaterialAndMaterial3Libraries
+//noinspection UsingMaterialAndMaterial3Libraries
 import android.Manifest
 import android.content.res.Configuration.ORIENTATION_LANDSCAPE
 import android.content.res.Configuration.ORIENTATION_PORTRAIT
@@ -25,16 +26,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
-//noinspection UsingMaterialAndMaterial3Libraries
 import androidx.compose.material.BackdropScaffold
-//noinspection UsingMaterialAndMaterial3Libraries
 import androidx.compose.material.BackdropValue
-import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ArrowCircleUp
 import androidx.compose.material.icons.rounded.Refresh
-//noinspection UsingMaterialAndMaterial3Libraries
 import androidx.compose.material.rememberBackdropScaffoldState
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PrimaryScrollableTabRow
 import androidx.compose.material3.Tab
@@ -94,6 +92,8 @@ import com.m3u.ui.LocalHelper
 import com.m3u.ui.MessageEventHandler
 import com.m3u.ui.isAtTop
 import com.m3u.ui.repeatOnLifecycle
+import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.hazeChild
 import kotlinx.coroutines.launch
 
 internal typealias NavigateToStream = () -> Unit
@@ -275,10 +275,11 @@ private fun PlaylistScreen(
                 }
             },
             frontLayerContent = {
+                val hazeState = remember { HazeState() }
                 Background(
                     modifier = Modifier.fillMaxSize()
                 ) {
-                    PlaylistPager(channelHolder) { streamHolder, padding ->
+                    PlaylistPager(channelHolder, hazeState) { streamHolder, padding ->
                         val type = configuration.uiMode and UI_MODE_TYPE_MASK
                         when {
                             !pref.useCommonUIMode && type == UI_MODE_TYPE_TELEVISION -> {
@@ -291,6 +292,7 @@ private fun PlaylistScreen(
                                 }
                                 TvStreamGallery(
                                     state = state,
+                                    hazeState = hazeState,
                                     rowCount = 4,
                                     streamHolder = streamHolder,
                                     play = { url ->
@@ -320,6 +322,7 @@ private fun PlaylistScreen(
                                 }
                                 StreamGallery(
                                     state = state,
+                                    hazeState = hazeState,
                                     rowCount = actualRowCount,
                                     streamHolder = streamHolder,
                                     play = { url ->
@@ -351,6 +354,7 @@ private fun PlaylistScreen(
 @Composable
 private fun PlaylistPager(
     channelHolder: ChannelHolder,
+    hazeState: HazeState,
     modifier: Modifier = Modifier,
     content: @Composable (streamHolder: StreamHolder, PaddingValues) -> Unit,
 ) {
@@ -375,47 +379,51 @@ private fun PlaylistPager(
             )
         }
         if (channels.size > 1) {
-            PrimaryScrollableTabRow(
-                selectedTabIndex = pagerState.currentPage,
-                containerColor = Color.Transparent,
-                indicator = { tabPositions ->
-                    val index = pagerState.currentPage
-                    with(TabRowDefaults) {
-                        Modifier.tabIndicatorOffset(
-                            currentTabPosition = tabPositions[index]
-                        )
-                    }
-                },
-                tabs = {
-                    val keys = remember(channels) { channels.map { it.title } }
-                    keys.forEachIndexed { index, title ->
-                        val selected = pagerState.currentPage == index
-                        Tab(
-                            selected = selected,
-                            onClick = {
-                                coroutineScope.launch {
-                                    pagerState.animateScrollToPage(index)
-                                }
-                            },
-                            text = {
-                                Text(
-                                    text = title,
-                                    style = MaterialTheme.typography.titleSmall,
-                                    color = if (selected) theme.onBackground else Color.Unspecified
-                                )
-                            },
-                            icon = null
-                        )
-                    }
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .onGloballyPositioned {
-                        tabRowHeight = with(density) {
-                            it.size.height.toDp()
+            Column {
+                PrimaryScrollableTabRow(
+                    selectedTabIndex = pagerState.currentPage,
+                    containerColor = Color.Transparent,
+                    indicator = { tabPositions ->
+                        val index = pagerState.currentPage
+                        with(TabRowDefaults) {
+                            Modifier.tabIndicatorOffset(
+                                currentTabPosition = tabPositions[index]
+                            )
                         }
-                    }
-            )
+                    },
+                    tabs = {
+                        val keys = remember(channels) { channels.map { it.title } }
+                        keys.forEachIndexed { index, title ->
+                            val selected = pagerState.currentPage == index
+                            Tab(
+                                selected = selected,
+                                onClick = {
+                                    coroutineScope.launch {
+                                        pagerState.animateScrollToPage(index)
+                                    }
+                                },
+                                text = {
+                                    Text(
+                                        text = title,
+                                        style = MaterialTheme.typography.titleSmall,
+                                        color = if (selected) theme.onBackground else Color.Unspecified
+                                    )
+                                }
+                            )
+                        }
+                    },
+                    divider = {},
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .hazeChild(hazeState)
+                        .onGloballyPositioned {
+                            tabRowHeight = with(density) {
+                                it.size.height.toDp()
+                            }
+                        }
+                )
+                HorizontalDivider()
+            }
         }
     }
 }
