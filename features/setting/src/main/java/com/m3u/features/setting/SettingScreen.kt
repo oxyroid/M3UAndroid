@@ -136,26 +136,24 @@ private fun SettingScreen(
     ListDetailPaneScaffold(
         scaffoldState = scaffoldState,
         listPane = {
-            AnimatedPane(Modifier) {
-                PreferencesFragment(
-                    fragment = fragment,
-                    contentPadding = contentPadding,
-                    versionName = versionName,
-                    versionCode = versionCode,
-                    useCommonUIModeEnable = useCommonUIModeEnable,
-                    navigateToPlaylistManagement = {
-                        currentPaneDestination = ListDetailPaneScaffoldRole.Detail
-                        fragment = SettingFragment.Subscriptions
-                    },
-                    navigateToScriptManagement = {
-                        currentPaneDestination = ListDetailPaneScaffoldRole.Detail
-                        fragment = (SettingFragment.Scripts)
-                    },
-                    navigateToConsole = navigateToConsole,
-                    navigateToAbout = navigateToAbout,
-                    modifier = Modifier.fillMaxSize()
-                )
-            }
+            PreferencesFragment(
+                fragment = fragment,
+                contentPadding = contentPadding,
+                versionName = versionName,
+                versionCode = versionCode,
+                useCommonUIModeEnable = useCommonUIModeEnable,
+                navigateToPlaylistManagement = {
+                    currentPaneDestination = ListDetailPaneScaffoldRole.Detail
+                    fragment = SettingFragment.Subscriptions
+                },
+                navigateToScriptManagement = {
+                    currentPaneDestination = ListDetailPaneScaffoldRole.Detail
+                    fragment = (SettingFragment.Scripts)
+                },
+                navigateToConsole = navigateToConsole,
+                navigateToAbout = navigateToAbout,
+                modifier = Modifier.fillMaxSize()
+            )
         },
         detailPane = {
             if (fragment != SettingFragment.Root) {
