@@ -1,6 +1,6 @@
 package com.m3u.androidApp.components
 
-import androidx.compose.animation.Crossfade
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -26,8 +26,6 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import com.m3u.core.util.basic.title
-import com.m3u.material.ktx.animateColor
-import com.m3u.material.ktx.animated
 import com.m3u.ui.Destination
 import com.m3u.ui.Fob
 import com.m3u.ui.Navigate
@@ -47,8 +45,14 @@ fun AppNavigation(
     fobbedColor: Color = AppNavigationDefaults.fobbedColor(),
 ) {
     val destinationHolder = rememberRootDestinationHolder(Destination.Root.entries)
-    val actualBackgroundColor by backgroundColor.animated("BottomNavigationSheetBackground")
-    val actualContentColor by unselectedColor.animated("BottomNavigationSheetContent")
+    val actualBackgroundColor by animateColorAsState(
+        targetValue = backgroundColor,
+        label = "navigation-color"
+    )
+    val actualContentColor by animateColorAsState(
+        targetValue = unselectedColor,
+        label = "navigation-content-color"
+    )
 
     when {
         useNavRail -> {
@@ -107,9 +111,11 @@ private fun RailContent(
             val iconTextId = root.iconTextId
             val selectedIcon = fob?.icon.takeIf { fobbed } ?: root.selectedIcon
             val unselectedIcon = fob?.icon.takeIf { fobbed } ?: root.unselectedIcon
-            val actualSelectedColor by animateColor("BottomNavigationSheetSelected") {
-                if (fobbed) fobbedColor else selectedColor
-            }
+
+            val actualSelectedColor by animateColorAsState(
+                targetValue = if (fobbed) fobbedColor else selectedColor,
+                label = "navigation-rail-content-select-color"
+            )
 
             RailItem(
                 selected = selected,
@@ -125,15 +131,10 @@ private fun RailContent(
                 icon = {
                     val icon = if (selected) selectedIcon
                     else unselectedIcon
-                    Crossfade(
-                        targetState = icon,
-                        label = "BottomNavigationSheetIcon"
-                    ) { actualIcon ->
-                        Icon(
-                            imageVector = actualIcon,
-                            contentDescription = stringResource(iconTextId)
-                        )
-                    }
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = stringResource(iconTextId)
+                    )
                 },
                 label = {
                     Text(
@@ -167,9 +168,11 @@ private fun Content(
             val iconTextId = root.iconTextId
             val selectedIcon = fob?.icon.takeIf { fobbed } ?: root.selectedIcon
             val unselectedIcon = fob?.icon.takeIf { fobbed } ?: root.unselectedIcon
-            val actualSelectedColor by animateColor("BottomNavigationSheetSelected") {
-                if (fobbed) fobbedColor else selectedColor
-            }
+
+            val actualSelectedColor by animateColorAsState(
+                targetValue = if (fobbed) fobbedColor else selectedColor,
+                label = "navigation-normal-content-select-color"
+            )
 
             NavigationBarItem(
                 selected = selected,
@@ -187,15 +190,10 @@ private fun Content(
                 icon = {
                     val icon = if (selected) selectedIcon
                     else unselectedIcon
-                    Crossfade(
-                        targetState = icon,
-                        label = "BottomNavigationSheetIcon"
-                    ) { actualIcon ->
-                        Icon(
-                            imageVector = actualIcon,
-                            contentDescription = stringResource(iconTextId)
-                        )
-                    }
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = stringResource(iconTextId)
+                    )
                 },
                 label = {
                     Text(

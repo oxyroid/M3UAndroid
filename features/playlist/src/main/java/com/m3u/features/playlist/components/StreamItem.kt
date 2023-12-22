@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Star
@@ -25,6 +26,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
 import com.m3u.data.database.entity.Stream
 import com.m3u.i18n.R.string
 import com.m3u.material.components.Image
@@ -92,7 +94,9 @@ internal fun StreamItem(
                         fontSize = MaterialTheme.typography.titleSmall.fontSize,
                         overflow = TextOverflow.Ellipsis,
                         maxLines = 1,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        // icon-button-tokens: icon-size
+                        modifier = Modifier.heightIn(min = 24.dp)
                     )
                     Crossfade(
                         targetState = favourite,

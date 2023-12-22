@@ -30,9 +30,7 @@ import com.m3u.ui.Helper
 import com.m3u.ui.M3ULocalProvider
 import com.m3u.ui.Navigate
 import com.m3u.ui.useRailNav
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
 internal fun AppScaffold(
@@ -62,15 +60,8 @@ internal fun AppScaffold(
             pref.cinemaMode -> true
             else -> isSystemInDarkTheme()
         }
-        DisposableEffect(
-            darkMode,
-            scope,
-            pref.cinemaMode
-        ) {
+        DisposableEffect(darkMode, scope) {
             scope.launch {
-                if (!pref.cinemaMode) {
-                    delay(800.milliseconds)
-                }
                 helper.darkMode = darkMode.unspecifiable
             }
             onDispose {}

@@ -18,10 +18,7 @@ import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.m3u.data.parser.VersionCatalogParser
 import com.m3u.features.about.components.ContributorItem
-import com.m3u.features.about.model.ContributorHolder
-import com.m3u.features.about.model.rememberContributorHolder
 import com.m3u.i18n.R.string
 import com.m3u.material.components.Background
 import com.m3u.material.ktx.plus
@@ -42,13 +39,11 @@ internal fun AboutRoute(
         this.title = title
     }
 
-    val contributors by viewModel.contributors.collectAsStateWithLifecycle()
-    val libraries by viewModel.libraries.collectAsStateWithLifecycle()
+    val state by viewModel.s.collectAsStateWithLifecycle()
 
     AboutScreen(
         contentPadding = contentPadding,
-        contributorHolder = rememberContributorHolder(contributors),
-        libraries = libraries,
+        state = state,
         modifier = modifier.fillMaxSize()
     )
 }
@@ -56,14 +51,13 @@ internal fun AboutRoute(
 @Composable
 private fun AboutScreen(
     contentPadding: PaddingValues,
-    contributorHolder: ContributorHolder,
-    libraries: List<VersionCatalogParser.Entity.Library>,
+    state: AboutState,
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
     val handler = LocalUriHandler.current
     Background(modifier) {
-        val contributors = contributorHolder.contributions
+        val contributors = state.contributors
         LazyColumn(
             verticalArrangement = Arrangement.spacedBy(spacing.small),
             contentPadding = contentPadding + PaddingValues(horizontal = spacing.medium)
@@ -76,16 +70,16 @@ private fun AboutScreen(
                     }
                 )
             }
-            items(libraries) { library ->
+            items(state.libraries) { library ->
                 ListItem(
                     headlineContent = {
-                        Text(text = library.key)
+                        Text(library.key)
                     },
                     supportingContent = {
-                        Text(text = library.group + ":" + library.name)
+                        Text(library.group + ":" + library.name)
                     },
                     trailingContent = {
-                        MonoText(text = library.ref)
+                        MonoText(library.ref)
                     },
                     leadingContent = {
                         Icon(

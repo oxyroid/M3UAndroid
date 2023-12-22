@@ -25,6 +25,7 @@
             <option value="$PROJECT_DIR$/features/stream" />
             <option value="$PROJECT_DIR$/i18n" />
             <option value="$PROJECT_DIR$/material" />
+            <option value="$PROJECT_DIR$/symbol" />
             <option value="$PROJECT_DIR$/ui" />
           </set>
         </option>

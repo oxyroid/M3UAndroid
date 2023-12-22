@@ -6,6 +6,7 @@ import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -110,7 +111,7 @@ internal fun StreamFragment(
         color = Color.Black,
         contentColor = Color.White
     ) {
-        Box(modifier) {
+        Box(modifier.animateContentSize()) {
             val state = rememberPlayerState(
                 player = playerState.player,
                 url = url,

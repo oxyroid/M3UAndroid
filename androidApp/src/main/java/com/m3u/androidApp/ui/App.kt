@@ -45,11 +45,11 @@ fun App(
         rootDestination = rootDestination,
         fob = fob,
         isSystemBarScrollable = isSystemBarScrollable,
+        helper = helper,
+        pref = pref,
         onBackPressed = appState::onBackClick.takeIf { isBackPressedVisible },
         navigate = appState::navigate,
         modifier = Modifier.fillMaxSize(),
-        helper = helper,
-        pref = pref
     ) { contentPadding ->
         CompositionLocalProvider(
             LocalNavController provides appState.navController,

@@ -41,3 +41,4 @@ include(":i18n")
 include(":ui")
 include(":dlna")
 
+include(":symbol")

@@ -1,5 +1,6 @@
 package com.m3u.ui
 
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -24,6 +25,7 @@ fun M3ULocalProvider(
         LocalPref provides pref
     ) {
         AppTheme(
+            useDarkTheme = pref.cinemaMode || isSystemInDarkTheme(),
             useDynamicColors = pref.useDynamicColors,
             typography = typography
         ) {

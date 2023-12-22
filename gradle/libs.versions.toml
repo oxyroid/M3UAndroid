@@ -46,9 +46,10 @@ servlet = "3.1.0"
 #noinspection GradleDependency
 jetty = "8.1.21.v20160908"
 nanohttpd = "2.3.1"
-haze = "0.2.0"
+haze = "0.4.1"
 kaml = "0.55.0"
 fastlane = "2.1.1"
+org-jetbrains-kotlin-jvm = "1.9.20"
 
 [libraries]
 androidx-core-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "androidx-core" }
@@ -152,6 +153,7 @@ com-google-dagger-hilt-android = { id = "com.google.dagger.hilt.android", versio
 com-google-devtools-ksp = { id = "com.google.devtools.ksp", version.ref = "ksp-plugin" }
 com-android-test = { id = "com.android.test", version.ref = "android-gradle-plugin" }
 androidx-baselineprofile = { id = "androidx.baselineprofile", version.ref = "androidx-baselineprofile-benchmark" }
+org-jetbrains-kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "org-jetbrains-kotlin-jvm" }
 
 [bundles]
 androidx-compose = ["androidx-compose-ui-ui", "androidx-compose-ui-ui-util", "androidx-compose-runtime-runtime", "androidx-compose-foundation-foundation", "androidx-compose-animation-animation"]

@@ -15,7 +15,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -33,13 +33,11 @@ class AboutViewModel @Inject constructor(
     @Publisher.App private val publisher: Publisher,
     private val logger: Logger
 ) : BaseViewModel<Unit, Unit, EmptyMessage>(Unit) {
-    private val _contributors: MutableStateFlow<List<Contributor>> =
+    private val contributors: MutableStateFlow<List<Contributor>> =
         MutableStateFlow(emptyList())
-    internal val contributors: StateFlow<List<Contributor>> = _contributors.asStateFlow()
-
     private val versionCatalog: MutableStateFlow<List<VersionCatalogParser.Entity>> =
         MutableStateFlow(emptyList())
-    internal val libraries = versionCatalog
+    private val libraries = versionCatalog
         .map { entities ->
             val versions = entities.filterIsInstance<VersionCatalogParser.Entity.Version>()
             entities.mapNotNull { prev ->
@@ -60,6 +58,16 @@ class AboutViewModel @Inject constructor(
             initialValue = emptyList()
         )
 
+    internal val s: StateFlow<AboutState> = combine(
+        contributors,
+        libraries
+    ) { cs, ls -> AboutState(cs, ls) }
+        .stateIn(
+            scope = viewModelScope,
+            initialValue = AboutState(),
+            started = SharingStarted.WhileSubscribed(5_000)
+        )
+
     init {
         refresh()
     }
@@ -73,7 +81,7 @@ class AboutViewModel @Inject constructor(
                         publisher.repository
                     )
                 } ?: emptyList()
-                _contributors.value = users
+                contributors.value = users
                     .map { it.toContributor() }
                     .sortedByDescending { it.contributions }
             }

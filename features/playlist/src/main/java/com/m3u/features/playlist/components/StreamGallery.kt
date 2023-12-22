@@ -11,9 +11,6 @@ import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.tv.foundation.lazy.grid.TvGridCells
 import androidx.tv.foundation.lazy.grid.TvLazyGridState
@@ -24,6 +21,7 @@ import com.m3u.data.database.entity.Stream
 import com.m3u.data.database.entity.StreamHolder
 import com.m3u.material.ktx.plus
 import com.m3u.material.model.LocalSpacing
+import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.haze
 
 typealias PlayStream = (url: String) -> Unit
@@ -31,6 +29,7 @@ typealias PlayStream = (url: String) -> Unit
 @Composable
 internal fun StreamGallery(
     state: LazyStaggeredGridState,
+    hazeState: HazeState,
     rowCount: Int,
     streamHolder: StreamHolder,
     play: PlayStream,
@@ -40,8 +39,6 @@ internal fun StreamGallery(
 ) {
     val spacing = LocalSpacing.current
     val pref = LocalPref.current
-    val density = LocalDensity.current
-    val configuration = LocalConfiguration.current
 
     val streams = streamHolder.streams
     val floating = streamHolder.floating
@@ -55,18 +52,8 @@ internal fun StreamGallery(
         modifier = modifier
             .fillMaxSize()
             .haze(
-                area = with(density) {
-                    arrayOf(
-                        Rect(
-                            0f,
-                            0f,
-                            configuration.screenWidthDp.dp.toPx(),
-                            contentPadding.calculateTopPadding().toPx()
-                        )
-                    )
-                },
-                backgroundColor = MaterialTheme.colorScheme.background,
-                blurRadius = 2.dp
+                state = hazeState,
+                backgroundColor = MaterialTheme.colorScheme.surface
             )
     ) {
         items(
@@ -91,6 +78,7 @@ internal fun StreamGallery(
 @Composable
 internal fun TvStreamGallery(
     state: TvLazyGridState,
+    hazeState: HazeState,
     rowCount: Int,
     streamHolder: StreamHolder,
     play: PlayStream,
@@ -100,8 +88,6 @@ internal fun TvStreamGallery(
 ) {
     val spacing = LocalSpacing.current
     val pref = LocalPref.current
-    val density = LocalDensity.current
-    val configuration = LocalConfiguration.current
 
     val streams = streamHolder.streams
     val floating = streamHolder.floating
@@ -115,18 +101,8 @@ internal fun TvStreamGallery(
         modifier = modifier
             .fillMaxSize()
             .haze(
-                area = with(density) {
-                    arrayOf(
-                        Rect(
-                            0f,
-                            0f,
-                            configuration.screenWidthDp.dp.toPx(),
-                            contentPadding.calculateTopPadding().toPx()
-                        )
-                    )
-                },
-                backgroundColor = MaterialTheme.colorScheme.background,
-                blurRadius = 2.dp
+                state = hazeState,
+                backgroundColor = MaterialTheme.colorScheme.surface
             )
     ) {
         items(

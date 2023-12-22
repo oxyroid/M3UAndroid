@@ -78,6 +78,9 @@ dependencies {
     implementation(project(":features:crash"))
     implementation(project(":features:about"))
 
+    implementation(project(":symbol"))
+    ksp(project(":symbol"))
+
     implementation(libs.androidx.core.core.ktx)
     implementation(libs.androidx.appcompat.appcompat)
     implementation(libs.androidx.activity.activity.compose)

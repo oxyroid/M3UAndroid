@@ -19,7 +19,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBarsIgnoringVisibility
 import androidx.compose.foundation.layout.systemBarsIgnoringVisibility
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.wrapContentSize
@@ -39,12 +38,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -56,7 +53,9 @@ import com.m3u.material.ktx.animated
 import com.m3u.material.ktx.plus
 import com.m3u.material.model.LocalDuration
 import com.m3u.material.model.LocalSpacing
+import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.haze
+import dev.chrisbanes.haze.hazeChild
 
 @Composable
 fun ToolkitScaffold(
@@ -72,7 +71,6 @@ fun ToolkitScaffold(
 ) {
     val density = LocalDensity.current
     val spacing = LocalSpacing.current
-    val configuration = LocalConfiguration.current
 
     val maxHeightDp = AppTopBarDefaults.TopBarHeight
     val minHeightDp = Dp.Hairline
@@ -125,22 +123,9 @@ fun ToolkitScaffold(
         val actualBackgroundColor by MaterialTheme.colorScheme.background.animated("AppBarBackground")
         val actualContentColor by MaterialTheme.colorScheme.onBackground.animated("AppBarContent")
         // Child Content
+        val hazeState = remember { HazeState() }
         Box(
-            modifier = Modifier
-                .haze(
-                    area = with(density) {
-                        arrayOf(
-                            Rect(
-                                0f,
-                                0f,
-                                configuration.screenWidthDp.dp.toPx(),
-                                WindowInsets.statusBarsIgnoringVisibility.getTop(density) + maxHeightPx
-                            )
-                        )
-                    },
-                    backgroundColor = actualBackgroundColor,
-                    blurRadius = 2.dp
-                )
+            modifier = Modifier.haze(hazeState, actualBackgroundColor)
         ) {
             content(
                 windowInsets.asPaddingValues() + PaddingValues(top = contentPaddingTop)
@@ -152,7 +137,8 @@ fun ToolkitScaffold(
         Surface(
             tonalElevation = LocalAbsoluteTonalElevation.current,
             color = Color.Transparent,
-            contentColor = actualContentColor
+            contentColor = actualContentColor,
+            modifier = Modifier.hazeChild(hazeState)
         ) {
             Row(
                 modifier = Modifier
