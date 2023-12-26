@@ -1,6 +1,6 @@
 package com.m3u.data.parser.impl
 
-import com.m3u.core.architecture.Logger
+import com.m3u.core.architecture.logger.Logger
 import com.m3u.data.parser.VersionCatalogParser
 import java.io.InputStream
 import javax.inject.Inject

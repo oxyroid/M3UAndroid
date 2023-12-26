@@ -6,7 +6,7 @@ import com.m3u.core.architecture.pref.Pref
 import com.m3u.core.architecture.pref.observeAsFlow
 import com.m3u.core.architecture.viewmodel.BaseViewModel
 import com.m3u.core.util.collections.filterNotNullKeys
-import com.m3u.core.wrapper.EmptyMessage
+import com.m3u.core.wrapper.Message
 import com.m3u.data.repository.PlaylistRepository
 import com.m3u.data.repository.StreamRepository
 import com.m3u.data.service.PlayerManager
@@ -26,7 +26,7 @@ class FavouriteViewModel @Inject constructor(
     playlistRepository: PlaylistRepository,
     pref: Pref,
     playerManager: PlayerManager
-) : BaseViewModel<FavoriteState, FavoriteEvent, EmptyMessage>(
+) : BaseViewModel<FavoriteState, FavoriteEvent, Message.Static>(
     emptyState = FavoriteState()
 ) {
     init {

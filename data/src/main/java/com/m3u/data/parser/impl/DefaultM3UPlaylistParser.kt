@@ -1,7 +1,7 @@
 package com.m3u.data.parser.impl
 
 import android.net.Uri
-import com.m3u.core.architecture.Logger
+import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.util.basic.splitOutOfQuotation
 import com.m3u.core.util.basic.trimBrackets
 import com.m3u.core.util.loadLine

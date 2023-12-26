@@ -1,4 +1,3 @@
-@file:kotlin.OptIn(ExperimentalPref::class)
 @file:OptIn(UnstableApi::class)
 
 package com.m3u.data.service.impl
@@ -19,7 +18,6 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
 import androidx.media3.session.MediaSession
-import com.m3u.core.architecture.pref.ExperimentalPref
 import com.m3u.core.architecture.pref.Pref
 import com.m3u.core.architecture.pref.observeAsFlow
 import com.m3u.data.contract.Certs

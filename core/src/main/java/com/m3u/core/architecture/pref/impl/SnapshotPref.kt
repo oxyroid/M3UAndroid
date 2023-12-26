@@ -1,12 +1,10 @@
-package com.m3u.core.architecture.pref
+package com.m3u.core.architecture.pref.impl
 
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
-import com.m3u.core.annotation.ClipMode
-import com.m3u.core.annotation.ConnectTimeout
-import com.m3u.core.annotation.PlaylistStrategy
+import com.m3u.core.architecture.pref.Pref
 import com.m3u.core.architecture.pref.Pref.Companion.AUTO_REFRESH
 import com.m3u.core.architecture.pref.Pref.Companion.BRIGHTNESS_GESTURE
 import com.m3u.core.architecture.pref.Pref.Companion.CINEMA_MODE
@@ -47,6 +45,10 @@ import com.m3u.core.architecture.pref.Pref.Companion.USE_COMMON_UI_MODE
 import com.m3u.core.architecture.pref.Pref.Companion.USE_DYNAMIC_COLORS
 import com.m3u.core.architecture.pref.Pref.Companion.VOLUME_GESTURE
 import com.m3u.core.architecture.pref.Pref.Companion.ZAPPING_MODE
+import com.m3u.core.architecture.pref.SharedPreferencesDelegator
+import com.m3u.core.architecture.pref.annotation.ClipMode
+import com.m3u.core.architecture.pref.annotation.ConnectTimeout
+import com.m3u.core.architecture.pref.annotation.PlaylistStrategy
 import com.m3u.core.util.context.booleanAsState
 import com.m3u.core.util.context.intAsState
 import com.m3u.core.util.context.longAsState
@@ -57,7 +59,10 @@ class SnapshotPref @Inject constructor(
     @ApplicationContext context: Context
 ) : Pref {
     private val sharedPreferences: SharedPreferences =
-        context.getSharedPreferences(SHARED_SETTINGS, Context.MODE_PRIVATE)
+        SharedPreferencesDelegator(
+            context.getSharedPreferences(SHARED_SETTINGS, Context.MODE_PRIVATE),
+            SharedPreferencesDelegator.STRATEGY_CACHE
+        )
 
     @PlaylistStrategy
     override var playlistStrategy: Int by
@@ -83,7 +88,6 @@ class SnapshotPref @Inject constructor(
     override var autoRefresh: Boolean by
     sharedPreferences.booleanAsState(DEFAULT_AUTO_REFRESH, AUTO_REFRESH)
 
-    @ExperimentalPref
     override var isSSLVerification: Boolean by
     sharedPreferences.booleanAsState(DEFAULT_SSL_VERIFICATION, SSL_VERIFICATION)
     override var fullInfoPlayer: Boolean by
@@ -93,7 +97,6 @@ class SnapshotPref @Inject constructor(
     override var noPictureMode: Boolean by
     sharedPreferences.booleanAsState(DEFAULT_NO_PICTURE_MODE, NO_PICTURE_MODE)
 
-    @ExperimentalPref
     override var cinemaMode: Boolean by
     sharedPreferences.booleanAsState(DEFAULT_CINEMA_MODE, CINEMA_MODE)
     override var useDynamicColors: Boolean by

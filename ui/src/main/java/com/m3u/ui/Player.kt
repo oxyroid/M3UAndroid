@@ -19,7 +19,7 @@ import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
-import com.m3u.core.annotation.ClipMode
+import com.m3u.core.architecture.pref.annotation.ClipMode
 import com.m3u.material.ktx.ifUnspecified
 
 @Immutable

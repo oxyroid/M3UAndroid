@@ -9,7 +9,6 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.OpenInNew
@@ -55,12 +54,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.unit.dp
-import com.m3u.core.annotation.ClipMode
-import com.m3u.core.annotation.ConnectTimeout
-import com.m3u.core.annotation.PlaylistStrategy
-import com.m3u.core.architecture.pref.ExperimentalPref
 import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_USE_DYNAMIC_COLORS
+import com.m3u.core.architecture.pref.annotation.ClipMode
+import com.m3u.core.architecture.pref.annotation.ConnectTimeout
+import com.m3u.core.architecture.pref.annotation.PlaylistStrategy
 import com.m3u.core.util.basic.title
 import com.m3u.features.setting.NavigateToAbout
 import com.m3u.features.setting.NavigateToConsole
@@ -70,10 +68,10 @@ import com.m3u.i18n.R.string
 import com.m3u.material.components.IconPreference
 import com.m3u.material.components.Preference
 import com.m3u.material.components.TextPreference
+import com.m3u.material.ktx.plus
 import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.Destination
 
-@OptIn(ExperimentalPref::class)
 @Composable
 internal fun PreferencesFragment(
     fragment: SettingFragment,
@@ -85,7 +83,7 @@ internal fun PreferencesFragment(
     navigateToScriptManagement: () -> Unit,
     navigateToConsole: NavigateToConsole,
     navigateToAbout: NavigateToAbout,
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
     val context = LocalContext.current
@@ -93,13 +91,13 @@ internal fun PreferencesFragment(
 
     LazyColumn(
         modifier = modifier,
-        contentPadding = contentPadding,
-        horizontalAlignment = Alignment.CenterHorizontally
+        contentPadding = contentPadding + PaddingValues(spacing.medium),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(spacing.medium)
     ) {
         item {
             Column(
                 modifier = Modifier
-                    .padding(spacing.medium)
                     .clip(MaterialTheme.shapes.medium),
                 verticalArrangement = Arrangement.spacedBy(1.dp)
             ) {
@@ -165,13 +163,6 @@ internal fun PreferencesFragment(
                     }
                 )
                 CheckBoxSharedPreference(
-                    title = string.feat_setting_auto_refresh,
-                    content = string.feat_setting_auto_refresh_description,
-                    icon = Icons.Rounded.Refresh,
-                    checked = pref.autoRefresh,
-                    onChanged = { pref.autoRefresh = !pref.autoRefresh }
-                )
-                CheckBoxSharedPreference(
                     title = string.feat_setting_no_picture_mode,
                     content = string.feat_setting_no_picture_mode_description,
                     icon = Icons.Rounded.HideImage,
@@ -194,6 +185,14 @@ internal fun PreferencesFragment(
                     checked = pref.useCommonUIMode,
                     onChanged = { pref.useCommonUIMode = !pref.useCommonUIMode }
                 )
+                CheckBoxSharedPreference(
+                    title = string.feat_setting_cinema_mode,
+                    content = string.feat_setting_cinema_mode_description,
+                    icon = Icons.Rounded.Chair,
+                    checked = pref.cinemaMode,
+                    onChanged = { pref.cinemaMode = !pref.cinemaMode }
+                )
+
                 val useDynamicColorsAvailable = DEFAULT_USE_DYNAMIC_COLORS
 
                 CheckBoxSharedPreference(
@@ -214,7 +213,6 @@ internal fun PreferencesFragment(
             var expended by rememberSaveable { mutableStateOf(false) }
             Column(
                 modifier = Modifier
-                    .padding(spacing.medium)
                     .clip(MaterialTheme.shapes.medium),
                 verticalArrangement = Arrangement.spacedBy(1.dp)
             ) {
@@ -287,7 +285,6 @@ internal fun PreferencesFragment(
         item {
             Column(
                 modifier = Modifier
-                    .padding(spacing.medium)
                     .clip(MaterialTheme.shapes.medium),
                 verticalArrangement = Arrangement.spacedBy(1.dp)
             ) {
@@ -324,13 +321,6 @@ internal fun PreferencesFragment(
                     Column(
                         verticalArrangement = Arrangement.spacedBy(1.dp)
                     ) {
-                        CheckBoxSharedPreference(
-                            title = string.feat_setting_cinema_mode,
-                            content = string.feat_setting_cinema_mode_description,
-                            icon = Icons.Rounded.Chair,
-                            checked = pref.cinemaMode,
-                            onChanged = { pref.cinemaMode = !pref.cinemaMode }
-                        )
                         Preference(
                             title = stringResource(string.feat_setting_script_management).title(),
                             content = stringResource(string.feat_setting_not_implementation).title(),
@@ -344,6 +334,13 @@ internal fun PreferencesFragment(
                             icon = Icons.Rounded.Edit,
                             enabled = false,
                             onClick = navigateToConsole
+                        )
+                        CheckBoxSharedPreference(
+                            title = string.feat_setting_auto_refresh,
+                            content = string.feat_setting_auto_refresh_description,
+                            icon = Icons.Rounded.Refresh,
+                            checked = pref.autoRefresh,
+                            onChanged = { pref.autoRefresh = !pref.autoRefresh }
                         )
                         CheckBoxSharedPreference(
                             title = string.feat_setting_ssl_verification_enabled,
@@ -361,7 +358,6 @@ internal fun PreferencesFragment(
         item {
             Column(
                 modifier = Modifier
-                    .padding(spacing.medium)
                     .clip(MaterialTheme.shapes.medium),
                 verticalArrangement = Arrangement.spacedBy(1.dp)
             ) {

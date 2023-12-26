@@ -8,55 +8,49 @@ import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.androidApp.navigation.M3UNavHost
-import com.m3u.core.architecture.pref.Pref
 import com.m3u.material.model.LocalNavController
 import com.m3u.ui.EmptyHelper
 import com.m3u.ui.Helper
 import com.m3u.ui.rememberActionHolder
+import com.m3u.ui.useRailNav
 
 @Composable
 fun App(
-    pref: Pref,
-    appState: AppState = rememberAppState(),
+    state: AppState = rememberAppState(),
     viewModel: AppViewModel = hiltViewModel(),
     helper: Helper = EmptyHelper,
 ) {
-    val snacker by viewModel.snacker.collectAsStateWithLifecycle()
+    val message by viewModel.message.collectAsStateWithLifecycle()
     val actions by viewModel.actions.collectAsStateWithLifecycle()
     val fob by viewModel.fob.collectAsStateWithLifecycle()
 
-    val navDestination = appState.navDestination
-    val rootDestination = appState.rootDestination
+    val navDestination = state.navDestination
+    val rootDestination = state.rootDestination
 
     val isBackPressedVisible = AppDefaults.isBackPressedVisible(navDestination)
-    val isSystemBarScrollable = AppDefaults.isSystemBarScrollable(navDestination)
 
     val title: String by AppDefaults.title(
         rootDestination = rootDestination,
         defState = viewModel.title.collectAsStateWithLifecycle()
     )
 
-    val actionHolder = rememberActionHolder(actions)
-
-    AppScaffold(
+    M3UScaffold(
         title = title,
-        snacker = snacker.value,
-        actionHolder = actionHolder,
+        message = message,
+        useRailNav = helper.useRailNav,
+        actionHolder = rememberActionHolder(actions),
         rootDestination = rootDestination,
         fob = fob,
-        isSystemBarScrollable = isSystemBarScrollable,
-        helper = helper,
-        pref = pref,
-        onBackPressed = appState::onBackClick.takeIf { isBackPressedVisible },
-        navigate = appState::navigate,
+        onBackPressed = state::onBackClick.takeIf { isBackPressedVisible },
+        navigate = state::navigate,
         modifier = Modifier.fillMaxSize(),
     ) { contentPadding ->
         CompositionLocalProvider(
-            LocalNavController provides appState.navController,
+            LocalNavController provides state.navController,
         ) {
             M3UNavHost(
-                pagerState = appState.pagerState,
-                navigate = appState::navigate,
+                pagerState = state.pagerState,
+                navigate = state::navigate,
                 contentPadding = contentPadding,
                 modifier = Modifier.fillMaxSize()
             )

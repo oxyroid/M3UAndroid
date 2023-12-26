@@ -3,10 +3,10 @@ package com.m3u.data.repository.impl
 import android.content.Context
 import android.net.Uri
 import androidx.core.net.toUri
-import com.m3u.core.annotation.PlaylistStrategy
-import com.m3u.core.architecture.Logger
-import com.m3u.core.architecture.execute
-import com.m3u.core.architecture.sandBox
+import com.m3u.core.architecture.pref.annotation.PlaylistStrategy
+import com.m3u.core.architecture.logger.Logger
+import com.m3u.core.architecture.logger.execute
+import com.m3u.core.architecture.logger.sandBox
 import com.m3u.core.util.basic.startsWithAny
 import com.m3u.core.util.belong
 import com.m3u.core.util.readFileContent

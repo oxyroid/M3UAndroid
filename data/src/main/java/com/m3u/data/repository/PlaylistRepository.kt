@@ -1,6 +1,6 @@
 package com.m3u.data.repository
 
-import com.m3u.core.annotation.PlaylistStrategy
+import com.m3u.core.architecture.pref.annotation.PlaylistStrategy
 import com.m3u.core.wrapper.Process
 import com.m3u.core.wrapper.Resource
 import com.m3u.data.database.entity.Playlist

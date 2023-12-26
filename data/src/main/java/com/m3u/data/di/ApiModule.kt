@@ -4,7 +4,7 @@ package com.m3u.data.di
 
 import com.charleskorn.kaml.Yaml
 import com.charleskorn.kaml.YamlConfiguration
-import com.m3u.core.architecture.pref.SnapshotPref
+import com.m3u.core.architecture.pref.impl.SnapshotPref
 import com.m3u.core.util.serialization.asConverterFactory
 import com.m3u.data.api.GithubApi
 import com.m3u.data.contract.Apis

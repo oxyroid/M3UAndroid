@@ -2,20 +2,47 @@ package com.m3u.features.playlist
 
 import com.m3u.core.wrapper.Message
 import com.m3u.i18n.R.string
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 sealed class PlaylistMessage(
+    override val level: Int,
+    override val type: Int,
+    override val duration: Duration = 3.seconds,
     resId: Int,
     vararg formatArgs: Any
-) : Message(resId, formatArgs) {
-    data object PlaylistUrlNotFound : PlaylistMessage(string.feat_playlist_error_playlist_url_not_found)
+) : Message.Static(level, "playlist", type, duration, resId, formatArgs) {
+    data object PlaylistUrlNotFound : PlaylistMessage(
+        level = LEVEL_ERROR,
+        type = TYPE_SNACK,
+        resId = string.feat_playlist_error_playlist_url_not_found
+    )
 
     data class PlaylistNotFound(val playlistUrl: String) :
-        PlaylistMessage(string.feat_playlist_error_playlist_not_found, playlistUrl)
+        PlaylistMessage(
+            level = LEVEL_ERROR,
+            type = TYPE_SNACK,
+            resId = string.feat_playlist_error_playlist_not_found,
+            formatArgs = arrayOf(playlistUrl)
+        )
 
-    data object StreamNotFound : PlaylistMessage(string.feat_playlist_error_stream_not_found)
+    data object StreamNotFound : PlaylistMessage(
+        level = LEVEL_ERROR,
+        type = TYPE_SNACK,
+        resId = string.feat_playlist_error_stream_not_found
+    )
 
-    data object StreamCoverNotFound : PlaylistMessage(string.feat_playlist_error_stream_cover_not_found)
+    data object StreamCoverNotFound : PlaylistMessage(
+        level = LEVEL_ERROR,
+        type = TYPE_SNACK,
+        resId = string.feat_playlist_error_stream_cover_not_found
+    )
 
     data class StreamCoverSaved(val path: String) :
-        PlaylistMessage(string.feat_playlist_success_save_cover, path)
+        PlaylistMessage(
+            level = LEVEL_ERROR,
+            type = TYPE_SNACK,
+            resId = string.feat_playlist_success_save_cover,
+            formatArgs = arrayOf(path)
+        )
 }

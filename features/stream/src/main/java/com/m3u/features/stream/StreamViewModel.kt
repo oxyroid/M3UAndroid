@@ -2,9 +2,9 @@ package com.m3u.features.stream
 
 import android.app.Application
 import androidx.lifecycle.viewModelScope
-import com.m3u.core.architecture.Logger
+import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.viewmodel.BaseViewModel
-import com.m3u.core.wrapper.EmptyMessage
+import com.m3u.core.wrapper.Message
 import com.m3u.data.repository.PlaylistRepository
 import com.m3u.data.repository.StreamRepository
 import com.m3u.data.service.PlayerManager
@@ -35,10 +35,11 @@ class StreamViewModel @Inject constructor(
     private val playerManager: PlayerManager,
     private val logger: Logger,
     private val application: Application
-) : BaseViewModel<StreamState, StreamEvent, EmptyMessage>(
+) : BaseViewModel<StreamState, StreamEvent, Message.Static>(
     emptyState = StreamState()
 ), OnDeviceRegistryListener, OnDeviceControlListener {
     private val _devices = MutableStateFlow<List<Device<*, *, *>>>(emptyList())
+
     // searched screencast devices
     val devices = _devices.asStateFlow()
 
@@ -95,10 +96,12 @@ class StreamViewModel @Inject constructor(
     }
 
     private val _isDevicesVisible: MutableStateFlow<Boolean> = MutableStateFlow(false)
+
     // show searching devices dialog or not
     val isDevicesVisible = _isDevicesVisible.asStateFlow()
 
     private val _searching: MutableStateFlow<Boolean> = MutableStateFlow(false)
+
     // searching or not
     val searching = _searching.asStateFlow()
 

@@ -1,5 +1,6 @@
 package com.m3u.material.components
 
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.material3.LocalAbsoluteTonalElevation
@@ -12,7 +13,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.m3u.material.ktx.animated
 import com.m3u.material.ktx.ifUnspecified
 
 @Composable
@@ -22,15 +22,17 @@ fun Background(
     contentColor: Color = MaterialTheme.colorScheme.onBackground,
     content: @Composable BoxScope.() -> Unit
 ) {
-    val actualColor by color
-        .ifUnspecified { Color.Transparent }
-        .animated("BackgroundBackground")
-    val actualContentColor by contentColor.animated("BackgroundContent")
+    val actualColor by animateColorAsState(
+        targetValue = color.ifUnspecified { Color.Transparent },
+        label = "background-color"
+    )
+    val actualContentColor by animateColorAsState(
+        targetValue = contentColor.ifUnspecified { LocalContentColor.current },
+        label = "content-color"
+    )
     Box(
         modifier = Modifier
-            .drawBehind {
-                drawRect(actualColor)
-            }
+            .drawBehind { drawRect(actualColor) }
             .then(modifier)
     ) {
         CompositionLocalProvider(

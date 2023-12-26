@@ -12,8 +12,8 @@ import coil.Coil
 import coil.request.ErrorResult
 import coil.request.ImageRequest
 import coil.request.SuccessResult
-import com.m3u.core.architecture.Logger
-import com.m3u.core.architecture.executeResult
+import com.m3u.core.architecture.logger.Logger
+import com.m3u.core.architecture.logger.executeResult
 import com.m3u.core.wrapper.Resource
 import com.m3u.core.wrapper.emitException
 import com.m3u.core.wrapper.emitResource

@@ -1,5 +1,7 @@
 package com.m3u.material.ktx
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
@@ -19,14 +21,18 @@ sealed interface Edge {
     val isHorizontal: Boolean get() = this is Start || this is End
 }
 
+@Composable
 fun Modifier.blurEdge(
     color: Color,
     edge: Edge,
     enable: Boolean = true,
     dimen: Float = BlurDefaults.DIMEN
-): Modifier = if (!enable) Modifier else composed {
-    val currentColor by color.animated("brushColor")
-    Modifier.drawWithCache {
+): Modifier {
+    val currentColor by animateColorAsState(
+        targetValue = color,
+        label = "brushColor"
+    )
+    return if (enable) drawWithCache {
         val brush = brush(
             colors = colors(currentColor, edge),
             edge = edge,
@@ -41,9 +47,10 @@ fun Modifier.blurEdge(
                 size = size(size, edge, dimen),
             )
         }
-    }
+    } else this
 }
 
+@Composable
 fun Modifier.blurEdges(
     color: Color,
     edges: List<Edge>,
@@ -52,7 +59,10 @@ fun Modifier.blurEdges(
 ): Modifier {
     return if (edges.size == 1) blurEdge(color, edges.first(), enable, dimen)
     else if (!enable || edges.isEmpty()) Modifier else composed {
-        val currentColor by color.animated("brushColor")
+        val currentColor by animateColorAsState(
+            targetValue = color,
+            label = "brushColor"
+        )
         Modifier.drawWithCache {
             val brushes = edges.map { edge ->
                 edge to brush(

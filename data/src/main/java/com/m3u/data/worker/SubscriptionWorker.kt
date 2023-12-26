@@ -8,8 +8,8 @@ import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
-import com.m3u.core.annotation.PlaylistStrategy
-import com.m3u.core.architecture.Logger
+import com.m3u.core.architecture.pref.annotation.PlaylistStrategy
+import com.m3u.core.architecture.logger.Logger
 import com.m3u.data.R
 import com.m3u.data.repository.PlaylistRepository
 import com.m3u.i18n.R.string

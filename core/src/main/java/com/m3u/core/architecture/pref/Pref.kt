@@ -4,9 +4,10 @@ import android.os.Build
 import androidx.annotation.ChecksSdkIntAtLeast
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.snapshotFlow
-import com.m3u.core.annotation.ClipMode
-import com.m3u.core.annotation.ConnectTimeout
-import com.m3u.core.annotation.PlaylistStrategy
+import com.m3u.core.architecture.pref.annotation.ClipMode
+import com.m3u.core.architecture.pref.annotation.ConnectTimeout
+import com.m3u.core.architecture.pref.annotation.PlaylistStrategy
+import com.m3u.core.architecture.pref.impl.SnapshotPref
 import kotlinx.coroutines.flow.Flow
 
 @Stable
@@ -26,12 +27,10 @@ interface Pref {
     var autoRefresh: Boolean
     var fullInfoPlayer: Boolean
 
-    @ExperimentalPref
     var isSSLVerification: Boolean
     var rootDestination: Int
     var noPictureMode: Boolean
 
-    @ExperimentalPref
     var cinemaMode: Boolean
     var useDynamicColors: Boolean
 

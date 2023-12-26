@@ -1,11 +1,10 @@
 package com.m3u.features.about
 
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.m3u.core.architecture.Logger
 import com.m3u.core.architecture.Publisher
-import com.m3u.core.architecture.execute
-import com.m3u.core.architecture.viewmodel.BaseViewModel
-import com.m3u.core.wrapper.EmptyMessage
+import com.m3u.core.architecture.logger.Logger
+import com.m3u.core.architecture.logger.execute
 import com.m3u.data.api.GithubApi
 import com.m3u.data.parser.VersionCatalogParser
 import com.m3u.features.about.model.Contributor
@@ -32,7 +31,7 @@ class AboutViewModel @Inject constructor(
     private val client: OkHttpClient,
     @Publisher.App private val publisher: Publisher,
     private val logger: Logger
-) : BaseViewModel<Unit, Unit, EmptyMessage>(Unit) {
+) : ViewModel() {
     private val contributors: MutableStateFlow<List<Contributor>> =
         MutableStateFlow(emptyList())
     private val versionCatalog: MutableStateFlow<List<VersionCatalogParser.Entity>> =
@@ -98,9 +97,5 @@ class AboutViewModel @Inject constructor(
                 input?.use { parser.execute(it) } ?: emptyList()
             }
         }
-    }
-
-    override fun onEvent(event: Unit) {
-
     }
 }

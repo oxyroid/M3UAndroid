@@ -39,17 +39,17 @@ fun AppNavigation(
     fob: Fob?,
     useNavRail: Boolean,
     modifier: Modifier = Modifier,
-    backgroundColor: Color = AppNavigationDefaults.backgroundColor(),
+    color: Color = AppNavigationDefaults.color(),
     selectedColor: Color = AppNavigationDefaults.selectedColor(),
     unselectedColor: Color = AppNavigationDefaults.unselectedColor(),
     fobbedColor: Color = AppNavigationDefaults.fobbedColor(),
 ) {
     val destinationHolder = rememberRootDestinationHolder(Destination.Root.entries)
-    val actualBackgroundColor by animateColorAsState(
-        targetValue = backgroundColor,
+    val currentColor by animateColorAsState(
+        targetValue = color,
         label = "navigation-color"
     )
-    val actualContentColor by animateColorAsState(
+    val currentContentColor by animateColorAsState(
         targetValue = unselectedColor,
         label = "navigation-content-color"
     )
@@ -58,8 +58,8 @@ fun AppNavigation(
         useNavRail -> {
             NavigationRail(
                 modifier = modifier,
-                containerColor = actualBackgroundColor,
-                contentColor = actualContentColor
+                containerColor = currentColor,
+                contentColor = currentContentColor
             ) {
                 RailContent(
                     navigate = navigate,
@@ -75,8 +75,8 @@ fun AppNavigation(
         else -> {
             BottomAppBar(
                 modifier = modifier,
-                containerColor = actualBackgroundColor,
-                contentColor = actualContentColor
+                containerColor = currentColor,
+                contentColor = currentContentColor
             ) {
                 Content(
                     navigate = navigate,
@@ -176,6 +176,7 @@ private fun Content(
 
             NavigationBarItem(
                 selected = selected,
+                alwaysShowLabel = false,
                 onClick = {
                     if (fobbed && fob != null) {
                         fob.onClick()
@@ -185,7 +186,8 @@ private fun Content(
                 },
                 colors = NavigationBarItemDefaults.colors(
                     selectedTextColor = actualSelectedColor,
-                    selectedIconColor = actualSelectedColor
+                    selectedIconColor = actualSelectedColor,
+                    indicatorColor = Color.Transparent
                 ),
                 icon = {
                     val icon = if (selected) selectedIcon
@@ -238,7 +240,8 @@ private fun RailItem(
             alwaysShowLabel = false,
             colors = NavigationRailItemDefaults.colors(
                 selectedIconColor = selectedColor,
-                selectedTextColor = selectedColor
+                selectedTextColor = selectedColor,
+                indicatorColor = Color.Transparent
             ),
             interactionSource = remember { MutableInteractionSource() },
         )
@@ -247,7 +250,7 @@ private fun RailItem(
 
 object AppNavigationDefaults {
     @Composable
-    fun backgroundColor() = MaterialTheme.colorScheme.surface
+    fun color() = MaterialTheme.colorScheme.surface
 
     @Composable
     fun selectedColor() = MaterialTheme.colorScheme.primary

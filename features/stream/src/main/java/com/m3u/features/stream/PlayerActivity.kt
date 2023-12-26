@@ -18,13 +18,14 @@ import androidx.compose.runtime.Composable
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.lifecycleScope
-import com.m3u.core.architecture.Logger
+import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.pref.Pref
 import com.m3u.core.unspecified.UBoolean
 import com.m3u.core.unspecified.specified
 import com.m3u.core.util.basic.rational
 import com.m3u.core.util.context.isDarkMode
 import com.m3u.core.util.context.isPortraitMode
+import com.m3u.core.wrapper.Message
 import com.m3u.data.service.PlayerManager
 import com.m3u.ui.Action
 import com.m3u.ui.Fob
@@ -161,8 +162,23 @@ class PlayerActivity : ComponentActivity() {
             }
         }
 
-        override fun snake(message: String) {
-            logger.log(message)
+        override fun log(message: Message) {
+            if (message == Message.Static || message == Message.Dynamic.EMPTY) return
+            when (message) {
+                is Message.Static -> {
+                    logger.log(
+                        text = getString(message.resId, message.formatArgs)
+                    )
+                }
+
+                is Message.Dynamic -> {
+                    logger.log(
+                        text = message.value,
+                        tag = message.tag,
+                        level = message.level
+                    )
+                }
+            }
         }
 
         override fun play(url: String) {

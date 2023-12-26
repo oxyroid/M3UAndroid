@@ -2,6 +2,7 @@ package com.m3u.material.components
 
 import androidx.annotation.IntRange
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
@@ -38,7 +39,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
-import com.m3u.material.ktx.animated
 import com.m3u.material.ktx.ifUnspecified
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
@@ -185,9 +185,10 @@ fun MaskButton(
 ) {
     val tooltipState = rememberTooltipState()
 
-    val animatedColor by tint
-        .ifUnspecified { LocalContentColor.current }
-        .animated("mask-button-tint")
+    val animatedColor by animateColorAsState(
+        targetValue = tint.ifUnspecified { LocalContentColor.current },
+        label = "mask-button-tint"
+    )
 
     val currentKeepAlive by rememberUpdatedState(state::wake)
     TooltipBox(

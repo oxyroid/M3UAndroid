@@ -17,6 +17,7 @@ import androidx.core.app.PictureInPictureModeChangedInfo
 import androidx.core.util.Consumer
 import androidx.lifecycle.Lifecycle
 import com.m3u.core.unspecified.UBoolean
+import com.m3u.core.wrapper.Message
 import com.m3u.material.ktx.LifecycleEffect
 
 typealias OnUserLeaveHint = () -> Unit
@@ -41,7 +42,7 @@ interface Helper {
 
     fun enterPipMode(size: Rect)
     fun toast(message: String)
-    fun snake(message: String)
+    fun log(message: Message)
     fun play(url: String)
     fun replay()
 }
@@ -181,7 +182,7 @@ val EmptyHelper = object : Helper {
         error("Cannot toast: $message")
     }
 
-    override fun snake(message: String) {
+    override fun log(message: Message) {
         error("Cannot snake: $message")
     }
 

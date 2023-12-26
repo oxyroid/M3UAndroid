@@ -1,10 +1,19 @@
-package com.m3u.core.architecture
+package com.m3u.core.architecture.logger
 
+import com.m3u.core.wrapper.Message
 import javax.inject.Qualifier
 
 interface Logger {
-    fun log(text: String)
-    fun log(throwable: Throwable)
+    fun log(
+        text: String,
+        level: Int = Message.LEVEL_ERROR,
+        tag: String = "LOGGER"
+    )
+
+    fun log(
+        throwable: Throwable,
+        tag: String = "LOGGER"
+    )
 
     @Qualifier
     @Retention(AnnotationRetention.BINARY)

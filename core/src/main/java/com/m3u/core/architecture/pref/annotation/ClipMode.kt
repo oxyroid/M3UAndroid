@@ -1,4 +1,4 @@
-package com.m3u.core.annotation
+package com.m3u.core.architecture.pref.annotation
 
 @Target(
     AnnotationTarget.CLASS,
@@ -14,5 +14,3 @@ annotation class ClipMode {
         const val STRETCHED = 2
     }
 }
-
-typealias OnClipMode = () -> Unit

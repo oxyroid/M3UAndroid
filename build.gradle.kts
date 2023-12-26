@@ -25,7 +25,7 @@ subprojects {
                 "-opt-in=androidx.compose.material3.adaptive.navigation.suite.ExperimentalMaterial3AdaptiveNavigationSuiteApi"
             )
         }
-        val path = project.buildDir.absolutePath + "/compose_metrics"
+        val path = project.layout.buildDirectory.dir("compose_metrics").get().asFile.path
         compilerOptions.freeCompilerArgs.addAll(
             "-P",
             "plugin:androidx.compose.compiler.plugins.kotlin:metricsDestination=$path",

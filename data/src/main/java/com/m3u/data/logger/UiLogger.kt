@@ -1,30 +1,38 @@
 package com.m3u.data.logger
 
-import com.m3u.core.architecture.Logger
-import com.m3u.data.service.Message
-import com.m3u.data.service.UiService
+import com.m3u.core.architecture.logger.Logger
+import com.m3u.core.wrapper.Message
+import com.m3u.data.service.DynamicMessageService
 import java.util.Locale
 import javax.inject.Inject
 
-/**
- * A collector of banner service.
- * Its messages will be deliver to users just like a global snack bar.
- * @see UiService
- */
 class UiLogger @Inject constructor(
-    private val uiService: UiService,
+    private val dynamicMessageService: DynamicMessageService,
     private val logger: Logger
 ) : Logger {
-    override fun log(text: String) {
+    override fun log(
+        text: String,
+        level: Int,
+        tag: String
+    ) {
         val value = text
             .replaceFirstChar {
                 if (it.isLowerCase()) it.titlecase(Locale.ROOT)
                 else it.toString()
             }
-        uiService.snack(Message(value))
+        val message = Message.Dynamic(
+            value = value,
+            level = level,
+            tag = tag,
+            type = Message.TYPE_SNACK
+        )
+        dynamicMessageService.emit(message)
     }
 
-    override fun log(throwable: Throwable) {
+    override fun log(
+        throwable: Throwable,
+        tag: String
+    ) {
         val info = throwable.stackTraceToString()
         throwable.message?.let(::log)
         logger.log(
@@ -32,7 +40,8 @@ class UiLogger @Inject constructor(
             ${throwable.message}
             $info
             =====
-            """.trimIndent()
+            """.trimIndent(),
+            tag = tag
         )
     }
 }

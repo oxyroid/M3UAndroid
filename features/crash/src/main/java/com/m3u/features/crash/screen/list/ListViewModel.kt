@@ -2,7 +2,7 @@ package com.m3u.features.crash.screen.list
 
 import com.m3u.core.architecture.FilePathCacher
 import com.m3u.core.architecture.viewmodel.BaseViewModel
-import com.m3u.core.wrapper.EmptyMessage
+import com.m3u.core.wrapper.Message
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.update
 import javax.inject.Inject
@@ -10,7 +10,7 @@ import javax.inject.Inject
 @HiltViewModel
 class ListViewModel @Inject constructor(
     cacher: FilePathCacher
-) : BaseViewModel<ListState, ListEvent, EmptyMessage>(
+) : BaseViewModel<ListState, ListEvent, Message.Static>(
     emptyState = ListState()
 ) {
     init {

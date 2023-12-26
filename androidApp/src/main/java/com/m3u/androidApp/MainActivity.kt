@@ -16,10 +16,13 @@ import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsCompat.Type.InsetsType
@@ -29,18 +32,21 @@ import androidx.lifecycle.lifecycleScope
 import com.m3u.androidApp.ui.App
 import com.m3u.androidApp.ui.AppViewModel
 import com.m3u.androidApp.ui.rememberAppState
-import com.m3u.core.architecture.Logger
+import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.pref.Pref
 import com.m3u.core.unspecified.UBoolean
 import com.m3u.core.unspecified.specified
+import com.m3u.core.unspecified.unspecifiable
 import com.m3u.core.util.basic.rational
 import com.m3u.core.util.context.isDarkMode
 import com.m3u.core.util.context.isPortraitMode
+import com.m3u.core.wrapper.Message
 import com.m3u.data.service.PlayerManager
 import com.m3u.ui.Action
 import com.m3u.ui.Destination
 import com.m3u.ui.Fob
 import com.m3u.ui.Helper
+import com.m3u.ui.M3ULocalProvider
 import com.m3u.ui.OnPipModeChanged
 import com.m3u.ui.OnUserLeaveHint
 import dagger.hilt.android.AndroidEntryPoint
@@ -82,14 +88,29 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         setContent {
-            App(
-                appState = rememberAppState(
-                    pagerState = rememberPagerState { Destination.Root.entries.size }
-                ),
-                viewModel = viewModel,
+            val scope = rememberCoroutineScope()
+            val darkMode = when {
+                pref.cinemaMode -> true
+                else -> isSystemInDarkTheme()
+            }
+            DisposableEffect(darkMode, scope) {
+                scope.launch {
+                    helper.darkMode = darkMode.unspecifiable
+                }
+                onDispose {}
+            }
+            M3ULocalProvider(
                 helper = helper,
                 pref = pref
-            )
+            ) {
+                App(
+                    state = rememberAppState(
+                        pagerState = rememberPagerState { Destination.Root.entries.size }
+                    ),
+                    viewModel = viewModel,
+                    helper = helper
+                )
+            }
         }
     }
 
@@ -181,8 +202,23 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        override fun snake(message: String) {
-            logger.log(message)
+        override fun log(message: Message) {
+            if (message == Message.Static || message == Message.Dynamic.EMPTY) return
+            when (message) {
+                is Message.Static -> {
+                    logger.log(
+                        text = getString(message.resId, message.formatArgs)
+                    )
+                }
+
+                is Message.Dynamic -> {
+                    logger.log(
+                        text = message.value,
+                        tag = message.tag,
+                        level = message.level
+                    )
+                }
+            }
         }
 
         override fun play(url: String) {

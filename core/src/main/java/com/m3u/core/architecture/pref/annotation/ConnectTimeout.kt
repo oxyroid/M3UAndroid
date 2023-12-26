@@ -1,4 +1,4 @@
-package com.m3u.core.annotation
+package com.m3u.core.architecture.pref.annotation
 
 @Target(
     AnnotationTarget.CLASS,
@@ -7,11 +7,9 @@ package com.m3u.core.annotation
     AnnotationTarget.TYPE
 )
 @Retention(AnnotationRetention.SOURCE)
-annotation class PlaylistStrategy {
+annotation class ConnectTimeout {
     companion object {
-        const val ALL = 0
-        const val SKIP_FAVORITE = 1
+        const val SHORT = 8000L
+        const val LONG = 20000L
     }
 }
-
-typealias OnPlaylistStrategy = () -> Unit

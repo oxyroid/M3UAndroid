@@ -2,7 +2,7 @@
 
 package com.m3u.data.di
 
-import com.m3u.core.architecture.Logger
+import com.m3u.core.architecture.logger.Logger
 import com.m3u.data.logger.CommonLogger
 import com.m3u.data.logger.UiLogger
 import dagger.Binds

@@ -1,5 +1,6 @@
 package com.m3u.features.foryou.components
 
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
@@ -25,7 +26,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.m3u.material.components.OuterRow
-import com.m3u.material.ktx.animated
 import com.m3u.material.model.LocalSpacing
 
 @Composable
@@ -39,12 +39,15 @@ internal fun PlaylistItem(
 ) {
     val spacing = LocalSpacing.current
     val theme = MaterialTheme.colorScheme
-    val actualContentColor by theme.onSurface.animated("playlist-item-content")
+    val actualContentColor by animateColorAsState(
+        targetValue = theme.onSurface,
+        label = "playlist-item-content"
+    )
 
     OutlinedCard(
         shape = RoundedCornerShape(spacing.medium),
         border = CardDefaults.outlinedCardBorder(local),
-        modifier = Modifier.semantics(mergeDescendants = true) {  }
+        modifier = Modifier.semantics(mergeDescendants = true) { }
     ) {
         OuterRow(
             modifier = modifier
@@ -70,8 +73,14 @@ internal fun PlaylistItem(
                 modifier = Modifier.weight(1f)
             )
 
-            val actualPrimaryColor by theme.primary.animated("playlist-item-primary")
-            val actualOnPrimaryColor by theme.onPrimary.animated("playlist-item-on-primary")
+            val actualPrimaryColor by animateColorAsState(
+                targetValue = theme.primary,
+                label = "playlist-item-primary"
+            )
+            val actualOnPrimaryColor by animateColorAsState(
+                targetValue = theme.onPrimary,
+                label = "playlist-item-on-primary"
+            )
             Box(
                 modifier = Modifier
                     .clip(CircleShape)

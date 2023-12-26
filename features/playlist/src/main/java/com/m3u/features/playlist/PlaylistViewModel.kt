@@ -1,7 +1,7 @@
 package com.m3u.features.playlist
 
 import androidx.lifecycle.viewModelScope
-import com.m3u.core.architecture.Logger
+import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.pref.Pref
 import com.m3u.core.architecture.pref.observeAsFlow
 import com.m3u.core.architecture.viewmodel.BaseViewModel
