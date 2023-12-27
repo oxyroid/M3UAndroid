@@ -45,7 +45,6 @@ import com.m3u.core.architecture.pref.Pref.Companion.USE_COMMON_UI_MODE
 import com.m3u.core.architecture.pref.Pref.Companion.USE_DYNAMIC_COLORS
 import com.m3u.core.architecture.pref.Pref.Companion.VOLUME_GESTURE
 import com.m3u.core.architecture.pref.Pref.Companion.ZAPPING_MODE
-import com.m3u.core.architecture.pref.SharedPreferencesDelegator
 import com.m3u.core.architecture.pref.annotation.ClipMode
 import com.m3u.core.architecture.pref.annotation.ConnectTimeout
 import com.m3u.core.architecture.pref.annotation.PlaylistStrategy
@@ -59,10 +58,7 @@ class SnapshotPref @Inject constructor(
     @ApplicationContext context: Context
 ) : Pref {
     private val sharedPreferences: SharedPreferences =
-        SharedPreferencesDelegator(
-            context.getSharedPreferences(SHARED_SETTINGS, Context.MODE_PRIVATE),
-            SharedPreferencesDelegator.STRATEGY_CACHE
-        )
+        context.getSharedPreferences(SHARED_SETTINGS, Context.MODE_PRIVATE)
 
     @PlaylistStrategy
     override var playlistStrategy: Int by
