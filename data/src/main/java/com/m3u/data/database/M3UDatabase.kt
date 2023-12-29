@@ -15,14 +15,15 @@ import com.m3u.data.database.entity.Stream
 
 @Database(
     entities = [Stream::class, Playlist::class],
-    version = 4,
+    version = 5,
     exportSchema = true,
     autoMigrations = [
         AutoMigration(
             from = 3,
             to = 4,
-            spec = M3UDatabase.Companion.FeedStreamAutoMigration::class
-        )
+            spec = M3UDatabase.Companion.AutoMigration3To4::class
+        ),
+        AutoMigration(from = 4, to = 5)
     ]
 )
 abstract class M3UDatabase : RoomDatabase() {
@@ -32,7 +33,7 @@ abstract class M3UDatabase : RoomDatabase() {
     companion object {
         val MIGRATION_1_2 = object : Migration(1, 2) {
             override fun migrate(db: SupportSQLiteDatabase) {
-                db.execSQL("ALTER TABLE streams ADD COLUMN banned INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("ALTER TABLE lives ADD COLUMN banned INTEGER NOT NULL DEFAULT 0")
             }
         }
         val MIGRATION_2_3 = object : Migration(2, 3) {
@@ -48,6 +49,6 @@ abstract class M3UDatabase : RoomDatabase() {
         )
         @RenameTable(fromTableName = "feeds", toTableName = "playlists")
         @RenameTable(fromTableName = "lives", toTableName = "streams")
-        class FeedStreamAutoMigration : AutoMigrationSpec
+        class AutoMigration3To4 : AutoMigrationSpec
     }
 }

@@ -7,7 +7,9 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -40,11 +42,12 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.data.database.entity.Playlist
-import com.m3u.features.foryou.components.PlaylistGallery
 import com.m3u.features.foryou.components.ForyouDialog
 import com.m3u.features.foryou.components.OnRename
 import com.m3u.features.foryou.components.OnUnsubscribe
+import com.m3u.features.foryou.components.PlaylistGallery
 import com.m3u.features.foryou.model.PlaylistDetailHolder
+import com.m3u.features.foryou.model.Unseens
 import com.m3u.i18n.R
 import com.m3u.material.components.Background
 import com.m3u.material.ktx.interceptVolumeEvent
@@ -71,7 +74,8 @@ fun ForyouRoute(
     val pref = LocalPref.current
 
     val message by viewModel.message.collectAsStateWithLifecycle()
-    val playlistDetailHolder by viewModel.playlists.collectAsStateWithLifecycle()
+    val holder by viewModel.playlists.collectAsStateWithLifecycle()
+    val unseenStreams by viewModel.unseens.collectAsStateWithLifecycle()
 
     MessageEventHandler(message)
 
@@ -94,7 +98,8 @@ fun ForyouRoute(
     }
 
     ForyouScreen(
-        playlistDetailHolder = playlistDetailHolder,
+        holder = holder,
+        unseens = unseenStreams,
         rowCount = pref.rowCount,
         contentPadding = contentPadding,
         navigateToPlaylist = navigateToPlaylist,
@@ -109,17 +114,19 @@ fun ForyouRoute(
 @Composable
 private fun ForyouScreen(
     rowCount: Int,
-    playlistDetailHolder: PlaylistDetailHolder,
+    holder: PlaylistDetailHolder,
+    unseens: Unseens,
     contentPadding: PaddingValues,
     navigateToPlaylist: NavigateToPlaylist,
     unsubscribe: OnUnsubscribe,
     rename: OnRename,
     modifier: Modifier = Modifier
 ) {
+    val spacing = LocalSpacing.current
+
     var dialog: ForyouDialog by remember { mutableStateOf(ForyouDialog.Idle) }
     val configuration = LocalConfiguration.current
 
-    val details = playlistDetailHolder.details
 
     val actualRowCount = remember(rowCount, configuration.orientation) {
         when (configuration.orientation) {
@@ -128,19 +135,25 @@ private fun ForyouScreen(
         }
     }
     Background(modifier) {
-        if (details.isNotEmpty()) {
-            PlaylistGallery(
-                rowCount = actualRowCount,
-                playlistDetailHolder = playlistDetailHolder,
-                navigateToPlaylist = navigateToPlaylist,
-                onMenu = { dialog = ForyouDialog.Selections(it) },
-                contentPadding = contentPadding,
-                modifier = Modifier.fillMaxSize()
-            )
-        } else {
-            PlaylistGalleryPlaceholder(
-                modifier = Modifier.align(Alignment.Center)
-            )
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.spacedBy(spacing.small, Alignment.CenterVertically)
+        ) {
+            if (holder.details.isNotEmpty() || unseens.streams.isNotEmpty()) {
+                PlaylistGallery(
+                    rowCount = actualRowCount,
+                    holder = holder,
+                    unseens = unseens,
+                    navigateToPlaylist = navigateToPlaylist,
+                    onMenu = { dialog = ForyouDialog.Selections(it) },
+                    contentPadding = contentPadding,
+                    modifier = Modifier.fillMaxSize()
+                )
+            } else {
+                PlaylistGalleryPlaceholder(
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                )
+            }
         }
         ForyouDialog(
             status = dialog,

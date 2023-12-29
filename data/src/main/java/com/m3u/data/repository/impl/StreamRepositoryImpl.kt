@@ -8,7 +8,9 @@ import com.m3u.data.database.entity.Stream
 import com.m3u.data.repository.StreamRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import kotlinx.datetime.Clock
 import javax.inject.Inject
+import kotlin.time.Duration
 
 class StreamRepositoryImpl @Inject constructor(
     private val streamDao: StreamDao,
@@ -38,9 +40,19 @@ class StreamRepositoryImpl @Inject constructor(
         streamDao.setFavourite(id, target)
     }
 
-    override suspend fun setBanned(id: Int, target: Boolean) {
-        logger.execute {
-            streamDao.setBanned(id, target)
-        }
+    override suspend fun setBanned(id: Int, target: Boolean) = logger.sandBox {
+        streamDao.setBanned(id, target)
+    }
+
+    override suspend fun updateSeen(id: Int) = logger.sandBox {
+        val current = Clock.System.now().toEpochMilliseconds()
+        streamDao.updateSeen(id, current)
+    }
+
+    override fun observeAllUnseenFavourites(limit: Duration): Flow<List<Stream>> {
+        return streamDao.observeAllUnseenFavourites(
+            limit = limit.inWholeMilliseconds,
+            current = Clock.System.now().toEpochMilliseconds()
+        )
     }
 }

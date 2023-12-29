@@ -20,6 +20,8 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -81,6 +83,16 @@ class StreamViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5_000),
             initialValue = StreamState.PlayerState()
         )
+    init {
+        playerManager
+            .url
+            .onEach { url ->
+                url?: return@onEach
+                val stream = streamRepository.getByUrl(url)?: return@onEach
+                streamRepository.updateSeen(stream.id)
+            }
+            .launchIn(viewModelScope)
+    }
 
     override fun onEvent(event: StreamEvent) {
         when (event) {

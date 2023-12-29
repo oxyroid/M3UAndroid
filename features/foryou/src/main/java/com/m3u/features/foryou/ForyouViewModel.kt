@@ -6,6 +6,7 @@ import com.m3u.data.repository.PlaylistRepository
 import com.m3u.data.repository.StreamRepository
 import com.m3u.features.foryou.model.PlaylistDetail
 import com.m3u.features.foryou.model.PlaylistDetailHolder
+import com.m3u.features.foryou.model.Unseens
 import com.m3u.features.foryou.model.toDetail
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -18,6 +19,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
+import kotlin.time.Duration.Companion.days
 
 @HiltViewModel
 class ForyouViewModel @Inject constructor(
@@ -54,6 +56,15 @@ class ForyouViewModel @Inject constructor(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000L),
             initialValue = PlaylistDetailHolder()
+        )
+
+    internal val unseens: StateFlow<Unseens> = streamRepository
+        .observeAllUnseenFavourites(5.days)
+        .map { Unseens(it) }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000L),
+            initialValue = Unseens()
         )
 
     override fun onEvent(event: ForyouEvent) {

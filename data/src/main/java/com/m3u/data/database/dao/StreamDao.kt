@@ -37,9 +37,18 @@ interface StreamDao {
     @Query("SELECT * FROM streams ORDER BY id")
     fun observeAll(): Flow<List<Stream>>
 
+    @Query("SELECT * FROM streams WHERE favourite = 1 AND seen + :limit < :current ORDER BY seen")
+    fun observeAllUnseenFavourites(
+        limit: Long,
+        current: Long
+    ): Flow<List<Stream>>
+
     @Query("UPDATE streams SET favourite = :target WHERE id = :id")
     suspend fun setFavourite(id: Int, target: Boolean)
 
     @Query("UPDATE streams SET banned = :target WHERE id = :id")
     suspend fun setBanned(id: Int, target: Boolean)
+
+    @Query("UPDATE streams SET seen = :target WHERE id = :id")
+    suspend fun updateSeen(id: Int, target: Long)
 }
