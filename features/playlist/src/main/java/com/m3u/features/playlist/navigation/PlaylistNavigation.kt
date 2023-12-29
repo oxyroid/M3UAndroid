@@ -13,7 +13,6 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.m3u.features.playlist.PlaylistRoute
-import com.m3u.features.playlist.NavigateToStream
 
 private const val PLAYLIST_ROUTE_PATH = "playlist_route"
 private const val TYPE_URL = "url"
@@ -27,7 +26,7 @@ fun NavController.navigateToPlaylist(playlistUrl: String, navOptions: NavOptions
 }
 
 fun NavGraphBuilder.playlistScreen(
-    navigateToStream: NavigateToStream,
+    navigateToStream: () -> Unit,
     contentPadding: PaddingValues,
 ) {
     composable(

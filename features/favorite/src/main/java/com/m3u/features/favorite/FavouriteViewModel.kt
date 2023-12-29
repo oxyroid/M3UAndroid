@@ -1,6 +1,5 @@
 package com.m3u.features.favorite
 
-import android.util.Log
 import androidx.lifecycle.viewModelScope
 import com.m3u.core.architecture.pref.Pref
 import com.m3u.core.architecture.pref.observeAsFlow
@@ -50,7 +49,6 @@ class FavouriteViewModel @Inject constructor(
 
     private val zappingMode = pref
         .observeAsFlow { it.zappingMode }
-        .onEach { Log.e("FAV", "$it") }
         .stateIn(
             scope = viewModelScope,
             initialValue = Pref.DEFAULT_ZAPPING_MODE,

@@ -1,6 +1,7 @@
 package com.m3u.material.ktx
 
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.runtime.Composable
@@ -26,4 +27,20 @@ operator fun PaddingValues.minus(another: PaddingValues): PaddingValues {
         calculateEndPadding(direction) - another.calculateEndPadding(direction),
         calculateBottomPadding() - another.calculateBottomPadding(),
     )
+}
+
+@Composable
+infix fun PaddingValues.only(side: WindowInsetsSides): PaddingValues {
+    val layoutDirection = LocalLayoutDirection.current
+    return when (side) {
+        WindowInsetsSides.Start ->
+            PaddingValues(start = calculateStartPadding(layoutDirection))
+
+        WindowInsetsSides.End ->
+            PaddingValues(end = calculateStartPadding(layoutDirection))
+
+        WindowInsetsSides.Top -> PaddingValues(top = calculateTopPadding())
+        WindowInsetsSides.Bottom -> PaddingValues(top = calculateBottomPadding())
+        else -> this
+    }
 }

@@ -26,6 +26,7 @@ import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_ROW_COUNT
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_SCREENCAST
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_SCREEN_ROTATING
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_SSL_VERIFICATION
+import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_UNSEENS_MILLISECONDS
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_USE_COMMON_UI_MODE
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_USE_DYNAMIC_COLORS
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_VOLUME_GESTURE
@@ -41,6 +42,7 @@ import com.m3u.core.architecture.pref.Pref.Companion.ROW_COUNT
 import com.m3u.core.architecture.pref.Pref.Companion.SCREENCAST
 import com.m3u.core.architecture.pref.Pref.Companion.SCREEN_ROTATING
 import com.m3u.core.architecture.pref.Pref.Companion.SSL_VERIFICATION
+import com.m3u.core.architecture.pref.Pref.Companion.UNSEENS_MILLISECONDS
 import com.m3u.core.architecture.pref.Pref.Companion.USE_COMMON_UI_MODE
 import com.m3u.core.architecture.pref.Pref.Companion.USE_DYNAMIC_COLORS
 import com.m3u.core.architecture.pref.Pref.Companion.VOLUME_GESTURE
@@ -48,6 +50,7 @@ import com.m3u.core.architecture.pref.Pref.Companion.ZAPPING_MODE
 import com.m3u.core.architecture.pref.annotation.ClipMode
 import com.m3u.core.architecture.pref.annotation.ConnectTimeout
 import com.m3u.core.architecture.pref.annotation.PlaylistStrategy
+import com.m3u.core.architecture.pref.annotation.UnseensMilliseconds
 import com.m3u.core.util.context.booleanAsState
 import com.m3u.core.util.context.intAsState
 import com.m3u.core.util.context.longAsState
@@ -115,6 +118,10 @@ class SnapshotPref @Inject constructor(
 
     override var screenRotating: Boolean by
     sharedPreferences.booleanAsState(DEFAULT_SCREEN_ROTATING, SCREEN_ROTATING)
+
+    @UnseensMilliseconds
+    override var unseensMilliseconds: Long by
+    sharedPreferences.longAsState(DEFAULT_UNSEENS_MILLISECONDS, UNSEENS_MILLISECONDS)
 
     companion object {
         private const val SHARED_SETTINGS = "shared_settings"

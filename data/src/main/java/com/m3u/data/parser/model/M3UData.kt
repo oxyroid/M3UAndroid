@@ -13,11 +13,13 @@ data class M3UData(
 )
 
 fun M3UData.toStream(
-    playlistUrl: String
+    playlistUrl: String,
+    seen: Long
 ): Stream = Stream(
     url = url,
     group = group,
     title = title,
     cover = cover,
-    playlistUrl = playlistUrl
+    playlistUrl = playlistUrl,
+    seen = seen
 )

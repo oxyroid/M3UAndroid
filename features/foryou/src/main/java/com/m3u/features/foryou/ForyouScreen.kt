@@ -7,11 +7,15 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -46,11 +50,14 @@ import com.m3u.features.foryou.components.ForyouDialog
 import com.m3u.features.foryou.components.OnRename
 import com.m3u.features.foryou.components.OnUnsubscribe
 import com.m3u.features.foryou.components.PlaylistGallery
+import com.m3u.features.foryou.components.UnseensGallery
 import com.m3u.features.foryou.model.PlaylistDetailHolder
 import com.m3u.features.foryou.model.Unseens
 import com.m3u.i18n.R
 import com.m3u.material.components.Background
 import com.m3u.material.ktx.interceptVolumeEvent
+import com.m3u.material.ktx.minus
+import com.m3u.material.ktx.only
 import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.EventHandler
 import com.m3u.ui.LocalHelper
@@ -64,6 +71,7 @@ typealias NavigateToSettingSubscription = () -> Unit
 @Composable
 fun ForyouRoute(
     navigateToPlaylist: NavigateToPlaylist,
+    navigateToStream: () -> Unit,
     navigateToSettingSubscription: NavigateToSettingSubscription,
     resume: ResumeEvent,
     contentPadding: PaddingValues,
@@ -75,7 +83,7 @@ fun ForyouRoute(
 
     val message by viewModel.message.collectAsStateWithLifecycle()
     val holder by viewModel.playlists.collectAsStateWithLifecycle()
-    val unseenStreams by viewModel.unseens.collectAsStateWithLifecycle()
+    val unseens by viewModel.unseens.collectAsStateWithLifecycle()
 
     MessageEventHandler(message)
 
@@ -99,12 +107,20 @@ fun ForyouRoute(
 
     ForyouScreen(
         holder = holder,
-        unseens = unseenStreams,
+        unseens = unseens,
         rowCount = pref.rowCount,
         contentPadding = contentPadding,
         navigateToPlaylist = navigateToPlaylist,
+        navigateToStream = navigateToStream,
         unsubscribe = { viewModel.onEvent(ForyouEvent.Unsubscribe(it)) },
-        rename = { playlistUrl, target -> viewModel.onEvent(ForyouEvent.Rename(playlistUrl, target)) },
+        rename = { playlistUrl, target ->
+            viewModel.onEvent(
+                ForyouEvent.Rename(
+                    playlistUrl,
+                    target
+                )
+            )
+        },
         modifier = modifier
             .fillMaxSize()
             .then(interceptVolumeEventModifier),
@@ -118,12 +134,11 @@ private fun ForyouScreen(
     unseens: Unseens,
     contentPadding: PaddingValues,
     navigateToPlaylist: NavigateToPlaylist,
+    navigateToStream: () -> Unit,
     unsubscribe: OnUnsubscribe,
     rename: OnRename,
     modifier: Modifier = Modifier
 ) {
-    val spacing = LocalSpacing.current
-
     var dialog: ForyouDialog by remember { mutableStateOf(ForyouDialog.Idle) }
     val configuration = LocalConfiguration.current
 
@@ -136,17 +151,35 @@ private fun ForyouScreen(
     }
     Background(modifier) {
         Column(
-            modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.spacedBy(spacing.small, Alignment.CenterVertically)
+            modifier = Modifier
+                .fillMaxSize()
+                .navigationBarsPadding()
         ) {
-            if (holder.details.isNotEmpty() || unseens.streams.isNotEmpty()) {
+            val showUnseens = unseens.streams.isNotEmpty()
+            val showPlaylist = holder.details.isNotEmpty()
+            if (showUnseens) {
+                Column {
+                    Spacer(
+                        Modifier
+                            .fillMaxWidth()
+                            .height(contentPadding.calculateTopPadding())
+                    )
+                    UnseensGallery(
+                        unseens = unseens,
+                        navigateToStream = navigateToStream,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            }
+            if (showPlaylist) {
+                val actualContentPadding = if (!showUnseens) contentPadding
+                else contentPadding - contentPadding.only(WindowInsetsSides.Top)
                 PlaylistGallery(
                     rowCount = actualRowCount,
                     holder = holder,
-                    unseens = unseens,
                     navigateToPlaylist = navigateToPlaylist,
                     onMenu = { dialog = ForyouDialog.Selections(it) },
-                    contentPadding = contentPadding,
+                    contentPadding = actualContentPadding,
                     modifier = Modifier.fillMaxSize()
                 )
             } else {

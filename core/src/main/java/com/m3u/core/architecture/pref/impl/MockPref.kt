@@ -26,4 +26,5 @@ internal object MockPref : Pref {
     override var record: Boolean = Pref.DEFAULT_RECORD
     override var screencast: Boolean = Pref.DEFAULT_SCREENCAST
     override var screenRotating: Boolean = Pref.DEFAULT_SCREEN_ROTATING
+    override var unseensMilliseconds: Long = Pref.DEFAULT_UNSEENS_MILLISECONDS
 }

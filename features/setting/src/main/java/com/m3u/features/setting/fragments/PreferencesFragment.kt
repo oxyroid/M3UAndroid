@@ -31,6 +31,7 @@ import androidx.compose.material.icons.rounded.MusicNote
 import androidx.compose.material.icons.rounded.Pages
 import androidx.compose.material.icons.rounded.PermDeviceInformation
 import androidx.compose.material.icons.rounded.PictureInPicture
+import androidx.compose.material.icons.rounded.Recommend
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.SafetyCheck
 import androidx.compose.material.icons.rounded.ScreenRotation
@@ -59,6 +60,7 @@ import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_USE_DYNAMIC_COLORS
 import com.m3u.core.architecture.pref.annotation.ClipMode
 import com.m3u.core.architecture.pref.annotation.ConnectTimeout
 import com.m3u.core.architecture.pref.annotation.PlaylistStrategy
+import com.m3u.core.architecture.pref.annotation.UnseensMilliseconds
 import com.m3u.core.util.basic.title
 import com.m3u.features.setting.NavigateToAbout
 import com.m3u.features.setting.NavigateToConsole
@@ -71,6 +73,8 @@ import com.m3u.material.components.TextPreference
 import com.m3u.material.ktx.plus
 import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.Destination
+import kotlin.time.DurationUnit
+import kotlin.time.toDuration
 
 @Composable
 internal fun PreferencesFragment(
@@ -153,13 +157,35 @@ internal fun PreferencesFragment(
                     }
                 )
                 TextPreference(
-                    title = stringResource(string.feat_setting_initial_tab).title(),
+                    title = stringResource(string.feat_setting_initial_screen).title(),
                     icon = Icons.Rounded.Pages,
                     trailing = stringResource(Destination.Root.entries[pref.rootDestination].iconTextId).title(),
                     onClick = {
                         val total = Destination.Root.entries.size
                         val prev = pref.rootDestination
                         pref.rootDestination = (prev + 1).takeIf { it < total } ?: 0
+                    }
+                )
+                val unseensMilliseconds = pref.unseensMilliseconds
+                val unseensMillisecondsText = remember(unseensMilliseconds) {
+                    val duration = unseensMilliseconds
+                        .toDuration(DurationUnit.MILLISECONDS)
+                    if (unseensMilliseconds > UnseensMilliseconds.DAYS_30) "Never"
+                    else duration
+                        .toString()
+                        .title()
+                }
+                TextPreference(
+                    title = stringResource(string.feat_setting_unseen_limit).title(),
+                    icon = Icons.Rounded.Recommend,
+                    trailing = unseensMillisecondsText,
+                    onClick = {
+                        pref.unseensMilliseconds = when (unseensMilliseconds) {
+                            UnseensMilliseconds.DAYS_3 -> UnseensMilliseconds.DAYS_7
+                            UnseensMilliseconds.DAYS_7 -> UnseensMilliseconds.DAYS_30
+                            UnseensMilliseconds.DAYS_30 -> UnseensMilliseconds.NEVER
+                            else -> UnseensMilliseconds.DAYS_3
+                        }
                     }
                 )
                 CheckBoxSharedPreference(

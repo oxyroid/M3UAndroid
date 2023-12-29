@@ -11,7 +11,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.data.database.entity.StreamHolder
-import com.m3u.features.favorite.NavigateToStream
 import com.m3u.material.ktx.plus
 import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.LocalHelper
@@ -22,7 +21,7 @@ internal fun FavouriteGallery(
     contentPadding: PaddingValues,
     streamHolder: StreamHolder,
     rowCount: Int,
-    navigateToStream: NavigateToStream,
+    navigateToStream: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current

@@ -1,6 +1,8 @@
 package com.m3u.features.foryou
 
 import androidx.lifecycle.viewModelScope
+import com.m3u.core.architecture.pref.Pref
+import com.m3u.core.architecture.pref.observeAsFlow
 import com.m3u.core.architecture.viewmodel.BaseViewModel
 import com.m3u.data.repository.PlaylistRepository
 import com.m3u.data.repository.StreamRepository
@@ -10,21 +12,26 @@ import com.m3u.features.foryou.model.Unseens
 import com.m3u.features.foryou.model.toDetail
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flatMapMerge
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
-import kotlin.time.Duration.Companion.days
+import kotlin.time.Duration
+import kotlin.time.DurationUnit
+import kotlin.time.toDuration
 
 @HiltViewModel
 class ForyouViewModel @Inject constructor(
     private val playlistRepository: PlaylistRepository,
     streamRepository: StreamRepository,
+    pref: Pref
 ) : BaseViewModel<ForyouState, ForyouEvent, ForyouMessage>(
     emptyState = ForyouState()
 ) {
@@ -58,8 +65,18 @@ class ForyouViewModel @Inject constructor(
             initialValue = PlaylistDetailHolder()
         )
 
-    internal val unseens: StateFlow<Unseens> = streamRepository
-        .observeAllUnseenFavourites(5.days)
+    private val unseensMilliseconds = pref
+        .observeAsFlow { it.unseensMilliseconds }
+        .map { it.toDuration(DurationUnit.MILLISECONDS) }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000L),
+            initialValue = Duration.INFINITE
+        )
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    internal val unseens: StateFlow<Unseens> = unseensMilliseconds
+        .flatMapMerge { streamRepository.observeAllUnseenFavourites(it) }
         .map { Unseens(it) }
         .stateIn(
             scope = viewModelScope,

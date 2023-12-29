@@ -14,7 +14,6 @@ import androidx.compose.ui.text.AnnotatedString
 import com.m3u.data.database.entity.Playlist
 import com.m3u.features.foryou.NavigateToPlaylist
 import com.m3u.features.foryou.model.PlaylistDetailHolder
-import com.m3u.features.foryou.model.Unseens
 import com.m3u.i18n.R.string
 import com.m3u.material.ktx.plus
 import com.m3u.material.model.LocalSpacing
@@ -25,7 +24,6 @@ internal typealias OnMenu = (Playlist) -> Unit
 internal fun PlaylistGallery(
     rowCount: Int,
     holder: PlaylistDetailHolder,
-    unseens: Unseens,
     navigateToPlaylist: NavigateToPlaylist,
     onMenu: OnMenu,
     contentPadding: PaddingValues,
@@ -33,7 +31,6 @@ internal fun PlaylistGallery(
 ) {
     val spacing = LocalSpacing.current
     val details = holder.details
-    val streams = unseens.streams
 
     LazyVerticalGrid(
         columns = GridCells.Fixed(rowCount),

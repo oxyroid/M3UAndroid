@@ -52,4 +52,6 @@ dependencies {
     implementation(libs.com.google.dagger.hilt.android)
     implementation(libs.androidx.hilt.hilt.navigation.compose)
     ksp(libs.com.google.dagger.hilt.compiler)
+
+    implementation(libs.kotlinx.datetime)
 }

@@ -17,7 +17,6 @@ import androidx.navigation.compose.composable
 import com.m3u.core.wrapper.eventOf
 import com.m3u.core.wrapper.handledEvent
 import com.m3u.features.favorite.FavouriteRoute
-import com.m3u.features.favorite.NavigateToStream
 import com.m3u.features.foryou.ForyouRoute
 import com.m3u.features.foryou.NavigateToPlaylist
 import com.m3u.features.foryou.NavigateToSettingSubscription
@@ -41,7 +40,7 @@ fun NavGraphBuilder.rootGraph(
     pagerState: PagerState,
     contentPadding: PaddingValues,
     navigateToPlaylist: NavigateToPlaylist,
-    navigateToStream: NavigateToStream,
+    navigateToStream: () -> Unit,
     navigateToConsole: NavigateToConsole,
     navigateToAbout: NavigateToAbout,
     navigateToSettingSubscription: NavigateToSettingSubscription,
@@ -64,7 +63,7 @@ private fun RootGraph(
     pagerState: PagerState,
     contentPadding: PaddingValues,
     navigateToPlaylist: NavigateToPlaylist,
-    navigateToStream: NavigateToStream,
+    navigateToStream: () -> Unit,
     navigateToConsole: NavigateToConsole,
     navigateToAbout: NavigateToAbout,
     navigateToSettingSubscription: NavigateToSettingSubscription,
@@ -101,6 +100,7 @@ private fun RootGraph(
             Destination.Root.Foryou -> {
                 ForyouRoute(
                     navigateToPlaylist = navigateToPlaylist,
+                    navigateToStream = navigateToStream,
                     navigateToSettingSubscription = navigateToSettingSubscription,
                     resume = rememberResumeEvent(pagerState.targetPage, pagerIndex),
                     contentPadding = contentPadding,

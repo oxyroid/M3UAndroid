@@ -3,10 +3,10 @@ package com.m3u.data.repository.impl
 import android.content.Context
 import android.net.Uri
 import androidx.core.net.toUri
-import com.m3u.core.architecture.pref.annotation.PlaylistStrategy
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.execute
 import com.m3u.core.architecture.logger.sandBox
+import com.m3u.core.architecture.pref.annotation.PlaylistStrategy
 import com.m3u.core.util.basic.startsWithAny
 import com.m3u.core.util.belong
 import com.m3u.core.util.readFileContent
@@ -31,6 +31,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.withContext
+import kotlinx.datetime.Clock
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.io.File
@@ -58,9 +59,10 @@ class PlaylistRepositoryImpl @Inject constructor(
                 emitMessage("wrong url")
                 return@processFlow
             }
+            val seen = Clock.System.now().toEpochMilliseconds()
             val streams = when {
-                url.isNetworkUrl -> acquireNetwork(actualUrl)
-                url.isAndroidUrl -> acquireAndroid(actualUrl)
+                url.isNetworkUrl -> acquireNetwork(actualUrl, seen)
+                url.isAndroidUrl -> acquireAndroid(actualUrl, seen)
                 else -> emptyList()
             }
 
@@ -126,20 +128,20 @@ class PlaylistRepositoryImpl @Inject constructor(
         }
     }
 
-    private suspend fun acquireNetwork(url: String): List<Stream> {
+    private suspend fun acquireNetwork(url: String, seen: Long): List<Stream> {
         val request = Request.Builder()
             .url(url)
             .build()
         val response = client.newCall(request).execute()
         if (!response.isSuccessful) return emptyList()
         val input = response.body?.byteStream()
-        return input?.use { parse(url, it) } ?: emptyList()
+        return input?.use { parse(url, seen, it) } ?: emptyList()
     }
 
-    private suspend fun acquireAndroid(url: String): List<Stream> {
+    private suspend fun acquireAndroid(url: String, seen: Long): List<Stream> {
         val uri = Uri.parse(url)
         val input = context.contentResolver.openInputStream(uri)
-        return input?.use { parse(url, it) } ?: emptyList()
+        return input?.use { parse(url, seen, it) } ?: emptyList()
     }
 
     override fun observeAll(): Flow<List<Playlist>> = logger.execute {
@@ -166,8 +168,12 @@ class PlaylistRepositoryImpl @Inject constructor(
         }
     }
 
-    private suspend fun parse(uri: String, input: InputStream): List<Stream> = logger.execute {
-        parser.execute(input).map { it.toStream(uri) }
+    private suspend fun parse(
+        uri: String,
+        seen: Long,
+        input: InputStream
+    ): List<Stream> = logger.execute {
+        parser.execute(input).map { it.toStream(uri, seen) }
     } ?: emptyList()
 
     override suspend fun rename(url: String, target: String) = logger.sandBox {

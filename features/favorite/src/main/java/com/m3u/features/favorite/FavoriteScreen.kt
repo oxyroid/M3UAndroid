@@ -20,11 +20,9 @@ import com.m3u.ui.EventHandler
 import com.m3u.ui.LocalHelper
 import com.m3u.ui.ResumeEvent
 
-typealias NavigateToStream = () -> Unit
-
 @Composable
 fun FavouriteRoute(
-    navigateToStream: NavigateToStream,
+    navigateToStream: () -> Unit,
     resume: ResumeEvent,
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
@@ -75,7 +73,7 @@ private fun FavoriteScreen(
     contentPadding: PaddingValues,
     rowCount: Int,
     streamHolder: StreamHolder,
-    navigateToStream: NavigateToStream,
+    navigateToStream: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val configuration = LocalConfiguration.current

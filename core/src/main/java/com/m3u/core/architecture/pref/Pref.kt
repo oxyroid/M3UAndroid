@@ -7,6 +7,7 @@ import androidx.compose.runtime.snapshotFlow
 import com.m3u.core.architecture.pref.annotation.ClipMode
 import com.m3u.core.architecture.pref.annotation.ConnectTimeout
 import com.m3u.core.architecture.pref.annotation.PlaylistStrategy
+import com.m3u.core.architecture.pref.annotation.UnseensMilliseconds
 import com.m3u.core.architecture.pref.impl.SnapshotPref
 import kotlinx.coroutines.flow.Flow
 
@@ -41,6 +42,9 @@ interface Pref {
     var screencast: Boolean
     var screenRotating: Boolean
 
+    @UnseensMilliseconds
+    var unseensMilliseconds: Long
+
     companion object {
         @PlaylistStrategy
         const val DEFAULT_PLAYLIST_STRATEGY = PlaylistStrategy.SKIP_FAVORITE
@@ -71,6 +75,9 @@ interface Pref {
         const val DEFAULT_SCREENCAST = true
         const val DEFAULT_SCREEN_ROTATING = false
 
+        @UnseensMilliseconds
+        const val DEFAULT_UNSEENS_MILLISECONDS = UnseensMilliseconds.DAYS_3
+
         const val PLAYLIST_STRATEGY = "playlist-strategy"
         const val USE_COMMON_UI_MODE = "use-common-ui-mode"
         const val ROW_COUNT = "rowCount"
@@ -93,6 +100,7 @@ interface Pref {
         const val RECORD = "record"
         const val SCREENCAST = "screencast"
         const val SCREEN_ROTATING = "screen-rotating"
+        const val UNSEENS_MILLISECONDS = "unseens-milliseconds"
     }
 }
 

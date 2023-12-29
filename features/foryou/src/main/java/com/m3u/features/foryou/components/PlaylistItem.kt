@@ -47,10 +47,10 @@ internal fun PlaylistItem(
     OutlinedCard(
         shape = RoundedCornerShape(spacing.medium),
         border = CardDefaults.outlinedCardBorder(local),
-        modifier = Modifier.semantics(mergeDescendants = true) { }
+        modifier = modifier.semantics(mergeDescendants = true) { }
     ) {
         OuterRow(
-            modifier = modifier
+            modifier = Modifier
                 .combinedClickable(
                     onClick = onClick,
                     onLongClick = onLongClick
