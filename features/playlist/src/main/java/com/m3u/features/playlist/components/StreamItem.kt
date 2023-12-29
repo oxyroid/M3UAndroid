@@ -96,7 +96,9 @@ internal fun StreamItem(
                         maxLines = 1,
                         fontWeight = FontWeight.Bold,
                         // icon-button-tokens: icon-size
-                        modifier = Modifier.heightIn(min = 24.dp)
+                        modifier = Modifier
+                            .heightIn(min = 24.dp)
+                            .weight(1f)
                     )
                     Crossfade(
                         targetState = favourite,
