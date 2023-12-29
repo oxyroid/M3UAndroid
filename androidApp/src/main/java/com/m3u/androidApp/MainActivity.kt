@@ -11,11 +11,11 @@ import android.os.Bundle
 import android.util.Log
 import android.view.ViewConfiguration
 import android.widget.Toast
-import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.windowsizeclass.WindowSizeClass
@@ -56,7 +56,7 @@ import javax.inject.Inject
 import kotlin.reflect.KMutableProperty0
 
 @AndroidEntryPoint
-class MainActivity : ComponentActivity() {
+class MainActivity : AppCompatActivity() {
     private val controller by lazy {
         WindowInsetsControllerCompat(window, window.decorView).apply {
             systemBarsBehavior = BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
@@ -88,6 +88,11 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         setContent {
+            val pagerState =
+                rememberPagerState(pref.rootDestination) { Destination.Root.entries.size }
+            val state = rememberAppState(
+                pagerState = pagerState
+            )
             val scope = rememberCoroutineScope()
             val darkMode = when {
                 pref.cinemaMode -> true
@@ -104,9 +109,7 @@ class MainActivity : ComponentActivity() {
                 pref = pref
             ) {
                 App(
-                    state = rememberAppState(
-                        pagerState = rememberPagerState { Destination.Root.entries.size }
-                    ),
+                    state = state,
                     viewModel = viewModel,
                     helper = helper
                 )
