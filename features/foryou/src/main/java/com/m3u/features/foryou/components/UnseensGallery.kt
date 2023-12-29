@@ -18,11 +18,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.util.lerp
 import com.m3u.data.database.entity.Stream
 import com.m3u.features.foryou.model.Unseens
+import com.m3u.i18n.R.string
 import com.m3u.material.components.HorizontalPagerIndicator
 import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.LocalHelper
@@ -76,7 +77,6 @@ private fun UnseensGalleryItem(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val context = LocalContext.current
     val spacing = LocalSpacing.current
     Card(
         Modifier
@@ -104,19 +104,23 @@ private fun UnseensGalleryItem(
                 .padding(spacing.medium)
         ) {
             Text(
-                text = "favourite that you would see again".uppercase(),
+                text = stringResource(string.feat_foryou_long_unseen_label).uppercase(),
                 style = MaterialTheme.typography.labelLarge,
                 maxLines = 1
             )
+            val duration = remember(stream.seen) {
+                Clock.System.now() - Instant.fromEpochMilliseconds(stream.seen)
+            }
             Text(
-                text = remember(stream.seen) {
-                    val now = Clock.System.now()
-                    val duration = now - Instant.fromEpochMilliseconds(stream.seen)
-                    when {
-                        duration > 30.days -> "More than 30 days"
-                        duration > 1.days -> "${duration.inWholeDays} days"
-                        else -> "${duration.inWholeHours} hours"
-                    }
+                text = when {
+                    duration > 30.days ->
+                        stringResource(string.feat_foryou_long_unseen_more_than_days, 30)
+
+                    duration > 1.days ->
+                        stringResource(string.feat_foryou_long_unseen_days, duration.inWholeDays)
+
+                    else ->
+                        stringResource(string.feat_foryou_long_unseen_hours, duration.inWholeHours)
                 },
                 style = MaterialTheme.typography.labelMedium,
             )

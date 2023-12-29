@@ -47,7 +47,7 @@ private data class PlayerPayload(
 
 class PlayerManagerImpl @Inject constructor(
     @ApplicationContext private val context: Context,
-    pref: Pref
+    private val pref: Pref
 ) : PlayerManager(), Player.Listener, MediaSession.Callback {
     private val player = MutableStateFlow<Player?>(null)
 
@@ -68,7 +68,10 @@ class PlayerManagerImpl @Inject constructor(
         .stateIn(
             scope = scope,
             started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = PlayerPayload(pref.isSSLVerification, pref.connectTimeout)
+            initialValue = PlayerPayload(
+                pref.isSSLVerification,
+                pref.connectTimeout
+            )
         )
 
     private fun createPlayer(payload: PlayerPayload): Player {
@@ -150,15 +153,11 @@ class PlayerManagerImpl @Inject constructor(
 
     override fun onPlayerErrorChanged(error: PlaybackException?) {
         super.onPlayerErrorChanged(error)
-        when (error?.errorCode) {
-            PlaybackException.ERROR_CODE_BEHIND_LIVE_WINDOW -> {
-                player.value?.let {
-                    it.seekToDefaultPosition()
-                    it.prepare()
-                }
+        if (pref.autoReconnect || error?.errorCode == PlaybackException.ERROR_CODE_BEHIND_LIVE_WINDOW) {
+            player.value?.let {
+                it.seekToDefaultPosition()
+                it.prepare()
             }
-
-            else -> {}
         }
         super.mutablePlaybackError.value = error
     }

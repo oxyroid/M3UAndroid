@@ -27,6 +27,7 @@ import androidx.compose.material.icons.rounded.Extension
 import androidx.compose.material.icons.rounded.FitScreen
 import androidx.compose.material.icons.rounded.HideImage
 import androidx.compose.material.icons.rounded.Info
+import androidx.compose.material.icons.rounded.Loop
 import androidx.compose.material.icons.rounded.MusicNote
 import androidx.compose.material.icons.rounded.Pages
 import androidx.compose.material.icons.rounded.PermDeviceInformation
@@ -304,6 +305,12 @@ internal fun PreferencesFragment(
                             icon = Icons.Rounded.Cast,
                             checked = pref.screencast,
                             onChanged = { pref.screencast = !pref.screencast }
+                        )
+                        CheckBoxSharedPreference(
+                            title = string.feat_setting_auto_reconnect,
+                            icon = Icons.Rounded.Loop,
+                            checked = pref.autoReconnect,
+                            onChanged = { pref.autoReconnect = !pref.autoReconnect }
                         )
                     }
                 }

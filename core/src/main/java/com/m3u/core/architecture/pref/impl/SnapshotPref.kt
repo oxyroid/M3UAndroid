@@ -5,11 +5,13 @@ import android.content.SharedPreferences
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import com.m3u.core.architecture.pref.Pref
+import com.m3u.core.architecture.pref.Pref.Companion.AUTO_RECONNECT
 import com.m3u.core.architecture.pref.Pref.Companion.AUTO_REFRESH
 import com.m3u.core.architecture.pref.Pref.Companion.BRIGHTNESS_GESTURE
 import com.m3u.core.architecture.pref.Pref.Companion.CINEMA_MODE
 import com.m3u.core.architecture.pref.Pref.Companion.CLIP_MODE
 import com.m3u.core.architecture.pref.Pref.Companion.CONNECT_TIMEOUT
+import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_AUTO_RECONNECT
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_AUTO_REFRESH
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_BRIGHTNESS_GESTURE
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_CINEMA_MODE
@@ -122,6 +124,9 @@ class SnapshotPref @Inject constructor(
     @UnseensMilliseconds
     override var unseensMilliseconds: Long by
     sharedPreferences.longAsState(DEFAULT_UNSEENS_MILLISECONDS, UNSEENS_MILLISECONDS)
+
+    override var autoReconnect: Boolean by
+    sharedPreferences.booleanAsState(DEFAULT_AUTO_RECONNECT, AUTO_RECONNECT)
 
     companion object {
         private const val SHARED_SETTINGS = "shared_settings"
