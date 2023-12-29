@@ -262,6 +262,7 @@ internal fun PreferencesFragment(
                         CheckBoxSharedPreference(
                             title = string.feat_setting_record,
                             icon = Icons.Rounded.SlowMotionVideo,
+                            enabled = false,
                             checked = pref.record,
                             onChanged = { pref.record = !pref.record }
                         )
