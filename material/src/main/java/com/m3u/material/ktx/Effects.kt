@@ -1,5 +1,7 @@
 package com.m3u.material.ktx
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.border
 import androidx.compose.foundation.interaction.InteractionSource
 import androidx.compose.material3.MaterialTheme
@@ -29,12 +31,14 @@ fun Modifier.interactionBorder(
 ): Modifier = interaction(type, source) { visible ->
     val actualColor = color.ifUnspecified { InteractionDefaults.BorderColor }
     val actualDp = width.ifUnspecified { InteractionDefaults.BorderWidth }
-    val currentColor by animateColor("interaction-border-color") {
-        if (visible) actualColor else Color.Transparent
-    }
-    val currentWidth by animateDp("interaction-border-width") {
-        if (visible) actualDp else Dp.Hairline
-    }
+    val currentColor by animateColorAsState(
+        targetValue = if (visible) actualColor else Color.Transparent,
+        label = "interaction-border-color"
+    )
+    val currentWidth by animateDpAsState(
+        targetValue = if (visible) actualDp else Dp.Hairline,
+        label = "interaction-border-width"
+    )
     border(
         width = currentWidth,
         color = currentColor,

@@ -1,5 +1,6 @@
 package com.m3u.features.foryou.components
 
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.material.icons.Icons
@@ -20,7 +21,6 @@ import com.m3u.i18n.R.string
 import com.m3u.material.components.AppDialog
 import com.m3u.material.components.DialogItem
 import com.m3u.material.components.DialogTextField
-import com.m3u.material.ktx.animateDp
 import com.m3u.material.model.LocalSpacing
 
 internal typealias OnUpdateStatus = (ForyouDialog) -> Unit
@@ -43,7 +43,10 @@ internal fun ForyouDialog(
     modifier: Modifier = Modifier
 ) {
     var editMode by remember { mutableStateOf(false) }
-    val borderWidth by animateDp("foryou-dialog-border") { if (editMode) 6.dp else 2.dp }
+    val borderWidth by animateDpAsState(
+        targetValue = if (editMode) 6.dp else 2.dp,
+        label = "foryou-dialog-border"
+    )
     AppDialog(
         visible = status is ForyouDialog.Selections,
         onDismiss = {

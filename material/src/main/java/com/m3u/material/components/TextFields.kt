@@ -3,6 +3,7 @@
 package com.m3u.material.components
 
 import androidx.annotation.DrawableRes
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -60,7 +61,6 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.m3u.material.ktx.InteractionType
-import com.m3u.material.ktx.animateDp
 import com.m3u.material.ktx.interactionBorder
 import com.m3u.material.model.LocalDuration
 import kotlinx.coroutines.delay
@@ -402,9 +402,10 @@ fun LabelField(
                     ) {
                         val hasText = textFieldValue.text.isNotEmpty()
 
-                        val animPlaceholder: Dp by animateDp("PlaceholderTranslationY") {
-                            if (isFocused.value || hasText) (-10).dp else 0.dp
-                        }
+                        val animPlaceholder: Dp by animateDpAsState(
+                            if (isFocused.value || hasText) (-10).dp else 0.dp,
+                            label = "placeholder-translation-y"
+                        )
                         val animPlaceHolderFontSize: Float by animateFloatAsState(
                             targetValue = if (isFocused.value || hasText) 12f else 14f,
                             label = "PlaceholderFontSize"
@@ -548,9 +549,10 @@ fun LabelField(
                     ) {
                         val hasText = text.isNotEmpty()
 
-                        val animPlaceholder: Dp by animateDp("PlaceholderTranslationY") {
-                            if (isFocused.value || hasText) (-10).dp else 0.dp
-                        }
+                        val animPlaceholder: Dp by animateDpAsState(
+                            if (isFocused.value || hasText) (-10).dp else 0.dp,
+                            label = "placeholder-translation-y"
+                        )
                         val animPlaceHolderFontSize: Float by animateFloatAsState(
                             targetValue = if (isFocused.value || hasText) 12f else 14f,
                             label = "PlaceholderFontSize"

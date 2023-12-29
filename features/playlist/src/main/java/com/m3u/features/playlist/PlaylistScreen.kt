@@ -1,4 +1,5 @@
 @file:Suppress("UsingMaterialAndMaterial3Libraries")
+
 package com.m3u.features.playlist
 
 import android.Manifest
@@ -14,6 +15,7 @@ import android.content.res.Configuration.UI_MODE_TYPE_VR_HEADSET
 import android.content.res.Configuration.UI_MODE_TYPE_WATCH
 import android.view.KeyEvent
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -78,7 +80,6 @@ import com.m3u.features.playlist.components.TvStreamGallery
 import com.m3u.i18n.R.string
 import com.m3u.material.components.Background
 import com.m3u.material.components.TextField
-import com.m3u.material.ktx.animateColor
 import com.m3u.material.ktx.interceptVolumeEvent
 import com.m3u.material.ktx.isAtTop
 import com.m3u.material.model.LocalSpacing
@@ -94,8 +95,6 @@ import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.hazeChild
 import kotlinx.coroutines.launch
 
-internal typealias NavigateToStream = () -> Unit
-
 private typealias OnMenu = (Stream) -> Unit
 private typealias OnScrollUp = () -> Unit
 private typealias OnRefresh = () -> Unit
@@ -104,7 +103,7 @@ private typealias OnRefresh = () -> Unit
 internal fun PlaylistRoute(
     contentPadding: PaddingValues,
     playlistUrl: String,
-    navigateToStream: NavigateToStream,
+    navigateToStream: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: PlaylistViewModel = hiltViewModel()
 ) {
@@ -208,7 +207,7 @@ private fun PlaylistScreen(
     scrollUp: Event<Unit>,
     refreshing: Boolean,
     onRefresh: OnRefresh,
-    navigateToStream: NavigateToStream,
+    navigateToStream: () -> Unit,
     onMenu: OnMenu,
     onScrollUp: OnScrollUp,
     contentPadding: PaddingValues,
@@ -242,8 +241,14 @@ private fun PlaylistScreen(
                 }
             }
         }
-        val currentColor by animateColor("color") { theme.background }
-        val currentContentColor by animateColor("color") { theme.onBackground }
+        val currentColor by animateColorAsState(
+            targetValue = theme.background,
+            label = "background"
+        )
+        val currentContentColor by animateColorAsState(
+            targetValue = theme.onBackground,
+            label = "on-background"
+        )
         val focusManager = LocalFocusManager.current
 
         BackdropScaffold(
@@ -397,7 +402,7 @@ private fun PlaylistPager(
                                 selected = selected,
                                 onClick = {
                                     coroutineScope.launch {
-                                        pagerState.animateScrollToPage(index)
+                                        pagerState.scrollToPage(index)
                                     }
                                 },
                                 text = {
