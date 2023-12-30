@@ -207,23 +207,14 @@ class MainActivity : AppCompatActivity() {
 
         override fun log(message: Message) {
             if (message == Message.Static || message == Message.Dynamic.EMPTY) return
-            when (message) {
-                is Message.Static -> {
-                    logger.log(
-                        text = getString(message.resId, message.formatArgs),
-                        level = message.level,
-                        tag = message.tag
-                    )
-                }
-
-                is Message.Dynamic -> {
-                    logger.log(
-                        text = message.value,
-                        tag = message.tag,
-                        level = message.level
-                    )
-                }
-            }
+            logger.log(
+                text = when (message) {
+                    is Message.Static -> getString(message.resId, message.formatArgs)
+                    is Message.Dynamic -> message.value
+                },
+                level = message.level,
+                tag = message.tag
+            )
         }
 
         override fun play(url: String) {

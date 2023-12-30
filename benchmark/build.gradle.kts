@@ -1,3 +1,5 @@
+@file:Suppress("UnstableApiUsage")
+
 import com.android.build.api.dsl.ManagedVirtualDevice
 
 plugins {
@@ -28,6 +30,9 @@ android {
     testOptions {
         managedDevices {
             allDevices {
+                // Add Gradle task
+                // :benchmark:Pixel5Api31BenchmarkAndroidTest --rerun-tasks -P
+                // android.testInstrumentationRunnerArguments.class=com.m3u.benchmark.BaselineProfileGenerator
                 create("Pixel5Api31", ManagedVirtualDevice::class) {
                     device = "Pixel 5"
                     apiLevel = 31
