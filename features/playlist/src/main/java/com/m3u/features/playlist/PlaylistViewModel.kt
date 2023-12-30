@@ -13,7 +13,6 @@ import com.m3u.core.architecture.pref.Pref
 import com.m3u.core.architecture.pref.observeAsFlow
 import com.m3u.core.architecture.viewmodel.BaseViewModel
 import com.m3u.core.wrapper.chain
-import com.m3u.core.wrapper.chainmap
 import com.m3u.core.wrapper.eventOf
 import com.m3u.core.wrapper.failure
 import com.m3u.core.wrapper.success
@@ -159,8 +158,7 @@ class PlaylistViewModel @Inject constructor(
             mediaRepository
                 .savePicture(url)
                 .chain()
-                .chainmap { StreamCoverSaved(it.absolutePath) }
-                .success { onMessage(it) }
+                .success { onMessage(StreamCoverSaved(it.absolutePath)) }
                 .failure(logger::log)
                 .launchIn(this)
         }

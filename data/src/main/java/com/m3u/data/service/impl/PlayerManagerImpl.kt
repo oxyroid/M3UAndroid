@@ -116,9 +116,7 @@ class PlayerManagerImpl @Inject constructor(
 
     override fun play(url: String) {
         player.update { prev ->
-            if (prev != null) {
-                stop()
-            }
+            if (prev != null) stop()
             _url.update { url }
             createPlayer(payload.value).also {
                 it.addListener(this)

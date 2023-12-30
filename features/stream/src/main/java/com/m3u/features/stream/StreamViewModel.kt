@@ -83,12 +83,13 @@ class StreamViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5_000),
             initialValue = StreamState.PlayerState()
         )
+
     init {
         playerManager
             .url
             .onEach { url ->
-                url?: return@onEach
-                val stream = streamRepository.getByUrl(url)?: return@onEach
+                url ?: return@onEach
+                val stream = streamRepository.getByUrl(url) ?: return@onEach
                 streamRepository.reportPlayed(stream.id)
             }
             .launchIn(viewModelScope)
@@ -149,6 +150,7 @@ class StreamViewModel @Inject constructor(
 
     private fun disconnectDlnaDevice(device: Device<*, *, *>) {
         controlPoint?.stop()
+        controlPoint = null
         DLNACastManager.disconnectDevice(device)
     }
 
@@ -194,7 +196,6 @@ class StreamViewModel @Inject constructor(
             title = title,
             callback = object : ServiceActionCallback<Unit> {
                 override fun onSuccess(result: Unit) {
-                    logger.log("ok: url=$url, title=$title")
                     controlPoint?.play()
                 }
 

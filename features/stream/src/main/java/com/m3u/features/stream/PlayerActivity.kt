@@ -1,6 +1,7 @@
 package com.m3u.features.stream
 
 import android.app.PictureInPictureParams
+import android.content.Intent
 import android.content.res.Configuration
 import android.graphics.Color
 import android.graphics.Rect
@@ -17,6 +18,7 @@ import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.runtime.Composable
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.lifecycleScope
 import com.m3u.core.Contracts
 import com.m3u.core.architecture.logger.Logger
@@ -68,10 +70,12 @@ class PlayerActivity : ComponentActivity() {
     @Inject
     lateinit var playerManager: PlayerManager
 
+    private val shortcutStreamUrlLiveData = MutableLiveData<String?>(null)
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
-        val shortcutStreamUrl = intent.getStringExtra(Contracts.PLAYER_SHORTCUT_STREAM_URL)
+        shortcutStreamUrlLiveData.value =
+            intent.getStringExtra(Contracts.PLAYER_SHORTCUT_STREAM_URL)
         setContent {
             M3ULocalProvider(
                 helper = helper,
@@ -82,9 +86,17 @@ class PlayerActivity : ComponentActivity() {
                 )
             }
         }
-        if (!shortcutStreamUrl.isNullOrEmpty()) {
-            helper.play(shortcutStreamUrl)
+        shortcutStreamUrlLiveData.observe(this) { url ->
+            if (!url.isNullOrEmpty()) {
+                helper.play(url)
+            }
         }
+    }
+
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        shortcutStreamUrlLiveData.value =
+            intent?.getStringExtra(Contracts.PLAYER_SHORTCUT_STREAM_URL)
     }
 
     private fun helper(): Helper = object : Helper {
