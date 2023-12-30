@@ -1,4 +1,7 @@
 # M3UAndroid
+
+M3U is my first elaborate Android project and is also my first jetpack compose application project.
+
 ![playlist](.github/images/playlist.png)
 ![setting](.github/images/setting.png)
 ![stream](.github/images/stream.png)
@@ -10,6 +13,7 @@ Please submit a pull request if you want to help with translation.
 Official:
 - [English](i18n/src/main/res/values)
 - [Simplified Chinese](i18n/src/main/res/values-zh-rCN)
+- (You can also provide better translations for the above languages via pull requests)
 
 From PRs:
 - [Spanish](i18n/src/main/res/values-es-rES), thanks [@sguinetti](https://github.com/sguinetti/M3UAndroid)
@@ -38,14 +42,15 @@ M3U is an app that attempts to use the latest libraries and tools. As a summary:
 - Uses many of the Architecture Components, including: Room, Lifecycle, Navigation.
 - Uses Hilt for dependency injection.
 - Uses Lint Checks for code scanning.
+- Uses KSP & KotlinPoet for Code Generating.
 - FFmepg-kit & ExoPlayer.
 
 ### Community
 
-M3U is my first elaborate Android project and is also my first jetpack compose application project.
-
 You can join the [Telegram Channel](https://t.me/m3u_android) for update information and **alpha &
 beta packages**.
+
+You can also join the [Telegram Group](https://t.me/m3u_android_chat) for discussing.
 
 ### Contributing
 
