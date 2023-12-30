@@ -1,6 +1,13 @@
 package com.m3u.features.playlist
 
+import android.content.ComponentName
+import android.content.Context
+import android.content.Intent
+import androidx.core.content.pm.ShortcutInfoCompat
+import androidx.core.content.pm.ShortcutManagerCompat
+import androidx.core.graphics.drawable.IconCompat
 import androidx.lifecycle.viewModelScope
+import com.m3u.core.Contracts
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.pref.Pref
 import com.m3u.core.architecture.pref.observeAsFlow
@@ -47,9 +54,10 @@ class PlaylistViewModel @Inject constructor(
             PlaylistEvent.Refresh -> refresh()
             is PlaylistEvent.Favourite -> favourite(event)
             PlaylistEvent.ScrollUp -> scrollUp()
-            is PlaylistEvent.Mute -> mute(event)
+            is PlaylistEvent.Ban -> ban(event)
             is PlaylistEvent.SavePicture -> savePicture(event)
             is PlaylistEvent.Query -> query(event)
+            is PlaylistEvent.CreateShortcut -> createShortcut(event.context, event.id)
         }
     }
 
@@ -158,7 +166,7 @@ class PlaylistViewModel @Inject constructor(
         }
     }
 
-    private fun mute(event: PlaylistEvent.Mute) {
+    private fun ban(event: PlaylistEvent.Ban) {
         viewModelScope.launch {
             val id = event.id
             val target = event.target
@@ -166,8 +174,30 @@ class PlaylistViewModel @Inject constructor(
             if (stream == null) {
                 onMessage(PlaylistMessage.StreamNotFound)
             } else {
-                streamRepository.setBanned(stream.id, target)
+                streamRepository.ban(stream.id, target)
             }
+        }
+    }
+
+    private fun createShortcut(context: Context, id: Int) {
+        val shortcutId = "stream_$id"
+        viewModelScope.launch {
+            val stream = streamRepository.get(id) ?: return@launch
+            val shortcutInfo = ShortcutInfoCompat.Builder(context, shortcutId)
+                .setShortLabel(stream.title)
+                .setLongLabel(stream.url)
+                .setIcon(IconCompat.createWithResource(context, android.R.drawable.ic_media_play))
+                .setIntent(
+                    Intent(Intent.ACTION_VIEW).apply {
+                        component = ComponentName.createRelative(
+                            context,
+                            Contracts.PLAYER_ACTIVITY
+                        )
+                        putExtra(Contracts.PLAYER_SHORTCUT_STREAM_URL, stream.url)
+                    }
+                )
+                .build()
+            ShortcutManagerCompat.pushDynamicShortcut(context, shortcutInfo)
         }
     }
 

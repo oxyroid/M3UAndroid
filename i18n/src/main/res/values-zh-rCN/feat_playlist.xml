@@ -6,6 +6,8 @@
     <string name="feat_playlist_dialog_favourite_cancel_title">取消喜欢</string>
     <string name="feat_playlist_dialog_mute_title">屏蔽</string>
     <string name="feat_playlist_dialog_save_picture_title">保存封面</string>
+    <string name="feat_playlist_dialog_create_shortcut_title">创建快捷方式</string>
+
     <string name="feat_playlist_query_placeholder">输入关键字</string>
 
     <string name="feat_playlist_error_playlist_not_found">订阅不存在（%s）</string>

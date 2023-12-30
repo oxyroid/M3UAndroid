@@ -18,6 +18,7 @@ import androidx.compose.runtime.Composable
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.lifecycleScope
+import com.m3u.core.Contracts
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.pref.Pref
 import com.m3u.core.unspecified.UBoolean
@@ -70,6 +71,7 @@ class PlayerActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
+        val shortcutStreamUrl = intent.getStringExtra(Contracts.PLAYER_SHORTCUT_STREAM_URL)
         setContent {
             M3ULocalProvider(
                 helper = helper,
@@ -79,6 +81,9 @@ class PlayerActivity : ComponentActivity() {
                     onBackPressed = { finish() }
                 )
             }
+        }
+        if (!shortcutStreamUrl.isNullOrEmpty()) {
+            helper.play(shortcutStreamUrl)
         }
     }
 

@@ -89,7 +89,7 @@ class StreamViewModel @Inject constructor(
             .onEach { url ->
                 url?: return@onEach
                 val stream = streamRepository.getByUrl(url)?: return@onEach
-                streamRepository.updateSeen(stream.id)
+                streamRepository.reportPlayed(stream.id)
             }
             .launchIn(viewModelScope)
     }

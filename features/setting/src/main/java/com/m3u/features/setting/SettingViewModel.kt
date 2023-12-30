@@ -70,7 +70,7 @@ class SettingViewModel @Inject constructor(
         val banned = readable.banneds.find { it.id == streamId }
         if (banned != null) {
             viewModelScope.launch {
-                streamRepository.setBanned(streamId, false)
+                streamRepository.ban(streamId, false)
             }
         }
     }

@@ -14,7 +14,7 @@ import kotlin.time.Duration
 
 class StreamRepositoryImpl @Inject constructor(
     private val streamDao: StreamDao,
-    private val logger: Logger
+    private val logger: Logger,
 ) : StreamRepository {
     override fun observe(id: Int): Flow<Stream?> = logger.execute {
         streamDao.observeById(id)
@@ -40,11 +40,11 @@ class StreamRepositoryImpl @Inject constructor(
         streamDao.setFavourite(id, target)
     }
 
-    override suspend fun setBanned(id: Int, target: Boolean) = logger.sandBox {
-        streamDao.setBanned(id, target)
+    override suspend fun ban(id: Int, target: Boolean) = logger.sandBox {
+        streamDao.ban(id, target)
     }
 
-    override suspend fun updateSeen(id: Int) = logger.sandBox {
+    override suspend fun reportPlayed(id: Int) = logger.sandBox {
         val current = Clock.System.now().toEpochMilliseconds()
         streamDao.updateSeen(id, current)
     }

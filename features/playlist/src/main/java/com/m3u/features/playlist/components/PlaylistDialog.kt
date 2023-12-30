@@ -21,18 +21,14 @@ import com.m3u.material.components.DialogItem
 import com.m3u.material.components.DialogTextField
 import com.m3u.material.model.LocalSpacing
 
-internal typealias OnUpdateDialogStatus = (DialogStatus) -> Unit
-internal typealias OnFavoriteStream = (streamId: Int, target: Boolean) -> Unit
-internal typealias OnBannedStream = (streamId: Int, target: Boolean) -> Unit
-internal typealias OnSavePicture = (streamId: Int) -> Unit
-
 @Composable
 internal fun PlaylistDialog(
     status: DialogStatus,
-    onUpdate: OnUpdateDialogStatus,
-    onFavorite: OnFavoriteStream,
-    onBanned: OnBannedStream,
-    onSavePicture: OnSavePicture,
+    onUpdate: (DialogStatus) -> Unit,
+    onFavorite: (streamId: Int, target: Boolean) -> Unit,
+    ban: (streamId: Int, target: Boolean) -> Unit,
+    onSavePicture: (streamId: Int) -> Unit,
+    createShortcut: (streamId: Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
     AppDialog(
@@ -57,13 +53,17 @@ internal fun PlaylistDialog(
             }
             DialogItem(string.feat_playlist_dialog_mute_title) {
                 onUpdate(DialogStatus.Idle)
-                onBanned(status.stream.id, true)
+                ban(status.stream.id, true)
             }
             if (!status.stream.cover.isNullOrEmpty()) {
                 DialogItem(string.feat_playlist_dialog_save_picture_title) {
                     onUpdate(DialogStatus.Idle)
                     onSavePicture(status.stream.id)
                 }
+            }
+            DialogItem(string.feat_playlist_dialog_create_shortcut_title) {
+                onUpdate(DialogStatus.Idle)
+                createShortcut(status.stream.id)
             }
         }
     }

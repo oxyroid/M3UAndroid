@@ -8,7 +8,7 @@ interface StreamRepository : ReadOnlyRepository<Stream, Int> {
     suspend fun getByUrl(url: String): Stream?
     suspend fun getByPlaylistUrl(playlistUrl: String): List<Stream>
     suspend fun setFavourite(id: Int, target: Boolean)
-    suspend fun setBanned(id: Int, target: Boolean)
-    suspend fun updateSeen(id: Int)
+    suspend fun ban(id: Int, target: Boolean)
+    suspend fun reportPlayed(id: Int)
     fun observeAllUnseenFavourites(limit: Duration): Flow<List<Stream>>
 }

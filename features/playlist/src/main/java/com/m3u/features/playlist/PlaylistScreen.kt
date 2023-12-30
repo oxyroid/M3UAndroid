@@ -55,6 +55,7 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
@@ -107,6 +108,7 @@ internal fun PlaylistRoute(
     modifier: Modifier = Modifier,
     viewModel: PlaylistViewModel = hiltViewModel()
 ) {
+    val context = LocalContext.current
     val helper = LocalHelper.current
     val pref = LocalPref.current
 
@@ -187,13 +189,16 @@ internal fun PlaylistRoute(
         status = dialogStatus,
         onUpdate = { dialogStatus = it },
         onFavorite = { id, target -> viewModel.onEvent(PlaylistEvent.Favourite(id, target)) },
-        onBanned = { id, target -> viewModel.onEvent(PlaylistEvent.Mute(id, target)) },
+        ban = { id, target -> viewModel.onEvent(PlaylistEvent.Ban(id, target)) },
         onSavePicture = { id ->
             if (writeExternalPermissionState.status is PermissionStatus.Denied) {
                 writeExternalPermissionState.launchPermissionRequest()
                 return@PlaylistDialog
             }
             viewModel.onEvent(PlaylistEvent.SavePicture(id))
+        },
+        createShortcut = { id ->
+            viewModel.onEvent(PlaylistEvent.CreateShortcut(context, id))
         }
     )
 }
