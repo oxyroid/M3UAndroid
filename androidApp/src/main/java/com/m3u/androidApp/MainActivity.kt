@@ -210,7 +210,9 @@ class MainActivity : AppCompatActivity() {
             when (message) {
                 is Message.Static -> {
                     logger.log(
-                        text = getString(message.resId, message.formatArgs)
+                        text = getString(message.resId, message.formatArgs),
+                        level = message.level,
+                        tag = message.tag
                     )
                 }
 

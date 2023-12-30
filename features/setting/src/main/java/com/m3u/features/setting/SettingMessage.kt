@@ -31,7 +31,7 @@ sealed class SettingMessage(
     )
 
     data object Enqueued : SettingMessage(
-        level = LEVEL_ERROR,
+        level = LEVEL_INFO,
         type = TYPE_SNACK,
         resId = string.feat_setting_enqueue_subscribe
     )
