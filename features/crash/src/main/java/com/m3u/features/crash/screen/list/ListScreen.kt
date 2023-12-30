@@ -31,7 +31,7 @@ internal fun ListScreen(
                     modifier = Modifier
                         .fillParentMaxWidth()
                         .clickable {
-                            navigateToDetail(file.path)
+                            navigateToDetail(file.absolutePath)
                         }
                 )
             }

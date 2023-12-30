@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.os.Build
+import android.util.Log
 import com.m3u.core.architecture.FilePath
 import com.m3u.core.architecture.FilePathCacher
 import com.m3u.core.util.collections.forEachNotNull
@@ -29,7 +30,7 @@ class CrashFilePathCacher @Inject constructor(
         if (!dir.exists() || dir.isFile) return null
         val filePath = key.path
         return dir
-            .listFiles { file -> file.startsWith(filePath) }
+            .listFiles { file -> file.absolutePath.endsWith(filePath) }
             ?.firstOrNull()
     }
 

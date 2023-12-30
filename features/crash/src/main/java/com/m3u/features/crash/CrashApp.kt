@@ -3,6 +3,7 @@ package com.m3u.features.crash
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -15,10 +16,8 @@ import com.m3u.features.crash.screen.list.ListScreen
 
 @Composable
 internal fun CrashApp() {
-    Box {
-        var destination: Destination by remember {
-            mutableStateOf(Destination.List)
-        }
+    Box(Modifier.systemBarsPadding()) {
+        var destination: Destination by remember { mutableStateOf(Destination.List) }
         ListScreen(
             navigateToDetail = { path ->
                 destination = Destination.Detail(path)

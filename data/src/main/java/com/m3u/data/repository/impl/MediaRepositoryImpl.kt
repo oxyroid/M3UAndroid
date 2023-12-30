@@ -1,19 +1,16 @@
 package com.m3u.data.repository.impl
 
 import android.content.Context
-import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.Environment
-import androidx.core.content.FileProvider
 import androidx.core.graphics.drawable.toBitmap
 import coil.Coil
 import coil.request.ErrorResult
 import coil.request.ImageRequest
 import coil.request.SuccessResult
 import com.m3u.core.architecture.logger.Logger
-import com.m3u.core.architecture.logger.executeResult
 import com.m3u.core.wrapper.Resource
 import com.m3u.core.wrapper.emitException
 import com.m3u.core.wrapper.emitResource
@@ -24,6 +21,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
 import java.io.File
+import java.io.InputStream
+import java.io.OutputStream
 import javax.inject.Inject
 
 private const val BITMAP_QUALITY = 100
@@ -58,7 +57,7 @@ class MediaRepositoryImpl @Inject constructor(
         }
     }
 
-    private suspend fun loadDrawable(url: String): Drawable {
+    override suspend fun loadDrawable(url: String): Drawable {
         val loader = Coil.imageLoader(context)
         val request: ImageRequest = ImageRequest.Builder(context)
             .data(url)
@@ -69,19 +68,11 @@ class MediaRepositoryImpl @Inject constructor(
         }
     }
 
-    override fun shareFiles(files: List<File>): Result<Unit> = logger.executeResult {
-        val uris: List<Uri> = files.mapNotNull {
-            try {
-                FileProvider.getUriForFile(
-                    context,
-                    "com.m3u.app.fileprovider",
-                    it
-                )
-            } catch (e: IllegalArgumentException) {
-                null
-            }
-        }
-        val intent = Intent(Intent.ACTION_MEDIA_SHARED, uris.first())
-        context.startActivity(intent)
+    override fun openOutputStream(uri: Uri): OutputStream? {
+        return context.contentResolver.openOutputStream(uri)
+    }
+
+    override fun openInputStream(uri: Uri): InputStream? {
+        return context.contentResolver.openInputStream(uri)
     }
 }

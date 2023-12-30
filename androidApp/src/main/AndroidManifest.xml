@@ -62,6 +62,7 @@
         <activity
             android:name="com.m3u.features.crash.CrashActivity"
             android:label="@string/app_label_crash"
+            android:theme="@style/Theme.M3U"
             android:launchMode="singleInstance" />
 
         <service android:name="com.m3u.dlna.DLNACastService" />
@@ -82,7 +83,7 @@
 
         <provider
             android:name="androidx.core.content.FileProvider"
-            android:authorities="com.m3u.androidApp.fileprovider"
+            android:authorities="${applicationId}.provider"
             android:exported="false"
             android:grantUriPermissions="true">
             <meta-data
