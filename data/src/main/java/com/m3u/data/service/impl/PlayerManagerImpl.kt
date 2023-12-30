@@ -14,6 +14,7 @@ import androidx.media3.common.VideoSize
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.datasource.okhttp.OkHttpDataSource
+import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
@@ -75,6 +76,9 @@ class PlayerManagerImpl @Inject constructor(
         )
 
     private fun createPlayer(payload: PlayerPayload): Player {
+        val rf = DefaultRenderersFactory(context).apply {
+            setEnableDecoderFallback(true)
+        }
         val msf = DefaultMediaSourceFactory(context)
             .setDataSourceFactory(
                 if (payload.isSSLVerification) DefaultDataSource.Factory(context)
@@ -97,6 +101,7 @@ class PlayerManagerImpl @Inject constructor(
         }
         return ExoPlayer.Builder(context)
             .setMediaSourceFactory(msf)
+            .setRenderersFactory(rf)
             .setTrackSelector(trackSelector)
             .build()
             .apply {
