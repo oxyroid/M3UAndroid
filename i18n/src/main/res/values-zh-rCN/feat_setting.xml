@@ -66,6 +66,6 @@
     <string name="feat_setting_screen_rotating">屏幕旋转</string>
     <string name="feat_setting_screen_rotating_description">只有当系统屏幕旋转解锁时可用</string>
     <string name="feat_setting_optional_player_features">可选播放器功能</string>
-    <string name="feat_setting_unseen_limit">推荐好久未播放的流媒体</string>
+    <string name="feat_setting_unseen_limit">推荐许久未见的流媒体</string>
     <string name="feat_setting_auto_reconnect">自动重连</string>
 </resources>
