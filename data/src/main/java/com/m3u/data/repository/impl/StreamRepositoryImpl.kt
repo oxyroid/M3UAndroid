@@ -49,6 +49,10 @@ class StreamRepositoryImpl @Inject constructor(
         streamDao.updateSeen(id, current)
     }
 
+    override suspend fun getPlayedRecently(): Stream? = logger.execute {
+        streamDao.getPlayedRecently()
+    }
+
     override fun observeAllUnseenFavourites(limit: Duration): Flow<List<Stream>> {
         return streamDao.observeAllUnseenFavourites(
             limit = limit.inWholeMilliseconds,

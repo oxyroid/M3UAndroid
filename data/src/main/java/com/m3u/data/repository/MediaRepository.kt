@@ -13,5 +13,5 @@ interface MediaRepository {
     fun openOutputStream(uri: Uri): OutputStream?
     fun openInputStream(uri: Uri): InputStream?
 
-    suspend fun loadDrawable(url: String): Drawable
+    suspend fun loadDrawable(url: String): Drawable?
 }

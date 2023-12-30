@@ -408,12 +408,11 @@ private object StreamFragmentDefaults {
         @Composable get() {
             val context = LocalContext.current
             val contentResolver = context.contentResolver
-            return produceState(
-                initialValue = Settings.System.getInt(
-                    contentResolver,
-                    Settings.System.ACCELEROMETER_ROTATION
-                ) == 1
-            ) {
+            val initialValue = Settings.System.getInt(
+                contentResolver,
+                Settings.System.ACCELEROMETER_ROTATION
+            ) == 1
+            return produceState(initialValue) {
                 val uri = Settings.System.getUriFor(Settings.System.ACCELEROMETER_ROTATION)
                 val handler = Handler(Looper.getMainLooper())
                 val observer = object : ContentObserver(handler) {

@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_label_crash">应用发生崩溃</string>
+    <string name="app_shortcut_stream_recently_short_label">最近</string>
+    <string name="app_shortcut_stream_recently_long_label">播放最近的播放过的频道</string>
+    <string name="app_shortcut_stream_recently_disabled">不可用</string>
 </resources>

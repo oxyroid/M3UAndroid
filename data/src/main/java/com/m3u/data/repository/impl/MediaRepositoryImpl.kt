@@ -11,6 +11,7 @@ import coil.request.ErrorResult
 import coil.request.ImageRequest
 import coil.request.SuccessResult
 import com.m3u.core.architecture.logger.Logger
+import com.m3u.core.architecture.logger.execute
 import com.m3u.core.wrapper.Resource
 import com.m3u.core.wrapper.emitException
 import com.m3u.core.wrapper.emitResource
@@ -36,7 +37,7 @@ class MediaRepositoryImpl @Inject constructor(
 
     override fun savePicture(url: String): Flow<Resource<File>> = resourceFlow {
         try {
-            val drawable = loadDrawable(url)
+            val drawable = checkNotNull(loadDrawable(url))
             val bitmap = drawable.toBitmap()
             val name = "Picture_${System.currentTimeMillis()}.png"
             val file = File(directory, name)
@@ -57,7 +58,7 @@ class MediaRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun loadDrawable(url: String): Drawable {
+    override suspend fun loadDrawable(url: String): Drawable? = logger.execute<Drawable> {
         val loader = Coil.imageLoader(context)
         val request: ImageRequest = ImageRequest.Builder(context)
             .data(url)

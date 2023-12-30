@@ -10,5 +10,6 @@ interface StreamRepository : ReadOnlyRepository<Stream, Int> {
     suspend fun setFavourite(id: Int, target: Boolean)
     suspend fun ban(id: Int, target: Boolean)
     suspend fun reportPlayed(id: Int)
+    suspend fun getPlayedRecently(): Stream?
     fun observeAllUnseenFavourites(limit: Duration): Flow<List<Stream>>
 }

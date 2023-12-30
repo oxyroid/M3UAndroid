@@ -22,6 +22,9 @@ interface StreamDao {
     @Query("DELETE FROM streams WHERE playlistUrl = :playlistUrl")
     suspend fun deleteByPlaylistUrl(playlistUrl: String)
 
+    @Query("SELECT * FROM streams WHERE seen != 0 ORDER BY seen DESC LIMIT 1")
+    suspend fun getPlayedRecently(): Stream?
+
     @Query("SELECT * FROM streams WHERE id = :id")
     suspend fun get(id: Int): Stream?
 

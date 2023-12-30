@@ -6,6 +6,7 @@ import android.content.Intent
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.graphics.drawable.IconCompat
+import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.viewModelScope
 import com.m3u.core.Contracts
 import com.m3u.core.architecture.logger.Logger
@@ -181,10 +182,15 @@ class PlaylistViewModel @Inject constructor(
         val shortcutId = "stream_$id"
         viewModelScope.launch {
             val stream = streamRepository.get(id) ?: return@launch
+            val bitmap = stream.cover?.let { mediaRepository.loadDrawable(it)?.toBitmap() }
             val shortcutInfo = ShortcutInfoCompat.Builder(context, shortcutId)
                 .setShortLabel(stream.title)
                 .setLongLabel(stream.url)
-                .setIcon(IconCompat.createWithResource(context, android.R.drawable.ic_media_play))
+                .setIcon(
+                    bitmap
+                        ?.let { IconCompat.createWithBitmap(it) }
+                        ?: IconCompat.createWithResource(context, R.drawable.round_play_arrow_24)
+                )
                 .setIntent(
                     Intent(Intent.ACTION_VIEW).apply {
                         component = ComponentName.createRelative(

@@ -62,8 +62,6 @@ class MainActivity : AppCompatActivity() {
             systemBarsBehavior = BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
         }
     }
-    private var actualOnUserLeaveHint: OnUserLeaveHint? = null
-    private var actualOnPipModeChanged: OnPipModeChanged? = null
     private val viewModel: AppViewModel by viewModels()
     private val helper by lazy {
         helper(
@@ -169,12 +167,11 @@ class MainActivity : AppCompatActivity() {
                 )
             }
 
-        override var onUserLeaveHint: OnUserLeaveHint? by ::actualOnUserLeaveHint
-        override var onPipModeChanged: OnPipModeChanged?
-            get() = actualOnPipModeChanged
+        override var onUserLeaveHint: OnUserLeaveHint? = null
+        override var onPipModeChanged: OnPipModeChanged? = null
             set(value) {
                 if (value != null) addOnPictureInPictureModeChangedListener(value)
-                else actualOnPipModeChanged?.let {
+                else field?.let {
                     removeOnPictureInPictureModeChangedListener(it)
                 }
             }
@@ -228,7 +225,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onUserLeaveHint() {
         super.onUserLeaveHint()
-        actualOnUserLeaveHint?.invoke()
+        helper.onUserLeaveHint?.invoke()
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {

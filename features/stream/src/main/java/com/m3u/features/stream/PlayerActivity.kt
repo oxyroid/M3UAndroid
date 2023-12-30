@@ -6,7 +6,6 @@ import android.content.res.Configuration
 import android.graphics.Color
 import android.graphics.Rect
 import android.os.Bundle
-import android.util.Log
 import android.view.ViewConfiguration
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -29,6 +28,7 @@ import com.m3u.core.util.basic.rational
 import com.m3u.core.util.context.isDarkMode
 import com.m3u.core.util.context.isPortraitMode
 import com.m3u.core.wrapper.Message
+import com.m3u.data.repository.StreamRepository
 import com.m3u.data.service.PlayerManager
 import com.m3u.ui.Action
 import com.m3u.ui.Fob
@@ -48,11 +48,7 @@ class PlayerActivity : ComponentActivity() {
             systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
         }
     }
-    private var actualOnUserLeaveHint: OnUserLeaveHint? = null
-    private var actualOnPipModeChanged: OnPipModeChanged? = null
-    private val helper by lazy {
-        helper()
-    }
+    private val helper by lazy { helper() }
 
     companion object {
         // FIXME: the property is worked only when activity has one instance at most.
@@ -70,12 +66,15 @@ class PlayerActivity : ComponentActivity() {
     @Inject
     lateinit var playerManager: PlayerManager
 
+    @Inject
+    lateinit var streamRepository: StreamRepository
+
     private val shortcutStreamUrlLiveData = MutableLiveData<String?>(null)
+    private val shortcutRecentlyLiveData = MutableLiveData(false)
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
-        shortcutStreamUrlLiveData.value =
-            intent.getStringExtra(Contracts.PLAYER_SHORTCUT_STREAM_URL)
+        handleIntent(intent)
         setContent {
             M3ULocalProvider(
                 helper = helper,
@@ -91,18 +90,33 @@ class PlayerActivity : ComponentActivity() {
                 helper.play(url)
             }
         }
+        shortcutRecentlyLiveData.observe(this) { recently ->
+            if (recently) {
+                lifecycleScope.launch {
+                    val stream = streamRepository.getPlayedRecently() ?: return@launch
+                    helper.play(stream.url)
+                }
+            }
+        }
     }
 
     override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
+        if (intent != null) {
+            handleIntent(intent)
+        }
+    }
+
+    private fun handleIntent(intent: Intent) {
         shortcutStreamUrlLiveData.value =
-            intent?.getStringExtra(Contracts.PLAYER_SHORTCUT_STREAM_URL)
+            intent.getStringExtra(Contracts.PLAYER_SHORTCUT_STREAM_URL)
+        shortcutRecentlyLiveData.value =
+            intent.getBooleanExtra(Contracts.PLAYER_SHORTCUT_STREAM_RECENTLY, false)
     }
 
     private fun helper(): Helper = object : Helper {
         init {
             addOnPictureInPictureModeChangedListener { info ->
-                isInPipMode = info.isInPictureInPictureMode
                 PlayerActivity.isInPipMode = info.isInPictureInPictureMode
             }
         }
@@ -143,12 +157,11 @@ class PlayerActivity : ComponentActivity() {
                 )
             }
 
-        override var onUserLeaveHint: OnUserLeaveHint? by ::actualOnUserLeaveHint
-        override var onPipModeChanged: OnPipModeChanged?
-            get() = actualOnPipModeChanged
+        override var onUserLeaveHint: OnUserLeaveHint? = null
+        override var onPipModeChanged: OnPipModeChanged? = null
             set(value) {
                 if (value != null) addOnPictureInPictureModeChangedListener(value)
-                else actualOnPipModeChanged?.let {
+                else field?.let {
                     removeOnPictureInPictureModeChangedListener(it)
                 }
             }
@@ -156,13 +169,12 @@ class PlayerActivity : ComponentActivity() {
         override var brightness: Float
             get() = window.attributes.screenBrightness
             set(value) {
-                Log.e("TAG", "helper: $value")
                 window.attributes = window.attributes.apply {
                     screenBrightness = value
                 }
             }
 
-        override var isInPipMode: Boolean = false
+        override val isInPipMode: Boolean get() = PlayerActivity.isInPipMode
 
         override var screenOrientation: Int
             get() = this@PlayerActivity.requestedOrientation
@@ -209,7 +221,7 @@ class PlayerActivity : ComponentActivity() {
 
     override fun onUserLeaveHint() {
         super.onUserLeaveHint()
-        actualOnUserLeaveHint?.invoke()
+        helper.onUserLeaveHint?.invoke()
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {

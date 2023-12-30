@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_label_crash">app crashes</string>
+    <string name="app_shortcut_stream_recently_short_label">Recently</string>
+    <string name="app_shortcut_stream_recently_long_label">Play recently stream</string>
+    <string name="app_shortcut_stream_recently_disabled">unavailable</string>
 </resources>
