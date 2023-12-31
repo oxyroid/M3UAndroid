@@ -20,7 +20,7 @@ import com.m3u.data.repository.MediaRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.flow.flowOn
 import java.io.File
 import java.io.InputStream
 import java.io.OutputStream
@@ -33,23 +33,18 @@ class MediaRepositoryImpl @Inject constructor(
     private val logger: Logger
 ) : MediaRepository {
     private val directory =
-        Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
+        File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), "M3U")
 
     override fun savePicture(url: String): Flow<Resource<File>> = resourceFlow {
         try {
             val drawable = checkNotNull(loadDrawable(url))
             val bitmap = drawable.toBitmap()
             val name = "Picture_${System.currentTimeMillis()}.png"
+            directory.mkdirs()
             val file = File(directory, name)
-            withContext(Dispatchers.IO) {
-                if (!directory.exists()) {
-                    directory.mkdirs()
-                }
-                file.createNewFile()
-                file.outputStream().buffered().use {
-                    bitmap.compress(Bitmap.CompressFormat.PNG, BITMAP_QUALITY, it)
-                    it.flush()
-                }
+            file.outputStream().buffered().use {
+                bitmap.compress(Bitmap.CompressFormat.PNG, BITMAP_QUALITY, it)
+                it.flush()
             }
             emitResource(file)
         } catch (e: Exception) {
@@ -57,6 +52,7 @@ class MediaRepositoryImpl @Inject constructor(
             emitException(e)
         }
     }
+        .flowOn(Dispatchers.IO)
 
     override suspend fun loadDrawable(url: String): Drawable? = logger.execute<Drawable> {
         val loader = Coil.imageLoader(context)
