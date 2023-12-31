@@ -20,6 +20,7 @@ import com.m3u.data.database.entity.Stream
 import com.m3u.data.repository.MediaRepository
 import com.m3u.data.repository.PlaylistRepository
 import com.m3u.data.repository.StreamRepository
+import com.m3u.data.repository.refresh
 import com.m3u.data.service.PlayerManager
 import com.m3u.features.playlist.PlaylistMessage.StreamCoverSaved
 import com.m3u.ui.Sort
@@ -93,19 +94,15 @@ class PlaylistViewModel @Inject constructor(
     }
 
     private fun refresh() {
-        val url = readable.url
-//        playlistRepository
-//            .refresh(url, pref.playlistStrategy)
-//            .chain()
-//            .onEach {
-//                writable.update { prev ->
-//                    prev.copy(
-//                        fetching = !it.isCompleted
-//                    )
-//                }
-//            }
-//            .failure(logger::log)
-//            .launchIn(viewModelScope)
+        val url = playlistUrl.value
+        playlistRepository
+            .refresh(url, pref.playlistStrategy)
+            .onEach { resource ->
+                val refreshing = resource is Resource.Loading
+                val message = if (refreshing) PlaylistMessage.Refreshing else PlaylistMessage.None
+                onMessage(message)
+            }
+            .launchIn(viewModelScope)
     }
 
     private fun favourite(event: PlaylistEvent.Favourite) {

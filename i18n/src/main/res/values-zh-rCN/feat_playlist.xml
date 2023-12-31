@@ -16,4 +16,5 @@
     <string name="feat_playlist_error_stream_not_found">频道不存在</string>
     <string name="feat_playlist_success_save_cover">保存到了（%s）</string>
     <string name="feat_playlist_prompt_add_playlist">到“设置-订阅管理”中添加一个播放列表</string>
+    <string name="feat_playlist_refreshing">刷新中</string>
 </resources>

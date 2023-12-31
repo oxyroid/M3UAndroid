@@ -54,6 +54,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import kotlin.reflect.KMutableProperty0
+import kotlin.time.Duration
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
@@ -203,20 +204,26 @@ class MainActivity : AppCompatActivity() {
         }
 
         override fun log(message: Message) {
-            if (message == Message.Static || message == Message.Dynamic.EMPTY) return
             logger.log(
-                text = when (message) {
-                    is Message.Static -> {
+                text = when {
+                    message.level == Message.LEVEL_EMPTY -> ""
+                    message is Message.Static -> {
                         val args = message.formatArgs.flatMap {
                             if (it is Array<*>) it.toList()
                             else listOf(it)
                         }
                         getString(message.resId, *args.toTypedArray())
                     }
-                    is Message.Dynamic -> message.value
+
+                    message is Message.Dynamic -> message.value
+                    else -> ""
                 },
                 level = message.level,
-                tag = message.tag
+                tag = message.tag,
+                duration = when {
+                    message.level == Message.LEVEL_EMPTY -> Duration.ZERO
+                    else -> message.duration
+                }
             )
         }
 

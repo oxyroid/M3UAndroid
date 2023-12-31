@@ -5,6 +5,7 @@ import com.m3u.core.wrapper.Message
 import com.m3u.data.service.DynamicMessageService
 import java.util.Locale
 import javax.inject.Inject
+import kotlin.time.Duration
 
 class UiLogger @Inject constructor(
     private val dynamicMessageService: DynamicMessageService,
@@ -13,18 +14,19 @@ class UiLogger @Inject constructor(
     override fun log(
         text: String,
         level: Int,
-        tag: String
+        tag: String,
+        duration: Duration
     ) {
-        val value = text
-            .replaceFirstChar {
-                if (it.isLowerCase()) it.titlecase(Locale.ROOT)
-                else it.toString()
-            }
+        val value = text.replaceFirstChar {
+            if (it.isLowerCase()) it.titlecase(Locale.ROOT)
+            else it.toString()
+        }
         val message = Message.Dynamic(
             value = value,
             level = level,
             tag = tag,
-            type = Message.TYPE_SNACK
+            type = Message.TYPE_SNACK,
+            duration = duration
         )
         dynamicMessageService.emit(message)
     }

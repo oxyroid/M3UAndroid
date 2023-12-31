@@ -5,6 +5,7 @@ import com.m3u.core.architecture.Publisher
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.wrapper.Message
 import javax.inject.Inject
+import kotlin.time.Duration
 
 /**
  * This is a wrapper of android logcat.
@@ -20,7 +21,8 @@ class CommonLogger @Inject constructor(
     override fun log(
         text: String,
         level: Int,
-        tag: String
+        tag: String,
+        duration: Duration
     ) {
         if (publisher.debug) {
             when (level) {

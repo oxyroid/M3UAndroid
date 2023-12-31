@@ -153,8 +153,8 @@ internal fun PlaylistRoute(
         )
     }
 
-    LaunchedEffect(pref.autoRefresh, state.url) {
-        if (state.url.isNotEmpty() && pref.autoRefresh) {
+    LaunchedEffect(pref.autoRefresh, playlistUrl) {
+        if (playlistUrl.isNotEmpty() && pref.autoRefresh) {
             viewModel.onEvent(PlaylistEvent.Refresh)
         }
     }
@@ -166,8 +166,11 @@ internal fun PlaylistRoute(
         if (pref.godMode) {
             Modifier.interceptVolumeEvent { event ->
                 when (event) {
-                    KeyEvent.KEYCODE_VOLUME_UP -> pref.rowCount = (pref.rowCount - 1).coerceAtLeast(1)
-                    KeyEvent.KEYCODE_VOLUME_DOWN -> pref.rowCount = (pref.rowCount + 1).coerceAtMost(3)
+                    KeyEvent.KEYCODE_VOLUME_UP -> pref.rowCount =
+                        (pref.rowCount - 1).coerceAtLeast(1)
+
+                    KeyEvent.KEYCODE_VOLUME_DOWN -> pref.rowCount =
+                        (pref.rowCount + 1).coerceAtMost(3)
                 }
             }
         } else Modifier
@@ -190,8 +193,6 @@ internal fun PlaylistRoute(
                 zapping = zapping
             ),
             scrollUp = state.scrollUp,
-            refreshing = state.fetching,
-            onRefresh = { viewModel.onEvent(PlaylistEvent.Refresh) },
             navigateToStream = navigateToStream,
             onMenu = {
                 dialogStatus = DialogStatus.Selections(it)
@@ -229,8 +230,6 @@ private fun PlaylistScreen(
     rowCount: Int,
     channelHolder: ChannelHolder,
     scrollUp: Event<Unit>,
-    refreshing: Boolean,
-    onRefresh: () -> Unit,
     navigateToStream: () -> Unit,
     onMenu: (Stream) -> Unit,
     onScrollUp: () -> Unit,

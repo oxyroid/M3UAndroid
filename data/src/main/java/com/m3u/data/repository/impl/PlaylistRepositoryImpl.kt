@@ -132,7 +132,9 @@ class PlaylistRepositoryImpl @Inject constructor(
         val request = Request.Builder()
             .url(url)
             .build()
-        val response = client.newCall(request).execute()
+        val response = withContext(Dispatchers.IO) {
+            client.newCall(request).execute()
+        }
         if (!response.isSuccessful) return emptyList()
         val input = response.body?.byteStream()
         return input?.use { parse(url, seen, it) } ?: emptyList()

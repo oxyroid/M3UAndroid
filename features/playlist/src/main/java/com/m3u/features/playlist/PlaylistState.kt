@@ -30,7 +30,5 @@ fun rememberChannelHolder(
 }
 
 data class PlaylistState(
-    val url: String = "",
-    val fetching: Boolean = false,
     val scrollUp: Event<Unit> = handledEvent()
 )

@@ -46,7 +46,6 @@ fun PlaylistRepository.refresh(
                     is Process.Success -> Resource.Success(prev.data)
                 }
                     .let { send(it) }
-
             }
             .launchIn(this)
     } catch (e: Exception) {

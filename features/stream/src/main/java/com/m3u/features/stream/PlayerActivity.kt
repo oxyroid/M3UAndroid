@@ -40,6 +40,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import kotlin.time.Duration
 
 @AndroidEntryPoint
 class PlayerActivity : ComponentActivity() {
@@ -192,22 +193,27 @@ class PlayerActivity : ComponentActivity() {
         }
 
         override fun log(message: Message) {
-            if (message == Message.Static || message == Message.Dynamic.EMPTY) return
-            when (message) {
-                is Message.Static -> {
-                    logger.log(
-                        text = getString(message.resId, message.formatArgs)
-                    )
-                }
+            logger.log(
+                text = when {
+                    message.level == Message.LEVEL_EMPTY -> ""
+                    message is Message.Static -> {
+                        val args = message.formatArgs.flatMap {
+                            if (it is Array<*>) it.toList()
+                            else listOf(it)
+                        }
+                        getString(message.resId, *args.toTypedArray())
+                    }
 
-                is Message.Dynamic -> {
-                    logger.log(
-                        text = message.value,
-                        tag = message.tag,
-                        level = message.level
-                    )
+                    message is Message.Dynamic -> message.value
+                    else -> ""
+                },
+                level = message.level,
+                tag = message.tag,
+                duration = when {
+                    message.level == Message.LEVEL_EMPTY -> Duration.ZERO
+                    else -> message.duration
                 }
-            }
+            )
         }
 
         override fun play(url: String) {
