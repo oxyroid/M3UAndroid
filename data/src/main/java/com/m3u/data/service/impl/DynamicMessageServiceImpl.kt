@@ -11,24 +11,25 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.util.concurrent.atomic.AtomicReference
 import javax.inject.Inject
-import kotlin.concurrent.Volatile
 
 class DynamicMessageServiceImpl @Inject constructor() : DynamicMessageService {
 
     private val _message = MutableStateFlow(Message.Dynamic.EMPTY)
     override val message: StateFlow<Message.Dynamic> get() = _message.asStateFlow()
 
-    @Volatile
-    private var job: Job? = null
+    private val job = AtomicReference<Job?>()
 
     override fun emit(message: Message.Dynamic) {
-        CoroutineScope(Dispatchers.Main.immediate).launch {
-            job?.cancel()
-            job = launch {
-                _message.update { message }
-                delay(message.duration)
-                _message.update { Message.Dynamic.EMPTY }
+        CoroutineScope(Dispatchers.Main).launch {
+            job.getAndUpdate { prev ->
+                prev?.cancel()
+                launch {
+                    _message.update { message }
+                    delay(message.duration)
+                    _message.update { Message.Dynamic.EMPTY }
+                }
             }
         }
     }
