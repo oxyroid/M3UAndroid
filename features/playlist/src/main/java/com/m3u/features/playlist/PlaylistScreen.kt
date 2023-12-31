@@ -13,9 +13,11 @@ import android.content.res.Configuration.UI_MODE_TYPE_NORMAL
 import android.content.res.Configuration.UI_MODE_TYPE_TELEVISION
 import android.content.res.Configuration.UI_MODE_TYPE_VR_HEADSET
 import android.content.res.Configuration.UI_MODE_TYPE_WATCH
+import android.os.Build
 import android.view.KeyEvent
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -29,6 +31,7 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.BackdropScaffold
 import androidx.compose.material.BackdropValue
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.Sort
 import androidx.compose.material.icons.rounded.ArrowCircleUp
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.rememberBackdropScaffoldState
@@ -38,12 +41,14 @@ import androidx.compose.material3.PrimaryScrollableTabRow
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRowDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -53,10 +58,8 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.capitalize
@@ -90,15 +93,10 @@ import com.m3u.ui.EventHandler
 import com.m3u.ui.Fob
 import com.m3u.ui.LocalHelper
 import com.m3u.ui.MessageEventHandler
+import com.m3u.ui.SortBottomSheet
 import com.m3u.ui.isAtTop
 import com.m3u.ui.repeatOnLifecycle
-import dev.chrisbanes.haze.HazeState
-import dev.chrisbanes.haze.hazeChild
 import kotlinx.coroutines.launch
-
-private typealias OnMenu = (Stream) -> Unit
-private typealias OnScrollUp = () -> Unit
-private typealias OnRefresh = () -> Unit
 
 @Composable
 internal fun PlaylistRoute(
@@ -114,13 +112,25 @@ internal fun PlaylistRoute(
 
     val state by viewModel.state.collectAsStateWithLifecycle()
     val message by viewModel.message.collectAsStateWithLifecycle()
-    val floating by viewModel.floating.collectAsStateWithLifecycle()
+    val zapping by viewModel.zapping.collectAsStateWithLifecycle()
     val query by viewModel.query.collectAsStateWithLifecycle()
+    val channels by viewModel.channels.collectAsStateWithLifecycle()
+    val sorts = viewModel.sorts
+    val sort by viewModel.sort.collectAsStateWithLifecycle()
 
-    var dialogStatus: DialogStatus by remember { mutableStateOf(DialogStatus.Idle) }
+    val sheetState = rememberModalBottomSheetState()
+
+    // If you try to check or request the WRITE_EXTERNAL_STORAGE on Android 13+,
+    // it will always return false.
+    // So you'll have to skip the permission check/request completely on Android 13+.
+    val permissionRequired = Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU
+
     val writeExternalPermissionState = rememberPermissionState(
         Manifest.permission.WRITE_EXTERNAL_STORAGE
     )
+
+    var dialogStatus: DialogStatus by remember { mutableStateOf(DialogStatus.Idle) }
+    var isSortSheetVisible by rememberSaveable { mutableStateOf(false) }
 
     MessageEventHandler(message)
 
@@ -131,11 +141,14 @@ internal fun PlaylistRoute(
     helper.repeatOnLifecycle {
         actions = listOf(
             Action(
+                icon = Icons.AutoMirrored.Rounded.Sort,
+                contentDescription = "sort",
+                onClick = { isSortSheetVisible = true }
+            ),
+            Action(
                 icon = Icons.Rounded.Refresh,
                 contentDescription = "refresh",
-                onClick = {
-                    viewModel.onEvent(PlaylistEvent.Refresh)
-                }
+                onClick = { viewModel.onEvent(PlaylistEvent.Refresh) }
             )
         )
     }
@@ -153,54 +166,60 @@ internal fun PlaylistRoute(
         if (pref.godMode) {
             Modifier.interceptVolumeEvent { event ->
                 when (event) {
-                    KeyEvent.KEYCODE_VOLUME_UP -> pref.rowCount =
-                        (pref.rowCount - 1).coerceAtLeast(1)
-
-                    KeyEvent.KEYCODE_VOLUME_DOWN -> pref.rowCount =
-                        (pref.rowCount + 1).coerceAtMost(3)
+                    KeyEvent.KEYCODE_VOLUME_UP -> pref.rowCount = (pref.rowCount - 1).coerceAtLeast(1)
+                    KeyEvent.KEYCODE_VOLUME_DOWN -> pref.rowCount = (pref.rowCount + 1).coerceAtMost(3)
                 }
             }
         } else Modifier
     }
+    Background {
+        SortBottomSheet(
+            visible = isSortSheetVisible,
+            sort = sort,
+            sorts = sorts,
+            sheetState = sheetState,
+            onChanged = { viewModel.sort(it) },
+            onDismissRequest = { isSortSheetVisible = false }
+        )
+        PlaylistScreen(
+            query = query,
+            onQuery = { viewModel.onEvent(PlaylistEvent.Query(it)) },
+            rowCount = pref.rowCount,
+            channelHolder = rememberChannelHolder(
+                channels = channels,
+                zapping = zapping
+            ),
+            scrollUp = state.scrollUp,
+            refreshing = state.fetching,
+            onRefresh = { viewModel.onEvent(PlaylistEvent.Refresh) },
+            navigateToStream = navigateToStream,
+            onMenu = {
+                dialogStatus = DialogStatus.Selections(it)
+            },
+            onScrollUp = { viewModel.onEvent(PlaylistEvent.ScrollUp) },
+            contentPadding = contentPadding,
+            modifier = modifier
+                .fillMaxSize()
+                .then(interceptVolumeEventModifier)
+        )
 
-    PlaylistScreen(
-        query = query,
-        onQuery = { viewModel.onEvent(PlaylistEvent.Query(it)) },
-        rowCount = pref.rowCount,
-        channelHolder = rememberChannelHolder(
-            channels = state.channels,
-            floating = floating
-        ),
-        scrollUp = state.scrollUp,
-        refreshing = state.fetching,
-        onRefresh = { viewModel.onEvent(PlaylistEvent.Refresh) },
-        navigateToStream = navigateToStream,
-        onMenu = {
-            dialogStatus = DialogStatus.Selections(it)
-        },
-        onScrollUp = { viewModel.onEvent(PlaylistEvent.ScrollUp) },
-        contentPadding = contentPadding,
-        modifier = modifier
-            .fillMaxSize()
-            .then(interceptVolumeEventModifier)
-    )
-
-    PlaylistDialog(
-        status = dialogStatus,
-        onUpdate = { dialogStatus = it },
-        onFavorite = { id, target -> viewModel.onEvent(PlaylistEvent.Favourite(id, target)) },
-        ban = { id, target -> viewModel.onEvent(PlaylistEvent.Ban(id, target)) },
-        onSavePicture = { id ->
-            if (writeExternalPermissionState.status is PermissionStatus.Denied) {
-                writeExternalPermissionState.launchPermissionRequest()
-                return@PlaylistDialog
+        PlaylistDialog(
+            status = dialogStatus,
+            onUpdate = { dialogStatus = it },
+            onFavorite = { id, target -> viewModel.onEvent(PlaylistEvent.Favourite(id, target)) },
+            ban = { id, target -> viewModel.onEvent(PlaylistEvent.Ban(id, target)) },
+            onSavePicture = { id ->
+                if (permissionRequired && writeExternalPermissionState.status is PermissionStatus.Denied) {
+                    writeExternalPermissionState.launchPermissionRequest()
+                    return@PlaylistDialog
+                }
+                viewModel.onEvent(PlaylistEvent.SavePicture(id))
+            },
+            createShortcut = { id ->
+                viewModel.onEvent(PlaylistEvent.CreateShortcut(context, id))
             }
-            viewModel.onEvent(PlaylistEvent.SavePicture(id))
-        },
-        createShortcut = { id ->
-            viewModel.onEvent(PlaylistEvent.CreateShortcut(context, id))
-        }
-    )
+        )
+    }
 }
 
 @Composable
@@ -211,10 +230,10 @@ private fun PlaylistScreen(
     channelHolder: ChannelHolder,
     scrollUp: Event<Unit>,
     refreshing: Boolean,
-    onRefresh: OnRefresh,
+    onRefresh: () -> Unit,
     navigateToStream: () -> Unit,
-    onMenu: OnMenu,
-    onScrollUp: OnScrollUp,
+    onMenu: (Stream) -> Unit,
+    onScrollUp: () -> Unit,
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier
 ) {
@@ -223,7 +242,7 @@ private fun PlaylistScreen(
     val pref = LocalPref.current
     val configuration = LocalConfiguration.current
     val spacing = LocalSpacing.current
-    Box(modifier) {
+    Box {
         val isAtTopState = remember {
             observableStateOf(true) { newValue ->
                 helper.fob = if (newValue) null
@@ -283,11 +302,10 @@ private fun PlaylistScreen(
                 }
             },
             frontLayerContent = {
-                val hazeState = remember { HazeState() }
                 Background(
                     modifier = Modifier.fillMaxSize()
                 ) {
-                    PlaylistPager(channelHolder, hazeState) { streamHolder, padding ->
+                    PlaylistPager(channelHolder) { streamHolder ->
                         val type = configuration.uiMode and UI_MODE_TYPE_MASK
                         when {
                             !pref.useCommonUIMode && type == UI_MODE_TYPE_TELEVISION -> {
@@ -300,7 +318,6 @@ private fun PlaylistScreen(
                                 }
                                 TvStreamGallery(
                                     state = state,
-                                    hazeState = hazeState,
                                     rowCount = 4,
                                     streamHolder = streamHolder,
                                     play = { url ->
@@ -308,7 +325,7 @@ private fun PlaylistScreen(
                                         navigateToStream()
                                     },
                                     onMenu = onMenu,
-                                    contentPadding = padding
+                                    modifier = modifier
                                 )
                             }
 
@@ -330,7 +347,6 @@ private fun PlaylistScreen(
                                 }
                                 StreamGallery(
                                     state = state,
-                                    hazeState = hazeState,
                                     rowCount = actualRowCount,
                                     streamHolder = streamHolder,
                                     play = { url ->
@@ -339,7 +355,6 @@ private fun PlaylistScreen(
                                     },
                                     onMenu = onMenu,
                                     modifier = modifier,
-                                    contentPadding = padding
                                 )
                             }
                         }
@@ -362,32 +377,22 @@ private fun PlaylistScreen(
 @Composable
 private fun PlaylistPager(
     channelHolder: ChannelHolder,
-    hazeState: HazeState,
     modifier: Modifier = Modifier,
-    content: @Composable (streamHolder: StreamHolder, PaddingValues) -> Unit,
+    content: @Composable (streamHolder: StreamHolder) -> Unit,
 ) {
-    val theme = MaterialTheme.colorScheme
-    val density = LocalDensity.current
-    Box(modifier) {
+    Column(modifier) {
         val channels = channelHolder.channels
-        val floating = channelHolder.floating
+        val zapping = channelHolder.zapping
         val pagerState = rememberPagerState { channels.size }
         val coroutineScope = rememberCoroutineScope()
         val holders = List(channels.size) {
             rememberStreamHolder(
                 streams = channels[it].streams,
-                floating = floating
+                zapping = zapping
             )
         }
-        var tabRowHeight by remember { mutableStateOf(0.dp) }
-        HorizontalPager(pagerState) { pager ->
-            content(
-                holders[pager].copy(floating = floating),
-                PaddingValues(top = tabRowHeight)
-            )
-        }
-        if (channels.size > 1) {
-            Column {
+        Column(Modifier.animateContentSize()) {
+            if (channels.size > 1) {
                 PrimaryScrollableTabRow(
                     selectedTabIndex = pagerState.currentPage,
                     containerColor = Color.Transparent,
@@ -414,24 +419,23 @@ private fun PlaylistPager(
                                     Text(
                                         text = title,
                                         style = MaterialTheme.typography.titleSmall,
-                                        color = if (selected) theme.onBackground else Color.Unspecified
+                                        color = if (selected) MaterialTheme.colorScheme.onBackground
+                                        else Color.Unspecified
                                     )
                                 }
                             )
                         }
                     },
                     divider = {},
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .hazeChild(hazeState)
-                        .onGloballyPositioned {
-                            tabRowHeight = with(density) {
-                                it.size.height.toDp()
-                            }
-                        }
+                    modifier = Modifier.fillMaxWidth()
                 )
                 HorizontalDivider()
             }
+        }
+        HorizontalPager(pagerState) { pager ->
+            content(
+                holders[pager].copy(zapping = zapping)
+            )
         }
     }
 }
@@ -448,13 +452,13 @@ private fun UnsupportedUIModeContent(
     val device = remember(type) {
         when (type) {
             UI_MODE_TYPE_NORMAL -> "Normal"
-            UI_MODE_TYPE_DESK -> "Desk"
+            UI_MODE_TYPE_DESK -> "Desktop"
             UI_MODE_TYPE_CAR -> "Car"
             UI_MODE_TYPE_TELEVISION -> "Television"
             UI_MODE_TYPE_APPLIANCE -> "Appliance"
             UI_MODE_TYPE_WATCH -> "Watch"
             UI_MODE_TYPE_VR_HEADSET -> "VR-Headset"
-            else -> "Device Type $type"
+            else -> "Device Type: $type"
         }
     }
     Column(

@@ -8,7 +8,6 @@ import androidx.compose.foundation.lazy.staggeredgrid.LazyStaggeredGridState
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.items
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -21,15 +20,12 @@ import com.m3u.data.database.entity.Stream
 import com.m3u.data.database.entity.StreamHolder
 import com.m3u.material.ktx.plus
 import com.m3u.material.model.LocalSpacing
-import dev.chrisbanes.haze.HazeState
-import dev.chrisbanes.haze.haze
 
 typealias PlayStream = (url: String) -> Unit
 
 @Composable
 internal fun StreamGallery(
     state: LazyStaggeredGridState,
-    hazeState: HazeState,
     rowCount: Int,
     streamHolder: StreamHolder,
     play: PlayStream,
@@ -41,7 +37,7 @@ internal fun StreamGallery(
     val pref = LocalPref.current
 
     val streams = streamHolder.streams
-    val floating = streamHolder.floating
+    val floating = streamHolder.zapping
 
     LazyVerticalStaggeredGrid(
         state = state,
@@ -49,12 +45,7 @@ internal fun StreamGallery(
         verticalItemSpacing = spacing.medium,
         horizontalArrangement = Arrangement.spacedBy(spacing.medium),
         contentPadding = PaddingValues(spacing.medium) + contentPadding,
-        modifier = modifier
-            .fillMaxSize()
-            .haze(
-                state = hazeState,
-                backgroundColor = MaterialTheme.colorScheme.surface
-            )
+        modifier = modifier.fillMaxSize()
     ) {
         items(
             items = streams,
@@ -78,7 +69,6 @@ internal fun StreamGallery(
 @Composable
 internal fun TvStreamGallery(
     state: TvLazyGridState,
-    hazeState: HazeState,
     rowCount: Int,
     streamHolder: StreamHolder,
     play: PlayStream,
@@ -90,7 +80,7 @@ internal fun TvStreamGallery(
     val pref = LocalPref.current
 
     val streams = streamHolder.streams
-    val floating = streamHolder.floating
+    val floating = streamHolder.zapping
 
     TvLazyVerticalGrid(
         state = state,
@@ -98,12 +88,7 @@ internal fun TvStreamGallery(
         verticalArrangement = Arrangement.spacedBy(spacing.medium),
         horizontalArrangement = Arrangement.spacedBy(spacing.medium),
         contentPadding = PaddingValues(spacing.medium) + contentPadding,
-        modifier = modifier
-            .fillMaxSize()
-            .haze(
-                state = hazeState,
-                backgroundColor = MaterialTheme.colorScheme.surface
-            )
+        modifier = modifier.fillMaxSize()
     ) {
         items(
             items = streams,

@@ -4,9 +4,15 @@ import android.content.res.Configuration
 import android.view.KeyEvent
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.Sort
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -15,10 +21,13 @@ import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.data.database.entity.StreamHolder
 import com.m3u.data.database.entity.rememberStreamHolder
 import com.m3u.features.favorite.components.FavouriteGallery
+import com.m3u.material.components.Background
 import com.m3u.material.ktx.interceptVolumeEvent
+import com.m3u.ui.Action
 import com.m3u.ui.EventHandler
 import com.m3u.ui.LocalHelper
 import com.m3u.ui.ResumeEvent
+import com.m3u.ui.SortBottomSheet
 
 @Composable
 fun FavouriteRoute(
@@ -30,15 +39,24 @@ fun FavouriteRoute(
 ) {
     val helper = LocalHelper.current
     val pref = LocalPref.current
-    val state by viewModel.state.collectAsStateWithLifecycle()
-    val floating by viewModel.floating.collectAsStateWithLifecycle()
 
-    val streams = remember(state.details) {
-        state.details.flatMap { it.value }
-    }
+    val streams by viewModel.streams.collectAsStateWithLifecycle()
+    val zapping by viewModel.zapping.collectAsStateWithLifecycle()
+    val sorts = viewModel.sorts
+    val sort by viewModel.sort.collectAsStateWithLifecycle()
+
+    val sheetState = rememberModalBottomSheetState()
+
+    var isSortSheetVisible by rememberSaveable { mutableStateOf(false) }
 
     EventHandler(resume) {
-        helper.actions = emptyList()
+        helper.actions = listOf(
+            Action(
+                icon = Icons.AutoMirrored.Rounded.Sort,
+                contentDescription = "sort",
+                onClick = { isSortSheetVisible = true }
+            )
+        )
     }
 
     val interceptVolumeEventModifier = remember(pref.godMode) {
@@ -54,18 +72,29 @@ fun FavouriteRoute(
             }
         } else Modifier
     }
-    FavoriteScreen(
-        contentPadding = contentPadding,
-        rowCount = pref.rowCount,
-        streamHolder = rememberStreamHolder(
-            streams = streams,
-            floating = floating
-        ),
-        navigateToStream = navigateToStream,
-        modifier = modifier
-            .fillMaxSize()
-            .then(interceptVolumeEventModifier)
-    )
+
+    Background {
+        SortBottomSheet(
+            visible = isSortSheetVisible,
+            sort = sort,
+            sorts = sorts,
+            sheetState = sheetState,
+            onChanged = { viewModel.sort(it) },
+            onDismissRequest = { isSortSheetVisible = false }
+        )
+        FavoriteScreen(
+            contentPadding = contentPadding,
+            rowCount = pref.rowCount,
+            streamHolder = rememberStreamHolder(
+                streams = streams,
+                zapping = zapping
+            ),
+            navigateToStream = navigateToStream,
+            modifier = modifier
+                .fillMaxSize()
+                .then(interceptVolumeEventModifier)
+        )
+    }
 }
 
 @Composable

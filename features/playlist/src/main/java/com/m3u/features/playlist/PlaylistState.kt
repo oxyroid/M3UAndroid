@@ -16,22 +16,21 @@ data class Channel(
 @Immutable
 data class ChannelHolder(
     val channels: List<Channel>,
-    val floating: Stream? = null
+    val zapping: Stream? = null
 )
 
 @Composable
 fun rememberChannelHolder(
     channels: List<Channel>,
-    floating: Stream? = null
+    zapping: Stream? = null
 ): ChannelHolder {
-    return remember(channels, floating) {
-        ChannelHolder(channels, floating)
+    return remember(channels, zapping) {
+        ChannelHolder(channels, zapping)
     }
 }
 
 data class PlaylistState(
     val url: String = "",
-    val channels: List<Channel> = emptyList(),
     val fetching: Boolean = false,
     val scrollUp: Event<Unit> = handledEvent()
 )

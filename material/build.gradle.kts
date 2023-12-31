@@ -56,6 +56,8 @@ dependencies {
 
     implementation(libs.com.airbnb.android.lottie.compose)
     api(libs.haze)
+
+    api(libs.kotlinx.collections.immutable)
 }
 
 afterEvaluate {

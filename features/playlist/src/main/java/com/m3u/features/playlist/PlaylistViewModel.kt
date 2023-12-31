@@ -13,24 +13,28 @@ import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.pref.Pref
 import com.m3u.core.architecture.pref.observeAsFlow
 import com.m3u.core.architecture.viewmodel.BaseViewModel
-import com.m3u.core.wrapper.chain
+import com.m3u.core.wrapper.Resource
 import com.m3u.core.wrapper.eventOf
-import com.m3u.core.wrapper.failure
-import com.m3u.core.wrapper.success
+import com.m3u.data.database.entity.Playlist
 import com.m3u.data.database.entity.Stream
 import com.m3u.data.repository.MediaRepository
 import com.m3u.data.repository.PlaylistRepository
 import com.m3u.data.repository.StreamRepository
-import com.m3u.data.repository.refresh
 import com.m3u.data.service.PlayerManager
 import com.m3u.features.playlist.PlaylistMessage.StreamCoverSaved
+import com.m3u.ui.Sort
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Job
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.toPersistentList
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapMerge
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -69,7 +73,7 @@ class PlaylistViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5_000)
         )
 
-    val floating = combine(
+    val zapping = combine(
         zappingMode,
         playerManager.url,
         streamRepository.observeAll()
@@ -83,48 +87,25 @@ class PlaylistViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5_000)
         )
 
-    private var observeJob: Job? = null
+
     private fun observe(playlistUrl: String) {
-        if (playlistUrl.isEmpty()) {
-            onMessage(PlaylistMessage.PlaylistUrlNotFound)
-            return
-        }
-        observeJob?.cancel()
-        observeJob = playlistRepository
-            .observeWithStreams(playlistUrl)
-            .combine(_query) { current, query ->
-                val playlist = current?.playlist
-                val streams = current?.streams ?: emptyList()
-                val channels = streams.toChannels(query)
-                playlist to channels
-            }
-            .onEach { result ->
-                val playlist = result.first
-                val channels = result.second
-                writable.update { prev ->
-                    prev.copy(
-                        url = playlist?.url.orEmpty(),
-                        channels = channels
-                    )
-                }
-            }
-            .launchIn(viewModelScope)
+        this.playlistUrl.update { playlistUrl }
     }
 
     private fun refresh() {
         val url = readable.url
-        playlistRepository
-            .refresh(url, pref.playlistStrategy)
-            .chain()
-            .onEach {
-                writable.update { prev ->
-                    prev.copy(
-                        fetching = !it.isCompleted
-                    )
-                }
-            }
-            .failure(logger::log)
-            .launchIn(viewModelScope)
+//        playlistRepository
+//            .refresh(url, pref.playlistStrategy)
+//            .chain()
+//            .onEach {
+//                writable.update { prev ->
+//                    prev.copy(
+//                        fetching = !it.isCompleted
+//                    )
+//                }
+//            }
+//            .failure(logger::log)
+//            .launchIn(viewModelScope)
     }
 
     private fun favourite(event: PlaylistEvent.Favourite) {
@@ -151,16 +132,25 @@ class PlaylistViewModel @Inject constructor(
                 onMessage(PlaylistMessage.StreamNotFound)
                 return@launch
             }
-            val url = stream.cover
-            if (url.isNullOrEmpty()) {
+            val cover = stream.cover
+            if (cover.isNullOrEmpty()) {
                 onMessage(PlaylistMessage.StreamCoverNotFound)
                 return@launch
             }
             mediaRepository
-                .savePicture(url)
-                .chain()
-                .success { onMessage(StreamCoverSaved(it.absolutePath)) }
-                .failure(logger::log)
+                .savePicture(cover)
+                .onEach { resource ->
+                    when (resource) {
+                        Resource.Loading -> {}
+                        is Resource.Success -> {
+                            onMessage(StreamCoverSaved(resource.data.absolutePath))
+                        }
+
+                        is Resource.Failure -> {
+                            logger.log(resource.message.orEmpty())
+                        }
+                    }
+                }
                 .launchIn(this)
         }
     }
@@ -212,9 +202,69 @@ class PlaylistViewModel @Inject constructor(
         _query.update { text }
     }
 
-    private fun List<Stream>.toChannels(query: CharSequence): List<Channel> =
-        filter { it.title.contains(query, true) }
-            .groupBy { it.group }
-            .toList()
-            .map { Channel(it.first, it.second) }
+    private fun List<Stream>.toChannels(): List<Channel> = groupBy { it.group }
+        .toList()
+        .map { Channel(it.first, it.second) }
+
+    private fun List<Stream>.toSingleChannel(): List<Channel> = listOf(
+        Channel("", this)
+    )
+
+    private val playlistUrl = MutableStateFlow("")
+
+    val playlist: StateFlow<Playlist?> = playlistUrl.map { url ->
+        playlistRepository.get(url)
+    }
+        .stateIn(
+            scope = viewModelScope,
+            initialValue = null,
+            started = SharingStarted.WhileSubscribed(5_000L)
+        )
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private val unsorted: StateFlow<List<Stream>> = combine(
+        playlistUrl.flatMapMerge { url ->
+            playlistRepository.observeWithStreams(url)
+        },
+        query
+    ) { current, query ->
+        current?.streams?.filter { it.title.contains(query, true) } ?: emptyList()
+    }
+        .stateIn(
+            scope = viewModelScope,
+            initialValue = emptyList(),
+            started = SharingStarted.WhileSubscribed(5_000L)
+        )
+
+    val sorts: ImmutableList<Sort> = Sort.entries.toPersistentList()
+
+    private val sortIndex = MutableStateFlow(0)
+
+    val sort = sortIndex
+        .map { sorts[it] }
+        .stateIn(
+            scope = viewModelScope,
+            initialValue = Sort.UNSPECIFIED,
+            started = SharingStarted.WhileSubscribed(5_000L)
+        )
+
+    fun sort(sort: Sort) {
+        sortIndex.update { sorts.indexOf(sort).coerceAtLeast(0) }
+    }
+
+    val channels = combine(
+        unsorted,
+        sort
+    ) { all, sort ->
+        when (sort) {
+            Sort.ASC -> all.sortedBy { it.title }.toSingleChannel()
+            Sort.DESC -> all.sortedByDescending { it.title }.toSingleChannel()
+            Sort.UNSPECIFIED -> all.toChannels()
+        }
+    }
+        .stateIn(
+            scope = viewModelScope,
+            initialValue = emptyList(),
+            started = SharingStarted.WhileSubscribed(5_000L)
+        )
 }

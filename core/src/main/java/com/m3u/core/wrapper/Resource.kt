@@ -1,15 +1,11 @@
-@file:Suppress("unused")
-
 package com.m3u.core.wrapper
 
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
 import kotlinx.coroutines.channels.ProducerScope
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.map
 import kotlin.experimental.ExperimentalTypeInference
 
 sealed class Resource<out T> {
@@ -25,14 +21,6 @@ sealed class Resource<out T> {
     data class Failure<out T>(
         val message: String?
     ) : Resource<T>()
-}
-
-fun <T> Flow<Resource<T>>.chain(): Flow<Chain<T>> = map {
-    when (it) {
-        is Resource.Success -> Chain(data = { it.data })
-        is Resource.Failure -> Chain(message = { it.message })
-        else -> Chain()
-    }
 }
 
 @OptIn(ExperimentalTypeInference::class)

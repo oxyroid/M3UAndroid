@@ -28,7 +28,7 @@ internal fun FavouriteGallery(
     val pref = LocalPref.current
     val helper = LocalHelper.current
     val streams = streamHolder.streams
-    val floating = streamHolder.floating
+    val zapping = streamHolder.zapping
     LazyVerticalStaggeredGrid(
         columns = StaggeredGridCells.Fixed(rowCount),
         verticalItemSpacing = spacing.medium,
@@ -44,7 +44,7 @@ internal fun FavouriteGallery(
             FavoriteItem(
                 stream = stream,
                 noPictureMode = pref.noPictureMode,
-                border = floating != stream,
+                border = zapping != stream,
                 onClick = {
                     helper.play(stream.url)
                     navigateToStream()

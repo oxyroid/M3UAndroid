@@ -67,6 +67,7 @@ fun StreamRoute(
                     viewModel.onEvent(StreamEvent.Stop)
                 }
             }
+
             else -> {}
         }
     }
@@ -125,7 +126,6 @@ fun StreamRoute(
         color = Color.Black,
         contentColor = Color.White
     ) {
-        // TODO: replace with material3-carousel.
         DlnaDevicesBottomSheet(
             maskState = maskState,
             searching = searching,

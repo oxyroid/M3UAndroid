@@ -40,15 +40,15 @@ data class Stream(
 @Immutable
 data class StreamHolder(
     val streams: List<Stream> = emptyList(),
-    val floating: Stream? = null
+    val zapping: Stream? = null
 )
 
 @Composable
 fun rememberStreamHolder(
     streams: List<Stream>,
-    floating: Stream? = null
+    zapping: Stream? = null
 ): StreamHolder {
-    return remember(streams, floating) {
-        StreamHolder(streams, floating)
+    return remember(streams, zapping) {
+        StreamHolder(streams, zapping)
     }
 }
