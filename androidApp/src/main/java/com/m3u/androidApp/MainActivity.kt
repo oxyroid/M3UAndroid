@@ -206,7 +206,13 @@ class MainActivity : AppCompatActivity() {
             if (message == Message.Static || message == Message.Dynamic.EMPTY) return
             logger.log(
                 text = when (message) {
-                    is Message.Static -> getString(message.resId, message.formatArgs)
+                    is Message.Static -> {
+                        val args = message.formatArgs.flatMap {
+                            if (it is Array<*>) it.toList()
+                            else listOf(it)
+                        }
+                        getString(message.resId, *args.toTypedArray())
+                    }
                     is Message.Dynamic -> message.value
                 },
                 level = message.level,

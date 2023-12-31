@@ -12,19 +12,6 @@ sealed class PlaylistMessage(
     resId: Int,
     vararg formatArgs: Any
 ) : Message.Static(level, "playlist", type, duration, resId, formatArgs) {
-    data object PlaylistUrlNotFound : PlaylistMessage(
-        level = LEVEL_ERROR,
-        type = TYPE_SNACK,
-        resId = string.feat_playlist_error_playlist_url_not_found
-    )
-
-    data class PlaylistNotFound(val playlistUrl: String) :
-        PlaylistMessage(
-            level = LEVEL_ERROR,
-            type = TYPE_SNACK,
-            resId = string.feat_playlist_error_playlist_not_found,
-            formatArgs = arrayOf(playlistUrl)
-        )
 
     data object StreamNotFound : PlaylistMessage(
         level = LEVEL_ERROR,
@@ -38,11 +25,10 @@ sealed class PlaylistMessage(
         resId = string.feat_playlist_error_stream_cover_not_found
     )
 
-    data class StreamCoverSaved(val path: String) :
-        PlaylistMessage(
-            level = LEVEL_ERROR,
-            type = TYPE_SNACK,
-            resId = string.feat_playlist_success_save_cover,
-            formatArgs = arrayOf(path)
-        )
+    data class StreamCoverSaved(val path: String) : PlaylistMessage(
+        level = LEVEL_INFO,
+        type = TYPE_SNACK,
+        resId = string.feat_playlist_success_save_cover,
+        formatArgs = arrayOf(path)
+    )
 }
