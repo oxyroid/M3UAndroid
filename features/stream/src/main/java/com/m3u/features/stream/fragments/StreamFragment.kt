@@ -148,7 +148,7 @@ internal fun StreamFragment(
                         MaskButton(
                             state = maskState,
                             icon = when (gesture) {
-                                MaskGesture.LIGHT -> when {
+                                MaskGesture.BRIGHTNESS -> when {
                                     brightness < 0.5f -> Icons.Rounded.DarkMode
                                     else -> Icons.Rounded.LightMode
                                 }
@@ -167,7 +167,7 @@ internal fun StreamFragment(
                             tint = when (gesture) {
                                 null -> if (muted) theme.error else Color.Unspecified
                                 MaskGesture.VOLUME -> if (muted) theme.error else Color.Unspecified
-                                MaskGesture.LIGHT -> Color.Unspecified
+                                MaskGesture.BRIGHTNESS -> Color.Unspecified
                             }
                         )
                         MaskButton(
@@ -311,6 +311,8 @@ internal fun StreamFragment(
                         }
                     },
                     modifier = Modifier.detectVerticalMaskGestures(
+                        safePercent = 0.35f,
+                        threshold = maxHeight.value * 0.15f,
                         volume = { deltaPixel ->
                             if (!pref.volumeGesture) return@detectVerticalMaskGestures
                             onVolume(
@@ -347,38 +349,50 @@ internal fun StreamFragment(
 }
 
 private enum class MaskGesture {
-    VOLUME, LIGHT
+    VOLUME, BRIGHTNESS
 }
 
 private object StreamFragmentDefaults {
+    /**
+     * @param safePercent The percent of horizontal area from center that will not trigger the gesture.
+     * @param threshold The minimum pixel value that can respond to gestures.
+     */
     @Composable
     fun Modifier.detectVerticalMaskGestures(
+        safePercent: Float = 0f,
+        threshold: Float = 0f,
         volume: (pixel: Float) -> Unit,
         brightness: (pixel: Float) -> Unit,
         onDragStart: ((MaskGesture) -> Unit)? = null,
         onDragEnd: (() -> Unit)? = null
     ): Modifier {
         var gesture: MaskGesture? = null
+        var totalPixel = 0f
         return this then Modifier.pointerInput(Unit) {
             detectVerticalDragGestures(
                 onDragStart = { start ->
-                    gesture = when (start.x) {
-                        in 0f..size.width / 2f -> MaskGesture.LIGHT
-                        else -> MaskGesture.VOLUME
-                    }.also {
-                        onDragStart?.invoke(it)
+                    when (start.x) {
+                        in 0f..size.width * (1 - safePercent) / 2 ->
+                            gesture = MaskGesture.BRIGHTNESS.also { onDragStart?.invoke(it) }
+                        in size.width * (1 + safePercent) / 2 .. 1f ->
+                            gesture = MaskGesture.BRIGHTNESS.also { onDragStart?.invoke(it) }
+                        else -> {}
                     }
                 },
                 onDragEnd = {
                     onDragEnd?.invoke()
                     gesture = null
+                    totalPixel = 0f
                 },
                 onDragCancel = {
                     gesture = null
+                    totalPixel = 0f
                 },
                 onVerticalDrag = { _, dragAmount ->
+                    totalPixel += dragAmount
+                    if (totalPixel < threshold) return@detectVerticalDragGestures
                     when (gesture) {
-                        MaskGesture.LIGHT -> brightness(dragAmount)
+                        MaskGesture.BRIGHTNESS -> brightness(dragAmount)
                         MaskGesture.VOLUME -> volume(dragAmount)
                         null -> {}
                     }

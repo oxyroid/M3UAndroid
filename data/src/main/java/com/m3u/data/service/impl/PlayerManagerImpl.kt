@@ -33,18 +33,14 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.plus
 import okhttp3.OkHttpClient
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
-
-private data class PlayerPayload(
-    val isSSLVerification: Boolean,
-    val timeout: Long
-)
 
 class PlayerManagerImpl @Inject constructor(
     @ApplicationContext private val context: Context,
@@ -59,39 +55,49 @@ class PlayerManagerImpl @Inject constructor(
     private val _url = MutableStateFlow<String?>(null)
     override val url: StateFlow<String?> = _url.asStateFlow()
 
-    private val payload = pref
-        .observeAsFlow { PlayerPayload(it.isSSLVerification, it.connectTimeout) }
-        .onEach { payload ->
-            player.update {
-                createPlayer(payload)
-            }
-        }
+    private val isSSLVerification = pref
+        .observeAsFlow { it.isSSLVerification }
         .stateIn(
             scope = scope,
             started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = PlayerPayload(
-                pref.isSSLVerification,
-                pref.connectTimeout
-            )
+            initialValue = Pref.DEFAULT_SSL_VERIFICATION
+        )
+    private val connectTimeout = pref
+        .observeAsFlow { it.connectTimeout }
+        .stateIn(
+            scope = scope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = Pref.DEFAULT_CONNECT_TIMEOUT
         )
 
-    private fun createPlayer(payload: PlayerPayload): Player {
+    init {
+        combine(
+            isSSLVerification,
+            connectTimeout
+        ) { _, _ -> replay() }
+            .launchIn(scope)
+    }
+
+    private fun createPlayer(
+        isSSLVerification: Boolean,
+        timeout: Long
+    ): Player {
         val rf = DefaultRenderersFactory(context).apply {
             setEnableDecoderFallback(true)
         }
         val msf = DefaultMediaSourceFactory(context)
             .setDataSourceFactory(
-                if (payload.isSSLVerification) DefaultDataSource.Factory(context)
+                if (isSSLVerification) DefaultDataSource.Factory(context)
                 else DefaultDataSource.Factory(
                     context,
                     OkHttpDataSource.Factory(
                         OkHttpClient.Builder()
                             .sslSocketFactory(SSL.TLSTrustAll.socketFactory, Certs.TrustAll)
                             .hostnameVerifier { _, _ -> true }
-                            .connectTimeout(payload.timeout, TimeUnit.MILLISECONDS)
-                            .callTimeout(payload.timeout, TimeUnit.MILLISECONDS)
-                            .readTimeout(payload.timeout, TimeUnit.MILLISECONDS)
-                            .writeTimeout(payload.timeout, TimeUnit.MILLISECONDS)
+                            .connectTimeout(timeout, TimeUnit.MILLISECONDS)
+                            .callTimeout(timeout, TimeUnit.MILLISECONDS)
+                            .readTimeout(timeout, TimeUnit.MILLISECONDS)
+                            .writeTimeout(timeout, TimeUnit.MILLISECONDS)
                             .build()
                     )
                 )
@@ -118,7 +124,7 @@ class PlayerManagerImpl @Inject constructor(
         player.update { prev ->
             if (prev != null) stop()
             _url.update { url }
-            createPlayer(payload.value).also {
+            createPlayer(isSSLVerification.value, connectTimeout.value).also {
                 it.addListener(this)
                 val mediaItem = MediaItem.fromUri(url)
                 it.setMediaItem(mediaItem)

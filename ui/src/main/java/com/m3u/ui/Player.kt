@@ -85,14 +85,7 @@ fun Player(
         modifier = modifier
     ) { view ->
         view.apply {
-            setShutterBackgroundColor(currentShutterColor.toArgb())
-            player?.let { currentPlayer ->
-                PlayerView.switchTargetView(
-                    currentPlayer,
-                    null,
-                    this
-                )
-            }
+            this.player = player
             setKeepScreenOn(keepScreenOn)
             resizeMode = when (clipMode) {
                 ClipMode.ADAPTIVE -> AspectRatioFrameLayout.RESIZE_MODE_FIT

@@ -19,17 +19,16 @@ class DynamicMessageServiceImpl @Inject constructor() : DynamicMessageService {
     private val _message = MutableStateFlow(Message.Dynamic.EMPTY)
     override val message: StateFlow<Message.Dynamic> get() = _message.asStateFlow()
 
+    private val coroutineScope = CoroutineScope(Dispatchers.Main)
     private val job = AtomicReference<Job?>()
 
     override fun emit(message: Message.Dynamic) {
-        CoroutineScope(Dispatchers.Main).launch {
-            job.getAndUpdate { prev ->
-                prev?.cancel()
-                launch {
-                    _message.update { message }
-                    delay(message.duration)
-                    _message.update { Message.Dynamic.EMPTY }
-                }
+        job.getAndUpdate { prev ->
+            prev?.cancel()
+            coroutineScope.launch {
+                _message.update { message }
+                delay(message.duration)
+                _message.update { Message.Dynamic.EMPTY }
             }
         }
     }
