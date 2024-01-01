@@ -302,6 +302,7 @@ fun LabelField(
     contentColor: Color = TextFieldDefaults.contentColor(),
     shape: Shape = TextFieldDefaults.shape(),
     placeholder: String = "",
+    keyboardType: KeyboardType = KeyboardType.Text,
     readOnly: Boolean = false,
     enabled: Boolean = true,
     imeAction: ImeAction = ImeAction.Done,
@@ -357,7 +358,7 @@ fun LabelField(
                 onNext = { focusManager.moveFocus(FocusDirection.Down) }
             ),
             keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Password,
+                keyboardType = keyboardType,
                 imeAction = imeAction
             ),
             readOnly = readOnly,
@@ -449,6 +450,7 @@ fun LabelField(
     contentColor: Color = TextFieldDefaults.contentColor(),
     shape: Shape = TextFieldDefaults.shape(),
     placeholder: String = "",
+    keyboardType: KeyboardType = KeyboardType.Text,
     readOnly: Boolean = false,
     enabled: Boolean = true,
     imeAction: ImeAction = ImeAction.Done,
@@ -504,7 +506,7 @@ fun LabelField(
                 onNext = { focusManager.moveFocus(FocusDirection.Down) }
             ),
             keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Password,
+                keyboardType = keyboardType,
                 imeAction = imeAction
             ),
             readOnly = readOnly,
