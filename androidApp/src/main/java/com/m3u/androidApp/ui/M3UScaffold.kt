@@ -141,9 +141,7 @@ private fun M3UScaffoldImpl(
                         .fillMaxWidth()
                 )
             },
-            modifier = modifier
-                .fillMaxSize()
-                // .nestedScroll(scrollBehavior.nestedScrollConnection)
+            modifier = modifier.fillMaxSize()
         ) { padding ->
             Box(Modifier.haze(hazeState, currentColor)) {
                 content(padding)

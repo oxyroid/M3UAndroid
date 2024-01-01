@@ -88,11 +88,13 @@ class AboutViewModel @Inject constructor(
                 .url("https://raw.githubusercontent.com/realOxy/M3UAndroid/master/gradle/libs.versions.toml")
                 .build()
             val response = withContext(Dispatchers.IO) {
-                client
-                    .newCall(request)
-                    .execute()
+                logger.execute {
+                    client
+                        .newCall(request)
+                        .execute()
+                }
             }
-            val input = response.body?.byteStream()
+            val input = response?.body?.byteStream()
             versionCatalog.update {
                 input?.use { parser.execute(it) } ?: emptyList()
             }

@@ -1,22 +1,14 @@
 package com.m3u.features.stream.fragments
 
 import android.content.pm.ActivityInfo
-import android.database.ContentObserver
-import android.os.Handler
-import android.os.Looper
-import android.provider.Settings
-import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.basicMarquee
-import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
@@ -40,25 +32,20 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.produceState
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.core.util.basic.isNotEmpty
@@ -69,14 +56,13 @@ import com.m3u.features.stream.fragments.StreamFragmentDefaults.detectVerticalMa
 import com.m3u.i18n.R.string
 import com.m3u.material.components.Background
 import com.m3u.material.components.Image
-import com.m3u.material.components.MaskButton
-import com.m3u.material.components.MaskCircleButton
-import com.m3u.material.components.MaskState
+import com.m3u.material.components.mask.MaskButton
+import com.m3u.material.components.mask.MaskCircleButton
+import com.m3u.material.components.mask.MaskState
 import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.LocalHelper
 import com.m3u.ui.Player
 import com.m3u.ui.rememberPlayerState
-import kotlin.math.absoluteValue
 import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
@@ -122,7 +108,9 @@ internal fun StreamFragment(
 
             Player(
                 state = state,
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier
+                    .fillMaxSize()
+                    .align(Alignment.Center)
             )
 
             val shouldShowPlaceholder = cover.isNotEmpty() && playerState.videoSize.isEmpty
@@ -134,7 +122,7 @@ internal fun StreamFragment(
             )
 
             BoxWithConstraints {
-                var gesture: MaskGesture? by rememberSaveable { mutableStateOf(null) }
+                var gesture: MaskGesture? by remember { mutableStateOf(null) }
                 val muted = currentVolume == 0f
                 PlayerMask(
                     state = maskState,
@@ -235,7 +223,6 @@ internal fun StreamFragment(
                             verticalArrangement = Arrangement.Bottom,
                             modifier = Modifier
                                 .semantics(mergeDescendants = true) { }
-                                .fillMaxHeight()
                                 .weight(1f)
                         ) {
                             Text(
@@ -247,7 +234,7 @@ internal fun StreamFragment(
                             )
                             Text(
                                 text = title,
-                                style = MaterialTheme.typography.titleLarge,
+                                style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.ExtraBold,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,
@@ -282,39 +269,31 @@ internal fun StreamFragment(
                                     modifier = Modifier.basicMarquee()
                                 )
                             }
-                            // TODO: implement servers ui here.
-
                         }
-                        Row(
-                            horizontalArrangement = Arrangement.End,
-                            verticalAlignment = Alignment.Bottom,
-                            modifier = Modifier.fillMaxHeight()
-                        ) {
-                            val autoRotating by StreamFragmentDefaults.IsAutoRotatingEnabled
-                            LaunchedEffect(autoRotating) {
-                                if (autoRotating) {
-                                    helper.screenOrientation =
-                                        ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
-                                }
+                        val autoRotating by StreamFragmentDefaults.IsAutoRotatingEnabled
+                        LaunchedEffect(autoRotating) {
+                            if (autoRotating) {
+                                helper.screenOrientation =
+                                    ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
                             }
-                            if (pref.screenRotating && !autoRotating) {
-                                MaskButton(
-                                    state = maskState,
-                                    icon = Icons.Rounded.ScreenRotationAlt,
-                                    onClick = {
-                                        helper.screenOrientation = when (helper.screenOrientation) {
-                                            ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE -> ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
-                                            else -> ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
-                                        }
-                                    },
-                                    contentDescription = stringResource(string.feat_stream_screen_rotating)
-                                )
-                            }
+                        }
+                        if (pref.screenRotating && !autoRotating) {
+                            MaskButton(
+                                state = maskState,
+                                icon = Icons.Rounded.ScreenRotationAlt,
+                                onClick = {
+                                    helper.screenOrientation = when (helper.screenOrientation) {
+                                        ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE -> ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+                                        else -> ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+                                    }
+                                },
+                                contentDescription = stringResource(string.feat_stream_screen_rotating)
+                            )
                         }
                     },
                     modifier = Modifier.detectVerticalMaskGestures(
-                        safePercent = 0.35f,
-                        threshold = maxHeight.value * 0.15f,
+                        safe = 0.35f,
+                        threshold = 0.15f,
                         volume = { deltaPixel ->
                             if (!pref.volumeGesture) return@detectVerticalMaskGestures
                             onVolume(
@@ -348,107 +327,4 @@ internal fun StreamFragment(
             }
         }
     }
-}
-
-private enum class MaskGesture {
-    VOLUME, BRIGHTNESS
-}
-
-private object StreamFragmentDefaults {
-    /**
-     * @param safePercent The percent of horizontal area from center that will not trigger the gesture.
-     * @param threshold The minimum pixel value that can respond to gestures.
-     */
-    @Composable
-    fun Modifier.detectVerticalMaskGestures(
-        safePercent: Float = 0f,
-        threshold: Float = 0f,
-        volume: (pixel: Float) -> Unit,
-        brightness: (pixel: Float) -> Unit,
-        onDragStart: ((MaskGesture) -> Unit)? = null,
-        onDragEnd: (() -> Unit)? = null
-    ): Modifier {
-        var gesture: MaskGesture? = null
-        var totalPixel = 0f
-        return this then Modifier.pointerInput(Unit) {
-            detectVerticalDragGestures(
-                onDragStart = { start ->
-                    when (start.x / size.width) {
-                        in 0f..(1 - safePercent) / 2 ->
-                            gesture = MaskGesture.BRIGHTNESS.also { onDragStart?.invoke(it) }
-                        in (1 + safePercent) / 2 .. 1f ->
-                            gesture = MaskGesture.VOLUME.also { onDragStart?.invoke(it) }
-                        else -> {}
-                    }
-                    Log.e("TAG", "width: ${size.width}, ${start.x}, r: $gesture")
-                },
-                onDragEnd = {
-                    onDragEnd?.invoke()
-                    gesture = null
-                    totalPixel = 0f
-                },
-                onDragCancel = {
-                    gesture = null
-                    totalPixel = 0f
-                },
-                onVerticalDrag = { _, dragAmount ->
-                    totalPixel += dragAmount.absoluteValue
-                    if (totalPixel < threshold) return@detectVerticalDragGestures
-                    when (gesture) {
-                        MaskGesture.BRIGHTNESS -> brightness(dragAmount)
-                        MaskGesture.VOLUME -> volume(dragAmount)
-                        null -> {}
-                    }
-                }
-            )
-        }
-    }
-
-    @Composable
-    fun playbackExceptionDisplayText(e: PlaybackException?): String = when (e) {
-        null -> ""
-        else -> "[${e.errorCode}] ${e.errorCodeName}"
-    }
-
-    @Composable
-    fun playStateDisplayText(@Player.State state: Int): String = when (state) {
-        Player.STATE_IDLE -> string.feat_stream_playback_state_idle
-        Player.STATE_BUFFERING -> string.feat_stream_playback_state_buffering
-        Player.STATE_READY -> null
-        Player.STATE_ENDED -> string.feat_stream_playback_state_ended
-        else -> null
-    }
-        ?.let { stringResource(it) }
-        .orEmpty()
-
-    val IsAutoRotatingEnabled: State<Boolean>
-        @Composable get() {
-            val context = LocalContext.current
-            val contentResolver = context.contentResolver
-            val initialValue = Settings.System.getInt(
-                contentResolver,
-                Settings.System.ACCELEROMETER_ROTATION
-            ) == 1
-            return produceState(initialValue) {
-                val uri = Settings.System.getUriFor(Settings.System.ACCELEROMETER_ROTATION)
-                val handler = Handler(Looper.getMainLooper())
-                val observer = object : ContentObserver(handler) {
-                    override fun onChange(selfChange: Boolean) {
-                        super.onChange(selfChange)
-                        value = Settings.System.getInt(
-                            contentResolver,
-                            Settings.System.ACCELEROMETER_ROTATION
-                        ) == 1
-                    }
-                }
-                contentResolver.registerContentObserver(
-                    uri,
-                    true,
-                    observer
-                )
-                awaitDispose {
-                    contentResolver.unregisterContentObserver(observer)
-                }
-            }
-        }
 }

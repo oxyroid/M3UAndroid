@@ -1,7 +1,6 @@
 package com.m3u.features.stream
 
 import android.graphics.Rect
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -19,7 +18,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.core.architecture.pref.LocalPref
-import com.m3u.core.unspecified.UBoolean
 import com.m3u.core.unspecified.unspecifiable
 import com.m3u.core.util.basic.isNotEmpty
 import com.m3u.features.stream.components.DlnaDevicesBottomSheet
@@ -27,9 +25,9 @@ import com.m3u.features.stream.components.rememberDeviceHolder
 import com.m3u.features.stream.components.rememberDeviceWrapper
 import com.m3u.features.stream.fragments.StreamFragment
 import com.m3u.material.components.Background
-import com.m3u.material.components.Interceptor
-import com.m3u.material.components.MaskState
-import com.m3u.material.components.rememberMaskState
+import com.m3u.material.components.mask.MaskInterceptor
+import com.m3u.material.components.mask.MaskState
+import com.m3u.material.components.mask.rememberMaskState
 import com.m3u.material.ktx.LifecycleEffect
 import com.m3u.ui.LocalHelper
 import com.m3u.ui.OnPipModeChanged
@@ -74,8 +72,8 @@ fun StreamRoute(
 
     helper.repeatOnLifecycle {
         darkMode = true.unspecifiable
-        statusBarVisibility = UBoolean.False
-        navigationBarVisibility = UBoolean.False
+        statusBarVisibility = false.unspecifiable
+        navigationBarVisibility = false.unspecifiable
         onPipModeChanged = OnPipModeChanged { info ->
             isPipMode = info.isInPictureInPictureMode
             if (!isPipMode) {
@@ -105,7 +103,7 @@ fun StreamRoute(
         snapshotFlow { maskState.visible }
             .onEach { visible ->
                 helper.statusBarVisibility = visible.unspecifiable
-                helper.navigationBarVisibility = UBoolean.False
+                helper.navigationBarVisibility = false.unspecifiable
             }
             .launchIn(this)
     }
@@ -118,7 +116,7 @@ fun StreamRoute(
     }
 
     LaunchedEffect(isPipMode) {
-        val interceptor: Interceptor? = if (isPipMode) { _ -> false } else null
+        val interceptor: MaskInterceptor? = if (isPipMode) { _ -> false } else null
         maskState.intercept(interceptor)
     }
 
@@ -200,7 +198,6 @@ private fun StreamScreen(
         onVolume = onVolume,
         modifier = modifier
             .fillMaxSize()
-            .background(Color.Black)
             .testTag("features:stream")
     )
 }

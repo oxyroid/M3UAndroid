@@ -72,6 +72,7 @@ class PlayerActivity : ComponentActivity() {
 
     private val shortcutStreamUrlLiveData = MutableLiveData<String?>(null)
     private val shortcutRecentlyLiveData = MutableLiveData(false)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
