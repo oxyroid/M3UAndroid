@@ -5,6 +5,7 @@ import android.database.ContentObserver
 import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
+import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.basicMarquee
@@ -75,6 +76,7 @@ import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.LocalHelper
 import com.m3u.ui.Player
 import com.m3u.ui.rememberPlayerState
+import kotlin.math.absoluteValue
 import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
@@ -371,13 +373,14 @@ private object StreamFragmentDefaults {
         return this then Modifier.pointerInput(Unit) {
             detectVerticalDragGestures(
                 onDragStart = { start ->
-                    when (start.x) {
-                        in 0f..size.width * (1 - safePercent) / 2 ->
+                    when (start.x / size.width) {
+                        in 0f..(1 - safePercent) / 2 ->
                             gesture = MaskGesture.BRIGHTNESS.also { onDragStart?.invoke(it) }
-                        in size.width * (1 + safePercent) / 2 .. 1f ->
-                            gesture = MaskGesture.BRIGHTNESS.also { onDragStart?.invoke(it) }
+                        in (1 + safePercent) / 2 .. 1f ->
+                            gesture = MaskGesture.VOLUME.also { onDragStart?.invoke(it) }
                         else -> {}
                     }
+                    Log.e("TAG", "width: ${size.width}, ${start.x}, r: $gesture")
                 },
                 onDragEnd = {
                     onDragEnd?.invoke()
@@ -389,7 +392,7 @@ private object StreamFragmentDefaults {
                     totalPixel = 0f
                 },
                 onVerticalDrag = { _, dragAmount ->
-                    totalPixel += dragAmount
+                    totalPixel += dragAmount.absoluteValue
                     if (totalPixel < threshold) return@detectVerticalDragGestures
                     when (gesture) {
                         MaskGesture.BRIGHTNESS -> brightness(dragAmount)
