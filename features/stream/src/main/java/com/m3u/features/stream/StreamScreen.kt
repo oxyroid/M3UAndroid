@@ -1,6 +1,5 @@
 package com.m3u.features.stream
 
-import android.content.Context
 import android.graphics.Rect
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
@@ -16,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.LifecycleStartEffect
@@ -119,10 +119,11 @@ fun StreamRoute(
             maskState.wake()
             viewModel.onEvent(StreamEvent.OnVolume(0f))
         }
-        context.registerReceiver(
+        ContextCompat.registerReceiver(
+            context,
             receiver,
             AudioBecomingNoisyReceiver.INTENT_FILTER,
-            Context.RECEIVER_NOT_EXPORTED
+            ContextCompat.RECEIVER_NOT_EXPORTED
         )
         onPauseOrDispose {
             context.unregisterReceiver(receiver)
