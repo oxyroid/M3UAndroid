@@ -42,6 +42,8 @@ dependencies {
 
     implementation(libs.androidx.core.core.ktx)
     implementation(libs.androidx.appcompat.appcompat)
+    implementation(libs.androidx.lifecycle.lifecycle.runtime.compose)
+
     implementation(libs.com.google.android.material.material)
     implementation(libs.androidx.media3.media3.ui)
     implementation(libs.androidx.media3.media3.exoplayer)

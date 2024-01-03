@@ -13,9 +13,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleResumeEffect
+import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.core.unspecified.unspecifiable
@@ -23,12 +25,12 @@ import com.m3u.core.util.basic.isNotEmpty
 import com.m3u.features.stream.components.DlnaDevicesBottomSheet
 import com.m3u.features.stream.components.rememberDeviceHolder
 import com.m3u.features.stream.components.rememberDeviceWrapper
+import com.m3u.features.stream.fragments.AudioBecomingNoisyReceiver
 import com.m3u.features.stream.fragments.StreamFragment
 import com.m3u.material.components.Background
 import com.m3u.material.components.mask.MaskInterceptor
 import com.m3u.material.components.mask.MaskState
 import com.m3u.material.components.mask.rememberMaskState
-import com.m3u.material.ktx.LifecycleEffect
 import com.m3u.ui.LocalHelper
 import com.m3u.ui.OnPipModeChanged
 import com.m3u.ui.repeatOnLifecycle
@@ -43,6 +45,7 @@ fun StreamRoute(
 ) {
     val helper = LocalHelper.current
     val pref = LocalPref.current
+    val context = LocalContext.current
 
     val state: StreamState by viewModel.state.collectAsStateWithLifecycle()
     val playerState: StreamState.PlayerState by viewModel.playerState.collectAsStateWithLifecycle()
@@ -58,15 +61,11 @@ fun StreamRoute(
 
     val maskState = rememberMaskState()
 
-    LifecycleEffect { event ->
-        when (event) {
-            Lifecycle.Event.ON_STOP -> {
-                if (isPipMode) {
-                    viewModel.onEvent(StreamEvent.Stop)
-                }
+    LifecycleStartEffect {
+        onStopOrDispose {
+            if (isPipMode) {
+                viewModel.onEvent(StreamEvent.Stop)
             }
-
-            else -> {}
         }
     }
 
@@ -112,6 +111,16 @@ fun StreamRoute(
         val prev = helper.brightness
         onDispose {
             helper.brightness = prev
+        }
+    }
+    LifecycleResumeEffect {
+        val receiver = AudioBecomingNoisyReceiver {
+            maskState.wake()
+            viewModel.onEvent(StreamEvent.OnVolume(0f))
+        }
+        context.registerReceiver(receiver, AudioBecomingNoisyReceiver.INTENT_FILTER)
+        onPauseOrDispose {
+            context.unregisterReceiver(receiver)
         }
     }
 

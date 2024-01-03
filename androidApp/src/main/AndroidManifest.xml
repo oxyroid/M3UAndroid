@@ -50,7 +50,8 @@
                 <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
             </intent-filter>
 
-            <meta-data android:name="android.app.shortcuts"
+            <meta-data
+                android:name="android.app.shortcuts"
                 android:resource="@xml/shortcuts" />
         </activity>
         <activity
@@ -64,8 +65,8 @@
         <activity
             android:name="com.m3u.features.crash.CrashActivity"
             android:label="@string/app_label_crash"
-            android:theme="@style/Theme.M3U"
-            android:launchMode="singleInstance" />
+            android:launchMode="singleInstance"
+            android:theme="@style/Theme.M3U" />
 
         <service android:name="com.m3u.dlna.DLNACastService" />
 

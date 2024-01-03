@@ -1,6 +1,11 @@
 package com.m3u.features.stream.fragments
 
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.database.ContentObserver
+import android.media.AudioManager
 import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
@@ -116,4 +121,16 @@ internal object StreamFragmentDefaults {
                 }
             }
         }
+}
+
+class AudioBecomingNoisyReceiver(private val callback: () -> Unit) : BroadcastReceiver() {
+    companion object {
+        val INTENT_FILTER = IntentFilter().apply {
+            addAction(AudioManager.ACTION_AUDIO_BECOMING_NOISY)
+        }
+    }
+
+    override fun onReceive(context: Context, intent: Intent) {
+        callback()
+    }
 }

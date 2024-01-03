@@ -5,6 +5,7 @@ import android.graphics.Rect
 import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
@@ -13,12 +14,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.core.app.PictureInPictureModeChangedInfo
 import androidx.core.util.Consumer
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import com.m3u.core.unspecified.UBoolean
 import com.m3u.core.wrapper.Message
-import com.m3u.material.ktx.LifecycleEffect
 
 typealias OnUserLeaveHint = () -> Unit
 typealias OnPipModeChanged = Consumer<PictureInPictureModeChangedInfo>
@@ -92,23 +94,30 @@ fun Helper.repeatOnLifecycle(
     state: Lifecycle.State = Lifecycle.State.STARTED,
     block: Helper.() -> Unit
 ) {
+    val lifecycleOwner = LocalLifecycleOwner.current
     check(state != Lifecycle.State.CREATED && state != Lifecycle.State.INITIALIZED) {
         "state cannot be CREATED or INITIALIZED!"
     }
     var bundle: HelperBundle? by remember { mutableStateOf(null) }
 
-    LifecycleEffect { event ->
-        when (event) {
-            Lifecycle.Event.upTo(state) -> {
-                bundle = backup()
-                block()
-            }
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.upTo(state) -> {
+                    bundle = backup()
+                    block()
+                }
 
-            Lifecycle.Event.downFrom(state) -> {
-                bundle?.let { restore(it) }
-            }
+                Lifecycle.Event.downFrom(state) -> {
+                    bundle?.let { restore(it) }
+                }
 
-            else -> {}
+                else -> {}
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
         }
     }
 }
