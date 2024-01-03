@@ -1,5 +1,6 @@
 package com.m3u.features.stream
 
+import android.content.Context
 import android.graphics.Rect
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
@@ -118,7 +119,11 @@ fun StreamRoute(
             maskState.wake()
             viewModel.onEvent(StreamEvent.OnVolume(0f))
         }
-        context.registerReceiver(receiver, AudioBecomingNoisyReceiver.INTENT_FILTER)
+        context.registerReceiver(
+            receiver,
+            AudioBecomingNoisyReceiver.INTENT_FILTER,
+            Context.RECEIVER_NOT_EXPORTED
+        )
         onPauseOrDispose {
             context.unregisterReceiver(receiver)
         }
