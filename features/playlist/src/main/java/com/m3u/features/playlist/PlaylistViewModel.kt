@@ -94,12 +94,16 @@ class PlaylistViewModel @Inject constructor(
         this.recommend.update { recommend }
     }
 
+    private var _refreshing = MutableStateFlow(false)
+    val refreshing = _refreshing.asStateFlow()
+
     private fun refresh() {
         val url = playlistUrl.value
         playlistRepository
             .refresh(url, pref.playlistStrategy)
             .onEach { resource ->
                 val refreshing = resource is Resource.Loading
+                _refreshing.update { refreshing }
                 val message = if (refreshing) PlaylistMessage.Refreshing else PlaylistMessage.None
                 onMessage(message)
             }

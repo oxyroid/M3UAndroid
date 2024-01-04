@@ -17,7 +17,6 @@ import android.os.Build
 import android.view.KeyEvent
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -26,8 +25,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
-import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.BackdropScaffold
 import androidx.compose.material.BackdropValue
 import androidx.compose.material.icons.Icons
@@ -35,11 +32,7 @@ import androidx.compose.material.icons.automirrored.rounded.Sort
 import androidx.compose.material.icons.rounded.ArrowCircleUp
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.rememberBackdropScaffoldState
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.PrimaryScrollableTabRow
-import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRowDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -47,7 +40,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -97,7 +89,6 @@ import com.m3u.ui.isAtTop
 import com.m3u.ui.repeatOnLifecycle
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
-import kotlinx.coroutines.launch
 
 @Composable
 internal fun PlaylistRoute(
@@ -119,6 +110,7 @@ internal fun PlaylistRoute(
     val channels by viewModel.channels.collectAsStateWithLifecycle()
     val sorts = viewModel.sorts
     val sort by viewModel.sort.collectAsStateWithLifecycle()
+    val refreshing by viewModel.refreshing.collectAsStateWithLifecycle()
 
     val sheetState = rememberModalBottomSheetState()
 
@@ -164,6 +156,9 @@ internal fun PlaylistRoute(
     BackHandler(query.isNotEmpty()) {
         viewModel.onEvent(PlaylistEvent.Query(""))
     }
+
+    BackHandler(refreshing) {}
+
     val interceptVolumeEventModifier = remember(pref.godMode) {
         if (pref.godMode) {
             Modifier.interceptVolumeEvent { event ->

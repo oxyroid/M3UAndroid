@@ -1,6 +1,8 @@
 package com.m3u.androidApp.ui
 
 import android.util.Log
+import androidx.activity.OnBackPressedDispatcherOwner
+import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
@@ -29,7 +31,8 @@ import kotlinx.coroutines.launch
 fun rememberAppState(
     navController: NavHostController = rememberNavController(),
     pagerState: PagerState = rememberPagerState { Destination.Root.entries.size },
-    coroutineScope: CoroutineScope = rememberCoroutineScope()
+    coroutineScope: CoroutineScope = rememberCoroutineScope(),
+    onBackPressedDispatcherOwner: OnBackPressedDispatcherOwner? = LocalOnBackPressedDispatcherOwner.current
 ): AppState {
     DisposableEffect(navController) {
         val listener = NavController.OnDestinationChangedListener { _, destination, _ ->
@@ -40,8 +43,8 @@ fun rememberAppState(
             navController.removeOnDestinationChangedListener(listener)
         }
     }
-    return remember(navController, pagerState, coroutineScope) {
-        AppState(navController, pagerState, coroutineScope)
+    return remember(navController, pagerState, coroutineScope, onBackPressedDispatcherOwner) {
+        AppState(navController, pagerState, coroutineScope, onBackPressedDispatcherOwner)
     }
 }
 
@@ -49,7 +52,8 @@ fun rememberAppState(
 class AppState(
     val navController: NavHostController,
     val pagerState: PagerState,
-    private val coroutineScope: CoroutineScope
+    private val coroutineScope: CoroutineScope,
+    private val onBackPressedDispatcherOwner: OnBackPressedDispatcherOwner?
 ) {
     // Current Root Destination Page.
     // Initially, we stored the "pagerState" here. However, we encountered an unexpected behavior
@@ -90,7 +94,11 @@ class AppState(
                 }
             }
 
-            is Destination.Playlist -> navController.navigateToPlaylist(destination.url, destination.recommend)
+            is Destination.Playlist -> navController.navigateToPlaylist(
+                destination.url,
+                destination.recommend
+            )
+
             is Destination.Stream -> {}
             Destination.Console -> navController.navigateToConsole()
             Destination.About -> navController.navigateToAbout()
@@ -98,7 +106,7 @@ class AppState(
     }
 
     fun onBackClick() {
-        navController.popBackStack()
+        onBackPressedDispatcherOwner?.onBackPressedDispatcher?.onBackPressed()
     }
 
     private val rootDestinations: List<Destination.Root> = Destination.Root.entries

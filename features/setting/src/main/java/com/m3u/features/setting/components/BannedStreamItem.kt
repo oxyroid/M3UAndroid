@@ -7,11 +7,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import com.m3u.data.database.entity.Stream
 
 @Composable
-internal fun MutedStreamItem(
+internal fun BannedStreamItem(
     stream: Stream,
     onBanned: () -> Unit,
     modifier: Modifier = Modifier
@@ -23,7 +24,8 @@ internal fun MutedStreamItem(
                 text = text,
                 style = MaterialTheme.typography.titleSmall,
                 maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                overflow = TextOverflow.Ellipsis,
+                fontWeight = FontWeight.SemiBold
             )
         },
         supportingContent = {

@@ -58,8 +58,7 @@ fun SortBottomSheet(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(spacing.medium),
                 modifier = Modifier.padding(
-                    horizontal = spacing.medium,
-                    vertical = spacing.small
+                    horizontal = spacing.medium
                 )
             ) {
                 Icon(
@@ -105,7 +104,10 @@ private fun SortBottomSheetItem(
     ) {
         ListItem(
             headlineContent = {
-                Text(stringResource(sort.resId))
+                Text(
+                    text = stringResource(sort.resId),
+                    fontWeight = FontWeight.SemiBold
+                )
             },
             modifier = Modifier
                 .selectable(
