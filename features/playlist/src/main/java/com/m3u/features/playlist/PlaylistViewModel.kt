@@ -227,7 +227,7 @@ class PlaylistViewModel @Inject constructor(
         },
         query
     ) { current, query ->
-        current?.streams?.filter { it.title.contains(query, true) } ?: emptyList()
+        current?.streams?.filter { !it.banned && it.title.contains(query, true) } ?: emptyList()
     }
         .stateIn(
             scope = viewModelScope,
