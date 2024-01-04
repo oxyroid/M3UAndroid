@@ -17,7 +17,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.core.architecture.pref.LocalPref
@@ -114,19 +113,25 @@ fun StreamRoute(
             helper.brightness = prev
         }
     }
-    LifecycleResumeEffect {
+    LifecycleStartEffect {
         val receiver = AudioBecomingNoisyReceiver {
             maskState.wake()
             viewModel.onEvent(StreamEvent.OnVolume(0f))
         }
-        ContextCompat.registerReceiver(
-            context,
-            receiver,
-            AudioBecomingNoisyReceiver.INTENT_FILTER,
-            ContextCompat.RECEIVER_NOT_EXPORTED
-        )
-        onPauseOrDispose {
-            context.unregisterReceiver(receiver)
+        try {
+            ContextCompat.registerReceiver(
+                context,
+                receiver,
+                AudioBecomingNoisyReceiver.INTENT_FILTER,
+                ContextCompat.RECEIVER_NOT_EXPORTED
+            )
+        } catch (ignored: Exception) {
+        }
+        onStopOrDispose {
+            try {
+                context.unregisterReceiver(receiver)
+            } catch (ignored: Exception) {
+            }
         }
     }
 
