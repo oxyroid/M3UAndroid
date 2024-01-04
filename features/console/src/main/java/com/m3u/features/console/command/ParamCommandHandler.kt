@@ -7,7 +7,7 @@ import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 
-internal abstract class CommandHandler(private val input: String) {
+internal abstract class ParamCommandHandler(private val input: String) {
     protected abstract val introduce: String
     private val scopes: MutableMap<String, suspend CommandScope.() -> Unit> = mutableMapOf()
 

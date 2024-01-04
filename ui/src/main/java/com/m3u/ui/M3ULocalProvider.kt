@@ -5,9 +5,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
-import com.m3u.core.architecture.pref.Pref
 import com.m3u.core.architecture.pref.LocalPref
-import com.m3u.material.components.Background
+import com.m3u.core.architecture.pref.Pref
 import com.m3u.material.model.AppTheme
 
 @Composable
@@ -29,9 +28,7 @@ fun M3ULocalProvider(
             useDynamicColors = pref.useDynamicColors,
             typography = typography
         ) {
-            Background {
-                content()
-            }
+            content()
         }
     }
 }

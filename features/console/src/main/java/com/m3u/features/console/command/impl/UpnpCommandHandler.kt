@@ -1,12 +1,12 @@
 package com.m3u.features.console.command.impl
 
-import com.m3u.features.console.command.CommandHandler
+import com.m3u.features.console.command.ParamCommandHandler
 import kotlinx.coroutines.flow.Flow
 
 internal class UpnpCommandHandler(
     discoverNearbyDevices: () -> Flow<String>,
     input: String
-) : CommandHandler(input) {
+) : ParamCommandHandler(input) {
     init {
         path("discover") {
             discoverNearbyDevices().collect { device ->

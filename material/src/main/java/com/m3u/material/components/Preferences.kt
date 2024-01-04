@@ -1,14 +1,17 @@
 package com.m3u.material.components
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.basicMarquee
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.selection.toggleable
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.LocalAbsoluteTonalElevation
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
@@ -25,7 +28,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
@@ -34,8 +36,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
-import com.m3u.material.ktx.ifUnspecified
 
 @Composable
 fun Preference(
@@ -63,52 +63,70 @@ fun Preference(
             }
         }
     ) {
-        Card(
-            shape = RectangleShape,
-            enabled = enabled,
-            onClick = onClick,
-            elevation = CardDefaults.cardElevation(
-                defaultElevation = elevation.ifUnspecified { 3.dp },
-                disabledElevation = 1.dp
-            )
-        ) {
-            ListItem(
-                headlineContent = {
+        val currentContainerColor by animateColorAsState(
+            targetValue = MaterialTheme.colorScheme.surface,
+            label = "preference-container-color",
+            animationSpec = spring(stiffness = Spring.StiffnessMediumLow)
+        )
+        val currentContentColor by animateColorAsState(
+            targetValue = MaterialTheme.colorScheme.onSurface,
+            label = "preference-content-color",
+            animationSpec = spring(stiffness = Spring.StiffnessMediumLow)
+        )
+        val currentDisableContentColor by animateColorAsState(
+            targetValue = MaterialTheme.colorScheme.onSurfaceVariant.copy(0.38f),
+            label = "preference-container-color",
+            animationSpec = spring(stiffness = Spring.StiffnessMediumLow)
+        )
+        ListItem(
+            headlineContent = {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            },
+            supportingContent = {
+                if (content != null) {
                     Text(
-                        text = title,
-                        style = MaterialTheme.typography.titleMedium,
+                        text = content.capitalize(Locale.current),
+                        style = MaterialTheme.typography.bodyMedium,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier then if (focus) Modifier.basicMarquee()
+                        else Modifier
                     )
-                },
-                supportingContent = {
-                    if (content != null) {
-                        Text(
-                            text = content.capitalize(Locale.current),
-                            style = MaterialTheme.typography.bodyMedium,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier then if (focus) Modifier.basicMarquee()
-                            else Modifier
-                        )
-                    }
-                },
-                trailingContent = trailing,
-                leadingContent = {
-                    icon?.let {
-                        Icon(imageVector = it, contentDescription = null)
-                    }
-                },
-                tonalElevation = LocalAbsoluteTonalElevation.current,
-                modifier = modifier
-                    .semantics(mergeDescendants = true) { }
-                    .fillMaxWidth()
-                    .onFocusChanged {
-                        focus = it.hasFocus
-                    }
-                    .focusable()
-            )
-        }
+                }
+            },
+            trailingContent = trailing,
+            leadingContent = {
+                icon?.let {
+                    Icon(imageVector = it, contentDescription = null)
+                }
+            },
+            tonalElevation = LocalAbsoluteTonalElevation.current,
+            colors = ListItemDefaults.colors(
+                containerColor = currentContainerColor,
+                headlineColor = currentContentColor,
+                leadingIconColor = currentContentColor,
+                overlineColor = currentContentColor,
+                supportingColor = currentContentColor,
+                trailingIconColor = currentContentColor,
+                disabledHeadlineColor = currentDisableContentColor,
+                disabledLeadingIconColor = currentDisableContentColor,
+                disabledTrailingIconColor = currentDisableContentColor
+            ),
+            shadowElevation = elevation,
+            modifier = modifier
+                .semantics(mergeDescendants = true) {}
+                .clickable(enabled, onClick = onClick)
+                .fillMaxWidth()
+                .onFocusChanged {
+                    focus = it.hasFocus
+                }
+                .focusable()
+        )
     }
 }
 

@@ -1,12 +1,12 @@
 package com.m3u.features.console.command.impl
 
 import com.m3u.core.architecture.FilePathCacher
-import com.m3u.features.console.command.CommandHandler
+import com.m3u.features.console.command.ParamCommandHandler
 
 internal class LoggerCommandHandler(
     input: String,
     cacher: FilePathCacher
-) : CommandHandler(input) {
+) : ParamCommandHandler(input) {
     init {
         path("list") {
             val files = cacher.readAll()

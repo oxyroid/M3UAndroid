@@ -69,7 +69,7 @@ internal fun TvStreamGallery(
     state: TvLazyGridState,
     rowCount: Int,
     streams: ImmutableList<Stream>,
-    zapping: Stream? = null,
+    zapping: Stream?,
     play: PlayStream,
     onMenu: (Stream) -> Unit,
     modifier: Modifier = Modifier,

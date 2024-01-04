@@ -48,6 +48,6 @@ dependencies {
     implementation(libs.androidx.media3.media3.ui)
     implementation(libs.androidx.media3.media3.exoplayer)
 
-    implementation(libs.androidx.tv.tv.foundation)
-    implementation(libs.androidx.tv.tv.material)
+    api(libs.androidx.tv.tv.foundation)
+    api(libs.androidx.tv.tv.material)
 }

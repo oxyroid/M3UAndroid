@@ -7,7 +7,7 @@ import com.m3u.core.architecture.FilePathCacher
 import com.m3u.core.architecture.Publisher
 import com.m3u.core.architecture.viewmodel.BaseViewModel
 import com.m3u.core.wrapper.Message
-import com.m3u.features.console.command.CommandHandler
+import com.m3u.features.console.command.ParamCommandHandler
 import com.m3u.features.console.command.CommandResource
 import com.m3u.features.console.command.impl.EmptyCommandHandler
 import com.m3u.features.console.command.impl.LoggerCommandHandler
@@ -96,8 +96,8 @@ class ConsoleViewModel @Inject constructor(
         writable.value = ConsoleState()
     }
 
-    private fun findCommandHandler(input: String): CommandHandler =
-        when (CommandHandler.parseKey(input)) {
+    private fun findCommandHandler(input: String): ParamCommandHandler =
+        when (ParamCommandHandler.parseKey(input)) {
             LoggerCommandHandler.KEY -> {
                 LoggerCommandHandler(
                     input = input,
