@@ -55,7 +55,7 @@ class PlaylistViewModel @Inject constructor(
 ) {
     override fun onEvent(event: PlaylistEvent) {
         when (event) {
-            is PlaylistEvent.Observe -> observe(event.playlistUrl)
+            is PlaylistEvent.Init -> init(event.playlistUrl, event.recommend)
             PlaylistEvent.Refresh -> refresh()
             is PlaylistEvent.Favourite -> favourite(event)
             PlaylistEvent.ScrollUp -> scrollUp()
@@ -66,7 +66,7 @@ class PlaylistViewModel @Inject constructor(
         }
     }
 
-    private val zappingMode = pref
+    private val zappingMode: StateFlow<Boolean> = pref
         .observeAsFlow { it.zappingMode }
         .stateIn(
             scope = viewModelScope,
@@ -74,7 +74,7 @@ class PlaylistViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5_000)
         )
 
-    val zapping = combine(
+    val zapping: StateFlow<Stream?> = combine(
         zappingMode,
         playerManager.url,
         streamRepository.observeAll()
@@ -88,9 +88,9 @@ class PlaylistViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5_000)
         )
 
-
-    private fun observe(playlistUrl: String) {
+    private fun init(playlistUrl: String, recommend: String?) {
         this.playlistUrl.update { playlistUrl }
+        this.recommend.update { recommend }
     }
 
     private fun refresh() {
@@ -192,22 +192,24 @@ class PlaylistViewModel @Inject constructor(
         }
     }
 
-    private val _query = MutableStateFlow("")
-    val query = _query.asStateFlow()
+    private val _query: MutableStateFlow<String> = MutableStateFlow("")
+    val query: StateFlow<String> = _query.asStateFlow()
     private fun query(event: PlaylistEvent.Query) {
         val text = event.text
         _query.update { text }
     }
 
-    private fun List<Stream>.toChannels(): List<Channel> = groupBy { it.group }
+    private fun List<Stream>.toChannels(recommend: String?): List<Channel> = groupBy { it.group }
         .toList()
         .map { Channel(it.first, it.second) }
+        .sortedByDescending { recommend?.equals(it.title) }
 
     private fun List<Stream>.toSingleChannel(): List<Channel> = listOf(
         Channel("", this)
     )
 
-    private val playlistUrl = MutableStateFlow("")
+    private val playlistUrl: MutableStateFlow<String> = MutableStateFlow("")
+    private val recommend: MutableStateFlow<String?> = MutableStateFlow(null)
 
     val playlist: StateFlow<Playlist?> = playlistUrl.map { url ->
         playlistRepository.get(url)
@@ -235,9 +237,9 @@ class PlaylistViewModel @Inject constructor(
 
     val sorts: ImmutableList<Sort> = Sort.entries.toPersistentList()
 
-    private val sortIndex = MutableStateFlow(0)
+    private val sortIndex: MutableStateFlow<Int> = MutableStateFlow(0)
 
-    val sort = sortIndex
+    val sort: StateFlow<Sort> = sortIndex
         .map { sorts[it] }
         .stateIn(
             scope = viewModelScope,
@@ -249,14 +251,15 @@ class PlaylistViewModel @Inject constructor(
         sortIndex.update { sorts.indexOf(sort).coerceAtLeast(0) }
     }
 
-    val channels = combine(
+    val channels: StateFlow<List<Channel>> = combine(
         unsorted,
-        sort
-    ) { all, sort ->
+        sort,
+        recommend
+    ) { all, sort, recommend ->
         when (sort) {
             Sort.ASC -> all.sortedBy { it.title }.toSingleChannel()
             Sort.DESC -> all.sortedByDescending { it.title }.toSingleChannel()
-            Sort.UNSPECIFIED -> all.toChannels()
+            Sort.UNSPECIFIED -> all.toChannels(recommend)
         }
     }
         .stateIn(

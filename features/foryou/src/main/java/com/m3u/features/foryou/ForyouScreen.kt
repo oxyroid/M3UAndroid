@@ -50,9 +50,9 @@ import com.m3u.features.foryou.components.ForyouDialog
 import com.m3u.features.foryou.components.OnRename
 import com.m3u.features.foryou.components.OnUnsubscribe
 import com.m3u.features.foryou.components.PlaylistGallery
-import com.m3u.features.foryou.components.UnseensGallery
+import com.m3u.features.foryou.components.recommend.RecommendGallery
 import com.m3u.features.foryou.model.PlaylistDetailHolder
-import com.m3u.features.foryou.model.Unseens
+import com.m3u.features.foryou.components.recommend.Recommend
 import com.m3u.i18n.R
 import com.m3u.material.components.Background
 import com.m3u.material.ktx.interceptVolumeEvent
@@ -65,14 +65,12 @@ import com.m3u.ui.MessageEventHandler
 import com.m3u.ui.MonoText
 import com.m3u.ui.ResumeEvent
 
-typealias NavigateToPlaylist = (playlist: Playlist) -> Unit
-typealias NavigateToSettingSubscription = () -> Unit
-
 @Composable
 fun ForyouRoute(
-    navigateToPlaylist: NavigateToPlaylist,
+    navigateToPlaylist: (Playlist) -> Unit,
     navigateToStream: () -> Unit,
-    navigateToSettingSubscription: NavigateToSettingSubscription,
+    navigateToRecommendPlaylist: (Playlist, String) -> Unit,
+    navigateToSettingSubscription: () -> Unit,
     resume: ResumeEvent,
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
@@ -83,7 +81,7 @@ fun ForyouRoute(
 
     val message by viewModel.message.collectAsStateWithLifecycle()
     val holder by viewModel.playlists.collectAsStateWithLifecycle()
-    val unseens by viewModel.unseens.collectAsStateWithLifecycle()
+    val recommend by viewModel.recommend.collectAsStateWithLifecycle()
 
     MessageEventHandler(message)
 
@@ -107,11 +105,12 @@ fun ForyouRoute(
 
     ForyouScreen(
         holder = holder,
-        unseens = unseens,
+        recommend = recommend,
         rowCount = pref.rowCount,
         contentPadding = contentPadding,
         navigateToPlaylist = navigateToPlaylist,
         navigateToStream = navigateToStream,
+        navigateToRecommendPlaylist = navigateToRecommendPlaylist,
         unsubscribe = { viewModel.onEvent(ForyouEvent.Unsubscribe(it)) },
         rename = { playlistUrl, target ->
             viewModel.onEvent(
@@ -131,17 +130,17 @@ fun ForyouRoute(
 private fun ForyouScreen(
     rowCount: Int,
     holder: PlaylistDetailHolder,
-    unseens: Unseens,
+    recommend: Recommend,
     contentPadding: PaddingValues,
-    navigateToPlaylist: NavigateToPlaylist,
+    navigateToPlaylist: (Playlist) -> Unit,
     navigateToStream: () -> Unit,
+    navigateToRecommendPlaylist: (Playlist, String) -> Unit,
     unsubscribe: OnUnsubscribe,
     rename: OnRename,
     modifier: Modifier = Modifier
 ) {
     var dialog: ForyouDialog by remember { mutableStateOf(ForyouDialog.Idle) }
     val configuration = LocalConfiguration.current
-
 
     val actualRowCount = remember(rowCount, configuration.orientation) {
         when (configuration.orientation) {
@@ -155,24 +154,24 @@ private fun ForyouScreen(
                 .fillMaxSize()
                 .navigationBarsPadding()
         ) {
-            val showUnseens = unseens.streams.isNotEmpty()
+            val showRecommend = recommend.isNotEmpty()
             val showPlaylist = holder.details.isNotEmpty()
-            if (showUnseens) {
+            if (showRecommend) {
                 Column {
                     Spacer(
                         Modifier
                             .fillMaxWidth()
                             .height(contentPadding.calculateTopPadding())
                     )
-                    UnseensGallery(
-                        unseens = unseens,
+                    RecommendGallery(
+                        recommend = recommend,
                         navigateToStream = navigateToStream,
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
             }
             if (showPlaylist) {
-                val actualContentPadding = if (!showUnseens) contentPadding
+                val actualContentPadding = if (!showRecommend) contentPadding
                 else contentPadding - contentPadding.only(WindowInsetsSides.Top)
                 PlaylistGallery(
                     rowCount = actualRowCount,

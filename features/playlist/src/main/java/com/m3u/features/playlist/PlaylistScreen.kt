@@ -102,6 +102,7 @@ import kotlinx.coroutines.launch
 internal fun PlaylistRoute(
     contentPadding: PaddingValues,
     playlistUrl: String,
+    recommend: String?,
     navigateToStream: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: PlaylistViewModel = hiltViewModel()
@@ -123,7 +124,7 @@ internal fun PlaylistRoute(
     // If you try to check or request the WRITE_EXTERNAL_STORAGE on Android 13+,
     // it will always return false.
     // So you'll have to skip the permission check/request completely on Android 13+.
-    val permissionRequired = Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU
+    val writeExternalPermissionRequired = Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU
 
     val writeExternalPermissionState = rememberPermissionState(
         Manifest.permission.WRITE_EXTERNAL_STORAGE
@@ -134,8 +135,8 @@ internal fun PlaylistRoute(
 
     MessageEventHandler(message)
 
-    LaunchedEffect(playlistUrl) {
-        viewModel.onEvent(PlaylistEvent.Observe(playlistUrl))
+    LaunchedEffect(playlistUrl, recommend) {
+        viewModel.onEvent(PlaylistEvent.Init(playlistUrl, recommend))
     }
 
     helper.repeatOnLifecycle {
@@ -210,7 +211,7 @@ internal fun PlaylistRoute(
             onFavorite = { id, target -> viewModel.onEvent(PlaylistEvent.Favourite(id, target)) },
             ban = { id, target -> viewModel.onEvent(PlaylistEvent.Ban(id, target)) },
             onSavePicture = { id ->
-                if (permissionRequired && writeExternalPermissionState.status is PermissionStatus.Denied) {
+                if (writeExternalPermissionRequired && writeExternalPermissionState.status is PermissionStatus.Denied) {
                     writeExternalPermissionState.launchPermissionRequest()
                     return@PlaylistDialog
                 }

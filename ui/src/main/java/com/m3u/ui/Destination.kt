@@ -57,7 +57,10 @@ sealed interface Destination {
         );
     }
 
-    data class Playlist(val url: String) : Destination
+    data class Playlist(
+        val url: String,
+        val recommend: String? = null
+    ) : Destination
 
     @Parcelize
     data class Stream(val id: Int) : Destination, Parcelable

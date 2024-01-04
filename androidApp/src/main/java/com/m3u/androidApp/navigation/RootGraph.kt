@@ -16,12 +16,9 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import com.m3u.core.wrapper.eventOf
 import com.m3u.core.wrapper.handledEvent
+import com.m3u.data.database.entity.Playlist
 import com.m3u.features.favorite.FavouriteRoute
 import com.m3u.features.foryou.ForyouRoute
-import com.m3u.features.foryou.NavigateToPlaylist
-import com.m3u.features.foryou.NavigateToSettingSubscription
-import com.m3u.features.setting.NavigateToAbout
-import com.m3u.features.setting.NavigateToConsole
 import com.m3u.features.setting.SettingRoute
 import com.m3u.material.ktx.Edge
 import com.m3u.material.ktx.blurEdge
@@ -39,11 +36,12 @@ fun NavController.popupToRoot() {
 fun NavGraphBuilder.rootGraph(
     pagerState: PagerState,
     contentPadding: PaddingValues,
-    navigateToPlaylist: NavigateToPlaylist,
+    navigateToPlaylist: (Playlist) -> Unit,
     navigateToStream: () -> Unit,
-    navigateToConsole: NavigateToConsole,
-    navigateToAbout: NavigateToAbout,
-    navigateToSettingSubscription: NavigateToSettingSubscription,
+    navigateToConsole: () -> Unit,
+    navigateToAbout: () -> Unit,
+    navigateToRecommendPlaylist: (Playlist, String) -> Unit,
+    navigateToSettingSubscription: () -> Unit,
 ) {
     composable(ROOT_ROUTE) {
         RootGraph(
@@ -53,6 +51,7 @@ fun NavGraphBuilder.rootGraph(
             navigateToStream = navigateToStream,
             navigateToConsole = navigateToConsole,
             navigateToAbout = navigateToAbout,
+            navigateToRecommendPlaylist = navigateToRecommendPlaylist,
             navigateToSettingSubscription = navigateToSettingSubscription
         )
     }
@@ -62,11 +61,12 @@ fun NavGraphBuilder.rootGraph(
 private fun RootGraph(
     pagerState: PagerState,
     contentPadding: PaddingValues,
-    navigateToPlaylist: NavigateToPlaylist,
+    navigateToPlaylist: (Playlist) -> Unit,
     navigateToStream: () -> Unit,
-    navigateToConsole: NavigateToConsole,
-    navigateToAbout: NavigateToAbout,
-    navigateToSettingSubscription: NavigateToSettingSubscription,
+    navigateToConsole: () -> Unit,
+    navigateToAbout: () -> Unit,
+    navigateToRecommendPlaylist: (Playlist, String) -> Unit,
+    navigateToSettingSubscription: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val destinations = Destination.Root.entries
@@ -101,6 +101,7 @@ private fun RootGraph(
                 ForyouRoute(
                     navigateToPlaylist = navigateToPlaylist,
                     navigateToStream = navigateToStream,
+                    navigateToRecommendPlaylist = navigateToRecommendPlaylist,
                     navigateToSettingSubscription = navigateToSettingSubscription,
                     resume = rememberResumeEvent(pagerState.targetPage, pagerIndex),
                     contentPadding = contentPadding,

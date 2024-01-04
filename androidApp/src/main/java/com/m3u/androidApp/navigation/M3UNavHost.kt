@@ -70,6 +70,13 @@ fun M3UNavHost(
             navigateToAbout = {
                 navigate(Destination.About)
             },
+            navigateToRecommendPlaylist = { playlist, recommend ->
+                helper.title = playlist.title.ifEmpty {
+                    if (playlist.local) context.getString(string.feat_foryou_imported_playlist_title)
+                    else ""
+                }
+                navigate(Destination.Playlist(playlist.url, recommend))
+            },
             navigateToSettingSubscription = {
                 navigate(Destination.Root.Setting)
             }

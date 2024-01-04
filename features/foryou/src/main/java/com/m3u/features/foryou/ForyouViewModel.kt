@@ -6,9 +6,9 @@ import com.m3u.core.architecture.pref.observeAsFlow
 import com.m3u.core.architecture.viewmodel.BaseViewModel
 import com.m3u.data.repository.PlaylistRepository
 import com.m3u.data.repository.StreamRepository
+import com.m3u.features.foryou.components.recommend.Recommend
 import com.m3u.features.foryou.model.PlaylistDetail
 import com.m3u.features.foryou.model.PlaylistDetailHolder
-import com.m3u.features.foryou.model.Unseens
 import com.m3u.features.foryou.model.toDetail
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -65,7 +65,7 @@ class ForyouViewModel @Inject constructor(
             initialValue = PlaylistDetailHolder()
         )
 
-    private val unseensMilliseconds = pref
+    private val unseensDuration = pref
         .observeAsFlow { it.unseensMilliseconds }
         .map { it.toDuration(DurationUnit.MILLISECONDS) }
         .stateIn(
@@ -75,13 +75,13 @@ class ForyouViewModel @Inject constructor(
         )
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    internal val unseens: StateFlow<Unseens> = unseensMilliseconds
+    internal val recommend: StateFlow<Recommend> = unseensDuration
         .flatMapMerge { streamRepository.observeAllUnseenFavourites(it) }
-        .map { Unseens(it) }
+        .map { prev -> Recommend(prev.map { Recommend.UnseenSpec(it) }) }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000L),
-            initialValue = Unseens()
+            initialValue = Recommend()
         )
 
     override fun onEvent(event: ForyouEvent) {

@@ -12,20 +12,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import com.m3u.data.database.entity.Playlist
-import com.m3u.features.foryou.NavigateToPlaylist
 import com.m3u.features.foryou.model.PlaylistDetailHolder
 import com.m3u.i18n.R.string
 import com.m3u.material.ktx.plus
 import com.m3u.material.model.LocalSpacing
 
-internal typealias OnMenu = (Playlist) -> Unit
-
 @Composable
 internal fun PlaylistGallery(
     rowCount: Int,
     holder: PlaylistDetailHolder,
-    navigateToPlaylist: NavigateToPlaylist,
-    onMenu: OnMenu,
+    navigateToPlaylist: (Playlist) -> Unit,
+    onMenu: (Playlist) -> Unit,
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier
 ) {

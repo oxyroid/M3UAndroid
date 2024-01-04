@@ -90,7 +90,7 @@ class AppState(
                 }
             }
 
-            is Destination.Playlist -> navController.navigateToPlaylist(destination.url)
+            is Destination.Playlist -> navController.navigateToPlaylist(destination.url, destination.recommend)
             is Destination.Stream -> {}
             Destination.Console -> navController.navigateToConsole()
             Destination.About -> navController.navigateToAbout()

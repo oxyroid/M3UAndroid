@@ -63,8 +63,6 @@ import com.m3u.core.architecture.pref.annotation.ConnectTimeout
 import com.m3u.core.architecture.pref.annotation.PlaylistStrategy
 import com.m3u.core.architecture.pref.annotation.UnseensMilliseconds
 import com.m3u.core.util.basic.title
-import com.m3u.features.setting.NavigateToAbout
-import com.m3u.features.setting.NavigateToConsole
 import com.m3u.features.setting.SettingFragment
 import com.m3u.features.setting.components.CheckBoxSharedPreference
 import com.m3u.i18n.R.string
@@ -86,8 +84,8 @@ internal fun PreferencesFragment(
     useCommonUIModeEnable: Boolean,
     navigateToPlaylistManagement: () -> Unit,
     navigateToScriptManagement: () -> Unit,
-    navigateToConsole: NavigateToConsole,
-    navigateToAbout: NavigateToAbout,
+    navigateToConsole: () -> Unit,
+    navigateToAbout: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current

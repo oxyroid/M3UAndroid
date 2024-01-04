@@ -48,17 +48,14 @@ import com.m3u.ui.LocalHelper
 import com.m3u.ui.MessageEventHandler
 import com.m3u.ui.ResumeEvent
 
-typealias NavigateToConsole = () -> Unit
-typealias NavigateToAbout = () -> Unit
-
 @Composable
 fun SettingRoute(
     modifier: Modifier = Modifier,
     resume: ResumeEvent,
     contentPadding: PaddingValues,
     viewModel: SettingViewModel = hiltViewModel(),
-    navigateToConsole: NavigateToConsole,
-    navigateToAbout: NavigateToAbout
+    navigateToConsole: () -> Unit,
+    navigateToAbout: () -> Unit
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val message by viewModel.message.collectAsStateWithLifecycle()
@@ -116,8 +113,8 @@ private fun SettingScreen(
     mutedStreamHolder: MutedStreamHolder,
     onBanned: (Int) -> Unit,
     importJavaScript: (Uri) -> Unit,
-    navigateToConsole: NavigateToConsole,
-    navigateToAbout: NavigateToAbout,
+    navigateToConsole: () -> Unit,
+    navigateToAbout: () -> Unit,
     localStorage: Boolean,
     onLocalStorage: () -> Unit,
     openDocument: (Uri) -> Unit,

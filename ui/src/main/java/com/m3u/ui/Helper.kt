@@ -11,6 +11,7 @@ import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -95,6 +96,7 @@ fun Helper.repeatOnLifecycle(
     block: Helper.() -> Unit
 ) {
     val lifecycleOwner = LocalLifecycleOwner.current
+    val currentBlock by rememberUpdatedState(block)
     check(state != Lifecycle.State.CREATED && state != Lifecycle.State.INITIALIZED) {
         "state cannot be CREATED or INITIALIZED!"
     }
@@ -105,7 +107,7 @@ fun Helper.repeatOnLifecycle(
             when (event) {
                 Lifecycle.Event.upTo(state) -> {
                     bundle = backup()
-                    block()
+                    currentBlock()
                 }
 
                 Lifecycle.Event.downFrom(state) -> {
