@@ -12,5 +12,4 @@
     <string name="feat_playlist_error_stream_cover_not_found">la portada no existe</string>
     <string name="feat_playlist_error_stream_not_found">el directo no existe</string>
     <string name="feat_playlist_success_save_cover">guardada to (%s)</string>
-    <string name="feat_playlist_prompt_add_playlist">visita \"Ajustes - Administrar playlist\" para añadir una playlist</string>
 </resources>

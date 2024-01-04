@@ -6,6 +6,7 @@
     <string name="feat_foryou_copy_playlist_url">copy url</string>
     <string name="feat_foryou_rename_playlist">rename</string>
     <string name="feat_foryou_imported_playlist_title">imported</string>
+    <string name="feat_foryou_prompt_add_playlist">add a playlist</string>
     <string name="feat_foryou_recommend_unseen_label">favourite that you would see again</string>
     <string name="feat_foryou_recommend_unseen_more_than_days">more than %d days</string>
     <string name="feat_foryou_recommend_unseen_days">%d days</string>

@@ -6,6 +6,7 @@
     <string name="feat_foryou_copy_playlist_url">复制链接</string>
     <string name="feat_foryou_rename_playlist">重命名</string>
     <string name="feat_foryou_imported_playlist_title">导入频道</string>
+    <string name="feat_foryou_prompt_add_playlist">添加一个播放列表</string>
     <string name="feat_foryou_recommend_unseen_label">许久未见的喜爱</string>
     <string name="feat_foryou_recommend_unseen_more_than_days">超过 %d 天</string>
     <string name="feat_foryou_recommend_unseen_days">%d 天</string>

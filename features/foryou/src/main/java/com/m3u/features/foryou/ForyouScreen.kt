@@ -266,7 +266,7 @@ private fun PlaylistGalleryPlaceholder(
         }
         val message = @Composable {
             val text =
-                stringResource(R.string.feat_playlist_prompt_add_playlist)
+                stringResource(R.string.feat_foryou_prompt_add_playlist)
                     .capitalize(Locale.current)
             MonoText(
                 text = text,
