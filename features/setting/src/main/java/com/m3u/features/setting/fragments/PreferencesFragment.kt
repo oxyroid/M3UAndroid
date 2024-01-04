@@ -286,6 +286,7 @@ internal fun PreferencesFragment(
                         )
                         CheckBoxSharedPreference(
                             title = string.feat_setting_record,
+                            content = string.feat_setting_not_implementation,
                             icon = Icons.Rounded.SlowMotionVideo,
                             enabled = false,
                             checked = pref.record,
@@ -415,8 +416,7 @@ internal fun PreferencesFragment(
                 Preference(
                     title = stringResource(string.feat_setting_project_about).title(),
                     icon = Icons.Rounded.Source,
-                    onClick = navigateToAbout,
-//                    enabled = false
+                    onClick = navigateToAbout
                 )
                 Preference(
                     title = stringResource(string.feat_setting_app_version).title(),
