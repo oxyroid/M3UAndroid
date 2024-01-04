@@ -13,7 +13,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -430,7 +430,7 @@ fun LabelField(
                             Modifier
                                 .padding(top = -animPlaceholder)
                                 .fillMaxWidth()
-                                .height(18.dp),
+                                .heightIn(18.dp),
                         ) {
                             innerTextField()
                         }
@@ -578,7 +578,7 @@ fun LabelField(
                             Modifier
                                 .padding(top = -animPlaceholder)
                                 .fillMaxWidth()
-                                .height(18.dp),
+                                .heightIn(18.dp),
                         ) {
                             innerTextField()
                         }
