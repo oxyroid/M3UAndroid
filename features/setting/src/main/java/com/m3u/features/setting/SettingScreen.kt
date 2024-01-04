@@ -38,7 +38,7 @@ import androidx.compose.ui.unit.toSize
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.data.database.entity.Stream
-import com.m3u.features.setting.fragments.PreferencesFragment
+import com.m3u.features.setting.fragments.preferences.PreferencesFragment
 import com.m3u.features.setting.fragments.ScriptsFragment
 import com.m3u.features.setting.fragments.SubscriptionsFragment
 import com.m3u.ui.Destination

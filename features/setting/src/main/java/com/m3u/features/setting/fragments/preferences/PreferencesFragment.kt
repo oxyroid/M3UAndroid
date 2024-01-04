@@ -1,11 +1,10 @@
-package com.m3u.features.setting.fragments
+package com.m3u.features.setting.fragments.preferences
 
 import android.content.res.Configuration
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -13,10 +12,6 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
 import androidx.tv.foundation.lazy.list.TvLazyColumn
 import com.m3u.features.setting.SettingFragment
-import com.m3u.features.setting.fragments.preferences.ExperimentalPreference
-import com.m3u.features.setting.fragments.preferences.OptionalPreferences
-import com.m3u.features.setting.fragments.preferences.OtherPreferences
-import com.m3u.features.setting.fragments.preferences.RegularPreferences
 
 @Composable
 internal fun PreferencesFragment(
@@ -35,9 +30,7 @@ internal fun PreferencesFragment(
     val type = configuration.uiMode and Configuration.UI_MODE_TYPE_MASK
     if (type != Configuration.UI_MODE_TYPE_TELEVISION) {
         LazyColumn(
-            modifier = Modifier
-                .background(MaterialTheme.colorScheme.outlineVariant)
-                .then(modifier),
+            modifier = modifier,
             contentPadding = contentPadding,
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(1.dp)
@@ -48,15 +41,18 @@ internal fun PreferencesFragment(
                     useCommonUIModeEnable = useCommonUIModeEnable,
                     navigateToPlaylistManagement = navigateToPlaylistManagement
                 )
+                HorizontalDivider()
             }
             item {
                 OptionalPreferences()
+                HorizontalDivider()
             }
             item {
                 ExperimentalPreference(
                     navigateToScriptManagement = navigateToScriptManagement,
                     navigateToConsole = navigateToConsole
                 )
+                HorizontalDivider()
             }
             item {
                 OtherPreferences(
@@ -68,9 +64,7 @@ internal fun PreferencesFragment(
         }
     } else {
         TvLazyColumn(
-            modifier = Modifier
-                .background(MaterialTheme.colorScheme.outlineVariant)
-                .then(modifier),
+            modifier = modifier,
             contentPadding = contentPadding,
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(1.dp)
@@ -81,15 +75,18 @@ internal fun PreferencesFragment(
                     useCommonUIModeEnable = useCommonUIModeEnable,
                     navigateToPlaylistManagement = navigateToPlaylistManagement
                 )
+                HorizontalDivider()
             }
             item {
                 OptionalPreferences()
+                HorizontalDivider()
             }
             item {
                 ExperimentalPreference(
                     navigateToScriptManagement = navigateToScriptManagement,
                     navigateToConsole = navigateToConsole
                 )
+                HorizontalDivider()
             }
             item {
                 OtherPreferences(
