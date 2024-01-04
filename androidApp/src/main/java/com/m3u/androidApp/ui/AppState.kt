@@ -99,7 +99,6 @@ class AppState(
                 destination.recommend
             )
 
-            is Destination.Stream -> {}
             Destination.Console -> navController.navigateToConsole()
             Destination.About -> navController.navigateToAbout()
         }

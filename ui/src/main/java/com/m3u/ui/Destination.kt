@@ -1,6 +1,5 @@
 package com.m3u.ui
 
-import android.os.Parcelable
 import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Collections
@@ -11,7 +10,6 @@ import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.m3u.i18n.R.string
-import kotlinx.parcelize.Parcelize
 
 sealed interface Destination {
     enum class Root(
@@ -44,9 +42,6 @@ sealed interface Destination {
         val url: String,
         val recommend: String? = null
     ) : Destination
-
-    @Parcelize
-    data class Stream(val id: Int) : Destination, Parcelable
 
     data object Console : Destination
 
