@@ -1,6 +1,8 @@
 package com.m3u.androidApp.components
 
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -47,11 +49,13 @@ fun AppNavigation(
 
     val currentColor by animateColorAsState(
         targetValue = color,
-        label = "navigation-color"
+        label = "navigation-color",
+        animationSpec = spring(stiffness = Spring.StiffnessMediumLow)
     )
     val currentContentColor by animateColorAsState(
         targetValue = unselectedColor,
-        label = "navigation-content-color"
+        label = "navigation-content-color",
+        animationSpec = spring(stiffness = Spring.StiffnessMediumLow)
     )
 
     when {

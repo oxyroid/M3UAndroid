@@ -1,6 +1,8 @@
 package com.m3u.material.components
 
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.material3.LocalAbsoluteTonalElevation
@@ -25,11 +27,13 @@ inline fun Background(
 ) {
     val currentColor by animateColorAsState(
         targetValue = color,
-        label = "color"
+        label = "color",
+        animationSpec = spring(stiffness = Spring.StiffnessMediumLow)
     )
     val currentContentColor by animateColorAsState(
         targetValue = contentColor.ifUnspecified { LocalContentColor.current },
-        label = "content-color"
+        label = "content-color",
+        animationSpec = spring(stiffness = Spring.StiffnessMediumLow)
     )
     Box(
         modifier = Modifier

@@ -31,6 +31,7 @@ import com.m3u.androidApp.components.AppSnackHost
 import com.m3u.core.util.collections.withEach
 import com.m3u.core.wrapper.Message
 import com.m3u.i18n.R.string
+import com.m3u.material.components.Background
 import com.m3u.material.components.IconButton
 import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.Action
@@ -142,7 +143,7 @@ private fun M3UScaffoldImpl(
             },
             modifier = modifier.fillMaxSize()
         ) { padding ->
-            Box(Modifier.haze(hazeState, currentColor)) {
+            Background(Modifier.haze(hazeState, currentColor)) {
                 content(padding)
             }
         }
