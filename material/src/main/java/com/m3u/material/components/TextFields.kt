@@ -35,7 +35,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -64,7 +63,6 @@ import com.m3u.material.ktx.InteractionType
 import com.m3u.material.ktx.interactionBorder
 import com.m3u.material.model.LocalDuration
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 
 @Composable
 fun TextField(
@@ -90,17 +88,17 @@ fun TextField(
     val bringIntoViewRequester = remember { BringIntoViewRequester() }
     val interactionSource = remember { MutableInteractionSource() }
     val interactionSourceFocus by interactionSource.collectIsFocusedAsState()
-    val scope = rememberCoroutineScope()
 
     val imeVisible = WindowInsets.isImeVisible
 
     // Bring the composable into view (visible to user).
     LaunchedEffect(imeVisible, interactionSourceFocus) {
+        delay(duration.medium.toLong())
         if (imeVisible && interactionSourceFocus) {
-            scope.launch {
-                delay(duration.fast.toLong())
-                bringIntoViewRequester.bringIntoView()
-            }
+            bringIntoViewRequester.bringIntoView()
+        }
+        if (!imeVisible) {
+            focusManager.clearFocus()
         }
     }
 
@@ -204,17 +202,17 @@ fun TextField(
     val bringIntoViewRequester = remember { BringIntoViewRequester() }
     val interactionSource = remember { MutableInteractionSource() }
     val interactionSourceState by interactionSource.collectIsFocusedAsState()
-    val scope = rememberCoroutineScope()
 
     val imeVisible = WindowInsets.isImeVisible
 
     // Bring the composable into view (visible to user).
     LaunchedEffect(imeVisible, interactionSourceState) {
+        delay(duration.medium.toLong())
         if (imeVisible && interactionSourceState) {
-            scope.launch {
-                delay(duration.fast.toLong())
-                bringIntoViewRequester.bringIntoView()
-            }
+            bringIntoViewRequester.bringIntoView()
+        }
+        if (!imeVisible) {
+            focusManager.clearFocus()
         }
     }
 
@@ -315,16 +313,16 @@ fun LabelField(
     val bringIntoViewRequester = remember { BringIntoViewRequester() }
     val interactionSource = remember { MutableInteractionSource() }
     val interactionSourceState by interactionSource.collectIsFocusedAsState()
-    val scope = rememberCoroutineScope()
     val imeVisible = WindowInsets.isImeVisible
 
     // Bring the composable into view (visible to user).
     LaunchedEffect(imeVisible, interactionSourceState) {
+        delay(duration.medium.toLong())
         if (imeVisible && interactionSourceState) {
-            scope.launch {
-                delay(duration.fast.toLong())
-                bringIntoViewRequester.bringIntoView()
-            }
+            bringIntoViewRequester.bringIntoView()
+        }
+        if (!imeVisible) {
+            focusManager.clearFocus()
         }
     }
 
@@ -463,16 +461,16 @@ fun LabelField(
     val bringIntoViewRequester = remember { BringIntoViewRequester() }
     val interactionSource = remember { MutableInteractionSource() }
     val interactionSourceFocus by interactionSource.collectIsFocusedAsState()
-    val scope = rememberCoroutineScope()
     val imeVisible = WindowInsets.isImeVisible
 
     // Bring the composable into view (visible to user).
     LaunchedEffect(imeVisible, interactionSourceFocus) {
+        delay(duration.medium.toLong())
         if (imeVisible && interactionSourceFocus) {
-            scope.launch {
-                delay(duration.fast.toLong())
-                bringIntoViewRequester.bringIntoView()
-            }
+            bringIntoViewRequester.bringIntoView()
+        }
+        if (!imeVisible) {
+            focusManager.clearFocus()
         }
     }
 
