@@ -99,7 +99,7 @@ private fun FavoriteScreen(
     contentPadding: PaddingValues,
     rowCount: Int,
     streams: ImmutableList<Stream>,
-    zapping: Stream? = null,
+    zapping: Stream?,
     navigateToStream: () -> Unit,
     modifier: Modifier = Modifier
 ) {
