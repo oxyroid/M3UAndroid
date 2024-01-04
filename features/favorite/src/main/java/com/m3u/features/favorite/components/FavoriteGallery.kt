@@ -10,16 +10,18 @@ import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.m3u.core.architecture.pref.LocalPref
-import com.m3u.data.database.entity.StreamHolder
+import com.m3u.data.database.entity.Stream
 import com.m3u.material.ktx.plus
 import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.LocalHelper
+import kotlinx.collections.immutable.ImmutableList
 
 // TODO: replace with material3-carousel.
 @Composable
 internal fun FavouriteGallery(
     contentPadding: PaddingValues,
-    streamHolder: StreamHolder,
+    streams: ImmutableList<Stream>,
+    zapping: Stream? = null,
     rowCount: Int,
     navigateToStream: () -> Unit,
     modifier: Modifier = Modifier
@@ -27,8 +29,6 @@ internal fun FavouriteGallery(
     val spacing = LocalSpacing.current
     val pref = LocalPref.current
     val helper = LocalHelper.current
-    val streams = streamHolder.streams
-    val zapping = streamHolder.zapping
     LazyVerticalStaggeredGrid(
         columns = StaggeredGridCells.Fixed(rowCount),
         verticalItemSpacing = spacing.medium,

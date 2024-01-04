@@ -17,9 +17,9 @@ import androidx.tv.foundation.lazy.grid.TvLazyVerticalGrid
 import androidx.tv.foundation.lazy.grid.items
 import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.data.database.entity.Stream
-import com.m3u.data.database.entity.StreamHolder
 import com.m3u.material.ktx.plus
 import com.m3u.material.model.LocalSpacing
+import kotlinx.collections.immutable.ImmutableList
 
 typealias PlayStream = (url: String) -> Unit
 
@@ -27,7 +27,8 @@ typealias PlayStream = (url: String) -> Unit
 internal fun StreamGallery(
     state: LazyStaggeredGridState,
     rowCount: Int,
-    streamHolder: StreamHolder,
+    streams: ImmutableList<Stream>,
+    zapping: Stream? = null,
     play: PlayStream,
     onMenu: (Stream) -> Unit,
     modifier: Modifier = Modifier,
@@ -35,9 +36,6 @@ internal fun StreamGallery(
 ) {
     val spacing = LocalSpacing.current
     val pref = LocalPref.current
-
-    val streams = streamHolder.streams
-    val floating = streamHolder.zapping
 
     LazyVerticalStaggeredGrid(
         state = state,
@@ -54,7 +52,7 @@ internal fun StreamGallery(
         ) { stream ->
             StreamItem(
                 stream = stream,
-                border = floating != stream,
+                border = zapping != stream,
                 noPictureMode = pref.noPictureMode,
                 onClick = {
                     play(stream.url)
@@ -70,7 +68,8 @@ internal fun StreamGallery(
 internal fun TvStreamGallery(
     state: TvLazyGridState,
     rowCount: Int,
-    streamHolder: StreamHolder,
+    streams: ImmutableList<Stream>,
+    zapping: Stream? = null,
     play: PlayStream,
     onMenu: (Stream) -> Unit,
     modifier: Modifier = Modifier,
@@ -78,9 +77,6 @@ internal fun TvStreamGallery(
 ) {
     val spacing = LocalSpacing.current
     val pref = LocalPref.current
-
-    val streams = streamHolder.streams
-    val floating = streamHolder.zapping
 
     TvLazyVerticalGrid(
         state = state,
@@ -97,7 +93,7 @@ internal fun TvStreamGallery(
         ) { stream ->
             StreamItem(
                 stream = stream,
-                border = floating != stream,
+                border = zapping != stream,
                 noPictureMode = pref.noPictureMode,
                 onClick = {
                     play(stream.url)

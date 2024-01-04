@@ -50,8 +50,7 @@ import com.m3u.material.components.LabelField
 import com.m3u.material.components.TextButton
 import com.m3u.material.ktx.plus
 import com.m3u.material.model.LocalSpacing
-
-internal typealias MutedStreamHolder = () -> List<Stream>
+import kotlinx.collections.immutable.ImmutableList
 
 @Composable
 internal fun SubscriptionsFragment(
@@ -60,7 +59,7 @@ internal fun SubscriptionsFragment(
     url: String,
     uriWrapper: UriWrapper,
     localStorage: Boolean,
-    streamHolder: MutedStreamHolder,
+    banneds: ImmutableList<Stream>,
     onBanned: (Int) -> Unit,
     onTitle: (String) -> Unit,
     onUrl: (String) -> Unit,
@@ -72,14 +71,13 @@ internal fun SubscriptionsFragment(
     val spacing = LocalSpacing.current
     val theme = MaterialTheme.colorScheme
     val focusRequester = remember { FocusRequester() }
-    val streams = streamHolder()
     LazyColumn(
         contentPadding = PaddingValues(spacing.medium) + contentPadding,
         verticalArrangement = Arrangement.spacedBy(spacing.small),
         modifier = modifier.focusGroup()
     ) {
-        item {
-            if (streams.isNotEmpty()) {
+        if (banneds.isNotEmpty()) {
+            item {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -97,7 +95,7 @@ internal fun SubscriptionsFragment(
                                 horizontal = spacing.medium
                             )
                     )
-                    streams.forEach { stream ->
+                    banneds.forEach { stream ->
                         MutedStreamItem(
                             stream = stream,
                             onBanned = { onBanned(stream.id) },

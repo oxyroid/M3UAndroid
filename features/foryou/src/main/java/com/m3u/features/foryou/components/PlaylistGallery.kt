@@ -12,23 +12,22 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import com.m3u.data.database.entity.Playlist
-import com.m3u.features.foryou.model.PlaylistDetailHolder
+import com.m3u.features.foryou.model.PlaylistDetail
 import com.m3u.i18n.R.string
 import com.m3u.material.ktx.plus
 import com.m3u.material.model.LocalSpacing
+import kotlinx.collections.immutable.ImmutableList
 
 @Composable
 internal fun PlaylistGallery(
     rowCount: Int,
-    holder: PlaylistDetailHolder,
+    details: ImmutableList<PlaylistDetail>,
     navigateToPlaylist: (Playlist) -> Unit,
     onMenu: (Playlist) -> Unit,
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
-    val details = holder.details
-
     LazyVerticalGrid(
         columns = GridCells.Fixed(rowCount),
         contentPadding = PaddingValues(LocalSpacing.current.medium) + contentPadding,

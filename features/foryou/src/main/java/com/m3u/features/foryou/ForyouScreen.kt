@@ -50,9 +50,9 @@ import com.m3u.features.foryou.components.ForyouDialog
 import com.m3u.features.foryou.components.OnRename
 import com.m3u.features.foryou.components.OnUnsubscribe
 import com.m3u.features.foryou.components.PlaylistGallery
-import com.m3u.features.foryou.components.recommend.RecommendGallery
-import com.m3u.features.foryou.model.PlaylistDetailHolder
 import com.m3u.features.foryou.components.recommend.Recommend
+import com.m3u.features.foryou.components.recommend.RecommendGallery
+import com.m3u.features.foryou.model.PlaylistDetail
 import com.m3u.i18n.R
 import com.m3u.material.components.Background
 import com.m3u.material.ktx.interceptVolumeEvent
@@ -61,9 +61,10 @@ import com.m3u.material.ktx.only
 import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.EventHandler
 import com.m3u.ui.LocalHelper
-import com.m3u.ui.MessageEventHandler
 import com.m3u.ui.MonoText
 import com.m3u.ui.ResumeEvent
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
 
 @Composable
 fun ForyouRoute(
@@ -79,47 +80,35 @@ fun ForyouRoute(
     val helper = LocalHelper.current
     val pref = LocalPref.current
 
-    val message by viewModel.message.collectAsStateWithLifecycle()
-    val holder by viewModel.playlists.collectAsStateWithLifecycle()
+    val details by viewModel.details.collectAsStateWithLifecycle()
     val recommend by viewModel.recommend.collectAsStateWithLifecycle()
 
-    MessageEventHandler(message)
-
     EventHandler(resume) {
-        helper.actions = emptyList()
+        helper.actions = persistentListOf()
     }
 
     val interceptVolumeEventModifier = remember(pref.godMode) {
         if (pref.godMode) {
             Modifier.interceptVolumeEvent { event ->
-                when (event) {
-                    KeyEvent.KEYCODE_VOLUME_UP -> pref.rowCount =
-                        (pref.rowCount - 1).coerceAtLeast(1)
-
-                    KeyEvent.KEYCODE_VOLUME_DOWN -> pref.rowCount =
-                        (pref.rowCount + 1).coerceAtMost(3)
+                pref.rowCount = when (event) {
+                    KeyEvent.KEYCODE_VOLUME_UP -> (pref.rowCount - 1).coerceAtLeast(1)
+                    KeyEvent.KEYCODE_VOLUME_DOWN -> (pref.rowCount + 1).coerceAtMost(3)
+                    else -> return@interceptVolumeEvent
                 }
             }
         } else Modifier
     }
 
     ForyouScreen(
-        holder = holder,
+        details = details,
         recommend = recommend,
         rowCount = pref.rowCount,
         contentPadding = contentPadding,
         navigateToPlaylist = navigateToPlaylist,
         navigateToStream = navigateToStream,
         navigateToRecommendPlaylist = navigateToRecommendPlaylist,
-        unsubscribe = { viewModel.onEvent(ForyouEvent.Unsubscribe(it)) },
-        rename = { playlistUrl, target ->
-            viewModel.onEvent(
-                ForyouEvent.Rename(
-                    playlistUrl,
-                    target
-                )
-            )
-        },
+        unsubscribe = { viewModel.unsubscribe(it) },
+        rename = { playlistUrl, target -> viewModel.rename(playlistUrl, target) },
         modifier = modifier
             .fillMaxSize()
             .then(interceptVolumeEventModifier),
@@ -129,7 +118,7 @@ fun ForyouRoute(
 @Composable
 private fun ForyouScreen(
     rowCount: Int,
-    holder: PlaylistDetailHolder,
+    details: ImmutableList<PlaylistDetail>,
     recommend: Recommend,
     contentPadding: PaddingValues,
     navigateToPlaylist: (Playlist) -> Unit,
@@ -155,7 +144,7 @@ private fun ForyouScreen(
                 .navigationBarsPadding()
         ) {
             val showRecommend = recommend.isNotEmpty()
-            val showPlaylist = holder.details.isNotEmpty()
+            val showPlaylist = details.isNotEmpty()
             if (showRecommend) {
                 Column {
                     Spacer(
@@ -175,7 +164,7 @@ private fun ForyouScreen(
                 else contentPadding - contentPadding.only(WindowInsetsSides.Top)
                 PlaylistGallery(
                     rowCount = actualRowCount,
-                    holder = holder,
+                    details = details,
                     navigateToPlaylist = navigateToPlaylist,
                     onMenu = { dialog = ForyouDialog.Selections(it) },
                     contentPadding = actualContentPadding,

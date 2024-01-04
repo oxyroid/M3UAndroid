@@ -22,6 +22,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import com.m3u.core.unspecified.UBoolean
 import com.m3u.core.wrapper.Message
+import kotlinx.collections.immutable.ImmutableList
 
 typealias OnUserLeaveHint = () -> Unit
 typealias OnPipModeChanged = Consumer<PictureInPictureModeChangedInfo>
@@ -29,7 +30,7 @@ typealias OnPipModeChanged = Consumer<PictureInPictureModeChangedInfo>
 @Stable
 interface Helper {
     var title: String
-    var actions: List<Action>
+    var actions: ImmutableList<Action>
     var fob: Fob?
     var statusBarVisibility: UBoolean
     var navigationBarVisibility: UBoolean
@@ -55,7 +56,7 @@ val Helper.useRailNav: Boolean
 
 private data class HelperBundle(
     val title: String,
-    val actions: List<Action>,
+    val actions: ImmutableList<Action>,
     val fob: Fob?,
     val statusBarsVisibility: UBoolean,
     val navigationBarsVisibility: UBoolean,
@@ -131,7 +132,7 @@ val EmptyHelper = object : Helper {
             error("Cannot set title")
         }
 
-    override var actions: List<Action>
+    override var actions: ImmutableList<Action>
         get() = error("Cannot get actions")
         set(_) {
             error("Cannot set actions")
@@ -214,18 +215,6 @@ data class Action(
     val contentDescription: String?,
     val onClick: () -> Unit
 )
-
-@Immutable
-data class ActionHolder(
-    val actions: List<Action>
-)
-
-@Composable
-fun rememberActionHolder(actions: List<Action>): ActionHolder {
-    return remember(actions) {
-        ActionHolder(actions)
-    }
-}
 
 @Immutable
 data class Fob(

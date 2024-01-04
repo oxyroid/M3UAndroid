@@ -9,26 +9,9 @@ import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.rounded.Collections
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.Settings
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.Immutable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.m3u.i18n.R.string
 import kotlinx.parcelize.Parcelize
-
-typealias Navigate = (Destination) -> Unit
-
-@Immutable
-data class RootDestinationHolder(
-    val roots: List<Destination.Root>
-)
-
-@Composable
-fun rememberRootDestinationHolder(roots: List<Destination.Root>): RootDestinationHolder {
-    return remember(roots) {
-        RootDestinationHolder(roots)
-    }
-}
 
 sealed interface Destination {
     enum class Root(

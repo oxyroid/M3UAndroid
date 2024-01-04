@@ -1,19 +1,21 @@
 package com.m3u.features.favorite
 
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.m3u.core.architecture.pref.Pref
 import com.m3u.core.architecture.pref.observeAsFlow
-import com.m3u.core.architecture.viewmodel.BaseViewModel
-import com.m3u.core.wrapper.Message
+import com.m3u.data.database.entity.Stream
 import com.m3u.data.repository.StreamRepository
 import com.m3u.data.repository.observeAll
 import com.m3u.data.service.PlayerManager
 import com.m3u.ui.Sort
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -25,9 +27,7 @@ class FavouriteViewModel @Inject constructor(
     streamRepository: StreamRepository,
     pref: Pref,
     playerManager: PlayerManager
-) : BaseViewModel<FavoriteState, FavoriteEvent, Message.Static>(
-    emptyState = FavoriteState()
-) {
+) : ViewModel() {
     private val zappingMode = pref
         .observeAsFlow { it.zappingMode }
         .stateIn(
@@ -50,10 +50,6 @@ class FavouriteViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5_000)
         )
 
-    override fun onEvent(event: FavoriteEvent) {
-
-    }
-
     val sorts: ImmutableList<Sort> = Sort.entries.toPersistentList()
 
     private val sortIndex = MutableStateFlow(0)
@@ -70,7 +66,7 @@ class FavouriteViewModel @Inject constructor(
         sortIndex.update { sorts.indexOf(sort).coerceAtLeast(0) }
     }
 
-    val streams = streamRepository
+    val streams: StateFlow<ImmutableList<Stream>> = streamRepository
         .observeAll { it.favourite }
         .combine(sort) { all, sort ->
             when (sort) {
@@ -78,10 +74,11 @@ class FavouriteViewModel @Inject constructor(
                 Sort.ASC -> all.sortedBy { it.title }
                 Sort.DESC -> all.sortedByDescending { it.title }
             }
+                .toPersistentList()
         }
         .stateIn(
             scope = viewModelScope,
-            initialValue = emptyList(),
+            initialValue = persistentListOf(),
             started = SharingStarted.WhileSubscribed(5_000L)
         )
 

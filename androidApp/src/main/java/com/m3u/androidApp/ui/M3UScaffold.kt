@@ -33,23 +33,23 @@ import com.m3u.core.wrapper.Message
 import com.m3u.i18n.R.string
 import com.m3u.material.components.IconButton
 import com.m3u.material.model.LocalSpacing
-import com.m3u.ui.ActionHolder
+import com.m3u.ui.Action
 import com.m3u.ui.Destination
 import com.m3u.ui.Fob
-import com.m3u.ui.Navigate
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.haze
 import dev.chrisbanes.haze.hazeChild
+import kotlinx.collections.immutable.ImmutableList
 
 @Composable
 internal fun M3UScaffold(
     title: String,
     message: Message.Dynamic,
-    actionHolder: ActionHolder,
+    actions: ImmutableList<Action>,
     rootDestination: Destination.Root?,
     fob: Fob?,
     useRailNav: Boolean,
-    navigate: Navigate,
+    navigate: (Destination) -> Unit,
     modifier: Modifier = Modifier,
     onBackPressed: (() -> Unit)? = null,
     content: @Composable (PaddingValues) -> Unit
@@ -60,7 +60,6 @@ internal fun M3UScaffold(
         title = title,
         useRailNav = useRailNav,
         actions = {
-            val actions = actionHolder.actions
             actions.withEach {
                 IconButton(
                     icon = icon,

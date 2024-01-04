@@ -50,6 +50,7 @@ import com.m3u.ui.M3ULocalProvider
 import com.m3u.ui.OnPipModeChanged
 import com.m3u.ui.OnUserLeaveHint
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -123,7 +124,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun helper(
         title: Method<String>,
-        actions: Method<List<Action>>,
+        actions: Method<ImmutableList<Action>>,
         fob: Method<Fob?>
     ): Helper = object : Helper {
         init {
@@ -144,7 +145,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         override var title: String by title
-        override var actions: List<Action> by actions
+        override var actions: ImmutableList<Action> by actions
         override var fob: Fob? by fob
         override var statusBarVisibility: UBoolean = UBoolean.Unspecified
             set(value) {

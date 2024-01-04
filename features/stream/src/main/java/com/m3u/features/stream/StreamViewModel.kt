@@ -14,6 +14,9 @@ import com.m3u.dlna.control.DeviceControl
 import com.m3u.dlna.control.OnDeviceControlListener
 import com.m3u.dlna.control.ServiceActionCallback
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -40,7 +43,7 @@ class StreamViewModel @Inject constructor(
 ) : BaseViewModel<StreamState, StreamEvent, Message.Static>(
     emptyState = StreamState()
 ), OnDeviceRegistryListener, OnDeviceControlListener {
-    private val _devices = MutableStateFlow<List<Device<*, *, *>>>(emptyList())
+    private val _devices = MutableStateFlow<ImmutableList<Device<*, *, *>>>(persistentListOf())
 
     // searched screencast devices
     val devices = _devices.asStateFlow()
@@ -137,7 +140,7 @@ class StreamViewModel @Inject constructor(
         binded = false
         _searching.value = false
         _isDevicesVisible.value = false
-        _devices.value = emptyList()
+        _devices.value = persistentListOf()
         DLNACastManager.unbindCastService(application)
         DLNACastManager.unregisterListener(this)
     }
@@ -179,11 +182,11 @@ class StreamViewModel @Inject constructor(
     }
 
     override fun onDeviceAdded(device: Device<*, *, *>) {
-        _devices.update { it + device }
+        _devices.update { (it + device).toPersistentList() }
     }
 
     override fun onDeviceRemoved(device: Device<*, *, *>) {
-        _devices.update { it - device }
+        _devices.update { (it - device).toPersistentList() }
     }
 
     override fun onConnected(device: Device<*, *, *>) {

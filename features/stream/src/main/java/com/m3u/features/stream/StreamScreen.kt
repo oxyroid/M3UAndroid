@@ -23,7 +23,6 @@ import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.core.unspecified.unspecifiable
 import com.m3u.core.util.basic.isNotEmpty
 import com.m3u.features.stream.components.DlnaDevicesBottomSheet
-import com.m3u.features.stream.components.rememberDeviceHolder
 import com.m3u.features.stream.components.rememberDeviceWrapper
 import com.m3u.features.stream.fragments.AudioBecomingNoisyReceiver
 import com.m3u.features.stream.fragments.StreamFragment
@@ -148,7 +147,7 @@ fun StreamRoute(
             maskState = maskState,
             searching = searching,
             isDevicesVisible = isDevicesVisible,
-            deviceHolder = rememberDeviceHolder(devices),
+            devices = devices,
             connected = rememberDeviceWrapper(state.connected),
             connectDlnaDevice = { viewModel.onEvent(StreamEvent.ConnectDlnaDevice(it)) },
             disconnectDlnaDevice = { viewModel.onEvent(StreamEvent.DisconnectDlnaDevice(it)) },

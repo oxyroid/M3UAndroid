@@ -8,12 +8,18 @@ import androidx.work.workDataOf
 import com.m3u.core.architecture.Publisher
 import com.m3u.core.architecture.pref.Pref
 import com.m3u.core.architecture.viewmodel.BaseViewModel
+import com.m3u.data.database.entity.Stream
 import com.m3u.data.repository.StreamRepository
 import com.m3u.data.repository.observeAll
 import com.m3u.data.worker.SubscriptionWorker
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableList
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -30,18 +36,14 @@ class SettingViewModel @Inject constructor(
         versionCode = publisher.versionCode
     )
 ) {
-    init {
-        streamRepository
-            .observeAll { it.banned }
-            .onEach { streams ->
-                writable.update {
-                    it.copy(
-                        banneds = streams
-                    )
-                }
-            }
-            .launchIn(viewModelScope)
-    }
+    internal val banneds: StateFlow<ImmutableList<Stream>> = streamRepository
+        .observeAll { it.banned }
+        .map { it.toImmutableList() }
+        .stateIn(
+            scope = viewModelScope,
+            initialValue = persistentListOf(),
+            started = SharingStarted.WhileSubscribed(5_000L)
+        )
 
     override fun onEvent(event: SettingEvent) {
         when (event) {
@@ -67,7 +69,7 @@ class SettingViewModel @Inject constructor(
     }
 
     private fun onBanned(streamId: Int) {
-        val banned = readable.banneds.find { it.id == streamId }
+        val banned = banneds.value.find { it.id == streamId }
         if (banned != null) {
             viewModelScope.launch {
                 streamRepository.ban(streamId, false)

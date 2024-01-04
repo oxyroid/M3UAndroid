@@ -37,6 +37,8 @@ import com.m3u.ui.M3ULocalProvider
 import com.m3u.ui.OnPipModeChanged
 import com.m3u.ui.OnUserLeaveHint
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -135,7 +137,7 @@ class PlayerActivity : ComponentActivity() {
         }
 
         override var title: String = ""
-        override var actions: List<Action> = emptyList()
+        override var actions: ImmutableList<Action> = persistentListOf()
         override var fob: Fob? = null
         override var statusBarVisibility: UBoolean = UBoolean.Unspecified
             set(value) {

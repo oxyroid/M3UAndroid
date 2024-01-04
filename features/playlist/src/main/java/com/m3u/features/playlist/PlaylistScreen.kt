@@ -75,10 +75,9 @@ import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.core.util.compose.observableStateOf
 import com.m3u.core.wrapper.Event
 import com.m3u.data.database.entity.Stream
-import com.m3u.data.database.entity.StreamHolder
-import com.m3u.data.database.entity.rememberStreamHolder
 import com.m3u.features.playlist.components.DialogStatus
 import com.m3u.features.playlist.components.PlaylistDialog
+import com.m3u.features.playlist.components.PlaylistPager
 import com.m3u.features.playlist.components.StreamGallery
 import com.m3u.features.playlist.components.TvStreamGallery
 import com.m3u.i18n.R.string
@@ -96,6 +95,8 @@ import com.m3u.ui.MessageEventHandler
 import com.m3u.ui.SortBottomSheet
 import com.m3u.ui.isAtTop
 import com.m3u.ui.repeatOnLifecycle
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.launch
 
 @Composable
@@ -140,7 +141,7 @@ internal fun PlaylistRoute(
     }
 
     helper.repeatOnLifecycle {
-        actions = listOf(
+        actions = persistentListOf(
             Action(
                 icon = Icons.AutoMirrored.Rounded.Sort,
                 contentDescription = "sort",
@@ -166,12 +167,10 @@ internal fun PlaylistRoute(
     val interceptVolumeEventModifier = remember(pref.godMode) {
         if (pref.godMode) {
             Modifier.interceptVolumeEvent { event ->
-                when (event) {
-                    KeyEvent.KEYCODE_VOLUME_UP -> pref.rowCount =
-                        (pref.rowCount - 1).coerceAtLeast(1)
-
-                    KeyEvent.KEYCODE_VOLUME_DOWN -> pref.rowCount =
-                        (pref.rowCount + 1).coerceAtMost(3)
+                pref.rowCount = when (event) {
+                    KeyEvent.KEYCODE_VOLUME_UP -> (pref.rowCount - 1).coerceAtLeast(1)
+                    KeyEvent.KEYCODE_VOLUME_DOWN -> (pref.rowCount + 1).coerceAtMost(3)
+                    else -> return@interceptVolumeEvent
                 }
             }
         } else Modifier
@@ -189,10 +188,8 @@ internal fun PlaylistRoute(
             query = query,
             onQuery = { viewModel.onEvent(PlaylistEvent.Query(it)) },
             rowCount = pref.rowCount,
-            channelHolder = rememberChannelHolder(
-                channels = channels,
-                zapping = zapping
-            ),
+            zapping = zapping,
+            channels = channels,
             scrollUp = state.scrollUp,
             navigateToStream = navigateToStream,
             onMenu = {
@@ -229,7 +226,8 @@ private fun PlaylistScreen(
     query: String,
     onQuery: (String) -> Unit,
     rowCount: Int,
-    channelHolder: ChannelHolder,
+    zapping: Stream?,
+    channels: ImmutableList<Channel>,
     scrollUp: Event<Unit>,
     navigateToStream: () -> Unit,
     onMenu: (Stream) -> Unit,
@@ -305,7 +303,7 @@ private fun PlaylistScreen(
                 Background(
                     modifier = Modifier.fillMaxSize()
                 ) {
-                    PlaylistPager(channelHolder) { streamHolder ->
+                    PlaylistPager(channels, zapping) { streams, zapping ->
                         val type = configuration.uiMode and UI_MODE_TYPE_MASK
                         when {
                             !pref.useCommonUIMode && type == UI_MODE_TYPE_TELEVISION -> {
@@ -319,7 +317,8 @@ private fun PlaylistScreen(
                                 TvStreamGallery(
                                     state = state,
                                     rowCount = 4,
-                                    streamHolder = streamHolder,
+                                    streams = streams,
+                                    zapping = zapping,
                                     play = { url ->
                                         helper.play(url)
                                         navigateToStream()
@@ -348,7 +347,8 @@ private fun PlaylistScreen(
                                 StreamGallery(
                                     state = state,
                                     rowCount = actualRowCount,
-                                    streamHolder = streamHolder,
+                                    streams = streams,
+                                    zapping = zapping,
                                     play = { url ->
                                         helper.play(url)
                                         navigateToStream()
@@ -371,72 +371,6 @@ private fun PlaylistScreen(
                     connection = connection,
                 )
         )
-    }
-}
-
-@Composable
-private fun PlaylistPager(
-    channelHolder: ChannelHolder,
-    modifier: Modifier = Modifier,
-    content: @Composable (streamHolder: StreamHolder) -> Unit,
-) {
-    Column(modifier) {
-        val channels = channelHolder.channels
-        val zapping = channelHolder.zapping
-        val pagerState = rememberPagerState { channels.size }
-        val coroutineScope = rememberCoroutineScope()
-        val holders = List(channels.size) {
-            rememberStreamHolder(
-                streams = channels[it].streams,
-                zapping = zapping
-            )
-        }
-        Column(Modifier.animateContentSize()) {
-            if (channels.size > 1) {
-                PrimaryScrollableTabRow(
-                    selectedTabIndex = pagerState.currentPage,
-                    containerColor = Color.Transparent,
-                    indicator = { tabPositions ->
-                        val index = pagerState.currentPage
-                        with(TabRowDefaults) {
-                            Modifier.tabIndicatorOffset(
-                                currentTabPosition = tabPositions[index]
-                            )
-                        }
-                    },
-                    tabs = {
-                        val keys = remember(channels) { channels.map { it.title } }
-                        keys.forEachIndexed { index, title ->
-                            val selected = pagerState.currentPage == index
-                            Tab(
-                                selected = selected,
-                                onClick = {
-                                    coroutineScope.launch {
-                                        pagerState.scrollToPage(index)
-                                    }
-                                },
-                                text = {
-                                    Text(
-                                        text = title,
-                                        style = MaterialTheme.typography.titleSmall,
-                                        color = if (selected) MaterialTheme.colorScheme.onBackground
-                                        else Color.Unspecified
-                                    )
-                                }
-                            )
-                        }
-                    },
-                    divider = {},
-                    modifier = Modifier.fillMaxWidth()
-                )
-                HorizontalDivider()
-            }
-        }
-        HorizontalPager(pagerState) { pager ->
-            content(
-                holders[pager].copy(zapping = zapping)
-            )
-        }
     }
 }
 

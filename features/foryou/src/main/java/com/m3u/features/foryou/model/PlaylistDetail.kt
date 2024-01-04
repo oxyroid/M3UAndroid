@@ -13,11 +13,6 @@ internal data class PlaylistDetail(
     }
 }
 
-@Immutable
-internal data class PlaylistDetailHolder(
-    val details: List<PlaylistDetail> = emptyList()
-)
-
 internal fun Playlist.toDetail(
     count: Int = PlaylistDetail.DEFAULT_COUNT
 ): PlaylistDetail = PlaylistDetail(

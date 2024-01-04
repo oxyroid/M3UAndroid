@@ -21,12 +21,11 @@ import com.m3u.i18n.R.string
 import com.m3u.material.model.LocalNavController
 import com.m3u.ui.Destination
 import com.m3u.ui.LocalHelper
-import com.m3u.ui.Navigate
 
 @Composable
 fun M3UNavHost(
     pagerState: PagerState,
-    navigate: Navigate,
+    navigate: (Destination) -> Unit,
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
     startDestination: String = ROOT_ROUTE

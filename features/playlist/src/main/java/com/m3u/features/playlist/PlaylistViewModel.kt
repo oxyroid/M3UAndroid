@@ -26,6 +26,7 @@ import com.m3u.features.playlist.PlaylistMessage.StreamCoverSaved
 import com.m3u.ui.Sort
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -201,11 +202,11 @@ class PlaylistViewModel @Inject constructor(
 
     private fun List<Stream>.toChannels(recommend: String?): List<Channel> = groupBy { it.group }
         .toList()
-        .map { Channel(it.first, it.second) }
+        .map { Channel(it.first, it.second.toPersistentList()) }
         .sortedByDescending { recommend?.equals(it.title) }
 
     private fun List<Stream>.toSingleChannel(): List<Channel> = listOf(
-        Channel("", this)
+        Channel("", toPersistentList())
     )
 
     private val playlistUrl: MutableStateFlow<String> = MutableStateFlow("")
@@ -251,7 +252,7 @@ class PlaylistViewModel @Inject constructor(
         sortIndex.update { sorts.indexOf(sort).coerceAtLeast(0) }
     }
 
-    val channels: StateFlow<List<Channel>> = combine(
+    val channels: StateFlow<ImmutableList<Channel>> = combine(
         unsorted,
         sort,
         recommend
@@ -261,10 +262,11 @@ class PlaylistViewModel @Inject constructor(
             Sort.DESC -> all.sortedByDescending { it.title }.toSingleChannel()
             Sort.UNSPECIFIED -> all.toChannels(recommend)
         }
+            .toPersistentList()
     }
         .stateIn(
             scope = viewModelScope,
-            initialValue = emptyList(),
+            initialValue = persistentListOf(),
             started = SharingStarted.WhileSubscribed(5_000L)
         )
 }

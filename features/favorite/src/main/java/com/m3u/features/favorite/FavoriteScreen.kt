@@ -18,8 +18,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.core.architecture.pref.LocalPref
-import com.m3u.data.database.entity.StreamHolder
-import com.m3u.data.database.entity.rememberStreamHolder
+import com.m3u.data.database.entity.Stream
 import com.m3u.features.favorite.components.FavouriteGallery
 import com.m3u.material.components.Background
 import com.m3u.material.ktx.interceptVolumeEvent
@@ -28,6 +27,8 @@ import com.m3u.ui.EventHandler
 import com.m3u.ui.LocalHelper
 import com.m3u.ui.ResumeEvent
 import com.m3u.ui.SortBottomSheet
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
 
 @Composable
 fun FavouriteRoute(
@@ -50,7 +51,7 @@ fun FavouriteRoute(
     var isSortSheetVisible by rememberSaveable { mutableStateOf(false) }
 
     EventHandler(resume) {
-        helper.actions = listOf(
+        helper.actions = persistentListOf(
             Action(
                 icon = Icons.AutoMirrored.Rounded.Sort,
                 contentDescription = "sort",
@@ -62,12 +63,10 @@ fun FavouriteRoute(
     val interceptVolumeEventModifier = remember(pref.godMode) {
         if (pref.godMode) {
             Modifier.interceptVolumeEvent { event ->
-                when (event) {
-                    KeyEvent.KEYCODE_VOLUME_UP ->
-                        pref.rowCount = (pref.rowCount - 1).coerceAtLeast(1)
-
-                    KeyEvent.KEYCODE_VOLUME_DOWN ->
-                        pref.rowCount = (pref.rowCount + 1).coerceAtMost(3)
+                pref.rowCount = when (event) {
+                    KeyEvent.KEYCODE_VOLUME_UP -> (pref.rowCount - 1).coerceAtLeast(1)
+                    KeyEvent.KEYCODE_VOLUME_DOWN -> (pref.rowCount + 1).coerceAtMost(3)
+                    else -> return@interceptVolumeEvent
                 }
             }
         } else Modifier
@@ -85,10 +84,8 @@ fun FavouriteRoute(
         FavoriteScreen(
             contentPadding = contentPadding,
             rowCount = pref.rowCount,
-            streamHolder = rememberStreamHolder(
-                streams = streams,
-                zapping = zapping
-            ),
+            streams = streams,
+            zapping = zapping,
             navigateToStream = navigateToStream,
             modifier = modifier
                 .fillMaxSize()
@@ -101,7 +98,8 @@ fun FavouriteRoute(
 private fun FavoriteScreen(
     contentPadding: PaddingValues,
     rowCount: Int,
-    streamHolder: StreamHolder,
+    streams: ImmutableList<Stream>,
+    zapping: Stream? = null,
     navigateToStream: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -113,7 +111,8 @@ private fun FavoriteScreen(
     }
     FavouriteGallery(
         contentPadding = contentPadding,
-        streamHolder = streamHolder,
+        streams = streams,
+        zapping = zapping,
         rowCount = actualRowCount,
         navigateToStream = navigateToStream,
         modifier = modifier

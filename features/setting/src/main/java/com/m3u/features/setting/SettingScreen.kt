@@ -37,7 +37,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.m3u.features.setting.fragments.MutedStreamHolder
+import com.m3u.data.database.entity.Stream
 import com.m3u.features.setting.fragments.PreferencesFragment
 import com.m3u.features.setting.fragments.ScriptsFragment
 import com.m3u.features.setting.fragments.SubscriptionsFragment
@@ -47,6 +47,8 @@ import com.m3u.ui.Fob
 import com.m3u.ui.LocalHelper
 import com.m3u.ui.MessageEventHandler
 import com.m3u.ui.ResumeEvent
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
 
 @Composable
 fun SettingRoute(
@@ -59,10 +61,11 @@ fun SettingRoute(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val message by viewModel.message.collectAsStateWithLifecycle()
+    val banneds by viewModel.banneds.collectAsStateWithLifecycle()
     val helper = LocalHelper.current
 
     EventHandler(resume) {
-        helper.actions = emptyList()
+        helper.actions = persistentListOf()
     }
 
     MessageEventHandler(message)
@@ -81,7 +84,7 @@ fun SettingRoute(
         uriWrapper = rememberUriWrapper(state.uri),
         useCommonUIModeEnable = useCommonUIModeEnable,
         navigateToConsole = navigateToConsole,
-        mutedStreamHolder = { state.banneds },
+        banneds = banneds,
         onTitle = { viewModel.onEvent(SettingEvent.OnTitle(it)) },
         onUrl = { viewModel.onEvent(SettingEvent.OnUrl(it)) },
         onSubscribe = {
@@ -110,7 +113,7 @@ private fun SettingScreen(
     onUrl: (String) -> Unit,
     onSubscribe: () -> Unit,
     useCommonUIModeEnable: Boolean,
-    mutedStreamHolder: MutedStreamHolder,
+    banneds: ImmutableList<Stream>,
     onBanned: (Int) -> Unit,
     importJavaScript: (Uri) -> Unit,
     navigateToConsole: () -> Unit,
@@ -187,7 +190,7 @@ private fun SettingScreen(
                                 title = title,
                                 url = url,
                                 uriWrapper = uriWrapper,
-                                streamHolder = mutedStreamHolder,
+                                banneds = banneds,
                                 onBanned = onBanned,
                                 onTitle = onTitle,
                                 onUrl = onUrl,

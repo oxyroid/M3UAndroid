@@ -14,9 +14,7 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -24,27 +22,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.m3u.i18n.R.string
 import com.m3u.material.components.CircularProgressIndicator
-import com.m3u.material.components.mask.MaskState
 import com.m3u.material.components.OnDismiss
+import com.m3u.material.components.mask.MaskState
 import com.m3u.material.model.LocalSpacing
+import kotlinx.collections.immutable.ImmutableList
 import org.fourthline.cling.model.meta.Device
-
-@Immutable
-internal data class DeviceHolder(
-    val devices: List<Device<*, *, *>>
-)
-
-@Composable
-internal fun rememberDeviceHolder(devices: List<Device<*, *, *>>): DeviceHolder {
-    return remember(devices) {
-        DeviceHolder(devices)
-    }
-}
 
 @Composable
 internal fun DlnaDevicesBottomSheet(
     isDevicesVisible: Boolean,
-    deviceHolder: DeviceHolder,
+    devices: ImmutableList<Device<*, *, *>>,
     connected: DeviceWrapper?,
     searching: Boolean,
     maskState: MaskState,
@@ -67,7 +54,6 @@ internal fun DlnaDevicesBottomSheet(
             modifier = modifier,
             windowInsets = WindowInsets(0)
         ) {
-            val devices = deviceHolder.devices
             LaunchedEffect(devices, state.isVisible) {
                 if (state.isVisible) state.expand()
             }

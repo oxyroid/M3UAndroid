@@ -1,16 +1,18 @@
 package com.m3u.features.foryou
 
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.m3u.core.architecture.pref.Pref
 import com.m3u.core.architecture.pref.observeAsFlow
-import com.m3u.core.architecture.viewmodel.BaseViewModel
 import com.m3u.data.repository.PlaylistRepository
 import com.m3u.data.repository.StreamRepository
 import com.m3u.features.foryou.components.recommend.Recommend
 import com.m3u.features.foryou.model.PlaylistDetail
-import com.m3u.features.foryou.model.PlaylistDetailHolder
 import com.m3u.features.foryou.model.toDetail
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.SharingStarted
@@ -32,9 +34,7 @@ class ForyouViewModel @Inject constructor(
     private val playlistRepository: PlaylistRepository,
     streamRepository: StreamRepository,
     pref: Pref
-) : BaseViewModel<ForyouState, ForyouEvent, ForyouMessage>(
-    emptyState = ForyouState()
-) {
+) : ViewModel() {
     private val counts: StateFlow<Map<String, Int>> = streamRepository
         .observeAll()
         .map { streams ->
@@ -48,7 +48,7 @@ class ForyouViewModel @Inject constructor(
             initialValue = emptyMap()
         )
 
-    internal val playlists: StateFlow<PlaylistDetailHolder> = playlistRepository
+    internal val details: StateFlow<ImmutableList<PlaylistDetail>> = playlistRepository
         .observeAll()
         .distinctUntilChanged()
         .combine(counts) { fs, cs ->
@@ -57,12 +57,12 @@ class ForyouViewModel @Inject constructor(
                     f.toDetail(cs[f.url] ?: PlaylistDetail.DEFAULT_COUNT)
                 }
             }
+                .toPersistentList()
         }
-        .map { PlaylistDetailHolder(it) }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000L),
-            initialValue = PlaylistDetailHolder()
+            initialValue = persistentListOf()
         )
 
     private val unseensDuration = pref
@@ -84,23 +84,13 @@ class ForyouViewModel @Inject constructor(
             initialValue = Recommend()
         )
 
-    override fun onEvent(event: ForyouEvent) {
-        when (event) {
-            is ForyouEvent.Unsubscribe -> unsubscribe(event.url)
-            is ForyouEvent.Rename -> rename(event.playlistUrl, event.target)
-        }
-    }
-
-    private fun unsubscribe(url: String) {
+    fun unsubscribe(url: String) {
         viewModelScope.launch {
-            val playlist = playlistRepository.unsubscribe(url)
-            if (playlist == null) {
-                onMessage(ForyouMessage.ErrorCannotUnsubscribe)
-            }
+            playlistRepository.unsubscribe(url)
         }
     }
 
-    private fun rename(playlistUrl: String, target: String) {
+    fun rename(playlistUrl: String, target: String) {
         viewModelScope.launch {
             playlistRepository.rename(playlistUrl, target)
         }

@@ -28,13 +28,12 @@ import androidx.compose.ui.text.font.FontWeight
 import com.m3u.core.util.basic.title
 import com.m3u.ui.Destination
 import com.m3u.ui.Fob
-import com.m3u.ui.Navigate
-import com.m3u.ui.RootDestinationHolder
-import com.m3u.ui.rememberRootDestinationHolder
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.toPersistentList
 
 @Composable
 fun AppNavigation(
-    navigate: Navigate,
+    navigate: (Destination) -> Unit,
     rootDestination: Destination.Root?,
     fob: Fob?,
     useNavRail: Boolean,
@@ -44,7 +43,8 @@ fun AppNavigation(
     unselectedColor: Color = AppNavigationDefaults.unselectedColor(),
     fobbedColor: Color = AppNavigationDefaults.fobbedColor(),
 ) {
-    val destinationHolder = rememberRootDestinationHolder(Destination.Root.entries)
+    val roots = remember { Destination.Root.entries.toPersistentList() }
+
     val currentColor by animateColorAsState(
         targetValue = color,
         label = "navigation-color"
@@ -63,7 +63,7 @@ fun AppNavigation(
             ) {
                 RailContent(
                     navigate = navigate,
-                    destinationHolder = destinationHolder,
+                    roots = roots,
                     rootDestination = rootDestination,
                     fob = fob,
                     selectedColor = selectedColor,
@@ -80,7 +80,7 @@ fun AppNavigation(
             ) {
                 Content(
                     navigate = navigate,
-                    destinationHolder = destinationHolder,
+                    roots = roots,
                     rootDestination = rootDestination,
                     fob = fob,
                     selectedColor = selectedColor,
@@ -93,8 +93,8 @@ fun AppNavigation(
 
 @Composable
 private fun RailContent(
-    navigate: Navigate,
-    destinationHolder: RootDestinationHolder,
+    navigate: (Destination) -> Unit,
+    roots: ImmutableList<Destination.Root>,
     rootDestination: Destination.Root?,
     fob: Fob?,
     selectedColor: Color,
@@ -103,7 +103,6 @@ private fun RailContent(
 ) {
     val relation = fob?.rootDestination
     val actualActiveDestination = rootDestination ?: relation
-    val roots = destinationHolder.roots
     Column(modifier) {
         roots.forEach { root ->
             val fobbed = root == relation
@@ -150,8 +149,8 @@ private fun RailContent(
 
 @Composable
 private fun Content(
-    navigate: Navigate,
-    destinationHolder: RootDestinationHolder,
+    navigate: (Destination) -> Unit,
+    roots: ImmutableList<Destination.Root>,
     rootDestination: Destination.Root?,
     fob: Fob?,
     selectedColor: Color,
@@ -160,7 +159,6 @@ private fun Content(
 ) {
     val relation = fob?.rootDestination
     val actualActiveDestination = rootDestination ?: relation
-    val roots = destinationHolder.roots
     Row(modifier) {
         roots.forEach { root ->
             val fobbed = root == relation
