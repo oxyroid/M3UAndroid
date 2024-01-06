@@ -7,9 +7,13 @@ import android.graphics.Rect
 import androidx.annotation.OptIn
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
+import androidx.media3.common.Format
 import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
+import androidx.media3.common.TrackGroup
+import androidx.media3.common.TrackSelectionOverride
+import androidx.media3.common.Tracks
 import androidx.media3.common.VideoSize
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.DefaultDataSource
@@ -102,13 +106,13 @@ class PlayerManagerImpl @Inject constructor(
                     )
                 )
             )
-        val trackSelector = DefaultTrackSelector(context).apply {
+        val ts = DefaultTrackSelector(context).apply {
             setParameters(buildUponParameters().setMaxVideoSizeSd())
         }
         return ExoPlayer.Builder(context)
             .setMediaSourceFactory(msf)
             .setRenderersFactory(rf)
-            .setTrackSelector(trackSelector)
+            .setTrackSelector(ts)
             .build()
             .apply {
                 val attributes = AudioAttributes.Builder()
@@ -171,7 +175,42 @@ class PlayerManagerImpl @Inject constructor(
         super.mutablePlaybackError.value = error
     }
 
-    private fun VideoSize.toRect(): Rect {
-        return Rect(0, 0, width, height)
+    private val _formats = MutableStateFlow<List<Tracks.Group>>(emptyList())
+    override val groups: StateFlow<List<Tracks.Group>> = _formats.asStateFlow()
+
+    private val _selected = MutableStateFlow<Map<@C.TrackType Int, Format?>>(emptyMap())
+    override val selected: StateFlow<Map<@C.TrackType Int, Format?>> = _selected.asStateFlow()
+
+    override fun onTracksChanged(tracks: Tracks) {
+        super.onTracksChanged(tracks)
+        _formats.value = tracks.groups
+        _selected.value = tracks.groups
+            .filter { it.isSelected }
+            .groupBy { it.type }
+            .mapValues {
+                val group = it.value.first()
+                var selectedIndex = 0
+                for (i in 0 until group.length) {
+                    if (group.isTrackSelected(i)) {
+                        selectedIndex = i
+                    }
+                }
+                group.getTrackFormat(selectedIndex)
+            }
     }
+
+
+    override fun chooseTrack(group: TrackGroup, trackIndex: Int) {
+        val currentPlayer = player.value ?: return
+        val override = TrackSelectionOverride(group, trackIndex)
+        currentPlayer.trackSelectionParameters = currentPlayer
+            .trackSelectionParameters
+            .buildUpon()
+            .setOverrideForType(override)
+            .build()
+    }
+}
+
+private fun VideoSize.toRect(): Rect {
+    return Rect(0, 0, width, height)
 }

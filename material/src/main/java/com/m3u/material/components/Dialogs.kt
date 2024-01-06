@@ -100,7 +100,8 @@ fun DialogItem(
             Text(
                 text = text.uppercase(),
                 style = MaterialTheme.typography.titleSmall,
-                maxLines = 1
+                maxLines = 1,
+                fontWeight = FontWeight.SemiBold
             )
         }
     }

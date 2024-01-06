@@ -2,6 +2,9 @@ package com.m3u.features.stream
 
 import android.app.Application
 import androidx.lifecycle.viewModelScope
+import androidx.media3.common.C
+import androidx.media3.common.Format
+import androidx.media3.common.Tracks
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.viewmodel.BaseViewModel
 import com.m3u.core.wrapper.Message
@@ -24,6 +27,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -66,6 +71,56 @@ class StreamViewModel @Inject constructor(
             initialValue = StreamState.Metadata(),
             started = SharingStarted.WhileSubscribed(5_000)
         )
+
+    private val groups: StateFlow<List<Tracks.Group>> = playerManager
+        .groups
+        .stateIn(
+            scope = viewModelScope,
+            initialValue = emptyList(),
+            started = SharingStarted.WhileSubscribed(5_000)
+        )
+
+    val videoFormats: StateFlow<ImmutableList<Format>> = groups
+        .mapNotNull { all -> all.find { it.type == C.TRACK_TYPE_VIDEO } }
+        .map { group ->
+            List(group.length) {
+                group.getTrackFormat(it)
+            }
+        }
+        .map { all ->
+            all.mapNotNull {
+                it.takeIf { it.width > 0 && it.height > 0 }
+            }
+                .toPersistentList()
+        }
+        .stateIn(
+            scope = viewModelScope,
+            initialValue = persistentListOf(),
+            started = SharingStarted.WhileSubscribed(5_000)
+        )
+
+    val format: StateFlow<Format?> = playerManager
+        .selected
+        .map { it[C.TRACK_TYPE_VIDEO] }
+        .stateIn(
+            scope = viewModelScope,
+            initialValue = null,
+            started = SharingStarted.WhileSubscribed(5_000)
+        )
+
+    fun chooseFormat(format: Format) {
+        val currentGroups = groups.value
+        val currentGroup = currentGroups.find { it.type == C.TRACK_TYPE_VIDEO } ?: return
+        for (index in 0 until currentGroup.length) {
+            if (currentGroup.getTrackFormat(index).id == format.id) {
+                playerManager.chooseTrack(
+                    group = currentGroup.mediaTrackGroup,
+                    trackIndex = index
+                )
+                break
+            }
+        }
+    }
 
     // stream playing state
     val playerState: StateFlow<StreamState.PlayerState> = combine(

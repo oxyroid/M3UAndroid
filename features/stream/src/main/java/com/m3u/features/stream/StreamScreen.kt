@@ -19,10 +19,12 @@ import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.media3.common.Format
 import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.core.unspecified.unspecifiable
 import com.m3u.core.util.basic.isNotEmpty
 import com.m3u.features.stream.components.DlnaDevicesBottomSheet
+import com.m3u.features.stream.components.FormatsBottomSheet
 import com.m3u.features.stream.components.rememberDeviceWrapper
 import com.m3u.features.stream.fragments.AudioBecomingNoisyReceiver
 import com.m3u.features.stream.fragments.StreamFragment
@@ -33,6 +35,7 @@ import com.m3u.material.components.mask.rememberMaskState
 import com.m3u.ui.LocalHelper
 import com.m3u.ui.OnPipModeChanged
 import com.m3u.ui.repeatOnLifecycle
+import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 
@@ -52,11 +55,14 @@ fun StreamRoute(
     val devices by viewModel.devices.collectAsStateWithLifecycle()
     val isDevicesVisible by viewModel.isDevicesVisible.collectAsStateWithLifecycle()
     val searching by viewModel.searching.collectAsStateWithLifecycle()
+    val formats by viewModel.videoFormats.collectAsStateWithLifecycle()
+    val format by viewModel.format.collectAsStateWithLifecycle()
 
     val volume by viewModel.volume.collectAsStateWithLifecycle()
     var brightness by rememberSaveable { mutableFloatStateOf(helper.brightness) }
     var isPipMode by rememberSaveable { mutableStateOf(false) }
     var isAutoZappingMode by rememberSaveable { mutableStateOf(true) }
+    var choosing by rememberSaveable { mutableStateOf(false) }
 
     val maskState = rememberMaskState()
 
@@ -143,6 +149,7 @@ fun StreamRoute(
         color = Color.Black,
         contentColor = Color.White
     ) {
+
         DlnaDevicesBottomSheet(
             maskState = maskState,
             searching = searching,
@@ -154,15 +161,26 @@ fun StreamRoute(
             onDismiss = { viewModel.onEvent(StreamEvent.CloseDlnaDevices) }
         )
 
+        FormatsBottomSheet(
+            visible = choosing,
+            formats = formats,
+            format = format,
+            maskState = maskState,
+            onDismiss = { choosing = false },
+            onClick = { viewModel.chooseFormat(it) }
+        )
+
         StreamScreen(
             recording = state.recording,
             openDlnaDevices = { viewModel.onEvent(StreamEvent.OpenDlnaDevices) },
+            openChooseFormat = { choosing = true },
             onRecord = { viewModel.onEvent(StreamEvent.Record) },
             onFavourite = { viewModel.onEvent(StreamEvent.OnFavourite(it)) },
             onBackPressed = onBackPressed,
             maskState = maskState,
             playerState = playerState,
             metadata = metadata,
+            formats = formats,
             brightness = brightness,
             volume = volume,
             onBrightness = { brightness = it },
@@ -176,13 +194,15 @@ fun StreamRoute(
 @Composable
 private fun StreamScreen(
     recording: Boolean,
-    openDlnaDevices: () -> Unit,
     onRecord: () -> Unit,
     onFavourite: (String) -> Unit,
     onBackPressed: () -> Unit,
     maskState: MaskState,
     playerState: StreamState.PlayerState,
     metadata: StreamState.Metadata,
+    formats: ImmutableList<Format>,
+    openDlnaDevices: () -> Unit,
+    openChooseFormat: () -> Unit,
     volume: Float,
     brightness: Float,
     onVolume: (Float) -> Unit,
@@ -192,16 +212,19 @@ private fun StreamScreen(
 ) {
     val stream = metadata.stream
     val playlist = metadata.playlist
+
     val url = stream?.url.orEmpty()
     val title = stream?.title ?: "--"
     val cover = stream?.cover.orEmpty()
     val playlistTitle = playlist?.title ?: "--"
     val favourite = stream?.favourite ?: false
+
     StreamFragment(
         playerState = playerState,
         title = title,
         url = url,
         cover = cover,
+        formats = formats,
         playlistTitle = playlistTitle,
         maskState = maskState,
         recording = recording,
@@ -209,6 +232,7 @@ private fun StreamScreen(
         onRecord = onRecord,
         onFavourite = { onFavourite(url) },
         openDlnaDevices = openDlnaDevices,
+        openChooseFormat = openChooseFormat,
         onBackPressed = onBackPressed,
         replay = replay,
         brightness = brightness,

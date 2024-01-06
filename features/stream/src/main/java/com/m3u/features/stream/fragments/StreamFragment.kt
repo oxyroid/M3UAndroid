@@ -20,6 +20,7 @@ import androidx.compose.material.icons.automirrored.rounded.VolumeOff
 import androidx.compose.material.icons.automirrored.rounded.VolumeUp
 import androidx.compose.material.icons.rounded.Cast
 import androidx.compose.material.icons.rounded.DarkMode
+import androidx.compose.material.icons.rounded.HighQuality
 import androidx.compose.material.icons.rounded.LightMode
 import androidx.compose.material.icons.rounded.PictureInPicture
 import androidx.compose.material.icons.rounded.RadioButtonChecked
@@ -46,6 +47,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.media3.common.Format
 import androidx.media3.common.Player
 import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.core.util.basic.isNotEmpty
@@ -63,6 +65,7 @@ import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.LocalHelper
 import com.m3u.ui.Player
 import com.m3u.ui.rememberPlayerState
+import kotlinx.collections.immutable.ImmutableList
 import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
@@ -72,6 +75,7 @@ internal fun StreamFragment(
     playlistTitle: String,
     url: String,
     cover: String,
+    formats: ImmutableList<Format>,
     maskState: MaskState,
     recording: Boolean,
     favourite: Boolean,
@@ -82,6 +86,7 @@ internal fun StreamFragment(
     onRecord: () -> Unit,
     onFavourite: () -> Unit,
     openDlnaDevices: () -> Unit,
+    openChooseFormat: () -> Unit,
     onBackPressed: () -> Unit,
     replay: () -> Unit,
     modifier: Modifier = Modifier
@@ -168,6 +173,14 @@ internal fun StreamFragment(
                             contentDescription = if (favourite) stringResource(string.feat_stream_tooltip_unfavourite)
                             else stringResource(string.feat_stream_tooltip_favourite)
                         )
+                        if (formats.isNotEmpty()) {
+                            MaskButton(
+                                state = maskState,
+                                icon = Icons.Rounded.HighQuality,
+                                onClick = openChooseFormat,
+                                contentDescription = stringResource(string.feat_stream_tooltip_choose_format)
+                            )
+                        }
                         if (pref.record) {
                             MaskButton(
                                 state = maskState,
@@ -287,7 +300,7 @@ internal fun StreamFragment(
                                         else -> ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
                                     }
                                 },
-                                contentDescription = stringResource(string.feat_stream_screen_rotating)
+                                contentDescription = stringResource(string.feat_stream_tooltip_screen_rotating)
                             )
                         }
                     },
