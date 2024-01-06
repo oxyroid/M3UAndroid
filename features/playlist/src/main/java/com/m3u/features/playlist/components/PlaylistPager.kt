@@ -15,6 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import com.m3u.data.database.entity.Stream
 import com.m3u.features.playlist.Channel
 import kotlinx.collections.immutable.ImmutableList
@@ -58,7 +59,8 @@ internal fun PlaylistPager(
                                         text = channel.title,
                                         style = MaterialTheme.typography.titleSmall,
                                         color = if (selected) MaterialTheme.colorScheme.onBackground
-                                        else Color.Unspecified
+                                        else Color.Unspecified,
+                                        fontWeight = FontWeight.Bold.takeIf { selected }
                                     )
                                 }
                             )

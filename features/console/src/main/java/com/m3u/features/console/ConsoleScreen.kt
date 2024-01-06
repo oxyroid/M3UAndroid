@@ -91,7 +91,7 @@ private fun ConsoleScreen(
                                 text = MonoStyle.get(command).actual(command),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MonoStyle.get(command).color,
-                                modifier = Modifier.padding(horizontal = LocalSpacing.current.medium),
+                                modifier = Modifier.fillMaxWidth()
                             )
                         }
                     }

@@ -15,6 +15,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -30,9 +31,12 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.capitalize
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.intl.Locale
+import androidx.lifecycle.compose.LifecycleStartEffect
 import com.m3u.i18n.R
 import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.MonoText
+import kotlinx.coroutines.delay
+import kotlin.time.Duration.Companion.seconds
 
 @Composable
 internal fun PlaylistGalleryPlaceholder(
@@ -47,6 +51,17 @@ internal fun PlaylistGalleryPlaceholder(
         targetValue = if (expanded) spacing.medium else spacing.large,
         label = "playlist-gallery-placeholder-corner-size"
     )
+    LaunchedEffect(expanded) {
+        if (expanded) {
+            delay(3.seconds)
+            expanded = false
+        }
+    }
+    LifecycleStartEffect {
+        onStopOrDispose {
+            expanded = false
+        }
+    }
     val elevation by animateDpAsState(
         targetValue = if (expanded) spacing.small else spacing.medium,
         label = "playlist-gallery-placeholder-elevation"
@@ -61,8 +76,12 @@ internal fun PlaylistGalleryPlaceholder(
             value = expanded,
             role = Role.Checkbox,
             onValueChange = {
-                feedback.performHapticFeedback(HapticFeedbackType.LongPress)
-                expanded = it
+                if (it) {
+                    feedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                    expanded = true
+                } else {
+                    navigateToSettingSubscription()
+                }
             }
         )
         .semantics(mergeDescendants = true) {}
