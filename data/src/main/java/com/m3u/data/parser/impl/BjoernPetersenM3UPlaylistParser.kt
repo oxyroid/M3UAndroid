@@ -15,9 +15,7 @@ class BjoernPetersenM3UPlaylistParser @Inject constructor() : M3UPlaylistParser 
     override val engine: String = "bjoern-petersen"
 
     override suspend fun execute(input: InputStream): M3UPlaylist {
-        val list = input.use {
-            M3uParser.parse(it.reader())
-        }
+        val list = input.reader().use { reader -> M3uParser.parse(reader) }
         return list.map { it.toM3UData() }
     }
 
