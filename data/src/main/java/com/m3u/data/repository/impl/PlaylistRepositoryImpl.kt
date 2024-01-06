@@ -171,11 +171,11 @@ class PlaylistRepositoryImpl @Inject constructor(
     }
 
     private suspend fun parse(
-        uri: String,
+        playlistUrl: String,
         seen: Long,
         input: InputStream
     ): List<Stream> = logger.execute {
-        parser.execute(input).map { it.toStream(uri, seen) }
+        parser.execute(input).map { it.toStream(playlistUrl, seen) }
     } ?: emptyList()
 
     override suspend fun rename(url: String, target: String) = logger.sandBox {

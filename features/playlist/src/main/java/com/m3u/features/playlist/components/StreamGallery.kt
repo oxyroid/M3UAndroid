@@ -34,15 +34,88 @@ internal fun StreamGallery(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(0.dp),
 ) {
+    val pref = LocalPref.current
+    if (pref.compact) {
+        CompactStreamGalleryImpl(
+            state = state,
+            rowCount = rowCount,
+            streams = streams,
+            zapping = zapping,
+            play = play,
+            onMenu = onMenu,
+            modifier = modifier,
+            contentPadding = contentPadding
+        )
+    } else {
+        StreamGalleryImpl(
+            state = state,
+            rowCount = rowCount,
+            streams = streams,
+            zapping = zapping,
+            play = play,
+            onMenu = onMenu,
+            modifier = modifier,
+            contentPadding = contentPadding
+        )
+    }
+}
+
+@Composable
+fun TvStreamGallery(
+    state: TvLazyGridState,
+    rowCount: Int,
+    streams: ImmutableList<Stream>,
+    zapping: Stream?,
+    play: PlayStream,
+    onMenu: (Stream) -> Unit,
+    modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(0.dp),
+) {
+    val pref = LocalPref.current
+    if (pref.compact) {
+        CompactTvStreamGalleryImpl(
+            state = state,
+            rowCount = rowCount,
+            streams = streams,
+            zapping = zapping,
+            play = play,
+            onMenu = onMenu,
+            modifier = modifier,
+            contentPadding = contentPadding
+        )
+    } else {
+        TvStreamGalleryImpl(
+            state = state,
+            rowCount = rowCount,
+            streams = streams,
+            zapping = zapping,
+            play = play,
+            onMenu = onMenu,
+            modifier = modifier,
+            contentPadding = contentPadding
+        )
+    }
+}
+
+@Composable
+private fun CompactTvStreamGalleryImpl(
+    state: TvLazyGridState,
+    rowCount: Int,
+    streams: ImmutableList<Stream>,
+    zapping: Stream?,
+    play: PlayStream,
+    onMenu: (Stream) -> Unit,
+    modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(0.dp),
+) {
     val spacing = LocalSpacing.current
     val pref = LocalPref.current
 
-    LazyVerticalStaggeredGrid(
+    TvLazyVerticalGrid(
         state = state,
-        columns = StaggeredGridCells.Fixed(rowCount),
-        verticalItemSpacing = spacing.medium,
+        columns = TvGridCells.Fixed(rowCount),
         horizontalArrangement = Arrangement.spacedBy(spacing.medium),
-        contentPadding = PaddingValues(spacing.medium) + contentPadding,
+        contentPadding = contentPadding,
         modifier = modifier.fillMaxSize()
     ) {
         items(
@@ -50,9 +123,9 @@ internal fun StreamGallery(
             key = { stream -> stream.id },
             contentType = { it.cover.isNullOrEmpty() }
         ) { stream ->
-            StreamItem(
+            CompactStreamItem(
                 stream = stream,
-                border = zapping != stream,
+                zapping = zapping == stream,
                 noPictureMode = pref.noPictureMode,
                 onClick = {
                     play(stream.url)
@@ -65,7 +138,7 @@ internal fun StreamGallery(
 }
 
 @Composable
-internal fun TvStreamGallery(
+private fun TvStreamGalleryImpl(
     state: TvLazyGridState,
     rowCount: Int,
     streams: ImmutableList<Stream>,
@@ -93,7 +166,88 @@ internal fun TvStreamGallery(
         ) { stream ->
             StreamItem(
                 stream = stream,
-                border = zapping != stream,
+                zapping = zapping == stream,
+                noPictureMode = pref.noPictureMode,
+                onClick = {
+                    play(stream.url)
+                },
+                onLongClick = { onMenu(stream) },
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+    }
+}
+
+@Composable
+private fun CompactStreamGalleryImpl(
+    state: LazyStaggeredGridState,
+    rowCount: Int,
+    streams: ImmutableList<Stream>,
+    zapping: Stream?,
+    play: PlayStream,
+    onMenu: (Stream) -> Unit,
+    modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(0.dp),
+) {
+    val spacing = LocalSpacing.current
+    val pref = LocalPref.current
+
+    LazyVerticalStaggeredGrid(
+        state = state,
+        columns = StaggeredGridCells.Fixed(rowCount),
+        horizontalArrangement = Arrangement.spacedBy(spacing.medium),
+        contentPadding = contentPadding,
+        modifier = modifier.fillMaxSize()
+    ) {
+        items(
+            items = streams,
+            key = { stream -> stream.id },
+            contentType = { it.cover.isNullOrEmpty() }
+        ) { stream ->
+            CompactStreamItem(
+                stream = stream,
+                zapping = zapping == stream,
+                noPictureMode = pref.noPictureMode,
+                onClick = {
+                    play(stream.url)
+                },
+                onLongClick = { onMenu(stream) },
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+    }
+}
+
+@Composable
+private fun StreamGalleryImpl(
+    state: LazyStaggeredGridState,
+    rowCount: Int,
+    streams: ImmutableList<Stream>,
+    zapping: Stream?,
+    play: PlayStream,
+    onMenu: (Stream) -> Unit,
+    modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(0.dp),
+) {
+    val spacing = LocalSpacing.current
+    val pref = LocalPref.current
+
+    LazyVerticalStaggeredGrid(
+        state = state,
+        columns = StaggeredGridCells.Fixed(rowCount),
+        verticalItemSpacing = spacing.medium,
+        horizontalArrangement = Arrangement.spacedBy(spacing.medium),
+        contentPadding = PaddingValues(spacing.medium) + contentPadding,
+        modifier = modifier.fillMaxSize()
+    ) {
+        items(
+            items = streams,
+            key = { stream -> stream.id },
+            contentType = { it.cover.isNullOrEmpty() }
+        ) { stream ->
+            StreamItem(
+                stream = stream,
+                zapping = zapping == stream,
                 noPictureMode = pref.noPictureMode,
                 onClick = {
                     play(stream.url)

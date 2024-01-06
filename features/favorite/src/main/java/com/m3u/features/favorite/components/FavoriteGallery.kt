@@ -30,6 +30,37 @@ internal fun FavouriteGallery(
     navigateToStream: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val pref = LocalPref.current
+    if (pref.compact) {
+        CompactFavouriteGalleryImpl(
+            contentPadding = contentPadding,
+            streams = streams,
+            zapping = zapping,
+            rowCount = rowCount,
+            navigateToStream = navigateToStream,
+            modifier = modifier
+        )
+    } else {
+        FavouriteGalleryImpl(
+            contentPadding = contentPadding,
+            streams = streams,
+            zapping = zapping,
+            rowCount = rowCount,
+            navigateToStream = navigateToStream,
+            modifier = modifier
+        )
+    }
+}
+
+@Composable
+private fun FavouriteGalleryImpl(
+    contentPadding: PaddingValues,
+    streams: ImmutableList<Stream>,
+    zapping: Stream?,
+    rowCount: Int,
+    navigateToStream: () -> Unit,
+    modifier: Modifier = Modifier
+) {
     val spacing = LocalSpacing.current
     val pref = LocalPref.current
     val helper = LocalHelper.current
@@ -52,7 +83,7 @@ internal fun FavouriteGallery(
                 FavoriteItem(
                     stream = stream,
                     noPictureMode = pref.noPictureMode,
-                    border = zapping != stream,
+                    zapping = zapping == stream,
                     onClick = {
                         helper.play(stream.url)
                         navigateToStream()
@@ -78,7 +109,75 @@ internal fun FavouriteGallery(
                 FavoriteItem(
                     stream = stream,
                     noPictureMode = pref.noPictureMode,
-                    border = zapping != stream,
+                    zapping = zapping == stream,
+                    onClick = {
+                        helper.play(stream.url)
+                        navigateToStream()
+                    },
+                    onLongClick = {},
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun CompactFavouriteGalleryImpl(
+    contentPadding: PaddingValues,
+    streams: ImmutableList<Stream>,
+    zapping: Stream?,
+    rowCount: Int,
+    navigateToStream: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val spacing = LocalSpacing.current
+    val pref = LocalPref.current
+    val helper = LocalHelper.current
+    val configuration = LocalConfiguration.current
+
+    val type = configuration.uiMode and Configuration.UI_MODE_TYPE_MASK
+    if (type != Configuration.UI_MODE_TYPE_TELEVISION) {
+        LazyVerticalStaggeredGrid(
+            columns = StaggeredGridCells.Fixed(rowCount),
+            horizontalArrangement = Arrangement.spacedBy(spacing.medium),
+            contentPadding = contentPadding,
+            modifier = modifier.fillMaxSize(),
+        ) {
+            items(
+                items = streams,
+                key = { it.id },
+                contentType = { it.cover.isNullOrEmpty() }
+            ) { stream ->
+                CompatFavoriteItem(
+                    stream = stream,
+                    noPictureMode = pref.noPictureMode,
+                    zapping = zapping == stream,
+                    onClick = {
+                        helper.play(stream.url)
+                        navigateToStream()
+                    },
+                    onLongClick = {},
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        }
+    } else {
+        TvLazyVerticalGrid(
+            columns = TvGridCells.Fixed(rowCount),
+            horizontalArrangement = Arrangement.spacedBy(spacing.medium),
+            contentPadding = contentPadding,
+            modifier = modifier.fillMaxSize(),
+        ) {
+            items(
+                items = streams,
+                key = { it.id },
+                contentType = { it.cover.isNullOrEmpty() }
+            ) { stream ->
+                CompatFavoriteItem(
+                    stream = stream,
+                    noPictureMode = pref.noPictureMode,
+                    zapping = zapping == stream,
                     onClick = {
                         helper.play(stream.url)
                         navigateToStream()

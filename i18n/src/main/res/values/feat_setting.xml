@@ -64,4 +64,5 @@
     <string name="feat_setting_optional_player_features">optional player features</string>
     <string name="feat_setting_unseen_limit">recommend long-unseen favorite streams</string>
     <string name="feat_setting_auto_reconnect">auto reconnect</string>
+    <string name="feat_setting_compact">compact mode</string>
 </resources>

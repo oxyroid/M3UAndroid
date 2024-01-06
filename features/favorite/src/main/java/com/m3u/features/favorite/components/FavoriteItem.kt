@@ -34,15 +34,17 @@ internal fun FavoriteItem(
     onClick: () -> Unit,
     onLongClick: () -> Unit,
     modifier: Modifier = Modifier,
-    border: Boolean = true,
+    zapping: Boolean = false
 ) {
     val context = LocalContext.current
     val spacing = LocalSpacing.current
 
-    val scheme = remember(stream.url) { URI(stream.url).scheme ?: context.getString(string.feat_playlist_scheme_unknown) }
+    val scheme = remember(stream.url) {
+        URI(stream.url).scheme ?: context.getString(string.feat_playlist_scheme_unknown)
+    }
 
     OutlinedCard(
-        border = CardDefaults.outlinedCardBorder(border)
+        border = CardDefaults.outlinedCardBorder(zapping)
     ) {
         Column(
             modifier = Modifier

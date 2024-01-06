@@ -68,4 +68,5 @@
     <string name="feat_setting_optional_player_features">可选播放器功能</string>
     <string name="feat_setting_unseen_limit">推荐许久未见的流媒体</string>
     <string name="feat_setting_auto_reconnect">自动重连</string>
+    <string name="feat_setting_compact">紧凑模式</string>
 </resources>

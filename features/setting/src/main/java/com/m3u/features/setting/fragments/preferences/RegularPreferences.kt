@@ -3,6 +3,7 @@ package com.m3u.features.setting.fragments.preferences
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Animation
+import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.material.icons.rounded.Chair
 import androidx.compose.material.icons.rounded.ColorLens
 import androidx.compose.material.icons.rounded.DeviceHub
@@ -169,6 +170,15 @@ internal fun RegularPreferences(
                 pref.useDynamicColors = !pref.useDynamicColors
             },
             enabled = useDynamicColorsAvailable
+        )
+
+        CheckBoxSharedPreference(
+            title = string.feat_setting_compact,
+            icon = Icons.Rounded.AutoAwesome,
+            checked = pref.compact,
+            onChanged = {
+                pref.compact = !pref.compact
+            }
         )
     }
 }
