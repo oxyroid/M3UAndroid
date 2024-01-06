@@ -14,4 +14,9 @@
 
     <string name="ui_theme_card_left">ho</string>
     <string name="ui_theme_card_right">la</string>
+
+    <string name="ui_sort">Ordenar</string>
+    <string name="ui_sort_asc">A-Z</string>
+    <string name="ui_sort_desc">Z-A</string>
+    <string name="ui_sort_unspecified">Sin especificar</string>
 </resources>

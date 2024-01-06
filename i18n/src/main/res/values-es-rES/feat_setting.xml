@@ -52,7 +52,7 @@
     <string name="feat_setting_error_blank_url">url en blanco</string>
     <string name="feat_setting_use_dynamic_colors">colores dinámicos</string>
     <string name="feat_setting_use_dynamic_colors_unavailable">está disponible en Android 12 y posteriores</string>
-    <string name="feat_setting_not_implementation">está característica no está disponible para esta versión</string>
+    <string name="feat_setting_not_implementation">esta característica no está disponible para esta versión</string>
     <string name="feat_setting_zapping_mode">Modo zapeo</string>
     <string name="feat_setting_zapping_mode_description">Un vistazo a los directos antes de reproducirlos</string>
     <string name="feat_setting_gesture_brightness">gestos de brillo</string>
@@ -64,4 +64,5 @@
     <string name="feat_setting_optional_player_features">características opcionales de reproducción</string>
     <string name="feat_setting_unseen_limit">recomendar streams favoritos vistos muy antes</string>
     <string name="feat_setting_auto_reconnect">auto reconectar</string>
+    <string name="feat_setting_compact">modo compacto</string>
 </resources>
