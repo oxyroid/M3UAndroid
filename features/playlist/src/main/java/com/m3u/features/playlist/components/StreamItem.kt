@@ -10,10 +10,13 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
@@ -41,7 +44,7 @@ internal fun StreamItem(
     onClick: () -> Unit,
     onLongClick: () -> Unit,
     modifier: Modifier = Modifier,
-    border: Boolean = true,
+    zapping: Boolean = false,
 ) {
     val context = LocalContext.current
     val spacing = LocalSpacing.current
@@ -57,7 +60,7 @@ internal fun StreamItem(
 
     OutlinedCard(
         modifier = Modifier.semantics(mergeDescendants = true) { },
-        border = CardDefaults.outlinedCardBorder(border)
+        border = CardDefaults.outlinedCardBorder(zapping)
     ) {
         Column(
             modifier = Modifier
@@ -129,5 +132,83 @@ internal fun StreamItem(
                 }
             }
         }
+    }
+}
+
+
+@Composable
+internal fun CompactStreamItem(
+    stream: Stream,
+    noPictureMode: Boolean,
+    onClick: () -> Unit,
+    onLongClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    zapping: Boolean = false
+) {
+    val spacing = LocalSpacing.current
+    val favourite = stream.favourite
+
+    val colorScheme = MaterialTheme.colorScheme
+    MaterialTheme(
+        colorScheme = colorScheme.copy(
+            surface = if (zapping) colorScheme.onSurface else colorScheme.surface,
+            onSurface = if (zapping) colorScheme.surface else colorScheme.onSurface,
+            surfaceVariant = if (zapping) colorScheme.onSurfaceVariant else colorScheme.surfaceVariant,
+            onSurfaceVariant = if (zapping) colorScheme.surfaceVariant else colorScheme.onSurfaceVariant
+        )
+    ) {
+        ListItem(
+            headlineContent = {
+                Text(
+                    text = stream.title,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontSize = MaterialTheme.typography.titleSmall.fontSize,
+                    overflow = TextOverflow.Ellipsis,
+                    maxLines = 1,
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            supportingContent = {
+                Text(
+                    text = stream.url,
+                    maxLines = 1,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontSize = MaterialTheme.typography.bodyMedium.fontSize,
+                    overflow = TextOverflow.Ellipsis
+                )
+            },
+            leadingContent = {
+                AnimatedVisibility(!noPictureMode && !stream.cover.isNullOrEmpty()) {
+                    Image(
+                        model = stream.cover,
+                        errorPlaceholder = stream.title,
+                        contentScale = ContentScale.Crop,
+                        shape = RoundedCornerShape(spacing.small),
+                        modifier = Modifier.size(48.dp)
+                    )
+                }
+            },
+            trailingContent = {
+                Crossfade(
+                    targetState = favourite,
+                    label = "stream-item-favourite"
+                ) { favourite ->
+                    if (favourite) {
+                        Icon(
+                            imageVector = Icons.Rounded.Star,
+                            contentDescription = null,
+                            tint = if (zapping) MaterialTheme.colorScheme.onPrimary
+                            else MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+            },
+            modifier = Modifier
+                .combinedClickable(
+                    onClick = onClick,
+                    onLongClick = onLongClick
+                )
+                .then(modifier)
+        )
     }
 }

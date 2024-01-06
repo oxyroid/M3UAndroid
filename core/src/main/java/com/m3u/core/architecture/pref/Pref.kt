@@ -47,6 +47,8 @@ interface Pref {
 
     var autoReconnect: Boolean
 
+    var compact: Boolean
+
     companion object {
         @PlaylistStrategy
         const val DEFAULT_PLAYLIST_STRATEGY = PlaylistStrategy.SKIP_FAVORITE
@@ -80,6 +82,7 @@ interface Pref {
         @UnseensMilliseconds
         const val DEFAULT_UNSEENS_MILLISECONDS = UnseensMilliseconds.DAYS_3
         const val DEFAULT_AUTO_RECONNECT = false
+        const val DEFAULT_COMPACT = false
 
         const val PLAYLIST_STRATEGY = "playlist-strategy"
         const val USE_COMMON_UI_MODE = "use-common-ui-mode"
@@ -105,6 +108,7 @@ interface Pref {
         const val SCREEN_ROTATING = "screen-rotating"
         const val UNSEENS_MILLISECONDS = "unseens-milliseconds"
         const val AUTO_RECONNECT = "auto-reconnect"
+        const val COMPACT = "compact"
     }
 }
 

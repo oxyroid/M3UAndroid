@@ -10,12 +10,14 @@ import com.m3u.core.architecture.pref.Pref.Companion.AUTO_REFRESH
 import com.m3u.core.architecture.pref.Pref.Companion.BRIGHTNESS_GESTURE
 import com.m3u.core.architecture.pref.Pref.Companion.CINEMA_MODE
 import com.m3u.core.architecture.pref.Pref.Companion.CLIP_MODE
+import com.m3u.core.architecture.pref.Pref.Companion.COMPACT
 import com.m3u.core.architecture.pref.Pref.Companion.CONNECT_TIMEOUT
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_AUTO_RECONNECT
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_AUTO_REFRESH
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_BRIGHTNESS_GESTURE
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_CINEMA_MODE
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_CLIP_MODE
+import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_COMPACT
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_CONNECT_TIMEOUT
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_EXPERIMENTAL_MODE
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_FULL_INFO_PLAYER
@@ -127,6 +129,9 @@ class SnapshotPref @Inject constructor(
 
     override var autoReconnect: Boolean by
     sharedPreferences.booleanAsState(DEFAULT_AUTO_RECONNECT, AUTO_RECONNECT)
+
+    override var compact: Boolean by
+    sharedPreferences.booleanAsState(DEFAULT_COMPACT, COMPACT)
 
     companion object {
         private const val SHARED_SETTINGS = "shared_settings"

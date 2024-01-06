@@ -63,19 +63,15 @@ fun Preference(
             }
         }
     ) {
+        val alpha = if(enabled) 1f else 0.38f
         val currentContainerColor by animateColorAsState(
-            targetValue = MaterialTheme.colorScheme.surface,
+            targetValue = MaterialTheme.colorScheme.surface.copy(alpha),
             label = "preference-container-color",
             animationSpec = spring(stiffness = Spring.StiffnessMediumLow)
         )
         val currentContentColor by animateColorAsState(
-            targetValue = MaterialTheme.colorScheme.onSurface,
+            targetValue = MaterialTheme.colorScheme.onSurface.copy(alpha),
             label = "preference-content-color",
-            animationSpec = spring(stiffness = Spring.StiffnessMediumLow)
-        )
-        val currentDisableContentColor by animateColorAsState(
-            targetValue = MaterialTheme.colorScheme.onSurfaceVariant.copy(0.38f),
-            label = "preference-container-color",
             animationSpec = spring(stiffness = Spring.StiffnessMediumLow)
         )
         ListItem(
@@ -113,9 +109,6 @@ fun Preference(
                 overlineColor = currentContentColor,
                 supportingColor = currentContentColor,
                 trailingIconColor = currentContentColor,
-                disabledHeadlineColor = currentDisableContentColor,
-                disabledLeadingIconColor = currentDisableContentColor,
-                disabledTrailingIconColor = currentDisableContentColor
             ),
             shadowElevation = elevation,
             modifier = modifier
