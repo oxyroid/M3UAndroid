@@ -6,9 +6,9 @@
         <item name="android:windowExitTransition">@android:transition/explode</item>
     </style>
     <style name="Theme.M3U.Starting" parent="Theme.SplashScreen.IconBackground">
-        <item name="windowSplashScreenBackground">@color/background</item>
-        <item name="windowSplashScreenAnimatedIcon">@drawable/splash</item>
-        <item name="windowSplashScreenAnimationDuration">400</item>
+        <item name="windowSplashScreenBackground">@color/ic_launcher_background_tint</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash</item>
+        <item name="windowSplashScreenAnimationDuration">800</item>
         <item name="postSplashScreenTheme">@style/Theme.M3U</item>
     </style>
 </resources>
