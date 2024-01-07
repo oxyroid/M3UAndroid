@@ -1,4 +1,5 @@
 # M3UAndroid
+<a href="https://github.com/realOxy/M3UAndroid/releases/latest"><img src="https://img.shields.io/github/release/realOxy/M3UAndroid.svg?logo=github"></a>
 <a href="https://t.me/m3u_android"><img src="https://img.shields.io/badge/Telegram-2CA5E0?style=flat&logo=telegram&logoColor=white"></a>
 
 M3U is my first elaborate Android project and is also my first jetpack compose application project.
