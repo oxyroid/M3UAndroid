@@ -41,7 +41,7 @@ fun NavGraphBuilder.rootGraph(
     navigateToConsole: () -> Unit,
     navigateToAbout: () -> Unit,
     navigateToRecommendPlaylist: (Playlist, String) -> Unit,
-    navigateToSettingSubscription: () -> Unit,
+    navigateToSettingPlaylistManagement: () -> Unit,
 ) {
     composable(ROOT_ROUTE) {
         RootGraph(
@@ -52,7 +52,7 @@ fun NavGraphBuilder.rootGraph(
             navigateToConsole = navigateToConsole,
             navigateToAbout = navigateToAbout,
             navigateToRecommendPlaylist = navigateToRecommendPlaylist,
-            navigateToSettingSubscription = navigateToSettingSubscription
+            navigateToSettingPlaylistManagement = navigateToSettingPlaylistManagement
         )
     }
 }
@@ -66,7 +66,7 @@ private fun RootGraph(
     navigateToConsole: () -> Unit,
     navigateToAbout: () -> Unit,
     navigateToRecommendPlaylist: (Playlist, String) -> Unit,
-    navigateToSettingSubscription: () -> Unit,
+    navigateToSettingPlaylistManagement: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val destinations = Destination.Root.entries
@@ -102,7 +102,7 @@ private fun RootGraph(
                     navigateToPlaylist = navigateToPlaylist,
                     navigateToStream = navigateToStream,
                     navigateToRecommendPlaylist = navigateToRecommendPlaylist,
-                    navigateToSettingSubscription = navigateToSettingSubscription,
+                    navigateToSettingPlaylistManagement = navigateToSettingPlaylistManagement,
                     resume = rememberResumeEvent(pagerState.targetPage, pagerIndex),
                     contentPadding = contentPadding,
                     modifier = Modifier.fillMaxSize()

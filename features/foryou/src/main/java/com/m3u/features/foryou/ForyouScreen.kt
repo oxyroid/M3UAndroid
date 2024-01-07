@@ -49,7 +49,7 @@ fun ForyouRoute(
     navigateToPlaylist: (Playlist) -> Unit,
     navigateToStream: () -> Unit,
     navigateToRecommendPlaylist: (Playlist, String) -> Unit,
-    navigateToSettingSubscription: () -> Unit,
+    navigateToSettingPlaylistManagement: () -> Unit,
     resume: ResumeEvent,
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
@@ -85,7 +85,7 @@ fun ForyouRoute(
         navigateToPlaylist = navigateToPlaylist,
         navigateToStream = navigateToStream,
         navigateToRecommendPlaylist = navigateToRecommendPlaylist,
-        navigateToSettingSubscription = navigateToSettingSubscription,
+        navigateToSettingPlaylistManagement = navigateToSettingPlaylistManagement,
         unsubscribe = { viewModel.unsubscribe(it) },
         rename = { playlistUrl, target -> viewModel.rename(playlistUrl, target) },
         modifier = modifier
@@ -103,7 +103,7 @@ private fun ForyouScreen(
     navigateToPlaylist: (Playlist) -> Unit,
     navigateToStream: () -> Unit,
     navigateToRecommendPlaylist: (Playlist, String) -> Unit,
-    navigateToSettingSubscription: () -> Unit,
+    navigateToSettingPlaylistManagement: () -> Unit,
     unsubscribe: OnUnsubscribe,
     rename: OnRename,
     modifier: Modifier = Modifier
@@ -155,7 +155,7 @@ private fun ForyouScreen(
             } else {
                 Box(Modifier.fillMaxSize()) {
                     PlaylistGalleryPlaceholder(
-                        navigateToSettingSubscription = navigateToSettingSubscription,
+                        navigateToSettingPlaylistManagement = navigateToSettingPlaylistManagement,
                         modifier = Modifier.align(Alignment.Center)
                     )
                 }

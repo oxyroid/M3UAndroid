@@ -40,7 +40,7 @@ import kotlin.time.Duration.Companion.seconds
 
 @Composable
 internal fun PlaylistGalleryPlaceholder(
-    navigateToSettingSubscription: () -> Unit,
+    navigateToSettingPlaylistManagement: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val feedback = LocalHapticFeedback.current
@@ -80,7 +80,7 @@ internal fun PlaylistGalleryPlaceholder(
                     feedback.performHapticFeedback(HapticFeedbackType.LongPress)
                     expanded = true
                 } else {
-                    navigateToSettingSubscription()
+                    navigateToSettingPlaylistManagement()
                 }
             }
         )

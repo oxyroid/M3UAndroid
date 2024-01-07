@@ -11,29 +11,32 @@ import androidx.compose.foundation.pager.PagerState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navigation
 import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.features.about.navigation.aboutScreen
 import com.m3u.features.console.navigation.consoleScreen
 import com.m3u.features.playlist.navigation.playlistScreen
 import com.m3u.features.stream.PlayerActivity
 import com.m3u.i18n.R.string
-import com.m3u.material.model.LocalNavController
 import com.m3u.ui.Destination
 import com.m3u.ui.LocalHelper
 
 @Composable
-fun M3UNavHost(
+fun AppNavHost(
     pagerState: PagerState,
     navigate: (Destination) -> Unit,
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
+    navController: NavHostController = rememberNavController(),
     startDestination: String = ROOT_ROUTE
 ) {
     val helper = LocalHelper.current
     val context = LocalContext.current
     val pref = LocalPref.current
-    val navController = LocalNavController.current
     NavHost(
         navController = navController,
         startDestination = startDestination,
@@ -76,7 +79,7 @@ fun M3UNavHost(
                 }
                 navigate(Destination.Playlist(playlist.url, recommend))
             },
-            navigateToSettingSubscription = {
+            navigateToSettingPlaylistManagement = {
                 navigate(Destination.Root.Setting)
             }
         )
@@ -98,5 +101,21 @@ fun M3UNavHost(
         )
         consoleScreen()
         aboutScreen(contentPadding)
+        navigation(
+            startDestination = "preferences",
+            route = "settings"
+        ) {
+            composable("preferences") {
+
+            }
+            composable("playlist-management") {
+
+            }
+            aboutScreen(contentPadding)
+            consoleScreen()
+            composable("script") {
+
+            }
+        }
     }
 }

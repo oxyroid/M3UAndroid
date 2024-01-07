@@ -33,7 +33,7 @@ import com.m3u.data.service.PlayerService
 import com.m3u.ui.Action
 import com.m3u.ui.Fob
 import com.m3u.ui.Helper
-import com.m3u.ui.M3ULocalProvider
+import com.m3u.ui.AppLocalProvider
 import com.m3u.ui.OnPipModeChanged
 import com.m3u.ui.OnUserLeaveHint
 import dagger.hilt.android.AndroidEntryPoint
@@ -80,7 +80,7 @@ class PlayerActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         handleIntent(intent)
         setContent {
-            M3ULocalProvider(
+            AppLocalProvider(
                 helper = helper,
                 pref = pref
             ) {

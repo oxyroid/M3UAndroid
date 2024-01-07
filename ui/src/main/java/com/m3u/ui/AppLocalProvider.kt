@@ -10,7 +10,7 @@ import com.m3u.core.architecture.pref.Pref
 import com.m3u.material.model.AppTheme
 
 @Composable
-fun M3ULocalProvider(
+fun AppLocalProvider(
     helper: Helper = EmptyHelper,
     pref: Pref,
     content: @Composable () -> Unit

@@ -1,6 +1,6 @@
 package com.m3u.material.model
 
-import android.annotation.SuppressLint
+import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Typography
@@ -91,7 +91,6 @@ val DarkColors = darkColorScheme(
 )
 
 @Composable
-@SuppressLint("NewApi")
 fun AppTheme(
     useDynamicColors: Boolean,
     useDarkTheme: Boolean = isSystemInDarkTheme(),
@@ -99,9 +98,15 @@ fun AppTheme(
     content: @Composable () -> Unit
 ) {
     val context = LocalContext.current
+    val dynamicColorsAvailable = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
     val colors = when {
-        useDarkTheme -> if (useDynamicColors) dynamicDarkColorScheme(context) else DarkColors
-        else -> if (useDynamicColors) dynamicLightColorScheme(context) else LightColors
+        useDarkTheme -> if (dynamicColorsAvailable && useDynamicColors) {
+            dynamicDarkColorScheme(context)
+        } else DarkColors
+
+        else -> if (dynamicColorsAvailable && useDynamicColors) {
+            dynamicLightColorScheme(context)
+        } else LightColors
     }
 
     MaterialTheme(

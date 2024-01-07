@@ -2,13 +2,11 @@ package com.m3u.androidApp.ui
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.m3u.androidApp.navigation.M3UNavHost
-import com.m3u.material.model.LocalNavController
+import com.m3u.androidApp.navigation.AppNavHost
 
 @Composable
 fun App(
@@ -29,7 +27,7 @@ fun App(
         defState = viewModel.title.collectAsStateWithLifecycle()
     )
 
-    M3UScaffold(
+    AppScaffold(
         title = title,
         message = message,
         actions = actions,
@@ -39,15 +37,12 @@ fun App(
         navigate = state::navigate,
         modifier = Modifier.fillMaxSize(),
     ) { contentPadding ->
-        CompositionLocalProvider(
-            LocalNavController provides state.navController,
-        ) {
-            M3UNavHost(
-                pagerState = state.pagerState,
-                navigate = state::navigate,
-                contentPadding = contentPadding,
-                modifier = Modifier.fillMaxSize()
-            )
-        }
+        AppNavHost(
+            pagerState = state.pagerState,
+            navigate = state::navigate,
+            contentPadding = contentPadding,
+            modifier = Modifier.fillMaxSize(),
+            navController = state.navController
+        )
     }
 }

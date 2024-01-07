@@ -46,7 +46,7 @@ import com.m3u.ui.Action
 import com.m3u.ui.Destination
 import com.m3u.ui.Fob
 import com.m3u.ui.Helper
-import com.m3u.ui.M3ULocalProvider
+import com.m3u.ui.AppLocalProvider
 import com.m3u.ui.OnPipModeChanged
 import com.m3u.ui.OnUserLeaveHint
 import dagger.hilt.android.AndroidEntryPoint
@@ -104,7 +104,7 @@ class MainActivity : AppCompatActivity() {
                 }
                 onDispose {}
             }
-            M3ULocalProvider(
+            AppLocalProvider(
                 helper = helper,
                 pref = pref
             ) {

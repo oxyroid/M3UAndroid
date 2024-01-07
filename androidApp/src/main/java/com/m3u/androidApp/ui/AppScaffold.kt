@@ -32,7 +32,7 @@ import com.m3u.ui.Fob
 import kotlinx.collections.immutable.ImmutableList
 
 @Composable
-internal fun M3UScaffold(
+internal fun AppScaffold(
     title: String,
     message: Message.Dynamic,
     actions: ImmutableList<Action>,
