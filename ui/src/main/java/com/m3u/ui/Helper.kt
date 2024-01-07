@@ -2,6 +2,7 @@ package com.m3u.ui
 
 import android.annotation.SuppressLint
 import android.graphics.Rect
+import androidx.annotation.StringRes
 import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
@@ -220,5 +221,6 @@ data class Action(
 data class Fob(
     val rootDestination: Destination.Root,
     val icon: ImageVector,
+    @StringRes val iconTextId: Int,
     val onClick: () -> Unit
 )

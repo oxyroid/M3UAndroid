@@ -21,7 +21,7 @@ import com.m3u.data.repository.MediaRepository
 import com.m3u.data.repository.PlaylistRepository
 import com.m3u.data.repository.StreamRepository
 import com.m3u.data.repository.refresh
-import com.m3u.data.service.PlayerManager
+import com.m3u.data.service.PlayerService
 import com.m3u.features.playlist.PlaylistMessage.StreamCoverSaved
 import com.m3u.ui.Sort
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -48,7 +48,7 @@ class PlaylistViewModel @Inject constructor(
     private val streamRepository: StreamRepository,
     private val playlistRepository: PlaylistRepository,
     private val mediaRepository: MediaRepository,
-    playerManager: PlayerManager,
+    playerService: PlayerService,
     private val pref: Pref,
     @Logger.Ui private val logger: Logger
 ) : BaseViewModel<PlaylistState, PlaylistEvent, PlaylistMessage>(
@@ -77,7 +77,7 @@ class PlaylistViewModel @Inject constructor(
 
     val zapping: StateFlow<Stream?> = combine(
         zappingMode,
-        playerManager.url,
+        playerService.url,
         streamRepository.observeAll()
     ) { zappingMode, url, streams ->
         if (!zappingMode) null

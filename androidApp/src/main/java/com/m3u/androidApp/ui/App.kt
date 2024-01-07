@@ -9,15 +9,11 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.androidApp.navigation.M3UNavHost
 import com.m3u.material.model.LocalNavController
-import com.m3u.ui.EmptyHelper
-import com.m3u.ui.Helper
-import com.m3u.ui.useRailNav
 
 @Composable
 fun App(
     state: AppState = rememberAppState(),
     viewModel: AppViewModel = hiltViewModel(),
-    helper: Helper = EmptyHelper,
 ) {
     val message by viewModel.message.collectAsStateWithLifecycle()
     val actions by viewModel.actions.collectAsStateWithLifecycle()
@@ -36,7 +32,6 @@ fun App(
     M3UScaffold(
         title = title,
         message = message,
-        useRailNav = helper.useRailNav,
         actions = actions,
         rootDestination = rootDestination,
         fob = fob,

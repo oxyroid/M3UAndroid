@@ -5,8 +5,6 @@ import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.adaptive.AnimatedPane
 import androidx.compose.material3.adaptive.HingePolicy
 import androidx.compose.material3.adaptive.ListDetailPaneScaffold
@@ -21,7 +19,6 @@ import androidx.compose.material3.adaptive.currentWindowSize
 import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -38,12 +35,10 @@ import androidx.compose.ui.unit.toSize
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.data.database.entity.Stream
-import com.m3u.features.setting.fragments.preferences.PreferencesFragment
 import com.m3u.features.setting.fragments.ScriptsFragment
 import com.m3u.features.setting.fragments.SubscriptionsFragment
-import com.m3u.ui.Destination
+import com.m3u.features.setting.fragments.preferences.PreferencesFragment
 import com.m3u.ui.EventHandler
-import com.m3u.ui.Fob
 import com.m3u.ui.LocalHelper
 import com.m3u.ui.MessageEventHandler
 import com.m3u.ui.ResumeEvent
@@ -123,7 +118,6 @@ private fun SettingScreen(
     openDocument: (Uri) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val helper = LocalHelper.current
     var fragment: SettingFragment by rememberSaveable { mutableStateOf(SettingFragment.Root) }
     var currentPaneDestination by rememberSaveable {
         mutableStateOf(ListDetailPaneScaffoldRole.List)
@@ -142,21 +136,6 @@ private fun SettingScreen(
             HingePolicy.NeverAvoid
         )
     )
-
-    DisposableEffect(fragment) {
-        helper.fob = if (fragment == SettingFragment.Root) null
-        else Fob(
-            rootDestination = Destination.Root.Setting,
-            icon = Icons.Rounded.Settings
-        ) {
-            fragment = SettingFragment.Root
-            currentPaneDestination = ListDetailPaneScaffoldRole.List
-        }
-
-        onDispose {
-            helper.fob = null
-        }
-    }
 
     ListDetailPaneScaffold(
         scaffoldState = scaffoldState,

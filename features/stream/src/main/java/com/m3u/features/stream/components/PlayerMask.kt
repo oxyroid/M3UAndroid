@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -32,13 +31,11 @@ internal fun PlayerMask(
     ) {
         Box(modifier) {
             MaskPanel(
-                state = state,
-                modifier = Modifier.systemBarsPadding()
+                state = state
             )
             Mask(
                 state = state,
-                color = Color.Black.copy(alpha = 0.54f),
-                modifier = Modifier.systemBarsPadding()
+                color = Color.Black.copy(alpha = 0.54f)
             ) {
                 Row(
                     modifier = Modifier

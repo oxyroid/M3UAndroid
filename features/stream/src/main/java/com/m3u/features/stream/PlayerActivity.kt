@@ -29,7 +29,7 @@ import com.m3u.core.util.context.isDarkMode
 import com.m3u.core.util.context.isPortraitMode
 import com.m3u.core.wrapper.Message
 import com.m3u.data.repository.StreamRepository
-import com.m3u.data.service.PlayerManager
+import com.m3u.data.service.PlayerService
 import com.m3u.ui.Action
 import com.m3u.ui.Fob
 import com.m3u.ui.Helper
@@ -67,7 +67,7 @@ class PlayerActivity : ComponentActivity() {
     lateinit var logger: Logger
 
     @Inject
-    lateinit var playerManager: PlayerManager
+    lateinit var playerService: PlayerService
 
     @Inject
     lateinit var streamRepository: StreamRepository
@@ -220,11 +220,11 @@ class PlayerActivity : ComponentActivity() {
         }
 
         override fun play(url: String) {
-            playerManager.play(url)
+            playerService.play(url)
         }
 
         override fun replay() {
-            playerManager.replay()
+            playerService.replay()
         }
     }
 

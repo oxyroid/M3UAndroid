@@ -27,7 +27,7 @@ import com.m3u.core.architecture.pref.Pref
 import com.m3u.core.architecture.pref.observeAsFlow
 import com.m3u.data.contract.Certs
 import com.m3u.data.contract.SSL
-import com.m3u.data.service.PlayerManager
+import com.m3u.data.service.PlayerService
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -46,18 +46,26 @@ import okhttp3.OkHttpClient
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
-class PlayerManagerImpl @Inject constructor(
+class PlayerServiceImpl @Inject constructor(
     @ApplicationContext private val context: Context,
     private val pref: Pref
-) : PlayerManager(), Player.Listener, MediaSession.Callback {
-    private val player = MutableStateFlow<Player?>(null)
-
-    override fun observe(): Flow<Player?> = player.asStateFlow()
+) : PlayerService, Player.Listener, MediaSession.Callback {
+    private val _player = MutableStateFlow<Player?>(null)
+    override val player: Flow<Player?> = _player.asStateFlow()
 
     private val scope = CoroutineScope(Dispatchers.Main) + Job()
 
     private val _url = MutableStateFlow<String?>(null)
     override val url: StateFlow<String?> = _url.asStateFlow()
+
+    private val _videoSize = MutableStateFlow(Rect())
+    override val videoSize: StateFlow<Rect> = _videoSize.asStateFlow()
+
+    private val _playbackState = MutableStateFlow(Player.STATE_IDLE)
+    override val playbackState: StateFlow<Int> = _playbackState.asStateFlow()
+
+    private val _playbackError = MutableStateFlow<PlaybackException?>(null)
+    override val playerError: StateFlow<PlaybackException?> = _playbackError.asStateFlow()
 
     private val isSSLVerification = pref
         .observeAsFlow { it.isSSLVerification }
@@ -125,9 +133,10 @@ class PlayerManagerImpl @Inject constructor(
     }
 
     override fun play(url: String) {
-        player.update { prev ->
+        _player.update { prev ->
             if (prev != null) stop()
-            _url.update { url }
+            _url.value = url
+
             createPlayer(isSSLVerification.value, connectTimeout.value).also {
                 it.addListener(this)
                 val mediaItem = MediaItem.fromUri(url)
@@ -139,15 +148,17 @@ class PlayerManagerImpl @Inject constructor(
 
     override fun stop() {
         _url.update { null }
-        player.update {
+        _player.update {
             it?.removeListener(this)
             it?.stop()
             it?.release()
             null
         }
-        super.mutablePlaybackState.value = Player.STATE_IDLE
-        super.mutablePlaybackError.value = null
-        super.mutableVideoSize.value = Rect()
+        _groups.value = emptyList()
+        _selected.value = emptyMap()
+        _playbackState.value = Player.STATE_IDLE
+        _playbackError.value = null
+        _videoSize.value = Rect()
     }
 
     override fun replay() {
@@ -156,43 +167,44 @@ class PlayerManagerImpl @Inject constructor(
 
     override fun onVideoSizeChanged(size: VideoSize) {
         super.onVideoSizeChanged(size)
-        super.mutableVideoSize.value = size.toRect()
+        _videoSize.value = size.toRect()
     }
 
     override fun onPlaybackStateChanged(state: Int) {
         super.onPlaybackStateChanged(state)
-        super.mutablePlaybackState.value = state
+        _playbackState.value = state
     }
 
     override fun onPlayerErrorChanged(error: PlaybackException?) {
         super.onPlayerErrorChanged(error)
         if (pref.autoReconnect || error?.errorCode == PlaybackException.ERROR_CODE_BEHIND_LIVE_WINDOW) {
-            player.value?.let {
+            _player.value?.let {
                 it.seekToDefaultPosition()
                 it.prepare()
             }
         }
-        super.mutablePlaybackError.value = error
+        _playbackError.value = error
     }
 
-    private val _formats = MutableStateFlow<List<Tracks.Group>>(emptyList())
-    override val groups: StateFlow<List<Tracks.Group>> = _formats.asStateFlow()
+    private val _groups = MutableStateFlow<List<Tracks.Group>>(emptyList())
+    override val groups: StateFlow<List<Tracks.Group>> = _groups.asStateFlow()
 
     private val _selected = MutableStateFlow<Map<@C.TrackType Int, Format?>>(emptyMap())
     override val selected: StateFlow<Map<@C.TrackType Int, Format?>> = _selected.asStateFlow()
 
     override fun onTracksChanged(tracks: Tracks) {
         super.onTracksChanged(tracks)
-        _formats.value = tracks.groups
+        _groups.value = tracks.groups
         _selected.value = tracks.groups
             .filter { it.isSelected }
             .groupBy { it.type }
-            .mapValues {
-                val group = it.value.first()
+            .mapValues { (_, groups) ->
+                val group = groups.first()
                 var selectedIndex = 0
                 for (i in 0 until group.length) {
                     if (group.isTrackSelected(i)) {
                         selectedIndex = i
+                        break
                     }
                 }
                 group.getTrackFormat(selectedIndex)
@@ -201,7 +213,7 @@ class PlayerManagerImpl @Inject constructor(
 
 
     override fun chooseTrack(group: TrackGroup, trackIndex: Int) {
-        val currentPlayer = player.value ?: return
+        val currentPlayer = _player.value ?: return
         val override = TrackSelectionOverride(group, trackIndex)
         currentPlayer.trackSelectionParameters = currentPlayer
             .trackSelectionParameters

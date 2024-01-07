@@ -16,7 +16,7 @@
     <string name="ui_theme_card_right">好</string>
 
     <string name="ui_sort">排序</string>
-    <string name="ui_sort_asc">a-z</string>
-    <string name="ui_sort_desc">z-a</string>
+    <string name="ui_sort_asc">A-Z</string>
+    <string name="ui_sort_desc">Z-A</string>
     <string name="ui_sort_unspecified">默认</string>
 </resources>

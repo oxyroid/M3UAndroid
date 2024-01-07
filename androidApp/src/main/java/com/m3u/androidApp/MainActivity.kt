@@ -41,7 +41,7 @@ import com.m3u.core.util.basic.rational
 import com.m3u.core.util.context.isDarkMode
 import com.m3u.core.util.context.isPortraitMode
 import com.m3u.core.wrapper.Message
-import com.m3u.data.service.PlayerManager
+import com.m3u.data.service.PlayerService
 import com.m3u.ui.Action
 import com.m3u.ui.Destination
 import com.m3u.ui.Fob
@@ -81,7 +81,7 @@ class MainActivity : AppCompatActivity() {
     lateinit var logger: Logger
 
     @Inject
-    lateinit var playerManager: PlayerManager
+    lateinit var playerService: PlayerService
 
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
@@ -111,7 +111,6 @@ class MainActivity : AppCompatActivity() {
                 App(
                     state = state,
                     viewModel = viewModel,
-                    helper = helper
                 )
             }
         }
@@ -229,11 +228,11 @@ class MainActivity : AppCompatActivity() {
         }
 
         override fun play(url: String) {
-            playerManager.play(url)
+            playerService.play(url)
         }
 
         override fun replay() {
-            playerManager.replay()
+            playerService.replay()
         }
     }
 

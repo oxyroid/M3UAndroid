@@ -2,6 +2,7 @@
 
 package com.m3u.material.components
 
+import androidx.activity.compose.BackHandler
 import androidx.annotation.DrawableRes
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
@@ -87,19 +88,20 @@ fun TextField(
     val duration = LocalDuration.current
     val bringIntoViewRequester = remember { BringIntoViewRequester() }
     val interactionSource = remember { MutableInteractionSource() }
-    val interactionSourceFocus by interactionSource.collectIsFocusedAsState()
+    val focus by interactionSource.collectIsFocusedAsState()
 
     val imeVisible = WindowInsets.isImeVisible
 
     // Bring the composable into view (visible to user).
-    LaunchedEffect(imeVisible, interactionSourceFocus) {
+    LaunchedEffect(imeVisible, focus) {
         delay(duration.medium.toLong())
-        if (imeVisible && interactionSourceFocus) {
+        if (imeVisible && focus) {
             bringIntoViewRequester.bringIntoView()
         }
-        if (!imeVisible) {
-            focusManager.clearFocus()
-        }
+    }
+
+    BackHandler(focus) {
+        focusManager.clearFocus()
     }
 
     val theme = MaterialTheme.colorScheme
@@ -201,19 +203,20 @@ fun TextField(
     val duration = LocalDuration.current
     val bringIntoViewRequester = remember { BringIntoViewRequester() }
     val interactionSource = remember { MutableInteractionSource() }
-    val interactionSourceState by interactionSource.collectIsFocusedAsState()
+    val focus by interactionSource.collectIsFocusedAsState()
 
     val imeVisible = WindowInsets.isImeVisible
 
     // Bring the composable into view (visible to user).
-    LaunchedEffect(imeVisible, interactionSourceState) {
+    LaunchedEffect(imeVisible, focus) {
         delay(duration.medium.toLong())
-        if (imeVisible && interactionSourceState) {
+        if (imeVisible && focus) {
             bringIntoViewRequester.bringIntoView()
         }
-        if (!imeVisible) {
-            focusManager.clearFocus()
-        }
+    }
+
+    BackHandler(focus) {
+        focusManager.clearFocus()
     }
 
     val theme = MaterialTheme.colorScheme
@@ -312,18 +315,19 @@ fun LabelField(
     val duration = LocalDuration.current
     val bringIntoViewRequester = remember { BringIntoViewRequester() }
     val interactionSource = remember { MutableInteractionSource() }
-    val interactionSourceState by interactionSource.collectIsFocusedAsState()
+    val focus by interactionSource.collectIsFocusedAsState()
     val imeVisible = WindowInsets.isImeVisible
 
     // Bring the composable into view (visible to user).
-    LaunchedEffect(imeVisible, interactionSourceState) {
+    LaunchedEffect(imeVisible, focus) {
         delay(duration.medium.toLong())
-        if (imeVisible && interactionSourceState) {
+        if (imeVisible && focus) {
             bringIntoViewRequester.bringIntoView()
         }
-        if (!imeVisible) {
-            focusManager.clearFocus()
-        }
+    }
+
+    BackHandler(focus) {
+        focusManager.clearFocus()
     }
 
     val focusRequester = FocusRequester()
@@ -460,18 +464,18 @@ fun LabelField(
     val duration = LocalDuration.current
     val bringIntoViewRequester = remember { BringIntoViewRequester() }
     val interactionSource = remember { MutableInteractionSource() }
-    val interactionSourceFocus by interactionSource.collectIsFocusedAsState()
+    val focus by interactionSource.collectIsFocusedAsState()
     val imeVisible = WindowInsets.isImeVisible
 
     // Bring the composable into view (visible to user).
-    LaunchedEffect(imeVisible, interactionSourceFocus) {
+    LaunchedEffect(imeVisible, focus) {
         delay(duration.medium.toLong())
-        if (imeVisible && interactionSourceFocus) {
+        if (imeVisible && focus) {
             bringIntoViewRequester.bringIntoView()
         }
-        if (!imeVisible) {
-            focusManager.clearFocus()
-        }
+    }
+    BackHandler(focus) {
+        focusManager.clearFocus()
     }
 
     val focusRequester = FocusRequester()

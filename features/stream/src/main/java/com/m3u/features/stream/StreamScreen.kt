@@ -1,7 +1,9 @@
 package com.m3u.features.stream
 
 import android.graphics.Rect
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -239,6 +241,7 @@ private fun StreamScreen(
         volume = volume,
         onBrightness = onBrightness,
         onVolume = onVolume,
+        windowInsets = WindowInsets.statusBars,
         modifier = modifier
             .fillMaxSize()
             .testTag("features:stream")

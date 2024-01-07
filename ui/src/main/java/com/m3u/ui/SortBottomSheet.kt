@@ -5,7 +5,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.navigationBarsIgnoringVisibility
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
@@ -54,37 +55,40 @@ fun SortBottomSheet(
             modifier = modifier,
             windowInsets = WindowInsets(0)
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(spacing.medium),
-                modifier = Modifier.padding(
-                    horizontal = spacing.medium
-                )
-            ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Rounded.Sort,
-                    contentDescription = "sort"
-                )
-                Text(
-                    text = stringResource(string.ui_sort),
-                    fontWeight = FontWeight.Bold,
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.weight(1f)
-                )
-            }
             Column(
-                verticalArrangement = Arrangement.spacedBy(spacing.small),
-                modifier = Modifier
-                    .selectableGroup()
-                    .padding(spacing.medium)
-                    .navigationBarsPadding()
+                modifier = Modifier.padding(WindowInsets.navigationBarsIgnoringVisibility.asPaddingValues())
             ) {
-                sorts.forEach { current ->
-                    SortBottomSheetItem(
-                        sort = current,
-                        selected = current == sort,
-                        onSelected = { onChanged(current) }
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(spacing.medium),
+                    modifier = Modifier.padding(
+                        horizontal = spacing.medium
                     )
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Rounded.Sort,
+                        contentDescription = "sort"
+                    )
+                    Text(
+                        text = stringResource(string.ui_sort),
+                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(spacing.small),
+                    modifier = Modifier
+                        .selectableGroup()
+                        .padding(spacing.medium)
+                ) {
+                    sorts.forEach { current ->
+                        SortBottomSheetItem(
+                            sort = current,
+                            selected = current == sort,
+                            onSelected = { onChanged(current) }
+                        )
+                    }
                 }
             }
         }

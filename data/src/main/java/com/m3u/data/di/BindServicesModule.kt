@@ -6,9 +6,9 @@ import android.app.NotificationManager
 import android.content.Context
 import androidx.core.app.NotificationManagerCompat
 import androidx.work.WorkManager
-import com.m3u.data.service.PlayerManager
+import com.m3u.data.service.PlayerService
 import com.m3u.data.service.DynamicMessageService
-import com.m3u.data.service.impl.PlayerManagerImpl
+import com.m3u.data.service.impl.PlayerServiceImpl
 import com.m3u.data.service.impl.DynamicMessageServiceImpl
 import dagger.Binds
 import dagger.Module
@@ -23,7 +23,7 @@ import javax.inject.Singleton
 interface BindServicesModule {
     @Binds
     @Singleton
-    fun bindPlayerManager(service: PlayerManagerImpl): PlayerManager
+    fun bindPlayerService(service: PlayerServiceImpl): PlayerService
 
     @Binds
     @Singleton

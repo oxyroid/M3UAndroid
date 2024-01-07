@@ -9,9 +9,13 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
@@ -89,7 +93,8 @@ internal fun StreamFragment(
     openChooseFormat: () -> Unit,
     onBackPressed: () -> Unit,
     replay: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    windowInsets: WindowInsets = WindowInsets.systemBars
 ) {
     val theme = MaterialTheme.colorScheme
     val pref = LocalPref.current
@@ -304,32 +309,34 @@ internal fun StreamFragment(
                             )
                         }
                     },
-                    modifier = Modifier.detectVerticalMaskGestures(
-                        safe = 0.35f,
-                        threshold = 0.15f,
-                        volume = { deltaPixel ->
-                            if (!pref.volumeGesture) return@detectVerticalMaskGestures
-                            onVolume(
-                                (currentVolume - (deltaPixel / maxHeight.value)).coerceIn(0f..1f)
-                            )
-                        },
-                        brightness = { deltaPixel ->
-                            if (!pref.brightnessGesture) return@detectVerticalMaskGestures
-                            onBrightness(
-                                (currentLight - deltaPixel / maxHeight.value).coerceIn(0f..1f)
-                            )
-                        },
-                        onDragStart = {
-                            if (!pref.volumeGesture && !pref.brightnessGesture) return@detectVerticalMaskGestures
-                            maskState.lock()
-                            gesture = it
-                        },
-                        onDragEnd = {
-                            if (!pref.volumeGesture && !pref.brightnessGesture) return@detectVerticalMaskGestures
-                            maskState.unlock(400.milliseconds)
-                            gesture = null
-                        }
-                    )
+                    modifier = Modifier
+                        .detectVerticalMaskGestures(
+                            safe = 0.35f,
+                            threshold = 0.15f,
+                            volume = { deltaPixel ->
+                                if (!pref.volumeGesture) return@detectVerticalMaskGestures
+                                onVolume(
+                                    (currentVolume - (deltaPixel / maxHeight.value)).coerceIn(0f..1f)
+                                )
+                            },
+                            brightness = { deltaPixel ->
+                                if (!pref.brightnessGesture) return@detectVerticalMaskGestures
+                                onBrightness(
+                                    (currentLight - deltaPixel / maxHeight.value).coerceIn(0f..1f)
+                                )
+                            },
+                            onDragStart = {
+                                if (!pref.volumeGesture && !pref.brightnessGesture) return@detectVerticalMaskGestures
+                                maskState.lock()
+                                gesture = it
+                            },
+                            onDragEnd = {
+                                if (!pref.volumeGesture && !pref.brightnessGesture) return@detectVerticalMaskGestures
+                                maskState.unlock(400.milliseconds)
+                                gesture = null
+                            }
+                        )
+                        .padding(windowInsets.asPaddingValues())
                 )
             }
 

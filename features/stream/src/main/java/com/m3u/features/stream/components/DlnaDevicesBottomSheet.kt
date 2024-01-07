@@ -1,9 +1,12 @@
 package com.m3u.features.stream.components
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.navigationBarsIgnoringVisibility
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.sizeIn
@@ -60,41 +63,46 @@ internal fun DlnaDevicesBottomSheet(
             LaunchedEffect(Unit) {
                 maskState.sleep()
             }
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(
-                    horizontal = spacing.medium,
-                    vertical = spacing.small
-                )
+
+            Column(
+                modifier = Modifier.padding(WindowInsets.navigationBarsIgnoringVisibility.asPaddingValues())
             ) {
-                Text(
-                    text = stringResource(string.feat_stream_dialog_dlna_devices),
-                    fontWeight = FontWeight.Bold,
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.weight(1f)
-                )
-                AnimatedVisibility(
-                    visible = searching
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(
+                        horizontal = spacing.medium,
+                        vertical = spacing.small
+                    )
                 ) {
-                    CircularProgressIndicator()
-                }
-            }
-            LazyColumn(
-                modifier = Modifier
-                    .sizeIn(
-                        maxHeight = 320.dp
+                    Text(
+                        text = stringResource(string.feat_stream_dialog_dlna_devices),
+                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.weight(1f)
                     )
-            ) {
-                items(devices) { device ->
-                    DlnaDeviceItem(
-                        deviceWrapper = rememberDeviceWrapper(device),
-                        connected = device == connected?.device,
-                        requestConnection = { connectDlnaDevice(device) },
-                        loseConnection = { disconnectDlnaDevice(device) }
-                    )
+                    AnimatedVisibility(
+                        visible = searching
+                    ) {
+                        CircularProgressIndicator()
+                    }
                 }
-                item {
-                    Spacer(modifier = Modifier.navigationBarsPadding())
+                LazyColumn(
+                    modifier = Modifier
+                        .sizeIn(
+                            maxHeight = 320.dp
+                        )
+                ) {
+                    items(devices) { device ->
+                        DlnaDeviceItem(
+                            deviceWrapper = rememberDeviceWrapper(device),
+                            connected = device == connected?.device,
+                            requestConnection = { connectDlnaDevice(device) },
+                            loseConnection = { disconnectDlnaDevice(device) }
+                        )
+                    }
+                    item {
+                        Spacer(modifier = Modifier.navigationBarsPadding())
+                    }
                 }
             }
         }

@@ -58,6 +58,9 @@ dependencies {
     api(libs.haze)
 
     api(libs.kotlinx.collections.immutable)
+
+    api(libs.androidx.tv.tv.foundation)
+    api(libs.androidx.tv.tv.material)
 }
 
 afterEvaluate {

@@ -19,7 +19,6 @@ fun M3UData.toStream(
     seen: Long
 ): Stream {
     val fileScheme = "file:///"
-    Log.e("TAG", "playlistUrl: $playlistUrl")
     val actualUrl = run {
         if (url.startsWith(fileScheme)) {
             Log.e("TAG", "url: $url")
@@ -47,6 +46,4 @@ fun M3UData.toStream(
         playlistUrl = playlistUrl,
         seen = seen
     )
-
-    // RESOLUTION
 }

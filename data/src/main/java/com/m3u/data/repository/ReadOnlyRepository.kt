@@ -15,9 +15,3 @@ inline fun <T> ReadOnlyRepository<T, *>.observeAll(
 ): Flow<List<T>> = observeAll()
     .map { it.filter(predicate) }
     .distinctUntilChanged()
-
-interface ReadWriteRepository<T, in ID> : ReadOnlyRepository<T, ID> {
-    suspend fun save(e: T)
-    suspend fun delete(e: T)
-    suspend fun deleteAll()
-}
