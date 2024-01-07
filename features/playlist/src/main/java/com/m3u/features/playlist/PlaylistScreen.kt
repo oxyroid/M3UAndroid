@@ -29,7 +29,7 @@ import androidx.compose.material.BackdropScaffold
 import androidx.compose.material.BackdropValue
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Sort
-import androidx.compose.material.icons.rounded.ArrowCircleUp
+import androidx.compose.material.icons.rounded.KeyboardDoubleArrowUp
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.rememberBackdropScaffoldState
 import androidx.compose.material3.MaterialTheme
@@ -40,6 +40,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -89,6 +90,7 @@ import com.m3u.ui.isAtTop
 import com.m3u.ui.repeatOnLifecycle
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.coroutines.launch
 
 @Composable
 internal fun PlaylistRoute(
@@ -241,8 +243,9 @@ private fun PlaylistScreen(
                 helper.fob = if (newValue) null
                 else {
                     Fob(
-                        icon = Icons.Rounded.ArrowCircleUp,
+                        icon = Icons.Rounded.KeyboardDoubleArrowUp,
                         rootDestination = Destination.Root.Foryou,
+                        iconTextId = string.feat_playlist_scroll_up,
                         onClick = onScrollUp
                     )
                 }
@@ -274,9 +277,20 @@ private fun PlaylistScreen(
             frontLayerShape = RectangleShape,
             peekHeight = 0.dp,
             backLayerContent = {
+                val coroutineScope = rememberCoroutineScope()
                 LaunchedEffect(scaffoldState.currentValue) {
                     if (scaffoldState.isConcealed) {
                         focusManager.clearFocus()
+                    }
+                }
+                BackHandler(scaffoldState.isRevealed || query.isNotEmpty()) {
+                    if (scaffoldState.isRevealed) {
+                        coroutineScope.launch {
+                            scaffoldState.conceal()
+                        }
+                    }
+                    if (query.isNotEmpty()) {
+                        onQuery("")
                     }
                 }
                 Box(
