@@ -8,7 +8,10 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
@@ -20,6 +23,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.data.database.entity.Stream
 import com.m3u.i18n.R.string
 import com.m3u.material.components.Image
@@ -29,6 +34,39 @@ import java.net.URI
 
 @Composable
 internal fun FavoriteItem(
+    stream: Stream,
+    noPictureMode: Boolean,
+    onClick: () -> Unit,
+    onLongClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    zapping: Boolean = false
+) {
+    val pref = LocalPref.current
+    val compact = pref.compact
+
+    if (!compact) {
+        FavoriteItemImpl(
+            stream = stream,
+            noPictureMode = noPictureMode,
+            onClick = onClick,
+            onLongClick = onLongClick,
+            modifier = modifier,
+            zapping = zapping
+        )
+    } else {
+        CompactFavoriteItemImpl(
+            stream = stream,
+            noPictureMode = noPictureMode,
+            onClick = onClick,
+            onLongClick = onLongClick,
+            modifier = modifier,
+            zapping = zapping
+        )
+    }
+}
+
+@Composable
+private fun FavoriteItemImpl(
     stream: Stream,
     noPictureMode: Boolean,
     onClick: () -> Unit,
@@ -92,5 +130,66 @@ internal fun FavoriteItem(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun CompactFavoriteItemImpl(
+    stream: Stream,
+    noPictureMode: Boolean,
+    onClick: () -> Unit,
+    onLongClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    zapping: Boolean = false
+) {
+    val spacing = LocalSpacing.current
+
+    val colorScheme = MaterialTheme.colorScheme
+    MaterialTheme(
+        colorScheme = colorScheme.copy(
+            surface = if (zapping) colorScheme.onSurface else colorScheme.surface,
+            onSurface = if (zapping) colorScheme.surface else colorScheme.onSurface,
+            surfaceVariant = if (zapping) colorScheme.onSurfaceVariant else colorScheme.surfaceVariant,
+            onSurfaceVariant = if (zapping) colorScheme.surfaceVariant else colorScheme.onSurfaceVariant
+        )
+    ) {
+        ListItem(
+            headlineContent = {
+                Text(
+                    text = stream.title,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontSize = MaterialTheme.typography.titleSmall.fontSize,
+                    overflow = TextOverflow.Ellipsis,
+                    maxLines = 1,
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            supportingContent = {
+                Text(
+                    text = stream.url,
+                    maxLines = 1,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontSize = MaterialTheme.typography.bodyMedium.fontSize,
+                    overflow = TextOverflow.Ellipsis
+                )
+            },
+            leadingContent = {
+                AnimatedVisibility(!noPictureMode && !stream.cover.isNullOrEmpty()) {
+                    Image(
+                        model = stream.cover,
+                        errorPlaceholder = stream.title,
+                        contentScale = ContentScale.Crop,
+                        shape = RoundedCornerShape(spacing.small),
+                        modifier = Modifier.size(48.dp)
+                    )
+                }
+            },
+            modifier = Modifier
+                .combinedClickable(
+                    onClick = onClick,
+                    onLongClick = onLongClick
+                )
+                .then(modifier)
+        )
     }
 }

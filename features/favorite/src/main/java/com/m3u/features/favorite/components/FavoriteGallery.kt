@@ -31,8 +31,10 @@ internal fun FavouriteGallery(
     modifier: Modifier = Modifier
 ) {
     val pref = LocalPref.current
-    if (pref.compact) {
-        CompactFavouriteGalleryImpl(
+    val compact = pref.compact
+
+    if (!compact) {
+        FavouriteGalleryImpl(
             contentPadding = contentPadding,
             streams = streams,
             zapping = zapping,
@@ -41,7 +43,7 @@ internal fun FavouriteGallery(
             modifier = modifier
         )
     } else {
-        FavouriteGalleryImpl(
+        CompactFavouriteGalleryImpl(
             contentPadding = contentPadding,
             streams = streams,
             zapping = zapping,
@@ -140,7 +142,6 @@ private fun CompactFavouriteGalleryImpl(
     if (type != Configuration.UI_MODE_TYPE_TELEVISION) {
         LazyVerticalStaggeredGrid(
             columns = StaggeredGridCells.Fixed(rowCount),
-            horizontalArrangement = Arrangement.spacedBy(spacing.medium),
             contentPadding = contentPadding,
             modifier = modifier.fillMaxSize(),
         ) {
@@ -149,7 +150,7 @@ private fun CompactFavouriteGalleryImpl(
                 key = { it.id },
                 contentType = { it.cover.isNullOrEmpty() }
             ) { stream ->
-                CompatFavoriteItem(
+                FavoriteItem(
                     stream = stream,
                     noPictureMode = pref.noPictureMode,
                     zapping = zapping == stream,
@@ -174,7 +175,7 @@ private fun CompactFavouriteGalleryImpl(
                 key = { it.id },
                 contentType = { it.cover.isNullOrEmpty() }
             ) { stream ->
-                CompatFavoriteItem(
+                FavoriteItem(
                     stream = stream,
                     noPictureMode = pref.noPictureMode,
                     zapping = zapping == stream,

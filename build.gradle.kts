@@ -22,7 +22,8 @@ subprojects {
                 "-opt-in=com.google.accompanist.permissions.ExperimentalPermissionsApi",
                 "-opt-in=androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi",
                 "-opt-in=androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi",
-                "-opt-in=androidx.compose.material3.adaptive.navigation.suite.ExperimentalMaterial3AdaptiveNavigationSuiteApi"
+                "-opt-in=androidx.compose.material3.adaptive.navigation.suite.ExperimentalMaterial3AdaptiveNavigationSuiteApi",
+                "-opt-in=androidx.tv.material3.ExperimentalTvMaterial3Api"
             )
         }
         val path = project.layout.buildDirectory.dir("compose_metrics").get().asFile.path

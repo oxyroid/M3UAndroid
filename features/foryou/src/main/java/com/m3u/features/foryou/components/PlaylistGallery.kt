@@ -10,7 +10,7 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.AnnotatedString
+import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.data.database.entity.Playlist
 import com.m3u.features.foryou.model.PlaylistDetail
 import com.m3u.i18n.R.string
@@ -27,10 +27,43 @@ internal fun PlaylistGallery(
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier
 ) {
+    val pref = LocalPref.current
+    val compact = pref.compact
+
+    if (!compact) {
+        PlaylistGalleryImpl(
+            rowCount = rowCount,
+            details = details,
+            navigateToPlaylist = navigateToPlaylist,
+            onMenu = onMenu,
+            contentPadding = contentPadding,
+            modifier = modifier
+        )
+    } else {
+        CompactPlaylistGalleryImpl(
+            rowCount = rowCount,
+            details = details,
+            navigateToPlaylist = navigateToPlaylist,
+            onMenu = onMenu,
+            contentPadding = contentPadding,
+            modifier = modifier
+        )
+    }
+}
+
+@Composable
+private fun PlaylistGalleryImpl(
+    rowCount: Int,
+    details: ImmutableList<PlaylistDetail>,
+    navigateToPlaylist: (Playlist) -> Unit,
+    onMenu: (Playlist) -> Unit,
+    contentPadding: PaddingValues,
+    modifier: Modifier = Modifier
+) {
     val spacing = LocalSpacing.current
     LazyVerticalGrid(
         columns = GridCells.Fixed(rowCount),
-        contentPadding = PaddingValues(LocalSpacing.current.medium) + contentPadding,
+        contentPadding = PaddingValues(spacing.medium) + contentPadding,
         verticalArrangement = Arrangement.spacedBy(spacing.medium),
         horizontalArrangement = Arrangement.spacedBy(spacing.medium),
         modifier = modifier.fillMaxSize()
@@ -53,10 +86,42 @@ internal fun PlaylistGallery(
 }
 
 @Composable
-private fun Playlist.calculateUiTitle(): AnnotatedString {
+private fun CompactPlaylistGalleryImpl(
+    rowCount: Int,
+    details: ImmutableList<PlaylistDetail>,
+    navigateToPlaylist: (Playlist) -> Unit,
+    onMenu: (Playlist) -> Unit,
+    contentPadding: PaddingValues,
+    modifier: Modifier = Modifier
+) {
+    LazyVerticalGrid(
+        columns = GridCells.Fixed(rowCount),
+        contentPadding = contentPadding,
+        modifier = modifier.fillMaxSize()
+    ) {
+        items(
+            items = details,
+            key = { it.playlist.url },
+            contentType = {}
+        ) { detail ->
+            PlaylistItem(
+                label = detail.playlist.calculateUiTitle(),
+                number = detail.count,
+                local = detail.playlist.local,
+                modifier = Modifier.fillMaxWidth(),
+                onClick = { navigateToPlaylist(detail.playlist) },
+                onLongClick = { onMenu(detail.playlist) }
+            )
+        }
+    }
+}
+
+
+@Composable
+private fun Playlist.calculateUiTitle(): String {
     val actual = title.ifEmpty {
         if (local) stringResource(string.feat_foryou_imported_playlist_title)
         else ""
     }
-    return AnnotatedString(actual.uppercase())
+    return actual.uppercase()
 }

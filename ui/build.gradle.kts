@@ -47,7 +47,4 @@ dependencies {
     implementation(libs.com.google.android.material.material)
     implementation(libs.androidx.media3.media3.ui)
     implementation(libs.androidx.media3.media3.exoplayer)
-
-    api(libs.androidx.tv.tv.foundation)
-    api(libs.androidx.tv.tv.material)
 }

@@ -21,22 +21,21 @@ import com.m3u.material.ktx.plus
 import com.m3u.material.model.LocalSpacing
 import kotlinx.collections.immutable.ImmutableList
 
-typealias PlayStream = (url: String) -> Unit
-
 @Composable
 internal fun StreamGallery(
     state: LazyStaggeredGridState,
     rowCount: Int,
     streams: ImmutableList<Stream>,
     zapping: Stream?,
-    play: PlayStream,
+    play: (url: String) -> Unit,
     onMenu: (Stream) -> Unit,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(0.dp),
 ) {
     val pref = LocalPref.current
-    if (pref.compact) {
-        CompactStreamGalleryImpl(
+
+    if (!pref.compact) {
+        StreamGalleryImpl(
             state = state,
             rowCount = rowCount,
             streams = streams,
@@ -47,7 +46,7 @@ internal fun StreamGallery(
             contentPadding = contentPadding
         )
     } else {
-        StreamGalleryImpl(
+        CompactStreamGalleryImpl(
             state = state,
             rowCount = rowCount,
             streams = streams,
@@ -61,12 +60,12 @@ internal fun StreamGallery(
 }
 
 @Composable
-fun TvStreamGallery(
+internal fun TvStreamGallery(
     state: TvLazyGridState,
     rowCount: Int,
     streams: ImmutableList<Stream>,
     zapping: Stream?,
-    play: PlayStream,
+    play: (url: String) -> Unit,
     onMenu: (Stream) -> Unit,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(0.dp),
@@ -103,18 +102,16 @@ private fun CompactTvStreamGalleryImpl(
     rowCount: Int,
     streams: ImmutableList<Stream>,
     zapping: Stream?,
-    play: PlayStream,
+    play: (url: String) -> Unit,
     onMenu: (Stream) -> Unit,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(0.dp),
 ) {
-    val spacing = LocalSpacing.current
     val pref = LocalPref.current
 
     TvLazyVerticalGrid(
         state = state,
         columns = TvGridCells.Fixed(rowCount),
-        horizontalArrangement = Arrangement.spacedBy(spacing.medium),
         contentPadding = contentPadding,
         modifier = modifier.fillMaxSize()
     ) {
@@ -123,7 +120,7 @@ private fun CompactTvStreamGalleryImpl(
             key = { stream -> stream.id },
             contentType = { it.cover.isNullOrEmpty() }
         ) { stream ->
-            CompactStreamItem(
+            StreamItem(
                 stream = stream,
                 zapping = zapping == stream,
                 noPictureMode = pref.noPictureMode,
@@ -143,7 +140,7 @@ private fun TvStreamGalleryImpl(
     rowCount: Int,
     streams: ImmutableList<Stream>,
     zapping: Stream?,
-    play: PlayStream,
+    play: (url: String) -> Unit,
     onMenu: (Stream) -> Unit,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(0.dp),
@@ -184,18 +181,16 @@ private fun CompactStreamGalleryImpl(
     rowCount: Int,
     streams: ImmutableList<Stream>,
     zapping: Stream?,
-    play: PlayStream,
+    play: (url: String) -> Unit,
     onMenu: (Stream) -> Unit,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(0.dp),
 ) {
-    val spacing = LocalSpacing.current
     val pref = LocalPref.current
 
     LazyVerticalStaggeredGrid(
         state = state,
         columns = StaggeredGridCells.Fixed(rowCount),
-        horizontalArrangement = Arrangement.spacedBy(spacing.medium),
         contentPadding = contentPadding,
         modifier = modifier.fillMaxSize()
     ) {
@@ -204,7 +199,7 @@ private fun CompactStreamGalleryImpl(
             key = { stream -> stream.id },
             contentType = { it.cover.isNullOrEmpty() }
         ) { stream ->
-            CompactStreamItem(
+            StreamItem(
                 stream = stream,
                 zapping = zapping == stream,
                 noPictureMode = pref.noPictureMode,
@@ -224,7 +219,7 @@ private fun StreamGalleryImpl(
     rowCount: Int,
     streams: ImmutableList<Stream>,
     zapping: Stream?,
-    play: PlayStream,
+    play: (url: String) -> Unit,
     onMenu: (Stream) -> Unit,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(0.dp),

@@ -11,6 +11,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.DriveFileMove
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
@@ -20,17 +21,50 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.material.components.OuterRow
 import com.m3u.material.model.LocalSpacing
 
 @Composable
 internal fun PlaylistItem(
-    label: AnnotatedString,
+    label: String,
+    number: Int,
+    local: Boolean,
+    onClick: () -> Unit,
+    onLongClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val pref = LocalPref.current
+    val compact = pref.compact
+
+    if (!compact) {
+        PlaylistItemImpl(
+            label = label,
+            number = number,
+            local = local,
+            onClick = onClick,
+            onLongClick = onLongClick,
+            modifier = modifier
+        )
+    } else {
+        CompactPlaylistItemImpl(
+            label = label,
+            number = number,
+            local = local,
+            onClick = onClick,
+            onLongClick = onLongClick,
+            modifier = modifier
+        )
+    }
+}
+
+@Composable
+private fun PlaylistItemImpl(
+    label: String,
     number: Int,
     local: Boolean,
     onClick: () -> Unit,
@@ -104,4 +138,50 @@ internal fun PlaylistItem(
             }
         }
     }
+}
+
+@Composable
+private fun CompactPlaylistItemImpl(
+    label: String,
+    number: Int,
+    local: Boolean,
+    onClick: () -> Unit,
+    onLongClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    ListItem(
+        headlineContent = {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        },
+        leadingContent = {
+            if (local) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Rounded.DriveFileMove,
+                    contentDescription = null
+                )
+            }
+        },
+        trailingContent = {
+            Text(
+                text = number.toString(),
+                style = MaterialTheme.typography.bodyMedium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                softWrap = false,
+                textAlign = TextAlign.Center
+            )
+        },
+        modifier = Modifier
+            .combinedClickable(
+                onClick = onClick,
+                onLongClick = onLongClick
+            )
+            .then(modifier)
+    )
 }

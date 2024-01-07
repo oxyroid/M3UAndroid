@@ -3,6 +3,7 @@ package com.m3u.features.foryou
 import android.content.res.Configuration.ORIENTATION_PORTRAIT
 import android.view.KeyEvent
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -36,6 +37,7 @@ import com.m3u.material.components.Background
 import com.m3u.material.ktx.interceptVolumeEvent
 import com.m3u.material.ktx.minus
 import com.m3u.material.ktx.only
+import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.EventHandler
 import com.m3u.ui.LocalHelper
 import com.m3u.ui.ResumeEvent
@@ -106,8 +108,8 @@ private fun ForyouScreen(
     rename: OnRename,
     modifier: Modifier = Modifier
 ) {
-    var dialog: ForyouDialog by remember { mutableStateOf(ForyouDialog.Idle) }
     val configuration = LocalConfiguration.current
+    val spacing = LocalSpacing.current
 
     val actualRowCount = remember(rowCount, configuration.orientation) {
         when (configuration.orientation) {
@@ -115,8 +117,10 @@ private fun ForyouScreen(
             else -> rowCount + 2
         }
     }
+    var dialog: ForyouDialog by remember { mutableStateOf(ForyouDialog.Idle) }
     Background(modifier) {
         Column(
+            verticalArrangement = Arrangement.spacedBy(spacing.small),
             modifier = Modifier
                 .fillMaxSize()
                 .navigationBarsPadding()

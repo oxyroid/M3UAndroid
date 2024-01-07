@@ -48,6 +48,9 @@ fun Preference(
     icon: ImageVector? = null,
     trailing: @Composable (() -> Unit)? = null
 ) {
+    // val configuration = LocalConfiguration.current
+    // val type = configuration.uiMode and Configuration.UI_MODE_TYPE_MASK
+
     var focus by remember { mutableStateOf(false) }
 
     TooltipBox(
@@ -63,7 +66,7 @@ fun Preference(
             }
         }
     ) {
-        val alpha = if(enabled) 1f else 0.38f
+        val alpha = if (enabled) 1f else 0.38f
         val currentContainerColor by animateColorAsState(
             targetValue = MaterialTheme.colorScheme.surface.copy(alpha),
             label = "preference-container-color",
@@ -74,6 +77,7 @@ fun Preference(
             label = "preference-content-color",
             animationSpec = spring(stiffness = Spring.StiffnessMediumLow)
         )
+        // if (type != Configuration.UI_MODE_TYPE_TELEVISION) {
         ListItem(
             headlineContent = {
                 Text(
@@ -120,6 +124,51 @@ fun Preference(
                 }
                 .focusable()
         )
+//        } else {
+//            TvListItem(
+//                selected = true,
+//                headlineContent = {
+//                    Text(
+//                        text = title,
+//                        style = MaterialTheme.typography.titleMedium,
+//                        maxLines = 1,
+//                        overflow = TextOverflow.Ellipsis,
+//                    )
+//                },
+//                supportingContent = {
+//                    if (content != null) {
+//                        Text(
+//                            text = content.capitalize(Locale.current),
+//                            style = MaterialTheme.typography.bodyMedium,
+//                            maxLines = 1,
+//                            overflow = TextOverflow.Ellipsis,
+//                            modifier = Modifier then if (focus) Modifier.basicMarquee()
+//                            else Modifier
+//                        )
+//                    }
+//                },
+//                trailingContent = trailing,
+//                leadingContent = {
+//                    icon?.let {
+//                        Icon(imageVector = it, contentDescription = null)
+//                    }
+//                },
+//                tonalElevation = LocalAbsoluteTonalElevation.current,
+//                colors = TvListItemDefaults.colors(
+//                    containerColor = currentContainerColor,
+//                    contentColor = currentContentColor,
+//                ),
+//                shape = TvListItemDefaults.shape(RectangleShape),
+//                onClick = onClick,
+//                modifier = modifier
+//                    .semantics(mergeDescendants = true) {}
+//                    .fillMaxWidth()
+//                    .onFocusChanged {
+//                        focus = it.hasFocus
+//                    }
+//                    .focusable()
+//            )
+//        }
     }
 }
 

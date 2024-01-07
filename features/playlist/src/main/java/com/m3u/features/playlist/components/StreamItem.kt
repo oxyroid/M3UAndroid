@@ -30,6 +30,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.data.database.entity.Stream
 import com.m3u.i18n.R.string
 import com.m3u.material.components.Image
@@ -39,6 +40,39 @@ import java.net.URI
 
 @Composable
 internal fun StreamItem(
+    stream: Stream,
+    noPictureMode: Boolean,
+    onClick: () -> Unit,
+    onLongClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    zapping: Boolean = false,
+) {
+    val pref = LocalPref.current
+    val compact = pref.compact
+
+    if (!compact) {
+        StreamItemImpl(
+            stream = stream,
+            noPictureMode = noPictureMode,
+            onClick = onClick,
+            onLongClick = onLongClick,
+            modifier = modifier,
+            zapping = zapping
+        )
+    } else {
+        CompactStreamItem(
+            stream = stream,
+            noPictureMode = noPictureMode,
+            onClick = onClick,
+            onLongClick = onLongClick,
+            modifier = modifier,
+            zapping = zapping
+        )
+    }
+}
+
+@Composable
+private fun StreamItemImpl(
     stream: Stream,
     noPictureMode: Boolean,
     onClick: () -> Unit,
@@ -135,9 +169,8 @@ internal fun StreamItem(
     }
 }
 
-
 @Composable
-internal fun CompactStreamItem(
+private fun CompactStreamItem(
     stream: Stream,
     noPictureMode: Boolean,
     onClick: () -> Unit,
