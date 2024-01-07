@@ -1,5 +1,6 @@
 package com.m3u.data.repository.impl
 
+import android.content.ContentResolver
 import android.content.Context
 import android.net.Uri
 import androidx.core.net.toUri
@@ -190,8 +191,8 @@ class PlaylistRepositoryImpl @Inject constructor(
         )
     private val String.isAndroidUrl: Boolean
         get() = this.startsWithAny(
-            "file://",
-            "content://",
+            ContentResolver.SCHEME_FILE,
+            ContentResolver.SCHEME_CONTENT,
             ignoreCase = true
         )
 
@@ -199,13 +200,19 @@ class PlaylistRepositoryImpl @Inject constructor(
         return if (isNetworkUrl) this
         else if (isAndroidUrl) {
             val uri = Uri.parse(this) ?: return null
+            if (uri.scheme == ContentResolver.SCHEME_FILE) {
+                return uri.toString()
+            }
             withContext(Dispatchers.IO) {
                 val resolver = context.contentResolver
                 val filename = uri.readFileName(resolver) ?: filenameWithTimezone
                 val content = uri.readFileContent(resolver).orEmpty()
                 val file = File(context.filesDir, filename)
                 file.writeText(content)
-                Uri.decode(file.toUri().toString())
+
+                val newUrl = Uri.decode(file.toUri().toString())
+                playlistDao.updateUrl(this@actualUrl, newUrl)
+                newUrl
             }
         } else null
     }

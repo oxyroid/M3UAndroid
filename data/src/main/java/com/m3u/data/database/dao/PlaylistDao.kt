@@ -18,6 +18,9 @@ interface PlaylistDao {
     @Delete
     suspend fun delete(vararg playlist: Playlist)
 
+    @Query("DELETE FROM playlists WHERE url = :url")
+    suspend fun deleteByUrl(url: String)
+
     @Query("SELECT * FROM playlists WHERE url = :url")
     suspend fun getByUrl(url: String): Playlist?
 
@@ -37,4 +40,16 @@ interface PlaylistDao {
 
     @Query("UPDATE playlists SET title = :target WHERE url = :url")
     suspend fun rename(url: String, target: String)
+
+    @Transaction
+    suspend fun updateUrl(oldUrl: String, newUrl: String) {
+        val playlist = getByUrl(oldUrl) ?: return
+        insert(
+            Playlist(
+                title = playlist.title,
+                url = newUrl
+            )
+        )
+        deleteByUrl(oldUrl)
+    }
 }
