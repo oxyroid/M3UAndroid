@@ -2,7 +2,6 @@ package com.m3u.features.setting.fragments.preferences
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Animation
 import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.material.icons.rounded.Chair
 import androidx.compose.material.icons.rounded.ColorLens
@@ -37,7 +36,6 @@ import kotlin.time.toDuration
 @Composable
 internal fun RegularPreferences(
     fragment: SettingFragment,
-    useCommonUIModeEnable: Boolean,
     navigateToPlaylistManagement: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -139,15 +137,6 @@ internal fun RegularPreferences(
             icon = Icons.Rounded.DeviceHub,
             checked = pref.godMode,
             onChanged = { pref.godMode = !pref.godMode }
-        )
-        CheckBoxSharedPreference(
-            title = string.feat_setting_common_ui_mode,
-            content = if (useCommonUIModeEnable) string.feat_setting_common_ui_mode_description
-            else string.feat_setting_common_ui_mode_disabled_description,
-            icon = Icons.Rounded.Animation,
-            enabled = useCommonUIModeEnable,
-            checked = pref.useCommonUIMode,
-            onChanged = { pref.useCommonUIMode = !pref.useCommonUIMode }
         )
         CheckBoxSharedPreference(
             title = string.feat_setting_cinema_mode,

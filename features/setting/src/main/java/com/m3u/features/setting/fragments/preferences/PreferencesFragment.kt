@@ -19,7 +19,6 @@ internal fun PreferencesFragment(
     contentPadding: PaddingValues,
     versionName: String,
     versionCode: Int,
-    useCommonUIModeEnable: Boolean,
     navigateToPlaylistManagement: () -> Unit,
     navigateToScriptManagement: () -> Unit,
     navigateToConsole: () -> Unit,
@@ -38,7 +37,6 @@ internal fun PreferencesFragment(
             item {
                 RegularPreferences(
                     fragment = fragment,
-                    useCommonUIModeEnable = useCommonUIModeEnable,
                     navigateToPlaylistManagement = navigateToPlaylistManagement
                 )
                 HorizontalDivider()
@@ -72,7 +70,6 @@ internal fun PreferencesFragment(
             item {
                 RegularPreferences(
                     fragment = fragment,
-                    useCommonUIModeEnable = useCommonUIModeEnable,
                     navigateToPlaylistManagement = navigateToPlaylistManagement
                 )
                 HorizontalDivider()

@@ -316,7 +316,7 @@ private fun PlaylistScreen(
                     PlaylistPager(channels, zapping) { streams, zapping ->
                         val type = configuration.uiMode and UI_MODE_TYPE_MASK
                         when {
-                            !pref.useCommonUIMode && type == UI_MODE_TYPE_TELEVISION -> {
+                            type == UI_MODE_TYPE_TELEVISION -> {
                                 val state = rememberTvLazyGridState()
                                 LaunchedEffect(state.isAtTop) {
                                     isAtTopState.value = state.isAtTop

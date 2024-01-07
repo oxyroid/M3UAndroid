@@ -1,5 +1,8 @@
 package com.m3u.androidApp.ui
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.PaddingValues
@@ -11,12 +14,15 @@ import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.adaptive.navigation.suite.NavigationSuiteDefaults
 import androidx.compose.material3.adaptive.navigation.suite.NavigationSuiteScaffold
 import androidx.compose.material3.adaptive.navigation.suite.NavigationSuiteScope
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -151,9 +157,25 @@ private fun M3UScaffoldImpl(
         }
     }
 
+    val currentContainerColor by animateColorAsState(
+        targetValue = MaterialTheme.colorScheme.background,
+        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+        label = "scaffold-navigation-container"
+    )
+    val currentContentColor by animateColorAsState(
+        targetValue = MaterialTheme.colorScheme.onBackground,
+        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+        label = "scaffold-navigation-content"
+    )
     NavigationSuiteScaffold(
         navigationSuiteItems = navigation,
         content = actualContent,
+        navigationSuiteColors = NavigationSuiteDefaults.colors(
+            navigationBarContainerColor = currentContainerColor,
+            navigationBarContentColor = currentContentColor,
+            navigationRailContainerColor = currentContainerColor,
+            navigationRailContentColor = currentContentColor
+        ),
         modifier = modifier
     )
 }

@@ -4,7 +4,6 @@ import com.m3u.core.architecture.pref.Pref
 
 internal object MockPref : Pref {
     override var playlistStrategy: Int = Pref.DEFAULT_PLAYLIST_STRATEGY
-    override var useCommonUIMode: Boolean = Pref.DEFAULT_USE_COMMON_UI_MODE
     override var rowCount: Int = Pref.DEFAULT_ROW_COUNT
     override var connectTimeout: Long = Pref.DEFAULT_CONNECT_TIMEOUT
     override var godMode: Boolean = Pref.DEFAULT_GOD_MODE

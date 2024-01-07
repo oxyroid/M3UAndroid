@@ -31,7 +31,6 @@ import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_SCREENCAST
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_SCREEN_ROTATING
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_SSL_VERIFICATION
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_UNSEENS_MILLISECONDS
-import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_USE_COMMON_UI_MODE
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_USE_DYNAMIC_COLORS
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_VOLUME_GESTURE
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_ZAPPING_MODE
@@ -47,7 +46,6 @@ import com.m3u.core.architecture.pref.Pref.Companion.SCREENCAST
 import com.m3u.core.architecture.pref.Pref.Companion.SCREEN_ROTATING
 import com.m3u.core.architecture.pref.Pref.Companion.SSL_VERIFICATION
 import com.m3u.core.architecture.pref.Pref.Companion.UNSEENS_MILLISECONDS
-import com.m3u.core.architecture.pref.Pref.Companion.USE_COMMON_UI_MODE
 import com.m3u.core.architecture.pref.Pref.Companion.USE_DYNAMIC_COLORS
 import com.m3u.core.architecture.pref.Pref.Companion.VOLUME_GESTURE
 import com.m3u.core.architecture.pref.Pref.Companion.ZAPPING_MODE
@@ -70,8 +68,6 @@ class SnapshotPref @Inject constructor(
     @PlaylistStrategy
     override var playlistStrategy: Int by
     sharedPreferences.intAsState(DEFAULT_PLAYLIST_STRATEGY, PLAYLIST_STRATEGY)
-    override var useCommonUIMode: Boolean by
-    sharedPreferences.booleanAsState(DEFAULT_USE_COMMON_UI_MODE, USE_COMMON_UI_MODE)
 
     override var rowCount: Int by
     sharedPreferences.intAsState(DEFAULT_ROW_COUNT, ROW_COUNT)

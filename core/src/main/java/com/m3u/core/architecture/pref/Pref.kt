@@ -15,7 +15,6 @@ import kotlinx.coroutines.flow.Flow
 interface Pref {
     @PlaylistStrategy
     var playlistStrategy: Int
-    var useCommonUIMode: Boolean
     var rowCount: Int
 
     @ConnectTimeout
@@ -52,7 +51,6 @@ interface Pref {
     companion object {
         @PlaylistStrategy
         const val DEFAULT_PLAYLIST_STRATEGY = PlaylistStrategy.SKIP_FAVORITE
-        const val DEFAULT_USE_COMMON_UI_MODE = false
         const val DEFAULT_ROW_COUNT = 1
 
         @ConnectTimeout
@@ -85,7 +83,6 @@ interface Pref {
         const val DEFAULT_COMPACT = false
 
         const val PLAYLIST_STRATEGY = "playlist-strategy"
-        const val USE_COMMON_UI_MODE = "use-common-ui-mode"
         const val ROW_COUNT = "rowCount"
 
         const val CONNECT_TIMEOUT = "connect-timeout"

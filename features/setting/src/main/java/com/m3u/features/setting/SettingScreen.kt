@@ -1,6 +1,5 @@
 package com.m3u.features.setting
 
-import android.content.res.Configuration
 import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.PaddingValues
@@ -25,7 +24,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
@@ -65,10 +63,6 @@ fun SettingRoute(
 
     MessageEventHandler(message)
 
-    val configuration = LocalConfiguration.current
-    val type = configuration.uiMode and Configuration.UI_MODE_TYPE_MASK
-    val useCommonUIModeEnable = (type != Configuration.UI_MODE_TYPE_NORMAL)
-
     val controller = LocalSoftwareKeyboardController.current
     SettingScreen(
         contentPadding = contentPadding,
@@ -77,7 +71,6 @@ fun SettingRoute(
         title = state.title,
         url = state.url,
         uriWrapper = rememberUriWrapper(state.uri),
-        useCommonUIModeEnable = useCommonUIModeEnable,
         navigateToConsole = navigateToConsole,
         banneds = banneds,
         onTitle = { viewModel.onEvent(SettingEvent.OnTitle(it)) },
@@ -107,7 +100,6 @@ private fun SettingScreen(
     onTitle: (String) -> Unit,
     onUrl: (String) -> Unit,
     onSubscribe: () -> Unit,
-    useCommonUIModeEnable: Boolean,
     banneds: ImmutableList<Stream>,
     onBanned: (Int) -> Unit,
     importJavaScript: (Uri) -> Unit,
@@ -145,7 +137,6 @@ private fun SettingScreen(
                 contentPadding = contentPadding,
                 versionName = versionName,
                 versionCode = versionCode,
-                useCommonUIModeEnable = useCommonUIModeEnable,
                 navigateToPlaylistManagement = {
                     currentPaneDestination = ListDetailPaneScaffoldRole.Detail
                     fragment = SettingFragment.Subscriptions
