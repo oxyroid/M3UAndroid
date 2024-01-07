@@ -1,5 +1,6 @@
 package com.m3u.material.model
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Typography
@@ -50,7 +51,6 @@ val LightColors = lightColorScheme(
     surfaceDim = Color(0xFFECD6C0)
 )
 
-
 val DarkColors = darkColorScheme(
     primary = Color(0xFFFCBA66),
     onPrimary = Color(0xFF472A00),
@@ -91,6 +91,7 @@ val DarkColors = darkColorScheme(
 )
 
 @Composable
+@SuppressLint("NewApi")
 fun AppTheme(
     useDynamicColors: Boolean,
     useDarkTheme: Boolean = isSystemInDarkTheme(),
