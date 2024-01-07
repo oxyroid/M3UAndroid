@@ -28,6 +28,7 @@ internal fun FavouriteGallery(
     zapping: Stream?,
     rowCount: Int,
     navigateToStream: () -> Unit,
+    onMenu: (Stream) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val pref = LocalPref.current
@@ -40,6 +41,7 @@ internal fun FavouriteGallery(
             zapping = zapping,
             rowCount = rowCount,
             navigateToStream = navigateToStream,
+            onMenu = onMenu,
             modifier = modifier
         )
     } else {
@@ -49,6 +51,7 @@ internal fun FavouriteGallery(
             zapping = zapping,
             rowCount = rowCount,
             navigateToStream = navigateToStream,
+            onMenu = onMenu,
             modifier = modifier
         )
     }
@@ -61,6 +64,7 @@ private fun FavouriteGalleryImpl(
     zapping: Stream?,
     rowCount: Int,
     navigateToStream: () -> Unit,
+    onMenu: (Stream) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
@@ -90,7 +94,9 @@ private fun FavouriteGalleryImpl(
                         helper.play(stream.url)
                         navigateToStream()
                     },
-                    onLongClick = {},
+                    onLongClick = {
+                        onMenu(stream)
+                    },
                     modifier = Modifier.fillMaxWidth()
                 )
             }
@@ -116,7 +122,9 @@ private fun FavouriteGalleryImpl(
                         helper.play(stream.url)
                         navigateToStream()
                     },
-                    onLongClick = {},
+                    onLongClick = {
+                        onMenu(stream)
+                    },
                     modifier = Modifier.fillMaxWidth()
                 )
             }
@@ -131,6 +139,7 @@ private fun CompactFavouriteGalleryImpl(
     zapping: Stream?,
     rowCount: Int,
     navigateToStream: () -> Unit,
+    onMenu: (Stream) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
@@ -158,7 +167,9 @@ private fun CompactFavouriteGalleryImpl(
                         helper.play(stream.url)
                         navigateToStream()
                     },
-                    onLongClick = {},
+                    onLongClick = {
+                        onMenu(stream)
+                    },
                     modifier = Modifier.fillMaxWidth()
                 )
             }
@@ -183,7 +194,9 @@ private fun CompactFavouriteGalleryImpl(
                         helper.play(stream.url)
                         navigateToStream()
                     },
-                    onLongClick = {},
+                    onLongClick = {
+                        onMenu(stream)
+                    },
                     modifier = Modifier.fillMaxWidth()
                 )
             }

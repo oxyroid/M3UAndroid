@@ -1,4 +1,4 @@
-package com.m3u.features.playlist.components
+package com.m3u.features.favorite.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.runtime.Composable
@@ -11,12 +11,10 @@ import com.m3u.material.components.DialogTextField
 import com.m3u.material.model.LocalSpacing
 
 @Composable
-internal fun PlaylistDialog(
+internal fun FavoriteDialog(
     status: DialogStatus,
     onUpdate: (DialogStatus) -> Unit,
-    onFavorite: (streamId: Int, target: Boolean) -> Unit,
-    ban: (streamId: Int, target: Boolean) -> Unit,
-    onSavePicture: (streamId: Int) -> Unit,
+    cancelFavorite: (streamId: Int) -> Unit,
     createShortcut: (streamId: Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -32,23 +30,9 @@ internal fun PlaylistDialog(
             DialogTextField(
                 text = status.stream.title,
             )
-            val favourite = status.stream.favourite
-            DialogItem(
-                if (favourite) string.feat_playlist_dialog_favourite_cancel_title
-                else string.feat_playlist_dialog_favourite_title
-            ) {
+            DialogItem(string.feat_playlist_dialog_favourite_cancel_title) {
                 onUpdate(DialogStatus.Idle)
-                onFavorite(status.stream.id, !favourite)
-            }
-            DialogItem(string.feat_playlist_dialog_mute_title) {
-                onUpdate(DialogStatus.Idle)
-                ban(status.stream.id, true)
-            }
-            if (!status.stream.cover.isNullOrEmpty()) {
-                DialogItem(string.feat_playlist_dialog_save_picture_title) {
-                    onUpdate(DialogStatus.Idle)
-                    onSavePicture(status.stream.id)
-                }
+                cancelFavorite(status.stream.id)
             }
             DialogItem(string.feat_playlist_dialog_create_shortcut_title) {
                 onUpdate(DialogStatus.Idle)

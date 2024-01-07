@@ -173,14 +173,6 @@ internal fun PlaylistRoute(
         } else Modifier
     }
     Background {
-        SortBottomSheet(
-            visible = isSortSheetVisible,
-            sort = sort,
-            sorts = sorts,
-            sheetState = sheetState,
-            onChanged = { viewModel.sort(it) },
-            onDismissRequest = { isSortSheetVisible = false }
-        )
         PlaylistScreen(
             query = query,
             onQuery = { viewModel.onEvent(PlaylistEvent.Query(it)) },
@@ -197,6 +189,15 @@ internal fun PlaylistRoute(
             modifier = modifier
                 .fillMaxSize()
                 .then(interceptVolumeEventModifier)
+        )
+
+        SortBottomSheet(
+            visible = isSortSheetVisible,
+            sort = sort,
+            sorts = sorts,
+            sheetState = sheetState,
+            onChanged = { viewModel.sort(it) },
+            onDismissRequest = { isSortSheetVisible = false }
         )
 
         PlaylistDialog(

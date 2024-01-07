@@ -15,10 +15,13 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.data.database.entity.Stream
+import com.m3u.features.favorite.components.DialogStatus
+import com.m3u.features.favorite.components.FavoriteDialog
 import com.m3u.features.favorite.components.FavouriteGallery
 import com.m3u.material.components.Background
 import com.m3u.material.ktx.interceptVolumeEvent
@@ -40,6 +43,7 @@ fun FavouriteRoute(
 ) {
     val helper = LocalHelper.current
     val pref = LocalPref.current
+    val context = LocalContext.current
 
     val streams by viewModel.streams.collectAsStateWithLifecycle()
     val zapping by viewModel.zapping.collectAsStateWithLifecycle()
@@ -49,6 +53,7 @@ fun FavouriteRoute(
     val sheetState = rememberModalBottomSheetState()
 
     var isSortSheetVisible by rememberSaveable { mutableStateOf(false) }
+    var dialogStatus: DialogStatus by remember { mutableStateOf(DialogStatus.Idle) }
 
     EventHandler(resume) {
         helper.actions = persistentListOf(
@@ -73,6 +78,17 @@ fun FavouriteRoute(
     }
 
     Background {
+        FavoriteScreen(
+            contentPadding = contentPadding,
+            rowCount = pref.rowCount,
+            streams = streams,
+            zapping = zapping,
+            navigateToStream = navigateToStream,
+            onMenu = { dialogStatus = DialogStatus.Selections(it) },
+            modifier = modifier
+                .fillMaxSize()
+                .then(interceptVolumeEventModifier)
+        )
         SortBottomSheet(
             visible = isSortSheetVisible,
             sort = sort,
@@ -81,15 +97,13 @@ fun FavouriteRoute(
             onChanged = { viewModel.sort(it) },
             onDismissRequest = { isSortSheetVisible = false }
         )
-        FavoriteScreen(
-            contentPadding = contentPadding,
-            rowCount = pref.rowCount,
-            streams = streams,
-            zapping = zapping,
-            navigateToStream = navigateToStream,
-            modifier = modifier
-                .fillMaxSize()
-                .then(interceptVolumeEventModifier)
+        FavoriteDialog(
+            status = dialogStatus,
+            onUpdate = { dialogStatus = it },
+            cancelFavorite = { id -> viewModel.cancelFavourite(id) },
+            createShortcut = { id ->
+                viewModel.createShortcut(context, id)
+            }
         )
     }
 }
@@ -101,6 +115,7 @@ private fun FavoriteScreen(
     streams: ImmutableList<Stream>,
     zapping: Stream?,
     navigateToStream: () -> Unit,
+    onMenu: (Stream) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val configuration = LocalConfiguration.current
@@ -115,6 +130,7 @@ private fun FavoriteScreen(
         zapping = zapping,
         rowCount = actualRowCount,
         navigateToStream = navigateToStream,
+        onMenu = onMenu,
         modifier = modifier
     )
 }
