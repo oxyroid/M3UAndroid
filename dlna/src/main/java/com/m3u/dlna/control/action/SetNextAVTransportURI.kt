@@ -1,9 +1,9 @@
 package com.m3u.dlna.control.action
 
-import org.fourthline.cling.controlpoint.ActionCallback
-import org.fourthline.cling.model.action.ActionInvocation
-import org.fourthline.cling.model.meta.Service
-import org.fourthline.cling.model.types.UnsignedIntegerFourBytes
+import org.jupnp.controlpoint.ActionCallback
+import org.jupnp.model.action.ActionInvocation
+import org.jupnp.model.meta.Service
+import org.jupnp.model.types.UnsignedIntegerFourBytes
 import java.util.logging.Logger
 
 @Suppress("LeakingThis")

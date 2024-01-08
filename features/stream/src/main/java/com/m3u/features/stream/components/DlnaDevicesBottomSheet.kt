@@ -29,7 +29,7 @@ import com.m3u.material.components.OnDismiss
 import com.m3u.material.components.mask.MaskState
 import com.m3u.material.model.LocalSpacing
 import kotlinx.collections.immutable.ImmutableList
-import org.fourthline.cling.model.meta.Device
+import org.jupnp.model.meta.Device
 
 @Composable
 internal fun DlnaDevicesBottomSheet(

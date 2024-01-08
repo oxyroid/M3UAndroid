@@ -16,10 +16,6 @@ import java.io.IOException
 internal class JettyHttpServer(port: Int) : HttpServer {
     private val server: Server = Server(port) // Has its own QueuedThreadPool
 
-    init {
-        server.gracefulShutdown = 1000 // Let's wait a second for ongoing transfers to complete
-    }
-
     @Synchronized
     override fun startServer() {
         if (!server.isStarted && !server.isStarting) {

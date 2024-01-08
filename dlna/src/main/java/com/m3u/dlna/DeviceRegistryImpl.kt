@@ -2,9 +2,9 @@ package com.m3u.dlna
 
 import android.os.Handler
 import android.os.Looper
-import org.fourthline.cling.model.meta.Device
-import org.fourthline.cling.registry.DefaultRegistryListener
-import org.fourthline.cling.registry.Registry
+import org.jupnp.model.meta.Device
+import org.jupnp.registry.DefaultRegistryListener
+import org.jupnp.registry.Registry
 
 internal class DeviceRegistryImpl(
     private val deviceRegistryListener: OnDeviceRegistryListener

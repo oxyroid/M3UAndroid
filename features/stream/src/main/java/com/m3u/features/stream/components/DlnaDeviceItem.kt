@@ -16,8 +16,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import org.fourthline.cling.model.meta.Device
+import org.jupnp.model.meta.Device
 
 @Immutable
 internal data class DeviceWrapper(

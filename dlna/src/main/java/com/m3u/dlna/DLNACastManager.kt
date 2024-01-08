@@ -9,19 +9,19 @@ import android.content.Intent
 import android.content.ServiceConnection
 import android.os.IBinder
 import android.util.Log
+import com.m3u.dlna.android.AndroidUpnpService
 import com.m3u.dlna.control.CastControlImpl
 import com.m3u.dlna.control.DeviceControl
 import com.m3u.dlna.control.EmptyDeviceControl
 import com.m3u.dlna.control.OnDeviceControlListener
 import com.m3u.dlna.http.LocalServer
-import org.fourthline.cling.android.AndroidUpnpService
-import org.fourthline.cling.model.message.header.STAllHeader
-import org.fourthline.cling.model.message.header.UDADeviceTypeHeader
-import org.fourthline.cling.model.meta.Device
-import org.fourthline.cling.model.types.DeviceType
-import org.fourthline.cling.model.types.ServiceType
-import org.fourthline.cling.model.types.UDADeviceType
-import org.fourthline.cling.model.types.UDAServiceType
+import org.jupnp.model.message.header.STAllHeader
+import org.jupnp.model.message.header.UDADeviceTypeHeader
+import org.jupnp.model.meta.Device
+import org.jupnp.model.types.DeviceType
+import org.jupnp.model.types.ServiceType
+import org.jupnp.model.types.UDADeviceType
+import org.jupnp.model.types.UDAServiceType
 
 object DLNACastManager : OnDeviceRegistryListener {
 
@@ -140,7 +140,7 @@ object DLNACastManager : OnDeviceRegistryListener {
     }
 
     fun search(type: DeviceType? = null) {
-        upnpService?.get()?.also { service ->
+        upnpService?.service?.also { service ->
             searchDeviceType = type
             service.registry.devices?.filter { searchDeviceType == null || searchDeviceType != it.type }
                 ?.onEach {
@@ -158,7 +158,7 @@ object DLNACastManager : OnDeviceRegistryListener {
 
     private val deviceControlMap = mutableMapOf<Device<*, *, *>, DeviceControl?>()
     fun connectDevice(device: Device<*, *, *>, listener: OnDeviceControlListener): DeviceControl {
-        val service = upnpService?.get() ?: return EmptyDeviceControl
+        val service = upnpService?.service ?: return EmptyDeviceControl
         var control = deviceControlMap[device]
         if (control == null) {
             val newController = CastControlImpl(service.controlPoint, device, listener)

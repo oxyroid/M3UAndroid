@@ -119,7 +119,7 @@
 -dontwarn javax.enterprise.inject.Alternative
 -dontwarn sun.net.www.protocol.http.Handler
 
--keep class org.fourthline.cling.** { *; }
+-keep class org.jupnp.** { *; }
 -dontwarn com.sun.net.httpserver.Headers
 -dontwarn com.sun.net.httpserver.HttpExchange
 -dontwarn java.awt.BorderLayout
@@ -193,3 +193,12 @@
 -dontwarn javax.swing.tree.TreePath
 -dontwarn javax.swing.tree.TreeSelectionModel
 -dontwarn sun.net.www.protocol.http.HttpURLConnection
+
+-dontwarn org.osgi.framework.BundleContext
+-dontwarn org.osgi.framework.ServiceReference
+-dontwarn org.osgi.framework.ServiceRegistration
+-dontwarn org.osgi.service.cm.ManagedService
+-dontwarn org.osgi.service.component.ComponentContext
+-dontwarn org.osgi.service.http.HttpContext
+-dontwarn org.osgi.service.http.HttpService
+-dontwarn org.osgi.service.http.NamespaceException

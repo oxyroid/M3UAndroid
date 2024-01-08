@@ -1,6 +1,6 @@
 package com.m3u.features.stream
 
-import org.fourthline.cling.model.meta.Device
+import org.jupnp.model.meta.Device
 
 sealed interface StreamEvent {
     data object OpenDlnaDevices : StreamEvent

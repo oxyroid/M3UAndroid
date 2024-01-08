@@ -6,7 +6,7 @@ import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import com.m3u.data.database.entity.Playlist
 import com.m3u.data.database.entity.Stream
-import org.fourthline.cling.model.meta.Device
+import org.jupnp.model.meta.Device
 
 data class StreamState(
     val recording: Boolean = false,

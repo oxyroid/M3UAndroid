@@ -1,6 +1,6 @@
 package com.m3u.dlna
 
-import org.fourthline.cling.model.meta.Device
+import org.jupnp.model.meta.Device
 
 /**
  * this listener call in UI thread.

@@ -47,12 +47,7 @@ dependencies {
     api(libs.jetty.client)
     // Nano http
     api(libs.nanohttpd)
-    api(
-        fileTree(
-            mapOf(
-                "dir" to "libs",
-                "include" to listOf("*.jar")
-            )
-        )
-    )
+
+    api(libs.jupnp)
+    api(libs.jupnp.support)
 }

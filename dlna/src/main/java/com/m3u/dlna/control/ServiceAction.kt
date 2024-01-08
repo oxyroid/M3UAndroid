@@ -1,10 +1,10 @@
 package com.m3u.dlna.control
 
-import org.fourthline.cling.support.model.BrowseFlag
-import org.fourthline.cling.support.model.DIDLContent
-import org.fourthline.cling.support.model.MediaInfo
-import org.fourthline.cling.support.model.PositionInfo
-import org.fourthline.cling.support.model.TransportInfo
+import org.jupnp.support.model.BrowseFlag
+import org.jupnp.support.model.DIDLContent
+import org.jupnp.support.model.MediaInfo
+import org.jupnp.support.model.PositionInfo
+import org.jupnp.support.model.TransportInfo
 
 interface ServiceActionCallback<T> {
     fun onSuccess(result: T)

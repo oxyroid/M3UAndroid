@@ -4,16 +4,16 @@ import com.m3u.dlna.DLNACastManager
 import com.m3u.dlna.control.BaseServiceExecutor.AVServiceExecutorImpl
 import com.m3u.dlna.control.BaseServiceExecutor.ContentServiceExecutorImpl
 import com.m3u.dlna.control.BaseServiceExecutor.RendererServiceExecutorImpl
-import org.fourthline.cling.controlpoint.ControlPoint
-import org.fourthline.cling.model.meta.Device
-import org.fourthline.cling.support.avtransport.lastchange.AVTransportLastChangeParser
-import org.fourthline.cling.support.lastchange.EventedValue
-import org.fourthline.cling.support.model.BrowseFlag
-import org.fourthline.cling.support.model.DIDLContent
-import org.fourthline.cling.support.model.MediaInfo
-import org.fourthline.cling.support.model.PositionInfo
-import org.fourthline.cling.support.model.TransportInfo
-import org.fourthline.cling.support.renderingcontrol.lastchange.RenderingControlLastChangeParser
+import org.jupnp.controlpoint.ControlPoint
+import org.jupnp.model.meta.Device
+import org.jupnp.support.avtransport.lastchange.AVTransportLastChangeParser
+import org.jupnp.support.lastchange.EventedValue
+import org.jupnp.support.model.BrowseFlag
+import org.jupnp.support.model.DIDLContent
+import org.jupnp.support.model.MediaInfo
+import org.jupnp.support.model.PositionInfo
+import org.jupnp.support.model.TransportInfo
+import org.jupnp.support.renderingcontrol.lastchange.RenderingControlLastChangeParser
 
 class CastControlImpl(
     controlPoint: ControlPoint,
@@ -64,9 +64,6 @@ class CastControlImpl(
         contentService.subscribe(object : SubscriptionListener {}, AVTransportLastChangeParser())
     }
 
-    // --------------------------------------------------------
-    // ---- AvTransport ---------------------------------------
-    // --------------------------------------------------------
     override fun setAVTransportURI(
         uri: String,
         title: String,
@@ -127,9 +124,6 @@ class CastControlImpl(
         avTransportService.getTransportInfo(callback)
     }
 
-    // --------------------------------------------------------
-    // ---- Renderer ------------------------------------------
-    // --------------------------------------------------------
     override fun setVolume(volume: Int, callback: ServiceActionCallback<Unit>?) {
         renderService.setVolume(volume, callback)
     }
@@ -146,9 +140,6 @@ class CastControlImpl(
         renderService.getMute(callback)
     }
 
-    // --------------------------------------------------------
-    // ---- Content -------------------------------------------
-    // --------------------------------------------------------
     override fun browse(
         objectId: String,
         flag: BrowseFlag,
