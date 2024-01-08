@@ -36,6 +36,7 @@ import com.m3u.data.database.entity.Stream
 import com.m3u.features.setting.fragments.ScriptsFragment
 import com.m3u.features.setting.fragments.SubscriptionsFragment
 import com.m3u.features.setting.fragments.preferences.PreferencesFragment
+import com.m3u.ui.Destination.Root.Setting.SettingFragment
 import com.m3u.ui.EventHandler
 import com.m3u.ui.LocalHelper
 import com.m3u.ui.MessageEventHandler
@@ -45,13 +46,16 @@ import kotlinx.collections.immutable.persistentListOf
 
 @Composable
 fun SettingRoute(
-    modifier: Modifier = Modifier,
     resume: ResumeEvent,
     contentPadding: PaddingValues,
-    viewModel: SettingViewModel = hiltViewModel(),
     navigateToConsole: () -> Unit,
-    navigateToAbout: () -> Unit
+    navigateToAbout: () -> Unit,
+    modifier: Modifier = Modifier,
+    viewModel: SettingViewModel = hiltViewModel(),
+    targetFragment: SettingFragment = SettingFragment.Root
 ) {
+    val controller = LocalSoftwareKeyboardController.current
+
     val state by viewModel.state.collectAsStateWithLifecycle()
     val message by viewModel.message.collectAsStateWithLifecycle()
     val banneds by viewModel.banneds.collectAsStateWithLifecycle()
@@ -63,7 +67,6 @@ fun SettingRoute(
 
     MessageEventHandler(message)
 
-    val controller = LocalSoftwareKeyboardController.current
     SettingScreen(
         contentPadding = contentPadding,
         versionName = state.versionName,
@@ -71,6 +74,7 @@ fun SettingRoute(
         title = state.title,
         url = state.url,
         uriWrapper = rememberUriWrapper(state.uri),
+        targetFragment = targetFragment,
         navigateToConsole = navigateToConsole,
         banneds = banneds,
         onTitle = { viewModel.onEvent(SettingEvent.OnTitle(it)) },
@@ -97,6 +101,7 @@ private fun SettingScreen(
     title: String,
     url: String,
     uriWrapper: UriWrapper,
+    targetFragment: SettingFragment,
     onTitle: (String) -> Unit,
     onUrl: (String) -> Unit,
     onSubscribe: () -> Unit,
@@ -110,9 +115,16 @@ private fun SettingScreen(
     openDocument: (Uri) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var fragment: SettingFragment by rememberSaveable { mutableStateOf(SettingFragment.Root) }
-    var currentPaneDestination by rememberSaveable {
-        mutableStateOf(ListDetailPaneScaffoldRole.List)
+    var fragment: SettingFragment by rememberSaveable(targetFragment) {
+        mutableStateOf(targetFragment)
+    }
+    var currentPaneDestination by rememberSaveable(targetFragment) {
+        mutableStateOf(
+            when (targetFragment) {
+                SettingFragment.Root -> ListDetailPaneScaffoldRole.List
+                else -> ListDetailPaneScaffoldRole.Detail
+            }
+        )
     }
     val scaffoldState = calculateListDetailPaneScaffoldState(
         currentPaneDestination = currentPaneDestination,

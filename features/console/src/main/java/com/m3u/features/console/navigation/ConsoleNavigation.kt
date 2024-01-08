@@ -4,6 +4,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavOptions
@@ -16,7 +17,9 @@ fun NavController.navigateToConsole(navOptions: NavOptions? = null) {
     this.navigate(CONSOLE_ROUTE, navOptions)
 }
 
-fun NavGraphBuilder.consoleScreen() {
+fun NavGraphBuilder.consoleScreen(
+    contentPadding: PaddingValues
+) {
     composable(
         route = CONSOLE_ROUTE,
         enterTransition = { slideInVertically { it } },
@@ -24,6 +27,6 @@ fun NavGraphBuilder.consoleScreen() {
         popEnterTransition = { fadeIn() },
         popExitTransition = { slideOutVertically { it } }
     ) {
-        ConsoleRoute()
+        ConsoleRoute(contentPadding)
     }
 }

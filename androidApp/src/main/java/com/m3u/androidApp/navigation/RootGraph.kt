@@ -24,6 +24,7 @@ import com.m3u.material.ktx.Edge
 import com.m3u.material.ktx.blurEdge
 import com.m3u.ui.Destination
 import com.m3u.ui.ResumeEvent
+import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 
@@ -35,6 +36,7 @@ fun NavController.popupToRoot() {
 
 fun NavGraphBuilder.rootGraph(
     pagerState: PagerState,
+    roots: ImmutableList<Destination.Root>,
     contentPadding: PaddingValues,
     navigateToPlaylist: (Playlist) -> Unit,
     navigateToStream: () -> Unit,
@@ -46,6 +48,7 @@ fun NavGraphBuilder.rootGraph(
     composable(ROOT_ROUTE) {
         RootGraph(
             pagerState = pagerState,
+            roots = roots,
             contentPadding = contentPadding,
             navigateToPlaylist = navigateToPlaylist,
             navigateToStream = navigateToStream,
@@ -60,6 +63,7 @@ fun NavGraphBuilder.rootGraph(
 @Composable
 private fun RootGraph(
     pagerState: PagerState,
+    roots: ImmutableList<Destination.Root>,
     contentPadding: PaddingValues,
     navigateToPlaylist: (Playlist) -> Unit,
     navigateToStream: () -> Unit,
@@ -69,7 +73,6 @@ private fun RootGraph(
     navigateToSettingPlaylistManagement: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val destinations = Destination.Root.entries
     LaunchedEffect(pagerState) {
         snapshotFlow {
             with(pagerState) {
@@ -96,14 +99,14 @@ private fun RootGraph(
                 color = MaterialTheme.colorScheme.background
             )
     ) { pagerIndex ->
-        when (destinations[pagerIndex]) {
+        when (val root = roots[pagerIndex]) {
             Destination.Root.Foryou -> {
                 ForyouRoute(
                     navigateToPlaylist = navigateToPlaylist,
                     navigateToStream = navigateToStream,
                     navigateToRecommendPlaylist = navigateToRecommendPlaylist,
                     navigateToSettingPlaylistManagement = navigateToSettingPlaylistManagement,
-                    resume = rememberResumeEvent(pagerState.targetPage, pagerIndex),
+                    resume = rememberResumeEvent(pagerState.settledPage, pagerIndex),
                     contentPadding = contentPadding,
                     modifier = Modifier.fillMaxSize()
                 )
@@ -112,18 +115,19 @@ private fun RootGraph(
             Destination.Root.Favourite -> {
                 FavouriteRoute(
                     navigateToStream = navigateToStream,
-                    resume = rememberResumeEvent(pagerState.targetPage, pagerIndex),
+                    resume = rememberResumeEvent(pagerState.settledPage, pagerIndex),
                     contentPadding = contentPadding,
                     modifier = Modifier.fillMaxSize()
                 )
             }
 
-            Destination.Root.Setting -> {
+            is Destination.Root.Setting -> {
                 SettingRoute(
                     navigateToConsole = navigateToConsole,
                     navigateToAbout = navigateToAbout,
                     contentPadding = contentPadding,
-                    resume = rememberResumeEvent(pagerState.targetPage, pagerIndex),
+                    targetFragment = root.targetFragment,
+                    resume = rememberResumeEvent(pagerState.settledPage, pagerIndex),
                     modifier = Modifier.fillMaxSize()
                 )
             }

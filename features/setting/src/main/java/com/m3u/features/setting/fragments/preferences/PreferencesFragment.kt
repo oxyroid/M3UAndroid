@@ -11,7 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
 import androidx.tv.foundation.lazy.list.TvLazyColumn
-import com.m3u.features.setting.SettingFragment
+import com.m3u.ui.Destination.Root.Setting.SettingFragment
 
 @Composable
 internal fun PreferencesFragment(

@@ -24,12 +24,12 @@ import com.m3u.core.architecture.pref.annotation.ConnectTimeout
 import com.m3u.core.architecture.pref.annotation.PlaylistStrategy
 import com.m3u.core.architecture.pref.annotation.UnseensMilliseconds
 import com.m3u.core.util.basic.title
-import com.m3u.features.setting.SettingFragment
 import com.m3u.features.setting.components.CheckBoxSharedPreference
 import com.m3u.i18n.R.string
 import com.m3u.material.components.Preference
 import com.m3u.material.components.TextPreference
 import com.m3u.ui.Destination
+import com.m3u.ui.Destination.Root.Setting.SettingFragment
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 

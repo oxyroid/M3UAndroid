@@ -235,7 +235,6 @@ private fun PlaylistScreen(
 ) {
     val helper = LocalHelper.current
     val theme = MaterialTheme.colorScheme
-    val pref = LocalPref.current
     val configuration = LocalConfiguration.current
     val spacing = LocalSpacing.current
     Box {

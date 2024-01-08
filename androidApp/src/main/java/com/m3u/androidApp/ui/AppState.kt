@@ -8,8 +8,11 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.Stable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination
 import androidx.navigation.NavHostController
@@ -18,12 +21,13 @@ import androidx.navigation.compose.rememberNavController
 import com.m3u.androidApp.navigation.ROOT_ROUTE
 import com.m3u.androidApp.navigation.popupToRoot
 import com.m3u.features.about.navigation.ABOUT_ROUTE
-import com.m3u.features.about.navigation.navigateToAbout
 import com.m3u.features.console.navigation.CONSOLE_ROUTE
-import com.m3u.features.console.navigation.navigateToConsole
 import com.m3u.features.playlist.navigation.PLAYLIST_ROUTE
-import com.m3u.features.playlist.navigation.navigateToPlaylist
 import com.m3u.ui.Destination
+import com.m3u.ui.Destination.Root.Setting.SettingFragment
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -52,7 +56,7 @@ fun rememberAppState(
 class AppState(
     val navController: NavHostController,
     val pagerState: PagerState,
-    private val coroutineScope: CoroutineScope,
+    val coroutineScope: CoroutineScope,
     private val onBackPressedDispatcherOwner: OnBackPressedDispatcherOwner?
 ) {
     // Current Root Destination Page.
@@ -84,23 +88,21 @@ class AppState(
             else -> null
         }
 
-    fun navigate(destination: Destination) {
-        when (destination) {
-            is Destination.Root -> {
-                navController.popupToRoot()
-                coroutineScope.launch {
-                    val page = rootDestinations.indexOf(destination)
-                    pagerState.scrollToPage(page)
-                }
+    fun navigateToRoot(destination: Destination.Root) {
+        navController.popupToRoot()
+        coroutineScope.launch {
+            val page = when (destination) {
+                Destination.Root.Foryou -> 0
+                Destination.Root.Favourite -> 1
+                is Destination.Root.Setting -> 2
             }
-
-            is Destination.Playlist -> navController.navigateToPlaylist(
-                destination.url,
-                destination.recommend
+            _rootDestinations = persistentListOf(
+                Destination.Root.Foryou,
+                Destination.Root.Favourite,
+                if (destination is Destination.Root.Setting) destination
+                else Destination.Root.Setting(SettingFragment.Root)
             )
-
-            Destination.Console -> navController.navigateToConsole()
-            Destination.About -> navController.navigateToAbout()
+            pagerState.scrollToPage(page)
         }
     }
 
@@ -108,7 +110,8 @@ class AppState(
         onBackPressedDispatcherOwner?.onBackPressedDispatcher?.onBackPressed()
     }
 
-    private val rootDestinations: List<Destination.Root> = Destination.Root.entries
+    private var _rootDestinations: List<Destination.Root> by mutableStateOf(Destination.Root.entries)
+    val rootDestinations: ImmutableList<Destination.Root> get() = _rootDestinations.toPersistentList()
 }
 
 inline infix fun <reified D : Destination> NavDestination.destinationTo(clazz: Class<D>): Boolean {

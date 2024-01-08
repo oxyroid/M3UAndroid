@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.imeNestedScroll
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -24,13 +23,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import com.m3u.data.database.entity.Stream
 import com.m3u.features.setting.UriWrapper
+import com.m3u.features.setting.components.BannedStreamItem
 import com.m3u.features.setting.components.ClipboardButton
 import com.m3u.features.setting.components.LocalStorageButton
 import com.m3u.features.setting.components.LocalStorageSwitch
-import com.m3u.features.setting.components.BannedStreamItem
 import com.m3u.i18n.R.string
 import com.m3u.material.components.Button
 import com.m3u.material.components.LabelField
@@ -55,7 +53,6 @@ internal fun SubscriptionsFragment(
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
-    val theme = MaterialTheme.colorScheme
     val focusRequester = remember { FocusRequester() }
     LazyColumn(
         contentPadding = PaddingValues(spacing.medium) + contentPadding,
@@ -69,15 +66,14 @@ internal fun SubscriptionsFragment(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(spacing.medium)),
-                    verticalArrangement = Arrangement.spacedBy(1.dp)
                 ) {
                     Text(
                         text = stringResource(string.feat_setting_label_muted_streams),
-                        color = theme.onPrimary,
+                        color = MaterialTheme.colorScheme.onPrimary,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(theme.primary)
+                            .clip(MaterialTheme.shapes.medium)
+                            .background(MaterialTheme.colorScheme.primary)
                             .padding(
                                 vertical = spacing.extraSmall,
                                 horizontal = spacing.medium
@@ -86,8 +82,7 @@ internal fun SubscriptionsFragment(
                     banneds.forEach { stream ->
                         BannedStreamItem(
                             stream = stream,
-                            onBanned = { onBanned(stream.id) },
-                            modifier = Modifier.background(theme.surface)
+                            onBanned = { onBanned(stream.id) }
                         )
                     }
                 }

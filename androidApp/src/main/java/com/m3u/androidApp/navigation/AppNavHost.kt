@@ -13,22 +13,26 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.navigation
 import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.features.about.navigation.aboutScreen
+import com.m3u.features.about.navigation.navigateToAbout
 import com.m3u.features.console.navigation.consoleScreen
+import com.m3u.features.console.navigation.navigateToConsole
+import com.m3u.features.playlist.navigation.navigateToPlaylist
 import com.m3u.features.playlist.navigation.playlistScreen
 import com.m3u.features.stream.PlayerActivity
 import com.m3u.i18n.R.string
 import com.m3u.ui.Destination
+import com.m3u.ui.Destination.Root.Setting.SettingFragment
 import com.m3u.ui.LocalHelper
+import kotlinx.collections.immutable.ImmutableList
 
 @Composable
 fun AppNavHost(
     pagerState: PagerState,
-    navigate: (Destination) -> Unit,
+    roots: ImmutableList<Destination.Root>,
+    navigateToRoot: (Destination.Root) -> Unit,
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
     navController: NavHostController = rememberNavController(),
@@ -46,13 +50,14 @@ fun AppNavHost(
     ) {
         rootGraph(
             pagerState = pagerState,
+            roots = roots,
             contentPadding = contentPadding,
             navigateToPlaylist = { playlist ->
                 helper.title = playlist.title.ifEmpty {
                     if (playlist.local) context.getString(string.feat_foryou_imported_playlist_title)
                     else ""
                 }
-                navigate(Destination.Playlist(playlist.url))
+                navController.navigateToPlaylist(playlist.url)
             },
             navigateToStream = {
                 if (pref.zappingMode && PlayerActivity.isInPipMode) return@rootGraph
@@ -67,20 +72,20 @@ fun AppNavHost(
                 )
             },
             navigateToConsole = {
-                navigate(Destination.Console)
+                navController.navigateToConsole()
             },
             navigateToAbout = {
-                navigate(Destination.About)
+                navController.navigateToAbout()
             },
             navigateToRecommendPlaylist = { playlist, recommend ->
                 helper.title = playlist.title.ifEmpty {
                     if (playlist.local) context.getString(string.feat_foryou_imported_playlist_title)
                     else ""
                 }
-                navigate(Destination.Playlist(playlist.url, recommend))
+                navController.navigateToPlaylist(playlist.url, recommend)
             },
             navigateToSettingPlaylistManagement = {
-                navigate(Destination.Root.Setting)
+                navigateToRoot(Destination.Root.Setting(SettingFragment.Subscriptions))
             }
         )
 
@@ -99,23 +104,7 @@ fun AppNavHost(
                 )
             }
         )
-        consoleScreen()
+        consoleScreen(contentPadding)
         aboutScreen(contentPadding)
-        navigation(
-            startDestination = "preferences",
-            route = "settings"
-        ) {
-            composable("preferences") {
-
-            }
-            composable("playlist-management") {
-
-            }
-            aboutScreen(contentPadding)
-            consoleScreen()
-            composable("script") {
-
-            }
-        }
     }
 }

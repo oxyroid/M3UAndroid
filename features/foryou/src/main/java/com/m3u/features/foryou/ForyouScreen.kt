@@ -13,6 +13,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Add
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -38,6 +40,7 @@ import com.m3u.material.ktx.interceptVolumeEvent
 import com.m3u.material.ktx.minus
 import com.m3u.material.ktx.only
 import com.m3u.material.model.LocalSpacing
+import com.m3u.ui.Action
 import com.m3u.ui.EventHandler
 import com.m3u.ui.LocalHelper
 import com.m3u.ui.ResumeEvent
@@ -62,7 +65,13 @@ fun ForyouRoute(
     val recommend by viewModel.recommend.collectAsStateWithLifecycle()
 
     EventHandler(resume) {
-        helper.actions = persistentListOf()
+        helper.actions = persistentListOf(
+            Action(
+                icon = Icons.Rounded.Add,
+                contentDescription = "add",
+                onClick = navigateToSettingPlaylistManagement
+            )
+        )
     }
 
     val interceptVolumeEventModifier = remember(pref.godMode) {

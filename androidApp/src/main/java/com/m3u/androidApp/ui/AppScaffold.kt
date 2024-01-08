@@ -43,8 +43,9 @@ internal fun AppScaffold(
     message: Message.Dynamic,
     actions: ImmutableList<Action>,
     rootDestination: Destination.Root?,
+    roots: ImmutableList<Destination.Root>,
     fob: Fob?,
-    navigate: (Destination) -> Unit,
+    navigateToRoot: (Destination.Root) -> Unit,
     modifier: Modifier = Modifier,
     onBackPressed: (() -> Unit)? = null,
     content: @Composable (PaddingValues) -> Unit
@@ -64,7 +65,6 @@ internal fun AppScaffold(
         },
         onBackPressed = onBackPressed,
         navigation = {
-            val roots = Destination.Root.entries
             roots.forEach { root ->
                 val useFob = fob?.rootDestination == root
                 val selected = root == rootDestination || useFob
@@ -72,7 +72,7 @@ internal fun AppScaffold(
                     selected = selected,
                     onClick = {
                         if (useFob) fob?.onClick?.invoke()
-                        else navigate(root)
+                        else navigateToRoot(root)
                     },
                     icon = {
                         Icon(

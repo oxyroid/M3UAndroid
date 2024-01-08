@@ -8,17 +8,21 @@ import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.rounded.Collections
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.Settings
+import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.m3u.i18n.R.string
 import kotlinx.collections.immutable.persistentListOf
 
+@Immutable
 sealed interface Destination {
+    @Immutable
     sealed class Root(
         val selectedIcon: ImageVector,
         val unselectedIcon: ImageVector,
         @StringRes val iconTextId: Int,
         @StringRes val titleTextId: Int
     ) : Destination {
+        @Immutable
         data object Foryou : Root(
             selectedIcon = Icons.Rounded.Home,
             unselectedIcon = Icons.Outlined.Home,
@@ -26,6 +30,7 @@ sealed interface Destination {
             titleTextId = string.ui_app_name
         )
 
+        @Immutable
         data object Favourite : Root(
             selectedIcon = Icons.Rounded.Collections,
             unselectedIcon = Icons.Outlined.Collections,
@@ -33,25 +38,36 @@ sealed interface Destination {
             titleTextId = string.ui_title_favourite
         )
 
-        data object Setting : Root(
+        @Immutable
+        data class Setting(
+            val targetFragment: SettingFragment = SettingFragment.Root
+        ) : Root(
             selectedIcon = Icons.Rounded.Settings,
             unselectedIcon = Icons.Outlined.Settings,
             iconTextId = string.ui_destination_setting,
             titleTextId = string.ui_title_setting
-        )
+        ) {
+            @Immutable
+            enum class SettingFragment {
+                Root, Subscriptions, Scripts
+            }
+        }
 
         companion object {
-            val entries = persistentListOf(Foryou, Favourite, Setting)
+            val entries = persistentListOf(Foryou, Favourite, Setting())
         }
     }
 
+    @Immutable
     data class Playlist(
         val url: String,
         val recommend: String? = null
     ) : Destination
 
+    @Immutable
     data object Console : Destination
 
+    @Immutable
     data object About : Destination
 }
 

@@ -32,14 +32,16 @@ fun App(
         message = message,
         actions = actions,
         rootDestination = rootDestination,
+        roots = state.rootDestinations,
         fob = fob,
         onBackPressed = state::onBackClick.takeIf { isBackPressedVisible },
-        navigate = state::navigate,
+        navigateToRoot = state::navigateToRoot,
         modifier = Modifier.fillMaxSize(),
     ) { contentPadding ->
         AppNavHost(
             pagerState = state.pagerState,
-            navigate = state::navigate,
+            roots = state.rootDestinations,
+            navigateToRoot = state::navigateToRoot,
             contentPadding = contentPadding,
             modifier = Modifier.fillMaxSize(),
             navController = state.navController
