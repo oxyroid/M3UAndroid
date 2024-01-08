@@ -39,9 +39,6 @@ android {
 }
 
 dependencies {
-    // Cling library required
-    api(libs.cling.core)
-    api(libs.cling.support)
     // Servlet
     api(libs.servlet.api)
     // Jetty
@@ -50,4 +47,12 @@ dependencies {
     api(libs.jetty.client)
     // Nano http
     api(libs.nanohttpd)
+    api(
+        fileTree(
+            mapOf(
+                "dir" to "libs",
+                "include" to listOf("*.jar")
+            )
+        )
+    )
 }
