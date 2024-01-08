@@ -12,82 +12,128 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
-val LightColors = lightColorScheme(
-    primary = Color(0xFF855303),
-    onPrimary = Color(0xFFFFFFFF),
-    secondary = Color(0xFF745A2E),
-    onSecondary = Color(0xFFFFFFFF),
-    surface = Color(0xFFFFF5DF),
-    onSurface = Color(0xFF25190A),
-    background = Color(0xFFFFF5DF),
-    onBackground = Color(0xFF25190A),
-    primaryContainer = Color(0xFFFFDDB8),
-    onPrimaryContainer = Color(0xFF2A1700),
-    tertiary = Color(0xFF725C1A),
-    onTertiary = Color(0xFFFFFFFF),
-    tertiaryContainer = Color(0xFFFFDF91),
-    onTertiaryContainer = Color(0xFF241A00),
-    error = Color(0xFFB3261E),
-    onError = Color(0xFFFFFFFF),
-    errorContainer = Color(0xFFF9DEDC),
-    onErrorContainer = Color(0xFF410E0B),
-    inversePrimary = Color(0xFFFCBA66),
-    inverseSurface = Color(0xFF3C2E1E),
-    inverseOnSurface = Color(0xFFFFEEDE),
-    outline = Color(0xFF86735F),
-    outlineVariant = Color(0xFFD9C3AC),
-    secondaryContainer = Color(0xFFFFDEAA),
-    onSecondaryContainer = Color(0xFF271900),
-    surfaceBright = Color(0xFFFFF5DF),
-    surfaceTint = Color(0xFF855303),
-    surfaceContainer = Color(0xFFFFEAD3),
-    surfaceContainerLowest = Color(0xFFFFFFFF),
-    surfaceContainerLow = Color(0xFFFFEFD9),
-    surfaceContainerHigh = Color(0xFFFAE4CE),
-    surfaceContainerHighest = Color(0xFFF7DFC6),
-    surfaceVariant = Color(0xFFF7DFC6),
-    onSurfaceVariant = Color(0xFF544432),
-    scrim = Color(0xFF000000),
-    surfaceDim = Color(0xFFECD6C0)
+private val LightPrimary = Color(0xFF6750A4)
+private val LightOnPrimary = Color(0xFFFFFFFF)
+private val LightPrimaryContainer = Color(0xFFEADDFF)
+private val LightOnPrimaryContainer = Color(0xFF21005D)
+private val LightSecondary = Color(0xFF625B71)
+private val LightOnSecondary = Color(0xFFFFFFFF)
+private val LightSecondaryContainer = Color(0xFFE8DEF8)
+private val LightOnSecondaryContainer = Color(0xFF1D192B)
+private val LightTertiary = Color(0xFF7D5260)
+private val LightOnTertiary = Color(0xFFFFFFFF)
+private val LightTertiaryContainer = Color(0xFFFFD8E4)
+private val LightOnTertiaryContainer = Color(0xFF31111D)
+private val LightError = Color(0xFFB3261E)
+private val LightOnError = Color(0xFFFFFFFF)
+private val LightErrorContainer = Color(0xFFF9DEDC)
+private val LightOnErrorContainer = Color(0xFF410E0B)
+private val LightOutline = Color(0xFF79747E)
+private val LightBackground = Color(0xFFFFFBFE)
+private val LightOnBackground = Color(0xFF1C1B1F)
+private val LightSurface = Color(0xFFFFFBFE)
+private val LightOnSurface = Color(0xFF1C1B1F)
+private val LightSurfaceVariant = Color(0xFFE7E0EC)
+private val LightOnSurfaceVariant = Color(0xFF49454F)
+private val LightInverseSurface = Color(0xFF313033)
+private val LightInverseOnSurface = Color(0xFFF4EFF4)
+private val LightInversePrimary = Color(0xFFD0BCFF)
+private val LightSurfaceTint = Color(0xFF6750A4)
+private val LightOutlineVariant = Color(0xFFCAC4D0)
+private val LightScrim = Color(0xFF000000)
+
+private val DarkPrimary = Color(0xFFD0BCFF)
+private val DarkOnPrimary = Color(0xFF381E72)
+private val DarkPrimaryContainer = Color(0xFF4F378B)
+private val DarkOnPrimaryContainer = Color(0xFFEADDFF)
+private val DarkSecondary = Color(0xFFCCC2DC)
+private val DarkOnSecondary = Color(0xFF332D41)
+private val DarkSecondaryContainer = Color(0xFF4A4458)
+private val DarkOnSecondaryContainer = Color(0xFFE8DEF8)
+private val DarkTertiary = Color(0xFFEFB8C8)
+private val DarkOnTertiary = Color(0xFF492532)
+private val DarkTertiaryContainer = Color(0xFF633B48)
+private val DarkOnTertiaryContainer = Color(0xFFFFD8E4)
+private val DarkError = Color(0xFFF2B8B5)
+private val DarkOnError = Color(0xFF601410)
+private val DarkErrorContainer = Color(0xFF8C1D18)
+private val DarkOnErrorContainer = Color(0xFFF9DEDC)
+private val DarkOutline = Color(0xFF938F99)
+private val DarkBackground = Color(0xFF1C1B1F)
+private val DarkOnBackground = Color(0xFFE6E1E5)
+private val DarkSurface = Color(0xFF1C1B1F)
+private val DarkOnSurface = Color(0xFFE6E1E5)
+private val DarkSurfaceVariant = Color(0xFF49454F)
+private val DarkOnSurfaceVariant = Color(0xFFCAC4D0)
+private val DarkInverseSurface = Color(0xFFE6E1E5)
+private val DarkInverseOnSurface = Color(0xFF313033)
+private val DarkInversePrimary = Color(0xFF6750A4)
+private val DarkSurfaceTint = Color(0xFFD0BCFF)
+private val DarkOutlineVariant = Color(0xFF49454F)
+private val DarkScrim = Color(0xFF000000)
+
+internal val LightColorScheme = lightColorScheme(
+    primary = LightPrimary,
+    onPrimary = LightOnPrimary,
+    primaryContainer = LightPrimaryContainer,
+    onPrimaryContainer = LightOnPrimaryContainer,
+    secondary = LightSecondary,
+    onSecondary = LightOnSecondary,
+    secondaryContainer = LightSecondaryContainer,
+    onSecondaryContainer = LightOnSecondaryContainer,
+    tertiary = LightTertiary,
+    onTertiary = LightOnTertiary,
+    tertiaryContainer = LightTertiaryContainer,
+    onTertiaryContainer = LightOnTertiaryContainer,
+    error = LightError,
+    onError = LightOnError,
+    errorContainer = LightErrorContainer,
+    onErrorContainer = LightOnErrorContainer,
+    outline = LightOutline,
+    background = LightBackground,
+    onBackground = LightOnBackground,
+    surface = LightSurface,
+    onSurface = LightOnSurface,
+    surfaceVariant = LightSurfaceVariant,
+    onSurfaceVariant = LightOnSurfaceVariant,
+    inverseSurface = LightInverseSurface,
+    inverseOnSurface = LightInverseOnSurface,
+    inversePrimary = LightInversePrimary,
+    surfaceTint = LightSurfaceTint,
+    outlineVariant = LightOutlineVariant,
+    scrim = LightScrim
 )
 
-val DarkColors = darkColorScheme(
-    primary = Color(0xFFFCBA66),
-    onPrimary = Color(0xFF472A00),
-    secondary = Color(0xFFE3C28C),
-    onSecondary = Color(0xFF412D05),
-    surface = Color(0xFF201000),
-    onSurface = Color(0xFFF7DFC6),
-    background = Color(0xFF201000),
-    onBackground = Color(0xFFF7DFC6),
-    primaryContainer = Color(0xFF653E00),
-    onPrimaryContainer = Color(0xFFFFDDB8),
-    tertiary = Color(0xFFE2C377),
-    onTertiary = Color(0xFF3D2E00),
-    tertiaryContainer = Color(0xFF584401),
-    onTertiaryContainer = Color(0xFFFFDF91),
-    error = Color(0xFFF2B8B5),
-    onError = Color(0xFF601410),
-    errorContainer = Color(0xFF8C1D18),
-    onErrorContainer = Color(0xFFF9DEDC),
-    inversePrimary = Color(0xFF855303),
-    inverseSurface = Color(0xFFF7DFC6),
-    inverseOnSurface = Color(0xFF3C2E1E),
-    outline = Color(0xFFA18D78),
-    outlineVariant = Color(0xFF544432),
-    secondaryContainer = Color(0xFF5A4319),
-    onSecondaryContainer = Color(0xFFFFDEAA),
-    surfaceBright = Color(0xFF463624),
-    surfaceTint = Color(0xFFFCBA66),
-    surfaceContainer = Color(0xFF2B1D0A),
-    surfaceContainerLowest = Color(0xFF1D0A00),
-    surfaceContainerLow = Color(0xFF25190A),
-    surfaceContainerHigh = Color(0xFF362716),
-    surfaceContainerHighest = Color(0xFF413220),
-    surfaceVariant = Color(0xFF544432),
-    onSurfaceVariant = Color(0xFFD9C3AC),
-    scrim = Color(0xFF000000),
-    surfaceDim = Color(0xFF201000)
+internal val DarkColorScheme = darkColorScheme(
+    primary = DarkPrimary,
+    onPrimary = DarkOnPrimary,
+    primaryContainer = DarkPrimaryContainer,
+    onPrimaryContainer = DarkOnPrimaryContainer,
+    secondary = DarkSecondary,
+    onSecondary = DarkOnSecondary,
+    secondaryContainer = DarkSecondaryContainer,
+    onSecondaryContainer = DarkOnSecondaryContainer,
+    tertiary = DarkTertiary,
+    onTertiary = DarkOnTertiary,
+    tertiaryContainer = DarkTertiaryContainer,
+    onTertiaryContainer = DarkOnTertiaryContainer,
+    error = DarkError,
+    onError = DarkOnError,
+    errorContainer = DarkErrorContainer,
+    onErrorContainer = DarkOnErrorContainer,
+    outline = DarkOutline,
+    background = DarkBackground,
+    onBackground = DarkOnBackground,
+    surface = DarkSurface,
+    onSurface = DarkOnSurface,
+    surfaceVariant = DarkSurfaceVariant,
+    onSurfaceVariant = DarkOnSurfaceVariant,
+    inverseSurface = DarkInverseSurface,
+    inverseOnSurface = DarkInverseOnSurface,
+    inversePrimary = DarkInversePrimary,
+    surfaceTint = DarkSurfaceTint,
+    outlineVariant = DarkOutlineVariant,
+    scrim = DarkScrim
 )
 
 @Composable
@@ -98,19 +144,14 @@ fun AppTheme(
     content: @Composable () -> Unit
 ) {
     val context = LocalContext.current
-    val dynamicColorsAvailable = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
-    val colors = when {
-        useDarkTheme -> if (dynamicColorsAvailable && useDynamicColors) {
-            dynamicDarkColorScheme(context)
-        } else DarkColors
-
-        else -> if (dynamicColorsAvailable && useDynamicColors) {
-            dynamicLightColorScheme(context)
-        } else LightColors
+    val supportsDynamicTheming = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+    val colorScheme = if (useDynamicColors && supportsDynamicTheming) {
+        if (useDarkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+    } else {
+        if (useDarkTheme) DarkColorScheme else LightColorScheme
     }
-
     MaterialTheme(
-        colorScheme = colors,
+        colorScheme = colorScheme,
         content = content,
         typography = typography
     )
