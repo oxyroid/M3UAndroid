@@ -26,8 +26,8 @@ From PRs:
 
 - [x] Playlist Management.
 - [x] Streaming media analysis capabilities.
-- [x] Android Tablet, Desktop adaptation.
-- [ ] Android TV, Car adaptation.
+- [x] Android Tablet adaptation.
+- [ ] Android TV, Desktop, Car adaptation.
 - [x] DLNA screencast.
 - [ ] AirPlay screencast.
 - [ ] Steam segment recording.
