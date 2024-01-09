@@ -1,7 +1,1 @@
 FREE stream media player for android, which made of jetpack compose. Android 8.0 and above supported.
-
-<li>Playlist Management</li>
-<li>Streaming media analysis capabilities</li>
-<li>Android Tablet, Desktop,TV, Car adaptation</li>
-<li>DLNA screencast</li>
-<li>Zapping Mode</li>
