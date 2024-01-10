@@ -16,7 +16,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import com.m3u.data.database.entity.Stream
+import com.m3u.data.database.model.Stream
 import com.m3u.features.playlist.Channel
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.launch

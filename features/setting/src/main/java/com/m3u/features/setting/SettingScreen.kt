@@ -20,22 +20,29 @@ import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.m3u.data.database.entity.Stream
+import com.m3u.core.architecture.pref.LocalPref
+import com.m3u.core.util.basic.title
+import com.m3u.core.util.compose.observableStateOf
+import com.m3u.data.database.model.Stream
+import com.m3u.features.setting.fragments.ColorPack
 import com.m3u.features.setting.fragments.ScriptsFragment
 import com.m3u.features.setting.fragments.SubscriptionsFragment
+import com.m3u.features.setting.fragments.ThemeFragment
 import com.m3u.features.setting.fragments.preferences.PreferencesFragment
+import com.m3u.i18n.R.string
 import com.m3u.ui.Destination.Root.Setting.SettingFragment
 import com.m3u.ui.EventHandler
 import com.m3u.ui.LocalHelper
@@ -54,14 +61,17 @@ fun SettingRoute(
     viewModel: SettingViewModel = hiltViewModel(),
     targetFragment: SettingFragment = SettingFragment.Root
 ) {
+    val title = stringResource(string.ui_title_setting)
     val controller = LocalSoftwareKeyboardController.current
 
     val state by viewModel.state.collectAsStateWithLifecycle()
     val message by viewModel.message.collectAsStateWithLifecycle()
+    val packs by viewModel.packs.collectAsStateWithLifecycle()
     val banneds by viewModel.banneds.collectAsStateWithLifecycle()
     val helper = LocalHelper.current
 
-    EventHandler(resume) {
+    EventHandler(resume, title) {
+        helper.title = title
         helper.actions = persistentListOf()
     }
 
@@ -89,6 +99,8 @@ fun SettingRoute(
         localStorage = state.localStorage,
         onLocalStorage = { viewModel.onEvent(SettingEvent.OnLocalStorage) },
         openDocument = { viewModel.onEvent(SettingEvent.OpenDocument(it)) },
+        packs = packs,
+        onArgbMenu = { /*todo*/ },
         modifier = modifier.fillMaxSize()
     )
 }
@@ -113,12 +125,32 @@ private fun SettingScreen(
     localStorage: Boolean,
     onLocalStorage: () -> Unit,
     openDocument: (Uri) -> Unit,
+    packs: ImmutableList<ColorPack>,
+    onArgbMenu: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var fragment: SettingFragment by rememberSaveable(targetFragment) {
-        mutableStateOf(targetFragment)
+    val helper = LocalHelper.current
+    val pref = LocalPref.current
+
+    val rootTitle = stringResource(string.ui_title_setting)
+    val playlistTitle = stringResource(string.feat_setting_playlist_management)
+    val scriptTitle = stringResource(string.feat_setting_script_management)
+    val appearanceTitle = stringResource(string.feat_setting_appearance)
+
+    val colorArgb = pref.colorArgb
+
+    var fragment: SettingFragment by remember(targetFragment) {
+        observableStateOf(targetFragment) {
+            helper.title = when (it) {
+                SettingFragment.Root -> rootTitle
+                SettingFragment.Playlists -> playlistTitle
+                SettingFragment.Scripts -> scriptTitle
+                SettingFragment.Appearance -> appearanceTitle
+            }.title()
+        }
     }
-    var currentPaneDestination by rememberSaveable(targetFragment) {
+
+    var currentPaneDestination by remember(targetFragment) {
         mutableStateOf(
             when (targetFragment) {
                 SettingFragment.Root -> ListDetailPaneScaffoldRole.List
@@ -151,11 +183,15 @@ private fun SettingScreen(
                 versionCode = versionCode,
                 navigateToPlaylistManagement = {
                     currentPaneDestination = ListDetailPaneScaffoldRole.Detail
-                    fragment = SettingFragment.Subscriptions
+                    fragment = SettingFragment.Playlists
                 },
                 navigateToScriptManagement = {
                     currentPaneDestination = ListDetailPaneScaffoldRole.Detail
-                    fragment = (SettingFragment.Scripts)
+                    fragment = SettingFragment.Scripts
+                },
+                navigateToThemeSelector = {
+                    currentPaneDestination = ListDetailPaneScaffoldRole.Detail
+                    fragment = SettingFragment.Appearance
                 },
                 navigateToConsole = navigateToConsole,
                 navigateToAbout = navigateToAbout,
@@ -166,7 +202,7 @@ private fun SettingScreen(
             if (fragment != SettingFragment.Root) {
                 AnimatedPane(Modifier) {
                     when (fragment) {
-                        SettingFragment.Subscriptions -> {
+                        SettingFragment.Playlists -> {
                             SubscriptionsFragment(
                                 contentPadding = contentPadding,
                                 title = title,
@@ -189,6 +225,15 @@ private fun SettingScreen(
                                 contentPadding = contentPadding,
                                 importJavaScript = importJavaScript,
                                 modifier = Modifier.fillMaxSize()
+                            )
+                        }
+
+                        SettingFragment.Appearance -> {
+                            ThemeFragment(
+                                packs = packs,
+                                colorArgb = colorArgb,
+                                onArgbMenu = onArgbMenu,
+                                contentPadding = contentPadding
                             )
                         }
 

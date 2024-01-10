@@ -15,7 +15,6 @@ import java.util.concurrent.atomic.AtomicReference
 import javax.inject.Inject
 
 class DynamicMessageServiceImpl @Inject constructor() : DynamicMessageService {
-
     private val _message = MutableStateFlow(Message.Dynamic.EMPTY)
     override val message: StateFlow<Message.Dynamic> get() = _message.asStateFlow()
 

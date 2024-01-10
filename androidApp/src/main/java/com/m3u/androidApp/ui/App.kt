@@ -6,7 +6,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.m3u.androidApp.navigation.AppNavHost
 
 @Composable
 fun App(
@@ -22,10 +21,7 @@ fun App(
 
     val isBackPressedVisible = AppDefaults.isBackPressedVisible(navDestination)
 
-    val title: String by AppDefaults.title(
-        rootDestination = rootDestination,
-        defState = viewModel.title.collectAsStateWithLifecycle()
-    )
+    val title: String by viewModel.title.collectAsStateWithLifecycle()
 
     AppScaffold(
         title = title,

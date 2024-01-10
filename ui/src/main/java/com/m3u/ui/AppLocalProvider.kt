@@ -24,7 +24,8 @@ fun AppLocalProvider(
         LocalPref provides pref
     ) {
         AppTheme(
-            useDarkTheme = pref.cinemaMode || isSystemInDarkTheme(),
+            argb = pref.colorArgb,
+            useDarkTheme = pref.darkMode || isSystemInDarkTheme(),
             useDynamicColors = pref.useDynamicColors,
             typography = typography
         ) {

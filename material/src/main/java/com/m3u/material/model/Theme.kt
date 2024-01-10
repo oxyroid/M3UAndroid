@@ -1,5 +1,6 @@
 package com.m3u.material.model
 
+import android.annotation.SuppressLint
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
@@ -10,7 +11,10 @@ import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
+import com.google.android.material.color.utilities.Scheme
+import com.m3u.material.ktx.asColorScheme
 
 private val LightPrimary = Color(0xFF6750A4)
 private val LightOnPrimary = Color(0xFFFFFFFF)
@@ -137,7 +141,9 @@ internal val DarkColorScheme = darkColorScheme(
 )
 
 @Composable
+@SuppressLint("RestrictedApi")
 fun AppTheme(
+    argb: Int,
     useDynamicColors: Boolean,
     useDarkTheme: Boolean = isSystemInDarkTheme(),
     typography: Typography,
@@ -148,7 +154,8 @@ fun AppTheme(
     val colorScheme = if (useDynamicColors && supportsDynamicTheming) {
         if (useDarkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
     } else {
-        if (useDarkTheme) DarkColorScheme else LightColorScheme
+        if (useDarkTheme) Scheme.dark(argb).asColorScheme()
+        else Scheme.light(argb).asColorScheme()
     }
     MaterialTheme(
         colorScheme = colorScheme,

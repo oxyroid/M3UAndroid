@@ -1,13 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="ui_app_name">M3U</string>
+    <string name="ui_title_foryou">M3U</string>
+    <string name="ui_title_favourite">Favourite</string>
+    <string name="ui_title_setting">Settings</string>
 
     <string name="ui_destination_foryou">For You</string>
     <string name="ui_destination_favourite">Favourite</string>
     <string name="ui_destination_setting">Settings</string>
-
-    <string name="ui_title_setting">Settings</string>
-    <string name="ui_title_favourite">Favourite</string>
 
     <string name="ui_error_unknown">unknown error</string>
     <string name="ui_cd_top_bar_on_back_pressed">back</string>

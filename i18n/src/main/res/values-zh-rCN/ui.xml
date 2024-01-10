@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="ui_app_name">M3U</string>
+    <string name="ui_title_foryou">M3U</string>
 
     <string name="ui_destination_foryou">主页</string>
     <string name="ui_destination_favourite">喜欢</string>

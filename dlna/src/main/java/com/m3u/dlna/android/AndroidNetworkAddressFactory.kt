@@ -1,5 +1,6 @@
 package com.m3u.dlna.android
 
+import android.annotation.SuppressLint
 import org.jupnp.transport.impl.NetworkAddressFactoryImpl
 import java.lang.reflect.Field
 import java.net.Inet4Address
@@ -12,6 +13,7 @@ class AndroidNetworkAddressFactory(
     multicastResponsePort: Int
 ) : NetworkAddressFactoryImpl(streamListenPort, multicastResponsePort) {
     override fun requiresNetworkInterface(): Boolean = false
+    @SuppressLint("DiscouragedPrivateApi")
     override fun isUsableAddress(
         networkInterface: NetworkInterface?,
         address: InetAddress
@@ -20,8 +22,8 @@ class AndroidNetworkAddressFactory(
         if (result) {
             val hostName = address.hostAddress
 
-            var field: Field? = null
-            var target: Any? = null
+            var field: Field?
+            var target: Any?
 
             try {
                 try {

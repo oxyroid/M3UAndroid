@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.m3u.i18n.R.string
 import com.m3u.material.model.LocalSpacing
@@ -43,7 +44,8 @@ internal fun LocalStorageSwitch(
         Text(
             text = stringResource(string.feat_setting_local_storage).uppercase(),
             style = MaterialTheme.typography.titleSmall,
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(1f),
+            fontWeight = FontWeight.SemiBold
         )
         Switch(checked = checked, onCheckedChange = null)
     }

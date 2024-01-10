@@ -8,16 +8,19 @@ import androidx.work.workDataOf
 import com.m3u.core.architecture.Publisher
 import com.m3u.core.architecture.pref.Pref
 import com.m3u.core.architecture.viewmodel.BaseViewModel
-import com.m3u.data.database.entity.Stream
+import com.m3u.data.database.model.Stream
 import com.m3u.data.repository.StreamRepository
 import com.m3u.data.repository.observeAll
-import com.m3u.data.worker.SubscriptionWorker
+import com.m3u.data.service.impl.SubscriptionWorker
+import com.m3u.features.setting.fragments.ColorPack
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -44,6 +47,18 @@ class SettingViewModel @Inject constructor(
             initialValue = persistentListOf(),
             started = SharingStarted.WhileSubscribed(5_000L)
         )
+
+    private val _packs = MutableStateFlow<ImmutableList<ColorPack>>(
+        persistentListOf(
+            ColorPack(0x466e9a, false),
+            ColorPack(0x466e9a, true),
+            ColorPack(0xD0BCFF, false),
+            ColorPack(0xD0BCFF, true),
+            ColorPack(0x6750A4, false),
+            ColorPack(0x6750A4, true),
+        )
+    )
+    internal val packs: StateFlow<ImmutableList<ColorPack>> = _packs.asStateFlow()
 
     override fun onEvent(event: SettingEvent) {
         when (event) {

@@ -3,7 +3,7 @@ package com.m3u.features.favorite.components
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import com.m3u.data.database.entity.Stream
+import com.m3u.data.database.model.Stream
 import com.m3u.i18n.R.string
 import com.m3u.material.components.AppDialog
 import com.m3u.material.components.DialogItem

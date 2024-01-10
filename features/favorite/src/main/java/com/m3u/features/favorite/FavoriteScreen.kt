@@ -16,13 +16,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.core.architecture.pref.LocalPref
-import com.m3u.data.database.entity.Stream
+import com.m3u.data.database.model.Stream
 import com.m3u.features.favorite.components.DialogStatus
 import com.m3u.features.favorite.components.FavoriteDialog
 import com.m3u.features.favorite.components.FavouriteGallery
+import com.m3u.i18n.R
 import com.m3u.material.components.Background
 import com.m3u.material.ktx.interceptVolumeEvent
 import com.m3u.ui.Action
@@ -41,6 +43,7 @@ fun FavouriteRoute(
     modifier: Modifier = Modifier,
     viewModel: FavouriteViewModel = hiltViewModel()
 ) {
+    val title = stringResource(R.string.ui_title_favourite)
     val helper = LocalHelper.current
     val pref = LocalPref.current
     val context = LocalContext.current
@@ -55,7 +58,8 @@ fun FavouriteRoute(
     var isSortSheetVisible by rememberSaveable { mutableStateOf(false) }
     var dialogStatus: DialogStatus by remember { mutableStateOf(DialogStatus.Idle) }
 
-    EventHandler(resume) {
+    EventHandler(resume, title) {
+        helper.title = title
         helper.actions = persistentListOf(
             Action(
                 icon = Icons.AutoMirrored.Rounded.Sort,

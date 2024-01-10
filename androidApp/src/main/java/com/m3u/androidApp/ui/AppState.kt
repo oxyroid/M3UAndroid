@@ -18,8 +18,6 @@ import androidx.navigation.NavDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.m3u.androidApp.navigation.ROOT_ROUTE
-import com.m3u.androidApp.navigation.popupToRoot
 import com.m3u.features.about.navigation.ABOUT_ROUTE
 import com.m3u.features.console.navigation.CONSOLE_ROUTE
 import com.m3u.features.playlist.navigation.PLAYLIST_ROUTE

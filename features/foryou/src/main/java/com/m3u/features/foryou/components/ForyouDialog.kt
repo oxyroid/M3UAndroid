@@ -16,7 +16,7 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
-import com.m3u.data.database.entity.Playlist
+import com.m3u.data.database.model.Playlist
 import com.m3u.i18n.R.string
 import com.m3u.material.components.AppDialog
 import com.m3u.material.components.DialogItem

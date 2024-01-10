@@ -11,7 +11,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.m3u.core.architecture.pref.LocalPref
-import com.m3u.data.database.entity.Playlist
+import com.m3u.data.database.model.Playlist
 import com.m3u.features.foryou.model.PlaylistDetail
 import com.m3u.i18n.R.string
 import com.m3u.material.ktx.plus

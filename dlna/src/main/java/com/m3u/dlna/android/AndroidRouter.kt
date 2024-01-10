@@ -94,14 +94,12 @@ open class AndroidRouter(
         }
         val lock = multicastLock!!
         if (enable) {
-            if (lock.isHeld) {
-            } else {
+            if (!lock.isHeld) {
                 lock.acquire()
             }
         } else {
             if (lock.isHeld) {
                 lock.release();
-            } else {
             }
         }
     }
@@ -115,14 +113,12 @@ open class AndroidRouter(
         }
         val lock = wifiLock!!
         if (enable) {
-            if (lock.isHeld) {
-            } else {
+            if (!lock.isHeld) {
                 lock.acquire()
             }
         } else {
             if (lock.isHeld) {
                 lock.release();
-            } else {
             }
         }
     }
@@ -143,9 +139,7 @@ open class AndroidRouter(
                     if (networkInfo != null) break
                 }
             }
-            if (isSameNetworkType(this@AndroidRouter.networkInfo, networkInfo)) {
-
-            } else {
+            if (!isSameNetworkType(this@AndroidRouter.networkInfo, networkInfo)) {
                 this@AndroidRouter.networkInfo = networkInfo
             }
         }
@@ -153,6 +147,7 @@ open class AndroidRouter(
         protected fun isSameNetworkType(network1: NetworkInfo?, network2: NetworkInfo?): Boolean {
             return network1?.type == network2?.type
         }
+
         protected fun displayIntentInfo(intent: Intent) {
 
         }

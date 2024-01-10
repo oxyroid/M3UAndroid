@@ -25,8 +25,8 @@ import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
 import androidx.media3.session.MediaSession
 import com.m3u.core.architecture.pref.Pref
 import com.m3u.core.architecture.pref.observeAsFlow
-import com.m3u.data.contract.Certs
-import com.m3u.data.contract.SSL
+import com.m3u.data.Certs
+import com.m3u.data.SSL
 import com.m3u.data.service.PlayerService
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope

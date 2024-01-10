@@ -9,7 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import com.m3u.data.database.entity.Stream
+import com.m3u.data.database.model.Stream
 
 @Composable
 internal fun BannedStreamItem(

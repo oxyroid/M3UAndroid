@@ -31,7 +31,7 @@ interface Pref {
     var rootDestination: Int
     var noPictureMode: Boolean
 
-    var cinemaMode: Boolean
+    var darkMode: Boolean
     var useDynamicColors: Boolean
 
     var zappingMode: Boolean
@@ -47,6 +47,8 @@ interface Pref {
     var autoReconnect: Boolean
 
     var compact: Boolean
+
+    var colorArgb: Int
 
     companion object {
         @PlaylistStrategy
@@ -65,7 +67,7 @@ interface Pref {
         const val DEFAULT_FULL_INFO_PLAYER = false
         const val DEFAULT_ROOT_DESTINATION = 0
         const val DEFAULT_NO_PICTURE_MODE = true
-        const val DEFAULT_CINEMA_MODE = false
+        const val DEFAULT_DARK_MODE = false
 
         @ChecksSdkIntAtLeast(api = Build.VERSION_CODES.S)
         val DEFAULT_USE_DYNAMIC_COLORS = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
@@ -81,6 +83,7 @@ interface Pref {
         const val DEFAULT_UNSEENS_MILLISECONDS = UnseensMilliseconds.DAYS_3
         const val DEFAULT_AUTO_RECONNECT = false
         const val DEFAULT_COMPACT = false
+        const val DEFAULT_COLOR_ARGB = 0xD0BCFF
 
         const val PLAYLIST_STRATEGY = "playlist-strategy"
         const val ROW_COUNT = "rowCount"
@@ -95,7 +98,7 @@ interface Pref {
         const val FULL_INFO_PLAYER = "full-info-player"
         const val ROOT_DESTINATION = "root-destination"
         const val NO_PICTURE_MODE = "no-picture-mode"
-        const val CINEMA_MODE = "cinema-mode"
+        const val DARK_MODE = "dark-mode"
         const val USE_DYNAMIC_COLORS = "use-dynamic-colors"
         const val ZAPPING_MODE = "zapping-mode"
         const val BRIGHTNESS_GESTURE = "brightness-gesture"
@@ -106,6 +109,7 @@ interface Pref {
         const val UNSEENS_MILLISECONDS = "unseens-milliseconds"
         const val AUTO_RECONNECT = "auto-reconnect"
         const val COMPACT = "compact"
+        const val COLOR_ARGB = "color-argb"
     }
 }
 

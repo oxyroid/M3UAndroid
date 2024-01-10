@@ -95,7 +95,7 @@ class MainActivity : AppCompatActivity() {
             )
             val scope = rememberCoroutineScope()
             val darkMode = when {
-                pref.cinemaMode -> true
+                pref.darkMode -> true
                 else -> isSystemInDarkTheme()
             }
             DisposableEffect(darkMode, scope) {

@@ -12,7 +12,7 @@ import androidx.lifecycle.viewModelScope
 import com.m3u.core.Contracts
 import com.m3u.core.architecture.pref.Pref
 import com.m3u.core.architecture.pref.observeAsFlow
-import com.m3u.data.database.entity.Stream
+import com.m3u.data.database.model.Stream
 import com.m3u.data.repository.MediaRepository
 import com.m3u.data.repository.StreamRepository
 import com.m3u.data.repository.observeAll

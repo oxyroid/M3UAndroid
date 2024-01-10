@@ -4,8 +4,8 @@ import android.graphics.Rect
 import androidx.compose.runtime.Immutable
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
-import com.m3u.data.database.entity.Playlist
-import com.m3u.data.database.entity.Stream
+import com.m3u.data.database.model.Playlist
+import com.m3u.data.database.model.Stream
 import org.jupnp.model.meta.Device
 
 data class StreamState(

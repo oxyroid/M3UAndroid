@@ -23,10 +23,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.core.architecture.pref.LocalPref
-import com.m3u.data.database.entity.Playlist
+import com.m3u.data.database.model.Playlist
 import com.m3u.features.foryou.components.ForyouDialog
 import com.m3u.features.foryou.components.OnRename
 import com.m3u.features.foryou.components.OnUnsubscribe
@@ -35,6 +36,7 @@ import com.m3u.features.foryou.components.PlaylistGalleryPlaceholder
 import com.m3u.features.foryou.components.recommend.Recommend
 import com.m3u.features.foryou.components.recommend.RecommendGallery
 import com.m3u.features.foryou.model.PlaylistDetail
+import com.m3u.i18n.R
 import com.m3u.material.components.Background
 import com.m3u.material.ktx.interceptVolumeEvent
 import com.m3u.material.ktx.minus
@@ -58,13 +60,16 @@ fun ForyouRoute(
     modifier: Modifier = Modifier,
     viewModel: ForyouViewModel = hiltViewModel()
 ) {
+    val title = stringResource(R.string.ui_title_foryou)
+
     val helper = LocalHelper.current
     val pref = LocalPref.current
 
     val details by viewModel.details.collectAsStateWithLifecycle()
     val recommend by viewModel.recommend.collectAsStateWithLifecycle()
 
-    EventHandler(resume) {
+    EventHandler(resume, title) {
+        helper.title = title
         helper.actions = persistentListOf(
             Action(
                 icon = Icons.Rounded.Add,

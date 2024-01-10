@@ -2,9 +2,9 @@ package com.m3u.material.components
 
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,6 +19,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.DarkMode
 import androidx.compose.material.icons.rounded.LightMode
+import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.ElevatedCard
@@ -28,6 +29,7 @@ import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
@@ -39,6 +41,8 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.m3u.material.ktx.InteractionType
+import com.m3u.material.ktx.interactionBorder
 import com.m3u.material.model.LocalSpacing
 import com.m3u.material.model.SugarColors
 
@@ -58,33 +62,27 @@ fun ThemeSelection(
         if (selected) 0f else 0.4f,
         label = "alpha"
     )
-    val elevation by animateIntAsState(
-        if (selected) 16 else 0,
-        label = "elevation"
-    )
-
     val zoom by animateFloatAsState(
-        if (selected) 1f else 0.8f,
+        if (selected) 1f else 0.85f,
         label = "zoom"
     )
-
     val blurRadius by animateFloatAsState(
         if (selected) 0f else 16f,
         label = "blurRadius"
     )
-
-
     val feedback = LocalHapticFeedback.current
+
+    val interactionSource = remember { MutableInteractionSource() }
+    val shape = RoundedCornerShape(spacing.medium)
+
     Box(
         contentAlignment = Alignment.Center
     ) {
         OutlinedCard(
+            shape = shape,
             colors = CardDefaults.outlinedCardColors(
                 containerColor = colorScheme.background,
                 contentColor = colorScheme.onBackground
-            ),
-            elevation = CardDefaults.outlinedCardElevation(
-                defaultElevation = elevation.dp
             ),
             modifier = modifier
                 .graphicsLayer {
@@ -92,23 +90,29 @@ fun ThemeSelection(
                     scaleY = zoom
                 }
                 .size(96.dp)
-                .padding(spacing.extraSmall)
+                .combinedClickable(
+                    interactionSource = interactionSource,
+                    indication = rememberRipple(),
+                    onClick = {
+                        if (selected) return@combinedClickable
+                        feedback.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                        onClick()
+                    },
+                    onLongClick = {
+                        feedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                        onLongClick()
+                    }
+                )
+                .interactionBorder(
+                    type = InteractionType.PRESS,
+                    source = interactionSource,
+                    shape = shape
+                )
         ) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(spacing.small),
                 modifier = Modifier
-                    .combinedClickable(
-                        onClick = {
-                            if (selected) return@combinedClickable
-                            feedback.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                            onClick()
-                        },
-                        onLongClick = {
-                            feedback.performHapticFeedback(HapticFeedbackType.LongPress)
-                            onLongClick()
-                        }
-                    )
                     .graphicsLayer {
                         if (blurRadius != 0f) renderEffect = BlurEffect(blurRadius, blurRadius)
                     }
@@ -142,7 +146,7 @@ fun ThemeSelection(
                     )
                 }
                 Text(
-                    text = "color",
+                    text = if (isDark) "NIGHT" else "DAY",
                     style = MaterialTheme.typography.titleMedium,
                     color = colorScheme.tertiary,
                     textAlign = TextAlign.Center,
@@ -177,24 +181,26 @@ fun ThemeAddSelection(
     onClick: () -> Unit
 ) {
     val theme = MaterialTheme.colorScheme
+    val spacing = LocalSpacing.current
     Box(
         contentAlignment = Alignment.Center
     ) {
         OutlinedCard(
+            shape = RoundedCornerShape(spacing.medium),
             colors = CardDefaults.outlinedCardColors(
                 containerColor = theme.surface,
                 contentColor = theme.onSurface
             ),
             elevation = CardDefaults.outlinedCardElevation(
-                defaultElevation = LocalSpacing.current.none
+                defaultElevation = spacing.none
             ),
             modifier = modifier
                 .graphicsLayer {
                     scaleX = 0.8f
                     scaleY = 0.8f
                 }
-                .aspectRatio(1f)
-                .padding(LocalSpacing.current.extraSmall),
+                .size(96.dp)
+                .padding(spacing.extraSmall),
             onClick = onClick,
             content = {}
         )

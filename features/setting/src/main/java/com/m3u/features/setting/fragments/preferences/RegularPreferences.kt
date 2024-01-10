@@ -2,8 +2,6 @@ package com.m3u.features.setting.fragments.preferences
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.AutoAwesome
-import androidx.compose.material.icons.rounded.Chair
 import androidx.compose.material.icons.rounded.ColorLens
 import androidx.compose.material.icons.rounded.DeviceHub
 import androidx.compose.material.icons.rounded.FitScreen
@@ -18,7 +16,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.m3u.core.architecture.pref.LocalPref
-import com.m3u.core.architecture.pref.Pref
 import com.m3u.core.architecture.pref.annotation.ClipMode
 import com.m3u.core.architecture.pref.annotation.ConnectTimeout
 import com.m3u.core.architecture.pref.annotation.PlaylistStrategy
@@ -37,6 +34,7 @@ import kotlin.time.toDuration
 internal fun RegularPreferences(
     fragment: SettingFragment,
     navigateToPlaylistManagement: () -> Unit,
+    navigateToThemeSelector: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val pref = LocalPref.current
@@ -44,8 +42,14 @@ internal fun RegularPreferences(
         Preference(
             title = stringResource(string.feat_setting_playlist_management).title(),
             icon = Icons.Rounded.MusicNote,
-            enabled = fragment != SettingFragment.Subscriptions,
+            enabled = fragment != SettingFragment.Playlists,
             onClick = navigateToPlaylistManagement
+        )
+        Preference(
+            title = stringResource(string.feat_setting_appearance).title(),
+            icon = Icons.Rounded.ColorLens,
+            enabled = fragment != SettingFragment.Appearance,
+            onClick = navigateToThemeSelector
         )
         TextPreference(
             title = stringResource(string.feat_setting_sync_mode).title(),
@@ -137,37 +141,6 @@ internal fun RegularPreferences(
             icon = Icons.Rounded.DeviceHub,
             checked = pref.godMode,
             onChanged = { pref.godMode = !pref.godMode }
-        )
-        CheckBoxSharedPreference(
-            title = string.feat_setting_cinema_mode,
-            content = string.feat_setting_cinema_mode_description,
-            icon = Icons.Rounded.Chair,
-            checked = pref.cinemaMode,
-            onChanged = { pref.cinemaMode = !pref.cinemaMode }
-        )
-
-        val useDynamicColorsAvailable = Pref.DEFAULT_USE_DYNAMIC_COLORS
-
-        CheckBoxSharedPreference(
-            title = string.feat_setting_use_dynamic_colors,
-            content = string
-                .feat_setting_use_dynamic_colors_unavailable
-                .takeUnless { useDynamicColorsAvailable },
-            icon = Icons.Rounded.ColorLens,
-            checked = pref.useDynamicColors,
-            onChanged = {
-                pref.useDynamicColors = !pref.useDynamicColors
-            },
-            enabled = useDynamicColorsAvailable
-        )
-
-        CheckBoxSharedPreference(
-            title = string.feat_setting_compact,
-            icon = Icons.Rounded.AutoAwesome,
-            checked = pref.compact,
-            onChanged = {
-                pref.compact = !pref.compact
-            }
         )
     }
 }

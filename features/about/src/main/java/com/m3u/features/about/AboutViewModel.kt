@@ -6,7 +6,7 @@ import com.m3u.core.architecture.Publisher
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.execute
 import com.m3u.data.api.GithubApi
-import com.m3u.data.parser.VersionCatalogParser
+import com.m3u.data.repository.parser.VersionCatalogParser
 import com.m3u.features.about.model.Contributor
 import com.m3u.features.about.model.toContributor
 import dagger.hilt.android.lifecycle.HiltViewModel

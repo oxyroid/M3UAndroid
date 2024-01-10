@@ -1,8 +1,8 @@
 package com.m3u.features.foryou.components.recommend
 
 import androidx.compose.runtime.Immutable
-import com.m3u.data.database.entity.Playlist
-import com.m3u.data.database.entity.Stream
+import com.m3u.data.database.model.Playlist
+import com.m3u.data.database.model.Stream
 
 @Immutable
 internal class Recommend(

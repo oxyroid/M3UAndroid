@@ -19,23 +19,20 @@ sealed interface Destination {
     sealed class Root(
         val selectedIcon: ImageVector,
         val unselectedIcon: ImageVector,
-        @StringRes val iconTextId: Int,
-        @StringRes val titleTextId: Int
+        @StringRes val iconTextId: Int
     ) : Destination {
         @Immutable
         data object Foryou : Root(
             selectedIcon = Icons.Rounded.Home,
             unselectedIcon = Icons.Outlined.Home,
-            iconTextId = string.ui_destination_foryou,
-            titleTextId = string.ui_app_name
+            iconTextId = string.ui_destination_foryou
         )
 
         @Immutable
         data object Favourite : Root(
             selectedIcon = Icons.Rounded.Collections,
             unselectedIcon = Icons.Outlined.Collections,
-            iconTextId = string.ui_destination_favourite,
-            titleTextId = string.ui_title_favourite
+            iconTextId = string.ui_destination_favourite
         )
 
         @Immutable
@@ -44,12 +41,11 @@ sealed interface Destination {
         ) : Root(
             selectedIcon = Icons.Rounded.Settings,
             unselectedIcon = Icons.Outlined.Settings,
-            iconTextId = string.ui_destination_setting,
-            titleTextId = string.ui_title_setting
+            iconTextId = string.ui_destination_setting
         ) {
             @Immutable
             enum class SettingFragment {
-                Root, Subscriptions, Scripts
+                Root, Playlists, Scripts, Appearance
             }
         }
 

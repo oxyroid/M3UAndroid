@@ -6,8 +6,8 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
-import com.m3u.data.database.entity.Playlist
-import com.m3u.data.database.entity.PlaylistWithStreams
+import com.m3u.data.database.model.Playlist
+import com.m3u.data.database.model.PlaylistWithStreams
 import kotlinx.coroutines.flow.Flow
 
 @Dao

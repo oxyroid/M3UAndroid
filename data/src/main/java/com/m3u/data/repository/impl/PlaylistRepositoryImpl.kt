@@ -20,11 +20,11 @@ import com.m3u.core.wrapper.processFlow
 import com.m3u.core.wrapper.pt
 import com.m3u.data.database.dao.PlaylistDao
 import com.m3u.data.database.dao.StreamDao
-import com.m3u.data.database.entity.Playlist
-import com.m3u.data.database.entity.PlaylistWithStreams
-import com.m3u.data.database.entity.Stream
-import com.m3u.data.parser.M3UPlaylistParser
-import com.m3u.data.parser.model.toStream
+import com.m3u.data.database.model.Playlist
+import com.m3u.data.database.model.PlaylistWithStreams
+import com.m3u.data.database.model.Stream
+import com.m3u.data.repository.parser.M3UPlaylistParser
+import com.m3u.data.repository.parser.model.toStream
 import com.m3u.data.repository.PlaylistRepository
 import com.m3u.i18n.R.string
 import dagger.hilt.android.qualifiers.ApplicationContext

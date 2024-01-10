@@ -8,14 +8,14 @@ import com.m3u.core.architecture.pref.Pref
 import com.m3u.core.architecture.pref.Pref.Companion.AUTO_RECONNECT
 import com.m3u.core.architecture.pref.Pref.Companion.AUTO_REFRESH
 import com.m3u.core.architecture.pref.Pref.Companion.BRIGHTNESS_GESTURE
-import com.m3u.core.architecture.pref.Pref.Companion.CINEMA_MODE
+import com.m3u.core.architecture.pref.Pref.Companion.DARK_MODE
 import com.m3u.core.architecture.pref.Pref.Companion.CLIP_MODE
 import com.m3u.core.architecture.pref.Pref.Companion.COMPACT
 import com.m3u.core.architecture.pref.Pref.Companion.CONNECT_TIMEOUT
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_AUTO_RECONNECT
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_AUTO_REFRESH
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_BRIGHTNESS_GESTURE
-import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_CINEMA_MODE
+import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_DARK_MODE
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_CLIP_MODE
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_COMPACT
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_CONNECT_TIMEOUT
@@ -30,6 +30,7 @@ import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_ROW_COUNT
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_SCREENCAST
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_SCREEN_ROTATING
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_SSL_VERIFICATION
+import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_COLOR_ARGB
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_UNSEENS_MILLISECONDS
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_USE_DYNAMIC_COLORS
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_VOLUME_GESTURE
@@ -45,6 +46,7 @@ import com.m3u.core.architecture.pref.Pref.Companion.ROW_COUNT
 import com.m3u.core.architecture.pref.Pref.Companion.SCREENCAST
 import com.m3u.core.architecture.pref.Pref.Companion.SCREEN_ROTATING
 import com.m3u.core.architecture.pref.Pref.Companion.SSL_VERIFICATION
+import com.m3u.core.architecture.pref.Pref.Companion.COLOR_ARGB
 import com.m3u.core.architecture.pref.Pref.Companion.UNSEENS_MILLISECONDS
 import com.m3u.core.architecture.pref.Pref.Companion.USE_DYNAMIC_COLORS
 import com.m3u.core.architecture.pref.Pref.Companion.VOLUME_GESTURE
@@ -96,8 +98,8 @@ class SnapshotPref @Inject constructor(
     override var noPictureMode: Boolean by
     sharedPreferences.booleanAsState(DEFAULT_NO_PICTURE_MODE, NO_PICTURE_MODE)
 
-    override var cinemaMode: Boolean by
-    sharedPreferences.booleanAsState(DEFAULT_CINEMA_MODE, CINEMA_MODE)
+    override var darkMode: Boolean by
+    sharedPreferences.booleanAsState(DEFAULT_DARK_MODE, DARK_MODE)
     override var useDynamicColors: Boolean by
     sharedPreferences.booleanAsState(DEFAULT_USE_DYNAMIC_COLORS, USE_DYNAMIC_COLORS)
 
@@ -128,6 +130,9 @@ class SnapshotPref @Inject constructor(
 
     override var compact: Boolean by
     sharedPreferences.booleanAsState(DEFAULT_COMPACT, COMPACT)
+
+    override var colorArgb: Int by
+    sharedPreferences.intAsState(DEFAULT_COLOR_ARGB, COLOR_ARGB)
 
     companion object {
         private const val SHARED_SETTINGS = "shared_settings"

@@ -21,6 +21,7 @@ internal fun PreferencesFragment(
     versionCode: Int,
     navigateToPlaylistManagement: () -> Unit,
     navigateToScriptManagement: () -> Unit,
+    navigateToThemeSelector: () -> Unit,
     navigateToConsole: () -> Unit,
     navigateToAbout: () -> Unit,
     modifier: Modifier = Modifier
@@ -37,7 +38,8 @@ internal fun PreferencesFragment(
             item {
                 RegularPreferences(
                     fragment = fragment,
-                    navigateToPlaylistManagement = navigateToPlaylistManagement
+                    navigateToPlaylistManagement = navigateToPlaylistManagement,
+                    navigateToThemeSelector = navigateToThemeSelector
                 )
                 HorizontalDivider()
             }
@@ -70,7 +72,8 @@ internal fun PreferencesFragment(
             item {
                 RegularPreferences(
                     fragment = fragment,
-                    navigateToPlaylistManagement = navigateToPlaylistManagement
+                    navigateToPlaylistManagement = navigateToPlaylistManagement,
+                    navigateToThemeSelector = navigateToThemeSelector
                 )
                 HorizontalDivider()
             }

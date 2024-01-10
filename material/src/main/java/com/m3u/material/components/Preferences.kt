@@ -100,8 +100,8 @@ fun Preference(
                 }
             },
             trailingContent = trailing,
-            leadingContent = {
-                icon?.let {
+            leadingContent = icon?.let {
+                @Composable {
                     Icon(imageVector = it, contentDescription = null)
                 }
             },

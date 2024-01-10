@@ -67,7 +67,7 @@ import com.google.accompanist.permissions.rememberPermissionState
 import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.core.util.compose.observableStateOf
 import com.m3u.core.wrapper.Event
-import com.m3u.data.database.entity.Stream
+import com.m3u.data.database.model.Stream
 import com.m3u.features.playlist.components.DialogStatus
 import com.m3u.features.playlist.components.PlaylistDialog
 import com.m3u.features.playlist.components.PlaylistPager

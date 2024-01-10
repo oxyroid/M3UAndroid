@@ -17,7 +17,7 @@ internal object MockPref : Pref {
     override var rootDestination: Int = Pref.DEFAULT_ROOT_DESTINATION
     override var noPictureMode: Boolean = Pref.DEFAULT_NO_PICTURE_MODE
 
-    override var cinemaMode: Boolean = Pref.DEFAULT_CINEMA_MODE
+    override var darkMode: Boolean = Pref.DEFAULT_DARK_MODE
     override var useDynamicColors: Boolean = Pref.DEFAULT_USE_DYNAMIC_COLORS
     override var zappingMode: Boolean = Pref.DEFAULT_ZAPPING_MODE
     override var brightnessGesture: Boolean = Pref.DEFAULT_BRIGHTNESS_GESTURE
@@ -28,4 +28,5 @@ internal object MockPref : Pref {
     override var unseensMilliseconds: Long = Pref.DEFAULT_UNSEENS_MILLISECONDS
     override var autoReconnect: Boolean = Pref.DEFAULT_AUTO_RECONNECT
     override var compact: Boolean = Pref.DEFAULT_COMPACT
+    override var colorArgb: Int = Pref.DEFAULT_COLOR_ARGB
 }

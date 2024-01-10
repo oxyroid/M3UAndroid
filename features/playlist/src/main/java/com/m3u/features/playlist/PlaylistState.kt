@@ -3,7 +3,7 @@ package com.m3u.features.playlist
 import androidx.compose.runtime.Immutable
 import com.m3u.core.wrapper.Event
 import com.m3u.core.wrapper.handledEvent
-import com.m3u.data.database.entity.Stream
+import com.m3u.data.database.model.Stream
 import kotlinx.collections.immutable.ImmutableList
 
 @Immutable

@@ -15,8 +15,8 @@ import com.m3u.core.architecture.pref.observeAsFlow
 import com.m3u.core.architecture.viewmodel.BaseViewModel
 import com.m3u.core.wrapper.Resource
 import com.m3u.core.wrapper.eventOf
-import com.m3u.data.database.entity.Playlist
-import com.m3u.data.database.entity.Stream
+import com.m3u.data.database.model.Playlist
+import com.m3u.data.database.model.Stream
 import com.m3u.data.repository.MediaRepository
 import com.m3u.data.repository.PlaylistRepository
 import com.m3u.data.repository.StreamRepository

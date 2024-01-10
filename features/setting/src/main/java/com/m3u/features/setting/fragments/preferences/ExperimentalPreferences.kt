@@ -37,7 +37,7 @@ internal fun ExperimentalPreference(
             derivedStateOf {
                 when {
                     !pref.experimentalMode -> ToggleableState.Off
-                    with(pref) { !cinemaMode || !isSSLVerification } -> ToggleableState.Indeterminate
+                    with(pref) { !darkMode || !isSSLVerification } -> ToggleableState.Indeterminate
                     else -> ToggleableState.On
                 }
             }

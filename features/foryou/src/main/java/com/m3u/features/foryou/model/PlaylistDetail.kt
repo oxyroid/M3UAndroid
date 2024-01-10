@@ -1,7 +1,7 @@
 package com.m3u.features.foryou.model
 
 import androidx.compose.runtime.Immutable
-import com.m3u.data.database.entity.Playlist
+import com.m3u.data.database.model.Playlist
 
 @Immutable
 internal data class PlaylistDetail(

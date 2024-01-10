@@ -61,6 +61,8 @@ dependencies {
 
     api(libs.androidx.tv.tv.foundation)
     api(libs.androidx.tv.tv.material)
+
+    api("com.google.android.material:material:1.11.0")
 }
 
 afterEvaluate {

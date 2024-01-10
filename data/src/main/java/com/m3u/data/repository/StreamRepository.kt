@@ -1,6 +1,6 @@
 package com.m3u.data.repository
 
-import com.m3u.data.database.entity.Stream
+import com.m3u.data.database.model.Stream
 import kotlinx.coroutines.flow.Flow
 import kotlin.time.Duration
 
