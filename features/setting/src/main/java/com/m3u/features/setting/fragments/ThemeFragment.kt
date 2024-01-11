@@ -1,7 +1,6 @@
 package com.m3u.features.setting.fragments
 
 import android.annotation.SuppressLint
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -14,21 +13,23 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import com.google.android.material.color.utilities.Scheme
 import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.core.architecture.pref.Pref
 import com.m3u.features.setting.components.CheckBoxSharedPreference
-import com.m3u.i18n.R
 import com.m3u.material.components.Background
 import com.m3u.material.components.ThemeAddSelection
 import com.m3u.material.components.ThemeSelection
 import com.m3u.material.ktx.asColorScheme
+import com.m3u.i18n.R.string
 import kotlinx.collections.immutable.ImmutableList
 
 @Immutable
 data class ColorPack(
     val argb: Int,
-    val isDark: Boolean
+    val isDark: Boolean,
+    val name: String
 )
 
 @SuppressLint("RestrictedApi")
@@ -41,7 +42,7 @@ internal fun ThemeFragment(
     contentPadding: PaddingValues = PaddingValues()
 ) {
     val pref = LocalPref.current
-    val isDarkMode = pref.darkMode || isSystemInDarkTheme()
+    val isDarkMode = pref.darkMode
     val useDynamicColors = pref.useDynamicColors
     Background {
         Column(
@@ -73,8 +74,9 @@ internal fun ThemeFragment(
                             pref.darkMode = pack.isDark
                         },
                         onLongClick = { onArgbMenu(pack.argb) },
-                        leftContentDescription = "ho",
-                        rightContentDescription = "la",
+                        name = pack.name,
+                        leftContentDescription = stringResource(string.ui_theme_card_left),
+                        rightContentDescription = stringResource(string.ui_theme_card_right),
                         modifier = Modifier
                             .animateItemPlacement()
                     )
@@ -89,16 +91,15 @@ internal fun ThemeFragment(
             val useDynamicColorsAvailable = Pref.DEFAULT_USE_DYNAMIC_COLORS
 
             CheckBoxSharedPreference(
-                title = R.string.feat_setting_use_dynamic_colors,
-                content = R.string
-                    .feat_setting_use_dynamic_colors_unavailable.takeUnless { useDynamicColorsAvailable },
+                title = string.feat_setting_use_dynamic_colors,
+                content = string.feat_setting_use_dynamic_colors_unavailable.takeUnless { useDynamicColorsAvailable },
                 checked = useDynamicColors,
                 onChanged = { pref.useDynamicColors = !useDynamicColors },
                 enabled = useDynamicColorsAvailable
             )
 
             CheckBoxSharedPreference(
-                title = R.string.feat_setting_compact,
+                title = string.feat_setting_compact,
                 checked = pref.compact,
                 onChanged = { pref.compact = !pref.compact }
             )

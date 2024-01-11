@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import com.m3u.material.components.Button
 import com.m3u.material.components.OuterColumn
 import com.m3u.i18n.R.string
@@ -36,7 +37,7 @@ internal fun ScriptsFragment(
 
         }
         Button(
-            textRes = string.feat_setting_script_management_import_js,
+            text = stringResource(string.feat_setting_script_management_import_js),
             modifier = Modifier.fillMaxWidth(),
             onClick = {
                 launcher.launch(arrayOf("text/javascript"))

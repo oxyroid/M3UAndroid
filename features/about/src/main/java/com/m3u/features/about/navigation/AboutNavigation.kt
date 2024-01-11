@@ -16,7 +16,7 @@ fun NavController.navigateToAbout(navOptions: NavOptions? = null) {
 }
 
 fun NavGraphBuilder.aboutScreen(
-    contentPadding: PaddingValues
+    contentPadding: PaddingValues = PaddingValues()
 ) {
     composable(
         route = ABOUT_ROUTE,

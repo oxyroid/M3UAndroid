@@ -1,6 +1,5 @@
 package com.m3u.features.favorite.components
 
-import android.content.res.Configuration
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -10,12 +9,12 @@ import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.tv.foundation.lazy.grid.TvGridCells
 import androidx.tv.foundation.lazy.grid.TvLazyVerticalGrid
 import androidx.tv.foundation.lazy.grid.items
 import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.data.database.model.Stream
+import com.m3u.material.ktx.isTvDevice
 import com.m3u.material.ktx.plus
 import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.LocalHelper
@@ -70,10 +69,8 @@ private fun FavouriteGalleryImpl(
     val spacing = LocalSpacing.current
     val pref = LocalPref.current
     val helper = LocalHelper.current
-    val configuration = LocalConfiguration.current
-
-    val type = configuration.uiMode and Configuration.UI_MODE_TYPE_MASK
-    if (type != Configuration.UI_MODE_TYPE_TELEVISION) {
+    val tv = isTvDevice()
+    if (!tv) {
         LazyVerticalStaggeredGrid(
             columns = StaggeredGridCells.Fixed(rowCount),
             verticalItemSpacing = spacing.medium,
@@ -145,10 +142,9 @@ private fun CompactFavouriteGalleryImpl(
     val spacing = LocalSpacing.current
     val pref = LocalPref.current
     val helper = LocalHelper.current
-    val configuration = LocalConfiguration.current
 
-    val type = configuration.uiMode and Configuration.UI_MODE_TYPE_MASK
-    if (type != Configuration.UI_MODE_TYPE_TELEVISION) {
+    val tv = isTvDevice()
+    if (!tv) {
         LazyVerticalStaggeredGrid(
             columns = StaggeredGridCells.Fixed(rowCount),
             contentPadding = contentPadding,

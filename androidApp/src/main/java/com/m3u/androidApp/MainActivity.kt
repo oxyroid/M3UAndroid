@@ -43,15 +43,16 @@ import com.m3u.core.util.context.isPortraitMode
 import com.m3u.core.wrapper.Message
 import com.m3u.data.service.PlayerService
 import com.m3u.ui.Action
+import com.m3u.ui.AppLocalProvider
 import com.m3u.ui.Destination
 import com.m3u.ui.Fob
 import com.m3u.ui.Helper
-import com.m3u.ui.AppLocalProvider
 import com.m3u.ui.OnPipModeChanged
 import com.m3u.ui.OnUserLeaveHint
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import kotlin.reflect.KMutableProperty0
@@ -157,6 +158,8 @@ class MainActivity : AppCompatActivity() {
                 applyConfiguration()
             }
 
+        override val message: StateFlow<Message> = viewModel.message
+
         override var darkMode: UBoolean = UBoolean.Unspecified
             set(value) {
                 field = value
@@ -220,8 +223,8 @@ class MainActivity : AppCompatActivity() {
                 },
                 level = message.level,
                 tag = message.tag,
-                duration = when {
-                    message.level == Message.LEVEL_EMPTY -> Duration.ZERO
+                duration = when (message.level) {
+                    Message.LEVEL_EMPTY -> Duration.ZERO
                     else -> message.duration
                 }
             )

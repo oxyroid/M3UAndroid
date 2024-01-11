@@ -27,23 +27,23 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
-import com.m3u.ui.AppSnackHost
 import com.m3u.core.wrapper.Message
 import com.m3u.material.components.Background
 import com.m3u.material.components.IconButton
 import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.Action
+import com.m3u.ui.AppSnackHost
 import com.m3u.ui.Destination
 import com.m3u.ui.Fob
 import kotlinx.collections.immutable.ImmutableList
 
 @Composable
-internal fun AppScaffold(
+internal fun AppRootGraph(
     title: String,
-    message: Message.Dynamic,
+    message: Message,
     actions: ImmutableList<Action>,
-    rootDestination: Destination.Root?,
-    roots: ImmutableList<Destination.Root>,
+    currentRootDestination: Destination.Root?,
+    rootDestinations: ImmutableList<Destination.Root>,
     fob: Fob?,
     navigateToRoot: (Destination.Root) -> Unit,
     modifier: Modifier = Modifier,
@@ -52,70 +52,46 @@ internal fun AppScaffold(
 ) {
     val spacing = LocalSpacing.current
 
-    M3UScaffoldImpl(
+    AppRootGraphImpl(
         title = title,
-        actions = {
-            actions.forEach {
-                IconButton(
-                    icon = it.icon,
-                    contentDescription = it.contentDescription,
-                    onClick = it.onClick
-                )
-            }
-        },
         onBackPressed = onBackPressed,
+        modifier = modifier,
+        actions = {
+            actions.forEach { action ->
+                IconButton(
+                    icon = action.icon,
+                    contentDescription = action.contentDescription,
+                    onClick = action.onClick
+                )
+            }
+        },
         navigation = {
-            roots.forEach { root ->
-                val useFob = fob?.rootDestination == root
-                val selected = root == rootDestination || useFob
-                item(
-                    selected = selected,
-                    onClick = {
-                        if (useFob) fob?.onClick?.invoke()
-                        else navigateToRoot(root)
-                    },
-                    icon = {
-                        Icon(
-                            imageVector = if (useFob && fob != null) fob.icon
-                            else if (selected) root.selectedIcon
-                            else root.unselectedIcon,
-                            contentDescription = stringResource(
-                                if (useFob && fob != null) fob.iconTextId
-                                else root.iconTextId
-                            )
-                        )
-                    },
-                    label = {
-                        Text(
-                            text = stringResource(
-                                if (useFob && fob != null) fob.iconTextId
-                                else root.iconTextId
-                            )
-                        )
-                    },
-                    alwaysShowLabel = false
+            rootDestinations.forEach { rootDestination ->
+                addRootDestination(
+                    rootDestination = rootDestination,
+                    currentRootDestination = currentRootDestination,
+                    fob = fob,
+                    navigateToRoot = navigateToRoot
                 )
             }
         },
-        content = { padding ->
-            Box {
-                content(padding)
-                AppSnackHost(
-                    message = message,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(spacing.small)
-                        .align(Alignment.BottomCenter)
-                        .padding(padding)
-                )
-            }
-        },
-        modifier = modifier
-    )
+    ) { padding ->
+        Box {
+            content(padding)
+            AppSnackHost(
+                message = message,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(spacing.small)
+                    .align(Alignment.BottomCenter)
+                    .padding(padding)
+            )
+        }
+    }
 }
 
 @Composable
-private fun M3UScaffoldImpl(
+private fun AppRootGraphImpl(
     title: String,
     modifier: Modifier = Modifier,
     onBackPressed: (() -> Unit)? = null,
@@ -124,6 +100,24 @@ private fun M3UScaffoldImpl(
     navigation: NavigationSuiteScope.() -> Unit = {},
     content: @Composable BoxScope.(PaddingValues) -> Unit
 ) {
+    val currentContainerColor by animateColorAsState(
+        targetValue = MaterialTheme.colorScheme.background,
+        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+        label = "scaffold-navigation-container"
+    )
+    val currentContentColor by animateColorAsState(
+        targetValue = MaterialTheme.colorScheme.onBackground,
+        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+        label = "scaffold-navigation-content"
+    )
+
+    val navigationSuiteColors = NavigationSuiteDefaults.colors(
+        navigationBarContainerColor = currentContainerColor,
+        navigationBarContentColor = currentContentColor,
+        navigationRailContainerColor = currentContainerColor,
+        navigationRailContentColor = currentContentColor
+    )
+
     val actualContent = @Composable {
         Scaffold(
             topBar = {
@@ -157,25 +151,49 @@ private fun M3UScaffoldImpl(
         }
     }
 
-    val currentContainerColor by animateColorAsState(
-        targetValue = MaterialTheme.colorScheme.background,
-        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
-        label = "scaffold-navigation-container"
-    )
-    val currentContentColor by animateColorAsState(
-        targetValue = MaterialTheme.colorScheme.onBackground,
-        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
-        label = "scaffold-navigation-content"
-    )
     NavigationSuiteScaffold(
         navigationSuiteItems = navigation,
         content = actualContent,
-        navigationSuiteColors = NavigationSuiteDefaults.colors(
-            navigationBarContainerColor = currentContainerColor,
-            navigationBarContentColor = currentContentColor,
-            navigationRailContainerColor = currentContainerColor,
-            navigationRailContentColor = currentContentColor
-        ),
+        navigationSuiteColors = navigationSuiteColors,
+        containerColor = currentContainerColor,
+        contentColor = currentContentColor,
         modifier = modifier
+    )
+}
+
+private fun NavigationSuiteScope.addRootDestination(
+    rootDestination: Destination.Root,
+    currentRootDestination: Destination.Root?,
+    fob: Fob?,
+    navigateToRoot: (Destination.Root) -> Unit
+) {
+    val useFob = fob?.rootDestination == rootDestination
+    val selected = rootDestination == currentRootDestination || useFob
+    item(
+        selected = selected,
+        onClick = {
+            if (useFob) fob?.onClick?.invoke()
+            else navigateToRoot(rootDestination)
+        },
+        icon = {
+            Icon(
+                imageVector = if (useFob && fob != null) fob.icon
+                else if (selected) rootDestination.selectedIcon
+                else rootDestination.unselectedIcon,
+                contentDescription = stringResource(
+                    if (useFob && fob != null) fob.iconTextId
+                    else rootDestination.iconTextId
+                )
+            )
+        },
+        label = {
+            Text(
+                text = stringResource(
+                    if (useFob && fob != null) fob.iconTextId
+                    else rootDestination.iconTextId
+                )
+            )
+        },
+        alwaysShowLabel = false
     )
 }

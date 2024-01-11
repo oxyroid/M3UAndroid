@@ -24,9 +24,8 @@ import kotlinx.coroutines.launch
 @Composable
 internal fun PlaylistPager(
     channels: ImmutableList<Channel>,
-    zapping: Stream?,
     modifier: Modifier = Modifier,
-    content: @Composable (streams: ImmutableList<Stream>, zapping: Stream?) -> Unit,
+    content: @Composable (streams: ImmutableList<Stream>) -> Unit,
 ) {
     Column(modifier) {
         val pagerState = rememberPagerState { channels.size }
@@ -75,8 +74,7 @@ internal fun PlaylistPager(
         HorizontalPager(pagerState) { pager ->
             content(
                 // we need stable list here
-                channels[pager].streams,
-                zapping
+                channels[pager].streams
             )
         }
     }

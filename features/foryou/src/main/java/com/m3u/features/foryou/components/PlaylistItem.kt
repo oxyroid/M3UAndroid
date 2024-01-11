@@ -27,7 +27,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.material.components.OuterRow
+import com.m3u.material.ktx.isTvDevice
 import com.m3u.material.model.LocalSpacing
+import androidx.tv.material3.Card as TvCard
 
 @Composable
 internal fun PlaylistItem(
@@ -73,68 +75,126 @@ private fun PlaylistItemImpl(
 ) {
     val spacing = LocalSpacing.current
     val theme = MaterialTheme.colorScheme
+    val tv = isTvDevice()
     val actualContentColor by animateColorAsState(
         targetValue = theme.onSurface,
         label = "playlist-item-content"
     )
 
-    OutlinedCard(
-        shape = RoundedCornerShape(spacing.medium),
-        border = CardDefaults.outlinedCardBorder(local),
-        modifier = modifier.semantics(mergeDescendants = true) { }
-    ) {
-        OuterRow(
-            modifier = Modifier
-                .combinedClickable(
-                    onClick = onClick,
-                    onLongClick = onLongClick
-                ),
-            verticalAlignment = Alignment.CenterVertically
+    if (!tv) {
+        OutlinedCard(
+            shape = RoundedCornerShape(spacing.medium),
+            border = CardDefaults.outlinedCardBorder(local),
+            modifier = modifier.semantics(mergeDescendants = true) { }
         ) {
-            if (local) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Rounded.DriveFileMove,
-                    contentDescription = null,
-                    tint = actualContentColor
-                )
-            }
-            Text(
-                text = label,
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.SemiBold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.weight(1f)
-            )
-
-            val actualPrimaryColor by animateColorAsState(
-                targetValue = theme.primary,
-                label = "playlist-item-primary"
-            )
-            val actualOnPrimaryColor by animateColorAsState(
-                targetValue = theme.onPrimary,
-                label = "playlist-item-on-primary"
-            )
-            Box(
+            OuterRow(
                 modifier = Modifier
-                    .clip(CircleShape)
-                    .background(actualPrimaryColor),
-                contentAlignment = Alignment.Center
+                    .combinedClickable(
+                        onClick = onClick,
+                        onLongClick = onLongClick
+                    ),
+                verticalAlignment = Alignment.CenterVertically
             ) {
+                if (local) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Rounded.DriveFileMove,
+                        contentDescription = null,
+                        tint = actualContentColor
+                    )
+                }
                 Text(
-                    color = actualOnPrimaryColor,
-                    text = number.toString(),
+                    text = label,
                     style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.SemiBold,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.padding(
-                        start = spacing.small,
-                        end = spacing.small,
-                        bottom = 2.dp,
-                    ),
-                    softWrap = false,
-                    textAlign = TextAlign.Center
+                    modifier = Modifier.weight(1f)
                 )
+
+                val actualPrimaryColor by animateColorAsState(
+                    targetValue = theme.primary,
+                    label = "playlist-item-primary"
+                )
+                val actualOnPrimaryColor by animateColorAsState(
+                    targetValue = theme.onPrimary,
+                    label = "playlist-item-on-primary"
+                )
+                Box(
+                    modifier = Modifier
+                        .clip(CircleShape)
+                        .background(actualPrimaryColor),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        color = actualOnPrimaryColor,
+                        text = number.toString(),
+                        style = MaterialTheme.typography.bodyMedium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.padding(
+                            start = spacing.small,
+                            end = spacing.small,
+                            bottom = 2.dp,
+                        ),
+                        softWrap = false,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
+        }
+    } else {
+        TvCard(
+            onClick = onClick,
+            onLongClick = onLongClick
+        ) {
+            OuterRow(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                if (local) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Rounded.DriveFileMove,
+                        contentDescription = null,
+                        tint = actualContentColor
+                    )
+                }
+                Text(
+                    text = label,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f)
+                )
+
+                val actualPrimaryColor by animateColorAsState(
+                    targetValue = theme.primary,
+                    label = "playlist-item-primary"
+                )
+                val actualOnPrimaryColor by animateColorAsState(
+                    targetValue = theme.onPrimary,
+                    label = "playlist-item-on-primary"
+                )
+                Box(
+                    modifier = Modifier
+                        .clip(CircleShape)
+                        .background(actualPrimaryColor),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        color = actualOnPrimaryColor,
+                        text = number.toString(),
+                        style = MaterialTheme.typography.bodyMedium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.padding(
+                            start = spacing.small,
+                            end = spacing.small,
+                            bottom = 2.dp,
+                        ),
+                        softWrap = false,
+                        textAlign = TextAlign.Center
+                    )
+                }
             }
         }
     }

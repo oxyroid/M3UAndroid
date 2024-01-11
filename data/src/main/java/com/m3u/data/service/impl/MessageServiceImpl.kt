@@ -1,7 +1,7 @@
 package com.m3u.data.service.impl
 
 import com.m3u.core.wrapper.Message
-import com.m3u.data.service.DynamicMessageService
+import com.m3u.data.service.MessageService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -14,14 +14,14 @@ import kotlinx.coroutines.launch
 import java.util.concurrent.atomic.AtomicReference
 import javax.inject.Inject
 
-class DynamicMessageServiceImpl @Inject constructor() : DynamicMessageService {
-    private val _message = MutableStateFlow(Message.Dynamic.EMPTY)
-    override val message: StateFlow<Message.Dynamic> get() = _message.asStateFlow()
+class MessageServiceImpl @Inject constructor() : MessageService {
+    private val _message: MutableStateFlow<Message> = MutableStateFlow(Message.Dynamic.EMPTY)
+    override val message: StateFlow<Message> get() = _message.asStateFlow()
 
     private val coroutineScope = CoroutineScope(Dispatchers.Main)
     private val job = AtomicReference<Job?>()
 
-    override fun emit(message: Message.Dynamic) {
+    override fun emit(message: Message) {
         job.getAndUpdate { prev ->
             prev?.cancel()
             coroutineScope.launch {

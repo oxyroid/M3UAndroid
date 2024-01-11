@@ -173,7 +173,7 @@ internal fun StreamFragment(
                         MaskButton(
                             state = maskState,
                             icon = Icons.Rounded.Star,
-                            tint = if (favourite) Color.Yellow else Color.Unspecified,
+                            tint = if (favourite) Color(0xffffcd3c) else Color.Unspecified,
                             onClick = onFavourite,
                             contentDescription = if (favourite) stringResource(string.feat_stream_tooltip_unfavourite)
                             else stringResource(string.feat_stream_tooltip_favourite)

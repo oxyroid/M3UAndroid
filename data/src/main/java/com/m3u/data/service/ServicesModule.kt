@@ -12,7 +12,7 @@ import com.m3u.data.service.impl.CrashFilePathCacher
 import com.m3u.data.repository.logger.CommonLogger
 import com.m3u.data.repository.logger.UiLogger
 import com.m3u.data.service.impl.PlayerServiceImpl
-import com.m3u.data.service.impl.DynamicMessageServiceImpl
+import com.m3u.data.service.impl.MessageServiceImpl
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -30,7 +30,7 @@ interface BindServicesModule {
 
     @Binds
     @Singleton
-    fun bindUiServiceService(service: DynamicMessageServiceImpl): DynamicMessageService
+    fun bindUiServiceService(service: MessageServiceImpl): MessageService
 
     @Binds
     @Singleton

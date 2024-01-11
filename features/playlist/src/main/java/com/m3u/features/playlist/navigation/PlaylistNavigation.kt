@@ -10,41 +10,57 @@ import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavOptions
 import androidx.navigation.NavType
+import androidx.navigation.activity
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.m3u.features.playlist.PlaylistRoute
+import com.m3u.features.playlist.TvPlaylistActivity
 
 private const val PLAYLIST_ROUTE_PATH = "playlist_route"
+private const val PLAYLIST_TV_ROUTE_PATH = "playlist_tv_route"
 
-private const val TYPE_URL = "url"
-private const val TYPE_RECOMMEND = "recommend"
+object PlaylistNavigation {
+    internal const val TYPE_URL = "url"
+    internal const val TYPE_RECOMMEND = "recommend"
 
-const val PLAYLIST_ROUTE = "$PLAYLIST_ROUTE_PATH?$TYPE_URL={$TYPE_URL}&$TYPE_RECOMMEND={$TYPE_RECOMMEND}"
-private fun createPlaylistRoute(url: String, recommend: String? = null): String {
-    return "$PLAYLIST_ROUTE_PATH?${TYPE_URL}=$url&$TYPE_RECOMMEND=$recommend"
+    const val PLAYLIST_ROUTE =
+        "$PLAYLIST_ROUTE_PATH?$TYPE_URL={$TYPE_URL}&$TYPE_RECOMMEND={$TYPE_RECOMMEND}"
+
+    internal fun createPlaylistRoute(url: String, recommend: String? = null): String {
+        return "$PLAYLIST_ROUTE_PATH?${TYPE_URL}=$url&$TYPE_RECOMMEND=$recommend"
+    }
+
+    internal const val PLAYLIST_TV_ROUTE =
+        "$PLAYLIST_TV_ROUTE_PATH?$TYPE_URL={$TYPE_URL}&$TYPE_RECOMMEND={$TYPE_RECOMMEND}"
+
+    internal fun createPlaylistTvRoute(url: String, recommend: String? = null): String {
+        return "$PLAYLIST_TV_ROUTE_PATH?${TYPE_URL}=$url&$TYPE_RECOMMEND=$recommend"
+    }
 }
 
 fun NavController.navigateToPlaylist(
     playlistUrl: String,
     recommend: String? = null,
-    navOptions: NavOptions? = null
+    tv: Boolean = false,
+    navOptions: NavOptions? = null,
 ) {
     val encodedUrl = Uri.encode(playlistUrl)
-    val route = createPlaylistRoute(encodedUrl, recommend)
+    val route = if (tv) PlaylistNavigation.createPlaylistTvRoute(encodedUrl, recommend)
+    else PlaylistNavigation.createPlaylistRoute(encodedUrl, recommend)
     this.navigate(route, navOptions)
 }
 
 fun NavGraphBuilder.playlistScreen(
     navigateToStream: () -> Unit,
-    contentPadding: PaddingValues,
+    contentPadding: PaddingValues = PaddingValues(),
 ) {
     composable(
-        route = PLAYLIST_ROUTE,
+        route = PlaylistNavigation.PLAYLIST_ROUTE,
         arguments = listOf(
-            navArgument(TYPE_URL) {
+            navArgument(PlaylistNavigation.TYPE_URL) {
                 type = NavType.StringType
             },
-            navArgument(TYPE_RECOMMEND) {
+            navArgument(PlaylistNavigation.TYPE_RECOMMEND) {
                 type = NavType.StringType
                 nullable = true
                 defaultValue = null
@@ -54,21 +70,24 @@ fun NavGraphBuilder.playlistScreen(
         exitTransition = { fadeOut() },
         popEnterTransition = { fadeIn() },
         popExitTransition = { slideOutVertically { it } }
-    ) { navBackStackEntry ->
-        val playlistUrl = navBackStackEntry
-            .arguments
-            ?.getString(TYPE_URL)
-            ?.let(Uri::decode)
-            .orEmpty()
-        val title = navBackStackEntry
-            .arguments
-            ?.getString(TYPE_RECOMMEND)
-
+    ) {
         PlaylistRoute(
-            playlistUrl = playlistUrl,
-            recommend = title,
             navigateToStream = navigateToStream,
             contentPadding = contentPadding
         )
+    }
+}
+
+fun NavGraphBuilder.playlistTvScreen() {
+    activity(PlaylistNavigation.PLAYLIST_TV_ROUTE) {
+        activityClass = TvPlaylistActivity::class
+        argument(PlaylistNavigation.TYPE_URL) {
+            type = NavType.StringType
+        }
+        argument(PlaylistNavigation.TYPE_RECOMMEND) {
+            type = NavType.StringType
+            nullable = true
+            defaultValue = null
+        }
     }
 }

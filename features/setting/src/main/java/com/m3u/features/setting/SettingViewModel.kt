@@ -50,12 +50,10 @@ class SettingViewModel @Inject constructor(
 
     private val _packs = MutableStateFlow<ImmutableList<ColorPack>>(
         persistentListOf(
-            ColorPack(0x466e9a, false),
-            ColorPack(0x466e9a, true),
-            ColorPack(0xD0BCFF, false),
-            ColorPack(0xD0BCFF, true),
-            ColorPack(0x6750A4, false),
-            ColorPack(0x6750A4, true),
+            ColorPack(0x5E6738, false, "avocado"),
+            ColorPack(0x5E6738, true, "mint"),
+            ColorPack(0xe69e71, false, "orange"),
+            ColorPack(0xe69e71, true, "leather")
         )
     )
     internal val packs: StateFlow<ImmutableList<ColorPack>> = _packs.asStateFlow()

@@ -10,6 +10,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import com.m3u.material.ktx.isTvDevice
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -31,6 +32,7 @@ fun MaskState.toggle() {
 
 private class MaskStateCoroutineImpl(
     @IntRange(from = 1) private val minDuration: Long = MaskDefaults.MIN_DURATION_SECOND,
+    private val isTvDevice: Boolean = false,
     coroutineScope: CoroutineScope
 ) : MaskState, CoroutineScope by coroutineScope {
     private var currentTime: Long by mutableLongStateOf(systemClock)
@@ -55,11 +57,13 @@ private class MaskStateCoroutineImpl(
     private val systemClock: Long get() = System.currentTimeMillis() / 1000
 
     override fun wake() {
-        lastTime = currentTime
+        if (isTvDevice) lock()
+        else lastTime = currentTime
     }
 
     override fun sleep() {
-        lastTime = 0
+        if (isTvDevice) unlock()
+        else lastTime = 0
     }
 
     override fun lock() {
@@ -84,12 +88,14 @@ private class MaskStateCoroutineImpl(
 @Composable
 fun rememberMaskState(
     @IntRange(from = 1) minDuration: Long = MaskDefaults.MIN_DURATION_SECOND,
-    coroutineScope: CoroutineScope = rememberCoroutineScope()
+    coroutineScope: CoroutineScope = rememberCoroutineScope(),
+    isTvDevice: Boolean = isTvDevice()
 ): MaskState {
     return remember(minDuration, coroutineScope) {
         MaskStateCoroutineImpl(
             minDuration = minDuration,
-            coroutineScope = coroutineScope
+            coroutineScope = coroutineScope,
+            isTvDevice = isTvDevice
         )
     }
 }

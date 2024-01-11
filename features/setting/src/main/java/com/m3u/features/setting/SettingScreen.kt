@@ -11,10 +11,13 @@ import androidx.compose.material3.adaptive.ListDetailPaneScaffoldRole
 import androidx.compose.material3.adaptive.PaneScaffoldDirective
 import androidx.compose.material3.adaptive.Posture
 import androidx.compose.material3.adaptive.WindowAdaptiveInfo
+import androidx.compose.material3.adaptive.allVerticalHingeBounds
 import androidx.compose.material3.adaptive.calculateListDetailPaneScaffoldState
 import androidx.compose.material3.adaptive.calculatePosture
 import androidx.compose.material3.adaptive.collectFoldingFeaturesAsState
 import androidx.compose.material3.adaptive.currentWindowSize
+import androidx.compose.material3.adaptive.occludingVerticalHingeBounds
+import androidx.compose.material3.adaptive.separatingVerticalHingeBounds
 import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
@@ -276,7 +279,7 @@ private fun calculateStandardPaneScaffoldDirective(
         else -> {
             maxHorizontalPartitions = 2
             contentPadding = PaddingValues(0.dp)
-            verticalSpacerSize = 24.dp
+            verticalSpacerSize = 0.dp
         }
     }
     val maxVerticalPartitions: Int

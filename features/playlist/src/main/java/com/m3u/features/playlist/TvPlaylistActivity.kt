@@ -1,6 +1,7 @@
-package com.m3u.features.stream
+package com.m3u.features.playlist
 
-import android.app.PictureInPictureParams
+import android.app.ActivityOptions
+import android.content.ComponentName
 import android.content.Intent
 import android.content.res.Configuration
 import android.graphics.Color
@@ -8,33 +9,38 @@ import android.graphics.Rect
 import android.os.Bundle
 import android.view.ViewConfiguration
 import android.widget.Toast
-import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
-import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import com.m3u.core.Contracts
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.pref.Pref
 import com.m3u.core.unspecified.UBoolean
 import com.m3u.core.unspecified.specified
-import com.m3u.core.util.basic.rational
 import com.m3u.core.util.context.isDarkMode
 import com.m3u.core.util.context.isPortraitMode
 import com.m3u.core.wrapper.Message
-import com.m3u.data.repository.StreamRepository
 import com.m3u.data.service.MessageService
 import com.m3u.data.service.PlayerService
+import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.Action
+import com.m3u.ui.AppLocalProvider
+import com.m3u.ui.AppSnackHost
 import com.m3u.ui.Fob
 import com.m3u.ui.Helper
-import com.m3u.ui.AppLocalProvider
 import com.m3u.ui.OnPipModeChanged
 import com.m3u.ui.OnUserLeaveHint
 import dagger.hilt.android.AndroidEntryPoint
@@ -47,19 +53,13 @@ import javax.inject.Inject
 import kotlin.time.Duration
 
 @AndroidEntryPoint
-class PlayerActivity : ComponentActivity() {
+class TvPlaylistActivity : AppCompatActivity() {
     private val controller by lazy {
         WindowInsetsControllerCompat(window, window.decorView).apply {
             systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
         }
     }
     private val helper by lazy { helper() }
-
-    companion object {
-        // FIXME: the property is worked only when activity has one instance at most.
-        var isInPipMode: Boolean = false
-            private set
-    }
 
     @Inject
     lateinit var pref: Pref
@@ -74,71 +74,49 @@ class PlayerActivity : ComponentActivity() {
     @Inject
     lateinit var messageService: MessageService
 
-    @Inject
-    lateinit var streamRepository: StreamRepository
-
-    private val shortcutStreamUrlLiveData = MutableLiveData<String?>(null)
-    private val shortcutRecentlyLiveData = MutableLiveData(false)
-
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
-        handleIntent(intent)
         setContent {
             AppLocalProvider(
                 helper = helper,
                 pref = pref
             ) {
-                StreamRoute(
-                    onBackPressed = { finish() }
-                )
-            }
-        }
-        shortcutStreamUrlLiveData.observe(this) { url ->
-            if (!url.isNullOrEmpty()) {
-                helper.play(url)
-            }
-        }
-        shortcutRecentlyLiveData.observe(this) { recently ->
-            if (recently) {
-                lifecycleScope.launch {
-                    val stream = streamRepository.getPlayedRecently() ?: return@launch
-                    helper.play(stream.url)
+                val spacing = LocalSpacing.current
+                val message by messageService.message.collectAsStateWithLifecycle()
+                Box {
+                    PlaylistRoute(
+                        navigateToStream = {
+                            val options = ActivityOptions.makeCustomAnimation(
+                                this@TvPlaylistActivity,
+                                0,
+                                0
+                            )
+                            startActivity(
+                                Intent().apply {
+                                    component = ComponentName.createRelative(
+                                        this@TvPlaylistActivity,
+                                        Contracts.PLAYER_ACTIVITY
+                                    )
+                                },
+                                options.toBundle()
+                            )
+                        }
+                    )
+                    AppSnackHost(
+                        message = message,
+                        modifier = Modifier
+                            .align(Alignment.TopStart)
+                            .padding(spacing.medium)
+                    )
                 }
             }
         }
     }
 
-    override fun onNewIntent(intent: Intent?) {
-        super.onNewIntent(intent)
-        if (intent != null) {
-            handleIntent(intent)
-        }
-    }
-
-    private fun handleIntent(intent: Intent) {
-        shortcutStreamUrlLiveData.value =
-            intent.getStringExtra(Contracts.PLAYER_SHORTCUT_STREAM_URL)
-        shortcutRecentlyLiveData.value =
-            intent.getBooleanExtra(Contracts.PLAYER_SHORTCUT_STREAM_RECENTLY, false)
-    }
-
     private fun helper(): Helper = object : Helper {
-        init {
-            addOnPictureInPictureModeChangedListener { info ->
-                PlayerActivity.isInPipMode = info.isInPictureInPictureMode
-            }
-        }
-
         override fun enterPipMode(size: Rect) {
-            val params = PictureInPictureParams.Builder()
-                .setAspectRatio(size.rational)
-                .build()
-            if (isInPictureInPictureMode) {
-                setPictureInPictureParams(params)
-            } else {
-                enterPictureInPictureMode(params)
-            }
+            throw UnsupportedOperationException("TvPlaylistActivity not support PIP mode")
         }
 
         override var title: String = ""
@@ -154,8 +132,6 @@ class PlayerActivity : ComponentActivity() {
                 field = value
                 applyConfiguration()
             }
-
-        override val message: StateFlow<Message> = messageService.message
 
         override var darkMode: UBoolean = UBoolean.Unspecified
             set(value) {
@@ -185,20 +161,22 @@ class PlayerActivity : ComponentActivity() {
                 }
             }
 
-        override val isInPipMode: Boolean get() = PlayerActivity.isInPipMode
+        override val isInPipMode: Boolean = false
 
         override var screenOrientation: Int
-            get() = this@PlayerActivity.requestedOrientation
+            get() = this@TvPlaylistActivity.requestedOrientation
             set(value) {
-                this@PlayerActivity.requestedOrientation = value
+                this@TvPlaylistActivity.requestedOrientation = value
             }
 
+        override val message: StateFlow<Message> = messageService.message
+
         override val windowSizeClass: WindowSizeClass
-            @Composable get() = calculateWindowSizeClass(activity = this@PlayerActivity)
+            @Composable get() = calculateWindowSizeClass(activity = this@TvPlaylistActivity)
 
         override fun toast(message: String) {
             lifecycleScope.launch(Dispatchers.Main) {
-                Toast.makeText(this@PlayerActivity, message, Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@TvPlaylistActivity, message, Toast.LENGTH_SHORT).show()
             }
         }
 
@@ -219,8 +197,8 @@ class PlayerActivity : ComponentActivity() {
                 },
                 level = message.level,
                 tag = message.tag,
-                duration = when {
-                    message.level == Message.LEVEL_EMPTY -> Duration.ZERO
+                duration = when (message.level) {
+                    Message.LEVEL_EMPTY -> Duration.ZERO
                     else -> message.duration
                 }
             )
@@ -268,7 +246,7 @@ class PlayerActivity : ComponentActivity() {
             WindowInsetsCompat.Type.navigationBars() -> {
                 val configuration = resources.configuration
                 val atBottom =
-                    ViewConfiguration.get(this@PlayerActivity).hasPermanentMenuKey()
+                    ViewConfiguration.get(this@TvPlaylistActivity).hasPermanentMenuKey()
                 if (configuration.isPortraitMode || !atBottom) {
                     show(WindowInsetsCompat.Type.navigationBars())
                 } else {

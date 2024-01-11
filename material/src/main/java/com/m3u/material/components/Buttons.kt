@@ -7,7 +7,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -15,6 +14,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ProvideTextStyle
@@ -28,140 +28,114 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-
-@Composable
-fun Button(
-    textRes: Int,
-    modifier: Modifier = Modifier,
-    enabled: Boolean = true,
-    backgroundColor: Color = MaterialTheme.colorScheme.primary,
-    contentColor: Color = MaterialTheme.colorScheme.onPrimary,
-    disabledBackgroundColor: Color = backgroundColor.copy(alpha = 0.12f),
-    disabledContentColor: Color = backgroundColor.copy(alpha = 0.38f),
-    onClick: () -> Unit
-) {
-    Button(
-        text = stringResource(textRes),
-        modifier = modifier,
-        enabled = enabled,
-        backgroundColor = backgroundColor,
-        contentColor = contentColor,
-        disabledBackgroundColor = disabledBackgroundColor,
-        disabledContentColor = disabledContentColor,
-        onClick = onClick
-    )
-}
+import com.m3u.material.ktx.isTvDevice
+import com.m3u.material.model.LocalSpacing
+import androidx.tv.material3.Button as TvButton
+import androidx.tv.material3.OutlinedButton as TvOutlinedButton
+import androidx.tv.material3.Text as TvText
 
 @Composable
 fun Button(
     text: String,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    backgroundColor: Color = MaterialTheme.colorScheme.primary,
+    containerColor: Color = MaterialTheme.colorScheme.primary,
     contentColor: Color = MaterialTheme.colorScheme.onPrimary,
-    disabledBackgroundColor: Color = backgroundColor.copy(alpha = 0.12f),
-    disabledContentColor: Color = backgroundColor.copy(alpha = 0.38f),
+    disabledContainerColor: Color = containerColor.copy(alpha = 0.12f),
+    disabledContentColor: Color = containerColor.copy(alpha = 0.38f),
     onClick: () -> Unit
 ) {
-    Button(
-        shape = RoundedCornerShape(8.dp),
-        onClick = onClick,
-        enabled = enabled,
-        modifier = modifier,
-        colors = ButtonDefaults.buttonColors(
-            containerColor = backgroundColor,
-            contentColor = contentColor,
-            disabledContainerColor = disabledBackgroundColor,
-            disabledContentColor = disabledContentColor
-        )
-    ) {
-        Text(
-            text = text.uppercase()
-        )
-    }
-}
-
-@Composable
-fun TextButton(
-    textRes: Int,
-    modifier: Modifier = Modifier,
-    enabled: Boolean = true,
-    backgroundColor: Color = MaterialTheme.colorScheme.surface,
-    contentColor: Color = MaterialTheme.colorScheme.primary,
-    disabledContentColor: Color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
-    onClick: () -> Unit
-) {
-    TextButton(
-        text = stringResource(textRes),
-        modifier = modifier,
-        enabled = enabled,
-        backgroundColor = backgroundColor,
-        contentColor = contentColor,
-        disabledContentColor = disabledContentColor,
-        onClick = onClick
-    )
-}
-
-@Composable
-fun TextButton(
-    text: String,
-    modifier: Modifier = Modifier,
-    enabled: Boolean = true,
-    backgroundColor: Color = MaterialTheme.colorScheme.surface,
-    contentColor: Color = MaterialTheme.colorScheme.primary,
-    disabledContentColor: Color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
-    onClick: () -> Unit
-) {
-    TextButtonLayout(
-        modifier = modifier,
-        enabled = enabled,
-        backgroundColor = backgroundColor,
-        contentColor = contentColor,
-        disabledContentColor = disabledContentColor,
-        onClick = onClick
-    ) {
-        Text(
-            text = text.uppercase(),
-            fontSize = 14.sp,
-            maxLines = 1
-        )
-    }
-}
-
-@Composable
-fun TextButtonLayout(
-    modifier: Modifier = Modifier,
-    enabled: Boolean = true,
-    backgroundColor: Color = Color.Transparent,
-    contentColor: Color = MaterialTheme.colorScheme.primary,
-    disabledContentColor: Color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
-    onClick: () -> Unit = {},
-    text: @Composable RowScope.() -> Unit,
-) {
-    TextButton(
-        shape = RoundedCornerShape(8.dp),
-        onClick = onClick,
-        modifier = modifier,
-        enabled = enabled,
-        colors = ButtonDefaults.textButtonColors(
-            containerColor = backgroundColor,
-            contentColor = contentColor,
-            disabledContentColor = disabledContentColor
-        ),
-        content = {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceAround,
-                content = text
+    val spacing = LocalSpacing.current
+    val tv = isTvDevice()
+    if (!tv) {
+        Button(
+            shape = RoundedCornerShape(8.dp),
+            onClick = onClick,
+            enabled = enabled,
+            modifier = modifier,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = containerColor,
+                contentColor = contentColor,
+                disabledContainerColor = disabledContainerColor,
+                disabledContentColor = disabledContentColor
+            )
+        ) {
+            Text(
+                text = text.uppercase()
             )
         }
-    )
+    } else {
+        TvButton(
+            onClick = onClick,
+            enabled = enabled,
+            modifier = Modifier
+                .padding(spacing.extraSmall)
+                .then(modifier),
+            colors = androidx.tv.material3.ButtonDefaults.colors(
+                containerColor = containerColor,
+                contentColor = contentColor,
+                disabledContainerColor = disabledContainerColor,
+                disabledContentColor = disabledContentColor
+            )
+        ) {
+            TvText(
+                text = text.uppercase()
+            )
+        }
+    }
+
 }
 
+@Composable
+fun TextButton(
+    text: String,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    containerColor: Color = MaterialTheme.colorScheme.surface,
+    contentColor: Color = MaterialTheme.colorScheme.primary,
+    disabledContentColor: Color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
+    onClick: () -> Unit
+) {
+    val spacing = LocalSpacing.current
+
+    val tv = isTvDevice()
+    if (!tv) {
+        TextButton(
+            shape = RoundedCornerShape(8.dp),
+            onClick = onClick,
+            enabled = enabled,
+            modifier = modifier,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = containerColor,
+                contentColor = contentColor,
+                disabledContentColor = disabledContentColor
+            )
+        ) {
+            Text(
+                text = text.uppercase()
+            )
+        }
+    } else {
+        TvOutlinedButton(
+            onClick = onClick,
+            enabled = enabled,
+            modifier = Modifier
+                .padding(spacing.extraSmall)
+                .then(modifier),
+            colors = androidx.tv.material3.ButtonDefaults.colors(
+                containerColor = containerColor,
+                contentColor = contentColor,
+                disabledContentColor = disabledContentColor
+            )
+        ) {
+            TvText(
+                text = text.uppercase()
+            )
+        }
+    }
+}
 
 @Composable
 fun IconButton(
@@ -170,21 +144,42 @@ fun IconButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    tint: Color = LocalContentColor.current,
+    tint: Color = Color.Unspecified
 ) {
-    IconButton(
-        onClick = onClick,
-        enabled = enabled,
-        modifier = modifier
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = contentDescription,
-            tint = tint
-        )
+    val tv = isTvDevice()
+    if (!tv) {
+        IconButton(
+            onClick = onClick,
+            enabled = enabled,
+            modifier = modifier,
+            colors = IconButtonDefaults.iconButtonColors(
+                contentColor = tint
+            )
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = contentDescription,
+            )
+        }
+    } else {
+        val colorScheme = androidx.tv.material3.MaterialTheme.colorScheme
+        androidx.tv.material3.IconButton(
+            onClick = onClick,
+            enabled = enabled,
+            modifier = modifier,
+            colors = androidx.tv.material3.IconButtonDefaults.colors(
+                contentColor = tint,
+                focusedContainerColor = colorScheme.onSurface.copy(0.38f),
+                focusedContentColor = tint
+            )
+        ) {
+            androidx.tv.material3.Icon(
+                imageVector = icon,
+                contentDescription = contentDescription
+            )
+        }
     }
 }
-
 
 @Composable
 fun BrushButton(

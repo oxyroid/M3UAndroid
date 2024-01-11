@@ -17,6 +17,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.isSpecified
 import androidx.compose.ui.unit.dp
 import com.m3u.material.ktx.ifUnspecified
+import com.m3u.material.ktx.isTvDevice
 
 @Composable
 inline fun Background(
@@ -25,13 +26,17 @@ inline fun Background(
     contentColor: Color = MaterialTheme.colorScheme.onBackground,
     crossinline content: @Composable BoxScope.() -> Unit
 ) {
+    val actualContentColor = contentColor.ifUnspecified {
+        if (!isTvDevice()) LocalContentColor.current
+        else androidx.tv.material3.LocalContentColor.current
+    }
     val currentColor by animateColorAsState(
         targetValue = color,
         label = "color",
         animationSpec = spring(stiffness = Spring.StiffnessMediumLow)
     )
     val currentContentColor by animateColorAsState(
-        targetValue = contentColor.ifUnspecified { LocalContentColor.current },
+        targetValue = actualContentColor,
         label = "content-color",
         animationSpec = spring(stiffness = Spring.StiffnessMediumLow)
     )
@@ -44,7 +49,8 @@ inline fun Background(
     ) {
         CompositionLocalProvider(
             LocalAbsoluteTonalElevation provides 0.dp,
-            LocalContentColor provides currentContentColor
+            LocalContentColor provides currentContentColor,
+            androidx.tv.material3.LocalContentColor provides currentContentColor
         ) {
             content()
         }

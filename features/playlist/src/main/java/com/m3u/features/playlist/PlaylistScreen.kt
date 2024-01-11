@@ -3,12 +3,9 @@
 package com.m3u.features.playlist
 
 import android.Manifest
-import android.content.res.Configuration.ORIENTATION_LANDSCAPE
-import android.content.res.Configuration.ORIENTATION_PORTRAIT
 import android.content.res.Configuration.UI_MODE_TYPE_APPLIANCE
 import android.content.res.Configuration.UI_MODE_TYPE_CAR
 import android.content.res.Configuration.UI_MODE_TYPE_DESK
-import android.content.res.Configuration.UI_MODE_TYPE_MASK
 import android.content.res.Configuration.UI_MODE_TYPE_NORMAL
 import android.content.res.Configuration.UI_MODE_TYPE_TELEVISION
 import android.content.res.Configuration.UI_MODE_TYPE_VR_HEADSET
@@ -16,105 +13,64 @@ import android.content.res.Configuration.UI_MODE_TYPE_WATCH
 import android.os.Build
 import android.view.KeyEvent
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
-import androidx.compose.material.BackdropScaffold
-import androidx.compose.material.BackdropValue
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.Sort
 import androidx.compose.material.icons.rounded.KeyboardDoubleArrowUp
-import androidx.compose.material.icons.rounded.Refresh
-import androidx.compose.material.rememberBackdropScaffoldState
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
-import androidx.compose.ui.input.nestedscroll.NestedScrollSource
-import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.capitalize
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.intl.Locale
-import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.tv.foundation.lazy.grid.rememberTvLazyGridState
 import com.google.accompanist.permissions.PermissionStatus
 import com.google.accompanist.permissions.rememberPermissionState
 import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.core.util.compose.observableStateOf
 import com.m3u.core.wrapper.Event
 import com.m3u.data.database.model.Stream
-import com.m3u.features.playlist.components.DialogStatus
-import com.m3u.features.playlist.components.PlaylistDialog
-import com.m3u.features.playlist.components.PlaylistPager
-import com.m3u.features.playlist.components.StreamGallery
-import com.m3u.features.playlist.components.TvStreamGallery
+import com.m3u.features.playlist.impl.PlaylistScreenImpl
+import com.m3u.features.playlist.impl.TvPlaylistScreenImpl
 import com.m3u.i18n.R.string
 import com.m3u.material.components.Background
-import com.m3u.material.components.TextField
 import com.m3u.material.ktx.interceptVolumeEvent
-import com.m3u.material.ktx.isAtTop
+import com.m3u.material.ktx.isTvDevice
 import com.m3u.material.model.LocalSpacing
-import com.m3u.ui.Action
 import com.m3u.ui.Destination
-import com.m3u.ui.EventHandler
 import com.m3u.ui.Fob
 import com.m3u.ui.LocalHelper
 import com.m3u.ui.MessageEventHandler
-import com.m3u.ui.SortBottomSheet
-import com.m3u.ui.isAtTop
-import com.m3u.ui.repeatOnLifecycle
+import com.m3u.ui.Sort
 import kotlinx.collections.immutable.ImmutableList
-import kotlinx.collections.immutable.persistentListOf
-import kotlinx.coroutines.launch
 
 @Composable
 internal fun PlaylistRoute(
-    contentPadding: PaddingValues,
-    playlistUrl: String,
-    recommend: String?,
     navigateToStream: () -> Unit,
     modifier: Modifier = Modifier,
-    viewModel: PlaylistViewModel = hiltViewModel()
+    viewModel: PlaylistViewModel = hiltViewModel(),
+    contentPadding: PaddingValues = PaddingValues()
 ) {
     val context = LocalContext.current
-    val helper = LocalHelper.current
     val pref = LocalPref.current
 
     val state by viewModel.state.collectAsStateWithLifecycle()
     val message by viewModel.message.collectAsStateWithLifecycle()
     val zapping by viewModel.zapping.collectAsStateWithLifecycle()
     val query by viewModel.query.collectAsStateWithLifecycle()
+    val playlistUrl by viewModel.playlistUrl.collectAsStateWithLifecycle()
     val channels by viewModel.channels.collectAsStateWithLifecycle()
-    val sorts = viewModel.sorts
-    val sort by viewModel.sort.collectAsStateWithLifecycle()
+    val unsorted by viewModel.unsorted.collectAsStateWithLifecycle()
     val refreshing by viewModel.refreshing.collectAsStateWithLifecycle()
 
-    val sheetState = rememberModalBottomSheetState()
+    val sorts = viewModel.sorts
+    val sort by viewModel.sort.collectAsStateWithLifecycle()
+
 
     // If you try to check or request the WRITE_EXTERNAL_STORAGE on Android 13+,
     // it will always return false.
@@ -125,29 +81,7 @@ internal fun PlaylistRoute(
         Manifest.permission.WRITE_EXTERNAL_STORAGE
     )
 
-    var dialogStatus: DialogStatus by remember { mutableStateOf(DialogStatus.Idle) }
-    var isSortSheetVisible by rememberSaveable { mutableStateOf(false) }
-
     MessageEventHandler(message)
-
-    LaunchedEffect(playlistUrl, recommend) {
-        viewModel.onEvent(PlaylistEvent.Init(playlistUrl, recommend))
-    }
-
-    helper.repeatOnLifecycle {
-        actions = persistentListOf(
-            Action(
-                icon = Icons.AutoMirrored.Rounded.Sort,
-                contentDescription = "sort",
-                onClick = { isSortSheetVisible = true }
-            ),
-            Action(
-                icon = Icons.Rounded.Refresh,
-                contentDescription = "refresh",
-                onClick = { viewModel.onEvent(PlaylistEvent.Refresh) }
-            )
-        )
-    }
 
     LaunchedEffect(pref.autoRefresh, playlistUrl) {
         if (playlistUrl.isNotEmpty() && pref.autoRefresh) {
@@ -172,6 +106,7 @@ internal fun PlaylistRoute(
             }
         } else Modifier
     }
+
     Background {
         PlaylistScreen(
             query = query,
@@ -180,41 +115,27 @@ internal fun PlaylistRoute(
             zapping = zapping,
             channels = channels,
             scrollUp = state.scrollUp,
+            sorts = sorts,
+            sort = sort,
+            onSort = { viewModel.sort(it) },
             navigateToStream = navigateToStream,
-            onMenu = {
-                dialogStatus = DialogStatus.Selections(it)
-            },
             onScrollUp = { viewModel.onEvent(PlaylistEvent.ScrollUp) },
+            onRefresh = { viewModel.onEvent(PlaylistEvent.Refresh) },
+            findStreamById = { id -> unsorted.find { it.id == id } },
             contentPadding = contentPadding,
+            onFavorite = { id, target -> viewModel.onEvent(PlaylistEvent.Favourite(id, target)) },
+            ban = { id -> viewModel.onEvent(PlaylistEvent.Ban(id)) },
+            onSavePicture = {
+                if (writeExternalPermissionRequired && writeExternalPermissionState.status is PermissionStatus.Denied) {
+                    writeExternalPermissionState.launchPermissionRequest()
+                    return@PlaylistScreen
+                }
+                viewModel.onEvent(PlaylistEvent.SavePicture(it))
+            },
+            createShortcut = { viewModel.onEvent(PlaylistEvent.CreateShortcut(context, it)) },
             modifier = modifier
                 .fillMaxSize()
                 .then(interceptVolumeEventModifier)
-        )
-
-        SortBottomSheet(
-            visible = isSortSheetVisible,
-            sort = sort,
-            sorts = sorts,
-            sheetState = sheetState,
-            onChanged = { viewModel.sort(it) },
-            onDismissRequest = { isSortSheetVisible = false }
-        )
-
-        PlaylistDialog(
-            status = dialogStatus,
-            onUpdate = { dialogStatus = it },
-            onFavorite = { id, target -> viewModel.onEvent(PlaylistEvent.Favourite(id, target)) },
-            ban = { id, target -> viewModel.onEvent(PlaylistEvent.Ban(id, target)) },
-            onSavePicture = { id ->
-                if (writeExternalPermissionRequired && writeExternalPermissionState.status is PermissionStatus.Denied) {
-                    writeExternalPermissionState.launchPermissionRequest()
-                    return@PlaylistDialog
-                }
-                viewModel.onEvent(PlaylistEvent.SavePicture(id))
-            },
-            createShortcut = { id ->
-                viewModel.onEvent(PlaylistEvent.CreateShortcut(context, id))
-            }
         )
     }
 }
@@ -226,159 +147,74 @@ private fun PlaylistScreen(
     rowCount: Int,
     zapping: Stream?,
     channels: ImmutableList<Channel>,
+    sorts: ImmutableList<Sort>,
+    sort: Sort,
+    onSort: (Sort) -> Unit,
+    findStreamById: (Int) -> Stream?,
     scrollUp: Event<Unit>,
+    onRefresh: () -> Unit,
     navigateToStream: () -> Unit,
-    onMenu: (Stream) -> Unit,
     onScrollUp: () -> Unit,
+    onFavorite: (streamId: Int, target: Boolean) -> Unit,
+    ban: (streamId: Int) -> Unit,
+    onSavePicture: (streamId: Int) -> Unit,
+    createShortcut: (streamId: Int) -> Unit,
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier
 ) {
     val helper = LocalHelper.current
-    val theme = MaterialTheme.colorScheme
-    val configuration = LocalConfiguration.current
-    val spacing = LocalSpacing.current
-    Box {
-        val isAtTopState = remember {
-            observableStateOf(true) { newValue ->
-                helper.fob = if (newValue) null
-                else {
-                    Fob(
-                        icon = Icons.Rounded.KeyboardDoubleArrowUp,
-                        rootDestination = Destination.Root.Foryou,
-                        iconTextId = string.feat_playlist_scroll_up,
-                        onClick = onScrollUp
-                    )
-                }
-            }
-        }
 
-        val scaffoldState = rememberBackdropScaffoldState(BackdropValue.Concealed)
-        val connection = remember {
-            object : NestedScrollConnection {
-                override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
-                    return if (scaffoldState.isRevealed) available
-                    else Offset.Zero
-                }
-            }
-        }
-        val currentColor by animateColorAsState(
-            targetValue = theme.background,
-            label = "background"
-        )
-        val currentContentColor by animateColorAsState(
-            targetValue = theme.onBackground,
-            label = "on-background"
-        )
-        val focusManager = LocalFocusManager.current
-
-        BackdropScaffold(
-            scaffoldState = scaffoldState,
-            appBar = { /*TODO*/ },
-            frontLayerShape = RectangleShape,
-            peekHeight = 0.dp,
-            backLayerContent = {
-                val coroutineScope = rememberCoroutineScope()
-                LaunchedEffect(scaffoldState.currentValue) {
-                    if (scaffoldState.isConcealed) {
-                        focusManager.clearFocus()
-                    }
-                }
-                BackHandler(scaffoldState.isRevealed || query.isNotEmpty()) {
-                    if (scaffoldState.isRevealed) {
-                        coroutineScope.launch {
-                            scaffoldState.conceal()
-                        }
-                    }
-                    if (query.isNotEmpty()) {
-                        onQuery("")
-                    }
-                }
-                Box(
-                    modifier = Modifier
-                        .padding(spacing.medium)
-                        .fillMaxWidth()
-                ) {
-                    TextField(
-                        text = query,
-                        onValueChange = onQuery,
-                        fontWeight = FontWeight.Bold,
-                        placeholder = stringResource(string.feat_playlist_query_placeholder).capitalize(
-                            Locale.current
-                        )
-                    )
-                }
-            },
-            frontLayerContent = {
-                Background(
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    PlaylistPager(channels, zapping) { streams, zapping ->
-                        val type = configuration.uiMode and UI_MODE_TYPE_MASK
-                        when {
-                            type == UI_MODE_TYPE_TELEVISION -> {
-                                val state = rememberTvLazyGridState()
-                                LaunchedEffect(state.isAtTop) {
-                                    isAtTopState.value = state.isAtTop
-                                }
-                                EventHandler(scrollUp) {
-                                    state.animateScrollToItem(0)
-                                }
-                                TvStreamGallery(
-                                    state = state,
-                                    rowCount = 4,
-                                    streams = streams,
-                                    zapping = zapping,
-                                    play = { url ->
-                                        helper.play(url)
-                                        navigateToStream()
-                                    },
-                                    onMenu = onMenu,
-                                    modifier = modifier
-                                )
-                            }
-
-                            else -> {
-                                val state = rememberLazyStaggeredGridState()
-                                LaunchedEffect(state.isAtTop) {
-                                    isAtTopState.value = state.isAtTop
-                                }
-                                EventHandler(scrollUp) {
-                                    state.animateScrollToItem(0)
-                                }
-                                val orientation = configuration.orientation
-                                val actualRowCount = remember(orientation, rowCount) {
-                                    when (orientation) {
-                                        ORIENTATION_LANDSCAPE -> rowCount + 2
-                                        ORIENTATION_PORTRAIT -> rowCount
-                                        else -> rowCount
-                                    }
-                                }
-                                StreamGallery(
-                                    state = state,
-                                    rowCount = actualRowCount,
-                                    streams = streams,
-                                    zapping = zapping,
-                                    play = { url ->
-                                        helper.play(url)
-                                        navigateToStream()
-                                    },
-                                    onMenu = onMenu,
-                                    modifier = modifier,
-                                )
-                            }
-                        }
-                    }
-                }
-            },
-            backLayerBackgroundColor = currentColor,
-            backLayerContentColor = currentContentColor,
-            frontLayerScrimColor = currentColor.copy(alpha = 0.45f),
-            frontLayerBackgroundColor = Color.Transparent,
-            modifier = Modifier
-                .padding(top = contentPadding.calculateTopPadding())
-                .nestedScroll(
-                    connection = connection,
+    val isAtTopState = remember {
+        observableStateOf(true) { newValue ->
+            helper.fob = if (newValue) null
+            else {
+                Fob(
+                    icon = Icons.Rounded.KeyboardDoubleArrowUp,
+                    rootDestination = Destination.Root.Foryou,
+                    iconTextId = string.feat_playlist_scroll_up,
+                    onClick = onScrollUp
                 )
+            }
+        }
+    }
+
+    val tv = isTvDevice()
+    if (!tv) {
+        PlaylistScreenImpl(
+            channels = channels,
+            zapping = zapping,
+            query = query,
+            onQuery = onQuery,
+            rowCount = rowCount,
+            scrollUp = scrollUp,
+            contentPadding = contentPadding,
+            navigateToStream = navigateToStream,
+            isAtTopState = isAtTopState,
+            onRefresh = onRefresh,
+            sorts = sorts,
+            sort = sort,
+            onSort = onSort,
+            onFavorite = onFavorite,
+            ban = ban,
+            onSavePicture = onSavePicture,
+            createShortcut = createShortcut,
+            modifier = modifier
+        )
+    } else {
+        TvPlaylistScreenImpl(
+            channels = channels,
+            query = query,
+            onQuery = onQuery,
+            navigateToStream = navigateToStream,
+            findStreamById = findStreamById,
+            onRefresh = onRefresh,
+            sorts = sorts,
+            sort = sort,
+            onFavorite = onFavorite,
+            ban = ban,
+            onSavePicture = onSavePicture,
+            createShortcut = createShortcut,
+            modifier = modifier
         )
     }
 }

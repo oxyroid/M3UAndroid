@@ -24,6 +24,8 @@ import androidx.lifecycle.LifecycleEventObserver
 import com.m3u.core.unspecified.UBoolean
 import com.m3u.core.wrapper.Message
 import kotlinx.collections.immutable.ImmutableList
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 
 typealias OnUserLeaveHint = () -> Unit
 typealias OnPipModeChanged = Consumer<PictureInPictureModeChangedInfo>
@@ -41,6 +43,7 @@ interface Helper {
     var brightness: Float
     val isInPipMode: Boolean
     var screenOrientation: Int
+    val message: StateFlow<Message>
 
     @get:Composable
     val windowSizeClass: WindowSizeClass
@@ -143,6 +146,8 @@ val EmptyHelper = object : Helper {
         set(_) {
             error("Cannot set fob")
         }
+    override val message: StateFlow<Message>
+        get() = MutableStateFlow(Message.Dynamic.EMPTY)
 
     override var statusBarVisibility: UBoolean
         get() = error("Cannot get systemUiVisibility")

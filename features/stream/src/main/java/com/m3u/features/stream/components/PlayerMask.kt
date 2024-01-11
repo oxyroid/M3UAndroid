@@ -16,6 +16,7 @@ import androidx.compose.ui.graphics.Color
 import com.m3u.material.components.mask.Mask
 import com.m3u.material.components.mask.MaskPanel
 import com.m3u.material.components.mask.MaskState
+import com.m3u.material.ktx.isTvDevice
 import com.m3u.material.model.LocalSpacing
 
 @Composable
@@ -26,8 +27,11 @@ internal fun PlayerMask(
     footer: @Composable RowScope.() -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val spacing = LocalSpacing.current
+    val tv = isTvDevice()
     CompositionLocalProvider(
-        LocalContentColor provides Color.White
+        LocalContentColor provides Color.White,
+        androidx.tv.material3.LocalContentColor provides Color.White
     ) {
         Box(modifier) {
             MaskPanel(
@@ -41,7 +45,10 @@ internal fun PlayerMask(
                     modifier = Modifier
                         .fillMaxWidth()
                         .align(Alignment.TopCenter),
-                    horizontalArrangement = Arrangement.End,
+                    horizontalArrangement = Arrangement.spacedBy(
+                        if (!tv) spacing.none else spacing.medium,
+                        Alignment.End
+                    ),
                     verticalAlignment = Alignment.Top,
                     content = header
                 )
@@ -57,7 +64,7 @@ internal fun PlayerMask(
                 ) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(LocalSpacing.current.medium),
+                        horizontalArrangement = Arrangement.spacedBy(spacing.medium),
                         verticalAlignment = Alignment.Bottom,
                         content = footer
                     )

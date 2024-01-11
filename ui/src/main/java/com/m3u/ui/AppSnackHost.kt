@@ -17,13 +17,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import com.m3u.core.wrapper.Message
 import com.m3u.material.model.LocalSpacing
 
 @Composable
 fun AppSnackHost(
-    message: Message.Dynamic,
+    message: Message,
     modifier: Modifier = Modifier
 ) {
     val theme = MaterialTheme.colorScheme
@@ -45,7 +46,7 @@ fun AppSnackHost(
         label = "snack-host-color"
     )
     AnimatedVisibility(
-        visible = message != Message.Dynamic.EMPTY,
+        visible = message.level != Message.LEVEL_EMPTY,
         enter = slideInVertically { it } + fadeIn(),
         exit = slideOutVertically { it } + fadeOut(),
         modifier = modifier
@@ -60,8 +61,14 @@ fun AppSnackHost(
                 contentColor = contentColor
             )
         ) {
+            val text = when {
+                message.level == Message.LEVEL_EMPTY -> return@Card
+                message is Message.Static -> stringResource(message.resId, message.formatArgs)
+                message is Message.Dynamic -> message.value
+                else -> return@Card
+            }
             Text(
-                text = message.value,
+                text = text,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 style = MaterialTheme.typography.titleSmall,

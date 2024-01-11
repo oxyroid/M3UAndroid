@@ -1,6 +1,7 @@
 package com.m3u.features.stream
 
 import android.graphics.Rect
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.statusBars
@@ -34,6 +35,7 @@ import com.m3u.material.components.Background
 import com.m3u.material.components.mask.MaskInterceptor
 import com.m3u.material.components.mask.MaskState
 import com.m3u.material.components.mask.rememberMaskState
+import com.m3u.material.ktx.isTvDevice
 import com.m3u.ui.LocalHelper
 import com.m3u.ui.OnPipModeChanged
 import com.m3u.ui.repeatOnLifecycle
@@ -220,6 +222,10 @@ private fun StreamScreen(
     val cover = stream?.cover.orEmpty()
     val playlistTitle = playlist?.title ?: "--"
     val favourite = stream?.favourite ?: false
+
+    BackHandler(isTvDevice() && maskState.visible) {
+        maskState.sleep()
+    }
 
     StreamFragment(
         playerState = playerState,

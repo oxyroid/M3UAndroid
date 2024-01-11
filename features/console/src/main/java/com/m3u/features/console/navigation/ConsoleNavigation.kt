@@ -18,7 +18,7 @@ fun NavController.navigateToConsole(navOptions: NavOptions? = null) {
 }
 
 fun NavGraphBuilder.consoleScreen(
-    contentPadding: PaddingValues
+    contentPadding: PaddingValues = PaddingValues()
 ) {
     composable(
         route = CONSOLE_ROUTE,

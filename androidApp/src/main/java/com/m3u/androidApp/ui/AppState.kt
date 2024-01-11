@@ -20,7 +20,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.m3u.features.about.navigation.ABOUT_ROUTE
 import com.m3u.features.console.navigation.CONSOLE_ROUTE
-import com.m3u.features.playlist.navigation.PLAYLIST_ROUTE
+import com.m3u.features.playlist.navigation.PlaylistNavigation
 import com.m3u.ui.Destination
 import com.m3u.ui.Destination.Root.Setting.SettingFragment
 import kotlinx.collections.immutable.ImmutableList
@@ -115,7 +115,7 @@ class AppState(
 inline infix fun <reified D : Destination> NavDestination.destinationTo(clazz: Class<D>): Boolean {
     val targetRoute = when (clazz.name) {
         Destination.Root::class.java.name -> ROOT_ROUTE
-        Destination.Playlist::class.java.name -> PLAYLIST_ROUTE
+        Destination.Playlist::class.java.name -> PlaylistNavigation.PLAYLIST_ROUTE
         Destination.Console::class.java.name -> CONSOLE_ROUTE
         Destination.About::class.java.name -> ABOUT_ROUTE
         else -> ROOT_ROUTE

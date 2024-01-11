@@ -15,7 +15,7 @@ internal fun PlaylistDialog(
     status: DialogStatus,
     onUpdate: (DialogStatus) -> Unit,
     onFavorite: (streamId: Int, target: Boolean) -> Unit,
-    ban: (streamId: Int, target: Boolean) -> Unit,
+    ban: (streamId: Int) -> Unit,
     onSavePicture: (streamId: Int) -> Unit,
     createShortcut: (streamId: Int) -> Unit,
     modifier: Modifier = Modifier
@@ -42,7 +42,7 @@ internal fun PlaylistDialog(
             }
             DialogItem(string.feat_playlist_dialog_mute_title) {
                 onUpdate(DialogStatus.Idle)
-                ban(status.stream.id, true)
+                ban(status.stream.id)
             }
             if (!status.stream.cover.isNullOrEmpty()) {
                 DialogItem(string.feat_playlist_dialog_save_picture_title) {

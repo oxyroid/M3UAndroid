@@ -1,6 +1,7 @@
 package com.m3u.material.components
 
 import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
@@ -14,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
@@ -53,27 +55,32 @@ fun ThemeSelection(
     selected: Boolean,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
+    name: String,
     leftContentDescription: String,
     rightContentDescription: String,
     modifier: Modifier = Modifier,
 ) {
     val spacing = LocalSpacing.current
     val alpha by animateFloatAsState(
-        if (selected) 0f else 0.4f,
+        targetValue = if (selected) 0f else 0.4f,
         label = "alpha"
     )
     val zoom by animateFloatAsState(
-        if (selected) 1f else 0.85f,
+        targetValue = if (selected) 0.95f else 0.85f,
         label = "zoom"
     )
     val blurRadius by animateFloatAsState(
-        if (selected) 0f else 16f,
-        label = "blurRadius"
+        targetValue = if (selected) 0f else 16f,
+        label = "blur-radius"
+    )
+    val corner by animateDpAsState(
+        targetValue = if (!selected) spacing.extraLarge else spacing.medium,
+        label = "corner"
     )
     val feedback = LocalHapticFeedback.current
 
     val interactionSource = remember { MutableInteractionSource() }
-    val shape = RoundedCornerShape(spacing.medium)
+    val shape = RoundedCornerShape(corner)
 
     Box(
         contentAlignment = Alignment.Center
@@ -90,19 +97,6 @@ fun ThemeSelection(
                     scaleY = zoom
                 }
                 .size(96.dp)
-                .combinedClickable(
-                    interactionSource = interactionSource,
-                    indication = rememberRipple(),
-                    onClick = {
-                        if (selected) return@combinedClickable
-                        feedback.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                        onClick()
-                    },
-                    onLongClick = {
-                        feedback.performHapticFeedback(HapticFeedbackType.LongPress)
-                        onLongClick()
-                    }
-                )
                 .interactionBorder(
                     type = InteractionType.PRESS,
                     source = interactionSource,
@@ -124,6 +118,19 @@ fun ThemeSelection(
                             )
                         )
                     }
+                    .combinedClickable(
+                        interactionSource = interactionSource,
+                        indication = rememberRipple(),
+                        onClick = {
+                            if (selected) return@combinedClickable
+                            feedback.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                            onClick()
+                        },
+                        onLongClick = {
+                            feedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                            onLongClick()
+                        }
+                    )
             ) {
                 Row(
                     horizontalArrangement = Arrangement.SpaceAround,
@@ -146,13 +153,14 @@ fun ThemeSelection(
                     )
                 }
                 Text(
-                    text = if (isDark) "NIGHT" else "DAY",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = colorScheme.tertiary,
+                    text = name.uppercase(),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = colorScheme.tertiaryContainer,
                     textAlign = TextAlign.Center,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(colorScheme.onTertiary)
+                        .background(colorScheme.onTertiaryContainer)
+                        .padding(vertical = 2.dp)
                 )
             }
         }
@@ -186,7 +194,7 @@ fun ThemeAddSelection(
         contentAlignment = Alignment.Center
     ) {
         OutlinedCard(
-            shape = RoundedCornerShape(spacing.medium),
+            shape = RoundedCornerShape(spacing.extraLarge),
             colors = CardDefaults.outlinedCardColors(
                 containerColor = theme.surface,
                 contentColor = theme.onSurface
@@ -234,6 +242,10 @@ private fun ColorPiece(
         ),
         modifier = Modifier
             .aspectRatio(1f)
+            .sizeIn(
+                minWidth = if (left) 48.dp else 32.dp,
+                minHeight = if (left) 48.dp else 32.dp,
+            )
             .padding(spacing.extraSmall)
     ) {
         Box(

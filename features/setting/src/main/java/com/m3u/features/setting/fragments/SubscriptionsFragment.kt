@@ -31,7 +31,7 @@ import com.m3u.features.setting.components.LocalStorageButton
 import com.m3u.features.setting.components.LocalStorageSwitch
 import com.m3u.i18n.R.string
 import com.m3u.material.components.Button
-import com.m3u.material.components.LabelField
+import com.m3u.material.components.PlaceholderField
 import com.m3u.material.ktx.plus
 import com.m3u.material.model.LocalSpacing
 import kotlinx.collections.immutable.ImmutableList
@@ -90,7 +90,7 @@ internal fun SubscriptionsFragment(
         }
 
         item {
-            LabelField(
+            PlaceholderField(
                 text = title,
                 placeholder = stringResource(string.feat_setting_placeholder_title).uppercase(),
                 onValueChange = onTitle,
@@ -109,7 +109,7 @@ internal fun SubscriptionsFragment(
                 label = "url"
             ) { localStorage ->
                 if (!localStorage) {
-                    LabelField(
+                    PlaceholderField(
                         text = url,
                         placeholder = stringResource(string.feat_setting_placeholder_url).uppercase(),
                         onValueChange = onUrl,

@@ -7,6 +7,7 @@ import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.graphics.drawable.IconCompat
 import androidx.core.graphics.drawable.toBitmap
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.m3u.core.Contracts
 import com.m3u.core.architecture.logger.Logger
@@ -23,6 +24,7 @@ import com.m3u.data.repository.StreamRepository
 import com.m3u.data.repository.refresh
 import com.m3u.data.service.PlayerService
 import com.m3u.features.playlist.PlaylistMessage.StreamCoverSaved
+import com.m3u.features.playlist.navigation.PlaylistNavigation
 import com.m3u.ui.Sort
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.collections.immutable.ImmutableList
@@ -45,6 +47,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class PlaylistViewModel @Inject constructor(
+    savedStateHandle: SavedStateHandle,
     private val streamRepository: StreamRepository,
     private val playlistRepository: PlaylistRepository,
     private val mediaRepository: MediaRepository,
@@ -54,9 +57,13 @@ class PlaylistViewModel @Inject constructor(
 ) : BaseViewModel<PlaylistState, PlaylistEvent, PlaylistMessage>(
     emptyState = PlaylistState()
 ) {
+    internal val playlistUrl: StateFlow<String> =
+        savedStateHandle.getStateFlow(PlaylistNavigation.TYPE_URL, "")
+    internal val recommend: StateFlow<String?> =
+        savedStateHandle.getStateFlow(PlaylistNavigation.TYPE_RECOMMEND, null)
+
     override fun onEvent(event: PlaylistEvent) {
         when (event) {
-            is PlaylistEvent.Init -> init(event.playlistUrl, event.recommend)
             PlaylistEvent.Refresh -> refresh()
             is PlaylistEvent.Favourite -> favourite(event)
             PlaylistEvent.ScrollUp -> scrollUp()
@@ -88,11 +95,6 @@ class PlaylistViewModel @Inject constructor(
             initialValue = null,
             started = SharingStarted.WhileSubscribed(5_000)
         )
-
-    private fun init(playlistUrl: String, recommend: String?) {
-        this.playlistUrl.update { playlistUrl }
-        this.recommend.update { recommend }
-    }
 
     private var _refreshing = MutableStateFlow(false)
     val refreshing = _refreshing.asStateFlow()
@@ -160,12 +162,11 @@ class PlaylistViewModel @Inject constructor(
     private fun ban(event: PlaylistEvent.Ban) {
         viewModelScope.launch {
             val id = event.id
-            val target = event.target
             val stream = streamRepository.get(id)
             if (stream == null) {
                 onMessage(PlaylistMessage.StreamNotFound)
             } else {
-                streamRepository.ban(stream.id, target)
+                streamRepository.ban(stream.id, true)
             }
         }
     }
@@ -213,9 +214,6 @@ class PlaylistViewModel @Inject constructor(
         Channel("", toPersistentList())
     )
 
-    private val playlistUrl: MutableStateFlow<String> = MutableStateFlow("")
-    private val recommend: MutableStateFlow<String?> = MutableStateFlow(null)
-
     val playlist: StateFlow<Playlist?> = playlistUrl.map { url ->
         playlistRepository.get(url)
     }
@@ -226,7 +224,7 @@ class PlaylistViewModel @Inject constructor(
         )
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    private val unsorted: StateFlow<List<Stream>> = combine(
+    internal val unsorted: StateFlow<List<Stream>> = combine(
         playlistUrl.flatMapMerge { url ->
             playlistRepository.observeWithStreams(url)
         },
