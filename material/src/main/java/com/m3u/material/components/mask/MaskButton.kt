@@ -28,7 +28,7 @@ fun MaskButton(
 ) {
     val tooltipState = rememberTooltipState()
 
-    val animatedColor by animateColorAsState(
+    val currentTint by animateColorAsState(
         targetValue = tint.ifUnspecified { LocalContentColor.current },
         label = "mask-button-tint"
     )
@@ -52,7 +52,7 @@ fun MaskButton(
                 onClick()
             },
             modifier = modifier,
-            tint = animatedColor
+            tint = currentTint
         )
     }
 }

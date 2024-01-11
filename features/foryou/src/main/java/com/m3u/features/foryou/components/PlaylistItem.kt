@@ -76,7 +76,7 @@ private fun PlaylistItemImpl(
     val spacing = LocalSpacing.current
     val theme = MaterialTheme.colorScheme
     val tv = isTvDevice()
-    val actualContentColor by animateColorAsState(
+    val currentContentColor by animateColorAsState(
         targetValue = theme.onSurface,
         label = "playlist-item-content"
     )
@@ -99,7 +99,7 @@ private fun PlaylistItemImpl(
                     Icon(
                         imageVector = Icons.AutoMirrored.Rounded.DriveFileMove,
                         contentDescription = null,
-                        tint = actualContentColor
+                        tint = currentContentColor
                     )
                 }
                 Text(
@@ -111,22 +111,22 @@ private fun PlaylistItemImpl(
                     modifier = Modifier.weight(1f)
                 )
 
-                val actualPrimaryColor by animateColorAsState(
+                val currentPrimaryColor by animateColorAsState(
                     targetValue = theme.primary,
                     label = "playlist-item-primary"
                 )
-                val actualOnPrimaryColor by animateColorAsState(
+                val currentOnPrimaryColor by animateColorAsState(
                     targetValue = theme.onPrimary,
                     label = "playlist-item-on-primary"
                 )
                 Box(
                     modifier = Modifier
                         .clip(CircleShape)
-                        .background(actualPrimaryColor),
+                        .background(currentPrimaryColor),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        color = actualOnPrimaryColor,
+                        color = currentOnPrimaryColor,
                         text = number.toString(),
                         style = MaterialTheme.typography.bodyMedium,
                         maxLines = 1,
@@ -154,7 +154,7 @@ private fun PlaylistItemImpl(
                     Icon(
                         imageVector = Icons.AutoMirrored.Rounded.DriveFileMove,
                         contentDescription = null,
-                        tint = actualContentColor
+                        tint = currentContentColor
                     )
                 }
                 Text(
@@ -166,22 +166,22 @@ private fun PlaylistItemImpl(
                     modifier = Modifier.weight(1f)
                 )
 
-                val actualPrimaryColor by animateColorAsState(
+                val currentPrimaryColor by animateColorAsState(
                     targetValue = theme.primary,
                     label = "playlist-item-primary"
                 )
-                val actualOnPrimaryColor by animateColorAsState(
+                val currentOnPrimaryColor by animateColorAsState(
                     targetValue = theme.onPrimary,
                     label = "playlist-item-on-primary"
                 )
                 Box(
                     modifier = Modifier
                         .clip(CircleShape)
-                        .background(actualPrimaryColor),
+                        .background(currentPrimaryColor),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        color = actualOnPrimaryColor,
+                        color = currentOnPrimaryColor,
                         text = number.toString(),
                         style = MaterialTheme.typography.bodyMedium,
                         maxLines = 1,
