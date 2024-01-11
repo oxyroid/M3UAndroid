@@ -22,6 +22,7 @@ import com.m3u.data.repository.MediaRepository
 import com.m3u.data.repository.PlaylistRepository
 import com.m3u.data.repository.StreamRepository
 import com.m3u.data.repository.refresh
+import com.m3u.data.service.MessageService
 import com.m3u.data.service.PlayerService
 import com.m3u.features.playlist.PlaylistMessage.StreamCoverSaved
 import com.m3u.features.playlist.navigation.PlaylistNavigation
@@ -53,7 +54,8 @@ class PlaylistViewModel @Inject constructor(
     private val mediaRepository: MediaRepository,
     playerService: PlayerService,
     private val pref: Pref,
-    @Logger.Ui private val logger: Logger
+    @Logger.Ui private val logger: Logger,
+    private val messageService: MessageService
 ) : BaseViewModel<PlaylistState, PlaylistEvent, PlaylistMessage>(
     emptyState = PlaylistState()
 ) {
@@ -107,7 +109,7 @@ class PlaylistViewModel @Inject constructor(
                 val refreshing = resource is Resource.Loading
                 _refreshing.update { refreshing }
                 val message = if (refreshing) PlaylistMessage.Refreshing else PlaylistMessage.None
-                onMessage(message)
+                messageService.emit(message)
             }
             .launchIn(viewModelScope)
     }
@@ -133,12 +135,12 @@ class PlaylistViewModel @Inject constructor(
         viewModelScope.launch {
             val stream = streamRepository.get(id)
             if (stream == null) {
-                onMessage(PlaylistMessage.StreamNotFound)
+                messageService.emit(PlaylistMessage.StreamNotFound)
                 return@launch
             }
             val cover = stream.cover
             if (cover.isNullOrEmpty()) {
-                onMessage(PlaylistMessage.StreamCoverNotFound)
+                messageService.emit(PlaylistMessage.StreamCoverNotFound)
                 return@launch
             }
             mediaRepository
@@ -147,7 +149,7 @@ class PlaylistViewModel @Inject constructor(
                     when (resource) {
                         Resource.Loading -> {}
                         is Resource.Success -> {
-                            onMessage(StreamCoverSaved(resource.data.absolutePath))
+                            messageService.emit(StreamCoverSaved(resource.data.absolutePath))
                         }
 
                         is Resource.Failure -> {
@@ -164,7 +166,7 @@ class PlaylistViewModel @Inject constructor(
             val id = event.id
             val stream = streamRepository.get(id)
             if (stream == null) {
-                onMessage(PlaylistMessage.StreamNotFound)
+                messageService.emit(PlaylistMessage.StreamNotFound)
             } else {
                 streamRepository.ban(stream.id, true)
             }

@@ -45,7 +45,6 @@ import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.Destination
 import com.m3u.ui.Fob
 import com.m3u.ui.LocalHelper
-import com.m3u.ui.MessageEventHandler
 import com.m3u.ui.Sort
 import kotlinx.collections.immutable.ImmutableList
 
@@ -60,7 +59,6 @@ internal fun PlaylistRoute(
     val pref = LocalPref.current
 
     val state by viewModel.state.collectAsStateWithLifecycle()
-    val message by viewModel.message.collectAsStateWithLifecycle()
     val zapping by viewModel.zapping.collectAsStateWithLifecycle()
     val query by viewModel.query.collectAsStateWithLifecycle()
     val playlistUrl by viewModel.playlistUrl.collectAsStateWithLifecycle()
@@ -80,8 +78,6 @@ internal fun PlaylistRoute(
     val writeExternalPermissionState = rememberPermissionState(
         Manifest.permission.WRITE_EXTERNAL_STORAGE
     )
-
-    MessageEventHandler(message)
 
     LaunchedEffect(pref.autoRefresh, playlistUrl) {
         if (playlistUrl.isNotEmpty() && pref.autoRefresh) {

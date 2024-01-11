@@ -11,6 +11,7 @@ import com.m3u.core.architecture.viewmodel.BaseViewModel
 import com.m3u.data.database.model.Stream
 import com.m3u.data.repository.StreamRepository
 import com.m3u.data.repository.observeAll
+import com.m3u.data.service.MessageService
 import com.m3u.data.service.impl.SubscriptionWorker
 import com.m3u.features.setting.fragments.ColorPack
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -32,7 +33,8 @@ class SettingViewModel @Inject constructor(
     private val streamRepository: StreamRepository,
     @Publisher.App private val publisher: Publisher,
     private val workManager: WorkManager,
-    private val pref: Pref
+    private val pref: Pref,
+    private val messageService: MessageService
 ) : BaseViewModel<SettingState, SettingEvent, SettingMessage>(
     emptyState = SettingState(
         versionName = publisher.versionName,
@@ -109,7 +111,7 @@ class SettingViewModel @Inject constructor(
     private fun subscribe() {
         val title = writable.value.title
         if (title.isEmpty()) {
-            onMessage(SettingMessage.EmptyTitle)
+            messageService.emit(SettingMessage.EmptyTitle)
             return
         }
         val url = readable.actualUrl
@@ -118,7 +120,7 @@ class SettingViewModel @Inject constructor(
                 readable.localStorage -> SettingMessage.EmptyFile
                 else -> SettingMessage.EmptyUrl
             }
-            onMessage(warning)
+            messageService.emit(warning)
             return
         }
 
@@ -134,7 +136,7 @@ class SettingViewModel @Inject constructor(
             .addTag(url)
             .build()
         workManager.enqueue(request)
-        onMessage(SettingMessage.Enqueued)
+        messageService.emit(SettingMessage.Enqueued)
         writable.update {
             it.copy(
                 title = "",

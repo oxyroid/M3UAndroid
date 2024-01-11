@@ -49,7 +49,6 @@ import com.m3u.i18n.R.string
 import com.m3u.ui.Destination.Root.Setting.SettingFragment
 import com.m3u.ui.EventHandler
 import com.m3u.ui.LocalHelper
-import com.m3u.ui.MessageEventHandler
 import com.m3u.ui.ResumeEvent
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
@@ -68,7 +67,6 @@ fun SettingRoute(
     val controller = LocalSoftwareKeyboardController.current
 
     val state by viewModel.state.collectAsStateWithLifecycle()
-    val message by viewModel.message.collectAsStateWithLifecycle()
     val packs by viewModel.packs.collectAsStateWithLifecycle()
     val banneds by viewModel.banneds.collectAsStateWithLifecycle()
     val helper = LocalHelper.current
@@ -77,8 +75,6 @@ fun SettingRoute(
         helper.title = title
         helper.actions = persistentListOf()
     }
-
-    MessageEventHandler(message)
 
     SettingScreen(
         contentPadding = contentPadding,
