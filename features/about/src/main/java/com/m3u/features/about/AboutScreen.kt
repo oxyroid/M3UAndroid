@@ -18,6 +18,7 @@ import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.m3u.core.util.basic.title
 import com.m3u.features.about.components.ContributorItem
 import com.m3u.i18n.R.string
 import com.m3u.material.components.Background
@@ -36,7 +37,7 @@ internal fun AboutRoute(
     val helper = LocalHelper.current
     val title = stringResource(string.feat_about_title)
     helper.repeatOnLifecycle {
-        this.title = title
+        this.title = title.title()
     }
 
     val state by viewModel.s.collectAsStateWithLifecycle()
