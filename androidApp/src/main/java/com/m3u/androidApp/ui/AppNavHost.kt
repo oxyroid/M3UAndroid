@@ -113,7 +113,7 @@ fun AppNavHost(
         )
 
         playlistTvScreen()
-        consoleScreen()
-        aboutScreen()
+        consoleScreen(contentPadding)
+        aboutScreen(contentPadding)
     }
 }
