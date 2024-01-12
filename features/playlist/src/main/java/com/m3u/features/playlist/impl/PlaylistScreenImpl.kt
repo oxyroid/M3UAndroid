@@ -1,4 +1,5 @@
 @file:Suppress("UsingMaterialAndMaterial3Libraries")
+
 package com.m3u.features.playlist.impl
 
 import android.content.res.Configuration.ORIENTATION_LANDSCAPE
@@ -38,9 +39,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.capitalize
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.unit.dp
 import com.m3u.core.wrapper.Event
 import com.m3u.data.database.model.Stream
