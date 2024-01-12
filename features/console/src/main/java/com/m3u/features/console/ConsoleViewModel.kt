@@ -6,9 +6,8 @@ import androidx.lifecycle.viewModelScope
 import com.m3u.core.architecture.FilePathCacher
 import com.m3u.core.architecture.Publisher
 import com.m3u.core.architecture.viewmodel.BaseViewModel
-import com.m3u.core.wrapper.Message
-import com.m3u.features.console.command.ParamCommandHandler
 import com.m3u.features.console.command.CommandResource
+import com.m3u.features.console.command.ParamCommandHandler
 import com.m3u.features.console.command.impl.EmptyCommandHandler
 import com.m3u.features.console.command.impl.LoggerCommandHandler
 import com.m3u.features.console.command.impl.UpnpCommandHandler
@@ -25,7 +24,7 @@ import javax.inject.Inject
 class ConsoleViewModel @Inject constructor(
     @Publisher.App publisher: Publisher,
     private val cacher: FilePathCacher
-) : BaseViewModel<ConsoleState, ConsoleEvent, Message.Static>(
+) : BaseViewModel<ConsoleState, ConsoleEvent>(
     emptyState = ConsoleState()
 ) {
     init {

@@ -18,7 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.media3.common.Format
+import com.m3u.features.stream.model.Format
 import com.m3u.i18n.R.string
 import com.m3u.material.components.OnDismiss
 import com.m3u.material.components.mask.MaskState

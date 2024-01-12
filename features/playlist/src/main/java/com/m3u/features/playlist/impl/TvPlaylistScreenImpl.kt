@@ -42,7 +42,6 @@ import androidx.compose.ui.unit.dp
 import androidx.tv.foundation.lazy.list.TvLazyColumn
 import androidx.tv.foundation.lazy.list.TvLazyRow
 import androidx.tv.foundation.lazy.list.items
-import androidx.tv.foundation.lazy.list.rememberTvLazyListState
 import androidx.tv.material3.Card
 import androidx.tv.material3.DrawerValue
 import androidx.tv.material3.Icon
@@ -70,6 +69,7 @@ import kotlinx.collections.immutable.ImmutableList
 
 @Composable
 internal fun TvPlaylistScreenImpl(
+    title: String,
     channels: ImmutableList<Channel>,
     findStreamById: (Int) -> Stream?,
     query: String,
@@ -88,8 +88,6 @@ internal fun TvPlaylistScreenImpl(
     val helper = LocalHelper.current
     val spacing = LocalSpacing.current
     val focusRequester = remember { FocusRequester() }
-
-    val state = rememberTvLazyListState()
 
     val maxBrowserHeight = 180.dp
 
@@ -264,6 +262,13 @@ internal fun TvPlaylistScreenImpl(
                             .align(Alignment.TopEnd)
                             .padding(spacing.medium)
                     ) {
+                        Text(
+                            text = title,
+                            style = MaterialTheme.typography.headlineLarge,
+                            fontWeight = FontWeight.ExtraBold,
+                            maxLines = 1
+                        )
+                        Spacer(modifier = Modifier.weight(1f))
                         IconButton(
                             icon = Icons.Rounded.Search,
                             contentDescription = "search",
@@ -279,7 +284,6 @@ internal fun TvPlaylistScreenImpl(
             },
             list = {
                 TvLazyColumn(
-                    state = state,
                     verticalArrangement = Arrangement.spacedBy(spacing.medium),
                     contentPadding = PaddingValues(vertical = spacing.medium),
                     modifier = Modifier
@@ -290,7 +294,6 @@ internal fun TvPlaylistScreenImpl(
                         )
                 ) {
                     items(channels) { channel ->
-                        val title = channel.title
                         val streams = channel.streams
                         TvLazyRow(
                             horizontalArrangement = Arrangement.spacedBy(spacing.medium),
@@ -310,7 +313,7 @@ internal fun TvPlaylistScreenImpl(
                                             modifier = Modifier.fillMaxSize()
                                         ) {
                                             Text(
-                                                text = title,
+                                                text = channel.title,
                                                 style = MaterialTheme.typography.displayMedium
                                             )
                                         }

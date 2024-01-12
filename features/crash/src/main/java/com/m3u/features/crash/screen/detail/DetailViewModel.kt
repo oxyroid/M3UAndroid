@@ -3,7 +3,6 @@ package com.m3u.features.crash.screen.detail
 import com.m3u.core.architecture.FilePath
 import com.m3u.core.architecture.FilePathCacher
 import com.m3u.core.architecture.viewmodel.BaseViewModel
-import com.m3u.core.wrapper.Message
 import com.m3u.data.repository.MediaRepository
 import com.m3u.features.crash.CrashActivity
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -15,7 +14,7 @@ import javax.inject.Inject
 class DetailViewModel @Inject constructor(
     private val cacher: FilePathCacher,
     private val mediaRepository: MediaRepository
-) : BaseViewModel<DetailState, DetailEvent, Message.Static>(
+) : BaseViewModel<DetailState, DetailEvent>(
     emptyState = DetailState()
 ) {
     override fun onEvent(event: DetailEvent) {

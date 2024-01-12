@@ -24,11 +24,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.tv.material3.Card
 import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.data.database.model.Stream
 import com.m3u.i18n.R.string
 import com.m3u.material.components.Image
 import com.m3u.material.components.TextBadge
+import com.m3u.material.ktx.isTvDevice
 import com.m3u.material.model.LocalSpacing
 import java.net.URI
 
@@ -76,21 +78,67 @@ private fun FavoriteItemImpl(
 ) {
     val context = LocalContext.current
     val spacing = LocalSpacing.current
+    val tv = isTvDevice()
 
     val scheme = remember(stream.url) {
         URI(stream.url).scheme ?: context.getString(string.feat_playlist_scheme_unknown)
     }
 
-    OutlinedCard(
-        border = CardDefaults.outlinedCardBorder(zapping)
-    ) {
-        Column(
-            modifier = Modifier
-                .combinedClickable(
-                    onClick = onClick,
-                    onLongClick = onLongClick
-                )
-                .then(modifier)
+    if (!tv) {
+        OutlinedCard(
+            border = CardDefaults.outlinedCardBorder(zapping)
+        ) {
+            Column(
+                modifier = Modifier
+                    .combinedClickable(
+                        onClick = onClick,
+                        onLongClick = onLongClick
+                    )
+                    .then(modifier)
+            ) {
+                AnimatedVisibility(!noPictureMode && !stream.cover.isNullOrEmpty()) {
+                    Image(
+                        model = stream.cover,
+                        errorPlaceholder = stream.title,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .aspectRatio(4 / 3f)
+                    )
+                }
+                Column(
+                    modifier = Modifier.padding(spacing.medium),
+                    verticalArrangement = Arrangement.spacedBy(spacing.small)
+                ) {
+                    Text(
+                        text = stream.title,
+                        style = MaterialTheme.typography.titleSmall,
+                        fontSize = MaterialTheme.typography.titleSmall.fontSize,
+                        overflow = TextOverflow.Ellipsis,
+                        maxLines = 1,
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(spacing.extraSmall)
+                    ) {
+                        TextBadge(scheme)
+                        Text(
+                            text = stream.url,
+                            maxLines = 1,
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontSize = MaterialTheme.typography.bodyMedium.fontSize,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                }
+            }
+        }
+    } else {
+        Card(
+            onClick = onClick,
+            onLongClick = onLongClick
         ) {
             AnimatedVisibility(!noPictureMode && !stream.cover.isNullOrEmpty()) {
                 Image(

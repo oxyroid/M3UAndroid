@@ -51,7 +51,6 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.media3.common.Format
 import androidx.media3.common.Player
 import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.core.util.basic.isNotEmpty
@@ -65,11 +64,11 @@ import com.m3u.material.components.Image
 import com.m3u.material.components.mask.MaskButton
 import com.m3u.material.components.mask.MaskCircleButton
 import com.m3u.material.components.mask.MaskState
+import com.m3u.material.ktx.isTvDevice
 import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.LocalHelper
 import com.m3u.ui.Player
 import com.m3u.ui.rememberPlayerState
-import kotlinx.collections.immutable.ImmutableList
 import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
@@ -79,7 +78,7 @@ internal fun StreamFragment(
     playlistTitle: String,
     url: String,
     cover: String,
-    formats: ImmutableList<Format>,
+    formatsIsNotEmpty: Boolean,
     maskState: MaskState,
     recording: Boolean,
     favourite: Boolean,
@@ -99,6 +98,7 @@ internal fun StreamFragment(
     val theme = MaterialTheme.colorScheme
     val pref = LocalPref.current
     val helper = LocalHelper.current
+    val tv = isTvDevice()
 
     // because they will be updated frequently,
     // they must be wrapped with rememberUpdatedState when using them.
@@ -178,7 +178,7 @@ internal fun StreamFragment(
                             contentDescription = if (favourite) stringResource(string.feat_stream_tooltip_unfavourite)
                             else stringResource(string.feat_stream_tooltip_favourite)
                         )
-                        if (formats.isNotEmpty()) {
+                        if (formatsIsNotEmpty) {
                             MaskButton(
                                 state = maskState,
                                 icon = Icons.Rounded.HighQuality,
@@ -199,7 +199,7 @@ internal fun StreamFragment(
                                 else stringResource(string.feat_stream_tooltip_record)
                             )
                         }
-                        if (pref.screencast && playerState.playState != Player.STATE_IDLE) {
+                        if (!tv && pref.screencast && playerState.playState != Player.STATE_IDLE) {
                             MaskButton(
                                 state = maskState,
                                 icon = Icons.Rounded.Cast,
@@ -288,53 +288,58 @@ internal fun StreamFragment(
                                 )
                             }
                         }
-                        val autoRotating by StreamFragmentDefaults.IsAutoRotatingEnabled
-                        LaunchedEffect(autoRotating) {
-                            if (autoRotating) {
-                                helper.screenOrientation =
-                                    ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+                        if (!tv) {
+                            val autoRotating by StreamFragmentDefaults.IsAutoRotatingEnabled
+                            LaunchedEffect(autoRotating) {
+                                if (autoRotating) {
+                                    helper.screenOrientation =
+                                        ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+                                }
                             }
-                        }
-                        if (pref.screenRotating && !autoRotating) {
-                            MaskButton(
-                                state = maskState,
-                                icon = Icons.Rounded.ScreenRotationAlt,
-                                onClick = {
-                                    helper.screenOrientation = when (helper.screenOrientation) {
-                                        ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE -> ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
-                                        else -> ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
-                                    }
-                                },
-                                contentDescription = stringResource(string.feat_stream_tooltip_screen_rotating)
-                            )
+                            if (pref.screenRotating && !autoRotating) {
+                                MaskButton(
+                                    state = maskState,
+                                    icon = Icons.Rounded.ScreenRotationAlt,
+                                    onClick = {
+                                        helper.screenOrientation = when (helper.screenOrientation) {
+                                            ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE -> ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+                                            else -> ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+                                        }
+                                    },
+                                    contentDescription = stringResource(string.feat_stream_tooltip_screen_rotating)
+                                )
+                            }
                         }
                     },
                     modifier = Modifier
-                        .detectVerticalMaskGestures(
-                            safe = 0.35f,
-                            threshold = 0.15f,
-                            volume = { deltaPixel ->
-                                if (!pref.volumeGesture) return@detectVerticalMaskGestures
-                                onVolume(
-                                    (currentVolume - (deltaPixel / maxHeight.value)).coerceIn(0f..1f)
-                                )
-                            },
-                            brightness = { deltaPixel ->
-                                if (!pref.brightnessGesture) return@detectVerticalMaskGestures
-                                onBrightness(
-                                    (currentLight - deltaPixel / maxHeight.value).coerceIn(0f..1f)
-                                )
-                            },
-                            onDragStart = {
-                                if (!pref.volumeGesture && !pref.brightnessGesture) return@detectVerticalMaskGestures
-                                maskState.lock()
-                                gesture = it
-                            },
-                            onDragEnd = {
-                                if (!pref.volumeGesture && !pref.brightnessGesture) return@detectVerticalMaskGestures
-                                maskState.unlock(400.milliseconds)
-                                gesture = null
-                            }
+                        .then(
+                            if (tv) Modifier
+                            else Modifier.detectVerticalMaskGestures(
+                                safe = 0.35f,
+                                threshold = 0.15f,
+                                volume = { deltaPixel ->
+                                    if (!pref.volumeGesture) return@detectVerticalMaskGestures
+                                    onVolume(
+                                        (currentVolume - (deltaPixel / maxHeight.value)).coerceIn(0f..1f)
+                                    )
+                                },
+                                brightness = { deltaPixel ->
+                                    if (!pref.brightnessGesture) return@detectVerticalMaskGestures
+                                    onBrightness(
+                                        (currentLight - deltaPixel / maxHeight.value).coerceIn(0f..1f)
+                                    )
+                                },
+                                onDragStart = {
+                                    if (!pref.volumeGesture && !pref.brightnessGesture) return@detectVerticalMaskGestures
+                                    maskState.lock()
+                                    gesture = it
+                                },
+                                onDragEnd = {
+                                    if (!pref.volumeGesture && !pref.brightnessGesture) return@detectVerticalMaskGestures
+                                    maskState.unlock(400.milliseconds)
+                                    gesture = null
+                                }
+                            )
                         )
                         .padding(windowInsets.asPaddingValues())
                 )

@@ -1,7 +1,6 @@
 package com.m3u.core.architecture.viewmodel
 
 import androidx.lifecycle.ViewModel
-import com.m3u.core.wrapper.Message
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -13,7 +12,8 @@ import kotlinx.coroutines.flow.asStateFlow
  * 3. It also provides context but not making memory lacking.
  */
 
-abstract class BaseViewModel<S, in E, M : Message>(
+@Deprecated("Use ViewModel instead")
+abstract class BaseViewModel<S, in E>(
     emptyState: S
 ) : ViewModel() {
     protected val writable: MutableStateFlow<S> = MutableStateFlow(emptyState)

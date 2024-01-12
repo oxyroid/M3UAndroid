@@ -39,7 +39,8 @@ internal fun TvStreamItem(
             if (stream.cover.isNullOrEmpty()) {
                 Text(
                     text = stream.title,
-                    modifier = Modifier.padding(spacing.medium)
+                    modifier = Modifier.padding(spacing.medium),
+                    maxLines = 1
                 )
             } else {
                 AsyncImage(

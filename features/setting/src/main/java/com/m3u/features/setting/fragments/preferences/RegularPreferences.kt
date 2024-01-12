@@ -25,6 +25,7 @@ import com.m3u.features.setting.components.CheckBoxSharedPreference
 import com.m3u.i18n.R.string
 import com.m3u.material.components.Preference
 import com.m3u.material.components.TextPreference
+import com.m3u.material.ktx.isTvDevice
 import com.m3u.ui.Destination
 import com.m3u.ui.Destination.Root.Setting.SettingFragment
 import kotlin.time.DurationUnit
@@ -38,6 +39,8 @@ internal fun RegularPreferences(
     modifier: Modifier = Modifier
 ) {
     val pref = LocalPref.current
+    val tv = isTvDevice()
+
     Column(modifier) {
         Preference(
             title = stringResource(string.feat_setting_playlist_management).title(),
@@ -135,12 +138,14 @@ internal fun RegularPreferences(
             checked = pref.noPictureMode,
             onChanged = { pref.noPictureMode = !pref.noPictureMode }
         )
-        CheckBoxSharedPreference(
-            title = string.feat_setting_god_mode,
-            content = string.feat_setting_god_mode_description,
-            icon = Icons.Rounded.DeviceHub,
-            checked = pref.godMode,
-            onChanged = { pref.godMode = !pref.godMode }
-        )
+        if (!tv) {
+            CheckBoxSharedPreference(
+                title = string.feat_setting_god_mode,
+                content = string.feat_setting_god_mode_description,
+                icon = Icons.Rounded.DeviceHub,
+                checked = pref.godMode,
+                onChanged = { pref.godMode = !pref.godMode }
+            )
+        }
     }
 }

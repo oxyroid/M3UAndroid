@@ -96,3 +96,8 @@ internal fun PreferencesFragment(
         }
     }
 }
+
+@Composable
+internal fun <T> T.ifTvDevice(placement: () -> T): T {
+    return if (isTvDevice()) placement() else this
+}

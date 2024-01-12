@@ -3,11 +3,9 @@ package com.m3u.features.stream
 import android.app.Application
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.C
-import androidx.media3.common.Format
 import androidx.media3.common.Tracks
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.viewmodel.BaseViewModel
-import com.m3u.core.wrapper.Message
 import com.m3u.data.repository.PlaylistRepository
 import com.m3u.data.repository.StreamRepository
 import com.m3u.data.service.PlayerService
@@ -16,6 +14,8 @@ import com.m3u.dlna.OnDeviceRegistryListener
 import com.m3u.dlna.control.DeviceControl
 import com.m3u.dlna.control.OnDeviceControlListener
 import com.m3u.dlna.control.ServiceActionCallback
+import com.m3u.features.stream.model.Format
+import com.m3u.features.stream.model.asFormat
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
@@ -45,19 +45,19 @@ class StreamViewModel @Inject constructor(
     private val playerService: PlayerService,
     private val logger: Logger,
     private val application: Application
-) : BaseViewModel<StreamState, StreamEvent, Message.Static>(
+) : BaseViewModel<StreamState, StreamEvent>(
     emptyState = StreamState()
 ), OnDeviceRegistryListener, OnDeviceControlListener {
     private val _devices = MutableStateFlow<ImmutableList<Device<*, *, *>>>(persistentListOf())
 
     // searched screencast devices
-    val devices = _devices.asStateFlow()
+    internal val devices = _devices.asStateFlow()
 
     private val _volume: MutableStateFlow<Float> = MutableStateFlow(1f)
-    val volume = _volume.asStateFlow()
+    internal val volume = _volume.asStateFlow()
 
     // playlist and stream info
-    val metadata: StateFlow<StreamState.Metadata> = combine(
+    internal val metadata: StateFlow<StreamState.Metadata> = combine(
         playerService.url,
         streamRepository.observeAll(),
         playlistRepository.observeAll()
@@ -80,7 +80,7 @@ class StreamViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5_000)
         )
 
-    val videoFormats: StateFlow<ImmutableList<Format>> = groups
+    internal val formats: StateFlow<ImmutableList<Format>> = groups
         .mapNotNull { all -> all.find { it.type == C.TRACK_TYPE_VIDEO } }
         .map { group ->
             List(group.length) {
@@ -88,10 +88,9 @@ class StreamViewModel @Inject constructor(
             }
         }
         .map { all ->
-            all.mapNotNull {
-                it.takeIf { it.width > 0 && it.height > 0 }
-            }
-                .toPersistentList()
+            all.mapNotNull { f ->
+                f.takeIf { it.width > 0 && it.height > 0 }?.asFormat()
+            }.toPersistentList()
         }
         .stateIn(
             scope = viewModelScope,
@@ -99,16 +98,17 @@ class StreamViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5_000)
         )
 
-    val format: StateFlow<Format?> = playerService
+    internal val format: StateFlow<Format?> = playerService
         .selected
         .map { it[C.TRACK_TYPE_VIDEO] }
+        .map { it?.asFormat() }
         .stateIn(
             scope = viewModelScope,
             initialValue = null,
             started = SharingStarted.WhileSubscribed(5_000)
         )
 
-    fun chooseFormat(format: Format) {
+    internal fun chooseFormat(format: Format) {
         val currentGroups = groups.value
         val currentGroup = currentGroups.find { it.type == C.TRACK_TYPE_VIDEO } ?: return
         for (index in 0 until currentGroup.length) {
@@ -123,7 +123,7 @@ class StreamViewModel @Inject constructor(
     }
 
     // stream playing state
-    val playerState: StateFlow<StreamState.PlayerState> = combine(
+    internal val playerState: StateFlow<StreamState.PlayerState> = combine(
         playerService.player,
         playerService.playbackState,
         playerService.videoSize,
@@ -159,7 +159,6 @@ class StreamViewModel @Inject constructor(
             StreamEvent.CloseDlnaDevices -> closeDlnaDevices()
             is StreamEvent.ConnectDlnaDevice -> connectDlnaDevice(event.device)
             is StreamEvent.DisconnectDlnaDevice -> disconnectDlnaDevice(event.device)
-            StreamEvent.Record -> record()
             is StreamEvent.OnFavourite -> onFavourite(event.url)
             StreamEvent.Stop -> stop()
             is StreamEvent.OnVolume -> onVolume(event.volume)
@@ -169,12 +168,12 @@ class StreamViewModel @Inject constructor(
     private val _isDevicesVisible: MutableStateFlow<Boolean> = MutableStateFlow(false)
 
     // show searching devices dialog or not
-    val isDevicesVisible = _isDevicesVisible.asStateFlow()
+    internal val isDevicesVisible = _isDevicesVisible.asStateFlow()
 
     private val _searching: MutableStateFlow<Boolean> = MutableStateFlow(false)
 
     // searching or not
-    val searching = _searching.asStateFlow()
+    internal val searching = _searching.asStateFlow()
 
     private fun openDlnaDevices() {
         DLNACastManager.bindCastService(application)
@@ -212,12 +211,11 @@ class StreamViewModel @Inject constructor(
         DLNACastManager.disconnectDevice(device)
     }
 
-    private fun record() {
-        writable.update {
-            it.copy(
-                recording = !readable.recording
-            )
-        }
+    private val _recording = MutableStateFlow(false)
+    internal val recording = _recording.asStateFlow()
+
+    internal fun record() {
+        _recording.update { !it }
     }
 
     private fun onFavourite(url: String) {

@@ -22,7 +22,6 @@ import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.media3.common.Format
 import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.core.unspecified.unspecifiable
 import com.m3u.core.util.basic.isNotEmpty
@@ -39,7 +38,6 @@ import com.m3u.material.ktx.isTvDevice
 import com.m3u.ui.LocalHelper
 import com.m3u.ui.OnPipModeChanged
 import com.m3u.ui.repeatOnLifecycle
-import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 
@@ -59,10 +57,11 @@ fun StreamRoute(
     val devices by viewModel.devices.collectAsStateWithLifecycle()
     val isDevicesVisible by viewModel.isDevicesVisible.collectAsStateWithLifecycle()
     val searching by viewModel.searching.collectAsStateWithLifecycle()
-    val formats by viewModel.videoFormats.collectAsStateWithLifecycle()
+    val formats by viewModel.formats.collectAsStateWithLifecycle()
     val format by viewModel.format.collectAsStateWithLifecycle()
-
     val volume by viewModel.volume.collectAsStateWithLifecycle()
+    val recording by viewModel.recording.collectAsStateWithLifecycle()
+
     var brightness by rememberSaveable { mutableFloatStateOf(helper.brightness) }
     var isPipMode by rememberSaveable { mutableStateOf(false) }
     var isAutoZappingMode by rememberSaveable { mutableStateOf(true) }
@@ -175,16 +174,16 @@ fun StreamRoute(
         )
 
         StreamScreen(
-            recording = state.recording,
+            recording = recording,
             openDlnaDevices = { viewModel.onEvent(StreamEvent.OpenDlnaDevices) },
             openChooseFormat = { choosing = true },
-            onRecord = { viewModel.onEvent(StreamEvent.Record) },
+            onRecord = { viewModel.record() },
             onFavourite = { viewModel.onEvent(StreamEvent.OnFavourite(it)) },
             onBackPressed = onBackPressed,
             maskState = maskState,
             playerState = playerState,
             metadata = metadata,
-            formats = formats,
+            formatsIsNotEmpty = formats.isNotEmpty(),
             brightness = brightness,
             volume = volume,
             onBrightness = { brightness = it },
@@ -204,7 +203,7 @@ private fun StreamScreen(
     maskState: MaskState,
     playerState: StreamState.PlayerState,
     metadata: StreamState.Metadata,
-    formats: ImmutableList<Format>,
+    formatsIsNotEmpty: Boolean,
     openDlnaDevices: () -> Unit,
     openChooseFormat: () -> Unit,
     volume: Float,
@@ -232,7 +231,7 @@ private fun StreamScreen(
         title = title,
         url = url,
         cover = cover,
-        formats = formats,
+        formatsIsNotEmpty = formatsIsNotEmpty,
         playlistTitle = playlistTitle,
         maskState = maskState,
         recording = recording,

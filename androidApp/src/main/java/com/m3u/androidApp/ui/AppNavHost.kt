@@ -72,9 +72,11 @@ fun AppNavHost(
             roots = roots,
             contentPadding = contentPadding,
             navigateToPlaylist = { playlist ->
-                helper.title = playlist.title.ifEmpty {
-                    if (playlist.local) context.getString(string.feat_foryou_imported_playlist_title)
-                    else ""
+                if (!tv) {
+                    helper.title = playlist.title.ifEmpty {
+                        if (playlist.local) context.getString(string.feat_foryou_imported_playlist_title)
+                        else ""
+                    }
                 }
                 navController.navigateToPlaylist(playlist.url, null, tv)
             },
@@ -97,9 +99,11 @@ fun AppNavHost(
                 navController.navigateToAbout()
             },
             navigateToRecommendPlaylist = { playlist, recommend ->
-                helper.title = playlist.title.ifEmpty {
-                    if (playlist.local) context.getString(string.feat_foryou_imported_playlist_title)
-                    else ""
+                if (!tv) {
+                    helper.title = playlist.title.ifEmpty {
+                        if (playlist.local) context.getString(string.feat_foryou_imported_playlist_title)
+                        else ""
+                    }
                 }
                 navController.navigateToPlaylist(playlist.url, recommend, tv)
             },

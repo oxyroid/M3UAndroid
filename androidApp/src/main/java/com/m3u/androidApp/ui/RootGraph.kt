@@ -8,9 +8,14 @@ import androidx.compose.foundation.pager.PagerState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
@@ -91,6 +96,12 @@ private fun RootGraph(
             .launchIn(this)
     }
 
+    var key by rememberSaveable { mutableStateOf(true) }
+    LifecycleResumeEffect(Unit) {
+        key = !key
+        onPauseOrDispose {  }
+    }
+
     HorizontalPager(
         state = pagerState,
         userScrollEnabled = !isTvDevice(),
@@ -108,7 +119,7 @@ private fun RootGraph(
                     navigateToStream = navigateToStream,
                     navigateToRecommendPlaylist = navigateToRecommendPlaylist,
                     navigateToSettingPlaylistManagement = navigateToSettingPlaylistManagement,
-                    resume = rememberResumeEvent(pagerState.settledPage, pagerIndex),
+                    resume = rememberResumeEvent(pagerState.settledPage, pagerIndex, key),
                     contentPadding = contentPadding,
                     modifier = Modifier.fillMaxSize()
                 )
@@ -117,7 +128,7 @@ private fun RootGraph(
             Destination.Root.Favourite -> {
                 FavouriteRoute(
                     navigateToStream = navigateToStream,
-                    resume = rememberResumeEvent(pagerState.settledPage, pagerIndex),
+                    resume = rememberResumeEvent(pagerState.settledPage, pagerIndex, key),
                     contentPadding = contentPadding,
                     modifier = Modifier.fillMaxSize()
                 )
@@ -129,7 +140,7 @@ private fun RootGraph(
                     navigateToAbout = navigateToAbout,
                     contentPadding = contentPadding,
                     targetFragment = root.targetFragment,
-                    resume = rememberResumeEvent(pagerState.settledPage, pagerIndex),
+                    resume = rememberResumeEvent(pagerState.settledPage, pagerIndex, key),
                     modifier = Modifier.fillMaxSize()
                 )
             }
@@ -145,8 +156,8 @@ private data class PagerStateSnapshot(
 )
 
 @Composable
-private fun rememberResumeEvent(currentPage: Int, targetPage: Int): ResumeEvent =
-    remember(currentPage, targetPage) {
+private fun rememberResumeEvent(currentPage: Int, targetPage: Int, key: Boolean): ResumeEvent =
+    remember(currentPage, targetPage, key) {
         if (currentPage == targetPage) eventOf(Unit)
         else handledEvent()
     }

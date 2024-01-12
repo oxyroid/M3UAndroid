@@ -62,6 +62,7 @@ internal fun PlaylistRoute(
     val zapping by viewModel.zapping.collectAsStateWithLifecycle()
     val query by viewModel.query.collectAsStateWithLifecycle()
     val playlistUrl by viewModel.playlistUrl.collectAsStateWithLifecycle()
+    val playlist by viewModel.playlist.collectAsStateWithLifecycle()
     val channels by viewModel.channels.collectAsStateWithLifecycle()
     val unsorted by viewModel.unsorted.collectAsStateWithLifecycle()
     val refreshing by viewModel.refreshing.collectAsStateWithLifecycle()
@@ -105,6 +106,7 @@ internal fun PlaylistRoute(
 
     Background {
         PlaylistScreen(
+            title = playlist?.title.orEmpty(),
             query = query,
             onQuery = { viewModel.onEvent(PlaylistEvent.Query(it)) },
             rowCount = pref.rowCount,
@@ -138,6 +140,7 @@ internal fun PlaylistRoute(
 
 @Composable
 private fun PlaylistScreen(
+    title: String,
     query: String,
     onQuery: (String) -> Unit,
     rowCount: Int,
@@ -198,6 +201,7 @@ private fun PlaylistScreen(
         )
     } else {
         TvPlaylistScreenImpl(
+            title = title,
             channels = channels,
             query = query,
             onQuery = onQuery,

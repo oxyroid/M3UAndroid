@@ -6,7 +6,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.media3.common.Format
+import com.m3u.features.stream.model.Format
 
 @Composable
 internal fun FormatItem(

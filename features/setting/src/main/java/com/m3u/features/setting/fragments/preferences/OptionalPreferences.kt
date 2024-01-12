@@ -27,11 +27,14 @@ import com.m3u.core.util.basic.title
 import com.m3u.features.setting.components.CheckBoxSharedPreference
 import com.m3u.i18n.R.string
 import com.m3u.material.components.Preference
+import com.m3u.material.ktx.isTvDevice
 
 @Composable
 fun OptionalPreferences(modifier: Modifier = Modifier) {
     val pref = LocalPref.current
+    val tv = isTvDevice()
     var expended by rememberSaveable { mutableStateOf(false) }
+
     Column(modifier) {
         Preference(
             title = stringResource(string.feat_setting_optional_player_features).title(),
@@ -55,25 +58,28 @@ fun OptionalPreferences(modifier: Modifier = Modifier) {
                     checked = pref.fullInfoPlayer,
                     onChanged = { pref.fullInfoPlayer = !pref.fullInfoPlayer }
                 )
-                CheckBoxSharedPreference(
-                    title = string.feat_setting_zapping_mode,
-                    content = string.feat_setting_zapping_mode_description,
-                    icon = Icons.Rounded.PictureInPicture,
-                    checked = pref.zappingMode,
-                    onChanged = { pref.zappingMode = !pref.zappingMode }
-                )
-                CheckBoxSharedPreference(
-                    title = string.feat_setting_gesture_brightness,
-                    icon = Icons.Rounded.BrightnessMedium,
-                    checked = pref.brightnessGesture,
-                    onChanged = { pref.brightnessGesture = !pref.brightnessGesture }
-                )
-                CheckBoxSharedPreference(
-                    title = string.feat_setting_gesture_volume,
-                    icon = Icons.AutoMirrored.Rounded.VolumeUp,
-                    checked = pref.volumeGesture,
-                    onChanged = { pref.volumeGesture = !pref.volumeGesture }
-                )
+                if (!tv) {
+                    CheckBoxSharedPreference(
+                        title = string.feat_setting_zapping_mode,
+                        content = string.feat_setting_zapping_mode_description,
+                        icon = Icons.Rounded.PictureInPicture,
+                        checked = pref.zappingMode,
+                        onChanged = { pref.zappingMode = !pref.zappingMode }
+                    )
+                    CheckBoxSharedPreference(
+                        title = string.feat_setting_gesture_brightness,
+                        icon = Icons.Rounded.BrightnessMedium,
+                        checked = pref.brightnessGesture,
+                        onChanged = { pref.brightnessGesture = !pref.brightnessGesture }
+                    )
+                    CheckBoxSharedPreference(
+                        title = string.feat_setting_gesture_volume,
+                        icon = Icons.AutoMirrored.Rounded.VolumeUp,
+                        checked = pref.volumeGesture,
+                        onChanged = { pref.volumeGesture = !pref.volumeGesture }
+                    )
+                }
+
                 CheckBoxSharedPreference(
                     title = string.feat_setting_record,
                     content = string.feat_setting_not_implementation,
@@ -82,19 +88,22 @@ fun OptionalPreferences(modifier: Modifier = Modifier) {
                     checked = pref.record,
                     onChanged = { pref.record = !pref.record }
                 )
-                CheckBoxSharedPreference(
-                    title = string.feat_setting_screen_rotating,
-                    content = string.feat_setting_screen_rotating_description,
-                    icon = Icons.Rounded.ScreenRotation,
-                    checked = pref.screenRotating,
-                    onChanged = { pref.screenRotating = !pref.screenRotating }
-                )
-                CheckBoxSharedPreference(
-                    title = string.feat_setting_screencast,
-                    icon = Icons.Rounded.Cast,
-                    checked = pref.screencast,
-                    onChanged = { pref.screencast = !pref.screencast }
-                )
+                if (!tv) {
+                    CheckBoxSharedPreference(
+                        title = string.feat_setting_screen_rotating,
+                        content = string.feat_setting_screen_rotating_description,
+                        icon = Icons.Rounded.ScreenRotation,
+                        checked = pref.screenRotating,
+                        onChanged = { pref.screenRotating = !pref.screenRotating }
+                    )
+                    CheckBoxSharedPreference(
+                        title = string.feat_setting_screencast,
+                        icon = Icons.Rounded.Cast,
+                        checked = pref.screencast,
+                        onChanged = { pref.screencast = !pref.screencast }
+                    )
+                }
+
                 CheckBoxSharedPreference(
                     title = string.feat_setting_auto_reconnect,
                     icon = Icons.Rounded.Loop,

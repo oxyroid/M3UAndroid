@@ -56,7 +56,7 @@ class PlaylistViewModel @Inject constructor(
     private val pref: Pref,
     @Logger.Ui private val logger: Logger,
     private val messageService: MessageService
-) : BaseViewModel<PlaylistState, PlaylistEvent, PlaylistMessage>(
+) : BaseViewModel<PlaylistState, PlaylistEvent>(
     emptyState = PlaylistState()
 ) {
     internal val playlistUrl: StateFlow<String> =
@@ -216,7 +216,7 @@ class PlaylistViewModel @Inject constructor(
         Channel("", toPersistentList())
     )
 
-    val playlist: StateFlow<Playlist?> = playlistUrl.map { url ->
+    internal val playlist: StateFlow<Playlist?> = playlistUrl.map { url ->
         playlistRepository.get(url)
     }
         .stateIn(

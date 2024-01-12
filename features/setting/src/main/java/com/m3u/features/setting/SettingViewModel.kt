@@ -35,7 +35,7 @@ class SettingViewModel @Inject constructor(
     private val workManager: WorkManager,
     private val pref: Pref,
     private val messageService: MessageService
-) : BaseViewModel<SettingState, SettingEvent, SettingMessage>(
+) : BaseViewModel<SettingState, SettingEvent>(
     emptyState = SettingState(
         versionName = publisher.versionName,
         versionCode = publisher.versionCode

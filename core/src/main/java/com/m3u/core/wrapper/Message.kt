@@ -4,6 +4,7 @@ import androidx.compose.runtime.Immutable
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
+@Immutable
 sealed class Message(
     open val level: Int,
     open val tag: String,

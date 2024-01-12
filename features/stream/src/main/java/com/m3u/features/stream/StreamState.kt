@@ -9,7 +9,6 @@ import com.m3u.data.database.model.Stream
 import org.jupnp.model.meta.Device
 
 data class StreamState(
-    val recording: Boolean = false,
     val connected: Device<*, *, *>? = null
 ) {
     @Immutable

@@ -9,7 +9,6 @@ import androidx.compose.material3.TooltipDefaults
 import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -33,22 +32,21 @@ fun MaskButton(
         label = "mask-button-tint"
     )
 
-    val currentKeepAlive by rememberUpdatedState(state::wake)
     TooltipBox(
+        state = tooltipState,
         positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
         tooltip = {
             PlainTooltip {
                 Text(text = contentDescription.uppercase())
             }
-        },
-        state = tooltipState
+        }
     ) {
         IconButton(
             icon = icon,
             enabled = enabled,
-            contentDescription = null,
+            contentDescription = contentDescription,
             onClick = {
-                currentKeepAlive()
+                state.wake()
                 onClick()
             },
             modifier = modifier,
