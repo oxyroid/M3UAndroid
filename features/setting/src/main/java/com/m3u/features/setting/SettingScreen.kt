@@ -43,7 +43,7 @@ import com.m3u.data.database.model.Stream
 import com.m3u.features.setting.fragments.ColorPack
 import com.m3u.features.setting.fragments.ScriptsFragment
 import com.m3u.features.setting.fragments.SubscriptionsFragment
-import com.m3u.features.setting.fragments.ThemeFragment
+import com.m3u.features.setting.fragments.AppearanceFragment
 import com.m3u.features.setting.fragments.preferences.PreferencesFragment
 import com.m3u.i18n.R.string
 import com.m3u.ui.Destination.Root.Setting.SettingFragment
@@ -228,7 +228,7 @@ private fun SettingScreen(
                         }
 
                         SettingFragment.Appearance -> {
-                            ThemeFragment(
+                            AppearanceFragment(
                                 packs = packs,
                                 colorArgb = colorArgb,
                                 onArgbMenu = onArgbMenu,

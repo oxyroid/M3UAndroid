@@ -27,6 +27,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.tv.material3.LocalContentColor as TvLocalContentColor
 import com.m3u.core.wrapper.Message
 import com.m3u.material.components.Background
 import com.m3u.material.components.IconButton
@@ -153,7 +156,13 @@ private fun AppRootGraphImpl(
 
     NavigationSuiteScaffold(
         navigationSuiteItems = navigation,
-        content = actualContent,
+        content = {
+            CompositionLocalProvider(
+                TvLocalContentColor provides LocalContentColor.current
+            ) {
+                actualContent()
+            }
+        },
         navigationSuiteColors = navigationSuiteColors,
         containerColor = currentContainerColor,
         contentColor = currentContentColor,

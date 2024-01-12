@@ -207,7 +207,7 @@ internal fun StreamFragment(
                                 contentDescription = stringResource(string.feat_stream_tooltip_cast)
                             )
                         }
-                        if (playerState.videoSize.isNotEmpty) {
+                        if (!tv && playerState.videoSize.isNotEmpty) {
                             MaskButton(
                                 state = maskState,
                                 icon = Icons.Rounded.PictureInPicture,

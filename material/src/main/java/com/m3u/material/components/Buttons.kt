@@ -30,6 +30,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
+import com.m3u.material.ktx.ifUnspecified
 import com.m3u.material.ktx.isTvDevice
 import com.m3u.material.model.LocalSpacing
 import androidx.tv.material3.Button as TvButton
@@ -163,14 +164,15 @@ fun IconButton(
         }
     } else {
         val colorScheme = androidx.tv.material3.MaterialTheme.colorScheme
+        val actualTint = tint.ifUnspecified { androidx.tv.material3.LocalContentColor.current }
         androidx.tv.material3.IconButton(
             onClick = onClick,
             enabled = enabled,
             modifier = modifier,
             colors = androidx.tv.material3.IconButtonDefaults.colors(
-                contentColor = tint,
+                contentColor = actualTint,
                 focusedContainerColor = colorScheme.onSurface.copy(0.38f),
-                focusedContentColor = tint
+                focusedContentColor = actualTint
             )
         ) {
             androidx.tv.material3.Icon(

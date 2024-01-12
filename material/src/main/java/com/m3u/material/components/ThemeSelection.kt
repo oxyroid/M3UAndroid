@@ -43,8 +43,10 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.tv.material3.Card
 import com.m3u.material.ktx.InteractionType
 import com.m3u.material.ktx.interactionBorder
+import com.m3u.material.ktx.isTvDevice
 import com.m3u.material.model.LocalSpacing
 import com.m3u.material.model.SugarColors
 
@@ -61,64 +63,103 @@ fun ThemeSelection(
     modifier: Modifier = Modifier,
 ) {
     val spacing = LocalSpacing.current
+    val tv = isTvDevice()
+
     val alpha by animateFloatAsState(
         targetValue = if (selected) 0f else 0.4f,
         label = "alpha"
-    )
-    val zoom by animateFloatAsState(
-        targetValue = if (selected) 0.95f else 0.85f,
-        label = "zoom"
     )
     val blurRadius by animateFloatAsState(
         targetValue = if (selected) 0f else 16f,
         label = "blur-radius"
     )
-    val corner by animateDpAsState(
-        targetValue = if (!selected) spacing.extraLarge else spacing.medium,
-        label = "corner"
-    )
     val feedback = LocalHapticFeedback.current
 
     val interactionSource = remember { MutableInteractionSource() }
-    val shape = RoundedCornerShape(corner)
 
+    val content: @Composable () -> Unit = {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(spacing.small),
+            modifier = Modifier
+                .graphicsLayer {
+                    if (blurRadius != 0f) renderEffect = BlurEffect(blurRadius, blurRadius)
+                }
+                .drawWithContent {
+                    drawContent()
+                    drawRect(
+                        color = Color.Black.copy(
+                            alpha = alpha
+                        )
+                    )
+                }
+        ) {
+            Row(
+                horizontalArrangement = Arrangement.SpaceAround,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+                    .padding(spacing.small)
+            ) {
+                ColorPiece(
+                    containerColor = colorScheme.primary,
+                    contentColor = colorScheme.onPrimary,
+                    left = true,
+                    contentDescription = leftContentDescription
+                )
+                ColorPiece(
+                    containerColor = colorScheme.secondary,
+                    contentColor = colorScheme.onSecondary,
+                    left = false,
+                    contentDescription = rightContentDescription
+                )
+            }
+            Text(
+                text = name.uppercase(),
+                style = MaterialTheme.typography.bodyMedium,
+                color = colorScheme.tertiaryContainer,
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(colorScheme.onTertiaryContainer)
+                    .padding(vertical = 2.dp)
+            )
+        }
+    }
     Box(
         contentAlignment = Alignment.Center
     ) {
-        OutlinedCard(
-            shape = shape,
-            colors = CardDefaults.outlinedCardColors(
-                containerColor = colorScheme.background,
-                contentColor = colorScheme.onBackground
-            ),
-            modifier = modifier
-                .graphicsLayer {
-                    scaleX = zoom
-                    scaleY = zoom
-                }
-                .size(96.dp)
-                .interactionBorder(
-                    type = InteractionType.PRESS,
-                    source = interactionSource,
-                    shape = shape
-                )
-        ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(spacing.small),
-                modifier = Modifier
+        if (!tv) {
+            val zoom by animateFloatAsState(
+                targetValue = if (selected) 0.95f else 0.85f,
+                label = "zoom"
+            )
+            val corner by animateDpAsState(
+                targetValue = if (!selected) spacing.extraLarge else spacing.medium,
+                label = "corner"
+            )
+            val shape = RoundedCornerShape(corner)
+
+            OutlinedCard(
+                shape = shape,
+                colors = CardDefaults.outlinedCardColors(
+                    containerColor = colorScheme.background,
+                    contentColor = colorScheme.onBackground
+                ),
+                modifier = modifier
                     .graphicsLayer {
-                        if (blurRadius != 0f) renderEffect = BlurEffect(blurRadius, blurRadius)
+                        scaleX = zoom
+                        scaleY = zoom
                     }
-                    .drawWithContent {
-                        drawContent()
-                        drawRect(
-                            color = Color.Black.copy(
-                                alpha = alpha
-                            )
-                        )
-                    }
-                    .combinedClickable(
+                    .size(96.dp)
+                    .interactionBorder(
+                        type = InteractionType.PRESS,
+                        source = interactionSource,
+                        shape = shape
+                    )
+            ) {
+                Box(
+                    modifier = Modifier.combinedClickable(
                         interactionSource = interactionSource,
                         indication = rememberRipple(),
                         onClick = {
@@ -130,55 +171,69 @@ fun ThemeSelection(
                             feedback.performHapticFeedback(HapticFeedbackType.LongPress)
                             onLongClick()
                         }
-                    )
-            ) {
-                Row(
-                    horizontalArrangement = Arrangement.SpaceAround,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f)
-                        .padding(spacing.small)
-                ) {
-                    ColorPiece(
-                        containerColor = colorScheme.primary,
-                        contentColor = colorScheme.onPrimary,
-                        left = true,
-                        contentDescription = leftContentDescription
-                    )
-                    ColorPiece(
-                        containerColor = colorScheme.secondary,
-                        contentColor = colorScheme.onSecondary,
-                        left = false,
-                        contentDescription = rightContentDescription
+                    ),
+                    content = { content() }
+                )
+            }
+
+            Crossfade(selected, label = "icon") { selected ->
+                if (!selected) {
+                    Icon(
+                        imageVector = when (isDark) {
+                            true -> Icons.Rounded.DarkMode
+                            false -> Icons.Rounded.LightMode
+                        },
+                        contentDescription = "",
+                        tint = when (isDark) {
+                            true -> SugarColors.Tee
+                            false -> SugarColors.Yellow
+                        }
                     )
                 }
-                Text(
-                    text = name.uppercase(),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = colorScheme.tertiaryContainer,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(colorScheme.onTertiaryContainer)
-                        .padding(vertical = 2.dp)
-                )
             }
-        }
-
-        Crossfade(selected, label = "icon") { selected ->
-            if (!selected) {
-                Icon(
-                    imageVector = when (isDark) {
-                        true -> Icons.Rounded.DarkMode
-                        false -> Icons.Rounded.LightMode
-                    },
-                    contentDescription = "",
-                    tint = when (isDark) {
-                        true -> SugarColors.Tee
-                        false -> SugarColors.Yellow
+        } else {
+            Card(
+                shape = androidx.tv.material3.CardDefaults.shape(
+                    shape = RoundedCornerShape(spacing.extraLarge),
+                    focusedShape = RoundedCornerShape(spacing.extraSmall),
+                    pressedShape = RoundedCornerShape(spacing.extraSmall)
+                ),
+                scale = androidx.tv.material3.CardDefaults.scale(
+                    scale = 0.85f,
+                    focusedScale = 0.95f,
+                    pressedScale = 0.85f
+                ),
+                onClick = {
+                    if (selected) return@Card
+                    feedback.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                    onClick()
+                },
+                onLongClick = {
+                    feedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                    onLongClick()
+                },
+                modifier = modifier.size(96.dp),
+                content = {
+                    Box(contentAlignment = Alignment.Center) {
+                        content()
+                        Crossfade(selected, label = "icon") { selected ->
+                            if (!selected) {
+                                androidx.tv.material3.Icon(
+                                    imageVector = when (isDark) {
+                                        true -> Icons.Rounded.DarkMode
+                                        false -> Icons.Rounded.LightMode
+                                    },
+                                    contentDescription = "",
+                                    tint = when (isDark) {
+                                        true -> SugarColors.Tee
+                                        false -> SugarColors.Yellow
+                                    }
+                                )
+                            }
+                        }
                     }
-                )
-            }
+                }
+            )
         }
     }
 }
