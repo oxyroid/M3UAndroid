@@ -17,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.core.util.basic.title
 import com.m3u.features.about.components.ContributorItem
@@ -26,7 +27,6 @@ import com.m3u.material.ktx.plus
 import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.LocalHelper
 import com.m3u.ui.MonoText
-import com.m3u.ui.repeatOnLifecycle
 
 @Composable
 internal fun AboutRoute(
@@ -36,8 +36,9 @@ internal fun AboutRoute(
 ) {
     val helper = LocalHelper.current
     val title = stringResource(string.feat_about_title)
-    helper.repeatOnLifecycle {
-        this.title = title.title()
+    LifecycleResumeEffect(Unit) {
+        helper.title = title.title()
+        onPauseOrDispose { }
     }
 
     val state by viewModel.s.collectAsStateWithLifecycle()

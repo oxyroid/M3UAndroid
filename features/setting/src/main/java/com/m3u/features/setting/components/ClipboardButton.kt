@@ -20,7 +20,7 @@ internal fun ClipboardButton(
         enabled = enabled,
         text = stringResource(string.feat_setting_label_parse_from_clipboard),
         onClick = {
-            val clipboardUrl = clipboardManager.getText()?.text.orEmpty()
+            val clipboardUrl = clipboardManager.getText()?.text?.trim()?: return@TextButton
             val clipboardTitle = run {
                 val filePath = clipboardUrl.split("/")
                 val fileSplit = filePath.lastOrNull()?.split(".") ?: emptyList()

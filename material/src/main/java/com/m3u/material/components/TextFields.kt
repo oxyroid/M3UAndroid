@@ -5,7 +5,6 @@ package com.m3u.material.components
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
@@ -261,10 +260,6 @@ fun PlaceholderField(
                             targetValue = if (focus || hasText) 12f else 14f,
                             label = "placeholder-font-size"
                         )
-                        val animFontWeight by animateIntAsState(
-                            targetValue = if (focus || hasText) 500 else 600,
-                            label = "placeholder-font-weight"
-                        )
 
                         Text(
                             modifier = Modifier
@@ -276,7 +271,7 @@ fun PlaceholderField(
                             fontSize = animPlaceHolderFontSize.sp,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
-                            fontWeight = FontWeight(animFontWeight)
+                            fontWeight = FontWeight.SemiBold
                         )
 
                         Box(

@@ -54,6 +54,7 @@ import androidx.tv.material3.Text
 import androidx.tv.material3.rememberDrawerState
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.m3u.core.wrapper.Message
 import com.m3u.data.database.model.Stream
 import com.m3u.features.playlist.Channel
 import com.m3u.features.playlist.R
@@ -63,6 +64,7 @@ import com.m3u.material.components.IconButton
 import com.m3u.material.ktx.Edge
 import com.m3u.material.ktx.blurEdge
 import com.m3u.material.model.LocalSpacing
+import com.m3u.ui.AppSnackHost
 import com.m3u.ui.LocalHelper
 import com.m3u.ui.Sort
 import kotlinx.collections.immutable.ImmutableList
@@ -70,6 +72,7 @@ import kotlinx.collections.immutable.ImmutableList
 @Composable
 internal fun TvPlaylistScreenImpl(
     title: String,
+    message: Message,
     channels: ImmutableList<Channel>,
     findStreamById: (Int) -> Stream?,
     query: String,
@@ -255,29 +258,34 @@ internal fun TvPlaylistScreenImpl(
                             }
                         }
                     }
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(spacing.small),
-                        modifier = Modifier
-                            .align(Alignment.TopEnd)
-                            .padding(spacing.medium)
+                    Column(
+                        Modifier.padding(spacing.medium),
+                        verticalArrangement = Arrangement.spacedBy(spacing.medium)
                     ) {
-                        Text(
-                            text = title,
-                            style = MaterialTheme.typography.headlineLarge,
-                            fontWeight = FontWeight.ExtraBold,
-                            maxLines = 1
-                        )
-                        Spacer(modifier = Modifier.weight(1f))
-                        IconButton(
-                            icon = Icons.Rounded.Search,
-                            contentDescription = "search",
-                            onClick = { /*TODO*/ }
-                        )
-                        IconButton(
-                            icon = Icons.Rounded.Refresh,
-                            contentDescription = "refresh",
-                            onClick = onRefresh
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(spacing.small),
+                        ) {
+                            Text(
+                                text = title,
+                                style = MaterialTheme.typography.headlineLarge,
+                                fontWeight = FontWeight.ExtraBold,
+                                maxLines = 1
+                            )
+                            Spacer(modifier = Modifier.weight(1f))
+                            IconButton(
+                                icon = Icons.Rounded.Search,
+                                contentDescription = "search",
+                                onClick = { /*TODO*/ }
+                            )
+                            IconButton(
+                                icon = Icons.Rounded.Refresh,
+                                contentDescription = "refresh",
+                                onClick = onRefresh
+                            )
+                        }
+                        AppSnackHost(
+                            message = message,
                         )
                     }
                 }

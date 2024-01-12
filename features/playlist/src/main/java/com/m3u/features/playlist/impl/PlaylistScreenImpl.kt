@@ -41,6 +41,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import com.m3u.core.wrapper.Event
 import com.m3u.data.database.model.Stream
 import com.m3u.features.playlist.Channel
@@ -58,7 +59,6 @@ import com.m3u.ui.EventHandler
 import com.m3u.ui.LocalHelper
 import com.m3u.ui.Sort
 import com.m3u.ui.SortBottomSheet
-import com.m3u.ui.repeatOnLifecycle
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.launch
@@ -111,9 +111,8 @@ internal fun PlaylistScreenImpl(
     var dialogStatus: DialogStatus by remember { mutableStateOf(DialogStatus.Idle) }
     var isSortSheetVisible by rememberSaveable { mutableStateOf(false) }
 
-
-    helper.repeatOnLifecycle {
-        actions = persistentListOf(
+    LifecycleResumeEffect(Unit) {
+        helper.actions = persistentListOf(
             Action(
                 icon = Icons.AutoMirrored.Rounded.Sort,
                 contentDescription = "sort",
@@ -125,6 +124,7 @@ internal fun PlaylistScreenImpl(
                 onClick = onRefresh
             )
         )
+        onPauseOrDispose { }
     }
 
     Background {

@@ -14,6 +14,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -64,7 +65,19 @@ fun AppSnackHost(
         ) {
             val text = when {
                 message.level == Message.LEVEL_EMPTY -> return@Card
-                message is Message.Static -> stringResource(message.resId, message.formatArgs)
+                message is Message.Static -> {
+                    val args = remember(message) {
+                        message.formatArgs.flatMap {
+                            when (it) {
+                                is Array<*> -> it.toList().filterNotNull()
+                                is Collection<*> -> it.toList().filterNotNull()
+                                else -> listOf(it)
+                            }
+                        }.toTypedArray()
+                    }
+                    stringResource(message.resId, *args)
+                }
+
                 message is Message.Dynamic -> message.value
                 else -> return@Card
             }.replaceFirstChar {

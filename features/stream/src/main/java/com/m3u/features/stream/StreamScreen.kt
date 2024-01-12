@@ -20,6 +20,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.core.architecture.pref.LocalPref
@@ -37,7 +38,6 @@ import com.m3u.material.components.mask.rememberMaskState
 import com.m3u.material.ktx.isTvDevice
 import com.m3u.ui.LocalHelper
 import com.m3u.ui.OnPipModeChanged
-import com.m3u.ui.repeatOnLifecycle
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 
@@ -77,17 +77,20 @@ fun StreamRoute(
         }
     }
 
-    helper.repeatOnLifecycle {
-        darkMode = true.unspecifiable
-        statusBarVisibility = false.unspecifiable
-        navigationBarVisibility = false.unspecifiable
-        onPipModeChanged = OnPipModeChanged { info ->
-            isPipMode = info.isInPictureInPictureMode
-            if (!isPipMode) {
-                maskState.wake()
-                isAutoZappingMode = false
+    LifecycleResumeEffect(Unit) {
+        with(helper) {
+            darkMode = true.unspecifiable
+            statusBarVisibility = false.unspecifiable
+            navigationBarVisibility = false.unspecifiable
+            onPipModeChanged = OnPipModeChanged { info ->
+                isPipMode = info.isInPictureInPictureMode
+                if (!isPipMode) {
+                    maskState.wake()
+                    isAutoZappingMode = false
+                }
             }
         }
+        onPauseOrDispose {  }
     }
 
     LaunchedEffect(pref.zappingMode, playerState.videoSize) {

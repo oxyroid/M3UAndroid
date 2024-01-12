@@ -13,18 +13,12 @@ import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import com.m3u.core.Contracts
 import com.m3u.core.architecture.logger.Logger
@@ -37,10 +31,8 @@ import com.m3u.core.util.context.isPortraitMode
 import com.m3u.core.wrapper.Message
 import com.m3u.data.service.MessageService
 import com.m3u.data.service.PlayerService
-import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.Action
 import com.m3u.ui.AppLocalProvider
-import com.m3u.ui.AppSnackHost
 import com.m3u.ui.Fob
 import com.m3u.ui.Helper
 import com.m3u.ui.OnPipModeChanged
@@ -84,40 +76,29 @@ class TvPlaylistActivity : AppCompatActivity() {
                 helper = helper,
                 pref = pref
             ) {
-                val spacing = LocalSpacing.current
-                val message by messageService.message.collectAsStateWithLifecycle()
-
                 val darkMode = pref.darkMode
                 LaunchedEffect(darkMode) {
                     helper.darkMode = darkMode.unspecifiable
                 }
 
-                Box {
-                    PlaylistRoute(
-                        navigateToStream = {
-                            val options = ActivityOptions.makeCustomAnimation(
-                                this@TvPlaylistActivity,
-                                0,
-                                0
-                            )
-                            startActivity(
-                                Intent().apply {
-                                    component = ComponentName.createRelative(
-                                        this@TvPlaylistActivity,
-                                        Contracts.PLAYER_ACTIVITY
-                                    )
-                                },
-                                options.toBundle()
-                            )
-                        }
-                    )
-                    AppSnackHost(
-                        message = message,
-                        modifier = Modifier
-                            .align(Alignment.TopStart)
-                            .padding(spacing.medium)
-                    )
-                }
+                PlaylistRoute(
+                    navigateToStream = {
+                        val options = ActivityOptions.makeCustomAnimation(
+                            this@TvPlaylistActivity,
+                            0,
+                            0
+                        )
+                        startActivity(
+                            Intent().apply {
+                                component = ComponentName.createRelative(
+                                    this@TvPlaylistActivity,
+                                    Contracts.PLAYER_ACTIVITY
+                                )
+                            },
+                            options.toBundle()
+                        )
+                    }
+                )
             }
         }
     }

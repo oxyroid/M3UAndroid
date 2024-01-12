@@ -34,6 +34,7 @@ import com.google.accompanist.permissions.rememberPermissionState
 import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.core.util.compose.observableStateOf
 import com.m3u.core.wrapper.Event
+import com.m3u.core.wrapper.Message
 import com.m3u.data.database.model.Stream
 import com.m3u.features.playlist.impl.PlaylistScreenImpl
 import com.m3u.features.playlist.impl.TvPlaylistScreenImpl
@@ -69,6 +70,8 @@ internal fun PlaylistRoute(
 
     val sorts = viewModel.sorts
     val sort by viewModel.sort.collectAsStateWithLifecycle()
+
+    val message by viewModel.message.collectAsStateWithLifecycle()
 
 
     // If you try to check or request the WRITE_EXTERNAL_STORAGE on Android 13+,
@@ -107,6 +110,7 @@ internal fun PlaylistRoute(
     Background {
         PlaylistScreen(
             title = playlist?.title.orEmpty(),
+            message = message,
             query = query,
             onQuery = { viewModel.onEvent(PlaylistEvent.Query(it)) },
             rowCount = pref.rowCount,
@@ -142,6 +146,7 @@ internal fun PlaylistRoute(
 private fun PlaylistScreen(
     title: String,
     query: String,
+    message: Message,
     onQuery: (String) -> Unit,
     rowCount: Int,
     zapping: Stream?,
@@ -202,6 +207,7 @@ private fun PlaylistScreen(
     } else {
         TvPlaylistScreenImpl(
             title = title,
+            message = message,
             channels = channels,
             query = query,
             onQuery = onQuery,

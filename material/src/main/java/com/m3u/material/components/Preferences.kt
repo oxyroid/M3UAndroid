@@ -5,9 +5,11 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.focusable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.selection.toggleable
+import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
@@ -23,11 +25,8 @@ import androidx.compose.material3.TooltipDefaults
 import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
@@ -36,6 +35,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
+import com.m3u.material.ktx.isTvDevice
+import androidx.tv.material3.ListItem as TvListItem
+import androidx.tv.material3.ListItemDefaults as TvListItemDefaults
 
 @Composable
 fun Preference(
@@ -51,7 +53,8 @@ fun Preference(
     // val configuration = LocalConfiguration.current
     // val type = configuration.uiMode and Configuration.UI_MODE_TYPE_MASK
 
-    var focus by remember { mutableStateOf(false) }
+    val interactionSource = remember { MutableInteractionSource() }
+    val focus by interactionSource.collectIsFocusedAsState()
 
     TooltipBox(
         state = rememberTooltipState(),
@@ -77,98 +80,99 @@ fun Preference(
             label = "preference-content-color",
             animationSpec = spring(stiffness = Spring.StiffnessMediumLow)
         )
-        // if (type != Configuration.UI_MODE_TYPE_TELEVISION) {
-        ListItem(
-            headlineContent = {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleMedium,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            },
-            supportingContent = {
-                if (content != null) {
+        if (!isTvDevice()) {
+            ListItem(
+                headlineContent = {
                     Text(
-                        text = content.capitalize(Locale.current),
-                        style = MaterialTheme.typography.bodyMedium,
+                        text = title,
+                        style = MaterialTheme.typography.titleMedium,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier then if (focus) Modifier.basicMarquee()
-                        else Modifier
                     )
-                }
-            },
-            trailingContent = trailing,
-            leadingContent = icon?.let {
-                @Composable {
-                    Icon(imageVector = it, contentDescription = null)
-                }
-            },
-            tonalElevation = LocalAbsoluteTonalElevation.current,
-            colors = ListItemDefaults.colors(
-                containerColor = currentContainerColor,
-                headlineColor = currentContentColor,
-                leadingIconColor = currentContentColor,
-                overlineColor = currentContentColor,
-                supportingColor = currentContentColor,
-                trailingIconColor = currentContentColor,
-            ),
-            shadowElevation = elevation,
-            modifier = modifier
-                .semantics(mergeDescendants = true) {}
-                .clickable(enabled, onClick = onClick)
-                .fillMaxWidth()
-                .onFocusChanged {
-                    focus = it.hasFocus
-                }
-                .focusable()
-        )
-//        } else {
-//            TvListItem(
-//                selected = true,
-//                headlineContent = {
-//                    Text(
-//                        text = title,
-//                        style = MaterialTheme.typography.titleMedium,
-//                        maxLines = 1,
-//                        overflow = TextOverflow.Ellipsis,
-//                    )
-//                },
-//                supportingContent = {
-//                    if (content != null) {
-//                        Text(
-//                            text = content.capitalize(Locale.current),
-//                            style = MaterialTheme.typography.bodyMedium,
-//                            maxLines = 1,
-//                            overflow = TextOverflow.Ellipsis,
-//                            modifier = Modifier then if (focus) Modifier.basicMarquee()
-//                            else Modifier
-//                        )
-//                    }
-//                },
-//                trailingContent = trailing,
-//                leadingContent = {
-//                    icon?.let {
-//                        Icon(imageVector = it, contentDescription = null)
-//                    }
-//                },
-//                tonalElevation = LocalAbsoluteTonalElevation.current,
-//                colors = TvListItemDefaults.colors(
-//                    containerColor = currentContainerColor,
-//                    contentColor = currentContentColor,
-//                ),
-//                shape = TvListItemDefaults.shape(RectangleShape),
-//                onClick = onClick,
-//                modifier = modifier
-//                    .semantics(mergeDescendants = true) {}
-//                    .fillMaxWidth()
-//                    .onFocusChanged {
-//                        focus = it.hasFocus
-//                    }
-//                    .focusable()
-//            )
-//        }
+                },
+                supportingContent = {
+                    if (content != null) {
+                        Text(
+                            text = content.capitalize(Locale.current),
+                            style = MaterialTheme.typography.bodyMedium,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier then if (focus) Modifier.basicMarquee()
+                            else Modifier
+                        )
+                    }
+                },
+                trailingContent = trailing,
+                leadingContent = icon?.let {
+                    @Composable {
+                        Icon(imageVector = it, contentDescription = null)
+                    }
+                },
+                tonalElevation = LocalAbsoluteTonalElevation.current,
+                colors = ListItemDefaults.colors(
+                    containerColor = currentContainerColor,
+                    headlineColor = currentContentColor,
+                    leadingIconColor = currentContentColor,
+                    overlineColor = currentContentColor,
+                    supportingColor = currentContentColor,
+                    trailingIconColor = currentContentColor,
+                ),
+                shadowElevation = elevation,
+                modifier = modifier
+                    .semantics(mergeDescendants = true) {}
+                    .clickable(
+                        enabled = enabled,
+                        onClick = onClick,
+                        interactionSource = interactionSource,
+                        indication = rememberRipple()
+                    )
+                    .fillMaxWidth()
+            )
+        } else {
+            TvListItem(
+                selected = focus,
+                interactionSource = interactionSource,
+                headlineContent = {
+                    androidx.tv.material3.Text(
+                        text = title,
+                        style = MaterialTheme.typography.titleMedium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                },
+                supportingContent = {
+                    if (content != null) {
+                        androidx.tv.material3.Text(
+                            text = content.capitalize(Locale.current),
+                            style = MaterialTheme.typography.bodyMedium,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier then if (focus) Modifier.basicMarquee()
+                            else Modifier
+                        )
+                    }
+                },
+                trailingContent = trailing,
+                leadingContent = {
+                    icon?.let {
+                        androidx.tv.material3.Icon(imageVector = it, contentDescription = null)
+                    }
+                },
+                tonalElevation = LocalAbsoluteTonalElevation.current,
+                colors = TvListItemDefaults.colors(
+                    containerColor = currentContainerColor,
+                    contentColor = currentContentColor,
+                ),
+                scale = TvListItemDefaults.scale(
+                    scale = 0.9f,
+                    focusedScale = 1f
+                ),
+                onClick = onClick,
+                modifier = modifier
+                    .semantics(mergeDescendants = true) {}
+                    .fillMaxWidth()
+            )
+        }
     }
 }
 
@@ -184,14 +188,6 @@ fun CheckBoxPreference(
     enabled: Boolean = true,
     icon: ImageVector? = null,
 ) {
-    val combined = Modifier
-        .toggleable(
-            value = checked,
-            onValueChange = { onChanged(it) },
-            role = Role.Checkbox,
-            enabled = enabled
-        )
-        .then(modifier)
     Preference(
         title = title,
         content = content,
@@ -202,7 +198,7 @@ fun CheckBoxPreference(
                 onChanged(!checked)
             }
         },
-        modifier = combined,
+        modifier = modifier,
         trailing = {
             Checkbox(
                 enabled = enabled,

@@ -10,6 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.tv.foundation.lazy.list.TvLazyColumn
 import com.m3u.material.ktx.isTvDevice
+import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.Destination.Root.Setting.SettingFragment
 
 @Composable
@@ -25,6 +26,7 @@ internal fun PreferencesFragment(
     navigateToAbout: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val spacing = LocalSpacing.current
     val tv = isTvDevice()
     if (!tv) {
         LazyColumn(
@@ -65,7 +67,7 @@ internal fun PreferencesFragment(
             modifier = modifier,
             contentPadding = contentPadding,
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(1.dp)
+            verticalArrangement = Arrangement.spacedBy(spacing.medium)
         ) {
             item {
                 RegularPreferences(
@@ -73,18 +75,15 @@ internal fun PreferencesFragment(
                     navigateToPlaylistManagement = navigateToPlaylistManagement,
                     navigateToThemeSelector = navigateToThemeSelector
                 )
-                HorizontalDivider()
             }
             item {
                 OptionalPreferences()
-                HorizontalDivider()
             }
             item {
                 ExperimentalPreference(
                     navigateToScriptManagement = navigateToScriptManagement,
                     navigateToConsole = navigateToConsole
                 )
-                HorizontalDivider()
             }
             item {
                 OtherPreferences(
@@ -95,9 +94,4 @@ internal fun PreferencesFragment(
             }
         }
     }
-}
-
-@Composable
-internal fun <T> T.ifTvDevice(placement: () -> T): T {
-    return if (isTvDevice()) placement() else this
 }

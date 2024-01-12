@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -24,6 +25,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -95,12 +97,17 @@ internal fun AppRootGraph(
                 }
             },
             actions = {
-                actions.forEach { action ->
-                    IconButton(
-                        icon = action.icon,
-                        contentDescription = action.contentDescription,
-                        onClick = action.onClick
-                    )
+
+                CompositionLocalProvider(
+                    androidx.tv.material3.LocalContentColor provides LocalContentColor.current
+                ) {
+                    actions.forEach { action ->
+                        IconButton(
+                            icon = action.icon,
+                            contentDescription = action.contentDescription,
+                            onClick = action.onClick
+                        )
+                    }
                 }
             },
             modifier = Modifier.fillMaxWidth()

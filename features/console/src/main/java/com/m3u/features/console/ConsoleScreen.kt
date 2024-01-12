@@ -23,7 +23,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.m3u.core.util.basic.title
 import com.m3u.i18n.R.string
 import com.m3u.material.components.Background
 import com.m3u.material.components.TextField
@@ -31,7 +33,6 @@ import com.m3u.material.ktx.plus
 import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.LocalHelper
 import com.m3u.ui.MonoText
-import com.m3u.ui.repeatOnLifecycle
 
 @Composable
 internal fun ConsoleRoute(
@@ -41,8 +42,9 @@ internal fun ConsoleRoute(
 ) {
     val helper = LocalHelper.current
     val title = stringResource(string.feat_console_title)
-    helper.repeatOnLifecycle {
-        this.title = title
+    LifecycleResumeEffect(Unit) {
+        helper.title = title.title()
+        onPauseOrDispose { }
     }
     val state by viewModel.state.collectAsStateWithLifecycle()
     ConsoleScreen(

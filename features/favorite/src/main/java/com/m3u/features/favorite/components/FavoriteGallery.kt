@@ -74,7 +74,7 @@ private fun FavouriteGalleryImpl(
         LazyVerticalStaggeredGrid(
             columns = StaggeredGridCells.Fixed(rowCount),
             verticalItemSpacing = spacing.medium,
-            horizontalArrangement = Arrangement.spacedBy(spacing.medium),
+            horizontalArrangement = Arrangement.spacedBy(spacing.large),
             contentPadding = PaddingValues(spacing.medium) + contentPadding,
             modifier = modifier.fillMaxSize(),
         ) {

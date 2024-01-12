@@ -1,26 +1,16 @@
 package com.m3u.ui
 
-import android.annotation.SuppressLint
 import android.graphics.Rect
 import androidx.annotation.StringRes
 import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.core.app.PictureInPictureModeChangedInfo
 import androidx.core.util.Consumer
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
 import com.m3u.core.unspecified.UBoolean
 import com.m3u.core.wrapper.Message
 import kotlinx.collections.immutable.ImmutableList
@@ -58,76 +48,22 @@ interface Helper {
 val Helper.useRailNav: Boolean
     @Composable get() = windowSizeClass.widthSizeClass > WindowWidthSizeClass.Compact
 
-private data class HelperBundle(
-    val title: String,
-    val actions: ImmutableList<Action>,
-    val fob: Fob?,
-    val statusBarsVisibility: UBoolean,
-    val navigationBarsVisibility: UBoolean,
-    val onUserLeaveHint: (() -> Unit)?,
-    val onPipModeChanged: Consumer<PictureInPictureModeChangedInfo>?,
-    val darkMode: UBoolean
-) {
-    override fun toString(): String =
-        "(title=$title,fob=$fob,status=$statusBarsVisibility,nav=$navigationBarsVisibility,dark=$darkMode)"
-}
+val LocalHelper = staticCompositionLocalOf { EmptyHelper }
 
-private fun Helper.restore(bundle: HelperBundle) {
-    title = bundle.title
-    actions = bundle.actions
-    fob = bundle.fob
-    statusBarVisibility = bundle.statusBarsVisibility
-    navigationBarVisibility = bundle.navigationBarsVisibility
-    onUserLeaveHint = bundle.onUserLeaveHint
-    onPipModeChanged = bundle.onPipModeChanged
-    darkMode = bundle.darkMode
-}
-
-private fun Helper.backup(): HelperBundle = HelperBundle(
-    title = title,
-    actions = actions,
-    fob = fob,
-    statusBarsVisibility = statusBarVisibility,
-    navigationBarsVisibility = navigationBarVisibility,
-    onUserLeaveHint = onUserLeaveHint,
-    onPipModeChanged = onPipModeChanged,
-    darkMode = darkMode
+@Immutable
+data class Action(
+    val icon: ImageVector,
+    val contentDescription: String?,
+    val onClick: () -> Unit
 )
 
-@Composable
-@SuppressLint("ComposableNaming")
-fun Helper.repeatOnLifecycle(
-    state: Lifecycle.State = Lifecycle.State.STARTED,
-    block: Helper.() -> Unit
-) {
-    val lifecycleOwner = LocalLifecycleOwner.current
-    val currentBlock by rememberUpdatedState(block)
-    check(state != Lifecycle.State.CREATED && state != Lifecycle.State.INITIALIZED) {
-        "state cannot be CREATED or INITIALIZED!"
-    }
-    var bundle: HelperBundle? by remember { mutableStateOf(null) }
-
-    DisposableEffect(lifecycleOwner) {
-        val observer = LifecycleEventObserver { _, event ->
-            when (event) {
-                Lifecycle.Event.upTo(state) -> {
-                    bundle = backup()
-                    currentBlock()
-                }
-
-                Lifecycle.Event.downFrom(state) -> {
-                    bundle?.let { restore(it) }
-                }
-
-                else -> {}
-            }
-        }
-        lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose {
-            lifecycleOwner.lifecycle.removeObserver(observer)
-        }
-    }
-}
+@Immutable
+data class Fob(
+    val rootDestination: Destination.Root,
+    val icon: ImageVector,
+    @StringRes val iconTextId: Int,
+    val onClick: () -> Unit
+)
 
 val EmptyHelper = object : Helper {
     override var title: String
@@ -212,20 +148,3 @@ val EmptyHelper = object : Helper {
         error("Cannot replay")
     }
 }
-
-val LocalHelper = staticCompositionLocalOf { EmptyHelper }
-
-@Immutable
-data class Action(
-    val icon: ImageVector,
-    val contentDescription: String?,
-    val onClick: () -> Unit
-)
-
-@Immutable
-data class Fob(
-    val rootDestination: Destination.Root,
-    val icon: ImageVector,
-    @StringRes val iconTextId: Int,
-    val onClick: () -> Unit
-)

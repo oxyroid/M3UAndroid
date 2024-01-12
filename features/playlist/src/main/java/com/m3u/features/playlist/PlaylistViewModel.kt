@@ -84,7 +84,7 @@ class PlaylistViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5_000)
         )
 
-    val zapping: StateFlow<Stream?> = combine(
+    internal val zapping: StateFlow<Stream?> = combine(
         zappingMode,
         playerService.url,
         streamRepository.observeAll()
@@ -99,7 +99,7 @@ class PlaylistViewModel @Inject constructor(
         )
 
     private var _refreshing = MutableStateFlow(false)
-    val refreshing = _refreshing.asStateFlow()
+    internal val refreshing = _refreshing.asStateFlow()
 
     private fun refresh() {
         val url = playlistUrl.value
@@ -201,7 +201,7 @@ class PlaylistViewModel @Inject constructor(
     }
 
     private val _query: MutableStateFlow<String> = MutableStateFlow("")
-    val query: StateFlow<String> = _query.asStateFlow()
+    internal val query: StateFlow<String> = _query.asStateFlow()
     private fun query(event: PlaylistEvent.Query) {
         val text = event.text
         _query.update { text }
@@ -240,11 +240,11 @@ class PlaylistViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5_000L)
         )
 
-    val sorts: ImmutableList<Sort> = Sort.entries.toPersistentList()
+    internal val sorts: ImmutableList<Sort> = Sort.entries.toPersistentList()
 
     private val sortIndex: MutableStateFlow<Int> = MutableStateFlow(0)
 
-    val sort: StateFlow<Sort> = sortIndex
+    internal val sort: StateFlow<Sort> = sortIndex
         .map { sorts[it] }
         .stateIn(
             scope = viewModelScope,
@@ -252,11 +252,11 @@ class PlaylistViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5_000L)
         )
 
-    fun sort(sort: Sort) {
+    internal fun sort(sort: Sort) {
         sortIndex.update { sorts.indexOf(sort).coerceAtLeast(0) }
     }
 
-    val channels: StateFlow<ImmutableList<Channel>> = combine(
+    internal val channels: StateFlow<ImmutableList<Channel>> = combine(
         unsorted,
         sort,
         recommend
@@ -273,4 +273,6 @@ class PlaylistViewModel @Inject constructor(
             initialValue = persistentListOf(),
             started = SharingStarted.WhileSubscribed(5_000L)
         )
+
+    internal val message = messageService.message
 }
