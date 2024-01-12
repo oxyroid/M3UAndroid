@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -30,6 +31,7 @@ import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.pref.Pref
 import com.m3u.core.unspecified.UBoolean
 import com.m3u.core.unspecified.specified
+import com.m3u.core.unspecified.unspecifiable
 import com.m3u.core.util.context.isDarkMode
 import com.m3u.core.util.context.isPortraitMode
 import com.m3u.core.wrapper.Message
@@ -84,6 +86,12 @@ class TvPlaylistActivity : AppCompatActivity() {
             ) {
                 val spacing = LocalSpacing.current
                 val message by messageService.message.collectAsStateWithLifecycle()
+
+                val darkMode = pref.darkMode
+                LaunchedEffect(darkMode) {
+                    helper.darkMode = darkMode.unspecifiable
+                }
+
                 Box {
                     PlaylistRoute(
                         navigateToStream = {

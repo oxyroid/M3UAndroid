@@ -21,6 +21,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import com.m3u.core.wrapper.Message
 import com.m3u.material.model.LocalSpacing
+import java.util.Locale
 
 @Composable
 fun AppSnackHost(
@@ -66,12 +67,15 @@ fun AppSnackHost(
                 message is Message.Static -> stringResource(message.resId, message.formatArgs)
                 message is Message.Dynamic -> message.value
                 else -> return@Card
+            }.replaceFirstChar {
+                if (it.isLowerCase()) it.titlecase(Locale.ROOT)
+                else it.toString()
             }
             Text(
                 text = text,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                style = MaterialTheme.typography.titleSmall,
+                style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier
                     .padding(
                         horizontal = spacing.medium,

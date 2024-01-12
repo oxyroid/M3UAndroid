@@ -74,7 +74,7 @@ fun FavouriteRoute(
             Modifier.interceptVolumeEvent { event ->
                 pref.rowCount = when (event) {
                     KeyEvent.KEYCODE_VOLUME_UP -> (pref.rowCount - 1).coerceAtLeast(1)
-                    KeyEvent.KEYCODE_VOLUME_DOWN -> (pref.rowCount + 1).coerceAtMost(3)
+                    KeyEvent.KEYCODE_VOLUME_DOWN -> (pref.rowCount + 1).coerceAtMost(2)
                     else -> return@interceptVolumeEvent
                 }
             }

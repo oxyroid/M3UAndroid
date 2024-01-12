@@ -85,8 +85,7 @@ internal fun AppearanceFragment(
                             name = pack.name,
                             leftContentDescription = stringResource(string.ui_theme_card_left),
                             rightContentDescription = stringResource(string.ui_theme_card_right),
-                            modifier = Modifier
-                                .animateItemPlacement()
+                            modifier = Modifier.animateItemPlacement()
                         )
                     }
                     item(key = "add") {

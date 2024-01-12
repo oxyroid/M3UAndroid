@@ -22,12 +22,9 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.selection.LocalTextSelectionColors
 import androidx.compose.foundation.text.selection.TextSelectionColors
-import androidx.compose.foundation.text2.BasicTextField2
-import androidx.compose.foundation.text2.input.TextFieldLineLimits
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
@@ -164,7 +161,9 @@ fun PlaceholderField(
     shape: Shape = TextFieldDefaults.shape(),
     placeholder: String = "",
     keyboardType: KeyboardType = KeyboardType.Text,
+    fontWeight: FontWeight? = null,
     readOnly: Boolean = false,
+    singleLine: Boolean = true,
     enabled: Boolean = true,
     imeAction: ImeAction = ImeAction.Done,
     keyboardActions: KeyboardActions? = null,
@@ -188,30 +187,33 @@ fun PlaceholderField(
             backgroundColor = theme.primary.copy(alpha = 0.45f)
         )
     ) {
-        BasicTextField2(
-            modifier = modifier,
+        BasicTextField(
             value = text,
-            onValueChange = onValueChange,
-            interactionSource = interactionSource,
+            singleLine = singleLine,
             enabled = enabled,
-            lineLimits = TextFieldLineLimits.SingleLine,
+            textStyle = TextStyle(
+                fontFamily = MaterialTheme.typography.bodyMedium.fontFamily,
+                fontSize = fontSize,
+                color = contentColor,
+                fontWeight = fontWeight
+            ),
+            onValueChange = {
+                onValueChange(it)
+            },
             keyboardActions = keyboardActions ?: KeyboardActions(
                 onDone = { focusManager.clearFocus() },
-                onNext = { focusManager.moveFocus(FocusDirection.Down) }
+                onNext = { focusManager.moveFocus(FocusDirection.Down) },
+                onSearch = { focusManager.clearFocus() }
             ),
             keyboardOptions = KeyboardOptions(
                 keyboardType = keyboardType,
                 imeAction = imeAction
             ),
+            interactionSource = interactionSource,
+            modifier = modifier.fillMaxWidth(),
             readOnly = readOnly,
-            textStyle = TextStyle(
-                fontSize = fontSize,
-                fontFamily = MaterialTheme.typography.bodyMedium.fontFamily,
-                fontWeight = FontWeight.Medium,
-                color = contentColor,
-            ),
             cursorBrush = SolidColor(contentColor.copy(.35f)),
-            decorator = { innerTextField ->
+            decorationBox = { innerTextField ->
                 Row(
                     modifier = Modifier
                         .clip(shape)
@@ -236,6 +238,11 @@ fun PlaceholderField(
 
                     Box(
                         Modifier
+                            .interactionBorder(
+                                type = InteractionType.PRESS,
+                                source = interactionSource,
+                                shape = shape
+                            )
                             .fillMaxWidth()
                             .defaultMinSize(minHeight = 48.dp)
                             .padding(
@@ -293,7 +300,7 @@ private object TextFieldDefaults {
     val MinimizeLabelFontSize = 14.sp
 
     @Composable
-    fun containerColor() = MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp)
+    fun containerColor() = MaterialTheme.colorScheme.surfaceVariant
 
     @Composable
     fun contentColor() = MaterialTheme.colorScheme.onSurface

@@ -16,13 +16,11 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.LaunchedEffect
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsCompat.Type.InsetsType
@@ -94,16 +92,9 @@ class MainActivity : AppCompatActivity() {
             val state = rememberAppState(
                 pagerState = pagerState
             )
-            val scope = rememberCoroutineScope()
-            val darkMode = when {
-                pref.darkMode -> true
-                else -> isSystemInDarkTheme()
-            }
-            DisposableEffect(darkMode, scope) {
-                scope.launch {
-                    helper.darkMode = darkMode.unspecifiable
-                }
-                onDispose {}
+            val darkMode = pref.darkMode
+            LaunchedEffect(darkMode) {
+                helper.darkMode = darkMode.unspecifiable
             }
             AppLocalProvider(
                 helper = helper,

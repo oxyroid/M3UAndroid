@@ -28,7 +28,7 @@ fun AppTheme(
 ) {
     val context = LocalContext.current
     val supportsDynamicTheming = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
-    val colorScheme = remember(useDynamicColors, supportsDynamicTheming, useDarkTheme, argb) {
+    val colorScheme = remember(useDynamicColors, useDarkTheme, argb, context) {
         if (useDynamicColors && supportsDynamicTheming) {
             if (useDarkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         } else {

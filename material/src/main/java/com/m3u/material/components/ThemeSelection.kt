@@ -40,6 +40,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -119,6 +120,7 @@ fun ThemeSelection(
                 style = MaterialTheme.typography.bodyMedium,
                 color = colorScheme.tertiaryContainer,
                 textAlign = TextAlign.Center,
+                fontWeight = FontWeight.SemiBold,
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(colorScheme.onTertiaryContainer)
@@ -131,7 +133,7 @@ fun ThemeSelection(
     ) {
         if (!tv) {
             val zoom by animateFloatAsState(
-                targetValue = if (selected) 0.95f else 0.85f,
+                targetValue = if (selected) 0.95f else 0.8f,
                 label = "zoom"
             )
             val corner by animateDpAsState(
@@ -199,7 +201,7 @@ fun ThemeSelection(
                     pressedShape = RoundedCornerShape(spacing.extraSmall)
                 ),
                 scale = androidx.tv.material3.CardDefaults.scale(
-                    scale = 0.85f,
+                    scale = 0.8f,
                     focusedScale = 0.95f,
                     pressedScale = 0.85f
                 ),

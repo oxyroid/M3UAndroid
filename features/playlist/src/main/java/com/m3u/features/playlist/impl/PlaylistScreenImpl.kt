@@ -160,9 +160,7 @@ internal fun PlaylistScreenImpl(
                         text = query,
                         onValueChange = onQuery,
                         fontWeight = FontWeight.Bold,
-                        placeholder = stringResource(string.feat_playlist_query_placeholder).capitalize(
-                            Locale.current
-                        )
+                        placeholder = stringResource(string.feat_playlist_query_placeholder).uppercase()
                     )
                 }
             },
@@ -206,7 +204,7 @@ internal fun PlaylistScreenImpl(
             frontLayerScrimColor = currentColor.copy(alpha = 0.45f),
             frontLayerBackgroundColor = Color.Transparent,
             modifier = Modifier
-                .padding(top = contentPadding.calculateTopPadding())
+                .padding(contentPadding)
                 .nestedScroll(
                     connection = connection,
                 )
