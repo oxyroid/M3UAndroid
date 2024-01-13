@@ -328,7 +328,10 @@ internal fun TvPlaylistScreenImpl(
                                         currentStreamId = stream.id
                                         drawerState.setValue(DrawerValue.Open)
                                     },
-                                    // todo:
+                                    // todo: immersive-list allow index only
+                                    // but it is hard to calculate index in 2-dimensional collection
+                                    // so we passed item id and in receiver scope we try findById to
+                                    // show actual item.
                                     modifier = Modifier.immersiveListItem(stream.id)
                                 )
                             }
