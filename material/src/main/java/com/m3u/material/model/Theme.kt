@@ -12,9 +12,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import com.google.android.material.color.utilities.Scheme
+import com.m3u.material.ktx.TelevisionChain
 import com.m3u.material.ktx.asColorScheme
 import androidx.tv.material3.ColorScheme as TvColorScheme
-import androidx.tv.material3.MaterialTheme as TvMaterialTheme
 import androidx.tv.material3.Typography as TvTypography
 
 @Composable
@@ -38,18 +38,15 @@ fun AppTheme(
     }
     MaterialTheme(
         colorScheme = colorScheme,
-        content = {
-            TvMaterialTheme(
-                colorScheme = remember(colorScheme) { colorScheme.asTvScheme() },
-                typography = remember(typography) { typography.asTvTypography() },
-                content = content
-            )
-        },
         typography = typography
-    )
+    ) {
+        TelevisionChain {
+            content()
+        }
+    }
 }
 
-private fun ColorScheme.asTvScheme(): TvColorScheme {
+fun ColorScheme.asTvScheme(): TvColorScheme {
     return TvColorScheme(
         primary = primary,
         onPrimary = onPrimary,
@@ -83,7 +80,7 @@ private fun ColorScheme.asTvScheme(): TvColorScheme {
     )
 }
 
-private fun Typography.asTvTypography(): TvTypography {
+fun Typography.asTvTypography(): TvTypography {
     return TvTypography(
         displayLarge = displayLarge,
         displayMedium = displayMedium,

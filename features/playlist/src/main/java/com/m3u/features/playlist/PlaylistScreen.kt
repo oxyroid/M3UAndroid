@@ -21,9 +21,13 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.KeyboardDoubleArrowUp
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -32,7 +36,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.google.accompanist.permissions.PermissionStatus
 import com.google.accompanist.permissions.rememberPermissionState
 import com.m3u.core.architecture.pref.LocalPref
-import com.m3u.core.util.compose.observableStateOf
 import com.m3u.core.wrapper.Event
 import com.m3u.core.wrapper.Message
 import com.m3u.data.database.model.Stream
@@ -41,13 +44,16 @@ import com.m3u.features.playlist.impl.TvPlaylistScreenImpl
 import com.m3u.i18n.R.string
 import com.m3u.material.components.Background
 import com.m3u.material.ktx.interceptVolumeEvent
-import com.m3u.material.ktx.isTvDevice
+import com.m3u.material.ktx.isTelevision
 import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.Destination
 import com.m3u.ui.Fob
 import com.m3u.ui.LocalHelper
 import com.m3u.ui.Sort
 import kotlinx.collections.immutable.ImmutableList
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 
 @Composable
 internal fun PlaylistRoute(
@@ -72,7 +78,6 @@ internal fun PlaylistRoute(
     val sort by viewModel.sort.collectAsStateWithLifecycle()
 
     val message by viewModel.message.collectAsStateWithLifecycle()
-
 
     // If you try to check or request the WRITE_EXTERNAL_STORAGE on Android 13+,
     // it will always return false.
@@ -167,22 +172,34 @@ private fun PlaylistScreen(
     modifier: Modifier = Modifier
 ) {
     val helper = LocalHelper.current
+    val currentOnScrollUp by rememberUpdatedState(onScrollUp)
 
     val isAtTopState = remember {
-        observableStateOf(true) { newValue ->
-            helper.fob = if (newValue) null
-            else {
-                Fob(
-                    icon = Icons.Rounded.KeyboardDoubleArrowUp,
-                    rootDestination = Destination.Root.Foryou,
-                    iconTextId = string.feat_playlist_scroll_up,
-                    onClick = onScrollUp
-                )
-            }
-        }
+        mutableStateOf(true)
     }
 
-    val tv = isTvDevice()
+    LaunchedEffect(Unit) {
+        snapshotFlow { isAtTopState.value }
+            .distinctUntilChanged()
+            .onEach { newValue ->
+                helper.fob = if (newValue) null
+                else {
+                    Fob(
+                        icon = Icons.Rounded.KeyboardDoubleArrowUp,
+                        rootDestination = Destination.Root.Foryou,
+                        iconTextId = string.feat_playlist_scroll_up,
+                        onClick = currentOnScrollUp
+                    )
+                }
+            }
+            .launchIn(this)
+    }
+
+    DisposableEffect(Unit) {
+        onDispose { helper.fob = null }
+    }
+
+    val tv = isTelevision()
     if (!tv) {
         PlaylistScreenImpl(
             channels = channels,

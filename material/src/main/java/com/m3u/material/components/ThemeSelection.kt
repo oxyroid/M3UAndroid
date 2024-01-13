@@ -14,8 +14,8 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
@@ -47,7 +47,7 @@ import androidx.compose.ui.unit.sp
 import androidx.tv.material3.Card
 import com.m3u.material.ktx.InteractionType
 import com.m3u.material.ktx.interactionBorder
-import com.m3u.material.ktx.isTvDevice
+import com.m3u.material.ktx.isTelevision
 import com.m3u.material.model.LocalSpacing
 import com.m3u.material.model.SugarColors
 
@@ -64,7 +64,7 @@ fun ThemeSelection(
     modifier: Modifier = Modifier,
 ) {
     val spacing = LocalSpacing.current
-    val tv = isTvDevice()
+    val tv = isTelevision()
 
     val alpha by animateFloatAsState(
         targetValue = if (selected) 0f else 0.4f,
@@ -299,10 +299,7 @@ private fun ColorPiece(
         ),
         modifier = Modifier
             .aspectRatio(1f)
-            .sizeIn(
-                minWidth = if (left) 48.dp else 32.dp,
-                minHeight = if (left) 48.dp else 32.dp,
-            )
+            .requiredSize(if (left) 48.dp else 32.dp)
             .padding(spacing.extraSmall)
     ) {
         Box(

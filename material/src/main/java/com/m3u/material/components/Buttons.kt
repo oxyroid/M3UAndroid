@@ -27,11 +27,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.isUnspecified
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
-import com.m3u.material.ktx.ifUnspecified
-import com.m3u.material.ktx.isTvDevice
+import com.m3u.material.ktx.TelevisionChain
+import com.m3u.material.ktx.isTelevision
 import com.m3u.material.model.LocalSpacing
 import androidx.tv.material3.Button as TvButton
 import androidx.tv.material3.OutlinedButton as TvOutlinedButton
@@ -49,7 +50,7 @@ fun Button(
     onClick: () -> Unit
 ) {
     val spacing = LocalSpacing.current
-    val tv = isTvDevice()
+    val tv = isTelevision()
     if (!tv) {
         Button(
             shape = RoundedCornerShape(8.dp),
@@ -101,7 +102,7 @@ fun TextButton(
 ) {
     val spacing = LocalSpacing.current
 
-    val tv = isTvDevice()
+    val tv = isTelevision()
     if (!tv) {
         TextButton(
             shape = RoundedCornerShape(8.dp),
@@ -119,21 +120,23 @@ fun TextButton(
             )
         }
     } else {
-        TvOutlinedButton(
-            onClick = onClick,
-            enabled = enabled,
-            modifier = Modifier
-                .padding(spacing.extraSmall)
-                .then(modifier),
-            colors = androidx.tv.material3.ButtonDefaults.colors(
-                containerColor = containerColor,
-                contentColor = contentColor,
-                disabledContentColor = disabledContentColor
-            )
-        ) {
-            TvText(
-                text = text.uppercase()
-            )
+        TelevisionChain {
+            TvOutlinedButton(
+                onClick = onClick,
+                enabled = enabled,
+                modifier = Modifier
+                    .padding(spacing.extraSmall)
+                    .then(modifier),
+                colors = androidx.tv.material3.ButtonDefaults.colors(
+                    containerColor = containerColor,
+                    contentColor = contentColor,
+                    disabledContentColor = disabledContentColor
+                )
+            ) {
+                TvText(
+                    text = text.uppercase()
+                )
+            }
         }
     }
 }
@@ -147,13 +150,14 @@ fun IconButton(
     enabled: Boolean = true,
     tint: Color = Color.Unspecified
 ) {
-    val tv = isTvDevice()
+    val tv = isTelevision()
     if (!tv) {
         IconButton(
             onClick = onClick,
             enabled = enabled,
             modifier = modifier,
-            colors = IconButtonDefaults.iconButtonColors(
+            colors = if (tint.isUnspecified) IconButtonDefaults.iconButtonColors()
+            else IconButtonDefaults.iconButtonColors(
                 contentColor = tint
             )
         ) {
@@ -163,22 +167,23 @@ fun IconButton(
             )
         }
     } else {
-        val colorScheme = androidx.tv.material3.MaterialTheme.colorScheme
-        val actualTint = tint.ifUnspecified { androidx.tv.material3.LocalContentColor.current }
-        androidx.tv.material3.IconButton(
-            onClick = onClick,
-            enabled = enabled,
-            modifier = modifier,
-            colors = androidx.tv.material3.IconButtonDefaults.colors(
-                contentColor = actualTint,
-                focusedContainerColor = colorScheme.onSurface.copy(0.38f),
-                focusedContentColor = actualTint
-            )
-        ) {
-            androidx.tv.material3.Icon(
-                imageVector = icon,
-                contentDescription = contentDescription
-            )
+        TelevisionChain {
+            androidx.tv.material3.IconButton(
+                onClick = onClick,
+                enabled = enabled,
+                modifier = modifier,
+                colors = if (tint.isUnspecified) androidx.tv.material3.IconButtonDefaults.colors()
+                else androidx.tv.material3.IconButtonDefaults.colors(
+                    contentColor = tint,
+                    focusedContentColor = tint,
+                    pressedContentColor = tint
+                )
+            ) {
+                androidx.tv.material3.Icon(
+                    imageVector = icon,
+                    contentDescription = contentDescription
+                )
+            }
         }
     }
 }

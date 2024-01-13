@@ -3,15 +3,17 @@ package com.m3u.material.components.mask
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.ClickableSurfaceDefaults
 import com.m3u.material.ktx.ifUnspecified
-import com.m3u.material.ktx.isTvDevice
+import com.m3u.material.ktx.isTelevision
 
 @Composable
 fun MaskCircleButton(
@@ -21,7 +23,7 @@ fun MaskCircleButton(
     modifier: Modifier = Modifier,
     tint: Color = Color.Unspecified
 ) {
-    val tv = isTvDevice()
+    val tv = isTelevision()
     if (!tv) {
         Surface(
             shape = CircleShape,
@@ -30,8 +32,14 @@ fun MaskCircleButton(
                 onClick()
             },
             modifier = modifier,
-            color = Color.Unspecified
+            color = Color.Unspecified,
+            contentColor = tint.ifUnspecified { LocalContentColor.current }
         ) {
+            CompositionLocalProvider(
+                androidx.tv.material3.LocalContentColor provides LocalContentColor.current
+            ) {
+
+            }
             Icon(
                 imageVector = icon,
                 contentDescription = null,
@@ -47,14 +55,14 @@ fun MaskCircleButton(
             },
             modifier = modifier,
             colors = ClickableSurfaceDefaults.colors(
-                containerColor = Color.Unspecified
+                containerColor = Color.Unspecified,
+                contentColor = tint.ifUnspecified { androidx.tv.material3.LocalContentColor.current }
             )
         ) {
             androidx.tv.material3.Icon(
                 imageVector = icon,
                 contentDescription = null,
-                modifier = Modifier.size(96.dp),
-                tint = tint.ifUnspecified { androidx.tv.material3.LocalContentColor.current }
+                modifier = Modifier.size(96.dp)
             )
         }
     }

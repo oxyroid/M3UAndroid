@@ -24,7 +24,7 @@ import com.m3u.features.playlist.navigation.playlistScreen
 import com.m3u.features.playlist.navigation.playlistTvScreen
 import com.m3u.features.stream.PlayerActivity
 import com.m3u.i18n.R.string
-import com.m3u.material.ktx.isTvDevice
+import com.m3u.material.ktx.isTelevision
 import com.m3u.ui.Destination
 import com.m3u.ui.Destination.Root.Setting.SettingFragment
 import com.m3u.ui.LocalHelper
@@ -44,7 +44,7 @@ fun AppNavHost(
     val context = LocalContext.current
     val pref = LocalPref.current
 
-    val tv = isTvDevice()
+    val tv = isTelevision()
     NavHost(
         navController = navController,
         startDestination = startDestination,

@@ -7,15 +7,20 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.exclude
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -25,8 +30,8 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -83,7 +88,8 @@ internal fun AppRootGraph(
                 Text(
                     text = title,
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.padding(horizontal = spacing.medium)
                 )
             },
             navigationIcon = {
@@ -97,26 +103,23 @@ internal fun AppRootGraph(
                 }
             },
             actions = {
-
-                CompositionLocalProvider(
-                    androidx.tv.material3.LocalContentColor provides LocalContentColor.current
-                ) {
-                    actions.forEach { action ->
-                        IconButton(
-                            icon = action.icon,
-                            contentDescription = action.contentDescription,
-                            onClick = action.onClick
-                        )
-                    }
+                actions.forEach { action ->
+                    IconButton(
+                        icon = action.icon,
+                        contentDescription = action.contentDescription,
+                        onClick = action.onClick
+                    )
                 }
+                Spacer(modifier = Modifier.width(spacing.medium))
             },
             modifier = Modifier.fillMaxWidth()
         )
     }
 
-    val topBarWithContent = @Composable {
+    val topBarWithContent = @Composable { windowInsets: WindowInsets ->
         Scaffold(
             topBar = topBar,
+            contentWindowInsets = windowInsets,
             modifier = Modifier.fillMaxSize()
         ) { padding ->
             Background {
@@ -139,7 +142,7 @@ internal fun AppRootGraph(
                 Modifier
                     .fillMaxWidth()
                     .weight(1f)
-            ) { topBarWithContent() }
+            ) { topBarWithContent(WindowInsets.systemBars.exclude(WindowInsets.navigationBars)) }
             NavigationBar(
                 containerColor = currentContainerColor,
                 contentColor = currentContentColor,
@@ -171,7 +174,9 @@ internal fun AppRootGraph(
             NavigationRail(
                 containerColor = currentContainerColor,
                 contentColor = currentContentColor,
-                modifier = Modifier.fillMaxHeight()
+                modifier = Modifier.fillMaxHeight(),
+                // keep header not null
+                header = {}
             ) {
                 items {
                     NavigationItemLayout(
@@ -197,17 +202,17 @@ internal fun AppRootGraph(
                 Modifier
                     .fillMaxHeight()
                     .weight(1f)
-            ) { topBarWithContent() }
+            ) { topBarWithContent(WindowInsets.systemBars) }
         }
     }
 }
 
 @Composable
-private fun NavigationItemLayout(
+private inline fun NavigationItemLayout(
     currentRootDestination: Destination.Root?,
     fob: Fob?,
     rootDestination: Destination.Root,
-    navigateToRoot: (Destination.Root) -> Unit,
+    crossinline navigateToRoot: (Destination.Root) -> Unit,
     block: @Composable (
         selected: Boolean,
         onClick: () -> Unit,
@@ -227,13 +232,15 @@ private fun NavigationItemLayout(
             contentDescription = null
         )
     }
-    val label = @Composable {
-        Text(
-            text = stringResource(
-                if (usefob && fob != null) fob.iconTextId
-                else rootDestination.iconTextId
+    val label: @Composable () -> Unit = remember(usefob, fob) {
+        @Composable {
+            Text(
+                text = stringResource(
+                    if (usefob && fob != null) fob.iconTextId
+                    else rootDestination.iconTextId
+                )
             )
-        )
+        }
     }
     val actualOnClick: () -> Unit = if (usefob) {
         { fob?.onClick?.invoke() }

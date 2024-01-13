@@ -4,6 +4,9 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
@@ -17,6 +20,7 @@ import com.m3u.material.components.OuterBox
 @Composable
 fun Mask(
     state: MaskState,
+    windowInsets: WindowInsets,
     modifier: Modifier = Modifier,
     color: Color = Color.Unspecified,
     contentColor: Color = Color.Unspecified,
@@ -33,7 +37,9 @@ fun Mask(
         }
         Background(color = color, contentColor = contentColor) {
             OuterBox(
-                modifier = modifier.focusRequester(focusRequester),
+                modifier = modifier
+                    .focusRequester(focusRequester)
+                    .padding(windowInsets.asPaddingValues()),
                 content = content
             )
         }

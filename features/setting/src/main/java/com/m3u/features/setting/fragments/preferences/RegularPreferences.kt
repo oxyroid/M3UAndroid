@@ -25,7 +25,7 @@ import com.m3u.features.setting.components.CheckBoxSharedPreference
 import com.m3u.i18n.R.string
 import com.m3u.material.components.Preference
 import com.m3u.material.components.TextPreference
-import com.m3u.material.ktx.isTvDevice
+import com.m3u.material.ktx.isTelevision
 import com.m3u.ui.Destination
 import com.m3u.ui.Destination.Root.Setting.SettingFragment
 import kotlin.time.DurationUnit
@@ -39,7 +39,7 @@ internal fun RegularPreferences(
     modifier: Modifier = Modifier
 ) {
     val pref = LocalPref.current
-    val tv = isTvDevice()
+    val tv = isTelevision()
 
     Column(modifier) {
         Preference(

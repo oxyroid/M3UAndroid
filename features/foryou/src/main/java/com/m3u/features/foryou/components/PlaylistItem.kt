@@ -27,7 +27,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.material.components.OuterRow
-import com.m3u.material.ktx.isTvDevice
+import com.m3u.material.ktx.isTelevision
 import com.m3u.material.model.LocalSpacing
 import androidx.tv.material3.Card as TvCard
 
@@ -75,7 +75,7 @@ private fun PlaylistItemImpl(
 ) {
     val spacing = LocalSpacing.current
     val theme = MaterialTheme.colorScheme
-    val tv = isTvDevice()
+    val tv = isTelevision()
     val currentContentColor by animateColorAsState(
         targetValue = theme.onSurface,
         label = "playlist-item-content"

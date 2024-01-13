@@ -14,7 +14,7 @@ import androidx.tv.foundation.lazy.grid.TvLazyVerticalGrid
 import androidx.tv.foundation.lazy.grid.items
 import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.data.database.model.Stream
-import com.m3u.material.ktx.isTvDevice
+import com.m3u.material.ktx.isTelevision
 import com.m3u.material.ktx.plus
 import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.LocalHelper
@@ -69,7 +69,7 @@ private fun FavouriteGalleryImpl(
     val spacing = LocalSpacing.current
     val pref = LocalPref.current
     val helper = LocalHelper.current
-    val tv = isTvDevice()
+    val tv = isTelevision()
     if (!tv) {
         LazyVerticalStaggeredGrid(
             columns = StaggeredGridCells.Fixed(rowCount),
@@ -143,7 +143,7 @@ private fun CompactFavouriteGalleryImpl(
     val pref = LocalPref.current
     val helper = LocalHelper.current
 
-    val tv = isTvDevice()
+    val tv = isTelevision()
     if (!tv) {
         LazyVerticalStaggeredGrid(
             columns = StaggeredGridCells.Fixed(rowCount),

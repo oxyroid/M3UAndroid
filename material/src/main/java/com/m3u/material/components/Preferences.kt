@@ -35,7 +35,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
-import com.m3u.material.ktx.isTvDevice
+import com.m3u.material.ktx.TelevisionChain
+import com.m3u.material.ktx.isTelevision
 import androidx.tv.material3.ListItem as TvListItem
 import androidx.tv.material3.ListItemDefaults as TvListItemDefaults
 
@@ -50,9 +51,6 @@ fun Preference(
     icon: ImageVector? = null,
     trailing: @Composable (() -> Unit)? = null
 ) {
-    // val configuration = LocalConfiguration.current
-    // val type = configuration.uiMode and Configuration.UI_MODE_TYPE_MASK
-
     val interactionSource = remember { MutableInteractionSource() }
     val focus by interactionSource.collectIsFocusedAsState()
 
@@ -80,7 +78,7 @@ fun Preference(
             label = "preference-content-color",
             animationSpec = spring(stiffness = Spring.StiffnessMediumLow)
         )
-        if (!isTvDevice()) {
+        if (!isTelevision()) {
             ListItem(
                 headlineContent = {
                     Text(
@@ -129,49 +127,43 @@ fun Preference(
                     .fillMaxWidth()
             )
         } else {
-            TvListItem(
-                selected = focus,
-                interactionSource = interactionSource,
-                headlineContent = {
-                    androidx.tv.material3.Text(
-                        text = title,
-                        style = MaterialTheme.typography.titleMedium,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                },
-                supportingContent = {
-                    if (content != null) {
+            TelevisionChain {
+                TvListItem(
+                    selected = focus,
+                    interactionSource = interactionSource,
+                    headlineContent = {
                         androidx.tv.material3.Text(
-                            text = content.capitalize(Locale.current),
-                            style = MaterialTheme.typography.bodyMedium,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier then if (focus) Modifier.basicMarquee()
-                            else Modifier
+                            text = title,
+                            style = MaterialTheme.typography.titleMedium,
                         )
-                    }
-                },
-                trailingContent = trailing,
-                leadingContent = {
-                    icon?.let {
-                        androidx.tv.material3.Icon(imageVector = it, contentDescription = null)
-                    }
-                },
-                tonalElevation = LocalAbsoluteTonalElevation.current,
-                colors = TvListItemDefaults.colors(
-                    containerColor = currentContainerColor,
-                    contentColor = currentContentColor,
-                ),
-                scale = TvListItemDefaults.scale(
-                    scale = 0.9f,
-                    focusedScale = 1f
-                ),
-                onClick = onClick,
-                modifier = modifier
-                    .semantics(mergeDescendants = true) {}
-                    .fillMaxWidth()
-            )
+                    },
+                    supportingContent = {
+                        if (content != null) {
+                            androidx.tv.material3.Text(
+                                text = content.capitalize(Locale.current),
+                                style = MaterialTheme.typography.bodyMedium,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                    },
+                    trailingContent = trailing,
+                    leadingContent = {
+                        icon?.let {
+                            androidx.tv.material3.Icon(imageVector = it, contentDescription = null)
+                        }
+                    },
+                    scale = TvListItemDefaults.scale(
+                        scale = 0.9f,
+                        focusedScale = 1f
+                    ),
+                    onClick = onClick,
+                    modifier = modifier
+                        .semantics(mergeDescendants = true) {}
+                        .fillMaxWidth()
+                )
+            }
+
         }
     }
 }
@@ -200,11 +192,19 @@ fun CheckBoxPreference(
         },
         modifier = modifier,
         trailing = {
-            Checkbox(
-                enabled = enabled,
-                checked = checked,
-                onCheckedChange = null
-            )
+            if (!isTelevision()) {
+                Checkbox(
+                    enabled = enabled,
+                    checked = checked,
+                    onCheckedChange = null
+                )
+            } else {
+                androidx.tv.material3.Checkbox(
+                    enabled = enabled,
+                    checked = checked,
+                    onCheckedChange = null
+                )
+            }
         },
         icon = icon
     )
@@ -240,11 +240,19 @@ fun SwitchPreference(
         },
         modifier = combined,
         trailing = {
-            Switch(
-                enabled = enabled,
-                checked = checked,
-                onCheckedChange = null
-            )
+            if (!isTelevision()) {
+                Switch(
+                    enabled = enabled,
+                    checked = checked,
+                    onCheckedChange = null
+                )
+            } else {
+                androidx.tv.material3.Switch(
+                    enabled = enabled,
+                    checked = checked,
+                    onCheckedChange = null
+                )
+            }
         },
         icon = icon
     )
@@ -269,11 +277,18 @@ fun IconPreference(
         elevation = elevation,
         modifier = modifier,
         trailing = {
-            Icon(
-                imageVector = imageVector,
-                contentDescription = null,
-                tint = LocalContentColor.current.copy(alpha = 0.65f)
-            )
+            if (!isTelevision()) {
+                Icon(
+                    imageVector = imageVector,
+                    contentDescription = null,
+                    tint = LocalContentColor.current.copy(alpha = 0.65f)
+                )
+            } else {
+                androidx.tv.material3.Icon(
+                    imageVector = imageVector,
+                    contentDescription = null,
+                )
+            }
         },
         icon = icon
     )
@@ -300,14 +315,25 @@ fun TextPreference(
         },
         modifier = modifier,
         trailing = {
-            Text(
-                text = trailing.uppercase(),
-                color = MaterialTheme.colorScheme.primary,
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Bold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
+
+            if (!isTelevision()) {
+                Text(
+                    text = trailing.uppercase(),
+                    color = MaterialTheme.colorScheme.primary,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            } else {
+                androidx.tv.material3.Text(
+                    text = trailing.uppercase(),
+                    style = androidx.tv.material3.MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
         },
         icon = icon
     )

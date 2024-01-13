@@ -17,7 +17,7 @@ import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.data.database.model.Playlist
 import com.m3u.features.foryou.model.PlaylistDetail
 import com.m3u.i18n.R.string
-import com.m3u.material.ktx.isTvDevice
+import com.m3u.material.ktx.isTelevision
 import com.m3u.material.ktx.plus
 import com.m3u.material.model.LocalSpacing
 import kotlinx.collections.immutable.ImmutableList
@@ -65,7 +65,7 @@ private fun PlaylistGalleryImpl(
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
-    val tv = isTvDevice()
+    val tv = isTelevision()
     if (!tv) {
         LazyVerticalGrid(
             columns = GridCells.Fixed(rowCount),

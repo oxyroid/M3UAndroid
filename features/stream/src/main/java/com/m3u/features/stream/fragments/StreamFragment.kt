@@ -10,10 +10,8 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -64,7 +62,7 @@ import com.m3u.material.components.Image
 import com.m3u.material.components.mask.MaskButton
 import com.m3u.material.components.mask.MaskCircleButton
 import com.m3u.material.components.mask.MaskState
-import com.m3u.material.ktx.isTvDevice
+import com.m3u.material.ktx.isTelevision
 import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.LocalHelper
 import com.m3u.ui.Player
@@ -98,7 +96,7 @@ internal fun StreamFragment(
     val theme = MaterialTheme.colorScheme
     val pref = LocalPref.current
     val helper = LocalHelper.current
-    val tv = isTvDevice()
+    val tv = isTelevision()
 
     // because they will be updated frequently,
     // they must be wrapped with rememberUpdatedState when using them.
@@ -107,7 +105,7 @@ internal fun StreamFragment(
 
     Background(
         color = Color.Black,
-        contentColor = Color.White
+        contentColor = Color.White,
     ) {
         Box(modifier.animateContentSize()) {
             val state = rememberPlayerState(
@@ -136,6 +134,7 @@ internal fun StreamFragment(
                 val muted = currentVolume == 0f
                 PlayerMask(
                     state = maskState,
+                    windowInsets = windowInsets,
                     header = {
                         MaskButton(
                             state = maskState,
@@ -341,7 +340,6 @@ internal fun StreamFragment(
                                 }
                             )
                         )
-                        .padding(windowInsets.asPaddingValues())
                 )
             }
 

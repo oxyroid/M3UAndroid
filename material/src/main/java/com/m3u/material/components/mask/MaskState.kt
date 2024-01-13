@@ -10,7 +10,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import com.m3u.material.ktx.isTvDevice
+import com.m3u.material.ktx.isTelevision
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -89,7 +89,7 @@ private class MaskStateCoroutineImpl(
 fun rememberMaskState(
     @IntRange(from = 1) minDuration: Long = MaskDefaults.MIN_DURATION_SECOND,
     coroutineScope: CoroutineScope = rememberCoroutineScope(),
-    isTvDevice: Boolean = isTvDevice()
+    isTvDevice: Boolean = isTelevision()
 ): MaskState {
     return remember(minDuration, coroutineScope) {
         MaskStateCoroutineImpl(

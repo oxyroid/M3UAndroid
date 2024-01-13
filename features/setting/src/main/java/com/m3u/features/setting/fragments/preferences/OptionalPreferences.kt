@@ -27,12 +27,12 @@ import com.m3u.core.util.basic.title
 import com.m3u.features.setting.components.CheckBoxSharedPreference
 import com.m3u.i18n.R.string
 import com.m3u.material.components.Preference
-import com.m3u.material.ktx.isTvDevice
+import com.m3u.material.ktx.isTelevision
 
 @Composable
 fun OptionalPreferences(modifier: Modifier = Modifier) {
     val pref = LocalPref.current
-    val tv = isTvDevice()
+    val tv = isTelevision()
     var expended by rememberSaveable { mutableStateOf(false) }
 
     Column(modifier) {

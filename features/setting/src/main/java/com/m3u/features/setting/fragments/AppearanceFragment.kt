@@ -26,7 +26,7 @@ import com.m3u.material.components.ThemeAddSelection
 import com.m3u.material.components.ThemeSelection
 import com.m3u.material.ktx.asColorScheme
 import com.m3u.i18n.R.string
-import com.m3u.material.ktx.isTvDevice
+import com.m3u.material.ktx.isTelevision
 import com.m3u.material.model.LocalSpacing
 import kotlinx.collections.immutable.ImmutableList
 
@@ -50,7 +50,7 @@ internal fun AppearanceFragment(
     val pref = LocalPref.current
     val isDarkMode = pref.darkMode
     val useDynamicColors = pref.useDynamicColors
-    val tv = isTvDevice()
+    val tv = isTelevision()
     Background {
         Column(
             modifier

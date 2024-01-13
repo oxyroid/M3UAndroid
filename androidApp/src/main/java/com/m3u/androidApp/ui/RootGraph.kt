@@ -27,7 +27,7 @@ import com.m3u.features.foryou.ForyouRoute
 import com.m3u.features.setting.SettingRoute
 import com.m3u.material.ktx.Edge
 import com.m3u.material.ktx.blurEdge
-import com.m3u.material.ktx.isTvDevice
+import com.m3u.material.ktx.isTelevision
 import com.m3u.ui.Destination
 import com.m3u.ui.ResumeEvent
 import kotlinx.collections.immutable.ImmutableList
@@ -104,7 +104,7 @@ private fun RootGraph(
 
     HorizontalPager(
         state = pagerState,
-        userScrollEnabled = !isTvDevice(),
+        userScrollEnabled = !isTelevision(),
         modifier = modifier
             .fillMaxSize()
             .blurEdge(

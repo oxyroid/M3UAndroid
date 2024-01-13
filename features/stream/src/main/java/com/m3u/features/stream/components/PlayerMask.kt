@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.LocalContentColor
@@ -16,19 +17,20 @@ import androidx.compose.ui.graphics.Color
 import com.m3u.material.components.mask.Mask
 import com.m3u.material.components.mask.MaskPanel
 import com.m3u.material.components.mask.MaskState
-import com.m3u.material.ktx.isTvDevice
+import com.m3u.material.ktx.isTelevision
 import com.m3u.material.model.LocalSpacing
 
 @Composable
 internal fun PlayerMask(
     state: MaskState,
+    windowInsets: WindowInsets,
     header: @Composable RowScope.() -> Unit,
     body: @Composable RowScope.() -> Unit,
     footer: @Composable RowScope.() -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val spacing = LocalSpacing.current
-    val tv = isTvDevice()
+    val tv = isTelevision()
     CompositionLocalProvider(
         LocalContentColor provides Color.White,
         androidx.tv.material3.LocalContentColor provides Color.White
@@ -39,6 +41,7 @@ internal fun PlayerMask(
             )
             Mask(
                 state = state,
+                windowInsets = windowInsets,
                 color = Color.Black.copy(alpha = 0.54f)
             ) {
                 Row(
@@ -59,8 +62,7 @@ internal fun PlayerMask(
                     content = body
                 )
                 Column(
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
+                    modifier = Modifier.align(Alignment.BottomCenter)
                 ) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),

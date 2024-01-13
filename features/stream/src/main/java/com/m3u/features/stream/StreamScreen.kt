@@ -35,7 +35,7 @@ import com.m3u.material.components.Background
 import com.m3u.material.components.mask.MaskInterceptor
 import com.m3u.material.components.mask.MaskState
 import com.m3u.material.components.mask.rememberMaskState
-import com.m3u.material.ktx.isTvDevice
+import com.m3u.material.ktx.isTelevision
 import com.m3u.ui.LocalHelper
 import com.m3u.ui.OnPipModeChanged
 import kotlinx.coroutines.flow.launchIn
@@ -225,7 +225,7 @@ private fun StreamScreen(
     val playlistTitle = playlist?.title ?: "--"
     val favourite = stream?.favourite ?: false
 
-    BackHandler(isTvDevice() && maskState.visible) {
+    BackHandler(isTelevision() && maskState.visible) {
         maskState.sleep()
     }
 

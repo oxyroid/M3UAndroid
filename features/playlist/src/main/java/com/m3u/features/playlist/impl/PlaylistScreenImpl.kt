@@ -29,6 +29,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
@@ -61,6 +62,8 @@ import com.m3u.ui.Sort
 import com.m3u.ui.SortBottomSheet
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 
 @Composable
@@ -169,11 +172,13 @@ internal fun PlaylistScreenImpl(
                 ) {
                     PlaylistPager(channels) { streams ->
                         val state = rememberLazyStaggeredGridState()
-                        LaunchedEffect(state.isAtTop) {
-                            isAtTopState.value = state.isAtTop
+                        LaunchedEffect(Unit) {
+                            snapshotFlow { state.isAtTop }
+                                .onEach { isAtTopState.value = it }
+                                .launchIn(this)
                         }
                         EventHandler(scrollUp) {
-                            state.animateScrollToItem(0)
+                            state.scrollToItem(0)
                         }
                         val orientation = configuration.orientation
                         val actualRowCount = remember(orientation, rowCount) {

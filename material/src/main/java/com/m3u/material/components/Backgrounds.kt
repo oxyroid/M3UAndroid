@@ -17,7 +17,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.isSpecified
 import androidx.compose.ui.unit.dp
 import com.m3u.material.ktx.ifUnspecified
-import com.m3u.material.ktx.isTvDevice
+import com.m3u.material.ktx.isTelevision
 
 @Composable
 inline fun Background(
@@ -27,7 +27,7 @@ inline fun Background(
     crossinline content: @Composable BoxScope.() -> Unit
 ) {
     val actualContentColor = contentColor.ifUnspecified {
-        if (!isTvDevice()) LocalContentColor.current
+        if (!isTelevision()) LocalContentColor.current
         else androidx.tv.material3.LocalContentColor.current
     }
     val currentColor by animateColorAsState(

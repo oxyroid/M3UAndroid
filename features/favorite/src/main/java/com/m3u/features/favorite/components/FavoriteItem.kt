@@ -30,7 +30,7 @@ import com.m3u.data.database.model.Stream
 import com.m3u.i18n.R.string
 import com.m3u.material.components.Image
 import com.m3u.material.components.TextBadge
-import com.m3u.material.ktx.isTvDevice
+import com.m3u.material.ktx.isTelevision
 import com.m3u.material.model.LocalSpacing
 import java.net.URI
 
@@ -78,7 +78,7 @@ private fun FavoriteItemImpl(
 ) {
     val context = LocalContext.current
     val spacing = LocalSpacing.current
-    val tv = isTvDevice()
+    val tv = isTelevision()
 
     val scheme = remember(stream.url) {
         URI(stream.url).scheme ?: context.getString(string.feat_playlist_scheme_unknown)

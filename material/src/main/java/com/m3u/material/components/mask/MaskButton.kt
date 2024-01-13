@@ -1,7 +1,6 @@
 package com.m3u.material.components.mask
 
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.Text
 import androidx.compose.material3.TooltipBox
@@ -13,7 +12,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.m3u.material.components.IconButton
-import com.m3u.material.ktx.ifUnspecified
 
 @Composable
 fun MaskButton(
@@ -28,7 +26,7 @@ fun MaskButton(
     val tooltipState = rememberTooltipState()
 
     val currentTint by animateColorAsState(
-        targetValue = tint.ifUnspecified { LocalContentColor.current },
+        targetValue = tint,
         label = "mask-button-tint"
     )
 
