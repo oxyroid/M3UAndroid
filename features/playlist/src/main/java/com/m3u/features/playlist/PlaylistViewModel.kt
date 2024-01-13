@@ -226,7 +226,7 @@ class PlaylistViewModel @Inject constructor(
         )
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    internal val unsorted: StateFlow<List<Stream>> = combine(
+    private val unsorted: StateFlow<List<Stream>> = combine(
         playlistUrl.flatMapLatest { url ->
             playlistRepository.observeWithStreams(url)
         },

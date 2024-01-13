@@ -39,7 +39,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.tv.foundation.lazy.list.TvLazyColumn
 import androidx.tv.foundation.lazy.list.TvLazyRow
-import androidx.tv.foundation.lazy.list.items
+import androidx.tv.foundation.lazy.list.itemsIndexed
 import androidx.tv.material3.DrawerValue
 import androidx.tv.material3.Icon
 import androidx.tv.material3.ImmersiveList
@@ -72,7 +72,6 @@ internal fun TvPlaylistScreenImpl(
     title: String,
     message: Message,
     channels: ImmutableList<Channel>,
-    findStreamById: (Int) -> Stream?,
     query: String,
     onQuery: (String) -> Unit,
     sorts: ImmutableList<Sort>,
@@ -94,10 +93,13 @@ internal fun TvPlaylistScreenImpl(
 
     val drawerState = rememberDrawerState(DrawerValue.Closed)
 
-    var currentStreamId: Int? by remember { mutableStateOf(null) }
+    var currentMixed: Int? by remember { mutableStateOf(null) }
 
-    val currentStream = remember(currentStreamId) {
-        currentStreamId?.let { findStreamById(it) }
+    val currentStream = remember(currentMixed) {
+        currentMixed?.let {
+            val (i, j) = TvPlaylistScreenImplDefault.separate(it)
+            channels[i].streams[j]
+        }
     }
 
     BackHandler(drawerState.currentValue == DrawerValue.Open) {
@@ -109,7 +111,7 @@ internal fun TvPlaylistScreenImpl(
             AnimatedVisibility(hasFocus) {
                 DisposableEffect(Unit) {
                     focusRequester.captureFocus()
-                    onDispose { currentStreamId = null }
+                    onDispose { currentMixed = null }
                 }
                 Column(
                     Modifier
@@ -146,7 +148,7 @@ internal fun TvPlaylistScreenImpl(
                     NavigationDrawerItem(
                         selected = false,
                         onClick = {
-                            currentStreamId?.let { ban(it) }
+                            currentStream?.let { ban(it.id) }
                             drawerState.setValue(DrawerValue.Closed)
                         },
                         leadingContent = {
@@ -162,7 +164,7 @@ internal fun TvPlaylistScreenImpl(
                     NavigationDrawerItem(
                         selected = false,
                         onClick = {
-                            currentStreamId?.let { createShortcut(it) }
+                            currentStream?.let { createShortcut(it.id) }
                             drawerState.setValue(DrawerValue.Closed)
                         },
                         leadingContent = {
@@ -179,7 +181,7 @@ internal fun TvPlaylistScreenImpl(
                     NavigationDrawerItem(
                         selected = false,
                         onClick = {
-                            currentStreamId?.let { onSavePicture(it) }
+                            currentStream?.let { onSavePicture(it.id) }
                             drawerState.setValue(DrawerValue.Closed)
                         },
                         leadingContent = {
@@ -198,25 +200,28 @@ internal fun TvPlaylistScreenImpl(
     ) {
         ImmersiveList(
             modifier = modifier.fillMaxWidth(),
-            background = { id, hasFocus ->
+            background = { mix, hasFocus ->
                 Background {
                     AnimatedVisibility(hasFocus) {
-                        AnimatedContent(id) { id ->
+                        AnimatedContent(mix) { mixed ->
                             Box(
                                 modifier = Modifier.fillMaxSize(),
                                 contentAlignment = Alignment.TopEnd
                             ) {
-                                val stream: Stream? = remember(id) { findStreamById(id) }
-                                val request = remember(stream?.cover) {
+                                val stream: Stream = remember(mixed) {
+                                    val (i, j) = TvPlaylistScreenImplDefault.separate(mixed)
+                                    channels[i].streams[j]
+                                }
+                                val request = remember(stream.cover) {
                                     ImageRequest.Builder(context)
-                                        .data(stream?.cover.orEmpty())
+                                        .data(stream.cover.orEmpty())
                                         .crossfade(1600)
                                         .build()
                                 }
                                 AsyncImage(
                                     model = request,
                                     contentScale = ContentScale.Crop,
-                                    contentDescription = stream?.title,
+                                    contentDescription = stream.title,
                                     modifier = Modifier
                                         .fillMaxWidth(0.78f)
                                         .aspectRatio(16 / 9f)
@@ -236,13 +241,13 @@ internal fun TvPlaylistScreenImpl(
                                         .fillMaxWidth()
                                 ) {
                                     Text(
-                                        text = stream?.title.orEmpty(),
+                                        text = stream.title,
                                         style = MaterialTheme.typography.headlineLarge,
                                         fontWeight = FontWeight.ExtraBold,
                                         maxLines = 1
                                     )
                                     Text(
-                                        text = stream?.url.orEmpty(),
+                                        text = stream.url,
                                         style = MaterialTheme.typography.headlineMedium,
                                         color = LocalContentColor.current.copy(0.68f),
                                         maxLines = 1
@@ -297,7 +302,7 @@ internal fun TvPlaylistScreenImpl(
                             edge = Edge.Top
                         )
                 ) {
-                    items(channels) { channel ->
+                    itemsIndexed(channels) { i, channel ->
                         if (multiCatalogs) {
                             Text(
                                 text = channel.title,
@@ -312,10 +317,11 @@ internal fun TvPlaylistScreenImpl(
                         ) {
                             items(
                                 count = streams.size,
-                                key = { i -> streams[i].id },
-                                contentType = { i -> streams[i].cover.isNullOrEmpty() }
-                            ) { index ->
-                                val stream = streams[index]
+                                key = { index -> streams[index].id },
+                                contentType = { index -> streams[index].cover.isNullOrEmpty() }
+                            ) { j ->
+                                val stream = streams[j]
+                                val mixed = TvPlaylistScreenImplDefault.combine(i, j)
                                 TvStreamItem(
                                     stream = stream,
                                     onClick = {
@@ -323,14 +329,10 @@ internal fun TvPlaylistScreenImpl(
                                         navigateToStream()
                                     },
                                     onLongClick = {
-                                        currentStreamId = stream.id
+                                        currentMixed = mixed
                                         drawerState.setValue(DrawerValue.Open)
                                     },
-                                    // todo: immersive-list allow index only
-                                    // but it is hard to calculate index in 2-dimensional collection
-                                    // so we passed item id and in receiver scope we try findById to
-                                    // show actual item.
-                                    modifier = Modifier.immersiveListItem(stream.id)
+                                    modifier = Modifier.immersiveListItem(mixed)
                                 )
                             }
                         }
@@ -338,5 +340,14 @@ internal fun TvPlaylistScreenImpl(
                 }
             }
         )
+    }
+}
+
+private object TvPlaylistScreenImplDefault {
+    fun combine(i: Int, j: Int): Int = i shl 16 or j
+    fun separate(mixed: Int): Pair<Int, Int> {
+        val i = mixed shr 16 and 0x7FFF
+        val j = mixed shr 0 and 0x7FFF
+        return i to j
     }
 }

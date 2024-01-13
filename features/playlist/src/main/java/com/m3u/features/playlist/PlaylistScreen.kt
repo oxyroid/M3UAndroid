@@ -71,7 +71,6 @@ internal fun PlaylistRoute(
     val playlistUrl by viewModel.playlistUrl.collectAsStateWithLifecycle()
     val playlist by viewModel.playlist.collectAsStateWithLifecycle()
     val channels by viewModel.channels.collectAsStateWithLifecycle()
-    val unsorted by viewModel.unsorted.collectAsStateWithLifecycle()
     val refreshing by viewModel.refreshing.collectAsStateWithLifecycle()
 
     val sorts = viewModel.sorts
@@ -128,7 +127,6 @@ internal fun PlaylistRoute(
             navigateToStream = navigateToStream,
             onScrollUp = { viewModel.onEvent(PlaylistEvent.ScrollUp) },
             onRefresh = { viewModel.onEvent(PlaylistEvent.Refresh) },
-            findStreamById = { id -> unsorted.find { it.id == id } },
             contentPadding = contentPadding,
             onFavorite = { id, target -> viewModel.onEvent(PlaylistEvent.Favourite(id, target)) },
             ban = { id -> viewModel.onEvent(PlaylistEvent.Ban(id)) },
@@ -159,7 +157,6 @@ private fun PlaylistScreen(
     sorts: ImmutableList<Sort>,
     sort: Sort,
     onSort: (Sort) -> Unit,
-    findStreamById: (Int) -> Stream?,
     scrollUp: Event<Unit>,
     onRefresh: () -> Unit,
     navigateToStream: () -> Unit,
@@ -229,7 +226,6 @@ private fun PlaylistScreen(
             query = query,
             onQuery = onQuery,
             navigateToStream = navigateToStream,
-            findStreamById = findStreamById,
             onRefresh = onRefresh,
             sorts = sorts,
             sort = sort,
