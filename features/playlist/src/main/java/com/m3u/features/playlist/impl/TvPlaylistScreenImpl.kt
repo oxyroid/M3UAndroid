@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -42,7 +41,6 @@ import androidx.compose.ui.unit.dp
 import androidx.tv.foundation.lazy.list.TvLazyColumn
 import androidx.tv.foundation.lazy.list.TvLazyRow
 import androidx.tv.foundation.lazy.list.items
-import androidx.tv.material3.Card
 import androidx.tv.material3.DrawerValue
 import androidx.tv.material3.Icon
 import androidx.tv.material3.ImmersiveList
@@ -91,8 +89,8 @@ internal fun TvPlaylistScreenImpl(
     val helper = LocalHelper.current
     val spacing = LocalSpacing.current
     val focusRequester = remember { FocusRequester() }
-
-    val maxBrowserHeight = 180.dp
+    val multiCatalogs = channels.size > 1
+    val maxBrowserHeight = if (multiCatalogs) 256.dp else 180.dp
 
     val drawerState = rememberDrawerState(DrawerValue.Closed)
 
@@ -302,33 +300,18 @@ internal fun TvPlaylistScreenImpl(
                         )
                 ) {
                     items(channels) { channel ->
+                        if (multiCatalogs) {
+                            Text(
+                                text = channel.title,
+                                style = MaterialTheme.typography.headlineMedium,
+                                modifier = Modifier.padding(spacing.medium)
+                            )
+                        }
                         val streams = channel.streams
                         TvLazyRow(
                             horizontalArrangement = Arrangement.spacedBy(spacing.medium),
                             contentPadding = PaddingValues(horizontal = spacing.medium)
                         ) {
-                            if (channels.size > 1) {
-                                item {
-                                    Card(
-                                        onClick = {},
-                                        onLongClick = {},
-                                        modifier = Modifier
-                                            .height(128.dp)
-                                            .aspectRatio(4 / 3f)
-                                    ) {
-                                        Box(
-                                            contentAlignment = Alignment.Center,
-                                            modifier = Modifier.fillMaxSize()
-                                        ) {
-                                            Text(
-                                                text = channel.title,
-                                                style = MaterialTheme.typography.displayMedium
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-
                             items(
                                 count = streams.size,
                                 key = { i -> streams[i].id },
