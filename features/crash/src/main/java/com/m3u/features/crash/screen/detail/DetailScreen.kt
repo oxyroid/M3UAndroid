@@ -1,6 +1,7 @@
 package com.m3u.features.crash.screen.detail
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
@@ -34,35 +35,37 @@ internal fun DetailScreen(
     }
     val state by viewModel.state.collectAsStateWithLifecycle()
     Background {
-        LazyColumn(
-            contentPadding = PaddingValues(spacing.medium),
-            modifier = modifier
-        ) {
-            item {
-                MonoText(
-                    text = state.text,
-                    color = LocalContentColor.current
+        Box {
+            LazyColumn(
+                contentPadding = PaddingValues(spacing.medium),
+                modifier = modifier
+            ) {
+                item {
+                    MonoText(
+                        text = state.text,
+                        color = LocalContentColor.current
+                    )
+                }
+            }
+            Column(
+                verticalArrangement = Arrangement.spacedBy(spacing.small),
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(spacing.medium)
+            ) {
+                ExtendedFloatingActionButton(
+                    text = { Text("SAVE") },
+                    icon = {
+                        Icon(
+                            imageVector = Icons.Rounded.FileDownload,
+                            contentDescription = null
+                        )
+                    },
+                    onClick = {
+                        viewModel.onEvent(DetailEvent.Save)
+                    }
                 )
             }
-        }
-        Column(
-            verticalArrangement = Arrangement.spacedBy(spacing.small),
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(spacing.medium)
-        ) {
-            ExtendedFloatingActionButton(
-                text = { Text("SAVE") },
-                icon = {
-                    Icon(
-                        imageVector = Icons.Rounded.FileDownload,
-                        contentDescription = null
-                    )
-                },
-                onClick = {
-                    viewModel.onEvent(DetailEvent.Save)
-                }
-            )
         }
     }
 }

@@ -19,7 +19,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.flatMapMerge
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -76,7 +76,7 @@ class ForyouViewModel @Inject constructor(
 
     @OptIn(ExperimentalCoroutinesApi::class)
     internal val recommend: StateFlow<Recommend> = unseensDuration
-        .flatMapMerge { streamRepository.observeAllUnseenFavourites(it) }
+        .flatMapLatest { streamRepository.observeAllUnseenFavourites(it) }
         .map { prev -> Recommend(prev.map { Recommend.UnseenSpec(it) }) }
         .stateIn(
             scope = viewModelScope,

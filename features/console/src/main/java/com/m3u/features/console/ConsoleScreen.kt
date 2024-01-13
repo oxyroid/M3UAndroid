@@ -1,6 +1,7 @@
 package com.m3u.features.console
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -73,52 +74,54 @@ private fun ConsoleScreen(
         contentColor = Color.White,
         modifier = modifier
     ) {
-        val commands = remember(output) { output.lines().asReversed() }
-        val state = rememberLazyListState()
-        LazyColumn(
-            state = state,
-            reverseLayout = true,
-            modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.Bottom,
-            horizontalAlignment = Alignment.Start,
-            contentPadding = contentPadding + PaddingValues(LocalSpacing.current.medium)
-        ) {
-            items(commands) { command ->
-                CompositionLocalProvider(
-                    LocalTextSelectionColors provides TextSelectionColors(
-                        backgroundColor = Color(0xff265c8e),
-                        handleColor = Color(0xff78c4dd)
-                    )
-                ) {
-                    SelectionContainer {
-                        MonoText(
-                            text = MonoStyle.get(command).actual(command),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MonoStyle.get(command).color,
-                            modifier = Modifier.fillMaxWidth()
+        Box {
+            val commands = remember(output) { output.lines().asReversed() }
+            val state = rememberLazyListState()
+            LazyColumn(
+                state = state,
+                reverseLayout = true,
+                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.Bottom,
+                horizontalAlignment = Alignment.Start,
+                contentPadding = contentPadding + PaddingValues(LocalSpacing.current.medium)
+            ) {
+                items(commands) { command ->
+                    CompositionLocalProvider(
+                        LocalTextSelectionColors provides TextSelectionColors(
+                            backgroundColor = Color(0xff265c8e),
+                            handleColor = Color(0xff78c4dd)
                         )
+                    ) {
+                        SelectionContainer {
+                            MonoText(
+                                text = MonoStyle.get(command).actual(command),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MonoStyle.get(command).color,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
                     }
                 }
             }
-        }
-        TextField(
-            text = input,
-            enabled = focus,
-            onValueChange = onInput,
-            singleLine = true,
-            placeholder = "command here...",
-            modifier = Modifier
-                .fillMaxWidth()
-                .align(Alignment.BottomCenter)
-                .padding(
-                    start = LocalSpacing.current.medium,
-                    end = LocalSpacing.current.medium,
-                    bottom = LocalSpacing.current.medium,
-                ),
-            keyboardActions = KeyboardActions { onExecute() }
-        )
-        LaunchedEffect(commands) {
-            state.animateScrollToItem(0)
+            TextField(
+                text = input,
+                enabled = focus,
+                onValueChange = onInput,
+                singleLine = true,
+                placeholder = "command here...",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .align(Alignment.BottomCenter)
+                    .padding(
+                        start = LocalSpacing.current.medium,
+                        end = LocalSpacing.current.medium,
+                        bottom = LocalSpacing.current.medium,
+                    ),
+                keyboardActions = KeyboardActions { onExecute() }
+            )
+            LaunchedEffect(commands) {
+                state.animateScrollToItem(0)
+            }
         }
     }
 }

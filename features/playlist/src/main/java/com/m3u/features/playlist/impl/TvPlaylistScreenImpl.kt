@@ -22,7 +22,6 @@ import androidx.compose.material.icons.rounded.Image
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -58,6 +57,7 @@ import com.m3u.features.playlist.Channel
 import com.m3u.features.playlist.R
 import com.m3u.features.playlist.components.TvStreamItem
 import com.m3u.i18n.R.string
+import com.m3u.material.components.Background
 import com.m3u.material.components.IconButton
 import com.m3u.material.ktx.Edge
 import com.m3u.material.ktx.blurEdge
@@ -199,9 +199,7 @@ internal fun TvPlaylistScreenImpl(
         ImmersiveList(
             modifier = modifier.fillMaxWidth(),
             background = { id, hasFocus ->
-                CompositionLocalProvider(
-                    LocalContentColor provides MaterialTheme.colorScheme.onBackground
-                ) {
+                Background {
                     AnimatedVisibility(hasFocus) {
                         AnimatedContent(id) { id ->
                             Box(

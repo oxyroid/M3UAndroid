@@ -4,7 +4,6 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.material3.LocalAbsoluteTonalElevation
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
@@ -24,7 +23,7 @@ inline fun Background(
     modifier: Modifier = Modifier,
     color: Color = MaterialTheme.colorScheme.background,
     contentColor: Color = MaterialTheme.colorScheme.onBackground,
-    crossinline content: @Composable BoxScope.() -> Unit
+    crossinline content: @Composable () -> Unit
 ) {
     val actualContentColor = contentColor.ifUnspecified {
         if (!isTelevision()) LocalContentColor.current

@@ -123,15 +123,17 @@ internal fun AppRootGraph(
             modifier = Modifier.fillMaxSize()
         ) { padding ->
             Background {
-                content(padding)
-                AppSnackHost(
-                    message = message,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(spacing.small)
-                        .align(Alignment.BottomCenter)
-                        .padding(padding)
-                )
+                Box {
+                    content(padding)
+                    AppSnackHost(
+                        message = message,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(spacing.small)
+                            .align(Alignment.BottomCenter)
+                            .padding(padding)
+                    )
+                }
             }
         }
     }

@@ -37,7 +37,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.flatMapMerge
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
@@ -227,7 +227,7 @@ class PlaylistViewModel @Inject constructor(
 
     @OptIn(ExperimentalCoroutinesApi::class)
     internal val unsorted: StateFlow<List<Stream>> = combine(
-        playlistUrl.flatMapMerge { url ->
+        playlistUrl.flatMapLatest { url ->
             playlistRepository.observeWithStreams(url)
         },
         query
