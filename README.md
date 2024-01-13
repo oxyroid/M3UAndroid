@@ -1,7 +1,9 @@
 # M3UAndroid
 <a href="https://t.me/m3u_android"><img src="https://img.shields.io/badge/Telegram-2CA5E0?style=flat&logo=telegram&logoColor=white"></a>
 
-M3U is my first elaborate Android project and is also my first jetpack compose application project.
+M3U is an android application which made of jetpack compose.
+
+Android Phone, TV, desktop and Car.
 
 <a href="https://github.com/realOxy/M3UAndroid/releases/latest"><img src="https://github.com/realOxy/M3UAndroid/assets/5572928/c407b17c-f64f-4486-ade1-6048eb177e67" height="80px"></a>
 <a href="https://apt.izzysoft.de/fdroid/index/apk/com.m3u.androidApp"><img src="https://github.com/realOxy/M3UAndroid/assets/5572928/4ba5a44a-c5e4-4634-a7aa-b8dda0992ba2" height="80px"></a>
