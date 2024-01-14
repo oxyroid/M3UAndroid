@@ -97,7 +97,9 @@ internal fun TvPlaylistScreenImpl(
                     message = message,
                     noPictureMode = noPictureMode,
                     maxBrowserHeight = maxBrowserHeight,
-                    onRefresh = onRefresh
+                    onRefresh = onRefresh,
+                    openSearchDrawer = {},
+                    openSortDrawer = {}
                 )
             },
             list = {
@@ -116,10 +118,14 @@ internal fun TvPlaylistScreenImpl(
                     onFocus = { _, i, j ->
                         focusMixed = TvPlaylistScreenImplDefaults.combine(i, j)
                     },
-                    modifier = Modifier.blurEdge(
-                        color = MaterialTheme.colorScheme.background,
-                        edge = Edge.Top
-                    )
+                    modifier = Modifier
+                        .then(
+                            if (noPictureMode) Modifier
+                            else Modifier.blurEdge(
+                                color = MaterialTheme.colorScheme.background,
+                                edge = Edge.Top
+                            )
+                        )
                 )
             }
         )

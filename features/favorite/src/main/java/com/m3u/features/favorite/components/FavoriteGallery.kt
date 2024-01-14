@@ -103,7 +103,10 @@ private fun FavouriteGalleryImpl(
             columns = TvGridCells.Fixed(rowCount),
             verticalArrangement = Arrangement.spacedBy(spacing.medium),
             horizontalArrangement = Arrangement.spacedBy(spacing.medium),
-            contentPadding = PaddingValues(spacing.medium) + contentPadding,
+            contentPadding = PaddingValues(
+                vertical = spacing.medium,
+                horizontal = spacing.large
+            ) + contentPadding,
             modifier = modifier.fillMaxSize(),
         ) {
             items(

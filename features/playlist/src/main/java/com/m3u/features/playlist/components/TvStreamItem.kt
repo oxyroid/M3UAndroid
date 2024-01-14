@@ -7,12 +7,14 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.BrokenImage
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.Card
 import androidx.tv.material3.Icon
@@ -49,7 +51,10 @@ internal fun TvStreamItem(
             if (noPictureMode || stream.cover.isNullOrEmpty()) {
                 Text(
                     text = stream.title,
-                    modifier = Modifier.padding(spacing.medium),
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .widthIn(86.dp)
+                        .padding(spacing.medium),
                     maxLines = 1
                 )
             } else {

@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.Sort
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.runtime.Composable
@@ -43,6 +44,8 @@ internal fun ImmersiveBackground(
     message: Message,
     maxBrowserHeight: Dp,
     onRefresh: () -> Unit,
+    openSearchDrawer: () -> Unit,
+    openSortDrawer: () -> Unit,
     modifier: Modifier = Modifier,
     noPictureMode: Boolean = false,
 ) {
@@ -122,7 +125,12 @@ internal fun ImmersiveBackground(
                     IconButton(
                         icon = Icons.Rounded.Search,
                         contentDescription = "search",
-                        onClick = { /*TODO*/ }
+                        onClick = openSearchDrawer
+                    )
+                    IconButton(
+                        icon = Icons.AutoMirrored.Rounded.Sort,
+                        contentDescription = "sort",
+                        onClick = openSortDrawer
                     )
                     IconButton(
                         icon = Icons.Rounded.Refresh,

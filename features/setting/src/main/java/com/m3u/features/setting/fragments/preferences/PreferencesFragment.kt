@@ -10,6 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.tv.foundation.lazy.list.TvLazyColumn
 import com.m3u.material.ktx.isTelevision
+import com.m3u.material.ktx.plus
 import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.Destination.Root.Setting.SettingFragment
 
@@ -65,7 +66,7 @@ internal fun PreferencesFragment(
     } else {
         TvLazyColumn(
             modifier = modifier,
-            contentPadding = contentPadding,
+            contentPadding = contentPadding + PaddingValues(spacing.medium),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(spacing.medium)
         ) {
