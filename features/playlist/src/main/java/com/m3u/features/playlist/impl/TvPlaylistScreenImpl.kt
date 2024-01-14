@@ -18,6 +18,7 @@ import com.m3u.core.wrapper.Message
 import com.m3u.features.playlist.Channel
 import com.m3u.features.playlist.components.ImmersiveBackground
 import com.m3u.features.playlist.components.PlaylistDrawer
+import com.m3u.features.playlist.components.PlaylistDrawerDefaults
 import com.m3u.features.playlist.components.TvStreamGallery
 import com.m3u.material.ktx.Edge
 import com.m3u.material.ktx.blurEdge
@@ -79,11 +80,13 @@ internal fun TvPlaylistScreenImpl(
 
     PlaylistDrawer(
         drawerState = drawerState,
-        stream = pressStream,
-        onFavorite = onFavorite,
-        ban = ban,
-        createShortcut = createShortcut,
-        savePicture = savePicture
+        items = PlaylistDrawerDefaults.rememberStreamItems(
+            stream = pressStream,
+            onFavorite = onFavorite,
+            ban = ban,
+            createShortcut = createShortcut,
+            savePicture = savePicture
+        )
     ) {
         ImmersiveList(
             modifier = modifier.fillMaxWidth(),

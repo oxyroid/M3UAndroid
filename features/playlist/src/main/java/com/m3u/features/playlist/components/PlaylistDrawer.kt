@@ -12,8 +12,11 @@ import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.Image
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.tv.material3.DrawerState
 import androidx.tv.material3.DrawerValue
@@ -22,17 +25,22 @@ import androidx.tv.material3.ModalNavigationDrawer
 import androidx.tv.material3.NavigationDrawerItem
 import androidx.tv.material3.Text
 import com.m3u.data.database.model.Stream
-import com.m3u.i18n.R
+import com.m3u.i18n.R.string
 import com.m3u.material.model.LocalSpacing
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
+
+@Immutable
+internal data class DrawerItem(
+    val title: String,
+    val icon: ImageVector,
+    val onClick: () -> Boolean
+)
 
 @Composable
 internal fun PlaylistDrawer(
+    items: ImmutableList<DrawerItem>,
     drawerState: DrawerState,
-    stream: Stream?,
-    onFavorite: (streamId: Int, target: Boolean) -> Unit,
-    ban: (streamId: Int) -> Unit,
-    createShortcut: (streamId: Int) -> Unit,
-    savePicture: (streamId: Int) -> Unit,
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit
 ) {
@@ -44,6 +52,8 @@ internal fun PlaylistDrawer(
 
     ModalNavigationDrawer(
         drawerState = drawerState,
+        modifier = modifier,
+        content = content,
         drawerContent = {
             AnimatedVisibility(hasFocus) {
                 Column(
@@ -53,82 +63,81 @@ internal fun PlaylistDrawer(
                     horizontalAlignment = Alignment.Start,
                     verticalArrangement = Arrangement.spacedBy(spacing.small)
                 ) {
-                    NavigationDrawerItem(
-                        selected = false,
-                        onClick = {
-                            stream?.let { stream ->
-                                onFavorite(stream.id, !stream.favourite)
-                            }
-                        },
-                        leadingContent = {
-                            Icon(
-                                imageVector = Icons.Rounded.Favorite,
-                                contentDescription = "favorite"
-                            )
-                        },
-                        content = {
-                            Text(
-                                stringResource(
-                                    if (stream?.favourite == true) R.string.feat_playlist_dialog_favourite_cancel_title
-                                    else R.string.feat_playlist_dialog_favourite_title
-                                ).uppercase()
-                            )
-                        },
-                    )
-
-                    NavigationDrawerItem(
-                        selected = false,
-                        onClick = {
-                            stream?.let { ban(it.id) }
-                            drawerState.setValue(DrawerValue.Closed)
-                        },
-                        leadingContent = {
-                            Icon(
-                                imageVector = Icons.Rounded.Delete,
-                                contentDescription = "ban"
-                            )
-                        },
-                        content = {
-                            Text(stringResource(R.string.feat_playlist_dialog_mute_title).uppercase())
-                        }
-                    )
-                    NavigationDrawerItem(
-                        selected = false,
-                        onClick = {
-                            stream?.let { createShortcut(it.id) }
-                            drawerState.setValue(DrawerValue.Closed)
-                        },
-                        leadingContent = {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Rounded.Shortcut,
-                                contentDescription = "shortcut"
-                            )
-                        },
-                        content = {
-                            Text(stringResource(R.string.feat_playlist_dialog_create_shortcut_title).uppercase())
-                        }
-                    )
-
-                    NavigationDrawerItem(
-                        selected = false,
-                        onClick = {
-                            stream?.let { savePicture(it.id) }
-                            drawerState.setValue(DrawerValue.Closed)
-                        },
-                        leadingContent = {
-                            Icon(
-                                imageVector = Icons.Rounded.Image,
-                                contentDescription = "save-cover"
-                            )
-                        },
-                        content = {
-                            Text(stringResource(R.string.feat_playlist_dialog_save_picture_title).uppercase())
-                        }
-                    )
+                    items.forEach { item ->
+                        NavigationDrawerItem(
+                            selected = false,
+                            onClick = {
+                                val result = item.onClick()
+                                if (result) drawerState.setValue(DrawerValue.Closed)
+                            },
+                            leadingContent = {
+                                Icon(
+                                    imageVector = item.icon,
+                                    contentDescription = item.title
+                                )
+                            },
+                            content = {
+                                Text(item.title.uppercase())
+                            },
+                        )
+                    }
                 }
             }
         },
-        modifier = modifier,
-        content = content
     )
+}
+
+internal object PlaylistDrawerDefaults {
+    @Composable
+    fun rememberStreamItems(
+        stream: Stream?,
+        onFavorite: (streamId: Int, target: Boolean) -> Unit,
+        ban: (streamId: Int) -> Unit,
+        createShortcut: (streamId: Int) -> Unit,
+        savePicture: (streamId: Int) -> Unit,
+    ): ImmutableList<DrawerItem> {
+        val favouriteTitle = stringResource(
+            if (stream?.favourite == true) string.feat_playlist_dialog_favourite_cancel_title
+            else string.feat_playlist_dialog_favourite_title
+        )
+        val banTitle = stringResource(string.feat_playlist_dialog_mute_title)
+        val createShortcutTitle = stringResource(string.feat_playlist_dialog_create_shortcut_title)
+        val savePictureTitle = stringResource(string.feat_playlist_dialog_save_picture_title)
+        return remember(stream, favouriteTitle, banTitle, createShortcutTitle, savePictureTitle) {
+            persistentListOf(
+                DrawerItem(
+                    title = favouriteTitle,
+                    icon = Icons.Rounded.Favorite,
+                    onClick = {
+                        stream?.let { stream -> onFavorite(stream.id, !stream.favourite) }
+                        false
+                    }
+                ),
+                DrawerItem(
+                    title = banTitle,
+                    icon = Icons.Rounded.Delete,
+                    onClick = {
+                        stream?.let { ban(it.id) }
+                        true
+                    }
+                ),
+                DrawerItem(
+                    title = createShortcutTitle,
+                    icon = Icons.AutoMirrored.Rounded.Shortcut,
+                    onClick = {
+                        stream?.let { createShortcut(it.id) }
+                        true
+                    }
+                ),
+                DrawerItem(
+                    title = savePictureTitle,
+                    icon = Icons.Rounded.Image,
+                    onClick = {
+                        stream?.let { savePicture(it.id) }
+                        true
+                    }
+                )
+            )
+        }
+    }
 }
