@@ -31,6 +31,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.Clock
 import okhttp3.OkHttpClient
@@ -86,6 +87,7 @@ class PlaylistRepositoryImpl @Inject constructor(
             emitException(e)
         }
     }
+        .flowOn(Dispatchers.IO)
 
     private suspend inline fun merge(
         prev: List<Stream>,

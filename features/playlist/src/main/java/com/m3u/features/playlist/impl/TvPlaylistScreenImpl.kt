@@ -64,7 +64,7 @@ internal fun TvPlaylistScreenImpl(
         derivedStateOf {
             pressMixed?.let {
                 val (i, j) = TvPlaylistScreenImplDefaults.separate(it)
-                channels[i].streams[j]
+                channels.getOrNull(i)?.streams?.getOrNull(j)
             }
         }
     }
@@ -73,7 +73,7 @@ internal fun TvPlaylistScreenImpl(
         derivedStateOf {
             focusMixed?.let {
                 val (i, j) = TvPlaylistScreenImplDefaults.separate(it)
-                channels[i].streams[j]
+                channels.getOrNull(i)?.streams?.getOrNull(j)
             }
         }
     }
