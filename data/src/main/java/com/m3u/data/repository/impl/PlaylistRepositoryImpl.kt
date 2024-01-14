@@ -119,10 +119,10 @@ class PlaylistRepositoryImpl @Inject constructor(
         }
         var count = 0
 
-        val needToBeInsertedstreams = streams.filterNot { it.url in existedUrls }
-        val total = needToBeInsertedstreams.size
+        val needToBeInsertedStreams = streams.filterNot { it.url in existedUrls }
+        val total = needToBeInsertedStreams.size
 
-        needToBeInsertedstreams.forEach { stream ->
+        needToBeInsertedStreams.forEach { stream ->
             streamDao.insert(stream)
             count++
             onProcess(count / total * 100)

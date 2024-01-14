@@ -27,21 +27,26 @@ internal fun TvStreamItem(
     onClick: () -> Unit,
     onLongClick: () -> Unit,
     modifier: Modifier = Modifier,
+    noPictureMode: Boolean = false
 ) {
     val spacing = LocalSpacing.current
     Card(
         onClick = onClick,
         onLongClick = onLongClick,
         modifier = Modifier
-            .height(128.dp)
-            .aspectRatio(4 / 3f)
+            .then(
+                if (noPictureMode) Modifier
+                else Modifier
+                    .height(128.dp)
+                    .aspectRatio(4 / 3f)
+            )
             .then(modifier)
     ) {
         Box(
             contentAlignment = Alignment.Center,
             modifier = Modifier.fillMaxSize()
         ) {
-            if (stream.cover.isNullOrEmpty()) {
+            if (noPictureMode || stream.cover.isNullOrEmpty()) {
                 Text(
                     text = stream.title,
                     modifier = Modifier.padding(spacing.medium),
