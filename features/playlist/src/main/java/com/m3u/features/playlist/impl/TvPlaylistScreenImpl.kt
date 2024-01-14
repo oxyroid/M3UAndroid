@@ -31,6 +31,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -52,7 +53,6 @@ import androidx.tv.material3.rememberDrawerState
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.m3u.core.wrapper.Message
-import com.m3u.data.database.model.Stream
 import com.m3u.features.playlist.Channel
 import com.m3u.features.playlist.R
 import com.m3u.features.playlist.components.TvStreamItem
@@ -92,11 +92,21 @@ internal fun TvPlaylistScreenImpl(
 
     val drawerState = rememberDrawerState(DrawerValue.Closed)
 
-    var currentMixed: Int? by remember { mutableStateOf(null) }
+    var pressMixed: Int? by remember { mutableStateOf(null) }
+    var focusMixed: Int? by remember { mutableStateOf(null) }
 
-    val currentStream by remember(channels) {
+    val pressStream by remember(channels) {
         derivedStateOf {
-            currentMixed?.let {
+            pressMixed?.let {
+                val (i, j) = TvPlaylistScreenImplDefaults.separate(it)
+                channels[i].streams[j]
+            }
+        }
+    }
+
+    val focusStream by remember(channels) {
+        derivedStateOf {
+            focusMixed?.let {
                 val (i, j) = TvPlaylistScreenImplDefaults.separate(it)
                 channels[i].streams[j]
             }
@@ -120,7 +130,7 @@ internal fun TvPlaylistScreenImpl(
                     NavigationDrawerItem(
                         selected = false,
                         onClick = {
-                            currentStream?.let { stream ->
+                            pressStream?.let { stream ->
                                 onFavorite(stream.id, !stream.favourite)
                             }
                         },
@@ -133,7 +143,7 @@ internal fun TvPlaylistScreenImpl(
                         content = {
                             Text(
                                 stringResource(
-                                    if (currentStream?.favourite == true) string.feat_playlist_dialog_favourite_cancel_title
+                                    if (pressStream?.favourite == true) string.feat_playlist_dialog_favourite_cancel_title
                                     else string.feat_playlist_dialog_favourite_title
                                 ).uppercase()
                             )
@@ -143,7 +153,7 @@ internal fun TvPlaylistScreenImpl(
                     NavigationDrawerItem(
                         selected = false,
                         onClick = {
-                            currentStream?.let { ban(it.id) }
+                            pressStream?.let { ban(it.id) }
                             drawerState.setValue(DrawerValue.Closed)
                         },
                         leadingContent = {
@@ -159,7 +169,7 @@ internal fun TvPlaylistScreenImpl(
                     NavigationDrawerItem(
                         selected = false,
                         onClick = {
-                            currentStream?.let { createShortcut(it.id) }
+                            pressStream?.let { createShortcut(it.id) }
                             drawerState.setValue(DrawerValue.Closed)
                         },
                         leadingContent = {
@@ -176,7 +186,7 @@ internal fun TvPlaylistScreenImpl(
                     NavigationDrawerItem(
                         selected = false,
                         onClick = {
-                            currentStream?.let { onSavePicture(it.id) }
+                            pressStream?.let { onSavePicture(it.id) }
                             drawerState.setValue(DrawerValue.Closed)
                         },
                         leadingContent = {
@@ -195,62 +205,57 @@ internal fun TvPlaylistScreenImpl(
     ) {
         ImmersiveList(
             modifier = modifier.fillMaxWidth(),
-            background = { mixed, hasFocus ->
+            background = { _, _ ->
+                val stream = focusStream
                 Background {
-                    AnimatedVisibility(hasFocus) {
-                        AnimatedContent(mixed) { mixed ->
-                            Box(
-                                modifier = Modifier.fillMaxSize(),
-                                contentAlignment = Alignment.TopEnd
+                    if (stream != null) {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.TopEnd
+                        ) {
+                            val request = remember(stream.cover) {
+                                ImageRequest.Builder(context)
+                                    .data(stream.cover.orEmpty())
+                                    .crossfade(1600)
+                                    .build()
+                            }
+                            AsyncImage(
+                                model = request,
+                                contentScale = ContentScale.Crop,
+                                contentDescription = stream.title,
+                                modifier = Modifier
+                                    .fillMaxWidth(0.78f)
+                                    .aspectRatio(16 / 9f)
+                            )
+                            Icon(
+                                painter = painterResource(R.drawable.scrim),
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.background,
+                                modifier = Modifier
+                                    .fillMaxWidth(0.78f)
+                                    .aspectRatio(16 / 9f)
+                            )
+                            Column(
+                                Modifier
+                                    .align(Alignment.BottomCenter)
+                                    .padding(spacing.medium)
+                                    .fillMaxWidth()
                             ) {
-                                val stream: Stream = remember(channels) {
-                                    val (i, j) = TvPlaylistScreenImplDefaults.separate(mixed)
-                                    channels[i].streams[j]
-                                }
-                                val request = remember(stream.cover) {
-                                    ImageRequest.Builder(context)
-                                        .data(stream.cover.orEmpty())
-                                        .crossfade(1600)
-                                        .build()
-                                }
-                                AsyncImage(
-                                    model = request,
-                                    contentScale = ContentScale.Crop,
-                                    contentDescription = stream.title,
-                                    modifier = Modifier
-                                        .fillMaxWidth(0.78f)
-                                        .aspectRatio(16 / 9f)
+                                Text(
+                                    text = stream.title,
+                                    style = MaterialTheme.typography.headlineLarge,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    maxLines = 1
                                 )
-                                Icon(
-                                    painter = painterResource(R.drawable.scrim),
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.background,
-                                    modifier = Modifier
-                                        .fillMaxWidth(0.78f)
-                                        .aspectRatio(16 / 9f)
+                                Text(
+                                    text = stream.url,
+                                    style = MaterialTheme.typography.headlineMedium,
+                                    color = LocalContentColor.current.copy(0.68f),
+                                    maxLines = 1
                                 )
-                                Column(
-                                    Modifier
-                                        .align(Alignment.BottomCenter)
-                                        .padding(spacing.medium)
-                                        .fillMaxWidth()
-                                ) {
-                                    Text(
-                                        text = stream.title,
-                                        style = MaterialTheme.typography.headlineLarge,
-                                        fontWeight = FontWeight.ExtraBold,
-                                        maxLines = 1
-                                    )
-                                    Text(
-                                        text = stream.url,
-                                        style = MaterialTheme.typography.headlineMedium,
-                                        color = LocalContentColor.current.copy(0.68f),
-                                        maxLines = 1
-                                    )
-                                    Spacer(
-                                        modifier = Modifier.heightIn(min = maxBrowserHeight)
-                                    )
-                                }
+                                Spacer(
+                                    modifier = Modifier.heightIn(min = maxBrowserHeight)
+                                )
                             }
                         }
                     }
@@ -326,10 +331,16 @@ internal fun TvPlaylistScreenImpl(
                                         navigateToStream()
                                     },
                                     onLongClick = {
-                                        currentMixed = mixed
+                                        pressMixed = mixed
                                         drawerState.setValue(DrawerValue.Open)
                                     },
-                                    modifier = Modifier.immersiveListItem(mixed)
+                                    modifier = Modifier
+                                        .onFocusChanged {
+                                            if (it.hasFocus) {
+                                                focusMixed = mixed
+                                            }
+                                        }
+                                    //.immersiveListItem(mixed)
                                 )
                             }
                         }
