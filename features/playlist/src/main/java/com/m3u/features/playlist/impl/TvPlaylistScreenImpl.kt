@@ -1,5 +1,6 @@
 package com.m3u.features.playlist.impl
 
+import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
@@ -22,15 +23,14 @@ import androidx.compose.material.icons.rounded.Image
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -87,7 +87,6 @@ internal fun TvPlaylistScreenImpl(
     val context = LocalContext.current
     val helper = LocalHelper.current
     val spacing = LocalSpacing.current
-    val focusRequester = remember { FocusRequester() }
     val multiCatalogs = channels.size > 1
     val maxBrowserHeight = if (multiCatalogs) 256.dp else 180.dp
 
@@ -95,10 +94,12 @@ internal fun TvPlaylistScreenImpl(
 
     var currentMixed: Int? by remember { mutableStateOf(null) }
 
-    val currentStream = remember(currentMixed) {
-        currentMixed?.let {
-            val (i, j) = TvPlaylistScreenImplDefault.separate(it)
-            channels[i].streams[j]
+    val currentStream by remember(channels) {
+        derivedStateOf {
+            currentMixed?.let {
+                val (i, j) = TvPlaylistScreenImplDefaults.separate(it)
+                channels[i].streams[j]
+            }
         }
     }
 
@@ -109,15 +110,10 @@ internal fun TvPlaylistScreenImpl(
         drawerState = drawerState,
         drawerContent = {
             AnimatedVisibility(hasFocus) {
-                DisposableEffect(Unit) {
-                    focusRequester.captureFocus()
-                    onDispose { currentMixed = null }
-                }
                 Column(
                     Modifier
                         .fillMaxHeight()
-                        .padding(spacing.medium)
-                        .focusRequester(focusRequester),
+                        .padding(spacing.medium),
                     horizontalAlignment = Alignment.Start,
                     verticalArrangement = Arrangement.spacedBy(spacing.small)
                 ) {
@@ -127,7 +123,6 @@ internal fun TvPlaylistScreenImpl(
                             currentStream?.let { stream ->
                                 onFavorite(stream.id, !stream.favourite)
                             }
-                            drawerState.setValue(DrawerValue.Closed)
                         },
                         leadingContent = {
                             Icon(
@@ -200,16 +195,16 @@ internal fun TvPlaylistScreenImpl(
     ) {
         ImmersiveList(
             modifier = modifier.fillMaxWidth(),
-            background = { mix, hasFocus ->
+            background = { mixed, hasFocus ->
                 Background {
                     AnimatedVisibility(hasFocus) {
-                        AnimatedContent(mix) { mixed ->
+                        AnimatedContent(mixed) { mixed ->
                             Box(
                                 modifier = Modifier.fillMaxSize(),
                                 contentAlignment = Alignment.TopEnd
                             ) {
-                                val stream: Stream = remember(mixed) {
-                                    val (i, j) = TvPlaylistScreenImplDefault.separate(mixed)
+                                val stream: Stream = remember(channels) {
+                                    val (i, j) = TvPlaylistScreenImplDefaults.separate(mixed)
                                     channels[i].streams[j]
                                 }
                                 val request = remember(stream.cover) {
@@ -292,6 +287,9 @@ internal fun TvPlaylistScreenImpl(
                 }
             },
             list = {
+                SideEffect {
+                    Log.e("TAG", "TvPlaylistScreenImpl: ")
+                }
                 TvLazyColumn(
                     verticalArrangement = Arrangement.spacedBy(spacing.medium),
                     contentPadding = PaddingValues(vertical = spacing.medium),
@@ -315,13 +313,12 @@ internal fun TvPlaylistScreenImpl(
                             horizontalArrangement = Arrangement.spacedBy(spacing.medium),
                             contentPadding = PaddingValues(horizontal = spacing.medium)
                         ) {
-                            items(
-                                count = streams.size,
-                                key = { index -> streams[index].id },
-                                contentType = { index -> streams[index].cover.isNullOrEmpty() }
-                            ) { j ->
-                                val stream = streams[j]
-                                val mixed = TvPlaylistScreenImplDefault.combine(i, j)
+                            itemsIndexed(
+                                items = streams,
+                                key = { _, stream -> stream.id },
+                                contentType = { _, stream -> stream.cover.isNullOrEmpty() }
+                            ) { j, stream ->
+                                val mixed = TvPlaylistScreenImplDefaults.combine(i, j)
                                 TvStreamItem(
                                     stream = stream,
                                     onClick = {
@@ -343,7 +340,7 @@ internal fun TvPlaylistScreenImpl(
     }
 }
 
-private object TvPlaylistScreenImplDefault {
+private object TvPlaylistScreenImplDefaults {
     fun combine(i: Int, j: Int): Int = i shl 16 or j
     fun separate(mixed: Int): Pair<Int, Int> {
         val i = mixed shr 16 and 0x7FFF
