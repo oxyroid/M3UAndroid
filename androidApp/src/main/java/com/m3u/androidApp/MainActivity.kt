@@ -38,6 +38,8 @@ import com.m3u.core.unspecified.unspecifiable
 import com.m3u.core.util.basic.rational
 import com.m3u.core.util.context.isDarkMode
 import com.m3u.core.util.context.isPortraitMode
+import com.m3u.core.util.coroutine.getValue
+import com.m3u.core.util.coroutine.setValue
 import com.m3u.core.wrapper.Message
 import com.m3u.data.service.PlayerService
 import com.m3u.ui.Action
@@ -50,10 +52,10 @@ import com.m3u.ui.OnUserLeaveHint
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-import kotlin.reflect.KMutableProperty0
 import kotlin.time.Duration
 
 @AndroidEntryPoint
@@ -66,10 +68,10 @@ class MainActivity : AppCompatActivity() {
     private val viewModel: AppViewModel by viewModels()
     private val helper by lazy {
         helper(
-            title = viewModel.title::value,
-            actions = viewModel.actions::value,
-            fob = viewModel.fob::value,
-            deep = viewModel.deep::value
+            title = viewModel.title,
+            actions = viewModel.actions,
+            fob = viewModel.fob,
+            deep = viewModel.deep
         )
     }
 
@@ -115,10 +117,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun helper(
-        title: Method<String>,
-        actions: Method<ImmutableList<Action>>,
-        fob: Method<Fob?>,
-        deep: Method<Int>
+        title: MutableStateFlow<String>,
+        actions: MutableStateFlow<ImmutableList<Action>>,
+        fob: MutableStateFlow<Fob?>,
+        deep: MutableStateFlow<Int>
     ): Helper = object : Helper {
         init {
             addOnPictureInPictureModeChangedListener { info ->
@@ -152,9 +154,9 @@ class MainActivity : AppCompatActivity() {
             }
 
         override var deep: Int
-            get() = deep.get()
+            get() = deep.value
             set(value) {
-                deep.set(value.coerceAtLeast(0))
+                deep.value = value.coerceAtLeast(0)
             }
 
         override val message: StateFlow<Message> = viewModel.message
@@ -287,5 +289,3 @@ class MainActivity : AppCompatActivity() {
         }
     }
 }
-
-private typealias Method<E> = KMutableProperty0<E>
