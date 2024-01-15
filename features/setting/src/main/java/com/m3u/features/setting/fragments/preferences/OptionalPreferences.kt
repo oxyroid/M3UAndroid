@@ -23,10 +23,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.m3u.core.architecture.pref.LocalPref
+import com.m3u.core.architecture.pref.annotation.ReconnectMode
 import com.m3u.core.util.basic.title
 import com.m3u.features.setting.components.CheckBoxSharedPreference
 import com.m3u.i18n.R.string
 import com.m3u.material.components.Preference
+import com.m3u.material.components.TextPreference
 import com.m3u.material.ktx.isTelevision
 
 @Composable
@@ -104,11 +106,21 @@ fun OptionalPreferences(modifier: Modifier = Modifier) {
                     )
                 }
 
-                CheckBoxSharedPreference(
-                    title = string.feat_setting_auto_reconnect,
+                TextPreference(
+                    title = stringResource(string.feat_setting_reconnect_mode).title(),
                     icon = Icons.Rounded.Loop,
-                    checked = pref.autoReconnect,
-                    onChanged = { pref.autoReconnect = !pref.autoReconnect }
+                    trailing = when (pref.reconnectMode) {
+                        ReconnectMode.RETRY -> stringResource(string.feat_setting_reconnect_mode_retry)
+                        ReconnectMode.RECONNECT -> stringResource(string.feat_setting_reconnect_mode_reconnect)
+                        else -> stringResource(string.feat_setting_reconnect_mode_no)
+                    },
+                    onClick = {
+                        pref.reconnectMode = when (pref.reconnectMode) {
+                            ReconnectMode.RETRY -> ReconnectMode.RECONNECT
+                            ReconnectMode.RECONNECT -> ReconnectMode.NO
+                            else -> ReconnectMode.RETRY
+                        }
+                    }
                 )
             }
         }

@@ -4,6 +4,7 @@ import android.os.Build
 import androidx.annotation.ChecksSdkIntAtLeast
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.snapshotFlow
+import com.m3u.core.architecture.pref.annotation.ReconnectMode
 import com.m3u.core.architecture.pref.annotation.ClipMode
 import com.m3u.core.architecture.pref.annotation.ConnectTimeout
 import com.m3u.core.architecture.pref.annotation.PlaylistStrategy
@@ -44,7 +45,8 @@ interface Pref {
     @UnseensMilliseconds
     var unseensMilliseconds: Long
 
-    var autoReconnect: Boolean
+    @ReconnectMode
+    var reconnectMode: Int
 
     var compact: Boolean
 
@@ -81,7 +83,7 @@ interface Pref {
 
         @UnseensMilliseconds
         const val DEFAULT_UNSEENS_MILLISECONDS = UnseensMilliseconds.DAYS_3
-        const val DEFAULT_AUTO_RECONNECT = false
+        const val DEFAULT_RECONNECT_MODE = ReconnectMode.NO
         const val DEFAULT_COMPACT = false
         const val DEFAULT_COLOR_ARGB = 0xD0BCFF
 
@@ -107,7 +109,7 @@ interface Pref {
         const val SCREENCAST = "screencast"
         const val SCREEN_ROTATING = "screen-rotating"
         const val UNSEENS_MILLISECONDS = "unseens-milliseconds"
-        const val AUTO_RECONNECT = "auto-reconnect"
+        const val RECONNECT_MODE = "reconnect-mode"
         const val COMPACT = "compact"
         const val COLOR_ARGB = "color-argb"
     }

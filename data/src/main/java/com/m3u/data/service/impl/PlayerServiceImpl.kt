@@ -24,6 +24,7 @@ import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
 import androidx.media3.session.MediaSession
 import com.m3u.core.architecture.pref.Pref
+import com.m3u.core.architecture.pref.annotation.ReconnectMode
 import com.m3u.core.architecture.pref.observeAsFlow
 import com.m3u.data.Certs
 import com.m3u.data.SSL
@@ -173,11 +174,17 @@ class PlayerServiceImpl @Inject constructor(
     override fun onPlaybackStateChanged(state: Int) {
         super.onPlaybackStateChanged(state)
         _playbackState.value = state
+        if (state == Player.STATE_ENDED && pref.reconnectMode == ReconnectMode.RECONNECT) {
+            _player.value?.let {
+                it.seekToDefaultPosition()
+                it.prepare()
+            }
+        }
     }
 
     override fun onPlayerErrorChanged(error: PlaybackException?) {
         super.onPlayerErrorChanged(error)
-        if (pref.autoReconnect || error?.errorCode == PlaybackException.ERROR_CODE_BEHIND_LIVE_WINDOW) {
+        if (pref.reconnectMode != ReconnectMode.NO || error?.errorCode == PlaybackException.ERROR_CODE_BEHIND_LIVE_WINDOW) {
             _player.value?.let {
                 it.seekToDefaultPosition()
                 it.prepare()

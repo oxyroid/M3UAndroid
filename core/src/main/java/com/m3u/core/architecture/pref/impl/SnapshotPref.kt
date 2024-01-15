@@ -5,14 +5,14 @@ import android.content.SharedPreferences
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import com.m3u.core.architecture.pref.Pref
-import com.m3u.core.architecture.pref.Pref.Companion.AUTO_RECONNECT
+import com.m3u.core.architecture.pref.Pref.Companion.RECONNECT_MODE
 import com.m3u.core.architecture.pref.Pref.Companion.AUTO_REFRESH
 import com.m3u.core.architecture.pref.Pref.Companion.BRIGHTNESS_GESTURE
 import com.m3u.core.architecture.pref.Pref.Companion.DARK_MODE
 import com.m3u.core.architecture.pref.Pref.Companion.CLIP_MODE
 import com.m3u.core.architecture.pref.Pref.Companion.COMPACT
 import com.m3u.core.architecture.pref.Pref.Companion.CONNECT_TIMEOUT
-import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_AUTO_RECONNECT
+import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_RECONNECT_MODE
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_AUTO_REFRESH
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_BRIGHTNESS_GESTURE
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_DARK_MODE
@@ -125,8 +125,8 @@ class SnapshotPref @Inject constructor(
     override var unseensMilliseconds: Long by
     sharedPreferences.longAsState(DEFAULT_UNSEENS_MILLISECONDS, UNSEENS_MILLISECONDS)
 
-    override var autoReconnect: Boolean by
-    sharedPreferences.booleanAsState(DEFAULT_AUTO_RECONNECT, AUTO_RECONNECT)
+    override var reconnectMode: Int by
+    sharedPreferences.intAsState(DEFAULT_RECONNECT_MODE, RECONNECT_MODE)
 
     override var compact: Boolean by
     sharedPreferences.booleanAsState(DEFAULT_COMPACT, COMPACT)

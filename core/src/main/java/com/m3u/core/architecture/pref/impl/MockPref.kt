@@ -26,7 +26,7 @@ internal object MockPref : Pref {
     override var screencast: Boolean = Pref.DEFAULT_SCREENCAST
     override var screenRotating: Boolean = Pref.DEFAULT_SCREEN_ROTATING
     override var unseensMilliseconds: Long = Pref.DEFAULT_UNSEENS_MILLISECONDS
-    override var autoReconnect: Boolean = Pref.DEFAULT_AUTO_RECONNECT
+    override var reconnectMode: Int = Pref.DEFAULT_RECONNECT_MODE
     override var compact: Boolean = Pref.DEFAULT_COMPACT
     override var colorArgb: Int = Pref.DEFAULT_COLOR_ARGB
 }
