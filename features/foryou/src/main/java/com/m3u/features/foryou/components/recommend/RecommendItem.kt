@@ -109,32 +109,7 @@ private fun UnseenContent(spec: Recommend.UnseenSpec) {
     val noPictureMode = pref.noPictureMode
 
     Box(Modifier.fillMaxWidth()) {
-        if (!noPictureMode) {
-            val request = remember(stream.cover) {
-                ImageRequest.Builder(context)
-                    .data(stream.cover.orEmpty())
-                    .crossfade(1600)
-                    .build()
-            }
-            AsyncImage(
-                model = request,
-                contentScale = ContentScale.Crop,
-                contentDescription = stream.title,
-                modifier = Modifier.matchParentSize()
-            )
-            Image(
-                imageVector = ImageVector.vectorResource(R.drawable.scrim),
-                contentScale = ContentScale.Crop,
-                contentDescription = null,
-                // tint = androidx.tv.material3.MaterialTheme.colorScheme.background,
-                modifier = Modifier.matchParentSize()
-            )
-        }
-
-        CompositionLocalProvider(
-            LocalContentColor provides Color.White,
-            androidx.tv.material3.LocalContentColor provides Color.White,
-        ) {
+        val info = @Composable {
             Column(Modifier.padding(spacing.medium)) {
                 Text(
                     text = stringResource(string.feat_foryou_recommend_unseen_label).uppercase(),
@@ -168,6 +143,34 @@ private fun UnseenContent(spec: Recommend.UnseenSpec) {
                     maxLines = 1
                 )
             }
+        }
+        if (!noPictureMode) {
+            val request = remember(stream.cover) {
+                ImageRequest.Builder(context)
+                    .data(stream.cover.orEmpty())
+                    .crossfade(1600)
+                    .build()
+            }
+            AsyncImage(
+                model = request,
+                contentScale = ContentScale.Crop,
+                contentDescription = stream.title,
+                modifier = Modifier.matchParentSize()
+            )
+            Image(
+                imageVector = ImageVector.vectorResource(R.drawable.scrim),
+                contentScale = ContentScale.Crop,
+                contentDescription = null,
+                modifier = Modifier.matchParentSize()
+            )
+            CompositionLocalProvider(
+                LocalContentColor provides Color.White,
+                androidx.tv.material3.LocalContentColor provides Color.White,
+            ) {
+                info()
+            }
+        } else {
+            info()
         }
     }
 }

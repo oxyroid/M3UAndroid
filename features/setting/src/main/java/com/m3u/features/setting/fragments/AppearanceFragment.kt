@@ -27,7 +27,6 @@ import com.m3u.material.components.ThemeSelection
 import com.m3u.material.ktx.asColorScheme
 import com.m3u.i18n.R.string
 import com.m3u.material.ktx.isTelevision
-import com.m3u.material.ktx.plus
 import com.m3u.material.model.LocalSpacing
 import kotlinx.collections.immutable.ImmutableList
 
@@ -56,7 +55,11 @@ internal fun AppearanceFragment(
         Column(
             modifier
                 .fillMaxSize()
-                .padding(contentPadding + PaddingValues(spacing.medium))
+                .padding(contentPadding)
+                .then(
+                    if (!tv) Modifier
+                    else Modifier.padding(spacing.medium)
+                )
         ) {
             if (!tv) {
                 LazyRow(

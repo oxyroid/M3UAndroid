@@ -37,7 +37,6 @@ internal fun RecommendGallery(
 
     if (!tv) {
         val state = rememberPagerState { recommend.size }
-
         Column(modifier) {
             HorizontalPager(
                 state = state,
