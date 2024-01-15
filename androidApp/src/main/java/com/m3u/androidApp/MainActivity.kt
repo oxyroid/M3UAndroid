@@ -168,7 +168,9 @@ class MainActivity : AppCompatActivity() {
                     SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT) {
                         value.specified ?: resources.configuration.isDarkMode
                     },
-                    SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT) { true }
+                    SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT) {
+                        value.specified ?: resources.configuration.isDarkMode
+                    }
                 )
             }
 
