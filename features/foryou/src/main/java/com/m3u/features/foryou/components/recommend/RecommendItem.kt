@@ -1,6 +1,8 @@
 package com.m3u.features.foryou.components.recommend
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -13,10 +15,19 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.util.lerp
+import androidx.tv.material3.CardScale
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
+import com.m3u.core.architecture.pref.LocalPref
+import com.m3u.features.foryou.R
 import com.m3u.i18n.R.string
+import com.m3u.material.ktx.isTelevision
 import com.m3u.material.model.LocalSpacing
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
@@ -30,12 +41,10 @@ internal fun RecommendItem(
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
-    RecommendItemLayout(pageOffset, modifier) {
+    RecommendItemLayout(pageOffset, onClick, modifier) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable(onClick = onClick)
-                .padding(spacing.medium)
         ) {
             when (spec) {
                 is Recommend.UnseenSpec -> UnseenContent(spec)
@@ -48,66 +57,113 @@ internal fun RecommendItem(
 @Composable
 private fun RecommendItemLayout(
     pageOffset: Float,
+    onClick: () -> Unit,
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit
 ) {
-    Card(
-        modifier = Modifier
-            .graphicsLayer {
-                lerp(
-                    start = 0.65f,
-                    stop = 1f,
-                    fraction = 1f - pageOffset.coerceIn(0f, 1f)
-                ).also { scale ->
-                    scaleX = scale
-                    scaleY = scale
+    val tv = isTelevision()
+    if (!tv) {
+        Card(
+            modifier = Modifier
+                .clickable { onClick() }
+                .graphicsLayer {
+                    lerp(
+                        start = 0.65f,
+                        stop = 1f,
+                        fraction = 1f - pageOffset.coerceIn(0f, 1f)
+                    ).also { scale ->
+                        scaleX = scale
+                        scaleY = scale
+                    }
+                    alpha = lerp(
+                        start = 0.5f,
+                        stop = 1f,
+                        fraction = 1f - pageOffset.coerceIn(0f, 1f)
+                    )
                 }
-                alpha = lerp(
-                    start = 0.5f,
-                    stop = 1f,
-                    fraction = 1f - pageOffset.coerceIn(0f, 1f)
-                )
-            }
-            .then(modifier),
-        content = { content() }
-    )
+                .then(modifier),
+            content = { content() }
+        )
+    } else {
+        androidx.tv.material3.Card(
+            scale = CardScale.None,
+            onClick = onClick,
+            modifier = modifier,
+            content = { content() }
+        )
+    }
+
 }
 
 @Composable
 private fun UnseenContent(spec: Recommend.UnseenSpec) {
+    val context = LocalContext.current
     val spacing = LocalSpacing.current
+    val pref = LocalPref.current
+
     val stream = spec.stream
-    Text(
-        text = stringResource(string.feat_foryou_recommend_unseen_label).uppercase(),
-        style = MaterialTheme.typography.labelLarge,
-        maxLines = 1
-    )
     val duration = remember(stream.seen) {
         Clock.System.now() - Instant.fromEpochMilliseconds(stream.seen)
     }
-    Text(
-        text = when {
-            duration > 30.days -> stringResource(
-                string.feat_foryou_recommend_unseen_more_than_days,
-                30
-            )
+    val noPictureMode = pref.noPictureMode
 
-            duration > 1.days -> stringResource(
-                string.feat_foryou_recommend_unseen_days,
-                duration.inWholeDays
+    Box(Modifier.fillMaxWidth()) {
+        if (!noPictureMode) {
+            val request = remember(stream.cover) {
+                ImageRequest.Builder(context)
+                    .data(stream.cover.orEmpty())
+                    .crossfade(1600)
+                    .build()
+            }
+            AsyncImage(
+                model = request,
+                contentScale = ContentScale.Crop,
+                contentDescription = stream.title,
+                modifier = Modifier.matchParentSize()
             )
+            Image(
+                painter = painterResource(R.drawable.scrim),
+                contentScale = ContentScale.Crop,
+                contentDescription = null,
+                // tint = androidx.tv.material3.MaterialTheme.colorScheme.background,
+                modifier = Modifier.matchParentSize()
+            )
+        }
 
-            else -> stringResource(string.feat_foryou_recommend_unseen_hours, duration.inWholeHours)
-        },
-        style = MaterialTheme.typography.labelMedium,
-    )
-    Spacer(modifier = Modifier.height(spacing.extraSmall))
-    Text(
-        text = stream.title,
-        style = MaterialTheme.typography.displaySmall,
-        fontWeight = FontWeight.Black,
-        maxLines = 1
-    )
+        Column(Modifier.padding(spacing.medium)) {
+            Text(
+                text = stringResource(string.feat_foryou_recommend_unseen_label).uppercase(),
+                style = MaterialTheme.typography.labelLarge,
+                maxLines = 1
+            )
+            Text(
+                text = when {
+                    duration > 30.days -> stringResource(
+                        string.feat_foryou_recommend_unseen_more_than_days,
+                        30
+                    )
+
+                    duration > 1.days -> stringResource(
+                        string.feat_foryou_recommend_unseen_days,
+                        duration.inWholeDays
+                    )
+
+                    else -> stringResource(
+                        string.feat_foryou_recommend_unseen_hours,
+                        duration.inWholeHours
+                    )
+                },
+                style = MaterialTheme.typography.labelMedium,
+            )
+            Spacer(modifier = Modifier.height(spacing.extraSmall))
+            Text(
+                text = stream.title,
+                style = MaterialTheme.typography.displaySmall,
+                fontWeight = FontWeight.Black,
+                maxLines = 1
+            )
+        }
+    }
 }
 
 @Composable
