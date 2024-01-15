@@ -9,19 +9,25 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Card
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.util.lerp
+import androidx.tv.material3.CardDefaults
 import androidx.tv.material3.CardScale
+import androidx.tv.material3.Glow
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.m3u.core.architecture.pref.LocalPref
@@ -40,16 +46,10 @@ internal fun RecommendItem(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val spacing = LocalSpacing.current
     RecommendItemLayout(pageOffset, onClick, modifier) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-        ) {
-            when (spec) {
-                is Recommend.UnseenSpec -> UnseenContent(spec)
-                is Recommend.DiscoverSpec -> DiscoverContent(spec)
-            }
+        when (spec) {
+            is Recommend.UnseenSpec -> UnseenContent(spec)
+            is Recommend.DiscoverSpec -> DiscoverContent(spec)
         }
     }
 }
@@ -87,6 +87,7 @@ private fun RecommendItemLayout(
     } else {
         androidx.tv.material3.Card(
             scale = CardScale.None,
+            glow = CardDefaults.glow(Glow.None, Glow.None, Glow.None),
             onClick = onClick,
             modifier = modifier,
             content = { content() }
@@ -122,7 +123,7 @@ private fun UnseenContent(spec: Recommend.UnseenSpec) {
                 modifier = Modifier.matchParentSize()
             )
             Image(
-                painter = painterResource(R.drawable.scrim),
+                imageVector = ImageVector.vectorResource(R.drawable.scrim),
                 contentScale = ContentScale.Crop,
                 contentDescription = null,
                 // tint = androidx.tv.material3.MaterialTheme.colorScheme.background,
@@ -130,38 +131,43 @@ private fun UnseenContent(spec: Recommend.UnseenSpec) {
             )
         }
 
-        Column(Modifier.padding(spacing.medium)) {
-            Text(
-                text = stringResource(string.feat_foryou_recommend_unseen_label).uppercase(),
-                style = MaterialTheme.typography.labelLarge,
-                maxLines = 1
-            )
-            Text(
-                text = when {
-                    duration > 30.days -> stringResource(
-                        string.feat_foryou_recommend_unseen_more_than_days,
-                        30
-                    )
+        CompositionLocalProvider(
+            LocalContentColor provides Color.White,
+            androidx.tv.material3.LocalContentColor provides Color.White,
+        ) {
+            Column(Modifier.padding(spacing.medium)) {
+                Text(
+                    text = stringResource(string.feat_foryou_recommend_unseen_label).uppercase(),
+                    style = MaterialTheme.typography.labelLarge,
+                    maxLines = 1
+                )
+                Text(
+                    text = when {
+                        duration > 30.days -> stringResource(
+                            string.feat_foryou_recommend_unseen_more_than_days,
+                            30
+                        )
 
-                    duration > 1.days -> stringResource(
-                        string.feat_foryou_recommend_unseen_days,
-                        duration.inWholeDays
-                    )
+                        duration > 1.days -> stringResource(
+                            string.feat_foryou_recommend_unseen_days,
+                            duration.inWholeDays
+                        )
 
-                    else -> stringResource(
-                        string.feat_foryou_recommend_unseen_hours,
-                        duration.inWholeHours
-                    )
-                },
-                style = MaterialTheme.typography.labelMedium,
-            )
-            Spacer(modifier = Modifier.height(spacing.extraSmall))
-            Text(
-                text = stream.title,
-                style = MaterialTheme.typography.displaySmall,
-                fontWeight = FontWeight.Black,
-                maxLines = 1
-            )
+                        else -> stringResource(
+                            string.feat_foryou_recommend_unseen_hours,
+                            duration.inWholeHours
+                        )
+                    },
+                    style = MaterialTheme.typography.labelMedium,
+                )
+                Spacer(modifier = Modifier.height(spacing.extraSmall))
+                Text(
+                    text = stream.title,
+                    style = MaterialTheme.typography.displaySmall,
+                    fontWeight = FontWeight.Black,
+                    maxLines = 1
+                )
+            }
         }
     }
 }

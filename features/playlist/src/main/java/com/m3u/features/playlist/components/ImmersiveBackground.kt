@@ -18,9 +18,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.tv.material3.Icon
@@ -32,7 +33,6 @@ import coil.request.ImageRequest
 import com.m3u.core.wrapper.Message
 import com.m3u.data.database.model.Stream
 import com.m3u.features.playlist.R
-import com.m3u.material.components.Background
 import com.m3u.material.components.IconButton
 import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.AppSnackHost
@@ -51,97 +51,96 @@ internal fun ImmersiveBackground(
 ) {
     val context = LocalContext.current
     val spacing = LocalSpacing.current
-    Background {
-        Box(modifier) {
-            if (stream != null) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.TopEnd
-                ) {
-                    if (!noPictureMode) {
-                        val request = remember(stream.cover) {
-                            ImageRequest.Builder(context)
-                                .data(stream.cover.orEmpty())
-                                .crossfade(1600)
-                                .build()
-                        }
-                        AsyncImage(
-                            model = request,
-                            contentScale = ContentScale.Crop,
-                            contentDescription = stream.title,
-                            modifier = Modifier
-                                .fillMaxWidth(0.78f)
-                                .aspectRatio(16 / 9f)
-                        )
-                        Icon(
-                            painter = painterResource(R.drawable.scrim),
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.background,
-                            modifier = Modifier
-                                .fillMaxWidth(0.78f)
-                                .aspectRatio(16 / 9f)
-                        )
-                    }
-
-                    Column(
-                        Modifier
-                            .align(Alignment.BottomCenter)
-                            .padding(spacing.medium)
-                            .fillMaxWidth()
-                    ) {
-                        Text(
-                            text = stream.title,
-                            style = MaterialTheme.typography.headlineLarge,
-                            fontWeight = FontWeight.ExtraBold,
-                            maxLines = 1
-                        )
-                        Text(
-                            text = stream.url,
-                            style = MaterialTheme.typography.headlineMedium,
-                            color = LocalContentColor.current.copy(0.68f),
-                            maxLines = 1
-                        )
-                        Spacer(
-                            modifier = Modifier.heightIn(min = maxBrowserHeight)
-                        )
-                    }
-                }
-            }
-            Column(
-                modifier = Modifier.padding(spacing.medium),
-                verticalArrangement = Arrangement.spacedBy(spacing.medium)
+    Box(modifier) {
+        if (stream != null) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.TopEnd
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(spacing.small),
+                if (!noPictureMode) {
+                    val request = remember(stream.cover) {
+                        ImageRequest.Builder(context)
+                            .data(stream.cover.orEmpty())
+                            .crossfade(1600)
+                            .build()
+                    }
+                    AsyncImage(
+                        model = request,
+                        contentScale = ContentScale.Crop,
+                        contentDescription = stream.title,
+                        modifier = Modifier
+                            .fillMaxWidth(0.78f)
+                            .aspectRatio(16 / 9f)
+                    )
+
+                    Icon(
+                        imageVector = ImageVector.vectorResource(R.drawable.scrim),
+                        tint = MaterialTheme.colorScheme.background,
+                        contentDescription = null,
+                        modifier = Modifier
+                            .fillMaxWidth(0.78f)
+                            .aspectRatio(16 / 9f)
+                    )
+                }
+
+                Column(
+                    Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(spacing.medium)
+                        .fillMaxWidth()
                 ) {
                     Text(
-                        text = title,
+                        text = stream.title,
                         style = MaterialTheme.typography.headlineLarge,
                         fontWeight = FontWeight.ExtraBold,
                         maxLines = 1
                     )
-                    Spacer(modifier = Modifier.weight(1f))
-                    IconButton(
-                        icon = Icons.Rounded.Search,
-                        contentDescription = "search",
-                        onClick = openSearchDrawer
+                    Text(
+                        text = stream.url,
+                        style = MaterialTheme.typography.headlineMedium,
+                        color = LocalContentColor.current.copy(0.68f),
+                        maxLines = 1
                     )
-                    IconButton(
-                        icon = Icons.AutoMirrored.Rounded.Sort,
-                        contentDescription = "sort",
-                        onClick = openSortDrawer
-                    )
-                    IconButton(
-                        icon = Icons.Rounded.Refresh,
-                        contentDescription = "refresh",
-                        onClick = onRefresh
+                    Spacer(
+                        modifier = Modifier.heightIn(min = maxBrowserHeight)
                     )
                 }
-                AppSnackHost(
-                    message = message,
+            }
+        }
+        Column(
+            modifier = Modifier.padding(spacing.medium),
+            verticalArrangement = Arrangement.spacedBy(spacing.medium)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(spacing.small),
+            ) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.headlineLarge,
+                    fontWeight = FontWeight.ExtraBold,
+                    maxLines = 1
+                )
+                Spacer(modifier = Modifier.weight(1f))
+                IconButton(
+                    icon = Icons.Rounded.Search,
+                    contentDescription = "search",
+                    onClick = openSearchDrawer
+                )
+                IconButton(
+                    icon = Icons.AutoMirrored.Rounded.Sort,
+                    contentDescription = "sort",
+                    onClick = openSortDrawer
+                )
+                IconButton(
+                    icon = Icons.Rounded.Refresh,
+                    contentDescription = "refresh",
+                    onClick = onRefresh
                 )
             }
+            AppSnackHost(
+                message = message,
+            )
         }
     }
 }

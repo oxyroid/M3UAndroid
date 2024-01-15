@@ -16,6 +16,7 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.tv.material3.DrawerState
@@ -23,6 +24,7 @@ import androidx.tv.material3.DrawerValue
 import androidx.tv.material3.Icon
 import androidx.tv.material3.ModalNavigationDrawer
 import androidx.tv.material3.NavigationDrawerItem
+import androidx.tv.material3.NavigationDrawerItemDefaults
 import androidx.tv.material3.Text
 import com.m3u.data.database.model.Stream
 import com.m3u.i18n.R.string
@@ -66,6 +68,9 @@ internal fun PlaylistDrawer(
                     items.forEach { item ->
                         NavigationDrawerItem(
                             selected = false,
+                            colors = NavigationDrawerItemDefaults.colors(
+                                contentColor = Color.White
+                            ),
                             onClick = {
                                 val result = item.onClick()
                                 if (result) drawerState.setValue(DrawerValue.Closed)
@@ -83,7 +88,7 @@ internal fun PlaylistDrawer(
                     }
                 }
             }
-        },
+        }
     )
 }
 

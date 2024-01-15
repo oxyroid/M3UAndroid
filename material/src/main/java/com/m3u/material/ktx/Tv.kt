@@ -30,19 +30,3 @@ fun TelevisionChain(block: @Composable () -> Unit) {
         block()
     }
 }
-
-@Composable
-inline fun <T> T.TelevisionChain(crossinline block: @Composable T.() -> Unit) {
-    if (!isTelevision()) {
-        block()
-        return
-    }
-    val scheme = MaterialTheme.colorScheme
-    val typography = MaterialTheme.typography
-    androidx.tv.material3.MaterialTheme(
-        colorScheme = remember(scheme) { scheme.asTvScheme() },
-        typography = remember(typography) { typography.asTvTypography() }
-    ) {
-        block()
-    }
-}

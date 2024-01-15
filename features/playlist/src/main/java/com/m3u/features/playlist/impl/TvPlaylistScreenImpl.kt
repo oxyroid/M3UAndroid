@@ -48,6 +48,7 @@ internal fun TvPlaylistScreenImpl(
 
     val multiCatalogs = channels.size > 1
     val noPictureMode = pref.noPictureMode
+    val darkMode = pref.darkMode
 
     val maxBrowserHeight = when {
         noPictureMode -> 320.dp
@@ -118,14 +119,13 @@ internal fun TvPlaylistScreenImpl(
                     onFocus = { _, i, j ->
                         focusMixed = TvPlaylistScreenImplDefaults.combine(i, j)
                     },
-                    modifier = Modifier
-                        .then(
-                            if (noPictureMode) Modifier
-                            else Modifier.blurEdge(
-                                color = MaterialTheme.colorScheme.background,
-                                edge = Edge.Top
-                            )
+                    modifier = Modifier.then(
+                        if (noPictureMode || !darkMode) Modifier
+                        else Modifier.blurEdge(
+                            color = MaterialTheme.colorScheme.background,
+                            edge = Edge.Top
                         )
+                    )
                 )
             }
         )
