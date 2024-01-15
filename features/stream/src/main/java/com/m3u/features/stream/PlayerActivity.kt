@@ -157,6 +157,8 @@ class PlayerActivity : ComponentActivity() {
 
         override val message: StateFlow<Message> = messageService.message
 
+
+        override var deep: Int = 0
         override var darkMode: UBoolean = UBoolean.Unspecified
             set(value) {
                 field = value

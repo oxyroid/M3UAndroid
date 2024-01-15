@@ -24,7 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.compose.LifecycleResumeEffect
+import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.core.util.basic.title
 import com.m3u.i18n.R.string
@@ -43,9 +43,12 @@ internal fun ConsoleRoute(
 ) {
     val helper = LocalHelper.current
     val title = stringResource(string.feat_console_title)
-    LifecycleResumeEffect(Unit) {
+    LifecycleStartEffect(Unit) {
         helper.title = title.title()
-        onPauseOrDispose { }
+        helper.deep += 1
+        onStopOrDispose {
+            helper.deep -= 1
+        }
     }
     val state by viewModel.state.collectAsStateWithLifecycle()
     ConsoleScreen(

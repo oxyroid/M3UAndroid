@@ -27,6 +27,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.core.architecture.pref.LocalPref
+import com.m3u.core.util.basic.title
 import com.m3u.data.database.model.Playlist
 import com.m3u.features.foryou.components.ForyouDialog
 import com.m3u.features.foryou.components.OnRename
@@ -69,7 +70,7 @@ fun ForyouRoute(
     val recommend by viewModel.recommend.collectAsStateWithLifecycle()
 
     EventHandler(resume, title) {
-        helper.title = title
+        helper.title = title.title()
         helper.actions = persistentListOf(
             Action(
                 icon = Icons.Rounded.Add,

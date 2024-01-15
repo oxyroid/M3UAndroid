@@ -32,10 +32,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.google.accompanist.permissions.PermissionStatus
 import com.google.accompanist.permissions.rememberPermissionState
 import com.m3u.core.architecture.pref.LocalPref
+import com.m3u.core.util.basic.title
 import com.m3u.core.wrapper.Event
 import com.m3u.core.wrapper.Message
 import com.m3u.data.database.model.Stream
@@ -64,6 +66,7 @@ internal fun PlaylistRoute(
 ) {
     val context = LocalContext.current
     val pref = LocalPref.current
+    val helper = LocalHelper.current
 
     val state by viewModel.state.collectAsStateWithLifecycle()
     val zapping by viewModel.zapping.collectAsStateWithLifecycle()
@@ -86,6 +89,14 @@ internal fun PlaylistRoute(
     val writeExternalPermissionState = rememberPermissionState(
         Manifest.permission.WRITE_EXTERNAL_STORAGE
     )
+
+    LifecycleStartEffect(playlist) {
+        helper.title = playlist?.title?.title().orEmpty()
+        helper.deep += 1
+        onStopOrDispose {
+            helper.deep -= 1
+        }
+    }
 
     LaunchedEffect(pref.autoRefresh, playlistUrl) {
         if (playlistUrl.isNotEmpty() && pref.autoRefresh) {

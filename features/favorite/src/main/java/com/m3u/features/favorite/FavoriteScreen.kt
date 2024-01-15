@@ -20,6 +20,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.core.architecture.pref.LocalPref
+import com.m3u.core.util.basic.title
 import com.m3u.data.database.model.Stream
 import com.m3u.features.favorite.components.DialogStatus
 import com.m3u.features.favorite.components.FavoriteDialog
@@ -59,7 +60,7 @@ fun FavouriteRoute(
     var dialogStatus: DialogStatus by remember { mutableStateOf(DialogStatus.Idle) }
 
     EventHandler(resume, title) {
-        helper.title = title
+        helper.title = title.title()
         helper.actions = persistentListOf(
             Action(
                 icon = Icons.AutoMirrored.Rounded.Sort,

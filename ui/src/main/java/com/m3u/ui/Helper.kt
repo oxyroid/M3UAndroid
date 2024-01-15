@@ -34,6 +34,7 @@ interface Helper {
     val isInPipMode: Boolean
     var screenOrientation: Int
     val message: StateFlow<Message>
+    var deep: Int
 
     @get:Composable
     val windowSizeClass: WindowSizeClass
@@ -94,6 +95,12 @@ val EmptyHelper = object : Helper {
         get() = error("Cannot get navigationBarsVisibility")
         set(_) {
             error("Cannot set navigationBarsVisibility")
+        }
+
+    override var deep: Int
+        get() = error("Cannot get deep")
+        set(_) {
+            error("Cannot set deep")
         }
 
     override var darkMode: UBoolean

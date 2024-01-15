@@ -160,6 +160,8 @@ class TvPlaylistActivity : AppCompatActivity() {
 
         override val message: StateFlow<Message> = messageService.message
 
+        override var deep: Int = 0
+
         override val windowSizeClass: WindowSizeClass
             @Composable get() = calculateWindowSizeClass(activity = this@TvPlaylistActivity)
 

@@ -99,7 +99,7 @@ private fun RootGraph(
     var key by rememberSaveable { mutableStateOf(true) }
     LifecycleResumeEffect(Unit) {
         key = !key
-        onPauseOrDispose {  }
+        onPauseOrDispose { }
     }
 
     HorizontalPager(

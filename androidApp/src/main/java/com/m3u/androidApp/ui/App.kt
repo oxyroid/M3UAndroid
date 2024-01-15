@@ -15,16 +15,13 @@ fun App(
 ) {
     val helper = LocalHelper.current
 
+    val title: String by viewModel.title.collectAsStateWithLifecycle()
     val actions by viewModel.actions.collectAsStateWithLifecycle()
     val message by helper.message.collectAsStateWithLifecycle()
     val fob by viewModel.fob.collectAsStateWithLifecycle()
+    val deep by viewModel.deep.collectAsStateWithLifecycle()
 
-    val navDestination = state.navDestination
     val rootDestination = state.rootDestination
-
-    val isBackPressedVisible = AppDefaults.isBackPressedVisible(navDestination)
-
-    val title: String by viewModel.title.collectAsStateWithLifecycle()
 
     AppRootGraph(
         title = title,
@@ -33,7 +30,7 @@ fun App(
         currentRootDestination = rootDestination,
         rootDestinations = state.rootDestinations,
         fob = fob,
-        onBackPressed = state::onBackClick.takeIf { isBackPressedVisible },
+        onBackPressed = state::onBackClick.takeIf { deep > 0 },
         navigateToRoot = state::navigateToRoot,
         modifier = Modifier.fillMaxSize(),
     ) { contentPadding ->

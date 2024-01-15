@@ -19,5 +19,6 @@ class AppViewModel @Inject constructor(
     val title: MutableStateFlow<String> = MutableStateFlow("")
     val actions: MutableStateFlow<ImmutableList<Action>> = MutableStateFlow(persistentListOf())
     val fob: MutableStateFlow<Fob?> = MutableStateFlow(null)
+    val deep: MutableStateFlow<Int> = MutableStateFlow(0)
 }
 

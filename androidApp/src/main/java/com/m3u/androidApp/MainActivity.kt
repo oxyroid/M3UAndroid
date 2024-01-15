@@ -68,7 +68,8 @@ class MainActivity : AppCompatActivity() {
         helper(
             title = viewModel.title::value,
             actions = viewModel.actions::value,
-            fob = viewModel.fob::value
+            fob = viewModel.fob::value,
+            deep = viewModel.deep::value
         )
     }
 
@@ -116,7 +117,8 @@ class MainActivity : AppCompatActivity() {
     private fun helper(
         title: Method<String>,
         actions: Method<ImmutableList<Action>>,
-        fob: Method<Fob?>
+        fob: Method<Fob?>,
+        deep: Method<Int>
     ): Helper = object : Helper {
         init {
             addOnPictureInPictureModeChangedListener { info ->
@@ -147,6 +149,12 @@ class MainActivity : AppCompatActivity() {
             set(value) {
                 field = value
                 applyConfiguration()
+            }
+
+        override var deep: Int
+            get() = deep.get()
+            set(value) {
+                deep.set(value.coerceAtLeast(0))
             }
 
         override val message: StateFlow<Message> = viewModel.message

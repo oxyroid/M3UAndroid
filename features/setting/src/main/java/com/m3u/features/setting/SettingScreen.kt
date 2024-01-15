@@ -72,7 +72,7 @@ fun SettingRoute(
     val helper = LocalHelper.current
 
     EventHandler(resume, title) {
-        helper.title = title
+        helper.title = title.title()
         helper.actions = persistentListOf()
     }
 
@@ -146,6 +146,10 @@ private fun SettingScreen(
                 SettingFragment.Scripts -> scriptTitle
                 SettingFragment.Appearance -> appearanceTitle
             }.title()
+            helper.deep += when (it) {
+                SettingFragment.Root -> -1
+                else -> 1
+            }
         }
     }
 

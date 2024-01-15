@@ -23,11 +23,9 @@ import com.m3u.features.playlist.navigation.navigateToPlaylist
 import com.m3u.features.playlist.navigation.playlistScreen
 import com.m3u.features.playlist.navigation.playlistTvScreen
 import com.m3u.features.stream.PlayerActivity
-import com.m3u.i18n.R.string
 import com.m3u.material.ktx.isTelevision
 import com.m3u.ui.Destination
 import com.m3u.ui.Destination.Root.Setting.SettingFragment
-import com.m3u.ui.LocalHelper
 import kotlinx.collections.immutable.ImmutableList
 
 @Composable
@@ -40,7 +38,6 @@ fun AppNavHost(
     navController: NavHostController = rememberNavController(),
     startDestination: String = ROOT_ROUTE
 ) {
-    val helper = LocalHelper.current
     val context = LocalContext.current
     val pref = LocalPref.current
 
@@ -72,12 +69,6 @@ fun AppNavHost(
             roots = roots,
             contentPadding = contentPadding,
             navigateToPlaylist = { playlist ->
-                if (!tv) {
-                    helper.title = playlist.title.ifEmpty {
-                        if (playlist.local) context.getString(string.feat_foryou_imported_playlist_title)
-                        else ""
-                    }
-                }
                 navController.navigateToPlaylist(playlist.url, null, tv)
             },
             navigateToStream = {
@@ -99,12 +90,6 @@ fun AppNavHost(
                 navController.navigateToAbout()
             },
             navigateToRecommendPlaylist = { playlist, recommend ->
-                if (!tv) {
-                    helper.title = playlist.title.ifEmpty {
-                        if (playlist.local) context.getString(string.feat_foryou_imported_playlist_title)
-                        else ""
-                    }
-                }
                 navController.navigateToPlaylist(playlist.url, recommend, tv)
             },
             navigateToSettingPlaylistManagement = {
