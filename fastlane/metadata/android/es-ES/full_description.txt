@@ -1,0 +1,1 @@
+Reproductor de streaming LIBRE para Android, hecho con Jetpack Componer. Para Android 8.0 y posteriores.
