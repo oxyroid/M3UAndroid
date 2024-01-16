@@ -50,6 +50,8 @@ fun StreamRoute(
     val pref = LocalPref.current
     val context = LocalContext.current
 
+    val tv = isTelevision()
+
     val state: StreamState by viewModel.state.collectAsStateWithLifecycle()
     val playerState: StreamState.PlayerState by viewModel.playerState.collectAsStateWithLifecycle()
     val metadata: StreamState.Metadata by viewModel.metadata.collectAsStateWithLifecycle()
@@ -123,24 +125,26 @@ fun StreamRoute(
             helper.brightness = prev
         }
     }
-    LifecycleStartEffect {
-        val receiver = AudioBecomingNoisyReceiver {
-            maskState.wake()
-            viewModel.onEvent(StreamEvent.OnVolume(0f))
-        }
-        try {
-            ContextCompat.registerReceiver(
-                context,
-                receiver,
-                AudioBecomingNoisyReceiver.INTENT_FILTER,
-                ContextCompat.RECEIVER_NOT_EXPORTED
-            )
-        } catch (ignored: Exception) {
-        }
-        onStopOrDispose {
+    if (!tv) {
+        LifecycleStartEffect {
+            val receiver = AudioBecomingNoisyReceiver {
+                maskState.wake()
+                viewModel.onEvent(StreamEvent.OnVolume(0f))
+            }
             try {
-                context.unregisterReceiver(receiver)
+                ContextCompat.registerReceiver(
+                    context,
+                    receiver,
+                    AudioBecomingNoisyReceiver.INTENT_FILTER,
+                    ContextCompat.RECEIVER_NOT_EXPORTED
+                )
             } catch (ignored: Exception) {
+            }
+            onStopOrDispose {
+                try {
+                    context.unregisterReceiver(receiver)
+                } catch (ignored: Exception) {
+                }
             }
         }
     }
