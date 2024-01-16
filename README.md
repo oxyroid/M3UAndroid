@@ -11,11 +11,9 @@ Android 8.0 and above supported.
 [<img src="https://github.com/realOxy/M3UAndroid/assets/5572928/c407b17c-f64f-4486-ade1-6048eb177e67"
 alt="Get it on GitHub"
 height="80">](https://github.com/realOxy/M3UAndroid/releases/latest)
-
 [<img src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png"
 alt="Get it on F-Droid"
 height="80">](https://f-droid.org/packages/com.m3u.androidApp)
-
 [<img src="https://github.com/realOxy/M3UAndroid/assets/5572928/4ba5a44a-c5e4-4634-a7aa-b8dda0992ba2"
 alt="Get it on IzzyOnDroid"
 height="80">](https://apt.izzysoft.de/fdroid/index/apk/com.m3u.androidApp)
