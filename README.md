@@ -1,4 +1,5 @@
 # M3UAndroid
+
 <a href="https://t.me/m3u_android"><img src="https://img.shields.io/badge/Telegram-2CA5E0?style=flat&logo=telegram&logoColor=white"></a>
 
 M3U is a FREE stream media player on android devices, which made of jetpack compose.
@@ -7,8 +8,17 @@ Android 8.0 and above supported.
 > Support is (or will be) provided for the following devices:
 > Android Phone, Tablet, TV, Desktop and Car.
 
-<a href="https://github.com/realOxy/M3UAndroid/releases/latest"><img src="https://github.com/realOxy/M3UAndroid/assets/5572928/c407b17c-f64f-4486-ade1-6048eb177e67" height="80px"></a>
-<a href="https://apt.izzysoft.de/fdroid/index/apk/com.m3u.androidApp"><img src="https://github.com/realOxy/M3UAndroid/assets/5572928/4ba5a44a-c5e4-4634-a7aa-b8dda0992ba2" height="80px"></a>
+[<img src="https://github.com/realOxy/M3UAndroid/assets/5572928/c407b17c-f64f-4486-ade1-6048eb177e67"
+alt="Get it on GitHub"
+height="80">](https://github.com/realOxy/M3UAndroid/releases/latest)
+
+[<img src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png"
+alt="Get it on F-Droid"
+height="80">](https://f-droid.org/packages/com.m3u.androidApp)
+
+[<img src="https://github.com/realOxy/M3UAndroid/assets/5572928/4ba5a44a-c5e4-4634-a7aa-b8dda0992ba2"
+alt="Get it on IzzyOnDroid"
+height="80">](https://apt.izzysoft.de/fdroid/index/apk/com.m3u.androidApp)
 
 ![foryou](.github/images/tv/foryou.png)
 ![playlist](.github/images/tv/playlist.png)
@@ -19,12 +29,15 @@ Android 8.0 and above supported.
 Please submit a pull request if you want to help with translation.
 
 Official:
+
 - [English](i18n/src/main/res/values)
 - [Simplified Chinese](i18n/src/main/res/values-zh-rCN)
 - (You can also provide better translations for the above languages via pull requests)
 
 From PRs:
-- [Spanish](i18n/src/main/res/values-es-rES), thanks [@sguinetti](https://github.com/sguinetti/M3UAndroid)
+
+- [Spanish](i18n/src/main/res/values-es-rES),
+  thanks [@sguinetti](https://github.com/sguinetti/M3UAndroid)
 
 ### Features & Roadmap
 
