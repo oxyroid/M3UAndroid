@@ -58,7 +58,9 @@ fun AppNavHost(
                     0
                 )
                 context.startActivity(
-                    Intent(context, PlayerActivity::class.java),
+                    Intent(context, PlayerActivity::class.java).apply {
+                        addFlags(Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT or Intent.FLAG_ACTIVITY_NEW_TASK)
+                    },
                     options.toBundle()
                 )
             },
