@@ -56,6 +56,7 @@ fun SettingRoute(
     val helper = LocalHelper.current
 
     EventHandler(resume, title) {
+        helper.deep = 0
         helper.title = title.title()
         helper.actions = persistentListOf()
     }
@@ -120,7 +121,7 @@ private fun SettingScreen(
 
     val colorArgb = pref.colorArgb
 
-    var fragment: SettingFragment by rememberSaveable(targetFragment) {
+    var fragment: SettingFragment by remember(targetFragment) {
         mutableStateOf(targetFragment)
     }
 
@@ -131,8 +132,8 @@ private fun SettingScreen(
             SettingFragment.Scripts -> scriptTitle
             SettingFragment.Appearance -> appearanceTitle
         }.title()
-        helper.deep += when (fragment) {
-            SettingFragment.Root -> -1
+        helper.deep = when (fragment) {
+            SettingFragment.Root -> 0
             else -> 1
         }
     }

@@ -74,6 +74,7 @@ fun ForyouRoute(
     val recommend by viewModel.recommend.collectAsStateWithLifecycle()
 
     EventHandler(resume, title) {
+        helper.deep = 0
         helper.title = title.title()
         helper.actions = persistentListOf(
             Action(

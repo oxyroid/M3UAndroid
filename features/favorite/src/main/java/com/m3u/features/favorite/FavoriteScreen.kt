@@ -64,6 +64,7 @@ fun FavouriteRoute(
     var dialogStatus: DialogStatus by remember { mutableStateOf(DialogStatus.Idle) }
 
     EventHandler(resume, title) {
+        helper.deep = 0
         helper.title = title.title()
         helper.actions = persistentListOf(
             Action(
