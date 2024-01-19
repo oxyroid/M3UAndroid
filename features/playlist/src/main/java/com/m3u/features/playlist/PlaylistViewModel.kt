@@ -1,14 +1,17 @@
 package com.m3u.features.playlist
 
 import android.content.ComponentName
+import android.content.ContentResolver
 import android.content.Context
 import android.content.Intent
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.graphics.drawable.IconCompat
 import androidx.core.graphics.drawable.toBitmap
+import androidx.core.net.toUri
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
+import androidx.tvprovider.media.tv.TvContractCompat
 import com.m3u.core.Contracts
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.pref.Pref
@@ -22,8 +25,8 @@ import com.m3u.data.repository.MediaRepository
 import com.m3u.data.repository.PlaylistRepository
 import com.m3u.data.repository.StreamRepository
 import com.m3u.data.repository.refresh
-import com.m3u.data.service.MessageService
-import com.m3u.data.service.PlayerService
+import com.m3u.data.manager.MessageManager
+import com.m3u.data.manager.PlayerManager
 import com.m3u.features.playlist.PlaylistMessage.StreamCoverSaved
 import com.m3u.features.playlist.navigation.PlaylistNavigation
 import com.m3u.ui.Sort
@@ -45,6 +48,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import androidx.tvprovider.media.tv.Channel as TvChannel
 
 @HiltViewModel
 class PlaylistViewModel @Inject constructor(
@@ -52,16 +56,16 @@ class PlaylistViewModel @Inject constructor(
     private val streamRepository: StreamRepository,
     private val playlistRepository: PlaylistRepository,
     private val mediaRepository: MediaRepository,
-    playerService: PlayerService,
+    playerManager: PlayerManager,
     private val pref: Pref,
     @Logger.Ui private val logger: Logger,
-    private val messageService: MessageService
+    private val messageManager: MessageManager
 ) : BaseViewModel<PlaylistState, PlaylistEvent>(
     emptyState = PlaylistState()
 ) {
     internal val playlistUrl: StateFlow<String> =
         savedStateHandle.getStateFlow(PlaylistNavigation.TYPE_URL, "")
-    internal val recommend: StateFlow<String?> =
+    private val recommend: StateFlow<String?> =
         savedStateHandle.getStateFlow(PlaylistNavigation.TYPE_RECOMMEND, null)
 
     override fun onEvent(event: PlaylistEvent) {
@@ -86,7 +90,7 @@ class PlaylistViewModel @Inject constructor(
 
     internal val zapping: StateFlow<Stream?> = combine(
         zappingMode,
-        playerService.url,
+        playerManager.url,
         streamRepository.observeAll()
     ) { zappingMode, url, streams ->
         if (!zappingMode) null
@@ -109,7 +113,7 @@ class PlaylistViewModel @Inject constructor(
                 val refreshing = resource is Resource.Loading
                 _refreshing.update { refreshing }
                 val message = if (refreshing) PlaylistMessage.Refreshing else PlaylistMessage.None
-                messageService.emit(message)
+                messageManager.emit(message)
             }
             .launchIn(viewModelScope)
     }
@@ -135,12 +139,12 @@ class PlaylistViewModel @Inject constructor(
         viewModelScope.launch {
             val stream = streamRepository.get(id)
             if (stream == null) {
-                messageService.emit(PlaylistMessage.StreamNotFound)
+                messageManager.emit(PlaylistMessage.StreamNotFound)
                 return@launch
             }
             val cover = stream.cover
             if (cover.isNullOrEmpty()) {
-                messageService.emit(PlaylistMessage.StreamCoverNotFound)
+                messageManager.emit(PlaylistMessage.StreamCoverNotFound)
                 return@launch
             }
             mediaRepository
@@ -149,7 +153,7 @@ class PlaylistViewModel @Inject constructor(
                     when (resource) {
                         Resource.Loading -> {}
                         is Resource.Success -> {
-                            messageService.emit(StreamCoverSaved(resource.data.absolutePath))
+                            messageManager.emit(StreamCoverSaved(resource.data.absolutePath))
                         }
 
                         is Resource.Failure -> {
@@ -166,7 +170,7 @@ class PlaylistViewModel @Inject constructor(
             val id = event.id
             val stream = streamRepository.get(id)
             if (stream == null) {
-                messageService.emit(PlaylistMessage.StreamNotFound)
+                messageManager.emit(PlaylistMessage.StreamNotFound)
             } else {
                 streamRepository.ban(stream.id, true)
             }
@@ -274,5 +278,5 @@ class PlaylistViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5_000L)
         )
 
-    internal val message = messageService.message
+    internal val message = messageManager.message
 }

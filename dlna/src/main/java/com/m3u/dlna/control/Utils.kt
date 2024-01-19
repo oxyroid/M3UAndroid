@@ -5,8 +5,15 @@ import android.os.Looper
 import org.jupnp.support.model.item.VideoItem
 
 internal object MetadataUtils {
-    private const val DIDL_LITE_XML =
-        """<?xml version="1.0"?><DIDL-Lite xmlns="urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:upnp="urn:schemas-upnp-org:metadata-1-0/upnp/">%s</DIDL-Lite>"""
+    private val DIDL_LITE_XML = """
+        <?xml version="1.0"?>
+        <DIDL-Lite 
+            xmlns="urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/" 
+            xmlns:dc="http://purl.org/dc/elements/1.1/" 
+            xmlns:upnp="urn:schemas-upnp-org:metadata-1-0/upnp/">
+            %s
+        </DIDL-Lite>
+    """.trimIndent()
 
     fun create(url: String, title: String) = DIDL_LITE_XML.format(buildItemXml(url, title))
 

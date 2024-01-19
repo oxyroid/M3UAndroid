@@ -1,9 +1,9 @@
 package com.m3u.androidApp.ui
 
 import androidx.lifecycle.ViewModel
-import com.m3u.data.service.MessageService
-import com.m3u.ui.Action
-import com.m3u.ui.Fob
+import com.m3u.data.manager.MessageManager
+import com.m3u.ui.helper.Action
+import com.m3u.ui.helper.Fob
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
@@ -12,9 +12,9 @@ import javax.inject.Inject
 
 @HiltViewModel
 class AppViewModel @Inject constructor(
-    messageService: MessageService
+    messageManager: MessageManager
 ) : ViewModel() {
-    val message = messageService.message
+    val message = messageManager.message
 
     val title: MutableStateFlow<String> = MutableStateFlow("")
     val actions: MutableStateFlow<ImmutableList<Action>> = MutableStateFlow(persistentListOf())

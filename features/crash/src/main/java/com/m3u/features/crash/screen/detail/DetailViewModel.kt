@@ -1,7 +1,6 @@
 package com.m3u.features.crash.screen.detail
 
-import com.m3u.core.architecture.FilePath
-import com.m3u.core.architecture.FilePathCacher
+import com.m3u.core.architecture.TraceFileProvider
 import com.m3u.core.architecture.viewmodel.BaseViewModel
 import com.m3u.data.repository.MediaRepository
 import com.m3u.features.crash.CrashActivity
@@ -12,7 +11,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class DetailViewModel @Inject constructor(
-    private val cacher: FilePathCacher,
+    private val provider: TraceFileProvider,
     private val mediaRepository: MediaRepository
 ) : BaseViewModel<DetailState, DetailEvent>(
     emptyState = DetailState()
@@ -26,8 +25,7 @@ class DetailViewModel @Inject constructor(
 
     private var file: File? = null
     private fun init(path: String) {
-        val filePath = FilePath(path)
-        file = cacher.read(filePath) ?: return
+        file = provider.read(path) ?: return
         val text = file?.readText().orEmpty()
         writable.update {
             it.copy(

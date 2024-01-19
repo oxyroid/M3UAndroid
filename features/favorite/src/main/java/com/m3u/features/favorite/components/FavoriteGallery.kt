@@ -17,7 +17,7 @@ import com.m3u.data.database.model.Stream
 import com.m3u.material.ktx.isTelevision
 import com.m3u.material.ktx.plus
 import com.m3u.material.model.LocalSpacing
-import com.m3u.ui.LocalHelper
+import com.m3u.ui.helper.LocalHelper
 import kotlinx.collections.immutable.ImmutableList
 
 @Composable

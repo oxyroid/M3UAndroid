@@ -20,7 +20,7 @@ import androidx.tv.material3.Carousel
 import com.m3u.material.components.HorizontalPagerIndicator
 import com.m3u.material.ktx.isTelevision
 import com.m3u.material.model.LocalSpacing
-import com.m3u.ui.LocalHelper
+import com.m3u.ui.helper.LocalHelper
 import kotlin.math.absoluteValue
 
 @OptIn(ExperimentalAnimationApi::class)

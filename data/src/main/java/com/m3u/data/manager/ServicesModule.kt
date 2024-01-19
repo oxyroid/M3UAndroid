@@ -1,18 +1,18 @@
 @file:Suppress("unused")
 
-package com.m3u.data.service
+package com.m3u.data.manager
 
 import android.app.NotificationManager
 import android.content.Context
 import androidx.core.app.NotificationManagerCompat
 import androidx.work.WorkManager
-import com.m3u.core.architecture.FilePathCacher
+import com.m3u.core.architecture.TraceFileProvider
 import com.m3u.core.architecture.logger.Logger
-import com.m3u.data.service.impl.CrashFilePathCacher
+import com.m3u.data.manager.impl.TraceFileProviderImpl
 import com.m3u.data.repository.logger.CommonLogger
 import com.m3u.data.repository.logger.UiLogger
-import com.m3u.data.service.impl.PlayerServiceImpl
-import com.m3u.data.service.impl.MessageServiceImpl
+import com.m3u.data.manager.impl.PlayerManagerImpl
+import com.m3u.data.manager.impl.MessageManagerImpl
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -26,15 +26,15 @@ import javax.inject.Singleton
 interface BindServicesModule {
     @Binds
     @Singleton
-    fun bindPlayerService(service: PlayerServiceImpl): PlayerService
+    fun bindPlayerService(service: PlayerManagerImpl): PlayerManager
 
     @Binds
     @Singleton
-    fun bindUiServiceService(service: MessageServiceImpl): MessageService
+    fun bindUiServiceService(service: MessageManagerImpl): MessageManager
 
     @Binds
     @Singleton
-    fun bindFilePathCacher(cacher: CrashFilePathCacher): FilePathCacher
+    fun bindTraceFileProvider(provider: TraceFileProviderImpl): TraceFileProvider
 
     @Binds
     @Singleton

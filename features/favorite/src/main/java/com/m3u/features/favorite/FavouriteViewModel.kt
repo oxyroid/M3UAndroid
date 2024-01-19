@@ -16,7 +16,7 @@ import com.m3u.data.database.model.Stream
 import com.m3u.data.repository.MediaRepository
 import com.m3u.data.repository.StreamRepository
 import com.m3u.data.repository.observeAll
-import com.m3u.data.service.PlayerService
+import com.m3u.data.manager.PlayerManager
 import com.m3u.ui.Sort
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.collections.immutable.ImmutableList
@@ -37,7 +37,7 @@ class FavouriteViewModel @Inject constructor(
     private val streamRepository: StreamRepository,
     private val mediaRepository: MediaRepository,
     pref: Pref,
-    playerService: PlayerService
+    playerManager: PlayerManager
 ) : ViewModel() {
     private val zappingMode = pref
         .observeAsFlow { it.zappingMode }
@@ -49,7 +49,7 @@ class FavouriteViewModel @Inject constructor(
 
     val zapping = combine(
         zappingMode,
-        playerService.url,
+        playerManager.url,
         streamRepository.observeAll()
     ) { zappingMode, url, streams ->
         if (!zappingMode) null

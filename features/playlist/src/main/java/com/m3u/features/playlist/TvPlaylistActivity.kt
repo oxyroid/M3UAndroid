@@ -29,14 +29,14 @@ import com.m3u.core.unspecified.unspecifiable
 import com.m3u.core.util.context.isDarkMode
 import com.m3u.core.util.context.isPortraitMode
 import com.m3u.core.wrapper.Message
-import com.m3u.data.service.MessageService
-import com.m3u.data.service.PlayerService
-import com.m3u.ui.Action
+import com.m3u.data.manager.MessageManager
+import com.m3u.data.manager.PlayerManager
 import com.m3u.ui.AppLocalProvider
-import com.m3u.ui.Fob
-import com.m3u.ui.Helper
-import com.m3u.ui.OnPipModeChanged
-import com.m3u.ui.OnUserLeaveHint
+import com.m3u.ui.helper.Action
+import com.m3u.ui.helper.Fob
+import com.m3u.ui.helper.Helper
+import com.m3u.ui.helper.OnPipModeChanged
+import com.m3u.ui.helper.OnUserLeaveHint
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
@@ -44,7 +44,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-import kotlin.time.Duration
 
 @AndroidEntryPoint
 class TvPlaylistActivity : AppCompatActivity() {
@@ -63,10 +62,10 @@ class TvPlaylistActivity : AppCompatActivity() {
     lateinit var logger: Logger
 
     @Inject
-    lateinit var playerService: PlayerService
+    lateinit var playerManager: PlayerManager
 
     @Inject
-    lateinit var messageService: MessageService
+    lateinit var messageManager: MessageManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
@@ -158,7 +157,7 @@ class TvPlaylistActivity : AppCompatActivity() {
                 this@TvPlaylistActivity.requestedOrientation = value
             }
 
-        override val message: StateFlow<Message> = messageService.message
+        override val message: StateFlow<Message> = messageManager.message
 
         override var deep: Int = 0
 
@@ -171,36 +170,12 @@ class TvPlaylistActivity : AppCompatActivity() {
             }
         }
 
-        override fun log(message: Message) {
-            logger.log(
-                text = when {
-                    message.level == Message.LEVEL_EMPTY -> ""
-                    message is Message.Static -> {
-                        val args = message.formatArgs.flatMap {
-                            if (it is Array<*>) it.toList()
-                            else listOf(it)
-                        }
-                        getString(message.resId, *args.toTypedArray())
-                    }
-
-                    message is Message.Dynamic -> message.value
-                    else -> ""
-                },
-                level = message.level,
-                tag = message.tag,
-                duration = when (message.level) {
-                    Message.LEVEL_EMPTY -> Duration.ZERO
-                    else -> message.duration
-                }
-            )
-        }
-
         override fun play(url: String) {
-            playerService.play(url)
+            playerManager.play(url)
         }
 
         override fun replay() {
-            playerService.replay()
+            playerManager.replay()
         }
     }
 

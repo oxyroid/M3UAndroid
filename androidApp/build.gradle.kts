@@ -76,7 +76,6 @@ dependencies {
     implementation(project(":features:setting"))
     implementation(project(":features:playlist"))
     implementation(project(":features:stream"))
-    implementation(project(":features:console"))
     implementation(project(":features:crash"))
     implementation(project(":features:about"))
 

@@ -35,8 +35,8 @@ import com.m3u.material.components.mask.MaskInterceptor
 import com.m3u.material.components.mask.MaskState
 import com.m3u.material.components.mask.rememberMaskState
 import com.m3u.material.ktx.isTelevision
-import com.m3u.ui.LocalHelper
-import com.m3u.ui.OnPipModeChanged
+import com.m3u.ui.helper.LocalHelper
+import com.m3u.ui.helper.OnPipModeChanged
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 

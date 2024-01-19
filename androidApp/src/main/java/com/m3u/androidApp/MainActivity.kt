@@ -41,14 +41,14 @@ import com.m3u.core.util.context.isPortraitMode
 import com.m3u.core.util.coroutine.getValue
 import com.m3u.core.util.coroutine.setValue
 import com.m3u.core.wrapper.Message
-import com.m3u.data.service.PlayerService
-import com.m3u.ui.Action
+import com.m3u.data.manager.PlayerManager
+import com.m3u.ui.helper.Action
 import com.m3u.ui.AppLocalProvider
 import com.m3u.ui.Destination
-import com.m3u.ui.Fob
-import com.m3u.ui.Helper
-import com.m3u.ui.OnPipModeChanged
-import com.m3u.ui.OnUserLeaveHint
+import com.m3u.ui.helper.Fob
+import com.m3u.ui.helper.Helper
+import com.m3u.ui.helper.OnPipModeChanged
+import com.m3u.ui.helper.OnUserLeaveHint
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.Dispatchers
@@ -56,7 +56,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-import kotlin.time.Duration
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
@@ -83,15 +82,16 @@ class MainActivity : AppCompatActivity() {
     lateinit var logger: Logger
 
     @Inject
-    lateinit var playerService: PlayerService
+    lateinit var playerManager: PlayerManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         setContent {
-            val pagerState =
-                rememberPagerState(pref.rootDestination) { Destination.Root.entries.size }
+            val pagerState = rememberPagerState(pref.rootDestination) {
+                Destination.Root.entries.size
+            }
             val state = rememberAppState(
                 pagerState = pagerState
             )
@@ -168,7 +168,10 @@ class MainActivity : AppCompatActivity() {
                     SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT) {
                         value.specified ?: resources.configuration.isDarkMode
                     },
-                    SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT) {
+                    SystemBarStyle.auto(
+                        Color.TRANSPARENT,
+                        Color.TRANSPARENT
+                    ) {
                         value.specified ?: resources.configuration.isDarkMode
                     }
                 )
@@ -209,36 +212,12 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        override fun log(message: Message) {
-            logger.log(
-                text = when {
-                    message.level == Message.LEVEL_EMPTY -> ""
-                    message is Message.Static -> {
-                        val args = message.formatArgs.flatMap {
-                            if (it is Array<*>) it.toList()
-                            else listOf(it)
-                        }
-                        getString(message.resId, *args.toTypedArray())
-                    }
-
-                    message is Message.Dynamic -> message.value
-                    else -> ""
-                },
-                level = message.level,
-                tag = message.tag,
-                duration = when (message.level) {
-                    Message.LEVEL_EMPTY -> Duration.ZERO
-                    else -> message.duration
-                }
-            )
-        }
-
         override fun play(url: String) {
-            playerService.play(url)
+            playerManager.play(url)
         }
 
         override fun replay() {
-            playerService.replay()
+            playerManager.replay()
         }
     }
 

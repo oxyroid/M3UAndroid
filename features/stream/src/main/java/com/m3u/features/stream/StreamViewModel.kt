@@ -8,7 +8,7 @@ import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.viewmodel.BaseViewModel
 import com.m3u.data.repository.PlaylistRepository
 import com.m3u.data.repository.StreamRepository
-import com.m3u.data.service.PlayerService
+import com.m3u.data.manager.PlayerManager
 import com.m3u.dlna.DLNACastManager
 import com.m3u.dlna.OnDeviceRegistryListener
 import com.m3u.dlna.control.DeviceControl
@@ -42,7 +42,7 @@ import kotlin.time.Duration.Companion.milliseconds
 class StreamViewModel @Inject constructor(
     private val streamRepository: StreamRepository,
     playlistRepository: PlaylistRepository,
-    private val playerService: PlayerService,
+    private val playerManager: PlayerManager,
     private val logger: Logger,
     private val application: Application
 ) : BaseViewModel<StreamState, StreamEvent>(
@@ -58,7 +58,7 @@ class StreamViewModel @Inject constructor(
 
     // playlist and stream info
     internal val metadata: StateFlow<StreamState.Metadata> = combine(
-        playerService.url,
+        playerManager.url,
         streamRepository.observeAll(),
         playlistRepository.observeAll()
     ) { url, streams, playlists ->
@@ -72,7 +72,7 @@ class StreamViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5_000)
         )
 
-    private val groups: StateFlow<List<Tracks.Group>> = playerService
+    private val groups: StateFlow<List<Tracks.Group>> = playerManager
         .groups
         .stateIn(
             scope = viewModelScope,
@@ -98,7 +98,7 @@ class StreamViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5_000)
         )
 
-    internal val format: StateFlow<Format?> = playerService
+    internal val format: StateFlow<Format?> = playerManager
         .selected
         .map { it[C.TRACK_TYPE_VIDEO] }
         .map { it?.asFormat() }
@@ -113,7 +113,7 @@ class StreamViewModel @Inject constructor(
         val currentGroup = currentGroups.find { it.type == C.TRACK_TYPE_VIDEO } ?: return
         for (index in 0 until currentGroup.length) {
             if (currentGroup.getTrackFormat(index).id == format.id) {
-                playerService.chooseTrack(
+                playerManager.chooseTrack(
                     group = currentGroup.mediaTrackGroup,
                     trackIndex = index
                 )
@@ -124,10 +124,10 @@ class StreamViewModel @Inject constructor(
 
     // stream playing state
     internal val playerState: StateFlow<StreamState.PlayerState> = combine(
-        playerService.player,
-        playerService.playbackState,
-        playerService.videoSize,
-        playerService.playerError
+        playerManager.player,
+        playerManager.playbackState,
+        playerManager.videoSize,
+        playerManager.playerError
     ) { player, playState, videoSize, playerError ->
         StreamState.PlayerState(
             playState = playState,
@@ -143,7 +143,7 @@ class StreamViewModel @Inject constructor(
         )
 
     init {
-        playerService
+        playerManager
             .url
             .onEach { url ->
                 url ?: return@onEach
@@ -269,12 +269,12 @@ class StreamViewModel @Inject constructor(
     }
 
     private fun stop() {
-        playerService.stop()
+        playerManager.stop()
     }
 
     override fun onCleared() {
         closeDlnaDevices()
-        playerService.stop()
+        playerManager.stop()
         controlPoint?.stop()
         controlPoint = null
         super.onCleared()

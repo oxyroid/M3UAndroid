@@ -1,4 +1,4 @@
-package com.m3u.data.service
+package com.m3u.data.manager
 
 import android.graphics.Rect
 import androidx.media3.common.C
@@ -10,7 +10,7 @@ import androidx.media3.common.Tracks
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 
-interface PlayerService {
+interface PlayerManager {
     val player: Flow<Player?>
     
     val videoSize: StateFlow<Rect>

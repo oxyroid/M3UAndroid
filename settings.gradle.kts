@@ -25,7 +25,6 @@ include(
     ":features:stream",
     ":features:playlist",
     ":features:favorite",
-    ":features:console",
     ":features:crash",
     ":features:about"
 )

@@ -4,13 +4,13 @@ import android.app.AlarmManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import com.m3u.core.architecture.FilePathCacher
+import com.m3u.core.architecture.TraceFileProvider
 import com.m3u.core.util.context.toast
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 
 class CrashHandler @Inject constructor(
-    private val cacher: FilePathCacher,
+    private val provider: TraceFileProvider,
     @ApplicationContext private val context: Context
 ) : Thread.UncaughtExceptionHandler {
     private val handler: Thread.UncaughtExceptionHandler? =
@@ -18,7 +18,7 @@ class CrashHandler @Inject constructor(
 
     override fun uncaughtException(thread: Thread, throwable: Throwable) {
         if (handler != null) {
-            cacher.write(throwable)
+            provider.write(throwable)
             context.toast("Uncaught error occurred!")
             throwable.printStackTrace()
             val pendingIntent = PendingIntent.getActivity(

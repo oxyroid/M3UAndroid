@@ -64,7 +64,7 @@ import com.m3u.material.components.mask.MaskCircleButton
 import com.m3u.material.components.mask.MaskState
 import com.m3u.material.ktx.isTelevision
 import com.m3u.material.model.LocalSpacing
-import com.m3u.ui.LocalHelper
+import com.m3u.ui.helper.LocalHelper
 import com.m3u.ui.Player
 import com.m3u.ui.rememberPlayerState
 import kotlin.time.Duration.Companion.milliseconds

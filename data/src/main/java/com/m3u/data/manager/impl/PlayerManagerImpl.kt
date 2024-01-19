@@ -1,6 +1,6 @@
 @file:OptIn(UnstableApi::class)
 
-package com.m3u.data.service.impl
+package com.m3u.data.manager.impl
 
 import android.content.Context
 import android.graphics.Rect
@@ -28,7 +28,7 @@ import com.m3u.core.architecture.pref.annotation.ReconnectMode
 import com.m3u.core.architecture.pref.observeAsFlow
 import com.m3u.data.Certs
 import com.m3u.data.SSL
-import com.m3u.data.service.PlayerService
+import com.m3u.data.manager.PlayerManager
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -47,10 +47,10 @@ import okhttp3.OkHttpClient
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
-class PlayerServiceImpl @Inject constructor(
+class PlayerManagerImpl @Inject constructor(
     @ApplicationContext private val context: Context,
     private val pref: Pref
-) : PlayerService, Player.Listener, MediaSession.Callback {
+) : PlayerManager, Player.Listener, MediaSession.Callback {
     private val _player = MutableStateFlow<Player?>(null)
     override val player: Flow<Player?> = _player.asStateFlow()
 

@@ -11,8 +11,8 @@ import com.m3u.core.architecture.viewmodel.BaseViewModel
 import com.m3u.data.database.model.Stream
 import com.m3u.data.repository.StreamRepository
 import com.m3u.data.repository.observeAll
-import com.m3u.data.service.MessageService
-import com.m3u.data.service.impl.SubscriptionWorker
+import com.m3u.data.manager.MessageManager
+import com.m3u.data.manager.impl.SubscriptionWorker
 import com.m3u.features.setting.fragments.ColorPack
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.collections.immutable.ImmutableList
@@ -34,7 +34,7 @@ class SettingViewModel @Inject constructor(
     @Publisher.App private val publisher: Publisher,
     private val workManager: WorkManager,
     private val pref: Pref,
-    private val messageService: MessageService
+    private val messageManager: MessageManager
 ) : BaseViewModel<SettingState, SettingEvent>(
     emptyState = SettingState(
         versionName = publisher.versionName,
@@ -111,7 +111,7 @@ class SettingViewModel @Inject constructor(
     private fun subscribe() {
         val title = writable.value.title
         if (title.isEmpty()) {
-            messageService.emit(SettingMessage.EmptyTitle)
+            messageManager.emit(SettingMessage.EmptyTitle)
             return
         }
         val url = readable.actualUrl
@@ -120,7 +120,7 @@ class SettingViewModel @Inject constructor(
                 readable.localStorage -> SettingMessage.EmptyFile
                 else -> SettingMessage.EmptyUrl
             }
-            messageService.emit(warning)
+            messageManager.emit(warning)
             return
         }
 
@@ -136,7 +136,7 @@ class SettingViewModel @Inject constructor(
             .addTag(url)
             .build()
         workManager.enqueue(request)
-        messageService.emit(SettingMessage.Enqueued)
+        messageManager.emit(SettingMessage.Enqueued)
         writable.update {
             it.copy(
                 title = "",

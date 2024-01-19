@@ -1,11 +1,10 @@
-package com.m3u.data.service.impl
+package com.m3u.data.manager.impl
 
 import android.content.Context
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.os.Build
-import com.m3u.core.architecture.FilePath
-import com.m3u.core.architecture.FilePathCacher
+import com.m3u.core.architecture.TraceFileProvider
 import com.m3u.core.util.collections.forEachNotNull
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
@@ -13,9 +12,9 @@ import java.io.PrintWriter
 import java.io.StringWriter
 import javax.inject.Inject
 
-class CrashFilePathCacher @Inject constructor(
+class TraceFileProviderImpl @Inject constructor(
     @ApplicationContext private val context: Context
-) : FilePathCacher {
+) : TraceFileProvider {
     private val dir = context.cacheDir
     override fun readAll(): List<File> {
         if (!dir.exists() || dir.isFile) return emptyList()
@@ -25,11 +24,10 @@ class CrashFilePathCacher @Inject constructor(
             ?: emptyList()
     }
 
-    override fun read(key: FilePath): File? {
+    override fun read(path: String): File? {
         if (!dir.exists() || dir.isFile) return null
-        val filePath = key.path
         return dir
-            .listFiles { file -> file.absolutePath.endsWith(filePath) }
+            .listFiles { file -> file.absolutePath.endsWith(path) }
             ?.firstOrNull()
     }
 

@@ -33,7 +33,7 @@ import com.m3u.features.setting.fragments.preferences.PreferencesFragment
 import com.m3u.i18n.R.string
 import com.m3u.ui.Destination.Root.Setting.SettingFragment
 import com.m3u.ui.EventHandler
-import com.m3u.ui.LocalHelper
+import com.m3u.ui.helper.LocalHelper
 import com.m3u.ui.ResumeEvent
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
