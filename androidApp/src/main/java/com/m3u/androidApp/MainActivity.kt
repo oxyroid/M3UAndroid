@@ -8,7 +8,6 @@ import android.content.res.Configuration
 import android.graphics.Color
 import android.graphics.Rect
 import android.os.Bundle
-import android.util.Log
 import android.view.ViewConfiguration
 import android.widget.Toast
 import androidx.activity.SystemBarStyle
@@ -42,9 +41,9 @@ import com.m3u.core.util.coroutine.getValue
 import com.m3u.core.util.coroutine.setValue
 import com.m3u.core.wrapper.Message
 import com.m3u.data.manager.PlayerManager
-import com.m3u.ui.helper.Action
 import com.m3u.ui.AppLocalProvider
 import com.m3u.ui.Destination
+import com.m3u.ui.helper.Action
 import com.m3u.ui.helper.Fob
 import com.m3u.ui.helper.Helper
 import com.m3u.ui.helper.OnPipModeChanged
@@ -105,7 +104,7 @@ class MainActivity : AppCompatActivity() {
             ) {
                 App(
                     state = state,
-                    viewModel = viewModel,
+                    viewModel = viewModel
                 )
             }
         }
@@ -168,12 +167,7 @@ class MainActivity : AppCompatActivity() {
                     SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT) {
                         value.specified ?: resources.configuration.isDarkMode
                     },
-                    SystemBarStyle.auto(
-                        Color.TRANSPARENT,
-                        Color.TRANSPARENT
-                    ) {
-                        value.specified ?: resources.configuration.isDarkMode
-                    }
+                    SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT) { true }
                 )
             }
 
@@ -189,7 +183,6 @@ class MainActivity : AppCompatActivity() {
         override var brightness: Float
             get() = window.attributes.screenBrightness
             set(value) {
-                Log.e("TAG", "helper: $value")
                 window.attributes = window.attributes.apply {
                     screenBrightness = value
                 }
