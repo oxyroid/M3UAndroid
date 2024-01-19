@@ -17,8 +17,6 @@ import androidx.navigation.compose.rememberNavController
 import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.features.about.navigation.aboutScreen
 import com.m3u.features.about.navigation.navigateToAbout
-import com.m3u.features.console.navigation.consoleScreen
-import com.m3u.features.console.navigation.navigateToConsole
 import com.m3u.features.playlist.navigation.navigateToPlaylist
 import com.m3u.features.playlist.navigation.playlistScreen
 import com.m3u.features.playlist.navigation.playlistTvScreen
@@ -85,9 +83,6 @@ fun AppNavHost(
                     options.toBundle()
                 )
             },
-            navigateToConsole = {
-                navController.navigateToConsole()
-            },
             navigateToAbout = {
                 navController.navigateToAbout()
             },
@@ -100,7 +95,6 @@ fun AppNavHost(
         )
 
         playlistTvScreen()
-        consoleScreen(contentPadding)
         aboutScreen(contentPadding)
     }
 }

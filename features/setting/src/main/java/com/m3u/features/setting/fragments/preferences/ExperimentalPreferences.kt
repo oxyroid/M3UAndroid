@@ -9,7 +9,6 @@ import androidx.compose.material.icons.rounded.Dangerous
 import androidx.compose.material.icons.rounded.Extension
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.SafetyCheck
-import androidx.compose.material.icons.rounded.Terminal
 import androidx.compose.material3.TriStateCheckbox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
@@ -28,7 +27,6 @@ import com.m3u.material.components.Preference
 @Composable
 internal fun ExperimentalPreference(
     navigateToScriptManagement: () -> Unit,
-    navigateToConsole: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val pref = LocalPref.current
@@ -71,11 +69,6 @@ internal fun ExperimentalPreference(
                     icon = Icons.Rounded.Extension,
                     enabled = false,
                     onClick = navigateToScriptManagement
-                )
-                Preference(
-                    title = stringResource(R.string.feat_setting_console_editor).title(),
-                    icon = Icons.Rounded.Terminal,
-                    onClick = navigateToConsole
                 )
                 CheckBoxSharedPreference(
                     title = R.string.feat_setting_auto_refresh,

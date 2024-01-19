@@ -23,7 +23,6 @@ internal fun PreferencesFragment(
     navigateToPlaylistManagement: () -> Unit,
     navigateToScriptManagement: () -> Unit,
     navigateToThemeSelector: () -> Unit,
-    navigateToConsole: () -> Unit,
     navigateToAbout: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -51,7 +50,6 @@ internal fun PreferencesFragment(
             item {
                 ExperimentalPreference(
                     navigateToScriptManagement = navigateToScriptManagement,
-                    navigateToConsole = navigateToConsole
                 )
                 HorizontalDivider()
             }
@@ -83,7 +81,6 @@ internal fun PreferencesFragment(
             item {
                 ExperimentalPreference(
                     navigateToScriptManagement = navigateToScriptManagement,
-                    navigateToConsole = navigateToConsole
                 )
             }
             item {

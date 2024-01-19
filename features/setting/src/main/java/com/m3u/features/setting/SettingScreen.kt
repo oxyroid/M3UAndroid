@@ -33,8 +33,8 @@ import com.m3u.features.setting.fragments.preferences.PreferencesFragment
 import com.m3u.i18n.R.string
 import com.m3u.ui.Destination.Root.Setting.SettingFragment
 import com.m3u.ui.EventHandler
-import com.m3u.ui.helper.LocalHelper
 import com.m3u.ui.ResumeEvent
+import com.m3u.ui.helper.LocalHelper
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 
@@ -42,7 +42,6 @@ import kotlinx.collections.immutable.persistentListOf
 fun SettingRoute(
     resume: ResumeEvent,
     contentPadding: PaddingValues,
-    navigateToConsole: () -> Unit,
     navigateToAbout: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: SettingViewModel = hiltViewModel(),
@@ -69,7 +68,6 @@ fun SettingRoute(
         url = state.url,
         uriWrapper = rememberUriWrapper(state.uri),
         targetFragment = targetFragment,
-        navigateToConsole = navigateToConsole,
         banneds = banneds,
         onTitle = { viewModel.onEvent(SettingEvent.OnTitle(it)) },
         onUrl = { viewModel.onEvent(SettingEvent.OnUrl(it)) },
@@ -104,7 +102,6 @@ private fun SettingScreen(
     banneds: ImmutableList<Stream>,
     onBanned: (Int) -> Unit,
     importJavaScript: (Uri) -> Unit,
-    navigateToConsole: () -> Unit,
     navigateToAbout: () -> Unit,
     localStorage: Boolean,
     onLocalStorage: () -> Unit,
@@ -173,7 +170,6 @@ private fun SettingScreen(
                     currentPaneDestination = ListDetailPaneScaffoldRole.Detail
                     fragment = SettingFragment.Appearance
                 },
-                navigateToConsole = navigateToConsole,
                 navigateToAbout = navigateToAbout,
                 modifier = Modifier.fillMaxSize()
             )

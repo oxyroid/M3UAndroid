@@ -46,7 +46,6 @@ fun NavGraphBuilder.rootGraph(
     contentPadding: PaddingValues,
     navigateToPlaylist: (Playlist) -> Unit,
     navigateToStream: () -> Unit,
-    navigateToConsole: () -> Unit,
     navigateToAbout: () -> Unit,
     navigateToRecommendPlaylist: (Playlist, String) -> Unit,
     navigateToSettingPlaylistManagement: () -> Unit,
@@ -58,7 +57,6 @@ fun NavGraphBuilder.rootGraph(
             contentPadding = contentPadding,
             navigateToPlaylist = navigateToPlaylist,
             navigateToStream = navigateToStream,
-            navigateToConsole = navigateToConsole,
             navigateToAbout = navigateToAbout,
             navigateToRecommendPlaylist = navigateToRecommendPlaylist,
             navigateToSettingPlaylistManagement = navigateToSettingPlaylistManagement
@@ -73,7 +71,6 @@ private fun RootGraph(
     contentPadding: PaddingValues,
     navigateToPlaylist: (Playlist) -> Unit,
     navigateToStream: () -> Unit,
-    navigateToConsole: () -> Unit,
     navigateToAbout: () -> Unit,
     navigateToRecommendPlaylist: (Playlist, String) -> Unit,
     navigateToSettingPlaylistManagement: () -> Unit,
@@ -136,7 +133,6 @@ private fun RootGraph(
 
             is Destination.Root.Setting -> {
                 SettingRoute(
-                    navigateToConsole = navigateToConsole,
                     navigateToAbout = navigateToAbout,
                     contentPadding = contentPadding,
                     targetFragment = root.targetFragment,

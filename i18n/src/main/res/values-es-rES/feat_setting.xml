@@ -16,7 +16,6 @@
     <string name="feat_setting_connect_timeout">límite de conexión</string>
     <string name="feat_setting_god_mode">modo dios</string>
     <string name="feat_setting_god_mode_description">ajusta la distribución con los botones del volumen</string>
-    <string name="feat_setting_console_editor">Console Editor</string>
     <string name="feat_setting_experimental_mode">modo experimental</string>
     <string name="feat_setting_experimental_mode_description">acciones no estables que traerían resultados inesperados</string>
     <string name="feat_setting_label_muted_streams">directos bloqueados</string>
