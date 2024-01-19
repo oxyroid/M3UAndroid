@@ -53,5 +53,4 @@ dependencies {
     ksp(libs.com.google.dagger.hilt.compiler)
 
     implementation(libs.aboutlibraries.core)
-    implementation(libs.aboutlibraries.compose.m3)
 }

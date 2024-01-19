@@ -15,6 +15,7 @@ androidx-tv = "1.0.0-alpha10"
 androidx-media3 = "1.2.1"
 androidx-work = "2.9.0"
 androidx-room = "2.6.1"
+androidx-tvprovider = "1.0.0"
 androidx-startup = "1.1.1"
 
 google-accompanist = "0.33.1-alpha"
@@ -113,6 +114,8 @@ androidx-room-room-runtime = { group = "androidx.room", name = "room-runtime", v
 androidx-room-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "androidx-room" }
 androidx-room-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "androidx-room" }
 
+androidx-tvprovider-tvprovider = { group = "androidx.tvprovider", name = "tvprovider", version.ref = "androidx-tvprovider" }
+
 com-google-accompanist-accompanist-permissions = { group = "com.google.accompanist", name = "accompanist-permissions", version.ref = "google-accompanist" }
 
 com-airbnb-android-lottie-compose = { group = "com.airbnb.android", name = "lottie-compose", version.ref = "lottie-compose" }
@@ -145,7 +148,6 @@ jetty-client = { group = "org.eclipse.jetty", name = "jetty-client", version.ref
 
 nanohttpd = { group = "org.nanohttpd", name = "nanohttpd", version.ref = "nanohttpd" }
 aboutlibraries-core = { group = "com.mikepenz", name = "aboutlibraries-core", version.ref = "aboutlibraries" }
-aboutlibraries-compose-m3 = { group = "com.mikepenz", name = "aboutlibraries-compose-m3", version.ref = "aboutlibraries" }
 
 jupnp = { group = "org.jupnp", name = "org.jupnp", version.ref = "jupnp" }
 jupnp-support = { group = "org.jupnp", name = "org.jupnp.support", version.ref = "jupnp" }
