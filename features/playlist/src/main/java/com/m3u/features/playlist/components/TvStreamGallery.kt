@@ -2,6 +2,7 @@ package com.m3u.features.playlist.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
@@ -49,7 +50,8 @@ internal fun TvStreamGallery(
             val streams = channel.streams
             TvLazyRow(
                 horizontalArrangement = Arrangement.spacedBy(spacing.medium),
-                contentPadding = PaddingValues(horizontal = spacing.medium)
+                contentPadding = PaddingValues(horizontal = spacing.medium),
+                modifier = Modifier.fillMaxWidth()
             ) {
                 itemsIndexed(
                     items = streams,
