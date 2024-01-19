@@ -44,6 +44,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.tv.material3.Border
 import androidx.tv.material3.Card
 import com.m3u.material.ktx.InteractionType
 import com.m3u.material.ktx.interactionBorder
@@ -133,7 +134,7 @@ fun ThemeSelection(
     ) {
         if (!tv) {
             val zoom by animateFloatAsState(
-                targetValue = if (selected) 0.95f else 0.8f,
+                targetValue = if (selected) 0.95f else 0.85f,
                 label = "zoom"
             )
             val corner by animateDpAsState(
@@ -195,11 +196,14 @@ fun ThemeSelection(
             }
         } else {
             Card(
-                shape = androidx.tv.material3.CardDefaults.shape(
-                    shape = RoundedCornerShape(spacing.extraLarge),
-                    focusedShape = RoundedCornerShape(spacing.extraSmall),
-                    pressedShape = RoundedCornerShape(spacing.extraSmall)
+                colors = androidx.tv.material3.CardDefaults.colors(
+                    containerColor = colorScheme.background,
+                    contentColor = colorScheme.onBackground
                 ),
+                shape = androidx.tv.material3.CardDefaults.shape(
+                    RoundedCornerShape(spacing.large)
+                ),
+                border = androidx.tv.material3.CardDefaults.border(focusedBorder = Border.None),
                 scale = androidx.tv.material3.CardDefaults.scale(
                     scale = 0.8f,
                     focusedScale = 0.95f,

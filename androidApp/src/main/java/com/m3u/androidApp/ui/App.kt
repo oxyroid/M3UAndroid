@@ -10,6 +10,7 @@ import com.m3u.ui.helper.LocalHelper
 
 @Composable
 fun App(
+    modifier: Modifier = Modifier,
     state: AppState = rememberAppState(),
     viewModel: AppViewModel = hiltViewModel(),
 ) {
@@ -32,7 +33,7 @@ fun App(
         fob = fob,
         onBackPressed = state::onBackClick.takeIf { deep > 0 },
         navigateToRoot = state::navigateToRoot,
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxSize().then(modifier),
     ) { contentPadding ->
         AppNavHost(
             pagerState = state.pagerState,

@@ -48,9 +48,9 @@ import com.m3u.material.components.Background
 import com.m3u.material.components.IconButton
 import com.m3u.material.ktx.isTelevision
 import com.m3u.material.model.LocalSpacing
-import com.m3u.ui.helper.Action
 import com.m3u.ui.AppSnackHost
 import com.m3u.ui.Destination
+import com.m3u.ui.helper.Action
 import com.m3u.ui.helper.Fob
 import com.m3u.ui.helper.LocalHelper
 import com.m3u.ui.helper.useRailNav
@@ -189,8 +189,8 @@ internal fun AppRootGraph(
                                     contentColor = currentContentColor
                                 ),
                                 interactionSource = source,
-                                shape = CardDefaults.shape(CircleShape, CircleShape, CircleShape),
-                                border = CardDefaults.border(Border.None, Border.None, Border.None),
+                                shape = CardDefaults.shape(CircleShape,),
+                                border = CardDefaults.border(focusedBorder = Border.None),
                                 scale = CardDefaults.scale(
                                     scale = if (selected) 1.1f else 1f,
                                     focusedScale = if (selected) 1.2f else 1.1f
