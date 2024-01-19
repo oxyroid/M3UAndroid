@@ -40,8 +40,10 @@ import com.m3u.features.foryou.model.PlaylistDetail
 import com.m3u.i18n.R
 import com.m3u.material.components.Background
 import com.m3u.material.ktx.interceptVolumeEvent
+import com.m3u.material.ktx.isTelevision
 import com.m3u.material.ktx.minus
 import com.m3u.material.ktx.only
+import com.m3u.material.ktx.thenIf
 import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.Action
 import com.m3u.ui.EventHandler
@@ -66,6 +68,8 @@ fun ForyouRoute(
     val helper = LocalHelper.current
     val pref = LocalPref.current
 
+    val tv = isTelevision()
+
     val details by viewModel.details.collectAsStateWithLifecycle()
     val recommend by viewModel.recommend.collectAsStateWithLifecycle()
 
@@ -80,18 +84,6 @@ fun ForyouRoute(
         )
     }
 
-    val interceptVolumeEventModifier = remember(pref.godMode) {
-        if (pref.godMode) {
-            Modifier.interceptVolumeEvent { event ->
-                pref.rowCount = when (event) {
-                    KeyEvent.KEYCODE_VOLUME_UP -> (pref.rowCount - 1).coerceAtLeast(1)
-                    KeyEvent.KEYCODE_VOLUME_DOWN -> (pref.rowCount + 1).coerceAtMost(2)
-                    else -> return@interceptVolumeEvent
-                }
-            }
-        } else Modifier
-    }
-
     ForyouScreen(
         details = details,
         recommend = recommend,
@@ -103,9 +95,18 @@ fun ForyouRoute(
         navigateToSettingPlaylistManagement = navigateToSettingPlaylistManagement,
         unsubscribe = { viewModel.unsubscribe(it) },
         rename = { playlistUrl, target -> viewModel.rename(playlistUrl, target) },
-        modifier = modifier
+        modifier = Modifier
             .fillMaxSize()
-            .then(interceptVolumeEventModifier),
+            .thenIf(!tv && pref.godMode) {
+                Modifier.interceptVolumeEvent { event ->
+                    pref.rowCount = when (event) {
+                        KeyEvent.KEYCODE_VOLUME_UP -> (pref.rowCount - 1).coerceAtLeast(1)
+                        KeyEvent.KEYCODE_VOLUME_DOWN -> (pref.rowCount + 1).coerceAtMost(2)
+                        else -> return@interceptVolumeEvent
+                    }
+                }
+            }
+            .then(modifier)
     )
 }
 

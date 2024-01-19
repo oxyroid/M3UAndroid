@@ -28,6 +28,8 @@ import com.m3u.features.favorite.components.FavouriteGallery
 import com.m3u.i18n.R
 import com.m3u.material.components.Background
 import com.m3u.material.ktx.interceptVolumeEvent
+import com.m3u.material.ktx.isTelevision
+import com.m3u.material.ktx.thenIf
 import com.m3u.ui.Action
 import com.m3u.ui.EventHandler
 import com.m3u.ui.LocalHelper
@@ -44,6 +46,8 @@ fun FavouriteRoute(
     modifier: Modifier = Modifier,
     viewModel: FavouriteViewModel = hiltViewModel()
 ) {
+    val tv = isTelevision()
+
     val title = stringResource(R.string.ui_title_favourite)
     val helper = LocalHelper.current
     val pref = LocalPref.current
@@ -70,18 +74,6 @@ fun FavouriteRoute(
         )
     }
 
-    val interceptVolumeEventModifier = remember(pref.godMode) {
-        if (pref.godMode) {
-            Modifier.interceptVolumeEvent { event ->
-                pref.rowCount = when (event) {
-                    KeyEvent.KEYCODE_VOLUME_UP -> (pref.rowCount - 1).coerceAtLeast(1)
-                    KeyEvent.KEYCODE_VOLUME_DOWN -> (pref.rowCount + 1).coerceAtMost(2)
-                    else -> return@interceptVolumeEvent
-                }
-            }
-        } else Modifier
-    }
-
     Background {
         FavoriteScreen(
             contentPadding = contentPadding,
@@ -90,9 +82,18 @@ fun FavouriteRoute(
             zapping = zapping,
             navigateToStream = navigateToStream,
             onMenu = { dialogStatus = DialogStatus.Selections(it) },
-            modifier = modifier
+            modifier = Modifier
                 .fillMaxSize()
-                .then(interceptVolumeEventModifier)
+                .thenIf(!tv && pref.godMode) {
+                    Modifier.interceptVolumeEvent { event ->
+                        pref.rowCount = when (event) {
+                            KeyEvent.KEYCODE_VOLUME_UP -> (pref.rowCount - 1).coerceAtLeast(1)
+                            KeyEvent.KEYCODE_VOLUME_DOWN -> (pref.rowCount + 1).coerceAtMost(2)
+                            else -> return@interceptVolumeEvent
+                        }
+                    }
+                }
+                .then(modifier)
         )
         SortBottomSheet(
             visible = isSortSheetVisible,

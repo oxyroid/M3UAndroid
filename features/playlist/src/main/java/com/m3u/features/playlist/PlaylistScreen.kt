@@ -47,6 +47,7 @@ import com.m3u.i18n.R.string
 import com.m3u.material.components.Background
 import com.m3u.material.ktx.interceptVolumeEvent
 import com.m3u.material.ktx.isTelevision
+import com.m3u.material.ktx.thenIf
 import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.Destination
 import com.m3u.ui.Fob
@@ -67,6 +68,8 @@ internal fun PlaylistRoute(
     val context = LocalContext.current
     val pref = LocalPref.current
     val helper = LocalHelper.current
+
+    val tv = isTelevision()
 
     val state by viewModel.state.collectAsStateWithLifecycle()
     val zapping by viewModel.zapping.collectAsStateWithLifecycle()
@@ -110,18 +113,6 @@ internal fun PlaylistRoute(
 
     BackHandler(refreshing) {}
 
-    val interceptVolumeEventModifier = remember(pref.godMode) {
-        if (pref.godMode) {
-            Modifier.interceptVolumeEvent { event ->
-                pref.rowCount = when (event) {
-                    KeyEvent.KEYCODE_VOLUME_UP -> (pref.rowCount - 1).coerceAtLeast(1)
-                    KeyEvent.KEYCODE_VOLUME_DOWN -> (pref.rowCount + 1).coerceAtMost(2)
-                    else -> return@interceptVolumeEvent
-                }
-            }
-        } else Modifier
-    }
-
     Background {
         PlaylistScreen(
             title = playlist?.title.orEmpty(),
@@ -149,9 +140,18 @@ internal fun PlaylistRoute(
                 viewModel.onEvent(PlaylistEvent.SavePicture(it))
             },
             createShortcut = { viewModel.onEvent(PlaylistEvent.CreateShortcut(context, it)) },
-            modifier = modifier
+            modifier = Modifier
                 .fillMaxSize()
-                .then(interceptVolumeEventModifier)
+                .thenIf(!tv && pref.godMode) {
+                    Modifier.interceptVolumeEvent { event ->
+                        pref.rowCount = when (event) {
+                            KeyEvent.KEYCODE_VOLUME_UP -> (pref.rowCount - 1).coerceAtLeast(1)
+                            KeyEvent.KEYCODE_VOLUME_DOWN -> (pref.rowCount + 1).coerceAtMost(2)
+                            else -> return@interceptVolumeEvent
+                        }
+                    }
+                }
+                .then(modifier)
         )
     }
 }
