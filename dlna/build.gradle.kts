@@ -40,13 +40,13 @@ android {
 
 dependencies {
     // Servlet
-    api(libs.servlet.api)
+    implementation(libs.servlet.api)
     // Jetty
-    api(libs.jetty.server)
-    api(libs.jetty.servlet)
-    api(libs.jetty.client)
+    implementation(libs.jetty.server)
+    implementation(libs.jetty.servlet)
+    implementation(libs.jetty.client)
     // Nano http
-    api(libs.nanohttpd)
+    implementation(libs.nanohttpd)
 
     api(libs.jupnp)
     api(libs.jupnp.support)
