@@ -22,8 +22,8 @@ import com.m3u.features.playlist.components.PlaylistDrawerDefaults
 import com.m3u.features.playlist.components.TvStreamGallery
 import com.m3u.material.ktx.Edge
 import com.m3u.material.ktx.blurEdge
-import com.m3u.ui.helper.LocalHelper
 import com.m3u.ui.Sort
+import com.m3u.ui.helper.LocalHelper
 import kotlinx.collections.immutable.ImmutableList
 
 @Composable
@@ -81,7 +81,7 @@ internal fun TvPlaylistScreenImpl(
 
     PlaylistDrawer(
         drawerState = drawerState,
-        items = PlaylistDrawerDefaults.rememberStreamItems(
+        items = PlaylistDrawerDefaults.rememberStreamMenuItems(
             stream = pressStream,
             onFavorite = onFavorite,
             ban = ban,

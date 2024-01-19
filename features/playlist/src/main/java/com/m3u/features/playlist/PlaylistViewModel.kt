@@ -77,6 +77,7 @@ class PlaylistViewModel @Inject constructor(
             is PlaylistEvent.SavePicture -> savePicture(event)
             is PlaylistEvent.Query -> query(event)
             is PlaylistEvent.CreateShortcut -> createShortcut(event.context, event.id)
+            is PlaylistEvent.CreateTvRecommend -> createTvRecommend(event.contentResolver, event.id)
         }
     }
 
@@ -201,6 +202,23 @@ class PlaylistViewModel @Inject constructor(
                 )
                 .build()
             ShortcutManagerCompat.pushDynamicShortcut(context, shortcutInfo)
+        }
+    }
+
+    private fun createTvRecommend(contentResolver: ContentResolver, id: Int) {
+        viewModelScope.launch {
+            val stream = streamRepository.get(id) ?: return@launch
+            val bitmap = stream.cover?.let { mediaRepository.loadDrawable(it)?.toBitmap() }
+            val channel = TvChannel.Builder()
+                .setType(TvContractCompat.Channels.TYPE_PREVIEW)
+                .setDisplayName(stream.title)
+                .setInternalProviderId(id.toString())
+                .setAppLinkIntentUri("content://channelsample.com/category/$id".toUri())
+                .build()
+            contentResolver.insert(
+                TvContractCompat.Channels.CONTENT_URI,
+                channel.toContentValues()
+            )
         }
     }
 

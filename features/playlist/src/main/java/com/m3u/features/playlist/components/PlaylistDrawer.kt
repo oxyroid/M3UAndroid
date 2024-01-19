@@ -94,7 +94,7 @@ internal fun PlaylistDrawer(
 
 internal object PlaylistDrawerDefaults {
     @Composable
-    fun rememberStreamItems(
+    fun rememberStreamMenuItems(
         stream: Stream?,
         onFavorite: (streamId: Int, target: Boolean) -> Unit,
         ban: (streamId: Int) -> Unit,
