@@ -10,7 +10,7 @@ import com.m3u.data.database.model.Stream
 
 @Database(
     entities = [Stream::class, Playlist::class],
-    version = 5,
+    version = 6,
     exportSchema = true,
     autoMigrations = [
         AutoMigration(
@@ -18,7 +18,8 @@ import com.m3u.data.database.model.Stream
             to = 4,
             spec = DatabaseMigrations.AutoMigration3To4::class
         ),
-        AutoMigration(from = 4, to = 5)
+        AutoMigration(from = 4, to = 5),
+        AutoMigration(from = 5, to = 6)
     ]
 )
 abstract class M3UDatabase : RoomDatabase() {

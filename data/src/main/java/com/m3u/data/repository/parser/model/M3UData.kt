@@ -11,7 +11,9 @@ data class M3UData(
     val group: String = "",
     val title: String = "",
     val url: String = "",
-    val duration: Double = -1.0
+    val duration: Double = -1.0,
+    val licenseType: String? = null,
+    val licenseKey: String? = null,
 )
 
 fun M3UData.toStream(
@@ -44,6 +46,8 @@ fun M3UData.toStream(
         title = title,
         cover = cover,
         playlistUrl = playlistUrl,
-        seen = seen
+        seen = seen,
+        licenseType = licenseType,
+        licenseKey = licenseKey
     )
 }

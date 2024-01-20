@@ -1,137 +1,106 @@
 package com.m3u.data.repository.parser.impl
 
-import android.net.Uri
-import com.m3u.core.architecture.logger.Logger
-import com.m3u.core.util.basic.splitOutOfQuotation
-import com.m3u.core.util.basic.trimBrackets
-import com.m3u.core.util.loadLine
 import com.m3u.data.repository.parser.M3UPlaylist
 import com.m3u.data.repository.parser.M3UPlaylistParser
 import com.m3u.data.repository.parser.model.M3UData
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.InputStream
-import java.util.Properties
+import java.util.LinkedList
 import javax.inject.Inject
 
-class DefaultM3UPlaylistParser @Inject constructor(
-    private val logger: Logger
-) : M3UPlaylistParser {
+class DefaultM3UPlaylistParser @Inject constructor() : M3UPlaylistParser {
     override val engine: String = "default"
-
-    private val pattern = Regex("#EXTINF:-?\\d+,")
-
-    override suspend fun execute(input: InputStream): M3UPlaylist = buildList {
-        withContext(Dispatchers.IO) {
-            var block: M3UData? = null
-            input
-                .bufferedReader()
-                .lines()
-                .filter { it.isNotEmpty() }
-                .forEach { line ->
-                    when {
-                        line.startsWith(M3U_HEADER_MARK) -> block = null
-                        line.startsWith(M3U_INFO_MARK) -> {
-                            try {
-                                block?.let { add(it) }
-                                // decoded content and replace "#EXTINF:-1," to "#EXTINF:-1 "
-                                val decodedContent = pattern.replace(
-                                    Uri.decode(line)
-                                ) { result ->
-                                    result.value.dropLast(1) + " "
-                                }
-                                block = M3UData().setContent(decodedContent)
-                            } catch (e: Exception) {
-                                logger.log(e)
-                            }
-                        }
-
-                        line.startsWith("#") -> {}
-                        else -> {
-                            block = block?.setUrl(line)
-                            block?.let {
-                                add(it)
-                            }
-                            block = null
-                        }
-                    }
-                }
-        }
-    }
-
-    private fun M3UData.setUrl(url: String): M3UData = run {
-        // if (URI.create(url).scheme == null) throwConfusingFormatError()
-        copy(url = url)
-    }
-
-    private fun M3UData.setContent(decodedContent: String): M3UData {
-        val contents = decodedContent.splitOutOfQuotation(',')
-        val spaceContentIndex =
-            contents.indexOfFirst { it.startsWith(com.m3u.data.repository.parser.impl.DefaultM3UPlaylistParser.M3U_INFO_MARK) }
-        val spaceContent = if (spaceContentIndex == -1) null else contents[spaceContentIndex]
-        val properties = if (!spaceContent.isNullOrEmpty()) makeProperties(spaceContent)
-        else Properties()
-
-        val id = properties.getProperty(
-            com.m3u.data.repository.parser.impl.DefaultM3UPlaylistParser.M3U_TVG_ID_MARK,
-            ""
-        )
-        val name = properties.getProperty(
-            com.m3u.data.repository.parser.impl.DefaultM3UPlaylistParser.M3U_TVG_NAME_MARK,
-            ""
-        )
-        val cover = properties.getProperty(
-            com.m3u.data.repository.parser.impl.DefaultM3UPlaylistParser.M3U_TVG_LOGO_MARK,
-            ""
-        )
-        val group = properties.getProperty(
-            com.m3u.data.repository.parser.impl.DefaultM3UPlaylistParser.M3U_GROUP_TITLE_MARK,
-            ""
-        )
-        val title = contents.toMutableList().apply {
-            if (spaceContentIndex != -1) {
-                removeAt(spaceContentIndex)
-            }
-        }.firstOrNull().orEmpty()
-        val duration = properties.getProperty(
-            com.m3u.data.repository.parser.impl.DefaultM3UPlaylistParser.M3U_TVG_DURATION,
-            "-1"
-        ).toDouble()
-
-        return this.copy(
-            id = id.trimBrackets(),
-            name = name.trimBrackets(),
-            group = group.trimBrackets(),
-            title = title,
-            cover = cover.trimBrackets(),
-            duration = duration
-        )
-    }
-
-    private fun makeProperties(spaceContent: String): Properties {
-        val properties = Properties()
-        val parts = spaceContent.splitOutOfQuotation(' ')
-        // check each of parts
-        parts
-            .mapNotNull { it.trim().ifEmpty { null } }
-            .forEach { part ->
-                if (part.startsWith(M3U_INFO_MARK)) {
-                    val duration = part.drop(M3U_INFO_MARK.length).toDouble()
-                    properties[M3U_TVG_DURATION] = duration
-                } else properties.loadLine(part)
-            }
-        return properties
-    }
 
     companion object {
         private const val M3U_HEADER_MARK = "#EXTM3U"
         private const val M3U_INFO_MARK = "#EXTINF:"
+        private const val KODI_MARK = "#KODIPROP:"
 
-        private const val M3U_TVG_DURATION = "duration"
+        private val infoRegex = """$M3U_INFO_MARK(-?\d+)(.*),(.+)""".toRegex()
+        private val kodiPropRegex = """$KODI_MARK(.+)=(.+)""".toRegex()
+        private val metadataRegex = """([\w-_.]+)=\s*(?:"([^"]*)"|(\S+))""".toRegex()
 
         private const val M3U_TVG_LOGO_MARK = "tvg-logo"
         const val M3U_TVG_ID_MARK = "tvg-id"
         const val M3U_TVG_NAME_MARK = "tvg-name"
         const val M3U_GROUP_TITLE_MARK = "group-title"
+
+        const val KODI_LICENSE_TYPE = "inputstream.adaptive.license_type"
+        const val KODI_LICENSE_KEY = "inputstream.adaptive.license_key"
+    }
+
+    override suspend fun execute(input: InputStream): M3UPlaylist {
+        return withContext(Dispatchers.IO) {
+            val lines = input
+                .bufferedReader()
+                .lineSequence()
+                .filter { it.isNotEmpty() }
+                .map { it.trimEnd() }
+                .dropWhile { it == M3U_HEADER_MARK }
+                .iterator()
+
+            if (!lines.hasNext()) return@withContext emptyList<M3UData>()
+
+            val entries = LinkedList<M3UData>()
+
+            var currentLine: String
+            var infoMatch: MatchResult? = null
+            val kodiMatches = mutableListOf<MatchResult>()
+
+            while (lines.hasNext()) {
+                currentLine = lines.next()
+                while (currentLine.startsWith("#")) {
+                    if (currentLine.startsWith(M3U_INFO_MARK)) {
+                        infoMatch = infoRegex.matchEntire(currentLine)
+                    }
+                    if (currentLine.startsWith(KODI_MARK)) {
+                        kodiPropRegex.matchEntire(currentLine)?.also { kodiMatches += it }
+                    }
+                    if (lines.hasNext()) {
+                        currentLine = lines.next()
+                    } else {
+                        return@withContext entries
+                    }
+                }
+                if (infoMatch == null && !currentLine.startsWith("#")) continue
+
+                val title = infoMatch?.groups?.get(3)?.value.orEmpty()
+                val duration = infoMatch?.groups?.get(1)?.value?.toDouble() ?: -1.0
+                val metadata = buildMap {
+                    val text = infoMatch?.groups?.get(2)?.value.orEmpty().trim()
+                    val matches = metadataRegex.findAll(text)
+                    for (match in matches) {
+                        val key = match.groups[1]!!.value
+                        val value = match.groups[2]?.value?.ifBlank { null } ?: continue
+                        put(key, value)
+                    }
+                }
+                val kodiMetadata = buildMap {
+                    for (match in kodiMatches) {
+                        val key = match.groups[1]!!.value
+                        val value = match.groups[2]?.value?.ifBlank { null } ?: continue
+                        put(key, value)
+                    }
+                }
+                val entry = M3UData(
+                    id = metadata[M3U_TVG_ID_MARK].orEmpty(),
+                    name = metadata[M3U_TVG_NAME_MARK].orEmpty(),
+                    cover = metadata[M3U_TVG_LOGO_MARK].orEmpty(),
+                    group = metadata[M3U_GROUP_TITLE_MARK].orEmpty(),
+                    title = title,
+                    url = currentLine,
+                    duration = duration,
+                    licenseType = kodiMetadata[KODI_LICENSE_TYPE],
+                    licenseKey = kodiMetadata[KODI_LICENSE_KEY],
+                )
+
+                infoMatch = null
+                kodiMatches.clear()
+
+                entries.add(entry)
+            }
+            entries
+        }
     }
 }

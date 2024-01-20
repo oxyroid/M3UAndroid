@@ -2,6 +2,7 @@
 
 package com.m3u.core.util
 
+// TODO: use ksp to generate code.
 interface Likable<T> {
     infix fun like(another: T): Boolean = this == another
 }
