@@ -20,6 +20,10 @@ import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.datasource.okhttp.OkHttpDataSource
 import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.drm.DefaultDrmSessionManager
+import androidx.media3.exoplayer.drm.DrmSessionManager
+import androidx.media3.exoplayer.drm.FrameworkMediaDrm
+import androidx.media3.exoplayer.drm.LocalMediaDrmCallback
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
 import androidx.media3.session.MediaSession
@@ -29,6 +33,7 @@ import com.m3u.core.architecture.pref.observeAsFlow
 import com.m3u.data.Certs
 import com.m3u.data.SSL
 import com.m3u.data.database.dao.StreamDao
+import com.m3u.data.database.model.Stream
 import com.m3u.data.manager.PlayerManager
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
@@ -121,6 +126,11 @@ class PlayerManagerImpl @Inject constructor(
                     )
                 )
             )
+            .apply {
+                drmSessionManager?.let { manager ->
+                    setDrmSessionManagerProvider { manager }
+                }
+            }
         val ts = DefaultTrackSelector(context).apply {
             setParameters(buildUponParameters().setMaxVideoSizeSd())
         }
@@ -139,19 +149,40 @@ class PlayerManagerImpl @Inject constructor(
             }
     }
 
+    private var drmSessionManager: DrmSessionManager? = null
+
     override fun play(streamId: Int) {
-        _player.update { prev ->
-            if (prev != null) stop()
-            _streamId.value = streamId
-            createPlayer(isSSLVerification.value, connectTimeout.value).also {
-                it.addListener(this)
-                coroutineScope.launch {
-                    val stream = streamDao.get(streamId) ?: return@launch
-                    val mediaItem = MediaItem.fromUri(stream.url)
-                    withContext(Dispatchers.Main) {
-                        it.setMediaItem(mediaItem)
-                        it.prepare()
-                    }
+        val prev = _player.value
+        if (prev != null) stop()
+        _streamId.value = streamId
+
+        coroutineScope.launch {
+            val stream = streamDao.get(streamId) ?: return@launch
+            val useDrm = stream.licenseType != null && stream.licenseKey != null
+
+            drmSessionManager = if (useDrm) {
+                val licenseType = stream.licenseType!!
+                val licenseKey = stream.licenseKey!!
+                val callback = LocalMediaDrmCallback(licenseKey.toByteArray())
+                val uuid = when (stream.licenseType) {
+                    Stream.LICENSE_TYPE_WIDEVINE -> C.WIDEVINE_UUID
+                    Stream.LICENSE_TYPE_CLEAR_KEY -> C.CLEARKEY_UUID
+                    Stream.LICENSE_TYPE_PLAY_READY -> C.PLAYREADY_UUID
+                    else -> C.CLEARKEY_UUID
+                }
+                val mediaDrm = FrameworkMediaDrm.newInstance(uuid)
+                DefaultDrmSessionManager.Builder()
+                    .setUuidAndExoMediaDrmProvider(uuid) { mediaDrm }
+                    .build(callback)
+            } else null
+
+            withContext(Dispatchers.Main) {
+                _player.value = createPlayer(isSSLVerification.value, connectTimeout.value).also {
+                    it.addListener(this@PlayerManagerImpl)
+                    val url = stream.url
+                    val mediaItem = MediaItem.fromUri(url)
+                    it.setMediaItem(mediaItem)
+                    it.prepare()
                 }
             }
         }
@@ -227,7 +258,6 @@ class PlayerManagerImpl @Inject constructor(
                 group.getTrackFormat(selectedIndex)
             }
     }
-
 
     override fun chooseTrack(group: TrackGroup, trackIndex: Int) {
         val currentPlayer = _player.value ?: return

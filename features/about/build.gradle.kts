@@ -54,3 +54,7 @@ dependencies {
 
     implementation(libs.aboutlibraries.core)
 }
+
+aboutLibraries {
+    offlineMode = true
+}

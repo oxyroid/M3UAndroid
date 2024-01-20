@@ -38,4 +38,10 @@ data class Stream(
         this.url == another.url && this.playlistUrl == another.playlistUrl && this.cover == another.cover
                 && this.group == another.group && this.title == another.title && this.licenseType == another.licenseType
                 && this.licenseKey == another.licenseKey
+
+    companion object {
+        const val LICENSE_TYPE_WIDEVINE = "com.widevine.alpha"
+        const val LICENSE_TYPE_CLEAR_KEY = "clearkey"
+        const val LICENSE_TYPE_PLAY_READY = "com.microsoft.playready"
+    }
 }
