@@ -170,8 +170,8 @@ class TvPlaylistActivity : AppCompatActivity() {
             }
         }
 
-        override fun play(url: String) {
-            playerManager.play(url)
+        override fun play(streamId: Int) {
+            playerManager.play(streamId)
         }
 
         override fun replay() {

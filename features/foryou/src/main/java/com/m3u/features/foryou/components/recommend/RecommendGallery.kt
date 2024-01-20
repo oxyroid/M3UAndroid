@@ -52,7 +52,7 @@ internal fun RecommendGallery(
                     onClick = {
                         when (spec) {
                             is Recommend.UnseenSpec -> {
-                                helper.play(spec.stream.url)
+                                helper.play(spec.stream.id)
                                 navigateToStream()
                             }
 
@@ -88,7 +88,7 @@ internal fun RecommendGallery(
                 onClick = {
                     when (spec) {
                         is Recommend.UnseenSpec -> {
-                            helper.play(spec.stream.url)
+                            helper.play(spec.stream.id)
                             navigateToStream()
                         }
 

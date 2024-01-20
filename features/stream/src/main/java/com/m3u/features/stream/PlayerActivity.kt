@@ -28,9 +28,9 @@ import com.m3u.core.util.basic.rational
 import com.m3u.core.util.context.isDarkMode
 import com.m3u.core.util.context.isPortraitMode
 import com.m3u.core.wrapper.Message
-import com.m3u.data.repository.StreamRepository
 import com.m3u.data.manager.MessageManager
 import com.m3u.data.manager.PlayerManager
+import com.m3u.data.repository.StreamRepository
 import com.m3u.ui.AppLocalProvider
 import com.m3u.ui.helper.Action
 import com.m3u.ui.helper.Fob
@@ -76,7 +76,7 @@ class PlayerActivity : ComponentActivity() {
     @Inject
     lateinit var streamRepository: StreamRepository
 
-    private val shortcutStreamUrlLiveData = MutableLiveData<String?>(null)
+    private val shortcutStreamIdLiveData = MutableLiveData<Int?>(null)
     private val shortcutRecentlyLiveData = MutableLiveData(false)
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -93,16 +93,16 @@ class PlayerActivity : ComponentActivity() {
                 )
             }
         }
-        shortcutStreamUrlLiveData.observe(this) { url ->
-            if (!url.isNullOrEmpty()) {
-                helper.play(url)
+        shortcutStreamIdLiveData.observe(this) { streamId ->
+            if (streamId != null) {
+                helper.play(streamId)
             }
         }
         shortcutRecentlyLiveData.observe(this) { recently ->
             if (recently) {
                 lifecycleScope.launch {
                     val stream = streamRepository.getPlayedRecently() ?: return@launch
-                    helper.play(stream.url)
+                    helper.play(stream.id)
                 }
             }
         }
@@ -116,10 +116,11 @@ class PlayerActivity : ComponentActivity() {
     }
 
     private fun handleIntent(intent: Intent) {
-        shortcutStreamUrlLiveData.value =
-            intent.getStringExtra(Contracts.PLAYER_SHORTCUT_STREAM_URL)
-        shortcutRecentlyLiveData.value =
-            intent.getBooleanExtra(Contracts.PLAYER_SHORTCUT_STREAM_RECENTLY, false)
+        shortcutStreamIdLiveData.value = intent
+            .getIntExtra(Contracts.PLAYER_SHORTCUT_STREAM_ID, -1)
+            .takeIf { it != -1 }
+        shortcutRecentlyLiveData.value = intent
+            .getBooleanExtra(Contracts.PLAYER_SHORTCUT_STREAM_RECENTLY, false)
     }
 
     private fun helper(): Helper = object : Helper {
@@ -203,8 +204,8 @@ class PlayerActivity : ComponentActivity() {
             }
         }
 
-        override fun play(url: String) {
-            playerManager.play(url)
+        override fun play(streamId: Int) {
+            playerManager.play(streamId)
         }
 
         override fun replay() {

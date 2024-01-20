@@ -37,7 +37,7 @@ interface Helper {
 
     fun enterPipMode(size: Rect)
     fun toast(message: String)
-    fun play(url: String)
+    fun play(streamId: Int)
     fun replay()
 }
 

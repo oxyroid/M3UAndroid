@@ -28,6 +28,7 @@ import com.m3u.core.architecture.pref.annotation.ReconnectMode
 import com.m3u.core.architecture.pref.observeAsFlow
 import com.m3u.data.Certs
 import com.m3u.data.SSL
+import com.m3u.data.database.dao.StreamDao
 import com.m3u.data.manager.PlayerManager
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
@@ -42,13 +43,16 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.plus
+import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 class PlayerManagerImpl @Inject constructor(
     @ApplicationContext private val context: Context,
+    private val streamDao: StreamDao,
     private val pref: Pref
 ) : PlayerManager, Player.Listener, MediaSession.Callback {
     private val _player = MutableStateFlow<Player?>(null)
@@ -56,8 +60,8 @@ class PlayerManagerImpl @Inject constructor(
 
     private val scope = CoroutineScope(Dispatchers.Main) + Job()
 
-    private val _url = MutableStateFlow<String?>(null)
-    override val url: StateFlow<String?> = _url.asStateFlow()
+    private val _streamId = MutableStateFlow<Int?>(null)
+    override val streamId: StateFlow<Int?> = _streamId.asStateFlow()
 
     private val _videoSize = MutableStateFlow(Rect())
     override val videoSize: StateFlow<Rect> = _videoSize.asStateFlow()
@@ -82,6 +86,8 @@ class PlayerManagerImpl @Inject constructor(
             started = SharingStarted.WhileSubscribed(5_000),
             initialValue = Pref.DEFAULT_CONNECT_TIMEOUT
         )
+
+    private val coroutineScope = CoroutineScope(Dispatchers.IO)
 
     init {
         combine(
@@ -133,22 +139,26 @@ class PlayerManagerImpl @Inject constructor(
             }
     }
 
-    override fun play(url: String) {
+    override fun play(streamId: Int) {
         _player.update { prev ->
             if (prev != null) stop()
-            _url.value = url
-
+            _streamId.value = streamId
             createPlayer(isSSLVerification.value, connectTimeout.value).also {
                 it.addListener(this)
-                val mediaItem = MediaItem.fromUri(url)
-                it.setMediaItem(mediaItem)
-                it.prepare()
+                coroutineScope.launch {
+                    val stream = streamDao.get(streamId) ?: return@launch
+                    val mediaItem = MediaItem.fromUri(stream.url)
+                    withContext(Dispatchers.Main) {
+                        it.setMediaItem(mediaItem)
+                        it.prepare()
+                    }
+                }
             }
         }
     }
 
     override fun stop() {
-        _url.update { null }
+        _streamId.value = null
         _player.update {
             it?.removeListener(this)
             it?.stop()
@@ -163,7 +173,7 @@ class PlayerManagerImpl @Inject constructor(
     }
 
     override fun replay() {
-        url.value?.let { play(it) }
+        streamId.value?.let { play(it) }
     }
 
     override fun onVideoSizeChanged(size: VideoSize) {

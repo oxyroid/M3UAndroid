@@ -193,8 +193,8 @@ internal fun PlaylistScreenImpl(
                             rowCount = actualRowCount,
                             streams = streams,
                             zapping = zapping,
-                            play = { url ->
-                                helper.play(url)
+                            play = { streamId ->
+                                helper.play(streamId)
                                 navigateToStream()
                             },
                             onMenu = { dialogStatus = DialogStatus.Selections(it) },

@@ -88,7 +88,7 @@ private fun FavouriteGalleryImpl(
                     noPictureMode = pref.noPictureMode,
                     zapping = zapping == stream,
                     onClick = {
-                        helper.play(stream.url)
+                        helper.play(stream.id)
                         navigateToStream()
                     },
                     onLongClick = {
@@ -119,7 +119,7 @@ private fun FavouriteGalleryImpl(
                     noPictureMode = pref.noPictureMode,
                     zapping = zapping == stream,
                     onClick = {
-                        helper.play(stream.url)
+                        helper.play(stream.id)
                         navigateToStream()
                     },
                     onLongClick = {
@@ -163,7 +163,7 @@ private fun CompactFavouriteGalleryImpl(
                     noPictureMode = pref.noPictureMode,
                     zapping = zapping == stream,
                     onClick = {
-                        helper.play(stream.url)
+                        helper.play(stream.id)
                         navigateToStream()
                     },
                     onLongClick = {
@@ -190,7 +190,7 @@ private fun CompactFavouriteGalleryImpl(
                     noPictureMode = pref.noPictureMode,
                     zapping = zapping == stream,
                     onClick = {
-                        helper.play(stream.url)
+                        helper.play(stream.id)
                         navigateToStream()
                     },
                     onLongClick = {

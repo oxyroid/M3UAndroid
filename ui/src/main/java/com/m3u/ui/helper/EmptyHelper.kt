@@ -86,8 +86,8 @@ val EmptyHelper = object : Helper {
         error("Cannot toast: $message")
     }
 
-    override fun play(url: String) {
-        error("Cannot play stream: $url")
+    override fun play(streamId: Int) {
+        error("Cannot play stream: $streamId")
     }
 
     override fun replay() {

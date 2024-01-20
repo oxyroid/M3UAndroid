@@ -19,9 +19,9 @@ interface PlayerManager {
     val groups: StateFlow<List<Tracks.Group>>
     val selected: StateFlow<Map<@C.TrackType Int, Format?>>
 
-    val url: StateFlow<String?>
+    val streamId: StateFlow<Int?>
 
-    fun play(url: String)
+    fun play(streamId: Int)
     fun stop()
     fun replay()
     fun chooseTrack(group: TrackGroup, trackIndex: Int)

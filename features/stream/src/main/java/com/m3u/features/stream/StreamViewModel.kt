@@ -58,11 +58,11 @@ class StreamViewModel @Inject constructor(
 
     // playlist and stream info
     internal val metadata: StateFlow<StreamState.Metadata> = combine(
-        playerManager.url,
+        playerManager.streamId,
         streamRepository.observeAll(),
         playlistRepository.observeAll()
-    ) { url, streams, playlists ->
-        val stream = streams.find { it.url == url }
+    ) { streamId, streams, playlists ->
+        val stream = streams.find { it.id == streamId }
         val playlist = playlists.find { it.url == stream?.playlistUrl }
         StreamState.Metadata(playlist, stream)
     }
@@ -144,10 +144,10 @@ class StreamViewModel @Inject constructor(
 
     init {
         playerManager
-            .url
-            .onEach { url ->
-                url ?: return@onEach
-                val stream = streamRepository.getByUrl(url) ?: return@onEach
+            .streamId
+            .onEach { streamId ->
+                streamId ?: return@onEach
+                val stream = streamRepository.get(streamId) ?: return@onEach
                 streamRepository.reportPlayed(stream.id)
             }
             .launchIn(viewModelScope)
