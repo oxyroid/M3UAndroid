@@ -58,7 +58,7 @@ class TvPlaylistActivity : AppCompatActivity() {
     lateinit var pref: Pref
 
     @Inject
-    @Logger.Ui
+    @Logger.Message
     lateinit var logger: Logger
 
     @Inject

@@ -1,6 +1,6 @@
 package com.m3u.core.architecture.logger
 
-import com.m3u.core.wrapper.Message
+import com.m3u.core.wrapper.Message.Companion.LEVEL_ERROR
 import javax.inject.Qualifier
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
@@ -8,7 +8,7 @@ import kotlin.time.Duration.Companion.seconds
 interface Logger {
     fun log(
         text: String,
-        level: Int = Message.LEVEL_ERROR,
+        level: Int = LEVEL_ERROR,
         tag: String = "LOGGER",
         duration: Duration = 3.seconds
     )
@@ -20,7 +20,7 @@ interface Logger {
 
     @Qualifier
     @Retention(AnnotationRetention.BINARY)
-    annotation class Ui
+    annotation class Message
 }
 
 /**
@@ -42,15 +42,4 @@ inline fun <R> Logger.execute(block: () -> R): R? = try {
 } catch (e: Exception) {
     log(e)
     null
-}
-
-/**
- * Execute a returned lambda as a Result with logger.
- */
-inline fun <R> Logger.executeResult(block: () -> R): Result<R> = try {
-    val data = block()
-    Result.success(data)
-} catch (e: Exception) {
-    log(e)
-    Result.failure(e)
 }

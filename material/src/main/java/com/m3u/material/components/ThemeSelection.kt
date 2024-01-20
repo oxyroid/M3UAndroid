@@ -158,7 +158,8 @@ fun ThemeSelection(
                     .interactionBorder(
                         type = InteractionType.PRESS,
                         source = interactionSource,
-                        shape = shape
+                        shape = shape,
+                        color = colorScheme.primary
                     )
             ) {
                 Box(

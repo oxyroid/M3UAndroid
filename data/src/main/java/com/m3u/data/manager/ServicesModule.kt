@@ -10,7 +10,7 @@ import com.m3u.core.architecture.TraceFileProvider
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.data.manager.impl.TraceFileProviderImpl
 import com.m3u.data.repository.logger.CommonLogger
-import com.m3u.data.repository.logger.UiLogger
+import com.m3u.data.repository.logger.MessageLogger
 import com.m3u.data.manager.impl.PlayerManagerImpl
 import com.m3u.data.manager.impl.MessageManagerImpl
 import dagger.Binds
@@ -26,11 +26,11 @@ import javax.inject.Singleton
 interface BindServicesModule {
     @Binds
     @Singleton
-    fun bindPlayerService(service: PlayerManagerImpl): PlayerManager
+    fun bindPlayerManager(service: PlayerManagerImpl): PlayerManager
 
     @Binds
     @Singleton
-    fun bindUiServiceService(service: MessageManagerImpl): MessageManager
+    fun bindMessageManager(service: MessageManagerImpl): MessageManager
 
     @Binds
     @Singleton
@@ -42,8 +42,8 @@ interface BindServicesModule {
 
     @Binds
     @Singleton
-    @Logger.Ui
-    fun bindUiLogger(logger: UiLogger): Logger
+    @Logger.Message
+    fun bindMessageLogger(logger: MessageLogger): Logger
 }
 
 @Module

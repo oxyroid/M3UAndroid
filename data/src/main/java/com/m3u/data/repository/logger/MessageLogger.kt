@@ -7,7 +7,7 @@ import java.util.Locale
 import javax.inject.Inject
 import kotlin.time.Duration
 
-class UiLogger @Inject constructor(
+class MessageLogger @Inject constructor(
     private val messageManager: MessageManager,
     private val logger: Logger
 ) : Logger {

@@ -58,7 +58,7 @@ class PlaylistViewModel @Inject constructor(
     private val mediaRepository: MediaRepository,
     playerManager: PlayerManager,
     private val pref: Pref,
-    @Logger.Ui private val logger: Logger,
+    @Logger.Message private val logger: Logger,
     private val messageManager: MessageManager
 ) : BaseViewModel<PlaylistState, PlaylistEvent>(
     emptyState = PlaylistState()

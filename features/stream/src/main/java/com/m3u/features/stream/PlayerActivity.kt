@@ -64,7 +64,7 @@ class PlayerActivity : ComponentActivity() {
     lateinit var pref: Pref
 
     @Inject
-    @Logger.Ui
+    @Logger.Message
     lateinit var logger: Logger
 
     @Inject

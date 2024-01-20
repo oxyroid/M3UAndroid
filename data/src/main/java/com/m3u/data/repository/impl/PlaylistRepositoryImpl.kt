@@ -44,7 +44,7 @@ import javax.inject.Inject
 class PlaylistRepositoryImpl @Inject constructor(
     private val playlistDao: PlaylistDao,
     private val streamDao: StreamDao,
-    @Logger.Ui private val logger: Logger,
+    @Logger.Message private val logger: Logger,
     private val client: OkHttpClient,
     @M3UPlaylistParser.BjoernPetersen private val parser: M3UPlaylistParser,
     @ApplicationContext private val context: Context
