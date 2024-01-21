@@ -167,23 +167,21 @@ fun IconButton(
             )
         }
     } else {
-        TelevisionChain {
-            androidx.tv.material3.IconButton(
-                onClick = onClick,
-                enabled = enabled,
-                modifier = modifier,
-                colors = if (tint.isUnspecified) androidx.tv.material3.IconButtonDefaults.colors()
-                else androidx.tv.material3.IconButtonDefaults.colors(
-                    contentColor = tint,
-                    focusedContentColor = tint,
-                    pressedContentColor = tint
-                )
-            ) {
-                androidx.tv.material3.Icon(
-                    imageVector = icon,
-                    contentDescription = contentDescription
-                )
-            }
+        androidx.tv.material3.IconButton(
+            onClick = onClick,
+            enabled = enabled,
+            modifier = modifier,
+            colors = if (tint.isUnspecified) androidx.tv.material3.IconButtonDefaults.colors()
+            else androidx.tv.material3.IconButtonDefaults.colors(
+                contentColor = tint,
+                focusedContainerColor = tint,
+                pressedContainerColor = tint
+            )
+        ) {
+            androidx.tv.material3.Icon(
+                imageVector = icon,
+                contentDescription = contentDescription
+            )
         }
     }
 }
