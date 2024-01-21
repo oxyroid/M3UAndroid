@@ -4,11 +4,13 @@ package com.m3u.data.manager.impl
 
 import android.content.Context
 import android.graphics.Rect
+import android.util.Base64
 import androidx.annotation.OptIn
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.Format
 import androidx.media3.common.MediaItem
+import androidx.media3.common.MediaItem.DrmConfiguration
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.TrackGroup
@@ -20,11 +22,7 @@ import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.datasource.okhttp.OkHttpDataSource
 import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.exoplayer.drm.DefaultDrmSessionManager
 import androidx.media3.exoplayer.drm.DrmSessionManager
-import androidx.media3.exoplayer.drm.FrameworkMediaDrm
-import androidx.media3.exoplayer.drm.HttpMediaDrmCallback
-import androidx.media3.exoplayer.drm.LocalMediaDrmCallback
 import androidx.media3.exoplayer.hls.HlsExtractorFactory
 import androidx.media3.exoplayer.hls.HlsMediaSource
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
@@ -32,7 +30,6 @@ import androidx.media3.session.MediaSession
 import com.m3u.core.architecture.pref.Pref
 import com.m3u.core.architecture.pref.annotation.ReconnectMode
 import com.m3u.core.architecture.pref.observeAsFlow
-import com.m3u.core.util.basic.startsWithAny
 import com.m3u.data.Certs
 import com.m3u.data.SSL
 import com.m3u.data.database.dao.StreamDao
@@ -137,43 +134,6 @@ class PlayerManagerImpl @Inject constructor(
             val stream = withContext(Dispatchers.IO) { streamDao.get(streamId) } ?: return@launch
             val useDrm = stream.licenseType != null && stream.licenseKey != null
 
-            drmSessionManager = if (useDrm) {
-                val licenseType = stream.licenseType!!
-                val licenseKey = stream.licenseKey!!
-                val uuid = when (licenseType) {
-                    Stream.LICENSE_TYPE_WIDEVINE -> C.WIDEVINE_UUID
-                    Stream.LICENSE_TYPE_CLEAR_KEY -> C.CLEARKEY_UUID
-                    Stream.LICENSE_TYPE_PLAY_READY -> C.PLAYREADY_UUID
-                    else -> C.CLEARKEY_UUID
-                }
-                val isUrl = licenseKey.startsWithAny("http://", "https://")
-                val actualLicenseKey = if (isUrl) licenseKey
-                else createStaticLicenseKey(licenseKey)
-                val callback = when (uuid) {
-                    C.WIDEVINE_UUID -> {
-                        HttpMediaDrmCallback(
-                            actualLicenseKey,
-                            buildHttpDataSourceFactory(
-                                !pref.isSSLVerification,
-                                pref.connectTimeout
-                            )
-                        ).apply {
-                            setKeyRequestProperty(licenseType, licenseKey)
-                        }
-                    }
-
-                    else -> {
-                        LocalMediaDrmCallback(
-                            actualLicenseKey.toByteArray()
-                        )
-                    }
-                }
-                val mediaDrm = FrameworkMediaDrm.newInstance(uuid)
-                DefaultDrmSessionManager.Builder()
-                    .setUuidAndExoMediaDrmProvider(uuid) { mediaDrm }
-                    .setMultiSession(true)
-                    .build(callback)
-            } else null
             _player.value = createPlayer(
                 pref.isSSLVerification,
                 pref.connectTimeout,
@@ -181,40 +141,37 @@ class PlayerManagerImpl @Inject constructor(
             ).also {
                 it.addListener(this@PlayerManagerImpl)
                 val url = stream.url
-                val mediaItem = MediaItem.fromUri(url)
+                val mediaItem = MediaItem.Builder()
+                    .setUri(url)
+                    .apply {
+                        if (useDrm) {
+                            val licenseType = stream.licenseType!!
+                            val licenseKey = stream.licenseKey!!
+                            val uuid = when (licenseType) {
+                                Stream.LICENSE_TYPE_WIDEVINE -> C.WIDEVINE_UUID
+                                Stream.LICENSE_TYPE_CLEAR_KEY -> C.CLEARKEY_UUID
+                                Stream.LICENSE_TYPE_PLAY_READY -> C.PLAYREADY_UUID
+                                else -> C.CLEARKEY_UUID
+                            }
+                            val licenseUrl = if (licenseKey.startsWith("http")) licenseKey
+                            else {
+                                Base64.encodeToString(
+                                    licenseKey.toByteArray(),
+                                    Base64.DEFAULT or Base64.NO_WRAP
+                                )
+                            }
+                            setDrmConfiguration(
+                                DrmConfiguration.Builder(uuid)
+                                    .setLicenseUri(licenseUrl)
+                                    .build()
+                            )
+                        }
+                    }
+                    .build()
                 it.setMediaItem(mediaItem)
                 it.prepare()
             }
         }
-    }
-
-    private val metadataRegex = """([\w-_.]+)=\s*(?:"([^"]*)"|(\S+))""".toRegex()
-    private fun createStaticLicenseKey(key: String): String {
-        val matches = metadataRegex.findAll(key)
-        val keys = matches.mapNotNull { match ->
-            val k = match.groups[1]?.value.orEmpty()
-            val kid = match.groups[2]?.value?.ifEmpty { null } ?: return@mapNotNull null
-            (k to kid)
-        }
-            .joinToString(
-                separator = ",",
-                prefix = "[",
-                postfix = "]"
-            ) {
-                """
-                {
-                    "kty":"oct",
-                    "k":"${it.first}",
-                    "kid":"${it.second}"
-                }
-                """.trimIndent()
-            }
-        return """
-        {
-            "keys": $keys,
-            "type":"temporary"
-        }
-        """.trimIndent()
     }
 
     override fun stop() {
