@@ -32,7 +32,6 @@ fun MaskState.toggle() {
 
 private class MaskStateCoroutineImpl(
     @IntRange(from = 1) private val minDuration: Long = MaskDefaults.MIN_DURATION_SECOND,
-    private val isTvDevice: Boolean = false,
     coroutineScope: CoroutineScope
 ) : MaskState, CoroutineScope by coroutineScope {
     private var currentTime: Long by mutableLongStateOf(systemClock)
@@ -57,13 +56,11 @@ private class MaskStateCoroutineImpl(
     private val systemClock: Long get() = System.currentTimeMillis() / 1000
 
     override fun wake() {
-        if (isTvDevice) lock()
-        else lastTime = currentTime
+        lastTime = currentTime
     }
 
     override fun sleep() {
-        if (isTvDevice) unlock()
-        else lastTime = 0
+        lastTime = 0
     }
 
     override fun lock() {
@@ -89,13 +86,11 @@ private class MaskStateCoroutineImpl(
 fun rememberMaskState(
     @IntRange(from = 1) minDuration: Long = MaskDefaults.MIN_DURATION_SECOND,
     coroutineScope: CoroutineScope = rememberCoroutineScope(),
-    isTvDevice: Boolean = isTelevision()
 ): MaskState {
     return remember(minDuration, coroutineScope) {
         MaskStateCoroutineImpl(
             minDuration = minDuration,
             coroutineScope = coroutineScope,
-            isTvDevice = isTvDevice
         )
     }
 }

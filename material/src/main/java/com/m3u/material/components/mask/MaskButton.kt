@@ -1,17 +1,18 @@
 package com.m3u.material.components.mask
 
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.Text
 import androidx.compose.material3.TooltipBox
 import androidx.compose.material3.TooltipDefaults
 import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusEvent
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.m3u.material.components.IconButton
+import com.m3u.material.ktx.isTelevision
+import com.m3u.material.ktx.thenIf
 
 @Composable
 fun MaskButton(
@@ -24,11 +25,6 @@ fun MaskButton(
     enabled: Boolean = true
 ) {
     val tooltipState = rememberTooltipState()
-
-    val currentTint by animateColorAsState(
-        targetValue = tint,
-        label = "mask-button-tint"
-    )
 
     TooltipBox(
         state = tooltipState,
@@ -47,8 +43,14 @@ fun MaskButton(
                 state.wake()
                 onClick()
             },
-            modifier = modifier,
-            tint = currentTint
+            modifier = modifier.thenIf(isTelevision()) {
+                Modifier.onFocusEvent {
+                    if (it.isFocused) {
+                        state.wake()
+                    }
+                }
+            },
+            tint = tint
         )
     }
 }
