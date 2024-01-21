@@ -62,5 +62,5 @@
     <string name="feat_setting_reconnect_mode_retry">solo si falla</string>
     <string name="feat_setting_reconnect_mode_reconnect">siempre</string>
     <string name="feat_setting_compact">modo compacto</string>
-        <string name="feat_setting_appearance">apariencia</string>
+    <string name="feat_setting_appearance">apariencia</string>
 </resources>

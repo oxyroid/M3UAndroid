@@ -2,35 +2,37 @@ package com.m3u.core.architecture.pref.impl
 
 import android.content.Context
 import android.content.SharedPreferences
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import com.m3u.core.architecture.pref.Pref
-import com.m3u.core.architecture.pref.Pref.Companion.RECONNECT_MODE
 import com.m3u.core.architecture.pref.Pref.Companion.AUTO_REFRESH
 import com.m3u.core.architecture.pref.Pref.Companion.BRIGHTNESS_GESTURE
-import com.m3u.core.architecture.pref.Pref.Companion.DARK_MODE
 import com.m3u.core.architecture.pref.Pref.Companion.CLIP_MODE
+import com.m3u.core.architecture.pref.Pref.Companion.COLOR_ARGB
 import com.m3u.core.architecture.pref.Pref.Companion.COMPACT
 import com.m3u.core.architecture.pref.Pref.Companion.CONNECT_TIMEOUT
-import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_RECONNECT_MODE
+import com.m3u.core.architecture.pref.Pref.Companion.DARK_MODE
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_AUTO_REFRESH
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_BRIGHTNESS_GESTURE
-import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_DARK_MODE
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_CLIP_MODE
+import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_COLOR_ARGB
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_COMPACT
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_CONNECT_TIMEOUT
+import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_DARK_MODE
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_EXPERIMENTAL_MODE
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_FULL_INFO_PLAYER
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_GOD_MODE
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_NO_PICTURE_MODE
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_PLAYLIST_STRATEGY
+import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_RECONNECT_MODE
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_RECORD
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_ROOT_DESTINATION
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_ROW_COUNT
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_SCREENCAST
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_SCREEN_ROTATING
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_SSL_VERIFICATION
-import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_COLOR_ARGB
+import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_TUNNELING
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_UNSEENS_MILLISECONDS
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_USE_DYNAMIC_COLORS
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_VOLUME_GESTURE
@@ -40,13 +42,14 @@ import com.m3u.core.architecture.pref.Pref.Companion.FULL_INFO_PLAYER
 import com.m3u.core.architecture.pref.Pref.Companion.GOD_MODE
 import com.m3u.core.architecture.pref.Pref.Companion.NO_PICTURE_MODE
 import com.m3u.core.architecture.pref.Pref.Companion.PLAYLIST_STRATEGY
+import com.m3u.core.architecture.pref.Pref.Companion.RECONNECT_MODE
 import com.m3u.core.architecture.pref.Pref.Companion.RECORD
 import com.m3u.core.architecture.pref.Pref.Companion.ROOT_DESTINATION
 import com.m3u.core.architecture.pref.Pref.Companion.ROW_COUNT
 import com.m3u.core.architecture.pref.Pref.Companion.SCREENCAST
 import com.m3u.core.architecture.pref.Pref.Companion.SCREEN_ROTATING
 import com.m3u.core.architecture.pref.Pref.Companion.SSL_VERIFICATION
-import com.m3u.core.architecture.pref.Pref.Companion.COLOR_ARGB
+import com.m3u.core.architecture.pref.Pref.Companion.TUNNELING
 import com.m3u.core.architecture.pref.Pref.Companion.UNSEENS_MILLISECONDS
 import com.m3u.core.architecture.pref.Pref.Companion.USE_DYNAMIC_COLORS
 import com.m3u.core.architecture.pref.Pref.Companion.VOLUME_GESTURE
@@ -61,6 +64,7 @@ import com.m3u.core.util.context.longAsState
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 
+@Stable
 class SnapshotPref @Inject constructor(
     @ApplicationContext context: Context
 ) : Pref {
@@ -133,6 +137,9 @@ class SnapshotPref @Inject constructor(
 
     override var colorArgb: Int by
     sharedPreferences.intAsState(DEFAULT_COLOR_ARGB, COLOR_ARGB)
+
+    override var tunneling: Boolean by
+    sharedPreferences.booleanAsState(DEFAULT_TUNNELING, TUNNELING)
 
     companion object {
         private const val SHARED_SETTINGS = "shared_settings"

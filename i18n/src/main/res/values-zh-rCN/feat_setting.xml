@@ -70,4 +70,6 @@
     <string name="feat_setting_reconnect_mode_reconnect">永远</string>
     <string name="feat_setting_compact">紧凑模式</string>
     <string name="feat_setting_appearance">外观</string>
+    <string name="feat_setting_tunneling">隧道模式</string>
+    <string name="feat_setting_tunneling_description">可以改善 Android TV 上 4K/HDR 内容的播放</string>
 </resources>

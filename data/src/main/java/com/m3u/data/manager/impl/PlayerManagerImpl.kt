@@ -23,13 +23,16 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.drm.DefaultDrmSessionManager
 import androidx.media3.exoplayer.drm.DrmSessionManager
 import androidx.media3.exoplayer.drm.FrameworkMediaDrm
+import androidx.media3.exoplayer.drm.HttpMediaDrmCallback
 import androidx.media3.exoplayer.drm.LocalMediaDrmCallback
-import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
+import androidx.media3.exoplayer.hls.HlsExtractorFactory
+import androidx.media3.exoplayer.hls.HlsMediaSource
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
 import androidx.media3.session.MediaSession
 import com.m3u.core.architecture.pref.Pref
 import com.m3u.core.architecture.pref.annotation.ReconnectMode
 import com.m3u.core.architecture.pref.observeAsFlow
+import com.m3u.core.util.basic.startsWithAny
 import com.m3u.data.Certs
 import com.m3u.data.SSL
 import com.m3u.data.database.dao.StreamDao
@@ -38,18 +41,14 @@ import com.m3u.data.manager.PlayerManager
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.plus
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import java.util.concurrent.TimeUnit
@@ -63,8 +62,6 @@ class PlayerManagerImpl @Inject constructor(
     private val _player = MutableStateFlow<Player?>(null)
     override val player: Flow<Player?> = _player.asStateFlow()
 
-    private val scope = CoroutineScope(Dispatchers.Main) + Job()
-
     private val _streamId = MutableStateFlow<Int?>(null)
     override val streamId: StateFlow<Int?> = _streamId.asStateFlow()
 
@@ -77,65 +74,45 @@ class PlayerManagerImpl @Inject constructor(
     private val _playbackError = MutableStateFlow<PlaybackException?>(null)
     override val playerError: StateFlow<PlaybackException?> = _playbackError.asStateFlow()
 
-    private val isSSLVerification = pref
-        .observeAsFlow { it.isSSLVerification }
-        .stateIn(
-            scope = scope,
-            started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = Pref.DEFAULT_SSL_VERIFICATION
-        )
-    private val connectTimeout = pref
-        .observeAsFlow { it.connectTimeout }
-        .stateIn(
-            scope = scope,
-            started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = Pref.DEFAULT_CONNECT_TIMEOUT
-        )
-
-    private val coroutineScope = CoroutineScope(Dispatchers.IO)
+    private val coroutineScope = CoroutineScope(Dispatchers.Main)
 
     init {
         combine(
-            isSSLVerification,
-            connectTimeout
-        ) { _, _ -> replay() }
-            .launchIn(scope)
+            pref.observeAsFlow { it.isSSLVerification },
+            pref.observeAsFlow { it.connectTimeout },
+            pref.observeAsFlow { it.tunneling }
+        ) { _, _, _ -> replay() }
+            .launchIn(coroutineScope)
     }
 
     private fun createPlayer(
         isSSLVerification: Boolean,
-        timeout: Long
+        timeout: Long,
+        tunneling: Boolean
     ): Player {
         val rf = DefaultRenderersFactory(context).apply {
             setEnableDecoderFallback(true)
         }
-        val msf = DefaultMediaSourceFactory(context)
-            .setDataSourceFactory(
-                if (isSSLVerification) DefaultDataSource.Factory(context)
-                else DefaultDataSource.Factory(
-                    context,
-                    OkHttpDataSource.Factory(
-                        OkHttpClient.Builder()
-                            .sslSocketFactory(SSL.TLSTrustAll.socketFactory, Certs.TrustAll)
-                            .hostnameVerifier { _, _ -> true }
-                            .connectTimeout(timeout, TimeUnit.MILLISECONDS)
-                            .callTimeout(timeout, TimeUnit.MILLISECONDS)
-                            .readTimeout(timeout, TimeUnit.MILLISECONDS)
-                            .writeTimeout(timeout, TimeUnit.MILLISECONDS)
-                            .build()
-                    )
-                )
-            )
+        val dsf = DefaultDataSource.Factory(
+            context,
+            buildHttpDataSourceFactory(!isSSLVerification, timeout)
+        )
+        val hlsmsf = HlsMediaSource.Factory(dsf)
+            .setExtractorFactory(HlsExtractorFactory.DEFAULT)
             .apply {
                 drmSessionManager?.let { manager ->
                     setDrmSessionManagerProvider { manager }
                 }
             }
         val ts = DefaultTrackSelector(context).apply {
-            setParameters(buildUponParameters().setMaxVideoSizeSd())
+            setParameters(
+                buildUponParameters()
+                    .setMaxVideoSizeSd()
+                    .setTunnelingEnabled(tunneling)
+            )
         }
         return ExoPlayer.Builder(context)
-            .setMediaSourceFactory(msf)
+            .setMediaSourceFactory(hlsmsf)
             .setRenderersFactory(rf)
             .setTrackSelector(ts)
             .build()
@@ -157,35 +134,87 @@ class PlayerManagerImpl @Inject constructor(
         _streamId.value = streamId
 
         coroutineScope.launch {
-            val stream = streamDao.get(streamId) ?: return@launch
+            val stream = withContext(Dispatchers.IO) { streamDao.get(streamId) } ?: return@launch
             val useDrm = stream.licenseType != null && stream.licenseKey != null
 
             drmSessionManager = if (useDrm) {
                 val licenseType = stream.licenseType!!
                 val licenseKey = stream.licenseKey!!
-                val callback = LocalMediaDrmCallback(licenseKey.toByteArray())
-                val uuid = when (stream.licenseType) {
+                val uuid = when (licenseType) {
                     Stream.LICENSE_TYPE_WIDEVINE -> C.WIDEVINE_UUID
                     Stream.LICENSE_TYPE_CLEAR_KEY -> C.CLEARKEY_UUID
                     Stream.LICENSE_TYPE_PLAY_READY -> C.PLAYREADY_UUID
                     else -> C.CLEARKEY_UUID
                 }
+                val isUrl = licenseKey.startsWithAny("http://", "https://")
+                val actualLicenseKey = if (isUrl) licenseKey
+                else createStaticLicenseKey(licenseKey)
+                val callback = when (uuid) {
+                    C.WIDEVINE_UUID -> {
+                        HttpMediaDrmCallback(
+                            actualLicenseKey,
+                            buildHttpDataSourceFactory(
+                                !pref.isSSLVerification,
+                                pref.connectTimeout
+                            )
+                        ).apply {
+                            setKeyRequestProperty(licenseType, licenseKey)
+                        }
+                    }
+
+                    else -> {
+                        LocalMediaDrmCallback(
+                            actualLicenseKey.toByteArray()
+                        )
+                    }
+                }
                 val mediaDrm = FrameworkMediaDrm.newInstance(uuid)
                 DefaultDrmSessionManager.Builder()
                     .setUuidAndExoMediaDrmProvider(uuid) { mediaDrm }
+                    .setMultiSession(true)
                     .build(callback)
             } else null
-
-            withContext(Dispatchers.Main) {
-                _player.value = createPlayer(isSSLVerification.value, connectTimeout.value).also {
-                    it.addListener(this@PlayerManagerImpl)
-                    val url = stream.url
-                    val mediaItem = MediaItem.fromUri(url)
-                    it.setMediaItem(mediaItem)
-                    it.prepare()
-                }
+            _player.value = createPlayer(
+                pref.isSSLVerification,
+                pref.connectTimeout,
+                pref.tunneling
+            ).also {
+                it.addListener(this@PlayerManagerImpl)
+                val url = stream.url
+                val mediaItem = MediaItem.fromUri(url)
+                it.setMediaItem(mediaItem)
+                it.prepare()
             }
         }
+    }
+
+    private val metadataRegex = """([\w-_.]+)=\s*(?:"([^"]*)"|(\S+))""".toRegex()
+    private fun createStaticLicenseKey(key: String): String {
+        val matches = metadataRegex.findAll(key)
+        val keys = matches.mapNotNull { match ->
+            val k = match.groups[1]?.value.orEmpty()
+            val kid = match.groups[2]?.value?.ifEmpty { null } ?: return@mapNotNull null
+            (k to kid)
+        }
+            .joinToString(
+                separator = ",",
+                prefix = "[",
+                postfix = "]"
+            ) {
+                """
+                {
+                    "kty":"oct",
+                    "k":"${it.first}",
+                    "kid":"${it.second}"
+                }
+                """.trimIndent()
+            }
+        return """
+        {
+            "keys": $keys,
+            "type":"temporary"
+        }
+        """.trimIndent()
     }
 
     override fun stop() {
@@ -267,6 +296,26 @@ class PlayerManagerImpl @Inject constructor(
             .buildUpon()
             .setOverrideForType(override)
             .build()
+    }
+
+    private fun buildHttpDataSourceFactory(
+        trustAll: Boolean,
+        timeout: Long
+    ): OkHttpDataSource.Factory {
+        return OkHttpDataSource.Factory(
+            OkHttpClient.Builder()
+                .connectTimeout(timeout, TimeUnit.MILLISECONDS)
+                .callTimeout(timeout, TimeUnit.MILLISECONDS)
+                .readTimeout(timeout, TimeUnit.MILLISECONDS)
+                .writeTimeout(timeout, TimeUnit.MILLISECONDS)
+                .apply {
+                    if (trustAll) {
+                        sslSocketFactory(SSL.TLSTrustAll.socketFactory, Certs.TrustAll)
+                            .hostnameVerifier { _, _ -> true }
+                    }
+                }
+                .build()
+        )
     }
 }
 

@@ -10,6 +10,7 @@ import androidx.compose.material.icons.rounded.BrightnessMedium
 import androidx.compose.material.icons.rounded.Cast
 import androidx.compose.material.icons.rounded.Details
 import androidx.compose.material.icons.rounded.Extension
+import androidx.compose.material.icons.rounded.FlashOn
 import androidx.compose.material.icons.rounded.Loop
 import androidx.compose.material.icons.rounded.PictureInPicture
 import androidx.compose.material.icons.rounded.ScreenRotation
@@ -53,6 +54,13 @@ fun OptionalPreferences(modifier: Modifier = Modifier) {
             )
         ) {
             Column {
+                CheckBoxSharedPreference(
+                    title = string.feat_setting_tunneling,
+                    content = string.feat_setting_tunneling_description,
+                    icon = Icons.Rounded.FlashOn,
+                    checked = pref.tunneling,
+                    onChanged = { pref.tunneling = !pref.tunneling }
+                )
                 CheckBoxSharedPreference(
                     title = string.feat_setting_full_info_player,
                     content = string.feat_setting_full_info_player_description,

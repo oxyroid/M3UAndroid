@@ -47,10 +47,10 @@ interface Pref {
 
     @ReconnectMode
     var reconnectMode: Int
-
     var compact: Boolean
-
     var colorArgb: Int
+    var tunneling: Boolean
+
 
     companion object {
         @PlaylistStrategy
@@ -86,6 +86,7 @@ interface Pref {
         const val DEFAULT_RECONNECT_MODE = ReconnectMode.NO
         const val DEFAULT_COMPACT = false
         const val DEFAULT_COLOR_ARGB = 0xD0BCFF
+        const val DEFAULT_TUNNELING = false
 
         const val PLAYLIST_STRATEGY = "playlist-strategy"
         const val ROW_COUNT = "rowCount"
@@ -112,6 +113,7 @@ interface Pref {
         const val RECONNECT_MODE = "reconnect-mode"
         const val COMPACT = "compact"
         const val COLOR_ARGB = "color-argb"
+        const val TUNNELING = "tunneling"
     }
 }
 

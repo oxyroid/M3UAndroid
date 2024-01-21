@@ -29,4 +29,5 @@ internal object MockPref : Pref {
     override var reconnectMode: Int = Pref.DEFAULT_RECONNECT_MODE
     override var compact: Boolean = Pref.DEFAULT_COMPACT
     override var colorArgb: Int = Pref.DEFAULT_COLOR_ARGB
+    override var tunneling: Boolean = Pref.DEFAULT_TUNNELING
 }
