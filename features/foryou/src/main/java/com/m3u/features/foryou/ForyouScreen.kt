@@ -15,6 +15,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.Link
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -45,10 +47,11 @@ import com.m3u.material.ktx.minus
 import com.m3u.material.ktx.only
 import com.m3u.material.ktx.thenIf
 import com.m3u.material.model.LocalSpacing
-import com.m3u.ui.helper.Action
+import com.m3u.ui.ConnectBottomSheet
 import com.m3u.ui.EventHandler
-import com.m3u.ui.helper.LocalHelper
 import com.m3u.ui.ResumeEvent
+import com.m3u.ui.helper.Action
+import com.m3u.ui.helper.LocalHelper
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 
@@ -73,10 +76,17 @@ fun ForyouRoute(
     val details by viewModel.details.collectAsStateWithLifecycle()
     val recommend by viewModel.recommend.collectAsStateWithLifecycle()
 
+    var isConnectSheetVisible by remember { mutableStateOf(false) }
+
     EventHandler(resume, title) {
         helper.deep = 0
         helper.title = title.title()
         helper.actions = persistentListOf(
+            Action(
+                icon = Icons.Rounded.Link,
+                contentDescription = "link",
+                onClick = { isConnectSheetVisible = true }
+            ),
             Action(
                 icon = Icons.Rounded.Add,
                 contentDescription = "add",
@@ -85,30 +95,43 @@ fun ForyouRoute(
         )
     }
 
-    ForyouScreen(
-        details = details,
-        recommend = recommend,
-        rowCount = pref.rowCount,
-        contentPadding = contentPadding,
-        navigateToPlaylist = navigateToPlaylist,
-        navigateToStream = navigateToStream,
-        navigateToRecommendPlaylist = navigateToRecommendPlaylist,
-        navigateToSettingPlaylistManagement = navigateToSettingPlaylistManagement,
-        unsubscribe = { viewModel.unsubscribe(it) },
-        rename = { playlistUrl, target -> viewModel.rename(playlistUrl, target) },
-        modifier = Modifier
-            .fillMaxSize()
-            .thenIf(!tv && pref.godMode) {
-                Modifier.interceptVolumeEvent { event ->
-                    pref.rowCount = when (event) {
-                        KeyEvent.KEYCODE_VOLUME_UP -> (pref.rowCount - 1).coerceAtLeast(1)
-                        KeyEvent.KEYCODE_VOLUME_DOWN -> (pref.rowCount + 1).coerceAtMost(2)
-                        else -> return@interceptVolumeEvent
+    Background {
+        ForyouScreen(
+            details = details,
+            recommend = recommend,
+            rowCount = pref.rowCount,
+            contentPadding = contentPadding,
+            navigateToPlaylist = navigateToPlaylist,
+            navigateToStream = navigateToStream,
+            navigateToRecommendPlaylist = navigateToRecommendPlaylist,
+            navigateToSettingPlaylistManagement = navigateToSettingPlaylistManagement,
+            unsubscribe = { viewModel.unsubscribe(it) },
+            rename = { playlistUrl, target -> viewModel.rename(playlistUrl, target) },
+            modifier = Modifier
+                .fillMaxSize()
+                .thenIf(!tv && pref.godMode) {
+                    Modifier.interceptVolumeEvent { event ->
+                        pref.rowCount = when (event) {
+                            KeyEvent.KEYCODE_VOLUME_UP -> (pref.rowCount - 1).coerceAtLeast(1)
+                            KeyEvent.KEYCODE_VOLUME_DOWN -> (pref.rowCount + 1).coerceAtMost(2)
+                            else -> return@interceptVolumeEvent
+                        }
                     }
                 }
-            }
-            .then(modifier)
-    )
+                .then(modifier)
+        )
+        var loading by remember { mutableStateOf(false) }
+        var code by remember { mutableStateOf("") }
+        ConnectBottomSheet(
+            visible = isConnectSheetVisible,
+            code = code,
+            loading = loading,
+            onCode = { code = it },
+            sheetState = rememberModalBottomSheetState { !loading },
+            onDismissRequest = { isConnectSheetVisible = false },
+            onConnect = { loading = true }
+        )
+    }
 }
 
 @Composable

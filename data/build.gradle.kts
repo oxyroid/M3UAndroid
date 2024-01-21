@@ -81,4 +81,6 @@ dependencies {
     ksp(libs.androidx.hilt.hilt.compiler)
 
     implementation(libs.parser.m3u)
+
+    implementation("org.zeromq:jeromq:0.5.3")
 }

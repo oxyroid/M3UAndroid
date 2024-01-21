@@ -18,4 +18,6 @@
     <string name="ui_sort_asc">A-Z</string>
     <string name="ui_sort_desc">Z-A</string>
     <string name="ui_sort_unspecified">Unspecified</string>
+
+    <string name="ui_connect">Connect</string>
 </resources>

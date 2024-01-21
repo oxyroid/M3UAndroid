@@ -188,7 +188,6 @@ internal fun StreamFragment(
                         if (pref.record) {
                             MaskButton(
                                 state = maskState,
-                                enabled = false,
                                 icon = if (recording) Icons.Rounded.RadioButtonChecked
                                 else Icons.Rounded.RadioButtonUnchecked,
                                 tint = if (recording) theme.error

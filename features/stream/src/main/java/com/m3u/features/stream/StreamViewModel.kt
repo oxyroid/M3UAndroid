@@ -9,6 +9,7 @@ import com.m3u.core.architecture.viewmodel.BaseViewModel
 import com.m3u.data.repository.PlaylistRepository
 import com.m3u.data.repository.StreamRepository
 import com.m3u.data.manager.PlayerManager
+import com.m3u.data.net.jetty.JettyServer
 import com.m3u.dlna.DLNACastManager
 import com.m3u.dlna.OnDeviceRegistryListener
 import com.m3u.dlna.control.DeviceControl
@@ -37,6 +38,7 @@ import org.jupnp.model.meta.Device
 import javax.inject.Inject
 import kotlin.math.roundToInt
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 @HiltViewModel
 class StreamViewModel @Inject constructor(
@@ -216,6 +218,12 @@ class StreamViewModel @Inject constructor(
 
     internal fun record() {
         _recording.update { !it }
+        viewModelScope.launch {
+            val server = JettyServer(2233)
+            server.start()
+            delay(3.seconds)
+            server.send("123")
+        }
     }
 
     private fun onFavourite(url: String) {

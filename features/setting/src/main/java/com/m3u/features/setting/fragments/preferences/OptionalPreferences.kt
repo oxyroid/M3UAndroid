@@ -92,9 +92,7 @@ fun OptionalPreferences(modifier: Modifier = Modifier) {
 
                 CheckBoxSharedPreference(
                     title = string.feat_setting_record,
-                    content = string.feat_setting_not_implementation,
                     icon = Icons.Rounded.SlowMotionVideo,
-                    enabled = false,
                     checked = pref.record,
                     onChanged = { pref.record = !pref.record }
                 )
