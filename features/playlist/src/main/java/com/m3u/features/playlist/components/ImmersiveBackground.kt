@@ -99,7 +99,8 @@ internal fun ImmersiveBackground(
                         text = stream.url,
                         style = MaterialTheme.typography.headlineMedium,
                         color = LocalContentColor.current.copy(0.68f),
-                        maxLines = 1
+                        maxLines = 1,
+                        softWrap = false
                     )
                     Spacer(
                         modifier = Modifier.heightIn(min = maxBrowserHeight)
