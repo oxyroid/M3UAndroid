@@ -1,4 +1,4 @@
-package com.m3u.data.net.jetty
+package com.m3u.data.net.zmq
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -10,18 +10,18 @@ import org.zeromq.SocketType
 import org.zeromq.ZContext
 import org.zeromq.ZMQ
 
-class JettyClient(private val port: Int) {
+class ZMQServer(private val port: Int) {
     private val context: ZContext by lazy { ZContext() }
     private var socket: ZMQ.Socket? = null
     private val flow = MutableSharedFlow<String>()
     private val coroutineScope = CoroutineScope(Dispatchers.IO)
 
     fun start() {
-        socket?.disconnect("tcp://localhost:$port")
-        socket = context.createSocket(SocketType.REQ).apply {
-            connect("tcp://localhost:$port")
+        socket?.unbind("tcp://*:$port")
+        socket = context.createSocket(SocketType.REP).apply {
+            bind("tcp://*:$port")
             while (!Thread.currentThread().isInterrupted) {
-                val reply: ByteArray = recv(0)
+                val reply = recv(0)
                 coroutineScope.launch {
                     flow.emit(String(reply, ZMQ.CHARSET))
                 }

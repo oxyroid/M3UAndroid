@@ -9,7 +9,7 @@ import com.m3u.core.architecture.viewmodel.BaseViewModel
 import com.m3u.data.repository.PlaylistRepository
 import com.m3u.data.repository.StreamRepository
 import com.m3u.data.manager.PlayerManager
-import com.m3u.data.net.jetty.JettyServer
+import com.m3u.data.net.zmq.ZMQServer
 import com.m3u.dlna.DLNACastManager
 import com.m3u.dlna.OnDeviceRegistryListener
 import com.m3u.dlna.control.DeviceControl
@@ -219,7 +219,7 @@ class StreamViewModel @Inject constructor(
     internal fun record() {
         _recording.update { !it }
         viewModelScope.launch {
-            val server = JettyServer(2233)
+            val server = ZMQServer(2233)
             server.start()
             delay(3.seconds)
             server.send("123")
