@@ -4,15 +4,16 @@ package com.m3u.data.manager
 
 import android.app.NotificationManager
 import android.content.Context
+import android.net.wifi.WifiManager
 import androidx.core.app.NotificationManagerCompat
 import androidx.work.WorkManager
 import com.m3u.core.architecture.TraceFileProvider
 import com.m3u.core.architecture.logger.Logger
+import com.m3u.data.manager.impl.MessageManagerImpl
+import com.m3u.data.manager.impl.PlayerManagerImpl
 import com.m3u.data.manager.impl.TraceFileProviderImpl
 import com.m3u.data.repository.logger.CommonLogger
 import com.m3u.data.repository.logger.MessageLogger
-import com.m3u.data.manager.impl.PlayerManagerImpl
-import com.m3u.data.manager.impl.MessageManagerImpl
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -65,5 +66,11 @@ object ProvidedServicesModule {
     @Singleton
     fun provideNotificationManager(@ApplicationContext context: Context): NotificationManager {
         return context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+    }
+
+    @Provides
+    @Singleton
+    fun provideWifiManager(@ApplicationContext context: Context): WifiManager {
+        return context.getSystemService(Context.WIFI_SERVICE) as WifiManager
     }
 }

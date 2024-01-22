@@ -1,6 +1,7 @@
 package com.m3u.features.foryou
 
 import android.content.res.Configuration.ORIENTATION_PORTRAIT
+import android.util.Log
 import android.view.KeyEvent
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
@@ -18,10 +19,12 @@ import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Link
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
@@ -54,6 +57,8 @@ import com.m3u.ui.helper.Action
 import com.m3u.ui.helper.LocalHelper
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 
 @Composable
 fun ForyouRoute(
@@ -71,12 +76,41 @@ fun ForyouRoute(
     val helper = LocalHelper.current
     val pref = LocalPref.current
 
+    // temp
+    var loading by remember { mutableStateOf(false) }
+    var code by remember { mutableStateOf("") }
+
     val tv = isTelevision()
+
+    val sheetState = rememberModalBottomSheetState { !loading }
 
     val details by viewModel.details.collectAsStateWithLifecycle()
     val recommend by viewModel.recommend.collectAsStateWithLifecycle()
 
+    val currentLocalCode by viewModel.currentLocalCode.collectAsStateWithLifecycle()
+    val localCodes by viewModel.localCodes.collectAsStateWithLifecycle()
+
     var isConnectSheetVisible by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        snapshotFlow { sheetState.isVisible }
+            .onEach { visible ->
+                if (visible) {
+                    viewModel.searchLocalCodes()
+                } else {
+                    viewModel.stopSearchLocalCodes()
+                }
+            }
+            .launchIn(this)
+    }
+
+    LaunchedEffect(Unit) {
+        snapshotFlow { localCodes }
+            .onEach {
+                Log.e("TAG", "$it")
+            }
+            .launchIn(this)
+    }
 
     EventHandler(resume, title) {
         helper.deep = 0
@@ -120,14 +154,12 @@ fun ForyouRoute(
                 }
                 .then(modifier)
         )
-        var loading by remember { mutableStateOf(false) }
-        var code by remember { mutableStateOf("") }
         ConnectBottomSheet(
             visible = isConnectSheetVisible,
             code = code,
             loading = loading,
             onCode = { code = it },
-            sheetState = rememberModalBottomSheetState { !loading },
+            sheetState = sheetState,
             onDismissRequest = { isConnectSheetVisible = false },
             onConnect = { loading = true }
         )
