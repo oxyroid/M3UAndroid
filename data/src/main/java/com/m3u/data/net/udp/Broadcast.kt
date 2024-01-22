@@ -8,7 +8,6 @@ import kotlinx.coroutines.flow.flowOn
 import java.net.DatagramPacket
 import java.net.DatagramSocket
 import java.net.InetAddress
-import java.nio.charset.Charset
 
 interface Broadcast {
     fun send(bytes: ByteArray)
@@ -28,7 +27,7 @@ data class LocalCode(
 
         fun decode(bytes: ByteArray): LocalCode {
             val line = bytes
-                .toString(Charset.defaultCharset())
+                .toString(Charsets.UTF_8)
                 .run {
                     take(indexOf('#', 1))
                 }
