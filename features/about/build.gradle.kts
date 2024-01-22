@@ -57,4 +57,5 @@ dependencies {
 
 aboutLibraries {
     offlineMode = true
+    excludeFields = arrayOf("generated")
 }
