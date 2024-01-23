@@ -4,13 +4,13 @@ package com.m3u.data.manager.impl
 
 import android.content.Context
 import android.graphics.Rect
-import android.util.Base64
 import androidx.annotation.OptIn
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.Format
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaItem.DrmConfiguration
+import androidx.media3.common.MimeTypes
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.TrackGroup
@@ -19,12 +19,14 @@ import androidx.media3.common.Tracks
 import androidx.media3.common.VideoSize
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.DefaultDataSource
+import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.datasource.okhttp.OkHttpDataSource
 import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.drm.DrmSessionManager
-import androidx.media3.exoplayer.hls.HlsExtractorFactory
-import androidx.media3.exoplayer.hls.HlsMediaSource
+import androidx.media3.exoplayer.rtsp.RtspMediaSource
+import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
+import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
 import androidx.media3.session.MediaSession
 import com.m3u.core.architecture.pref.Pref
@@ -45,9 +47,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
+import java.util.UUID
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
@@ -56,11 +58,15 @@ class PlayerManagerImpl @Inject constructor(
     private val streamDao: StreamDao,
     private val pref: Pref
 ) : PlayerManager, Player.Listener, MediaSession.Callback {
-    private val _player = MutableStateFlow<Player?>(null)
+    private val _player = MutableStateFlow<ExoPlayer?>(null)
     override val player: Flow<Player?> = _player.asStateFlow()
 
     private val _streamId = MutableStateFlow<Int?>(null)
     override val streamId: StateFlow<Int?> = _streamId.asStateFlow()
+
+    private val _stream = MutableStateFlow<Stream?>(null)
+
+    private val currentMimeType = MutableStateFlow<String?>(null)
 
     private val _videoSize = MutableStateFlow(Rect())
     override val videoSize: StateFlow<Rect> = _videoSize.asStateFlow()
@@ -86,7 +92,7 @@ class PlayerManagerImpl @Inject constructor(
         isSSLVerification: Boolean,
         timeout: Long,
         tunneling: Boolean
-    ): Player {
+    ): ExoPlayer {
         val rf = DefaultRenderersFactory(context).apply {
             setEnableDecoderFallback(true)
         }
@@ -94,13 +100,9 @@ class PlayerManagerImpl @Inject constructor(
             context,
             buildHttpDataSourceFactory(!isSSLVerification, timeout)
         )
-        val hlsmsf = HlsMediaSource.Factory(dsf)
-            .setExtractorFactory(HlsExtractorFactory.DEFAULT)
-            .apply {
-                drmSessionManager?.let { manager ->
-                    setDrmSessionManagerProvider { manager }
-                }
-            }
+        val msf = DefaultMediaSourceFactory(dsf)
+            .setDrmSessionManagerProvider { drmSessionManager }
+
         val ts = DefaultTrackSelector(context).apply {
             setParameters(
                 buildUponParameters()
@@ -108,8 +110,9 @@ class PlayerManagerImpl @Inject constructor(
                     .setTunnelingEnabled(tunneling)
             )
         }
+
         return ExoPlayer.Builder(context)
-            .setMediaSourceFactory(hlsmsf)
+            .setMediaSourceFactory(msf)
             .setRenderersFactory(rf)
             .setTrackSelector(ts)
             .build()
@@ -120,77 +123,109 @@ class PlayerManagerImpl @Inject constructor(
                     .build()
                 setAudioAttributes(attributes, true)
                 playWhenReady = true
+                addListener(this@PlayerManagerImpl)
             }
     }
 
-    private var drmSessionManager: DrmSessionManager? = null
+    private var drmSessionManager: DrmSessionManager = DrmSessionManager.DRM_UNSUPPORTED
 
-    override fun play(streamId: Int) {
-        val prev = _player.value
-        if (prev != null) stop()
+    private fun getUUID(type: String): UUID {
+        return when (type) {
+            Stream.LICENSE_TYPE_CLEAR_KEY -> C.CLEARKEY_UUID
+            Stream.LICENSE_TYPE_WIDEVINE -> C.WIDEVINE_UUID
+            Stream.LICENSE_TYPE_PLAY_READY -> C.PLAYREADY_UUID
+            else -> C.CLEARKEY_UUID
+        }
+    }
+
+    override suspend fun play(streamId: Int) {
+        if (streamId != _streamId.value) stop()
+        val stream = withContext(Dispatchers.IO) { streamDao.get(streamId) } ?: return
+        _stream.value = stream
         _streamId.value = streamId
+        tryPlay(
+            url = stream.url,
+            licenseType = stream.licenseType,
+            licenseKey = stream.licenseKey,
+            mimeType = null
+        )
+    }
 
-        coroutineScope.launch {
-            val stream = withContext(Dispatchers.IO) { streamDao.get(streamId) } ?: return@launch
-            val useDrm = stream.licenseType != null && stream.licenseKey != null
+    private fun tryPlay(
+        url: String,
+        licenseType: String?,
+        licenseKey: String?,
+        mimeType: String?
+    ) {
+        val useDrm = licenseType != null && licenseKey != null
+        if (useDrm) {
+            checkNotNull(licenseType)
+            checkNotNull(licenseKey)
+            val uuid = getUUID(licenseType)
+            val configuration = DrmConfiguration.Builder(uuid)
+                .setKeySetId(licenseKey.toByteArray())
+                .setLicenseUri(url)
+                .build()
+            // TODO
+        }
 
-            _player.value = createPlayer(
-                pref.isSSLVerification,
-                pref.connectTimeout,
-                pref.tunneling
-            ).also {
-                it.addListener(this@PlayerManagerImpl)
-                val url = stream.url
+        val currentPlayer = _player.value ?: createPlayer(
+            isSSLVerification = pref.isSSLVerification,
+            timeout = pref.connectTimeout,
+            tunneling = pref.tunneling
+        ).also { _player.value = it }
+
+        when (mimeType) {
+            MimeTypes.APPLICATION_SS -> {
+                val dataSourceFactory = DefaultHttpDataSource.Factory()
+                val mediaSource = ProgressiveMediaSource.Factory(dataSourceFactory)
+                    .createMediaSource(MediaItem.fromUri(url))
+                currentPlayer.setMediaSource(mediaSource)
+            }
+
+            MimeTypes.APPLICATION_RTSP -> {
+                val mediaSource = RtspMediaSource.Factory()
+                    .createMediaSource(MediaItem.fromUri(url))
+                currentPlayer.setMediaSource(mediaSource)
+            }
+
+            else -> {
                 val mediaItem = MediaItem.Builder()
                     .setUri(url)
                     .apply {
-                        if (useDrm) {
-                            val licenseType = stream.licenseType!!
-                            val licenseKey = stream.licenseKey!!
-                            val uuid = when (licenseType) {
-                                Stream.LICENSE_TYPE_WIDEVINE -> C.WIDEVINE_UUID
-                                Stream.LICENSE_TYPE_CLEAR_KEY -> C.CLEARKEY_UUID
-                                Stream.LICENSE_TYPE_PLAY_READY -> C.PLAYREADY_UUID
-                                else -> C.CLEARKEY_UUID
-                            }
-                            val licenseUrl = if (licenseKey.startsWith("http")) licenseKey
-                            else {
-                                Base64.encodeToString(
-                                    licenseKey.toByteArray(),
-                                    Base64.DEFAULT or Base64.NO_WRAP
-                                )
-                            }
-                            setDrmConfiguration(
-                                DrmConfiguration.Builder(uuid)
-                                    .setLicenseUri(licenseUrl)
-                                    .build()
-                            )
+                        if (mimeType != null) {
+                            setMimeType(mimeType)
                         }
                     }
                     .build()
-                it.setMediaItem(mediaItem)
-                it.prepare()
+
+                currentPlayer.setMediaItem(mediaItem)
             }
         }
+        currentPlayer.prepare()
     }
 
     override fun stop() {
-        _streamId.value = null
         _player.update {
-            it?.removeListener(this)
             it?.stop()
             it?.release()
+            it?.removeListener(this)
             null
         }
+        _streamId.value = null
+        _stream.value = null
         _groups.value = emptyList()
         _selected.value = emptyMap()
-        _playbackState.value = Player.STATE_IDLE
-        _playbackError.value = null
         _videoSize.value = Rect()
+        _playbackError.value = null
+        _playbackState.value = Player.STATE_IDLE
+        currentMimeType.value = null
     }
 
-    override fun replay() {
-        streamId.value?.let { play(it) }
+    override suspend fun replay() {
+        val streamId = streamId.value ?: return
+        stop()
+        play(streamId)
     }
 
     override fun onVideoSizeChanged(size: VideoSize) {
@@ -211,11 +246,39 @@ class PlayerManagerImpl @Inject constructor(
 
     override fun onPlayerErrorChanged(error: PlaybackException?) {
         super.onPlayerErrorChanged(error)
-        if (pref.reconnectMode != ReconnectMode.NO || error?.errorCode == PlaybackException.ERROR_CODE_BEHIND_LIVE_WINDOW) {
-            _player.value?.let {
-                it.seekToDefaultPosition()
-                it.prepare()
+        when (error?.errorCode) {
+            PlaybackException.ERROR_CODE_BEHIND_LIVE_WINDOW -> {
+                if (pref.reconnectMode != ReconnectMode.NO) {
+                    _player.value?.let {
+                        it.seekToDefaultPosition()
+                        it.prepare()
+                    }
+                }
             }
+
+            in 3000..3999 -> {
+                val retryMimetype = when (currentMimeType.value) {
+                    null -> MimeTypes.APPLICATION_M3U8
+                    MimeTypes.APPLICATION_M3U8 -> MimeTypes.APPLICATION_MPD
+                    MimeTypes.APPLICATION_MPD -> MimeTypes.APPLICATION_SS
+                    MimeTypes.APPLICATION_SS -> MimeTypes.APPLICATION_RTSP
+                    MimeTypes.APPLICATION_RTSP -> null
+                    else -> null
+                }.also { currentMimeType.value = it }
+
+                if (retryMimetype != null) {
+                    _stream.value?.let { stream ->
+                        tryPlay(
+                            url = stream.url,
+                            licenseType = stream.licenseType,
+                            licenseKey = stream.licenseKey,
+                            mimeType = retryMimetype
+                        )
+                    }
+                }
+            }
+
+            else -> {}
         }
         _playbackError.value = error
     }

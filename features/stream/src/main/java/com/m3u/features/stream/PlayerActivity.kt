@@ -205,11 +205,15 @@ class PlayerActivity : ComponentActivity() {
         }
 
         override fun play(streamId: Int) {
-            playerManager.play(streamId)
+            lifecycleScope.launch {
+                playerManager.play(streamId)
+            }
         }
 
         override fun replay() {
-            playerManager.replay()
+            lifecycleScope.launch {
+                playerManager.replay()
+            }
         }
     }
 

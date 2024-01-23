@@ -6,10 +6,10 @@ import androidx.media3.common.C
 import androidx.media3.common.Tracks
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.viewmodel.BaseViewModel
-import com.m3u.data.repository.PlaylistRepository
-import com.m3u.data.repository.StreamRepository
 import com.m3u.data.manager.PlayerManager
 import com.m3u.data.net.zmq.ZMQServer
+import com.m3u.data.repository.PlaylistRepository
+import com.m3u.data.repository.StreamRepository
 import com.m3u.dlna.DLNACastManager
 import com.m3u.dlna.OnDeviceRegistryListener
 import com.m3u.dlna.control.DeviceControl
@@ -282,7 +282,7 @@ class StreamViewModel @Inject constructor(
 
     override fun onCleared() {
         closeDlnaDevices()
-        playerManager.stop()
+        stop()
         controlPoint?.stop()
         controlPoint = null
         super.onCleared()

@@ -21,8 +21,9 @@ interface PlayerManager {
 
     val streamId: StateFlow<Int?>
 
-    fun play(streamId: Int)
+    suspend fun play(streamId: Int)
+    suspend fun replay()
     fun stop()
-    fun replay()
+
     fun chooseTrack(group: TrackGroup, trackIndex: Int)
 }
