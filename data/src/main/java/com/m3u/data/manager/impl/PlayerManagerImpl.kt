@@ -9,7 +9,6 @@ import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.Format
 import androidx.media3.common.MediaItem
-import androidx.media3.common.MediaItem.DrmConfiguration
 import androidx.media3.common.MimeTypes
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
@@ -23,7 +22,10 @@ import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.datasource.okhttp.OkHttpDataSource
 import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.drm.DefaultDrmSessionManager
 import androidx.media3.exoplayer.drm.DrmSessionManager
+import androidx.media3.exoplayer.drm.FrameworkMediaDrm
+import androidx.media3.exoplayer.drm.HttpMediaDrmCallback
 import androidx.media3.exoplayer.rtsp.RtspMediaSource
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.exoplayer.source.ProgressiveMediaSource
@@ -88,6 +90,7 @@ class PlayerManagerImpl @Inject constructor(
             .launchIn(coroutineScope)
     }
 
+    private var licenseKey: String? = null
     private fun createPlayer(
         isSSLVerification: Boolean,
         timeout: Long,
@@ -101,7 +104,23 @@ class PlayerManagerImpl @Inject constructor(
             buildHttpDataSourceFactory(!isSSLVerification, timeout)
         )
         val msf = DefaultMediaSourceFactory(dsf)
-            .setDrmSessionManagerProvider { drmSessionManager }
+            .setDrmSessionManagerProvider {
+                val stream = _stream.value
+                val licenseKey = stream?.licenseKey
+                val licenseType = stream?.licenseType
+                if (licenseKey != null && licenseType != null) {
+                    val callback = HttpMediaDrmCallback(licenseKey, dsf)
+                    val uuid = getUUID(licenseType)
+                    DefaultDrmSessionManager.Builder()
+                        .setMultiSession(false)
+                        .setUuidAndExoMediaDrmProvider(uuid) {
+                            FrameworkMediaDrm.newInstance(uuid)
+                        }
+                        .build(callback)
+                } else {
+                    DrmSessionManager.DRM_UNSUPPORTED
+                }
+            }
 
         val ts = DefaultTrackSelector(context).apply {
             setParameters(
@@ -127,8 +146,6 @@ class PlayerManagerImpl @Inject constructor(
             }
     }
 
-    private var drmSessionManager: DrmSessionManager = DrmSessionManager.DRM_UNSUPPORTED
-
     private fun getUUID(type: String): UUID {
         return when (type) {
             Stream.LICENSE_TYPE_CLEAR_KEY -> C.CLEARKEY_UUID
@@ -139,47 +156,39 @@ class PlayerManagerImpl @Inject constructor(
     }
 
     override suspend fun play(streamId: Int) {
-        if (streamId != _streamId.value) stop()
         val stream = withContext(Dispatchers.IO) { streamDao.get(streamId) } ?: return
         _stream.value = stream
         _streamId.value = streamId
+        licenseKey = stream.licenseKey
         tryPlay(
             url = stream.url,
-            licenseType = stream.licenseType,
-            licenseKey = stream.licenseKey,
             mimeType = null
         )
     }
 
     private fun tryPlay(
         url: String,
-        licenseType: String?,
-        licenseKey: String?,
         mimeType: String?
     ) {
-        val useDrm = licenseType != null && licenseKey != null
-        if (useDrm) {
-            checkNotNull(licenseType)
-            checkNotNull(licenseKey)
-            val uuid = getUUID(licenseType)
-            val configuration = DrmConfiguration.Builder(uuid)
-                .setKeySetId(licenseKey.toByteArray())
-                .setLicenseUri(url)
-                .build()
-            // TODO
-        }
-
         val currentPlayer = _player.value ?: createPlayer(
             isSSLVerification = pref.isSSLVerification,
             timeout = pref.connectTimeout,
             tunneling = pref.tunneling
-        ).also { _player.value = it }
+        ).also {
+            _player.value.also { prev ->
+                prev?.stop()
+                prev?.release()
+                prev?.removeListener(this)
+            }
+            _player.value = it
+        }
 
         when (mimeType) {
             MimeTypes.APPLICATION_SS -> {
                 val dataSourceFactory = DefaultHttpDataSource.Factory()
                 val mediaSource = ProgressiveMediaSource.Factory(dataSourceFactory)
                     .createMediaSource(MediaItem.fromUri(url))
+
                 currentPlayer.setMediaSource(mediaSource)
             }
 
@@ -205,7 +214,7 @@ class PlayerManagerImpl @Inject constructor(
         currentPlayer.prepare()
     }
 
-    override fun stop() {
+    override suspend fun stop() {
         _player.update {
             it?.stop()
             it?.release()
@@ -268,10 +277,9 @@ class PlayerManagerImpl @Inject constructor(
 
                 if (retryMimetype != null) {
                     _stream.value?.let { stream ->
+                        licenseKey = stream.licenseKey
                         tryPlay(
                             url = stream.url,
-                            licenseType = stream.licenseType,
-                            licenseKey = stream.licenseKey,
                             mimeType = retryMimetype
                         )
                     }
