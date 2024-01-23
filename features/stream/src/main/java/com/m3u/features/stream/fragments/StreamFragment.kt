@@ -242,14 +242,14 @@ internal fun StreamFragment(
                                 .weight(1f)
                         ) {
                             Text(
-                                text = playlistTitle,
+                                text = playlistTitle.trim(),
                                 style = MaterialTheme.typography.titleSmall,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,
                                 modifier = Modifier.basicMarquee()
                             )
                             Text(
-                                text = title,
+                                text = title.trim(),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.ExtraBold,
                                 maxLines = 1,

@@ -73,7 +73,7 @@ fun StreamRoute(
     LifecycleStartEffect {
         onStopOrDispose {
             if (isPipMode) {
-                viewModel.onEvent(StreamEvent.Stop)
+                viewModel.onEvent(StreamEvent.Release)
             }
         }
     }
@@ -91,7 +91,10 @@ fun StreamRoute(
                 }
             }
         }
-        onStopOrDispose {}
+        onStopOrDispose {
+            viewModel.onEvent(StreamEvent.Release)
+            viewModel.onEvent(StreamEvent.CloseDlnaDevices)
+        }
     }
 
     LaunchedEffect(pref.zappingMode, playerState.videoSize) {

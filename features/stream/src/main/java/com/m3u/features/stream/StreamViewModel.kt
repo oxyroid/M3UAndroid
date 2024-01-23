@@ -162,7 +162,7 @@ class StreamViewModel @Inject constructor(
             is StreamEvent.ConnectDlnaDevice -> connectDlnaDevice(event.device)
             is StreamEvent.DisconnectDlnaDevice -> disconnectDlnaDevice(event.device)
             is StreamEvent.OnFavourite -> onFavourite(event.url)
-            StreamEvent.Stop -> stop()
+            StreamEvent.Release -> release()
             is StreamEvent.OnVolume -> onVolume(event.volume)
         }
     }
@@ -178,9 +178,12 @@ class StreamViewModel @Inject constructor(
     internal val searching = _searching.asStateFlow()
 
     private fun openDlnaDevices() {
-        DLNACastManager.bindCastService(application)
-        binded = true
-        DLNACastManager.registerDeviceListener(this)
+        try {
+            DLNACastManager.bindCastService(application)
+            DLNACastManager.registerDeviceListener(this)
+        } catch (ignore: Exception) {
+
+        }
         viewModelScope.launch {
             delay(800.milliseconds)
             _searching.value = true
@@ -188,17 +191,16 @@ class StreamViewModel @Inject constructor(
         _isDevicesVisible.value = true
     }
 
-    @Volatile
-    private var binded = false
-
     private fun closeDlnaDevices() {
-        if (!binded) return
-        binded = false
-        _searching.value = false
-        _isDevicesVisible.value = false
-        _devices.value = persistentListOf()
-        DLNACastManager.unbindCastService(application)
-        DLNACastManager.unregisterListener(this)
+        try {
+            _searching.value = false
+            _isDevicesVisible.value = false
+            _devices.value = persistentListOf()
+            DLNACastManager.unbindCastService(application)
+            DLNACastManager.unregisterListener(this)
+        } catch (ignore: Exception) {
+
+        }
     }
 
     private var controlPoint: DeviceControl? = null
@@ -276,15 +278,13 @@ class StreamViewModel @Inject constructor(
         controlPoint = null
     }
 
-    private fun stop() {
+    private fun release() {
         viewModelScope.launch {
             playerManager.stop()
         }
     }
 
     override fun onCleared() {
-        closeDlnaDevices()
-        stop()
         controlPoint?.stop()
         controlPoint = null
         super.onCleared()
