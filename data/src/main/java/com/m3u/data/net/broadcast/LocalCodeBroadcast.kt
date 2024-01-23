@@ -1,4 +1,4 @@
-package com.m3u.data.net.udp
+package com.m3u.data.net.broadcast
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
@@ -8,42 +8,6 @@ import kotlinx.coroutines.flow.flowOn
 import java.net.DatagramPacket
 import java.net.DatagramSocket
 import java.net.InetAddress
-
-interface Broadcast {
-    fun send(bytes: ByteArray)
-    fun receive(): Flow<ByteArray>
-}
-
-data class LocalCode(
-    val host: String,
-    val port: Int,
-    val code: Int,
-    val expiration: Long
-) {
-    companion object {
-        fun encode(code: LocalCode): ByteArray =
-            "#M3U_LOCAL_CODE,${code.host},${code.port},${code.code},${code.expiration}#"
-                .toByteArray(Charsets.UTF_8)
-
-        fun decode(bytes: ByteArray): LocalCode {
-            val line = bytes
-                .toString(Charsets.UTF_8)
-                .run {
-                    take(indexOf('#', 1))
-                }
-            check(line.startsWith("#M3U_LOCAL_CODE", true)) {
-                "Invalidate bytes: $line"
-            }
-            val elements = line.split(",")
-            return LocalCode(
-                host = elements[1],
-                port = elements[2].toInt(),
-                code = elements[3].toInt(),
-                expiration = elements[4].toLong()
-            )
-        }
-    }
-}
 
 object LocalCodeBroadcast : Broadcast {
     override fun send(bytes: ByteArray) {
@@ -79,4 +43,35 @@ object LocalCodeBroadcast : Broadcast {
 
 
     private const val PORT = 56981
+}
+
+data class LocalCode(
+    val host: String,
+    val port: Int,
+    val code: Int,
+    val expiration: Long
+) {
+    companion object {
+        fun encode(code: LocalCode): ByteArray =
+            "#M3U_LOCAL_CODE,${code.host},${code.port},${code.code},${code.expiration}#"
+                .toByteArray(Charsets.UTF_8)
+
+        fun decode(bytes: ByteArray): LocalCode {
+            val line = bytes
+                .toString(Charsets.UTF_8)
+                .run {
+                    take(indexOf('#', 1))
+                }
+            check(line.startsWith("#M3U_LOCAL_CODE", true)) {
+                "invalidate local code data: $line"
+            }
+            val elements = line.split(",")
+            return LocalCode(
+                host = elements[1],
+                port = elements[2].toInt(),
+                code = elements[3].toInt(),
+                expiration = elements[4].toLong()
+            )
+        }
+    }
 }

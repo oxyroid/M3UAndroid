@@ -1,12 +1,11 @@
 package com.m3u.features.foryou
 
-import android.net.wifi.WifiManager
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.m3u.core.architecture.pref.Pref
 import com.m3u.core.architecture.pref.observeAsFlow
-import com.m3u.data.net.udp.LocalCode
-import com.m3u.data.net.udp.LocalCodeBroadcast
+import com.m3u.data.net.broadcast.LocalCode
+import com.m3u.data.net.broadcast.LocalCodeBroadcast
 import com.m3u.data.repository.PlaylistRepository
 import com.m3u.data.repository.StreamRepository
 import com.m3u.features.foryou.components.recommend.Recommend
@@ -45,7 +44,6 @@ import kotlin.time.toDuration
 class ForyouViewModel @Inject constructor(
     private val playlistRepository: PlaylistRepository,
     streamRepository: StreamRepository,
-    private val wifiManager: WifiManager,
     pref: Pref
 ) : ViewModel() {
     private val counts: StateFlow<Map<String, Int>> = streamRepository

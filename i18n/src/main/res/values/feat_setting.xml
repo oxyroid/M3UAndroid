@@ -64,5 +64,5 @@
     <string name="feat_setting_compact">compact mode</string>
     <string name="feat_setting_appearance">appearance</string>
     <string name="feat_setting_tunneling">tunneling mode</string>
-    <string name="feat_setting_tunneling_description">can improve playback of 4K/HDR content on Android TV</string>
+    <string name="feat_setting_tunneling_description">improve playback of 4K/HDR content</string>
 </resources>

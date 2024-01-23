@@ -24,7 +24,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.ArrowBackIosNew
+import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -34,15 +35,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.substring
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.m3u.material.model.LocalSpacing
 
 @Composable
 fun CodeSkeleton(
+    title: String,
+    subtitle: String,
     code: String,
     onCode: (String) -> Unit,
     modifier: Modifier = Modifier,
@@ -58,7 +60,7 @@ fun CodeSkeleton(
             verticalArrangement = Arrangement.Top
         ) {
             Text(
-                text = "Enter Code From Television",
+                text = title,
                 modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 8.dp),
                 textAlign = TextAlign.Center,
                 style = MaterialTheme.typography.headlineMedium,
@@ -66,7 +68,7 @@ fun CodeSkeleton(
             )
 
             Text(
-                text = "Make sure connect to the same Wi-Fi",
+                text = subtitle,
                 modifier = Modifier.padding(16.dp, 8.dp, 16.dp, 0.dp),
                 textAlign = TextAlign.Center,
                 fontSize = 14.sp,
@@ -74,66 +76,11 @@ fun CodeSkeleton(
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(0.78f)
             )
 
-            Row(
-                Modifier
-                    .fillMaxWidth()
-                    .padding(32.dp, 16.dp, 32.dp, 16.dp)
-                    .clickable(
-                        onClick = onKeyboard,
-                        indication = null,
-                        interactionSource = remember { MutableInteractionSource() }
-                    ),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                CodeField(
-                    text = if (code.isNotEmpty()) {
-                        code.substring(TextRange(0, 1))
-                    } else {
-                        ""
-                    }
-                )
-
-                CodeField(
-                    text = if (code.length > 1) {
-                        code.substring(TextRange(1, 2))
-                    } else {
-                        ""
-                    }
-                )
-
-                CodeField(
-                    text = if (code.length > 2) {
-                        code.substring(TextRange(2, 3))
-                    } else {
-                        ""
-                    }
-                )
-
-                CodeField(
-                    text = if (code.length > 3) {
-                        code.substring(TextRange(3, 4))
-                    } else {
-                        ""
-                    }
-                )
-
-                CodeField(
-                    text = if (code.length > 4) {
-                        code.substring(TextRange(4, 5))
-                    } else {
-                        ""
-                    }
-                )
-
-                CodeField(
-                    text = if (code.length > 5) {
-                        code.substring(TextRange(5, 6))
-                    } else {
-                        ""
-                    }
-                )
-            }
+            CodeRow(
+                code = code,
+                length = 6,
+                onClick = onKeyboard
+            )
 
             TextButton(
                 modifier = Modifier.padding(top = 4.dp, bottom = 16.dp),
@@ -154,6 +101,39 @@ fun CodeSkeleton(
             VirtualNumberKeyboard(
                 code = code,
                 onCode = onCode,
+            )
+        }
+    }
+}
+
+@Composable
+fun CodeRow(
+    code: String,
+    length: Int,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val spacing = LocalSpacing.current
+    val element = remember(code) { code.toCharArray().map { it.toString() } }
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .padding(
+                horizontal = spacing.extraLarge,
+                vertical = spacing.medium
+            )
+            .clickable(
+                onClick = onClick,
+                indication = null,
+                interactionSource = remember { MutableInteractionSource() }
+            )
+            .then(modifier),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        repeat(length) { i ->
+            CodeField(
+                text = element.getOrNull(i).orEmpty()
             )
         }
     }
@@ -252,8 +232,8 @@ fun VirtualNumberKeyboard(
             ) {
                 Icon(
                     modifier = Modifier.size(38.dp),
-                    imageVector = Icons.Rounded.Close,
-                    contentDescription = "Delete"
+                    imageVector = Icons.Rounded.ArrowBackIosNew,
+                    contentDescription = "Back"
                 )
             }
             KeyboardKey(
@@ -262,11 +242,28 @@ fun VirtualNumberKeyboard(
                 onClick = { if (code.length < 6) onCode(code + "0") }
             )
 
-            KeyboardKey(
-                modifier = Modifier.weight(1f),
-                text = ":",
-                onClick = { if (code.length < 6) onCode("$code:") }
-            )
+            Column(
+                modifier = Modifier
+                    .height(54.dp)
+                    .weight(1f)
+                    .clickable(
+                        onClick = {
+                            if (code.isNotEmpty()) {
+                                onCode("")
+                            }
+                        },
+                        indication = rememberRipple(color = MaterialTheme.colorScheme.primary),
+                        interactionSource = remember { MutableInteractionSource() }
+                    ),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Icon(
+                    modifier = Modifier.size(38.dp),
+                    imageVector = Icons.Rounded.Delete,
+                    contentDescription = "Delete"
+                )
+            }
         }
     }
 }

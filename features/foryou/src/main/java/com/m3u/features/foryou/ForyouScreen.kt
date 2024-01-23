@@ -27,7 +27,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -75,20 +77,21 @@ fun ForyouRoute(
 
     val helper = LocalHelper.current
     val pref = LocalPref.current
+    val hapticFeedback = LocalHapticFeedback.current
 
     // temp
-    var loading by remember { mutableStateOf(false) }
+    var connecting by remember { mutableStateOf(false) }
     var code by remember { mutableStateOf("") }
 
     val tv = isTelevision()
 
-    val sheetState = rememberModalBottomSheetState { !loading }
+    val sheetState = rememberModalBottomSheetState { !connecting }
 
     val details by viewModel.details.collectAsStateWithLifecycle()
     val recommend by viewModel.recommend.collectAsStateWithLifecycle()
 
-    val currentLocalCode by viewModel.currentLocalCode.collectAsStateWithLifecycle()
     val localCodes by viewModel.localCodes.collectAsStateWithLifecycle()
+    val currentLocalCode by viewModel.currentLocalCode.collectAsStateWithLifecycle()
 
     var isConnectSheetVisible by remember { mutableStateOf(false) }
 
@@ -102,9 +105,7 @@ fun ForyouRoute(
                 }
             }
             .launchIn(this)
-    }
 
-    LaunchedEffect(Unit) {
         snapshotFlow { localCodes }
             .onEach {
                 Log.e("TAG", "$it")
@@ -157,11 +158,14 @@ fun ForyouRoute(
         ConnectBottomSheet(
             visible = isConnectSheetVisible,
             code = code,
-            loading = loading,
-            onCode = { code = it },
+            connecting = connecting,
+            onCode = {
+                code = it
+                hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+            },
             sheetState = sheetState,
             onDismissRequest = { isConnectSheetVisible = false },
-            onConnect = { loading = true }
+            onConnect = { connecting = true }
         )
     }
 }

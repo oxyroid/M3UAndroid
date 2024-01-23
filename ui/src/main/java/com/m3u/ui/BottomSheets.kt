@@ -26,12 +26,14 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
+import com.m3u.core.util.basic.title
 import com.m3u.i18n.R.string
 import com.m3u.material.components.CodeSkeleton
 import com.m3u.material.model.LocalSpacing
@@ -134,7 +136,7 @@ private fun SortBottomSheetItem(
 @Composable
 fun ConnectBottomSheet(
     visible: Boolean,
-    loading: Boolean,
+    connecting: Boolean,
     code: String,
     sheetState: SheetState,
     onCode: (String) -> Unit,
@@ -150,7 +152,7 @@ fun ConnectBottomSheet(
         ModalBottomSheet(
             sheetState = sheetState,
             onDismissRequest = {
-                if (!loading) onDismissRequest()
+                if (!connecting) onDismissRequest()
             },
             windowInsets = WindowInsets(0),
             properties = ModalBottomSheetDefaults.properties(
@@ -158,44 +160,39 @@ fun ConnectBottomSheet(
             )
         ) {
             CodeSkeleton(
+                title = stringResource(string.feat_foryou_connect_title).title(),
+                subtitle = stringResource(string.feat_foryou_connect_subtitle),
                 code = code,
                 onCode = onCode,
                 modifier = modifier,
-                keyboard = !loading && keyboard,
+                keyboard = !connecting && keyboard,
                 onKeyboard = { keyboard = !keyboard },
-                loading = loading,
+                loading = connecting,
                 onSubmit = onConnect
             )
         }
     }
 }
 
-
 @Composable
-private fun ConnectBottomSheetItem(
-    ip: String,
-    selected: Boolean,
-    onSelected: () -> Unit,
+fun BackendConnectBottomSheet(
+    visible: Boolean,
+    connecting: Boolean,
+    code: String,
+    second: Int,
+    sheetState: SheetState,
+    onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    OutlinedCard(
-        enabled = selected,
-        onClick = {}
-    ) {
-        ListItem(
-            headlineContent = {
-                Text(
-                    text = ip,
-                    fontWeight = FontWeight.SemiBold
-                )
+    val currentSecond by rememberUpdatedState(second)
+    if (visible) {
+        ModalBottomSheet(
+            sheetState = sheetState,
+            onDismissRequest = {
+                if (!connecting) onDismissRequest()
             },
-            modifier = Modifier
-                .selectable(
-                    selected = selected,
-                    role = Role.DropdownList,
-                    onClick = onSelected
-                )
-                .then(modifier)
-        )
+            windowInsets = WindowInsets(0)
+        ) {
+        }
     }
 }
