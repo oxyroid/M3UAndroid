@@ -13,10 +13,10 @@ import com.m3u.core.Contracts
 import com.m3u.core.architecture.pref.Pref
 import com.m3u.core.architecture.pref.observeAsFlow
 import com.m3u.data.database.model.Stream
+import com.m3u.data.manager.PlayerManager
 import com.m3u.data.repository.MediaRepository
 import com.m3u.data.repository.StreamRepository
 import com.m3u.data.repository.observeAll
-import com.m3u.data.manager.PlayerManager
 import com.m3u.ui.Sort
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.collections.immutable.ImmutableList
@@ -82,8 +82,13 @@ class FavouriteViewModel @Inject constructor(
         .combine(sort) { all, sort ->
             when (sort) {
                 Sort.UNSPECIFIED -> all
-                Sort.ASC -> all.sortedBy { it.title }
-                Sort.DESC -> all.sortedByDescending { it.title }
+                Sort.ASC -> all.sortedWith(
+                    compareBy(String.CASE_INSENSITIVE_ORDER) { it.title }
+                )
+
+                Sort.DESC -> all.sortedWith(
+                    compareByDescending(String.CASE_INSENSITIVE_ORDER) { it.title }
+                )
             }
                 .toPersistentList()
         }

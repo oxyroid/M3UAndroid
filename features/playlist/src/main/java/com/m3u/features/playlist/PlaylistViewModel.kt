@@ -21,12 +21,12 @@ import com.m3u.core.wrapper.Resource
 import com.m3u.core.wrapper.eventOf
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.Stream
+import com.m3u.data.manager.MessageManager
+import com.m3u.data.manager.PlayerManager
 import com.m3u.data.repository.MediaRepository
 import com.m3u.data.repository.PlaylistRepository
 import com.m3u.data.repository.StreamRepository
 import com.m3u.data.repository.refresh
-import com.m3u.data.manager.MessageManager
-import com.m3u.data.manager.PlayerManager
 import com.m3u.features.playlist.PlaylistMessage.StreamCoverSaved
 import com.m3u.features.playlist.navigation.PlaylistNavigation
 import com.m3u.ui.Sort
@@ -284,8 +284,14 @@ class PlaylistViewModel @Inject constructor(
         recommend
     ) { all, sort, recommend ->
         when (sort) {
-            Sort.ASC -> all.sortedBy { it.title }.toSingleChannel()
-            Sort.DESC -> all.sortedByDescending { it.title }.toSingleChannel()
+            Sort.ASC -> all.sortedWith(
+                compareBy(String.CASE_INSENSITIVE_ORDER) { it.title }
+            ).toSingleChannel()
+
+            Sort.DESC -> all.sortedWith(
+                compareByDescending(String.CASE_INSENSITIVE_ORDER) { it.title }
+            ).toSingleChannel()
+
             Sort.UNSPECIFIED -> all.toChannels(recommend)
         }
             .toPersistentList()
