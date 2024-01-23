@@ -277,7 +277,9 @@ class StreamViewModel @Inject constructor(
     }
 
     private fun stop() {
-        playerManager.stop()
+        viewModelScope.launch {
+            playerManager.stop()
+        }
     }
 
     override fun onCleared() {

@@ -71,6 +71,7 @@ fun Player(
     LaunchedEffect(startColor) {
         actualColor = Color.Black
     }
+
     AndroidView(
         factory = { context ->
             PlayerView(context).apply {
@@ -81,6 +82,9 @@ fun Player(
                 )
                 setShutterBackgroundColor(currentShutterColor.toArgb())
             }
+        },
+        onRelease = {
+            it.player = null
         },
         modifier = modifier
     ) { view ->

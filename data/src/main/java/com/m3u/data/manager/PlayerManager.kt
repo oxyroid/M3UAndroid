@@ -23,7 +23,7 @@ interface PlayerManager {
 
     suspend fun play(streamId: Int)
     suspend fun replay()
-    fun stop()
+    suspend fun stop()
 
     fun chooseTrack(group: TrackGroup, trackIndex: Int)
 }
