@@ -43,7 +43,8 @@ import kotlinx.collections.immutable.ImmutableList
 enum class Sort(@StringRes val resId: Int) {
     UNSPECIFIED(string.ui_sort_unspecified),
     ASC(string.ui_sort_asc),
-    DESC(string.ui_sort_desc)
+    DESC(string.ui_sort_desc),
+    RECENTLY(string.ui_sort_recently)
 }
 
 @Composable

@@ -15,6 +15,7 @@ import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.data.database.model.Stream
 import com.m3u.material.ktx.plus
 import com.m3u.material.model.LocalSpacing
+import com.m3u.ui.Sort
 import kotlinx.collections.immutable.ImmutableList
 
 @Composable
@@ -23,6 +24,7 @@ internal fun StreamGallery(
     rowCount: Int,
     streams: ImmutableList<Stream>,
     zapping: Stream?,
+    sort: Sort,
     play: (streamId: Int) -> Unit,
     onMenu: (Stream) -> Unit,
     modifier: Modifier = Modifier,
@@ -36,6 +38,7 @@ internal fun StreamGallery(
             rowCount = rowCount,
             streams = streams,
             zapping = zapping,
+            sort = sort,
             play = play,
             onMenu = onMenu,
             modifier = modifier,
@@ -47,6 +50,7 @@ internal fun StreamGallery(
             rowCount = rowCount,
             streams = streams,
             zapping = zapping,
+            sort = sort,
             play = play,
             onMenu = onMenu,
             modifier = modifier,
@@ -61,6 +65,7 @@ private fun CompactStreamGalleryImpl(
     rowCount: Int,
     streams: ImmutableList<Stream>,
     zapping: Stream?,
+    sort: Sort,
     play: (streamId: Int) -> Unit,
     onMenu: (Stream) -> Unit,
     modifier: Modifier = Modifier,
@@ -82,6 +87,7 @@ private fun CompactStreamGalleryImpl(
             StreamItem(
                 stream = stream,
                 zapping = zapping == stream,
+                sort = sort,
                 noPictureMode = pref.noPictureMode,
                 onClick = {
                     play(stream.id)
@@ -99,6 +105,7 @@ private fun StreamGalleryImpl(
     rowCount: Int,
     streams: ImmutableList<Stream>,
     zapping: Stream?,
+    sort: Sort,
     play: (streamId: Int) -> Unit,
     onMenu: (Stream) -> Unit,
     modifier: Modifier = Modifier,
@@ -124,6 +131,7 @@ private fun StreamGalleryImpl(
                 stream = stream,
                 zapping = zapping == stream,
                 noPictureMode = pref.noPictureMode,
+                sort = sort,
                 onClick = {
                     play(stream.id)
                 },

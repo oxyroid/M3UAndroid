@@ -34,6 +34,7 @@ import com.m3u.ui.helper.Action
 import com.m3u.ui.EventHandler
 import com.m3u.ui.helper.LocalHelper
 import com.m3u.ui.ResumeEvent
+import com.m3u.ui.Sort
 import com.m3u.ui.SortBottomSheet
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
@@ -83,6 +84,7 @@ fun FavouriteRoute(
             zapping = zapping,
             navigateToStream = navigateToStream,
             onMenu = { dialogStatus = DialogStatus.Selections(it) },
+            sort = sort,
             modifier = Modifier
                 .fillMaxSize()
                 .thenIf(!tv && pref.godMode) {
@@ -122,6 +124,7 @@ private fun FavoriteScreen(
     streams: ImmutableList<Stream>,
     zapping: Stream?,
     navigateToStream: () -> Unit,
+    sort: Sort,
     onMenu: (Stream) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -136,6 +139,7 @@ private fun FavoriteScreen(
         streams = streams,
         zapping = zapping,
         rowCount = actualRowCount,
+        sort = sort,
         navigateToStream = navigateToStream,
         onMenu = onMenu,
         modifier = modifier

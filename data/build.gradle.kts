@@ -55,8 +55,6 @@ dependencies {
     implementation(libs.kotlinx.serialization.yaml)
     implementation(libs.kotlinx.serialization.coverter.retrofit)
 
-    implementation(libs.kotlinx.datetime)
-
     implementation(libs.io.coil.kt.coil)
 
     implementation(libs.com.google.dagger.hilt.android)

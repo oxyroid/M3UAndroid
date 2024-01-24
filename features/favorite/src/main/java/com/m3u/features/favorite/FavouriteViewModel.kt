@@ -89,6 +89,7 @@ class FavouriteViewModel @Inject constructor(
                 Sort.DESC -> all.sortedWith(
                     compareByDescending(String.CASE_INSENSITIVE_ORDER) { it.title }
                 )
+                Sort.RECENTLY -> all.sortedByDescending { it.seen }
             }
                 .toPersistentList()
         }

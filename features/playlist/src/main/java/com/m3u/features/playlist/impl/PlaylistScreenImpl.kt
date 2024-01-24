@@ -193,6 +193,7 @@ internal fun PlaylistScreenImpl(
                             rowCount = actualRowCount,
                             streams = streams,
                             zapping = zapping,
+                            sort = sort,
                             play = { streamId ->
                                 helper.play(streamId)
                                 navigateToStream()

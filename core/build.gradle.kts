@@ -44,4 +44,6 @@ dependencies {
     implementation(libs.androidx.media3.media3.session)
     implementation(libs.com.google.dagger.hilt.android)
     ksp(libs.com.google.dagger.hilt.compiler)
+
+    api(libs.kotlinx.datetime)
 }

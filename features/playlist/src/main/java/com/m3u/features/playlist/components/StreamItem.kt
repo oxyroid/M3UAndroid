@@ -17,6 +17,7 @@ import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
@@ -26,6 +27,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -36,7 +38,14 @@ import com.m3u.i18n.R.string
 import com.m3u.material.components.Image
 import com.m3u.material.components.TextBadge
 import com.m3u.material.model.LocalSpacing
+import com.m3u.ui.Sort
+import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
 import java.net.URI
+import kotlin.time.Duration.Companion.days
+import kotlin.time.Duration.Companion.hours
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 
 @Composable
 internal fun StreamItem(
@@ -46,6 +55,7 @@ internal fun StreamItem(
     onLongClick: () -> Unit,
     modifier: Modifier = Modifier,
     zapping: Boolean = false,
+    sort: Sort
 ) {
     val pref = LocalPref.current
     val compact = pref.compact
@@ -57,7 +67,8 @@ internal fun StreamItem(
             onClick = onClick,
             onLongClick = onLongClick,
             modifier = modifier,
-            zapping = zapping
+            zapping = zapping,
+            sort = sort
         )
     } else {
         CompactStreamItem(
@@ -66,7 +77,8 @@ internal fun StreamItem(
             onClick = onClick,
             onLongClick = onLongClick,
             modifier = modifier,
-            zapping = zapping
+            zapping = zapping,
+            sort = sort
         )
     }
 }
@@ -79,10 +91,15 @@ private fun StreamItemImpl(
     onLongClick: () -> Unit,
     modifier: Modifier = Modifier,
     zapping: Boolean = false,
+    sort: Sort
 ) {
     val context = LocalContext.current
     val spacing = LocalSpacing.current
+
     val favourite = stream.favourite
+    val recently = sort == Sort.RECENTLY
+
+    val recentlyString = stringResource(string.ui_sort_recently)
 
     val scheme = remember(stream) {
         try {
@@ -125,18 +142,41 @@ private fun StreamItemImpl(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text(
-                        text = stream.title,
-                        style = MaterialTheme.typography.titleSmall,
-                        fontSize = MaterialTheme.typography.titleSmall.fontSize,
-                        overflow = TextOverflow.Ellipsis,
-                        maxLines = 1,
-                        fontWeight = FontWeight.Bold,
+                    Column(
                         // icon-button-tokens: icon-size
                         modifier = Modifier
                             .heightIn(min = 24.dp)
                             .weight(1f)
-                    )
+                    ) {
+                        Text(
+                            text = stream.title.trim(),
+                            style = MaterialTheme.typography.titleSmall,
+                            fontSize = MaterialTheme.typography.titleSmall.fontSize,
+                            overflow = TextOverflow.Ellipsis,
+                            maxLines = 1,
+                            fontWeight = FontWeight.Bold,
+                        )
+                        if (recently) {
+                            Text(
+                                text = remember(stream.seen) {
+                                    val now = Clock.System.now()
+                                    val instant = Instant.fromEpochMilliseconds(stream.seen)
+                                    val duration = now - instant
+                                    duration.toComponents { days, hours, minutes, seconds, _ ->
+                                        when {
+                                            days > 0 -> days.days.toString()
+                                            hours > 0 -> hours.hours.toString()
+                                            minutes > 0 -> minutes.minutes.toString()
+                                            seconds > 0 -> seconds.seconds.toString()
+                                            else -> recentlyString
+                                        }
+                                    }
+                                },
+                                style = MaterialTheme.typography.bodySmall,
+                                color = LocalContentColor.current.copy(0.56f)
+                            )
+                        }
+                    }
                     Crossfade(
                         targetState = favourite,
                         label = "stream-item-favourite"
@@ -157,7 +197,7 @@ private fun StreamItemImpl(
                 ) {
                     TextBadge(scheme)
                     Text(
-                        text = stream.url,
+                        text = stream.url.trim(),
                         maxLines = 1,
                         style = MaterialTheme.typography.bodyMedium,
                         fontSize = MaterialTheme.typography.bodyMedium.fontSize,
@@ -176,10 +216,13 @@ private fun CompactStreamItem(
     onClick: () -> Unit,
     onLongClick: () -> Unit,
     modifier: Modifier = Modifier,
-    zapping: Boolean = false
+    zapping: Boolean = false,
+    sort: Sort
 ) {
     val spacing = LocalSpacing.current
     val favourite = stream.favourite
+    val recently = sort == Sort.RECENTLY
+    val recentlyString = stringResource(string.ui_sort_recently)
 
     val colorScheme = MaterialTheme.colorScheme
     MaterialTheme(
@@ -226,13 +269,40 @@ private fun CompactStreamItem(
                     targetState = favourite,
                     label = "stream-item-favourite"
                 ) { favourite ->
-                    if (favourite) {
-                        Icon(
-                            imageVector = Icons.Rounded.Star,
-                            contentDescription = null,
-                            tint = if (zapping) MaterialTheme.colorScheme.onPrimary
-                            else MaterialTheme.colorScheme.primary
-                        )
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        if (favourite) {
+                            Icon(
+                                imageVector = Icons.Rounded.Star,
+                                contentDescription = null,
+                                tint = if (zapping) MaterialTheme.colorScheme.onPrimary
+                                else MaterialTheme.colorScheme.primary
+                            )
+                        }
+                        AnimatedVisibility(recently) {
+                            Text(
+                                text = remember(stream.seen) {
+                                    val now = Clock.System.now()
+                                    val instant = Instant.fromEpochMilliseconds(stream.seen)
+                                    val duration = now - instant
+                                    duration.toComponents { days, hours, minutes, seconds, _ ->
+                                        when {
+                                            days > 0 -> "$days d"
+                                            hours > 0 -> "$hours h"
+                                            minutes > 0 -> "$minutes m"
+                                            seconds > 0 -> "$seconds s"
+                                            else -> recentlyString
+                                        }
+                                    }
+                                },
+                                color = if (zapping) MaterialTheme.colorScheme.onPrimary
+                                else MaterialTheme.colorScheme.primary,
+                                fontWeight = FontWeight.SemiBold,
+                                style = MaterialTheme.typography.bodyMedium,
+                                maxLines = 1,
+                            )
+                        }
                     }
                 }
             },

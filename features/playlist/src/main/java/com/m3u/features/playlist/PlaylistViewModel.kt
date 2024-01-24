@@ -292,6 +292,8 @@ class PlaylistViewModel @Inject constructor(
                 compareByDescending(String.CASE_INSENSITIVE_ORDER) { it.title }
             ).toSingleChannel()
 
+            Sort.RECENTLY -> all.sortedByDescending { it.seen }.toSingleChannel()
+
             Sort.UNSPECIFIED -> all.toChannels(recommend)
         }
             .toPersistentList()

@@ -7,11 +7,13 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
@@ -21,6 +23,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -32,7 +35,14 @@ import com.m3u.material.components.Image
 import com.m3u.material.components.TextBadge
 import com.m3u.material.ktx.isTelevision
 import com.m3u.material.model.LocalSpacing
+import com.m3u.ui.Sort
+import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
 import java.net.URI
+import kotlin.time.Duration.Companion.days
+import kotlin.time.Duration.Companion.hours
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 
 @Composable
 internal fun FavoriteItem(
@@ -41,7 +51,8 @@ internal fun FavoriteItem(
     onClick: () -> Unit,
     onLongClick: () -> Unit,
     modifier: Modifier = Modifier,
-    zapping: Boolean = false
+    zapping: Boolean = false,
+    sort: Sort
 ) {
     val pref = LocalPref.current
     val compact = pref.compact
@@ -53,7 +64,8 @@ internal fun FavoriteItem(
             onClick = onClick,
             onLongClick = onLongClick,
             modifier = modifier,
-            zapping = zapping
+            zapping = zapping,
+            sort = sort
         )
     } else {
         CompactFavoriteItemImpl(
@@ -62,7 +74,8 @@ internal fun FavoriteItem(
             onClick = onClick,
             onLongClick = onLongClick,
             modifier = modifier,
-            zapping = zapping
+            zapping = zapping,
+            sort = sort
         )
     }
 }
@@ -74,11 +87,14 @@ private fun FavoriteItemImpl(
     onClick: () -> Unit,
     onLongClick: () -> Unit,
     modifier: Modifier = Modifier,
-    zapping: Boolean = false
+    zapping: Boolean = false,
+    sort: Sort
 ) {
     val context = LocalContext.current
     val spacing = LocalSpacing.current
     val tv = isTelevision()
+    val recently = sort == Sort.RECENTLY
+    val recentlyString = stringResource(string.ui_sort_recently)
 
     val scheme = remember(stream.url) {
         URI(stream.url).scheme ?: context.getString(string.feat_playlist_scheme_unknown)
@@ -110,14 +126,36 @@ private fun FavoriteItemImpl(
                     modifier = Modifier.padding(spacing.medium),
                     verticalArrangement = Arrangement.spacedBy(spacing.small)
                 ) {
-                    Text(
-                        text = stream.title,
-                        style = MaterialTheme.typography.titleSmall,
-                        fontSize = MaterialTheme.typography.titleSmall.fontSize,
-                        overflow = TextOverflow.Ellipsis,
-                        maxLines = 1,
-                        fontWeight = FontWeight.Bold
-                    )
+                    Column {
+                        Text(
+                            text = stream.title.trim(),
+                            style = MaterialTheme.typography.titleSmall,
+                            fontSize = MaterialTheme.typography.titleSmall.fontSize,
+                            overflow = TextOverflow.Ellipsis,
+                            maxLines = 1,
+                            fontWeight = FontWeight.Bold,
+                        )
+                        if (recently) {
+                            Text(
+                                text = remember(stream.seen) {
+                                    val now = Clock.System.now()
+                                    val instant = Instant.fromEpochMilliseconds(stream.seen)
+                                    val duration = now - instant
+                                    duration.toComponents { days, hours, minutes, seconds, _ ->
+                                        when {
+                                            days > 0 -> days.days.toString()
+                                            hours > 0 -> hours.hours.toString()
+                                            minutes > 0 -> minutes.minutes.toString()
+                                            seconds > 0 -> seconds.seconds.toString()
+                                            else -> recentlyString
+                                        }
+                                    }
+                                },
+                                style = MaterialTheme.typography.bodySmall,
+                                color = LocalContentColor.current.copy(0.56f)
+                            )
+                        }
+                    }
 
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -125,7 +163,7 @@ private fun FavoriteItemImpl(
                     ) {
                         TextBadge(scheme)
                         Text(
-                            text = stream.url,
+                            text = stream.url.trim(),
                             maxLines = 1,
                             style = MaterialTheme.typography.bodyMedium,
                             fontSize = MaterialTheme.typography.bodyMedium.fontSize,
@@ -154,14 +192,41 @@ private fun FavoriteItemImpl(
                 modifier = Modifier.padding(spacing.medium),
                 verticalArrangement = Arrangement.spacedBy(spacing.small)
             ) {
-                Text(
-                    text = stream.title,
-                    style = MaterialTheme.typography.titleSmall,
-                    fontSize = MaterialTheme.typography.titleSmall.fontSize,
-                    overflow = TextOverflow.Ellipsis,
-                    maxLines = 1,
-                    fontWeight = FontWeight.Bold
-                )
+                Column(
+                    // icon-button-tokens: icon-size
+                    modifier = Modifier
+                        .heightIn(min = 24.dp)
+                        .weight(1f)
+                ) {
+                    Text(
+                        text = stream.title.trim(),
+                        style = MaterialTheme.typography.titleSmall,
+                        fontSize = MaterialTheme.typography.titleSmall.fontSize,
+                        overflow = TextOverflow.Ellipsis,
+                        maxLines = 1,
+                        fontWeight = FontWeight.Bold,
+                    )
+                    if (recently) {
+                        Text(
+                            text = remember(stream.seen) {
+                                val now = Clock.System.now()
+                                val instant = Instant.fromEpochMilliseconds(stream.seen)
+                                val duration = now - instant
+                                duration.toComponents { days, hours, minutes, seconds, _ ->
+                                    when {
+                                        days > 0 -> days.days.toString()
+                                        hours > 0 -> hours.hours.toString()
+                                        minutes > 0 -> minutes.minutes.toString()
+                                        seconds > 0 -> seconds.seconds.toString()
+                                        else -> recentlyString
+                                    }
+                                }
+                            },
+                            style = MaterialTheme.typography.bodySmall,
+                            color = LocalContentColor.current.copy(0.56f)
+                        )
+                    }
+                }
 
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -169,7 +234,7 @@ private fun FavoriteItemImpl(
                 ) {
                     TextBadge(scheme)
                     Text(
-                        text = stream.url,
+                        text = stream.url.trim(),
                         maxLines = 1,
                         style = MaterialTheme.typography.bodyMedium,
                         fontSize = MaterialTheme.typography.bodyMedium.fontSize,
@@ -188,11 +253,15 @@ private fun CompactFavoriteItemImpl(
     onClick: () -> Unit,
     onLongClick: () -> Unit,
     modifier: Modifier = Modifier,
-    zapping: Boolean = false
+    zapping: Boolean = false,
+    sort: Sort
 ) {
     val spacing = LocalSpacing.current
-
     val colorScheme = MaterialTheme.colorScheme
+
+    val recently = sort == Sort.RECENTLY
+    val recentlyString = stringResource(string.ui_sort_recently)
+
     MaterialTheme(
         colorScheme = colorScheme.copy(
             surface = if (zapping) colorScheme.onSurface else colorScheme.surface,
@@ -204,7 +273,7 @@ private fun CompactFavoriteItemImpl(
         ListItem(
             headlineContent = {
                 Text(
-                    text = stream.title,
+                    text = stream.title.trim(),
                     style = MaterialTheme.typography.titleSmall,
                     fontSize = MaterialTheme.typography.titleSmall.fontSize,
                     overflow = TextOverflow.Ellipsis,
@@ -214,7 +283,7 @@ private fun CompactFavoriteItemImpl(
             },
             supportingContent = {
                 Text(
-                    text = stream.url,
+                    text = stream.url.trim(),
                     maxLines = 1,
                     style = MaterialTheme.typography.bodyMedium,
                     fontSize = MaterialTheme.typography.bodyMedium.fontSize,
@@ -229,6 +298,31 @@ private fun CompactFavoriteItemImpl(
                         contentScale = ContentScale.Crop,
                         shape = RoundedCornerShape(spacing.small),
                         modifier = Modifier.size(48.dp)
+                    )
+                }
+            },
+            trailingContent = {
+                if (recently) {
+                    Text(
+                        text = remember(stream.seen) {
+                            val now = Clock.System.now()
+                            val instant = Instant.fromEpochMilliseconds(stream.seen)
+                            val duration = now - instant
+                            duration.toComponents { days, hours, minutes, seconds, _ ->
+                                when {
+                                    days > 0 -> "$days d"
+                                    hours > 0 -> "$hours h"
+                                    minutes > 0 -> "$minutes m"
+                                    seconds > 0 -> "$seconds s"
+                                    else -> recentlyString
+                                }
+                            }
+                        },
+                        color = if (zapping) MaterialTheme.colorScheme.onPrimary
+                        else MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.SemiBold,
+                        style = MaterialTheme.typography.bodyMedium,
+                        maxLines = 1,
                     )
                 }
             },

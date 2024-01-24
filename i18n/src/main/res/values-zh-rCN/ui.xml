@@ -18,5 +18,6 @@
     <string name="ui_sort">排序</string>
     <string name="ui_sort_asc">A-Z</string>
     <string name="ui_sort_desc">Z-A</string>
+    <string name="ui_sort_recently">最近</string>
     <string name="ui_sort_unspecified">默认</string>
 </resources>
