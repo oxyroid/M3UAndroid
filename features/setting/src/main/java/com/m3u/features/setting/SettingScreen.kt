@@ -14,7 +14,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -55,7 +54,7 @@ fun SettingRoute(
     val banneds by viewModel.banneds.collectAsStateWithLifecycle()
     val helper = LocalHelper.current
 
-    EventHandler(resume, title) {
+    EventHandler(resume) {
         helper.deep = 0
         helper.title = title.title()
         helper.actions = persistentListOf()
@@ -193,6 +192,7 @@ private fun SettingScreen(
                                 localStorage = localStorage,
                                 onLocalStorage = onLocalStorage,
                                 openDocument = openDocument,
+                                onBackup = {},
                                 modifier = Modifier.fillMaxSize()
                             )
                         }

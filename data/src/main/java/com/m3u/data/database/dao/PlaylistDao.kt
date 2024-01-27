@@ -38,6 +38,10 @@ interface PlaylistDao {
     @Query("SELECT * FROM playlists WHERE url = :url ORDER BY title")
     fun observeByUrlWithStreams(url: String): Flow<PlaylistWithStreams?>
 
+    @Transaction
+    @Query("SELECT * FROM playlists WHERE url = :url ORDER BY title")
+    suspend fun getByUrlWithStreams(url: String): PlaylistWithStreams?
+
     @Query("UPDATE playlists SET title = :target WHERE url = :url")
     suspend fun rename(url: String, target: String)
 

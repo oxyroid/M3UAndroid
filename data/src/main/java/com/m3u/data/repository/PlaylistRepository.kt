@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.onEach
 interface PlaylistRepository : ReadOnlyRepository<Playlist, String> {
     override fun observe(url: String): Flow<Playlist?>
     fun observeWithStreams(url: String): Flow<PlaylistWithStreams?>
+    suspend fun getWithStreams(url: String): PlaylistWithStreams?
     override suspend fun get(url: String): Playlist?
 
     fun subscribe(

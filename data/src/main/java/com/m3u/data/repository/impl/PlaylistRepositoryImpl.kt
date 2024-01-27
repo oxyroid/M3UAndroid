@@ -161,6 +161,10 @@ class PlaylistRepositoryImpl @Inject constructor(
         playlistDao.observeByUrlWithStreams(url)
     } ?: flow { }
 
+    override suspend fun getWithStreams(url: String): PlaylistWithStreams? = logger.execute {
+        playlistDao.getByUrlWithStreams(url)
+    }
+
     override suspend fun get(url: String): Playlist? = logger.execute {
         playlistDao.getByUrl(url)
     }

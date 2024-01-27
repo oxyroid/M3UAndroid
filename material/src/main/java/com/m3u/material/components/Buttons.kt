@@ -31,7 +31,6 @@ import androidx.compose.ui.graphics.isUnspecified
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
-import com.m3u.material.ktx.TelevisionChain
 import com.m3u.material.ktx.isTelevision
 import com.m3u.material.model.LocalSpacing
 import androidx.tv.material3.Button as TvButton
@@ -120,23 +119,21 @@ fun TextButton(
             )
         }
     } else {
-        TelevisionChain {
-            TvOutlinedButton(
-                onClick = onClick,
-                enabled = enabled,
-                modifier = Modifier
-                    .padding(spacing.extraSmall)
-                    .then(modifier),
-                colors = androidx.tv.material3.ButtonDefaults.colors(
-                    containerColor = containerColor,
-                    contentColor = contentColor,
-                    disabledContentColor = disabledContentColor
-                )
-            ) {
-                TvText(
-                    text = text.uppercase()
-                )
-            }
+        TvOutlinedButton(
+            onClick = onClick,
+            enabled = enabled,
+            modifier = Modifier
+                .padding(spacing.extraSmall)
+                .then(modifier),
+            colors = androidx.tv.material3.ButtonDefaults.colors(
+                containerColor = containerColor,
+                contentColor = contentColor,
+                disabledContentColor = disabledContentColor
+            )
+        ) {
+            TvText(
+                text = text.uppercase()
+            )
         }
     }
 }

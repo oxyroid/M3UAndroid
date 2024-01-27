@@ -32,6 +32,7 @@ import com.m3u.features.setting.components.LocalStorageSwitch
 import com.m3u.i18n.R.string
 import com.m3u.material.components.Button
 import com.m3u.material.components.PlaceholderField
+import com.m3u.material.components.TextButton
 import com.m3u.material.ktx.plus
 import com.m3u.material.model.LocalSpacing
 import kotlinx.collections.immutable.ImmutableList
@@ -50,6 +51,7 @@ internal fun SubscriptionsFragment(
     onSubscribe: () -> Unit,
     onLocalStorage: () -> Unit,
     openDocument: (Uri) -> Unit,
+    onBackup: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
@@ -150,6 +152,11 @@ internal fun SubscriptionsFragment(
                     enabled = !localStorage,
                     onTitle = onTitle,
                     onUrl = onUrl
+                )
+                TextButton(
+                    text = stringResource(string.feat_setting_label_backup),
+                    onClick = onBackup,
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
         }
