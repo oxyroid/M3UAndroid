@@ -6,6 +6,7 @@ import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import com.m3u.core.architecture.pref.Pref
+import com.m3u.core.architecture.pref.Pref.Companion.ALWAYS_TV
 import com.m3u.core.architecture.pref.Pref.Companion.AUTO_REFRESH
 import com.m3u.core.architecture.pref.Pref.Companion.BRIGHTNESS_GESTURE
 import com.m3u.core.architecture.pref.Pref.Companion.CLIP_MODE
@@ -13,6 +14,7 @@ import com.m3u.core.architecture.pref.Pref.Companion.COLOR_ARGB
 import com.m3u.core.architecture.pref.Pref.Companion.COMPACT
 import com.m3u.core.architecture.pref.Pref.Companion.CONNECT_TIMEOUT
 import com.m3u.core.architecture.pref.Pref.Companion.DARK_MODE
+import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_ALWAYS_TV
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_AUTO_REFRESH
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_BRIGHTNESS_GESTURE
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_CLIP_MODE
@@ -31,7 +33,6 @@ import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_ROOT_DESTINATION
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_ROW_COUNT
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_SCREENCAST
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_SCREEN_ROTATING
-import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_SSL_VERIFICATION
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_TUNNELING
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_UNSEENS_MILLISECONDS
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_USE_DYNAMIC_COLORS
@@ -48,7 +49,6 @@ import com.m3u.core.architecture.pref.Pref.Companion.ROOT_DESTINATION
 import com.m3u.core.architecture.pref.Pref.Companion.ROW_COUNT
 import com.m3u.core.architecture.pref.Pref.Companion.SCREENCAST
 import com.m3u.core.architecture.pref.Pref.Companion.SCREEN_ROTATING
-import com.m3u.core.architecture.pref.Pref.Companion.SSL_VERIFICATION
 import com.m3u.core.architecture.pref.Pref.Companion.TUNNELING
 import com.m3u.core.architecture.pref.Pref.Companion.UNSEENS_MILLISECONDS
 import com.m3u.core.architecture.pref.Pref.Companion.USE_DYNAMIC_COLORS
@@ -93,8 +93,6 @@ class SnapshotPref @Inject constructor(
     override var autoRefresh: Boolean by
     sharedPreferences.booleanAsState(DEFAULT_AUTO_REFRESH, AUTO_REFRESH)
 
-    override var isSSLVerification: Boolean by
-    sharedPreferences.booleanAsState(DEFAULT_SSL_VERIFICATION, SSL_VERIFICATION)
     override var fullInfoPlayer: Boolean by
     sharedPreferences.booleanAsState(DEFAULT_FULL_INFO_PLAYER, FULL_INFO_PLAYER)
     override var rootDestination: Int by
@@ -141,7 +139,13 @@ class SnapshotPref @Inject constructor(
     override var tunneling: Boolean by
     sharedPreferences.booleanAsState(DEFAULT_TUNNELING, TUNNELING)
 
+    override var alwaysTv: Boolean by
+    sharedPreferences.booleanAsState(DEFAULT_ALWAYS_TV, ALWAYS_TV)
+
     companion object {
         private const val SHARED_SETTINGS = "shared_settings"
+    }
+    init {
+        alwaysTv = false
     }
 }

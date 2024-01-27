@@ -6,6 +6,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.core.architecture.pref.Pref
+import com.m3u.material.ktx.LocalAlwaysTelevision
 import com.m3u.material.model.AppTheme
 import com.m3u.ui.helper.EmptyHelper
 import com.m3u.ui.helper.Helper
@@ -23,7 +24,8 @@ fun AppLocalProvider(
     }
     CompositionLocalProvider(
         LocalHelper provides helper,
-        LocalPref provides pref
+        LocalPref provides pref,
+        LocalAlwaysTelevision provides pref.alwaysTv
     ) {
         AppTheme(
             argb = pref.colorArgb,

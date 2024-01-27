@@ -13,7 +13,6 @@ internal object MockPref : Pref {
     override var autoRefresh: Boolean = Pref.DEFAULT_AUTO_REFRESH
     override var fullInfoPlayer: Boolean = Pref.DEFAULT_FULL_INFO_PLAYER
 
-    override var isSSLVerification: Boolean = Pref.DEFAULT_SSL_VERIFICATION
     override var rootDestination: Int = Pref.DEFAULT_ROOT_DESTINATION
     override var noPictureMode: Boolean = Pref.DEFAULT_NO_PICTURE_MODE
 
@@ -30,4 +29,5 @@ internal object MockPref : Pref {
     override var compact: Boolean = Pref.DEFAULT_COMPACT
     override var colorArgb: Int = Pref.DEFAULT_COLOR_ARGB
     override var tunneling: Boolean = Pref.DEFAULT_TUNNELING
+    override var alwaysTv: Boolean = Pref.DEFAULT_ALWAYS_TV
 }

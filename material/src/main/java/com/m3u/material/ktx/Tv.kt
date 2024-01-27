@@ -3,15 +3,23 @@ package com.m3u.material.ktx
 import android.content.res.Configuration
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalConfiguration
 import com.m3u.material.model.asTvScheme
 import com.m3u.material.model.asTvTypography
 
+val LocalAlwaysTelevision = compositionLocalOf { false }
+
 @Composable
 fun isTelevision(): Boolean {
-    val configuration = LocalConfiguration.current
-    val type = configuration.uiMode and Configuration.UI_MODE_TYPE_MASK
+    val alwaysTelevision = LocalAlwaysTelevision.current
+    return if (alwaysTelevision) true
+    else LocalConfiguration.current.isTelevision()
+}
+
+fun Configuration.isTelevision(): Boolean {
+    val type = uiMode and Configuration.UI_MODE_TYPE_MASK
     return type == Configuration.UI_MODE_TYPE_TELEVISION
 }
 

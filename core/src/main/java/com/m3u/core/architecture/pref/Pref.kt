@@ -28,7 +28,6 @@ interface Pref {
     var autoRefresh: Boolean
     var fullInfoPlayer: Boolean
 
-    var isSSLVerification: Boolean
     var rootDestination: Int
     var noPictureMode: Boolean
 
@@ -50,6 +49,7 @@ interface Pref {
     var compact: Boolean
     var colorArgb: Int
     var tunneling: Boolean
+    var alwaysTv: Boolean
 
 
     companion object {
@@ -65,7 +65,6 @@ interface Pref {
         @ClipMode
         const val DEFAULT_CLIP_MODE = ClipMode.ADAPTIVE
         const val DEFAULT_AUTO_REFRESH = false
-        const val DEFAULT_SSL_VERIFICATION = false
         const val DEFAULT_FULL_INFO_PLAYER = false
         const val DEFAULT_ROOT_DESTINATION = 0
         const val DEFAULT_NO_PICTURE_MODE = true
@@ -87,6 +86,7 @@ interface Pref {
         const val DEFAULT_COMPACT = false
         const val DEFAULT_COLOR_ARGB = 0xD0BCFF
         const val DEFAULT_TUNNELING = false
+        const val DEFAULT_ALWAYS_TV = false
 
         const val PLAYLIST_STRATEGY = "playlist-strategy"
         const val ROW_COUNT = "rowCount"
@@ -97,7 +97,6 @@ interface Pref {
 
         const val CLIP_MODE = "clip-mode"
         const val AUTO_REFRESH = "auto-refresh"
-        const val SSL_VERIFICATION = "ssl-verification"
         const val FULL_INFO_PLAYER = "full-info-player"
         const val ROOT_DESTINATION = "root-destination"
         const val NO_PICTURE_MODE = "no-picture-mode"
@@ -114,6 +113,7 @@ interface Pref {
         const val COMPACT = "compact"
         const val COLOR_ARGB = "color-argb"
         const val TUNNELING = "tunneling"
+        const val ALWAYS_TV = "always-tv"
     }
 }
 
