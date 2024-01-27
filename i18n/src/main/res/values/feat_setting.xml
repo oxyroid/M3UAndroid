@@ -29,8 +29,10 @@
     <string name="feat_setting_clip_mode_stretched">stretched</string>
     <string name="feat_setting_auto_refresh">auto refresh</string>
     <string name="feat_setting_auto_refresh_description">automatically refreshed when enter the playlist</string>
-    <string name="feat_setting_ssl_verification_enabled">SSL certificate verification</string>
-    <string name="feat_setting_ssl_verification_enabled_description">ensure valid and trustworthy SSL/TLS certificates for secure communications</string>
+
+    <string name="feat_setting_always_television">always television</string>
+    <string name="feat_setting_always_television_description">will be restored when the app is restarted</string>
+
     <string name="feat_setting_full_info_player">full information player</string>
     <string name="feat_setting_full_info_player_description">display more information in the player</string>
     <string name="feat_setting_initial_screen">initial Screen</string>
@@ -65,4 +67,6 @@
     <string name="feat_setting_appearance">appearance</string>
     <string name="feat_setting_tunneling">tunneling mode</string>
     <string name="feat_setting_tunneling_description">improve playback of 4K/HDR content</string>
+    <string name="feat_setting_label_backup">backup</string>
+    <string name="feat_setting_label_restore">restore</string>
 </resources>
