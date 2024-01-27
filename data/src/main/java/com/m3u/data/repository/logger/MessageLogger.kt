@@ -15,7 +15,8 @@ class MessageLogger @Inject constructor(
         text: String,
         level: Int,
         tag: String,
-        duration: Duration
+        duration: Duration,
+        type: Int
     ) {
         val value = text.replaceFirstChar {
             if (it.isLowerCase()) it.titlecase(Locale.ROOT)
@@ -25,7 +26,7 @@ class MessageLogger @Inject constructor(
             value = value,
             level = level,
             tag = tag,
-            type = Message.TYPE_SNACK,
+            type = type,
             duration = duration
         )
         messageManager.emit(message)

@@ -13,8 +13,4 @@ interface M3UPlaylistParser : Parser<InputStream, M3UPlaylist> {
     @Qualifier
     @Retention(AnnotationRetention.BINARY)
     annotation class Default
-
-    @Qualifier
-    @Retention(AnnotationRetention.BINARY)
-    annotation class BjoernPetersen
 }

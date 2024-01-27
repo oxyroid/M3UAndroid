@@ -49,8 +49,8 @@ fun CodeSkeleton(
     onCode: (String) -> Unit,
     modifier: Modifier = Modifier,
     loading: Boolean = false,
-    keyboard: Boolean = false,
-    onKeyboard: () -> Unit,
+    keyboard: Boolean = true,
+    onKeyboard: () -> Unit = {},
     onSubmit: () -> Unit
 ) {
     Column(modifier) {

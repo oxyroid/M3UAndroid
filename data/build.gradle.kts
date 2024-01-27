@@ -71,14 +71,11 @@ dependencies {
     implementation(libs.androidx.media3.media3.decoder)
     implementation(libs.androidx.media3.media3.container)
     implementation(libs.androidx.media3.media3.datasource.rtmp)
-    implementation(libs.androidx.media3.media3.datasource.okhttp)
     implementation(libs.androidx.media3.media3.extractor)
 
     implementation(libs.androidx.work.work.runtime.ktx)
     implementation(libs.androidx.hilt.hilt.work)
     ksp(libs.androidx.hilt.hilt.compiler)
 
-    implementation(libs.parser.m3u)
-
-    implementation("org.zeromq:jeromq:0.5.3")
+    implementation(libs.zeromq)
 }

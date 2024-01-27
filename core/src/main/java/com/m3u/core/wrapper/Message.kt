@@ -54,5 +54,6 @@ sealed class Message(
         const val TYPE_SNACK = 2
         const val TYPE_NOTIFICATION = 3
         const val TYPE_DIALOG = 4
+        const val TYPE_TELEVISION = 5
     }
 }

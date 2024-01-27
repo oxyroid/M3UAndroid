@@ -1,7 +1,6 @@
 package com.m3u.features.foryou
 
 import android.content.res.Configuration.ORIENTATION_PORTRAIT
-import android.util.Log
 import android.view.KeyEvent
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
@@ -17,14 +16,15 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Link
+import androidx.compose.material.icons.rounded.LinkOff
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -36,6 +36,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.core.util.basic.title
 import com.m3u.data.database.model.Playlist
+import com.m3u.data.repository.PairClientState
 import com.m3u.features.foryou.components.ForyouDialog
 import com.m3u.features.foryou.components.OnRename
 import com.m3u.features.foryou.components.OnUnsubscribe
@@ -59,8 +60,6 @@ import com.m3u.ui.helper.Action
 import com.m3u.ui.helper.LocalHelper
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
 
 @Composable
 fun ForyouRoute(
@@ -79,46 +78,47 @@ fun ForyouRoute(
     val pref = LocalPref.current
     val hapticFeedback = LocalHapticFeedback.current
 
-    // temp
-    var connecting by remember { mutableStateOf(false) }
     var code by remember { mutableStateOf("") }
 
     val tv = isTelevision()
 
-    val sheetState = rememberModalBottomSheetState { !connecting }
-
     val details by viewModel.details.collectAsStateWithLifecycle()
     val recommend by viewModel.recommend.collectAsStateWithLifecycle()
 
-    val localCodes by viewModel.localCodes.collectAsStateWithLifecycle()
-    val currentLocalCode by viewModel.currentLocalCode.collectAsStateWithLifecycle()
-
     var isConnectSheetVisible by remember { mutableStateOf(false) }
 
-    LaunchedEffect(Unit) {
-        snapshotFlow { sheetState.isVisible }
-            .onEach { visible ->
-                if (visible) {
-                    viewModel.searchLocalCodes()
-                } else {
-                    viewModel.stopSearchLocalCodes()
-                }
-            }
-            .launchIn(this)
+    val pairServerState by viewModel.pairServerStateFlow.collectAsStateWithLifecycle()
+    val pairClientState by viewModel.pairClientStateFlow.collectAsStateWithLifecycle()
 
-        snapshotFlow { localCodes }
-            .onEach {
-                Log.e("TAG", "$it")
-            }
-            .launchIn(this)
+    val connecting by remember {
+        derivedStateOf { pairClientState == PairClientState.Connecting }
+    }
+    val connected by remember {
+        derivedStateOf { pairClientState is PairClientState.Connected }
     }
 
-    EventHandler(resume, title) {
+    val icon by remember {
+        derivedStateOf {
+            when {
+                connected -> Icons.Rounded.Link
+                else -> Icons.Rounded.LinkOff
+            }
+        }
+    }
+    val sheetState = rememberModalBottomSheetState(
+        skipPartiallyExpanded = true,
+        confirmValueChange = { !connecting }
+    )
+
+    EventHandler(resume) {
         helper.deep = 0
         helper.title = title.title()
+    }
+
+    LaunchedEffect(icon) {
         helper.actions = persistentListOf(
             Action(
-                icon = Icons.Rounded.Link,
+                icon = icon,
                 contentDescription = "link",
                 onClick = { isConnectSheetVisible = true }
             ),
@@ -156,16 +156,20 @@ fun ForyouRoute(
                 .then(modifier)
         )
         ConnectBottomSheet(
-            visible = isConnectSheetVisible,
+            sheetState = sheetState,
+            visible = isConnectSheetVisible && !connected,
             code = code,
             connecting = connecting,
             onCode = {
                 code = it
                 hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
             },
-            sheetState = sheetState,
-            onDismissRequest = { isConnectSheetVisible = false },
-            onConnect = { connecting = true }
+            onDismissRequest = {
+                isConnectSheetVisible = false
+            },
+            onConnect = {
+                viewModel.pair(code.toInt())
+            }
         )
     }
 }

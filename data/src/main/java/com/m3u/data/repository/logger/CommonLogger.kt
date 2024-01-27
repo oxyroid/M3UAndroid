@@ -22,7 +22,8 @@ class CommonLogger @Inject constructor(
         text: String,
         level: Int,
         tag: String,
-        duration: Duration
+        duration: Duration,
+        type: Int
     ) {
         if (publisher.debug) {
             when (level) {

@@ -1,13 +1,15 @@
 @file:Suppress("unused")
 
-package com.m3u.data.repository
+package com.m3u.data.repository.di
 
+import com.m3u.data.repository.MediaRepository
 import com.m3u.data.repository.PlaylistRepository
 import com.m3u.data.repository.StreamRepository
-import com.m3u.data.repository.MediaRepository
+import com.m3u.data.repository.TvRepository
+import com.m3u.data.repository.impl.MediaRepositoryImpl
 import com.m3u.data.repository.impl.PlaylistRepositoryImpl
 import com.m3u.data.repository.impl.StreamRepositoryImpl
-import com.m3u.data.repository.impl.MediaRepositoryImpl
+import com.m3u.data.repository.impl.TvRepositoryImpl
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -34,4 +36,10 @@ interface RepositoryModule {
     fun bindMediaRepository(
         repository: MediaRepositoryImpl
     ): MediaRepository
+
+    @Binds
+    @Singleton
+    fun bindTvRepository(
+        repository: TvRepositoryImpl
+    ): TvRepository
 }

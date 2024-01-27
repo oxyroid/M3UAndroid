@@ -2,12 +2,15 @@ package com.m3u.features.foryou
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.m3u.core.architecture.logger.Logger
+import com.m3u.core.architecture.logger.prefix
 import com.m3u.core.architecture.pref.Pref
 import com.m3u.core.architecture.pref.observeAsFlow
-import com.m3u.data.net.broadcast.LocalCode
-import com.m3u.data.net.broadcast.LocalCodeBroadcast
+import com.m3u.data.repository.PairClientState
+import com.m3u.data.repository.PairServerState
 import com.m3u.data.repository.PlaylistRepository
 import com.m3u.data.repository.StreamRepository
+import com.m3u.data.repository.TvRepository
 import com.m3u.features.foryou.components.recommend.Recommend
 import com.m3u.features.foryou.model.PlaylistDetail
 import com.m3u.features.foryou.model.toDetail
@@ -17,26 +20,18 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.datetime.Clock
-import java.net.NetworkInterface
 import javax.inject.Inject
-import kotlin.random.Random
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.seconds
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 
@@ -44,8 +39,11 @@ import kotlin.time.toDuration
 class ForyouViewModel @Inject constructor(
     private val playlistRepository: PlaylistRepository,
     streamRepository: StreamRepository,
-    pref: Pref
+    private val tvRepository: TvRepository,
+    pref: Pref,
+    logcat: Logger
 ) : ViewModel() {
+    private val logger = logcat.prefix("foryou")
     private val counts: StateFlow<Map<String, Int>> = streamRepository
         .observeAll()
         .map { streams ->
@@ -107,74 +105,38 @@ class ForyouViewModel @Inject constructor(
         }
     }
 
-    private val _localCodes = MutableStateFlow<Set<LocalCode>>(emptySet())
-    val localCodes = _localCodes.asStateFlow()
+    val pairServerStateFlow = tvRepository
+        .pairServerState
+        .onEach { logger.log("server: $it") }
+        .stateIn(
+            scope = viewModelScope,
+            initialValue = PairServerState.Idle,
+            started = SharingStarted.WhileSubscribed(5000)
+        )
 
-    private var searchLocalCodesJob: Job? = null
-    fun searchLocalCodes() {
-        stopSearchLocalCodes()
-        searchLocalCodesJob = LocalCodeBroadcast
-            .receive()
-            .onEach { bytes ->
-                _localCodes.value += try {
-                    LocalCode.decode(bytes)
-                } catch (ignored: Exception) {
-                    return@onEach
-                }
-            }
-            .launchIn(viewModelScope)
-    }
-
-    fun stopSearchLocalCodes() {
-        searchLocalCodesJob?.cancel()
-        _localCodes.value = emptySet()
-    }
-
-    private val _currentLocalCode = MutableStateFlow<LocalCode?>(null)
-    val currentLocalCode = _currentLocalCode.asStateFlow()
-
-    private var sendLocalCodeJob: Job? = null
-    fun sendLocalCode() {
-        stopSendLocalCode()
-        val duration = 30.seconds
-        viewModelScope.launch {
-            while (true) {
-                val now = Clock.System.now()
-                val localCode = LocalCode(
-                    host = getIpAddress() ?: return@launch,
-                    port = Random.nextInt(49152, 65535),
-                    code = Random.nextInt(999999),
-                    expiration = (now + duration).toEpochMilliseconds()
-                )
-                _currentLocalCode.value = localCode
-                val bytes = LocalCode.encode(localCode)
-                LocalCodeBroadcast.send(bytes)
-            }
-        }
-    }
-
-    fun stopSendLocalCode() {
-        searchLocalCodesJob?.cancel()
-        _currentLocalCode.value = null
-    }
-
-    private fun getIpAddress(): String? {
-        val interfaces = NetworkInterface.getNetworkInterfaces()
-        while (interfaces.hasMoreElements()) {
-            val interfaze = interfaces.nextElement()
-            val wlan = interfaze.name.contains("wlan", true) ||
-                    interfaze.name.contains("ap", true)
-            if (wlan) {
-                val addresses = interfaze.inetAddresses
-                while (addresses.hasMoreElements()) {
-                    val address = addresses.nextElement()
-                    if (!address.isLoopbackAddress && address.address.size == 4
-                    ) {
-                        return address.hostAddress
+    val pairClientStateFlow = tvRepository
+        .pairClientState
+        .onEach { state ->
+            logger.log("client: $state")
+            when (state) {
+                is PairClientState.Connected -> {
+                    viewModelScope.launch {
+                        tvRepository.startClient()
                     }
                 }
+                else -> {}
             }
         }
-        return null
+        .stateIn(
+            scope = viewModelScope,
+            initialValue = PairClientState.Idle,
+            started = SharingStarted.WhileSubscribed(5000)
+        )
+
+
+    fun pair(pin: Int) {
+        viewModelScope.launch {
+            tvRepository.pair(pin)
+        }
     }
 }

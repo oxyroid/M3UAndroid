@@ -22,12 +22,8 @@ import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -146,10 +142,6 @@ fun ConnectBottomSheet(
     modifier: Modifier = Modifier
 ) {
     if (visible) {
-        var keyboard by remember { mutableStateOf(false) }
-        LaunchedEffect(keyboard) {
-            sheetState.expand()
-        }
         ModalBottomSheet(
             sheetState = sheetState,
             onDismissRequest = {
@@ -166,8 +158,6 @@ fun ConnectBottomSheet(
                 code = code,
                 onCode = onCode,
                 modifier = modifier,
-                keyboard = !connecting && keyboard,
-                onKeyboard = { keyboard = !keyboard },
                 loading = connecting,
                 onSubmit = onConnect
             )

@@ -10,7 +10,8 @@ interface Logger {
         text: String,
         level: Int = LEVEL_ERROR,
         tag: String = "LOGGER",
-        duration: Duration = 3.seconds
+        duration: Duration = 3.seconds,
+        type: Int = com.m3u.core.wrapper.Message.TYPE_SNACK
     )
 
     fun log(
@@ -21,6 +22,21 @@ interface Logger {
     @Qualifier
     @Retention(AnnotationRetention.BINARY)
     annotation class Message
+}
+
+fun Logger.prefix(text: String): PrefixLogger = PrefixLogger(this, text)
+
+class PrefixLogger(
+    val delegate: Logger,
+    private val prefix: String
+) : Logger {
+    override fun log(text: String, level: Int, tag: String, duration: Duration, type: Int) {
+        delegate.log("${prefix}: $text", level, tag, duration, type)
+    }
+
+    override fun log(throwable: Throwable, tag: String) {
+        delegate.log(RuntimeException(prefix, throwable), tag)
+    }
 }
 
 /**

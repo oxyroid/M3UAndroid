@@ -1,13 +1,12 @@
 package com.m3u.features.stream
 
-import android.app.Application
+import android.content.Context
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.C
 import androidx.media3.common.Tracks
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.viewmodel.BaseViewModel
 import com.m3u.data.manager.PlayerManager
-import com.m3u.data.net.zmq.ZMQServer
 import com.m3u.data.repository.PlaylistRepository
 import com.m3u.data.repository.StreamRepository
 import com.m3u.dlna.DLNACastManager
@@ -38,15 +37,13 @@ import org.jupnp.model.meta.Device
 import javax.inject.Inject
 import kotlin.math.roundToInt
 import kotlin.time.Duration.Companion.milliseconds
-import kotlin.time.Duration.Companion.seconds
 
 @HiltViewModel
 class StreamViewModel @Inject constructor(
     private val streamRepository: StreamRepository,
     playlistRepository: PlaylistRepository,
     private val playerManager: PlayerManager,
-    private val logger: Logger,
-    private val application: Application
+    private val logger: Logger
 ) : BaseViewModel<StreamState, StreamEvent>(
     emptyState = StreamState()
 ), OnDeviceRegistryListener, OnDeviceControlListener {
@@ -60,11 +57,11 @@ class StreamViewModel @Inject constructor(
 
     // playlist and stream info
     internal val metadata: StateFlow<StreamState.Metadata> = combine(
-        playerManager.streamId,
+        playerManager.url,
         streamRepository.observeAll(),
         playlistRepository.observeAll()
-    ) { streamId, streams, playlists ->
-        val stream = streams.find { it.id == streamId }
+    ) { url, streams, playlists ->
+        val stream = streams.find { it.url == url }
         val playlist = playlists.find { it.url == stream?.playlistUrl }
         StreamState.Metadata(playlist, stream)
     }
@@ -146,10 +143,10 @@ class StreamViewModel @Inject constructor(
 
     init {
         playerManager
-            .streamId
-            .onEach { streamId ->
-                streamId ?: return@onEach
-                val stream = streamRepository.get(streamId) ?: return@onEach
+            .url
+            .onEach { url ->
+                url ?: return@onEach
+                val stream = streamRepository.getByUrl(url) ?: return@onEach
                 streamRepository.reportPlayed(stream.id)
             }
             .launchIn(viewModelScope)
@@ -157,8 +154,8 @@ class StreamViewModel @Inject constructor(
 
     override fun onEvent(event: StreamEvent) {
         when (event) {
-            StreamEvent.OpenDlnaDevices -> openDlnaDevices()
-            StreamEvent.CloseDlnaDevices -> closeDlnaDevices()
+            is StreamEvent.OpenDlnaDevices -> openDlnaDevices(event.activityContext)
+            is StreamEvent.CloseDlnaDevices -> closeDlnaDevices(event.activityContext)
             is StreamEvent.ConnectDlnaDevice -> connectDlnaDevice(event.device)
             is StreamEvent.DisconnectDlnaDevice -> disconnectDlnaDevice(event.device)
             is StreamEvent.OnFavourite -> onFavourite(event.url)
@@ -177,9 +174,9 @@ class StreamViewModel @Inject constructor(
     // searching or not
     internal val searching = _searching.asStateFlow()
 
-    private fun openDlnaDevices() {
+    private fun openDlnaDevices(activityContext: Context) {
         try {
-            DLNACastManager.bindCastService(application)
+            DLNACastManager.bindCastService(activityContext)
             DLNACastManager.registerDeviceListener(this)
         } catch (ignore: Exception) {
 
@@ -191,12 +188,12 @@ class StreamViewModel @Inject constructor(
         _isDevicesVisible.value = true
     }
 
-    private fun closeDlnaDevices() {
+    private fun closeDlnaDevices(activityContext: Context) {
         try {
             _searching.value = false
             _isDevicesVisible.value = false
             _devices.value = persistentListOf()
-            DLNACastManager.unbindCastService(application)
+            DLNACastManager.unbindCastService(activityContext)
             DLNACastManager.unregisterListener(this)
         } catch (ignore: Exception) {
 
@@ -220,12 +217,6 @@ class StreamViewModel @Inject constructor(
 
     internal fun record() {
         _recording.update { !it }
-        viewModelScope.launch {
-            val server = ZMQServer(2233)
-            server.start()
-            delay(3.seconds)
-            server.send("123")
-        }
     }
 
     private fun onFavourite(url: String) {
@@ -279,14 +270,8 @@ class StreamViewModel @Inject constructor(
     }
 
     private fun release() {
-        viewModelScope.launch {
-            playerManager.stop()
-        }
-    }
-
-    override fun onCleared() {
         controlPoint?.stop()
         controlPoint = null
-        super.onCleared()
+        playerManager.stop()
     }
 }

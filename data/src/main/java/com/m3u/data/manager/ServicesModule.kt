@@ -4,6 +4,7 @@ package com.m3u.data.manager
 
 import android.app.NotificationManager
 import android.content.Context
+import android.net.nsd.NsdManager
 import android.net.wifi.WifiManager
 import androidx.core.app.NotificationManagerCompat
 import androidx.work.WorkManager
@@ -12,6 +13,8 @@ import com.m3u.core.architecture.logger.Logger
 import com.m3u.data.manager.impl.MessageManagerImpl
 import com.m3u.data.manager.impl.PlayerManagerImpl
 import com.m3u.data.manager.impl.TraceFileProviderImpl
+import com.m3u.data.manager.nsd.NsdDeviceManager
+import com.m3u.data.manager.nsd.NsdDeviceManagerImpl
 import com.m3u.data.repository.logger.CommonLogger
 import com.m3u.data.repository.logger.MessageLogger
 import dagger.Binds
@@ -45,6 +48,10 @@ interface BindServicesModule {
     @Singleton
     @Logger.Message
     fun bindMessageLogger(logger: MessageLogger): Logger
+
+    @Binds
+    @Singleton
+    fun bindNsdDeviceManager(manager: NsdDeviceManagerImpl): NsdDeviceManager
 }
 
 @Module
@@ -72,5 +79,11 @@ object ProvidedServicesModule {
     @Singleton
     fun provideWifiManager(@ApplicationContext context: Context): WifiManager {
         return context.getSystemService(Context.WIFI_SERVICE) as WifiManager
+    }
+
+    @Provides
+    @Singleton
+    fun provideNsdManager(@ApplicationContext context: Context): NsdManager {
+        return context.getSystemService(Context.NSD_SERVICE) as NsdManager
     }
 }
