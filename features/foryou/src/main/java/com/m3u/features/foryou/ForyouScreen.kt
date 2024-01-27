@@ -113,9 +113,22 @@ fun ForyouRoute(
     EventHandler(resume) {
         helper.deep = 0
         helper.title = title.title()
+        helper.actions = persistentListOf(
+            Action(
+                icon = icon,
+                contentDescription = "link",
+                onClick = { isConnectSheetVisible = true }
+            ),
+            Action(
+                icon = Icons.Rounded.Add,
+                contentDescription = "add",
+                onClick = navigateToSettingPlaylistManagement
+            )
+        )
     }
 
-    LaunchedEffect(icon) {
+    LaunchedEffect(resume, icon) {
+        if (resume.isHandled) return@LaunchedEffect
         helper.actions = persistentListOf(
             Action(
                 icon = icon,

@@ -12,11 +12,10 @@ import kotlinx.coroutines.CoroutineScope
 @NonRestartableComposable
 fun <T> EventHandler(
     event: Event<T>,
-    vararg keys: Any?,
     handler: suspend CoroutineScope.(T) -> Unit
 ) {
     val currentHandler by rememberUpdatedState(handler)
-    LaunchedEffect(event, keys) {
+    LaunchedEffect(event) {
         event.handle {
             currentHandler(this, it)
         }

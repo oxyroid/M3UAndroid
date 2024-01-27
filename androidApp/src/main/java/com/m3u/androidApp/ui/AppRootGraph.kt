@@ -38,6 +38,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.tv.material3.Border
@@ -189,7 +191,7 @@ internal fun AppRootGraph(
                                     contentColor = currentContentColor
                                 ),
                                 interactionSource = source,
-                                shape = CardDefaults.shape(CircleShape,),
+                                shape = CardDefaults.shape(CircleShape),
                                 border = CardDefaults.border(focusedBorder = Border.None),
                                 scale = CardDefaults.scale(
                                     scale = if (selected) 1.1f else 1f,
@@ -228,8 +230,8 @@ internal fun AppRootGraph(
                             .weight(1f)
                     ) { topBarWithContent(WindowInsets.systemBars.exclude(WindowInsets.navigationBars)) }
                     NavigationBar(
-                        containerColor = currentContainerColor,
-                        contentColor = currentContentColor,
+                        containerColor = MaterialTheme.colorScheme.background,
+                        contentColor = MaterialTheme.colorScheme.onBackground,
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         items {
@@ -306,6 +308,7 @@ private inline fun NavigationItemLayout(
         label: @Composable () -> Unit
     ) -> Unit
 ) {
+    val hapticFeedback = LocalHapticFeedback.current
     val tv = isTelevision()
     val usefob = fob?.rootDestination == rootDestination
     val selected = usefob || rootDestination == currentRootDestination
@@ -352,7 +355,10 @@ private inline fun NavigationItemLayout(
     val actualOnClick: () -> Unit = if (usefob) {
         { fob?.onClick?.invoke() }
     } else {
-        { navigateToRoot(rootDestination) }
+        {
+            navigateToRoot(rootDestination)
+            hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+        }
     }
     block(selected, actualOnClick, icon, label)
 }

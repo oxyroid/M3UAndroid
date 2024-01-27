@@ -20,6 +20,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
@@ -28,7 +29,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import com.m3u.material.ktx.ifUnspecified
 import com.m3u.material.model.LocalSpacing
 
 @Composable
@@ -54,8 +54,8 @@ fun DialogTextField(
             text = text,
             onValueChange = onTextChange,
             backgroundColor = if (readOnly) Color.Transparent
-            else backgroundColor.ifUnspecified { theme.surface },
-            contentColor = contentColor.ifUnspecified { theme.onSurface },
+            else backgroundColor.takeOrElse { theme.surface },
+            contentColor = contentColor.takeOrElse { theme.onSurface },
             readOnly = readOnly,
             fontWeight = FontWeight.ExtraBold,
             fontSize = 20.sp,
@@ -65,7 +65,7 @@ fun DialogTextField(
         if (onIconClick != null && icon != null) {
             IconButton(
                 icon = icon,
-                tint = iconTint.ifUnspecified { MaterialTheme.colorScheme.onBackground },
+                tint = iconTint.takeOrElse { MaterialTheme.colorScheme.onBackground },
                 onClick = onIconClick,
                 contentDescription = null
             )
@@ -86,9 +86,9 @@ fun DialogItem(
     Surface(
         shape = RoundedCornerShape(spacing.medium),
         tonalElevation = 0.dp,
-        color = color.ifUnspecified { theme.surface },
-        contentColor = contentColor.ifUnspecified { theme.onSurface },
-        modifier = Modifier.semantics(mergeDescendants = true) {  }
+        color = color.takeOrElse { theme.surface },
+        contentColor = contentColor.takeOrElse { theme.onSurface },
+        modifier = Modifier.semantics(mergeDescendants = true) { }
     ) {
         Row(
             horizontalArrangement = Arrangement.Start,

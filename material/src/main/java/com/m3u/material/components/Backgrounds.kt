@@ -14,8 +14,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.isSpecified
+import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.unit.dp
-import com.m3u.material.ktx.ifUnspecified
 import com.m3u.material.ktx.isTelevision
 
 @Composable
@@ -25,7 +25,7 @@ inline fun Background(
     contentColor: Color = MaterialTheme.colorScheme.onBackground,
     crossinline content: @Composable () -> Unit
 ) {
-    val actualContentColor = contentColor.ifUnspecified {
+    val actualContentColor = contentColor.takeOrElse {
         if (!isTelevision()) LocalContentColor.current
         else androidx.tv.material3.LocalContentColor.current
     }

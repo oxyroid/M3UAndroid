@@ -3,7 +3,7 @@ package com.m3u.core.wrapper
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
 
-@Stable
+@Immutable
 sealed class Event<out T> private constructor(
     private val data: T? = null
 ) {

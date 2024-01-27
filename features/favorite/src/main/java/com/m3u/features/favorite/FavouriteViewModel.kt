@@ -49,11 +49,11 @@ class FavouriteViewModel @Inject constructor(
 
     val zapping = combine(
         zappingMode,
-        playerManager.streamId,
+        playerManager.url,
         streamRepository.observeAll()
-    ) { zappingMode, streamId, streams ->
+    ) { zappingMode, url, streams ->
         if (!zappingMode) null
-        else streams.find { it.id == streamId }
+        else streams.find { it.url == url }
     }
         .stateIn(
             scope = viewModelScope,
@@ -124,7 +124,7 @@ class FavouriteViewModel @Inject constructor(
                             context,
                             Contracts.PLAYER_ACTIVITY
                         )
-                        putExtra(Contracts.PLAYER_SHORTCUT_STREAM_ID, stream.id)
+                        putExtra(Contracts.PLAYER_SHORTCUT_STREAM_URL, stream.url)
                     }
                 )
                 .build()

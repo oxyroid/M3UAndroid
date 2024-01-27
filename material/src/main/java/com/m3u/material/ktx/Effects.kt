@@ -12,7 +12,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.takeOrElse
 import com.m3u.material.model.LocalDuration
 import com.m3u.material.model.LocalSpacing
 
@@ -32,8 +34,8 @@ fun Modifier.interactionBorder(
     shape: Shape = RectangleShape
 ): Modifier = interaction(type, source) { visible ->
     val duration = LocalDuration.current
-    val actualColor = color.ifUnspecified { InteractionDefaults.BorderColor }
-    val actualDp = width.ifUnspecified { InteractionDefaults.BorderWidth }
+    val actualColor = color.takeOrElse { InteractionDefaults.BorderColor }
+    val actualDp = width.takeOrElse { InteractionDefaults.BorderWidth }
     val currentColor by animateColorAsState(
         targetValue = if (visible) actualColor else Color.Transparent,
         animationSpec = tween(duration.medium),
