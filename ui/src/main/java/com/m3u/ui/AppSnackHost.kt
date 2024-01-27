@@ -6,15 +6,20 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Tv
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -31,19 +36,26 @@ fun AppSnackHost(
 ) {
     val theme = MaterialTheme.colorScheme
     val spacing = LocalSpacing.current
+    val television = message.type == Message.TYPE_TELEVISION
     val containerColor by animateColorAsState(
-        targetValue = when (message.level) {
-            Message.LEVEL_ERROR -> theme.error
-            Message.LEVEL_WARN -> theme.tertiary
-            else -> theme.primary
+        targetValue = when (message.type) {
+            Message.TYPE_TELEVISION -> theme.onBackground
+            else -> when (message.level) {
+                Message.LEVEL_ERROR -> theme.error
+                Message.LEVEL_WARN -> theme.tertiary
+                else -> theme.primary
+            }
         },
         label = "snack-host-color"
     )
     val contentColor by animateColorAsState(
-        targetValue = when (message.level) {
-            Message.LEVEL_ERROR -> theme.onError
-            Message.LEVEL_WARN -> theme.onTertiary
-            else -> theme.onPrimary
+        targetValue = when (message.type) {
+            Message.TYPE_TELEVISION -> theme.background
+            else -> when (message.level) {
+                Message.LEVEL_ERROR -> theme.onError
+                Message.LEVEL_WARN -> theme.onTertiary
+                else -> theme.onPrimary
+            }
         },
         label = "snack-host-color"
     )
@@ -61,6 +73,9 @@ fun AppSnackHost(
             colors = CardDefaults.cardColors(
                 containerColor = containerColor,
                 contentColor = contentColor
+            ),
+            elevation = CardDefaults.elevatedCardElevation(
+                if (television) spacing.medium else spacing.none
             )
         ) {
             val text = when {
@@ -84,17 +99,29 @@ fun AppSnackHost(
                 if (it.isLowerCase()) it.titlecase(Locale.ROOT)
                 else it.toString()
             }
-            Text(
-                text = text,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier
-                    .padding(
-                        horizontal = spacing.medium,
-                        vertical = spacing.small
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(horizontal = spacing.medium)
+            ) {
+                if (television) {
+                    Icon(
+                        imageVector = Icons.Rounded.Tv,
+                        contentDescription = null
                     )
-            )
+                }
+                Text(
+                    text = text,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier
+                        .padding(
+                            horizontal = spacing.medium,
+                            vertical = spacing.small
+                        )
+                )
+            }
+
         }
     }
 }
