@@ -20,7 +20,6 @@ import com.m3u.material.components.OuterBox
 @Composable
 fun Mask(
     state: MaskState,
-    windowInsets: WindowInsets,
     modifier: Modifier = Modifier,
     color: Color = Color.Unspecified,
     contentColor: Color = Color.Unspecified,
@@ -38,8 +37,7 @@ fun Mask(
         Background(color = color, contentColor = contentColor) {
             OuterBox(
                 modifier = modifier
-                    .focusRequester(focusRequester)
-                    .padding(windowInsets.asPaddingValues()),
+                    .focusRequester(focusRequester),
                 content = content
             )
         }

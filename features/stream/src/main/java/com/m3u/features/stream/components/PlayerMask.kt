@@ -6,8 +6,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.systemBars
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -23,7 +26,6 @@ import com.m3u.material.model.LocalSpacing
 @Composable
 internal fun PlayerMask(
     state: MaskState,
-    windowInsets: WindowInsets,
     header: @Composable RowScope.() -> Unit,
     body: @Composable RowScope.() -> Unit,
     footer: @Composable RowScope.() -> Unit,
@@ -41,8 +43,9 @@ internal fun PlayerMask(
             )
             Mask(
                 state = state,
-                windowInsets = windowInsets,
-                color = Color.Black.copy(alpha = 0.54f)
+                color = Color.Black.copy(alpha = 0.54f),
+                modifier = Modifier
+                    .padding(WindowInsets.systemBars.asPaddingValues())
             ) {
                 Row(
                     modifier = Modifier

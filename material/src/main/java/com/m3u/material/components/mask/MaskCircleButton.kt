@@ -9,10 +9,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.ClickableSurfaceDefaults
-import com.m3u.material.ktx.ifUnspecified
 import com.m3u.material.ktx.isTelevision
 
 @Composable
@@ -33,7 +33,7 @@ fun MaskCircleButton(
             },
             modifier = modifier,
             color = Color.Unspecified,
-            contentColor = tint.ifUnspecified { LocalContentColor.current }
+            contentColor = tint.takeOrElse { LocalContentColor.current }
         ) {
             CompositionLocalProvider(
                 androidx.tv.material3.LocalContentColor provides LocalContentColor.current
@@ -56,7 +56,7 @@ fun MaskCircleButton(
             modifier = modifier,
             colors = ClickableSurfaceDefaults.colors(
                 containerColor = Color.Unspecified,
-                contentColor = tint.ifUnspecified { androidx.tv.material3.LocalContentColor.current }
+                contentColor = tint.takeOrElse { androidx.tv.material3.LocalContentColor.current }
             )
         ) {
             androidx.tv.material3.Icon(
