@@ -4,6 +4,7 @@ package com.m3u.androidApp
 
 import android.annotation.SuppressLint
 import android.app.PictureInPictureParams
+import android.content.Context
 import android.content.res.Configuration
 import android.graphics.Color
 import android.graphics.Rect
@@ -199,22 +200,21 @@ class MainActivity : AppCompatActivity() {
         override val windowSizeClass: WindowSizeClass
             @Composable get() = calculateWindowSizeClass(activity = this@MainActivity)
 
+        override val activityContext: Context
+            get() = this@MainActivity
+
         override fun toast(message: String) {
             lifecycleScope.launch(Dispatchers.Main) {
                 Toast.makeText(this@MainActivity, message, Toast.LENGTH_SHORT).show()
             }
         }
 
-        override fun play(streamId: Int) {
-            lifecycleScope.launch {
-                playerManager.play(streamId)
-            }
+        override fun play(url: String) {
+            playerManager.play(url)
         }
 
         override fun replay() {
-            lifecycleScope.launch {
-                playerManager.replay()
-            }
+            playerManager.replay()
         }
     }
 

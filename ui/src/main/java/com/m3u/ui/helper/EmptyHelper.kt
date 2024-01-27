@@ -1,5 +1,6 @@
 package com.m3u.ui.helper
 
+import android.content.Context
 import android.graphics.Rect
 import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import androidx.compose.runtime.Composable
@@ -46,6 +47,9 @@ val EmptyHelper = object : Helper {
             error("Cannot set deep")
         }
 
+    override val activityContext: Context
+        get() = error("Cannot get activityContext")
+
     override var darkMode: UBoolean
         get() = error("Cannot get darkMode")
         set(_) {
@@ -86,8 +90,8 @@ val EmptyHelper = object : Helper {
         error("Cannot toast: $message")
     }
 
-    override fun play(streamId: Int) {
-        error("Cannot play stream: $streamId")
+    override fun play(url: String) {
+        error("Cannot play stream url: $url")
     }
 
     override fun replay() {

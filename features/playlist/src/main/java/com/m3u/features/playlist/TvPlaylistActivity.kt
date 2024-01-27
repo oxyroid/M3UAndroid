@@ -2,6 +2,7 @@ package com.m3u.features.playlist
 
 import android.app.ActivityOptions
 import android.content.ComponentName
+import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
 import android.graphics.Color
@@ -161,6 +162,9 @@ class TvPlaylistActivity : AppCompatActivity() {
 
         override var deep: Int = 0
 
+        override val activityContext: Context
+            get() = this@TvPlaylistActivity
+
         override val windowSizeClass: WindowSizeClass
             @Composable get() = calculateWindowSizeClass(activity = this@TvPlaylistActivity)
 
@@ -169,17 +173,13 @@ class TvPlaylistActivity : AppCompatActivity() {
                 Toast.makeText(this@TvPlaylistActivity, message, Toast.LENGTH_SHORT).show()
             }
         }
-
-        override fun play(streamId: Int) {
-            lifecycleScope.launch {
-                playerManager.play(streamId)
-            }
+        
+        override fun play(url: String) {
+            playerManager.play(url)
         }
 
         override fun replay() {
-            lifecycleScope.launch {
-                playerManager.replay()
-            }
+            playerManager.replay()
         }
     }
 

@@ -2,9 +2,7 @@ package com.m3u.features.stream
 
 import android.graphics.Rect
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.statusBars
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -16,11 +14,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
-import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.compose.LifecycleStartEffect
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.core.unspecified.unspecifiable
@@ -28,13 +24,11 @@ import com.m3u.core.util.basic.isNotEmpty
 import com.m3u.features.stream.components.DlnaDevicesBottomSheet
 import com.m3u.features.stream.components.FormatsBottomSheet
 import com.m3u.features.stream.components.rememberDeviceWrapper
-import com.m3u.features.stream.fragments.AudioBecomingNoisyReceiver
 import com.m3u.features.stream.fragments.StreamFragment
 import com.m3u.material.components.Background
 import com.m3u.material.components.mask.MaskInterceptor
 import com.m3u.material.components.mask.MaskState
 import com.m3u.material.components.mask.rememberMaskState
-import com.m3u.material.ktx.isTelevision
 import com.m3u.ui.helper.LocalHelper
 import com.m3u.ui.helper.OnPipModeChanged
 import kotlinx.coroutines.flow.launchIn
@@ -48,9 +42,6 @@ fun StreamRoute(
 ) {
     val helper = LocalHelper.current
     val pref = LocalPref.current
-    val context = LocalContext.current
-
-    val tv = isTelevision()
 
     val state: StreamState by viewModel.state.collectAsStateWithLifecycle()
     val playerState: StreamState.PlayerState by viewModel.playerState.collectAsStateWithLifecycle()
@@ -70,15 +61,7 @@ fun StreamRoute(
 
     val maskState = rememberMaskState()
 
-    LifecycleStartEffect {
-        onStopOrDispose {
-            if (isPipMode) {
-                viewModel.onEvent(StreamEvent.Release)
-            }
-        }
-    }
-
-    LifecycleStartEffect(Unit) {
+    LifecycleResumeEffect {
         with(helper) {
             darkMode = true.unspecifiable
             statusBarVisibility = false.unspecifiable
@@ -91,9 +74,9 @@ fun StreamRoute(
                 }
             }
         }
-        onStopOrDispose {
+        onPauseOrDispose {
             viewModel.onEvent(StreamEvent.Release)
-            viewModel.onEvent(StreamEvent.CloseDlnaDevices)
+            viewModel.onEvent(StreamEvent.CloseDlnaDevices(helper.activityContext))
         }
     }
 
@@ -111,9 +94,7 @@ fun StreamRoute(
         snapshotFlow { brightness }
             .onEach { helper.brightness = it }
             .launchIn(this)
-    }
 
-    LaunchedEffect(Unit) {
         snapshotFlow { maskState.visible }
             .onEach { visible ->
                 helper.statusBarVisibility = visible.unspecifiable
@@ -128,29 +109,6 @@ fun StreamRoute(
             helper.brightness = prev
         }
     }
-    if (!tv) {
-        LifecycleStartEffect {
-            val receiver = AudioBecomingNoisyReceiver {
-                maskState.wake()
-                viewModel.onEvent(StreamEvent.OnVolume(0f))
-            }
-            try {
-                ContextCompat.registerReceiver(
-                    context,
-                    receiver,
-                    AudioBecomingNoisyReceiver.INTENT_FILTER,
-                    ContextCompat.RECEIVER_NOT_EXPORTED
-                )
-            } catch (ignored: Exception) {
-            }
-            onStopOrDispose {
-                try {
-                    context.unregisterReceiver(receiver)
-                } catch (ignored: Exception) {
-                }
-            }
-        }
-    }
 
     LaunchedEffect(isPipMode) {
         val interceptor: MaskInterceptor? = if (isPipMode) { _ -> false } else null
@@ -161,7 +119,6 @@ fun StreamRoute(
         color = Color.Black,
         contentColor = Color.White
     ) {
-
         DlnaDevicesBottomSheet(
             maskState = maskState,
             searching = searching,
@@ -170,7 +127,7 @@ fun StreamRoute(
             connected = rememberDeviceWrapper(state.connected),
             connectDlnaDevice = { viewModel.onEvent(StreamEvent.ConnectDlnaDevice(it)) },
             disconnectDlnaDevice = { viewModel.onEvent(StreamEvent.DisconnectDlnaDevice(it)) },
-            onDismiss = { viewModel.onEvent(StreamEvent.CloseDlnaDevices) }
+            onDismiss = { viewModel.onEvent(StreamEvent.CloseDlnaDevices(helper.activityContext)) }
         )
 
         FormatsBottomSheet(
@@ -184,7 +141,7 @@ fun StreamRoute(
 
         StreamScreen(
             recording = recording,
-            openDlnaDevices = { viewModel.onEvent(StreamEvent.OpenDlnaDevices) },
+            openDlnaDevices = { viewModel.onEvent(StreamEvent.OpenDlnaDevices(helper.activityContext)) },
             openChooseFormat = { choosing = true },
             onRecord = { viewModel.record() },
             onFavourite = { viewModel.onEvent(StreamEvent.OnFavourite(it)) },
@@ -231,14 +188,13 @@ private fun StreamScreen(
     val playlistTitle = playlist?.title ?: "--"
     val favourite = stream?.favourite ?: false
 
-    BackHandler(isTelevision() && maskState.visible) {
+    BackHandler(maskState.visible) {
         maskState.sleep()
     }
 
     StreamFragment(
         playerState = playerState,
         title = title,
-        url = url,
         cover = cover,
         formatsIsNotEmpty = formatsIsNotEmpty,
         playlistTitle = playlistTitle,
@@ -255,7 +211,6 @@ private fun StreamScreen(
         volume = volume,
         onBrightness = onBrightness,
         onVolume = onVolume,
-        windowInsets = WindowInsets.statusBars,
         modifier = modifier
             .fillMaxSize()
             .testTag("features:stream")

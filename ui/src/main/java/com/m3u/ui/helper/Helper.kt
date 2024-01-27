@@ -1,5 +1,6 @@
 package com.m3u.ui.helper
 
+import android.content.Context
 import android.graphics.Rect
 import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
@@ -31,13 +32,14 @@ interface Helper {
     var screenOrientation: Int
     val message: StateFlow<Message>
     var deep: Int
+    val activityContext: Context
 
     @get:Composable
     val windowSizeClass: WindowSizeClass
 
     fun enterPipMode(size: Rect)
     fun toast(message: String)
-    fun play(streamId: Int)
+    fun play(url: String)
     fun replay()
 }
 

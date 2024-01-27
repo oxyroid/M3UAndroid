@@ -1,6 +1,7 @@
 package com.m3u.features.stream
 
 import android.app.PictureInPictureParams
+import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
 import android.graphics.Color
@@ -76,7 +77,7 @@ class PlayerActivity : ComponentActivity() {
     @Inject
     lateinit var streamRepository: StreamRepository
 
-    private val shortcutStreamIdLiveData = MutableLiveData<Int?>(null)
+    private val shortcutStreamUrlLiveData = MutableLiveData<String?>(null)
     private val shortcutRecentlyLiveData = MutableLiveData(false)
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -93,7 +94,7 @@ class PlayerActivity : ComponentActivity() {
                 )
             }
         }
-        shortcutStreamIdLiveData.observe(this) { streamId ->
+        shortcutStreamUrlLiveData.observe(this) { streamId ->
             if (streamId != null) {
                 helper.play(streamId)
             }
@@ -102,7 +103,7 @@ class PlayerActivity : ComponentActivity() {
             if (recently) {
                 lifecycleScope.launch {
                     val stream = streamRepository.getPlayedRecently() ?: return@launch
-                    helper.play(stream.id)
+                    helper.play(stream.url)
                 }
             }
         }
@@ -116,9 +117,8 @@ class PlayerActivity : ComponentActivity() {
     }
 
     private fun handleIntent(intent: Intent) {
-        shortcutStreamIdLiveData.value = intent
-            .getIntExtra(Contracts.PLAYER_SHORTCUT_STREAM_ID, -1)
-            .takeIf { it != -1 }
+        shortcutStreamUrlLiveData.value = intent
+            .getStringExtra(Contracts.PLAYER_SHORTCUT_STREAM_URL)
         shortcutRecentlyLiveData.value = intent
             .getBooleanExtra(Contracts.PLAYER_SHORTCUT_STREAM_RECENTLY, false)
     }
@@ -159,6 +159,10 @@ class PlayerActivity : ComponentActivity() {
 
 
         override var deep: Int = 0
+
+        override val activityContext: Context
+            get() = this@PlayerActivity
+
         override var darkMode: UBoolean = UBoolean.Unspecified
             set(value) {
                 field = value
@@ -204,16 +208,12 @@ class PlayerActivity : ComponentActivity() {
             }
         }
 
-        override fun play(streamId: Int) {
-            lifecycleScope.launch {
-                playerManager.play(streamId)
-            }
+        override fun play(url: String) {
+            playerManager.play(url)
         }
 
         override fun replay() {
-            lifecycleScope.launch {
-                playerManager.replay()
-            }
+            playerManager.replay()
         }
     }
 

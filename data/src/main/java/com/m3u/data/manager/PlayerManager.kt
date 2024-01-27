@@ -17,13 +17,13 @@ interface PlayerManager {
     val playbackState: StateFlow<@Player.State Int>
     val playerError: StateFlow<PlaybackException?>
     val groups: StateFlow<List<Tracks.Group>>
-    val selected: StateFlow<Map<@C.TrackType Int, Format?>>
+    val selected: Flow<Map<@C.TrackType Int, Format?>>
 
-    val streamId: StateFlow<Int?>
+    val url: StateFlow<String?>
 
-    suspend fun play(streamId: Int)
-    suspend fun replay()
-    suspend fun stop()
+    fun play(url: String)
+    fun replay()
+    fun stop()
 
     fun chooseTrack(group: TrackGroup, trackIndex: Int)
 }

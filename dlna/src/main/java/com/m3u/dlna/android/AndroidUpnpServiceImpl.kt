@@ -36,7 +36,7 @@ open class AndroidUpnpServiceImpl: Service() {
             }
         }
     }
-    private val binder: Binder = object : Binder(), AndroidUpnpService {
+    private val binder = object : Binder(), AndroidUpnpService {
         override val service: UpnpService
             get() = upnp
         override val configuration: UpnpServiceConfiguration
@@ -62,7 +62,7 @@ open class AndroidUpnpServiceImpl: Service() {
         )
     }
     override fun onDestroy() {
-        upnp.shutdown()
-        super.onDestroy()
+        binder.registry.shutdown()
+        binder.configuration.shutdown()
     }
 }

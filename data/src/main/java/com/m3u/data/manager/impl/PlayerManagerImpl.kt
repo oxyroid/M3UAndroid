@@ -16,16 +16,16 @@ import androidx.media3.common.TrackGroup
 import androidx.media3.common.TrackSelectionOverride
 import androidx.media3.common.Tracks
 import androidx.media3.common.VideoSize
+import androidx.media3.common.util.SystemClock
 import androidx.media3.common.util.UnstableApi
+import androidx.media3.datasource.DataSource
 import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.datasource.DefaultHttpDataSource
-import androidx.media3.datasource.okhttp.OkHttpDataSource
+import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.exoplayer.drm.DefaultDrmSessionManager
-import androidx.media3.exoplayer.drm.DrmSessionManager
-import androidx.media3.exoplayer.drm.FrameworkMediaDrm
-import androidx.media3.exoplayer.drm.HttpMediaDrmCallback
+import androidx.media3.exoplayer.analytics.DefaultAnalyticsCollector
+import androidx.media3.exoplayer.hls.HlsMediaSource
 import androidx.media3.exoplayer.rtsp.RtspMediaSource
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.exoplayer.source.ProgressiveMediaSource
@@ -34,10 +34,6 @@ import androidx.media3.session.MediaSession
 import com.m3u.core.architecture.pref.Pref
 import com.m3u.core.architecture.pref.annotation.ReconnectMode
 import com.m3u.core.architecture.pref.observeAsFlow
-import com.m3u.data.Certs
-import com.m3u.data.SSL
-import com.m3u.data.database.dao.StreamDao
-import com.m3u.data.database.model.Stream
 import com.m3u.data.manager.PlayerManager
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
@@ -48,27 +44,22 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.withContext
-import okhttp3.OkHttpClient
-import java.util.UUID
-import java.util.concurrent.TimeUnit
+import java.net.CookieHandler
+import java.net.CookieManager
+import java.net.CookiePolicy
 import javax.inject.Inject
 
 class PlayerManagerImpl @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val streamDao: StreamDao,
     private val pref: Pref
 ) : PlayerManager, Player.Listener, MediaSession.Callback {
     private val _player = MutableStateFlow<ExoPlayer?>(null)
     override val player: Flow<Player?> = _player.asStateFlow()
 
-    private val _streamId = MutableStateFlow<Int?>(null)
-    override val streamId: StateFlow<Int?> = _streamId.asStateFlow()
-
-    private val _stream = MutableStateFlow<Stream?>(null)
-
-    private val currentMimeType = MutableStateFlow<String?>(null)
+    private val _url = MutableStateFlow<String?>(null)
+    override val url: StateFlow<String?> = _url.asStateFlow()
 
     private val _videoSize = MutableStateFlow(Rect())
     override val videoSize: StateFlow<Rect> = _videoSize.asStateFlow()
@@ -83,57 +74,38 @@ class PlayerManagerImpl @Inject constructor(
 
     init {
         combine(
-            pref.observeAsFlow { it.isSSLVerification },
             pref.observeAsFlow { it.connectTimeout },
             pref.observeAsFlow { it.tunneling }
-        ) { _, _, _ -> replay() }
+        ) { _, _ -> replay() }
             .launchIn(coroutineScope)
     }
 
-    private var licenseKey: String? = null
-    private fun createPlayer(
-        isSSLVerification: Boolean,
-        timeout: Long,
-        tunneling: Boolean
-    ): ExoPlayer {
+    private fun createPlayer(): ExoPlayer {
         val rf = DefaultRenderersFactory(context).apply {
             setEnableDecoderFallback(true)
         }
         val dsf = DefaultDataSource.Factory(
             context,
-            buildHttpDataSourceFactory(!isSSLVerification, timeout)
+            buildHttpDataSourceFactory()
         )
         val msf = DefaultMediaSourceFactory(dsf)
-            .setDrmSessionManagerProvider {
-                val stream = _stream.value
-                val licenseKey = stream?.licenseKey
-                val licenseType = stream?.licenseType
-                if (licenseKey != null && licenseType != null) {
-                    val callback = HttpMediaDrmCallback(licenseKey, dsf)
-                    val uuid = getUUID(licenseType)
-                    DefaultDrmSessionManager.Builder()
-                        .setMultiSession(false)
-                        .setUuidAndExoMediaDrmProvider(uuid) {
-                            FrameworkMediaDrm.newInstance(uuid)
-                        }
-                        .build(callback)
-                } else {
-                    DrmSessionManager.DRM_UNSUPPORTED
-                }
-            }
 
         val ts = DefaultTrackSelector(context).apply {
             setParameters(
                 buildUponParameters()
-                    .setMaxVideoSizeSd()
-                    .setTunnelingEnabled(tunneling)
+                    .setForceHighestSupportedBitrate(true)
+                    .setTunnelingEnabled(pref.tunneling)
             )
         }
 
+        val lc = DefaultLoadControl()
         return ExoPlayer.Builder(context)
             .setMediaSourceFactory(msf)
             .setRenderersFactory(rf)
             .setTrackSelector(ts)
+            .setLoadControl(lc)
+            .setAnalyticsCollector(DefaultAnalyticsCollector(SystemClock.DEFAULT))
+            .setHandleAudioBecomingNoisy(true)
             .build()
             .apply {
                 val attributes = AudioAttributes.Builder()
@@ -146,35 +118,16 @@ class PlayerManagerImpl @Inject constructor(
             }
     }
 
-    private fun getUUID(type: String): UUID {
-        return when (type) {
-            Stream.LICENSE_TYPE_CLEAR_KEY -> C.CLEARKEY_UUID
-            Stream.LICENSE_TYPE_WIDEVINE -> C.WIDEVINE_UUID
-            Stream.LICENSE_TYPE_PLAY_READY -> C.PLAYREADY_UUID
-            else -> C.CLEARKEY_UUID
-        }
-    }
-
-    override suspend fun play(streamId: Int) {
-        val stream = withContext(Dispatchers.IO) { streamDao.get(streamId) } ?: return
-        _stream.value = stream
-        _streamId.value = streamId
-        licenseKey = stream.licenseKey
+    override fun play(url: String) {
+        _url.value = url
         tryPlay(
-            url = stream.url,
             mimeType = null
         )
     }
 
-    private fun tryPlay(
-        url: String,
-        mimeType: String?
-    ) {
-        val currentPlayer = _player.value ?: createPlayer(
-            isSSLVerification = pref.isSSLVerification,
-            timeout = pref.connectTimeout,
-            tunneling = pref.tunneling
-        ).also {
+    private fun tryPlay(mimeType: String?) {
+        val url = this.url.value ?: return
+        val currentPlayer = _player.value ?: createPlayer().also {
             _player.value.also { prev ->
                 prev?.stop()
                 prev?.release()
@@ -185,7 +138,7 @@ class PlayerManagerImpl @Inject constructor(
 
         when (mimeType) {
             MimeTypes.APPLICATION_SS -> {
-                val dataSourceFactory = DefaultHttpDataSource.Factory()
+                val dataSourceFactory = buildHttpDataSourceFactory()
                 val mediaSource = ProgressiveMediaSource.Factory(dataSourceFactory)
                     .createMediaSource(MediaItem.fromUri(url))
 
@@ -196,6 +149,15 @@ class PlayerManagerImpl @Inject constructor(
                 val mediaSource = RtspMediaSource.Factory()
                     .createMediaSource(MediaItem.fromUri(url))
                 currentPlayer.setMediaSource(mediaSource)
+            }
+
+            MimeTypes.APPLICATION_M3U8 -> {
+                val dataSourceFactory = buildHttpDataSourceFactory()
+                val hlsMediaSource = HlsMediaSource.Factory(dataSourceFactory)
+                    .setAllowChunklessPreparation(false)
+                    .createMediaSource(MediaItem.fromUri(url))
+                val player = ExoPlayer.Builder(context).build()
+                player.setMediaSource(hlsMediaSource)
             }
 
             else -> {
@@ -214,27 +176,26 @@ class PlayerManagerImpl @Inject constructor(
         currentPlayer.prepare()
     }
 
-    override suspend fun stop() {
+    override fun stop() {
         _player.update {
             it?.stop()
             it?.release()
             it?.removeListener(this)
             null
         }
-        _streamId.value = null
-        _stream.value = null
+        _url.value = null
         _groups.value = emptyList()
-        _selected.value = emptyMap()
         _videoSize.value = Rect()
         _playbackError.value = null
         _playbackState.value = Player.STATE_IDLE
-        currentMimeType.value = null
     }
 
-    override suspend fun replay() {
-        val streamId = streamId.value ?: return
-        stop()
-        play(streamId)
+    override fun replay() {
+        val prev = url.value
+        if (prev != null) {
+            stop()
+            play(prev)
+        }
     }
 
     override fun onVideoSizeChanged(size: VideoSize) {
@@ -257,50 +218,33 @@ class PlayerManagerImpl @Inject constructor(
         super.onPlayerErrorChanged(error)
         when (error?.errorCode) {
             PlaybackException.ERROR_CODE_BEHIND_LIVE_WINDOW -> {
-                if (pref.reconnectMode != ReconnectMode.NO) {
+                // always retry
+                // if (pref.reconnectMode != ReconnectMode.NO) {
                     _player.value?.let {
                         it.seekToDefaultPosition()
                         it.prepare()
                     }
-                }
+                // }
             }
 
-            in 3000..3999 -> {
-                val retryMimetype = when (currentMimeType.value) {
-                    null -> MimeTypes.APPLICATION_M3U8
-                    MimeTypes.APPLICATION_M3U8 -> MimeTypes.APPLICATION_MPD
-                    MimeTypes.APPLICATION_MPD -> MimeTypes.APPLICATION_SS
-                    MimeTypes.APPLICATION_SS -> MimeTypes.APPLICATION_RTSP
-                    MimeTypes.APPLICATION_RTSP -> null
-                    else -> null
-                }.also { currentMimeType.value = it }
-
-                if (retryMimetype != null) {
-                    _stream.value?.let { stream ->
-                        licenseKey = stream.licenseKey
-                        tryPlay(
-                            url = stream.url,
-                            mimeType = retryMimetype
-                        )
-                    }
-                }
+            PlaybackException.ERROR_CODE_PARSING_CONTAINER_UNSUPPORTED,
+            PlaybackException.ERROR_CODE_IO_UNSPECIFIED -> {
+                tryPlay(
+                    mimeType = MimeTypes.APPLICATION_M3U8
+                )
             }
 
             else -> {}
         }
+
         _playbackError.value = error
     }
 
     private val _groups = MutableStateFlow<List<Tracks.Group>>(emptyList())
     override val groups: StateFlow<List<Tracks.Group>> = _groups.asStateFlow()
 
-    private val _selected = MutableStateFlow<Map<@C.TrackType Int, Format?>>(emptyMap())
-    override val selected: StateFlow<Map<@C.TrackType Int, Format?>> = _selected.asStateFlow()
-
-    override fun onTracksChanged(tracks: Tracks) {
-        super.onTracksChanged(tracks)
-        _groups.value = tracks.groups
-        _selected.value = tracks.groups
+    override val selected: Flow<Map<@C.TrackType Int, Format?>> = groups.map { all ->
+        all
             .filter { it.isSelected }
             .groupBy { it.type }
             .mapValues { (_, groups) ->
@@ -316,6 +260,11 @@ class PlayerManagerImpl @Inject constructor(
             }
     }
 
+    override fun onTracksChanged(tracks: Tracks) {
+        super.onTracksChanged(tracks)
+        _groups.value = tracks.groups
+    }
+
     override fun chooseTrack(group: TrackGroup, trackIndex: Int) {
         val currentPlayer = _player.value ?: return
         val override = TrackSelectionOverride(group, trackIndex)
@@ -326,24 +275,13 @@ class PlayerManagerImpl @Inject constructor(
             .build()
     }
 
-    private fun buildHttpDataSourceFactory(
-        trustAll: Boolean,
-        timeout: Long
-    ): OkHttpDataSource.Factory {
-        return OkHttpDataSource.Factory(
-            OkHttpClient.Builder()
-                .connectTimeout(timeout, TimeUnit.MILLISECONDS)
-                .callTimeout(timeout, TimeUnit.MILLISECONDS)
-                .readTimeout(timeout, TimeUnit.MILLISECONDS)
-                .writeTimeout(timeout, TimeUnit.MILLISECONDS)
-                .apply {
-                    if (trustAll) {
-                        sslSocketFactory(SSL.TLSTrustAll.socketFactory, Certs.TrustAll)
-                            .hostnameVerifier { _, _ -> true }
-                    }
-                }
-                .build()
-        )
+    private fun buildHttpDataSourceFactory(): DataSource.Factory {
+        val cookieManager = CookieManager()
+        cookieManager.setCookiePolicy(CookiePolicy.ACCEPT_ORIGINAL_SERVER)
+        CookieHandler.setDefault(cookieManager)
+        return DefaultHttpDataSource.Factory().apply {
+            setAllowCrossProtocolRedirects(true)
+        }
     }
 }
 

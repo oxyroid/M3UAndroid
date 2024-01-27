@@ -2,18 +2,15 @@ package com.m3u.features.stream.fragments
 
 import android.content.pm.ActivityInfo
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
@@ -64,8 +61,8 @@ import com.m3u.material.components.mask.MaskCircleButton
 import com.m3u.material.components.mask.MaskState
 import com.m3u.material.ktx.isTelevision
 import com.m3u.material.model.LocalSpacing
-import com.m3u.ui.helper.LocalHelper
 import com.m3u.ui.Player
+import com.m3u.ui.helper.LocalHelper
 import com.m3u.ui.rememberPlayerState
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -74,7 +71,6 @@ internal fun StreamFragment(
     playerState: StreamState.PlayerState,
     title: String,
     playlistTitle: String,
-    url: String,
     cover: String,
     formatsIsNotEmpty: Boolean,
     maskState: MaskState,
@@ -91,7 +87,6 @@ internal fun StreamFragment(
     onBackPressed: () -> Unit,
     replay: () -> Unit,
     modifier: Modifier = Modifier,
-    windowInsets: WindowInsets = WindowInsets.systemBars
 ) {
     val theme = MaterialTheme.colorScheme
     val pref = LocalPref.current
@@ -107,10 +102,9 @@ internal fun StreamFragment(
         color = Color.Black,
         contentColor = Color.White,
     ) {
-        Box(modifier.animateContentSize()) {
+        Box(modifier) {
             val state = rememberPlayerState(
                 player = playerState.player,
-                url = url,
                 clipMode = pref.clipMode
             )
 
@@ -134,7 +128,6 @@ internal fun StreamFragment(
                 val muted = currentVolume == 0f
                 PlayerMask(
                     state = maskState,
-                    windowInsets = windowInsets,
                     header = {
                         MaskButton(
                             state = maskState,

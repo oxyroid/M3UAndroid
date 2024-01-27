@@ -109,7 +109,7 @@ internal fun TvPlaylistScreenImpl(
                     maxBrowserHeight = maxBrowserHeight,
                     noPictureMode = noPictureMode,
                     onClick = { stream, _, _ ->
-                        helper.play(stream.id)
+                        helper.play(stream.url)
                         navigateToStream()
                     },
                     onLongClick = { _, i, j ->

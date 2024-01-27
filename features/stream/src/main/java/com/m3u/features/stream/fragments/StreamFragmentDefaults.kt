@@ -1,15 +1,9 @@
 package com.m3u.features.stream.fragments
 
-import android.content.BroadcastReceiver
-import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
 import android.database.ContentObserver
-import android.media.AudioManager
 import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
-import android.util.Log
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
@@ -50,7 +44,6 @@ internal object StreamFragmentDefaults {
 
                         else -> {}
                     }
-                    Log.e("TAG", "width: ${size.width}, ${start.x}, r: $gesture")
                 },
                 onDragEnd = {
                     onDragEnd?.invoke()
@@ -121,16 +114,4 @@ internal object StreamFragmentDefaults {
                 }
             }
         }
-}
-
-class AudioBecomingNoisyReceiver(private val callback: () -> Unit) : BroadcastReceiver() {
-    companion object {
-        val INTENT_FILTER = IntentFilter().apply {
-            addAction(AudioManager.ACTION_AUDIO_BECOMING_NOISY)
-        }
-    }
-
-    override fun onReceive(context: Context, intent: Intent) {
-        callback()
-    }
 }

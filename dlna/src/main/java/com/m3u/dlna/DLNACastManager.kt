@@ -149,7 +149,7 @@ object DLNACastManager : OnDeviceRegistryListener {
                     service.registry.removeDevice(it.identity.udn)
                 }
             // when search device, clear all founded first.
-            // service.registry.removeAllRemoteDevices()
+            service.registry.removeAllRemoteDevices()
 
             // search the special type device
             service.controlPoint.search(type?.let { UDADeviceTypeHeader(it) } ?: STAllHeader())

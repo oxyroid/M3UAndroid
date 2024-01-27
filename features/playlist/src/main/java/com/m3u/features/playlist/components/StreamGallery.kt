@@ -25,7 +25,7 @@ internal fun StreamGallery(
     streams: ImmutableList<Stream>,
     zapping: Stream?,
     sort: Sort,
-    play: (streamId: Int) -> Unit,
+    play: (url: String) -> Unit,
     onMenu: (Stream) -> Unit,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(0.dp),
@@ -66,7 +66,7 @@ private fun CompactStreamGalleryImpl(
     streams: ImmutableList<Stream>,
     zapping: Stream?,
     sort: Sort,
-    play: (streamId: Int) -> Unit,
+    play: (url: String) -> Unit,
     onMenu: (Stream) -> Unit,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(0.dp),
@@ -90,7 +90,7 @@ private fun CompactStreamGalleryImpl(
                 sort = sort,
                 noPictureMode = pref.noPictureMode,
                 onClick = {
-                    play(stream.id)
+                    play(stream.url)
                 },
                 onLongClick = { onMenu(stream) },
                 modifier = Modifier.fillMaxWidth(),
@@ -106,7 +106,7 @@ private fun StreamGalleryImpl(
     streams: ImmutableList<Stream>,
     zapping: Stream?,
     sort: Sort,
-    play: (streamId: Int) -> Unit,
+    play: (url: String) -> Unit,
     onMenu: (Stream) -> Unit,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(0.dp),
@@ -133,7 +133,7 @@ private fun StreamGalleryImpl(
                 noPictureMode = pref.noPictureMode,
                 sort = sort,
                 onClick = {
-                    play(stream.id)
+                    play(stream.url)
                 },
                 onLongClick = { onMenu(stream) },
                 modifier = Modifier.fillMaxWidth(),
