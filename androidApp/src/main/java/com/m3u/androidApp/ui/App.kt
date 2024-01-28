@@ -1,5 +1,6 @@
 package com.m3u.androidApp.ui
 
+import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
@@ -19,6 +20,7 @@ fun App(
     viewModel: AppViewModel = hiltViewModel(),
 ) {
     val helper = LocalHelper.current
+    val onBackPressedDispatcherOwner = LocalOnBackPressedDispatcherOwner.current
 
     val navController = rememberNavController()
     val entry by navController.currentBackStackEntryAsState()
@@ -42,7 +44,7 @@ fun App(
     val deep by viewModel.deep.collectAsStateWithLifecycle()
 
     val onBackPressed: (() -> Unit)? = {
-        navController.popBackStack()
+        onBackPressedDispatcherOwner?.onBackPressedDispatcher?.onBackPressed()
         Unit
     }.takeIf { deep > 0 }
 

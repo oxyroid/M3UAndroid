@@ -294,7 +294,6 @@ fun TextPreference(
         },
         modifier = modifier,
         trailing = {
-
             if (!isTelevision()) {
                 Text(
                     text = trailing.uppercase(),
