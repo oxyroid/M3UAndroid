@@ -1,7 +1,6 @@
 package com.m3u.features.stream
 
 import android.graphics.Rect
-import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -186,10 +185,6 @@ private fun StreamScreen(
     val cover = stream?.cover.orEmpty()
     val playlistTitle = playlist?.title ?: "--"
     val favourite = stream?.favourite ?: false
-
-    BackHandler(maskState.visible) {
-        maskState.sleep()
-    }
 
     StreamFragment(
         playerState = playerState,
