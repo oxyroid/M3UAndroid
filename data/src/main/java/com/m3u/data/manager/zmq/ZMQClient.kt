@@ -1,4 +1,4 @@
-package com.m3u.data.net.zmq
+package com.m3u.data.manager.zmq
 
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.prefix

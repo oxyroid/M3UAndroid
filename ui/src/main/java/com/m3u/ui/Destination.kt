@@ -11,47 +11,30 @@ import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.m3u.i18n.R.string
-import kotlinx.collections.immutable.persistentListOf
 
 @Immutable
 sealed interface Destination {
     @Immutable
-    sealed class Root(
+    enum class Root(
         val selectedIcon: ImageVector,
         val unselectedIcon: ImageVector,
         @StringRes val iconTextId: Int
     ) : Destination {
-        @Immutable
-        data object Foryou : Root(
+        Foryou(
             selectedIcon = Icons.Rounded.Home,
             unselectedIcon = Icons.Outlined.Home,
             iconTextId = string.ui_destination_foryou
-        )
-
-        @Immutable
-        data object Favourite : Root(
+        ),
+        Favourite(
             selectedIcon = Icons.Rounded.Collections,
             unselectedIcon = Icons.Outlined.Collections,
             iconTextId = string.ui_destination_favourite
-        )
-
-        @Immutable
-        data class Setting(
-            val targetFragment: SettingFragment = SettingFragment.Root
-        ) : Root(
+        ),
+        Setting(
             selectedIcon = Icons.Rounded.Settings,
             unselectedIcon = Icons.Outlined.Settings,
             iconTextId = string.ui_destination_setting
-        ) {
-            @Immutable
-            enum class SettingFragment {
-                Root, Playlists, Scripts, Appearance
-            }
-        }
-
-        companion object {
-            val entries = persistentListOf(Foryou, Favourite, Setting())
-        }
+        );
     }
 
     @Immutable
@@ -61,9 +44,18 @@ sealed interface Destination {
     ) : Destination
 
     @Immutable
-    data object Console : Destination
-
-    @Immutable
     data object About : Destination
 }
 
+sealed interface DestinationEvent {
+    sealed interface Setting {
+        @Immutable
+        data object Default : Setting
+
+        @Immutable
+        data object Playlists : Setting
+
+        @Immutable
+        data object Appearance : Setting
+    }
+}

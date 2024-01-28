@@ -7,6 +7,7 @@ import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.pref.Pref
 import com.m3u.core.wrapper.Message
 import com.m3u.data.repository.TvRepository
+import com.m3u.dlna.DLNACastManager
 import com.m3u.features.crash.CrashHandler
 import com.m3u.material.ktx.isTelevision
 import dagger.hilt.android.HiltAndroidApp
@@ -42,6 +43,7 @@ class M3UApplication : Application(), Configuration.Provider {
             if (resources.configuration.isTelevision() || pref.alwaysTv) {
                 tvRepository.startServer()
             } else {
+                DLNACastManager.bindCastService(this@M3UApplication)
                 tvRepository
                     .broadcast
                     .onEach {

@@ -2,6 +2,7 @@ package com.m3u.features.setting
 
 import android.net.Uri
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -9,8 +10,10 @@ import androidx.compose.material3.adaptive.AnimatedPane
 import androidx.compose.material3.adaptive.ListDetailPaneScaffold
 import androidx.compose.material3.adaptive.ListDetailPaneScaffoldRole
 import androidx.compose.material3.adaptive.calculateListDetailPaneScaffoldState
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -23,14 +26,16 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.core.util.basic.title
+import com.m3u.data.database.model.ColorPack
 import com.m3u.data.database.model.Stream
+import com.m3u.features.setting.components.CanvasBottomSheet
 import com.m3u.features.setting.fragments.AppearanceFragment
-import com.m3u.features.setting.fragments.ColorPack
-import com.m3u.features.setting.fragments.ScriptsFragment
 import com.m3u.features.setting.fragments.SubscriptionsFragment
 import com.m3u.features.setting.fragments.preferences.PreferencesFragment
 import com.m3u.i18n.R.string
-import com.m3u.ui.Destination.Root.Setting.SettingFragment
+import com.m3u.material.ktx.isTelevision
+import com.m3u.ui.DestinationEvent
+import com.m3u.ui.EventBus
 import com.m3u.ui.EventHandler
 import com.m3u.ui.ResumeEvent
 import com.m3u.ui.helper.LocalHelper
@@ -43,9 +48,10 @@ fun SettingRoute(
     contentPadding: PaddingValues,
     navigateToAbout: () -> Unit,
     modifier: Modifier = Modifier,
-    viewModel: SettingViewModel = hiltViewModel(),
-    targetFragment: SettingFragment = SettingFragment.Root
+    viewModel: SettingViewModel = hiltViewModel()
 ) {
+    val tv = isTelevision()
+
     val title = stringResource(string.ui_title_setting)
     val controller = LocalSoftwareKeyboardController.current
 
@@ -54,37 +60,56 @@ fun SettingRoute(
     val banneds by viewModel.banneds.collectAsStateWithLifecycle()
     val helper = LocalHelper.current
 
+    val sheetState = rememberModalBottomSheetState()
+    var colorInt: Int? by remember { mutableStateOf(null) }
+    var isDark: Boolean? by remember { mutableStateOf(null) }
+
     EventHandler(resume) {
         helper.deep = 0
         helper.title = title.title()
         helper.actions = persistentListOf()
     }
 
-    SettingScreen(
-        contentPadding = contentPadding,
-        versionName = state.versionName,
-        versionCode = state.versionCode,
-        title = state.title,
-        url = state.url,
-        uriWrapper = rememberUriWrapper(state.uri),
-        targetFragment = targetFragment,
-        banneds = banneds,
-        onTitle = { viewModel.onEvent(SettingEvent.OnTitle(it)) },
-        onUrl = { viewModel.onEvent(SettingEvent.OnUrl(it)) },
-        onSubscribe = {
-            controller?.hide()
-            viewModel.onEvent(SettingEvent.Subscribe)
-        },
-        onBanned = { viewModel.onEvent(SettingEvent.OnBanned(it)) },
-        importJavaScript = { viewModel.onEvent(SettingEvent.ImportJavaScript(it)) },
-        navigateToAbout = navigateToAbout,
-        localStorage = state.localStorage,
-        onLocalStorage = { viewModel.onEvent(SettingEvent.OnLocalStorage) },
-        openDocument = { viewModel.onEvent(SettingEvent.OpenDocument(it)) },
-        packs = packs,
-        onArgbMenu = { /*todo*/ },
-        modifier = modifier.fillMaxSize()
-    )
+    Box {
+        SettingScreen(
+            contentPadding = contentPadding,
+            versionName = state.versionName,
+            versionCode = state.versionCode,
+            title = state.title,
+            url = state.url,
+            uriWrapper = rememberUriWrapper(state.uri),
+            banneds = banneds,
+            onTitle = { viewModel.onEvent(SettingEvent.OnTitle(it)) },
+            onUrl = { viewModel.onEvent(SettingEvent.OnUrl(it)) },
+            onSubscribe = {
+                controller?.hide()
+                viewModel.onEvent(SettingEvent.Subscribe)
+            },
+            onBanned = { viewModel.onEvent(SettingEvent.OnBanned(it)) },
+            navigateToAbout = navigateToAbout,
+            localStorage = state.localStorage,
+            onLocalStorage = { viewModel.onEvent(SettingEvent.OnLocalStorage) },
+            openDocument = { viewModel.onEvent(SettingEvent.OpenDocument(it)) },
+            onClipboard = { viewModel.onClipboard(it) },
+            packs = packs,
+            openColorCanvas = { c, i ->
+                colorInt = c
+                isDark = i
+            },
+            modifier = modifier.fillMaxSize()
+        )
+        if (!tv) {
+            CanvasBottomSheet(
+                sheetState = sheetState,
+                colorInt = colorInt,
+                isDark = isDark,
+                onDismissRequest = {
+                    colorInt = null
+                    isDark = null
+                }
+            )
+        }
+    }
 }
 
 @Composable
@@ -95,55 +120,56 @@ private fun SettingScreen(
     title: String,
     url: String,
     uriWrapper: UriWrapper,
-    targetFragment: SettingFragment,
     onTitle: (String) -> Unit,
     onUrl: (String) -> Unit,
     onSubscribe: () -> Unit,
     banneds: ImmutableList<Stream>,
     onBanned: (Int) -> Unit,
-    importJavaScript: (Uri) -> Unit,
     navigateToAbout: () -> Unit,
     localStorage: Boolean,
     onLocalStorage: () -> Unit,
     openDocument: (Uri) -> Unit,
+    onClipboard: (String) -> Unit,
     packs: ImmutableList<ColorPack>,
-    onArgbMenu: (Int) -> Unit,
+    openColorCanvas: (Int, Boolean) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val helper = LocalHelper.current
     val pref = LocalPref.current
 
-    val rootTitle = stringResource(string.ui_title_setting)
+    val defaultTitle = stringResource(string.ui_title_setting)
     val playlistTitle = stringResource(string.feat_setting_playlist_management)
-    val scriptTitle = stringResource(string.feat_setting_script_management)
     val appearanceTitle = stringResource(string.feat_setting_appearance)
 
     val colorArgb = pref.colorArgb
 
-    var fragment: SettingFragment by remember(targetFragment) {
-        mutableStateOf(targetFragment)
+    var fragment: DestinationEvent.Setting by remember {
+        mutableStateOf(DestinationEvent.Setting.Default)
+    }
+
+    EventHandler(EventBus.setting) {
+        fragment = it
     }
 
     LaunchedEffect(fragment) {
         helper.title = when (fragment) {
-            SettingFragment.Root -> rootTitle
-            SettingFragment.Playlists -> playlistTitle
-            SettingFragment.Scripts -> scriptTitle
-            SettingFragment.Appearance -> appearanceTitle
+            DestinationEvent.Setting.Default -> defaultTitle
+            DestinationEvent.Setting.Playlists -> playlistTitle
+            DestinationEvent.Setting.Appearance -> appearanceTitle
         }.title()
         helper.deep = when (fragment) {
-            SettingFragment.Root -> 0
+            DestinationEvent.Setting.Default -> 0
             else -> 1
         }
     }
 
-    var currentPaneDestination by remember(targetFragment) {
-        mutableStateOf(
-            when (targetFragment) {
-                SettingFragment.Root -> ListDetailPaneScaffoldRole.List
+    val currentPaneDestination by remember {
+        derivedStateOf {
+            when (fragment) {
+                DestinationEvent.Setting.Default -> ListDetailPaneScaffoldRole.List
                 else -> ListDetailPaneScaffoldRole.Detail
             }
-        )
+        }
     }
     val scaffoldState = calculateListDetailPaneScaffoldState(
         currentPaneDestination = currentPaneDestination
@@ -159,26 +185,20 @@ private fun SettingScreen(
                 versionName = versionName,
                 versionCode = versionCode,
                 navigateToPlaylistManagement = {
-                    currentPaneDestination = ListDetailPaneScaffoldRole.Detail
-                    fragment = SettingFragment.Playlists
-                },
-                navigateToScriptManagement = {
-                    currentPaneDestination = ListDetailPaneScaffoldRole.Detail
-                    fragment = SettingFragment.Scripts
+                    fragment = DestinationEvent.Setting.Playlists
                 },
                 navigateToThemeSelector = {
-                    currentPaneDestination = ListDetailPaneScaffoldRole.Detail
-                    fragment = SettingFragment.Appearance
+                    fragment = DestinationEvent.Setting.Appearance
                 },
                 navigateToAbout = navigateToAbout,
                 modifier = Modifier.fillMaxSize()
             )
         },
         detailPane = {
-            if (fragment != SettingFragment.Root) {
+            if (fragment != DestinationEvent.Setting.Default) {
                 AnimatedPane(Modifier) {
                     when (fragment) {
-                        SettingFragment.Playlists -> {
+                        DestinationEvent.Setting.Playlists -> {
                             SubscriptionsFragment(
                                 contentPadding = contentPadding,
                                 title = title,
@@ -192,24 +212,17 @@ private fun SettingScreen(
                                 localStorage = localStorage,
                                 onLocalStorage = onLocalStorage,
                                 openDocument = openDocument,
+                                onClipboard = onClipboard,
                                 onBackup = {},
                                 modifier = Modifier.fillMaxSize()
                             )
                         }
 
-                        SettingFragment.Scripts -> {
-                            ScriptsFragment(
-                                contentPadding = contentPadding,
-                                importJavaScript = importJavaScript,
-                                modifier = Modifier.fillMaxSize()
-                            )
-                        }
-
-                        SettingFragment.Appearance -> {
+                        DestinationEvent.Setting.Appearance -> {
                             AppearanceFragment(
                                 packs = packs,
                                 colorArgb = colorArgb,
-                                onArgbMenu = onArgbMenu,
+                                openColorCanvas = openColorCanvas,
                                 contentPadding = contentPadding
                             )
                         }
@@ -224,8 +237,7 @@ private fun SettingScreen(
             .testTag("feature:setting")
     )
 
-    BackHandler(fragment != SettingFragment.Root) {
-        fragment = SettingFragment.Root
-        currentPaneDestination = ListDetailPaneScaffoldRole.List
+    BackHandler(fragment != DestinationEvent.Setting.Default) {
+        fragment = DestinationEvent.Setting.Default
     }
 }

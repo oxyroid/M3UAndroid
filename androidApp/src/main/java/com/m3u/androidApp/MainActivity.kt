@@ -16,7 +16,6 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.runtime.Composable
@@ -29,7 +28,6 @@ import androidx.core.view.WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_B
 import androidx.lifecycle.lifecycleScope
 import com.m3u.androidApp.ui.App
 import com.m3u.androidApp.ui.AppViewModel
-import com.m3u.androidApp.ui.rememberAppState
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.pref.Pref
 import com.m3u.core.unspecified.UBoolean
@@ -42,8 +40,7 @@ import com.m3u.core.util.coroutine.getValue
 import com.m3u.core.util.coroutine.setValue
 import com.m3u.core.wrapper.Message
 import com.m3u.data.manager.PlayerManager
-import com.m3u.ui.AppLocalProvider
-import com.m3u.ui.Destination
+import com.m3u.ui.Toolkit
 import com.m3u.ui.helper.Action
 import com.m3u.ui.helper.Fob
 import com.m3u.ui.helper.Helper
@@ -89,22 +86,15 @@ class MainActivity : AppCompatActivity() {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         setContent {
-            val pagerState = rememberPagerState(pref.rootDestination) {
-                Destination.Root.entries.size
-            }
-            val state = rememberAppState(
-                pagerState = pagerState
-            )
             val darkMode = pref.darkMode
             LaunchedEffect(darkMode) {
                 helper.darkMode = darkMode.unspecifiable
             }
-            AppLocalProvider(
+            Toolkit(
                 helper = helper,
                 pref = pref
             ) {
                 App(
-                    state = state,
                     viewModel = viewModel
                 )
             }

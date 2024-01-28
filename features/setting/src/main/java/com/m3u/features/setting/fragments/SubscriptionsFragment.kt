@@ -3,13 +3,11 @@ package com.m3u.features.setting.fragments
 import android.net.Uri
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.background
-import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.imeNestedScroll
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -22,11 +20,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.res.stringResource
 import com.m3u.data.database.model.Stream
 import com.m3u.features.setting.UriWrapper
 import com.m3u.features.setting.components.BannedStreamItem
-import com.m3u.features.setting.components.ClipboardButton
 import com.m3u.features.setting.components.LocalStorageButton
 import com.m3u.features.setting.components.LocalStorageSwitch
 import com.m3u.i18n.R.string
@@ -48,6 +46,7 @@ internal fun SubscriptionsFragment(
     onBanned: (Int) -> Unit,
     onTitle: (String) -> Unit,
     onUrl: (String) -> Unit,
+    onClipboard: (String) -> Unit,
     onSubscribe: () -> Unit,
     onLocalStorage: () -> Unit,
     openDocument: (Uri) -> Unit,
@@ -55,13 +54,14 @@ internal fun SubscriptionsFragment(
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
+    val clipboardManager = LocalClipboardManager.current
+
     val focusRequester = remember { FocusRequester() }
+
     LazyColumn(
         contentPadding = PaddingValues(spacing.medium) + contentPadding,
         verticalArrangement = Arrangement.spacedBy(spacing.small),
         modifier = modifier
-            .focusGroup()
-            .imeNestedScroll()
     ) {
         if (banneds.isNotEmpty()) {
             item {
@@ -148,10 +148,13 @@ internal fun SubscriptionsFragment(
                     onClick = onSubscribe,
                     modifier = Modifier.fillMaxWidth()
                 )
-                ClipboardButton(
+                TextButton(
+                    text = stringResource(string.feat_setting_label_parse_from_clipboard),
                     enabled = !localStorage,
-                    onTitle = onTitle,
-                    onUrl = onUrl
+                    onClick = {
+                        onClipboard(clipboardManager.getText()?.text.orEmpty())
+                    },
+                    modifier = Modifier.fillMaxWidth()
                 )
                 TextButton(
                     text = stringResource(string.feat_setting_label_backup),

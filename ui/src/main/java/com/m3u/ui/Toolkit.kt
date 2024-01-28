@@ -6,6 +6,8 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.core.architecture.pref.Pref
+import com.m3u.material.LocalM3UHapticFeedback
+import com.m3u.material.createM3UHapticFeedback
 import com.m3u.material.ktx.LocalAlwaysTelevision
 import com.m3u.material.model.AppTheme
 import com.m3u.ui.helper.EmptyHelper
@@ -13,7 +15,7 @@ import com.m3u.ui.helper.Helper
 import com.m3u.ui.helper.LocalHelper
 
 @Composable
-fun AppLocalProvider(
+fun Toolkit(
     helper: Helper = EmptyHelper,
     pref: Pref,
     content: @Composable () -> Unit
@@ -25,7 +27,8 @@ fun AppLocalProvider(
     CompositionLocalProvider(
         LocalHelper provides helper,
         LocalPref provides pref,
-        LocalAlwaysTelevision provides pref.alwaysTv
+        LocalAlwaysTelevision provides pref.alwaysTv,
+        LocalM3UHapticFeedback provides createM3UHapticFeedback()
     ) {
         AppTheme(
             argb = pref.colorArgb,

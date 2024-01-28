@@ -7,7 +7,6 @@ sealed interface SettingEvent {
     data class OnTitle(val title: String) : SettingEvent
     data class OnUrl(val url: String) : SettingEvent
     data class OnBanned(val id: Int) : SettingEvent
-    data class ImportJavaScript(val uri: Uri = Uri.EMPTY) : SettingEvent
     data class OpenDocument(val uri: Uri = Uri.EMPTY) : SettingEvent
     data object OnLocalStorage : SettingEvent
 }

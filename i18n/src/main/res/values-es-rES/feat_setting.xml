@@ -11,7 +11,6 @@
     <string name="feat_setting_sync_mode_all">todo</string>
     <string name="feat_setting_sync_mode_skip_favourite">saltar favorito</string>
     <string name="feat_setting_sync_mode">modo de sincronización</string>
-    <string name="feat_setting_script_management">administrar script</string>
     <string name="feat_setting_playlist_management">administrar playlist</string>
     <string name="feat_setting_connect_timeout">límite de conexión</string>
     <string name="feat_setting_god_mode">modo dios</string>
@@ -61,4 +60,5 @@
     <string name="feat_setting_reconnect_mode_reconnect">siempre</string>
     <string name="feat_setting_compact">modo compacto</string>
     <string name="feat_setting_appearance">apariencia</string>
+
 </resources>

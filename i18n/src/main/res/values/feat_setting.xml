@@ -11,7 +11,6 @@
     <string name="feat_setting_sync_mode_all">all</string>
     <string name="feat_setting_sync_mode_skip_favourite">skip favourite</string>
     <string name="feat_setting_sync_mode">synchronization strategy</string>
-    <string name="feat_setting_script_management">script management</string>
     <string name="feat_setting_playlist_management">playlist management</string>
     <string name="feat_setting_connect_timeout">connect timeout</string>
     <string name="feat_setting_god_mode">god mode</string>
@@ -67,6 +66,9 @@
     <string name="feat_setting_appearance">appearance</string>
     <string name="feat_setting_tunneling">tunneling mode</string>
     <string name="feat_setting_tunneling_description">improve playback of 4K/HDR content</string>
-    <string name="feat_setting_label_backup">backup</string>
+    <string name="feat_setting_label_backup">backup all data</string>
     <string name="feat_setting_label_restore">restore</string>
+
+    <string name="feat_setting_canvas_dark">dark</string>
+    <string name="feat_setting_canvas_light">light</string>
 </resources>

@@ -1,8 +1,5 @@
 package com.m3u.material.components
 
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.spring
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -13,7 +10,6 @@ import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
-import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.LocalAbsoluteTonalElevation
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
@@ -68,16 +64,16 @@ fun Preference(
         }
     ) {
         val alpha = if (enabled) 1f else 0.38f
-        val currentContainerColor by animateColorAsState(
-            targetValue = MaterialTheme.colorScheme.surface.copy(alpha),
-            label = "preference-container-color",
-            animationSpec = spring(stiffness = Spring.StiffnessMediumLow)
-        )
-        val currentContentColor by animateColorAsState(
-            targetValue = MaterialTheme.colorScheme.onSurface.copy(alpha),
-            label = "preference-content-color",
-            animationSpec = spring(stiffness = Spring.StiffnessMediumLow)
-        )
+//        val currentContainerColor by animateColorAsState(
+//            targetValue = MaterialTheme.colorScheme.surface.copy(alpha),
+//            label = "preference-container-color",
+//            animationSpec = spring(stiffness = Spring.StiffnessMediumLow)
+//        )
+//        val currentContentColor by animateColorAsState(
+//            targetValue = MaterialTheme.colorScheme.onSurface.copy(alpha),
+//            label = "preference-content-color",
+//            animationSpec = spring(stiffness = Spring.StiffnessMediumLow)
+//        )
         if (!isTelevision()) {
             ListItem(
                 headlineContent = {
@@ -107,14 +103,14 @@ fun Preference(
                     }
                 },
                 tonalElevation = LocalAbsoluteTonalElevation.current,
-                colors = ListItemDefaults.colors(
-                    containerColor = currentContainerColor,
-                    headlineColor = currentContentColor,
-                    leadingIconColor = currentContentColor,
-                    overlineColor = currentContentColor,
-                    supportingColor = currentContentColor,
-                    trailingIconColor = currentContentColor,
-                ),
+//                colors = ListItemDefaults.colors(
+//                    containerColor = currentContainerColor,
+//                    headlineColor = currentContentColor,
+//                    leadingIconColor = currentContentColor,
+//                    overlineColor = currentContentColor,
+//                    supportingColor = currentContentColor,
+//                    trailingIconColor = currentContentColor,
+//                ),
                 shadowElevation = elevation,
                 modifier = modifier
                     .semantics(mergeDescendants = true) {}

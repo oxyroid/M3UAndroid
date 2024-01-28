@@ -75,8 +75,7 @@ fun StreamRoute(
             }
         }
         onPauseOrDispose {
-            viewModel.onEvent(StreamEvent.Release)
-            viewModel.onEvent(StreamEvent.CloseDlnaDevices(helper.activityContext))
+            viewModel.onEvent(StreamEvent.CloseDlnaDevices)
         }
     }
 
@@ -127,7 +126,7 @@ fun StreamRoute(
             connected = rememberDeviceWrapper(state.connected),
             connectDlnaDevice = { viewModel.onEvent(StreamEvent.ConnectDlnaDevice(it)) },
             disconnectDlnaDevice = { viewModel.onEvent(StreamEvent.DisconnectDlnaDevice(it)) },
-            onDismiss = { viewModel.onEvent(StreamEvent.CloseDlnaDevices(helper.activityContext)) }
+            onDismiss = { viewModel.onEvent(StreamEvent.CloseDlnaDevices) }
         )
 
         FormatsBottomSheet(
@@ -141,7 +140,7 @@ fun StreamRoute(
 
         StreamScreen(
             recording = recording,
-            openDlnaDevices = { viewModel.onEvent(StreamEvent.OpenDlnaDevices(helper.activityContext)) },
+            openDlnaDevices = { viewModel.onEvent(StreamEvent.OpenDlnaDevices) },
             openChooseFormat = { choosing = true },
             onRecord = { viewModel.record() },
             onFavourite = { viewModel.onEvent(StreamEvent.OnFavourite(it)) },

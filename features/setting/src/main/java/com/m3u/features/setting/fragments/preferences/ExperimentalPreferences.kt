@@ -6,7 +6,6 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Dangerous
-import androidx.compose.material.icons.rounded.Extension
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Tv
 import androidx.compose.material3.Checkbox
@@ -22,7 +21,6 @@ import com.m3u.material.components.Preference
 
 @Composable
 internal fun ExperimentalPreference(
-    navigateToScriptManagement: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val pref = LocalPref.current
@@ -50,13 +48,6 @@ internal fun ExperimentalPreference(
             )
         ) {
             Column {
-                Preference(
-                    title = stringResource(string.feat_setting_script_management).title(),
-                    content = stringResource(string.feat_setting_not_implementation).title(),
-                    icon = Icons.Rounded.Extension,
-                    enabled = false,
-                    onClick = navigateToScriptManagement
-                )
                 CheckBoxSharedPreference(
                     title = string.feat_setting_auto_refresh,
                     content = string.feat_setting_auto_refresh_description,

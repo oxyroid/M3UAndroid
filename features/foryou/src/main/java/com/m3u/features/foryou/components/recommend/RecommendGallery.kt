@@ -17,9 +17,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.tv.material3.Carousel
+import com.m3u.core.wrapper.eventOf
+import com.m3u.data.database.model.Playlist
 import com.m3u.material.components.HorizontalPagerIndicator
 import com.m3u.material.ktx.isTelevision
 import com.m3u.material.model.LocalSpacing
+import com.m3u.ui.EventBus
 import com.m3u.ui.helper.LocalHelper
 import kotlin.math.absoluteValue
 
@@ -28,6 +31,7 @@ import kotlin.math.absoluteValue
 internal fun RecommendGallery(
     recommend: Recommend,
     navigateToStream: () -> Unit,
+    navigateToPlaylist: (Playlist) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
@@ -57,7 +61,8 @@ internal fun RecommendGallery(
                             }
 
                             is Recommend.DiscoverSpec -> {
-
+                                EventBus.discoverCategory = eventOf(spec.category)
+                                navigateToPlaylist(spec.playlist)
                             }
                         }
                     }

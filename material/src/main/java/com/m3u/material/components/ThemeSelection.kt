@@ -1,5 +1,6 @@
 package com.m3u.material.components
 
+import android.view.HapticFeedbackConstants
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
@@ -23,7 +24,6 @@ import androidx.compose.material.icons.rounded.DarkMode
 import androidx.compose.material.icons.rounded.LightMode
 import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -38,15 +38,16 @@ import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.BlurEffect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.tv.material3.Border
 import androidx.tv.material3.Card
+import com.m3u.material.LocalM3UHapticFeedback
 import com.m3u.material.ktx.InteractionType
+import com.m3u.material.ktx.asColorScheme
+import com.m3u.material.ktx.createScheme
 import com.m3u.material.ktx.interactionBorder
 import com.m3u.material.ktx.isTelevision
 import com.m3u.material.model.LocalSpacing
@@ -54,7 +55,7 @@ import com.m3u.material.model.SugarColors
 
 @Composable
 fun ThemeSelection(
-    colorScheme: ColorScheme,
+    argb: Int,
     isDark: Boolean,
     selected: Boolean,
     onClick: () -> Unit,
@@ -67,6 +68,10 @@ fun ThemeSelection(
     val spacing = LocalSpacing.current
     val tv = isTelevision()
 
+    val colorScheme = remember(argb, isDark) {
+        createScheme(argb, isDark).asColorScheme()
+    }
+
     val alpha by animateFloatAsState(
         targetValue = if (selected) 0f else 0.4f,
         label = "alpha"
@@ -75,7 +80,7 @@ fun ThemeSelection(
         targetValue = if (selected) 0f else 16f,
         label = "blur-radius"
     )
-    val feedback = LocalHapticFeedback.current
+    val feedback = LocalM3UHapticFeedback.current
 
     val interactionSource = remember { MutableInteractionSource() }
 
@@ -168,11 +173,11 @@ fun ThemeSelection(
                         indication = rememberRipple(),
                         onClick = {
                             if (selected) return@combinedClickable
-                            feedback.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                            feedback.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
                             onClick()
                         },
                         onLongClick = {
-                            feedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                            feedback.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
                             onLongClick()
                         }
                     ),
@@ -212,11 +217,9 @@ fun ThemeSelection(
                 ),
                 onClick = {
                     if (selected) return@Card
-                    feedback.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                     onClick()
                 },
                 onLongClick = {
-                    feedback.performHapticFeedback(HapticFeedbackType.LongPress)
                     onLongClick()
                 },
                 modifier = modifier.size(96.dp),

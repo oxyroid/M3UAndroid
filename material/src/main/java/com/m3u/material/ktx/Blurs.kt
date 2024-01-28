@@ -28,13 +28,13 @@ fun Modifier.blurEdge(
     enable: Boolean = true,
     dimen: Float = BlurDefaults.DIMEN
 ): Modifier {
-    val currentColor by animateColorAsState(
-        targetValue = color,
-        label = "brushColor"
-    )
+//    val currentColor by animateColorAsState(
+//        targetValue = color,
+//        label = "brushColor"
+//    )
     return if (enable) drawWithCache {
         val brush = brush(
-            colors = colors(currentColor, edge),
+            colors = colors(color, edge),
             edge = edge,
             full = full(edge, size),
             dimen = dimen

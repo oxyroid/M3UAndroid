@@ -50,4 +50,6 @@ dependencies {
 
     api(libs.jupnp)
     api(libs.jupnp.support)
+
+    implementation(libs.slf4j.api)
 }

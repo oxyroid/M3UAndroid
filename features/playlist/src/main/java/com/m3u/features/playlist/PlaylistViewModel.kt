@@ -65,8 +65,6 @@ class PlaylistViewModel @Inject constructor(
 ) {
     internal val playlistUrl: StateFlow<String> =
         savedStateHandle.getStateFlow(PlaylistNavigation.TYPE_URL, "")
-    private val recommend: StateFlow<String?> =
-        savedStateHandle.getStateFlow(PlaylistNavigation.TYPE_RECOMMEND, null)
 
     override fun onEvent(event: PlaylistEvent) {
         when (event) {
@@ -229,10 +227,9 @@ class PlaylistViewModel @Inject constructor(
         _query.update { text }
     }
 
-    private fun List<Stream>.toChannels(recommend: String?): List<Channel> = groupBy { it.group }
+    private fun List<Stream>.toChannels(): List<Channel> = groupBy { it.group }
         .toList()
         .map { Channel(it.first, it.second.toPersistentList()) }
-        .sortedByDescending { recommend?.equals(it.title) }
 
     private fun List<Stream>.toSingleChannel(): List<Channel> = listOf(
         Channel("", toPersistentList())
@@ -280,9 +277,8 @@ class PlaylistViewModel @Inject constructor(
 
     internal val channels: StateFlow<ImmutableList<Channel>> = combine(
         unsorted,
-        sort,
-        recommend
-    ) { all, sort, recommend ->
+        sort
+    ) { all, sort ->
         when (sort) {
             Sort.ASC -> all.sortedWith(
                 compareBy(String.CASE_INSENSITIVE_ORDER) { it.title }
@@ -294,7 +290,7 @@ class PlaylistViewModel @Inject constructor(
 
             Sort.RECENTLY -> all.sortedByDescending { it.seen }.toSingleChannel()
 
-            Sort.UNSPECIFIED -> all.toChannels(recommend)
+            Sort.UNSPECIFIED -> all.toChannels()
         }
             .toPersistentList()
     }

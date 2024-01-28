@@ -6,6 +6,15 @@ import androidx.compose.ui.graphics.Color
 import com.google.android.material.color.utilities.Scheme
 
 @SuppressLint("RestrictedApi")
+fun createScheme(
+    argb: Int,
+    isDark: Boolean
+): Scheme {
+    return if (isDark) Scheme.dark(argb)
+    else Scheme.light(argb)
+}
+
+@SuppressLint("RestrictedApi")
 fun Scheme.asColorScheme(): ColorScheme {
     val scheme = this
     return ColorScheme(

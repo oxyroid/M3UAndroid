@@ -1,4 +1,4 @@
-package com.m3u.data.net.zmq
+package com.m3u.data.manager.zmq
 
 import org.zeromq.ZMQ
 import kotlin.coroutines.resume

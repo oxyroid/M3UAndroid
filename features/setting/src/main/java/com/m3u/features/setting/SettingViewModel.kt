@@ -8,20 +8,19 @@ import androidx.work.workDataOf
 import com.m3u.core.architecture.Publisher
 import com.m3u.core.architecture.pref.Pref
 import com.m3u.core.architecture.viewmodel.BaseViewModel
+import com.m3u.data.database.dao.ColorPackDao
+import com.m3u.data.database.model.ColorPack
 import com.m3u.data.database.model.Stream
-import com.m3u.data.repository.StreamRepository
-import com.m3u.data.repository.observeAll
 import com.m3u.data.manager.MessageManager
 import com.m3u.data.manager.impl.SubscriptionWorker
-import com.m3u.features.setting.fragments.ColorPack
+import com.m3u.data.repository.StreamRepository
+import com.m3u.data.repository.observeAll
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -34,7 +33,8 @@ class SettingViewModel @Inject constructor(
     @Publisher.App private val publisher: Publisher,
     private val workManager: WorkManager,
     private val pref: Pref,
-    private val messageManager: MessageManager
+    private val messageManager: MessageManager,
+    colorPackDao: ColorPackDao
 ) : BaseViewModel<SettingState, SettingEvent>(
     emptyState = SettingState(
         versionName = publisher.versionName,
@@ -50,15 +50,14 @@ class SettingViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5_000L)
         )
 
-    private val _packs = MutableStateFlow<ImmutableList<ColorPack>>(
-        persistentListOf(
-            ColorPack(0x5E6738, false, "avocado"),
-            ColorPack(0x5E6738, true, "mint"),
-            ColorPack(0xe69e71, false, "orange"),
-            ColorPack(0xe69e71, true, "leather")
+    internal val packs: StateFlow<ImmutableList<ColorPack>> = colorPackDao
+        .observeAllColorPacks()
+        .map { it.toImmutableList() }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = persistentListOf()
         )
-    )
-    internal val packs: StateFlow<ImmutableList<ColorPack>> = _packs.asStateFlow()
 
     override fun onEvent(event: SettingEvent) {
         when (event) {
@@ -66,10 +65,19 @@ class SettingViewModel @Inject constructor(
             is SettingEvent.OnTitle -> onTitle(event.title)
             is SettingEvent.OnUrl -> onUrl(event.url)
             is SettingEvent.OnBanned -> onBanned(event.id)
-            is SettingEvent.ImportJavaScript -> importJavaScript(event.uri)
             SettingEvent.OnLocalStorage -> onLocalStorage()
             is SettingEvent.OpenDocument -> openDocument(event.uri)
         }
+    }
+
+    internal fun onClipboard(url: String) {
+        val title = run {
+            val filePath = url.split("/")
+            val fileSplit = filePath.lastOrNull()?.split(".") ?: emptyList()
+            fileSplit.firstOrNull() ?: "Playlist_${System.currentTimeMillis()}"
+        }
+        onTitle(title)
+        onUrl(url)
     }
 
     private fun openDocument(uri: Uri) {
@@ -78,9 +86,6 @@ class SettingViewModel @Inject constructor(
                 uri = uri
             )
         }
-    }
-
-    private fun importJavaScript(uri: Uri) {
     }
 
     private fun onBanned(streamId: Int) {

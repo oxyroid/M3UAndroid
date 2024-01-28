@@ -23,7 +23,7 @@ interface PlayerManager {
 
     fun play(url: String)
     fun replay()
-    fun stop()
+    fun release()
 
     fun chooseTrack(group: TrackGroup, trackIndex: Int)
 }

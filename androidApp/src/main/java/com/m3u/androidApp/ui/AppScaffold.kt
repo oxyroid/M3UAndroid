@@ -42,6 +42,7 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.util.fastForEach
 import androidx.tv.material3.Border
 import androidx.tv.material3.Card
 import androidx.tv.material3.CardDefaults
@@ -50,7 +51,7 @@ import com.m3u.material.components.Background
 import com.m3u.material.components.IconButton
 import com.m3u.material.ktx.isTelevision
 import com.m3u.material.model.LocalSpacing
-import com.m3u.ui.AppSnackHost
+import com.m3u.ui.M3USnackHost
 import com.m3u.ui.Destination
 import com.m3u.ui.helper.Action
 import com.m3u.ui.helper.Fob
@@ -59,12 +60,11 @@ import com.m3u.ui.helper.useRailNav
 import kotlinx.collections.immutable.ImmutableList
 
 @Composable
-internal fun AppRootGraph(
+internal fun AppScaffold(
     title: String,
     message: Message,
     actions: ImmutableList<Action>,
-    currentRootDestination: Destination.Root?,
-    rootDestinations: ImmutableList<Destination.Root>,
+    rootDestination: Destination.Root?,
     fob: Fob?,
     navigateToRoot: (Destination.Root) -> Unit,
     modifier: Modifier = Modifier,
@@ -76,13 +76,20 @@ internal fun AppRootGraph(
     val useRailNav = LocalHelper.current.useRailNav
     val tv = isTelevision()
 
-    val items: @Composable (inner: @Composable (Destination.Root) -> Unit) -> Unit = { inner ->
-        rootDestinations.forEach { rootDestination ->
+    val rootDestinations = remember { Destination.Root.entries }
+
+    @Composable
+    fun items(
+        roots: List<Destination.Root>,
+        inner: @Composable (Destination.Root) -> Unit
+    ) {
+        roots.fastForEach { rootDestination ->
             inner(rootDestination)
         }
     }
 
-    val topBar = @Composable {
+    @Composable
+    fun topBar() {
         if (!tv) {
             TopAppBar(
                 title = {
@@ -118,20 +125,20 @@ internal fun AppRootGraph(
         }
     }
 
-    val topBarWithContent = @Composable { windowInsets: WindowInsets ->
+    @Composable
+    fun topBarWithContent(windowInsets: WindowInsets) {
         Scaffold(
-            topBar = topBar,
+            topBar = { topBar() },
             contentWindowInsets = windowInsets,
             modifier = Modifier.fillMaxSize()
         ) { padding ->
             Background {
                 Box {
                     content(padding)
-                    AppSnackHost(
+                    M3USnackHost(
                         message = message,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(spacing.small)
                             .align(Alignment.BottomCenter)
                             .padding(padding)
                     )
@@ -152,11 +159,11 @@ internal fun AppRootGraph(
                         .fillMaxHeight()
                         .padding(spacing.medium)
                 ) {
-                    items {
+                    items(rootDestinations) { currentRootDestination ->
                         NavigationItemLayout(
-                            currentRootDestination = currentRootDestination,
+                            rootDestination = rootDestination,
                             fob = fob,
-                            rootDestination = it,
+                            currentRootDestination = currentRootDestination,
                             navigateToRoot = navigateToRoot
                         ) { selected: Boolean,
                             onClick: () -> Unit,
@@ -234,11 +241,11 @@ internal fun AppRootGraph(
                         contentColor = MaterialTheme.colorScheme.onBackground,
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        items {
+                        rootDestinations.forEach { currentRootDestination ->
                             NavigationItemLayout(
-                                currentRootDestination = currentRootDestination,
+                                rootDestination = rootDestination,
                                 fob = fob,
-                                rootDestination = it,
+                                currentRootDestination = currentRootDestination,
                                 navigateToRoot = navigateToRoot
                             ) { selected: Boolean,
                                 onClick: () -> Unit,
@@ -253,6 +260,25 @@ internal fun AppRootGraph(
                                 )
                             }
                         }
+//                        items(rootDestinations) { currentRootDestination ->
+//                            NavigationItemLayout(
+//                                rootDestination = rootDestination,
+//                                fob = fob,
+//                                currentRootDestination = currentRootDestination,
+//                                navigateToRoot = navigateToRoot
+//                            ) { selected: Boolean,
+//                                onClick: () -> Unit,
+//                                icon: @Composable () -> Unit,
+//                                label: @Composable () -> Unit ->
+//                                NavigationBarItem(
+//                                    selected = selected,
+//                                    onClick = onClick,
+//                                    icon = icon,
+//                                    label = label,
+//                                    alwaysShowLabel = alwaysShowLabel
+//                                )
+//                            }
+//                        }
                     }
                 }
             } else {
@@ -264,11 +290,11 @@ internal fun AppRootGraph(
                         // keep header not null
                         header = {}
                     ) {
-                        items {
+                        items(rootDestinations) { currentRootDestination ->
                             NavigationItemLayout(
-                                currentRootDestination = currentRootDestination,
+                                rootDestination = rootDestination,
                                 fob = fob,
-                                rootDestination = it,
+                                currentRootDestination = currentRootDestination,
                                 navigateToRoot = navigateToRoot
                             ) { selected: Boolean,
                                 onClick: () -> Unit,
@@ -297,9 +323,9 @@ internal fun AppRootGraph(
 
 @Composable
 private inline fun NavigationItemLayout(
-    currentRootDestination: Destination.Root?,
+    rootDestination: Destination.Root?,
     fob: Fob?,
-    rootDestination: Destination.Root,
+    currentRootDestination: Destination.Root,
     crossinline navigateToRoot: (Destination.Root) -> Unit,
     block: @Composable (
         selected: Boolean,
@@ -310,15 +336,15 @@ private inline fun NavigationItemLayout(
 ) {
     val hapticFeedback = LocalHapticFeedback.current
     val tv = isTelevision()
-    val usefob = fob?.rootDestination == rootDestination
-    val selected = usefob || rootDestination == currentRootDestination
+    val usefob = fob?.rootDestination == currentRootDestination
+    val selected = usefob || currentRootDestination == rootDestination
     val icon = @Composable {
         if (!tv) {
             Icon(
                 imageVector = when {
                     fob != null && usefob -> fob.icon
-                    selected -> rootDestination.selectedIcon
-                    else -> rootDestination.unselectedIcon
+                    selected -> currentRootDestination.selectedIcon
+                    else -> currentRootDestination.unselectedIcon
                 },
                 contentDescription = null
             )
@@ -326,8 +352,8 @@ private inline fun NavigationItemLayout(
             androidx.tv.material3.Icon(
                 imageVector = when {
                     fob != null && usefob -> fob.icon
-                    selected -> rootDestination.selectedIcon
-                    else -> rootDestination.unselectedIcon
+                    selected -> currentRootDestination.selectedIcon
+                    else -> currentRootDestination.unselectedIcon
                 },
                 contentDescription = null
             )
@@ -339,14 +365,14 @@ private inline fun NavigationItemLayout(
                 Text(
                     text = stringResource(
                         if (usefob && fob != null) fob.iconTextId
-                        else rootDestination.iconTextId
+                        else currentRootDestination.iconTextId
                     )
                 )
             } else {
                 androidx.tv.material3.Text(
                     text = stringResource(
                         if (usefob && fob != null) fob.iconTextId
-                        else rootDestination.iconTextId
+                        else currentRootDestination.iconTextId
                     )
                 )
             }
@@ -356,7 +382,7 @@ private inline fun NavigationItemLayout(
         { fob?.onClick?.invoke() }
     } else {
         {
-            navigateToRoot(rootDestination)
+            navigateToRoot(currentRootDestination)
             hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
         }
     }

@@ -15,7 +15,6 @@ import androidx.compose.material.icons.automirrored.rounded.OpenInNew
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -24,10 +23,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.m3u.core.util.readFileName
 import com.m3u.features.setting.UriWrapper
 import com.m3u.i18n.R.string
@@ -69,8 +66,8 @@ internal fun LocalStorageButton(
     val text = if (selected) remember(uri) {
         uri?.readFileName(context.contentResolver).orEmpty()
     } else stringResource(string.feat_setting_label_select_from_local_storage)
-    val color = MaterialTheme.colorScheme.surfaceColorAtElevation(4.dp)
-    val contentColor = MaterialTheme.colorScheme.onSurface
+    val color = MaterialTheme.colorScheme.surfaceVariant
+    val contentColor = MaterialTheme.colorScheme.onSurfaceVariant
     Row(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
@@ -94,12 +91,9 @@ internal fun LocalStorageButton(
     ) {
         Text(
             text = text.uppercase(),
-            style = TextStyle(
-                fontSize = 14.sp,
-                fontFamily = MaterialTheme.typography.bodyMedium.fontFamily,
-                fontWeight = FontWeight.Medium
-            ),
-            color = contentColor
+            style = MaterialTheme.typography.bodyMedium,
+            color = contentColor,
+            fontWeight = FontWeight.SemiBold
         )
         Icon(
             imageVector = icon,

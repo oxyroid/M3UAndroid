@@ -13,6 +13,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
 import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.runtime.Composable
@@ -32,7 +33,7 @@ import com.m3u.core.wrapper.Message
 import com.m3u.data.manager.MessageManager
 import com.m3u.data.manager.PlayerManager
 import com.m3u.data.repository.StreamRepository
-import com.m3u.ui.AppLocalProvider
+import com.m3u.ui.Toolkit
 import com.m3u.ui.helper.Action
 import com.m3u.ui.helper.Fob
 import com.m3u.ui.helper.Helper
@@ -66,6 +67,9 @@ class PlayerActivity : ComponentActivity() {
 
     @Inject
     @Logger.Message
+    lateinit var messager: Logger
+
+    @Inject
     lateinit var logger: Logger
 
     @Inject
@@ -80,17 +84,20 @@ class PlayerActivity : ComponentActivity() {
     private val shortcutStreamUrlLiveData = MutableLiveData<String?>(null)
     private val shortcutRecentlyLiveData = MutableLiveData(false)
 
+    private val viewModel: StreamViewModel by viewModels()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         handleIntent(intent)
         setContent {
-            AppLocalProvider(
+            Toolkit(
                 helper = helper,
                 pref = pref
             ) {
                 StreamRoute(
-                    onBackPressed = { finish() }
+                    onBackPressed = { finish() },
+                    viewModel = viewModel
                 )
             }
         }
@@ -263,6 +270,14 @@ class PlayerActivity : ComponentActivity() {
             }
 
             else -> {}
+        }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        if (isFinishing) {
+            viewModel.release()
+            logger.log("destroy")
         }
     }
 }

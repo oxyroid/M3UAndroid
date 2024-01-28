@@ -21,32 +21,30 @@ private const val PLAYLIST_TV_ROUTE_PATH = "playlist_tv_route"
 
 object PlaylistNavigation {
     internal const val TYPE_URL = "url"
-    internal const val TYPE_RECOMMEND = "recommend"
 
     const val PLAYLIST_ROUTE =
-        "$PLAYLIST_ROUTE_PATH?$TYPE_URL={$TYPE_URL}&$TYPE_RECOMMEND={$TYPE_RECOMMEND}"
+        "$PLAYLIST_ROUTE_PATH?$TYPE_URL={$TYPE_URL}"
 
-    internal fun createPlaylistRoute(url: String, recommend: String? = null): String {
-        return "$PLAYLIST_ROUTE_PATH?${TYPE_URL}=$url&$TYPE_RECOMMEND=$recommend"
+    internal fun createPlaylistRoute(url: String): String {
+        return "$PLAYLIST_ROUTE_PATH?${TYPE_URL}=$url"
     }
 
     internal const val PLAYLIST_TV_ROUTE =
-        "$PLAYLIST_TV_ROUTE_PATH?$TYPE_URL={$TYPE_URL}&$TYPE_RECOMMEND={$TYPE_RECOMMEND}"
+        "$PLAYLIST_TV_ROUTE_PATH?$TYPE_URL={$TYPE_URL}"
 
-    internal fun createPlaylistTvRoute(url: String, recommend: String? = null): String {
-        return "$PLAYLIST_TV_ROUTE_PATH?${TYPE_URL}=$url&$TYPE_RECOMMEND=$recommend"
+    internal fun createPlaylistTvRoute(url: String): String {
+        return "$PLAYLIST_TV_ROUTE_PATH?${TYPE_URL}=$url"
     }
 }
 
 fun NavController.navigateToPlaylist(
     playlistUrl: String,
-    recommend: String? = null,
     tv: Boolean = false,
     navOptions: NavOptions? = null,
 ) {
     val encodedUrl = Uri.encode(playlistUrl)
-    val route = if (tv) PlaylistNavigation.createPlaylistTvRoute(encodedUrl, recommend)
-    else PlaylistNavigation.createPlaylistRoute(encodedUrl, recommend)
+    val route = if (tv) PlaylistNavigation.createPlaylistTvRoute(encodedUrl)
+    else PlaylistNavigation.createPlaylistRoute(encodedUrl)
     this.navigate(route, navOptions)
 }
 
@@ -59,11 +57,6 @@ fun NavGraphBuilder.playlistScreen(
         arguments = listOf(
             navArgument(PlaylistNavigation.TYPE_URL) {
                 type = NavType.StringType
-            },
-            navArgument(PlaylistNavigation.TYPE_RECOMMEND) {
-                type = NavType.StringType
-                nullable = true
-                defaultValue = null
             }
         ),
         enterTransition = { slideInVertically { it } },
@@ -83,11 +76,6 @@ fun NavGraphBuilder.playlistTvScreen() {
         activityClass = TvPlaylistActivity::class
         argument(PlaylistNavigation.TYPE_URL) {
             type = NavType.StringType
-        }
-        argument(PlaylistNavigation.TYPE_RECOMMEND) {
-            type = NavType.StringType
-            nullable = true
-            defaultValue = null
         }
     }
 }

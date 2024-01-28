@@ -1,6 +1,5 @@
 package com.m3u.features.setting.fragments
 
-import android.annotation.SuppressLint
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -9,40 +8,30 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.Immutable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.tv.foundation.lazy.list.TvLazyRow
 import androidx.tv.foundation.lazy.list.items
-import com.google.android.material.color.utilities.Scheme
 import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.core.architecture.pref.Pref
+import com.m3u.data.database.model.ColorPack
 import com.m3u.features.setting.components.CheckBoxSharedPreference
+import com.m3u.i18n.R.string
 import com.m3u.material.components.Background
 import com.m3u.material.components.ThemeAddSelection
 import com.m3u.material.components.ThemeSelection
-import com.m3u.material.ktx.asColorScheme
-import com.m3u.i18n.R.string
 import com.m3u.material.ktx.isTelevision
 import com.m3u.material.model.LocalSpacing
 import kotlinx.collections.immutable.ImmutableList
 
-@Immutable
-data class ColorPack(
-    val argb: Int,
-    val isDark: Boolean,
-    val name: String
-)
-
-@SuppressLint("RestrictedApi")
 @Composable
 internal fun AppearanceFragment(
     packs: ImmutableList<ColorPack>,
     colorArgb: Int,
-    onArgbMenu: (Int) -> Unit,
+    openColorCanvas: (Int, Boolean) -> Unit,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues()
 ) {
@@ -67,17 +56,11 @@ internal fun AppearanceFragment(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     items(packs, key = { "${it.argb}_${it.isDark}" }) { pack ->
-                        val colorScheme = remember(pack.argb, pack.isDark) {
-                            when {
-                                pack.isDark -> Scheme.dark(pack.argb)
-                                else -> Scheme.light(pack.argb)
-                            }.asColorScheme()
-                        }
                         val selected =
                             !useDynamicColors && colorArgb == pack.argb && isDarkMode == pack.isDark
 
                         ThemeSelection(
-                            colorScheme = colorScheme,
+                            argb = pack.argb,
                             isDark = pack.isDark,
                             selected = selected,
                             onClick = {
@@ -85,7 +68,7 @@ internal fun AppearanceFragment(
                                 pref.colorArgb = pack.argb
                                 pref.darkMode = pack.isDark
                             },
-                            onLongClick = { onArgbMenu(pack.argb) },
+                            onLongClick = { openColorCanvas(pack.argb, pack.isDark) },
                             name = pack.name,
                             leftContentDescription = stringResource(string.ui_theme_card_left),
                             rightContentDescription = stringResource(string.ui_theme_card_right),
@@ -105,17 +88,12 @@ internal fun AppearanceFragment(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     items(packs, key = { "${it.argb}_${it.isDark}" }) { pack ->
-                        val colorScheme = remember(pack.argb, pack.isDark) {
-                            when {
-                                pack.isDark -> Scheme.dark(pack.argb)
-                                else -> Scheme.light(pack.argb)
-                            }.asColorScheme()
-                        }
+
                         val selected =
                             !useDynamicColors && colorArgb == pack.argb && isDarkMode == pack.isDark
 
                         ThemeSelection(
-                            colorScheme = colorScheme,
+                            argb = pack.argb,
                             isDark = pack.isDark,
                             selected = selected,
                             onClick = {
@@ -123,21 +101,16 @@ internal fun AppearanceFragment(
                                 pref.colorArgb = pack.argb
                                 pref.darkMode = pack.isDark
                             },
-                            onLongClick = { onArgbMenu(pack.argb) },
+                            onLongClick = { },
                             name = pack.name,
                             leftContentDescription = stringResource(string.ui_theme_card_left),
                             rightContentDescription = stringResource(string.ui_theme_card_right),
-                            modifier = Modifier
-                                .animateItemPlacement()
+                            modifier = Modifier.animateItemPlacement()
                         )
-                    }
-                    item(key = "add") {
-                        ThemeAddSelection {
-
-                        }
                     }
                 }
             }
+            HorizontalDivider()
 
             val useDynamicColorsAvailable = Pref.DEFAULT_USE_DYNAMIC_COLORS
 

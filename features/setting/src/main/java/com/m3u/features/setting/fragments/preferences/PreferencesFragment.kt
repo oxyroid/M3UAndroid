@@ -12,16 +12,15 @@ import androidx.tv.foundation.lazy.list.TvLazyColumn
 import com.m3u.material.ktx.isTelevision
 import com.m3u.material.ktx.plus
 import com.m3u.material.model.LocalSpacing
-import com.m3u.ui.Destination.Root.Setting.SettingFragment
+import com.m3u.ui.DestinationEvent
 
 @Composable
 internal fun PreferencesFragment(
-    fragment: SettingFragment,
+    fragment: DestinationEvent.Setting,
     contentPadding: PaddingValues,
     versionName: String,
     versionCode: Int,
     navigateToPlaylistManagement: () -> Unit,
-    navigateToScriptManagement: () -> Unit,
     navigateToThemeSelector: () -> Unit,
     navigateToAbout: () -> Unit,
     modifier: Modifier = Modifier
@@ -48,9 +47,7 @@ internal fun PreferencesFragment(
                 HorizontalDivider()
             }
             item {
-                ExperimentalPreference(
-                    navigateToScriptManagement = navigateToScriptManagement,
-                )
+                ExperimentalPreference()
                 HorizontalDivider()
             }
             item {
@@ -79,9 +76,7 @@ internal fun PreferencesFragment(
                 OptionalPreferences()
             }
             item {
-                ExperimentalPreference(
-                    navigateToScriptManagement = navigateToScriptManagement,
-                )
+                ExperimentalPreference()
             }
             item {
                 OtherPreferences(

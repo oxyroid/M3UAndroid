@@ -146,6 +146,6 @@ class SnapshotPref @Inject constructor(
         private const val SHARED_SETTINGS = "shared_settings"
     }
     init {
-        alwaysTv = false
+         alwaysTv = false
     }
 }

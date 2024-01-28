@@ -2,6 +2,8 @@ package com.m3u.ui
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
@@ -18,24 +20,31 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import com.m3u.core.wrapper.Message
+import com.m3u.material.model.LocalDuration
 import com.m3u.material.model.LocalSpacing
+import kotlinx.coroutines.delay
 import java.util.Locale
+import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
-fun AppSnackHost(
+fun M3USnackHost(
     message: Message,
     modifier: Modifier = Modifier
 ) {
     val theme = MaterialTheme.colorScheme
     val spacing = LocalSpacing.current
+    val duration = LocalDuration.current
+
     val television = message.type == Message.TYPE_TELEVISION
     val containerColor by animateColorAsState(
         targetValue = when (message.type) {
@@ -61,12 +70,31 @@ fun AppSnackHost(
     )
     AnimatedVisibility(
         visible = message.level != Message.LEVEL_EMPTY,
-        enter = slideInVertically { it } + fadeIn(),
-        exit = slideOutVertically { it } + fadeOut(),
-        modifier = modifier
+        enter = slideInVertically(
+            animationSpec = spring()
+        ) { it } + fadeIn(
+            animationSpec = spring()
+        ),
+        exit = slideOutVertically(
+            animationSpec = spring()
+        ) { it } + fadeOut(
+            animationSpec = spring()
+        ),
+        modifier = Modifier
+            .padding(spacing.medium)
+            .then(modifier)
     ) {
         val feedback = LocalHapticFeedback.current
+        val actualElevation by produceState(spacing.none) {
+            delay(duration.fast.milliseconds)
+            value = spacing.medium
+        }
+        val currentElevation by animateDpAsState(
+            targetValue = actualElevation,
+            label = "snake-host-elevation"
+        )
         LaunchedEffect(Unit) {
+            delay(duration.fast.milliseconds)
             feedback.performHapticFeedback(HapticFeedbackType.LongPress)
         }
         Card(
@@ -74,34 +102,12 @@ fun AppSnackHost(
                 containerColor = containerColor,
                 contentColor = contentColor
             ),
-            elevation = CardDefaults.elevatedCardElevation(
-                if (television) spacing.medium else spacing.none
-            )
+            elevation = CardDefaults.elevatedCardElevation(currentElevation)
         ) {
-            val text = when {
-                message.level == Message.LEVEL_EMPTY -> return@Card
-                message is Message.Static -> {
-                    val args = remember(message) {
-                        message.formatArgs.flatMap {
-                            when (it) {
-                                is Array<*> -> it.toList().filterNotNull()
-                                is Collection<*> -> it.toList().filterNotNull()
-                                else -> listOf(it)
-                            }
-                        }.toTypedArray()
-                    }
-                    stringResource(message.resId, *args)
-                }
+            val text = AppSnackHostDefaults.formatText(message)
 
-                message is Message.Dynamic -> message.value
-                else -> return@Card
-            }.replaceFirstChar {
-                if (it.isLowerCase()) it.titlecase(Locale.ROOT)
-                else it.toString()
-            }
             Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(horizontal = spacing.medium)
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 if (television) {
                     Icon(
@@ -114,6 +120,7 @@ fun AppSnackHost(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.SemiBold,
                     modifier = Modifier
                         .padding(
                             horizontal = spacing.medium,
@@ -122,6 +129,31 @@ fun AppSnackHost(
                 )
             }
 
+        }
+    }
+}
+
+object AppSnackHostDefaults {
+    @Composable
+    fun formatText(message: Message): String {
+        return when (message) {
+            is Message.Static -> {
+                val args = remember(message.formatArgs) {
+                    message.formatArgs.flatMap {
+                        when (it) {
+                            is Array<*> -> it.toList().filterNotNull()
+                            is Collection<*> -> it.toList().filterNotNull()
+                            else -> listOf(it)
+                        }
+                    }.toTypedArray()
+                }
+                stringResource(message.resId, *args)
+            }
+
+            is Message.Dynamic -> message.value
+        }.replaceFirstChar {
+            if (it.isLowerCase()) it.titlecase(Locale.ROOT)
+            else it.toString()
         }
     }
 }

@@ -32,7 +32,7 @@ import com.m3u.core.util.context.isPortraitMode
 import com.m3u.core.wrapper.Message
 import com.m3u.data.manager.MessageManager
 import com.m3u.data.manager.PlayerManager
-import com.m3u.ui.AppLocalProvider
+import com.m3u.ui.Toolkit
 import com.m3u.ui.helper.Action
 import com.m3u.ui.helper.Fob
 import com.m3u.ui.helper.Helper
@@ -72,7 +72,7 @@ class TvPlaylistActivity : AppCompatActivity() {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         setContent {
-            AppLocalProvider(
+            Toolkit(
                 helper = helper,
                 pref = pref
             ) {

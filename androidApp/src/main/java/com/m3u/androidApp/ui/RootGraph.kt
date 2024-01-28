@@ -1,21 +1,14 @@
 package com.m3u.androidApp.ui
 
-import android.util.Log
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.PagerState
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
-import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
@@ -27,38 +20,30 @@ import com.m3u.features.foryou.ForyouRoute
 import com.m3u.features.setting.SettingRoute
 import com.m3u.material.ktx.Edge
 import com.m3u.material.ktx.blurEdge
-import com.m3u.material.ktx.isTelevision
 import com.m3u.ui.Destination
 import com.m3u.ui.ResumeEvent
-import kotlinx.collections.immutable.ImmutableList
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
 
 const val ROOT_ROUTE = "root_route"
 
-fun NavController.popupToRoot() {
+fun NavController.popBackStackToRoot() {
     this.popBackStack(ROOT_ROUTE, false)
 }
 
 fun NavGraphBuilder.rootGraph(
-    pagerState: PagerState,
-    roots: ImmutableList<Destination.Root>,
+    root: Destination.Root?,
     contentPadding: PaddingValues,
     navigateToPlaylist: (Playlist) -> Unit,
     navigateToStream: () -> Unit,
     navigateToAbout: () -> Unit,
-    navigateToRecommendPlaylist: (Playlist, String) -> Unit,
     navigateToSettingPlaylistManagement: () -> Unit,
 ) {
     composable(ROOT_ROUTE) {
         RootGraph(
-            pagerState = pagerState,
-            roots = roots,
+            root = root,
             contentPadding = contentPadding,
             navigateToPlaylist = navigateToPlaylist,
             navigateToStream = navigateToStream,
             navigateToAbout = navigateToAbout,
-            navigateToRecommendPlaylist = navigateToRecommendPlaylist,
             navigateToSettingPlaylistManagement = navigateToSettingPlaylistManagement
         )
     }
@@ -66,42 +51,28 @@ fun NavGraphBuilder.rootGraph(
 
 @Composable
 private fun RootGraph(
-    pagerState: PagerState,
-    roots: ImmutableList<Destination.Root>,
+    root: Destination.Root?,
     contentPadding: PaddingValues,
     navigateToPlaylist: (Playlist) -> Unit,
     navigateToStream: () -> Unit,
     navigateToAbout: () -> Unit,
-    navigateToRecommendPlaylist: (Playlist, String) -> Unit,
     navigateToSettingPlaylistManagement: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    LaunchedEffect(pagerState) {
-        snapshotFlow {
-            with(pagerState) {
-                PagerStateSnapshot(
-                    currentPage,
-                    targetPage,
-                    settledPage,
-                    isScrollInProgress
-                )
-            }
-        }
-            .onEach {
-                Log.d("PagerState", it.toString())
-            }
-            .launchIn(this)
-    }
 
-    var key by rememberSaveable { mutableStateOf(true) }
-    LifecycleResumeEffect(Unit) {
-        key = !key
-        onPauseOrDispose { }
+    val rootDestinations = remember { Destination.Root.entries }
+    val pagerState = rememberPagerState(
+        pageCount = { rootDestinations.size }
+    )
+
+    LaunchedEffect(root, rootDestinations) {
+        val page = rootDestinations.indexOf(root).coerceAtLeast(0)
+        pagerState.scrollToPage(page)
     }
 
     HorizontalPager(
         state = pagerState,
-        userScrollEnabled = !isTelevision(),
+        userScrollEnabled = false,
         modifier = modifier
             .fillMaxSize()
             .blurEdge(
@@ -109,14 +80,13 @@ private fun RootGraph(
                 color = MaterialTheme.colorScheme.background
             )
     ) { pagerIndex ->
-        when (val root = roots[pagerIndex]) {
+        when (rootDestinations[pagerIndex]) {
             Destination.Root.Foryou -> {
                 ForyouRoute(
                     navigateToPlaylist = navigateToPlaylist,
                     navigateToStream = navigateToStream,
-                    navigateToRecommendPlaylist = navigateToRecommendPlaylist,
                     navigateToSettingPlaylistManagement = navigateToSettingPlaylistManagement,
-                    resume = rememberResumeEvent(pagerState.settledPage, pagerIndex, key),
+                    resume = rememberResumeEvent(pagerState.settledPage, pagerIndex),
                     contentPadding = contentPadding,
                     modifier = Modifier.fillMaxSize()
                 )
@@ -125,18 +95,17 @@ private fun RootGraph(
             Destination.Root.Favourite -> {
                 FavouriteRoute(
                     navigateToStream = navigateToStream,
-                    resume = rememberResumeEvent(pagerState.settledPage, pagerIndex, key),
+                    resume = rememberResumeEvent(pagerState.settledPage, pagerIndex),
                     contentPadding = contentPadding,
                     modifier = Modifier.fillMaxSize()
                 )
             }
 
-            is Destination.Root.Setting -> {
+            Destination.Root.Setting -> {
                 SettingRoute(
                     navigateToAbout = navigateToAbout,
                     contentPadding = contentPadding,
-                    targetFragment = root.targetFragment,
-                    resume = rememberResumeEvent(pagerState.settledPage, pagerIndex, key),
+                    resume = rememberResumeEvent(pagerState.settledPage, pagerIndex),
                     modifier = Modifier.fillMaxSize()
                 )
             }
@@ -144,16 +113,9 @@ private fun RootGraph(
     }
 }
 
-private data class PagerStateSnapshot(
-    val current: Int,
-    val target: Int,
-    val settled: Int,
-    val scrolling: Boolean
-)
-
 @Composable
-private fun rememberResumeEvent(currentPage: Int, targetPage: Int, key: Boolean): ResumeEvent =
-    remember(currentPage, targetPage, key) {
+private fun rememberResumeEvent(currentPage: Int, targetPage: Int): ResumeEvent =
+    remember(currentPage, targetPage) {
         if (currentPage == targetPage) eventOf(Unit)
         else handledEvent()
     }

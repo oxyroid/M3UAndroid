@@ -30,6 +30,7 @@ internal fun PlayerMask(
     body: @Composable RowScope.() -> Unit,
     footer: @Composable RowScope.() -> Unit,
     modifier: Modifier = Modifier,
+    slider: (@Composable () -> Unit)? = null
 ) {
     val spacing = LocalSpacing.current
     val tv = isTelevision()
@@ -73,6 +74,7 @@ internal fun PlayerMask(
                         verticalAlignment = Alignment.Bottom,
                         content = footer
                     )
+                    slider?.invoke()
                 }
             }
         }

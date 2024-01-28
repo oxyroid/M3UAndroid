@@ -27,6 +27,7 @@ kotlinx-datetime = "0.5.0"
 kotlinx-collections-immutable = "0.3.7"
 
 lottie-compose = "6.1.0"
+slf4j-api = "2.0.11"
 zeromq = "0.5.3"
 
 squareup-retrofit2 = "2.9.0"
@@ -143,6 +144,7 @@ jetty-client = { group = "org.eclipse.jetty", name = "jetty-client", version.ref
 nanohttpd = { group = "org.nanohttpd", name = "nanohttpd", version.ref = "nanohttpd" }
 aboutlibraries-core = { group = "com.mikepenz", name = "aboutlibraries-core", version.ref = "aboutlibraries" }
 
+slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j-api" }
 zeromq = { group = "org.zeromq", name = "jeromq", version.ref = "zeromq" }
 
 jupnp = { group = "org.jupnp", name = "org.jupnp", version.ref = "jupnp" }

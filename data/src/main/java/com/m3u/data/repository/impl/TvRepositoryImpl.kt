@@ -4,8 +4,8 @@ import android.net.nsd.NsdServiceInfo
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.prefix
 import com.m3u.data.manager.nsd.NsdDeviceManager
-import com.m3u.data.net.zmq.ZMQClient
-import com.m3u.data.net.zmq.ZMQServer
+import com.m3u.data.manager.zmq.ZMQClient
+import com.m3u.data.manager.zmq.ZMQServer
 import com.m3u.data.repository.PairClientState
 import com.m3u.data.repository.PairServerState
 import com.m3u.data.repository.TvRepository

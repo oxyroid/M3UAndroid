@@ -1,7 +1,11 @@
 package com.m3u.androidApp.ui
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import com.m3u.data.manager.MessageManager
+import com.m3u.ui.Destination
 import com.m3u.ui.helper.Action
 import com.m3u.ui.helper.Fob
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -16,6 +20,7 @@ class AppViewModel @Inject constructor(
 ) : ViewModel() {
     val message = messageManager.message
 
+    var rootDestination: Destination.Root by mutableStateOf(Destination.Root.Foryou)
     val title: MutableStateFlow<String> = MutableStateFlow("")
     val actions: MutableStateFlow<ImmutableList<Action>> = MutableStateFlow(persistentListOf())
     val fob: MutableStateFlow<Fob?> = MutableStateFlow(null)

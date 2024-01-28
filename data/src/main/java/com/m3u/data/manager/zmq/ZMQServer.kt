@@ -1,5 +1,6 @@
-package com.m3u.data.net.zmq
+package com.m3u.data.manager.zmq
 
+import android.os.Build
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.prefix
 import kotlinx.coroutines.Dispatchers
@@ -23,6 +24,7 @@ class ZMQServer(
     private var response: ZMQ.Socket? = null
     private var publish: ZMQ.Socket? = null
     private val logger = logger.prefix("zmq-server")
+    private val model = Build.MODEL
 
     private val _request = MutableSharedFlow<String>()
     val request: SharedFlow<String> = _request.asSharedFlow()
@@ -37,7 +39,7 @@ class ZMQServer(
                 logger.log("bind response")
             }
             publish = context!!.createSocket(SocketType.ROUTER).apply {
-                setHelloMsg("Welcome back".toByteArray(ZMQ.CHARSET))
+                setHelloMsg(model.toByteArray(ZMQ.CHARSET))
                 bind("tcp://*:$publishPort")
                 logger.log("bind publish")
             }

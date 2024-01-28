@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.systemGestureExclusion
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.VolumeDown
@@ -29,6 +30,7 @@ import androidx.compose.material.icons.rounded.ScreenRotationAlt
 import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -96,7 +98,7 @@ internal fun StreamFragment(
     // because they will be updated frequently,
     // they must be wrapped with rememberUpdatedState when using them.
     val currentVolume by rememberUpdatedState(volume)
-    val currentLight by rememberUpdatedState(brightness)
+    val currentBrightness by rememberUpdatedState(brightness)
 
     Background(
         color = Color.Black,
@@ -302,6 +304,16 @@ internal fun StreamFragment(
                             }
                         }
                     },
+                    slider = {
+                        Slider(
+                            value = currentVolume,
+                            onValueChange = {
+                                onVolume(it)
+                                maskState.wake()
+                            },
+                            modifier = Modifier.systemGestureExclusion()
+                        )
+                    },
                     modifier = Modifier
                         .then(
                             if (tv) Modifier
@@ -317,7 +329,7 @@ internal fun StreamFragment(
                                 brightness = { deltaPixel ->
                                     if (!pref.brightnessGesture) return@detectVerticalMaskGestures
                                     onBrightness(
-                                        (currentLight - deltaPixel / maxHeight.value).coerceIn(0f..1f)
+                                        (currentBrightness - deltaPixel / maxHeight.value).coerceIn(0f..1f)
                                     )
                                 },
                                 onDragStart = {

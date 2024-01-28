@@ -11,9 +11,9 @@ import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
-import com.google.android.material.color.utilities.Scheme
 import com.m3u.material.ktx.TelevisionChain
 import com.m3u.material.ktx.asColorScheme
+import com.m3u.material.ktx.createScheme
 import androidx.tv.material3.ColorScheme as TvColorScheme
 import androidx.tv.material3.Typography as TvTypography
 
@@ -32,8 +32,7 @@ fun AppTheme(
         if (useDynamicColors && supportsDynamicTheming) {
             if (useDarkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         } else {
-            if (useDarkTheme) Scheme.dark(argb).asColorScheme()
-            else Scheme.light(argb).asColorScheme()
+            createScheme(argb, useDarkTheme).asColorScheme()
         }
     }
     MaterialTheme(

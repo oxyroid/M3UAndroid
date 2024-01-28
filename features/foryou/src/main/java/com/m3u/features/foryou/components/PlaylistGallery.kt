@@ -72,7 +72,7 @@ private fun PlaylistGalleryImpl(
             contentPadding = PaddingValues(spacing.medium) + contentPadding,
             verticalArrangement = Arrangement.spacedBy(spacing.medium),
             horizontalArrangement = Arrangement.spacedBy(spacing.medium),
-            modifier = modifier.fillMaxSize()
+            modifier = modifier
         ) {
             items(
                 items = details,
@@ -98,7 +98,7 @@ private fun PlaylistGalleryImpl(
             ) + contentPadding,
             verticalArrangement = Arrangement.spacedBy(spacing.medium),
             horizontalArrangement = Arrangement.spacedBy(spacing.large),
-            modifier = modifier.fillMaxSize()
+            modifier = modifier
         ) {
             items(
                 items = details,

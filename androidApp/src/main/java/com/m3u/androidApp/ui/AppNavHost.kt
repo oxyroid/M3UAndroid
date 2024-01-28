@@ -7,7 +7,6 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.pager.PagerState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -15,6 +14,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
 import com.m3u.core.architecture.pref.LocalPref
+import com.m3u.core.wrapper.eventOf
 import com.m3u.features.about.navigation.aboutScreen
 import com.m3u.features.about.navigation.navigateToAbout
 import com.m3u.features.playlist.navigation.navigateToPlaylist
@@ -23,13 +23,12 @@ import com.m3u.features.playlist.navigation.playlistTvScreen
 import com.m3u.features.stream.PlayerActivity
 import com.m3u.material.ktx.isTelevision
 import com.m3u.ui.Destination
-import com.m3u.ui.Destination.Root.Setting.SettingFragment
-import kotlinx.collections.immutable.ImmutableList
+import com.m3u.ui.DestinationEvent
+import com.m3u.ui.EventBus
 
 @Composable
 fun AppNavHost(
-    pagerState: PagerState,
-    roots: ImmutableList<Destination.Root>,
+    root: Destination.Root?,
     navigateToRoot: (Destination.Root) -> Unit,
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
@@ -40,6 +39,7 @@ fun AppNavHost(
     val pref = LocalPref.current
 
     val tv = isTelevision()
+
     NavHost(
         navController = navController,
         startDestination = startDestination,
@@ -65,11 +65,10 @@ fun AppNavHost(
             contentPadding = contentPadding
         )
         rootGraph(
-            pagerState = pagerState,
-            roots = roots,
+            root = root,
             contentPadding = contentPadding,
             navigateToPlaylist = { playlist ->
-                navController.navigateToPlaylist(playlist.url, null, tv)
+                navController.navigateToPlaylist(playlist.url, tv)
             },
             navigateToStream = {
                 if (pref.zappingMode && PlayerActivity.isInPipMode) return@rootGraph
@@ -86,11 +85,9 @@ fun AppNavHost(
             navigateToAbout = {
                 navController.navigateToAbout()
             },
-            navigateToRecommendPlaylist = { playlist, recommend ->
-                navController.navigateToPlaylist(playlist.url, recommend, tv)
-            },
             navigateToSettingPlaylistManagement = {
-                navigateToRoot(Destination.Root.Setting(SettingFragment.Playlists))
+                navigateToRoot(Destination.Root.Setting)
+                EventBus.setting = eventOf(DestinationEvent.Setting.Playlists)
             }
         )
 

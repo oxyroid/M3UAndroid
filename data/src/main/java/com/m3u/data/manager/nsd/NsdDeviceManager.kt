@@ -11,7 +11,6 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.channels.trySendBlocking
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.flowOn
 import java.net.ServerSocket
 import java.util.concurrent.atomic.AtomicInteger
@@ -117,7 +116,7 @@ class NsdDeviceManagerImpl @Inject constructor(
         port: Int,
         pin: Int,
         metadata: Map<String, Any>
-    ): Flow<NsdServiceInfo?> = channelFlow {
+    ): Flow<NsdServiceInfo?> = callbackFlow {
         logger.log("broadcast")
         val socket = ServerSocket(0)
         val localPort = socket.localPort

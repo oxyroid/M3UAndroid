@@ -3,6 +3,11 @@ package com.m3u.features.foryou
 import android.content.res.Configuration.ORIENTATION_PORTRAIT
 import android.view.KeyEvent
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,14 +17,11 @@ import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
-import androidx.compose.material.icons.rounded.Link
-import androidx.compose.material.icons.rounded.LinkOff
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -45,8 +47,9 @@ import com.m3u.features.foryou.components.PlaylistGalleryPlaceholder
 import com.m3u.features.foryou.components.recommend.Recommend
 import com.m3u.features.foryou.components.recommend.RecommendGallery
 import com.m3u.features.foryou.model.PlaylistDetail
-import com.m3u.i18n.R
+import com.m3u.i18n.R.string
 import com.m3u.material.components.Background
+import com.m3u.material.components.Button
 import com.m3u.material.ktx.interceptVolumeEvent
 import com.m3u.material.ktx.isTelevision
 import com.m3u.material.ktx.minus
@@ -65,14 +68,13 @@ import kotlinx.collections.immutable.persistentListOf
 fun ForyouRoute(
     navigateToPlaylist: (Playlist) -> Unit,
     navigateToStream: () -> Unit,
-    navigateToRecommendPlaylist: (Playlist, String) -> Unit,
     navigateToSettingPlaylistManagement: () -> Unit,
     resume: ResumeEvent,
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
     viewModel: ForyouViewModel = hiltViewModel()
 ) {
-    val title = stringResource(R.string.ui_title_foryou)
+    val title = stringResource(string.ui_title_foryou)
 
     val helper = LocalHelper.current
     val pref = LocalPref.current
@@ -97,14 +99,6 @@ fun ForyouRoute(
         derivedStateOf { pairClientState is PairClientState.Connected }
     }
 
-    val icon by remember {
-        derivedStateOf {
-            when {
-                connected -> Icons.Rounded.Link
-                else -> Icons.Rounded.LinkOff
-            }
-        }
-    }
     val sheetState = rememberModalBottomSheetState(
         skipPartiallyExpanded = true,
         confirmValueChange = { !connecting }
@@ -114,27 +108,6 @@ fun ForyouRoute(
         helper.deep = 0
         helper.title = title.title()
         helper.actions = persistentListOf(
-            Action(
-                icon = icon,
-                contentDescription = "link",
-                onClick = { isConnectSheetVisible = true }
-            ),
-            Action(
-                icon = Icons.Rounded.Add,
-                contentDescription = "add",
-                onClick = navigateToSettingPlaylistManagement
-            )
-        )
-    }
-
-    LaunchedEffect(resume, icon) {
-        if (resume.isHandled) return@LaunchedEffect
-        helper.actions = persistentListOf(
-            Action(
-                icon = icon,
-                contentDescription = "link",
-                onClick = { isConnectSheetVisible = true }
-            ),
             Action(
                 icon = Icons.Rounded.Add,
                 contentDescription = "add",
@@ -149,12 +122,13 @@ fun ForyouRoute(
             recommend = recommend,
             rowCount = pref.rowCount,
             contentPadding = contentPadding,
+            showTelevisionConnection = !tv && !connected,
             navigateToPlaylist = navigateToPlaylist,
             navigateToStream = navigateToStream,
-            navigateToRecommendPlaylist = navigateToRecommendPlaylist,
             navigateToSettingPlaylistManagement = navigateToSettingPlaylistManagement,
             unsubscribe = { viewModel.unsubscribe(it) },
             rename = { playlistUrl, target -> viewModel.rename(playlistUrl, target) },
+            openTelevisionConnectionSheet = { isConnectSheetVisible = true },
             modifier = Modifier
                 .fillMaxSize()
                 .thenIf(!tv && pref.godMode) {
@@ -193,11 +167,12 @@ private fun ForyouScreen(
     details: ImmutableList<PlaylistDetail>,
     recommend: Recommend,
     contentPadding: PaddingValues,
+    showTelevisionConnection: Boolean,
     navigateToPlaylist: (Playlist) -> Unit,
     navigateToStream: () -> Unit,
-    navigateToRecommendPlaylist: (Playlist, String) -> Unit,
     navigateToSettingPlaylistManagement: () -> Unit,
     unsubscribe: OnUnsubscribe,
+    openTelevisionConnectionSheet: () -> Unit,
     rename: OnRename,
     modifier: Modifier = Modifier
 ) {
@@ -212,54 +187,70 @@ private fun ForyouScreen(
     }
     var dialog: ForyouDialog by remember { mutableStateOf(ForyouDialog.Idle) }
     Background(modifier) {
-        Column(
-            verticalArrangement = Arrangement.spacedBy(spacing.small),
-            modifier = Modifier
-                .fillMaxSize()
-                .navigationBarsPadding()
-        ) {
-            val showRecommend = recommend.isNotEmpty()
-            val showPlaylist = details.isNotEmpty()
-            if (showRecommend) {
-                Column {
-                    Spacer(
-                        Modifier
-                            .fillMaxWidth()
-                            .height(contentPadding.calculateTopPadding())
+        Box {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(spacing.small),
+                modifier = Modifier.fillMaxSize()
+            ) {
+                val showRecommend = recommend.isNotEmpty()
+                val showPlaylist = details.isNotEmpty()
+                if (showRecommend) {
+                    Column {
+                        Spacer(
+                            Modifier
+                                .fillMaxWidth()
+                                .height(contentPadding.calculateTopPadding())
+                        )
+                        RecommendGallery(
+                            recommend = recommend,
+                            navigateToStream = navigateToStream,
+                            navigateToPlaylist = navigateToPlaylist,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
+
+                if (showPlaylist) {
+                    val actualContentPadding = if (!showRecommend) contentPadding
+                    else contentPadding - contentPadding.only(WindowInsetsSides.Top)
+                    PlaylistGallery(
+                        rowCount = actualRowCount,
+                        details = details,
+                        navigateToPlaylist = navigateToPlaylist,
+                        onMenu = { dialog = ForyouDialog.Selections(it) },
+                        contentPadding = actualContentPadding,
+                        modifier = Modifier.fillMaxSize()
                     )
-                    RecommendGallery(
-                        recommend = recommend,
-                        navigateToStream = navigateToStream,
-                        modifier = Modifier.fillMaxWidth()
-                    )
+                } else {
+                    Box(Modifier.fillMaxSize()) {
+                        PlaylistGalleryPlaceholder(
+                            navigateToSettingPlaylistManagement = navigateToSettingPlaylistManagement,
+                            modifier = Modifier.align(Alignment.Center)
+                        )
+                    }
                 }
             }
-            if (showPlaylist) {
-                val actualContentPadding = if (!showRecommend) contentPadding
-                else contentPadding - contentPadding.only(WindowInsetsSides.Top)
-                PlaylistGallery(
-                    rowCount = actualRowCount,
-                    details = details,
-                    navigateToPlaylist = navigateToPlaylist,
-                    onMenu = { dialog = ForyouDialog.Selections(it) },
-                    contentPadding = actualContentPadding,
-                    modifier = Modifier.fillMaxSize()
+            AnimatedVisibility(
+                visible = showTelevisionConnection,
+                enter = slideInVertically { it } + fadeIn(),
+                exit = slideOutVertically { it } + fadeOut(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .align(Alignment.BottomCenter)
+                    .padding(spacing.medium)
+            ) {
+                Button(
+                    text = stringResource(string.feat_foryou_connect_title),
+                    onClick = openTelevisionConnectionSheet
                 )
-            } else {
-                Box(Modifier.fillMaxSize()) {
-                    PlaylistGalleryPlaceholder(
-                        navigateToSettingPlaylistManagement = navigateToSettingPlaylistManagement,
-                        modifier = Modifier.align(Alignment.Center)
-                    )
-                }
             }
+            ForyouDialog(
+                status = dialog,
+                update = { dialog = it },
+                unsubscribe = unsubscribe,
+                rename = rename
+            )
         }
-        ForyouDialog(
-            status = dialog,
-            update = { dialog = it },
-            unsubscribe = unsubscribe,
-            rename = rename
-        )
     }
 
     BackHandler(dialog != ForyouDialog.Idle) {

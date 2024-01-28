@@ -1,10 +1,10 @@
 package com.m3u.features.stream
 
-import android.content.Context
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.C
 import androidx.media3.common.Tracks
 import com.m3u.core.architecture.logger.Logger
+import com.m3u.core.architecture.logger.prefix
 import com.m3u.core.architecture.viewmodel.BaseViewModel
 import com.m3u.data.manager.PlayerManager
 import com.m3u.data.repository.PlaylistRepository
@@ -43,10 +43,11 @@ class StreamViewModel @Inject constructor(
     private val streamRepository: StreamRepository,
     playlistRepository: PlaylistRepository,
     private val playerManager: PlayerManager,
-    private val logger: Logger
+    logger: Logger,
 ) : BaseViewModel<StreamState, StreamEvent>(
     emptyState = StreamState()
 ), OnDeviceRegistryListener, OnDeviceControlListener {
+    private val logger = logger.prefix("stream")
     private val _devices = MutableStateFlow<ImmutableList<Device<*, *, *>>>(persistentListOf())
 
     // searched screencast devices
@@ -154,12 +155,11 @@ class StreamViewModel @Inject constructor(
 
     override fun onEvent(event: StreamEvent) {
         when (event) {
-            is StreamEvent.OpenDlnaDevices -> openDlnaDevices(event.activityContext)
-            is StreamEvent.CloseDlnaDevices -> closeDlnaDevices(event.activityContext)
+            StreamEvent.OpenDlnaDevices -> openDlnaDevices()
+            StreamEvent.CloseDlnaDevices -> closeDlnaDevices()
             is StreamEvent.ConnectDlnaDevice -> connectDlnaDevice(event.device)
             is StreamEvent.DisconnectDlnaDevice -> disconnectDlnaDevice(event.device)
             is StreamEvent.OnFavourite -> onFavourite(event.url)
-            StreamEvent.Release -> release()
             is StreamEvent.OnVolume -> onVolume(event.volume)
         }
     }
@@ -174,9 +174,8 @@ class StreamViewModel @Inject constructor(
     // searching or not
     internal val searching = _searching.asStateFlow()
 
-    private fun openDlnaDevices(activityContext: Context) {
+    private fun openDlnaDevices() {
         try {
-            DLNACastManager.bindCastService(activityContext)
             DLNACastManager.registerDeviceListener(this)
         } catch (ignore: Exception) {
 
@@ -188,12 +187,11 @@ class StreamViewModel @Inject constructor(
         _isDevicesVisible.value = true
     }
 
-    private fun closeDlnaDevices(activityContext: Context) {
+    private fun closeDlnaDevices() {
         try {
             _searching.value = false
             _isDevicesVisible.value = false
             _devices.value = persistentListOf()
-            DLNACastManager.unbindCastService(activityContext)
             DLNACastManager.unregisterListener(this)
         } catch (ignore: Exception) {
 
@@ -269,9 +267,14 @@ class StreamViewModel @Inject constructor(
         controlPoint = null
     }
 
-    private fun release() {
-        controlPoint?.stop()
-        controlPoint = null
-        playerManager.stop()
+    fun release() {
+        try {
+            controlPoint?.stop()
+            controlPoint = null
+            playerManager.release()
+            DLNACastManager.unregisterListener(this)
+        } catch (ignored: Exception) {
+
+        }
     }
 }

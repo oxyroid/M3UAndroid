@@ -31,6 +31,8 @@ import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
 import androidx.media3.session.MediaSession
+import com.m3u.core.architecture.logger.Logger
+import com.m3u.core.architecture.logger.prefix
 import com.m3u.core.architecture.pref.Pref
 import com.m3u.core.architecture.pref.annotation.ReconnectMode
 import com.m3u.core.architecture.pref.observeAsFlow
@@ -38,6 +40,7 @@ import com.m3u.data.manager.PlayerManager
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -46,6 +49,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.updateAndGet
 import java.net.CookieHandler
 import java.net.CookieManager
 import java.net.CookiePolicy
@@ -53,8 +57,10 @@ import javax.inject.Inject
 
 class PlayerManagerImpl @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val pref: Pref
+    private val pref: Pref,
+    logger: Logger
 ) : PlayerManager, Player.Listener, MediaSession.Callback {
+    private val logger = logger.prefix("player")
     private val _player = MutableStateFlow<ExoPlayer?>(null)
     override val player: Flow<Player?> = _player.asStateFlow()
 
@@ -71,14 +77,6 @@ class PlayerManagerImpl @Inject constructor(
     override val playerError: StateFlow<PlaybackException?> = _playbackError.asStateFlow()
 
     private val coroutineScope = CoroutineScope(Dispatchers.Main)
-
-    init {
-        combine(
-            pref.observeAsFlow { it.connectTimeout },
-            pref.observeAsFlow { it.tunneling }
-        ) { _, _ -> replay() }
-            .launchIn(coroutineScope)
-    }
 
     private fun createPlayer(): ExoPlayer {
         val rf = DefaultRenderersFactory(context).apply {
@@ -118,23 +116,39 @@ class PlayerManagerImpl @Inject constructor(
             }
     }
 
+    private var listenPrefJob: Job? = null
+
+    private var currentConnectTimeout = pref.connectTimeout
+    private var currentTunneling = pref.tunneling
+
     override fun play(url: String) {
+        logger.log("play, start")
         _url.value = url
         tryPlay(
             mimeType = null
         )
+        logger.log("play, end")
+
+        listenPrefJob?.cancel()
+        listenPrefJob = combine(
+            pref.observeAsFlow { it.connectTimeout },
+            pref.observeAsFlow { it.tunneling }
+        )
+        { timeout, tunneling ->
+            if (timeout != currentConnectTimeout || tunneling != currentTunneling) {
+                replay()
+                currentConnectTimeout = timeout
+                currentTunneling = tunneling
+            }
+        }
+            .launchIn(coroutineScope)
     }
 
     private fun tryPlay(mimeType: String?) {
         val url = this.url.value ?: return
-        val currentPlayer = _player.value ?: createPlayer().also {
-            _player.value.also { prev ->
-                prev?.stop()
-                prev?.release()
-                prev?.removeListener(this)
-            }
-            _player.value = it
-        }
+        val currentPlayer = _player.updateAndGet { prev ->
+            prev ?: createPlayer()
+        }!!
 
         when (mimeType) {
             MimeTypes.APPLICATION_SS -> {
@@ -176,24 +190,26 @@ class PlayerManagerImpl @Inject constructor(
         currentPlayer.prepare()
     }
 
-    override fun stop() {
+    override fun release() {
+        logger.log("release, start")
         _player.update {
             it?.stop()
             it?.release()
             it?.removeListener(this)
+            _url.value = null
+            _groups.value = emptyList()
+            _videoSize.value = Rect()
+            _playbackError.value = null
+            _playbackState.value = Player.STATE_IDLE
             null
         }
-        _url.value = null
-        _groups.value = emptyList()
-        _videoSize.value = Rect()
-        _playbackError.value = null
-        _playbackState.value = Player.STATE_IDLE
+        logger.log("release, end")
     }
 
     override fun replay() {
         val prev = url.value
         if (prev != null) {
-            stop()
+            release()
             play(prev)
         }
     }
@@ -220,10 +236,10 @@ class PlayerManagerImpl @Inject constructor(
             PlaybackException.ERROR_CODE_BEHIND_LIVE_WINDOW -> {
                 // always retry
                 // if (pref.reconnectMode != ReconnectMode.NO) {
-                    _player.value?.let {
-                        it.seekToDefaultPosition()
-                        it.prepare()
-                    }
+                _player.value?.let {
+                    it.seekToDefaultPosition()
+                    it.prepare()
+                }
                 // }
             }
 

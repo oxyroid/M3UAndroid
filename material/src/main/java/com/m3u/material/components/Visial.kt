@@ -277,7 +277,7 @@ private fun KeyboardKey(
     TextButton(
         modifier = modifier.height(54.dp),
         onClick = onClick,
-        shape = RoundedCornerShape(0.dp),
+        shape = RoundedCornerShape(8.dp),
         contentPadding = PaddingValues(0.dp)
     ) {
         Text(

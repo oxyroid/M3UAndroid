@@ -8,7 +8,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts.CreateDocument
 import com.m3u.core.architecture.pref.Pref
-import com.m3u.ui.AppLocalProvider
+import com.m3u.ui.Toolkit
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
@@ -32,7 +32,7 @@ class CrashActivity : ComponentActivity() {
             }
         }
         setContent {
-            AppLocalProvider(pref = pref) {
+            Toolkit(pref = pref) {
                 CrashApp()
             }
         }
