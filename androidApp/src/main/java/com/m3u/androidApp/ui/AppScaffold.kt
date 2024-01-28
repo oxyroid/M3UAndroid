@@ -51,13 +51,14 @@ import com.m3u.material.components.Background
 import com.m3u.material.components.IconButton
 import com.m3u.material.ktx.isTelevision
 import com.m3u.material.model.LocalSpacing
-import com.m3u.ui.M3USnackHost
 import com.m3u.ui.Destination
+import com.m3u.ui.M3USnackHost
 import com.m3u.ui.helper.Action
 import com.m3u.ui.helper.Fob
 import com.m3u.ui.helper.LocalHelper
 import com.m3u.ui.helper.useRailNav
 import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.toPersistentList
 
 @Composable
 internal fun AppScaffold(
@@ -76,75 +77,8 @@ internal fun AppScaffold(
     val useRailNav = LocalHelper.current.useRailNav
     val tv = isTelevision()
 
-    val rootDestinations = remember { Destination.Root.entries }
-
-    @Composable
-    fun items(
-        roots: List<Destination.Root>,
-        inner: @Composable (Destination.Root) -> Unit
-    ) {
-        roots.fastForEach { rootDestination ->
-            inner(rootDestination)
-        }
-    }
-
-    @Composable
-    fun topBar() {
-        if (!tv) {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = title,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.padding(horizontal = spacing.medium)
-                    )
-                },
-                navigationIcon = {
-                    if (onBackPressed != null) {
-                        IconButton(
-                            icon = Icons.AutoMirrored.Rounded.ArrowBack,
-                            contentDescription = null,
-                            onClick = onBackPressed,
-                            modifier = Modifier.wrapContentSize()
-                        )
-                    }
-                },
-                actions = {
-                    actions.forEach { action ->
-                        IconButton(
-                            icon = action.icon,
-                            contentDescription = action.contentDescription,
-                            onClick = action.onClick
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(spacing.medium))
-                },
-                modifier = Modifier.fillMaxWidth()
-            )
-        }
-    }
-
-    @Composable
-    fun topBarWithContent(windowInsets: WindowInsets) {
-        Scaffold(
-            topBar = { topBar() },
-            contentWindowInsets = windowInsets,
-            modifier = Modifier.fillMaxSize()
-        ) { padding ->
-            Background {
-                Box {
-                    content(padding)
-                    M3USnackHost(
-                        message = message,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .align(Alignment.BottomCenter)
-                            .padding(padding)
-                    )
-                }
-            }
-        }
+    val rootDestinations = remember {
+        Destination.Root.entries.toPersistentList()
     }
 
     Background {
@@ -159,7 +93,7 @@ internal fun AppScaffold(
                         .fillMaxHeight()
                         .padding(spacing.medium)
                 ) {
-                    items(rootDestinations) { currentRootDestination ->
+                    Items(rootDestinations) { currentRootDestination ->
                         NavigationItemLayout(
                             rootDestination = rootDestination,
                             fob = fob,
@@ -215,7 +149,16 @@ internal fun AppScaffold(
                     Modifier
                         .fillMaxHeight()
                         .weight(1f)
-                ) { topBarWithContent(WindowInsets.systemBars) }
+                ) {
+                    TopBarWithContent(
+                        message = message,
+                        windowInsets = WindowInsets.systemBars,
+                        title = title,
+                        onBackPressed = onBackPressed,
+                        actions = actions,
+                        content = content
+                    )
+                }
             }
         } else {
             val currentContainerColor by animateColorAsState(
@@ -235,13 +178,22 @@ internal fun AppScaffold(
                         Modifier
                             .fillMaxWidth()
                             .weight(1f)
-                    ) { topBarWithContent(WindowInsets.systemBars.exclude(WindowInsets.navigationBars)) }
+                    ) {
+                        TopBarWithContent(
+                            message = message,
+                            windowInsets = WindowInsets.systemBars.exclude(WindowInsets.navigationBars),
+                            title = title,
+                            onBackPressed = onBackPressed,
+                            actions = actions,
+                            content = content
+                        )
+                    }
                     NavigationBar(
                         containerColor = MaterialTheme.colorScheme.background,
                         contentColor = MaterialTheme.colorScheme.onBackground,
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        items(rootDestinations) { currentRootDestination ->
+                        Items(rootDestinations) { currentRootDestination ->
                             NavigationItemLayout(
                                 rootDestination = rootDestination,
                                 fob = fob,
@@ -271,7 +223,7 @@ internal fun AppScaffold(
                         // keep header not null
                         header = {}
                     ) {
-                        items(rootDestinations) { currentRootDestination ->
+                        Items(rootDestinations) { currentRootDestination ->
                             NavigationItemLayout(
                                 rootDestination = rootDestination,
                                 fob = fob,
@@ -295,19 +247,118 @@ internal fun AppScaffold(
                         Modifier
                             .fillMaxHeight()
                             .weight(1f)
-                    ) { topBarWithContent(WindowInsets.systemBars) }
+                    ) {
+                        TopBarWithContent(
+                            message = message,
+                            windowInsets = WindowInsets.systemBars,
+                            title = title,
+                            onBackPressed = onBackPressed,
+                            actions = actions,
+                            content = content
+                        )
+                    }
                 }
             }
         }
     }
 }
 
+
 @Composable
-private inline fun NavigationItemLayout(
+private fun Items(
+    roots: ImmutableList<Destination.Root>,
+    inner: @Composable (Destination.Root) -> Unit
+) {
+    roots.fastForEach { rootDestination ->
+        inner(rootDestination)
+    }
+}
+
+@Composable
+private fun TopBar(
+    title: String,
+    onBackPressed: (() -> Unit)?,
+    actions: ImmutableList<Action>
+) {
+    val tv = isTelevision()
+    val spacing = LocalSpacing.current
+
+    if (!tv) {
+        TopAppBar(
+            title = {
+                Text(
+                    text = title,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.padding(horizontal = spacing.medium)
+                )
+            },
+            navigationIcon = {
+                if (onBackPressed != null) {
+                    IconButton(
+                        icon = Icons.AutoMirrored.Rounded.ArrowBack,
+                        contentDescription = null,
+                        onClick = onBackPressed,
+                        modifier = Modifier.wrapContentSize()
+                    )
+                }
+            },
+            actions = {
+                actions.forEach { action ->
+                    IconButton(
+                        icon = action.icon,
+                        contentDescription = action.contentDescription,
+                        onClick = action.onClick
+                    )
+                }
+                Spacer(modifier = Modifier.width(spacing.medium))
+            },
+            modifier = Modifier.fillMaxWidth()
+        )
+    }
+}
+
+@Composable
+private fun TopBarWithContent(
+    message: Message,
+    windowInsets: WindowInsets,
+    title: String,
+    onBackPressed: (() -> Unit)?,
+    actions: ImmutableList<Action>,
+    content: @Composable (PaddingValues) -> Unit
+) {
+    Scaffold(
+        topBar = {
+            TopBar(
+                title = title,
+                onBackPressed = onBackPressed,
+                actions = actions
+            )
+        },
+        contentWindowInsets = windowInsets,
+        modifier = Modifier.fillMaxSize()
+    ) { padding ->
+        Background {
+            Box {
+                content(padding)
+                M3USnackHost(
+                    message = message,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .align(Alignment.BottomCenter)
+                        .padding(padding)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun NavigationItemLayout(
     rootDestination: Destination.Root?,
     fob: Fob?,
     currentRootDestination: Destination.Root,
-    crossinline navigateToRoot: (Destination.Root) -> Unit,
+    navigateToRoot: (Destination.Root) -> Unit,
     block: @Composable (
         selected: Boolean,
         onClick: () -> Unit,

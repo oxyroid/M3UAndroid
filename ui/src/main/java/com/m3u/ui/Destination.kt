@@ -47,7 +47,10 @@ sealed interface Destination {
     data object About : Destination
 }
 
+@Immutable
 sealed interface DestinationEvent {
+
+    @Immutable
     sealed interface Setting {
         @Immutable
         data object Default : Setting
