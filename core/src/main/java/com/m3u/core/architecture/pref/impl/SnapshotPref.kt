@@ -29,6 +29,7 @@ import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_NO_PICTURE_MODE
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_PLAYLIST_STRATEGY
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_RECONNECT_MODE
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_RECORD
+import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_REMOTE_CONTROL
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_ROOT_DESTINATION
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_ROW_COUNT
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_SCREENCAST
@@ -45,6 +46,7 @@ import com.m3u.core.architecture.pref.Pref.Companion.NO_PICTURE_MODE
 import com.m3u.core.architecture.pref.Pref.Companion.PLAYLIST_STRATEGY
 import com.m3u.core.architecture.pref.Pref.Companion.RECONNECT_MODE
 import com.m3u.core.architecture.pref.Pref.Companion.RECORD
+import com.m3u.core.architecture.pref.Pref.Companion.REMOTE_CONTROL
 import com.m3u.core.architecture.pref.Pref.Companion.ROOT_DESTINATION
 import com.m3u.core.architecture.pref.Pref.Companion.ROW_COUNT
 import com.m3u.core.architecture.pref.Pref.Companion.SCREENCAST
@@ -142,10 +144,14 @@ class SnapshotPref @Inject constructor(
     override var alwaysTv: Boolean by
     sharedPreferences.booleanAsState(DEFAULT_ALWAYS_TV, ALWAYS_TV)
 
+    override var remoteControl: Boolean by
+    sharedPreferences.booleanAsState(DEFAULT_REMOTE_CONTROL, REMOTE_CONTROL)
+
     companion object {
         private const val SHARED_SETTINGS = "shared_settings"
     }
+
     init {
-         alwaysTv = false
+        alwaysTv = false
     }
 }

@@ -50,6 +50,7 @@ interface Pref {
     var colorArgb: Int
     var tunneling: Boolean
     var alwaysTv: Boolean
+    var remoteControl: Boolean
 
 
     companion object {
@@ -87,6 +88,7 @@ interface Pref {
         const val DEFAULT_COLOR_ARGB = 0xD0BCFF
         const val DEFAULT_TUNNELING = false
         const val DEFAULT_ALWAYS_TV = false
+        const val DEFAULT_REMOTE_CONTROL = false
 
         const val PLAYLIST_STRATEGY = "playlist-strategy"
         const val ROW_COUNT = "rowCount"
@@ -114,6 +116,7 @@ interface Pref {
         const val COLOR_ARGB = "color-argb"
         const val TUNNELING = "tunneling"
         const val ALWAYS_TV = "always-tv"
+        const val REMOTE_CONTROL = "remote-control"
     }
 }
 

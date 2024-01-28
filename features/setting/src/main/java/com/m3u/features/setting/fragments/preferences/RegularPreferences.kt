@@ -9,6 +9,7 @@ import androidx.compose.material.icons.rounded.HideImage
 import androidx.compose.material.icons.rounded.MusicNote
 import androidx.compose.material.icons.rounded.Pages
 import androidx.compose.material.icons.rounded.Recommend
+import androidx.compose.material.icons.rounded.SettingsRemote
 import androidx.compose.material.icons.rounded.Sync
 import androidx.compose.material.icons.rounded.Timer
 import androidx.compose.runtime.Composable
@@ -139,6 +140,14 @@ internal fun RegularPreferences(
             onChanged = { pref.noPictureMode = !pref.noPictureMode }
         )
         if (!tv) {
+            CheckBoxSharedPreference(
+                title = string.feat_setting_remote_control,
+                content = string.feat_setting_remote_control_description,
+                icon = Icons.Rounded.SettingsRemote,
+                checked = pref.remoteControl,
+                onChanged = { pref.remoteControl = !pref.remoteControl }
+            )
+
             CheckBoxSharedPreference(
                 title = string.feat_setting_god_mode,
                 content = string.feat_setting_god_mode_description,

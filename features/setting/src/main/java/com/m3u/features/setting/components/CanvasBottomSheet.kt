@@ -1,6 +1,5 @@
 package com.m3u.features.setting.components
 
-import android.annotation.SuppressLint
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -41,14 +40,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.m3u.i18n.R.*
+import com.m3u.i18n.R.string
 import com.m3u.material.ktx.asColorScheme
 import com.m3u.material.ktx.createScheme
 import com.m3u.material.model.LocalSpacing
 import com.m3u.material.model.SugarColors
 import com.m3u.ui.FontFamilies
 
-@SuppressLint("RestrictedApi")
 @OptIn(ExperimentalStdlibApi::class)
 @Composable
 internal fun CanvasBottomSheet(

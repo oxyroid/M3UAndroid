@@ -122,7 +122,7 @@ fun ForyouRoute(
             recommend = recommend,
             rowCount = pref.rowCount,
             contentPadding = contentPadding,
-            showTelevisionConnection = !tv && !connected,
+            showTelevisionConnection = !tv && !connected && pref.remoteControl,
             navigateToPlaylist = navigateToPlaylist,
             navigateToStream = navigateToStream,
             navigateToSettingPlaylistManagement = navigateToSettingPlaylistManagement,

@@ -30,4 +30,5 @@ internal object MockPref : Pref {
     override var colorArgb: Int = Pref.DEFAULT_COLOR_ARGB
     override var tunneling: Boolean = Pref.DEFAULT_TUNNELING
     override var alwaysTv: Boolean = Pref.DEFAULT_ALWAYS_TV
+    override var remoteControl: Boolean = Pref.DEFAULT_REMOTE_CONTROL
 }

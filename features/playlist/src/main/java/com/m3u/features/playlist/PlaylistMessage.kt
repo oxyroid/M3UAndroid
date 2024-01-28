@@ -38,10 +38,4 @@ sealed class PlaylistMessage(
         duration = Duration.INFINITE,
         resId = string.feat_playlist_refreshing
     )
-
-    data object None : PlaylistMessage(
-        level = LEVEL_EMPTY,
-        type = TYPE_SNACK,
-        resId = 0
-    )
 }

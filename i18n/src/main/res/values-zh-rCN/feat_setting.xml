@@ -79,4 +79,7 @@
     <string name="feat_setting_canvas_light">日间</string>
     <string name="feat_setting_canvas_apply">应用</string>
     <string name="feat_setting_canvas_reset">重制</string>
+
+    <string name="feat_setting_remote_control">遥控器</string>
+    <string name="feat_setting_remote_control_description">开启遥控电视的能力</string>
 </resources>
