@@ -20,7 +20,7 @@ import androidx.media3.common.util.SystemClock
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.DataSource
 import androidx.media3.datasource.DefaultDataSource
-import androidx.media3.datasource.DefaultHttpDataSource
+import androidx.media3.datasource.okhttp.OkHttpDataSource
 import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
@@ -36,6 +36,8 @@ import com.m3u.core.architecture.logger.prefix
 import com.m3u.core.architecture.pref.Pref
 import com.m3u.core.architecture.pref.annotation.ReconnectMode
 import com.m3u.core.architecture.pref.observeAsFlow
+import com.m3u.data.Certs
+import com.m3u.data.SSL
 import com.m3u.data.manager.PlayerManager
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
@@ -50,6 +52,7 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.updateAndGet
+import okhttp3.OkHttpClient
 import java.net.CookieHandler
 import java.net.CookieManager
 import java.net.CookiePolicy
@@ -201,6 +204,7 @@ class PlayerManagerImpl @Inject constructor(
             _videoSize.value = Rect()
             _playbackError.value = null
             _playbackState.value = Player.STATE_IDLE
+            mimeType = null
             null
         }
         logger.log("release, end")
@@ -230,24 +234,52 @@ class PlayerManagerImpl @Inject constructor(
         }
     }
 
+    private var mimeType: String? = null
+
     override fun onPlayerErrorChanged(error: PlaybackException?) {
         super.onPlayerErrorChanged(error)
         when (error?.errorCode) {
             PlaybackException.ERROR_CODE_BEHIND_LIVE_WINDOW -> {
-                // always retry
-                // if (pref.reconnectMode != ReconnectMode.NO) {
                 _player.value?.let {
                     it.seekToDefaultPosition()
                     it.prepare()
                 }
-                // }
             }
 
+            PlaybackException.ERROR_CODE_PARSING_CONTAINER_MALFORMED,
+            PlaybackException.ERROR_CODE_PARSING_MANIFEST_MALFORMED,
             PlaybackException.ERROR_CODE_PARSING_CONTAINER_UNSUPPORTED,
+            PlaybackException.ERROR_CODE_PARSING_MANIFEST_UNSUPPORTED,
             PlaybackException.ERROR_CODE_IO_UNSPECIFIED -> {
-                tryPlay(
-                    mimeType = MimeTypes.APPLICATION_M3U8
-                )
+                when (mimeType) {
+                    null -> {
+                        mimeType = MimeTypes.APPLICATION_M3U8
+                        tryPlay(mimeType)
+                        return
+                    }
+
+                    MimeTypes.APPLICATION_M3U8 -> {
+                        mimeType = MimeTypes.APPLICATION_MPD
+                        tryPlay(mimeType)
+                        return
+                    }
+
+                    MimeTypes.APPLICATION_MPD -> {
+                        mimeType = MimeTypes.APPLICATION_SS
+                        tryPlay(mimeType)
+                        return
+                    }
+
+                    MimeTypes.APPLICATION_SS -> {
+                        mimeType = MimeTypes.APPLICATION_RTSP
+                        tryPlay(mimeType)
+                        return
+                    }
+
+                    else -> {
+                        mimeType = null
+                    }
+                }
             }
 
             else -> {}
@@ -295,9 +327,12 @@ class PlayerManagerImpl @Inject constructor(
         val cookieManager = CookieManager()
         cookieManager.setCookiePolicy(CookiePolicy.ACCEPT_ORIGINAL_SERVER)
         CookieHandler.setDefault(cookieManager)
-        return DefaultHttpDataSource.Factory().apply {
-            setAllowCrossProtocolRedirects(true)
-        }
+        return OkHttpDataSource.Factory(
+            OkHttpClient.Builder()
+                .sslSocketFactory(SSL.TLSTrustAll.socketFactory, Certs.TrustAll)
+                .hostnameVerifier { _, _ -> true }
+                .build()
+        )
     }
 }
 
