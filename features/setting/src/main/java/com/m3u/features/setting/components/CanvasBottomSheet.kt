@@ -151,7 +151,7 @@ internal fun CanvasBottomSheet(
                                 )
                             },
                             label = {
-                                Text(stringResource(string.feat_setting_canvas_apply))
+                                Text(stringResource(string.feat_setting_canvas_apply).uppercase())
                             },
                             modifier = Modifier.weight(1f)
                         )
@@ -177,7 +177,7 @@ internal fun CanvasBottomSheet(
                                 )
                             },
                             label = {
-                                Text(stringResource(string.feat_setting_canvas_reset))
+                                Text(stringResource(string.feat_setting_canvas_reset).uppercase())
                             },
                             modifier = Modifier.weight(1f)
                         )

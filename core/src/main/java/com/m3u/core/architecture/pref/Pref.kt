@@ -68,7 +68,7 @@ interface Pref {
         const val DEFAULT_FULL_INFO_PLAYER = false
         const val DEFAULT_ROOT_DESTINATION = 0
         const val DEFAULT_NO_PICTURE_MODE = true
-        const val DEFAULT_DARK_MODE = false
+        const val DEFAULT_DARK_MODE = true
 
         @ChecksSdkIntAtLeast(api = Build.VERSION_CODES.S)
         val DEFAULT_USE_DYNAMIC_COLORS = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
