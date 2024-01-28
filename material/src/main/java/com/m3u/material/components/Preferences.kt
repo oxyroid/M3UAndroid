@@ -10,6 +10,7 @@ import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.LocalAbsoluteTonalElevation
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
@@ -95,6 +96,11 @@ fun Preference(
                 },
                 tonalElevation = LocalAbsoluteTonalElevation.current,
                 shadowElevation = elevation,
+                colors = ListItemDefaults.colors(
+                    overlineColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha),
+                    supportingColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha),
+                    headlineColor = MaterialTheme.colorScheme.onSurface.copy(alpha)
+                ),
                 modifier = modifier
                     .semantics(mergeDescendants = true) {}
                     .clickable(
