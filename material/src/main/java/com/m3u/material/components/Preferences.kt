@@ -31,6 +31,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import com.m3u.material.ktx.TelevisionChain
 import com.m3u.material.ktx.isTelevision
 import androidx.tv.material3.ListItem as TvListItem
@@ -42,7 +43,7 @@ fun Preference(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     content: String? = null,
-    elevation: Dp = Dp.Unspecified,
+    elevation: Dp = 0.dp,
     onClick: () -> Unit = {},
     icon: ImageVector? = null,
     trailing: @Composable (() -> Unit)? = null
@@ -64,16 +65,6 @@ fun Preference(
         }
     ) {
         val alpha = if (enabled) 1f else 0.38f
-//        val currentContainerColor by animateColorAsState(
-//            targetValue = MaterialTheme.colorScheme.surface.copy(alpha),
-//            label = "preference-container-color",
-//            animationSpec = spring(stiffness = Spring.StiffnessMediumLow)
-//        )
-//        val currentContentColor by animateColorAsState(
-//            targetValue = MaterialTheme.colorScheme.onSurface.copy(alpha),
-//            label = "preference-content-color",
-//            animationSpec = spring(stiffness = Spring.StiffnessMediumLow)
-//        )
         if (!isTelevision()) {
             ListItem(
                 headlineContent = {
@@ -103,14 +94,6 @@ fun Preference(
                     }
                 },
                 tonalElevation = LocalAbsoluteTonalElevation.current,
-//                colors = ListItemDefaults.colors(
-//                    containerColor = currentContainerColor,
-//                    headlineColor = currentContentColor,
-//                    leadingIconColor = currentContentColor,
-//                    overlineColor = currentContentColor,
-//                    supportingColor = currentContentColor,
-//                    trailingIconColor = currentContentColor,
-//                ),
                 shadowElevation = elevation,
                 modifier = modifier
                     .semantics(mergeDescendants = true) {}
@@ -172,7 +155,7 @@ fun CheckBoxPreference(
     onChanged: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
     content: String? = null,
-    elevation: Dp = Dp.Unspecified,
+    elevation: Dp = 0.dp,
     enabled: Boolean = true,
     icon: ImageVector? = null,
 ) {
@@ -213,7 +196,7 @@ fun SwitchPreference(
     onChanged: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
     content: String? = null,
-    elevation: Dp = Dp.Unspecified,
+    elevation: Dp = 0.dp,
     enabled: Boolean = true,
     icon: ImageVector? = null,
 ) {
@@ -261,7 +244,7 @@ fun IconPreference(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     content: String? = null,
-    elevation: Dp = Dp.Unspecified,
+    elevation: Dp = 0.dp,
     enabled: Boolean = true,
     icon: ImageVector? = null,
 ) {
@@ -297,7 +280,7 @@ fun TextPreference(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     content: String? = null,
-    elevation: Dp = Dp.Unspecified,
+    elevation: Dp = 0.dp,
     enabled: Boolean = true,
     icon: ImageVector? = null,
 ) {
