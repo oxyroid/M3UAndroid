@@ -41,7 +41,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.m3u.i18n.R
+import com.m3u.i18n.R.*
 import com.m3u.material.ktx.asColorScheme
 import com.m3u.material.ktx.createScheme
 import com.m3u.material.model.LocalSpacing
@@ -147,11 +147,11 @@ internal fun CanvasBottomSheet(
                             icon = {
                                 Icon(
                                     imageVector = Icons.Rounded.Save,
-                                    contentDescription = "apply"
+                                    contentDescription = stringResource(string.feat_setting_canvas_apply)
                                 )
                             },
                             label = {
-                                Text(text = "APPLY")
+                                Text(stringResource(string.feat_setting_canvas_apply))
                             },
                             modifier = Modifier.weight(1f)
                         )
@@ -173,11 +173,11 @@ internal fun CanvasBottomSheet(
                             icon = {
                                 Icon(
                                     imageVector = Icons.Rounded.Refresh,
-                                    contentDescription = "reset"
+                                    contentDescription = stringResource(string.feat_setting_canvas_reset)
                                 )
                             },
                             label = {
-                                Text(text = "RESET")
+                                Text(stringResource(string.feat_setting_canvas_reset))
                             },
                             modifier = Modifier.weight(1f)
                         )
@@ -209,8 +209,8 @@ internal fun CanvasBottomSheet(
                                     Text(
                                         text = stringResource(
                                             when (currentIsDark) {
-                                                true -> R.string.feat_setting_canvas_dark
-                                                false -> R.string.feat_setting_canvas_light
+                                                true -> string.feat_setting_canvas_dark
+                                                false -> string.feat_setting_canvas_light
                                             }
                                         ).uppercase()
                                     )
