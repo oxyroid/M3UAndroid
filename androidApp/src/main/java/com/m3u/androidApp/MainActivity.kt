@@ -154,13 +154,12 @@ class MainActivity : AppCompatActivity() {
         override var darkMode: UBoolean = UBoolean.Unspecified
             set(value) {
                 field = value
+                val isDark = value.specified ?: resources.configuration.isDarkMode
                 enableEdgeToEdge(
-                    SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT) {
-                        value.specified ?: resources.configuration.isDarkMode
-                    },
-                    SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT) {
-                        value.specified ?: resources.configuration.isDarkMode
-                    }
+                    if (isDark) SystemBarStyle.dark(Color.TRANSPARENT)
+                    else SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT),
+                    if (isDark) SystemBarStyle.dark(Color.TRANSPARENT)
+                    else SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT)
                 )
             }
 
