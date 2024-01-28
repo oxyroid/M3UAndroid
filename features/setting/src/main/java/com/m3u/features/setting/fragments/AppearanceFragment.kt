@@ -1,5 +1,6 @@
 package com.m3u.features.setting.fragments
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -9,6 +10,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -51,6 +54,18 @@ internal fun AppearanceFragment(
                 )
         ) {
             if (!tv) {
+                Text(
+                    text = stringResource(string.feat_setting_appearance_hint_edit_color).uppercase(),
+                    color = MaterialTheme.colorScheme.onPrimary,
+                    style = MaterialTheme.typography.labelMedium,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(MaterialTheme.colorScheme.primary)
+                        .padding(
+                            horizontal = spacing.medium,
+                            vertical = spacing.extraSmall
+                        )
+                )
                 LazyRow(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
@@ -58,7 +73,6 @@ internal fun AppearanceFragment(
                     items(packs, key = { "${it.argb}_${it.isDark}" }) { pack ->
                         val selected =
                             !useDynamicColors && colorArgb == pack.argb && isDarkMode == pack.isDark
-
                         ThemeSelection(
                             argb = pack.argb,
                             isDark = pack.isDark,

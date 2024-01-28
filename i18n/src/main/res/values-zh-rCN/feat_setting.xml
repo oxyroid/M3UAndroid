@@ -66,7 +66,10 @@
     <string name="feat_setting_reconnect_mode_retry">仅在失败时</string>
     <string name="feat_setting_reconnect_mode_reconnect">永远</string>
     <string name="feat_setting_compact">紧凑模式</string>
+
     <string name="feat_setting_appearance">外观</string>
+    <string name="feat_setting_appearance_hint_edit_color">长按编辑颜色</string>
+
     <string name="feat_setting_tunneling">隧道模式</string>
     <string name="feat_setting_tunneling_description">改善 4K/HDR 内容的播放</string>
     <string name="feat_setting_label_backup">备份所有数据</string>
