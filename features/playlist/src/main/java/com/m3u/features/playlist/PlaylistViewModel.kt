@@ -17,6 +17,7 @@ import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.pref.Pref
 import com.m3u.core.architecture.pref.observeAsFlow
 import com.m3u.core.architecture.viewmodel.BaseViewModel
+import com.m3u.core.wrapper.Message
 import com.m3u.core.wrapper.Resource
 import com.m3u.core.wrapper.eventOf
 import com.m3u.data.database.model.Playlist
@@ -111,7 +112,7 @@ class PlaylistViewModel @Inject constructor(
             .onEach { resource ->
                 val refreshing = resource is Resource.Loading
                 _refreshing.update { refreshing }
-                val message = if (refreshing) PlaylistMessage.Refreshing else PlaylistMessage.None
+                val message = if (refreshing) PlaylistMessage.Refreshing else Message.Dynamic.EMPTY
                 messageManager.emit(message)
             }
             .launchIn(viewModelScope)
