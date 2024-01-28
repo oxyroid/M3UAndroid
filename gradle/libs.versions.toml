@@ -34,7 +34,7 @@ squareup-retrofit2 = "2.9.0"
 squareup-leakcanary = "2.12"
 
 kotlin = "1.9.22"
-android-gradle-plugin = "8.2.1"
+android-gradle-plugin = "8.2.2"
 dagger-plugin = "2.50"
 ksp-plugin = "1.9.22-1.0.17"
 

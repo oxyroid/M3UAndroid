@@ -241,7 +241,7 @@ internal fun AppScaffold(
                         contentColor = MaterialTheme.colorScheme.onBackground,
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        rootDestinations.forEach { currentRootDestination ->
+                        items(rootDestinations) { currentRootDestination ->
                             NavigationItemLayout(
                                 rootDestination = rootDestination,
                                 fob = fob,
@@ -260,25 +260,6 @@ internal fun AppScaffold(
                                 )
                             }
                         }
-//                        items(rootDestinations) { currentRootDestination ->
-//                            NavigationItemLayout(
-//                                rootDestination = rootDestination,
-//                                fob = fob,
-//                                currentRootDestination = currentRootDestination,
-//                                navigateToRoot = navigateToRoot
-//                            ) { selected: Boolean,
-//                                onClick: () -> Unit,
-//                                icon: @Composable () -> Unit,
-//                                label: @Composable () -> Unit ->
-//                                NavigationBarItem(
-//                                    selected = selected,
-//                                    onClick = onClick,
-//                                    icon = icon,
-//                                    label = label,
-//                                    alwaysShowLabel = alwaysShowLabel
-//                                )
-//                            }
-//                        }
                     }
                 }
             } else {
