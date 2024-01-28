@@ -31,6 +31,7 @@ import androidx.tv.material3.Glow
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.m3u.core.architecture.pref.LocalPref
+import com.m3u.core.util.basic.title
 import com.m3u.features.foryou.R
 import com.m3u.i18n.R.string
 import com.m3u.material.ktx.isTelevision
@@ -64,8 +65,8 @@ private fun RecommendItemLayout(
     val tv = isTelevision()
     if (!tv) {
         Card(
+            onClick = onClick,
             modifier = Modifier
-                .clickable { onClick() }
                 .graphicsLayer {
                     lerp(
                         start = 0.65f,
@@ -113,7 +114,7 @@ private fun UnseenContent(spec: Recommend.UnseenSpec) {
             Column(Modifier.padding(spacing.medium)) {
                 Text(
                     text = stringResource(string.feat_foryou_recommend_unseen_label).uppercase(),
-                    style = MaterialTheme.typography.labelLarge,
+                    style = MaterialTheme.typography.titleMedium,
                     maxLines = 1
                 )
                 Text(
@@ -132,8 +133,9 @@ private fun UnseenContent(spec: Recommend.UnseenSpec) {
                             string.feat_foryou_recommend_unseen_hours,
                             duration.inWholeHours
                         )
-                    },
+                    }.title(),
                     style = MaterialTheme.typography.labelMedium,
+                    color = LocalContentColor.current.copy(0.56f)
                 )
                 Spacer(modifier = Modifier.height(spacing.extraSmall))
                 Text(
