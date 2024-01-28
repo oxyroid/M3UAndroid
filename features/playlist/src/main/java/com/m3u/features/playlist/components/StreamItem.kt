@@ -100,6 +100,7 @@ private fun StreamItemImpl(
     val recently = sort == Sort.RECENTLY
 
     val recentlyString = stringResource(string.ui_sort_recently)
+    val neverPlayedString = stringResource(string.ui_sort_never_played)
 
     val scheme = remember(stream) {
         try {
@@ -164,6 +165,7 @@ private fun StreamItemImpl(
                                     val duration = now - instant
                                     duration.toComponents { days, hours, minutes, seconds, _ ->
                                         when {
+                                            stream.seen == 0L -> neverPlayedString
                                             days > 0 -> days.days.toString()
                                             hours > 0 -> hours.hours.toString()
                                             minutes > 0 -> minutes.minutes.toString()
@@ -222,7 +224,9 @@ private fun CompactStreamItem(
     val spacing = LocalSpacing.current
     val favourite = stream.favourite
     val recently = sort == Sort.RECENTLY
+
     val recentlyString = stringResource(string.ui_sort_recently)
+    val neverPlayedString = stringResource(string.ui_sort_never_played)
 
     val colorScheme = MaterialTheme.colorScheme
     MaterialTheme(
@@ -288,6 +292,7 @@ private fun CompactStreamItem(
                                     val duration = now - instant
                                     duration.toComponents { days, hours, minutes, seconds, _ ->
                                         when {
+                                            stream.seen == 0L -> neverPlayedString
                                             days > 0 -> "$days d"
                                             hours > 0 -> "$hours h"
                                             minutes > 0 -> "$minutes m"

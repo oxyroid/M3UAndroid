@@ -95,6 +95,7 @@ private fun FavoriteItemImpl(
     val tv = isTelevision()
     val recently = sort == Sort.RECENTLY
     val recentlyString = stringResource(string.ui_sort_recently)
+    val neverPlayedString = stringResource(string.ui_sort_never_played)
 
     val scheme = remember(stream.url) {
         URI(stream.url).scheme ?: context.getString(string.feat_playlist_scheme_unknown)
@@ -143,6 +144,7 @@ private fun FavoriteItemImpl(
                                     val duration = now - instant
                                     duration.toComponents { days, hours, minutes, seconds, _ ->
                                         when {
+                                            stream.seen == 0L -> neverPlayedString
                                             days > 0 -> days.days.toString()
                                             hours > 0 -> hours.hours.toString()
                                             minutes > 0 -> minutes.minutes.toString()
@@ -214,6 +216,7 @@ private fun FavoriteItemImpl(
                                 val duration = now - instant
                                 duration.toComponents { days, hours, minutes, seconds, _ ->
                                     when {
+                                        stream.seen == 0L -> neverPlayedString
                                         days > 0 -> days.days.toString()
                                         hours > 0 -> hours.hours.toString()
                                         minutes > 0 -> minutes.minutes.toString()
@@ -261,6 +264,7 @@ private fun CompactFavoriteItemImpl(
 
     val recently = sort == Sort.RECENTLY
     val recentlyString = stringResource(string.ui_sort_recently)
+    val neverPlayedString = stringResource(string.ui_sort_never_played)
 
     MaterialTheme(
         colorScheme = colorScheme.copy(
@@ -310,6 +314,7 @@ private fun CompactFavoriteItemImpl(
                             val duration = now - instant
                             duration.toComponents { days, hours, minutes, seconds, _ ->
                                 when {
+                                    stream.seen == 0L -> neverPlayedString
                                     days > 0 -> "$days d"
                                     hours > 0 -> "$hours h"
                                     minutes > 0 -> "$minutes m"

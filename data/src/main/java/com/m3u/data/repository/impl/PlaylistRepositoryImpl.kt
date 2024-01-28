@@ -182,7 +182,7 @@ class PlaylistRepositoryImpl @Inject constructor(
         seen: Long,
         input: InputStream
     ): List<Stream> = logger.execute {
-        parser.execute(input).map { it.toStream(playlistUrl, seen) }
+        parser.execute(input).map { it.toStream(playlistUrl, 0L) }
     } ?: emptyList()
 
     override suspend fun rename(url: String, target: String) = logger.sandBox {
