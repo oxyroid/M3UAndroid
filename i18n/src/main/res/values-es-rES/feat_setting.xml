@@ -61,4 +61,16 @@
     <string name="feat_setting_compact">modo compacto</string>
     <string name="feat_setting_appearance">apariencia</string>
 
+    <string name="feat_setting_tunneling">modo tunelado</string>
+    <string name="feat_setting_tunneling_description">mejora el desempeño en contenido 4K/HDR</string>
+    <string name="feat_setting_label_backup">respaldar todos los datos</string>
+    <string name="feat_setting_label_restore">restaurar</string>
+
+    <string name="feat_setting_canvas_dark">oscuro</string>
+    <string name="feat_setting_canvas_light">claro</string>
+    <string name="feat_setting_canvas_apply">aplicar</string>
+    <string name="feat_setting_canvas_reset">reiniciar</string>
+
+    <string name="feat_setting_remote_control">control remoto</string>
+    <string name="feat_setting_remote_control_description">activa la habilidad de controlar remotamente la TV</string>
 </resources>
