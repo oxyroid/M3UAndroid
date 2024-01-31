@@ -27,16 +27,7 @@ class ExampleStartupBenchmark {
         startupMode = StartupMode.COLD,
         compilationMode = mode
     ) {
-        val width = device.displayWidth
-        val height = device.displayHeight
         pressHome()
         startActivityAndWait()
-        device.swipe(width / 3 * 2, height / 2, width / 3, height / 2, 50)
-        Thread.sleep(2000)
-        device.swipe(width / 3 * 2, height / 2, width / 3, height / 2, 50)
-        Thread.sleep(2000)
-        device.swipe(width / 2, height / 3 * 2, width / 2, height / 3, 50)
-        Thread.sleep(2000)
-        device.swipe(width / 2, height / 3, width / 2, height / 3 * 2, 50)
     }
 }
