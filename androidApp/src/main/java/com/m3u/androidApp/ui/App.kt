@@ -11,6 +11,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.m3u.androidApp.ui.scaffold.AppScaffold
 import com.m3u.ui.Destination
 import com.m3u.ui.helper.LocalHelper
 
