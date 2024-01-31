@@ -32,6 +32,3 @@ include(":benchmark")
 include(":i18n")
 include(":ui")
 include(":dlna")
-
-include(":symbol")
-include(":decoder_ffmpeg")
