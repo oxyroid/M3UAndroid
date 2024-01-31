@@ -1,4 +1,4 @@
-package com.m3u.features.playlist.impl
+package com.m3u.features.playlist.internal
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable

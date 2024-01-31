@@ -1,6 +1,6 @@
 @file:Suppress("UsingMaterialAndMaterial3Libraries")
 
-package com.m3u.features.playlist.impl
+package com.m3u.features.playlist.internal
 
 import android.content.res.Configuration.ORIENTATION_LANDSCAPE
 import android.content.res.Configuration.ORIENTATION_PORTRAIT
@@ -55,11 +55,11 @@ import com.m3u.material.components.Background
 import com.m3u.material.components.TextField
 import com.m3u.material.ktx.isAtTop
 import com.m3u.material.model.LocalSpacing
-import com.m3u.ui.helper.Action
 import com.m3u.ui.EventHandler
-import com.m3u.ui.helper.LocalHelper
 import com.m3u.ui.Sort
 import com.m3u.ui.SortBottomSheet
+import com.m3u.ui.helper.Action
+import com.m3u.ui.helper.LocalHelper
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.flow.launchIn

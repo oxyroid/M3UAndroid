@@ -24,6 +24,7 @@ fun MaskButton(
     tint: Color = Color.Unspecified,
     enabled: Boolean = true
 ) {
+    val tv = isTelevision()
     val tooltipState = rememberTooltipState()
 
     TooltipBox(
@@ -43,7 +44,7 @@ fun MaskButton(
                 state.wake()
                 onClick()
             },
-            modifier = modifier.thenIf(isTelevision()) {
+            modifier = modifier.thenIf(tv) {
                 Modifier.onFocusEvent {
                     if (it.isFocused) {
                         state.wake()
