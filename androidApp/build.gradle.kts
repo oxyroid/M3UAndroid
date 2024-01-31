@@ -68,6 +68,9 @@ android {
             "/META-INF/{AL2.0,LGPL2.1}"
         )
     }
+    lint {
+        checkReleaseBuilds = false
+    }
 }
 
 hilt {
@@ -85,9 +88,6 @@ dependencies {
     implementation(project(":features:stream"))
     implementation(project(":features:crash"))
     implementation(project(":features:about"))
-
-    implementation(project(":symbol"))
-    ksp(project(":symbol"))
 
     implementation(libs.androidx.core.core.ktx)
     implementation(libs.androidx.appcompat.appcompat)
