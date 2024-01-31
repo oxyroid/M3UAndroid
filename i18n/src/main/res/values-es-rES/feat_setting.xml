@@ -28,6 +28,10 @@
     <string name="feat_setting_clip_mode_stretched">estirado</string>
     <string name="feat_setting_auto_refresh">autorefrescar</string>
     <string name="feat_setting_auto_refresh_description">se actualiza automáticamente al ingresar lista de reproducción</string>
+
+    <string name="feat_setting_always_television">siempre en televisión</string>
+    <string name="feat_setting_always_television_description">será revertido cuando se reinicia la app</string>
+
     <string name="feat_setting_full_info_player">reproductor con información detallada</string>
     <string name="feat_setting_full_info_player_description">muestra más detalles en el reproductor</string>
     <string name="feat_setting_initial_screen">Pantalla inicial</string>
@@ -60,5 +64,19 @@
     <string name="feat_setting_reconnect_mode_reconnect">siempre</string>
     <string name="feat_setting_compact">modo compacto</string>
     <string name="feat_setting_appearance">apariencia</string>
+    <string name="feat_setting_appearance_hint_edit_color">mantener pulsado modifica el color</string>
 
+
+    <string name="feat_setting_tunneling">modo tunelado</string>
+    <string name="feat_setting_tunneling_description">mejora el desempeño en contenido 4K/HDR</string>
+    <string name="feat_setting_label_backup">respaldar todos los datos</string>
+    <string name="feat_setting_label_restore">restaurar</string>
+
+    <string name="feat_setting_canvas_dark">oscuro</string>
+    <string name="feat_setting_canvas_light">claro</string>
+    <string name="feat_setting_canvas_apply">aplicar</string>
+    <string name="feat_setting_canvas_reset">reiniciar</string>
+
+    <string name="feat_setting_remote_control">control remoto</string>
+    <string name="feat_setting_remote_control_description">activa la habilidad de controlar remotamente la TV</string>
 </resources>

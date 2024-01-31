@@ -1,1 +1,8 @@
-Reproductor de streaming LIBRE para Android, hecho con Jetpack Componer. Para Android 8.0 y posteriores.
+<p><i>M3U</i> es un reproductor de streaming LIBRE para Android. Para Android 8.0 y posteriores.</p>
+<p><br><b>Características:</b></p>
+<ul>
+<li>Archivos M3U y M3U8.</li>
+<li>Transmisión HTTPS y RTMP.</li>
+<li>Android TV.</li>
+</ul>
+<p>Más en camino.</p>
