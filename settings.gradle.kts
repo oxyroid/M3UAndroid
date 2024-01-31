@@ -34,3 +34,4 @@ include(":ui")
 include(":dlna")
 
 include(":symbol")
+include(":decoder_ffmpeg")

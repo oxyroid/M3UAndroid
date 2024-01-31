@@ -22,7 +22,6 @@ import androidx.media3.datasource.DataSource
 import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.datasource.okhttp.OkHttpDataSource
 import androidx.media3.exoplayer.DefaultLoadControl
-import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.analytics.DefaultAnalyticsCollector
 import androidx.media3.exoplayer.hls.HlsMediaSource
@@ -30,6 +29,7 @@ import androidx.media3.exoplayer.rtsp.RtspMediaSource
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
+import androidx.media3.exoplayer.util.EventLogger
 import androidx.media3.session.MediaSession
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.prefix
@@ -82,7 +82,7 @@ class PlayerManagerImpl @Inject constructor(
     private val coroutineScope = CoroutineScope(Dispatchers.Main)
 
     private fun createPlayer(): ExoPlayer {
-        val rf = DefaultRenderersFactory(context).apply {
+        val rf = FfmpegRendersFactory(context).apply {
             setEnableDecoderFallback(true)
         }
         val dsf = DefaultDataSource.Factory(
@@ -99,7 +99,11 @@ class PlayerManagerImpl @Inject constructor(
             )
         }
 
-        val lc = DefaultLoadControl()
+        val lc = DefaultLoadControl.Builder()
+            .setPrioritizeTimeOverSizeThresholds(true)
+            .setTargetBufferBytes(C.LENGTH_UNSET)
+            .build()
+
         return ExoPlayer.Builder(context)
             .setMediaSourceFactory(msf)
             .setRenderersFactory(rf)
@@ -114,6 +118,7 @@ class PlayerManagerImpl @Inject constructor(
                     .setContentType(C.AUDIO_CONTENT_TYPE_MOVIE)
                     .build()
                 setAudioAttributes(attributes, true)
+                addAnalyticsListener(EventLogger())
                 playWhenReady = true
                 addListener(this@PlayerManagerImpl)
             }

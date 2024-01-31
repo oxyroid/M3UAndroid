@@ -43,6 +43,7 @@ android {
 
 dependencies {
     implementation(project(":core"))
+    implementation(project(":decoder_ffmpeg"))
 
     implementation(libs.androidx.core.core.ktx)
     implementation(libs.androidx.appcompat.appcompat)
@@ -68,7 +69,6 @@ dependencies {
     implementation(libs.androidx.media3.media3.exoplayer.rtsp)
     implementation(libs.androidx.media3.media3.exoplayer.smoothstreaming)
     implementation(libs.androidx.media3.media3.session)
-    implementation(libs.androidx.media3.media3.decoder)
     implementation(libs.androidx.media3.media3.container)
     implementation(libs.androidx.media3.media3.datasource.rtmp)
     implementation(libs.androidx.media3.media3.datasource.okhttp)

@@ -16,10 +16,13 @@ androidx-room = "2.6.1"
 androidx-tvprovider = "1.0.0"
 androidx-startup = "1.1.1"
 
+annotation = "1.7.1"
+checker-qual = "3.40.0"
 google-accompanist = "0.33.1-alpha"
 google-dagger = "2.50"
 
 io-coil = "2.5.0"
+kotlin-annotations-jvm = "1.8.20"
 kotlinpoet-ksp = "1.15.3"
 kotlinx-serialization-json = "1.6.2"
 kotlinx-serialization-converter-retrofit = "1.0.0"
@@ -53,6 +56,7 @@ jupnp = "2.7.1"
 aboutlibraries = "10.10.0"
 
 [libraries]
+androidx-annotation = { module = "androidx.annotation:annotation", version.ref = "annotation" }
 androidx-core-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "androidx-core" }
 androidx-core-core-splashscreen = { group = "androidx.core", name = "core-splashscreen", version.ref = "androidx-core-splashscreen" }
 androidx-appcompat-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "androidx-appcompat" }
@@ -83,6 +87,7 @@ androidx-compose-ui-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui
 
 androidx-startup-startup-runtime = { group = "androidx.startup", name = "startup-runtime", version.ref = "androidx-startup" }
 
+checker-qual = { module = "org.checkerframework:checker-qual", version.ref = "checker-qual" }
 com-google-dagger-hilt-android = { group = "com.google.dagger", name = "hilt-android", version.ref = "google-dagger" }
 com-google-dagger-hilt-compiler = { group = "com.google.dagger", name = "hilt-compiler", version.ref = "google-dagger" }
 
@@ -121,6 +126,7 @@ com-airbnb-android-lottie-compose = { group = "com.airbnb.android", name = "lott
 com-squareup-retrofit2-retrofit = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "squareup-retrofit2" }
 com-squareup-leakcanary-leakcanary-android = { group = "com.squareup.leakcanary", name = "leakcanary-android", version.ref = "squareup-leakcanary" }
 
+kotlin-annotations-jvm = { module = "org.jetbrains.kotlin:kotlin-annotations-jvm", version.ref = "kotlin-annotations-jvm" }
 kotlinpoet-ksp = { module = "com.squareup:kotlinpoet-ksp", version.ref = "kotlinpoet-ksp" }
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinx-serialization-json" }
 kotlinx-serialization-yaml = { group = "com.charleskorn.kaml", name = "kaml", version.ref = "kaml" }

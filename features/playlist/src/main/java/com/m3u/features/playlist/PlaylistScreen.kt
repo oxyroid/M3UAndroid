@@ -41,8 +41,8 @@ import com.m3u.core.util.basic.title
 import com.m3u.core.wrapper.Event
 import com.m3u.core.wrapper.Message
 import com.m3u.data.database.model.Stream
-import com.m3u.features.playlist.impl.PlaylistScreenImpl
-import com.m3u.features.playlist.impl.TvPlaylistScreenImpl
+import com.m3u.features.playlist.internal.PlaylistScreenImpl
+import com.m3u.features.playlist.internal.TvPlaylistScreenImpl
 import com.m3u.i18n.R.string
 import com.m3u.material.components.Background
 import com.m3u.material.ktx.interceptVolumeEvent
