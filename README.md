@@ -9,10 +9,10 @@ Android 8.0 and above supported.
 <img src="https://img.shields.io/badge/PHONE-3DDC84?logo=android&logoColor=white" alt="Android Phone"/>
 </a>&nbsp;&nbsp;
 <a href="#">
-<img src="https://img.shields.io/badge/TV-000000?logo=android&logoColor=white" alt="Android TV"/>
+<img src="https://img.shields.io/badge/TABLET-2580C3?logo=android&logoColor=white" alt="Android Tablet"/>
 </a>&nbsp;&nbsp;
 <a href="#">
-<img src="https://img.shields.io/badge/TABLET-2580C3?logo=android&logoColor=white" alt="Android Tablet"/>
+<img src="https://img.shields.io/badge/Television-000000?logo=android&logoColor=white" alt="Android TV"/>
 </a>
 </p>
 
