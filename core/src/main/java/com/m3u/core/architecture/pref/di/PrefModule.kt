@@ -3,7 +3,7 @@
 package com.m3u.core.architecture.pref.di
 
 import com.m3u.core.architecture.pref.Pref
-import com.m3u.core.architecture.pref.impl.SnapshotPref
+import com.m3u.core.architecture.pref.internal.SnapshotPref
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn

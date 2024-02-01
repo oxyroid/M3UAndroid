@@ -1,4 +1,4 @@
-package com.m3u.androidApp.ui.scaffold
+package com.m3u.androidApp.ui.internal
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -23,6 +23,9 @@ import androidx.tv.material3.Border
 import androidx.tv.material3.Card
 import androidx.tv.material3.CardDefaults
 import androidx.tv.material3.MaterialTheme
+import com.m3u.androidApp.ui.Items
+import com.m3u.androidApp.ui.NavigationItemLayout
+import com.m3u.androidApp.ui.TopBarWithContent
 import com.m3u.core.wrapper.Message
 import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.Destination

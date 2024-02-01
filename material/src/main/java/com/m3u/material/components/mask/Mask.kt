@@ -3,6 +3,7 @@ package com.m3u.material.components.mask
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -12,7 +13,6 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import com.m3u.material.components.Background
-import com.m3u.material.components.OuterBox
 
 @Composable
 fun Mask(
@@ -32,7 +32,7 @@ fun Mask(
             focusRequester.requestFocus()
         }
         Background(color = color, contentColor = contentColor) {
-            OuterBox(
+            Box(
                 modifier = modifier
                     .focusRequester(focusRequester),
                 content = content

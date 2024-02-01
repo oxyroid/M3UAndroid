@@ -1,4 +1,4 @@
-package com.m3u.androidApp.ui.scaffold
+package com.m3u.androidApp.ui
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -25,6 +25,9 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.util.fastForEach
+import com.m3u.androidApp.ui.internal.AppScaffoldImpl
+import com.m3u.androidApp.ui.internal.AppScaffoldRailImpl
+import com.m3u.androidApp.ui.internal.AppScaffoldTvImpl
 import com.m3u.core.wrapper.Message
 import com.m3u.material.components.Background
 import com.m3u.material.components.IconButton

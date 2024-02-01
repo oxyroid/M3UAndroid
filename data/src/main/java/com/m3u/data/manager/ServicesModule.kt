@@ -10,9 +10,9 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.work.WorkManager
 import com.m3u.core.architecture.TraceFileProvider
 import com.m3u.core.architecture.logger.Logger
-import com.m3u.data.manager.impl.MessageManagerImpl
-import com.m3u.data.manager.impl.PlayerManagerImpl
-import com.m3u.data.manager.impl.TraceFileProviderImpl
+import com.m3u.data.manager.internal.MessageManagerImpl
+import com.m3u.data.manager.internal.PlayerManagerImpl
+import com.m3u.data.manager.internal.TraceFileProviderImpl
 import com.m3u.data.manager.nsd.NsdDeviceManager
 import com.m3u.data.manager.nsd.NsdDeviceManagerImpl
 import com.m3u.data.repository.logger.CommonLogger

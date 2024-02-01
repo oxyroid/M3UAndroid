@@ -47,10 +47,12 @@ internal fun PlayerMask(
                 color = Color.Black.copy(alpha = 0.54f),
                 modifier = Modifier
                     .padding(WindowInsets.systemBars.asPaddingValues())
+                    .padding(vertical = spacing.medium)
             ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .padding(horizontal = spacing.medium)
                         .align(Alignment.TopCenter),
                     horizontalArrangement = Arrangement.spacedBy(
                         if (!tv) spacing.none else spacing.medium,
@@ -60,16 +62,21 @@ internal fun PlayerMask(
                     content = header
                 )
                 Row(
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier
+                        .padding(horizontal = spacing.medium)
+                        .fillMaxSize(),
                     horizontalArrangement = Arrangement.Center,
                     verticalAlignment = Alignment.CenterVertically,
                     content = body
                 )
                 Column(
-                    modifier = Modifier.align(Alignment.BottomCenter)
+                    modifier = Modifier
+                        .padding(horizontal = spacing.medium)
+                        .align(Alignment.BottomCenter)
                 ) {
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(spacing.medium),
                         verticalAlignment = Alignment.Bottom,
                         content = footer

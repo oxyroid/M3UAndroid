@@ -1,4 +1,4 @@
-package com.m3u.data.manager.impl
+package com.m3u.data.manager.internal
 
 import com.m3u.core.wrapper.Message
 import com.m3u.data.manager.MessageManager

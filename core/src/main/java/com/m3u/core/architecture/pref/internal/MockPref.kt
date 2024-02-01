@@ -1,4 +1,4 @@
-package com.m3u.core.architecture.pref.impl
+package com.m3u.core.architecture.pref.internal
 
 import com.m3u.core.architecture.pref.Pref
 
@@ -31,4 +31,5 @@ internal object MockPref : Pref {
     override var tunneling: Boolean = Pref.DEFAULT_TUNNELING
     override var alwaysTv: Boolean = Pref.DEFAULT_ALWAYS_TV
     override var remoteControl: Boolean = Pref.DEFAULT_REMOTE_CONTROL
+    override var progress: Boolean = Pref.DEFAULT_PROGRESS
 }

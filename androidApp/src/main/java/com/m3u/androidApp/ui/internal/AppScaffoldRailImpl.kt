@@ -1,4 +1,4 @@
-package com.m3u.androidApp.ui.scaffold
+package com.m3u.androidApp.ui.internal
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -12,6 +12,9 @@ import androidx.compose.material3.NavigationRailItem
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.InternalComposeApi
 import androidx.compose.ui.Modifier
+import com.m3u.androidApp.ui.Items
+import com.m3u.androidApp.ui.NavigationItemLayout
+import com.m3u.androidApp.ui.TopBarWithContent
 import com.m3u.core.wrapper.Message
 import com.m3u.ui.Destination
 import com.m3u.ui.helper.Action

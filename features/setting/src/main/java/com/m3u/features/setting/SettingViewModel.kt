@@ -12,7 +12,7 @@ import com.m3u.data.database.dao.ColorPackDao
 import com.m3u.data.database.model.ColorPack
 import com.m3u.data.database.model.Stream
 import com.m3u.data.manager.MessageManager
-import com.m3u.data.manager.impl.SubscriptionWorker
+import com.m3u.data.manager.internal.SubscriptionWorker
 import com.m3u.data.repository.StreamRepository
 import com.m3u.data.repository.observeAll
 import dagger.hilt.android.lifecycle.HiltViewModel

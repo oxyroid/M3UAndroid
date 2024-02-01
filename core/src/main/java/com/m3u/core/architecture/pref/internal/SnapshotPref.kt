@@ -1,4 +1,4 @@
-package com.m3u.core.architecture.pref.impl
+package com.m3u.core.architecture.pref.internal
 
 import android.content.Context
 import android.content.SharedPreferences
@@ -27,6 +27,7 @@ import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_FULL_INFO_PLAYER
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_GOD_MODE
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_NO_PICTURE_MODE
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_PLAYLIST_STRATEGY
+import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_PROGRESS
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_RECONNECT_MODE
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_RECORD
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_REMOTE_CONTROL
@@ -44,6 +45,7 @@ import com.m3u.core.architecture.pref.Pref.Companion.FULL_INFO_PLAYER
 import com.m3u.core.architecture.pref.Pref.Companion.GOD_MODE
 import com.m3u.core.architecture.pref.Pref.Companion.NO_PICTURE_MODE
 import com.m3u.core.architecture.pref.Pref.Companion.PLAYLIST_STRATEGY
+import com.m3u.core.architecture.pref.Pref.Companion.PROGRESS
 import com.m3u.core.architecture.pref.Pref.Companion.RECONNECT_MODE
 import com.m3u.core.architecture.pref.Pref.Companion.RECORD
 import com.m3u.core.architecture.pref.Pref.Companion.REMOTE_CONTROL
@@ -146,6 +148,9 @@ class SnapshotPref @Inject constructor(
 
     override var remoteControl: Boolean by
     sharedPreferences.booleanAsState(DEFAULT_REMOTE_CONTROL, REMOTE_CONTROL)
+
+    override var progress: Boolean by
+    sharedPreferences.booleanAsState(DEFAULT_PROGRESS, PROGRESS)
 
     companion object {
         private const val SHARED_SETTINGS = "shared_settings"

@@ -1,4 +1,4 @@
-package com.m3u.data.manager.impl
+package com.m3u.data.manager.internal
 
 import android.app.Notification
 import android.app.NotificationChannel
