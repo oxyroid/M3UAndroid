@@ -9,7 +9,7 @@ import com.m3u.core.architecture.pref.annotation.ClipMode
 import com.m3u.core.architecture.pref.annotation.ConnectTimeout
 import com.m3u.core.architecture.pref.annotation.PlaylistStrategy
 import com.m3u.core.architecture.pref.annotation.UnseensMilliseconds
-import com.m3u.core.architecture.pref.impl.SnapshotPref
+import com.m3u.core.architecture.pref.internal.SnapshotPref
 import kotlinx.coroutines.flow.Flow
 
 @Stable
@@ -51,6 +51,7 @@ interface Pref {
     var tunneling: Boolean
     var alwaysTv: Boolean
     var remoteControl: Boolean
+    var progress: Boolean
 
 
     companion object {
@@ -89,6 +90,7 @@ interface Pref {
         const val DEFAULT_TUNNELING = false
         const val DEFAULT_ALWAYS_TV = false
         const val DEFAULT_REMOTE_CONTROL = false
+        const val DEFAULT_PROGRESS = false
 
         const val PLAYLIST_STRATEGY = "playlist-strategy"
         const val ROW_COUNT = "rowCount"
@@ -117,6 +119,7 @@ interface Pref {
         const val TUNNELING = "tunneling"
         const val ALWAYS_TV = "always-tv"
         const val REMOTE_CONTROL = "remote-control"
+        const val PROGRESS = "progress"
     }
 }
 

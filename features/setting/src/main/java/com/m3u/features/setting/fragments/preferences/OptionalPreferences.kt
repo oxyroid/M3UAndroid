@@ -14,6 +14,7 @@ import androidx.compose.material.icons.rounded.FlashOn
 import androidx.compose.material.icons.rounded.Loop
 import androidx.compose.material.icons.rounded.PictureInPicture
 import androidx.compose.material.icons.rounded.ScreenRotation
+import androidx.compose.material.icons.rounded.SettingsEthernet
 import androidx.compose.material.icons.rounded.SlowMotionVideo
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -67,6 +68,12 @@ fun OptionalPreferences(modifier: Modifier = Modifier) {
                     icon = Icons.Rounded.Details,
                     checked = pref.fullInfoPlayer,
                     onChanged = { pref.fullInfoPlayer = !pref.fullInfoPlayer }
+                )
+                CheckBoxSharedPreference(
+                    title = string.feat_setting_progress,
+                    icon = Icons.Rounded.SettingsEthernet,
+                    checked = pref.progress,
+                    onChanged = { pref.progress = !pref.progress }
                 )
                 if (!tv) {
                     CheckBoxSharedPreference(

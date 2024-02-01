@@ -1,8 +1,11 @@
 package com.m3u.features.stream.fragments
 
 import android.content.pm.ActivityInfo
-import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.basicMarquee
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsDraggedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -29,11 +32,15 @@ import androidx.compose.material.icons.rounded.ScreenRotationAlt
 import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
@@ -47,12 +54,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.media3.common.Player
+import androidx.media3.common.Player.COMMAND_GET_CURRENT_MEDIA_ITEM
 import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.core.util.basic.isNotEmpty
 import com.m3u.features.stream.StreamState
 import com.m3u.features.stream.components.CoverPlaceholder
 import com.m3u.features.stream.components.PlayerMask
 import com.m3u.features.stream.fragments.StreamFragmentDefaults.detectVerticalMaskGestures
+import com.m3u.features.stream.fragments.StreamFragmentDefaults.playStateDisplayText
+import com.m3u.features.stream.fragments.StreamFragmentDefaults.playbackExceptionDisplayText
 import com.m3u.i18n.R.string
 import com.m3u.material.components.Background
 import com.m3u.material.components.Image
@@ -64,6 +74,9 @@ import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.Player
 import com.m3u.ui.helper.LocalHelper
 import com.m3u.ui.rememberPlayerState
+import kotlinx.coroutines.delay
+import kotlin.math.absoluteValue
+import kotlin.math.roundToLong
 import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
@@ -97,6 +110,52 @@ internal fun StreamFragment(
     // they must be wrapped with rememberUpdatedState when using them.
     val currentVolume by rememberUpdatedState(volume)
     val currentBrightness by rememberUpdatedState(brightness)
+
+    val getCurrentMediaItemAvailable by remember(playerState.player, pref.progress) {
+        derivedStateOf {
+            when {
+                !pref.progress -> false
+                playerState.player?.isCurrentMediaItemDynamic == true -> false
+                else -> playerState.player
+                    ?.isCommandAvailable(COMMAND_GET_CURRENT_MEDIA_ITEM)
+                    ?: false
+            }
+        }
+    }
+
+    val contentPosition by produceState(
+        initialValue = -1L,
+        getCurrentMediaItemAvailable
+    ) {
+        while (getCurrentMediaItemAvailable) {
+            delay(50.milliseconds)
+            value = playerState.player?.currentPosition ?: -1L
+        }
+        value = -1L
+    }
+    val contentDuration by produceState(
+        initialValue = -1L,
+        getCurrentMediaItemAvailable
+    ) {
+        while (getCurrentMediaItemAvailable) {
+            delay(50.milliseconds)
+            value = playerState.player?.duration?.absoluteValue ?: -1L
+        }
+        value = -1L
+    }
+
+    var bufferedPosition: Long? by remember { mutableStateOf(null) }
+    LaunchedEffect(bufferedPosition) {
+        delay(800.milliseconds)
+        bufferedPosition?.let {
+            playerState.player?.seekTo(it)
+        }
+    }
+    LaunchedEffect(playerState.playState) {
+        if (playerState.playState == Player.STATE_READY) {
+            bufferedPosition = null
+        }
+    }
 
     Background(
         color = Color.Black,
@@ -232,6 +291,7 @@ internal fun StreamFragment(
                             verticalArrangement = Arrangement.Bottom,
                             modifier = Modifier
                                 .semantics(mergeDescendants = true) { }
+                                .animateContentSize()
                                 .weight(1f)
                         ) {
                             Text(
@@ -249,34 +309,65 @@ internal fun StreamFragment(
                                 overflow = TextOverflow.Ellipsis,
                                 modifier = Modifier.basicMarquee()
                             )
-                            val playStateDisplayText =
-                                StreamFragmentDefaults.playStateDisplayText(playerState.playState)
+                            val playStateDisplayText = playStateDisplayText(playerState.playState)
                             val exceptionDisplayText =
-                                StreamFragmentDefaults.playbackExceptionDisplayText(playerState.playerError)
+                                playbackExceptionDisplayText(playerState.playerError)
+
                             if (playStateDisplayText.isNotEmpty() || exceptionDisplayText.isNotEmpty()) {
                                 Spacer(
                                     modifier = Modifier.height(spacing.small)
                                 )
                             }
-                            AnimatedVisibility(playStateDisplayText.isNotEmpty()) {
-                                Text(
-                                    text = playStateDisplayText.uppercase(),
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = LocalContentColor.current.copy(alpha = 0.75f),
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                    modifier = Modifier.basicMarquee()
-                                )
-                            }
-                            AnimatedVisibility(exceptionDisplayText.isNotEmpty()) {
-                                Text(
-                                    text = exceptionDisplayText,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = theme.error,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                    modifier = Modifier.basicMarquee()
-                                )
+                            when {
+                                playStateDisplayText.isNotEmpty() -> {
+                                    Text(
+                                        text = playStateDisplayText.uppercase(),
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = LocalContentColor.current.copy(alpha = 0.75f),
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                        modifier = Modifier.basicMarquee()
+                                    )
+                                }
+
+                                exceptionDisplayText.isNotEmpty() -> {
+                                    Text(
+                                        text = exceptionDisplayText,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = theme.error,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                        modifier = Modifier.basicMarquee()
+                                    )
+                                }
+
+                                getCurrentMediaItemAvailable -> {
+                                    val animContentPosition by animateFloatAsState(
+                                        targetValue = (bufferedPosition
+                                            ?: contentPosition.coerceAtLeast(0L)).toFloat(),
+                                        label = "anim-content-position"
+                                    )
+                                    val interactionSource = remember { MutableInteractionSource() }
+                                    val isDragged by interactionSource.collectIsDraggedAsState()
+                                    val enabled = playerState.playState == Player.STATE_READY
+                                    Slider(
+                                        value = animContentPosition,
+                                        valueRange = 0f..
+                                                contentDuration.coerceAtLeast(0L)
+                                                    .toFloat(),
+                                        enabled = enabled,
+                                        onValueChange = {
+                                            bufferedPosition = it.roundToLong()
+                                            maskState.wake()
+                                        },
+                                        interactionSource = interactionSource,
+                                        thumb = {
+                                            if (isDragged) {
+                                                SliderDefaults.Thumb(interactionSource)
+                                            }
+                                        }
+                                    )
+                                }
                             }
                         }
                         if (!tv) {
