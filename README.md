@@ -5,8 +5,9 @@
 M3U is a FREE stream media player on android devices, which made of jetpack compose.
 Android 8.0 and above supported.
 
-> Support is (or will be) provided for the following devices:
-> Android Phone, Tablet, TV, Desktop and Car.
+<img src="https://img.shields.io/badge/PHONE-3DDC84?logo=android&logoColor=white" alt="Android Phone"/>
+<img src="https://img.shields.io/badge/TV-000000?logo=android&logoColor=white" alt="Android TV"/>
+<img src="https://img.shields.io/badge/TABLET-2580C3?logo=android&logoColor=white" alt="Android Tablet"/>
 
 [<img src="https://github.com/realOxy/M3UAndroid/assets/5572928/c407b17c-f64f-4486-ade1-6048eb177e67"
 alt="Get it on GitHub"
