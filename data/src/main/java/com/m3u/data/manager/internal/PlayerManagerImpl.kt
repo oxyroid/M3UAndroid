@@ -1,6 +1,6 @@
 @file:OptIn(UnstableApi::class)
 
-package com.m3u.data.manager.impl
+package com.m3u.data.manager.internal
 
 import android.content.Context
 import android.graphics.Rect
@@ -22,6 +22,7 @@ import androidx.media3.datasource.DataSource
 import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.datasource.okhttp.OkHttpDataSource
 import androidx.media3.exoplayer.DefaultLoadControl
+import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.analytics.DefaultAnalyticsCollector
 import androidx.media3.exoplayer.hls.HlsMediaSource
@@ -36,10 +37,9 @@ import com.m3u.core.architecture.logger.prefix
 import com.m3u.core.architecture.pref.Pref
 import com.m3u.core.architecture.pref.annotation.ReconnectMode
 import com.m3u.core.architecture.pref.observeAsFlow
-import com.m3u.data.Certs
-import com.m3u.data.SSL
 import com.m3u.data.manager.PlayerManager
 import dagger.hilt.android.qualifiers.ApplicationContext
+import io.github.anilbeesetti.nextlib.media3ext.ffdecoder.NextRenderersFactory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -53,13 +53,11 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.updateAndGet
 import okhttp3.OkHttpClient
-import java.net.CookieHandler
-import java.net.CookieManager
-import java.net.CookiePolicy
 import javax.inject.Inject
 
 class PlayerManagerImpl @Inject constructor(
     @ApplicationContext private val context: Context,
+    private val okHttpClient: OkHttpClient,
     private val pref: Pref,
     logger: Logger
 ) : PlayerManager, Player.Listener, MediaSession.Callback {
@@ -82,8 +80,12 @@ class PlayerManagerImpl @Inject constructor(
     private val coroutineScope = CoroutineScope(Dispatchers.Main)
 
     private fun createPlayer(): ExoPlayer {
-        val rf = FfmpegRendersFactory(context).apply {
+//        val rf = FfmpegRendersFactory(context).apply {
+//            setEnableDecoderFallback(true)
+//        }
+        val rf = NextRenderersFactory(context).apply {
             setEnableDecoderFallback(true)
+            setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON)
         }
         val dsf = DefaultDataSource.Factory(
             context,
@@ -130,12 +132,10 @@ class PlayerManagerImpl @Inject constructor(
     private var currentTunneling = pref.tunneling
 
     override fun play(url: String) {
-        logger.log("play, start")
         _url.value = url
         tryPlay(
             mimeType = null
         )
-        logger.log("play, end")
 
         listenPrefJob?.cancel()
         listenPrefJob = combine(
@@ -154,13 +154,13 @@ class PlayerManagerImpl @Inject constructor(
 
     private fun tryPlay(mimeType: String?) {
         val url = this.url.value ?: return
+        val dataSourceFactory = buildHttpDataSourceFactory()
         val currentPlayer = _player.updateAndGet { prev ->
             prev ?: createPlayer()
         }!!
 
         when (mimeType) {
             MimeTypes.APPLICATION_SS -> {
-                val dataSourceFactory = buildHttpDataSourceFactory()
                 val mediaSource = ProgressiveMediaSource.Factory(dataSourceFactory)
                     .createMediaSource(MediaItem.fromUri(url))
 
@@ -174,7 +174,6 @@ class PlayerManagerImpl @Inject constructor(
             }
 
             MimeTypes.APPLICATION_M3U8 -> {
-                val dataSourceFactory = buildHttpDataSourceFactory()
                 val hlsMediaSource = HlsMediaSource.Factory(dataSourceFactory)
                     .setAllowChunklessPreparation(false)
                     .createMediaSource(MediaItem.fromUri(url))
@@ -183,6 +182,7 @@ class PlayerManagerImpl @Inject constructor(
             }
 
             else -> {
+                val mediaSourceFactory = DefaultMediaSourceFactory(dataSourceFactory)
                 val mediaItem = MediaItem.Builder()
                     .setUri(url)
                     .apply {
@@ -191,15 +191,16 @@ class PlayerManagerImpl @Inject constructor(
                         }
                     }
                     .build()
-
-                currentPlayer.setMediaItem(mediaItem)
+                val mediaSource = mediaSourceFactory.createMediaSource(mediaItem)
+                currentPlayer.setMediaSource(mediaSource)
             }
         }
         currentPlayer.prepare()
     }
 
     override fun release() {
-        logger.log("release, start")
+        listenPrefJob?.cancel()
+        listenPrefJob = null
         _player.update {
             it?.stop()
             it?.release()
@@ -212,7 +213,6 @@ class PlayerManagerImpl @Inject constructor(
             mimeType = null
             null
         }
-        logger.log("release, end")
     }
 
     override fun replay() {
@@ -329,15 +329,8 @@ class PlayerManagerImpl @Inject constructor(
     }
 
     private fun buildHttpDataSourceFactory(): DataSource.Factory {
-        val cookieManager = CookieManager()
-        cookieManager.setCookiePolicy(CookiePolicy.ACCEPT_ORIGINAL_SERVER)
-        CookieHandler.setDefault(cookieManager)
-        return OkHttpDataSource.Factory(
-            OkHttpClient.Builder()
-                .sslSocketFactory(SSL.TLSTrustAll.socketFactory, Certs.TrustAll)
-                .hostnameVerifier { _, _ -> true }
-                .build()
-        )
+        //  Credentials.basic()
+        return OkHttpDataSource.Factory(okHttpClient)
     }
 }
 

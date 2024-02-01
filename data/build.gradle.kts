@@ -43,7 +43,6 @@ android {
 
 dependencies {
     implementation(project(":core"))
-    implementation(project(":decoder_ffmpeg"))
 
     implementation(libs.androidx.core.core.ktx)
     implementation(libs.androidx.appcompat.appcompat)
@@ -79,4 +78,6 @@ dependencies {
     ksp(libs.androidx.hilt.hilt.compiler)
 
     implementation(libs.zeromq)
+
+    implementation(libs.nextlib.media3ext)
 }
