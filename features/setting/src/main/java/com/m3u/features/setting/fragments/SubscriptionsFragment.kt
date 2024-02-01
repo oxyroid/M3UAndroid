@@ -30,7 +30,7 @@ import com.m3u.features.setting.components.LocalStorageSwitch
 import com.m3u.i18n.R.string
 import com.m3u.material.components.Button
 import com.m3u.material.components.PlaceholderField
-import com.m3u.material.components.TextButton
+import com.m3u.material.components.TonalButton
 import com.m3u.material.ktx.plus
 import com.m3u.material.model.LocalSpacing
 import kotlinx.collections.immutable.ImmutableList
@@ -148,7 +148,7 @@ internal fun SubscriptionsFragment(
                     onClick = onSubscribe,
                     modifier = Modifier.fillMaxWidth()
                 )
-                TextButton(
+                TonalButton(
                     text = stringResource(string.feat_setting_label_parse_from_clipboard),
                     enabled = !localStorage,
                     onClick = {
@@ -156,12 +156,14 @@ internal fun SubscriptionsFragment(
                     },
                     modifier = Modifier.fillMaxWidth()
                 )
-                TextButton(
-                    text = stringResource(string.feat_setting_label_backup),
-                    onClick = onBackup,
-                    modifier = Modifier.fillMaxWidth()
-                )
             }
+        }
+        item {
+            TonalButton(
+                text = stringResource(string.feat_setting_label_backup),
+                onClick = onBackup,
+                modifier = Modifier.fillMaxWidth()
+            )
         }
 
         item {

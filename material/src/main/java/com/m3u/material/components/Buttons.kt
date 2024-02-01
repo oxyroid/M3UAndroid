@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
@@ -130,6 +131,43 @@ fun TextButton(
                 contentColor = contentColor,
                 disabledContentColor = disabledContentColor
             )
+        ) {
+            TvText(
+                text = text.uppercase()
+            )
+        }
+    }
+}
+
+@Composable
+fun TonalButton(
+    text: String,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    onClick: () -> Unit
+) {
+    val spacing = LocalSpacing.current
+
+    val tv = isTelevision()
+    if (!tv) {
+        FilledTonalButton(
+            shape = RoundedCornerShape(8.dp),
+            onClick = onClick,
+            enabled = enabled,
+            modifier = modifier,
+            elevation = ButtonDefaults.filledTonalButtonElevation(spacing.none)
+        ) {
+            Text(
+                text = text.uppercase()
+            )
+        }
+    } else {
+        TvOutlinedButton(
+            onClick = onClick,
+            enabled = enabled,
+            modifier = Modifier
+                .padding(spacing.extraSmall)
+                .then(modifier),
         ) {
             TvText(
                 text = text.uppercase()
