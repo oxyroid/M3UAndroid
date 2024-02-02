@@ -18,12 +18,14 @@ import com.m3u.core.util.basic.title
 import com.m3u.features.setting.components.CheckBoxSharedPreference
 import com.m3u.i18n.R.string
 import com.m3u.material.components.Preference
+import com.m3u.material.ktx.isTelevision
 
 @Composable
 internal fun ExperimentalPreference(
     modifier: Modifier = Modifier
 ) {
     val pref = LocalPref.current
+    val tv = isTelevision()
 
     Column(modifier) {
         Preference(
@@ -55,13 +57,15 @@ internal fun ExperimentalPreference(
                     checked = pref.autoRefresh,
                     onChanged = { pref.autoRefresh = !pref.autoRefresh }
                 )
-                CheckBoxSharedPreference(
-                    title = string.feat_setting_always_television,
-                    content = string.feat_setting_always_television_description,
-                    icon = Icons.Rounded.Tv,
-                    checked = pref.alwaysTv,
-                    onChanged = { pref.alwaysTv = !pref.alwaysTv }
-                )
+                if (!tv) {
+                    CheckBoxSharedPreference(
+                        title = string.feat_setting_always_television,
+                        content = string.feat_setting_always_television_description,
+                        icon = Icons.Rounded.Tv,
+                        checked = pref.alwaysTv,
+                        onChanged = { pref.alwaysTv = !pref.alwaysTv }
+                    )
+                }
             }
         }
     }
