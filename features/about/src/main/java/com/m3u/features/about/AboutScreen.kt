@@ -16,15 +16,16 @@ import androidx.lifecycle.compose.LifecycleStartEffect
 import com.m3u.core.util.basic.title
 import com.m3u.i18n.R.string
 import com.m3u.material.components.Background
+import com.m3u.material.model.LocalHazeState
 import com.m3u.ui.helper.LocalHelper
 import com.mikepenz.aboutlibraries.Libs
 import com.mikepenz.aboutlibraries.util.withContext
+import dev.chrisbanes.haze.haze
 
 @Composable
 internal fun AboutRoute(
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
-    // viewModel: AboutViewModel = hiltViewModel()
 ) {
     val helper = LocalHelper.current
     val title = stringResource(string.feat_about_title)
@@ -58,6 +59,7 @@ private fun AboutScreen(
             contentPadding = contentPadding,
             modifier = Modifier
                 .fillMaxSize()
+                .haze(LocalHazeState.current)
                 .then(modifier)
         ) {
             items(libs.libraries) { library ->

@@ -69,7 +69,8 @@ fun App(
             root = actualRootDestination,
             navigateToRoot = navigateToRootDestination,
             contentPadding = contentPadding,
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize(),
             navController = navController
         )
     }

@@ -30,12 +30,14 @@ import com.m3u.material.components.Background
 import com.m3u.material.ktx.interceptVolumeEvent
 import com.m3u.material.ktx.isTelevision
 import com.m3u.material.ktx.thenIf
+import com.m3u.material.model.LocalHazeState
 import com.m3u.ui.EventHandler
 import com.m3u.ui.ResumeEvent
 import com.m3u.ui.Sort
 import com.m3u.ui.SortBottomSheet
 import com.m3u.ui.helper.Action
 import com.m3u.ui.helper.LocalHelper
+import dev.chrisbanes.haze.haze
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 
@@ -142,6 +144,6 @@ private fun FavoriteScreen(
         sort = sort,
         navigateToStream = navigateToStream,
         onMenu = onMenu,
-        modifier = modifier
+        modifier = modifier.haze(LocalHazeState.current)
     )
 }

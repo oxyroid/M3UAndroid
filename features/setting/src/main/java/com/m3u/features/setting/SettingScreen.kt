@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.adaptive.AnimatedPane
 import androidx.compose.material3.adaptive.ListDetailPaneScaffold
 import androidx.compose.material3.adaptive.ListDetailPaneScaffoldRole
@@ -34,11 +35,14 @@ import com.m3u.features.setting.fragments.SubscriptionsFragment
 import com.m3u.features.setting.fragments.preferences.PreferencesFragment
 import com.m3u.i18n.R.string
 import com.m3u.material.ktx.isTelevision
+import com.m3u.material.model.LocalHazeState
 import com.m3u.ui.DestinationEvent
 import com.m3u.ui.EventBus
 import com.m3u.ui.EventHandler
 import com.m3u.ui.ResumeEvent
 import com.m3u.ui.helper.LocalHelper
+import dev.chrisbanes.haze.HazeDefaults
+import dev.chrisbanes.haze.haze
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 
@@ -234,6 +238,10 @@ private fun SettingScreen(
         },
         modifier = modifier
             .fillMaxSize()
+            .haze(
+                LocalHazeState.current,
+                HazeDefaults.style(MaterialTheme.colorScheme.surface)
+            )
             .testTag("feature:setting")
     )
 

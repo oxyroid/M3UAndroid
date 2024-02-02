@@ -40,7 +40,12 @@ infix fun PaddingValues.only(side: WindowInsetsSides): PaddingValues {
             PaddingValues(end = calculateStartPadding(layoutDirection))
 
         WindowInsetsSides.Top -> PaddingValues(top = calculateTopPadding())
-        WindowInsetsSides.Bottom -> PaddingValues(top = calculateBottomPadding())
+        WindowInsetsSides.Bottom -> PaddingValues(bottom = calculateBottomPadding())
         else -> this
     }
+}
+
+@Composable
+infix fun PaddingValues.split(side: WindowInsetsSides): Pair<PaddingValues, PaddingValues> {
+    return (this only side) to (this - (this only side))
 }

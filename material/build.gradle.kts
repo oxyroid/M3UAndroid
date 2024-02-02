@@ -62,6 +62,7 @@ dependencies {
     api(libs.androidx.tv.tv.material)
 
     api(libs.com.google.android.material.material)
+    api(libs.haze)
 }
 
 afterEvaluate {

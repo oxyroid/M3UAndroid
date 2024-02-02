@@ -24,6 +24,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
@@ -97,6 +98,7 @@ fun Preference(
                 tonalElevation = LocalAbsoluteTonalElevation.current,
                 shadowElevation = elevation,
                 colors = ListItemDefaults.colors(
+                    containerColor = Color.Transparent,
                     overlineColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha),
                     supportingColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha),
                     headlineColor = MaterialTheme.colorScheme.onSurface.copy(alpha)

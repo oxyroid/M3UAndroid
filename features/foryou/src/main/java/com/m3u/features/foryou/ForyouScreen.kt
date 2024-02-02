@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
@@ -55,12 +56,15 @@ import com.m3u.material.ktx.isTelevision
 import com.m3u.material.ktx.minus
 import com.m3u.material.ktx.only
 import com.m3u.material.ktx.thenIf
+import com.m3u.material.model.LocalHazeState
 import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.ConnectBottomSheet
 import com.m3u.ui.EventHandler
 import com.m3u.ui.ResumeEvent
 import com.m3u.ui.helper.Action
 import com.m3u.ui.helper.LocalHelper
+import dev.chrisbanes.haze.HazeDefaults
+import dev.chrisbanes.haze.haze
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 
@@ -219,7 +223,12 @@ private fun ForyouScreen(
                         navigateToPlaylist = navigateToPlaylist,
                         onMenu = { dialog = ForyouDialog.Selections(it) },
                         contentPadding = actualContentPadding,
-                        modifier = Modifier.fillMaxSize()
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .haze(
+                                LocalHazeState.current,
+                                HazeDefaults.style(MaterialTheme.colorScheme.surface)
+                            )
                     )
                 } else {
                     Box(Modifier.fillMaxSize()) {
@@ -238,6 +247,7 @@ private fun ForyouScreen(
                     .fillMaxWidth()
                     .align(Alignment.BottomCenter)
                     .padding(spacing.medium)
+                    .padding(contentPadding)
             ) {
                 Button(
                     text = stringResource(string.feat_foryou_connect_title),

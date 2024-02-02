@@ -5,9 +5,10 @@ package com.m3u.features.playlist.internal
 import android.content.res.Configuration.ORIENTATION_LANDSCAPE
 import android.content.res.Configuration.ORIENTATION_PORTRAIT
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -24,6 +25,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -48,18 +50,21 @@ import com.m3u.data.database.model.Stream
 import com.m3u.features.playlist.Channel
 import com.m3u.features.playlist.components.DialogStatus
 import com.m3u.features.playlist.components.PlaylistDialog
-import com.m3u.features.playlist.components.PlaylistPager
+import com.m3u.features.playlist.components.PlaylistTabRow
 import com.m3u.features.playlist.components.StreamGallery
 import com.m3u.i18n.R.string
 import com.m3u.material.components.Background
 import com.m3u.material.components.TextField
 import com.m3u.material.ktx.isAtTop
+import com.m3u.material.ktx.split
+import com.m3u.material.model.LocalHazeState
 import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.EventHandler
 import com.m3u.ui.Sort
 import com.m3u.ui.SortBottomSheet
 import com.m3u.ui.helper.Action
 import com.m3u.ui.helper.LocalHelper
+import dev.chrisbanes.haze.haze
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.flow.launchIn
@@ -99,14 +104,9 @@ internal fun PlaylistScreenImpl(
             }
         }
     }
-    val currentColor by animateColorAsState(
-        targetValue = MaterialTheme.colorScheme.background,
-        label = "background"
-    )
-    val currentContentColor by animateColorAsState(
-        targetValue = MaterialTheme.colorScheme.onBackground,
-        label = "on-background"
-    )
+    val currentColor = MaterialTheme.colorScheme.background
+    val currentContentColor = MaterialTheme.colorScheme.onBackground
+
     val focusManager = LocalFocusManager.current
 
     val sheetState = rememberModalBottomSheetState()
@@ -130,107 +130,124 @@ internal fun PlaylistScreenImpl(
         onStopOrDispose { }
     }
 
-    Background {
-        BackdropScaffold(
-            scaffoldState = scaffoldState,
-            appBar = { /*TODO*/ },
-            frontLayerShape = RectangleShape,
-            peekHeight = 0.dp,
-            backLayerContent = {
-                val coroutineScope = rememberCoroutineScope()
-                LaunchedEffect(scaffoldState.currentValue) {
-                    if (scaffoldState.isConcealed) {
-                        focusManager.clearFocus()
+    var currentPage by remember(channels.size) {
+        mutableIntStateOf(
+            if (channels.isEmpty()) -1
+            else 0
+        )
+    }
+
+    val (inner, outer) = contentPadding split WindowInsetsSides.Bottom
+
+    BackdropScaffold(
+        scaffoldState = scaffoldState,
+        appBar = { /*TODO*/ },
+        frontLayerShape = RectangleShape,
+        peekHeight = 0.dp,
+        backLayerContent = {
+            val coroutineScope = rememberCoroutineScope()
+            LaunchedEffect(scaffoldState.currentValue) {
+                if (scaffoldState.isConcealed) {
+                    focusManager.clearFocus()
+                }
+            }
+            BackHandler(scaffoldState.isRevealed || query.isNotEmpty()) {
+                if (scaffoldState.isRevealed) {
+                    coroutineScope.launch {
+                        scaffoldState.conceal()
                     }
                 }
-                BackHandler(scaffoldState.isRevealed || query.isNotEmpty()) {
-                    if (scaffoldState.isRevealed) {
-                        coroutineScope.launch {
-                            scaffoldState.conceal()
-                        }
-                    }
-                    if (query.isNotEmpty()) {
-                        onQuery("")
+                if (query.isNotEmpty()) {
+                    onQuery("")
+                }
+            }
+            Box(
+                modifier = Modifier
+                    .padding(spacing.medium)
+                    .fillMaxWidth()
+            ) {
+                TextField(
+                    text = query,
+                    onValueChange = onQuery,
+                    fontWeight = FontWeight.Bold,
+                    placeholder = stringResource(string.feat_playlist_query_placeholder).uppercase()
+                )
+            }
+        },
+        frontLayerContent = {
+            Background(
+                modifier = Modifier.fillMaxSize()
+            ) {
+                val state = rememberLazyStaggeredGridState()
+                LaunchedEffect(Unit) {
+                    snapshotFlow { state.isAtTop }
+                        .onEach { isAtTopState.value = it }
+                        .launchIn(this)
+                }
+                EventHandler(scrollUp) {
+                    state.scrollToItem(0)
+                }
+                val orientation = configuration.orientation
+                val actualRowCount = remember(orientation, rowCount) {
+                    when (orientation) {
+                        ORIENTATION_LANDSCAPE -> rowCount + 2
+                        ORIENTATION_PORTRAIT -> rowCount
+                        else -> rowCount
                     }
                 }
-                Box(
-                    modifier = Modifier
-                        .padding(spacing.medium)
-                        .fillMaxWidth()
-                ) {
-                    TextField(
-                        text = query,
-                        onValueChange = onQuery,
-                        fontWeight = FontWeight.Bold,
-                        placeholder = stringResource(string.feat_playlist_query_placeholder).uppercase()
+                Column {
+                    PlaylistTabRow(
+                        channels = channels,
+                        page = currentPage,
+                        onPageChanged = { currentPage = it },
+                        modifier = Modifier
                     )
-                }
-            },
-            frontLayerContent = {
-                Background(
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    PlaylistPager(channels) { streams ->
-                        val state = rememberLazyStaggeredGridState()
-                        LaunchedEffect(Unit) {
-                            snapshotFlow { state.isAtTop }
-                                .onEach { isAtTopState.value = it }
-                                .launchIn(this)
-                        }
-                        EventHandler(scrollUp) {
-                            state.scrollToItem(0)
-                        }
-                        val orientation = configuration.orientation
-                        val actualRowCount = remember(orientation, rowCount) {
-                            when (orientation) {
-                                ORIENTATION_LANDSCAPE -> rowCount + 2
-                                ORIENTATION_PORTRAIT -> rowCount
-                                else -> rowCount
-                            }
-                        }
+                    if (currentPage != -1) {
                         StreamGallery(
                             state = state,
                             rowCount = actualRowCount,
-                            streams = streams,
+                            streams = channels[currentPage].streams,
                             zapping = zapping,
                             sort = sort,
                             play = { url ->
                                 helper.play(url)
                                 navigateToStream()
                             },
+                            contentPadding = inner,
                             onMenu = { dialogStatus = DialogStatus.Selections(it) },
-                            modifier = modifier,
+                            modifier = modifier.haze(LocalHazeState.current)
                         )
                     }
                 }
-            },
-            backLayerBackgroundColor = currentColor,
-            backLayerContentColor = currentContentColor,
-            frontLayerScrimColor = currentColor.copy(alpha = 0.45f),
-            frontLayerBackgroundColor = Color.Transparent,
-            modifier = Modifier
-                .padding(contentPadding)
-                .nestedScroll(
-                    connection = connection,
-                )
-        )
+            }
+        },
+        backLayerBackgroundColor = Color.Transparent,
+        backLayerContentColor = currentContentColor,
+        frontLayerScrimColor = currentColor.copy(alpha = 0.45f),
+        frontLayerBackgroundColor = Color.Transparent,
+        modifier = Modifier
+            .padding(outer)
+            .nestedScroll(
+                connection = connection,
+            )
+    )
 
-        SortBottomSheet(
-            visible = isSortSheetVisible,
-            sort = sort,
-            sorts = sorts,
-            sheetState = sheetState,
-            onChanged = onSort,
-            onDismissRequest = { isSortSheetVisible = false }
-        )
 
-        PlaylistDialog(
-            status = dialogStatus,
-            onUpdate = { dialogStatus = it },
-            onFavorite = onFavorite,
-            ban = ban,
-            onSavePicture = onSavePicture,
-            createShortcut = createShortcut
-        )
-    }
+    SortBottomSheet(
+        visible = isSortSheetVisible,
+        sort = sort,
+        sorts = sorts,
+        sheetState = sheetState,
+        onChanged = onSort,
+        onDismissRequest = { isSortSheetVisible = false }
+    )
+
+    PlaylistDialog(
+        status = dialogStatus,
+        onUpdate = { dialogStatus = it },
+        onFavorite = onFavorite,
+        ban = ban,
+        onSavePicture = onSavePicture,
+        createShortcut = createShortcut
+    )
 }

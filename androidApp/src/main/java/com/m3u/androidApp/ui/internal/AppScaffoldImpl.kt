@@ -1,7 +1,6 @@
 package com.m3u.androidApp.ui.internal
 
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.exclude
@@ -13,14 +12,26 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.InternalComposeApi
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.dp
 import com.m3u.androidApp.ui.Items
 import com.m3u.androidApp.ui.NavigationItemLayout
 import com.m3u.androidApp.ui.TopBarWithContent
 import com.m3u.core.wrapper.Message
+import com.m3u.material.ktx.plus
+import com.m3u.material.model.LocalHazeState
 import com.m3u.ui.Destination
 import com.m3u.ui.helper.Action
 import com.m3u.ui.helper.Fob
+import dev.chrisbanes.haze.hazeChild
 import kotlinx.collections.immutable.ImmutableList
 
 @Composable
@@ -38,25 +49,33 @@ fun AppScaffoldImpl(
     content: @Composable (PaddingValues) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(modifier) {
-        Box(
-            Modifier
-                .fillMaxWidth()
-                .weight(1f)
-        ) {
-            TopBarWithContent(
-                message = message,
-                windowInsets = WindowInsets.systemBars.exclude(WindowInsets.navigationBars),
-                title = title,
-                onBackPressed = onBackPressed,
-                actions = actions,
-                content = content
-            )
-        }
+    val hazeState = LocalHazeState.current
+    val density = LocalDensity.current
+    var navigationHeight by remember { mutableStateOf(0.dp) }
+    Box(modifier) {
+        TopBarWithContent(
+            message = message,
+            windowInsets = WindowInsets.systemBars.exclude(WindowInsets.navigationBars),
+            title = title,
+            onBackPressed = onBackPressed,
+            actions = actions,
+            content = {
+                content(it + PaddingValues(bottom = navigationHeight))
+            }
+        )
+
         NavigationBar(
-            containerColor = MaterialTheme.colorScheme.background,
+            containerColor = Color.Transparent,
             contentColor = MaterialTheme.colorScheme.onBackground,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .hazeChild(hazeState)
+                .fillMaxWidth()
+                .align(Alignment.BottomCenter)
+                .onGloballyPositioned {
+                    navigationHeight = with(density) {
+                        it.size.height.toDp()
+                    }
+                }
         ) {
             Items(rootDestinations) { currentRootDestination ->
                 NavigationItemLayout(

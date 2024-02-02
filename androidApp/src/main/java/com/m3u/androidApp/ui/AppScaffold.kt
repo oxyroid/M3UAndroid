@@ -12,14 +12,18 @@ import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.InternalComposeApi
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
@@ -32,6 +36,7 @@ import com.m3u.core.wrapper.Message
 import com.m3u.material.components.Background
 import com.m3u.material.components.IconButton
 import com.m3u.material.ktx.isTelevision
+import com.m3u.material.model.LocalHazeState
 import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.Destination
 import com.m3u.ui.M3USnackHost
@@ -39,6 +44,8 @@ import com.m3u.ui.helper.Action
 import com.m3u.ui.helper.Fob
 import com.m3u.ui.helper.LocalHelper
 import com.m3u.ui.helper.useRailNav
+import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.hazeChild
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toPersistentList
 
@@ -59,57 +66,61 @@ internal fun AppScaffold(
     val useRailNav = LocalHelper.current.useRailNav
     val tv = isTelevision()
 
+    val hazeState = remember { HazeState() }
+
     val rootDestinations = remember {
         Destination.Root.entries.toPersistentList()
     }
 
-    Background {
-        when {
-            tv -> {
-                AppScaffoldTvImpl(
-                    rootDestination = rootDestination,
-                    rootDestinations = rootDestinations,
-                    fob = fob,
-                    title = title,
-                    message = message,
-                    navigateToRoot = navigateToRoot,
-                    onBackPressed = onBackPressed,
-                    actions = actions,
-                    content = content,
-                    modifier = modifier
-                )
-            }
+    CompositionLocalProvider(LocalHazeState provides hazeState) {
+        Background {
+            when {
+                tv -> {
+                    AppScaffoldTvImpl(
+                        rootDestination = rootDestination,
+                        rootDestinations = rootDestinations,
+                        fob = fob,
+                        title = title,
+                        message = message,
+                        navigateToRoot = navigateToRoot,
+                        onBackPressed = onBackPressed,
+                        actions = actions,
+                        content = content,
+                        modifier = modifier
+                    )
+                }
 
-            !useRailNav -> {
-                AppScaffoldImpl(
-                    rootDestination = rootDestination,
-                    rootDestinations = rootDestinations,
-                    alwaysShowLabel = alwaysShowLabel,
-                    fob = fob,
-                    title = title,
-                    message = message,
-                    navigateToRoot = navigateToRoot,
-                    onBackPressed = onBackPressed,
-                    actions = actions,
-                    content = content,
-                    modifier = modifier
-                )
-            }
+                !useRailNav -> {
+                    AppScaffoldImpl(
+                        rootDestination = rootDestination,
+                        rootDestinations = rootDestinations,
+                        alwaysShowLabel = alwaysShowLabel,
+                        fob = fob,
+                        title = title,
+                        message = message,
+                        navigateToRoot = navigateToRoot,
+                        onBackPressed = onBackPressed,
+                        actions = actions,
+                        content = content,
+                        modifier = modifier
+                    )
+                }
 
-            else -> {
-                AppScaffoldRailImpl(
-                    rootDestination = rootDestination,
-                    rootDestinations = rootDestinations,
-                    alwaysShowLabel = alwaysShowLabel,
-                    fob = fob,
-                    title = title,
-                    message = message,
-                    navigateToRoot = navigateToRoot,
-                    onBackPressed = onBackPressed,
-                    actions = actions,
-                    content = content,
-                    modifier = modifier
-                )
+                else -> {
+                    AppScaffoldRailImpl(
+                        rootDestination = rootDestination,
+                        rootDestinations = rootDestinations,
+                        alwaysShowLabel = alwaysShowLabel,
+                        fob = fob,
+                        title = title,
+                        message = message,
+                        navigateToRoot = navigateToRoot,
+                        onBackPressed = onBackPressed,
+                        actions = actions,
+                        content = content,
+                        modifier = modifier
+                    )
+                }
             }
         }
     }
@@ -137,11 +148,13 @@ internal fun TopBarWithContent(
 ) {
     val tv = isTelevision()
     val spacing = LocalSpacing.current
+    val hazeState = LocalHazeState.current
 
     Scaffold(
         topBar = {
             if (!tv) {
                 TopAppBar(
+                    colors = TopAppBarDefaults.topAppBarColors(Color.Transparent),
                     title = {
                         Text(
                             text = title,
@@ -170,11 +183,15 @@ internal fun TopBarWithContent(
                         }
                         Spacer(modifier = Modifier.width(spacing.medium))
                     },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .hazeChild(hazeState)
+                        .fillMaxWidth()
                 )
             }
         },
         contentWindowInsets = windowInsets,
+        containerColor = MaterialTheme.colorScheme.background,
+        contentColor = MaterialTheme.colorScheme.onBackground,
         modifier = Modifier.fillMaxSize()
     ) { padding ->
         Background {
