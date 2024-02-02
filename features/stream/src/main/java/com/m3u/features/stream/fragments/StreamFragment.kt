@@ -3,6 +3,7 @@ package com.m3u.features.stream.fragments
 import android.content.pm.ActivityInfo
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsDraggedAsState
@@ -78,6 +79,8 @@ import kotlinx.coroutines.delay
 import kotlin.math.absoluteValue
 import kotlin.math.roundToLong
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.DurationUnit
+import kotlin.time.toDuration
 
 @Composable
 internal fun StreamFragment(
@@ -313,7 +316,7 @@ internal fun StreamFragment(
                             val exceptionDisplayText =
                                 playbackExceptionDisplayText(playerState.playerError)
 
-                            if (playStateDisplayText.isNotEmpty() || exceptionDisplayText.isNotEmpty()) {
+                            if (playStateDisplayText.isNotEmpty() || exceptionDisplayText.isNotEmpty() || getCurrentMediaItemAvailable) {
                                 Spacer(
                                     modifier = Modifier.height(spacing.small)
                                 )
@@ -342,30 +345,23 @@ internal fun StreamFragment(
                                 }
 
                                 getCurrentMediaItemAvailable -> {
-                                    val animContentPosition by animateFloatAsState(
-                                        targetValue = (bufferedPosition
-                                            ?: contentPosition.coerceAtLeast(0L)).toFloat(),
-                                        label = "anim-content-position"
+                                    val fontWeight by animateIntAsState(
+                                        targetValue = if(bufferedPosition != null) 800
+                                        else 400,
+                                        label = "position-text-font-weight"
                                     )
-                                    val interactionSource = remember { MutableInteractionSource() }
-                                    val isDragged by interactionSource.collectIsDraggedAsState()
-                                    val enabled = playerState.playState == Player.STATE_READY
-                                    Slider(
-                                        value = animContentPosition,
-                                        valueRange = 0f..
-                                                contentDuration.coerceAtLeast(0L)
-                                                    .toFloat(),
-                                        enabled = enabled,
-                                        onValueChange = {
-                                            bufferedPosition = it.roundToLong()
-                                            maskState.wake()
-                                        },
-                                        interactionSource = interactionSource,
-                                        thumb = {
-                                            if (isDragged) {
-                                                SliderDefaults.Thumb(interactionSource)
-                                            }
-                                        }
+                                    Text(
+                                        text = StreamFragmentDefaults.timeunitDisplayTest(
+                                            (bufferedPosition ?: contentPosition).toDuration(
+                                                DurationUnit.MILLISECONDS
+                                            )
+                                        ),
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = LocalContentColor.current.copy(alpha = 0.75f),
+                                        maxLines = 1,
+                                        fontWeight = FontWeight(fontWeight),
+                                        overflow = TextOverflow.Ellipsis,
+                                        modifier = Modifier.basicMarquee()
                                     )
                                 }
                             }
@@ -389,6 +385,37 @@ internal fun StreamFragment(
                                         }
                                     },
                                     contentDescription = stringResource(string.feat_stream_tooltip_screen_rotating)
+                                )
+                            }
+                        }
+                    },
+                    slider = {
+                        when {
+                            getCurrentMediaItemAvailable -> {
+                                val animContentPosition by animateFloatAsState(
+                                    targetValue = (bufferedPosition
+                                        ?: contentPosition.coerceAtLeast(0L)).toFloat(),
+                                    label = "anim-content-position"
+                                )
+                                val interactionSource = remember { MutableInteractionSource() }
+                                val isDragged by interactionSource.collectIsDraggedAsState()
+                                val enabled = playerState.playState == Player.STATE_READY
+                                Slider(
+                                    value = animContentPosition,
+                                    valueRange = 0f..
+                                            contentDuration.coerceAtLeast(0L)
+                                                .toFloat(),
+                                    enabled = enabled,
+                                    onValueChange = {
+                                        bufferedPosition = it.roundToLong()
+                                        maskState.wake()
+                                    },
+                                    interactionSource = interactionSource,
+                                    thumb = {
+                                        if (isDragged) {
+                                            SliderDefaults.Thumb(interactionSource)
+                                        }
+                                    }
                                 )
                             }
                         }

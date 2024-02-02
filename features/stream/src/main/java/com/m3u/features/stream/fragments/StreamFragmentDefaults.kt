@@ -16,6 +16,7 @@ import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import com.m3u.i18n.R.string
 import kotlin.math.absoluteValue
+import kotlin.time.Duration
 
 internal object StreamFragmentDefaults {
     /**
@@ -84,6 +85,16 @@ internal object StreamFragmentDefaults {
         ?.let { stringResource(it) }
         .orEmpty()
 
+    @Composable
+    fun timeunitDisplayTest(duration: Duration): String =
+        duration.toComponents { hours, minutes, seconds, _ ->
+            buildString {
+                if (hours > 0) append("$hours:")
+                append("${minutes.fixClockUnit}:")
+                append(seconds.fixClockUnit)
+            }
+        }
+
     val IsAutoRotatingEnabled: State<Boolean>
         @Composable get() {
             val context = LocalContext.current
@@ -113,5 +124,11 @@ internal object StreamFragmentDefaults {
                     contentResolver.unregisterContentObserver(observer)
                 }
             }
+        }
+
+    private val Int.fixClockUnit: String
+        get() {
+            return if (this < 10) return "0$this"
+            else this.toString()
         }
 }
