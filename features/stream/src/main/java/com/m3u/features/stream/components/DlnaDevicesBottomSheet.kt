@@ -1,6 +1,7 @@
 package com.m3u.features.stream.components
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -25,6 +26,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.m3u.i18n.R.string
 import com.m3u.material.components.CircularProgressIndicator
+import com.m3u.material.components.UnstableBadge
+import com.m3u.material.components.UnstableValue
 import com.m3u.material.components.OnDismiss
 import com.m3u.material.components.mask.MaskState
 import com.m3u.material.model.LocalSpacing
@@ -69,6 +72,7 @@ internal fun DlnaDevicesBottomSheet(
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(spacing.small),
                     modifier = Modifier.padding(
                         horizontal = spacing.medium,
                         vertical = spacing.small
@@ -78,6 +82,9 @@ internal fun DlnaDevicesBottomSheet(
                         text = stringResource(string.feat_stream_dialog_dlna_devices),
                         fontWeight = FontWeight.Bold,
                         style = MaterialTheme.typography.titleMedium,
+                    )
+                    UnstableBadge(UnstableValue.EXPERIMENTAL)
+                    Spacer(
                         modifier = Modifier.weight(1f)
                     )
                     AnimatedVisibility(

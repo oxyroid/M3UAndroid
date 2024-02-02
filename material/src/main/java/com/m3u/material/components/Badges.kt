@@ -38,3 +38,22 @@ fun TextBadge(
         }
     }
 }
+
+enum class UnstableValue {
+    EXPERIMENTAL, ALPHA, BETA
+}
+
+@Composable
+fun UnstableBadge(
+    value: UnstableValue,
+    modifier: Modifier = Modifier
+) {
+    TextBadge(
+        text = when (value) {
+            UnstableValue.EXPERIMENTAL -> "EXPERIMENTAL"
+            UnstableValue.ALPHA -> "ALPHA"
+            UnstableValue.BETA -> "BETA"
+        },
+        modifier = modifier
+    )
+}
