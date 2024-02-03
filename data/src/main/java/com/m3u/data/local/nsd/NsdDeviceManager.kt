@@ -1,11 +1,11 @@
-package com.m3u.data.manager.nsd
+package com.m3u.data.local.nsd
 
 import android.net.nsd.NsdManager
 import android.net.nsd.NsdServiceInfo
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.prefix
-import com.m3u.data.manager.nsd.NsdDeviceManager.Companion.META_DATA_PIN
-import com.m3u.data.manager.nsd.NsdDeviceManager.Companion.SERVICE_TYPE
+import com.m3u.data.local.nsd.NsdDeviceManager.Companion.META_DATA_PIN
+import com.m3u.data.local.nsd.NsdDeviceManager.Companion.SERVICE_TYPE
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.channels.trySendBlocking

@@ -1,4 +1,4 @@
-package com.m3u.data.repository.parser.impl
+package com.m3u.data.repository.parser.internal
 
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.data.repository.parser.VersionCatalogParser

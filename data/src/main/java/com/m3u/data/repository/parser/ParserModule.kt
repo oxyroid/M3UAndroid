@@ -2,8 +2,8 @@
 
 package com.m3u.data.repository.parser
 
-import com.m3u.data.repository.parser.impl.DefaultM3UPlaylistParser
-import com.m3u.data.repository.parser.impl.VersionCatalogParserImpl
+import com.m3u.data.repository.parser.internal.DefaultM3UPlaylistParser
+import com.m3u.data.repository.parser.internal.VersionCatalogParserImpl
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn

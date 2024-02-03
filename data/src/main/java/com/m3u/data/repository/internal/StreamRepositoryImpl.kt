@@ -1,4 +1,4 @@
-package com.m3u.data.repository.impl
+package com.m3u.data.repository.internal
 
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.execute

@@ -1,6 +1,6 @@
 @file:Suppress("unused")
 
-package com.m3u.data.manager
+package com.m3u.data.local
 
 import android.app.NotificationManager
 import android.content.Context
@@ -10,11 +10,11 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.work.WorkManager
 import com.m3u.core.architecture.TraceFileProvider
 import com.m3u.core.architecture.logger.Logger
-import com.m3u.data.manager.internal.MessageManagerImpl
-import com.m3u.data.manager.internal.PlayerManagerImpl
-import com.m3u.data.manager.internal.TraceFileProviderImpl
-import com.m3u.data.manager.nsd.NsdDeviceManager
-import com.m3u.data.manager.nsd.NsdDeviceManagerImpl
+import com.m3u.data.local.internal.MessageManagerImpl
+import com.m3u.data.local.internal.PlayerManagerImpl
+import com.m3u.data.local.internal.TraceFileProviderImpl
+import com.m3u.data.local.nsd.NsdDeviceManager
+import com.m3u.data.local.nsd.NsdDeviceManagerImpl
 import com.m3u.data.repository.logger.CommonLogger
 import com.m3u.data.repository.logger.MessageLogger
 import dagger.Binds

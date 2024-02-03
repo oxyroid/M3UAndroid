@@ -1,6 +1,6 @@
 @file:OptIn(UnstableApi::class)
 
-package com.m3u.data.manager.internal
+package com.m3u.data.local.internal
 
 import android.content.Context
 import android.graphics.Rect
@@ -37,7 +37,7 @@ import com.m3u.core.architecture.logger.prefix
 import com.m3u.core.architecture.pref.Pref
 import com.m3u.core.architecture.pref.annotation.ReconnectMode
 import com.m3u.core.architecture.pref.observeAsFlow
-import com.m3u.data.manager.PlayerManager
+import com.m3u.data.local.PlayerManager
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.anilbeesetti.nextlib.media3ext.ffdecoder.NextRenderersFactory
 import kotlinx.coroutines.CoroutineScope

@@ -1,4 +1,4 @@
-package com.m3u.data.repository.parser.impl
+package com.m3u.data.repository.parser.internal
 
 import com.m3u.data.repository.parser.M3UPlaylist
 import com.m3u.data.repository.parser.M3UPlaylistParser

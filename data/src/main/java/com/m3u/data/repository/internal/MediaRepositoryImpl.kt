@@ -1,4 +1,4 @@
-package com.m3u.data.repository.impl
+package com.m3u.data.repository.internal
 
 import android.content.Context
 import android.graphics.Bitmap

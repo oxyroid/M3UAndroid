@@ -6,10 +6,10 @@ import com.m3u.data.repository.MediaRepository
 import com.m3u.data.repository.PlaylistRepository
 import com.m3u.data.repository.StreamRepository
 import com.m3u.data.repository.TvRepository
-import com.m3u.data.repository.impl.MediaRepositoryImpl
-import com.m3u.data.repository.impl.PlaylistRepositoryImpl
-import com.m3u.data.repository.impl.StreamRepositoryImpl
-import com.m3u.data.repository.impl.TvRepositoryImpl
+import com.m3u.data.repository.internal.MediaRepositoryImpl
+import com.m3u.data.repository.internal.PlaylistRepositoryImpl
+import com.m3u.data.repository.internal.StreamRepositoryImpl
+import com.m3u.data.repository.internal.TvRepositoryImpl
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn

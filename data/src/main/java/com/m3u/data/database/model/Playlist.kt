@@ -7,9 +7,11 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 import androidx.room.Relation
 import com.m3u.core.util.basic.startsWithAny
+import kotlinx.serialization.Serializable
 
 @Entity(tableName = "playlists")
 @Immutable
+@Serializable
 data class Playlist(
     @ColumnInfo(name = "title")
     val title: String,
