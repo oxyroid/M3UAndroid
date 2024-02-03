@@ -1,5 +1,6 @@
 package com.m3u.data.database.model
 
+import androidx.annotation.Keep
 import androidx.compose.runtime.Immutable
 import androidx.room.ColumnInfo
 import androidx.room.Entity
@@ -9,6 +10,7 @@ import androidx.room.Entity
     primaryKeys = ["argb", "dark"]
 )
 @Immutable
+@Keep
 data class ColorPack(
     @ColumnInfo("argb")
     val argb: Int,

@@ -1,5 +1,6 @@
 package com.m3u.data.database.model
 
+import androidx.annotation.Keep
 import androidx.compose.runtime.Immutable
 import androidx.room.ColumnInfo
 import androidx.room.Entity
@@ -10,6 +11,7 @@ import kotlinx.serialization.Serializable
 @Entity(tableName = "streams")
 @Immutable
 @Serializable
+@Keep
 data class Stream(
     @ColumnInfo(name = "url")
     val url: String,

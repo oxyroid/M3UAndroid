@@ -1,5 +1,6 @@
 package com.m3u.data.database.model
 
+import androidx.annotation.Keep
 import androidx.compose.runtime.Immutable
 import androidx.room.ColumnInfo
 import androidx.room.Embedded
@@ -12,6 +13,7 @@ import kotlinx.serialization.Serializable
 @Entity(tableName = "playlists")
 @Immutable
 @Serializable
+@Keep
 data class Playlist(
     @ColumnInfo(name = "title")
     val title: String,
