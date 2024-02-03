@@ -2,6 +2,8 @@ package com.m3u.features.setting
 
 import android.net.Uri
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
@@ -45,6 +47,7 @@ import dev.chrisbanes.haze.HazeDefaults
 import dev.chrisbanes.haze.haze
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.datetime.Clock
 
 @Composable
 fun SettingRoute(
@@ -62,11 +65,32 @@ fun SettingRoute(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val packs by viewModel.packs.collectAsStateWithLifecycle()
     val banneds by viewModel.banneds.collectAsStateWithLifecycle()
+    val backingUpOrRestoring by viewModel.backingUpOrRestoring.collectAsStateWithLifecycle()
+
     val helper = LocalHelper.current
 
     val sheetState = rememberModalBottomSheetState()
     var colorInt: Int? by remember { mutableStateOf(null) }
     var isDark: Boolean? by remember { mutableStateOf(null) }
+
+    val createDocumentLauncher =
+        rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/*")) { uri ->
+            uri?: return@rememberLauncherForActivityResult
+            viewModel.backup(uri)
+        }
+    val openDocumentLauncher =
+        rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+            uri?: return@rememberLauncherForActivityResult
+            viewModel.restore(uri)
+        }
+
+    val backup = {
+        val filename = "Backup_${Clock.System.now().nanosecondsOfSecond}.txt"
+        createDocumentLauncher.launch(filename)
+    }
+    val restore = {
+        openDocumentLauncher.launch(arrayOf("text/*"))
+    }
 
     EventHandler(resume) {
         helper.deep = 0
@@ -81,6 +105,7 @@ fun SettingRoute(
             versionCode = state.versionCode,
             title = state.title,
             url = state.url,
+            backingUpOrRestoring = backingUpOrRestoring,
             uriWrapper = rememberUriWrapper(state.uri),
             banneds = banneds,
             onTitle = { viewModel.onEvent(SettingEvent.OnTitle(it)) },
@@ -94,6 +119,8 @@ fun SettingRoute(
             localStorage = state.localStorage,
             onLocalStorage = { viewModel.onEvent(SettingEvent.OnLocalStorage) },
             openDocument = { viewModel.onEvent(SettingEvent.OpenDocument(it)) },
+            backup = backup,
+            restore = restore,
             onClipboard = { viewModel.onClipboard(it) },
             packs = packs,
             openColorCanvas = { c, i ->
@@ -124,6 +151,7 @@ private fun SettingScreen(
     title: String,
     url: String,
     uriWrapper: UriWrapper,
+    backingUpOrRestoring: Boolean,
     onTitle: (String) -> Unit,
     onUrl: (String) -> Unit,
     onSubscribe: () -> Unit,
@@ -133,6 +161,8 @@ private fun SettingScreen(
     localStorage: Boolean,
     onLocalStorage: () -> Unit,
     openDocument: (Uri) -> Unit,
+    backup: () -> Unit,
+    restore: () -> Unit,
     onClipboard: (String) -> Unit,
     packs: ImmutableList<ColorPack>,
     openColorCanvas: (Int, Boolean) -> Unit,
@@ -208,6 +238,7 @@ private fun SettingScreen(
                                 title = title,
                                 url = url,
                                 uriWrapper = uriWrapper,
+                                backingUpOrRestoring = backingUpOrRestoring,
                                 banneds = banneds,
                                 onBanned = onBanned,
                                 onTitle = onTitle,
@@ -217,7 +248,8 @@ private fun SettingScreen(
                                 onLocalStorage = onLocalStorage,
                                 openDocument = openDocument,
                                 onClipboard = onClipboard,
-                                onBackup = {},
+                                backup = backup,
+                                restore = restore,
                                 modifier = Modifier.fillMaxSize()
                             )
                         }

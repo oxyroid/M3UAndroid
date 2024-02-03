@@ -1,4 +1,4 @@
-package com.m3u.data.repository.impl
+package com.m3u.data.repository.internal
 
 import android.content.ContentResolver
 import android.content.Context
@@ -26,6 +26,7 @@ import com.m3u.data.database.model.Stream
 import com.m3u.data.repository.PlaylistRepository
 import com.m3u.data.repository.parser.M3UPlaylistParser
 import com.m3u.data.repository.parser.model.toStream
+import com.m3u.data.work.BackupContracts
 import com.m3u.i18n.R.string
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -34,11 +35,14 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.Clock
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.InputStream
+import java.io.Reader
 import javax.inject.Inject
 
 class PlaylistRepositoryImpl @Inject constructor(
@@ -88,6 +92,53 @@ class PlaylistRepositoryImpl @Inject constructor(
         }
     }
         .flowOn(Dispatchers.IO)
+
+    override suspend fun backup(uri: Uri): Unit = withContext(Dispatchers.IO) {
+        val json = Json {
+            prettyPrint = false
+        }
+        val all = playlistDao.getAllWithStreams()
+        context.contentResolver.openOutputStream(uri)?.use {
+            val writer = it.writer()
+            writer.write("")
+            all.forEach { (playlist, streams) ->
+                val encodedPlaylist = json.encodeToString(playlist)
+                val wrappedPlaylist = BackupContracts.wrapPlaylist(encodedPlaylist)
+                writer.appendLine(wrappedPlaylist)
+                streams.forEach { stream ->
+                    val encodedStream = json.encodeToString(stream)
+                    val wrappedStream = BackupContracts.wrapStream(encodedStream)
+                    writer.appendLine(wrappedStream)
+                }
+            }
+        }
+    }
+
+    override suspend fun restore(uri: Uri): Unit = withContext(Dispatchers.IO) {
+        val json = Json {
+            ignoreUnknownKeys = true
+        }
+        context.contentResolver.openInputStream(uri)?.use {
+            val reader = it.reader()
+
+            reader.forEachLine { line ->
+                if (line.isBlank()) return@forEachLine
+                val encodedPlaylist = BackupContracts.unwrapPlaylist(line)
+                val encodedStream = BackupContracts.unwrapStream(line)
+                when {
+                    encodedPlaylist != null -> {
+                        val playlist = json.decodeFromString<Playlist>(encodedPlaylist)
+                        playlistDao.insert(playlist)
+                    }
+                    encodedStream != null -> {
+                        val stream = json.decodeFromString<Stream>(encodedStream)
+                        streamDao.insert(stream)
+                    }
+                    else -> {}
+                }
+            }
+        }
+    }
 
     private suspend inline fun merge(
         prev: List<Stream>,
@@ -224,4 +275,7 @@ class PlaylistRepositoryImpl @Inject constructor(
     }
 
     private val filenameWithTimezone: String get() = "File_${System.currentTimeMillis()}"
+
+    // Modified with `inline`
+    private inline fun Reader.forEachLine(action: (String) -> Unit): Unit = useLines { it.forEach(action) }
 }

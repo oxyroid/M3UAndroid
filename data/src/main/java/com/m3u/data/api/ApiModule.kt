@@ -54,12 +54,6 @@ internal object ApiModule {
     }
 
     @Provides
-    fun provideJson(): Json = Json {
-        ignoreUnknownKeys = true
-        coerceInputValues = true
-    }
-
-    @Provides
     fun provideYaml(): Yaml = Yaml(
         configuration = YamlConfiguration(
             strictMode = false
@@ -68,9 +62,11 @@ internal object ApiModule {
 
     @Provides
     @Singleton
-    fun provideRetrofitBuilder(
-        json: Json
-    ): Retrofit.Builder {
+    fun provideRetrofitBuilder(): Retrofit.Builder {
+        val json = Json {
+            ignoreUnknownKeys = true
+            prettyPrint = false
+        }
         val mediaType = "application/json".toMediaType()
         return Retrofit.Builder()
             .addConverterFactory(json.asConverterFactory(mediaType))

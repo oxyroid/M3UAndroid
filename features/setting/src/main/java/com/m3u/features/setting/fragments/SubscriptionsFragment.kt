@@ -42,6 +42,7 @@ internal fun SubscriptionsFragment(
     url: String,
     uriWrapper: UriWrapper,
     localStorage: Boolean,
+    backingUpOrRestoring: Boolean,
     banneds: ImmutableList<Stream>,
     onBanned: (Int) -> Unit,
     onTitle: (String) -> Unit,
@@ -50,7 +51,8 @@ internal fun SubscriptionsFragment(
     onSubscribe: () -> Unit,
     onLocalStorage: () -> Unit,
     openDocument: (Uri) -> Unit,
-    onBackup: () -> Unit,
+    backup: () -> Unit,
+    restore: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
@@ -66,8 +68,7 @@ internal fun SubscriptionsFragment(
         if (banneds.isNotEmpty()) {
             item {
                 Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
                         text = stringResource(string.feat_setting_label_muted_streams),
@@ -159,11 +160,20 @@ internal fun SubscriptionsFragment(
             }
         }
         item {
-            TonalButton(
-                text = stringResource(string.feat_setting_label_backup),
-                onClick = onBackup,
-                modifier = Modifier.fillMaxWidth()
-            )
+            Column {
+                TonalButton(
+                    text = stringResource(string.feat_setting_label_backup),
+                    enabled = !backingUpOrRestoring,
+                    onClick = backup,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                TonalButton(
+                    text = stringResource(string.feat_setting_label_restore),
+                    enabled = !backingUpOrRestoring,
+                    onClick = restore,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
         }
 
         item {

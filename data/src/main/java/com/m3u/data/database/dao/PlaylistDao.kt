@@ -31,6 +31,10 @@ interface PlaylistDao {
     @Query("SELECT * FROM playlists ORDER BY title")
     fun observeAllWithStreams(): Flow<List<PlaylistWithStreams>>
 
+    @Transaction
+    @Query("SELECT * FROM playlists ORDER BY title")
+    suspend fun getAllWithStreams(): List<PlaylistWithStreams>
+
     @Query("SELECT * FROM playlists WHERE url = :url ORDER BY title")
     fun observeByUrl(url: String): Flow<Playlist?>
 

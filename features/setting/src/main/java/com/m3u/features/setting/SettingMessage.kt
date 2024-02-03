@@ -35,4 +35,16 @@ sealed class SettingMessage(
         type = TYPE_SNACK,
         resId = string.feat_setting_enqueue_subscribe
     )
+
+    data object BackingUp: SettingMessage(
+        level = LEVEL_INFO,
+        type = TYPE_SNACK,
+        resId = string.feat_setting_backing_up
+    )
+
+    data object Restoring: SettingMessage(
+        level = LEVEL_INFO,
+        type = TYPE_SNACK,
+        resId = string.feat_setting_restoring
+    )
 }

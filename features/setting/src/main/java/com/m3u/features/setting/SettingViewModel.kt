@@ -3,7 +3,10 @@ package com.m3u.features.setting
 import android.net.Uri
 import androidx.lifecycle.viewModelScope
 import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.OutOfQuotaPolicy
+import androidx.work.WorkInfo
 import androidx.work.WorkManager
+import androidx.work.WorkQuery
 import androidx.work.workDataOf
 import com.m3u.core.architecture.Publisher
 import com.m3u.core.architecture.pref.Pref
@@ -11,17 +14,22 @@ import com.m3u.core.architecture.viewmodel.BaseViewModel
 import com.m3u.data.database.dao.ColorPackDao
 import com.m3u.data.database.model.ColorPack
 import com.m3u.data.database.model.Stream
-import com.m3u.data.manager.MessageManager
-import com.m3u.data.manager.internal.SubscriptionWorker
+import com.m3u.data.local.MessageManager
 import com.m3u.data.repository.StreamRepository
 import com.m3u.data.repository.observeAll
+import com.m3u.data.work.BackupWorker
+import com.m3u.data.work.RestoreWorker
+import com.m3u.data.work.SubscriptionWorker
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -130,6 +138,7 @@ class SettingViewModel @Inject constructor(
         }
 
         workManager.cancelAllWorkByTag(url)
+
         val request = OneTimeWorkRequestBuilder<SubscriptionWorker>()
             .setInputData(
                 workDataOf(
@@ -139,6 +148,7 @@ class SettingViewModel @Inject constructor(
                 )
             )
             .addTag(url)
+            .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
             .build()
         workManager.enqueue(request)
         messageManager.emit(SettingMessage.Enqueued)
@@ -157,5 +167,57 @@ class SettingViewModel @Inject constructor(
                 localStorage = !it.localStorage
             )
         }
+    }
+
+    private val workInfosFlow: Flow<MutableList<WorkInfo>> = workManager.getWorkInfosFlow(
+        WorkQuery.fromStates(
+            WorkInfo.State.RUNNING,
+            WorkInfo.State.ENQUEUED
+        )
+    )
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    internal val backingUpOrRestoring = workInfosFlow
+        .mapLatest { all ->
+            all.find { info ->
+                info.tags.find { it == BackupWorker.TAG || it == RestoreWorker.TAG } != null
+            } != null
+        }
+        .stateIn(
+            scope = viewModelScope,
+            // determine ui button enabled or not
+            // disabled as default
+            initialValue = true,
+            started = SharingStarted.WhileSubscribed(5000)
+        )
+
+    fun backup(uri: Uri) {
+        workManager.cancelAllWorkByTag(BackupWorker.TAG)
+        val request = OneTimeWorkRequestBuilder<BackupWorker>()
+            .setInputData(
+                workDataOf(
+                    BackupWorker.INPUT_URI to uri.toString()
+                )
+            )
+            .addTag(BackupWorker.TAG)
+            .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
+            .build()
+        workManager.enqueue(request)
+        messageManager.emit(SettingMessage.BackingUp)
+    }
+
+    fun restore(uri: Uri) {
+        workManager.cancelAllWorkByTag(RestoreWorker.TAG)
+        val request = OneTimeWorkRequestBuilder<RestoreWorker>()
+            .setInputData(
+                workDataOf(
+                    RestoreWorker.INPUT_URI to uri.toString()
+                )
+            )
+            .addTag(RestoreWorker.TAG)
+            .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
+            .build()
+        workManager.enqueue(request)
+        messageManager.emit(SettingMessage.Restoring)
     }
 }

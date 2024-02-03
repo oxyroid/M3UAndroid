@@ -1,5 +1,6 @@
 package com.m3u.data.repository
 
+import android.net.Uri
 import com.m3u.core.architecture.pref.annotation.PlaylistStrategy
 import com.m3u.core.wrapper.Process
 import com.m3u.core.wrapper.Resource
@@ -26,6 +27,10 @@ interface PlaylistRepository : ReadOnlyRepository<Playlist, String> {
     suspend fun unsubscribe(url: String): Playlist?
 
     suspend fun rename(url: String, target: String)
+
+    suspend fun backup(uri: Uri)
+
+    suspend fun restore(uri: Uri)
 }
 
 fun PlaylistRepository.refresh(

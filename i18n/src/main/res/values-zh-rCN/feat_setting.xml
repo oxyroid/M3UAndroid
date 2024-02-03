@@ -75,7 +75,7 @@
 
     <string name="feat_setting_tunneling">隧道模式</string>
     <string name="feat_setting_tunneling_description">改善 4K/HDR 内容的播放</string>
-    <string name="feat_setting_label_backup">备份所有数据</string>
+    <string name="feat_setting_label_backup">备份</string>
     <string name="feat_setting_label_restore">恢复</string>
 
     <string name="feat_setting_canvas_dark">夜间</string>
@@ -85,4 +85,7 @@
 
     <string name="feat_setting_remote_control">遥控器</string>
     <string name="feat_setting_remote_control_description">开启遥控电视的能力</string>
+
+    <string name="feat_setting_backing_up">备份所有播放列表和频道中</string>
+    <string name="feat_setting_restoring">恢复所有播放列表和频道中</string>
 </resources>

@@ -1,4 +1,4 @@
-package com.m3u.data.manager.internal
+package com.m3u.data.work
 
 import android.app.Notification
 import android.app.NotificationChannel
@@ -54,7 +54,6 @@ class SubscriptionWorker @AssistedInject constructor(
         }
     }
 
-    @Suppress("UNUSED")
     private val builder = Notification.Builder(context, CHANNEL_ID)
         .setSmallIcon(R.drawable.round_file_download_24)
         .setContentTitle(title.orEmpty())

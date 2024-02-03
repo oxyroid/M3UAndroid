@@ -40,6 +40,9 @@ interface StreamDao {
     @Query("SELECT * FROM streams ORDER BY id")
     fun observeAll(): Flow<List<Stream>>
 
+    @Query("SELECT * FROM streams ORDER BY id")
+    suspend fun getAll(): List<Stream>
+
     @Query("SELECT * FROM streams WHERE favourite = 1 AND seen + :limit < :current ORDER BY seen")
     fun observeAllUnseenFavourites(
         limit: Long,

@@ -70,7 +70,7 @@
 
     <string name="feat_setting_tunneling">tunneling mode</string>
     <string name="feat_setting_tunneling_description">improve playback of 4K/HDR content</string>
-    <string name="feat_setting_label_backup">backup all data</string>
+    <string name="feat_setting_label_backup">backup</string>
     <string name="feat_setting_label_restore">restore</string>
 
     <string name="feat_setting_canvas_dark">dark</string>
@@ -80,4 +80,7 @@
 
     <string name="feat_setting_remote_control">remote control</string>
     <string name="feat_setting_remote_control_description">turn on the ability to remotely control your TV</string>
+
+    <string name="feat_setting_backing_up">backing up all playlists and channels</string>
+    <string name="feat_setting_restoring">restoring all playlists and channels</string>
 </resources>

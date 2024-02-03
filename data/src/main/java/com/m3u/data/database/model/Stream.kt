@@ -5,9 +5,11 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.m3u.core.util.Likable
+import kotlinx.serialization.Serializable
 
 @Entity(tableName = "streams")
 @Immutable
+@Serializable
 data class Stream(
     @ColumnInfo(name = "url")
     val url: String,
