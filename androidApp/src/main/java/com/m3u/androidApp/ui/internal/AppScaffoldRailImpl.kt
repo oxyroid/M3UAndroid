@@ -1,6 +1,7 @@
 package com.m3u.androidApp.ui.internal
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
@@ -15,7 +16,6 @@ import androidx.compose.ui.Modifier
 import com.m3u.androidApp.ui.Items
 import com.m3u.androidApp.ui.NavigationItemLayout
 import com.m3u.androidApp.ui.TopBarWithContent
-import com.m3u.core.wrapper.Message
 import com.m3u.ui.Destination
 import com.m3u.ui.helper.Action
 import com.m3u.ui.helper.Fob
@@ -29,11 +29,10 @@ internal fun AppScaffoldRailImpl(
     alwaysShowLabel: Boolean,
     fob: Fob?,
     title: String,
-    message: Message,
     navigateToRoot: (Destination.Root) -> Unit,
     onBackPressed: (() -> Unit)?,
     actions: ImmutableList<Action>,
-    content: @Composable (PaddingValues) -> Unit,
+    content: @Composable BoxScope.(PaddingValues) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Row(modifier) {
@@ -70,7 +69,6 @@ internal fun AppScaffoldRailImpl(
                 .weight(1f)
         ) {
             TopBarWithContent(
-                message = message,
                 windowInsets = WindowInsets.systemBars,
                 title = title,
                 onBackPressed = onBackPressed,

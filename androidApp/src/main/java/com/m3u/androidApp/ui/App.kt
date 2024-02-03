@@ -2,16 +2,20 @@ package com.m3u.androidApp.ui
 
 import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.m3u.ui.Destination
+import com.m3u.ui.M3USnackHost
 import com.m3u.ui.helper.LocalHelper
 
 @Composable
@@ -55,7 +59,6 @@ fun App(
 
     AppScaffold(
         title = title,
-        message = message,
         actions = actions,
         rootDestination = actualRootDestination,
         fob = fob,
@@ -72,6 +75,13 @@ fun App(
             modifier = Modifier
                 .fillMaxSize(),
             navController = navController
+        )
+        M3USnackHost(
+            message = message,
+            modifier = Modifier
+                .fillMaxWidth()
+                .align(Alignment.BottomCenter)
+                .padding(contentPadding)
         )
     }
 }

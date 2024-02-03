@@ -1,6 +1,7 @@
 package com.m3u.androidApp.ui
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -21,7 +22,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.InternalComposeApi
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -32,14 +32,12 @@ import androidx.compose.ui.util.fastForEach
 import com.m3u.androidApp.ui.internal.AppScaffoldImpl
 import com.m3u.androidApp.ui.internal.AppScaffoldRailImpl
 import com.m3u.androidApp.ui.internal.AppScaffoldTvImpl
-import com.m3u.core.wrapper.Message
 import com.m3u.material.components.Background
 import com.m3u.material.components.IconButton
 import com.m3u.material.ktx.isTelevision
 import com.m3u.material.model.LocalHazeState
 import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.Destination
-import com.m3u.ui.M3USnackHost
 import com.m3u.ui.helper.Action
 import com.m3u.ui.helper.Fob
 import com.m3u.ui.helper.LocalHelper
@@ -53,7 +51,6 @@ import kotlinx.collections.immutable.toPersistentList
 @OptIn(InternalComposeApi::class)
 internal fun AppScaffold(
     title: String,
-    message: Message,
     actions: ImmutableList<Action>,
     rootDestination: Destination.Root?,
     fob: Fob?,
@@ -61,7 +58,7 @@ internal fun AppScaffold(
     modifier: Modifier = Modifier,
     onBackPressed: (() -> Unit)? = null,
     alwaysShowLabel: Boolean = false,
-    content: @Composable (PaddingValues) -> Unit
+    content: @Composable BoxScope.(PaddingValues) -> Unit
 ) {
     val useRailNav = LocalHelper.current.useRailNav
     val tv = isTelevision()
@@ -81,7 +78,6 @@ internal fun AppScaffold(
                         rootDestinations = rootDestinations,
                         fob = fob,
                         title = title,
-                        message = message,
                         navigateToRoot = navigateToRoot,
                         onBackPressed = onBackPressed,
                         actions = actions,
@@ -97,7 +93,6 @@ internal fun AppScaffold(
                         alwaysShowLabel = alwaysShowLabel,
                         fob = fob,
                         title = title,
-                        message = message,
                         navigateToRoot = navigateToRoot,
                         onBackPressed = onBackPressed,
                         actions = actions,
@@ -113,7 +108,6 @@ internal fun AppScaffold(
                         alwaysShowLabel = alwaysShowLabel,
                         fob = fob,
                         title = title,
-                        message = message,
                         navigateToRoot = navigateToRoot,
                         onBackPressed = onBackPressed,
                         actions = actions,
@@ -139,12 +133,11 @@ internal fun Items(
 
 @Composable
 internal fun TopBarWithContent(
-    message: Message,
     windowInsets: WindowInsets,
     title: String,
     onBackPressed: (() -> Unit)?,
     actions: ImmutableList<Action>,
-    content: @Composable (PaddingValues) -> Unit
+    content: @Composable BoxScope.(PaddingValues) -> Unit
 ) {
     val tv = isTelevision()
     val spacing = LocalSpacing.current
@@ -197,13 +190,6 @@ internal fun TopBarWithContent(
         Background {
             Box {
                 content(padding)
-                M3USnackHost(
-                    message = message,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .align(Alignment.BottomCenter)
-                        .padding(padding)
-                )
             }
         }
     }

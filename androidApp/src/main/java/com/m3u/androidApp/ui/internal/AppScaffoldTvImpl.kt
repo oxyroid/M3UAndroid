@@ -5,6 +5,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -26,7 +27,6 @@ import androidx.tv.material3.MaterialTheme
 import com.m3u.androidApp.ui.Items
 import com.m3u.androidApp.ui.NavigationItemLayout
 import com.m3u.androidApp.ui.TopBarWithContent
-import com.m3u.core.wrapper.Message
 import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.Destination
 import com.m3u.ui.helper.Action
@@ -40,11 +40,10 @@ fun AppScaffoldTvImpl(
     rootDestinations: ImmutableList<Destination.Root>,
     fob: Fob?,
     title: String,
-    message: Message,
     navigateToRoot: (Destination.Root) -> Unit,
     onBackPressed: (() -> Unit)?,
     actions: ImmutableList<Action>,
-    content: @Composable (PaddingValues) -> Unit,
+    content: @Composable BoxScope.(PaddingValues) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
@@ -116,7 +115,6 @@ fun AppScaffoldTvImpl(
                 .weight(1f)
         ) {
             TopBarWithContent(
-                message = message,
                 windowInsets = WindowInsets.systemBars,
                 title = title,
                 onBackPressed = onBackPressed,

@@ -1,6 +1,7 @@
 package com.m3u.androidApp.ui.internal
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.exclude
@@ -25,7 +26,6 @@ import androidx.compose.ui.unit.dp
 import com.m3u.androidApp.ui.Items
 import com.m3u.androidApp.ui.NavigationItemLayout
 import com.m3u.androidApp.ui.TopBarWithContent
-import com.m3u.core.wrapper.Message
 import com.m3u.material.ktx.plus
 import com.m3u.material.model.LocalHazeState
 import com.m3u.ui.Destination
@@ -42,11 +42,10 @@ fun AppScaffoldImpl(
     alwaysShowLabel: Boolean,
     fob: Fob?,
     title: String,
-    message: Message,
     navigateToRoot: (Destination.Root) -> Unit,
     onBackPressed: (() -> Unit)?,
     actions: ImmutableList<Action>,
-    content: @Composable (PaddingValues) -> Unit,
+    content: @Composable BoxScope.(PaddingValues) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val hazeState = LocalHazeState.current
@@ -54,7 +53,6 @@ fun AppScaffoldImpl(
     var navigationHeight by remember { mutableStateOf(0.dp) }
     Box(modifier) {
         TopBarWithContent(
-            message = message,
             windowInsets = WindowInsets.systemBars.exclude(WindowInsets.navigationBars),
             title = title,
             onBackPressed = onBackPressed,
