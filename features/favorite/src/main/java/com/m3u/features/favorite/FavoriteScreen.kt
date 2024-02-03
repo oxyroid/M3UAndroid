@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Sort
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -37,6 +38,7 @@ import com.m3u.ui.Sort
 import com.m3u.ui.SortBottomSheet
 import com.m3u.ui.helper.Action
 import com.m3u.ui.helper.LocalHelper
+import dev.chrisbanes.haze.HazeDefaults
 import dev.chrisbanes.haze.haze
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
@@ -144,6 +146,9 @@ private fun FavoriteScreen(
         sort = sort,
         navigateToStream = navigateToStream,
         onMenu = onMenu,
-        modifier = modifier.haze(LocalHazeState.current)
+        modifier = modifier.haze(
+            LocalHazeState.current,
+            HazeDefaults.style(MaterialTheme.colorScheme.surface)
+        )
     )
 }

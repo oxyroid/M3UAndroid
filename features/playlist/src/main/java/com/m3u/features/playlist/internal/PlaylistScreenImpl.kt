@@ -64,6 +64,7 @@ import com.m3u.ui.Sort
 import com.m3u.ui.SortBottomSheet
 import com.m3u.ui.helper.Action
 import com.m3u.ui.helper.LocalHelper
+import dev.chrisbanes.haze.HazeDefaults
 import dev.chrisbanes.haze.haze
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
@@ -215,7 +216,10 @@ internal fun PlaylistScreenImpl(
                             },
                             contentPadding = inner,
                             onMenu = { dialogStatus = DialogStatus.Selections(it) },
-                            modifier = modifier.haze(LocalHazeState.current)
+                            modifier = modifier.haze(
+                                LocalHazeState.current,
+                                HazeDefaults.style(MaterialTheme.colorScheme.surface)
+                            )
                         )
                     }
                 }

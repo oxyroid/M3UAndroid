@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -20,6 +21,7 @@ import com.m3u.material.model.LocalHazeState
 import com.m3u.ui.helper.LocalHelper
 import com.mikepenz.aboutlibraries.Libs
 import com.mikepenz.aboutlibraries.util.withContext
+import dev.chrisbanes.haze.HazeDefaults
 import dev.chrisbanes.haze.haze
 
 @Composable
@@ -59,7 +61,10 @@ private fun AboutScreen(
             contentPadding = contentPadding,
             modifier = Modifier
                 .fillMaxSize()
-                .haze(LocalHazeState.current)
+                .haze(
+                    LocalHazeState.current,
+                    HazeDefaults.style(MaterialTheme.colorScheme.surface)
+                )
                 .then(modifier)
         ) {
             items(libs.libraries) { library ->
