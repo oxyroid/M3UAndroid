@@ -2,6 +2,8 @@ package com.m3u.features.setting.fragments.preferences
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.Composable
@@ -71,12 +73,15 @@ internal fun PreferencesFragment(
                     navigateToPlaylistManagement = navigateToPlaylistManagement,
                     navigateToThemeSelector = navigateToThemeSelector
                 )
+                Spacer(modifier = Modifier.height(spacing.extraSmall))
             }
             item {
                 OptionalPreferences()
+                Spacer(modifier = Modifier.height(spacing.extraSmall))
             }
             item {
                 ExperimentalPreference()
+                Spacer(modifier = Modifier.height(spacing.extraSmall))
             }
             item {
                 OtherPreferences(

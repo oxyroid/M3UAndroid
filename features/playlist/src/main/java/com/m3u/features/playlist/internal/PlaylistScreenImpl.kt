@@ -22,6 +22,7 @@ import androidx.compose.material.rememberBackdropScaffoldState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.InternalComposeApi
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
@@ -73,6 +74,7 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 
 @Composable
+@InternalComposeApi
 internal fun PlaylistScreenImpl(
     channels: ImmutableList<Channel>,
     zapping: Stream?,
@@ -200,8 +202,7 @@ internal fun PlaylistScreenImpl(
                     PlaylistTabRow(
                         channels = channels,
                         page = currentPage,
-                        onPageChanged = { currentPage = it },
-                        modifier = Modifier
+                        onPageChanged = { currentPage = it }
                     )
                     if (currentPage != -1) {
                         StreamGallery(

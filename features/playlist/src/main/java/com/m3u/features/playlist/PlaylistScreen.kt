@@ -22,6 +22,7 @@ import androidx.compose.material.icons.rounded.KeyboardDoubleArrowUp
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.InternalComposeApi
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -156,6 +157,7 @@ internal fun PlaylistRoute(
     }
 }
 
+@OptIn(InternalComposeApi::class)
 @Composable
 private fun PlaylistScreen(
     title: String,

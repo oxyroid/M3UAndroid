@@ -34,7 +34,6 @@ import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.m3u.material.ktx.TelevisionChain
 import com.m3u.material.ktx.isTelevision
 import androidx.tv.material3.ListItem as TvListItem
 import androidx.tv.material3.ListItemDefaults as TvListItemDefaults
@@ -114,43 +113,40 @@ fun Preference(
                     .fillMaxWidth()
             )
         } else {
-            TelevisionChain {
-                TvListItem(
-                    selected = focus,
-                    interactionSource = interactionSource,
-                    headlineContent = {
+            TvListItem(
+                selected = focus,
+                interactionSource = interactionSource,
+                headlineContent = {
+                    androidx.tv.material3.Text(
+                        text = title,
+                        style = MaterialTheme.typography.titleMedium,
+                    )
+                },
+                supportingContent = {
+                    if (content != null) {
                         androidx.tv.material3.Text(
-                            text = title,
-                            style = MaterialTheme.typography.titleMedium,
+                            text = content.capitalize(Locale.current),
+                            style = MaterialTheme.typography.bodyMedium,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
-                    },
-                    supportingContent = {
-                        if (content != null) {
-                            androidx.tv.material3.Text(
-                                text = content.capitalize(Locale.current),
-                                style = MaterialTheme.typography.bodyMedium,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                        }
-                    },
-                    trailingContent = trailing,
-                    leadingContent = {
-                        icon?.let {
-                            androidx.tv.material3.Icon(imageVector = it, contentDescription = null)
-                        }
-                    },
-                    scale = TvListItemDefaults.scale(
-                        scale = 0.9f,
-                        focusedScale = 1f
-                    ),
-                    onClick = onClick,
-                    modifier = modifier
-                        .semantics(mergeDescendants = true) {}
-                        .fillMaxWidth()
-                )
-            }
-
+                    }
+                },
+                trailingContent = trailing,
+                leadingContent = icon?.let {
+                    @Composable {
+                        androidx.tv.material3.Icon(imageVector = it, contentDescription = null)
+                    }
+                },
+                scale = TvListItemDefaults.scale(
+                    scale = 0.9f,
+                    focusedScale = 1f
+                ),
+                onClick = onClick,
+                modifier = modifier
+                    .semantics(mergeDescendants = true) {}
+                    .fillMaxWidth()
+            )
         }
     }
 }

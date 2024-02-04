@@ -9,6 +9,7 @@ import androidx.compose.material.icons.rounded.HideImage
 import androidx.compose.material.icons.rounded.MusicNote
 import androidx.compose.material.icons.rounded.Pages
 import androidx.compose.material.icons.rounded.Recommend
+import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.SettingsRemote
 import androidx.compose.material.icons.rounded.Sync
 import androidx.compose.material.icons.rounded.Timer
@@ -138,6 +139,13 @@ internal fun RegularPreferences(
             icon = Icons.Rounded.HideImage,
             checked = pref.noPictureMode,
             onChanged = { pref.noPictureMode = !pref.noPictureMode }
+        )
+        CheckBoxSharedPreference(
+            title = string.feat_setting_auto_refresh,
+            content = string.feat_setting_auto_refresh_description,
+            icon = Icons.Rounded.Refresh,
+            checked = pref.autoRefresh,
+            onChanged = { pref.autoRefresh = !pref.autoRefresh }
         )
         if (!tv) {
             CheckBoxSharedPreference(
