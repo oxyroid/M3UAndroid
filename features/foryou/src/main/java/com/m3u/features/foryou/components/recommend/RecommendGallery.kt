@@ -79,9 +79,9 @@ internal fun RecommendGallery(
         Carousel(
             itemCount = recommend.size,
             contentTransformEndToStart =
-            fadeIn(tween(1000)).togetherWith(fadeOut(tween(1000))),
+            fadeIn(tween(1000)) togetherWith fadeOut(tween(1000)),
             contentTransformStartToEnd =
-            fadeIn(tween(1000)).togetherWith(fadeOut(tween(1000))),
+            fadeIn(tween(1000)) togetherWith fadeOut(tween(1000)),
             modifier = Modifier
                 .padding(spacing.medium)
                 .then(modifier)

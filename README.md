@@ -12,6 +12,7 @@ Most Android devices, including smartphones, TVs, and tablets.
 ### Screenshots
 
 <div align="center">
+<img src=".github/images/phone/deviceframes.png"/>
 <img src=".github/images/tv/foryou.png" width="30%" />
 <img src=".github/images/tv/playlist.png" width="30%" />
 <img src=".github/images/tv/player.png" width="30%" />
