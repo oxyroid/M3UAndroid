@@ -28,6 +28,7 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastForEach
 import com.m3u.androidApp.ui.internal.AppScaffoldImpl
 import com.m3u.androidApp.ui.internal.AppScaffoldRailImpl
@@ -43,6 +44,7 @@ import com.m3u.ui.helper.Fob
 import com.m3u.ui.helper.LocalHelper
 import com.m3u.ui.helper.useRailNav
 import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.HazeStyle
 import dev.chrisbanes.haze.hazeChild
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toPersistentList
@@ -177,7 +179,7 @@ internal fun TopBarWithContent(
                         Spacer(modifier = Modifier.width(spacing.medium))
                     },
                     modifier = Modifier
-                        .hazeChild(hazeState)
+                        .hazeChild(hazeState, style = HazeStyle(blurRadius = 6.dp))
                         .fillMaxWidth()
                 )
             }

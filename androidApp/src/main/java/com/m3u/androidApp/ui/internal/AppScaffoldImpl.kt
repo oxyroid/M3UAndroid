@@ -31,6 +31,7 @@ import com.m3u.material.model.LocalHazeState
 import com.m3u.ui.Destination
 import com.m3u.ui.helper.Action
 import com.m3u.ui.helper.Fob
+import dev.chrisbanes.haze.HazeStyle
 import dev.chrisbanes.haze.hazeChild
 import kotlinx.collections.immutable.ImmutableList
 
@@ -66,7 +67,7 @@ fun AppScaffoldImpl(
             containerColor = Color.Transparent,
             contentColor = MaterialTheme.colorScheme.onBackground,
             modifier = Modifier
-                .hazeChild(hazeState)
+                .hazeChild(hazeState, style = HazeStyle(blurRadius = 6.dp, noiseFactor = 0.4f))
                 .fillMaxWidth()
                 .align(Alignment.BottomCenter)
                 .onGloballyPositioned {
