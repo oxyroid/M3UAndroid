@@ -46,8 +46,13 @@ internal fun PlayerMask(
                 state = state,
                 color = Color.Black.copy(alpha = 0.54f),
                 modifier = Modifier
+                    .then(
+                        Modifier.padding(
+                            top = if (tv) spacing.medium else spacing.none,
+                            bottom = if (!tv) spacing.medium else spacing.none
+                        )
+                    )
                     .padding(WindowInsets.systemBars.asPaddingValues())
-                    .padding(vertical = spacing.medium)
             ) {
                 Row(
                     modifier = Modifier

@@ -346,7 +346,7 @@ internal fun StreamFragment(
 
                                 getCurrentMediaItemAvailable -> {
                                     val fontWeight by animateIntAsState(
-                                        targetValue = if(bufferedPosition != null) 800
+                                        targetValue = if (bufferedPosition != null) 800
                                         else 400,
                                         label = "position-text-font-weight"
                                     )
