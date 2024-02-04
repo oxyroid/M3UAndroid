@@ -35,7 +35,8 @@ import com.m3u.data.database.model.Stream
 import com.m3u.features.playlist.R
 import com.m3u.material.components.IconButton
 import com.m3u.material.model.LocalSpacing
-import com.m3u.ui.M3USnackHost
+import com.m3u.ui.SnackHost
+import com.m3u.ui.rememberSnackHostState
 
 @Composable
 internal fun ImmersiveBackground(
@@ -139,8 +140,8 @@ internal fun ImmersiveBackground(
                     onClick = onRefresh
                 )
             }
-            M3USnackHost(
-                message = message
+            SnackHost(
+                state = rememberSnackHostState(message)
             )
         }
     }

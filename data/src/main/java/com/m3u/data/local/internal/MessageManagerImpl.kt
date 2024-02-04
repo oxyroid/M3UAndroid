@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import kotlin.concurrent.Volatile
 
 class MessageManagerImpl @Inject constructor() : MessageManager {
     private val _message: MutableStateFlow<Message> = MutableStateFlow(Message.Dynamic.EMPTY)
@@ -24,8 +25,22 @@ class MessageManagerImpl @Inject constructor() : MessageManager {
         job?.cancel()
         job = coroutineScope.launch {
             _message.update { message }
-            delay(message.duration)
+            while (true) {
+                delay(message.duration)
+                if (!isLocked) break
+            }
             _message.update { Message.Dynamic.EMPTY }
         }
+    }
+
+    @Volatile
+    private var isLocked = false
+
+    override fun lock() {
+        isLocked = true
+    }
+
+    override fun unlock() {
+        isLocked = false
     }
 }

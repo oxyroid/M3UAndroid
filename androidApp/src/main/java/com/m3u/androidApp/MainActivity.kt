@@ -20,11 +20,14 @@ import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsCompat.Type.InsetsType
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.core.view.WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import com.m3u.androidApp.ui.App
 import com.m3u.androidApp.ui.AppViewModel
@@ -39,6 +42,7 @@ import com.m3u.core.util.context.isPortraitMode
 import com.m3u.core.util.coroutine.getValue
 import com.m3u.core.util.coroutine.setValue
 import com.m3u.core.wrapper.Message
+import com.m3u.data.local.MessageManager
 import com.m3u.data.local.PlayerManager
 import com.m3u.ui.Toolkit
 import com.m3u.ui.helper.Action
@@ -46,11 +50,13 @@ import com.m3u.ui.helper.Fob
 import com.m3u.ui.helper.Helper
 import com.m3u.ui.helper.OnPipModeChanged
 import com.m3u.ui.helper.OnUserLeaveHint
+import com.m3u.ui.rememberSnackHostState
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -79,6 +85,9 @@ class MainActivity : AppCompatActivity() {
     lateinit var logger: Logger
 
     @Inject
+    lateinit var messageManager: MessageManager
+
+    @Inject
     lateinit var playerManager: PlayerManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -86,16 +95,33 @@ class MainActivity : AppCompatActivity() {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         setContent {
+            val message by viewModel.message.collectAsStateWithLifecycle()
+            val snackHostState = rememberSnackHostState()
+
             val darkMode = pref.darkMode
+
             LaunchedEffect(darkMode) {
                 helper.darkMode = darkMode.unspecifiable
             }
+            LaunchedEffect(Unit) {
+                snapshotFlow { snackHostState.isPressed }.collectLatest { isPressed ->
+                    if (isPressed) messageManager.lock()
+                    else messageManager.unlock()
+                }
+            }
+            LaunchedEffect(Unit) {
+                snapshotFlow { message }.collectLatest { message ->
+                    snackHostState.message = message
+                }
+            }
+
             Toolkit(
                 helper = helper,
                 pref = pref
             ) {
                 App(
-                    viewModel = viewModel
+                    viewModel = viewModel,
+                    snackHostState = snackHostState
                 )
             }
         }

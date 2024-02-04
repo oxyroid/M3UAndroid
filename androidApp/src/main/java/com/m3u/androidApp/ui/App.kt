@@ -15,13 +15,16 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.m3u.ui.Destination
-import com.m3u.ui.M3USnackHost
+import com.m3u.ui.SnackHost
+import com.m3u.ui.SnackHostState
 import com.m3u.ui.helper.LocalHelper
+import com.m3u.ui.rememberSnackHostState
 
 @Composable
 fun App(
     modifier: Modifier = Modifier,
     viewModel: AppViewModel = hiltViewModel(),
+    snackHostState: SnackHostState = rememberSnackHostState()
 ) {
     val helper = LocalHelper.current
     val onBackPressedDispatcherOwner = LocalOnBackPressedDispatcherOwner.current
@@ -43,7 +46,6 @@ fun App(
 
     val title: String by viewModel.title.collectAsStateWithLifecycle()
     val actions by viewModel.actions.collectAsStateWithLifecycle()
-    val message by helper.message.collectAsStateWithLifecycle()
     val fob by viewModel.fob.collectAsStateWithLifecycle()
     val deep by viewModel.deep.collectAsStateWithLifecycle()
 
@@ -76,8 +78,8 @@ fun App(
                 .fillMaxSize(),
             navController = navController
         )
-        M3USnackHost(
-            message = message,
+        SnackHost(
+            state = snackHostState,
             modifier = Modifier
                 .fillMaxWidth()
                 .align(Alignment.BottomCenter)

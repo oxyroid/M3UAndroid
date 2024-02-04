@@ -5,5 +5,7 @@ import kotlinx.coroutines.flow.StateFlow
 
 interface MessageManager {
     fun emit(message: Message)
+    fun lock()
+    fun unlock()
     val message: StateFlow<Message>
 }
