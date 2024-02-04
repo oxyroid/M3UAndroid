@@ -14,8 +14,10 @@ Most Android devices, including smartphones, TVs, and tablets.
 <div align="center">
 <img src=".github/images/phone/deviceframes.png"/>
 <img src=".github/images/tv/playlist.png"/>
-<img src=".github/images/tv/foryou.png" width="45%" />
-<img src=".github/images/tv/player.png" width="45%" />
+</div>
+<div style="display:flex;">
+<img src=".github/images/tv/foryou.png" width="45%" style="flex:1" />
+<img src=".github/images/tv/player.png" width="45%" style="flex:1" />
 </div>
 
 ### 📢 Translations Wanted 📢
