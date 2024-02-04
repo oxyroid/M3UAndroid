@@ -2,8 +2,6 @@
 
 package com.m3u.data.api
 
-import com.charleskorn.kaml.Yaml
-import com.charleskorn.kaml.YamlConfiguration
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.data.Certs
@@ -52,13 +50,6 @@ internal object ApiModule {
             .hostnameVerifier { _, _ -> true }
             .build()
     }
-
-    @Provides
-    fun provideYaml(): Yaml = Yaml(
-        configuration = YamlConfiguration(
-            strictMode = false
-        )
-    )
 
     @Provides
     @Singleton

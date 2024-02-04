@@ -52,7 +52,6 @@ dependencies {
     ksp(libs.androidx.room.room.compiler)
 
     implementation(libs.kotlinx.serialization.json)
-    implementation(libs.kotlinx.serialization.yaml)
     implementation(libs.kotlinx.serialization.coverter.retrofit)
 
     implementation(libs.io.coil.kt.coil)
