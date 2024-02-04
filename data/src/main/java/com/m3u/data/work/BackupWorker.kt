@@ -19,7 +19,7 @@ class BackupWorker @AssistedInject constructor(
     override suspend fun doWork(): Result {
         uri ?: return Result.failure()
         try {
-            playlistRepository.backup(uri)
+            playlistRepository.backupOrThrow(uri)
         } catch (e: Exception) {
             return Result.failure()
         }

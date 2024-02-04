@@ -26,4 +26,10 @@ internal object DatabaseMigrations {
     @RenameTable(fromTableName = "feeds", toTableName = "playlists")
     @RenameTable(fromTableName = "lives", toTableName = "streams")
     class AutoMigration3To4 : AutoMigrationSpec
+
+    val MIGRATION_7_8 = object: Migration(7, 8) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE playlists ADD COLUMN pinned_groups TEXT NOT NULL DEFAULT '[]'")
+        }
+    }
 }

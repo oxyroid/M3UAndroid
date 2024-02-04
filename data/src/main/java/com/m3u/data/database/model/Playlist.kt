@@ -7,6 +7,7 @@ import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import androidx.room.Relation
+import com.m3u.core.util.Likable
 import com.m3u.core.util.basic.startsWithAny
 import kotlinx.serialization.Serializable
 
@@ -19,14 +20,21 @@ data class Playlist(
     val title: String,
     @PrimaryKey
     @ColumnInfo(name = "url")
-    val url: String
-) {
-    val local: Boolean
+    val url: String,
+    // extra fields
+    @ColumnInfo(name = "pinned_groups", defaultValue = "[]")
+    val pinnedGroups: List<String> = emptyList()
+): Likable<Playlist> {
+    val fromLocal: Boolean
         get() = url == URL_IMPORTED || url.startsWithAny(
             "file://",
             "content://",
             ignoreCase = true
         )
+
+    override fun like(another: Playlist): Boolean {
+        return title == another.title && url == another.url
+    }
 
     companion object {
         const val URL_IMPORTED = "imported"

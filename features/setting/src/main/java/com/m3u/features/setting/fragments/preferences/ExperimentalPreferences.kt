@@ -6,9 +6,8 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Dangerous
-import androidx.compose.material.icons.rounded.Refresh
+import androidx.compose.material.icons.rounded.SlowMotionVideo
 import androidx.compose.material.icons.rounded.Tv
-import androidx.compose.material3.Checkbox
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -32,13 +31,7 @@ internal fun ExperimentalPreference(
             title = stringResource(string.feat_setting_experimental_mode).title(),
             content = stringResource(string.feat_setting_experimental_mode_description),
             icon = Icons.Rounded.Dangerous,
-            onClick = { pref.experimentalMode = !pref.experimentalMode },
-            trailing = {
-                Checkbox(
-                    checked = pref.experimentalMode,
-                    onCheckedChange = null
-                )
-            }
+            onClick = { pref.experimentalMode = !pref.experimentalMode }
         )
         AnimatedVisibility(
             visible = pref.experimentalMode,
@@ -51,11 +44,10 @@ internal fun ExperimentalPreference(
         ) {
             Column {
                 CheckBoxSharedPreference(
-                    title = string.feat_setting_auto_refresh,
-                    content = string.feat_setting_auto_refresh_description,
-                    icon = Icons.Rounded.Refresh,
-                    checked = pref.autoRefresh,
-                    onChanged = { pref.autoRefresh = !pref.autoRefresh }
+                    title = string.feat_setting_record,
+                    icon = Icons.Rounded.SlowMotionVideo,
+                    checked = pref.record,
+                    onChanged = { pref.record = !pref.record }
                 )
                 if (!tv) {
                     CheckBoxSharedPreference(

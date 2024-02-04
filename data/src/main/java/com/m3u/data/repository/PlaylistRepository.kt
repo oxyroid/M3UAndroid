@@ -2,7 +2,6 @@ package com.m3u.data.repository
 
 import android.net.Uri
 import com.m3u.core.architecture.pref.annotation.PlaylistStrategy
-import com.m3u.core.wrapper.Process
 import com.m3u.core.wrapper.Resource
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.PlaylistWithStreams
@@ -22,15 +21,15 @@ interface PlaylistRepository : ReadOnlyRepository<Playlist, String> {
         title: String,
         url: String,
         @PlaylistStrategy strategy: Int = PlaylistStrategy.ALL
-    ): Flow<Process<Unit>>
+    ): Flow<Resource<Unit>>
 
     suspend fun unsubscribe(url: String): Playlist?
 
     suspend fun rename(url: String, target: String)
 
-    suspend fun backup(uri: Uri)
+    suspend fun backupOrThrow(uri: Uri)
 
-    suspend fun restore(uri: Uri)
+    suspend fun restoreOrThrow(uri: Uri)
 }
 
 fun PlaylistRepository.refresh(
@@ -39,20 +38,13 @@ fun PlaylistRepository.refresh(
 ): Flow<Resource<Unit>> = channelFlow {
     try {
         val playlist = get(url) ?: error("Cannot find playlist: $url")
-        if (playlist.local) {
+        if (playlist.fromLocal) {
             // refreshing is not needed for local storage playlist.
             send(Resource.Success(Unit))
             return@channelFlow
         }
         subscribe(playlist.title, url, strategy)
-            .onEach { prev ->
-                when (prev) {
-                    is Process.Failure -> Resource.Failure(prev.message)
-                    is Process.Loading -> Resource.Loading
-                    is Process.Success -> Resource.Success(prev.data)
-                }
-                    .let { send(it) }
-            }
+            .onEach(::send)
             .launchIn(this)
     } catch (e: Exception) {
         send(Resource.Failure(e.message))

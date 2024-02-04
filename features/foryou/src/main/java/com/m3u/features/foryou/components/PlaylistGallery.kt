@@ -82,7 +82,7 @@ private fun PlaylistGalleryImpl(
                 PlaylistItem(
                     label = detail.playlist.calculateUiTitle(),
                     number = detail.count,
-                    local = detail.playlist.local,
+                    local = detail.playlist.fromLocal,
                     modifier = Modifier.fillMaxWidth(),
                     onClick = { navigateToPlaylist(detail.playlist) },
                     onLongClick = { onMenu(detail.playlist) }
@@ -108,7 +108,7 @@ private fun PlaylistGalleryImpl(
                 PlaylistItem(
                     label = detail.playlist.calculateUiTitle(),
                     number = detail.count,
-                    local = detail.playlist.local,
+                    local = detail.playlist.fromLocal,
                     modifier = Modifier.fillMaxWidth(),
                     onClick = { navigateToPlaylist(detail.playlist) },
                     onLongClick = { onMenu(detail.playlist) }
@@ -141,7 +141,7 @@ private fun CompactPlaylistGalleryImpl(
             PlaylistItem(
                 label = detail.playlist.calculateUiTitle(),
                 number = detail.count,
-                local = detail.playlist.local,
+                local = detail.playlist.fromLocal,
                 modifier = Modifier.fillMaxWidth(),
                 onClick = { navigateToPlaylist(detail.playlist) },
                 onLongClick = { onMenu(detail.playlist) }
@@ -154,7 +154,7 @@ private fun CompactPlaylistGalleryImpl(
 @Composable
 private fun Playlist.calculateUiTitle(): String {
     val actual = title.ifEmpty {
-        if (local) stringResource(string.feat_foryou_imported_playlist_title)
+        if (fromLocal) stringResource(string.feat_foryou_imported_playlist_title)
         else ""
     }
     return actual.uppercase()

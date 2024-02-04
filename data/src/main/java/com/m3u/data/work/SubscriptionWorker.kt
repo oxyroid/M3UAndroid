@@ -9,14 +9,12 @@ import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import com.m3u.core.architecture.pref.annotation.PlaylistStrategy
-import com.m3u.core.architecture.logger.Logger
 import com.m3u.data.R
 import com.m3u.data.repository.PlaylistRepository
 import com.m3u.i18n.R.string
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.launchIn
 
 @HiltWorker
@@ -24,8 +22,7 @@ class SubscriptionWorker @AssistedInject constructor(
     @Assisted private val context: Context,
     @Assisted params: WorkerParameters,
     private val playlistRepository: PlaylistRepository,
-    private val manager: NotificationManager,
-    private val logger: Logger
+    private val manager: NotificationManager
 ) : CoroutineWorker(context, params) {
     private val title = inputData.getString(INPUT_STRING_TITLE)
     private val url = inputData.getString(INPUT_STRING_URL)
@@ -42,10 +39,6 @@ class SubscriptionWorker @AssistedInject constructor(
             try {
                 playlistRepository
                     .subscribe(title, url, strategy)
-                    .catch {
-                        logger.log(it)
-                        throw it
-                    }
                     .launchIn(this)
                 Result.success()
             } catch (e: Exception) {

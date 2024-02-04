@@ -97,12 +97,6 @@ fun OptionalPreferences(modifier: Modifier = Modifier) {
                     )
                 }
 
-                CheckBoxSharedPreference(
-                    title = string.feat_setting_record,
-                    icon = Icons.Rounded.SlowMotionVideo,
-                    checked = pref.record,
-                    onChanged = { pref.record = !pref.record }
-                )
                 if (!tv) {
                     CheckBoxSharedPreference(
                         title = string.feat_setting_screen_rotating,

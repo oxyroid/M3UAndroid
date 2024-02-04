@@ -2,7 +2,7 @@ package com.m3u.features.playlist.internal
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.InternalComposeApi
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -15,6 +15,7 @@ import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.rememberDrawerState
 import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.core.wrapper.Message
+import com.m3u.data.database.model.Stream
 import com.m3u.features.playlist.Channel
 import com.m3u.features.playlist.components.ImmersiveBackground
 import com.m3u.features.playlist.components.PlaylistDrawer
@@ -22,11 +23,17 @@ import com.m3u.features.playlist.components.PlaylistDrawerDefaults
 import com.m3u.features.playlist.components.TvStreamGallery
 import com.m3u.material.ktx.Edge
 import com.m3u.material.ktx.blurEdge
+import com.m3u.material.model.LocalHazeState
 import com.m3u.ui.Sort
 import com.m3u.ui.helper.LocalHelper
+import dev.chrisbanes.haze.HazeDefaults
+import dev.chrisbanes.haze.HazeStyle
+import dev.chrisbanes.haze.haze
+import dev.chrisbanes.haze.hazeChild
 import kotlinx.collections.immutable.ImmutableList
 
 @Composable
+@InternalComposeApi
 internal fun TvPlaylistScreenImpl(
     title: String,
     message: Message,
@@ -58,31 +65,13 @@ internal fun TvPlaylistScreenImpl(
 
     val drawerState = rememberDrawerState(DrawerValue.Closed)
 
-    var pressMixed: Int? by remember { mutableStateOf(null) }
-    var focusMixed: Int? by remember { mutableStateOf(null) }
-
-    val pressStream by remember(channels) {
-        derivedStateOf {
-            pressMixed?.let {
-                val (i, j) = TvPlaylistScreenImplDefaults.separate(it)
-                channels.getOrNull(i)?.streams?.getOrNull(j)
-            }
-        }
-    }
-
-    val focusStream by remember(channels) {
-        derivedStateOf {
-            focusMixed?.let {
-                val (i, j) = TvPlaylistScreenImplDefaults.separate(it)
-                channels.getOrNull(i)?.streams?.getOrNull(j)
-            }
-        }
-    }
+    var press: Stream? by remember { mutableStateOf(null) }
+    var focus: Stream? by remember { mutableStateOf(null) }
 
     PlaylistDrawer(
         drawerState = drawerState,
         items = PlaylistDrawerDefaults.rememberStreamMenuItems(
-            stream = pressStream,
+            stream = press,
             onFavorite = onFavorite,
             ban = ban,
             createShortcut = createShortcut,
@@ -94,13 +83,17 @@ internal fun TvPlaylistScreenImpl(
             background = { _, _ ->
                 ImmersiveBackground(
                     title = title,
-                    stream = focusStream,
+                    stream = focus,
                     message = message,
                     noPictureMode = noPictureMode,
                     maxBrowserHeight = maxBrowserHeight,
                     onRefresh = onRefresh,
                     openSearchDrawer = {},
-                    openSortDrawer = {}
+                    openSortDrawer = {},
+                    modifier = Modifier.haze(
+                        LocalHazeState.current,
+                        HazeDefaults.style(MaterialTheme.colorScheme.background)
+                    )
                 )
             },
             list = {
@@ -112,19 +105,21 @@ internal fun TvPlaylistScreenImpl(
                         helper.play(stream.url)
                         navigateToStream()
                     },
-                    onLongClick = { _, i, j ->
-                        pressMixed = TvPlaylistScreenImplDefaults.combine(i, j)
+                    onLongClick = { stream, _, _ ->
+                        press = stream
                         drawerState.setValue(DrawerValue.Open)
                     },
-                    onFocus = { _, i, j ->
-                        focusMixed = TvPlaylistScreenImplDefaults.combine(i, j)
+                    onFocus = { stream, _, _ ->
+                        focus = stream
                     },
                     modifier = Modifier.then(
                         if (noPictureMode || !darkMode) Modifier
-                        else Modifier.blurEdge(
-                            color = MaterialTheme.colorScheme.background,
-                            edge = Edge.Top
-                        )
+                        else Modifier
+                            .hazeChild(LocalHazeState.current, style = HazeStyle(blurRadius = 4.dp))
+                            .blurEdge(
+                                color = MaterialTheme.colorScheme.background,
+                                edge = Edge.Top
+                            )
                     )
                 )
             }
@@ -132,11 +127,3 @@ internal fun TvPlaylistScreenImpl(
     }
 }
 
-private object TvPlaylistScreenImplDefaults {
-    fun combine(i: Int, j: Int): Int = i shl 16 or j
-    fun separate(mixed: Int): Pair<Int, Int> {
-        val i = mixed shr 16 and 0x7FFF
-        val j = mixed shr 0 and 0x7FFF
-        return i to j
-    }
-}

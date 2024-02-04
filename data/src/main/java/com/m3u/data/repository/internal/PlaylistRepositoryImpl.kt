@@ -12,12 +12,11 @@ import com.m3u.core.util.basic.startsWithAny
 import com.m3u.core.util.belong
 import com.m3u.core.util.readFileContent
 import com.m3u.core.util.readFileName
-import com.m3u.core.wrapper.Process
+import com.m3u.core.wrapper.Resource
 import com.m3u.core.wrapper.emitException
 import com.m3u.core.wrapper.emitMessage
 import com.m3u.core.wrapper.emitResource
-import com.m3u.core.wrapper.processFlow
-import com.m3u.core.wrapper.pt
+import com.m3u.core.wrapper.resourceFlow
 import com.m3u.data.database.dao.PlaylistDao
 import com.m3u.data.database.dao.StreamDao
 import com.m3u.data.database.model.Playlist
@@ -58,12 +57,12 @@ class PlaylistRepositoryImpl @Inject constructor(
         title: String,
         url: String,
         strategy: Int
-    ): Flow<Process<Unit>> = processFlow {
+    ): Flow<Resource<Unit>> = resourceFlow {
         try {
             val actualUrl = url.actualUrl()
             if (actualUrl == null) {
                 emitMessage("wrong url")
-                return@processFlow
+                return@resourceFlow
             }
             val seen = Clock.System.now().toEpochMilliseconds()
             val streams = when {
@@ -75,13 +74,11 @@ class PlaylistRepositoryImpl @Inject constructor(
             val playlist = Playlist(title, actualUrl)
             playlistDao.insert(playlist)
 
-            merge(
-                prev = streamDao.getByPlaylistUrl(url),
+            compareAndUpdateDB(
+                previous = streamDao.getByPlaylistUrl(url),
                 streams = streams,
                 strategy = strategy
-            ) { value ->
-                emit(Process.Loading(value.pt))
-            }
+            )
 
             emitResource(Unit)
         } catch (e: FileNotFoundException) {
@@ -93,7 +90,7 @@ class PlaylistRepositoryImpl @Inject constructor(
     }
         .flowOn(Dispatchers.IO)
 
-    override suspend fun backup(uri: Uri): Unit = withContext(Dispatchers.IO) {
+    override suspend fun backupOrThrow(uri: Uri): Unit = withContext(Dispatchers.IO) {
         val json = Json {
             prettyPrint = false
         }
@@ -114,7 +111,7 @@ class PlaylistRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun restore(uri: Uri): Unit = withContext(Dispatchers.IO) {
+    override suspend fun restoreOrThrow(uri: Uri): Unit = withContext(Dispatchers.IO) {
         val json = Json {
             ignoreUnknownKeys = true
         }
@@ -130,28 +127,29 @@ class PlaylistRepositoryImpl @Inject constructor(
                         val playlist = json.decodeFromString<Playlist>(encodedPlaylist)
                         playlistDao.insert(playlist)
                     }
+
                     encodedStream != null -> {
                         val stream = json.decodeFromString<Stream>(encodedStream)
                         streamDao.insert(stream)
                     }
+
                     else -> {}
                 }
             }
         }
     }
 
-    private suspend inline fun merge(
-        prev: List<Stream>,
+    private suspend inline fun compareAndUpdateDB(
+        previous: List<Stream>,
         streams: List<Stream>,
         @PlaylistStrategy strategy: Int,
-        onProcess: (Int) -> Unit
     ) {
         val skippedUrls = mutableListOf<String>()
         val grouped by lazy {
-            prev.groupBy { it.favourite }.withDefault { emptyList() }
+            previous.groupBy { it.favourite }.withDefault { emptyList() }
         }
         val invalidate = when (strategy) {
-            PlaylistStrategy.ALL -> prev
+            PlaylistStrategy.ALL -> previous
             PlaylistStrategy.SKIP_FAVORITE -> grouped.getValue(false)
             else -> emptyList()
         }
@@ -170,15 +168,10 @@ class PlaylistRepositoryImpl @Inject constructor(
 
             else -> emptyList()
         }
-        var count = 0
-
         val needToBeInsertedStreams = streams.filterNot { it.url in existedUrls }
-        val total = needToBeInsertedStreams.size
 
         needToBeInsertedStreams.forEach { stream ->
             streamDao.insert(stream)
-            count++
-            onProcess(count / total * 100)
         }
     }
 
@@ -277,5 +270,6 @@ class PlaylistRepositoryImpl @Inject constructor(
     private val filenameWithTimezone: String get() = "File_${System.currentTimeMillis()}"
 
     // Modified with `inline`
-    private inline fun Reader.forEachLine(action: (String) -> Unit): Unit = useLines { it.forEach(action) }
+    private inline fun Reader.forEachLine(action: (String) -> Unit): Unit =
+        useLines { it.forEach(action) }
 }

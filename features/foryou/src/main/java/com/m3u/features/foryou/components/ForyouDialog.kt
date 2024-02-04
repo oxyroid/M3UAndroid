@@ -66,7 +66,7 @@ internal fun ForyouDialog(
             val currentStatus = remember { status as ForyouDialog.Selections }
             if (status is ForyouDialog.Selections) {
                 val editable = with(currentStatus.playlist) {
-                    !local || title.isNotEmpty()
+                    !fromLocal || title.isNotEmpty()
                 }
                 var renamedText by remember(currentStatus) {
                     mutableStateOf(
@@ -94,7 +94,7 @@ internal fun ForyouDialog(
                         unsubscribe(currentStatus.playlist.url)
                         update(ForyouDialog.Idle)
                     }
-                    if (!currentStatus.playlist.local) {
+                    if (!currentStatus.playlist.fromLocal) {
                         val clipboardManager = LocalClipboardManager.current
                         DialogItem(string.feat_foryou_copy_playlist_url) {
                             val annotatedString = AnnotatedString(currentStatus.playlist.url)

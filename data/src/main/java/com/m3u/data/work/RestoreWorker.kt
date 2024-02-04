@@ -21,7 +21,7 @@ class RestoreWorker @AssistedInject constructor(
     override suspend fun doWork(): Result {
         uri?: return Result.failure()
         try {
-            playlistRepository.restore(uri)
+            playlistRepository.restoreOrThrow(uri)
         } catch (e: Exception) {
             return Result.failure()
         }
