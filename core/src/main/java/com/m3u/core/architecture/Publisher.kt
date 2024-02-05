@@ -9,6 +9,7 @@ interface Publisher {
     val versionName: String
     val versionCode: Int
     val debug: Boolean
+    val snapshot: Boolean
 
     @Qualifier
     @Retention(AnnotationRetention.BINARY)

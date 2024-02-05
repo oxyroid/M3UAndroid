@@ -103,6 +103,7 @@ fun SettingRoute(
             contentPadding = contentPadding,
             versionName = state.versionName,
             versionCode = state.versionCode,
+            snapshot = state.snapshot,
             title = state.title,
             url = state.url,
             backingUpOrRestoring = backingUpOrRestoring,
@@ -148,6 +149,7 @@ private fun SettingScreen(
     contentPadding: PaddingValues,
     versionName: String,
     versionCode: Int,
+    snapshot: Boolean,
     title: String,
     url: String,
     uriWrapper: UriWrapper,
@@ -218,6 +220,7 @@ private fun SettingScreen(
                 contentPadding = contentPadding,
                 versionName = versionName,
                 versionCode = versionCode,
+                snapshot = snapshot,
                 navigateToPlaylistManagement = {
                     fragment = DestinationEvent.Setting.Playlists
                 },

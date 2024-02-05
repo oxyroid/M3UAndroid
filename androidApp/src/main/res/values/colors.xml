@@ -2,4 +2,6 @@
 <resources>
     <color name="background">#FFFBFE</color>
     <color name="onBackground">#1C1B1F</color>
+    <color name="icon_start">#CEB951</color>
+    <color name="icon_end">#61B34F</color>
 </resources>

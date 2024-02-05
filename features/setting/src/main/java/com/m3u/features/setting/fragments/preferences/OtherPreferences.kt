@@ -23,6 +23,7 @@ import com.m3u.material.components.Preference
 internal fun OtherPreferences(
     versionName: String,
     versionCode: Int,
+    snapshot: Boolean,
     navigateToAbout: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -54,7 +55,7 @@ internal fun OtherPreferences(
         )
         Preference(
             title = stringResource(R.string.feat_setting_app_version).title(),
-            content = "$versionName ($versionCode)",
+            content = "$versionName ($versionCode)" + if (snapshot) " SNAPSHOT" else "",
             icon = Icons.Rounded.Info,
         )
     }

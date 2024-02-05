@@ -32,6 +32,16 @@ android {
             matchingFallbacks += listOf("release")
             isDebuggable = false
         }
+        create("snapshot") {
+            applicationIdSuffix = ".snapshot"
+            isMinifyEnabled = true
+            isShrinkResources = true
+            signingConfig = signingConfigs.getByName("debug")
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+        }
         all {
             isCrunchPngs = false
             proguardFiles(

@@ -46,7 +46,8 @@ class SettingViewModel @Inject constructor(
 ) : BaseViewModel<SettingState, SettingEvent>(
     emptyState = SettingState(
         versionName = publisher.versionName,
-        versionCode = publisher.versionCode
+        versionCode = publisher.versionCode,
+        snapshot = publisher.snapshot
     )
 ) {
     internal val banneds: StateFlow<ImmutableList<Stream>> = streamRepository
