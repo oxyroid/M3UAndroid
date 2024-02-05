@@ -55,7 +55,7 @@ internal fun OtherPreferences(
         )
         Preference(
             title = stringResource(R.string.feat_setting_app_version).title(),
-            content = "$versionName ($versionCode)" + if (snapshot) " SNAPSHOT" else "",
+            content = "$versionName ($versionCode)",
             icon = Icons.Rounded.Info,
         )
     }

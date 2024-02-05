@@ -8,6 +8,5 @@ class AppPublisher @Inject constructor() : Publisher {
     override val versionName: String = BuildConfig.VERSION_NAME
     override val versionCode: Int = BuildConfig.VERSION_CODE
     override val debug: Boolean = BuildConfig.DEBUG
-    @Suppress("KotlinConstantConditions")
-    override val snapshot: Boolean = BuildConfig.BUILD_TYPE == "snapshot"
+    override val snapshot: Boolean =  "snapshot" in BuildConfig.FLAVOR
 }
