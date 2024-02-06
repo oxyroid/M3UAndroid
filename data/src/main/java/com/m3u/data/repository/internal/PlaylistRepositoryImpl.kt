@@ -96,9 +96,10 @@ class PlaylistRepositoryImpl @Inject constructor(
         }
         val all = playlistDao.getAllWithStreams()
         context.contentResolver.openOutputStream(uri)?.use {
-            val writer = it.writer()
+            val writer = it.bufferedWriter()
             writer.write("")
             all.forEach { (playlist, streams) ->
+                if (playlist.fromLocal) return@forEach
                 val encodedPlaylist = json.encodeToString(playlist)
                 val wrappedPlaylist = BackupContracts.wrapPlaylist(encodedPlaylist)
                 writer.appendLine(wrappedPlaylist)
@@ -116,7 +117,7 @@ class PlaylistRepositoryImpl @Inject constructor(
             ignoreUnknownKeys = true
         }
         context.contentResolver.openInputStream(uri)?.use {
-            val reader = it.reader()
+            val reader = it.bufferedReader()
 
             reader.forEachLine { line ->
                 if (line.isBlank()) return@forEachLine
@@ -196,6 +197,10 @@ class PlaylistRepositoryImpl @Inject constructor(
     override fun observeAll(): Flow<List<Playlist>> = logger.execute {
         playlistDao.observeAll()
     } ?: flow { }
+
+    override fun observeAllRemote(): Flow<List<Playlist>> {
+        TODO("Not yet implemented")
+    }
 
     override fun observe(url: String): Flow<Playlist?> = logger.execute {
         playlistDao.observeByUrl(url)

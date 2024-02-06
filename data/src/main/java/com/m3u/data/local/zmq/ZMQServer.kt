@@ -13,11 +13,11 @@ import kotlinx.coroutines.withContext
 import org.zeromq.SocketType
 import org.zeromq.ZContext
 import org.zeromq.ZMQ
-import kotlin.random.Random
+import java.net.ServerSocket
 
 class ZMQServer(
-    val responsePort: Int = createPort(),
-    val publishPort: Int = responsePort + 1,
+    val responsePort: Int,
+    val publishPort: Int,
     logger: Logger
 ) {
     private var context: ZContext? = null
@@ -38,15 +38,15 @@ class ZMQServer(
                 bind("tcp://*:$responsePort")
                 logger.log("bind response")
             }
-            publish = context!!.createSocket(SocketType.ROUTER).apply {
-                setHelloMsg(model.toByteArray(ZMQ.CHARSET))
+            publish = context!!.createSocket(SocketType.PUB).apply {
                 bind("tcp://*:$publishPort")
                 logger.log("bind publish")
             }
             responseJob = launch {
                 while (true) {
-                    val reply = response?.recvAwait(0) ?: continue
-                    _request.emit(String(reply, ZMQ.CHARSET))
+                    val message = response?.recvStr(0) ?: continue
+                    _request.emit(message)
+                    logger.log("Received request: $message")
                 }
             }
         }
@@ -68,7 +68,7 @@ class ZMQServer(
 
     fun reply(body: String) {
         response?.send(body)
-        logger.log("reply, $body")
+        logger.log("Replied to request: $body")
     }
 
     fun broadcast(topic: String, body: String) {
@@ -77,6 +77,16 @@ class ZMQServer(
     }
 
     companion object {
-        fun createPort(): Int = Random.nextInt(400, 62000)
+        fun findRandomFreePort(): Int? {
+            var socket: ServerSocket? = null
+            return try {
+                socket = ServerSocket(0)
+                socket.localPort
+            } catch (ignore: Exception) {
+                null
+            } finally {
+                socket?.close()
+            }
+        }
     }
 }

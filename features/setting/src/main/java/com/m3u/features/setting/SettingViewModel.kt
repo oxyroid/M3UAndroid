@@ -9,6 +9,7 @@ import androidx.work.WorkManager
 import androidx.work.WorkQuery
 import androidx.work.workDataOf
 import com.m3u.core.architecture.Publisher
+import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.pref.Pref
 import com.m3u.core.architecture.viewmodel.BaseViewModel
 import com.m3u.data.database.dao.ColorPackDao
@@ -24,10 +25,11 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
@@ -42,7 +44,8 @@ class SettingViewModel @Inject constructor(
     private val workManager: WorkManager,
     private val pref: Pref,
     private val messageManager: MessageManager,
-    colorPackDao: ColorPackDao
+    colorPackDao: ColorPackDao,
+    private val logger: Logger
 ) : BaseViewModel<SettingState, SettingEvent>(
     emptyState = SettingState(
         versionName = publisher.versionName,
@@ -170,25 +173,33 @@ class SettingViewModel @Inject constructor(
         }
     }
 
-    private val workInfosFlow: Flow<MutableList<WorkInfo>> = workManager.getWorkInfosFlow(
-        WorkQuery.fromStates(
-            WorkInfo.State.RUNNING,
-            WorkInfo.State.ENQUEUED
+    @OptIn(ExperimentalCoroutinesApi::class, ExperimentalStdlibApi::class)
+    internal val backingUpOrRestoring: StateFlow<BackingUpAndRestoringState> = workManager
+        .getWorkInfosFlow(
+            WorkQuery.fromStates(
+                WorkInfo.State.RUNNING,
+                WorkInfo.State.ENQUEUED
+            )
         )
-    )
-
-    @OptIn(ExperimentalCoroutinesApi::class)
-    internal val backingUpOrRestoring = workInfosFlow
-        .mapLatest { all ->
-            all.find { info ->
-                info.tags.find { it == BackupWorker.TAG || it == RestoreWorker.TAG } != null
-            } != null
+        .mapLatest { infos ->
+            var backingUp = false
+            var restoring = false
+            for (info in infos) {
+                if (backingUp && restoring) break
+                for (tag in info.tags) {
+                    if (backingUp && restoring) break
+                    if (tag == BackupWorker.TAG) backingUp = true
+                    if (tag == RestoreWorker.TAG) restoring = true
+                }
+            }
+            BackingUpAndRestoringState.of(backingUp, restoring)
         }
+        .flowOn(Dispatchers.Default)
         .stateIn(
             scope = viewModelScope,
             // determine ui button enabled or not
-            // disabled as default
-            initialValue = true,
+            // both as default
+            initialValue = BackingUpAndRestoringState.BOTH,
             started = SharingStarted.WhileSubscribed(5000)
         )
 

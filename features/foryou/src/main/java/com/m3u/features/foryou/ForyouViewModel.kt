@@ -117,7 +117,6 @@ class ForyouViewModel @Inject constructor(
     val pairClientStateFlow = tvRepository
         .pairClientState
         .onEach { state ->
-            logger.log("client: $state")
             when (state) {
                 is PairClientState.Connected -> {
                     viewModelScope.launch {

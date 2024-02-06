@@ -10,12 +10,13 @@ import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 
-@Suppress("PARAMETER_NAME_CHANGED_ON_OVERRIDE")
-interface PlaylistRepository : ReadOnlyRepository<Playlist, String> {
-    override fun observe(url: String): Flow<Playlist?>
+interface PlaylistRepository {
+    fun observeAll(): Flow<List<Playlist>>
+    fun observeAllRemote(): Flow<List<Playlist>>
+    suspend fun get(id: String): Playlist?
+    fun observe(url: String): Flow<Playlist?>
     fun observeWithStreams(url: String): Flow<PlaylistWithStreams?>
     suspend fun getWithStreams(url: String): PlaylistWithStreams?
-    override suspend fun get(url: String): Playlist?
 
     fun subscribe(
         title: String,

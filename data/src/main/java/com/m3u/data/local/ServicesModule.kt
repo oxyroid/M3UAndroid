@@ -4,6 +4,7 @@ package com.m3u.data.local
 
 import android.app.NotificationManager
 import android.content.Context
+import android.net.ConnectivityManager
 import android.net.nsd.NsdManager
 import android.net.wifi.WifiManager
 import androidx.core.app.NotificationManagerCompat
@@ -79,6 +80,12 @@ object ProvidedServicesModule {
     @Singleton
     fun provideWifiManager(@ApplicationContext context: Context): WifiManager {
         return context.getSystemService(Context.WIFI_SERVICE) as WifiManager
+    }
+
+    @Provides
+    @Singleton
+    fun provideConnectivityManager(@ApplicationContext context: Context): ConnectivityManager {
+        return context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
     }
 
     @Provides

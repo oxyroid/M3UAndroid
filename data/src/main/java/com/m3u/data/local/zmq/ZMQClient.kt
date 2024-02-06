@@ -8,6 +8,8 @@ import kotlinx.coroutines.channels.trySendBlocking
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import org.zeromq.SocketType
 import org.zeromq.ZContext
 import org.zeromq.ZMQ
@@ -30,22 +32,22 @@ class ZMQClient(
     }
 
     fun subscribe() = channelFlow {
-        val socket = context.createSocket(SocketType.DEALER).apply {
+        val socket = context.createSocket(SocketType.SUB).apply {
             connect("tcp://$address:$publishPort")
-            logger.log("subscribe")
+            subscribe(ZMQ.SUBSCRIPTION_ALL)
+            logger.log("Subscribed to broadcasts")
         }
         launch {
             while (true) {
-                logger.log("try receiving broadcast")
-                val broadcast = socket?.recvAwait(0) ?: continue
-                val string = String(broadcast, ZMQ.CHARSET)
-                logger.log("receive a broadcast: $string")
-                trySendBlocking(string)
+                logger.log("Trying to receive broadcast")
+                val broadcast = socket.recvStr() ?: continue
+                logger.log("Received broadcast: $broadcast")
+                trySendBlocking(broadcast)
             }
         }
         awaitClose {
-            socket.disconnect("tcp://localhost:$publishPort")
-            logger.log("unsubscribe")
+            socket.disconnect("tcp://$address:$publishPort")
+            logger.log("Unsubscribed from broadcasts")
         }
     }
         .flowOn(Dispatchers.IO)
@@ -55,7 +57,12 @@ class ZMQClient(
         cont.resume(response.recvStr())
     }
 
+    suspend inline fun <reified P, reified R> sendRequest(body: P): R =
+        sendRequest(Json.encodeToString(body))
+            .let { Json.decodeFromString(it) }
+
     fun release() {
-        response.disconnect("tcp://*:$responsePort")
+        response.disconnect("tcp://$address:$responsePort")
+        context.destroy()
     }
 }

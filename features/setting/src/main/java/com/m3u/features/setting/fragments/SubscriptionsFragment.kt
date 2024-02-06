@@ -23,6 +23,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.res.stringResource
 import com.m3u.data.database.model.Stream
+import com.m3u.features.setting.BackingUpAndRestoringState
 import com.m3u.features.setting.UriWrapper
 import com.m3u.features.setting.components.BannedStreamItem
 import com.m3u.features.setting.components.LocalStorageButton
@@ -42,7 +43,7 @@ internal fun SubscriptionsFragment(
     url: String,
     uriWrapper: UriWrapper,
     localStorage: Boolean,
-    backingUpOrRestoring: Boolean,
+    backingUpOrRestoring: BackingUpAndRestoringState,
     banneds: ImmutableList<Stream>,
     onBanned: (Int) -> Unit,
     onTitle: (String) -> Unit,
@@ -163,13 +164,13 @@ internal fun SubscriptionsFragment(
             Column {
                 TonalButton(
                     text = stringResource(string.feat_setting_label_backup),
-                    enabled = !backingUpOrRestoring,
+                    enabled = backingUpOrRestoring == BackingUpAndRestoringState.NONE,
                     onClick = backup,
                     modifier = Modifier.fillMaxWidth()
                 )
                 TonalButton(
                     text = stringResource(string.feat_setting_label_restore),
-                    enabled = !backingUpOrRestoring,
+                    enabled = backingUpOrRestoring == BackingUpAndRestoringState.NONE,
                     onClick = restore,
                     modifier = Modifier.fillMaxWidth()
                 )

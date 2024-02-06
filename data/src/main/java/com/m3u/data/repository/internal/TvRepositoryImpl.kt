@@ -1,5 +1,7 @@
 package com.m3u.data.repository.internal
 
+import android.net.ConnectivityManager
+import android.net.LinkProperties
 import android.net.nsd.NsdServiceInfo
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.prefix
@@ -31,12 +33,15 @@ import kotlin.time.Duration
 
 class TvRepositoryImpl @Inject constructor(
     private val nsdDeviceManager: NsdDeviceManager,
+    private val connectivityManager: ConnectivityManager,
     logger: Logger
 ) : TvRepository {
     private val logger = logger.prefix("tv-repos")
     private val server: ZMQServer by lazy {
         ZMQServer(
-            logger = logger
+            logger = logger,
+            responsePort = checkNotNull(ZMQServer.findRandomFreePort()) { "no available port" },
+            publishPort = checkNotNull(ZMQServer.findRandomFreePort()) { "no available port" }
         )
     }
 
@@ -123,15 +128,19 @@ class TvRepositoryImpl @Inject constructor(
 
     override suspend fun startServer(): Unit = coroutineScope {
         launch { server.start() }
-        val publishPort = server.publishPort
-        val responsePort = server.responsePort
+        val pubPort = server.publishPort
+        val repPort = server.responsePort
+        val address = getLocalAddress()
         val pin = NsdDeviceManager.createPin()
+
+        logger.log("address: $address, pubPort: $pubPort, repPort: $repPort, pin: $pin")
         nsdDeviceManager
             .broadcast(
                 pin = pin,
                 metadata = mapOf(
-                    NsdDeviceManager.META_DATA_PUB_PORT to publishPort,
-                    NsdDeviceManager.META_DATA_REP_PORT to responsePort
+                    NsdDeviceManager.META_DATA_PUB_PORT to pubPort,
+                    NsdDeviceManager.META_DATA_REP_PORT to repPort,
+                    NsdDeviceManager.META_DATA_ADDRESS to address
                 )
             )
             .onStart {
@@ -170,7 +179,9 @@ class TvRepositoryImpl @Inject constructor(
                     info.getAttribute(NsdDeviceManager.META_DATA_PUB_PORT) ?: return@onEach
                 val repPort =
                     info.getAttribute(NsdDeviceManager.META_DATA_REP_PORT) ?: return@onEach
-                val address = info.host.hostAddress.orEmpty()
+                val address = info.getAttribute(NsdDeviceManager.META_DATA_ADDRESS) ?: return@onEach
+
+                logger.log("address: $address, pubPort: $pubPort, repPort: $repPort")
                 client = ZMQClient(
                     address = address,
                     responsePort = repPort.toInt(),
@@ -208,4 +219,13 @@ class TvRepositoryImpl @Inject constructor(
 
     private fun NsdServiceInfo.getAttribute(key: String): String? =
         attributes[key]?.decodeToString()
+
+    private fun getLocalAddress(): String {
+        val properties = connectivityManager
+            .getLinkProperties(connectivityManager.activeNetwork) as LinkProperties
+        val addresses = properties.linkAddresses
+        return addresses
+            .find { it.address.isSiteLocalAddress }
+            ?.address?.hostAddress.orEmpty()
+    }
 }

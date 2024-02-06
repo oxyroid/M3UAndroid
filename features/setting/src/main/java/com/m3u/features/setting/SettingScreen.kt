@@ -153,7 +153,7 @@ private fun SettingScreen(
     title: String,
     url: String,
     uriWrapper: UriWrapper,
-    backingUpOrRestoring: Boolean,
+    backingUpOrRestoring: BackingUpAndRestoringState,
     onTitle: (String) -> Unit,
     onUrl: (String) -> Unit,
     onSubscribe: () -> Unit,

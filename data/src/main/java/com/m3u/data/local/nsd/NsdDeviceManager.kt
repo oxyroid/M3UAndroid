@@ -34,6 +34,7 @@ interface NsdDeviceManager {
         const val SERVICE_TYPE = "_m3u-server._tcp."
         const val META_DATA_PUB_PORT = "pub_port"
         const val META_DATA_REP_PORT = "rep_port"
+        const val META_DATA_ADDRESS = "address"
         const val META_DATA_PIN = "pin"
     }
 }
