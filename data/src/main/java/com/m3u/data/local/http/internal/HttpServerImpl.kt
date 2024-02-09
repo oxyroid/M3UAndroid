@@ -17,7 +17,8 @@ import kotlinx.serialization.json.Json
 import javax.inject.Inject
 
 internal class HttpServerImpl @Inject constructor(
-    private val sayHello: Endpoint.SayHello
+    private val sayHello: Endpoint.SayHello,
+    private val playlists: Endpoint.Playlists
 ) : HttpServer {
     override fun start(port: Int) = channelFlow<Unit> {
         val server: EmbeddedServer<NettyApplicationEngine, NettyApplicationEngine.Configuration> =
@@ -25,6 +26,7 @@ internal class HttpServerImpl @Inject constructor(
                 configureSerialization()
                 routing {
                     sayHello.apply(this)
+                    playlists.apply(this)
                 }
             }
                 .start(wait = false)

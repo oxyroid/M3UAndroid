@@ -17,14 +17,14 @@ interface LocalApi {
     suspend fun subscribe(
         @Query("title") title: String,
         @Query("url") url: String
-    ): Endpoint.Subscribe.Rep?
+    ): Endpoint.Playlists.SubscribeRep?
 }
 
 class LocalService @Inject constructor(
     private val builder: Retrofit.Builder
 ) : LocalApi {
     override suspend fun sayHello(): Endpoint.SayHello.Rep? = api?.sayHello()
-    override suspend fun subscribe(title: String, url: String): Endpoint.Subscribe.Rep? =
+    override suspend fun subscribe(title: String, url: String): Endpoint.Playlists.SubscribeRep? =
         api?.subscribe(title, url)
 
     private var api: LocalApi? = null

@@ -43,7 +43,7 @@ sealed interface Endpoint {
         )
     }
 
-    data class Subscribe @Inject constructor(
+    data class Playlists @Inject constructor(
         private val workManager: WorkManager,
         private val pref: Pref
     ) : Endpoint {
@@ -54,7 +54,7 @@ sealed interface Endpoint {
                     val url = call.queryParameters["url"]
                     if (title == null || url == null) {
                         call.respond(
-                            Rep(success = false)
+                            SubscribeRep(success = false)
                         )
                         return@post
                     }
@@ -74,7 +74,7 @@ sealed interface Endpoint {
                     workManager.enqueue(request)
 
                     call.respond(
-                        Rep(success = true)
+                        SubscribeRep(success = true)
                     )
                 }
             }
@@ -82,7 +82,7 @@ sealed interface Endpoint {
 
         @Keep
         @Serializable
-        data class Rep(
+        data class SubscribeRep(
             val success: Boolean
         )
     }
