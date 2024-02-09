@@ -4,6 +4,7 @@ import android.content.res.Configuration.ORIENTATION_PORTRAIT
 import android.view.KeyEvent
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.Crossfade
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
@@ -21,6 +22,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
@@ -82,6 +84,7 @@ fun ForyouRoute(
 
     val helper = LocalHelper.current
     val pref = LocalPref.current
+    val spacing = LocalSpacing.current
     val hapticFeedback = LocalHapticFeedback.current
 
     var code by remember { mutableStateOf("") }
@@ -121,47 +124,62 @@ fun ForyouRoute(
     }
 
     Background {
-        ForyouScreen(
-            details = details,
-            recommend = recommend,
-            rowCount = pref.rowCount,
-            contentPadding = contentPadding,
-            showTelevisionConnection = !tv && !connected && pref.remoteControl,
-            navigateToPlaylist = navigateToPlaylist,
-            navigateToStream = navigateToStream,
-            navigateToSettingPlaylistManagement = navigateToSettingPlaylistManagement,
-            unsubscribe = { viewModel.unsubscribe(it) },
-            rename = { playlistUrl, target -> viewModel.rename(playlistUrl, target) },
-            openTelevisionConnectionSheet = { isConnectSheetVisible = true },
-            modifier = Modifier
-                .fillMaxSize()
-                .thenIf(!tv && pref.godMode) {
-                    Modifier.interceptVolumeEvent { event ->
-                        pref.rowCount = when (event) {
-                            KeyEvent.KEYCODE_VOLUME_UP -> (pref.rowCount - 1).coerceAtLeast(1)
-                            KeyEvent.KEYCODE_VOLUME_DOWN -> (pref.rowCount + 1).coerceAtMost(2)
-                            else -> return@interceptVolumeEvent
+        Box(modifier) {
+            ForyouScreen(
+                details = details,
+                recommend = recommend,
+                rowCount = pref.rowCount,
+                contentPadding = contentPadding,
+                showTelevisionConnection = !tv && !connected && pref.remoteControl,
+                navigateToPlaylist = navigateToPlaylist,
+                navigateToStream = navigateToStream,
+                navigateToSettingPlaylistManagement = navigateToSettingPlaylistManagement,
+                unsubscribe = { viewModel.unsubscribe(it) },
+                rename = { playlistUrl, target -> viewModel.rename(playlistUrl, target) },
+                openTelevisionConnectionSheet = { isConnectSheetVisible = true },
+                modifier = Modifier
+                    .fillMaxSize()
+                    .thenIf(!tv && pref.godMode) {
+                        Modifier.interceptVolumeEvent { event ->
+                            pref.rowCount = when (event) {
+                                KeyEvent.KEYCODE_VOLUME_UP -> (pref.rowCount - 1).coerceAtLeast(1)
+                                KeyEvent.KEYCODE_VOLUME_DOWN -> (pref.rowCount + 1).coerceAtMost(2)
+                                else -> return@interceptVolumeEvent
+                            }
                         }
                     }
+            )
+            ConnectBottomSheet(
+                sheetState = sheetState,
+                visible = isConnectSheetVisible && !connected,
+                code = code,
+                connecting = connecting,
+                onCode = {
+                    code = it
+                    hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                },
+                onDismissRequest = {
+                    isConnectSheetVisible = false
+                },
+                onConnect = {
+                    viewModel.pair(code.toInt())
                 }
-                .then(modifier)
-        )
-        ConnectBottomSheet(
-            sheetState = sheetState,
-            visible = isConnectSheetVisible && !connected,
-            code = code,
-            connecting = connecting,
-            onCode = {
-                code = it
-                hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
-            },
-            onDismissRequest = {
-                isConnectSheetVisible = false
-            },
-            onConnect = {
-                viewModel.pair(code.toInt())
+            )
+            Crossfade(
+                targetState = pinCodeForServer,
+                label = "pin-code",
+                modifier = Modifier
+                    .padding(spacing.medium)
+                    .align(Alignment.BottomEnd)
+            ) { code ->
+                if (code != null) {
+                    Text(
+                        text = code,
+                        style = MaterialTheme.typography.headlineMedium
+                    )
+                }
             }
-        )
+        }
     }
 }
 

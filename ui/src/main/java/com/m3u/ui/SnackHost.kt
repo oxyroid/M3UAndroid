@@ -4,7 +4,6 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
@@ -28,7 +27,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
@@ -40,6 +38,7 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
 import com.m3u.core.wrapper.Message
 import com.m3u.material.model.LocalDuration
 import com.m3u.material.model.LocalSpacing
@@ -142,14 +141,6 @@ fun SnackHost(
             .padding(spacing.medium)
             .then(modifier)
     ) {
-        val actualElevation by produceState(spacing.none) {
-            delay(duration.fast.milliseconds)
-            value = spacing.medium
-        }
-        val currentElevation by animateDpAsState(
-            targetValue = actualElevation,
-            label = "snake-host-elevation"
-        )
         LaunchedEffect(Unit) {
             delay(duration.fast.milliseconds)
             feedback.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -159,7 +150,7 @@ fun SnackHost(
                 containerColor = currentContainerColor,
                 contentColor = currentContentColor
             ),
-            elevation = CardDefaults.elevatedCardElevation(currentElevation),
+            elevation = CardDefaults.elevatedCardElevation(0.dp),
             onClick = { },
             interactionSource = interactionSource,
             modifier = Modifier.animateContentSize()

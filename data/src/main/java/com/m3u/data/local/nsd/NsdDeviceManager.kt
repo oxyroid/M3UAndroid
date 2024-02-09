@@ -15,7 +15,7 @@ interface NsdDeviceManager {
     companion object {
         const val SERVICE_TYPE = "_m3u-server._tcp."
         const val META_DATA_PORT = "port"
-        const val META_DATA_ADDRESS = "address"
+        const val META_DATA_HOST = "host"
         const val META_DATA_PIN = "pin"
     }
 }

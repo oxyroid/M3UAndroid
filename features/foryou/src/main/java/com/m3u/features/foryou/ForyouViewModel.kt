@@ -25,6 +25,8 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -42,12 +44,23 @@ class ForyouViewModel @Inject constructor(
     pref: Pref,
     publisher: Publisher
 ) : ViewModel() {
-    internal val pinCodeForServer: StateFlow<Int?> = (if (!publisher.isTelevision) flow { }
-    else tvRepository.startServer())
+    @OptIn(ExperimentalCoroutinesApi::class)
+    internal val pinCodeForServer: StateFlow<String?> = pref
+        .observeAsFlow { it.remoteControl }
+        .flatMapLatest { remoteControl ->
+            if (remoteControl && publisher.isTelevision) tvRepository.startServer()
+            else flowOf(null)
+        }
+        .map { code ->
+            code?.toString()?.let {
+                "0".repeat(6 - it.length) + it
+            }
+        }
+        .flowOn(Dispatchers.IO)
         .stateIn(
             scope = viewModelScope,
             initialValue = null,
-            started = SharingStarted.WhileSubscribed(5_000)
+            started = SharingStarted.WhileSubscribed()
         )
 
     private val counts: StateFlow<Map<String, Int>> = streamRepository
@@ -119,6 +132,7 @@ class ForyouViewModel @Inject constructor(
             if (pinCode != null) tvRepository.pair(pinCode)
             else flow { }
         }
+            .flowOn(Dispatchers.IO)
             .stateIn(
                 scope = viewModelScope,
                 initialValue = PairState.Idle,

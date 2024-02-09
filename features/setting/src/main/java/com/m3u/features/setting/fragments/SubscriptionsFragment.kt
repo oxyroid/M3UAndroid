@@ -28,10 +28,12 @@ import com.m3u.features.setting.UriWrapper
 import com.m3u.features.setting.components.BannedStreamItem
 import com.m3u.features.setting.components.LocalStorageButton
 import com.m3u.features.setting.components.LocalStorageSwitch
+import com.m3u.features.setting.components.RemoteControlSubscribeSwitch
 import com.m3u.i18n.R.string
 import com.m3u.material.components.Button
 import com.m3u.material.components.PlaceholderField
 import com.m3u.material.components.TonalButton
+import com.m3u.material.ktx.isTelevision
 import com.m3u.material.ktx.plus
 import com.m3u.material.model.LocalSpacing
 import kotlinx.collections.immutable.ImmutableList
@@ -43,6 +45,7 @@ internal fun SubscriptionsFragment(
     url: String,
     uriWrapper: UriWrapper,
     localStorage: Boolean,
+    forTv: Boolean,
     backingUpOrRestoring: BackingUpAndRestoringState,
     banneds: ImmutableList<Stream>,
     onBanned: (Int) -> Unit,
@@ -51,6 +54,7 @@ internal fun SubscriptionsFragment(
     onClipboard: (String) -> Unit,
     onSubscribe: () -> Unit,
     onLocalStorage: () -> Unit,
+    onForTv: () -> Unit,
     openDocument: (Uri) -> Unit,
     backup: () -> Unit,
     restore: () -> Unit,
@@ -58,6 +62,8 @@ internal fun SubscriptionsFragment(
 ) {
     val spacing = LocalSpacing.current
     val clipboardManager = LocalClipboardManager.current
+
+    val tv = isTelevision()
 
     val focusRequester = remember { FocusRequester() }
 
@@ -136,11 +142,17 @@ internal fun SubscriptionsFragment(
             }
         }
 
-        item {
-            LocalStorageSwitch(
-                checked = localStorage,
-                onChanged = onLocalStorage
-            )
+        if (!tv) {
+            item {
+                LocalStorageSwitch(
+                    checked = localStorage,
+                    onChanged = onLocalStorage
+                )
+                RemoteControlSubscribeSwitch(
+                    checked = forTv,
+                    onChanged = onForTv
+                )
+            }
         }
 
         item {
@@ -150,30 +162,34 @@ internal fun SubscriptionsFragment(
                     onClick = onSubscribe,
                     modifier = Modifier.fillMaxWidth()
                 )
-                TonalButton(
-                    text = stringResource(string.feat_setting_label_parse_from_clipboard),
-                    enabled = !localStorage,
-                    onClick = {
-                        onClipboard(clipboardManager.getText()?.text.orEmpty())
-                    },
-                    modifier = Modifier.fillMaxWidth()
-                )
+                if (!tv) {
+                    TonalButton(
+                        text = stringResource(string.feat_setting_label_parse_from_clipboard),
+                        enabled = !localStorage,
+                        onClick = {
+                            onClipboard(clipboardManager.getText()?.text.orEmpty())
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
             }
         }
-        item {
-            Column {
-                TonalButton(
-                    text = stringResource(string.feat_setting_label_backup),
-                    enabled = backingUpOrRestoring == BackingUpAndRestoringState.NONE,
-                    onClick = backup,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                TonalButton(
-                    text = stringResource(string.feat_setting_label_restore),
-                    enabled = backingUpOrRestoring == BackingUpAndRestoringState.NONE,
-                    onClick = restore,
-                    modifier = Modifier.fillMaxWidth()
-                )
+        if (!tv) {
+            item {
+                Column {
+                    TonalButton(
+                        text = stringResource(string.feat_setting_label_backup),
+                        enabled = backingUpOrRestoring == BackingUpAndRestoringState.NONE,
+                        onClick = backup,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    TonalButton(
+                        text = stringResource(string.feat_setting_label_restore),
+                        enabled = backingUpOrRestoring == BackingUpAndRestoringState.NONE,
+                        onClick = restore,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
             }
         }
 

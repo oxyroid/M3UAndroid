@@ -86,6 +86,9 @@
     <string name="feat_setting_remote_control">遥控器</string>
     <string name="feat_setting_remote_control_description">开启遥控电视的能力</string>
 
+    <string name="feat_setting_remote_control_tv_side">遥控器</string>
+    <string name="feat_setting_remote_control_tv_side_description">允许智能手机控制你的电视</string>
+
     <string name="feat_setting_backing_up">备份所有播放列表和频道中</string>
     <string name="feat_setting_restoring">恢复所有播放列表和频道中</string>
 </resources>

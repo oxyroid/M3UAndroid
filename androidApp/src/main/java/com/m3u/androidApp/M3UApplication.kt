@@ -33,16 +33,8 @@ class M3UApplication : Application(), Configuration.Provider {
         super.onCreate()
         Thread.setDefaultUncaughtExceptionHandler(handler)
         CoroutineScope(Dispatchers.IO).launch {
-            if (resources.configuration.isTelevision() || pref.alwaysTv) {
-//                tvRepository.startServer()
-            } else {
+            if (!resources.configuration.isTelevision() && !pref.alwaysTv) {
                 DLNACastManager.bindCastService(this@M3UApplication)
-//                tvRepository
-//                    .broadcast
-//                    .onEach {
-//                        messager.log(it, type = Message.TYPE_TELEVISION)
-//                    }
-//                    .launchIn(this)
             }
         }
     }

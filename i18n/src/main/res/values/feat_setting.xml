@@ -81,6 +81,11 @@
     <string name="feat_setting_remote_control">remote control</string>
     <string name="feat_setting_remote_control_description">turn on the ability to remotely control your TV</string>
 
+    <string name="feat_setting_remote_control_tv_side">remote control</string>
+    <string name="feat_setting_remote_control_tv_side_description">allow smartphones to control your TV</string>
+
+    <string name="feat_setting_subscribe_for_tv">for television</string>
+
     <string name="feat_setting_backing_up">backing up all playlists and channels</string>
     <string name="feat_setting_restoring">restoring all playlists and channels</string>
 </resources>

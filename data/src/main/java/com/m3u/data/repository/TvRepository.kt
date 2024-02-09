@@ -21,5 +21,5 @@ sealed interface PairState {
     data object Idle : PairState
     data object Timeout : PairState
     data object Connecting : PairState
-    data class Connected(val address: String, val port: Int) : PairState
+    data class Connected(val host: String, val port: Int) : PairState
 }

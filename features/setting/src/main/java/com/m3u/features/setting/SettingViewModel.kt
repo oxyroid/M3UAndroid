@@ -1,6 +1,9 @@
 package com.m3u.features.setting
 
 import android.net.Uri
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.viewModelScope
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.OutOfQuotaPolicy
@@ -53,6 +56,7 @@ class SettingViewModel @Inject constructor(
         snapshot = publisher.snapshot
     )
 ) {
+    internal var forTv by mutableStateOf(false)
     internal val banneds: StateFlow<ImmutableList<Stream>> = streamRepository
         .observeAll { it.banned }
         .map { it.toImmutableList() }

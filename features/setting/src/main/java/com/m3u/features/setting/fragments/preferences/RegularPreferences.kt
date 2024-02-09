@@ -147,15 +147,18 @@ internal fun RegularPreferences(
             checked = pref.autoRefresh,
             onChanged = { pref.autoRefresh = !pref.autoRefresh }
         )
-        if (!tv) {
-            CheckBoxSharedPreference(
-                title = string.feat_setting_remote_control,
-                content = string.feat_setting_remote_control_description,
-                icon = Icons.Rounded.SettingsRemote,
-                checked = pref.remoteControl,
-                onChanged = { pref.remoteControl = !pref.remoteControl }
-            )
 
+        CheckBoxSharedPreference(
+            title = if (!tv) string.feat_setting_remote_control
+            else string.feat_setting_remote_control_tv_side,
+            content = if (!tv) string.feat_setting_remote_control_description
+            else string.feat_setting_remote_control_tv_side_description,
+            icon = Icons.Rounded.SettingsRemote,
+            checked = pref.remoteControl,
+            onChanged = { pref.remoteControl = !pref.remoteControl }
+        )
+
+        if (!tv) {
             CheckBoxSharedPreference(
                 title = string.feat_setting_god_mode,
                 content = string.feat_setting_god_mode_description,

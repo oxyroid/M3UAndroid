@@ -7,7 +7,7 @@ import kotlin.random.Random
 
 object Locals {
     fun findPort(): Int = ServerSocket(0).use { it.localPort }
-    fun getAddress(connectivityManager: ConnectivityManager): String {
+    fun getHost(connectivityManager: ConnectivityManager): String {
         val properties = connectivityManager
             .getLinkProperties(connectivityManager.activeNetwork) as LinkProperties
         val addresses = properties.linkAddresses
