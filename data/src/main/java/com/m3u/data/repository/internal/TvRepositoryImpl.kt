@@ -1,231 +1,101 @@
 package com.m3u.data.repository.internal
 
 import android.net.ConnectivityManager
-import android.net.LinkProperties
 import android.net.nsd.NsdServiceInfo
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.prefix
+import com.m3u.core.util.coroutine.onTimeout
+import com.m3u.data.Locals
+import com.m3u.data.local.endpoint.HttpServer
 import com.m3u.data.local.nsd.NsdDeviceManager
-import com.m3u.data.local.zmq.ZMQClient
-import com.m3u.data.local.zmq.ZMQServer
-import com.m3u.data.repository.PairClientState
-import com.m3u.data.repository.PairServerState
+import com.m3u.data.repository.PairState
 import com.m3u.data.repository.TvRepository
-import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.channels.trySendBlocking
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.onStart
-import kotlinx.coroutines.flow.timeout
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 import kotlin.time.Duration
 
 class TvRepositoryImpl @Inject constructor(
     private val nsdDeviceManager: NsdDeviceManager,
     private val connectivityManager: ConnectivityManager,
+    private val server: HttpServer,
     logger: Logger
 ) : TvRepository {
     private val logger = logger.prefix("tv-repos")
-    private val server: ZMQServer by lazy {
-        ZMQServer(
-            logger = logger,
-            responsePort = checkNotNull(ZMQServer.findRandomFreePort()) { "no available port" },
-            publishPort = checkNotNull(ZMQServer.findRandomFreePort()) { "no available port" }
-        )
-    }
 
-    @Volatile
-    private var client: ZMQClient? = null
+    override fun startServer(): Flow<Int?> = channelFlow {
+        val serverPort = Locals.findPort()
+        val nsdPort = Locals.findPort()
+        val pin = Locals.createPin()
+        val address = Locals.getAddress(connectivityManager)
 
-    /**
-     * Television used, request from phone:
-     * ```kotlin
-     * televisionScope.launch {
-     *     serverJob?.cancel()
-     *     serverJob = launch { repository.startServer() }
-     *     // ...
-     *     repository.fromPhone.collect { request ->
-     *         val response = getResponseByRequest(request)
-     *         repository.reply(response)
-     *     }
-     * }
-     * ```
-     */
-    override val fromPhone: SharedFlow<String> by lazy { server.request }
+        logger.log("start-server: server-port[$serverPort], nsd-port[$nsdPort], pin[$pin], address[$address]")
 
-    override suspend fun toTelevision(body: String): String {
-        val client = checkNotNull(client)
-        return client.sendRequest(body)
-    }
+        server
+            .start(serverPort)
+            .launchIn(this)
 
-    /**
-     * Phone used, broadcast from tv:
-     * ```kotlin
-     * phoneScope.launch {
-     *     clientJob?.cancel()
-     *     clientJob = launch { repository.startClient() }
-     *     repository.broadcast.collect { broadcast ->
-     *         showBroadcast(broadcast)
-     *     }
-     * }
-     * ```
-     */
-    private val _broadcast = MutableSharedFlow<String>()
-    override val broadcast: SharedFlow<String> = _broadcast.asSharedFlow()
-
-    /**
-     * Television used, pair state:
-     * ```kotlin
-     * televisionScope.launch {
-     *     serverJob?.cancel()
-     *     serverJob = launch { repository.startServer() }
-     *     repository.pairServerState.onEach { state ->
-     *         showPairState(state)
-     *     }.launchIn(this)
-     *     // ...
-     * }
-     * ```
-     */
-    private val _pairServerState = MutableStateFlow<PairServerState>(PairServerState.Idle)
-    override val pairServerState = _pairServerState.asStateFlow()
-
-    /**
-     * Phone used, pair state:
-     * ```kotlin
-     * phoneScope.launch {
-     *     repository.pairClientState.onEach { state ->
-     *         saveAndShowPairState(state)
-     *         when (state) {
-     *             PairClientState.Idle -> {
-     *                 clientJob?.cancel()
-     *                 clientJob = null
-     *             }
-     *             is PairClientState.Connected -> {
-     *                 clientJob = launch { repository.startClient() }
-     *             }
-     *         }
-     *     }.launchIn(this)
-     * }
-     * ```
-     * User type PIN on phone from television and then pair it.
-     * ```kotlin
-     * fun pair(pin: Int) { phoneScope.launch { repository.pair(pin) } }
-     * ```
-     */
-    private val _pairClientState = MutableStateFlow<PairClientState>(PairClientState.Idle)
-    override val pairClientState = _pairClientState.asStateFlow()
-
-    override suspend fun startServer(): Unit = coroutineScope {
-        launch { server.start() }
-        val pubPort = server.publishPort
-        val repPort = server.responsePort
-        val address = getLocalAddress()
-        val pin = NsdDeviceManager.createPin()
-
-        logger.log("address: $address, pubPort: $pubPort, repPort: $repPort, pin: $pin")
         nsdDeviceManager
             .broadcast(
                 pin = pin,
+                port = nsdPort,
                 metadata = mapOf(
-                    NsdDeviceManager.META_DATA_PUB_PORT to pubPort,
-                    NsdDeviceManager.META_DATA_REP_PORT to repPort,
+                    NsdDeviceManager.META_DATA_PORT to serverPort,
                     NsdDeviceManager.META_DATA_ADDRESS to address
                 )
             )
             .onStart {
-                _pairServerState.value = PairServerState.Prepared(pin)
+                trySendBlocking(serverPort)
             }
             .onCompletion {
-                _pairServerState.value = PairServerState.Idle
+                trySendBlocking(null)
+                logger.log("start-server: timeout!")
             }
             .onEach { connected ->
-                _pairServerState.value = when (connected) {
-                    null -> PairServerState.Prepared(pin)
-                    else -> PairServerState.Connected(connected)
-                }
+                trySendBlocking(
+                    if (connected != null) null else serverPort
+                )
             }
             .launchIn(this)
+
+        awaitClose {
+            logger.log("start-server: closing...")
+        }
     }
 
-    @OptIn(FlowPreview::class)
-    override suspend fun pair(pin: Int, timeout: Duration): Unit = coroutineScope {
+    override fun pair(pin: Int, timeout: Duration): Flow<PairState> = channelFlow {
+        trySendBlocking(PairState.Idle)
         nsdDeviceManager
             .search()
-            .timeout(timeout)
-            .onStart { _pairClientState.value = PairClientState.Connecting }
-            .catch {
-                if (it is TimeoutCancellationException) {
-                    _pairClientState.value = PairClientState.Idle
-                }
-            }
+            .onStart { trySendBlocking(PairState.Connecting) }
+            .onTimeout(timeout) { trySendBlocking(PairState.Timeout) }
             .onEach { all ->
-//                val info = all
-//                    .find {
-//                        it.getAttribute(NsdDeviceManager.META_DATA_PIN) == pin.toString()
-//                    } ?: return@onEach
-                val info = all.firstOrNull() ?: return@onEach
-                val pubPort =
-                    info.getAttribute(NsdDeviceManager.META_DATA_PUB_PORT) ?: return@onEach
-                val repPort =
-                    info.getAttribute(NsdDeviceManager.META_DATA_REP_PORT) ?: return@onEach
-                val address = info.getAttribute(NsdDeviceManager.META_DATA_ADDRESS) ?: return@onEach
+                val info = all
+                    .find {
+                        it.getAttribute(NsdDeviceManager.META_DATA_PIN) == pin.toString()
+                    } ?: return@onEach
+                val port = info.getAttribute(NsdDeviceManager.META_DATA_PORT)
+                    ?.toIntOrNull()
+                    ?: return@onEach
+                val address =
+                    info.getAttribute(NsdDeviceManager.META_DATA_ADDRESS) ?: return@onEach
 
-                logger.log("address: $address, pubPort: $pubPort, repPort: $repPort")
-                client = ZMQClient(
-                    address = address,
-                    responsePort = repPort.toInt(),
-                    publishPort = pubPort.toInt(),
-                    logger = logger.delegate
-                )
-                logger.log("pair success")
-                _pairClientState.value = PairClientState.Connected(info)
+                trySendBlocking(PairState.Connected(address, port))
                 cancel()
             }
             .launchIn(this)
     }
 
-    private var startClientJob: Job? = null
-    override suspend fun startClient(): Unit = coroutineScope {
-        logger.log("start client")
-        val client = checkNotNull(client)
-        startClientJob = client
-            .subscribe()
-            .onEach { _broadcast.emit(it) }
-            .launchIn(this)
-    }
-
-    override fun stopClient() {
-        startClientJob?.cancel()
-        startClientJob = null
-        _pairClientState.value = PairClientState.Idle
-    }
-
     override fun release() {
-        stopClient()
-        client?.release()
-        server.release()
     }
 
     private fun NsdServiceInfo.getAttribute(key: String): String? =
         attributes[key]?.decodeToString()
-
-    private fun getLocalAddress(): String {
-        val properties = connectivityManager
-            .getLinkProperties(connectivityManager.activeNetwork) as LinkProperties
-        val addresses = properties.linkAddresses
-        return addresses
-            .find { it.address.isSiteLocalAddress }
-            ?.address?.hostAddress.orEmpty()
-    }
 }

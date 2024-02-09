@@ -2,7 +2,7 @@ package com.m3u.data.repository.logger
 
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.wrapper.Message
-import com.m3u.data.local.MessageManager
+import com.m3u.data.local.service.MessageManager
 import java.util.Locale
 import javax.inject.Inject
 import kotlin.time.Duration

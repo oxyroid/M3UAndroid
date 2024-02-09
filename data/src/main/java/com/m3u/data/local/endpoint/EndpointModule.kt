@@ -1,18 +1,17 @@
-@file:Suppress("unused")
-
-package com.m3u.androidApp
+package com.m3u.data.local.endpoint
 
 import com.m3u.core.architecture.Publisher
-import dagger.Binds
 import dagger.Module
+import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
-interface AppModule {
-    @Binds
+object EndpointModule {
+    @Provides
     @Singleton
-    fun bindPublisher(provider: AppPublisher): Publisher
+    fun provideSayHelloEndpoint(publisher: Publisher): Endpoint.SayHello =
+        Endpoint.SayHello(publisher)
 }

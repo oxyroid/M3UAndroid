@@ -1,10 +1,7 @@
-@file:OptIn(UnstableApi::class)
-
-package com.m3u.data.local.internal
+package com.m3u.data.local.service.internal
 
 import android.content.Context
 import android.graphics.Rect
-import androidx.annotation.OptIn
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.Format
@@ -17,7 +14,6 @@ import androidx.media3.common.TrackSelectionOverride
 import androidx.media3.common.Tracks
 import androidx.media3.common.VideoSize
 import androidx.media3.common.util.SystemClock
-import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.DataSource
 import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.datasource.okhttp.OkHttpDataSource
@@ -37,7 +33,7 @@ import com.m3u.core.architecture.logger.prefix
 import com.m3u.core.architecture.pref.Pref
 import com.m3u.core.architecture.pref.annotation.ReconnectMode
 import com.m3u.core.architecture.pref.observeAsFlow
-import com.m3u.data.local.PlayerManager
+import com.m3u.data.local.service.PlayerManager
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.anilbeesetti.nextlib.media3ext.ffdecoder.NextRenderersFactory
 import kotlinx.coroutines.CoroutineScope

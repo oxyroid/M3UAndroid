@@ -5,7 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import com.m3u.core.architecture.pref.Pref
-import com.m3u.data.local.MessageManager
+import com.m3u.data.local.service.MessageManager
 import com.m3u.ui.Destination
 import com.m3u.ui.helper.Action
 import com.m3u.ui.helper.Fob

@@ -39,7 +39,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.core.util.basic.title
 import com.m3u.data.database.model.Playlist
-import com.m3u.data.repository.PairClientState
+import com.m3u.data.repository.PairState
 import com.m3u.features.foryou.components.ForyouDialog
 import com.m3u.features.foryou.components.OnRename
 import com.m3u.features.foryou.components.OnUnsubscribe
@@ -93,14 +93,14 @@ fun ForyouRoute(
 
     var isConnectSheetVisible by remember { mutableStateOf(false) }
 
-    val pairServerState by viewModel.pairServerStateFlow.collectAsStateWithLifecycle()
-    val pairClientState by viewModel.pairClientStateFlow.collectAsStateWithLifecycle()
+    val pinCodeForServer by viewModel.pinCodeForServer.collectAsStateWithLifecycle()
+    val pairStateForClient by viewModel.pairStateForClient.collectAsStateWithLifecycle()
 
     val connecting by remember {
-        derivedStateOf { pairClientState == PairClientState.Connecting }
+        derivedStateOf { pairStateForClient == PairState.Connecting }
     }
     val connected by remember {
-        derivedStateOf { pairClientState is PairClientState.Connected }
+        derivedStateOf { pairStateForClient is PairState.Connected }
     }
 
     val sheetState = rememberModalBottomSheetState(

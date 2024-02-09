@@ -1,4 +1,4 @@
-package com.m3u.data.local
+package com.m3u.data.local.service
 
 import com.m3u.core.wrapper.Message
 import kotlinx.coroutines.flow.StateFlow

@@ -14,7 +14,6 @@ import com.m3u.dlna.control.CastControlImpl
 import com.m3u.dlna.control.DeviceControl
 import com.m3u.dlna.control.EmptyDeviceControl
 import com.m3u.dlna.control.OnDeviceControlListener
-import com.m3u.dlna.http.LocalServer
 import org.jupnp.model.message.header.STAllHeader
 import org.jupnp.model.message.header.UDADeviceTypeHeader
 import org.jupnp.model.meta.Device
@@ -122,22 +121,6 @@ object DLNACastManager : OnDeviceRegistryListener {
 
     private fun checkDeviceType(device: Device<*, *, *>): Boolean =
         searchDeviceType == null || searchDeviceType == device.type
-
-    var localServer: LocalServer? = null
-        private set
-
-    fun startLocalHttpServer(port: Int = 8192, jetty: Boolean = true) {
-        if (localServer == null) {
-            applicationContext?.run {
-                localServer = LocalServer(this, port, jetty)
-            }
-        }
-        localServer?.startServer()
-    }
-
-    fun stopLocalHttpServer() {
-        localServer?.stopServer()
-    }
 
     fun search(type: DeviceType? = null) {
         upnpService?.service?.also { service ->

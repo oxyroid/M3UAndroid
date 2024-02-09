@@ -21,6 +21,7 @@ google-dagger = "2.50"
 
 haze = "0.5.0"
 io-coil = "2.5.0"
+javalin = "6.0.0"
 kotlinx-serialization-json = "1.6.2"
 kotlinx-serialization-converter-retrofit = "1.0.0"
 kotlinx-datetime = "0.5.0"
@@ -29,7 +30,6 @@ kotlinx-collections-immutable = "0.3.7"
 lottie-compose = "6.3.0"
 nextLib = "0.6.0"
 slf4j-api = "2.0.11"
-zeromq = "0.5.4"
 
 squareup-retrofit2 = "2.9.0"
 squareup-leakcanary = "2.13"
@@ -48,7 +48,7 @@ androidx-benchmark = "1.2.3"
 
 servlet = "3.1.0"
 jetty = "9.3.14.v20161028"
-nanohttpd = "2.3.1"
+
 jupnp = "2.7.1"
 aboutlibraries = "10.10.0"
 
@@ -122,6 +122,7 @@ com-airbnb-android-lottie-compose = { group = "com.airbnb.android", name = "lott
 com-squareup-retrofit2-retrofit = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "squareup-retrofit2" }
 com-squareup-leakcanary-leakcanary-android = { group = "com.squareup.leakcanary", name = "leakcanary-android", version.ref = "squareup-leakcanary" }
 
+javalin = { module = "io.javalin:javalin", version.ref = "javalin" }
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinx-serialization-json" }
 kotlinx-serialization-coverter-retrofit = { group = "com.jakewharton.retrofit", name = "retrofit2-kotlinx-serialization-converter", version.ref = "kotlinx-serialization-converter-retrofit" }
 kotlinx-collections-immutable = { group = "org.jetbrains.kotlinx", name = "kotlinx-collections-immutable", version.ref = "kotlinx-collections-immutable" }
@@ -142,11 +143,9 @@ jetty-server = { group = "org.eclipse.jetty", name = "jetty-server", version.ref
 jetty-servlet = { group = "org.eclipse.jetty", name = "jetty-servlet", version.ref = "jetty" }
 jetty-client = { group = "org.eclipse.jetty", name = "jetty-client", version.ref = "jetty" }
 
-nanohttpd = { group = "org.nanohttpd", name = "nanohttpd", version.ref = "nanohttpd" }
 aboutlibraries-core = { group = "com.mikepenz", name = "aboutlibraries-core", version.ref = "aboutlibraries" }
 
 slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j-api" }
-zeromq = { group = "org.zeromq", name = "jeromq", version.ref = "zeromq" }
 
 jupnp = { group = "org.jupnp", name = "org.jupnp", version.ref = "jupnp" }
 jupnp-support = { group = "org.jupnp", name = "org.jupnp.support", version.ref = "jupnp" }

@@ -35,6 +35,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     composeOptions {
         kotlinCompilerExtensionVersion = libs.versions.compose.compiler.get()
@@ -76,7 +77,8 @@ dependencies {
     implementation(libs.androidx.hilt.hilt.work)
     ksp(libs.androidx.hilt.hilt.compiler)
 
-    implementation(libs.zeromq)
-
     implementation(libs.nextlib.media3ext)
+
+    implementation(libs.javalin)
+    debugImplementation(libs.slf4j.api)
 }

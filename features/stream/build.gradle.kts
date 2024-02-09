@@ -60,4 +60,5 @@ dependencies {
     ksp(libs.com.google.dagger.hilt.compiler)
 
     implementation(libs.com.google.accompanist.accompanist.permissions)
+    implementation(libs.jupnp)
 }

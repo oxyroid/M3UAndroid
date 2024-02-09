@@ -1,4 +1,4 @@
-package com.m3u.data.local.internal
+package com.m3u.data.local.service.internal
 
 import android.content.Context
 import android.content.pm.PackageInfo

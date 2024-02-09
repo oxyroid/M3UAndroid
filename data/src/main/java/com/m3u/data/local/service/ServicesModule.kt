@@ -1,6 +1,6 @@
 @file:Suppress("unused")
 
-package com.m3u.data.local
+package com.m3u.data.local.service
 
 import android.app.NotificationManager
 import android.content.Context
@@ -11,11 +11,13 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.work.WorkManager
 import com.m3u.core.architecture.TraceFileProvider
 import com.m3u.core.architecture.logger.Logger
-import com.m3u.data.local.internal.MessageManagerImpl
-import com.m3u.data.local.internal.PlayerManagerImpl
-import com.m3u.data.local.internal.TraceFileProviderImpl
+import com.m3u.data.local.endpoint.HttpServer
+import com.m3u.data.local.endpoint.internal.HttpServerImpl
 import com.m3u.data.local.nsd.NsdDeviceManager
-import com.m3u.data.local.nsd.NsdDeviceManagerImpl
+import com.m3u.data.local.nsd.internal.NsdDeviceManagerImpl
+import com.m3u.data.local.service.internal.MessageManagerImpl
+import com.m3u.data.local.service.internal.PlayerManagerImpl
+import com.m3u.data.local.service.internal.TraceFileProviderImpl
 import com.m3u.data.repository.logger.CommonLogger
 import com.m3u.data.repository.logger.MessageLogger
 import dagger.Binds
@@ -28,7 +30,7 @@ import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
-interface BindServicesModule {
+internal interface BindServicesModule {
     @Binds
     @Singleton
     fun bindPlayerManager(service: PlayerManagerImpl): PlayerManager
@@ -53,6 +55,10 @@ interface BindServicesModule {
     @Binds
     @Singleton
     fun bindNsdDeviceManager(manager: NsdDeviceManagerImpl): NsdDeviceManager
+
+    @Binds
+    @Singleton
+    fun bindHttpServer(server: HttpServerImpl): HttpServer
 }
 
 @Module
