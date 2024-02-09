@@ -15,7 +15,7 @@ import com.m3u.core.architecture.viewmodel.BaseViewModel
 import com.m3u.data.database.dao.ColorPackDao
 import com.m3u.data.database.model.ColorPack
 import com.m3u.data.database.model.Stream
-import com.m3u.data.local.MessageManager
+import com.m3u.data.local.service.MessageManager
 import com.m3u.data.repository.StreamRepository
 import com.m3u.data.repository.observeAll
 import com.m3u.data.work.BackupWorker
@@ -40,7 +40,7 @@ import javax.inject.Inject
 @HiltViewModel
 class SettingViewModel @Inject constructor(
     private val streamRepository: StreamRepository,
-    @Publisher.App private val publisher: Publisher,
+    private val publisher: Publisher,
     private val workManager: WorkManager,
     private val pref: Pref,
     private val messageManager: MessageManager,

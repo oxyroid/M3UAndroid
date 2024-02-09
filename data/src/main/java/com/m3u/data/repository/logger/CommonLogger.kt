@@ -16,7 +16,7 @@ import kotlin.time.Duration
  * This is the default Logger implement.
  */
 class CommonLogger @Inject constructor(
-    @Publisher.App private val publisher: Publisher
+    private val publisher: Publisher
 ) : Logger {
     override fun log(
         text: String,

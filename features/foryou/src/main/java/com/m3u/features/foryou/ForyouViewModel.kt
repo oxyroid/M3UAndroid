@@ -2,12 +2,10 @@ package com.m3u.features.foryou
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.m3u.core.architecture.logger.Logger
-import com.m3u.core.architecture.logger.prefix
+import com.m3u.core.architecture.Publisher
 import com.m3u.core.architecture.pref.Pref
 import com.m3u.core.architecture.pref.observeAsFlow
-import com.m3u.data.repository.PairClientState
-import com.m3u.data.repository.PairServerState
+import com.m3u.data.repository.PairState
 import com.m3u.data.repository.PlaylistRepository
 import com.m3u.data.repository.StreamRepository
 import com.m3u.data.repository.TvRepository
@@ -20,13 +18,14 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -41,9 +40,16 @@ class ForyouViewModel @Inject constructor(
     streamRepository: StreamRepository,
     private val tvRepository: TvRepository,
     pref: Pref,
-    logcat: Logger
+    publisher: Publisher
 ) : ViewModel() {
-    private val logger = logcat.prefix("foryou")
+    internal val pinCodeForServer: StateFlow<Int?> = (if (!publisher.isTelevision) flow { }
+    else tvRepository.startServer())
+        .stateIn(
+            scope = viewModelScope,
+            initialValue = null,
+            started = SharingStarted.WhileSubscribed(5_000)
+        )
+
     private val counts: StateFlow<Map<String, Int>> = streamRepository
         .observeAll()
         .map { streams ->
@@ -93,49 +99,33 @@ class ForyouViewModel @Inject constructor(
             initialValue = Recommend()
         )
 
-    fun unsubscribe(url: String) {
+    internal fun unsubscribe(url: String) {
         viewModelScope.launch {
             playlistRepository.unsubscribe(url)
         }
     }
 
-    fun rename(playlistUrl: String, target: String) {
+    internal fun rename(playlistUrl: String, target: String) {
         viewModelScope.launch {
             playlistRepository.rename(playlistUrl, target)
         }
     }
 
-    val pairServerStateFlow = tvRepository
-        .pairServerState
-        .onEach { logger.log("server: $it") }
-        .stateIn(
-            scope = viewModelScope,
-            initialValue = PairServerState.Idle,
-            started = SharingStarted.WhileSubscribed(5000)
-        )
+    private val pinCodeForClient = MutableStateFlow<Int?>(null)
 
-    val pairClientStateFlow = tvRepository
-        .pairClientState
-        .onEach { state ->
-            when (state) {
-                is PairClientState.Connected -> {
-                    viewModelScope.launch {
-                        tvRepository.startClient()
-                    }
-                }
-                else -> {}
-            }
+    @OptIn(ExperimentalCoroutinesApi::class)
+    internal val pairStateForClient: StateFlow<PairState> =
+        pinCodeForClient.flatMapLatest { pinCode ->
+            if (pinCode != null) tvRepository.pair(pinCode)
+            else flow { }
         }
-        .stateIn(
-            scope = viewModelScope,
-            initialValue = PairClientState.Idle,
-            started = SharingStarted.WhileSubscribed(5000)
-        )
+            .stateIn(
+                scope = viewModelScope,
+                initialValue = PairState.Idle,
+                started = SharingStarted.WhileSubscribed(5_000)
+            )
 
-
-    fun pair(pin: Int) {
-        viewModelScope.launch {
-            tvRepository.pair(pin)
-        }
+    internal fun pair(pin: Int) {
+        pinCodeForClient.value = pin
     }
 }

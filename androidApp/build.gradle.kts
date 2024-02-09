@@ -77,7 +77,9 @@ android {
     packaging {
         resources.excludes += setOf(
             "/META-INF/beans.xml",
-            "/META-INF/{AL2.0,LGPL2.1}"
+            "/META-INF/{AL2.0,LGPL2.1}",
+            "/META-INF/INDEX.LIST",
+            "/META-INF/io.netty.versions.properties"
         )
     }
 }

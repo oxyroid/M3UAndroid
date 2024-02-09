@@ -39,17 +39,16 @@ android {
 }
 
 dependencies {
+    // JUpnp
+    implementation(libs.jupnp)
+    implementation(libs.jupnp.support)
+
     // Servlet
     implementation(libs.servlet.api)
     // Jetty
     implementation(libs.jetty.server)
     implementation(libs.jetty.servlet)
     implementation(libs.jetty.client)
-    // Nano http
-    implementation(libs.nanohttpd)
-
-    api(libs.jupnp)
-    api(libs.jupnp.support)
 
     implementation(libs.slf4j.api)
 }

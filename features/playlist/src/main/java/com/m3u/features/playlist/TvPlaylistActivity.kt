@@ -30,8 +30,8 @@ import com.m3u.core.unspecified.unspecifiable
 import com.m3u.core.util.context.isDarkMode
 import com.m3u.core.util.context.isPortraitMode
 import com.m3u.core.wrapper.Message
-import com.m3u.data.local.MessageManager
-import com.m3u.data.local.PlayerManager
+import com.m3u.data.local.service.MessageManager
+import com.m3u.data.local.service.PlayerManager
 import com.m3u.ui.Toolkit
 import com.m3u.ui.helper.Action
 import com.m3u.ui.helper.Fob
