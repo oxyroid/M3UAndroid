@@ -1,4 +1,4 @@
-package com.m3u.data.local.endpoint
+package com.m3u.data.local.http
 
 import kotlinx.coroutines.flow.Flow
 

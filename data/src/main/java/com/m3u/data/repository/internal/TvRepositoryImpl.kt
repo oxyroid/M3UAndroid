@@ -6,7 +6,7 @@ import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.prefix
 import com.m3u.core.util.coroutine.onTimeout
 import com.m3u.data.Locals
-import com.m3u.data.local.endpoint.HttpServer
+import com.m3u.data.local.http.HttpServer
 import com.m3u.data.local.nsd.NsdDeviceManager
 import com.m3u.data.repository.PairState
 import com.m3u.data.repository.TvRepository

@@ -79,6 +79,8 @@ dependencies {
 
     implementation(libs.nextlib.media3ext)
 
-    implementation(libs.javalin)
-    debugImplementation(libs.slf4j.api)
+    implementation(libs.ktor.server)
+    implementation(libs.ktor.server.content.negotiation)
+    implementation(libs.ktor.serialization.kotlinx.json)
+    debugImplementation(libs.logback.classic)
 }

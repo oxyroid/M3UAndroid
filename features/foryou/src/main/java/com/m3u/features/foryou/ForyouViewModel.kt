@@ -25,9 +25,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -128,16 +126,6 @@ class ForyouViewModel @Inject constructor(
             )
 
     internal fun pair(pin: Int) {
-        tvRepository
-            .pair(pin)
-            .onEach { state ->
-                when (state) {
-                    PairState.Idle -> TODO()
-                    PairState.Connecting -> TODO()
-                    PairState.Timeout -> TODO()
-                    is PairState.Connected -> TODO()
-                }
-            }
-            .launchIn(viewModelScope)
+        pinCodeForClient.value = pin
     }
 }

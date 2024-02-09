@@ -11,8 +11,8 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.work.WorkManager
 import com.m3u.core.architecture.TraceFileProvider
 import com.m3u.core.architecture.logger.Logger
-import com.m3u.data.local.endpoint.HttpServer
-import com.m3u.data.local.endpoint.internal.HttpServerImpl
+import com.m3u.data.local.http.HttpServer
+import com.m3u.data.local.http.internal.HttpServerImpl
 import com.m3u.data.local.nsd.NsdDeviceManager
 import com.m3u.data.local.nsd.internal.NsdDeviceManagerImpl
 import com.m3u.data.local.service.internal.MessageManagerImpl
