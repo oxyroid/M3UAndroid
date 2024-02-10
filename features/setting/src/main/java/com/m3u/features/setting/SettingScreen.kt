@@ -10,10 +10,19 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.adaptive.AnimatedPane
+import androidx.compose.material3.adaptive.HingePolicy
 import androidx.compose.material3.adaptive.ListDetailPaneScaffold
 import androidx.compose.material3.adaptive.ListDetailPaneScaffoldRole
+import androidx.compose.material3.adaptive.PaneScaffoldDirective
+import androidx.compose.material3.adaptive.Posture
+import androidx.compose.material3.adaptive.WindowAdaptiveInfo
+import androidx.compose.material3.adaptive.allVerticalHingeBounds
 import androidx.compose.material3.adaptive.calculateListDetailPaneScaffoldState
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
+import androidx.compose.material3.adaptive.occludingVerticalHingeBounds
+import androidx.compose.material3.adaptive.separatingVerticalHingeBounds
 import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -22,9 +31,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.core.architecture.pref.LocalPref
@@ -58,8 +70,8 @@ fun SettingRoute(
     viewModel: SettingViewModel = hiltViewModel()
 ) {
     val tv = isTelevision()
-
     val title = stringResource(string.ui_title_setting)
+    
     val controller = LocalSoftwareKeyboardController.current
 
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -75,12 +87,12 @@ fun SettingRoute(
 
     val createDocumentLauncher =
         rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/*")) { uri ->
-            uri?: return@rememberLauncherForActivityResult
+            uri ?: return@rememberLauncherForActivityResult
             viewModel.backup(uri)
         }
     val openDocumentLauncher =
         rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
-            uri?: return@rememberLauncherForActivityResult
+            uri ?: return@rememberLauncherForActivityResult
             viewModel.restore(uri)
         }
 
@@ -119,8 +131,8 @@ fun SettingRoute(
             navigateToAbout = navigateToAbout,
             localStorage = state.localStorage,
             onLocalStorage = { viewModel.onEvent(SettingEvent.OnLocalStorage) },
-            forTv = viewModel.forTv,
-            onForTv = { viewModel.forTv = !viewModel.forTv },
+            subscribeForTv = viewModel.subscribeForTv,
+            onsubscribeForTv = { viewModel.subscribeForTv = !viewModel.subscribeForTv },
             openDocument = { viewModel.onEvent(SettingEvent.OpenDocument(it)) },
             backup = backup,
             restore = restore,
@@ -164,8 +176,8 @@ private fun SettingScreen(
     navigateToAbout: () -> Unit,
     localStorage: Boolean,
     onLocalStorage: () -> Unit,
-    forTv: Boolean,
-    onForTv: () -> Unit,
+    subscribeForTv: Boolean,
+    onsubscribeForTv: () -> Unit,
     openDocument: (Uri) -> Unit,
     backup: () -> Unit,
     restore: () -> Unit,
@@ -212,11 +224,13 @@ private fun SettingScreen(
         }
     }
     val scaffoldState = calculateListDetailPaneScaffoldState(
-        currentPaneDestination = currentPaneDestination
+        currentPaneDestination = currentPaneDestination,
+        scaffoldDirective = calculateStandardPaneScaffoldDirective(currentWindowAdaptiveInfo())
     )
 
     ListDetailPaneScaffold(
         scaffoldState = scaffoldState,
+        // we handle the window insets in app scaffold
         windowInsets = WindowInsets(0),
         listPane = {
             PreferencesFragment(
@@ -253,8 +267,8 @@ private fun SettingScreen(
                                 onSubscribe = onSubscribe,
                                 localStorage = localStorage,
                                 onLocalStorage = onLocalStorage,
-                                forTv = forTv,
-                                onForTv = onForTv,
+                                subscribeForTv = subscribeForTv,
+                                onsubscribeForTv = onsubscribeForTv,
                                 openDocument = openDocument,
                                 onClipboard = onClipboard,
                                 backup = backup,
@@ -288,5 +302,58 @@ private fun SettingScreen(
 
     BackHandler(fragment != DestinationEvent.Setting.Default) {
         fragment = DestinationEvent.Setting.Default
+    }
+}
+
+private fun calculateStandardPaneScaffoldDirective(
+    windowAdaptiveInfo: WindowAdaptiveInfo,
+    verticalHingePolicy: HingePolicy = HingePolicy.AvoidSeparating
+): PaneScaffoldDirective {
+    val maxHorizontalPartitions: Int
+    val verticalSpacerSize: Dp
+    when (windowAdaptiveInfo.windowSizeClass.widthSizeClass) {
+        WindowWidthSizeClass.Compact -> {
+            maxHorizontalPartitions = 1
+            verticalSpacerSize = 0.dp
+        }
+
+        WindowWidthSizeClass.Medium -> {
+            maxHorizontalPartitions = 1
+            verticalSpacerSize = 0.dp
+        }
+
+        else -> {
+            maxHorizontalPartitions = 2
+            verticalSpacerSize = 24.dp
+        }
+    }
+    val maxVerticalPartitions: Int
+    val horizontalSpacerSize: Dp
+
+    if (windowAdaptiveInfo.windowPosture.isTabletop) {
+        maxVerticalPartitions = 2
+        horizontalSpacerSize = 24.dp
+    } else {
+        maxVerticalPartitions = 1
+        horizontalSpacerSize = 0.dp
+    }
+
+    return PaneScaffoldDirective(
+        // keep no paddings
+        PaddingValues(),
+        maxHorizontalPartitions,
+        verticalSpacerSize,
+        maxVerticalPartitions,
+        horizontalSpacerSize,
+        getExcludedVerticalBounds(windowAdaptiveInfo.windowPosture, verticalHingePolicy)
+    )
+}
+
+private fun getExcludedVerticalBounds(posture: Posture, hingePolicy: HingePolicy): List<Rect> {
+    return when (hingePolicy) {
+        HingePolicy.AvoidSeparating -> posture.separatingVerticalHingeBounds
+        HingePolicy.AvoidOccluding -> posture.occludingVerticalHingeBounds
+        HingePolicy.AlwaysAvoid -> posture.allVerticalHingeBounds
+        else -> emptyList()
     }
 }

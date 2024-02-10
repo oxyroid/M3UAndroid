@@ -22,6 +22,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.res.stringResource
+import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.data.database.model.Stream
 import com.m3u.features.setting.BackingUpAndRestoringState
 import com.m3u.features.setting.UriWrapper
@@ -45,7 +46,7 @@ internal fun SubscriptionsFragment(
     url: String,
     uriWrapper: UriWrapper,
     localStorage: Boolean,
-    forTv: Boolean,
+    subscribeForTv: Boolean,
     backingUpOrRestoring: BackingUpAndRestoringState,
     banneds: ImmutableList<Stream>,
     onBanned: (Int) -> Unit,
@@ -54,7 +55,7 @@ internal fun SubscriptionsFragment(
     onClipboard: (String) -> Unit,
     onSubscribe: () -> Unit,
     onLocalStorage: () -> Unit,
-    onForTv: () -> Unit,
+    onsubscribeForTv: () -> Unit,
     openDocument: (Uri) -> Unit,
     backup: () -> Unit,
     restore: () -> Unit,
@@ -62,8 +63,10 @@ internal fun SubscriptionsFragment(
 ) {
     val spacing = LocalSpacing.current
     val clipboardManager = LocalClipboardManager.current
+    val pref = LocalPref.current
 
     val tv = isTelevision()
+    val remoteControl = pref.remoteControl
 
     val focusRequester = remember { FocusRequester() }
 
@@ -146,12 +149,16 @@ internal fun SubscriptionsFragment(
             item {
                 LocalStorageSwitch(
                     checked = localStorage,
-                    onChanged = onLocalStorage
+                    onChanged = onLocalStorage,
+                    enabled = !subscribeForTv
                 )
-                RemoteControlSubscribeSwitch(
-                    checked = forTv,
-                    onChanged = onForTv
-                )
+                if (remoteControl) {
+                    RemoteControlSubscribeSwitch(
+                        checked = subscribeForTv,
+                        onChanged = onsubscribeForTv,
+                        enabled = !localStorage
+                    )
+                }
             }
         }
 
@@ -179,13 +186,13 @@ internal fun SubscriptionsFragment(
                 Column {
                     TonalButton(
                         text = stringResource(string.feat_setting_label_backup),
-                        enabled = backingUpOrRestoring == BackingUpAndRestoringState.NONE,
+                        enabled = !subscribeForTv && backingUpOrRestoring == BackingUpAndRestoringState.NONE,
                         onClick = backup,
                         modifier = Modifier.fillMaxWidth()
                     )
                     TonalButton(
                         text = stringResource(string.feat_setting_label_restore),
-                        enabled = backingUpOrRestoring == BackingUpAndRestoringState.NONE,
+                        enabled = !subscribeForTv && backingUpOrRestoring == BackingUpAndRestoringState.NONE,
                         onClick = restore,
                         modifier = Modifier.fillMaxWidth()
                     )

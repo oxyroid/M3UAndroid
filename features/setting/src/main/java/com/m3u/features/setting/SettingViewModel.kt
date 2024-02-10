@@ -12,9 +12,9 @@ import androidx.work.WorkManager
 import androidx.work.WorkQuery
 import androidx.work.workDataOf
 import com.m3u.core.architecture.Publisher
-import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.pref.Pref
 import com.m3u.core.architecture.viewmodel.BaseViewModel
+import com.m3u.data.api.LocalService
 import com.m3u.data.database.dao.ColorPackDao
 import com.m3u.data.database.model.ColorPack
 import com.m3u.data.database.model.Stream
@@ -43,12 +43,12 @@ import javax.inject.Inject
 @HiltViewModel
 class SettingViewModel @Inject constructor(
     private val streamRepository: StreamRepository,
-    private val publisher: Publisher,
     private val workManager: WorkManager,
     private val pref: Pref,
     private val messageManager: MessageManager,
-    colorPackDao: ColorPackDao,
-    private val logger: Logger
+    private val localService: LocalService,
+    publisher: Publisher,
+    colorPackDao: ColorPackDao
 ) : BaseViewModel<SettingState, SettingEvent>(
     emptyState = SettingState(
         versionName = publisher.versionName,
@@ -56,7 +56,7 @@ class SettingViewModel @Inject constructor(
         snapshot = publisher.snapshot
     )
 ) {
-    internal var forTv by mutableStateOf(false)
+    internal var subscribeForTv by mutableStateOf(false)
     internal val banneds: StateFlow<ImmutableList<Stream>> = streamRepository
         .observeAll { it.banned }
         .map { it.toImmutableList() }
@@ -145,6 +145,20 @@ class SettingViewModel @Inject constructor(
             return
         }
 
+        if (subscribeForTv) {
+            viewModelScope.launch {
+                localService.subscribe(title, url)
+            }
+            writable.update {
+                it.copy(
+                    title = "",
+                    url = "",
+                    uri = Uri.EMPTY
+                )
+            }
+            return
+        }
+
         workManager.cancelAllWorkByTag(url)
 
         val request = OneTimeWorkRequestBuilder<SubscriptionWorker>()
@@ -177,7 +191,7 @@ class SettingViewModel @Inject constructor(
         }
     }
 
-    @OptIn(ExperimentalCoroutinesApi::class, ExperimentalStdlibApi::class)
+    @OptIn(ExperimentalCoroutinesApi::class)
     internal val backingUpOrRestoring: StateFlow<BackingUpAndRestoringState> = workManager
         .getWorkInfosFlow(
             WorkQuery.fromStates(
