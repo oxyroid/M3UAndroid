@@ -29,7 +29,7 @@ class LocalService @Inject constructor(
 
     private var api: LocalApi? = null
 
-    fun connect(host: String, port: Int) {
+    fun prepare(host: String, port: Int) {
         val baseUrl = HttpUrl.Builder()
             .host(host)
             .port(port)
@@ -40,7 +40,7 @@ class LocalService @Inject constructor(
             .create()
     }
 
-    fun disconnect() {
+    fun close() {
         api = null
     }
 }

@@ -3,6 +3,8 @@ package com.m3u.features.foryou
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.m3u.core.architecture.Publisher
+import com.m3u.core.architecture.logger.Logger
+import com.m3u.core.architecture.logger.prefix
 import com.m3u.core.architecture.pref.Pref
 import com.m3u.core.architecture.pref.observeAsFlow
 import com.m3u.data.repository.PairState
@@ -18,7 +20,7 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -42,8 +44,11 @@ class ForyouViewModel @Inject constructor(
     streamRepository: StreamRepository,
     private val tvRepository: TvRepository,
     pref: Pref,
-    publisher: Publisher
+    publisher: Publisher,
+    logcat: Logger
 ) : ViewModel() {
+    private val logger = logcat.prefix("foryou")
+
     @OptIn(ExperimentalCoroutinesApi::class)
     internal val pinCodeForServer: StateFlow<String?> = pref
         .observeAsFlow { it.remoteControl }
@@ -124,7 +129,7 @@ class ForyouViewModel @Inject constructor(
         }
     }
 
-    private val pinCodeForClient = MutableStateFlow<Int?>(null)
+    private val pinCodeForClient = MutableSharedFlow<Int?>()
 
     @OptIn(ExperimentalCoroutinesApi::class)
     internal val pairStateForClient: StateFlow<PairState> =
@@ -140,6 +145,8 @@ class ForyouViewModel @Inject constructor(
             )
 
     internal fun pair(pin: Int) {
-        pinCodeForClient.value = pin
+        viewModelScope.launch {
+            pinCodeForClient.emit(pin)
+        }
     }
 }

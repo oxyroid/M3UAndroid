@@ -76,16 +76,18 @@ class TvRepositoryImpl @Inject constructor(
 
     override fun pair(pin: Int, timeout: Duration): Flow<PairState> = channelFlow {
         trySendBlocking(PairState.Idle)
-        localService.disconnect()
+        localService.close()
         nsdDeviceManager
             .search()
             .onStart {
+                logger.log("pair: start")
                 trySendBlocking(PairState.Connecting)
-                localService.disconnect()
+                localService.close()
             }
             .onTimeout(timeout) {
+                logger.log("pair: timeout")
                 trySendBlocking(PairState.Timeout)
-                localService.disconnect()
+                localService.close()
             }
             .onEach { all ->
                 val info = all.find {
@@ -97,8 +99,9 @@ class TvRepositoryImpl @Inject constructor(
                 val host =
                     info.getAttribute(NsdDeviceManager.META_DATA_HOST) ?: return@onEach
 
+                logger.log("pair: connected")
                 trySendBlocking(PairState.Connected(host, port))
-                localService.connect(host, port)
+                localService.prepare(host, port)
                 cancel()
             }
             .launchIn(this)
