@@ -6,6 +6,7 @@ import android.app.NotificationManager
 import android.content.Context
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
+import androidx.work.ForegroundInfo
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import com.m3u.core.architecture.pref.annotation.PlaylistStrategy
@@ -61,9 +62,22 @@ class SubscriptionWorker @AssistedInject constructor(
         manager.createNotificationChannel(channel)
     }
 
+    override suspend fun getForegroundInfo(): ForegroundInfo {
+        return ForegroundInfo(NOTIFICATION_ID, createNotification())
+    }
+
+    private fun createNotification(): Notification {
+        return Notification.Builder(context, CHANNEL_ID)
+            .setSmallIcon(R.drawable.round_file_download_24)
+            .setContentTitle(title)
+            .setContentText(url)
+            .build()
+    }
+
     companion object {
         private const val CHANNEL_ID = "subscribe_channel"
         private const val NOTIFICATION_NAME = "subscribe task"
+        private const val NOTIFICATION_ID = 1224
         const val INPUT_STRING_TITLE = "title"
         const val INPUT_STRING_URL = "url"
         const val INPUT_INT_STRATEGY = "strategy"
