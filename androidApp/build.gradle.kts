@@ -54,7 +54,18 @@ android {
     }
     splits {
         abi {
-            isEnable = true
+            val benchmark = project
+                .properties
+                .keys
+                .find { it.contains("testInstrumentationRunnerArguments") } != null
+
+            val snapshot = gradle
+                .startParameter
+                .taskNames
+                .find { it.contains("snapshot", ignoreCase = true) } != null
+
+            isEnable = !benchmark && !snapshot
+
             reset()
             include("x86", "x86_64", "arm64-v8a", "armeabi-v7a")
             isUniversalApk = true
