@@ -14,6 +14,7 @@ import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.runtime.Composable
@@ -76,7 +77,8 @@ class TvPlaylistActivity : AppCompatActivity() {
                 helper = helper,
                 pref = pref
             ) {
-                val darkMode = pref.darkMode
+                val darkMode = if (pref.followSystemTheme) isSystemInDarkTheme()
+                else pref.darkMode
                 LaunchedEffect(darkMode) {
                     helper.darkMode = darkMode.unspecifiable
                 }

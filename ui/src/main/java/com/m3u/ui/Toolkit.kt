@@ -1,5 +1,6 @@
 package com.m3u.ui
 
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -32,7 +33,8 @@ fun Toolkit(
     ) {
         AppTheme(
             argb = pref.colorArgb,
-            useDarkTheme = pref.darkMode,
+            useDarkTheme = if (pref.followSystemTheme) isSystemInDarkTheme()
+            else pref.darkMode,
             useDynamicColors = pref.useDynamicColors,
             typography = typography
         ) {

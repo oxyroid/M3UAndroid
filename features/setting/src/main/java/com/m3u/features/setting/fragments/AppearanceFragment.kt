@@ -9,6 +9,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Bento
+import androidx.compose.material.icons.rounded.ColorLens
+import androidx.compose.material.icons.rounded.DarkMode
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -89,7 +93,7 @@ internal fun AppearanceFragment(
                             modifier = Modifier.animateItemPlacement()
                         )
                     }
-                    item(key = "add") {
+                    item {
                         ThemeAddSelection {
 
                         }
@@ -126,11 +130,19 @@ internal fun AppearanceFragment(
             }
             HorizontalDivider()
 
+            CheckBoxSharedPreference(
+                title = string.feat_setting_follow_system_theme,
+                icon = Icons.Rounded.DarkMode,
+                checked = pref.followSystemTheme,
+                onChanged = { pref.followSystemTheme = !pref.followSystemTheme },
+            )
+
             val useDynamicColorsAvailable = Pref.DEFAULT_USE_DYNAMIC_COLORS
 
             CheckBoxSharedPreference(
                 title = string.feat_setting_use_dynamic_colors,
                 content = string.feat_setting_use_dynamic_colors_unavailable.takeUnless { useDynamicColorsAvailable },
+                icon = Icons.Rounded.ColorLens,
                 checked = useDynamicColors,
                 onChanged = { pref.useDynamicColors = !useDynamicColors },
                 enabled = useDynamicColorsAvailable
@@ -139,6 +151,7 @@ internal fun AppearanceFragment(
             if (!tv) {
                 CheckBoxSharedPreference(
                     title = string.feat_setting_compact,
+                    icon = Icons.Rounded.Bento,
                     checked = pref.compact,
                     onChanged = { pref.compact = !pref.compact }
                 )

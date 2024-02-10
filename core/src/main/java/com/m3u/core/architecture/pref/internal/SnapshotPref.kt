@@ -23,6 +23,7 @@ import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_COMPACT
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_CONNECT_TIMEOUT
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_DARK_MODE
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_EXPERIMENTAL_MODE
+import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_FOLLOW_SYSTEM_THEME
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_FULL_INFO_PLAYER
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_GOD_MODE
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_NO_PICTURE_MODE
@@ -41,6 +42,7 @@ import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_USE_DYNAMIC_COLORS
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_VOLUME_GESTURE
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_ZAPPING_MODE
 import com.m3u.core.architecture.pref.Pref.Companion.EXPERIMENTAL_MODE
+import com.m3u.core.architecture.pref.Pref.Companion.FOLLOW_SYSTEM_THEME
 import com.m3u.core.architecture.pref.Pref.Companion.FULL_INFO_PLAYER
 import com.m3u.core.architecture.pref.Pref.Companion.GOD_MODE
 import com.m3u.core.architecture.pref.Pref.Companion.NO_PICTURE_MODE
@@ -108,38 +110,31 @@ class SnapshotPref @Inject constructor(
     sharedPreferences.booleanAsState(DEFAULT_DARK_MODE, DARK_MODE)
     override var useDynamicColors: Boolean by
     sharedPreferences.booleanAsState(DEFAULT_USE_DYNAMIC_COLORS, USE_DYNAMIC_COLORS)
+    override var followSystemTheme: Boolean by
+    sharedPreferences.booleanAsState(DEFAULT_FOLLOW_SYSTEM_THEME, FOLLOW_SYSTEM_THEME)
 
     override var zappingMode: Boolean by
     sharedPreferences.booleanAsState(DEFAULT_ZAPPING_MODE, ZAPPING_MODE)
-
     override var brightnessGesture: Boolean by
     sharedPreferences.booleanAsState(DEFAULT_BRIGHTNESS_GESTURE, BRIGHTNESS_GESTURE)
-
     override var volumeGesture: Boolean by
     sharedPreferences.booleanAsState(DEFAULT_VOLUME_GESTURE, VOLUME_GESTURE)
-
     override var record: Boolean by
     sharedPreferences.booleanAsState(DEFAULT_RECORD, RECORD)
-
     override var screencast: Boolean by
     sharedPreferences.booleanAsState(DEFAULT_SCREENCAST, SCREENCAST)
-
     override var screenRotating: Boolean by
     sharedPreferences.booleanAsState(DEFAULT_SCREEN_ROTATING, SCREEN_ROTATING)
 
     @UnseensMilliseconds
     override var unseensMilliseconds: Long by
     sharedPreferences.longAsState(DEFAULT_UNSEENS_MILLISECONDS, UNSEENS_MILLISECONDS)
-
     override var reconnectMode: Int by
     sharedPreferences.intAsState(DEFAULT_RECONNECT_MODE, RECONNECT_MODE)
-
     override var compact: Boolean by
     sharedPreferences.booleanAsState(DEFAULT_COMPACT, COMPACT)
-
     override var colorArgb: Int by
     sharedPreferences.intAsState(DEFAULT_COLOR_ARGB, COLOR_ARGB)
-
     override var tunneling: Boolean by
     sharedPreferences.booleanAsState(DEFAULT_TUNNELING, TUNNELING)
 

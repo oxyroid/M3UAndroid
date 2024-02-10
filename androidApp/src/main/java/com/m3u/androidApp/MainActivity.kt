@@ -16,6 +16,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.runtime.Composable
@@ -98,7 +99,8 @@ class MainActivity : AppCompatActivity() {
             val message by viewModel.message.collectAsStateWithLifecycle()
             val snackHostState = rememberSnackHostState()
 
-            val darkMode = pref.darkMode
+            val darkMode = if (pref.followSystemTheme) isSystemInDarkTheme()
+            else pref.darkMode
 
             LaunchedEffect(darkMode) {
                 helper.darkMode = darkMode.unspecifiable

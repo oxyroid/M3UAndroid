@@ -251,19 +251,17 @@ fun ThemeSelection(
 @Composable
 fun ThemeAddSelection(
     modifier: Modifier = Modifier,
+    containerColor: Color = MaterialTheme.colorScheme.surface,
+    contentColor: Color = MaterialTheme.colorScheme.onSurface,
     onClick: () -> Unit
 ) {
-    val theme = MaterialTheme.colorScheme
     val spacing = LocalSpacing.current
     Box(
         contentAlignment = Alignment.Center
     ) {
         OutlinedCard(
             shape = RoundedCornerShape(spacing.extraLarge),
-            colors = CardDefaults.outlinedCardColors(
-                containerColor = theme.surface,
-                contentColor = theme.onSurface
-            ),
+            colors = CardDefaults.outlinedCardColors(containerColor, contentColor),
             elevation = CardDefaults.outlinedCardElevation(
                 defaultElevation = spacing.none
             ),
@@ -281,7 +279,7 @@ fun ThemeAddSelection(
         Icon(
             imageVector = Icons.Rounded.Add,
             contentDescription = "",
-            tint = theme.onSurface
+            tint = contentColor
         )
     }
 }

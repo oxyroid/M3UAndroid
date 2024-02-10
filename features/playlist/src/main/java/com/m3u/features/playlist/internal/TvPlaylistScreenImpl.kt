@@ -1,5 +1,6 @@
 package com.m3u.features.playlist.internal
 
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.InternalComposeApi
@@ -55,7 +56,8 @@ internal fun TvPlaylistScreenImpl(
 
     val multiCatalogs = channels.size > 1
     val noPictureMode = pref.noPictureMode
-    val darkMode = pref.darkMode
+    val darkMode = if (pref.followSystemTheme) isSystemInDarkTheme()
+    else pref.darkMode
 
     val maxBrowserHeight = when {
         noPictureMode -> 320.dp

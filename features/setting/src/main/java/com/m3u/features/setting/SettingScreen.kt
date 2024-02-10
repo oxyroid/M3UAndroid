@@ -15,6 +15,7 @@ import androidx.compose.material3.adaptive.ListDetailPaneScaffold
 import androidx.compose.material3.adaptive.ListDetailPaneScaffoldRole
 import androidx.compose.material3.adaptive.PaneScaffoldDirective
 import androidx.compose.material3.adaptive.Posture
+import androidx.compose.material3.adaptive.ThreePaneScaffoldDestinationItem
 import androidx.compose.material3.adaptive.WindowAdaptiveInfo
 import androidx.compose.material3.adaptive.allVerticalHingeBounds
 import androidx.compose.material3.adaptive.calculateListDetailPaneScaffoldState
@@ -215,16 +216,16 @@ private fun SettingScreen(
         }
     }
 
-    val currentPaneDestination by remember {
+    val currentDestination by remember {
         derivedStateOf {
             when (fragment) {
-                DestinationEvent.Setting.Default -> ListDetailPaneScaffoldRole.List
-                else -> ListDetailPaneScaffoldRole.Detail
+                DestinationEvent.Setting.Default -> ThreePaneScaffoldDestinationItem(ListDetailPaneScaffoldRole.List, null)
+                else -> ThreePaneScaffoldDestinationItem(ListDetailPaneScaffoldRole.Detail, null)
             }
         }
     }
     val scaffoldState = calculateListDetailPaneScaffoldState(
-        currentPaneDestination = currentPaneDestination,
+        currentDestination = currentDestination,
         scaffoldDirective = calculateStandardPaneScaffoldDirective(currentWindowAdaptiveInfo())
     )
 

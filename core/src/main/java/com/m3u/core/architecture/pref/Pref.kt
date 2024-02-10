@@ -33,6 +33,7 @@ interface Pref {
 
     var darkMode: Boolean
     var useDynamicColors: Boolean
+    var followSystemTheme: Boolean
 
     var zappingMode: Boolean
     var brightnessGesture: Boolean
@@ -74,6 +75,7 @@ interface Pref {
 
         @ChecksSdkIntAtLeast(api = Build.VERSION_CODES.S)
         val DEFAULT_USE_DYNAMIC_COLORS = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+        val DEFAULT_FOLLOW_SYSTEM_THEME = false
 
         const val DEFAULT_ZAPPING_MODE = false
         const val DEFAULT_BRIGHTNESS_GESTURE = true
@@ -106,6 +108,7 @@ interface Pref {
         const val NO_PICTURE_MODE = "no-picture-mode"
         const val DARK_MODE = "dark-mode"
         const val USE_DYNAMIC_COLORS = "use-dynamic-colors"
+        const val FOLLOW_SYSTEM_THEME = "follow-system-theme"
         const val ZAPPING_MODE = "zapping-mode"
         const val BRIGHTNESS_GESTURE = "brightness-gesture"
         const val VOLUME_GESTURE = "volume-gesture"
