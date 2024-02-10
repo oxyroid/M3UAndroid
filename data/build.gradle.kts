@@ -79,7 +79,8 @@ dependencies {
 
     implementation(libs.nextlib.media3ext)
 
-    implementation(libs.ktor.server)
+    implementation(libs.ktor.server.netty)
+    implementation(libs.ktor.server.websockets)
     implementation(libs.ktor.server.content.negotiation)
     implementation(libs.ktor.serialization.kotlinx.json)
 }

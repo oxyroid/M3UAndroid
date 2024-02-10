@@ -1,6 +1,7 @@
 package com.m3u.data.api
 
-import com.m3u.data.local.http.Endpoint
+import com.m3u.data.local.http.endpoint.Playlists
+import com.m3u.data.local.http.endpoint.SayHello
 import okhttp3.HttpUrl
 import retrofit2.Retrofit
 import retrofit2.create
@@ -11,20 +12,20 @@ import javax.inject.Inject
 
 interface LocalApi {
     @GET("/say_hello")
-    suspend fun sayHello(): Endpoint.SayHello.Rep?
+    suspend fun sayHello(): SayHello.Rep?
 
     @POST("/playlists/subscribe")
     suspend fun subscribe(
         @Query("title") title: String,
         @Query("url") url: String
-    ): Endpoint.Playlists.SubscribeRep?
+    ): Playlists.SubscribeRep?
 }
 
 class LocalService @Inject constructor(
     private val builder: Retrofit.Builder
 ) : LocalApi {
-    override suspend fun sayHello(): Endpoint.SayHello.Rep? = api?.sayHello()
-    override suspend fun subscribe(title: String, url: String): Endpoint.Playlists.SubscribeRep? =
+    override suspend fun sayHello(): SayHello.Rep? = api?.sayHello()
+    override suspend fun subscribe(title: String, url: String): Playlists.SubscribeRep? =
         api?.subscribe(title, url)
 
     private var api: LocalApi? = null
