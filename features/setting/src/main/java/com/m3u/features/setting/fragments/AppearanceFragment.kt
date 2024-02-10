@@ -31,6 +31,7 @@ import com.m3u.material.components.Background
 import com.m3u.material.components.ThemeAddSelection
 import com.m3u.material.components.ThemeSelection
 import com.m3u.material.ktx.isTelevision
+import com.m3u.material.ktx.thenIf
 import com.m3u.material.model.LocalSpacing
 import kotlinx.collections.immutable.ImmutableList
 
@@ -52,10 +53,9 @@ internal fun AppearanceFragment(
             modifier
                 .fillMaxSize()
                 .padding(contentPadding)
-                .then(
-                    if (!tv) Modifier
-                    else Modifier.padding(spacing.medium)
-                )
+                .thenIf(tv) {
+                    Modifier.padding(spacing.medium)
+                }
         ) {
             if (!tv) {
                 Text(
