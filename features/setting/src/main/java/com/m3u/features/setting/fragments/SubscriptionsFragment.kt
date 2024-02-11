@@ -55,7 +55,7 @@ internal fun SubscriptionsFragment(
     onClipboard: (String) -> Unit,
     onSubscribe: () -> Unit,
     onLocalStorage: () -> Unit,
-    onsubscribeForTv: () -> Unit,
+    onSubscribeForTv: () -> Unit,
     openDocument: (Uri) -> Unit,
     backup: () -> Unit,
     restore: () -> Unit,
@@ -154,7 +154,7 @@ internal fun SubscriptionsFragment(
             if (!tv && remoteControl) {
                 RemoteControlSubscribeSwitch(
                     checked = subscribeForTv,
-                    onChanged = onsubscribeForTv,
+                    onChanged = onSubscribeForTv,
                     enabled = !localStorage
                 )
             }
