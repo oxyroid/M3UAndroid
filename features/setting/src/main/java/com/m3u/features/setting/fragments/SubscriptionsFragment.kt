@@ -145,20 +145,18 @@ internal fun SubscriptionsFragment(
             }
         }
 
-        if (!tv) {
-            item {
-                LocalStorageSwitch(
-                    checked = localStorage,
-                    onChanged = onLocalStorage,
-                    enabled = !subscribeForTv
+        item {
+            LocalStorageSwitch(
+                checked = localStorage,
+                onChanged = onLocalStorage,
+                enabled = !subscribeForTv
+            )
+            if (!tv && remoteControl) {
+                RemoteControlSubscribeSwitch(
+                    checked = subscribeForTv,
+                    onChanged = onsubscribeForTv,
+                    enabled = !localStorage
                 )
-                if (remoteControl) {
-                    RemoteControlSubscribeSwitch(
-                        checked = subscribeForTv,
-                        onChanged = onsubscribeForTv,
-                        enabled = !localStorage
-                    )
-                }
             }
         }
 
@@ -181,25 +179,22 @@ internal fun SubscriptionsFragment(
                 }
             }
         }
-        if (!tv) {
-            item {
-                Column {
-                    TonalButton(
-                        text = stringResource(string.feat_setting_label_backup),
-                        enabled = !subscribeForTv && backingUpOrRestoring == BackingUpAndRestoringState.NONE,
-                        onClick = backup,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    TonalButton(
-                        text = stringResource(string.feat_setting_label_restore),
-                        enabled = !subscribeForTv && backingUpOrRestoring == BackingUpAndRestoringState.NONE,
-                        onClick = restore,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
+        item {
+            Column {
+                TonalButton(
+                    text = stringResource(string.feat_setting_label_backup),
+                    enabled = !subscribeForTv && backingUpOrRestoring == BackingUpAndRestoringState.NONE,
+                    onClick = backup,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                TonalButton(
+                    text = stringResource(string.feat_setting_label_restore),
+                    enabled = !subscribeForTv && backingUpOrRestoring == BackingUpAndRestoringState.NONE,
+                    onClick = restore,
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
         }
-
         item {
             Spacer(Modifier.imePadding())
         }

@@ -141,7 +141,6 @@ androidx-test-espresso-espresso-core = { group = "androidx.test.espresso", name 
 androidx-test-uiautomator-uiautomator = { group = "androidx.test.uiautomator", name = "uiautomator", version.ref = "androidx-test-uiautomator" }
 androidx-benchmark-benchmark-macro-junit4 = { group = "androidx.benchmark", name = "benchmark-macro-junit4", version.ref = "androidx-benchmark" }
 
-logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logbackClassic" }
 nextlib-media3ext = { module = "com.github.anilbeesetti.nextlib:nextlib-media3ext", version.ref = "nextLib" }
 servlet-api = { group = "javax.servlet", name = "javax.servlet-api", version.ref = "servlet" }
 

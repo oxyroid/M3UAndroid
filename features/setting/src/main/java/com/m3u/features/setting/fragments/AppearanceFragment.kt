@@ -45,9 +45,11 @@ internal fun AppearanceFragment(
 ) {
     val spacing = LocalSpacing.current
     val pref = LocalPref.current
+
     val isDarkMode = pref.darkMode
     val useDynamicColors = pref.useDynamicColors
     val tv = isTelevision()
+
     Background {
         Column(
             modifier

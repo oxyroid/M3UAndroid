@@ -3,8 +3,6 @@ package com.m3u.features.foryou
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.m3u.core.architecture.Publisher
-import com.m3u.core.architecture.logger.Logger
-import com.m3u.core.architecture.logger.prefix
 import com.m3u.core.architecture.pref.Pref
 import com.m3u.core.architecture.pref.observeAsFlow
 import com.m3u.data.repository.PairState
@@ -44,16 +42,13 @@ class ForyouViewModel @Inject constructor(
     streamRepository: StreamRepository,
     private val tvRepository: TvRepository,
     pref: Pref,
-    publisher: Publisher,
-    logcat: Logger
+    publisher: Publisher
 ) : ViewModel() {
-    private val logger = logcat.prefix("foryou")
-
     @OptIn(ExperimentalCoroutinesApi::class)
     internal val pinCodeForServer: StateFlow<String?> = pref
         .observeAsFlow { it.remoteControl }
         .flatMapLatest { remoteControl ->
-            if (remoteControl && publisher.isTelevision) tvRepository.startServer()
+            if (remoteControl && (publisher.isTelevision || pref.alwaysTv)) tvRepository.startServer()
             else flowOf(null)
         }
         .map { code ->
