@@ -34,6 +34,7 @@
 
     <string name="feat_setting_full_info_player">reproductor con información detallada</string>
     <string name="feat_setting_full_info_player_description">muestra más detalles en el reproductor</string>
+    <string name="feat_setting_progress">barra deslizante</string>
     <string name="feat_setting_initial_screen">Pantalla inicial</string>
     <string name="feat_setting_no_picture_mode">modo sin imagen</string>
     <string name="feat_setting_no_picture_mode_description">podría mejorar el rendimiento</string>
@@ -69,8 +70,7 @@
 
     <string name="feat_setting_tunneling">modo tunelado</string>
     <string name="feat_setting_tunneling_description">mejora el desempeño en contenido 4K/HDR</string>
-    <!-- invalidate -->
-    <!--    <string name="feat_setting_label_backup">respaldar todos los datos</string>-->
+    <string name="feat_setting_label_backup">respaldar</string>
     <string name="feat_setting_label_restore">restaurar</string>
 
     <string name="feat_setting_canvas_dark">oscuro</string>
@@ -80,4 +80,11 @@
 
     <string name="feat_setting_remote_control">control remoto</string>
     <string name="feat_setting_remote_control_description">activa la habilidad de controlar remotamente la TV</string>
+
+    <string name="feat_setting_remote_control_tv_side">control remoto</string>
+    <string name="feat_setting_remote_control_tv_side_description">permite a los smartphones controlar tu TV</string>
+    <string name="feat_setting_subscribe_for_tv">para television</string>
+    <string name="feat_setting_backing_up">respaldando todos los playlists y canales</string>
+    <string name="feat_setting_restoring">restaurando todos los playlists y canales</string>
+    <string name="feat_setting_follow_system_theme">seguir tema del sistema</string>
 </resources>
