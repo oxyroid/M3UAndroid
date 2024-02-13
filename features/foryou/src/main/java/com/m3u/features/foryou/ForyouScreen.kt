@@ -62,6 +62,7 @@ import com.m3u.material.model.LocalHazeState
 import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.ConnectBottomSheet
 import com.m3u.ui.EventHandler
+import com.m3u.ui.FontFamilies
 import com.m3u.ui.ResumeEvent
 import com.m3u.ui.helper.Action
 import com.m3u.ui.helper.LocalHelper
@@ -175,7 +176,8 @@ fun ForyouRoute(
                 if (code != null) {
                     Text(
                         text = code,
-                        style = MaterialTheme.typography.headlineMedium
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontFamily = FontFamilies.JetbrainsMono
                     )
                 }
             }
