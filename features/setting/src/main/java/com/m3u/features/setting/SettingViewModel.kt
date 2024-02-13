@@ -16,7 +16,7 @@ import com.m3u.core.architecture.dispatcher.Dispatcher
 import com.m3u.core.architecture.dispatcher.M3uDispatchers.Default
 import com.m3u.core.architecture.pref.Pref
 import com.m3u.core.architecture.viewmodel.BaseViewModel
-import com.m3u.data.api.LocalService
+import com.m3u.data.api.LocalPreparedService
 import com.m3u.data.database.dao.ColorPackDao
 import com.m3u.data.database.model.ColorPack
 import com.m3u.data.database.model.Stream
@@ -48,7 +48,7 @@ class SettingViewModel @Inject constructor(
     private val workManager: WorkManager,
     private val pref: Pref,
     private val messageManager: MessageManager,
-    private val localService: LocalService,
+    private val localService: LocalPreparedService,
     publisher: Publisher,
     colorPackDao: ColorPackDao,
     @Dispatcher(Default) private val defaultDispatcher: CoroutineDispatcher

@@ -79,12 +79,14 @@ dependencies {
 
     implementation(libs.nextlib.media3ext)
 
-    implementation(libs.ktor.server.netty)
+    implementation(libs.ktor.server.jetty)
     implementation(libs.ktor.server.websockets)
     implementation(libs.ktor.server.cors)
-    implementation(libs.ktor.server.status.pages)
     implementation(libs.ktor.server.content.negotiation)
     implementation(libs.ktor.serialization.kotlinx.json)
 
     debugImplementation(libs.chucker)
+    releaseImplementation(libs.chucker.no.op)
+    debugImplementation(libs.slf4j.api)
+    debugImplementation(libs.logback.android)
 }

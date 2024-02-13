@@ -13,7 +13,7 @@ import retrofit2.http.Query
 import javax.inject.Inject
 import javax.inject.Singleton
 
-interface LocalApi {
+interface LocalService {
     @GET("/say_hello")
     suspend fun sayHello(): SayHello.Rep?
 
@@ -25,19 +25,23 @@ interface LocalApi {
 }
 
 @Singleton
-class LocalService @Inject constructor(
+class LocalPreparedService @Inject constructor(
     private val builder: Retrofit.Builder,
     @Logger.Message private val logger: Logger
-) : LocalApi {
-    override suspend fun sayHello(): SayHello.Rep? = logger.execute { api?.sayHello() }
+) : LocalService {
+    override suspend fun sayHello(): SayHello.Rep? = logger.execute {
+        val api = checkNotNull(api) { "You haven't connected television" }
+        api.sayHello()
+    }
     override suspend fun subscribe(
         title: String,
         url: String
     ): Playlists.SubscribeRep? = logger.execute {
-        api?.subscribe(title, url)
+        val api = checkNotNull(api) { "You haven't connected television" }
+        api.subscribe(title, url)
     }
 
-    private var api: LocalApi? = null
+    private var api: LocalService? = null
 
     fun prepare(host: String, port: Int) {
         val baseUrl = HttpUrl.Builder()

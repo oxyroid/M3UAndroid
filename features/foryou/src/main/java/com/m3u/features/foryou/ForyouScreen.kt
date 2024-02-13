@@ -25,11 +25,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -70,6 +72,7 @@ import dev.chrisbanes.haze.HazeDefaults
 import dev.chrisbanes.haze.haze
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.coroutines.flow.collectLatest
 
 @Composable
 fun ForyouRoute(
@@ -124,6 +127,15 @@ fun ForyouRoute(
         )
     }
 
+    LaunchedEffect(Unit) {
+        snapshotFlow { connected }.collectLatest { visible ->
+            if (visible) {
+                isConnectSheetVisible = false
+                code = ""
+            }
+        }
+    }
+
     Background {
         Box(modifier) {
             ForyouScreen(
@@ -131,7 +143,7 @@ fun ForyouRoute(
                 recommend = recommend,
                 rowCount = pref.rowCount,
                 contentPadding = contentPadding,
-                showTelevisionConnection = !tv && !connected && pref.remoteControl,
+                showTelevisionConnection = !tv && pref.remoteControl,
                 navigateToPlaylist = navigateToPlaylist,
                 navigateToStream = navigateToStream,
                 navigateToSettingPlaylistManagement = navigateToSettingPlaylistManagement,
@@ -152,7 +164,7 @@ fun ForyouRoute(
             )
             ConnectBottomSheet(
                 sheetState = sheetState,
-                visible = isConnectSheetVisible && !connected,
+                visible = isConnectSheetVisible,
                 code = code,
                 connecting = connecting,
                 onCode = {

@@ -27,6 +27,7 @@ kotlinx-datetime = "0.5.0"
 kotlinx-collections-immutable = "0.3.7"
 
 chucker = "4.0.0"
+logbackAndroid = "3.0.0"
 lottie-compose = "6.3.0"
 nextLib = "0.6.0"
 slf4j-api = "2.0.11"
@@ -124,8 +125,8 @@ com-squareup-retrofit2-retrofit = { group = "com.squareup.retrofit2", name = "re
 com-squareup-leakcanary-leakcanary-android = { group = "com.squareup.leakcanary", name = "leakcanary-android", version.ref = "squareup-leakcanary" }
 
 ktor-server-netty = { group = "io.ktor", name = "ktor-server-netty", version.ref = "ktor-server" }
+ktor-server-jetty = { group = "io.ktor", name = "ktor-server-jetty", version.ref = "ktor-server" }
 ktor-server-websockets = { group = "io.ktor", name = "ktor-server-websockets-jvm", version.ref = "ktor-server" }
-ktor-server-status-pages = { group = "io.ktor", name = "ktor-server-status-pages", version.ref = "ktor-server" }
 ktor-server-cors = { group = "io.ktor", name = "ktor-server-cors", version.ref = "ktor-server" }
 ktor-server-content-negotiation = { group = "io.ktor", name = "ktor-server-content-negotiation-jvm", version.ref = "ktor-server" }
 ktor-serialization-kotlinx-json = { group = "io.ktor", name = "ktor-serialization-kotlinx-json-jvm", version.ref = "ktor-server" }
@@ -144,6 +145,8 @@ androidx-test-uiautomator-uiautomator = { group = "androidx.test.uiautomator", n
 androidx-benchmark-benchmark-macro-junit4 = { group = "androidx.benchmark", name = "benchmark-macro-junit4", version.ref = "androidx-benchmark" }
 
 chucker = { module = "com.github.chuckerteam.chucker:library", version.ref = "chucker" }
+chucker-no-op = { module = "com.github.chuckerteam.chucker:library-no-op", version.ref = "chucker" }
+logback-android = { module = "com.github.tony19:logback-android", version.ref = "logbackAndroid" }
 nextlib-media3ext = { module = "com.github.anilbeesetti.nextlib:nextlib-media3ext", version.ref = "nextLib" }
 servlet-api = { group = "javax.servlet", name = "javax.servlet-api", version.ref = "servlet" }
 

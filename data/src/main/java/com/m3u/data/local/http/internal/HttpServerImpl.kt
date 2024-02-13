@@ -5,16 +5,12 @@ import com.m3u.data.local.http.endpoint.Playlists
 import com.m3u.data.local.http.endpoint.SayHello
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
-import io.ktor.server.application.ApplicationCall
 import io.ktor.server.application.install
 import io.ktor.server.engine.EmbeddedServer
 import io.ktor.server.engine.embeddedServer
-import io.ktor.server.netty.Netty
-import io.ktor.server.netty.NettyApplicationEngine
+import io.ktor.server.jetty.Jetty
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.plugins.cors.routing.CORS
-import io.ktor.server.plugins.statuspages.StatusPages
-import io.ktor.server.response.respondText
 import io.ktor.server.routing.routing
 import io.ktor.server.websocket.WebSockets
 import io.ktor.server.websocket.pingPeriod
@@ -27,14 +23,13 @@ internal class HttpServerImpl @Inject constructor(
     private val sayHello: SayHello,
     private val playlists: Playlists
 ) : HttpServer {
-    private var server: EmbeddedServer<NettyApplicationEngine, NettyApplicationEngine.Configuration>? = null
+    private var server: EmbeddedServer<*, *>? = null
 
     override fun start(port: Int) {
-        server = embeddedServer(Netty, port) {
+        server = embeddedServer(Jetty, port) {
             configureSerialization()
             configureSockets()
             configureCors()
-            configureStatusPages()
             routing {
                 sayHello.apply(this)
                 playlists.apply(this)
@@ -69,18 +64,7 @@ internal class HttpServerImpl @Inject constructor(
 
     private fun Application.configureCors() {
         install(CORS) {
-            allowSameOrigin = true
-            allowCredentials = true
             anyHost()
-            allowXHttpMethodOverride()
-        }
-    }
-
-    private fun Application.configureStatusPages() {
-        install(StatusPages) {
-            exception { call: ApplicationCall, cause: Exception ->
-                call.respondText("${cause.message}")
-            }
         }
     }
 }
