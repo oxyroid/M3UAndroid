@@ -26,7 +26,7 @@ kotlinx-serialization-converter-retrofit = "1.0.0"
 kotlinx-datetime = "0.5.0"
 kotlinx-collections-immutable = "0.3.7"
 
-logbackClassic = "1.4.14"
+chucker = "4.0.0"
 lottie-compose = "6.3.0"
 nextLib = "0.6.0"
 slf4j-api = "2.0.11"
@@ -141,6 +141,7 @@ androidx-test-espresso-espresso-core = { group = "androidx.test.espresso", name 
 androidx-test-uiautomator-uiautomator = { group = "androidx.test.uiautomator", name = "uiautomator", version.ref = "androidx-test-uiautomator" }
 androidx-benchmark-benchmark-macro-junit4 = { group = "androidx.benchmark", name = "benchmark-macro-junit4", version.ref = "androidx-benchmark" }
 
+chucker = { module = "com.github.chuckerteam.chucker:library", version.ref = "chucker" }
 nextlib-media3ext = { module = "com.github.anilbeesetti.nextlib:nextlib-media3ext", version.ref = "nextLib" }
 servlet-api = { group = "javax.servlet", name = "javax.servlet-api", version.ref = "servlet" }
 

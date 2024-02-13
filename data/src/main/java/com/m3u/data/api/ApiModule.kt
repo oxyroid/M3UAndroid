@@ -2,6 +2,8 @@
 
 package com.m3u.data.api
 
+import android.app.Application
+import com.chuckerteam.chucker.api.ChuckerInterceptor
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.data.Certs
@@ -19,6 +21,7 @@ import okhttp3.Response
 import okhttp3.ResponseBody.Companion.toResponseBody
 import retrofit2.Retrofit
 import retrofit2.create
+import java.net.SocketTimeoutException
 import javax.inject.Singleton
 
 @Module
@@ -27,7 +30,8 @@ internal object ApiModule {
     @Provides
     @Singleton
     fun provideOkhttpClient(
-        logger: Logger
+        logger: Logger,
+        application: Application
     ): OkHttpClient {
         return OkHttpClient.Builder()
             .authenticator(Authenticator.JAVA_NET_AUTHENTICATOR)
@@ -35,6 +39,8 @@ internal object ApiModule {
                 val request = chain.request()
                 try {
                     chain.proceed(request)
+                } catch (e: SocketTimeoutException) {
+                    throw e
                 } catch (e: Exception) {
                     logger.log(e)
                     Response.Builder()
@@ -46,6 +52,7 @@ internal object ApiModule {
                         .build()
                 }
             }
+            .addInterceptor(ChuckerInterceptor(application))
             .sslSocketFactory(SSL.TLSTrustAll.socketFactory, Certs.TrustAll)
             .hostnameVerifier { _, _ -> true }
             .build()
@@ -53,7 +60,9 @@ internal object ApiModule {
 
     @Provides
     @Singleton
-    fun provideRetrofitBuilder(): Retrofit.Builder {
+    fun provideRetrofitBuilder(
+        okHttpClient: OkHttpClient
+    ): Retrofit.Builder {
         val json = Json {
             ignoreUnknownKeys = true
             prettyPrint = false
@@ -61,6 +70,7 @@ internal object ApiModule {
         val mediaType = "application/json".toMediaType()
         return Retrofit.Builder()
             .addConverterFactory(json.asConverterFactory(mediaType))
+            .client(okHttpClient)
     }
 
     @Provides
