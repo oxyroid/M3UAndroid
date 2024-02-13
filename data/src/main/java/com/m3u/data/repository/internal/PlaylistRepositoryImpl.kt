@@ -35,7 +35,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.withContext
-import kotlinx.datetime.Clock
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
@@ -67,11 +66,13 @@ class PlaylistRepositoryImpl @Inject constructor(
                 emitMessage("wrong url")
                 return@resourceFlow
             }
-            val seen = Clock.System.now().toEpochMilliseconds()
             val streams = when {
-                url.isNetworkUrl -> acquireNetwork(actualUrl, seen)
-                url.isAndroidUrl -> acquireAndroid(actualUrl, seen)
-                else -> emptyList()
+                url.isSupportedNetworkUrl -> acquireNetwork(actualUrl)
+                url.isSupportedAndroidUrl -> acquireAndroid(actualUrl)
+                else -> {
+                    emitMessage("unsupported url")
+                    return@resourceFlow
+                }
             }
 
             val playlist = Playlist(title, actualUrl)
@@ -179,7 +180,7 @@ class PlaylistRepositoryImpl @Inject constructor(
         }
     }
 
-    private suspend fun acquireNetwork(url: String, seen: Long): List<Stream> {
+    private suspend fun acquireNetwork(url: String): List<Stream> {
         val request = Request.Builder()
             .url(url)
             .build()
@@ -188,22 +189,18 @@ class PlaylistRepositoryImpl @Inject constructor(
         }
         if (!response.isSuccessful) return emptyList()
         val input = response.body?.byteStream()
-        return input?.use { parse(url, seen, it) } ?: emptyList()
+        return input?.use { parse(url, it) } ?: emptyList()
     }
 
-    private suspend fun acquireAndroid(url: String, seen: Long): List<Stream> {
+    private suspend fun acquireAndroid(url: String): List<Stream> {
         val uri = Uri.parse(url)
         val input = context.contentResolver.openInputStream(uri)
-        return input?.use { parse(url, seen, it) } ?: emptyList()
+        return input?.use { parse(url, it) } ?: emptyList()
     }
 
     override fun observeAll(): Flow<List<Playlist>> = logger.execute {
         playlistDao.observeAll()
     } ?: flow { }
-
-    override fun observeAllRemote(): Flow<List<Playlist>> {
-        TODO("Not yet implemented")
-    }
 
     override fun observe(url: String): Flow<Playlist?> = logger.execute {
         playlistDao.observeByUrl(url)
@@ -231,7 +228,6 @@ class PlaylistRepositoryImpl @Inject constructor(
 
     private suspend fun parse(
         playlistUrl: String,
-        seen: Long,
         input: InputStream
     ): List<Stream> = logger.execute {
         parser.execute(input).map { it.toStream(playlistUrl, 0L) }
@@ -241,13 +237,13 @@ class PlaylistRepositoryImpl @Inject constructor(
         playlistDao.rename(url, target)
     }
 
-    private val String.isNetworkUrl: Boolean
+    private val String.isSupportedNetworkUrl: Boolean
         get() = this.startsWithAny(
             "http://",
             "https://",
             ignoreCase = true
         )
-    private val String.isAndroidUrl: Boolean
+    private val String.isSupportedAndroidUrl: Boolean
         get() = this.startsWithAny(
             ContentResolver.SCHEME_FILE,
             ContentResolver.SCHEME_CONTENT,
@@ -255,8 +251,8 @@ class PlaylistRepositoryImpl @Inject constructor(
         )
 
     private suspend fun String.actualUrl(): String? {
-        return if (isNetworkUrl) this
-        else if (isAndroidUrl) {
+        return if (isSupportedNetworkUrl) this
+        else if (isSupportedAndroidUrl) {
             val uri = Uri.parse(this) ?: return null
             if (uri.scheme == ContentResolver.SCHEME_FILE) {
                 return uri.toString()
