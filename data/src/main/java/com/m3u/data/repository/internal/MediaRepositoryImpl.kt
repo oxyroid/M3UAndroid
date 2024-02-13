@@ -10,6 +10,8 @@ import coil.Coil
 import coil.request.ErrorResult
 import coil.request.ImageRequest
 import coil.request.SuccessResult
+import com.m3u.core.architecture.dispatcher.Dispatcher
+import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.execute
 import com.m3u.core.wrapper.Resource
@@ -18,7 +20,7 @@ import com.m3u.core.wrapper.emitResource
 import com.m3u.core.wrapper.resourceFlow
 import com.m3u.data.repository.MediaRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOn
 import java.io.File
@@ -30,7 +32,8 @@ private const val BITMAP_QUALITY = 100
 
 class MediaRepositoryImpl @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val logger: Logger
+    private val logger: Logger,
+    @Dispatcher(IO) private val ioDispatcher: CoroutineDispatcher
 ) : MediaRepository {
     private val directory =
         File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), "M3U")
@@ -52,7 +55,7 @@ class MediaRepositoryImpl @Inject constructor(
             emitException(e)
         }
     }
-        .flowOn(Dispatchers.IO)
+        .flowOn(ioDispatcher)
 
     override suspend fun loadDrawable(url: String): Drawable? = logger.execute<Drawable> {
         val loader = Coil.imageLoader(context)

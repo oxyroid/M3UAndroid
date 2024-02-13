@@ -9,9 +9,6 @@ import com.m3u.dlna.DLNACastManager
 import com.m3u.features.crash.CrashHandler
 import com.m3u.material.ktx.isTelevision
 import dagger.hilt.android.HiltAndroidApp
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltAndroidApp
@@ -32,10 +29,8 @@ class M3UApplication : Application(), Configuration.Provider {
     override fun onCreate() {
         super.onCreate()
         Thread.setDefaultUncaughtExceptionHandler(handler)
-        CoroutineScope(Dispatchers.IO).launch {
-            if (!resources.configuration.isTelevision() && !pref.alwaysTv) {
-                DLNACastManager.bindCastService(this@M3UApplication)
-            }
+        if (!resources.configuration.isTelevision() && !pref.alwaysTv) {
+            DLNACastManager.bindCastService(this@M3UApplication)
         }
     }
 

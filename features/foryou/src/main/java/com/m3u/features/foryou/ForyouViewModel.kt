@@ -2,7 +2,9 @@ package com.m3u.features.foryou
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.m3u.core.architecture.Publisher
+import com.m3u.core.architecture.dispatcher.Dispatcher
+import com.m3u.core.architecture.dispatcher.M3uDispatchers.Default
+import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
 import com.m3u.core.architecture.pref.Pref
 import com.m3u.core.architecture.pref.observeAsFlow
 import com.m3u.data.repository.PairState
@@ -16,7 +18,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toPersistentList
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -25,7 +27,6 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -42,25 +43,18 @@ class ForyouViewModel @Inject constructor(
     streamRepository: StreamRepository,
     private val tvRepository: TvRepository,
     pref: Pref,
-    publisher: Publisher
+    @Dispatcher(IO) private val ioDispatcher: CoroutineDispatcher,
+    @Dispatcher(Default) defaultDispatcher: CoroutineDispatcher
 ) : ViewModel() {
-    @OptIn(ExperimentalCoroutinesApi::class)
-    internal val pinCodeForServer: StateFlow<String?> = pref
-        .observeAsFlow { it.remoteControl }
-        .flatMapLatest { remoteControl ->
-            if (remoteControl && (publisher.isTelevision || pref.alwaysTv)) tvRepository.startServer()
-            else flowOf(null)
-        }
+    internal val pinCodeForServer: StateFlow<String?> = tvRepository
+        .pinCodeForServer
         .map { code ->
-            code?.toString()?.let {
-                "0".repeat(6 - it.length) + it
-            }
+            code?.let { convertToPaddedString(it) }
         }
-        .flowOn(Dispatchers.IO)
         .stateIn(
             scope = viewModelScope,
-            initialValue = null,
-            started = SharingStarted.WhileSubscribed()
+            started = SharingStarted.Eagerly,
+            initialValue = null
         )
 
     private val counts: StateFlow<Map<String, Int>> = streamRepository
@@ -80,7 +74,7 @@ class ForyouViewModel @Inject constructor(
         .observeAll()
         .distinctUntilChanged()
         .combine(counts) { fs, cs ->
-            withContext(Dispatchers.Default) {
+            withContext(defaultDispatcher) {
                 fs.map { f ->
                     f.toDetail(cs[f.url] ?: PlaylistDetail.DEFAULT_COUNT)
                 }
@@ -129,10 +123,10 @@ class ForyouViewModel @Inject constructor(
     @OptIn(ExperimentalCoroutinesApi::class)
     internal val pairStateForClient: StateFlow<PairState> =
         pinCodeForClient.flatMapLatest { pinCode ->
-            if (pinCode != null) tvRepository.pair(pinCode)
+            if (pinCode != null) tvRepository.pairForClient(pinCode)
             else flow { }
         }
-            .flowOn(Dispatchers.IO)
+            .flowOn(ioDispatcher)
             .stateIn(
                 scope = viewModelScope,
                 initialValue = PairState.Idle,
@@ -143,5 +137,13 @@ class ForyouViewModel @Inject constructor(
         viewModelScope.launch {
             pinCodeForClient.emit(pin)
         }
+    }
+}
+
+private fun convertToPaddedString(code: Int, length: Int = 6): String {
+    val codeString = code.toString()
+    check(codeString.length <= length) { "Code($code) length is out of limitation($length)." }
+    return codeString.let {
+        "0".repeat(length - it.length) + it
     }
 }

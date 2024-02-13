@@ -12,6 +12,8 @@ import androidx.work.WorkManager
 import androidx.work.WorkQuery
 import androidx.work.workDataOf
 import com.m3u.core.architecture.Publisher
+import com.m3u.core.architecture.dispatcher.Dispatcher
+import com.m3u.core.architecture.dispatcher.M3uDispatchers.Default
 import com.m3u.core.architecture.pref.Pref
 import com.m3u.core.architecture.viewmodel.BaseViewModel
 import com.m3u.data.api.LocalService
@@ -28,7 +30,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -48,7 +50,8 @@ class SettingViewModel @Inject constructor(
     private val messageManager: MessageManager,
     private val localService: LocalService,
     publisher: Publisher,
-    colorPackDao: ColorPackDao
+    colorPackDao: ColorPackDao,
+    @Dispatcher(Default) private val defaultDispatcher: CoroutineDispatcher
 ) : BaseViewModel<SettingState, SettingEvent>(
     emptyState = SettingState(
         versionName = publisher.versionName,
@@ -212,7 +215,7 @@ class SettingViewModel @Inject constructor(
             }
             BackingUpAndRestoringState.of(backingUp, restoring)
         }
-        .flowOn(Dispatchers.Default)
+        .flowOn(defaultDispatcher)
         .stateIn(
             scope = viewModelScope,
             // determine ui button enabled or not

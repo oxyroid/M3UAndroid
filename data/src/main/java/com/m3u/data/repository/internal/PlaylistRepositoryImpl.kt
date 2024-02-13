@@ -4,6 +4,8 @@ import android.content.ContentResolver
 import android.content.Context
 import android.net.Uri
 import androidx.core.net.toUri
+import com.m3u.core.architecture.dispatcher.Dispatcher
+import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.execute
 import com.m3u.core.architecture.logger.sandBox
@@ -28,7 +30,7 @@ import com.m3u.data.repository.parser.model.toStream
 import com.m3u.data.work.BackupContracts
 import com.m3u.i18n.R.string
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
@@ -50,7 +52,8 @@ class PlaylistRepositoryImpl @Inject constructor(
     @Logger.Message private val logger: Logger,
     private val client: OkHttpClient,
     @M3UPlaylistParser.Default private val parser: M3UPlaylistParser,
-    @ApplicationContext private val context: Context
+    @ApplicationContext private val context: Context,
+    @Dispatcher(IO) private val ioDispatcher: CoroutineDispatcher
 ) : PlaylistRepository {
 
     override fun subscribe(
@@ -88,9 +91,9 @@ class PlaylistRepositoryImpl @Inject constructor(
             emitException(e)
         }
     }
-        .flowOn(Dispatchers.IO)
+        .flowOn(ioDispatcher)
 
-    override suspend fun backupOrThrow(uri: Uri): Unit = withContext(Dispatchers.IO) {
+    override suspend fun backupOrThrow(uri: Uri): Unit = withContext(ioDispatcher) {
         val json = Json {
             prettyPrint = false
         }
@@ -112,7 +115,7 @@ class PlaylistRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun restoreOrThrow(uri: Uri): Unit = withContext(Dispatchers.IO) {
+    override suspend fun restoreOrThrow(uri: Uri): Unit = withContext(ioDispatcher) {
         val json = Json {
             ignoreUnknownKeys = true
         }
@@ -180,7 +183,7 @@ class PlaylistRepositoryImpl @Inject constructor(
         val request = Request.Builder()
             .url(url)
             .build()
-        val response = withContext(Dispatchers.IO) {
+        val response = withContext(ioDispatcher) {
             client.newCall(request).execute()
         }
         if (!response.isSuccessful) return emptyList()
@@ -258,7 +261,7 @@ class PlaylistRepositoryImpl @Inject constructor(
             if (uri.scheme == ContentResolver.SCHEME_FILE) {
                 return uri.toString()
             }
-            withContext(Dispatchers.IO) {
+            withContext(ioDispatcher) {
                 val resolver = context.contentResolver
                 val filename = uri.readFileName(resolver) ?: filenameWithTimezone
                 val content = uri.readFileContent(resolver).orEmpty()

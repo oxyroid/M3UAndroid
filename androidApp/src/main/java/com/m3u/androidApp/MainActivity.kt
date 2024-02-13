@@ -32,6 +32,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import com.m3u.androidApp.ui.App
 import com.m3u.androidApp.ui.AppViewModel
+import com.m3u.core.architecture.dispatcher.Dispatcher
+import com.m3u.core.architecture.dispatcher.M3uDispatchers.Main
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.pref.Pref
 import com.m3u.core.unspecified.UBoolean
@@ -54,7 +56,7 @@ import com.m3u.ui.helper.OnUserLeaveHint
 import com.m3u.ui.rememberSnackHostState
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.collections.immutable.ImmutableList
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -90,6 +92,10 @@ class MainActivity : AppCompatActivity() {
 
     @Inject
     lateinit var playerManager: PlayerManager
+
+    @Inject
+    @Dispatcher(Main)
+    lateinit var mainDispatcher: CoroutineDispatcher
 
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
@@ -223,7 +229,7 @@ class MainActivity : AppCompatActivity() {
             get() = this@MainActivity
 
         override fun toast(message: String) {
-            lifecycleScope.launch(Dispatchers.Main) {
+            lifecycleScope.launch(mainDispatcher) {
                 Toast.makeText(this@MainActivity, message, Toast.LENGTH_SHORT).show()
             }
         }

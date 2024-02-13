@@ -28,16 +28,16 @@ import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
 import androidx.media3.exoplayer.util.EventLogger
 import androidx.media3.session.MediaSession
-import com.m3u.core.architecture.logger.Logger
-import com.m3u.core.architecture.logger.prefix
+import com.m3u.core.architecture.dispatcher.Dispatcher
+import com.m3u.core.architecture.dispatcher.M3uDispatchers.Main
 import com.m3u.core.architecture.pref.Pref
 import com.m3u.core.architecture.pref.annotation.ReconnectMode
 import com.m3u.core.architecture.pref.observeAsFlow
 import com.m3u.data.local.service.PlayerManager
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.anilbeesetti.nextlib.media3ext.ffdecoder.NextRenderersFactory
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -55,9 +55,8 @@ class PlayerManagerImpl @Inject constructor(
     @ApplicationContext private val context: Context,
     private val okHttpClient: OkHttpClient,
     private val pref: Pref,
-    logger: Logger
+    @Dispatcher(Main) mainDispatcher: CoroutineDispatcher
 ) : PlayerManager, Player.Listener, MediaSession.Callback {
-    private val logger = logger.prefix("player")
     private val _player = MutableStateFlow<ExoPlayer?>(null)
     override val player: Flow<Player?> = _player.asStateFlow()
 
@@ -73,12 +72,9 @@ class PlayerManagerImpl @Inject constructor(
     private val _playbackError = MutableStateFlow<PlaybackException?>(null)
     override val playerError: StateFlow<PlaybackException?> = _playbackError.asStateFlow()
 
-    private val coroutineScope = CoroutineScope(Dispatchers.Main)
+    private val coroutineScope = CoroutineScope(mainDispatcher)
 
     private fun createPlayer(): ExoPlayer {
-//        val rf = FfmpegRendersFactory(context).apply {
-//            setEnableDecoderFallback(true)
-//        }
         val rf = NextRenderersFactory(context).apply {
             setEnableDecoderFallback(true)
             setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON)

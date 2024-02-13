@@ -1,15 +1,19 @@
 package com.m3u.data.repository.parser.internal
 
+import com.m3u.core.architecture.dispatcher.Dispatcher
+import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
 import com.m3u.data.repository.parser.M3UPlaylist
 import com.m3u.data.repository.parser.M3UPlaylistParser
 import com.m3u.data.repository.parser.model.M3UData
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 import java.io.InputStream
 import java.util.LinkedList
 import javax.inject.Inject
 
-class DefaultM3UPlaylistParser @Inject constructor() : M3UPlaylistParser {
+class DefaultM3UPlaylistParser @Inject constructor(
+    @Dispatcher(IO) private val ioDispatcher: CoroutineDispatcher
+) : M3UPlaylistParser {
     override val engine: String = "default"
 
     companion object {
@@ -31,7 +35,7 @@ class DefaultM3UPlaylistParser @Inject constructor() : M3UPlaylistParser {
     }
 
     override suspend fun execute(input: InputStream): M3UPlaylist {
-        return withContext(Dispatchers.IO) {
+        return withContext(ioDispatcher) {
             val lines = input
                 .bufferedReader()
                 .lineSequence()

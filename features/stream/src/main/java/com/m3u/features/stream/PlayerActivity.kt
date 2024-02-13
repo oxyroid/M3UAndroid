@@ -22,6 +22,8 @@ import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.lifecycleScope
 import com.m3u.core.Contracts
+import com.m3u.core.architecture.dispatcher.Dispatcher
+import com.m3u.core.architecture.dispatcher.M3uDispatchers.Main
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.pref.Pref
 import com.m3u.core.unspecified.UBoolean
@@ -42,7 +44,7 @@ import com.m3u.ui.helper.OnUserLeaveHint
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -80,6 +82,10 @@ class PlayerActivity : ComponentActivity() {
 
     @Inject
     lateinit var streamRepository: StreamRepository
+
+    @Inject
+    @Dispatcher(Main)
+    lateinit var mainDispatcher: CoroutineDispatcher
 
     private val shortcutStreamUrlLiveData = MutableLiveData<String?>(null)
     private val shortcutRecentlyLiveData = MutableLiveData(false)
@@ -210,7 +216,7 @@ class PlayerActivity : ComponentActivity() {
             @Composable get() = calculateWindowSizeClass(activity = this@PlayerActivity)
 
         override fun toast(message: String) {
-            lifecycleScope.launch(Dispatchers.Main) {
+            lifecycleScope.launch(mainDispatcher) {
                 Toast.makeText(this@PlayerActivity, message, Toast.LENGTH_SHORT).show()
             }
         }
