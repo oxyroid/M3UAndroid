@@ -1,5 +1,6 @@
 package com.m3u.data.local.http.endpoint
 
+import android.content.Context
 import androidx.annotation.Keep
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.OutOfQuotaPolicy
@@ -7,20 +8,24 @@ import androidx.work.WorkManager
 import androidx.work.workDataOf
 import com.m3u.core.architecture.pref.Pref
 import com.m3u.data.work.SubscriptionWorker
+import dagger.hilt.android.qualifiers.ApplicationContext
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
 import kotlinx.serialization.Serializable
 import javax.inject.Inject
+import javax.inject.Singleton
 
+@Singleton
 data class Playlists @Inject constructor(
     private val workManager: WorkManager,
-    private val pref: Pref
+    private val pref: Pref,
+    @ApplicationContext private val context: Context
 ) : Endpoint {
     override fun apply(route: Route) {
         route.route("/playlists") {
-            post("/subscribe") {
+            post("subscribe") {
                 val title = call.queryParameters["title"]
                 val url = call.queryParameters["url"]
                 if (title == null || url == null) {

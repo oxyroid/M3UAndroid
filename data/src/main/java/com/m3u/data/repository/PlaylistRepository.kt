@@ -13,7 +13,7 @@ import kotlinx.coroutines.flow.onEach
 interface PlaylistRepository {
     fun observeAll(): Flow<List<Playlist>>
     fun observeAllRemote(): Flow<List<Playlist>>
-    suspend fun get(id: String): Playlist?
+    suspend fun get(url: String): Playlist?
     fun observe(url: String): Flow<Playlist?>
     fun observeWithStreams(url: String): Flow<PlaylistWithStreams?>
     suspend fun getWithStreams(url: String): PlaylistWithStreams?

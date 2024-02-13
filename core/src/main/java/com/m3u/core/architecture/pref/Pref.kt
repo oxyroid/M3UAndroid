@@ -4,10 +4,10 @@ import android.os.Build
 import androidx.annotation.ChecksSdkIntAtLeast
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.snapshotFlow
-import com.m3u.core.architecture.pref.annotation.ReconnectMode
 import com.m3u.core.architecture.pref.annotation.ClipMode
 import com.m3u.core.architecture.pref.annotation.ConnectTimeout
 import com.m3u.core.architecture.pref.annotation.PlaylistStrategy
+import com.m3u.core.architecture.pref.annotation.ReconnectMode
 import com.m3u.core.architecture.pref.annotation.UnseensMilliseconds
 import com.m3u.core.architecture.pref.internal.SnapshotPref
 import kotlinx.coroutines.flow.Flow
@@ -75,7 +75,7 @@ interface Pref {
 
         @ChecksSdkIntAtLeast(api = Build.VERSION_CODES.S)
         val DEFAULT_USE_DYNAMIC_COLORS = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
-        val DEFAULT_FOLLOW_SYSTEM_THEME = false
+        const val DEFAULT_FOLLOW_SYSTEM_THEME = false
 
         const val DEFAULT_ZAPPING_MODE = false
         const val DEFAULT_BRIGHTNESS_GESTURE = true
@@ -126,7 +126,7 @@ interface Pref {
     }
 }
 
-fun <R> Pref.observeAsFlow(block: (Pref) -> R): Flow<R> = when (this) {
-    is SnapshotPref -> snapshotFlow { block(this) }
-    else -> error("Pref.observeAsFlow only be allowed when it is snapshot pref.")
+inline fun <R> Pref.observeAsFlow(crossinline block: (Pref) -> R): Flow<R> {
+    check(this is SnapshotPref)
+    return snapshotFlow { block(this) }
 }

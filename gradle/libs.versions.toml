@@ -125,6 +125,8 @@ com-squareup-leakcanary-leakcanary-android = { group = "com.squareup.leakcanary"
 
 ktor-server-netty = { group = "io.ktor", name = "ktor-server-netty", version.ref = "ktor-server" }
 ktor-server-websockets = { group = "io.ktor", name = "ktor-server-websockets-jvm", version.ref = "ktor-server" }
+ktor-server-status-pages = { group = "io.ktor", name = "ktor-server-status-pages", version.ref = "ktor-server" }
+ktor-server-cors = { group = "io.ktor", name = "ktor-server-cors", version.ref = "ktor-server" }
 ktor-server-content-negotiation = { group = "io.ktor", name = "ktor-server-content-negotiation-jvm", version.ref = "ktor-server" }
 ktor-serialization-kotlinx-json = { group = "io.ktor", name = "ktor-serialization-kotlinx-json-jvm", version.ref = "ktor-server" }
 
