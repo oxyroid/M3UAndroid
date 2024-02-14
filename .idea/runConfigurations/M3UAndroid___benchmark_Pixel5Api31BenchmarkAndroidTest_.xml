@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name=":benchmark:Pixel5Api31FullBenchmarkAndroidTest" type="GradleRunConfiguration" factoryName="Gradle">
+  <configuration default="false" name="M3UAndroid [:benchmark:Pixel5Api31BenchmarkAndroidTest]" type="GradleRunConfiguration" factoryName="Gradle">
     <ExternalSystemSettings>
       <option name="executionName" />
       <option name="externalProjectPath" value="$PROJECT_DIR$" />
