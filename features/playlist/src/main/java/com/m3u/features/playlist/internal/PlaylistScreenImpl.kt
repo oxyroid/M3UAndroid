@@ -88,7 +88,7 @@ internal fun PlaylistScreenImpl(
     navigateToStream: () -> Unit,
     onRefresh: () -> Unit,
     onFavorite: (streamId: Int, target: Boolean) -> Unit,
-    ban: (streamId: Int) -> Unit,
+    hide: (streamId: Int) -> Unit,
     onSavePicture: (streamId: Int) -> Unit,
     createShortcut: (streamId: Int) -> Unit,
     isAtTopState: MutableState<Boolean>,
@@ -251,7 +251,7 @@ internal fun PlaylistScreenImpl(
         status = dialogStatus,
         onUpdate = { dialogStatus = it },
         onFavorite = onFavorite,
-        ban = ban,
+        hide = hide,
         onSavePicture = onSavePicture,
         createShortcut = createShortcut
     )

@@ -1,4 +1,4 @@
-package com.m3u.data.work
+package com.m3u.data.worker
 
 import android.app.Notification
 import android.app.NotificationChannel

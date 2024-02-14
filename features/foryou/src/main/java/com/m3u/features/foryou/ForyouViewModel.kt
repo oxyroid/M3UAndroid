@@ -7,10 +7,10 @@ import com.m3u.core.architecture.dispatcher.M3uDispatchers.Default
 import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
 import com.m3u.core.architecture.pref.Pref
 import com.m3u.core.architecture.pref.observeAsFlow
-import com.m3u.data.repository.PairState
+import com.m3u.data.repository.ConnectionToTelevision
 import com.m3u.data.repository.PlaylistRepository
 import com.m3u.data.repository.StreamRepository
-import com.m3u.data.repository.TvRepository
+import com.m3u.data.repository.TelevisionRepository
 import com.m3u.features.foryou.components.recommend.Recommend
 import com.m3u.features.foryou.model.PlaylistDetail
 import com.m3u.features.foryou.model.toDetail
@@ -19,14 +19,13 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -41,16 +40,14 @@ import kotlin.time.toDuration
 class ForyouViewModel @Inject constructor(
     private val playlistRepository: PlaylistRepository,
     streamRepository: StreamRepository,
-    private val tvRepository: TvRepository,
+    private val televisionRepository: TelevisionRepository,
     pref: Pref,
     @Dispatcher(IO) private val ioDispatcher: CoroutineDispatcher,
     @Dispatcher(Default) defaultDispatcher: CoroutineDispatcher
 ) : ViewModel() {
-    internal val pinCodeForServer: StateFlow<String?> = tvRepository
-        .pinCodeForServer
-        .map { code ->
-            code?.let { convertToPaddedString(it) }
-        }
+    internal val broadcastCodeOnTelevision: StateFlow<String?> = televisionRepository
+        .broadcastCodeOnTelevision
+        .map { code -> code?.let { convertToPaddedString(it) } }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.Eagerly,
@@ -60,6 +57,7 @@ class ForyouViewModel @Inject constructor(
     private val counts: StateFlow<Map<String, Int>> = streamRepository
         .observeAll()
         .map { streams ->
+            // map playlistUrl to count
             streams
                 .groupBy { it.playlistUrl }
                 .mapValues { it.value.size }
@@ -73,10 +71,11 @@ class ForyouViewModel @Inject constructor(
     internal val details: StateFlow<ImmutableList<PlaylistDetail>> = playlistRepository
         .observeAll()
         .distinctUntilChanged()
-        .combine(counts) { fs, cs ->
+        .combine(counts) { playlists, counts ->
             withContext(defaultDispatcher) {
-                fs.map { f ->
-                    f.toDetail(cs[f.url] ?: PlaylistDetail.DEFAULT_COUNT)
+                playlists.map { playlist ->
+                    val count = counts[playlist.url] ?: PlaylistDetail.DEFAULT_COUNT
+                    playlist.toDetail(count)
                 }
             }
                 .toPersistentList()
@@ -96,7 +95,6 @@ class ForyouViewModel @Inject constructor(
             initialValue = Duration.INFINITE
         )
 
-    @OptIn(ExperimentalCoroutinesApi::class)
     internal val recommend: StateFlow<Recommend> = unseensDuration
         .flatMapLatest { streamRepository.observeAllUnseenFavourites(it) }
         .map { prev -> Recommend(prev.map { Recommend.UnseenSpec(it) }) }
@@ -118,24 +116,34 @@ class ForyouViewModel @Inject constructor(
         }
     }
 
-    private val pinCodeForClient = MutableSharedFlow<Int?>()
+    private val televisionCodeOnSmartphone = MutableSharedFlow<Int?>()
 
-    @OptIn(ExperimentalCoroutinesApi::class)
-    internal val pairStateForClient: StateFlow<PairState> =
-        pinCodeForClient.flatMapLatest { pinCode ->
-            if (pinCode != null) tvRepository.pairForClient(pinCode)
-            else flow { }
+    internal val connectionToTelevision: StateFlow<ConnectionToTelevision> =
+        televisionCodeOnSmartphone.flatMapLatest { code ->
+            if (code != null) televisionRepository.connectToTelevision(code)
+            else {
+                televisionRepository.disconnectToTelevision()
+                flowOf(ConnectionToTelevision.Idle())
+            }
         }
             .flowOn(ioDispatcher)
             .stateIn(
                 scope = viewModelScope,
-                initialValue = PairState.Idle,
+                initialValue = ConnectionToTelevision.Idle(),
                 started = SharingStarted.WhileSubscribed(5_000)
             )
 
-    internal fun pair(pin: Int) {
+    internal val connectedTelevision = televisionRepository.connectedTelevision
+
+    internal fun openTelevisionCodeOnSmartphone(code: Int) {
         viewModelScope.launch {
-            pinCodeForClient.emit(pin)
+            televisionCodeOnSmartphone.emit(code)
+        }
+    }
+
+    internal fun closeTelevisionCodeOnSmartphone() {
+        viewModelScope.launch {
+            televisionCodeOnSmartphone.emit(null)
         }
     }
 }

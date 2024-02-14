@@ -26,7 +26,7 @@ import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.data.database.model.Stream
 import com.m3u.features.setting.BackingUpAndRestoringState
 import com.m3u.features.setting.UriWrapper
-import com.m3u.features.setting.components.BannedStreamItem
+import com.m3u.features.setting.components.hiddenStreamstreamItem
 import com.m3u.features.setting.components.LocalStorageButton
 import com.m3u.features.setting.components.LocalStorageSwitch
 import com.m3u.features.setting.components.RemoteControlSubscribeSwitch
@@ -48,8 +48,8 @@ internal fun SubscriptionsFragment(
     localStorage: Boolean,
     subscribeForTv: Boolean,
     backingUpOrRestoring: BackingUpAndRestoringState,
-    banneds: ImmutableList<Stream>,
-    onBanned: (Int) -> Unit,
+    hiddenStreams: ImmutableList<Stream>,
+    onHidden: (Int) -> Unit,
     onTitle: (String) -> Unit,
     onUrl: (String) -> Unit,
     onClipboard: (String) -> Unit,
@@ -75,13 +75,13 @@ internal fun SubscriptionsFragment(
         verticalArrangement = Arrangement.spacedBy(spacing.small),
         modifier = modifier
     ) {
-        if (banneds.isNotEmpty()) {
+        if (hiddenStreams.isNotEmpty()) {
             item {
                 Column(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
-                        text = stringResource(string.feat_setting_label_muted_streams),
+                        text = stringResource(string.feat_setting_label_hidden_streams),
                         color = MaterialTheme.colorScheme.onPrimary,
                         modifier = Modifier
                             .fillMaxWidth()
@@ -92,10 +92,10 @@ internal fun SubscriptionsFragment(
                                 horizontal = spacing.medium
                             )
                     )
-                    banneds.forEach { stream ->
-                        BannedStreamItem(
+                    hiddenStreams.forEach { stream ->
+                        hiddenStreamstreamItem(
                             stream = stream,
-                            onBanned = { onBanned(stream.id) }
+                            onHidden = { onHidden(stream.id) }
                         )
                     }
                 }

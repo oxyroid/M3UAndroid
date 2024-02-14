@@ -1,14 +1,15 @@
-package com.m3u.data.local.http.internal
+package com.m3u.data.television.http.internal
 
-import com.m3u.data.local.http.HttpServer
-import com.m3u.data.local.http.endpoint.Playlists
-import com.m3u.data.local.http.endpoint.SayHello
+import com.m3u.data.television.http.HttpServer
+import com.m3u.data.television.http.endpoint.Playlists
+import com.m3u.data.television.http.endpoint.SayHello
+import io.ktor.serialization.kotlinx.KotlinxWebsocketSerializationConverter
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
 import io.ktor.server.engine.EmbeddedServer
 import io.ktor.server.engine.embeddedServer
-import io.ktor.server.jetty.Jetty
+import io.ktor.server.netty.Netty
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.plugins.cors.routing.CORS
 import io.ktor.server.routing.routing
@@ -26,7 +27,7 @@ internal class HttpServerImpl @Inject constructor(
     private var server: EmbeddedServer<*, *>? = null
 
     override fun start(port: Int) {
-        server = embeddedServer(Jetty, port) {
+        server = embeddedServer(Netty, port) {
             configureSerialization()
             configureSockets()
             configureCors()
@@ -57,6 +58,11 @@ internal class HttpServerImpl @Inject constructor(
 
     private fun Application.configureSockets() {
         install(WebSockets) {
+            val json = Json {
+                ignoreUnknownKeys = true
+                prettyPrint = true
+            }
+            contentConverter = KotlinxWebsocketSerializationConverter(json)
             pingPeriod = Duration.ofSeconds(15)
             timeout = Duration.ofSeconds(15)
         }
@@ -65,6 +71,7 @@ internal class HttpServerImpl @Inject constructor(
     private fun Application.configureCors() {
         install(CORS) {
             anyHost()
+            allowSameOrigin = true
         }
     }
 }

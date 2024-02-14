@@ -32,4 +32,10 @@ internal object DatabaseMigrations {
             db.execSQL("ALTER TABLE playlists ADD COLUMN pinned_groups TEXT NOT NULL DEFAULT '[]'")
         }
     }
+    @RenameColumn(
+        tableName = "streams",
+        fromColumnName = "banned",
+        toColumnName = "hidden"
+    )
+    class AutoMigration8To9: AutoMigrationSpec
 }

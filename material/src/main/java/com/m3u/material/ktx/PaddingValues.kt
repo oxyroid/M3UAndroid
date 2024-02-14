@@ -46,6 +46,7 @@ infix fun PaddingValues.only(side: WindowInsetsSides): PaddingValues {
 }
 
 @Composable
-infix fun PaddingValues.split(side: WindowInsetsSides): Pair<PaddingValues, PaddingValues> {
+infix fun PaddingValues.split(side: WindowInsetsSides?): Pair<PaddingValues, PaddingValues> {
+    if (side == null) return PaddingValues() to this
     return (this only side) to (this - (this only side))
 }

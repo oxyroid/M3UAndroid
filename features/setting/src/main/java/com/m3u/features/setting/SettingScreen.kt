@@ -77,7 +77,7 @@ fun SettingRoute(
 
     val state by viewModel.state.collectAsStateWithLifecycle()
     val packs by viewModel.packs.collectAsStateWithLifecycle()
-    val banneds by viewModel.banneds.collectAsStateWithLifecycle()
+    val hiddenStreams by viewModel.hiddenStreams.collectAsStateWithLifecycle()
     val backingUpOrRestoring by viewModel.backingUpOrRestoring.collectAsStateWithLifecycle()
 
     val helper = LocalHelper.current
@@ -121,14 +121,14 @@ fun SettingRoute(
             url = state.url,
             backingUpOrRestoring = backingUpOrRestoring,
             uriWrapper = rememberUriWrapper(state.uri),
-            banneds = banneds,
+            hiddenStreams = hiddenStreams,
             onTitle = { viewModel.onEvent(SettingEvent.OnTitle(it)) },
             onUrl = { viewModel.onEvent(SettingEvent.OnUrl(it)) },
             onSubscribe = {
                 controller?.hide()
                 viewModel.onEvent(SettingEvent.Subscribe)
             },
-            onBanned = { viewModel.onEvent(SettingEvent.OnBanned(it)) },
+            onHidden = { viewModel.onEvent(SettingEvent.OnHidden(it)) },
             navigateToAbout = navigateToAbout,
             localStorage = state.localStorage,
             onLocalStorage = { viewModel.onEvent(SettingEvent.OnLocalStorage) },
@@ -172,8 +172,8 @@ private fun SettingScreen(
     onTitle: (String) -> Unit,
     onUrl: (String) -> Unit,
     onSubscribe: () -> Unit,
-    banneds: ImmutableList<Stream>,
-    onBanned: (Int) -> Unit,
+    hiddenStreams: ImmutableList<Stream>,
+    onHidden: (Int) -> Unit,
     navigateToAbout: () -> Unit,
     localStorage: Boolean,
     onLocalStorage: () -> Unit,
@@ -261,8 +261,8 @@ private fun SettingScreen(
                                 url = url,
                                 uriWrapper = uriWrapper,
                                 backingUpOrRestoring = backingUpOrRestoring,
-                                banneds = banneds,
-                                onBanned = onBanned,
+                                hiddenStreams = hiddenStreams,
+                                onHidden = onHidden,
                                 onTitle = onTitle,
                                 onUrl = onUrl,
                                 onSubscribe = onSubscribe,

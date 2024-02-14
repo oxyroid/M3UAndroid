@@ -32,8 +32,8 @@ import com.m3u.core.util.basic.rational
 import com.m3u.core.util.context.isDarkMode
 import com.m3u.core.util.context.isPortraitMode
 import com.m3u.core.wrapper.Message
-import com.m3u.data.local.service.MessageManager
-import com.m3u.data.local.service.PlayerManager
+import com.m3u.data.service.MessageManager
+import com.m3u.data.service.PlayerManager
 import com.m3u.data.repository.StreamRepository
 import com.m3u.ui.Toolkit
 import com.m3u.ui.helper.Action
@@ -68,7 +68,7 @@ class PlayerActivity : ComponentActivity() {
     lateinit var pref: Pref
 
     @Inject
-    @Logger.Message
+    @Logger.MessageImpl
     lateinit var messager: Logger
 
     @Inject

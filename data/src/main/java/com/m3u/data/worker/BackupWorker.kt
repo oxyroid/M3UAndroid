@@ -1,4 +1,4 @@
-package com.m3u.data.work
+package com.m3u.data.worker
 
 import android.app.Notification
 import android.content.Context
@@ -13,23 +13,22 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 
 @HiltWorker
-class RestoreWorker @AssistedInject constructor(
+class BackupWorker @AssistedInject constructor(
     @Assisted private val context: Context,
     @Assisted params: WorkerParameters,
     private val playlistRepository: PlaylistRepository
 ) : CoroutineWorker(context, params) {
-
     private val uri = inputData.getString(INPUT_URI)?.let { Uri.parse(it) }
-
     override suspend fun doWork(): Result {
-        uri?: return Result.failure()
+        uri ?: return Result.failure()
         try {
-            playlistRepository.restoreOrThrow(uri)
+            playlistRepository.backupOrThrow(uri)
         } catch (e: Exception) {
             return Result.failure()
         }
         return Result.success()
     }
+
     override suspend fun getForegroundInfo(): ForegroundInfo {
         return ForegroundInfo(NOTIFICATION_ID, createNotification())
     }
@@ -43,11 +42,10 @@ class RestoreWorker @AssistedInject constructor(
     }
 
 
-
     companion object {
         private const val CHANNEL_ID = "subscribe_channel"
-        private const val NOTIFICATION_ID = 1226
-        const val TAG = "restore"
+        private const val NOTIFICATION_ID = 1225
+        const val TAG = "backup"
         const val INPUT_URI = "uri"
     }
 }

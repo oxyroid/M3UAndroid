@@ -97,7 +97,7 @@ internal object PlaylistDrawerDefaults {
     fun rememberStreamMenuItems(
         stream: Stream?,
         onFavorite: (streamId: Int, target: Boolean) -> Unit,
-        ban: (streamId: Int) -> Unit,
+        hide: (streamId: Int) -> Unit,
         createShortcut: (streamId: Int) -> Unit,
         savePicture: (streamId: Int) -> Unit,
     ): ImmutableList<DrawerItem> {
@@ -105,10 +105,10 @@ internal object PlaylistDrawerDefaults {
             if (stream?.favourite == true) string.feat_playlist_dialog_favourite_cancel_title
             else string.feat_playlist_dialog_favourite_title
         )
-        val banTitle = stringResource(string.feat_playlist_dialog_mute_title)
+        val hideTitle = stringResource(string.feat_playlist_dialog_hide_title)
         val createShortcutTitle = stringResource(string.feat_playlist_dialog_create_shortcut_title)
         val savePictureTitle = stringResource(string.feat_playlist_dialog_save_picture_title)
-        return remember(stream, favouriteTitle, banTitle, createShortcutTitle, savePictureTitle) {
+        return remember(stream, favouriteTitle, hideTitle, createShortcutTitle, savePictureTitle) {
             persistentListOf(
                 DrawerItem(
                     title = favouriteTitle,
@@ -119,10 +119,10 @@ internal object PlaylistDrawerDefaults {
                     }
                 ),
                 DrawerItem(
-                    title = banTitle,
+                    title = hideTitle,
                     icon = Icons.Rounded.Delete,
                     onClick = {
-                        stream?.let { ban(it.id) }
+                        stream?.let { hide(it.id) }
                         true
                     }
                 ),

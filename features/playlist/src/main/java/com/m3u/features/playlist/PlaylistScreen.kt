@@ -132,7 +132,7 @@ internal fun PlaylistRoute(
             onRefresh = { viewModel.onEvent(PlaylistEvent.Refresh) },
             contentPadding = contentPadding,
             onFavorite = { id, target -> viewModel.onEvent(PlaylistEvent.Favourite(id, target)) },
-            ban = { id -> viewModel.onEvent(PlaylistEvent.Ban(id)) },
+            hide = { id -> viewModel.onEvent(PlaylistEvent.Hide(id)) },
             savePicture = {
                 if (writeExternalPermissionRequired && writeExternalPermissionState.status is PermissionStatus.Denied) {
                     writeExternalPermissionState.launchPermissionRequest()
@@ -175,7 +175,7 @@ private fun PlaylistScreen(
     navigateToStream: () -> Unit,
     onScrollUp: () -> Unit,
     onFavorite: (streamId: Int, target: Boolean) -> Unit,
-    ban: (streamId: Int) -> Unit,
+    hide: (streamId: Int) -> Unit,
     savePicture: (streamId: Int) -> Unit,
     createShortcut: (streamId: Int) -> Unit,
     contentPadding: PaddingValues,
@@ -226,7 +226,7 @@ private fun PlaylistScreen(
             sort = sort,
             onSort = onSort,
             onFavorite = onFavorite,
-            ban = ban,
+            hide = hide,
             onSavePicture = savePicture,
             createShortcut = createShortcut,
             modifier = modifier
@@ -243,7 +243,7 @@ private fun PlaylistScreen(
             sorts = sorts,
             sort = sort,
             onFavorite = onFavorite,
-            ban = ban,
+            hide = hide,
             savePicture = savePicture,
             createShortcut = createShortcut,
             modifier = modifier

@@ -37,12 +37,8 @@ fun PlaylistRepository.refresh(
     @PlaylistStrategy strategy: Int
 ): Flow<Resource<Unit>> = channelFlow {
     try {
-        val playlist = get(url) ?: error("Cannot find playlist: $url")
-        if (playlist.fromLocal) {
-            // refreshing is not needed for local storage playlist.
-            send(Resource.Success(Unit))
-            return@channelFlow
-        }
+        val playlist = checkNotNull(get(url)) { "Cannot find playlist: $url" }
+        check(!playlist.fromLocal) { "refreshing is not needed for local storage playlist." }
         subscribe(playlist.title, url, strategy)
             .onEach(::send)
             .launchIn(this)

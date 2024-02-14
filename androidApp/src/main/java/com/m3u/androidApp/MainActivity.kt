@@ -45,8 +45,8 @@ import com.m3u.core.util.context.isPortraitMode
 import com.m3u.core.util.coroutine.getValue
 import com.m3u.core.util.coroutine.setValue
 import com.m3u.core.wrapper.Message
-import com.m3u.data.local.service.MessageManager
-import com.m3u.data.local.service.PlayerManager
+import com.m3u.data.service.MessageManager
+import com.m3u.data.service.PlayerManager
 import com.m3u.ui.Toolkit
 import com.m3u.ui.helper.Action
 import com.m3u.ui.helper.Fob
@@ -84,7 +84,7 @@ class MainActivity : AppCompatActivity() {
     lateinit var pref: Pref
 
     @Inject
-    @Logger.Message
+    @Logger.MessageImpl
     lateinit var logger: Logger
 
     @Inject

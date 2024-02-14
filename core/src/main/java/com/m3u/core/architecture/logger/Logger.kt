@@ -1,6 +1,6 @@
 package com.m3u.core.architecture.logger
 
-import com.m3u.core.wrapper.Message.Companion.LEVEL_ERROR
+import com.m3u.core.wrapper.Message
 import javax.inject.Qualifier
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
@@ -8,10 +8,10 @@ import kotlin.time.Duration.Companion.seconds
 interface Logger {
     fun log(
         text: String,
-        level: Int = LEVEL_ERROR,
+        level: Int = Message.LEVEL_ERROR,
         tag: String = "LOGGER",
-        duration: Duration = 3.seconds,
-        type: Int = com.m3u.core.wrapper.Message.TYPE_SNACK
+        duration: Duration = 5.seconds,
+        type: Int = Message.TYPE_SNACK
     )
 
     fun log(
@@ -21,7 +21,7 @@ interface Logger {
 
     @Qualifier
     @Retention(AnnotationRetention.BINARY)
-    annotation class Message
+    annotation class MessageImpl
 }
 
 fun Logger.prefix(text: String): PrefixLogger = PrefixLogger(this, text)

@@ -33,8 +33,8 @@ data class Stream(
     // extra fields
     @ColumnInfo(name = "favourite")
     val favourite: Boolean = false,
-    @ColumnInfo(name = "banned")
-    val banned: Boolean = false,
+    @ColumnInfo(name = "hidden", defaultValue = "0")
+    val hidden: Boolean = false,
     @ColumnInfo(name = "seen", defaultValue = "0")
     val seen: Long = 0L,
 ) : Likable<Stream> {

@@ -1,4 +1,4 @@
-package com.m3u.data.local.service.internal
+package com.m3u.data.service.internal
 
 import android.content.Context
 import android.graphics.Rect
@@ -33,7 +33,7 @@ import com.m3u.core.architecture.dispatcher.M3uDispatchers.Main
 import com.m3u.core.architecture.pref.Pref
 import com.m3u.core.architecture.pref.annotation.ReconnectMode
 import com.m3u.core.architecture.pref.observeAsFlow
-import com.m3u.data.local.service.PlayerManager
+import com.m3u.data.service.PlayerManager
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.anilbeesetti.nextlib.media3ext.ffdecoder.NextRenderersFactory
 import kotlinx.coroutines.CoroutineDispatcher

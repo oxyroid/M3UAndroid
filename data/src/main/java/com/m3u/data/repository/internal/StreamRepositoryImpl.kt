@@ -40,8 +40,8 @@ class StreamRepositoryImpl @Inject constructor(
         streamDao.setFavourite(id, target)
     }
 
-    override suspend fun ban(id: Int, target: Boolean) = logger.sandBox {
-        streamDao.ban(id, target)
+    override suspend fun hide(id: Int, target: Boolean) = logger.sandBox {
+        streamDao.hide(id, target)
     }
 
     override suspend fun reportPlayed(id: Int) = logger.sandBox {

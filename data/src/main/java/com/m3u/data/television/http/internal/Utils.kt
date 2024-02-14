@@ -1,4 +1,4 @@
-package com.m3u.data.local.http.internal
+package com.m3u.data.television.http.internal
 
 import java.net.InetAddress
 import java.net.NetworkInterface

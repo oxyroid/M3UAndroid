@@ -27,7 +27,6 @@ import com.m3u.data.database.model.Stream
 import com.m3u.data.repository.PlaylistRepository
 import com.m3u.data.repository.parser.M3UPlaylistParser
 import com.m3u.data.repository.parser.model.toStream
-import com.m3u.data.work.BackupContracts
 import com.m3u.i18n.R.string
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineDispatcher
@@ -48,7 +47,7 @@ import javax.inject.Inject
 class PlaylistRepositoryImpl @Inject constructor(
     private val playlistDao: PlaylistDao,
     private val streamDao: StreamDao,
-    @Logger.Message private val logger: Logger,
+    @Logger.MessageImpl private val logger: Logger,
     private val client: OkHttpClient,
     @M3UPlaylistParser.Default private val parser: M3UPlaylistParser,
     @ApplicationContext private val context: Context,
@@ -105,11 +104,11 @@ class PlaylistRepositoryImpl @Inject constructor(
             all.forEach { (playlist, streams) ->
                 if (playlist.fromLocal) return@forEach
                 val encodedPlaylist = json.encodeToString(playlist)
-                val wrappedPlaylist = BackupContracts.wrapPlaylist(encodedPlaylist)
+                val wrappedPlaylist = BackupOrRestoreContracts.wrapPlaylist(encodedPlaylist)
                 writer.appendLine(wrappedPlaylist)
                 streams.forEach { stream ->
                     val encodedStream = json.encodeToString(stream)
-                    val wrappedStream = BackupContracts.wrapStream(encodedStream)
+                    val wrappedStream = BackupOrRestoreContracts.wrapStream(encodedStream)
                     writer.appendLine(wrappedStream)
                 }
             }
@@ -125,8 +124,8 @@ class PlaylistRepositoryImpl @Inject constructor(
 
             reader.forEachLine { line ->
                 if (line.isBlank()) return@forEachLine
-                val encodedPlaylist = BackupContracts.unwrapPlaylist(line)
-                val encodedStream = BackupContracts.unwrapStream(line)
+                val encodedPlaylist = BackupOrRestoreContracts.unwrapPlaylist(line)
+                val encodedStream = BackupOrRestoreContracts.unwrapStream(line)
                 when {
                     encodedPlaylist != null -> {
                         val playlist = json.decodeFromString<Playlist>(encodedPlaylist)

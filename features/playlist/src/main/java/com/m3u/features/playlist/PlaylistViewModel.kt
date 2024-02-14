@@ -22,8 +22,8 @@ import com.m3u.core.wrapper.Resource
 import com.m3u.core.wrapper.eventOf
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.Stream
-import com.m3u.data.local.service.MessageManager
-import com.m3u.data.local.service.PlayerManager
+import com.m3u.data.service.MessageManager
+import com.m3u.data.service.PlayerManager
 import com.m3u.data.repository.MediaRepository
 import com.m3u.data.repository.PlaylistRepository
 import com.m3u.data.repository.StreamRepository
@@ -35,7 +35,6 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toPersistentList
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -59,7 +58,7 @@ class PlaylistViewModel @Inject constructor(
     private val mediaRepository: MediaRepository,
     playerManager: PlayerManager,
     private val pref: Pref,
-    @Logger.Message private val logger: Logger,
+    @Logger.MessageImpl private val logger: Logger,
     private val messageManager: MessageManager
 ) : BaseViewModel<PlaylistState, PlaylistEvent>(
     emptyState = PlaylistState()
@@ -72,7 +71,7 @@ class PlaylistViewModel @Inject constructor(
             PlaylistEvent.Refresh -> refresh()
             is PlaylistEvent.Favourite -> favourite(event)
             PlaylistEvent.ScrollUp -> scrollUp()
-            is PlaylistEvent.Ban -> ban(event)
+            is PlaylistEvent.Hide -> hide(event)
             is PlaylistEvent.SavePicture -> savePicture(event)
             is PlaylistEvent.Query -> query(event)
             is PlaylistEvent.CreateShortcut -> createShortcut(event.context, event.id)
@@ -165,14 +164,14 @@ class PlaylistViewModel @Inject constructor(
         }
     }
 
-    private fun ban(event: PlaylistEvent.Ban) {
+    private fun hide(event: PlaylistEvent.Hide) {
         viewModelScope.launch {
             val id = event.id
             val stream = streamRepository.get(id)
             if (stream == null) {
                 messageManager.emit(PlaylistMessage.StreamNotFound)
             } else {
-                streamRepository.ban(stream.id, true)
+                streamRepository.hide(stream.id, true)
             }
         }
     }
@@ -245,14 +244,13 @@ class PlaylistViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5_000L)
         )
 
-    @OptIn(ExperimentalCoroutinesApi::class)
     private val unsorted: StateFlow<List<Stream>> = combine(
         playlistUrl.flatMapLatest { url ->
             playlistRepository.observeWithStreams(url)
         },
         query
     ) { current, query ->
-        current?.streams?.filter { !it.banned && it.title.contains(query, true) } ?: emptyList()
+        current?.streams?.filter { !it.hidden && it.title.contains(query, true) } ?: emptyList()
     }
         .stateIn(
             scope = viewModelScope,

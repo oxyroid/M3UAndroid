@@ -16,7 +16,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.ModalBottomSheetDefaults
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
@@ -29,9 +28,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
-import com.m3u.core.util.basic.title
 import com.m3u.i18n.R.string
-import com.m3u.material.components.CodeSkeleton
 import com.m3u.material.model.LocalSpacing
 import kotlinx.collections.immutable.ImmutableList
 
@@ -127,41 +124,6 @@ private fun SortBottomSheetItem(
                 )
                 .then(modifier)
         )
-    }
-}
-
-@Composable
-fun ConnectBottomSheet(
-    visible: Boolean,
-    connecting: Boolean,
-    code: String,
-    sheetState: SheetState,
-    onCode: (String) -> Unit,
-    onConnect: () -> Unit,
-    onDismissRequest: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    if (visible) {
-        ModalBottomSheet(
-            sheetState = sheetState,
-            onDismissRequest = {
-                if (!connecting) onDismissRequest()
-            },
-            windowInsets = WindowInsets(0),
-            properties = ModalBottomSheetDefaults.properties(
-                shouldDismissOnBackPress = false
-            )
-        ) {
-            CodeSkeleton(
-                title = stringResource(string.feat_foryou_connect_title).title(),
-                subtitle = stringResource(string.feat_foryou_connect_subtitle),
-                code = code,
-                onCode = onCode,
-                modifier = modifier,
-                loading = connecting,
-                onSubmit = onConnect
-            )
-        }
     }
 }
 

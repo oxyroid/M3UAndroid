@@ -44,7 +44,7 @@ internal fun TvPlaylistScreenImpl(
     sorts: ImmutableList<Sort>,
     sort: Sort,
     onFavorite: (streamId: Int, target: Boolean) -> Unit,
-    ban: (streamId: Int) -> Unit,
+    hide: (streamId: Int) -> Unit,
     savePicture: (streamId: Int) -> Unit,
     createShortcut: (streamId: Int) -> Unit,
     navigateToStream: () -> Unit,
@@ -75,7 +75,7 @@ internal fun TvPlaylistScreenImpl(
         items = PlaylistDrawerDefaults.rememberStreamMenuItems(
             stream = press,
             onFavorite = onFavorite,
-            ban = ban,
+            hide = hide,
             createShortcut = createShortcut,
             savePicture = savePicture
         )

@@ -1,9 +1,9 @@
-package com.m3u.data.local.service.internal
+package com.m3u.data.service.internal
 
 import com.m3u.core.architecture.dispatcher.Dispatcher
 import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
 import com.m3u.core.wrapper.Message
-import com.m3u.data.local.service.MessageManager
+import com.m3u.data.service.MessageManager
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job

@@ -20,7 +20,7 @@
     <string name="feat_setting_god_mode_description">通过物理按键调节界面</string>
     <string name="feat_setting_experimental_mode">试验特性</string>
     <string name="feat_setting_experimental_mode_description">不稳定的功能可能引发致命错误</string>
-    <string name="feat_setting_label_muted_streams">屏蔽的频道</string>
+    <string name="feat_setting_label_hidden_streams">屏蔽的频道</string>
     <string name="feat_setting_label_add_playlist">新增订阅</string>
     <string name="feat_setting_label_parse_from_clipboard">解析剪贴板</string>
     <string name="feat_setting_label_select_from_local_storage">选择文件</string>
@@ -88,6 +88,8 @@
 
     <string name="feat_setting_remote_control_tv_side">遥控器</string>
     <string name="feat_setting_remote_control_tv_side_description">允许智能手机控制你的电视</string>
+
+    <string name="feat_setting_subscribe_for_tv">为电视订阅</string>
 
     <string name="feat_setting_backing_up">备份所有播放列表和频道中</string>
     <string name="feat_setting_restoring">恢复所有播放列表和频道中</string>

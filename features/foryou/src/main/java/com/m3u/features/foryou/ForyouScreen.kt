@@ -13,11 +13,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
@@ -43,7 +41,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.core.util.basic.title
 import com.m3u.data.database.model.Playlist
-import com.m3u.data.repository.PairState
+import com.m3u.data.repository.ConnectionToTelevision
+import com.m3u.features.foryou.components.ConnectBottomSheet
 import com.m3u.features.foryou.components.ForyouDialog
 import com.m3u.features.foryou.components.OnRename
 import com.m3u.features.foryou.components.OnUnsubscribe
@@ -57,12 +56,10 @@ import com.m3u.material.components.Background
 import com.m3u.material.components.Button
 import com.m3u.material.ktx.interceptVolumeEvent
 import com.m3u.material.ktx.isTelevision
-import com.m3u.material.ktx.minus
-import com.m3u.material.ktx.only
+import com.m3u.material.ktx.split
 import com.m3u.material.ktx.thenIf
 import com.m3u.material.model.LocalHazeState
 import com.m3u.material.model.LocalSpacing
-import com.m3u.ui.ConnectBottomSheet
 import com.m3u.ui.EventHandler
 import com.m3u.ui.FontFamilies
 import com.m3u.ui.ResumeEvent
@@ -100,19 +97,21 @@ fun ForyouRoute(
 
     var isConnectSheetVisible by remember { mutableStateOf(false) }
 
-    val pinCodeForServer by viewModel.pinCodeForServer.collectAsStateWithLifecycle()
-    val pairStateForClient by viewModel.pairStateForClient.collectAsStateWithLifecycle()
+    // for televisions
+    val broadcastCodeOnTelevision by viewModel.broadcastCodeOnTelevision.collectAsStateWithLifecycle()
 
-    val connecting by remember {
-        derivedStateOf { pairStateForClient == PairState.Connecting }
+    // for smartphones
+    val connectionToTelevision by viewModel.connectionToTelevision.collectAsStateWithLifecycle()
+    val connectedTelevision by viewModel.connectedTelevision.collectAsStateWithLifecycle()
+    val searchingToTelevision by remember {
+        derivedStateOf { connectionToTelevision is ConnectionToTelevision.Searching }
     }
-    val connected by remember {
-        derivedStateOf { pairStateForClient is PairState.Connected }
+    val connectedToTelevision by remember {
+        derivedStateOf { connectedTelevision != null }
     }
-
     val sheetState = rememberModalBottomSheetState(
         skipPartiallyExpanded = true,
-        confirmValueChange = { !connecting }
+        confirmValueChange = { !searchingToTelevision }
     )
 
     EventHandler(resume) {
@@ -128,8 +127,8 @@ fun ForyouRoute(
     }
 
     LaunchedEffect(Unit) {
-        snapshotFlow { connected }.collectLatest { visible ->
-            if (visible) {
+        snapshotFlow { connectedToTelevision }.collectLatest { connected ->
+            if (connected) {
                 isConnectSheetVisible = false
                 code = ""
             }
@@ -165,8 +164,9 @@ fun ForyouRoute(
             ConnectBottomSheet(
                 sheetState = sheetState,
                 visible = isConnectSheetVisible,
+                connectedTelevision = connectedTelevision,
                 code = code,
-                connecting = connecting,
+                connecting = searchingToTelevision,
                 onCode = {
                     code = it
                     hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -174,13 +174,12 @@ fun ForyouRoute(
                 onDismissRequest = {
                     isConnectSheetVisible = false
                 },
-                onConnect = {
-                    viewModel.pair(code.toInt())
-                }
+                onConnect = { viewModel.openTelevisionCodeOnSmartphone(code.toInt()) },
+                onDisconnect = { viewModel.closeTelevisionCodeOnSmartphone() }
             )
             Crossfade(
-                targetState = pinCodeForServer,
-                label = "pin-code",
+                targetState = broadcastCodeOnTelevision,
+                label = "broadcast-code-on-television",
                 modifier = Modifier
                     .padding(spacing.medium)
                     .align(Alignment.BottomEnd)
@@ -230,13 +229,10 @@ private fun ForyouScreen(
             ) {
                 val showRecommend = recommend.isNotEmpty()
                 val showPlaylist = details.isNotEmpty()
+                val (topContentPadding, otherContentPadding) =
+                    contentPadding split if (showRecommend) WindowInsetsSides.Top else null
                 if (showRecommend) {
-                    Column {
-                        Spacer(
-                            Modifier
-                                .fillMaxWidth()
-                                .height(contentPadding.calculateTopPadding())
-                        )
+                    Box(Modifier.padding(topContentPadding)) {
                         RecommendGallery(
                             recommend = recommend,
                             navigateToStream = navigateToStream,
@@ -247,14 +243,12 @@ private fun ForyouScreen(
                 }
 
                 if (showPlaylist) {
-                    val actualContentPadding = if (!showRecommend) contentPadding
-                    else contentPadding - contentPadding.only(WindowInsetsSides.Top)
                     PlaylistGallery(
                         rowCount = actualRowCount,
                         details = details,
                         navigateToPlaylist = navigateToPlaylist,
                         onMenu = { dialog = ForyouDialog.Selections(it) },
-                        contentPadding = actualContentPadding,
+                        contentPadding = otherContentPadding,
                         modifier = Modifier
                             .fillMaxSize()
                             .haze(

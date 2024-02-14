@@ -20,7 +20,7 @@ class M3UApplication : Application(), Configuration.Provider {
     lateinit var handler: CrashHandler
 
     @Inject
-    @Logger.Message
+    @Logger.MessageImpl
     lateinit var messager: Logger
 
     @Inject

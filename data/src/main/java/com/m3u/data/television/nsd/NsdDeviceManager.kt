@@ -1,4 +1,4 @@
-package com.m3u.data.local.nsd
+package com.m3u.data.television.nsd
 
 import android.net.nsd.NsdServiceInfo
 import kotlinx.coroutines.flow.Flow

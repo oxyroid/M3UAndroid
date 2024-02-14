@@ -1,23 +1,21 @@
 @file:Suppress("unused")
 
-package com.m3u.data.local.service
+package com.m3u.data.service
 
 import android.app.NotificationManager
 import android.content.Context
-import android.net.ConnectivityManager
 import android.net.nsd.NsdManager
-import android.net.wifi.WifiManager
 import androidx.core.app.NotificationManagerCompat
 import androidx.work.WorkManager
 import com.m3u.core.architecture.TraceFileProvider
 import com.m3u.core.architecture.logger.Logger
-import com.m3u.data.local.http.HttpServer
-import com.m3u.data.local.http.internal.HttpServerImpl
-import com.m3u.data.local.nsd.NsdDeviceManager
-import com.m3u.data.local.nsd.internal.NsdDeviceManagerImpl
-import com.m3u.data.local.service.internal.MessageManagerImpl
-import com.m3u.data.local.service.internal.PlayerManagerImpl
-import com.m3u.data.local.service.internal.TraceFileProviderImpl
+import com.m3u.data.television.http.HttpServer
+import com.m3u.data.television.http.internal.HttpServerImpl
+import com.m3u.data.television.nsd.NsdDeviceManager
+import com.m3u.data.television.nsd.internal.NsdDeviceManagerImpl
+import com.m3u.data.service.internal.MessageManagerImpl
+import com.m3u.data.service.internal.PlayerManagerImpl
+import com.m3u.data.service.internal.TraceFileProviderImpl
 import com.m3u.data.repository.logger.CommonLogger
 import com.m3u.data.repository.logger.MessageLogger
 import dagger.Binds
@@ -49,7 +47,7 @@ internal interface BindServicesModule {
 
     @Binds
     @Singleton
-    @Logger.Message
+    @Logger.MessageImpl
     fun bindMessageLogger(logger: MessageLogger): Logger
 
     @Binds
@@ -80,18 +78,6 @@ object ProvidedServicesModule {
     @Singleton
     fun provideNotificationManager(@ApplicationContext context: Context): NotificationManager {
         return context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-    }
-
-    @Provides
-    @Singleton
-    fun provideWifiManager(@ApplicationContext context: Context): WifiManager {
-        return context.getSystemService(Context.WIFI_SERVICE) as WifiManager
-    }
-
-    @Provides
-    @Singleton
-    fun provideConnectivityManager(@ApplicationContext context: Context): ConnectivityManager {
-        return context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
     }
 
     @Provides

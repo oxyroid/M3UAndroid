@@ -52,8 +52,8 @@ interface StreamDao {
     @Query("UPDATE streams SET favourite = :target WHERE id = :id")
     suspend fun setFavourite(id: Int, target: Boolean)
 
-    @Query("UPDATE streams SET banned = :target WHERE id = :id")
-    suspend fun ban(id: Int, target: Boolean)
+    @Query("UPDATE streams SET hidden = :target WHERE id = :id")
+    suspend fun hide(id: Int, target: Boolean)
 
     @Query("UPDATE streams SET seen = :target WHERE id = :id")
     suspend fun updateSeen(id: Int, target: Long)

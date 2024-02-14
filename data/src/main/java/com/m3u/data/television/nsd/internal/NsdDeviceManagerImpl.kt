@@ -1,4 +1,4 @@
-package com.m3u.data.local.nsd.internal
+package com.m3u.data.television.nsd.internal
 
 import android.net.nsd.NsdManager
 import android.net.nsd.NsdServiceInfo
@@ -6,9 +6,9 @@ import com.m3u.core.architecture.dispatcher.Dispatcher
 import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.prefix
-import com.m3u.data.local.nsd.NsdDeviceManager
-import com.m3u.data.local.nsd.NsdDeviceManager.Companion.META_DATA_PIN
-import com.m3u.data.local.nsd.NsdDeviceManager.Companion.SERVICE_TYPE
+import com.m3u.data.television.nsd.NsdDeviceManager
+import com.m3u.data.television.nsd.NsdDeviceManager.Companion.META_DATA_PIN
+import com.m3u.data.television.nsd.NsdDeviceManager.Companion.SERVICE_TYPE
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.channels.trySendBlocking

@@ -20,18 +20,17 @@ import com.m3u.data.api.LocalPreparedService
 import com.m3u.data.database.dao.ColorPackDao
 import com.m3u.data.database.model.ColorPack
 import com.m3u.data.database.model.Stream
-import com.m3u.data.local.service.MessageManager
+import com.m3u.data.service.MessageManager
 import com.m3u.data.repository.StreamRepository
 import com.m3u.data.repository.observeAll
-import com.m3u.data.work.BackupWorker
-import com.m3u.data.work.RestoreWorker
-import com.m3u.data.work.SubscriptionWorker
+import com.m3u.data.worker.BackupWorker
+import com.m3u.data.worker.RestoreWorker
+import com.m3u.data.worker.SubscriptionWorker
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flowOn
@@ -60,8 +59,8 @@ class SettingViewModel @Inject constructor(
     )
 ) {
     internal var subscribeForTv by mutableStateOf(false)
-    internal val banneds: StateFlow<ImmutableList<Stream>> = streamRepository
-        .observeAll { it.banned }
+    internal val hiddenStreams: StateFlow<ImmutableList<Stream>> = streamRepository
+        .observeAll { it.hidden }
         .map { it.toImmutableList() }
         .stateIn(
             scope = viewModelScope,
@@ -83,7 +82,7 @@ class SettingViewModel @Inject constructor(
             SettingEvent.Subscribe -> subscribe()
             is SettingEvent.OnTitle -> onTitle(event.title)
             is SettingEvent.OnUrl -> onUrl(event.url)
-            is SettingEvent.OnBanned -> onBanned(event.id)
+            is SettingEvent.OnHidden -> onHidden(event.id)
             SettingEvent.OnLocalStorage -> onLocalStorage()
             is SettingEvent.OpenDocument -> openDocument(event.uri)
         }
@@ -107,11 +106,11 @@ class SettingViewModel @Inject constructor(
         }
     }
 
-    private fun onBanned(streamId: Int) {
-        val banned = banneds.value.find { it.id == streamId }
-        if (banned != null) {
+    private fun onHidden(streamId: Int) {
+        val hidden = hiddenStreams.value.find { it.id == streamId }
+        if (hidden != null) {
             viewModelScope.launch {
-                streamRepository.ban(streamId, false)
+                streamRepository.hide(streamId, false)
             }
         }
     }
@@ -194,7 +193,6 @@ class SettingViewModel @Inject constructor(
         }
     }
 
-    @OptIn(ExperimentalCoroutinesApi::class)
     internal val backingUpOrRestoring: StateFlow<BackingUpAndRestoringState> = workManager
         .getWorkInfosFlow(
             WorkQuery.fromStates(

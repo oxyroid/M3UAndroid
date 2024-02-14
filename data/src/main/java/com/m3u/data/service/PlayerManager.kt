@@ -1,4 +1,4 @@
-package com.m3u.data.local.service
+package com.m3u.data.service
 
 import android.graphics.Rect
 import androidx.media3.common.C

@@ -1,4 +1,4 @@
-package com.m3u.data.local.http.endpoint
+package com.m3u.data.television.http.endpoint
 
 import android.content.Context
 import androidx.annotation.Keep
@@ -7,7 +7,7 @@ import androidx.work.OutOfQuotaPolicy
 import androidx.work.WorkManager
 import androidx.work.workDataOf
 import com.m3u.core.architecture.pref.Pref
-import com.m3u.data.work.SubscriptionWorker
+import com.m3u.data.worker.SubscriptionWorker
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route

@@ -15,4 +15,9 @@
 9. Never use view-based XML, you can use view in AndroidView composable only.
 10. Never use Painter to inflate drawable resources, use `ImageVector.vectorResource` instead.
 11. If you wanna to add some libraries, please make sure they are located in MavenCentral, google or
-    jitpack repository. And jar library is not allowed as well.  
+    jitpack repository. And jar library is not allowed as well.
+12. Due to compatibility needs, for data table `playlists` and `streams`,
+    please do not change the existing column names(referring to the real field names mapped to the
+    database, that is, the name field defined in ColumnInfo),
+    and remember the new fields must have default value (it needs to be defined in the
+    defaultValue field in both the data class and ColumnInfo).

@@ -17,7 +17,7 @@
     <string name="feat_setting_god_mode_description">ajusta la distribución con los botones del volumen</string>
     <string name="feat_setting_experimental_mode">modo experimental</string>
     <string name="feat_setting_experimental_mode_description">acciones no estables que traerían resultados inesperados</string>
-    <string name="feat_setting_label_muted_streams">directos bloqueados</string>
+    <string name="feat_setting_label_hidden_streams">directos bloqueados</string>
     <string name="feat_setting_label_add_playlist">añadir playlist</string>
     <string name="feat_setting_label_parse_from_clipboard">obtener del portapapeles</string>
     <string name="feat_setting_label_select_from_local_storage">seleccionar archivo</string>

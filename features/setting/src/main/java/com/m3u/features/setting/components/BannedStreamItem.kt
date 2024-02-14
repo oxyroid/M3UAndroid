@@ -12,9 +12,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import com.m3u.data.database.model.Stream
 
 @Composable
-internal fun BannedStreamItem(
+internal fun hiddenStreamstreamItem(
     stream: Stream,
-    onBanned: () -> Unit,
+    onHidden: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     ListItem(
@@ -42,7 +42,7 @@ internal fun BannedStreamItem(
                 enabled = true,
                 onClickLabel = null,
                 role = Role.Button,
-                onClick = onBanned
+                onClick = onHidden
             )
             .then(modifier)
     )
