@@ -1,7 +1,6 @@
 package com.m3u.data.television.http.endpoint
 
 import android.content.Context
-import androidx.annotation.Keep
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.OutOfQuotaPolicy
 import androidx.work.WorkManager
@@ -13,7 +12,6 @@ import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
-import kotlinx.serialization.Serializable
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -30,7 +28,10 @@ data class Playlists @Inject constructor(
                 val url = call.queryParameters["url"]
                 if (title == null || url == null) {
                     call.respond(
-                        SubscribeRep(success = false)
+                        DefRep(
+                            success = false,
+                            reason = "Both title and url are required."
+                        )
                     )
                     return@post
                 }
@@ -48,17 +49,10 @@ data class Playlists @Inject constructor(
                     .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
                     .build()
                 workManager.enqueue(request)
-
                 call.respond(
-                    SubscribeRep(success = true)
+                    DefRep(success = true)
                 )
             }
         }
     }
-
-    @Keep
-    @Serializable
-    data class SubscribeRep(
-        val success: Boolean
-    )
 }

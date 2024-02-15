@@ -6,8 +6,10 @@ import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import androidx.compose.runtime.Composable
 import com.m3u.core.unspecified.UBoolean
 import com.m3u.core.wrapper.Message
+import com.m3u.data.television.model.RemoteDirection
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 
 val EmptyHelper = object : Helper {
@@ -84,6 +86,9 @@ val EmptyHelper = object : Helper {
 
     override val windowSizeClass: WindowSizeClass
         @Composable get() = error("Cannot get windowSizeClass")
+
+    override val remoteDirection: SharedFlow<RemoteDirection>
+        get() = error("Cannot get remote direction")
 
     override fun enterPipMode(size: Rect) = error("Cannot enterPipMode")
     override fun toast(message: String) {

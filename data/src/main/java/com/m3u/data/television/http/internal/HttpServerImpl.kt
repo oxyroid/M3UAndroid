@@ -1,6 +1,7 @@
 package com.m3u.data.television.http.internal
 
 import com.m3u.data.television.http.HttpServer
+import com.m3u.data.television.http.endpoint.Remotes
 import com.m3u.data.television.http.endpoint.Playlists
 import com.m3u.data.television.http.endpoint.SayHello
 import io.ktor.serialization.kotlinx.KotlinxWebsocketSerializationConverter
@@ -22,7 +23,8 @@ import javax.inject.Inject
 
 internal class HttpServerImpl @Inject constructor(
     private val sayHello: SayHello,
-    private val playlists: Playlists
+    private val playlists: Playlists,
+    private val remotes: Remotes
 ) : HttpServer {
     private var server: EmbeddedServer<*, *>? = null
 
@@ -34,6 +36,7 @@ internal class HttpServerImpl @Inject constructor(
             routing {
                 sayHello.apply(this)
                 playlists.apply(this)
+                remotes.apply(this)
             }
         }.apply {
             start(false)

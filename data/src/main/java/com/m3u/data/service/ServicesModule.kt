@@ -18,6 +18,7 @@ import com.m3u.data.service.internal.PlayerManagerImpl
 import com.m3u.data.service.internal.TraceFileProviderImpl
 import com.m3u.data.repository.logger.CommonLogger
 import com.m3u.data.repository.logger.MessageLogger
+import com.m3u.data.service.internal.RemoteDirectionServiceImpl
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -57,6 +58,10 @@ internal interface BindServicesModule {
     @Binds
     @Singleton
     fun bindHttpServer(server: HttpServerImpl): HttpServer
+
+    @Binds
+    @Singleton
+    fun bindRemoteDirectionService(service: RemoteDirectionServiceImpl): RemoteDirectionService
 }
 
 @Module

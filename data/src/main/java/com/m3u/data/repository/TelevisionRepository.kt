@@ -12,15 +12,20 @@ abstract class TelevisionRepository {
     protected abstract fun broadcastOnTelevision()
     protected abstract fun closeBroadcastOnTelevision()
 
-    abstract val connectedTelevision: StateFlow<SayHello.Rep?>
+    abstract val connectedTelevision: StateFlow<SayHello.TelevisionInfo?>
 
-    abstract fun connectToTelevision(code: Int, timeout: Duration = 8.seconds): Flow<ConnectionToTelevision>
+    abstract fun connectToTelevision(
+        broadcastCode: Int,
+        timeout: Duration = 8.seconds
+    ): Flow<ConnectionToTelevisionValue>
+
     abstract suspend fun disconnectToTelevision()
 }
 
-sealed interface ConnectionToTelevision {
-    data class Idle(val reason: String? = null) : ConnectionToTelevision
-    data object Timeout : ConnectionToTelevision
-    data object Searching: ConnectionToTelevision
-    data class Completed(val host: String, val port: Int) : ConnectionToTelevision
+sealed interface ConnectionToTelevisionValue {
+    data class Idle(val reason: String? = null) : ConnectionToTelevisionValue
+    data object Timeout : ConnectionToTelevisionValue
+    data object Searching : ConnectionToTelevisionValue
+    data object Connecting : ConnectionToTelevisionValue
+    data class Completed(val host: String, val port: Int) : ConnectionToTelevisionValue
 }

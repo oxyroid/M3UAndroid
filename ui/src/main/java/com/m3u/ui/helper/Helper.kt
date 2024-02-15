@@ -11,7 +11,9 @@ import androidx.core.app.PictureInPictureModeChangedInfo
 import androidx.core.util.Consumer
 import com.m3u.core.unspecified.UBoolean
 import com.m3u.core.wrapper.Message
+import com.m3u.data.television.model.RemoteDirection
 import kotlinx.collections.immutable.ImmutableList
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 
 typealias OnUserLeaveHint = () -> Unit
@@ -33,6 +35,7 @@ interface Helper {
     val message: StateFlow<Message>
     var deep: Int
     val activityContext: Context
+    val remoteDirection: SharedFlow<RemoteDirection>
 
     @get:Composable
     val windowSizeClass: WindowSizeClass

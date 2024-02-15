@@ -1,5 +1,9 @@
 package com.m3u.features.foryou
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.m3u.core.architecture.dispatcher.Dispatcher
@@ -7,10 +11,13 @@ import com.m3u.core.architecture.dispatcher.M3uDispatchers.Default
 import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
 import com.m3u.core.architecture.pref.Pref
 import com.m3u.core.architecture.pref.observeAsFlow
-import com.m3u.data.repository.ConnectionToTelevision
+import com.m3u.data.api.LocalPreparedService
+import com.m3u.data.repository.ConnectionToTelevisionValue
 import com.m3u.data.repository.PlaylistRepository
 import com.m3u.data.repository.StreamRepository
 import com.m3u.data.repository.TelevisionRepository
+import com.m3u.data.television.model.RemoteDirection
+import com.m3u.features.foryou.components.ConnectBottomSheetValue
 import com.m3u.features.foryou.components.recommend.Recommend
 import com.m3u.features.foryou.model.PlaylistDetail
 import com.m3u.features.foryou.model.toDetail
@@ -41,10 +48,14 @@ class ForyouViewModel @Inject constructor(
     private val playlistRepository: PlaylistRepository,
     streamRepository: StreamRepository,
     private val televisionRepository: TelevisionRepository,
+    private val localService: LocalPreparedService,
     pref: Pref,
     @Dispatcher(IO) private val ioDispatcher: CoroutineDispatcher,
     @Dispatcher(Default) defaultDispatcher: CoroutineDispatcher
 ) : ViewModel() {
+    internal var code by mutableStateOf("")
+    internal var isConnectSheetVisible by mutableStateOf(false)
+
     internal val broadcastCodeOnTelevision: StateFlow<String?> = televisionRepository
         .broadcastCodeOnTelevision
         .map { code -> code?.let { convertToPaddedString(it) } }
@@ -59,8 +70,8 @@ class ForyouViewModel @Inject constructor(
         .map { streams ->
             // map playlistUrl to count
             streams
-                .groupBy { it.playlistUrl }
-                .mapValues { it.value.size }
+                .groupingBy { it.playlistUrl }
+                .eachCount()
         }
         .stateIn(
             scope = viewModelScope,
@@ -116,34 +127,68 @@ class ForyouViewModel @Inject constructor(
         }
     }
 
-    private val televisionCodeOnSmartphone = MutableSharedFlow<Int?>()
+    private val televisionCodeOnSmartphone = MutableSharedFlow<String>()
 
-    internal val connectionToTelevision: StateFlow<ConnectionToTelevision> =
+    private val connectionToTelevisionValue: StateFlow<ConnectionToTelevisionValue> =
         televisionCodeOnSmartphone.flatMapLatest { code ->
-            if (code != null) televisionRepository.connectToTelevision(code)
+            if (code.isNotEmpty()) televisionRepository.connectToTelevision(code.toInt())
             else {
                 televisionRepository.disconnectToTelevision()
-                flowOf(ConnectionToTelevision.Idle())
+                flowOf(ConnectionToTelevisionValue.Idle())
             }
         }
             .flowOn(ioDispatcher)
             .stateIn(
                 scope = viewModelScope,
-                initialValue = ConnectionToTelevision.Idle(),
+                initialValue = ConnectionToTelevisionValue.Idle(),
                 started = SharingStarted.WhileSubscribed(5_000)
             )
 
-    internal val connectedTelevision = televisionRepository.connectedTelevision
+    internal val connectBottomSheetValue: StateFlow<ConnectBottomSheetValue> = combine(
+        televisionRepository.connectedTelevision,
+        snapshotFlow { code },
+        connectionToTelevisionValue
+    ) { television, code, connection ->
+        when (television) {
+            null -> ConnectBottomSheetValue.Prepare(
+                code = code,
+                searching = connection is ConnectionToTelevisionValue.Searching ||
+                        connection is ConnectionToTelevisionValue.Connecting,
+                onSearch = ::openTelevisionCodeOnSmartphone,
+                onCode = { this.code = it }
+            )
 
-    internal fun openTelevisionCodeOnSmartphone(code: Int) {
+            else -> {
+                this.code = ""
+                ConnectBottomSheetValue.Remote(
+                    television = television,
+                    onRemoteDirection = ::onRemoteDirection,
+                    onDisconnect = ::closeTelevisionCodeOnSmartphone
+                )
+            }
+        }
+    }
+        .stateIn(
+            scope = viewModelScope,
+            initialValue = ConnectBottomSheetValue.Idle,
+            started = SharingStarted.Lazily
+        )
+
+    private fun openTelevisionCodeOnSmartphone() {
         viewModelScope.launch {
             televisionCodeOnSmartphone.emit(code)
         }
     }
 
-    internal fun closeTelevisionCodeOnSmartphone() {
+    private fun closeTelevisionCodeOnSmartphone() {
         viewModelScope.launch {
-            televisionCodeOnSmartphone.emit(null)
+            televisionCodeOnSmartphone.emit("")
+        }
+    }
+
+    private fun onRemoteDirection(remoteDirection: RemoteDirection) {
+        viewModelScope.launch {
+            localService.remoteDirection(remoteDirection.value)
         }
     }
 }

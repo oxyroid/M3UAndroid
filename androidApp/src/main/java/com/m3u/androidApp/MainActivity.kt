@@ -47,6 +47,8 @@ import com.m3u.core.util.coroutine.setValue
 import com.m3u.core.wrapper.Message
 import com.m3u.data.service.MessageManager
 import com.m3u.data.service.PlayerManager
+import com.m3u.data.service.RemoteDirectionService
+import com.m3u.data.television.model.RemoteDirection
 import com.m3u.ui.Toolkit
 import com.m3u.ui.helper.Action
 import com.m3u.ui.helper.Fob
@@ -58,6 +60,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -92,6 +95,9 @@ class MainActivity : AppCompatActivity() {
 
     @Inject
     lateinit var playerManager: PlayerManager
+
+    @Inject
+    lateinit var remoteDirectionService: RemoteDirectionService
 
     @Inject
     @Dispatcher(Main)
@@ -227,6 +233,9 @@ class MainActivity : AppCompatActivity() {
 
         override val activityContext: Context
             get() = this@MainActivity
+
+        override val remoteDirection: SharedFlow<RemoteDirection>
+            get() = remoteDirectionService.remoteDirection
 
         override fun toast(message: String) {
             lifecycleScope.launch(mainDispatcher) {

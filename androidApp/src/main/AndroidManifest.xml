@@ -23,19 +23,19 @@
 
     <application
         android:name=".M3UApplication"
-        android:icon="@mipmap/ic_launcher"
-        android:label="@string/app_name"
         android:allowBackup="true"
         android:appCategory="video"
         android:banner="@mipmap/ic_launcher"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:enableOnBackInvokedCallback="true"
         android:fullBackupContent="@xml/backup_rules"
+        android:hardwareAccelerated="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
         android:requestLegacyExternalStorage="true"
         android:supportsRtl="true"
         android:theme="@style/Theme.M3U.Starting"
         android:usesCleartextTraffic="true"
-        android:hardwareAccelerated="true"
         tools:targetApi="tiramisu">
 
         <activity

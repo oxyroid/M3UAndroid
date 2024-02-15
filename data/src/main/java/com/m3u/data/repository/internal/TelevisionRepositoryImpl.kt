@@ -10,12 +10,12 @@ import com.m3u.core.architecture.pref.Pref
 import com.m3u.core.architecture.pref.observeAsFlow
 import com.m3u.core.util.coroutine.onTimeout
 import com.m3u.data.api.LocalPreparedService
+import com.m3u.data.repository.ConnectionToTelevisionValue
+import com.m3u.data.repository.TelevisionRepository
 import com.m3u.data.television.http.HttpServer
 import com.m3u.data.television.http.endpoint.SayHello
 import com.m3u.data.television.http.internal.Utils
 import com.m3u.data.television.nsd.NsdDeviceManager
-import com.m3u.data.repository.ConnectionToTelevision
-import com.m3u.data.repository.TelevisionRepository
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -64,16 +64,16 @@ class TelevisionRepositoryImpl @Inject constructor(
             .launchIn(coroutineScope)
     }
 
-    private val _pinCodeForServer = MutableStateFlow<Int?>(null)
-    override val broadcastCodeOnTelevision = _pinCodeForServer.asStateFlow()
+    private val _broadcastCodeOnTelevision = MutableStateFlow<Int?>(null)
+    override val broadcastCodeOnTelevision = _broadcastCodeOnTelevision.asStateFlow()
 
-    private var serverJob: Job? = null
+    private var broadcastOnTelevisionJob: Job? = null
 
     override fun broadcastOnTelevision() {
         val serverPort = Utils.findPort()
         closeBroadcastOnTelevision()
         server.start(serverPort)
-        serverJob = coroutineScope.launch {
+        broadcastOnTelevisionJob = coroutineScope.launch {
             while (isActive) {
                 val nsdPort = Utils.findPort()
                 val pin = Utils.createPin()
@@ -94,12 +94,12 @@ class TelevisionRepositoryImpl @Inject constructor(
                         logger.log("start-server: opening...")
                     }
                     .onCompletion {
-                        _pinCodeForServer.value = null
+                        _broadcastCodeOnTelevision.value = null
                         logger.log("start-server: nsd completed")
                     }
                     .onEach { registered ->
                         logger.log("start-server: registered: $registered")
-                        _pinCodeForServer.value = if (registered != null) pin else null
+                        _broadcastCodeOnTelevision.value = if (registered != null) pin else null
                     }
                     .collect()
             }
@@ -108,29 +108,29 @@ class TelevisionRepositoryImpl @Inject constructor(
 
     override fun closeBroadcastOnTelevision() {
         server.stop()
-        serverJob?.cancel()
-        serverJob = null
+        broadcastOnTelevisionJob?.cancel()
+        broadcastOnTelevisionJob = null
     }
 
-    private val _connectedToTelevision = MutableStateFlow<SayHello.Rep?>(null)
-    override val connectedTelevision = _connectedToTelevision.asStateFlow()
+    private val _connectedTelevision = MutableStateFlow<SayHello.TelevisionInfo?>(null)
+    override val connectedTelevision = _connectedTelevision.asStateFlow()
 
-    private var connectionToTelevisionJob: Job? = null
+    private var connectToTelevisionJob: Job? = null
     override fun connectToTelevision(
-        code: Int,
+        broadcastCode: Int,
         timeout: Duration
-    ): Flow<ConnectionToTelevision> = channelFlow {
+    ): Flow<ConnectionToTelevisionValue> = channelFlow {
         val completed = nsdDeviceManager
             .search()
-            .onStart { trySendBlocking(ConnectionToTelevision.Searching) }
+            .onStart { trySendBlocking(ConnectionToTelevisionValue.Searching) }
             .onTimeout(timeout) {
                 logger.log("pair: timeout")
-                trySendBlocking(ConnectionToTelevision.Timeout)
+                trySendBlocking(ConnectionToTelevisionValue.Timeout)
             }
             .mapNotNull { all ->
                 logger.log("pair: all devices: $all")
                 val info = all.find {
-                    it.getAttribute(NsdDeviceManager.META_DATA_PIN) == code.toString()
+                    it.getAttribute(NsdDeviceManager.META_DATA_PIN) == broadcastCode.toString()
                 } ?: return@mapNotNull null
                 val port = info.getAttribute(NsdDeviceManager.META_DATA_PORT)
                     ?.toIntOrNull()
@@ -139,27 +139,28 @@ class TelevisionRepositoryImpl @Inject constructor(
                     info.getAttribute(NsdDeviceManager.META_DATA_HOST) ?: return@mapNotNull null
 
                 logger.log("pair: connecting")
-                ConnectionToTelevision.Completed(host, port)
+                ConnectionToTelevisionValue.Completed(host, port)
             }
             .firstOrNull()
 
         if (completed != null) {
-            trySendBlocking(completed)
-            connectionToTelevisionJob?.cancel()
-            connectionToTelevisionJob = localService
+            trySendBlocking(ConnectionToTelevisionValue.Connecting)
+            connectToTelevisionJob?.cancel()
+            connectToTelevisionJob = localService
                 .prepare(completed.host, completed.port)
                 .onEach { rep ->
                     logger.log("pair: connected")
-                    _connectedToTelevision.value = rep
+                    _connectedTelevision.value = rep
+                    trySendBlocking(completed)
                 }
                 .launchIn(coroutineScope)
         }
     }
 
     override suspend fun disconnectToTelevision() {
-        connectionToTelevisionJob?.cancel()
-        connectionToTelevisionJob = null
-        _connectedToTelevision.value = null
+        connectToTelevisionJob?.cancel()
+        connectToTelevisionJob = null
+        _connectedTelevision.value = null
     }
 
     private fun NsdServiceInfo.getAttribute(key: String): String? =

@@ -24,34 +24,32 @@ data class SayHello @Inject constructor(
     private val publisher: Publisher,
     @Logger.MessageImpl private val messager: Logger
 ) : Endpoint {
+    private val televisionInfo = with(publisher) {
+        TelevisionInfo(model, versionCode, snapshot, abi)
+    }
+
     override fun apply(route: Route) {
         route.route("/say_hello") {
             get {
-                val rep = Rep(
-                    model = publisher.model,
-                    version = publisher.versionCode,
-                    snapshot = publisher.snapshot,
-                    abi = publisher.abi
-                )
-                call.respond(rep)
+                call.respond(televisionInfo)
             }
             webSocket {
                 val model = call.request.queryParameters["model"] ?: "?"
-                val rep = with(publisher) { Rep(model, versionCode, snapshot, abi) }
 
                 messager.log("Connection from [$model]", Message.LEVEL_INFO)
-                sendSerialized(rep)
+                sendSerialized(televisionInfo)
 
                 for (frame in incoming) {
                     when (frame) {
                         is Frame.Text -> {
                             messager.log("[$model] " + frame.readText(), Message.LEVEL_WARN)
-                            sendSerialized(rep)
+                            sendSerialized(televisionInfo)
                         }
 
                         is Frame.Binary -> {
 
                         }
+
                         is Frame.Close -> {
                             messager.log("Connection lost from [$model], reason: ${frame.readReason()}")
                         }
@@ -66,7 +64,7 @@ data class SayHello @Inject constructor(
     @Keep
     @Serializable
     @Immutable
-    data class Rep(
+    data class TelevisionInfo(
         val model: String,
         val version: Int,
         val snapshot: Boolean,

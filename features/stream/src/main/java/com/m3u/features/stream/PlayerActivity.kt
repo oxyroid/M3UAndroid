@@ -35,6 +35,8 @@ import com.m3u.core.wrapper.Message
 import com.m3u.data.service.MessageManager
 import com.m3u.data.service.PlayerManager
 import com.m3u.data.repository.StreamRepository
+import com.m3u.data.service.RemoteDirectionService
+import com.m3u.data.television.model.RemoteDirection
 import com.m3u.ui.Toolkit
 import com.m3u.ui.helper.Action
 import com.m3u.ui.helper.Fob
@@ -45,6 +47,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -82,6 +85,9 @@ class PlayerActivity : ComponentActivity() {
 
     @Inject
     lateinit var streamRepository: StreamRepository
+
+    @Inject
+    lateinit var remoteDirectionService: RemoteDirectionService
 
     @Inject
     @Dispatcher(Main)
@@ -214,6 +220,9 @@ class PlayerActivity : ComponentActivity() {
 
         override val windowSizeClass: WindowSizeClass
             @Composable get() = calculateWindowSizeClass(activity = this@PlayerActivity)
+
+        override val remoteDirection: SharedFlow<RemoteDirection>
+            get() = remoteDirectionService.remoteDirection
 
         override fun toast(message: String) {
             lifecycleScope.launch(mainDispatcher) {
