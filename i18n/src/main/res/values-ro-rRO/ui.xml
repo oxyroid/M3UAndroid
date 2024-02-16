@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="ui_title_foryou">M3U</string>
+    <string name="ui_title_favourite">Favorite</string>
+    <string name="ui_title_setting">Setari</string>
+
+    <string name="ui_destination_foryou">Pentru Tine</string>
+    <string name="ui_destination_favourite">Favorite</string>
+    <string name="ui_destination_setting">Setari</string>
+
+    <string name="ui_error_unknown">eroare necunoscuta</string>
+    <string name="ui_cd_top_bar_on_back_pressed">inapoi</string>
+
+    <string name="ui_theme_card_left">stanga</string>
+    <string name="ui_theme_card_right">dreapta</string>
+
+    <string name="ui_sort">Aranjare</string>
+    <string name="ui_sort_asc">A-Z</string>
+    <string name="ui_sort_desc">Z-A</string>
+    <string name="ui_sort_recently">recent</string>
+    <string name="ui_sort_never_played">niciodata rulat</string>
+    <string name="ui_sort_unspecified">Nespecificat</string>
+
+    <string name="ui_connect">Conectare</string>
+</resources>

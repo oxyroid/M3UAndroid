@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="feat_foryou_hidden_streams_playlist">streamuri ascunse</string>
+    <string name="feat_foryou_unsubscribe_playlist">dezabonare</string>
+    <string name="feat_foryou_copy_playlist_url">copie adresa lista</string>
+    <string name="feat_foryou_rename_playlist">redenumire</string>
+    <string name="feat_foryou_imported_playlist_title">importat</string>
+    <string name="feat_foryou_prompt_add_playlist">adauga o lista</string>
+    <string name="feat_foryou_recommend_unseen_label">favorite pe care le vei mai vedea</string>
+    <string name="feat_foryou_recommend_unseen_more_than_days">mai mult de %d zile</string>
+    <string name="feat_foryou_recommend_unseen_days">%d zile</string>
+    <string name="feat_foryou_recommend_unseen_hours">%d ore</string>
+    <string name="feat_foryou_connect_title">codul de pe TV</string>
+    <string name="feat_foryou_connect_subtitle">Verificati sa fiti conectat la aceasi retea Wi-Fi</string>
+</resources>
