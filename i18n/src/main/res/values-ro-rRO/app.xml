@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_label_crash">erori aplicatie</string>
+    <string name="app_shortcut_stream_recently_short_label">Recent</string>
+    <string name="app_shortcut_stream_recently_long_label">Ruleaaz canale recente</string>
+    <string name="app_shortcut_stream_recently_disabled">indisponibil</string>
+</resources>
