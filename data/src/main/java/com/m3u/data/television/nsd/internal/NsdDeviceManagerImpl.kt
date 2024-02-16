@@ -6,6 +6,7 @@ import com.m3u.core.architecture.dispatcher.Dispatcher
 import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.prefix
+import com.m3u.data.television.Utils
 import com.m3u.data.television.nsd.NsdDeviceManager
 import com.m3u.data.television.nsd.NsdDeviceManager.Companion.META_DATA_PIN
 import com.m3u.data.television.nsd.NsdDeviceManager.Companion.SERVICE_TYPE
@@ -15,7 +16,6 @@ import kotlinx.coroutines.channels.trySendBlocking
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.flowOn
-import java.net.ServerSocket
 import javax.inject.Inject
 
 class NsdDeviceManagerImpl @Inject constructor(
@@ -99,8 +99,7 @@ class NsdDeviceManagerImpl @Inject constructor(
         metadata: Map<String, Any>
     ): Flow<NsdServiceInfo?> = callbackFlow {
         logger.log("broadcast")
-        val socket = ServerSocket(0)
-        val localPort = socket.localPort
+        val localPort = Utils.findPort()
 
         val serviceInfo = NsdServiceInfo().apply {
             serviceName = name

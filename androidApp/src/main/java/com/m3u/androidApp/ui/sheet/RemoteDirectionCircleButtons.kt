@@ -1,15 +1,10 @@
-package com.m3u.features.foryou.components.sheet
+package com.m3u.androidApp.ui.sheet
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.draggable2D
 import androidx.compose.foundation.gestures.rememberDraggable2DState
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material.icons.Icons
@@ -19,12 +14,10 @@ import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.KeyboardArrowUp
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.InternalComposeApi
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -32,51 +25,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.isUnspecified
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.m3u.data.television.http.endpoint.SayHello
 import com.m3u.data.television.model.RemoteDirection
-import com.m3u.material.model.LocalSpacing
+import com.m3u.material.model.LocalHazeState
+import dev.chrisbanes.haze.hazeChild
 
 @Composable
-@InternalComposeApi
-internal fun ColumnScope.RemoteControlSheetContent(
-    television: SayHello.TelevisionInfo,
-    onRemoteDirection: (RemoteDirection) -> Unit,
-    onDisconnect: () -> Unit
-) {
-    val spacing = LocalSpacing.current
-    Column(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(spacing.medium)
-    ) {
-        Text(
-            text = television.model,
-            textAlign = TextAlign.Center,
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 8.dp),
-        )
-
-        RemoteDirectionCircleButtons(
-            onRemoteDirection = onRemoteDirection
-        )
-
-        TextButton(
-            onClick = onDisconnect,
-            modifier = Modifier.padding(top = 4.dp)
-        ) {
-            Text("DISCONNECT")
-        }
-    }
-}
-
-@Composable
-private fun RemoteDirectionCircleButtons(
+internal fun RemoteDirectionCircleButtons(
     onRemoteDirection: (RemoteDirection) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -90,9 +49,11 @@ private fun RemoteDirectionCircleButtons(
         currentCenter += offset
     }
     var targetDirection: RemoteDirection? by remember { mutableStateOf(null) }
+    var targetRotationX: Float by remember { mutableFloatStateOf(0f) }
+    var targetRotationY: Float by remember { mutableFloatStateOf(0f) }
 
-    val containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(4.dp)
-    val contentColor = MaterialTheme.colorScheme.onSurface
+    val containerColor = MaterialTheme.colorScheme.surfaceVariant
+    val contentColor = Color.White
     val hapticFeedback = LocalHapticFeedback.current
 
     Box(contentAlignment = Alignment.Center) {
@@ -106,20 +67,26 @@ private fun RemoteDirectionCircleButtons(
                         currentCenter = Offset.Unspecified
                     }
                 )
+                .graphicsLayer {
+                    rotationX = targetRotationX
+                    rotationY = targetRotationY
+                }
                 .then(modifier)
         ) {
             val radius = size.minDimension / 2
 
             if (currentCenter.isUnspecified) {
                 targetDirection = null
+                targetRotationX = 0f
+                targetRotationY = 0f
             } else {
-                val merged = (currentCenter - center)
+                val merged = currentCenter - center
                 val tan = merged.x / merged.y
                 //  +1(--)   0   -1(+-)
                 //  gigantic     gigantic
                 //  -1(-+)   0   +1(++)
                 targetDirection = when {
-                    (currentCenter - center).getDistance() < radius * 0.65f -> null
+                    merged.getDistance() < radius * 0.65f -> null
                     currentCenter == center -> null
                     merged.x < 0f && (tan > 1f || tan < -1f) -> RemoteDirection.LEFT
                     merged.x > 0f && (tan > 1f || tan < -1f) -> RemoteDirection.RIGHT
@@ -127,6 +94,8 @@ private fun RemoteDirectionCircleButtons(
                     merged.y > 0f && tan in -1f..1f -> RemoteDirection.DOWN
                     else -> null
                 }
+                targetRotationX = merged.copy(x = 0f).getDistance() / radius * 15 * if (merged.y < 0) -1f else 1f
+                targetRotationY = merged.copy(y = 0f).getDistance() / radius * 15 * if (merged.x > 0) -1f else 1f
             }
 
 
@@ -136,7 +105,7 @@ private fun RemoteDirectionCircleButtons(
                     currentCenter = center
                 }
 
-                !triggered && ((currentCenter - center).getDistance() > (radius * 0.65f)) -> {
+                !triggered && (currentCenter - center).getDistance() > (radius * 0.65f) -> {
                     triggered = true
                     targetDirection?.let { onRemoteDirection(it) }
                     hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -146,6 +115,11 @@ private fun RemoteDirectionCircleButtons(
                 color = containerColor,
                 radius = radius
             )
+        }
+        Canvas(
+            Modifier.matchParentSize()
+        ) {
+            val radius = size.minDimension / 2
             drawCircle(
                 color = contentColor,
                 radius = radius / 4 * triggeredZoom,
@@ -163,7 +137,7 @@ private fun RemoteDirectionCircleButtons(
             Icon(
                 imageVector = icon,
                 contentDescription = targetDirection?.name,
-                tint = contentColor.copy(0.45f),
+                tint = contentColor.copy(0.65f),
                 modifier = Modifier.matchParentSize()
             )
         }

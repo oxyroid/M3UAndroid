@@ -3,12 +3,6 @@ package com.m3u.features.foryou
 import android.content.res.Configuration.ORIENTATION_PORTRAIT
 import android.view.KeyEvent
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.Crossfade
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,10 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -37,8 +28,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.core.util.basic.title
 import com.m3u.data.database.model.Playlist
-import com.m3u.features.foryou.components.ConnectBottomSheet
-import com.m3u.features.foryou.components.ConnectBottomSheetValue
 import com.m3u.features.foryou.components.ForyouDialog
 import com.m3u.features.foryou.components.OnRename
 import com.m3u.features.foryou.components.OnUnsubscribe
@@ -49,7 +38,6 @@ import com.m3u.features.foryou.components.recommend.RecommendGallery
 import com.m3u.features.foryou.model.PlaylistDetail
 import com.m3u.i18n.R.string
 import com.m3u.material.components.Background
-import com.m3u.material.components.Button
 import com.m3u.material.ktx.interceptVolumeEvent
 import com.m3u.material.ktx.isTelevision
 import com.m3u.material.ktx.split
@@ -57,7 +45,6 @@ import com.m3u.material.ktx.thenIf
 import com.m3u.material.model.LocalHazeState
 import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.EventHandler
-import com.m3u.ui.FontFamilies
 import com.m3u.ui.ResumeEvent
 import com.m3u.ui.helper.Action
 import com.m3u.ui.helper.LocalHelper
@@ -78,30 +65,12 @@ fun ForyouRoute(
 ) {
     val helper = LocalHelper.current
     val pref = LocalPref.current
-    val spacing = LocalSpacing.current
 
     val tv = isTelevision()
     val title = stringResource(string.ui_title_foryou)
 
     val details by viewModel.details.collectAsStateWithLifecycle()
     val recommend by viewModel.recommend.collectAsStateWithLifecycle()
-
-    // for televisions
-    val broadcastCodeOnTelevision by viewModel.broadcastCodeOnTelevision.collectAsStateWithLifecycle()
-
-    // for smartphones
-    val connectBottomSheetValue by viewModel.connectBottomSheetValue.collectAsStateWithLifecycle()
-    val searching by remember {
-        derivedStateOf {
-            with(connectBottomSheetValue) {
-                this is ConnectBottomSheetValue.Prepare && searching
-            }
-        }
-    }
-    val sheetState = rememberModalBottomSheetState(
-        skipPartiallyExpanded = true,
-        confirmValueChange = { !searching }
-    )
 
     EventHandler(resume) {
         helper.deep = 0
@@ -122,13 +91,11 @@ fun ForyouRoute(
                 recommend = recommend,
                 rowCount = pref.rowCount,
                 contentPadding = contentPadding,
-                showTelevisionConnection = !tv && pref.remoteControl,
                 navigateToPlaylist = navigateToPlaylist,
                 navigateToStream = navigateToStream,
                 navigateToSettingPlaylistManagement = navigateToSettingPlaylistManagement,
                 unsubscribe = { viewModel.unsubscribe(it) },
                 rename = { playlistUrl, target -> viewModel.rename(playlistUrl, target) },
-                openTelevisionConnectionSheet = { viewModel.isConnectSheetVisible = true },
                 modifier = Modifier
                     .fillMaxSize()
                     .thenIf(!tv && pref.godMode) {
@@ -141,30 +108,6 @@ fun ForyouRoute(
                         }
                     }
             )
-            ConnectBottomSheet(
-                sheetState = sheetState,
-                visible = viewModel.isConnectSheetVisible,
-                value = connectBottomSheetValue,
-                onDismissRequest = {
-                    viewModel.code = ""
-                    viewModel.isConnectSheetVisible = false
-                }
-            )
-            Crossfade(
-                targetState = broadcastCodeOnTelevision,
-                label = "broadcast-code-on-television",
-                modifier = Modifier
-                    .padding(spacing.medium)
-                    .align(Alignment.BottomEnd)
-            ) { code ->
-                if (code != null) {
-                    Text(
-                        text = code,
-                        style = MaterialTheme.typography.headlineMedium,
-                        fontFamily = FontFamilies.JetbrainsMono
-                    )
-                }
-            }
         }
     }
 }
@@ -175,12 +118,10 @@ private fun ForyouScreen(
     details: ImmutableList<PlaylistDetail>,
     recommend: Recommend,
     contentPadding: PaddingValues,
-    showTelevisionConnection: Boolean,
     navigateToPlaylist: (Playlist) -> Unit,
     navigateToStream: () -> Unit,
     navigateToSettingPlaylistManagement: () -> Unit,
     unsubscribe: OnUnsubscribe,
-    openTelevisionConnectionSheet: () -> Unit,
     rename: OnRename,
     modifier: Modifier = Modifier
 ) {
@@ -237,21 +178,6 @@ private fun ForyouScreen(
                         )
                     }
                 }
-            }
-            AnimatedVisibility(
-                visible = showTelevisionConnection,
-                enter = slideInVertically { it } + fadeIn(),
-                exit = slideOutVertically { it } + fadeOut(),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .align(Alignment.BottomCenter)
-                    .padding(spacing.medium)
-                    .padding(contentPadding)
-            ) {
-                Button(
-                    text = stringResource(string.feat_foryou_connect_title),
-                    onClick = openTelevisionConnectionSheet
-                )
             }
             ForyouDialog(
                 status = dialog,

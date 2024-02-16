@@ -1,6 +1,10 @@
 package com.m3u.core.wrapper
 
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.remember
+import androidx.compose.ui.res.stringResource
+import java.util.Locale
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
@@ -41,6 +45,27 @@ sealed class Message(
         companion object {
             val EMPTY = Dynamic("", LEVEL_EMPTY, "", TYPE_EMPTY)
         }
+    }
+
+    @Composable
+    fun formatText(): String = when (this) {
+        is Static -> {
+            val args = remember(formatArgs) {
+                formatArgs.flatMap {
+                    when (it) {
+                        is Array<*> -> it.toList().filterNotNull()
+                        is Collection<*> -> it.toList().filterNotNull()
+                        else -> listOf(it)
+                    }
+                }.toTypedArray()
+            }
+            stringResource(resId, *args)
+        }
+
+        is Dynamic -> value
+    }.replaceFirstChar {
+        if (it.isLowerCase()) it.titlecase(Locale.ROOT)
+        else it.toString()
     }
 
     companion object {

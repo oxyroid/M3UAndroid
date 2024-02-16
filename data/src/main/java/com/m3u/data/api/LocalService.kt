@@ -3,9 +3,9 @@ package com.m3u.data.api
 import com.m3u.core.architecture.Publisher
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.execute
-import com.m3u.core.architecture.logger.sandBox
 import com.m3u.data.television.http.endpoint.DefRep
 import com.m3u.data.television.http.endpoint.SayHello
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.channels.trySendBlocking
 import kotlinx.coroutines.flow.Flow
@@ -46,7 +46,10 @@ class LocalPreparedService @Inject constructor(
     @Logger.MessageImpl private val logger: Logger,
     private val publisher: Publisher,
 ) : LocalService {
-    fun prepare(host: String, port: Int): Flow<SayHello.TelevisionInfo> = callbackFlow {
+    fun prepare(
+        host: String,
+        port: Int
+    ): Flow<SayHello.TelevisionInfo> = callbackFlow {
         val json = Json {
             ignoreUnknownKeys = true
         }
@@ -71,17 +74,18 @@ class LocalPreparedService @Inject constructor(
             .build()
 
         val listener = object : WebSocketListener() {
-            override fun onMessage(webSocket: WebSocket, text: String) = logger.sandBox {
+            override fun onMessage(webSocket: WebSocket, text: String) {
                 when (
-                    val televisionInfo = json.decodeFromString<SayHello.TelevisionInfo?>(text)
+                    val info = json.decodeFromString<SayHello.TelevisionInfo?>(text)
                 ) {
                     null -> {}
                     else -> {
-                        check(televisionInfo.version == publisher.versionCode) {
-                            channel.close()
-                            "The software version is incompatible, please make sure the version is consistent."
+                        runCatching {
+                            trySendBlocking(checkCompatibleVersion(info))
+                        }.onFailure {
+                            logger.log(it.message.orEmpty())
+                            cancel()
                         }
-                        trySendBlocking(televisionInfo)
                     }
                 }
             }
@@ -117,5 +121,13 @@ class LocalPreparedService @Inject constructor(
     }
 
     private var api: LocalService? = null
-    private fun requireApi(): LocalService = checkNotNull(api) { "You haven't connected television" }
+    private fun requireApi(): LocalService =
+        checkNotNull(api) { "You haven't connected television" }
+
+    private fun checkCompatibleVersion(info: SayHello.TelevisionInfo): SayHello.TelevisionInfo {
+        check(info.version == publisher.versionCode) {
+            "The software version is incompatible\nplease make sure the version is consistent."
+        }
+        return info
+    }
 }

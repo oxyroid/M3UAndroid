@@ -1,10 +1,12 @@
-package com.m3u.features.foryou.components.sheet
+package com.m3u.androidApp.ui.sheet
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -24,9 +26,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.m3u.androidApp.ui.CodeRow
 import com.m3u.core.util.basic.title
-import com.m3u.features.foryou.components.CodeRow
-import com.m3u.features.foryou.components.VirtualNumberKeyboard
+import com.m3u.core.wrapper.Message
 import com.m3u.i18n.R
 
 @Composable
@@ -34,11 +36,16 @@ import com.m3u.i18n.R
 internal fun ColumnScope.PrepareSheetContent(
     code: String,
     connecting: Boolean,
+    message: Message,
     onConnect: () -> Unit,
     onCode: (String) -> Unit
 ) {
     val title = stringResource(R.string.feat_foryou_connect_title).title()
-    val subtitle = stringResource(R.string.feat_foryou_connect_subtitle)
+    val subtitle = if (message.level == Message.LEVEL_EMPTY) {
+        stringResource(R.string.feat_foryou_connect_subtitle)
+    } else {
+        message.formatText()
+    }
     Column(
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -52,14 +59,23 @@ internal fun ColumnScope.PrepareSheetContent(
             modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 8.dp),
         )
 
-        Text(
-            text = subtitle,
-            textAlign = TextAlign.Center,
-            fontSize = 14.sp,
-            lineHeight = 16.sp,
-            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(0.78f),
-            modifier = Modifier.padding(16.dp, 8.dp, 16.dp, 0.dp)
-        )
+        AnimatedContent(
+            targetState = subtitle,
+            label = "subtitle",
+            transitionSpec = {
+                fadeIn() + slideInVertically { it } togetherWith fadeOut() + slideOutVertically { it }
+            },
+        ) { subtitle ->
+            Text(
+                text = subtitle,
+                textAlign = TextAlign.Center,
+                fontSize = 14.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(0.78f),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp, 8.dp, 16.dp, 0.dp)
+            )
+        }
         CodeRow(
             code = code,
             length = 6,

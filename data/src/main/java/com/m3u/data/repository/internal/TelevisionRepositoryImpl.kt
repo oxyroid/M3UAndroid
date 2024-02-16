@@ -9,16 +9,19 @@ import com.m3u.core.architecture.logger.prefix
 import com.m3u.core.architecture.pref.Pref
 import com.m3u.core.architecture.pref.observeAsFlow
 import com.m3u.core.util.coroutine.onTimeout
+import com.m3u.core.wrapper.Resource
+import com.m3u.core.wrapper.asResource
 import com.m3u.data.api.LocalPreparedService
 import com.m3u.data.repository.ConnectionToTelevisionValue
 import com.m3u.data.repository.TelevisionRepository
+import com.m3u.data.television.Utils
 import com.m3u.data.television.http.HttpServer
 import com.m3u.data.television.http.endpoint.SayHello
-import com.m3u.data.television.http.internal.Utils
 import com.m3u.data.television.nsd.NsdDeviceManager
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.channels.trySendBlocking
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -132,13 +135,14 @@ class TelevisionRepositoryImpl @Inject constructor(
                 val info = all.find {
                     it.getAttribute(NsdDeviceManager.META_DATA_PIN) == broadcastCode.toString()
                 } ?: return@mapNotNull null
-                val port = info.getAttribute(NsdDeviceManager.META_DATA_PORT)
+                val port = info
+                    .getAttribute(NsdDeviceManager.META_DATA_PORT)
                     ?.toIntOrNull()
                     ?: return@mapNotNull null
-                val host =
-                    info.getAttribute(NsdDeviceManager.META_DATA_HOST) ?: return@mapNotNull null
+                val host = info
+                    .getAttribute(NsdDeviceManager.META_DATA_HOST)
+                    ?: return@mapNotNull null
 
-                logger.log("pair: connecting")
                 ConnectionToTelevisionValue.Completed(host, port)
             }
             .firstOrNull()
@@ -148,12 +152,30 @@ class TelevisionRepositoryImpl @Inject constructor(
             connectToTelevisionJob?.cancel()
             connectToTelevisionJob = localService
                 .prepare(completed.host, completed.port)
-                .onEach { rep ->
-                    logger.log("pair: connected")
-                    _connectedTelevision.value = rep
-                    trySendBlocking(completed)
+                .asResource()
+                .onEach { resource ->
+                    when (resource) {
+                        Resource.Loading -> {
+                            logger.log("pair: connecting")
+                        }
+
+                        is Resource.Success -> {
+                            logger.log("pair: connected")
+                            _connectedTelevision.value = resource.data
+                            trySendBlocking(completed)
+                        }
+
+                        is Resource.Failure -> {
+                            logger.log("pair: catch an error, ${resource.message}")
+                            _connectedTelevision.value = null
+                            trySendBlocking(ConnectionToTelevisionValue.Idle(resource.message))
+                        }
+                    }
                 }
                 .launchIn(coroutineScope)
+        }
+        awaitClose {
+            trySendBlocking(ConnectionToTelevisionValue.Idle())
         }
     }
 

@@ -35,7 +35,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -44,7 +43,6 @@ import com.m3u.material.model.LocalDuration
 import com.m3u.material.model.LocalSpacing
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
-import java.util.Locale
 import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
@@ -138,7 +136,6 @@ fun SnackHost(
                 scaleX = currentScale
                 scaleY = currentScale
             }
-            .padding(spacing.medium)
             .then(modifier)
     ) {
         LaunchedEffect(Unit) {
@@ -155,7 +152,7 @@ fun SnackHost(
             interactionSource = interactionSource,
             modifier = Modifier.animateContentSize()
         ) {
-            val text = AppSnackHostDefaults.formatText(message)
+            val text = message.formatText()
 
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -187,31 +184,6 @@ fun SnackHost(
                     )
                 }
             }
-        }
-    }
-}
-
-object AppSnackHostDefaults {
-    @Composable
-    fun formatText(message: Message): String {
-        return when (message) {
-            is Message.Static -> {
-                val args = remember(message.formatArgs) {
-                    message.formatArgs.flatMap {
-                        when (it) {
-                            is Array<*> -> it.toList().filterNotNull()
-                            is Collection<*> -> it.toList().filterNotNull()
-                            else -> listOf(it)
-                        }
-                    }.toTypedArray()
-                }
-                stringResource(message.resId, *args)
-            }
-
-            is Message.Dynamic -> message.value
-        }.replaceFirstChar {
-            if (it.isLowerCase()) it.titlecase(Locale.ROOT)
-            else it.toString()
         }
     }
 }

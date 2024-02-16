@@ -24,8 +24,8 @@ abstract class TelevisionRepository {
 
 sealed interface ConnectionToTelevisionValue {
     data class Idle(val reason: String? = null) : ConnectionToTelevisionValue
-    data object Timeout : ConnectionToTelevisionValue
     data object Searching : ConnectionToTelevisionValue
     data object Connecting : ConnectionToTelevisionValue
+    data object Timeout : ConnectionToTelevisionValue
     data class Completed(val host: String, val port: Int) : ConnectionToTelevisionValue
 }

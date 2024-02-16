@@ -3,9 +3,13 @@ package com.m3u.core.wrapper
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
 import kotlinx.coroutines.channels.ProducerScope
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.FlowCollector
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 import kotlin.experimental.ExperimentalTypeInference
 
 sealed class Resource<out T> {
@@ -22,6 +26,10 @@ sealed class Resource<out T> {
         val message: String?
     ) : Resource<T>()
 }
+
+fun <T> Flow<T>.asResource(): Flow<Resource<T>> = map<T, Resource<T>> { Resource.Success(it) }
+    .onStart { emit(Resource.Loading) }
+    .catch { emit(Resource.Failure(it.message)) }
 
 @OptIn(ExperimentalTypeInference::class)
 fun <T> resourceFlow(@BuilderInference block: suspend FlowCollector<Resource<T>>.() -> Unit) =

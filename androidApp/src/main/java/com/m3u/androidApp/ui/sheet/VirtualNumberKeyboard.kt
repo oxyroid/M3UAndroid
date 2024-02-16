@@ -1,4 +1,4 @@
-package com.m3u.features.foryou.components
+package com.m3u.androidApp.ui.sheet
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable

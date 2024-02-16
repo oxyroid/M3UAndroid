@@ -1,4 +1,4 @@
-package com.m3u.features.foryou.components
+package com.m3u.androidApp.ui
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
@@ -12,10 +12,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.InternalComposeApi
 import androidx.compose.ui.Modifier
+import com.m3u.androidApp.ui.sheet.PrepareSheetContent
+import com.m3u.androidApp.ui.sheet.RemoteControlSheetContent
+import com.m3u.core.wrapper.Message
 import com.m3u.data.television.http.endpoint.SayHello
 import com.m3u.data.television.model.RemoteDirection
-import com.m3u.features.foryou.components.sheet.PrepareSheetContent
-import com.m3u.features.foryou.components.sheet.RemoteControlSheetContent
 
 @Immutable
 sealed class ConnectBottomSheetValue {
@@ -42,6 +43,7 @@ sealed class ConnectBottomSheetValue {
 @OptIn(InternalComposeApi::class)
 @Composable
 internal fun ConnectBottomSheet(
+    message: Message,
     value: ConnectBottomSheetValue,
     visible: Boolean,
     sheetState: SheetState,
@@ -69,6 +71,7 @@ internal fun ConnectBottomSheet(
                             code = value.code,
                             connecting = value.searching,
                             onConnect = value.onSearch,
+                            message = message,
                             onCode = value.onCode
                         )
                     }
@@ -77,7 +80,8 @@ internal fun ConnectBottomSheet(
                         RemoteControlSheetContent(
                             television = value.television,
                             onRemoteDirection = value.onRemoteDirection,
-                            onDisconnect = value.onDisconnect
+                            onDisconnect = value.onDisconnect,
+                            message = message,
                         )
                     }
 
