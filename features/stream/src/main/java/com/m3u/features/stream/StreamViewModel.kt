@@ -102,18 +102,23 @@ class StreamViewModel @Inject constructor(
                 started = SharingStarted.Lazily
             )
 
-    internal fun chooseFormat(type: @C.TrackType Int, format: Format) {
+    internal fun chooseTrack(type: @C.TrackType Int, format: Format) {
         val groups = playerManager.groups.value
-        val group = groups.find { it.type == type }?.mediaTrackGroup ?: return
-        for (index in 0 until group.length) {
-            if (group.getFormat(index).id == format.id) {
+        val group = groups.find { it.type == type } ?: return
+        val trackGroup = group.mediaTrackGroup
+        for (index in 0 until trackGroup.length) {
+            if (trackGroup.getFormat(index).id == format.id) {
                 playerManager.chooseTrack(
-                    group = group,
+                    group = trackGroup,
                     trackIndex = index
                 )
                 break
             }
         }
+    }
+
+    internal fun clearTrack(type: @C.TrackType Int) {
+        playerManager.clearTrack(type)
     }
 
     // stream playing state

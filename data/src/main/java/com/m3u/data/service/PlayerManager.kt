@@ -28,4 +28,5 @@ interface PlayerManager {
     fun release()
 
     fun chooseTrack(group: TrackGroup, trackIndex: Int)
+    fun clearTrack(type: @C.TrackType Int)
 }

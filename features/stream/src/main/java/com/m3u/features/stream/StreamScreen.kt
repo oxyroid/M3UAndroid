@@ -136,7 +136,12 @@ fun StreamRoute(
             selectedFormats = selectedFormats,
             maskState = maskState,
             onDismiss = { choosing = false },
-            onClick = { type, format -> viewModel.chooseFormat(type, format) }
+            onChooseTrack = { type, format ->
+                viewModel.chooseTrack(type, format)
+            },
+            onClearTrack = { type ->
+                viewModel.clearTrack(type)
+            }
         )
 
         StreamScreen(

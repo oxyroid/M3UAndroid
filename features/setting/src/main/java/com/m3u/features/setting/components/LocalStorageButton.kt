@@ -62,7 +62,7 @@ internal fun LocalStorageButton(
     }
     val icon = Icons.AutoMirrored.Rounded.OpenInNew
     val text = if (selected) remember(uri) {
-        uri?.readFileName(context.contentResolver).orEmpty()
+        uri.readFileName(context.contentResolver).orEmpty()
     } else stringResource(string.feat_setting_label_select_from_local_storage)
     val color = MaterialTheme.colorScheme.surfaceVariant
     val contentColor = MaterialTheme.colorScheme.onSurfaceVariant

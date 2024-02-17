@@ -53,7 +53,8 @@ internal fun FormatsBottomSheet(
     selectedFormats: ImmutableMap<Int, Format?>,
     maskState: MaskState,
     onDismiss: OnDismiss,
-    onClick: (@C.TrackType Int, Format) -> Unit,
+    onChooseTrack: (@C.TrackType Int, Format) -> Unit,
+    onClearTrack: (@C.TrackType Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
@@ -99,16 +100,23 @@ internal fun FormatsBottomSheet(
             ) { page ->
                 val type = typesIndexed[page]
                 val formats = formatsIndexed[page]
-                val selected = selectedFormatsIndexed[page]
+                val selectedFormat = selectedFormatsIndexed[page]
                 LazyColumn(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     items(formats) { format ->
+                        val selected = format.id == selectedFormat?.id
                         FormatItem(
                             format = format,
                             type = type,
-                            selected = format.id == selected?.id,
-                            onClick = { onClick(type, format) }
+                            selected = selected,
+                            onClick = {
+                                if (selected) {
+                                    onClearTrack(type)
+                                } else {
+                                    onChooseTrack(type, format)
+                                }
+                            }
                         )
                     }
                 }

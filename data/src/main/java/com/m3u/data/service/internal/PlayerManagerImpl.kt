@@ -2,7 +2,6 @@ package com.m3u.data.service.internal
 
 import android.content.Context
 import android.graphics.Rect
-import android.util.Log
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.Format
@@ -14,7 +13,6 @@ import androidx.media3.common.TrackGroup
 import androidx.media3.common.TrackSelectionOverride
 import androidx.media3.common.Tracks
 import androidx.media3.common.VideoSize
-import androidx.media3.common.text.CueGroup
 import androidx.media3.common.util.SystemClock
 import androidx.media3.datasource.DataSource
 import androidx.media3.datasource.DefaultDataSource
@@ -323,11 +321,22 @@ class PlayerManagerImpl @Inject constructor(
 
     override fun chooseTrack(group: TrackGroup, trackIndex: Int) {
         val currentPlayer = _player.value ?: return
+        val type = group.type
         val override = TrackSelectionOverride(group, trackIndex)
         currentPlayer.trackSelectionParameters = currentPlayer
             .trackSelectionParameters
             .buildUpon()
             .setOverrideForType(override)
+            .setTrackTypeDisabled(type, false)
+            .build()
+    }
+
+    override fun clearTrack(type: @C.TrackType Int) {
+        val currentPlayer = _player.value ?: return
+        currentPlayer.trackSelectionParameters = currentPlayer
+            .trackSelectionParameters
+            .buildUpon()
+            .setTrackTypeDisabled(type, true)
             .build()
     }
 
@@ -339,10 +348,6 @@ class PlayerManagerImpl @Inject constructor(
     override fun onTracksChanged(tracks: Tracks) {
         super.onTracksChanged(tracks)
         _groups.value = tracks.groups
-    }
-
-    override fun onCues(cueGroup: CueGroup) {
-        Log.e("TAG", "${cueGroup.cues}")
     }
 }
 

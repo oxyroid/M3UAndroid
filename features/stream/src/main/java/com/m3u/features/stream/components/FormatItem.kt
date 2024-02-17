@@ -38,6 +38,12 @@ internal fun FormatItem(
 private fun Format.displayText(type: @C.TrackType Int): String = when (type) {
     C.TRACK_TYPE_AUDIO -> "$sampleRate $sampleMimeType"
     C.TRACK_TYPE_VIDEO -> "$width×$height $sampleMimeType"
-    C.TRACK_TYPE_TEXT -> "$label-$language"
-    else -> ""
+    C.TRACK_TYPE_TEXT -> buildList {
+        label?.let { add(it) }
+        language?.let { add(it) }
+        sampleMimeType?.let { add(it) }
+    }
+        .joinToString(separator = "-")
+
+    else -> sampleMimeType.orEmpty()
 }
