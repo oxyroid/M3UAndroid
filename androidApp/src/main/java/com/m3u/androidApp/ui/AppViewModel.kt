@@ -9,6 +9,7 @@ import androidx.lifecycle.viewModelScope
 import com.m3u.core.architecture.dispatcher.Dispatcher
 import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
 import com.m3u.core.architecture.pref.Pref
+import com.m3u.core.architecture.pref.observeAsFlow
 import com.m3u.data.api.LocalPreparedService
 import com.m3u.data.repository.ConnectionToTelevisionValue
 import com.m3u.data.repository.TelevisionRepository
@@ -21,6 +22,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -29,7 +31,9 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -39,7 +43,7 @@ class AppViewModel @Inject constructor(
     messageManager: MessageManager,
     private val televisionRepository: TelevisionRepository,
     private val localService: LocalPreparedService,
-    pref: Pref,
+    private val pref: Pref,
     @Dispatcher(IO) private val ioDispatcher: CoroutineDispatcher,
 ) : ViewModel() {
     val message = messageManager.message
@@ -103,10 +107,19 @@ class AppViewModel @Inject constructor(
             started = SharingStarted.Lazily
         )
 
+    private var openTelevisionCodeOnSmartphoneJob: Job? = null
     private fun openTelevisionCodeOnSmartphone() {
         viewModelScope.launch {
             televisionCodeOnSmartphone.emit(code)
         }
+        openTelevisionCodeOnSmartphoneJob?.cancel()
+        openTelevisionCodeOnSmartphoneJob = pref.observeAsFlow { it.remoteControl }
+            .onEach { remoteControl ->
+                if (!remoteControl) {
+                    closeTelevisionCodeOnSmartphone()
+                }
+            }
+            .launchIn(viewModelScope)
     }
 
     private fun closeTelevisionCodeOnSmartphone() {

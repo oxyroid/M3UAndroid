@@ -1,5 +1,6 @@
 package com.m3u.androidApp.ui.sheet
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -15,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.m3u.core.wrapper.Message
 import com.m3u.data.television.model.RemoteDirection
 import com.m3u.data.television.model.TelevisionInfo
@@ -41,6 +43,19 @@ internal fun ColumnScope.RemoteControlSheetContent(
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 8.dp),
         )
+        AnimatedVisibility(
+            visible = message.level != Message.LEVEL_EMPTY
+        ) {
+            Text(
+                text = message.formatText(),
+                textAlign = TextAlign.Center,
+                fontSize = 14.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(0.78f),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp, 0.dp, 16.dp, 8.dp)
+            )
+        }
 
         RemoteDirectionController(
             onRemoteDirection = onRemoteDirection

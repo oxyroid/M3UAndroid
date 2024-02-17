@@ -60,7 +60,6 @@ import dev.chrisbanes.haze.HazeDefaults
 import dev.chrisbanes.haze.haze
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
-import kotlinx.datetime.Clock
 
 @Composable
 fun SettingRoute(
@@ -72,7 +71,7 @@ fun SettingRoute(
 ) {
     val tv = isTelevision()
     val title = stringResource(string.ui_title_setting)
-    
+
     val controller = LocalSoftwareKeyboardController.current
 
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -98,7 +97,7 @@ fun SettingRoute(
         }
 
     val backup = {
-        val filename = "Backup_${Clock.System.now().nanosecondsOfSecond}.txt"
+        val filename = "Backup_${System.currentTimeMillis()}.txt"
         createDocumentLauncher.launch(filename)
     }
     val restore = {
@@ -219,7 +218,11 @@ private fun SettingScreen(
     val currentDestination by remember {
         derivedStateOf {
             when (fragment) {
-                DestinationEvent.Setting.Default -> ThreePaneScaffoldDestinationItem(ListDetailPaneScaffoldRole.List, null)
+                DestinationEvent.Setting.Default -> ThreePaneScaffoldDestinationItem(
+                    ListDetailPaneScaffoldRole.List,
+                    null
+                )
+
                 else -> ThreePaneScaffoldDestinationItem(ListDetailPaneScaffoldRole.Detail, null)
             }
         }
