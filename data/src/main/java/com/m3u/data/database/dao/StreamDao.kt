@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface StreamDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insert(stream: Stream)
+    suspend fun insertAll(vararg streams: Stream)
 
     @Delete
     suspend fun delete(stream: Stream)

@@ -1,15 +1,17 @@
 package com.m3u.data.repository.internal
 
 object BackupOrRestoreContracts {
-    fun wrapPlaylist(encoded: String): String = "P,$encoded"
-    fun wrapStream(encoded: String): String = "S,$encoded"
+    fun wrapPlaylist(encoded: String): String = "P,${encoded.trim()}"
+    fun wrapStream(encoded: String): String = "S,${encoded.trim()}"
     fun unwrapPlaylist(wrapped: String): String? {
-        if (!wrapped.startsWith("P,")) return null
-        return wrapped.drop(2)
+        val trimmed = wrapped.trim()
+        if (!trimmed.startsWith("P,")) return null
+        return trimmed.drop(2)
     }
 
     fun unwrapStream(wrapped: String): String? {
-        if (!wrapped.startsWith("S,")) return null
-        return wrapped.drop(2)
+        val trimmed = wrapped.trim()
+        if (!trimmed.startsWith("S,")) return null
+        return trimmed.drop(2)
     }
 }

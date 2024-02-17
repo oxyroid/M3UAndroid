@@ -47,7 +47,7 @@ import javax.inject.Inject
 class PlaylistRepositoryImpl @Inject constructor(
     private val playlistDao: PlaylistDao,
     private val streamDao: StreamDao,
-    @Logger.MessageImpl private val logger: Logger,
+    private val logger: Logger,
     private val client: OkHttpClient,
     @M3UPlaylistParser.Default private val parser: M3UPlaylistParser,
     @ApplicationContext private val context: Context,
@@ -100,45 +100,60 @@ class PlaylistRepositoryImpl @Inject constructor(
         val all = playlistDao.getAllWithStreams()
         context.contentResolver.openOutputStream(uri)?.use {
             val writer = it.bufferedWriter()
-            writer.write("")
             all.forEach { (playlist, streams) ->
-                if (playlist.fromLocal) return@forEach
-                val encodedPlaylist = json.encodeToString(playlist)
-                val wrappedPlaylist = BackupOrRestoreContracts.wrapPlaylist(encodedPlaylist)
-                writer.appendLine(wrappedPlaylist)
+                if (playlist.fromLocal) {
+                    logger.log("The playlist is from local storage, skipped. ($playlist)")
+                    return@forEach
+                }
+                logger.sandBox {
+                    val encodedPlaylist = json.encodeToString(playlist)
+                    val wrappedPlaylist = BackupOrRestoreContracts.wrapPlaylist(encodedPlaylist)
+                    writer.appendLine(wrappedPlaylist)
+                }
+
                 streams.forEach { stream ->
-                    val encodedStream = json.encodeToString(stream)
-                    val wrappedStream = BackupOrRestoreContracts.wrapStream(encodedStream)
-                    writer.appendLine(wrappedStream)
+                    logger.sandBox {
+                        val encodedStream = json.encodeToString(stream)
+                        val wrappedStream = BackupOrRestoreContracts.wrapStream(encodedStream)
+                        logger.log(wrappedStream)
+                        writer.appendLine(wrappedStream)
+                    }
                 }
             }
+            writer.flush()
         }
     }
 
-    override suspend fun restoreOrThrow(uri: Uri): Unit = withContext(ioDispatcher) {
-        val json = Json {
-            ignoreUnknownKeys = true
-        }
-        context.contentResolver.openInputStream(uri)?.use {
-            val reader = it.bufferedReader()
+    override suspend fun restoreOrThrow(uri: Uri) = logger.sandBox {
+        withContext(ioDispatcher) {
+            val json = Json {
+                ignoreUnknownKeys = true
+            }
+            context.contentResolver.openInputStream(uri)?.use {
+                val reader = it.bufferedReader()
 
-            reader.forEachLine { line ->
-                if (line.isBlank()) return@forEachLine
-                val encodedPlaylist = BackupOrRestoreContracts.unwrapPlaylist(line)
-                val encodedStream = BackupOrRestoreContracts.unwrapStream(line)
-                when {
-                    encodedPlaylist != null -> {
-                        val playlist = json.decodeFromString<Playlist>(encodedPlaylist)
-                        playlistDao.insert(playlist)
+                val playlists = mutableListOf<Playlist>()
+                val streams = mutableListOf<Stream>()
+                reader.forEachLine { line ->
+                    if (line.isBlank()) return@forEachLine
+                    val encodedPlaylist = BackupOrRestoreContracts.unwrapPlaylist(line)
+                    val encodedStream = BackupOrRestoreContracts.unwrapStream(line)
+                    when {
+                        encodedPlaylist != null -> logger.sandBox {
+                            val playlist = json.decodeFromString<Playlist>(encodedPlaylist)
+                            playlists.add(playlist)
+                        }
+
+                        encodedStream != null -> logger.sandBox {
+                            val stream = json.decodeFromString<Stream>(encodedStream)
+                            streams.add(stream)
+                        }
+
+                        else -> {}
                     }
-
-                    encodedStream != null -> {
-                        val stream = json.decodeFromString<Stream>(encodedStream)
-                        streamDao.insert(stream)
-                    }
-
-                    else -> {}
                 }
+                playlistDao.insertAll(*playlists.toTypedArray())
+                streamDao.insertAll(*streams.toTypedArray())
             }
         }
     }
@@ -174,9 +189,7 @@ class PlaylistRepositoryImpl @Inject constructor(
         }
         val needToBeInsertedStreams = streams.filterNot { it.url in existedUrls }
 
-        needToBeInsertedStreams.forEach { stream ->
-            streamDao.insert(stream)
-        }
+        streamDao.insertAll(*needToBeInsertedStreams.toTypedArray())
     }
 
     private suspend fun acquireNetwork(url: String): List<Stream> {
