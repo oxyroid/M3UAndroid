@@ -134,7 +134,12 @@ fun App(
                 exit = scaleOut(targetScale = 0.65f) + fadeOut(),
             ) {
                 FloatingActionButton(
-                    elevation = FloatingActionButtonDefaults.elevation(spacing.none),
+                    elevation = FloatingActionButtonDefaults.elevation(
+                        defaultElevation = spacing.none,
+                        pressedElevation = spacing.none,
+                        focusedElevation = spacing.extraSmall,
+                        hoveredElevation = spacing.extraSmall
+                    ),
                     onClick = { viewModel.isConnectSheetVisible = true }
                 ) {
                     Icon(

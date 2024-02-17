@@ -105,7 +105,8 @@ class PlayerActivity : ComponentActivity() {
         setContent {
             Toolkit(
                 helper = helper,
-                pref = pref
+                pref = pref,
+                alwaysUseDarkTheme = true
             ) {
                 StreamRoute(
                     onBackPressed = { finish() },

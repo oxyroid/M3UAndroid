@@ -5,8 +5,6 @@ import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.foundation.basicMarquee
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsDraggedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -34,7 +32,6 @@ import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
-import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -397,24 +394,16 @@ internal fun StreamFragment(
                                         ?: contentPosition.coerceAtLeast(0L)).toFloat(),
                                     label = "anim-content-position"
                                 )
-                                val interactionSource = remember { MutableInteractionSource() }
-                                val isDragged by interactionSource.collectIsDraggedAsState()
                                 val enabled = playerState.playState == Player.STATE_READY
                                 Slider(
                                     value = animContentPosition,
-                                    valueRange = 0f..
-                                            contentDuration.coerceAtLeast(0L)
-                                                .toFloat(),
+                                    valueRange = 0f..contentDuration
+                                        .coerceAtLeast(0L)
+                                        .toFloat(),
                                     enabled = enabled,
                                     onValueChange = {
                                         bufferedPosition = it.roundToLong()
                                         maskState.wake()
-                                    },
-                                    interactionSource = interactionSource,
-                                    thumb = {
-                                        if (isDragged) {
-                                            SliderDefaults.Thumb(interactionSource)
-                                        }
                                     }
                                 )
                             }

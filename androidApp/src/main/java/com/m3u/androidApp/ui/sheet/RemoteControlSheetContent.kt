@@ -16,14 +16,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.m3u.core.wrapper.Message
-import com.m3u.data.television.http.endpoint.SayHello
 import com.m3u.data.television.model.RemoteDirection
+import com.m3u.data.television.model.TelevisionInfo
 import com.m3u.material.model.LocalSpacing
 
 @Composable
 @InternalComposeApi
 internal fun ColumnScope.RemoteControlSheetContent(
-    television: SayHello.TelevisionInfo,
+    television: TelevisionInfo,
     message: Message,
     onRemoteDirection: (RemoteDirection) -> Unit,
     onDisconnect: () -> Unit
@@ -42,7 +42,7 @@ internal fun ColumnScope.RemoteControlSheetContent(
             modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 8.dp),
         )
 
-        RemoteDirectionCircleButtons(
+        RemoteDirectionController(
             onRemoteDirection = onRemoteDirection
         )
 

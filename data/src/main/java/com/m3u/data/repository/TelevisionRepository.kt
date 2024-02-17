@@ -1,6 +1,6 @@
 package com.m3u.data.repository
 
-import com.m3u.data.television.http.endpoint.SayHello
+import com.m3u.data.television.model.TelevisionInfo
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import kotlin.time.Duration
@@ -12,7 +12,7 @@ abstract class TelevisionRepository {
     protected abstract fun broadcastOnTelevision()
     protected abstract fun closeBroadcastOnTelevision()
 
-    abstract val connectedTelevision: StateFlow<SayHello.TelevisionInfo?>
+    abstract val connectedTelevision: StateFlow<TelevisionInfo?>
 
     abstract fun connectToTelevision(
         broadcastCode: Int,

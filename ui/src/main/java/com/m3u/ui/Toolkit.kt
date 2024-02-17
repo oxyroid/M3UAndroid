@@ -23,6 +23,7 @@ import kotlinx.coroutines.flow.onEach
 fun Toolkit(
     helper: Helper = EmptyHelper,
     pref: Pref,
+    alwaysUseDarkTheme: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val prevTypography = MaterialTheme.typography
@@ -47,8 +48,11 @@ fun Toolkit(
     ) {
         AppTheme(
             argb = pref.colorArgb,
-            useDarkTheme = if (pref.followSystemTheme) isSystemInDarkTheme()
-            else pref.darkMode,
+            useDarkTheme = when {
+                alwaysUseDarkTheme -> true
+                pref.followSystemTheme -> isSystemInDarkTheme()
+                else -> pref.darkMode
+            },
             useDynamicColors = pref.useDynamicColors,
             typography = typography
         ) {

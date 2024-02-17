@@ -3,7 +3,7 @@ package com.m3u.data.television.http.internal
 import com.m3u.data.television.http.HttpServer
 import com.m3u.data.television.http.endpoint.Remotes
 import com.m3u.data.television.http.endpoint.Playlists
-import com.m3u.data.television.http.endpoint.SayHello
+import com.m3u.data.television.http.endpoint.SayHellos
 import io.ktor.serialization.kotlinx.KotlinxWebsocketSerializationConverter
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
@@ -22,7 +22,7 @@ import java.time.Duration
 import javax.inject.Inject
 
 internal class HttpServerImpl @Inject constructor(
-    private val sayHello: SayHello,
+    private val sayHellos: SayHellos,
     private val playlists: Playlists,
     private val remotes: Remotes
 ) : HttpServer {
@@ -34,7 +34,7 @@ internal class HttpServerImpl @Inject constructor(
             configureSockets()
             configureCors()
             routing {
-                sayHello.apply(this)
+                sayHellos.apply(this)
                 playlists.apply(this)
                 remotes.apply(this)
             }

@@ -16,7 +16,7 @@ import com.m3u.data.repository.ConnectionToTelevisionValue
 import com.m3u.data.repository.TelevisionRepository
 import com.m3u.data.television.Utils
 import com.m3u.data.television.http.HttpServer
-import com.m3u.data.television.http.endpoint.SayHello
+import com.m3u.data.television.model.TelevisionInfo
 import com.m3u.data.television.nsd.NsdDeviceManager
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -115,7 +115,7 @@ class TelevisionRepositoryImpl @Inject constructor(
         broadcastOnTelevisionJob = null
     }
 
-    private val _connectedTelevision = MutableStateFlow<SayHello.TelevisionInfo?>(null)
+    private val _connectedTelevision = MutableStateFlow<TelevisionInfo?>(null)
     override val connectedTelevision = _connectedTelevision.asStateFlow()
 
     private var connectToTelevisionJob: Job? = null

@@ -15,8 +15,8 @@ import androidx.compose.ui.Modifier
 import com.m3u.androidApp.ui.sheet.PrepareSheetContent
 import com.m3u.androidApp.ui.sheet.RemoteControlSheetContent
 import com.m3u.core.wrapper.Message
-import com.m3u.data.television.http.endpoint.SayHello
 import com.m3u.data.television.model.RemoteDirection
+import com.m3u.data.television.model.TelevisionInfo
 
 @Immutable
 sealed class ConnectBottomSheetValue {
@@ -33,7 +33,7 @@ sealed class ConnectBottomSheetValue {
 
     @Immutable
     data class Remote(
-        val television: SayHello.TelevisionInfo,
+        val television: TelevisionInfo,
         val onRemoteDirection: (RemoteDirection) -> Unit,
         val onDisconnect: () -> Unit
     ) : ConnectBottomSheetValue()
