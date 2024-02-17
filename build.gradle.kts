@@ -28,14 +28,20 @@ subprojects {
                 "-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi",
             )
         }
-        val path = project.layout.buildDirectory.dir("compose_metrics").get().asFile.path
+        val composeMetricsPath =
+            project.layout.buildDirectory.dir("compose_metrics").get().asFile.path
         compilerOptions.freeCompilerArgs.addAll(
             "-P",
-            "plugin:androidx.compose.compiler.plugins.kotlin:metricsDestination=$path",
+            "plugin:androidx.compose.compiler.plugins.kotlin:metricsDestination=$composeMetricsPath",
         )
         compilerOptions.freeCompilerArgs.addAll(
             "-P",
-            "plugin:androidx.compose.compiler.plugins.kotlin:reportsDestination=$path",
+            "plugin:androidx.compose.compiler.plugins.kotlin:reportsDestination=$composeMetricsPath",
+        )
+        compilerOptions.freeCompilerArgs.addAll(
+            "-P",
+            "plugin:androidx.compose.compiler.plugins.kotlin:stabilityConfigurationPath=" +
+                    "${project.rootDir.path}/compose_compiler_config.conf"
         )
     }
 }

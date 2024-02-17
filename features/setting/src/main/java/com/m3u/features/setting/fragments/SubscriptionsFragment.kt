@@ -25,11 +25,10 @@ import androidx.compose.ui.res.stringResource
 import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.data.database.model.Stream
 import com.m3u.features.setting.BackingUpAndRestoringState
-import com.m3u.features.setting.UriWrapper
-import com.m3u.features.setting.components.hiddenStreamstreamItem
 import com.m3u.features.setting.components.LocalStorageButton
 import com.m3u.features.setting.components.LocalStorageSwitch
 import com.m3u.features.setting.components.RemoteControlSubscribeSwitch
+import com.m3u.features.setting.components.hiddenStreamstreamItem
 import com.m3u.i18n.R.string
 import com.m3u.material.components.Button
 import com.m3u.material.components.PlaceholderField
@@ -44,7 +43,7 @@ internal fun SubscriptionsFragment(
     contentPadding: PaddingValues,
     title: String,
     url: String,
-    uriWrapper: UriWrapper,
+    uri: Uri,
     localStorage: Boolean,
     subscribeForTv: Boolean,
     backingUpOrRestoring: BackingUpAndRestoringState,
@@ -137,7 +136,7 @@ internal fun SubscriptionsFragment(
                     )
                 } else {
                     LocalStorageButton(
-                        uriWrapper = uriWrapper,
+                        uri = uri,
                         onTitle = onTitle,
                         openDocument = openDocument,
                     )

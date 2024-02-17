@@ -26,18 +26,16 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.m3u.core.util.readFileName
-import com.m3u.features.setting.UriWrapper
 import com.m3u.i18n.R.string
 import com.m3u.material.model.LocalSpacing
 
 @Composable
 internal fun LocalStorageButton(
-    uriWrapper: UriWrapper,
+    uri: Uri,
     onTitle: (String) -> Unit,
     openDocument: (Uri) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val uri = uriWrapper.uri
     val context = LocalContext.current
     val selected = uri != Uri.EMPTY
     val spacing = LocalSpacing.current

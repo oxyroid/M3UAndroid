@@ -48,8 +48,10 @@ fun StreamRoute(
     val devices by viewModel.devices.collectAsStateWithLifecycle()
     val isDevicesVisible by viewModel.isDevicesVisible.collectAsStateWithLifecycle()
     val searching by viewModel.searching.collectAsStateWithLifecycle()
+
     val formats by viewModel.formats.collectAsStateWithLifecycle()
-    val format by viewModel.format.collectAsStateWithLifecycle()
+    val selectedFormats by viewModel.selectedFormats.collectAsStateWithLifecycle()
+
     val volume by viewModel.volume.collectAsStateWithLifecycle()
     val recording by viewModel.recording.collectAsStateWithLifecycle()
 
@@ -130,11 +132,11 @@ fun StreamRoute(
 
         FormatsBottomSheet(
             visible = choosing,
-            formats = formats,
-            format = format,
+            allFormats = formats,
+            selectedFormats = selectedFormats,
             maskState = maskState,
             onDismiss = { choosing = false },
-            onClick = { viewModel.chooseFormat(it) }
+            onClick = { type, format -> viewModel.chooseFormat(type, format) }
         )
 
         StreamScreen(

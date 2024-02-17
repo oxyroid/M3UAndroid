@@ -2,6 +2,7 @@ package com.m3u.data.service.internal
 
 import android.content.Context
 import android.graphics.Rect
+import android.util.Log
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.Format
@@ -13,6 +14,7 @@ import androidx.media3.common.TrackGroup
 import androidx.media3.common.TrackSelectionOverride
 import androidx.media3.common.Tracks
 import androidx.media3.common.VideoSize
+import androidx.media3.common.text.CueGroup
 import androidx.media3.common.util.SystemClock
 import androidx.media3.datasource.DataSource
 import androidx.media3.datasource.DefaultDataSource
@@ -288,26 +290,35 @@ class PlayerManagerImpl @Inject constructor(
     private val _groups = MutableStateFlow<List<Tracks.Group>>(emptyList())
     override val groups: StateFlow<List<Tracks.Group>> = _groups.asStateFlow()
 
-    override val selected: Flow<Map<@C.TrackType Int, Format?>> = groups.map { all ->
-        all
-            .filter { it.isSelected }
-            .groupBy { it.type }
-            .mapValues { (_, groups) ->
-                val group = groups.first()
-                var selectedIndex = 0
-                for (i in 0 until group.length) {
+    override val trackGroups: Flow<Map<@C.TrackType Int, List<Tracks.Group>>> = groups.map { all ->
+        all.groupBy { it.type }
+    }
+    override val trackFormats: Flow<Map<@C.TrackType Int, List<Format>>> =
+        trackGroups.map { groups ->
+            groups.mapValues { (_, innerGroups) ->
+                innerGroups
+                    .map { group -> List(group.length) { group.getTrackFormat(it) } }
+                    .flatten()
+            }
+        }
+    override val selected: Flow<Map<@C.TrackType Int, Format?>> = trackGroups.map { groups ->
+        groups.mapValues { (_, groups) ->
+            var format: Format? = null
+            outer@ for (group in groups) {
+                var selectedIndex = -1
+                inner@ for (i in 0 until group.length) {
                     if (group.isTrackSelected(i)) {
                         selectedIndex = i
-                        break
+                        break@inner
                     }
                 }
-                group.getTrackFormat(selectedIndex)
+                if (selectedIndex != -1) {
+                    format = group.getTrackFormat(selectedIndex)
+                    break@outer
+                }
             }
-    }
-
-    override fun onTracksChanged(tracks: Tracks) {
-        super.onTracksChanged(tracks)
-        _groups.value = tracks.groups
+            format
+        }
     }
 
     override fun chooseTrack(group: TrackGroup, trackIndex: Int) {
@@ -323,6 +334,15 @@ class PlayerManagerImpl @Inject constructor(
     private fun buildHttpDataSourceFactory(): DataSource.Factory {
         //  Credentials.basic()
         return OkHttpDataSource.Factory(okHttpClient)
+    }
+
+    override fun onTracksChanged(tracks: Tracks) {
+        super.onTracksChanged(tracks)
+        _groups.value = tracks.groups
+    }
+
+    override fun onCues(cueGroup: CueGroup) {
+        Log.e("TAG", "${cueGroup.cues}")
     }
 }
 

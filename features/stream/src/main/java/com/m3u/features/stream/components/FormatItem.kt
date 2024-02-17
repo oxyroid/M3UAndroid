@@ -6,11 +6,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import com.m3u.features.stream.model.Format
+import androidx.media3.common.C
+import androidx.media3.common.Format
 
 @Composable
 internal fun FormatItem(
     format: Format,
+    type: @C.TrackType Int,
     selected: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -26,9 +28,16 @@ internal fun FormatItem(
     ) {
         ListItem(
             headlineContent = {
-                Text("${format.width}×${format.height} ${format.codecs}")
+                Text(format.displayText(type))
             },
             modifier = modifier.clickable { onClick() }
         )
     }
+}
+
+private fun Format.displayText(type: @C.TrackType Int): String = when (type) {
+    C.TRACK_TYPE_AUDIO -> "$sampleRate $sampleMimeType"
+    C.TRACK_TYPE_VIDEO -> "$width×$height $sampleMimeType"
+    C.TRACK_TYPE_TEXT -> "$label-$language"
+    else -> ""
 }
