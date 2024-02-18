@@ -17,6 +17,7 @@ import androidx.media3.common.util.SystemClock
 import androidx.media3.datasource.DataSource
 import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.datasource.okhttp.OkHttpDataSource
+import androidx.media3.datasource.rtmp.RtmpDataSource
 import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
@@ -173,6 +174,16 @@ class PlayerManagerImpl @Inject constructor(
                 player.setMediaSource(hlsMediaSource)
             }
 
+            MIMETYPE_RTMP -> {
+                val factory = RtmpDataSource.Factory()
+                val mediaSourceFactory = DefaultMediaSourceFactory(factory)
+                val mediaItem = MediaItem.Builder()
+                    .setUri(url)
+                    .build()
+                val mediaSource = mediaSourceFactory.createMediaSource(mediaItem)
+                currentPlayer.setMediaSource(mediaSource)
+            }
+
             else -> {
                 val mediaSourceFactory = DefaultMediaSourceFactory(dataSourceFactory)
                 val mediaItem = MediaItem.Builder()
@@ -247,6 +258,7 @@ class PlayerManagerImpl @Inject constructor(
             PlaybackException.ERROR_CODE_PARSING_MANIFEST_MALFORMED,
             PlaybackException.ERROR_CODE_PARSING_CONTAINER_UNSUPPORTED,
             PlaybackException.ERROR_CODE_PARSING_MANIFEST_UNSUPPORTED,
+            PlaybackException.ERROR_CODE_FAILED_RUNTIME_CHECK,
             PlaybackException.ERROR_CODE_IO_UNSPECIFIED -> {
                 when (mimeType) {
                     null -> {
@@ -256,6 +268,12 @@ class PlayerManagerImpl @Inject constructor(
                     }
 
                     MimeTypes.APPLICATION_M3U8 -> {
+                        mimeType = MIMETYPE_RTMP
+                        tryPlay(mimeType)
+                        return
+                    }
+
+                    MIMETYPE_RTMP -> {
                         mimeType = MimeTypes.APPLICATION_MPD
                         tryPlay(mimeType)
                         return
@@ -271,6 +289,10 @@ class PlayerManagerImpl @Inject constructor(
                         mimeType = MimeTypes.APPLICATION_RTSP
                         tryPlay(mimeType)
                         return
+                    }
+
+                    MimeTypes.APPLICATION_RTSP -> {
+                        mimeType = null
                     }
 
                     else -> {
@@ -354,3 +376,5 @@ class PlayerManagerImpl @Inject constructor(
 private fun VideoSize.toRect(): Rect {
     return Rect(0, 0, width, height)
 }
+
+private const val MIMETYPE_RTMP = "rtmp"
