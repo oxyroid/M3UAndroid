@@ -4,7 +4,7 @@ import com.m3u.core.architecture.Publisher
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.execute
 import com.m3u.data.television.http.endpoint.DefRep
-import com.m3u.data.television.model.TelevisionInfo
+import com.m3u.data.television.model.Television
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.channels.trySendBlocking
@@ -27,7 +27,7 @@ import javax.inject.Singleton
 
 interface LocalService {
     @GET("/say_hello")
-    suspend fun sayHello(): TelevisionInfo?
+    suspend fun sayHello(): Television?
 
     @POST("/playlists/subscribe")
     suspend fun subscribe(
@@ -49,7 +49,7 @@ class LocalPreparedService @Inject constructor(
     fun prepare(
         host: String,
         port: Int
-    ): Flow<TelevisionInfo> = callbackFlow {
+    ): Flow<Television> = callbackFlow {
         val json = Json {
             ignoreUnknownKeys = true
         }
@@ -76,9 +76,8 @@ class LocalPreparedService @Inject constructor(
         val listener = object : WebSocketListener() {
             override fun onMessage(webSocket: WebSocket, text: String) {
                 try {
-                    val info = json.decodeFromString<TelevisionInfo?>(text) ?: return
-                    val safeInfo = checkCompatibleInfoOrThrow(info)
-                    trySendBlocking(safeInfo)
+                    val info = json.decodeFromString<Television?>(text) ?: return
+                    trySendBlocking(info)
                 } catch (e: IllegalStateException) {
                     logger.log(e.message.orEmpty())
                     cancel()
@@ -102,7 +101,7 @@ class LocalPreparedService @Inject constructor(
         api = null
     }
 
-    override suspend fun sayHello(): TelevisionInfo? = logger.execute {
+    override suspend fun sayHello(): Television? = logger.execute {
         requireApi().sayHello()
     }
 
@@ -121,7 +120,7 @@ class LocalPreparedService @Inject constructor(
     private fun requireApi(): LocalService =
         checkNotNull(api) { "You haven't connected television" }
 
-    private fun checkCompatibleInfoOrThrow(info: TelevisionInfo): TelevisionInfo {
+    private fun checkCompatibleInfoOrThrow(info: Television): Television {
         check(info.version == publisher.versionCode) {
             """
                 The software version is incompatible

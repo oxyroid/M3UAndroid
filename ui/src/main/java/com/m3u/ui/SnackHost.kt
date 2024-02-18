@@ -116,7 +116,7 @@ fun SnackHost(
         label = "snack-host-color"
     )
     val currentScale by animateFloatAsState(
-        targetValue = if (isPressed) 1.05f else 1f,
+        targetValue = if (isPressed) 1.02f else 1f,
         label = "snack-host-scale"
     )
     AnimatedVisibility(

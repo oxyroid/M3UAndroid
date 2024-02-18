@@ -2,11 +2,15 @@ package com.m3u.data.television.http.endpoint
 
 import com.m3u.core.architecture.Publisher
 import com.m3u.core.architecture.logger.Logger
+import com.m3u.core.architecture.logger.sandBox
 import com.m3u.core.wrapper.Message
-import com.m3u.data.television.model.TelevisionInfo
+import com.m3u.data.repository.MediaRepository
+import com.m3u.data.television.model.Television
+import io.ktor.server.request.receiveChannel
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
+import io.ktor.server.routing.post
 import io.ktor.server.routing.route
 import io.ktor.server.websocket.sendSerialized
 import io.ktor.server.websocket.webSocket
@@ -19,10 +23,17 @@ import javax.inject.Singleton
 @Singleton
 data class SayHellos @Inject constructor(
     private val publisher: Publisher,
-    @Logger.MessageImpl private val messager: Logger
+    @Logger.MessageImpl private val messager: Logger,
+    private val mediaRepository: MediaRepository
 ) : Endpoint {
     private val info = with(publisher) {
-        TelevisionInfo(model, versionCode, snapshot, abi)
+        Television(
+            model = model,
+            version = versionCode,
+            snapshot = snapshot,
+            abi = abi,
+            allowUpdatedPackage = true
+        )
     }
 
     override fun apply(route: Route) {
@@ -30,6 +41,26 @@ data class SayHellos @Inject constructor(
             get {
                 call.respond(info)
             }
+
+            post("/update") {
+                messager.sandBox {
+                    val version = call.queryParameters["version"]
+                    if (version == null) {
+                        call.respond(
+                            DefRep(
+                                result = false,
+                                reason = "require version query parameter"
+                            )
+                        )
+                        return@post
+                    }
+                    mediaRepository.installApk(call.receiveChannel())
+                    call.respond(
+                        DefRep(true)
+                    )
+                }
+            }
+
             webSocket {
                 val model = call.request.queryParameters["model"] ?: "?"
 

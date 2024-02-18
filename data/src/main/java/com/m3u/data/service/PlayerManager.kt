@@ -17,7 +17,6 @@ interface PlayerManager {
     val playbackState: StateFlow<@Player.State Int>
     val playerError: StateFlow<PlaybackException?>
     val groups: StateFlow<List<Tracks.Group>>
-    val trackGroups: Flow<Map<@C.TrackType Int, List<Tracks.Group>>>
     val trackFormats: Flow<Map<@C.TrackType Int, List<Format>>>
     val selected: Flow<Map<@C.TrackType Int, Format?>>
 

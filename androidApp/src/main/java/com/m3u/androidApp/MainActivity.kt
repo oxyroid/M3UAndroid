@@ -135,7 +135,7 @@ class MainActivity : AppCompatActivity() {
             ) {
                 App(
                     viewModel = viewModel,
-                    snackHostState = snackHostState
+                    hostState = snackHostState
                 )
             }
         }

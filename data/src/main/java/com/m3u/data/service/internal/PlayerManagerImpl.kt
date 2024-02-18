@@ -310,36 +310,36 @@ class PlayerManagerImpl @Inject constructor(
     private val _groups = MutableStateFlow<List<Tracks.Group>>(emptyList())
     override val groups: StateFlow<List<Tracks.Group>> = _groups.asStateFlow()
 
-    override val trackGroups: Flow<Map<@C.TrackType Int, List<Tracks.Group>>> = groups.map { all ->
-        all.groupBy { it.type }
-    }
-    override val trackFormats: Flow<Map<@C.TrackType Int, List<Format>>> =
-        trackGroups.map { groups ->
+    override val trackFormats: Flow<Map<@C.TrackType Int, List<Format>>> = groups
+        .map { all -> all.groupBy { it.type } }
+        .map { groups ->
             groups.mapValues { (_, innerGroups) ->
                 innerGroups
                     .map { group -> List(group.length) { group.getTrackFormat(it) } }
                     .flatten()
             }
         }
-    override val selected: Flow<Map<@C.TrackType Int, Format?>> = trackGroups.map { groups ->
-        groups.mapValues { (_, groups) ->
-            var format: Format? = null
-            outer@ for (group in groups) {
-                var selectedIndex = -1
-                inner@ for (i in 0 until group.length) {
-                    if (group.isTrackSelected(i)) {
-                        selectedIndex = i
-                        break@inner
+    override val selected: Flow<Map<@C.TrackType Int, Format?>> = groups
+        .map { all -> all.groupBy { it.type } }
+        .map { groups ->
+            groups.mapValues { (_, groups) ->
+                var format: Format? = null
+                outer@ for (group in groups) {
+                    var selectedIndex = -1
+                    inner@ for (i in 0 until group.length) {
+                        if (group.isTrackSelected(i)) {
+                            selectedIndex = i
+                            break@inner
+                        }
+                    }
+                    if (selectedIndex != -1) {
+                        format = group.getTrackFormat(selectedIndex)
+                        break@outer
                     }
                 }
-                if (selectedIndex != -1) {
-                    format = group.getTrackFormat(selectedIndex)
-                    break@outer
-                }
+                format
             }
-            format
         }
-    }
 
     override fun chooseTrack(group: TrackGroup, trackIndex: Int) {
         val currentPlayer = _player.value ?: return

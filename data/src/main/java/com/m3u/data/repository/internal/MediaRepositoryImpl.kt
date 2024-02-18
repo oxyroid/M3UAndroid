@@ -1,11 +1,13 @@
 package com.m3u.data.repository.internal
 
 import android.content.Context
+import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.Environment
 import androidx.core.graphics.drawable.toBitmap
+import androidx.media3.common.MimeTypes
 import coil.Coil
 import coil.request.ErrorResult
 import coil.request.ImageRequest
@@ -14,12 +16,16 @@ import com.m3u.core.architecture.dispatcher.Dispatcher
 import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.execute
+import com.m3u.core.architecture.logger.sandBox
 import com.m3u.core.wrapper.Resource
 import com.m3u.core.wrapper.emitException
 import com.m3u.core.wrapper.emitResource
 import com.m3u.core.wrapper.resourceFlow
 import com.m3u.data.repository.MediaRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
+import io.ktor.util.cio.writeChannel
+import io.ktor.utils.io.ByteReadChannel
+import io.ktor.utils.io.copyAndClose
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOn
@@ -35,16 +41,23 @@ class MediaRepositoryImpl @Inject constructor(
     private val logger: Logger,
     @Dispatcher(IO) private val ioDispatcher: CoroutineDispatcher
 ) : MediaRepository {
-    private val directory =
-        File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), "M3U")
+    private val applicationName = "M3U"
+    private val pictureDirectory = File(
+        Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
+        applicationName
+    )
+    private val downloadDirectory = File(
+        Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
+        applicationName
+    )
 
     override fun savePicture(url: String): Flow<Resource<File>> = resourceFlow {
         try {
             val drawable = checkNotNull(loadDrawable(url))
             val bitmap = drawable.toBitmap()
             val name = "Picture_${System.currentTimeMillis()}.png"
-            directory.mkdirs()
-            val file = File(directory, name)
+            pictureDirectory.mkdirs()
+            val file = File(pictureDirectory, name)
             file.outputStream().buffered().use {
                 bitmap.compress(Bitmap.CompressFormat.PNG, BITMAP_QUALITY, it)
                 it.flush()
@@ -56,6 +69,19 @@ class MediaRepositoryImpl @Inject constructor(
         }
     }
         .flowOn(ioDispatcher)
+
+    override suspend fun installApk(channel: ByteReadChannel) = logger.sandBox {
+        val dir = downloadDirectory.resolve("apks")
+        dir.mkdirs()
+        val file = File(dir, "${System.currentTimeMillis()}.apk")
+        channel.copyAndClose(file.writeChannel())
+        val uri = Uri.fromFile(file)
+        val intent = Intent(Intent.ACTION_VIEW).apply {
+            MimeTypes.APPLICATION_AIT
+            setDataAndType(uri, "application/vnd.android.package-archive")
+        }
+        context.startActivity(intent)
+    }
 
     override suspend fun loadDrawable(url: String): Drawable? = logger.execute<Drawable> {
         val loader = Coil.imageLoader(context)

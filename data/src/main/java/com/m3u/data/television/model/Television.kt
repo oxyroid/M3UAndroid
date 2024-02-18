@@ -8,9 +8,10 @@ import kotlinx.serialization.Serializable
 @Keep
 @Serializable
 @Immutable
-data class TelevisionInfo(
+data class Television(
     val model: String,
     val version: Int,
     val snapshot: Boolean,
-    val abi: Abi
+    val abi: Abi,
+    val allowUpdatedPackage: Boolean = false
 )

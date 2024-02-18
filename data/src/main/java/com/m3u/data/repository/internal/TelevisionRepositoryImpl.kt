@@ -14,9 +14,11 @@ import com.m3u.core.wrapper.asResource
 import com.m3u.data.api.LocalPreparedService
 import com.m3u.data.repository.ConnectionToTelevisionValue
 import com.m3u.data.repository.TelevisionRepository
+import com.m3u.data.repository.UpdateState
+import com.m3u.data.repository.UpdateKey
 import com.m3u.data.television.Utils
 import com.m3u.data.television.http.HttpServer
-import com.m3u.data.television.model.TelevisionInfo
+import com.m3u.data.television.model.Television
 import com.m3u.data.television.nsd.NsdDeviceManager
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -25,6 +27,7 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.channels.trySendBlocking
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.collect
@@ -115,10 +118,11 @@ class TelevisionRepositoryImpl @Inject constructor(
         broadcastOnTelevisionJob = null
     }
 
-    private val _connectedTelevision = MutableStateFlow<TelevisionInfo?>(null)
-    override val connectedTelevision = _connectedTelevision.asStateFlow()
+    private val _connected = MutableStateFlow<Television?>(null)
+    override val connected: StateFlow<Television?> = _connected.asStateFlow()
 
     private var connectToTelevisionJob: Job? = null
+
     override fun connectToTelevision(
         broadcastCode: Int,
         timeout: Duration
@@ -161,13 +165,13 @@ class TelevisionRepositoryImpl @Inject constructor(
 
                         is Resource.Success -> {
                             logger.log("pair: connected")
-                            _connectedTelevision.value = resource.data
+                            _connected.value = resource.data
                             trySendBlocking(completed)
                         }
 
                         is Resource.Failure -> {
                             logger.log("pair: catch an error, ${resource.message}")
-                            _connectedTelevision.value = null
+                            _connected.value = null
                             trySendBlocking(ConnectionToTelevisionValue.Idle(resource.message))
                         }
                     }
@@ -182,8 +186,11 @@ class TelevisionRepositoryImpl @Inject constructor(
     override suspend fun disconnectToTelevision() {
         connectToTelevisionJob?.cancel()
         connectToTelevisionJob = null
-        _connectedTelevision.value = null
+        _connected.value = null
     }
+
+    private val _allUpdateStates = MutableStateFlow(emptyMap<UpdateKey, UpdateState>())
+    override val allUpdateStates = _allUpdateStates.asStateFlow()
 
     private fun NsdServiceInfo.getAttribute(key: String): String? =
         attributes[key]?.decodeToString()

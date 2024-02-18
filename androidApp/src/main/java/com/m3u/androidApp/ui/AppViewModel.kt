@@ -6,6 +6,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.m3u.androidApp.ui.sheet.RemoteControlSheetValue
+import com.m3u.core.architecture.Publisher
 import com.m3u.core.architecture.dispatcher.Dispatcher
 import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
 import com.m3u.core.architecture.pref.Pref
@@ -13,6 +15,8 @@ import com.m3u.core.architecture.pref.observeAsFlow
 import com.m3u.data.api.LocalPreparedService
 import com.m3u.data.repository.ConnectionToTelevisionValue
 import com.m3u.data.repository.TelevisionRepository
+import com.m3u.data.repository.UpdateState
+import com.m3u.data.repository.UpdateKey
 import com.m3u.data.service.MessageManager
 import com.m3u.data.television.model.RemoteDirection
 import com.m3u.ui.Destination
@@ -44,6 +48,7 @@ class AppViewModel @Inject constructor(
     private val televisionRepository: TelevisionRepository,
     private val localService: LocalPreparedService,
     private val pref: Pref,
+    private val publisher: Publisher,
     @Dispatcher(IO) private val ioDispatcher: CoroutineDispatcher,
 ) : ViewModel() {
     val message = messageManager.message
@@ -77,58 +82,70 @@ class AppViewModel @Inject constructor(
                 started = SharingStarted.WhileSubscribed(5_000)
             )
 
-    internal val connectBottomSheetValue: StateFlow<ConnectBottomSheetValue> = combine(
-        televisionRepository.connectedTelevision,
+    internal val remoteControlSheetValue: StateFlow<RemoteControlSheetValue> = combine(
+        televisionRepository.connected,
         snapshotFlow { code },
-        connectionToTelevisionValue
-    ) { television, code, connection ->
-        when (television) {
-            null -> ConnectBottomSheetValue.Prepare(
-                code = code,
-                searching = connection is ConnectionToTelevisionValue.Searching ||
-                        connection is ConnectionToTelevisionValue.Connecting,
-                onSearch = ::openTelevisionCodeOnSmartphone,
-                onCode = { this.code = it }
-            )
+        connectionToTelevisionValue,
+        televisionRepository.allUpdateStates
+    ) { television, code, connection, states ->
+        when {
+            television == null -> {
+                RemoteControlSheetValue.Prepare(
+                    code = code,
+                    searchingOrConnecting = with(connection) {
+                        this is ConnectionToTelevisionValue.Searching ||
+                                this is ConnectionToTelevisionValue.Connecting
+                    }
+                )
+            }
+
+            television.version != publisher.versionCode -> {
+                this.code = ""
+                val query = UpdateKey(television.version, television.abi)
+                val state = states[query] ?: UpdateState.Idle
+                RemoteControlSheetValue.Update(
+                    television = television,
+                    state = state
+                )
+            }
 
             else -> {
                 this.code = ""
-                ConnectBottomSheetValue.Remote(
+                RemoteControlSheetValue.DPad(
                     television = television,
-                    onRemoteDirection = ::onRemoteDirection,
-                    onDisconnect = ::closeTelevisionCodeOnSmartphone
                 )
             }
         }
     }
         .stateIn(
             scope = viewModelScope,
-            initialValue = ConnectBottomSheetValue.Idle,
+            initialValue = RemoteControlSheetValue.Idle,
             started = SharingStarted.Lazily
         )
 
-    private var openTelevisionCodeOnSmartphoneJob: Job? = null
-    private fun openTelevisionCodeOnSmartphone() {
+    private var checkTelevisionCodeOnSmartphoneJob: Job? = null
+
+    internal fun checkTelevisionCodeOnSmartphone() {
         viewModelScope.launch {
             televisionCodeOnSmartphone.emit(code)
         }
-        openTelevisionCodeOnSmartphoneJob?.cancel()
-        openTelevisionCodeOnSmartphoneJob = pref.observeAsFlow { it.remoteControl }
+        checkTelevisionCodeOnSmartphoneJob?.cancel()
+        checkTelevisionCodeOnSmartphoneJob = pref.observeAsFlow { it.remoteControl }
             .onEach { remoteControl ->
                 if (!remoteControl) {
-                    closeTelevisionCodeOnSmartphone()
+                    forgetTelevisionCodeOnSmartphone()
                 }
             }
             .launchIn(viewModelScope)
     }
 
-    private fun closeTelevisionCodeOnSmartphone() {
+    internal fun forgetTelevisionCodeOnSmartphone() {
         viewModelScope.launch {
             televisionCodeOnSmartphone.emit("")
         }
     }
 
-    private fun onRemoteDirection(remoteDirection: RemoteDirection) {
+    internal fun onRemoteDirection(remoteDirection: RemoteDirection) {
         viewModelScope.launch {
             localService.remoteDirection(remoteDirection.value)
         }

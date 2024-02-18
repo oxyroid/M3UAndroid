@@ -19,7 +19,6 @@ import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -30,6 +29,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.m3u.androidApp.ui.sheet.RemoteControlSheet
 import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.material.ktx.isTelevision
 import com.m3u.material.model.LocalSpacing
@@ -43,7 +43,7 @@ import com.m3u.ui.rememberSnackHostState
 fun App(
     modifier: Modifier = Modifier,
     viewModel: AppViewModel = hiltViewModel(),
-    snackHostState: SnackHostState = rememberSnackHostState()
+    hostState: SnackHostState = rememberSnackHostState()
 ) {
     val spacing = LocalSpacing.current
     val pref = LocalPref.current
@@ -52,17 +52,14 @@ fun App(
     val navController = rememberNavController()
     val entry by navController.currentBackStackEntryAsState()
 
-    val isInRootDestination by remember {
+    val root by remember {
         derivedStateOf {
-            entry?.destination?.route?.startsWith(ROOT_ROUTE) ?: false
+            viewModel.rootDestination.takeIf {
+                entry?.destination?.route?.startsWith(ROOT_ROUTE) == true
+            }
         }
     }
-    val actualRootDestination by remember {
-        derivedStateOf {
-            if (isInRootDestination) viewModel.rootDestination
-            else null
-        }
-    }
+
     val tv = isTelevision()
 
     val title: String by viewModel.title.collectAsStateWithLifecycle()
@@ -84,23 +81,12 @@ fun App(
     val broadcastCodeOnTelevision by viewModel.broadcastCodeOnTelevision.collectAsStateWithLifecycle()
 
     // for smartphones
-    val connectBottomSheetValue by viewModel.connectBottomSheetValue.collectAsStateWithLifecycle()
-    val searching by remember {
-        derivedStateOf {
-            with(connectBottomSheetValue) {
-                this is ConnectBottomSheetValue.Prepare && searching
-            }
-        }
-    }
-    val sheetState = rememberModalBottomSheetState(
-        skipPartiallyExpanded = true,
-        confirmValueChange = { !searching }
-    )
+    val remoteControlSheetValue by viewModel.remoteControlSheetValue.collectAsStateWithLifecycle()
 
     AppScaffold(
         title = title,
         actions = actions,
-        rootDestination = actualRootDestination,
+        rootDestination = root,
         fob = fob,
         onBackPressed = onBackPressed,
         navigateToRoot = navigateToRootDestination,
@@ -109,15 +95,15 @@ fun App(
             .then(modifier),
     ) { contentPadding ->
         AppNavHost(
-            root = actualRootDestination,
+            root = root,
             navigateToRoot = navigateToRootDestination,
             contentPadding = contentPadding,
-            modifier = Modifier
-                .fillMaxSize(),
-            navController = navController
+            navController = navController,
+            modifier = Modifier.fillMaxSize()
         )
         Row(
             horizontalArrangement = Arrangement.spacedBy(spacing.small, Alignment.End),
+            verticalAlignment = Alignment.Bottom,
             modifier = Modifier
                 .fillMaxWidth()
                 .align(Alignment.BottomCenter)
@@ -125,7 +111,7 @@ fun App(
                 .padding(spacing.medium)
         ) {
             SnackHost(
-                state = snackHostState,
+                state = hostState,
                 modifier = Modifier.weight(1f)
             )
             AnimatedVisibility(
@@ -150,11 +136,14 @@ fun App(
             }
         }
 
-        ConnectBottomSheet(
-            message = snackHostState.message,
-            sheetState = sheetState,
+        RemoteControlSheet(
+            value = remoteControlSheetValue,
             visible = viewModel.isConnectSheetVisible,
-            value = connectBottomSheetValue,
+            onCode = { viewModel.code = it },
+            checkTelevisionCodeOnSmartphone = viewModel::checkTelevisionCodeOnSmartphone,
+            forgetTelevisionCodeOnSmartphone = viewModel::forgetTelevisionCodeOnSmartphone,
+            onRemoteDirection = viewModel::onRemoteDirection,
+            message = hostState.message,
             onDismissRequest = {
                 viewModel.code = ""
                 viewModel.isConnectSheetVisible = false

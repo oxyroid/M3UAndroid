@@ -29,7 +29,7 @@ data class Playlists @Inject constructor(
                 if (title == null || url == null) {
                     call.respond(
                         DefRep(
-                            success = false,
+                            result = false,
                             reason = "Both title and url are required."
                         )
                     )
@@ -50,7 +50,7 @@ data class Playlists @Inject constructor(
                     .build()
                 workManager.enqueue(request)
                 call.respond(
-                    DefRep(success = true)
+                    DefRep(result = true)
                 )
             }
         }

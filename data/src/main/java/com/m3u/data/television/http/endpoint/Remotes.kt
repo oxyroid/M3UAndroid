@@ -27,7 +27,7 @@ data class Remotes @Inject constructor(
                     if (remoteDirection == null) {
                         call.respond(
                             DefRep(
-                                success = false,
+                                result = false,
                                 reason = "Remote direction is unsupported."
                             )
                         )
@@ -35,7 +35,7 @@ data class Remotes @Inject constructor(
                     }
                     remoteDirectionService.handle(remoteDirection)
                     call.respond(
-                        DefRep(success = true)
+                        DefRep(result = true)
                     )
                 }
             }
