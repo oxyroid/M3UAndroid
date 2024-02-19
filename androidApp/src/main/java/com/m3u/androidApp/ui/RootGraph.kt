@@ -1,19 +1,14 @@
 package com.m3u.androidApp.ui
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
-import com.m3u.core.wrapper.eventOf
-import com.m3u.core.wrapper.handledEvent
 import com.m3u.data.database.model.Playlist
 import com.m3u.features.favorite.FavouriteRoute
 import com.m3u.features.foryou.ForyouRoute
@@ -21,7 +16,6 @@ import com.m3u.features.setting.SettingRoute
 import com.m3u.material.ktx.Edge
 import com.m3u.material.ktx.blurEdge
 import com.m3u.ui.Destination
-import com.m3u.ui.ResumeEvent
 
 const val ROOT_ROUTE = "root_route"
 
@@ -59,34 +53,20 @@ private fun RootGraph(
     navigateToSettingPlaylistManagement: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-
-    val rootDestinations = remember { Destination.Root.entries }
-    val pagerState = rememberPagerState(
-        pageCount = { rootDestinations.size }
-    )
-
-    LaunchedEffect(root, rootDestinations) {
-        val page = rootDestinations.indexOf(root).coerceAtLeast(0)
-        pagerState.scrollToPage(page)
-    }
-
-    HorizontalPager(
-        state = pagerState,
-        userScrollEnabled = false,
+    Box(
         modifier = modifier
             .fillMaxSize()
             .blurEdge(
                 edge = Edge.Bottom,
                 color = MaterialTheme.colorScheme.background
             )
-    ) { pagerIndex ->
-        when (rootDestinations[pagerIndex]) {
+    ) {
+        when (root) {
             Destination.Root.Foryou -> {
                 ForyouRoute(
                     navigateToPlaylist = navigateToPlaylist,
                     navigateToStream = navigateToStream,
                     navigateToSettingPlaylistManagement = navigateToSettingPlaylistManagement,
-                    resume = rememberResumeEvent(pagerState.settledPage, pagerIndex),
                     contentPadding = contentPadding,
                     modifier = Modifier.fillMaxSize()
                 )
@@ -95,7 +75,6 @@ private fun RootGraph(
             Destination.Root.Favourite -> {
                 FavouriteRoute(
                     navigateToStream = navigateToStream,
-                    resume = rememberResumeEvent(pagerState.settledPage, pagerIndex),
                     contentPadding = contentPadding,
                     modifier = Modifier.fillMaxSize()
                 )
@@ -105,17 +84,10 @@ private fun RootGraph(
                 SettingRoute(
                     navigateToAbout = navigateToAbout,
                     contentPadding = contentPadding,
-                    resume = rememberResumeEvent(pagerState.settledPage, pagerIndex),
                     modifier = Modifier.fillMaxSize()
                 )
             }
+            null -> {}
         }
     }
 }
-
-@Composable
-private fun rememberResumeEvent(currentPage: Int, targetPage: Int): ResumeEvent =
-    remember(currentPage, targetPage) {
-        if (currentPage == targetPage) eventOf(Unit)
-        else handledEvent()
-    }

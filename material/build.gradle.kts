@@ -1,7 +1,6 @@
 plugins {
     alias(libs.plugins.com.android.library)
     alias(libs.plugins.org.jetbrains.kotlin.android)
-    `maven-publish`
 }
 
 android {
@@ -63,18 +62,4 @@ dependencies {
 
     api(libs.com.google.android.material.material)
     api(libs.haze)
-}
-
-afterEvaluate {
-    publishing {
-        publications {
-            create<MavenPublication>("release") {
-                groupId = "com.m3u"
-                artifactId = "material"
-                version = "1.0.0"
-
-                from(components["release"])
-            }
-        }
-    }
 }

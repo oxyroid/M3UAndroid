@@ -9,6 +9,7 @@ import androidx.compose.material.icons.automirrored.rounded.Sort
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -32,8 +33,6 @@ import com.m3u.material.ktx.interceptVolumeEvent
 import com.m3u.material.ktx.isTelevision
 import com.m3u.material.ktx.thenIf
 import com.m3u.material.model.LocalHazeState
-import com.m3u.ui.EventHandler
-import com.m3u.ui.ResumeEvent
 import com.m3u.ui.Sort
 import com.m3u.ui.SortBottomSheet
 import com.m3u.ui.helper.Action
@@ -46,7 +45,6 @@ import kotlinx.collections.immutable.persistentListOf
 @Composable
 fun FavouriteRoute(
     navigateToStream: () -> Unit,
-    resume: ResumeEvent,
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
     viewModel: FavouriteViewModel = hiltViewModel()
@@ -68,7 +66,7 @@ fun FavouriteRoute(
     var isSortSheetVisible by rememberSaveable { mutableStateOf(false) }
     var dialogStatus: DialogStatus by remember { mutableStateOf(DialogStatus.Idle) }
 
-    EventHandler(resume) {
+    LaunchedEffect(Unit) {
         helper.deep = 0
         helper.title = title.title()
         helper.actions = persistentListOf(

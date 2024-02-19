@@ -15,6 +15,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -44,8 +45,6 @@ import com.m3u.material.ktx.split
 import com.m3u.material.ktx.thenIf
 import com.m3u.material.model.LocalHazeState
 import com.m3u.material.model.LocalSpacing
-import com.m3u.ui.EventHandler
-import com.m3u.ui.ResumeEvent
 import com.m3u.ui.helper.Action
 import com.m3u.ui.helper.LocalHelper
 import dev.chrisbanes.haze.HazeDefaults
@@ -58,7 +57,6 @@ fun ForyouRoute(
     navigateToPlaylist: (Playlist) -> Unit,
     navigateToStream: () -> Unit,
     navigateToSettingPlaylistManagement: () -> Unit,
-    resume: ResumeEvent,
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
     viewModel: ForyouViewModel = hiltViewModel()
@@ -72,7 +70,7 @@ fun ForyouRoute(
     val details by viewModel.details.collectAsStateWithLifecycle()
     val recommend by viewModel.recommend.collectAsStateWithLifecycle()
 
-    EventHandler(resume) {
+    LaunchedEffect(Unit) {
         helper.deep = 0
         helper.title = title.title()
         helper.actions = persistentListOf(

@@ -54,7 +54,6 @@ import com.m3u.material.model.LocalHazeState
 import com.m3u.ui.DestinationEvent
 import com.m3u.ui.EventBus
 import com.m3u.ui.EventHandler
-import com.m3u.ui.ResumeEvent
 import com.m3u.ui.helper.LocalHelper
 import dev.chrisbanes.haze.HazeDefaults
 import dev.chrisbanes.haze.haze
@@ -63,7 +62,6 @@ import kotlinx.collections.immutable.persistentListOf
 
 @Composable
 fun SettingRoute(
-    resume: ResumeEvent,
     contentPadding: PaddingValues,
     navigateToAbout: () -> Unit,
     modifier: Modifier = Modifier,
@@ -104,7 +102,7 @@ fun SettingRoute(
         openDocumentLauncher.launch(arrayOf("text/*"))
     }
 
-    EventHandler(resume) {
+    LaunchedEffect(Unit) {
         helper.deep = 0
         helper.title = title.title()
         helper.actions = persistentListOf()
