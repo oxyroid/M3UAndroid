@@ -1,7 +1,6 @@
 package com.m3u.data.service.internal
 
 import android.view.KeyEvent
-import android.view.inputmethod.BaseInputConnection
 import androidx.compose.runtime.Immutable
 import com.m3u.core.architecture.dispatcher.Dispatcher
 import com.m3u.core.architecture.dispatcher.M3uDispatchers.Main
@@ -9,19 +8,21 @@ import com.m3u.data.service.RemoteDirectionService
 import com.m3u.data.television.model.RemoteDirection
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-import kotlin.time.Duration.Companion.milliseconds
 
 @Immutable
 class RemoteDirectionServiceImpl @Inject constructor(
     @Dispatcher(Main) private val mainDispatcher: CoroutineDispatcher
 ) : RemoteDirectionService {
     private val coroutineScope = CoroutineScope(mainDispatcher)
+    private val _actions = MutableSharedFlow<RemoteDirectionService.Action>()
+    override val actions: SharedFlow<RemoteDirectionService.Action> = _actions.asSharedFlow()
 
     override fun emit(remoteDirection: RemoteDirection) {
-        val currentConnection = connection ?: return
         val keyCode = when (remoteDirection) {
             RemoteDirection.LEFT -> KeyEvent.KEYCODE_DPAD_LEFT
             RemoteDirection.RIGHT -> KeyEvent.KEYCODE_DPAD_RIGHT
@@ -30,29 +31,17 @@ class RemoteDirectionServiceImpl @Inject constructor(
             RemoteDirection.ENTER -> KeyEvent.KEYCODE_DPAD_CENTER
             RemoteDirection.EXIT -> {
                 coroutineScope.launch {
-                    onBackPressed?.invoke()
+                    _actions.emit(
+                        RemoteDirectionService.Action.Back
+                    )
                 }
                 return
             }
         }
         coroutineScope.launch {
-            currentConnection.sendKeyEvent(
-                KeyEvent(KeyEvent.ACTION_DOWN, keyCode)
-            )
-            delay(150.milliseconds)
-            currentConnection.sendKeyEvent(
-                KeyEvent(KeyEvent.ACTION_UP, keyCode)
+            _actions.emit(
+                RemoteDirectionService.Action.Common(keyCode)
             )
         }
-    }
-
-    private var connection: BaseInputConnection? = null
-    private var onBackPressed: (() -> Unit)? = null
-    override fun init(
-        connection: BaseInputConnection?,
-        onBackPressed: (() -> Unit)?
-    ) {
-        this.connection = connection
-        this.onBackPressed = onBackPressed
     }
 }

@@ -1,14 +1,15 @@
 package com.m3u.data.service
 
-import android.view.inputmethod.BaseInputConnection
 import androidx.compose.runtime.Immutable
 import com.m3u.data.television.model.RemoteDirection
+import kotlinx.coroutines.flow.SharedFlow
 
 @Immutable
 interface RemoteDirectionService {
+    val actions: SharedFlow<Action>
     fun emit(remoteDirection: RemoteDirection)
-    fun init(
-        connection: BaseInputConnection?,
-        onBackPressed: (() -> Unit)?
-    )
+    sealed class Action {
+        data object Back : Action()
+        data class Common(val keyCode: Int) : Action()
+    }
 }
