@@ -95,6 +95,7 @@ internal fun RemoteControlSheet(
                     is RemoteControlSheetValue.Update -> {
 
                     }
+
                     else -> {}
                 }
             }

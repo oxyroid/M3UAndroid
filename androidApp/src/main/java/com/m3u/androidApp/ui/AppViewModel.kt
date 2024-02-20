@@ -96,11 +96,18 @@ class AppViewModel @Inject constructor(
 
             television.version != publisher.versionCode -> {
                 this.code = ""
-                val query = UpdateKey(television.version, television.abi)
-                val state = states[query] ?: UpdateState.Idle
-                RemoteControlSheetValue.Update(
-                    television = television,
-                    state = state
+//                val query = UpdateKey(television.version, television.abi)
+//                val state = states[query] ?: UpdateState.Idle
+//                RemoteControlSheetValue.Update(
+//                    television = television,
+//                    state = state
+//                )
+                RemoteControlSheetValue.Prepare(
+                    code = code,
+                    searchingOrConnecting = with(connection) {
+                        this is ConnectionToTelevisionValue.Searching ||
+                                this is ConnectionToTelevisionValue.Connecting
+                    }
                 )
             }
 
