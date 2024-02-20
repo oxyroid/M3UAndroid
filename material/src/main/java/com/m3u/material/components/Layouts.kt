@@ -38,9 +38,7 @@ fun OuterRow(
 ) {
     val spacing = LocalSpacing.current
     Row(
-        modifier = modifier.padding(
-            spacing.medium
-        ),
+        modifier = modifier.padding(spacing.medium),
         horizontalArrangement = horizontalArrangement,
         verticalAlignment = verticalAlignment,
         content = content
@@ -56,9 +54,7 @@ fun OuterBox(
 ) {
     val spacing = LocalSpacing.current
     Box(
-        modifier = modifier.padding(
-            spacing.medium
-        ),
+        modifier = modifier.padding(spacing.medium),
         contentAlignment = contentAlignment,
         propagateMinConstraints = propagateMinConstraints,
         content = content

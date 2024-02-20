@@ -74,7 +74,7 @@ fun App(
 
     val navigateToRootDestination = { rootDestination: Destination.Root ->
         viewModel.rootDestination = rootDestination
-        if (shouldDispatchBackStack) {
+        if (!shouldDispatchBackStack) {
             navController.restoreBackStack()
         }
     }
