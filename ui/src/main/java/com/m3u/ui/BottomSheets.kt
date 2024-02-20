@@ -1,11 +1,18 @@
 package com.m3u.ui
 
+import androidx.activity.compose.BackHandler
 import androidx.annotation.StringRes
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsIgnoringVisibility
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.selection.selectable
@@ -21,14 +28,18 @@ import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.tv.foundation.lazy.list.TvLazyColumn
+import androidx.tv.foundation.lazy.list.items
+import androidx.tv.material3.DenseListItem
+import androidx.tv.material3.ListItemDefaults
 import com.m3u.i18n.R.string
+import com.m3u.material.components.television.dialogFocusable
 import com.m3u.material.model.LocalSpacing
 import kotlinx.collections.immutable.ImmutableList
 
@@ -128,24 +139,46 @@ private fun SortBottomSheetItem(
 }
 
 @Composable
-fun BackendConnectBottomSheet(
+fun SortFullScreenDialog(
     visible: Boolean,
-    connecting: Boolean,
-    code: String,
-    second: Int,
-    sheetState: SheetState,
+    sort: Sort,
+    sorts: ImmutableList<Sort>,
+    onChanged: (Sort) -> Unit,
     onDismissRequest: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
-    val currentSecond by rememberUpdatedState(second)
-    if (visible) {
-        ModalBottomSheet(
-            sheetState = sheetState,
-            onDismissRequest = {
-                if (!connecting) onDismissRequest()
-            },
-            windowInsets = WindowInsets(0)
+    Box(Modifier.fillMaxSize().then(modifier)) {
+        AnimatedVisibility(
+            visible = visible,
+            modifier = Modifier
+                .fillMaxHeight()
+                .fillMaxWidth(0.4f)
+                .align(Alignment.CenterEnd)
         ) {
+            TvLazyColumn(
+                Modifier
+                    .fillMaxHeight()
+                    .background(androidx.tv.material3.MaterialTheme.colorScheme.surfaceVariant)
+                    .padding(12.dp)
+                    .selectableGroup()
+                    .dialogFocusable(),
+                horizontalAlignment = Alignment.Start,
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                items(sorts) { currentSort ->
+                    DenseListItem(
+                        selected = currentSort == sort,
+                        onClick = { onChanged(currentSort) },
+                        leadingContent = {},
+                        scale = ListItemDefaults.scale(0.95f, 1f)
+                    ) {
+                        androidx.tv.material3.Text(currentSort.name)
+                    }
+                }
+            }
+            BackHandler {
+                onDismissRequest()
+            }
         }
     }
 }

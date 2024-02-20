@@ -60,7 +60,7 @@ class CrashActivity : ComponentActivity() {
             Toolkit(
                 pref = pref,
                 helper = helper,
-                remoteDirectionService = remoteDirectionService
+                actions = remoteDirectionService.actions
             ) {
                 CrashApp()
             }

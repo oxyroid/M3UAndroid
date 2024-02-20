@@ -14,6 +14,10 @@ plugins {
 
 subprojects {
     tasks.withType<KotlinCompile>().configureEach {
+        val composeMetricsPath =
+            project.layout.buildDirectory.dir("compose_metrics").get().asFile.path
+        val composeStabilityConfigurationPath =
+            "${project.rootDir.path}/compose_compiler_config.conf"
         kotlinOptions {
             freeCompilerArgs += listOf(
                 "-Xcontext-receivers",
@@ -26,22 +30,11 @@ subprojects {
                 "-opt-in=androidx.compose.material3.adaptive.navigation.suite.ExperimentalMaterial3AdaptiveNavigationSuiteApi",
                 "-opt-in=androidx.tv.material3.ExperimentalTvMaterial3Api",
                 "-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi",
+                "-P", "plugin:androidx.compose.compiler.plugins.kotlin:metricsDestination=$composeMetricsPath",
+                "-P", "plugin:androidx.compose.compiler.plugins.kotlin:reportsDestination=$composeMetricsPath",
+                "-P", "plugin:androidx.compose.compiler.plugins.kotlin:stabilityConfigurationPath=$composeStabilityConfigurationPath",
+                "-P", "plugin:androidx.compose.compiler.plugins.kotlin:experimentalStrongSkipping=true",
             )
         }
-        val composeMetricsPath =
-            project.layout.buildDirectory.dir("compose_metrics").get().asFile.path
-        compilerOptions.freeCompilerArgs.addAll(
-            "-P",
-            "plugin:androidx.compose.compiler.plugins.kotlin:metricsDestination=$composeMetricsPath",
-        )
-        compilerOptions.freeCompilerArgs.addAll(
-            "-P",
-            "plugin:androidx.compose.compiler.plugins.kotlin:reportsDestination=$composeMetricsPath",
-        )
-        compilerOptions.freeCompilerArgs.addAll(
-            "-P",
-            "plugin:androidx.compose.compiler.plugins.kotlin:stabilityConfigurationPath=" +
-                    "${project.rootDir.path}/compose_compiler_config.conf"
-        )
     }
 }

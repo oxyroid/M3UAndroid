@@ -232,6 +232,7 @@ private fun PlaylistScreen(
             onRefresh = onRefresh,
             sorts = sorts,
             sort = sort,
+            onSort = onSort,
             onFavorite = onFavorite,
             hide = hide,
             savePicture = savePicture,

@@ -87,6 +87,7 @@ internal fun ImmersiveBackground(
                         .padding(spacing.medium)
                         .fillMaxWidth()
                 ) {
+                    SnackHost()
                     Text(
                         text = stream.title,
                         style = MaterialTheme.typography.headlineLarge,

@@ -22,7 +22,6 @@ internal fun PreferencesFragment(
     contentPadding: PaddingValues,
     versionName: String,
     versionCode: Int,
-    snapshot: Boolean,
     navigateToPlaylistManagement: () -> Unit,
     navigateToThemeSelector: () -> Unit,
     navigateToAbout: () -> Unit,
@@ -57,7 +56,6 @@ internal fun PreferencesFragment(
                 OtherPreferences(
                     versionName = versionName,
                     versionCode = versionCode,
-                    snapshot = snapshot,
                     navigateToAbout = navigateToAbout
                 )
             }
@@ -89,7 +87,6 @@ internal fun PreferencesFragment(
                 OtherPreferences(
                     versionName = versionName,
                     versionCode = versionCode,
-                    snapshot = snapshot,
                     navigateToAbout = navigateToAbout
                 )
             }

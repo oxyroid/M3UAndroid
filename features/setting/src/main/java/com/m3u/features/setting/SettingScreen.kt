@@ -111,7 +111,6 @@ fun SettingRoute(
             contentPadding = contentPadding,
             versionName = state.versionName,
             versionCode = state.versionCode,
-            snapshot = state.snapshot,
             title = state.title,
             url = state.url,
             uri = state.uri,
@@ -159,7 +158,6 @@ private fun SettingScreen(
     contentPadding: PaddingValues,
     versionName: String,
     versionCode: Int,
-    snapshot: Boolean,
     title: String,
     url: String,
     uri: Uri,
@@ -230,7 +228,6 @@ private fun SettingScreen(
                 contentPadding = contentPadding,
                 versionName = versionName,
                 versionCode = versionCode,
-                snapshot = snapshot,
                 navigateToPlaylistManagement = {
                     fragment = Param.Setting.Playlists
                 },

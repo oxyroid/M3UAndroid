@@ -68,7 +68,7 @@ class PlayerActivity : ComponentActivity() {
                 helper = helper,
                 pref = pref,
                 alwaysUseDarkTheme = true,
-                remoteDirectionService = remoteDirectionService
+                actions = remoteDirectionService.actions
             ) {
                 StreamRoute(
                     onBackPressed = { finish() },

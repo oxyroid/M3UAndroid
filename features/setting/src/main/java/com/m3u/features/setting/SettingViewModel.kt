@@ -15,14 +15,15 @@ import com.m3u.core.architecture.Publisher
 import com.m3u.core.architecture.dispatcher.Dispatcher
 import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
 import com.m3u.core.architecture.pref.Pref
+import com.m3u.core.architecture.pref.observeAsFlow
 import com.m3u.core.architecture.viewmodel.BaseViewModel
 import com.m3u.data.api.LocalPreparedService
 import com.m3u.data.database.dao.ColorPackDao
 import com.m3u.data.database.model.ColorPack
 import com.m3u.data.database.model.Stream
-import com.m3u.data.service.Messager
 import com.m3u.data.repository.StreamRepository
 import com.m3u.data.repository.observeAll
+import com.m3u.data.service.Messager
 import com.m3u.data.worker.BackupWorker
 import com.m3u.data.worker.RestoreWorker
 import com.m3u.data.worker.SubscriptionWorker
@@ -33,6 +34,7 @@ import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
@@ -55,7 +57,6 @@ class SettingViewModel @Inject constructor(
     emptyState = SettingState(
         versionName = publisher.versionName,
         versionCode = publisher.versionCode,
-        snapshot = publisher.snapshot
     )
 ) {
     internal var subscribeForTv by mutableStateOf(false)
@@ -69,8 +70,10 @@ class SettingViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5_000L)
         )
 
-    internal val packs: StateFlow<ImmutableList<ColorPack>> = colorPackDao
-        .observeAllColorPacks()
+    internal val packs: StateFlow<ImmutableList<ColorPack>> = combine(
+        colorPackDao.observeAllColorPacks(),
+        pref.observeAsFlow { it.followSystemTheme }
+    ) { all, followSystemTheme -> if (followSystemTheme) all.filter { !it.isDark } else all }
         .map { it.toImmutableList() }
         .flowOn(ioDispatcher)
         .stateIn(

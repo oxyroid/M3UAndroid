@@ -139,10 +139,11 @@ fun Preference(
                     }
                 },
                 scale = TvListItemDefaults.scale(
-                    scale = 0.9f,
+                    scale = 0.95f,
                     focusedScale = 1f
                 ),
                 onClick = onClick,
+                enabled = enabled,
                 modifier = modifier
                     .semantics(mergeDescendants = true) {}
                     .fillMaxWidth()

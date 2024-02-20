@@ -198,7 +198,6 @@ private fun FavoriteItemImpl(
                     // icon-button-tokens: icon-size
                     modifier = Modifier
                         .heightIn(min = 24.dp)
-                        .weight(1f)
                 ) {
                     Text(
                         text = stream.title.trim(),

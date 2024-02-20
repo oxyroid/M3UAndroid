@@ -5,7 +5,6 @@ import android.net.Uri
 data class SettingState(
     val versionName: String = "",
     val versionCode: Int = -1,
-    val snapshot: Boolean = false,
     val title: String = "",
     val url: String = "",
     val uri: Uri = Uri.EMPTY,

@@ -21,13 +21,14 @@ import com.m3u.material.model.Theme
 import com.m3u.ui.helper.Helper
 import com.m3u.ui.helper.LocalHelper
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.SharedFlow
 import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
 fun Toolkit(
     helper: Helper,
     pref: Pref,
-    remoteDirectionService: RemoteDirectionService,
+    actions: SharedFlow<RemoteDirectionService.Action>,
     alwaysUseDarkTheme: Boolean = false,
     content: @Composable () -> Unit
 ) {
@@ -35,23 +36,23 @@ fun Toolkit(
     val onBackPressedDispatcher =
         checkNotNull(LocalOnBackPressedDispatcherOwner.current).onBackPressedDispatcher
     val prevTypography = MaterialTheme.typography
-    val typography = remember(prevTypography) {
+    val smartphoneTypography: androidx.compose.material3.Typography = remember(prevTypography) {
         prevTypography.withFontFamily(FontFamilies.GoogleSans)
     }
-
     val useDarkTheme = when {
         alwaysUseDarkTheme -> true
         pref.followSystemTheme -> isSystemInDarkTheme()
         else -> pref.darkMode
     }
 
-    LaunchedEffect(view) {
+    LaunchedEffect(view, actions) {
         val connection = BaseInputConnection(view, true)
-        remoteDirectionService.actions.collect { action ->
+        actions.collect { action ->
             when (action) {
                 RemoteDirectionService.Action.Back -> {
                     onBackPressedDispatcher.onBackPressed()
                 }
+
                 is RemoteDirectionService.Action.Common -> {
                     connection.sendKeyEvent(
                         KeyEvent(KeyEvent.ACTION_DOWN, action.keyCode)
@@ -75,7 +76,7 @@ fun Toolkit(
             argb = pref.colorArgb,
             useDarkTheme = useDarkTheme,
             useDynamicColors = pref.useDynamicColors,
-            typography = typography
+            typography = smartphoneTypography,
         ) {
             LaunchedEffect(useDarkTheme) {
                 helper.isSystemBarUseDarkMode = useDarkTheme.unspecifiable

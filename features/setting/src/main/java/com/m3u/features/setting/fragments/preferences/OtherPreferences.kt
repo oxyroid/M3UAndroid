@@ -23,7 +23,6 @@ import com.m3u.material.components.Preference
 internal fun OtherPreferences(
     versionName: String,
     versionCode: Int,
-    snapshot: Boolean,
     navigateToAbout: () -> Unit,
     modifier: Modifier = Modifier
 ) {

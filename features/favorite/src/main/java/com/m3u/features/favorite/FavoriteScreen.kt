@@ -35,6 +35,7 @@ import com.m3u.material.ktx.thenIf
 import com.m3u.material.model.LocalHazeState
 import com.m3u.ui.Sort
 import com.m3u.ui.SortBottomSheet
+import com.m3u.ui.SortFullScreenDialog
 import com.m3u.ui.helper.Action
 import com.m3u.ui.helper.LocalHelper
 import dev.chrisbanes.haze.HazeDefaults
@@ -78,43 +79,56 @@ fun FavouriteRoute(
     }
 
     Background {
-        FavoriteScreen(
-            contentPadding = contentPadding,
-            rowCount = pref.rowCount,
-            streams = streams,
-            zapping = zapping,
-            navigateToStream = navigateToStream,
-            onMenu = { dialogStatus = DialogStatus.Selections(it) },
-            sort = sort,
-            modifier = Modifier
-                .fillMaxSize()
-                .thenIf(!tv && pref.godMode) {
-                    Modifier.interceptVolumeEvent { event ->
-                        pref.rowCount = when (event) {
-                            KeyEvent.KEYCODE_VOLUME_UP -> (pref.rowCount - 1).coerceAtLeast(1)
-                            KeyEvent.KEYCODE_VOLUME_DOWN -> (pref.rowCount + 1).coerceAtMost(2)
-                            else -> return@interceptVolumeEvent
+        val content = @Composable {
+            FavoriteScreen(
+                contentPadding = contentPadding,
+                rowCount = pref.rowCount,
+                streams = streams,
+                zapping = zapping,
+                navigateToStream = navigateToStream,
+                onMenu = { dialogStatus = DialogStatus.Selections(it) },
+                sort = sort,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .thenIf(!tv && pref.godMode) {
+                        Modifier.interceptVolumeEvent { event ->
+                            pref.rowCount = when (event) {
+                                KeyEvent.KEYCODE_VOLUME_UP -> (pref.rowCount - 1).coerceAtLeast(1)
+                                KeyEvent.KEYCODE_VOLUME_DOWN -> (pref.rowCount + 1).coerceAtMost(2)
+                                else -> return@interceptVolumeEvent
+                            }
                         }
                     }
+                    .then(modifier)
+            )
+        }
+        content()
+        if (!tv) {
+            SortBottomSheet(
+                visible = isSortSheetVisible,
+                sort = sort,
+                sorts = sorts,
+                sheetState = sheetState,
+                onChanged = { viewModel.sort(it) },
+                onDismissRequest = { isSortSheetVisible = false }
+            )
+            FavoriteDialog(
+                status = dialogStatus,
+                onUpdate = { dialogStatus = it },
+                cancelFavorite = { id -> viewModel.cancelFavourite(id) },
+                createShortcut = { id ->
+                    viewModel.createShortcut(context, id)
                 }
-                .then(modifier)
-        )
-        SortBottomSheet(
-            visible = isSortSheetVisible,
-            sort = sort,
-            sorts = sorts,
-            sheetState = sheetState,
-            onChanged = { viewModel.sort(it) },
-            onDismissRequest = { isSortSheetVisible = false }
-        )
-        FavoriteDialog(
-            status = dialogStatus,
-            onUpdate = { dialogStatus = it },
-            cancelFavorite = { id -> viewModel.cancelFavourite(id) },
-            createShortcut = { id ->
-                viewModel.createShortcut(context, id)
-            }
-        )
+            )
+        } else {
+            SortFullScreenDialog(
+                visible = dialogStatus != DialogStatus.Idle,
+                sort = sort,
+                sorts = sorts,
+                onChanged = { viewModel.sort(it) },
+                onDismissRequest = { dialogStatus = DialogStatus.Idle }
+            )
+        }
     }
 }
 

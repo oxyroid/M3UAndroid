@@ -74,7 +74,7 @@ class MainActivity : AppCompatActivity() {
             Toolkit(
                 helper = helper,
                 pref = pref,
-                remoteDirectionService = remoteDirectionService
+                actions = remoteDirectionService.actions
             ) {
                 App(
                     viewModel = viewModel
