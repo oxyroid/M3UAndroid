@@ -13,7 +13,6 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import androidx.tvprovider.media.tv.TvContractCompat
 import com.m3u.core.Contracts
-import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.pref.Pref
 import com.m3u.core.architecture.pref.observeAsFlow
 import com.m3u.core.architecture.viewmodel.BaseViewModel
@@ -22,12 +21,12 @@ import com.m3u.core.wrapper.Resource
 import com.m3u.core.wrapper.eventOf
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.Stream
-import com.m3u.data.service.MessageManager
-import com.m3u.data.service.PlayerManager
 import com.m3u.data.repository.MediaRepository
 import com.m3u.data.repository.PlaylistRepository
 import com.m3u.data.repository.StreamRepository
 import com.m3u.data.repository.refresh
+import com.m3u.data.service.Messager
+import com.m3u.data.service.PlayerManager
 import com.m3u.features.playlist.PlaylistMessage.StreamCoverSaved
 import com.m3u.features.playlist.navigation.PlaylistNavigation
 import com.m3u.ui.Sort
@@ -58,8 +57,7 @@ class PlaylistViewModel @Inject constructor(
     private val mediaRepository: MediaRepository,
     playerManager: PlayerManager,
     private val pref: Pref,
-    @Logger.MessageImpl private val logger: Logger,
-    private val messageManager: MessageManager
+    private val messager: Messager
 ) : BaseViewModel<PlaylistState, PlaylistEvent>(
     emptyState = PlaylistState()
 ) {
@@ -112,7 +110,7 @@ class PlaylistViewModel @Inject constructor(
                 val refreshing = resource is Resource.Loading
                 _refreshing.update { refreshing }
                 val message = if (refreshing) PlaylistMessage.Refreshing else Message.Dynamic.EMPTY
-                messageManager.emit(message)
+                messager.emit(message)
             }
             .launchIn(viewModelScope)
     }
@@ -138,12 +136,12 @@ class PlaylistViewModel @Inject constructor(
         viewModelScope.launch {
             val stream = streamRepository.get(id)
             if (stream == null) {
-                messageManager.emit(PlaylistMessage.StreamNotFound)
+                messager.emit(PlaylistMessage.StreamNotFound)
                 return@launch
             }
             val cover = stream.cover
             if (cover.isNullOrEmpty()) {
-                messageManager.emit(PlaylistMessage.StreamCoverNotFound)
+                messager.emit(PlaylistMessage.StreamCoverNotFound)
                 return@launch
             }
             mediaRepository
@@ -152,11 +150,11 @@ class PlaylistViewModel @Inject constructor(
                     when (resource) {
                         Resource.Loading -> {}
                         is Resource.Success -> {
-                            messageManager.emit(StreamCoverSaved(resource.data.absolutePath))
+                            messager.emit(StreamCoverSaved(resource.data.absolutePath))
                         }
 
                         is Resource.Failure -> {
-                            logger.log(resource.message.orEmpty())
+                            messager.emit(resource.message.orEmpty())
                         }
                     }
                 }
@@ -169,7 +167,7 @@ class PlaylistViewModel @Inject constructor(
             val id = event.id
             val stream = streamRepository.get(id)
             if (stream == null) {
-                messageManager.emit(PlaylistMessage.StreamNotFound)
+                messager.emit(PlaylistMessage.StreamNotFound)
             } else {
                 streamRepository.hide(stream.id, true)
             }
@@ -298,6 +296,4 @@ class PlaylistViewModel @Inject constructor(
             initialValue = persistentListOf(),
             started = SharingStarted.WhileSubscribed(5_000L)
         )
-
-    internal val message = messageManager.message
 }

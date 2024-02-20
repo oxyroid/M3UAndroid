@@ -78,7 +78,7 @@ class StreamViewModel @Inject constructor(
             .trackFormats
             .map { all ->
                 all
-                    .filter { it.key in ALLOWED_TRACK_TYPES }
+//                    .filter { it.key in ALLOWED_TRACK_TYPES }
                     .mapValues { (_, formats) -> formats.toPersistentList() }
                     .toImmutableMap()
             }
@@ -93,7 +93,7 @@ class StreamViewModel @Inject constructor(
             .selected
             .map { all ->
                 all
-                    .filter { it.key in ALLOWED_TRACK_TYPES }
+//                    .filter { it.key in ALLOWED_TRACK_TYPES }
                     .toPersistentMap()
             }
             .stateIn(

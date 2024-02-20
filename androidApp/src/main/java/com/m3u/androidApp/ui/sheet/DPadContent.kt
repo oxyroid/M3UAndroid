@@ -9,27 +9,30 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.InternalComposeApi
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.m3u.core.wrapper.Message
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.data.television.model.RemoteDirection
 import com.m3u.data.television.model.Television
 import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.FontFamilies
+import com.m3u.ui.helper.LocalHelper
 
 @Composable
 @InternalComposeApi
 internal fun DPadContent(
     television: Television,
-    message: Message,
     onRemoteDirection: (RemoteDirection) -> Unit,
     forgetTelevisionCodeOnSmartphone: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
+    val helper = LocalHelper.current
+    val message by helper.message.collectAsStateWithLifecycle()
     Column(
         modifier = modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,

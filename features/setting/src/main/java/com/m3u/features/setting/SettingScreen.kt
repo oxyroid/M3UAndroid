@@ -51,7 +51,7 @@ import com.m3u.features.setting.fragments.preferences.PreferencesFragment
 import com.m3u.i18n.R.string
 import com.m3u.material.ktx.isTelevision
 import com.m3u.material.model.LocalHazeState
-import com.m3u.ui.DestinationEvent
+import com.m3u.ui.Param
 import com.m3u.ui.EventBus
 import com.m3u.ui.EventHandler
 import com.m3u.ui.helper.LocalHelper
@@ -70,14 +70,13 @@ fun SettingRoute(
     val tv = isTelevision()
     val title = stringResource(string.ui_title_setting)
 
+    val helper = LocalHelper.current
     val controller = LocalSoftwareKeyboardController.current
 
     val state by viewModel.state.collectAsStateWithLifecycle()
     val packs by viewModel.packs.collectAsStateWithLifecycle()
     val hiddenStreams by viewModel.hiddenStreams.collectAsStateWithLifecycle()
     val backingUpOrRestoring by viewModel.backingUpOrRestoring.collectAsStateWithLifecycle()
-
-    val helper = LocalHelper.current
 
     val sheetState = rememberModalBottomSheetState()
     var colorInt: Int? by remember { mutableStateOf(null) }
@@ -103,7 +102,6 @@ fun SettingRoute(
     }
 
     LaunchedEffect(Unit) {
-        helper.deep = 0
         helper.title = title.title()
         helper.actions = persistentListOf()
     }
@@ -193,40 +191,32 @@ private fun SettingScreen(
 
     val colorArgb = pref.colorArgb
 
-    var fragment: DestinationEvent.Setting by remember {
-        mutableStateOf(DestinationEvent.Setting.Default)
+    var fragment: Param.Setting by remember {
+        mutableStateOf(Param.Setting.Default)
     }
 
     EventHandler(EventBus.setting) {
         fragment = it
     }
 
-    LaunchedEffect(fragment) {
+    LaunchedEffect(fragment, defaultTitle, playlistTitle, appearanceTitle) {
         helper.title = when (fragment) {
-            DestinationEvent.Setting.Default -> defaultTitle
-            DestinationEvent.Setting.Playlists -> playlistTitle
-            DestinationEvent.Setting.Appearance -> appearanceTitle
+            Param.Setting.Default -> defaultTitle
+            Param.Setting.Playlists -> playlistTitle
+            Param.Setting.Appearance -> appearanceTitle
         }.title()
-        helper.deep = when (fragment) {
-            DestinationEvent.Setting.Default -> 0
-            else -> 1
-        }
     }
 
-    val currentDestination by remember {
+    val currentPaneScaffoldRole by remember {
         derivedStateOf {
             when (fragment) {
-                DestinationEvent.Setting.Default -> ThreePaneScaffoldDestinationItem(
-                    ListDetailPaneScaffoldRole.List,
-                    null
-                )
-
-                else -> ThreePaneScaffoldDestinationItem(ListDetailPaneScaffoldRole.Detail, null)
+                Param.Setting.Default -> ListDetailPaneScaffoldRole.List
+                else -> ListDetailPaneScaffoldRole.Detail
             }
         }
     }
     val scaffoldState = calculateListDetailPaneScaffoldState(
-        currentDestination = currentDestination,
+        currentDestination = ThreePaneScaffoldDestinationItem(currentPaneScaffoldRole, null),
         scaffoldDirective = calculateStandardPaneScaffoldDirective(currentWindowAdaptiveInfo())
     )
 
@@ -242,20 +232,20 @@ private fun SettingScreen(
                 versionCode = versionCode,
                 snapshot = snapshot,
                 navigateToPlaylistManagement = {
-                    fragment = DestinationEvent.Setting.Playlists
+                    fragment = Param.Setting.Playlists
                 },
                 navigateToThemeSelector = {
-                    fragment = DestinationEvent.Setting.Appearance
+                    fragment = Param.Setting.Appearance
                 },
                 navigateToAbout = navigateToAbout,
                 modifier = Modifier.fillMaxSize()
             )
         },
         detailPane = {
-            if (fragment != DestinationEvent.Setting.Default) {
+            if (fragment != Param.Setting.Default) {
                 AnimatedPane(Modifier) {
                     when (fragment) {
-                        DestinationEvent.Setting.Playlists -> {
+                        Param.Setting.Playlists -> {
                             SubscriptionsFragment(
                                 contentPadding = contentPadding,
                                 title = title,
@@ -279,7 +269,7 @@ private fun SettingScreen(
                             )
                         }
 
-                        DestinationEvent.Setting.Appearance -> {
+                        Param.Setting.Appearance -> {
                             AppearanceFragment(
                                 packs = packs,
                                 colorArgb = colorArgb,
@@ -302,8 +292,8 @@ private fun SettingScreen(
             .testTag("feature:setting")
     )
 
-    BackHandler(fragment != DestinationEvent.Setting.Default) {
-        fragment = DestinationEvent.Setting.Default
+    BackHandler(fragment != Param.Setting.Default) {
+        fragment = Param.Setting.Default
     }
 }
 

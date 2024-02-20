@@ -49,7 +49,7 @@ import kotlinx.coroutines.launch
 @Composable
 internal fun FormatsBottomSheet(
     visible: Boolean,
-    allFormats: ImmutableMap<Int, ImmutableList<Format>>,
+    formats: ImmutableMap<Int, ImmutableList<Format>>,
     selectedFormats: ImmutableMap<Int, Format?>,
     maskState: MaskState,
     onDismiss: OnDismiss,
@@ -59,7 +59,7 @@ internal fun FormatsBottomSheet(
 ) {
     val spacing = LocalSpacing.current
     val state = rememberModalBottomSheetState()
-    val pagerState = rememberPagerState { allFormats.size }
+    val pagerState = rememberPagerState { formats.size }
     val coroutineScope = rememberCoroutineScope()
 
     LaunchedEffect(visible) {
@@ -83,11 +83,11 @@ internal fun FormatsBottomSheet(
                 modifier = Modifier.padding(horizontal = spacing.medium)
             )
             Spacer(modifier = Modifier.height(spacing.medium))
-            val typesIndexed = remember(allFormats) {
-                allFormats.map { it.key }
+            val typesIndexed = remember(formats) {
+                formats.map { it.key }
             }
-            val formatsIndexed = remember(allFormats) {
-                allFormats.map { it.value }
+            val formatsIndexed = remember(formats) {
+                formats.map { it.value }
             }
             val selectedFormatsIndexed = remember(selectedFormats) {
                 selectedFormats.map { it.value }
@@ -99,12 +99,12 @@ internal fun FormatsBottomSheet(
                 modifier = Modifier.heightIn(240.dp)
             ) { page ->
                 val type = typesIndexed[page]
-                val formats = formatsIndexed[page]
+                val currentFormats = formatsIndexed[page]
                 val selectedFormat = selectedFormatsIndexed[page]
                 LazyColumn(
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    items(formats) { format ->
+                    items(currentFormats) { format ->
                         val selected = format.id == selectedFormat?.id
                         FormatItem(
                             format = format,
@@ -128,7 +128,7 @@ internal fun FormatsBottomSheet(
                     .padding(horizontal = spacing.medium)
                     .padding(WindowInsets.navigationBarsIgnoringVisibility.asPaddingValues())
             ) {
-                allFormats.entries.forEachIndexed { index, (type, _) ->
+                formats.entries.forEachIndexed { index, (type, _) ->
                     val icon = when (type) {
                         C.TRACK_TYPE_AUDIO -> Icons.Rounded.Audiotrack
                         C.TRACK_TYPE_VIDEO -> Icons.Rounded.VideoLibrary
@@ -151,7 +151,7 @@ internal fun FormatsBottomSheet(
                         shape = SegmentedButtonDefaults.itemShape(
                             baseShape = RoundedCornerShape(8.dp),
                             index = index,
-                            count = allFormats.size
+                            count = formats.size
                         ),
                         colors = SegmentedButtonDefaults.colors(
                             disabledInactiveContentColor = LocalContentColor.current.copy(0.38f)

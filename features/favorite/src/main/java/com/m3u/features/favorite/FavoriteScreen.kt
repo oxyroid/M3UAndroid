@@ -66,8 +66,7 @@ fun FavouriteRoute(
     var isSortSheetVisible by rememberSaveable { mutableStateOf(false) }
     var dialogStatus: DialogStatus by remember { mutableStateOf(DialogStatus.Idle) }
 
-    LaunchedEffect(Unit) {
-        helper.deep = 0
+    LaunchedEffect(title) {
         helper.title = title.title()
         helper.actions = persistentListOf(
             Action(

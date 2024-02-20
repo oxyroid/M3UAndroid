@@ -3,7 +3,7 @@ package com.m3u.features.foryou
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.m3u.core.architecture.dispatcher.Dispatcher
-import com.m3u.core.architecture.dispatcher.M3uDispatchers.Default
+import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
 import com.m3u.core.architecture.pref.Pref
 import com.m3u.core.architecture.pref.observeAsFlow
 import com.m3u.data.repository.PlaylistRepository
@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -35,7 +36,7 @@ class ForyouViewModel @Inject constructor(
     private val playlistRepository: PlaylistRepository,
     streamRepository: StreamRepository,
     pref: Pref,
-    @Dispatcher(Default) defaultDispatcher: CoroutineDispatcher
+    @Dispatcher(IO) ioDispatcher: CoroutineDispatcher
 ) : ViewModel() {
     private val counts: StateFlow<Map<String, Int>> = streamRepository
         .observeAll()
@@ -45,6 +46,7 @@ class ForyouViewModel @Inject constructor(
                 .groupingBy { it.playlistUrl }
                 .eachCount()
         }
+        .flowOn(ioDispatcher)
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
@@ -55,7 +57,7 @@ class ForyouViewModel @Inject constructor(
         .observeAll()
         .distinctUntilChanged()
         .combine(counts) { playlists, counts ->
-            withContext(defaultDispatcher) {
+            withContext(ioDispatcher) {
                 playlists.map { playlist ->
                     val count = counts[playlist.url] ?: PlaylistDetail.DEFAULT_COUNT
                     playlist.toDetail(count)
@@ -63,6 +65,7 @@ class ForyouViewModel @Inject constructor(
             }
                 .toPersistentList()
         }
+        .flowOn(ioDispatcher)
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000L),
@@ -72,6 +75,7 @@ class ForyouViewModel @Inject constructor(
     private val unseensDuration = pref
         .observeAsFlow { it.unseensMilliseconds }
         .map { it.toDuration(DurationUnit.MILLISECONDS) }
+        .flowOn(ioDispatcher)
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000L),
@@ -81,6 +85,7 @@ class ForyouViewModel @Inject constructor(
     internal val recommend: StateFlow<Recommend> = unseensDuration
         .flatMapLatest { streamRepository.observeAllUnseenFavourites(it) }
         .map { prev -> Recommend(prev.map { Recommend.UnseenSpec(it) }) }
+        .flowOn(ioDispatcher)
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000L),

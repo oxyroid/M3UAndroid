@@ -20,6 +20,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -30,51 +31,52 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.m3u.androidApp.ui.sheet.RemoteControlSheet
+import com.m3u.androidApp.ui.sheet.RemoteControlSheetValue
 import com.m3u.core.architecture.pref.LocalPref
+import com.m3u.data.television.model.RemoteDirection
 import com.m3u.material.ktx.isTelevision
 import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.Destination
 import com.m3u.ui.FontFamilies
+import com.m3u.ui.LocalNavController
 import com.m3u.ui.SnackHost
-import com.m3u.ui.SnackHostState
-import com.m3u.ui.rememberSnackHostState
+import com.m3u.ui.helper.Action
+import com.m3u.ui.helper.Fob
+import kotlinx.collections.immutable.ImmutableList
 
 @Composable
 fun App(
     modifier: Modifier = Modifier,
     viewModel: AppViewModel = hiltViewModel(),
-    hostState: SnackHostState = rememberSnackHostState()
 ) {
-    val spacing = LocalSpacing.current
-    val pref = LocalPref.current
-    val onBackPressedDispatcherOwner = LocalOnBackPressedDispatcherOwner.current
+    val onBackPressedDispatcher = checkNotNull(
+        LocalOnBackPressedDispatcherOwner.current
+    ).onBackPressedDispatcher
+
+    val title: String by viewModel.title
+    val actions by viewModel.actions
+    val fob by viewModel.fob
 
     val navController = rememberNavController()
     val entry by navController.currentBackStackEntryAsState()
 
-    val root by remember {
+    val shouldDispatchBackStack by remember {
         derivedStateOf {
-            viewModel.rootDestination.takeIf {
-                entry?.destination?.route?.startsWith(ROOT_ROUTE) == true
+            with(entry) {
+                this != null && destination.route == ROOT_ROUTE
             }
         }
     }
 
-    val tv = isTelevision()
-
-    val title: String by viewModel.title.collectAsStateWithLifecycle()
-    val actions by viewModel.actions.collectAsStateWithLifecycle()
-    val fob by viewModel.fob.collectAsStateWithLifecycle()
-    val deep by viewModel.deep.collectAsStateWithLifecycle()
-
-    val onBackPressed: (() -> Unit)? = {
-        onBackPressedDispatcherOwner?.onBackPressedDispatcher?.onBackPressed()
-        Unit
-    }.takeIf { deep > 0 }
+    val onBackPressed: (() -> Unit) = {
+        onBackPressedDispatcher.onBackPressed()
+    }
 
     val navigateToRootDestination = { rootDestination: Destination.Root ->
         viewModel.rootDestination = rootDestination
-        navController.popBackStackToRoot()
+        if (shouldDispatchBackStack) {
+            navController.restoreBackStack()
+        }
     }
 
     // for televisions
@@ -83,22 +85,72 @@ fun App(
     // for smartphones
     val remoteControlSheetValue by viewModel.remoteControlSheetValue.collectAsStateWithLifecycle()
 
+    CompositionLocalProvider(
+        LocalNavController provides navController
+    ) {
+        AppImpl(
+            title = title,
+            actions = actions,
+            fob = fob,
+            rootDestination = viewModel.rootDestination,
+            onBackPressed = onBackPressed.takeUnless { shouldDispatchBackStack },
+            navigateToRoot = navigateToRootDestination,
+            openRemoteControlSheet = { viewModel.isConnectSheetVisible = true },
+            onCode = { viewModel.code = it },
+            checkTelevisionCodeOnSmartphone = viewModel::checkTelevisionCodeOnSmartphone,
+            forgetTelevisionCodeOnSmartphone = viewModel::forgetTelevisionCodeOnSmartphone,
+            broadcastCodeOnTelevision = broadcastCodeOnTelevision,
+            isRemoteControlSheetVisible = viewModel.isConnectSheetVisible,
+            remoteControlSheetValue = remoteControlSheetValue,
+            onRemoteDirection = viewModel::onRemoteDirection,
+            onDismissRequest = {
+                viewModel.code = ""
+                viewModel.isConnectSheetVisible = false
+            },
+            modifier = modifier
+        )
+    }
+}
+
+@Composable
+private fun AppImpl(
+    title: String,
+    actions: ImmutableList<Action>,
+    fob: Fob?,
+    rootDestination: Destination.Root,
+    isRemoteControlSheetVisible: Boolean,
+    remoteControlSheetValue: RemoteControlSheetValue,
+    broadcastCodeOnTelevision: String?,
+    onBackPressed: (() -> Unit)?,
+    navigateToRoot: (Destination.Root) -> Unit,
+    openRemoteControlSheet: () -> Unit,
+    onCode: (String) -> Unit,
+    checkTelevisionCodeOnSmartphone: () -> Unit,
+    forgetTelevisionCodeOnSmartphone: () -> Unit,
+    onRemoteDirection: (RemoteDirection) -> Unit,
+    onDismissRequest: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val spacing = LocalSpacing.current
+    val pref = LocalPref.current
+
+    val tv = isTelevision()
+
     AppScaffold(
         title = title,
         actions = actions,
-        rootDestination = root,
         fob = fob,
+        rootDestination = rootDestination,
         onBackPressed = onBackPressed,
-        navigateToRoot = navigateToRootDestination,
+        navigateToRoot = navigateToRoot,
         modifier = Modifier
             .fillMaxSize()
             .then(modifier),
     ) { contentPadding ->
         AppNavHost(
-            root = root,
-            navigateToRoot = navigateToRootDestination,
+            currentDestination = { rootDestination },
+            navigateToRoot = navigateToRoot,
             contentPadding = contentPadding,
-            navController = navController,
             modifier = Modifier.fillMaxSize()
         )
         Row(
@@ -110,10 +162,7 @@ fun App(
                 .padding(contentPadding)
                 .padding(spacing.medium)
         ) {
-            SnackHost(
-                state = hostState,
-                modifier = Modifier.weight(1f)
-            )
+            SnackHost(Modifier.weight(1f))
             AnimatedVisibility(
                 visible = !tv && pref.remoteControl,
                 enter = scaleIn(initialScale = 0.65f) + fadeIn(),
@@ -126,7 +175,7 @@ fun App(
                         focusedElevation = spacing.extraSmall,
                         hoveredElevation = spacing.extraSmall
                     ),
-                    onClick = { viewModel.isConnectSheetVisible = true }
+                    onClick = openRemoteControlSheet
                 ) {
                     Icon(
                         imageVector = Icons.Rounded.SettingsRemote,
@@ -138,16 +187,12 @@ fun App(
 
         RemoteControlSheet(
             value = remoteControlSheetValue,
-            visible = viewModel.isConnectSheetVisible,
-            onCode = { viewModel.code = it },
-            checkTelevisionCodeOnSmartphone = viewModel::checkTelevisionCodeOnSmartphone,
-            forgetTelevisionCodeOnSmartphone = viewModel::forgetTelevisionCodeOnSmartphone,
-            onRemoteDirection = viewModel::onRemoteDirection,
-            message = hostState.message,
-            onDismissRequest = {
-                viewModel.code = ""
-                viewModel.isConnectSheetVisible = false
-            }
+            visible = isRemoteControlSheetVisible,
+            onCode = onCode,
+            checkTelevisionCodeOnSmartphone = checkTelevisionCodeOnSmartphone,
+            forgetTelevisionCodeOnSmartphone = forgetTelevisionCodeOnSmartphone,
+            onRemoteDirection = onRemoteDirection,
+            onDismissRequest = onDismissRequest
         )
 
         Crossfade(

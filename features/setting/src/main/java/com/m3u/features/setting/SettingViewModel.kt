@@ -13,14 +13,14 @@ import androidx.work.WorkQuery
 import androidx.work.workDataOf
 import com.m3u.core.architecture.Publisher
 import com.m3u.core.architecture.dispatcher.Dispatcher
-import com.m3u.core.architecture.dispatcher.M3uDispatchers.Default
+import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
 import com.m3u.core.architecture.pref.Pref
 import com.m3u.core.architecture.viewmodel.BaseViewModel
 import com.m3u.data.api.LocalPreparedService
 import com.m3u.data.database.dao.ColorPackDao
 import com.m3u.data.database.model.ColorPack
 import com.m3u.data.database.model.Stream
-import com.m3u.data.service.MessageManager
+import com.m3u.data.service.Messager
 import com.m3u.data.repository.StreamRepository
 import com.m3u.data.repository.observeAll
 import com.m3u.data.worker.BackupWorker
@@ -46,11 +46,11 @@ class SettingViewModel @Inject constructor(
     private val streamRepository: StreamRepository,
     private val workManager: WorkManager,
     private val pref: Pref,
-    private val messageManager: MessageManager,
+    private val messager: Messager,
     private val localService: LocalPreparedService,
     publisher: Publisher,
     colorPackDao: ColorPackDao,
-    @Dispatcher(Default) private val defaultDispatcher: CoroutineDispatcher
+    @Dispatcher(IO) private val ioDispatcher: CoroutineDispatcher
 ) : BaseViewModel<SettingState, SettingEvent>(
     emptyState = SettingState(
         versionName = publisher.versionName,
@@ -62,6 +62,7 @@ class SettingViewModel @Inject constructor(
     internal val hiddenStreams: StateFlow<ImmutableList<Stream>> = streamRepository
         .observeAll { it.hidden }
         .map { it.toImmutableList() }
+        .flowOn(ioDispatcher)
         .stateIn(
             scope = viewModelScope,
             initialValue = persistentListOf(),
@@ -71,6 +72,7 @@ class SettingViewModel @Inject constructor(
     internal val packs: StateFlow<ImmutableList<ColorPack>> = colorPackDao
         .observeAllColorPacks()
         .map { it.toImmutableList() }
+        .flowOn(ioDispatcher)
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
@@ -134,7 +136,7 @@ class SettingViewModel @Inject constructor(
     private fun subscribe() {
         val title = writable.value.title
         if (title.isEmpty()) {
-            messageManager.emit(SettingMessage.EmptyTitle)
+            messager.emit(SettingMessage.EmptyTitle)
             return
         }
         val url = readable.actualUrl
@@ -143,7 +145,7 @@ class SettingViewModel @Inject constructor(
                 readable.localStorage -> SettingMessage.EmptyFile
                 else -> SettingMessage.EmptyUrl
             }
-            messageManager.emit(warning)
+            messager.emit(warning)
             return
         }
 
@@ -175,7 +177,7 @@ class SettingViewModel @Inject constructor(
             .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
             .build()
         workManager.enqueue(request)
-        messageManager.emit(SettingMessage.Enqueued)
+        messager.emit(SettingMessage.Enqueued)
         writable.update {
             it.copy(
                 title = "",
@@ -213,7 +215,7 @@ class SettingViewModel @Inject constructor(
             }
             BackingUpAndRestoringState.of(backingUp, restoring)
         }
-        .flowOn(defaultDispatcher)
+        .flowOn(ioDispatcher)
         .stateIn(
             scope = viewModelScope,
             // determine ui button enabled or not
@@ -234,7 +236,7 @@ class SettingViewModel @Inject constructor(
             .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
             .build()
         workManager.enqueue(request)
-        messageManager.emit(SettingMessage.BackingUp)
+        messager.emit(SettingMessage.BackingUp)
     }
 
     fun restore(uri: Uri) {
@@ -249,6 +251,6 @@ class SettingViewModel @Inject constructor(
             .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
             .build()
         workManager.enqueue(request)
-        messageManager.emit(SettingMessage.Restoring)
+        messager.emit(SettingMessage.Restoring)
     }
 }

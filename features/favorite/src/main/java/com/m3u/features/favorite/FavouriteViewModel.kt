@@ -10,6 +10,8 @@ import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.m3u.core.Contracts
+import com.m3u.core.architecture.dispatcher.Dispatcher
+import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
 import com.m3u.core.architecture.pref.Pref
 import com.m3u.core.architecture.pref.observeAsFlow
 import com.m3u.data.database.model.Stream
@@ -22,10 +24,12 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toPersistentList
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -37,10 +41,12 @@ class FavouriteViewModel @Inject constructor(
     private val streamRepository: StreamRepository,
     private val mediaRepository: MediaRepository,
     pref: Pref,
-    playerManager: PlayerManager
+    playerManager: PlayerManager,
+    @Dispatcher(IO) ioDispatcher: CoroutineDispatcher
 ) : ViewModel() {
     private val zappingMode = pref
         .observeAsFlow { it.zappingMode }
+        .flowOn(ioDispatcher)
         .stateIn(
             scope = viewModelScope,
             initialValue = Pref.DEFAULT_ZAPPING_MODE,
@@ -55,6 +61,7 @@ class FavouriteViewModel @Inject constructor(
         if (!zappingMode) null
         else streams.find { it.url == url }
     }
+        .flowOn(ioDispatcher)
         .stateIn(
             scope = viewModelScope,
             initialValue = null,
@@ -67,6 +74,7 @@ class FavouriteViewModel @Inject constructor(
 
     val sort = sortIndex
         .map { sorts[it] }
+        .flowOn(ioDispatcher)
         .stateIn(
             scope = viewModelScope,
             initialValue = Sort.UNSPECIFIED,
@@ -93,6 +101,7 @@ class FavouriteViewModel @Inject constructor(
             }
                 .toPersistentList()
         }
+        .flowOn(ioDispatcher)
         .stateIn(
             scope = viewModelScope,
             initialValue = persistentListOf(),

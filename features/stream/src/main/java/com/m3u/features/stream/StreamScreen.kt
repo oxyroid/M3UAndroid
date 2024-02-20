@@ -64,7 +64,7 @@ fun StreamRoute(
 
     LifecycleResumeEffect {
         with(helper) {
-            darkMode = true.unspecifiable
+            isSystemBarUseDarkMode = true.unspecifiable
             statusBarVisibility = false.unspecifiable
             navigationBarVisibility = false.unspecifiable
             onPipModeChanged = OnPipModeChanged { info ->
@@ -132,7 +132,7 @@ fun StreamRoute(
 
         FormatsBottomSheet(
             visible = choosing,
-            allFormats = formats,
+            formats = formats,
             selectedFormats = selectedFormats,
             maskState = maskState,
             onDismiss = { choosing = false },

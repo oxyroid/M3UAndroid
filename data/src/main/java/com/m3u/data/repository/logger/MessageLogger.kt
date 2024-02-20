@@ -2,13 +2,13 @@ package com.m3u.data.repository.logger
 
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.wrapper.Message
-import com.m3u.data.service.MessageManager
+import com.m3u.data.service.Messager
 import java.util.Locale
 import javax.inject.Inject
 import kotlin.time.Duration
 
 class MessageLogger @Inject constructor(
-    private val messageManager: MessageManager,
+    private val messager: Messager,
     private val logger: Logger
 ) : Logger {
     override fun log(
@@ -29,7 +29,7 @@ class MessageLogger @Inject constructor(
             type = type,
             duration = duration
         )
-        messageManager.emit(message)
+        messager.emit(message)
     }
 
     override fun log(

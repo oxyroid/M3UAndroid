@@ -24,12 +24,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.Stable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
@@ -38,60 +35,33 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.core.wrapper.Message
 import com.m3u.material.model.LocalDuration
 import com.m3u.material.model.LocalSpacing
+import com.m3u.ui.helper.LocalHelper
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.collectLatest
 import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
-fun rememberSnackHostState(
-    message: Message = Message.Dynamic.EMPTY
-): SnackHostState = remember(message) {
-    SnackHostStateImpl(message)
-}
-
-@Stable
-abstract class SnackHostState {
-    abstract var message: Message
-    abstract var isPressed: Boolean
-        internal set
-}
-
-@Stable
-private class SnackHostStateImpl(
-    message: Message
-) : SnackHostState() {
-    override var message: Message by mutableStateOf(message)
-    override var isPressed: Boolean by mutableStateOf(false)
-}
-
-@Composable
 fun SnackHost(
-    modifier: Modifier = Modifier,
-    state: SnackHostState = rememberSnackHostState()
+    modifier: Modifier = Modifier
 ) {
     val theme = MaterialTheme.colorScheme
     val spacing = LocalSpacing.current
     val duration = LocalDuration.current
     val feedback = LocalHapticFeedback.current
+    val helper = LocalHelper.current
 
-    val message = state.message
+    val message by helper.message.collectAsStateWithLifecycle()
 
-    val television = message.type == Message.TYPE_TELEVISION
+    val television by remember {
+        derivedStateOf { message.type == Message.TYPE_TELEVISION }
+    }
 
     val interactionSource = remember { MutableInteractionSource() }
 
     val isPressed by interactionSource.collectIsPressedAsState()
-
-    LaunchedEffect(Unit) {
-        snapshotFlow { isPressed }
-            .collectLatest {
-                if (it) feedback.performHapticFeedback(HapticFeedbackType.LongPress)
-                state.isPressed = it
-            }
-    }
 
     val currentContainerColor by animateColorAsState(
         targetValue = when (message.type) {

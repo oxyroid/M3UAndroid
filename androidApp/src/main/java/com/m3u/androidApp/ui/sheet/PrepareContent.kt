@@ -16,6 +16,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.InternalComposeApi
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -25,21 +26,25 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.androidApp.ui.CodeRow
 import com.m3u.core.util.basic.title
 import com.m3u.core.wrapper.Message
 import com.m3u.i18n.R
+import com.m3u.ui.helper.LocalHelper
 
 @Composable
 @InternalComposeApi
 internal fun PrepareContent(
     code: String,
     searchingOrConnecting: Boolean,
-    message: Message,
     checkTelevisionCodeOnSmartphone: () -> Unit,
     onCode: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val helper = LocalHelper.current
+    val message by helper.message.collectAsStateWithLifecycle()
+
     val title = stringResource(R.string.feat_foryou_connect_title).title()
     val subtitle = if (message.level == Message.LEVEL_EMPTY) {
         stringResource(R.string.feat_foryou_connect_subtitle)

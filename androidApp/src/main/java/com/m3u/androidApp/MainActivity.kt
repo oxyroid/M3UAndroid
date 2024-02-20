@@ -3,83 +3,38 @@
 package com.m3u.androidApp
 
 import android.annotation.SuppressLint
-import android.app.PictureInPictureParams
-import android.content.Context
 import android.content.res.Configuration
-import android.graphics.Color
-import android.graphics.Rect
 import android.os.Bundle
-import android.view.ViewConfiguration
-import android.widget.Toast
-import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.material3.windowsizeclass.WindowSizeClass
-import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
-import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.WindowInsetsCompat.Type.InsetsType
-import androidx.core.view.WindowInsetsControllerCompat
-import androidx.core.view.WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.lifecycleScope
 import com.m3u.androidApp.ui.App
 import com.m3u.androidApp.ui.AppViewModel
 import com.m3u.core.architecture.dispatcher.Dispatcher
 import com.m3u.core.architecture.dispatcher.M3uDispatchers.Main
-import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.pref.Pref
-import com.m3u.core.unspecified.UBoolean
-import com.m3u.core.unspecified.specified
-import com.m3u.core.unspecified.unspecifiable
-import com.m3u.core.util.basic.rational
-import com.m3u.core.util.context.isDarkMode
-import com.m3u.core.util.context.isPortraitMode
-import com.m3u.core.util.coroutine.getValue
-import com.m3u.core.util.coroutine.setValue
-import com.m3u.core.wrapper.Message
-import com.m3u.data.service.MessageManager
 import com.m3u.data.service.PlayerManager
 import com.m3u.data.service.RemoteDirectionService
-import com.m3u.data.television.model.RemoteDirection
 import com.m3u.ui.Toolkit
-import com.m3u.ui.helper.Action
-import com.m3u.ui.helper.Fob
-import com.m3u.ui.helper.Helper
-import com.m3u.ui.helper.OnPipModeChanged
-import com.m3u.ui.helper.OnUserLeaveHint
-import com.m3u.ui.rememberSnackHostState
+import com.m3u.ui.helper.AbstractHelper
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
-    private val controller by lazy {
-        WindowInsetsControllerCompat(window, window.decorView).apply {
-            systemBarsBehavior = BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-        }
-    }
     private val viewModel: AppViewModel by viewModels()
     private val helper by lazy {
-        helper(
+        AbstractHelper(
+            activity = this,
+            mainDispatcher = mainDispatcher,
+            playerManager = playerManager,
             title = viewModel.title,
+            message = viewModel.message,
             actions = viewModel.actions,
-            fob = viewModel.fob,
-            deep = viewModel.deep
+            fob = viewModel.fob
         )
     }
 
@@ -87,169 +42,18 @@ class MainActivity : AppCompatActivity() {
     lateinit var pref: Pref
 
     @Inject
-    @Logger.MessageImpl
-    lateinit var logger: Logger
-
-    @Inject
-    lateinit var messageManager: MessageManager
-
-    @Inject
     lateinit var playerManager: PlayerManager
-
-    @Inject
-    lateinit var remoteDirectionService: RemoteDirectionService
 
     @Inject
     @Dispatcher(Main)
     lateinit var mainDispatcher: CoroutineDispatcher
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        installSplashScreen()
-        enableEdgeToEdge()
-        super.onCreate(savedInstanceState)
-        setContent {
-            val message by viewModel.message.collectAsStateWithLifecycle()
-            val snackHostState = rememberSnackHostState()
-
-            val darkMode = if (pref.followSystemTheme) isSystemInDarkTheme()
-            else pref.darkMode
-
-            LaunchedEffect(darkMode) {
-                helper.darkMode = darkMode.unspecifiable
-            }
-            LaunchedEffect(Unit) {
-                snapshotFlow { snackHostState.isPressed }.collectLatest { isPressed ->
-                    if (isPressed) messageManager.lock()
-                    else messageManager.unlock()
-                }
-            }
-            LaunchedEffect(Unit) {
-                snapshotFlow { message }.collectLatest { message ->
-                    snackHostState.message = message
-                }
-            }
-
-            Toolkit(
-                helper = helper,
-                pref = pref
-            ) {
-                App(
-                    viewModel = viewModel,
-                    hostState = snackHostState
-                )
-            }
-        }
-    }
+    @Inject
+    lateinit var remoteDirectionService: RemoteDirectionService
 
     override fun onResume() {
         super.onResume()
-        applyConfiguration()
-    }
-
-    private fun helper(
-        title: MutableStateFlow<String>,
-        actions: MutableStateFlow<ImmutableList<Action>>,
-        fob: MutableStateFlow<Fob?>,
-        deep: MutableStateFlow<Int>
-    ): Helper = object : Helper {
-        init {
-            addOnPictureInPictureModeChangedListener { info ->
-                isInPipMode = info.isInPictureInPictureMode
-            }
-        }
-
-        override fun enterPipMode(size: Rect) {
-            val params = PictureInPictureParams.Builder()
-                .setAspectRatio(size.rational)
-                .build()
-            if (isInPictureInPictureMode) {
-                setPictureInPictureParams(params)
-            } else {
-                enterPictureInPictureMode(params)
-            }
-        }
-
-        override var title: String by title
-        override var actions: ImmutableList<Action> by actions
-        override var fob: Fob? by fob
-        override var statusBarVisibility: UBoolean = UBoolean.Unspecified
-            set(value) {
-                field = value
-                applyConfiguration()
-            }
-        override var navigationBarVisibility: UBoolean = UBoolean.Unspecified
-            set(value) {
-                field = value
-                applyConfiguration()
-            }
-
-        override var deep: Int
-            get() = deep.value
-            set(value) {
-                deep.value = value.coerceAtLeast(0)
-            }
-
-        override val message: StateFlow<Message> = viewModel.message
-
-        override var darkMode: UBoolean = UBoolean.Unspecified
-            set(value) {
-                field = value
-                val isDark = value.specified ?: resources.configuration.isDarkMode
-                enableEdgeToEdge(
-                    if (isDark) SystemBarStyle.dark(Color.TRANSPARENT)
-                    else SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT),
-                    if (isDark) SystemBarStyle.dark(Color.TRANSPARENT)
-                    else SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT)
-                )
-            }
-
-        override var onUserLeaveHint: OnUserLeaveHint? = null
-        override var onPipModeChanged: OnPipModeChanged? = null
-            set(value) {
-                if (value != null) addOnPictureInPictureModeChangedListener(value)
-                else field?.let {
-                    removeOnPictureInPictureModeChangedListener(it)
-                }
-            }
-
-        override var brightness: Float
-            get() = window.attributes.screenBrightness
-            set(value) {
-                window.attributes = window.attributes.apply {
-                    screenBrightness = value
-                }
-            }
-
-        override var isInPipMode: Boolean = false
-
-        override var screenOrientation: Int
-            get() = this@MainActivity.requestedOrientation
-            set(value) {
-                this@MainActivity.requestedOrientation = value
-            }
-
-        override val windowSizeClass: WindowSizeClass
-            @Composable get() = calculateWindowSizeClass(activity = this@MainActivity)
-
-        override val activityContext: Context
-            get() = this@MainActivity
-
-        override val remoteDirection: SharedFlow<RemoteDirection>
-            get() = remoteDirectionService.remoteDirection
-
-        override fun toast(message: String) {
-            lifecycleScope.launch(mainDispatcher) {
-                Toast.makeText(this@MainActivity, message, Toast.LENGTH_SHORT).show()
-            }
-        }
-
-        override fun play(url: String) {
-            playerManager.play(url)
-        }
-
-        override fun replay() {
-            playerManager.replay()
-        }
+        helper.applyConfiguration()
     }
 
     override fun onUserLeaveHint() {
@@ -259,45 +63,23 @@ class MainActivity : AppCompatActivity() {
 
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
-        applyConfiguration()
+        helper.applyConfiguration()
     }
 
-    private fun applyConfiguration() {
-        val navigationBarsVisibility = helper.navigationBarVisibility
-        val statusBarsVisibility = helper.statusBarVisibility
-
-        controller.apply {
-            when (navigationBarsVisibility) {
-                UBoolean.True -> show(WindowInsetsCompat.Type.navigationBars())
-                UBoolean.False -> hide(WindowInsetsCompat.Type.navigationBars())
-                UBoolean.Unspecified -> default(WindowInsetsCompat.Type.navigationBars())
+    override fun onCreate(savedInstanceState: Bundle?) {
+        installSplashScreen()
+        enableEdgeToEdge()
+        super.onCreate(savedInstanceState)
+        setContent {
+            Toolkit(
+                helper = helper,
+                pref = pref,
+                remoteDirectionService = remoteDirectionService
+            ) {
+                App(
+                    viewModel = viewModel
+                )
             }
-            when (statusBarsVisibility) {
-                UBoolean.True -> show(WindowInsetsCompat.Type.statusBars())
-                UBoolean.False -> hide(WindowInsetsCompat.Type.statusBars())
-                UBoolean.Unspecified -> default(WindowInsetsCompat.Type.statusBars())
-            }
-        }
-    }
-
-    private fun WindowInsetsControllerCompat.default(@InsetsType types: Int) {
-        when (types) {
-            WindowInsetsCompat.Type.navigationBars() -> {
-                val configuration = resources.configuration
-                val atBottom =
-                    ViewConfiguration.get(this@MainActivity).hasPermanentMenuKey()
-                if (configuration.isPortraitMode || !atBottom) {
-                    show(WindowInsetsCompat.Type.navigationBars())
-                } else {
-                    hide(WindowInsetsCompat.Type.navigationBars())
-                }
-            }
-
-            WindowInsetsCompat.Type.statusBars() -> {
-                show(WindowInsetsCompat.Type.statusBars())
-            }
-
-            else -> {}
         }
     }
 }

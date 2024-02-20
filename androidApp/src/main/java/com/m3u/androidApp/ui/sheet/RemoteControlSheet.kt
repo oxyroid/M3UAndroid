@@ -12,7 +12,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.InternalComposeApi
 import androidx.compose.ui.Modifier
-import com.m3u.core.wrapper.Message
 import com.m3u.data.repository.UpdateState
 import com.m3u.data.television.model.RemoteDirection
 import com.m3u.data.television.model.Television
@@ -46,7 +45,6 @@ sealed class RemoteControlSheetValue {
 internal fun RemoteControlSheet(
     value: RemoteControlSheetValue,
     visible: Boolean,
-    message: Message,
     onCode: (String) -> Unit,
     checkTelevisionCodeOnSmartphone: () -> Unit,
     forgetTelevisionCodeOnSmartphone: () -> Unit,
@@ -82,7 +80,6 @@ internal fun RemoteControlSheet(
                             code = value.code,
                             searchingOrConnecting = value.searchingOrConnecting,
                             checkTelevisionCodeOnSmartphone = checkTelevisionCodeOnSmartphone,
-                            message = message,
                             onCode = onCode
                         )
                     }
@@ -92,7 +89,6 @@ internal fun RemoteControlSheet(
                             television = value.television,
                             onRemoteDirection = onRemoteDirection,
                             forgetTelevisionCodeOnSmartphone = forgetTelevisionCodeOnSmartphone,
-                            message = message,
                         )
                     }
 

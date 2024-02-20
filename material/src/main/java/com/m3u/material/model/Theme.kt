@@ -19,7 +19,7 @@ import androidx.tv.material3.Typography as TvTypography
 
 @Composable
 @SuppressLint("RestrictedApi")
-fun AppTheme(
+fun Theme(
     argb: Int,
     useDynamicColors: Boolean,
     useDarkTheme: Boolean = isSystemInDarkTheme(),
@@ -35,6 +35,7 @@ fun AppTheme(
             createScheme(argb, useDarkTheme).asColorScheme()
         }
     }
+
     MaterialTheme(
         colorScheme = colorScheme,
         typography = typography

@@ -33,7 +33,7 @@ data class Remotes @Inject constructor(
                         )
                         return@post
                     }
-                    remoteDirectionService.handle(remoteDirection)
+                    remoteDirectionService.emit(remoteDirection)
                     call.respond(
                         DefRep(result = true)
                     )

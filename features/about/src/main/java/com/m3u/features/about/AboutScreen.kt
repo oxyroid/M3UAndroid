@@ -8,12 +8,12 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.lifecycle.compose.LifecycleStartEffect
 import com.m3u.core.util.basic.title
 import com.m3u.i18n.R.string
 import com.m3u.material.components.Background
@@ -31,12 +31,8 @@ internal fun AboutRoute(
 ) {
     val helper = LocalHelper.current
     val title = stringResource(string.feat_about_title)
-    LifecycleStartEffect(Unit) {
+    LaunchedEffect(title) {
         helper.title = title.title()
-        helper.deep += 1
-        onStopOrDispose {
-            helper.deep -= 1
-        }
     }
 
     AboutScreen(

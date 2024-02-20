@@ -47,7 +47,6 @@ import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.HazeStyle
 import dev.chrisbanes.haze.hazeChild
 import kotlinx.collections.immutable.ImmutableList
-import kotlinx.collections.immutable.toPersistentList
 
 @Composable
 @OptIn(InternalComposeApi::class)
@@ -67,17 +66,12 @@ internal fun AppScaffold(
 
     val hazeState = remember { HazeState() }
 
-    val rootDestinations = remember {
-        Destination.Root.entries.toPersistentList()
-    }
-
     CompositionLocalProvider(LocalHazeState provides hazeState) {
         Background {
             when {
                 tv -> {
                     AppScaffoldTvImpl(
                         rootDestination = rootDestination,
-                        rootDestinations = rootDestinations,
                         fob = fob,
                         title = title,
                         navigateToRoot = navigateToRoot,
@@ -91,7 +85,6 @@ internal fun AppScaffold(
                 !useRailNav -> {
                     AppScaffoldImpl(
                         rootDestination = rootDestination,
-                        rootDestinations = rootDestinations,
                         alwaysShowLabel = alwaysShowLabel,
                         fob = fob,
                         title = title,
@@ -106,7 +99,6 @@ internal fun AppScaffold(
                 else -> {
                     AppScaffoldRailImpl(
                         rootDestination = rootDestination,
-                        rootDestinations = rootDestinations,
                         alwaysShowLabel = alwaysShowLabel,
                         fob = fob,
                         title = title,
@@ -125,10 +117,9 @@ internal fun AppScaffold(
 
 @Composable
 internal fun Items(
-    roots: ImmutableList<Destination.Root>,
     inner: @Composable (Destination.Root) -> Unit
 ) {
-    roots.fastForEach { rootDestination ->
+    Destination.Root.entries.fastForEach { rootDestination ->
         inner(rootDestination)
     }
 }
@@ -211,6 +202,7 @@ internal fun NavigationItemLayout(
     ) -> Unit
 ) {
     val hapticFeedback = LocalHapticFeedback.current
+
     val tv = isTelevision()
     val usefob = fob?.rootDestination == currentRootDestination
     val selected = usefob || currentRootDestination == rootDestination

@@ -15,7 +15,6 @@ import androidx.tv.material3.ImmersiveList
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.rememberDrawerState
 import com.m3u.core.architecture.pref.LocalPref
-import com.m3u.core.wrapper.Message
 import com.m3u.data.database.model.Stream
 import com.m3u.features.playlist.Channel
 import com.m3u.features.playlist.components.ImmersiveBackground
@@ -37,7 +36,6 @@ import kotlinx.collections.immutable.ImmutableList
 @InternalComposeApi
 internal fun TvPlaylistScreenImpl(
     title: String,
-    message: Message,
     channels: ImmutableList<Channel>,
     query: String,
     onQuery: (String) -> Unit,
@@ -86,7 +84,6 @@ internal fun TvPlaylistScreenImpl(
                 ImmersiveBackground(
                     title = title,
                     stream = focus,
-                    message = message,
                     noPictureMode = noPictureMode,
                     maxBrowserHeight = maxBrowserHeight,
                     onRefresh = onRefresh,

@@ -37,7 +37,6 @@ import kotlinx.collections.immutable.ImmutableList
 @InternalComposeApi
 fun AppScaffoldTvImpl(
     rootDestination: Destination.Root?,
-    rootDestinations: ImmutableList<Destination.Root>,
     fob: Fob?,
     title: String,
     navigateToRoot: (Destination.Root) -> Unit,
@@ -57,7 +56,7 @@ fun AppScaffoldTvImpl(
                 .fillMaxHeight()
                 .padding(spacing.medium)
         ) {
-            Items(rootDestinations) { currentRootDestination ->
+            Items { currentRootDestination ->
                 NavigationItemLayout(
                     rootDestination = rootDestination,
                     fob = fob,

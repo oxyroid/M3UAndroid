@@ -30,19 +30,16 @@ import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import com.m3u.core.wrapper.Message
 import com.m3u.data.database.model.Stream
 import com.m3u.features.playlist.R
 import com.m3u.material.components.IconButton
 import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.SnackHost
-import com.m3u.ui.rememberSnackHostState
 
 @Composable
 internal fun ImmersiveBackground(
     title: String,
     stream: Stream?,
-    message: Message,
     maxBrowserHeight: Dp,
     onRefresh: () -> Unit,
     openSearchDrawer: () -> Unit,
@@ -140,9 +137,7 @@ internal fun ImmersiveBackground(
                     onClick = onRefresh
                 )
             }
-            SnackHost(
-                state = rememberSnackHostState(message)
-            )
+            SnackHost()
         }
     }
 }

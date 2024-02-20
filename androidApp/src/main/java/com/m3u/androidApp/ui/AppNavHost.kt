@@ -10,9 +10,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.rememberNavController
 import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.core.wrapper.eventOf
 import com.m3u.features.about.navigation.aboutScreen
@@ -23,20 +21,21 @@ import com.m3u.features.playlist.navigation.playlistTvScreen
 import com.m3u.features.stream.PlayerActivity
 import com.m3u.material.ktx.isTelevision
 import com.m3u.ui.Destination
-import com.m3u.ui.DestinationEvent
+import com.m3u.ui.Param
 import com.m3u.ui.EventBus
+import com.m3u.ui.LocalNavController
 
 @Composable
 fun AppNavHost(
-    root: Destination.Root?,
+    currentDestination: () -> Destination.Root,
     navigateToRoot: (Destination.Root) -> Unit,
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
-    navController: NavHostController = rememberNavController(),
     startDestination: String = ROOT_ROUTE
 ) {
     val context = LocalContext.current
     val pref = LocalPref.current
+    val navController = LocalNavController.current
 
     val tv = isTelevision()
 
@@ -65,7 +64,7 @@ fun AppNavHost(
             contentPadding = contentPadding
         )
         rootGraph(
-            root = root,
+            currentDestination = currentDestination,
             contentPadding = contentPadding,
             navigateToPlaylist = { playlist ->
                 navController.navigateToPlaylist(playlist.url, tv)
@@ -87,7 +86,7 @@ fun AppNavHost(
             },
             navigateToSettingPlaylistManagement = {
                 navigateToRoot(Destination.Root.Setting)
-                EventBus.setting = eventOf(DestinationEvent.Setting.Playlists)
+                EventBus.setting = eventOf(Param.Setting.Playlists)
             }
         )
 

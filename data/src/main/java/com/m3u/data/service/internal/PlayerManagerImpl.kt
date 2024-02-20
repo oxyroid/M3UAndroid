@@ -2,6 +2,7 @@ package com.m3u.data.service.internal
 
 import android.content.Context
 import android.graphics.Rect
+import android.util.Log
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.Format
@@ -124,10 +125,24 @@ class PlayerManagerImpl @Inject constructor(
     private var currentConnectTimeout = pref.connectTimeout
     private var currentTunneling = pref.tunneling
 
+    private fun parseMimetype(url: String): String? {
+        return when {
+            url.contains(".m3u", true) ||
+                    url.contains(".m3u8", true) -> MimeTypes.APPLICATION_M3U8
+
+            url.contains(".mpd", true) -> MimeTypes.APPLICATION_MPD
+            url.contains(".ism", true) -> MimeTypes.APPLICATION_SS
+            url.startsWith("rtsp://", true) ||
+                    url.contains(".sdp", true) -> MimeTypes.APPLICATION_RTSP
+
+            else -> null
+        }
+    }
+
     override fun play(url: String) {
         _url.value = url
         tryPlay(
-            mimeType = null
+            mimeType = parseMimetype(url)
         )
 
         listenPrefJob?.cancel()
@@ -156,7 +171,6 @@ class PlayerManagerImpl @Inject constructor(
             MimeTypes.APPLICATION_SS -> {
                 val mediaSource = ProgressiveMediaSource.Factory(dataSourceFactory)
                     .createMediaSource(MediaItem.fromUri(url))
-
                 currentPlayer.setMediaSource(mediaSource)
             }
 
@@ -170,8 +184,7 @@ class PlayerManagerImpl @Inject constructor(
                 val hlsMediaSource = HlsMediaSource.Factory(dataSourceFactory)
                     .setAllowChunklessPreparation(false)
                     .createMediaSource(MediaItem.fromUri(url))
-                val player = ExoPlayer.Builder(context).build()
-                player.setMediaSource(hlsMediaSource)
+                currentPlayer.setMediaSource(hlsMediaSource)
             }
 
             MIMETYPE_RTMP -> {
@@ -243,6 +256,10 @@ class PlayerManagerImpl @Inject constructor(
     }
 
     private var mimeType: String? = null
+        set(value) {
+            Log.e("PlayerManagerImpl", "tryMimeType: $value")
+            field = value
+        }
 
     override fun onPlayerErrorChanged(error: PlaybackException?) {
         super.onPlayerErrorChanged(error)
@@ -260,6 +277,7 @@ class PlayerManagerImpl @Inject constructor(
             PlaybackException.ERROR_CODE_PARSING_MANIFEST_UNSUPPORTED,
             PlaybackException.ERROR_CODE_FAILED_RUNTIME_CHECK,
             PlaybackException.ERROR_CODE_IO_UNSPECIFIED -> {
+                Log.e("PlayerManagerImpl", "onPlayerErrorChanged: try other mimetypes")
                 when (mimeType) {
                     null -> {
                         mimeType = MimeTypes.APPLICATION_M3U8

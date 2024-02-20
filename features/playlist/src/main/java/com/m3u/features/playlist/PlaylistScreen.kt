@@ -40,7 +40,6 @@ import com.google.accompanist.permissions.rememberPermissionState
 import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.core.util.basic.title
 import com.m3u.core.wrapper.Event
-import com.m3u.core.wrapper.Message
 import com.m3u.data.database.model.Stream
 import com.m3u.features.playlist.internal.PlaylistScreenImpl
 import com.m3u.features.playlist.internal.TvPlaylistScreenImpl
@@ -51,9 +50,9 @@ import com.m3u.material.ktx.isTelevision
 import com.m3u.material.ktx.thenIf
 import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.Destination
+import com.m3u.ui.Sort
 import com.m3u.ui.helper.Fob
 import com.m3u.ui.helper.LocalHelper
-import com.m3u.ui.Sort
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.launchIn
@@ -83,8 +82,6 @@ internal fun PlaylistRoute(
     val sorts = viewModel.sorts
     val sort by viewModel.sort.collectAsStateWithLifecycle()
 
-    val message by viewModel.message.collectAsStateWithLifecycle()
-
     // If you try to check or request the WRITE_EXTERNAL_STORAGE on Android 13+,
     // it will always return false.
     // So you'll have to skip the permission check/request completely on Android 13+.
@@ -96,9 +93,7 @@ internal fun PlaylistRoute(
 
     LifecycleStartEffect(playlist) {
         helper.title = playlist?.title?.title().orEmpty()
-        helper.deep += 1
         onStopOrDispose {
-            helper.deep -= 1
         }
     }
 
@@ -117,7 +112,6 @@ internal fun PlaylistRoute(
     Background {
         PlaylistScreen(
             title = playlist?.title.orEmpty(),
-            message = message,
             query = query,
             onQuery = { viewModel.onEvent(PlaylistEvent.Query(it)) },
             rowCount = pref.rowCount,
@@ -162,7 +156,6 @@ internal fun PlaylistRoute(
 private fun PlaylistScreen(
     title: String,
     query: String,
-    message: Message,
     onQuery: (String) -> Unit,
     rowCount: Int,
     zapping: Stream?,
@@ -184,9 +177,7 @@ private fun PlaylistScreen(
     val helper = LocalHelper.current
     val currentOnScrollUp by rememberUpdatedState(onScrollUp)
 
-    val isAtTopState = remember {
-        mutableStateOf(true)
-    }
+    val isAtTopState = remember { mutableStateOf(true) }
 
     LaunchedEffect(Unit) {
         snapshotFlow { isAtTopState.value }
@@ -234,7 +225,6 @@ private fun PlaylistScreen(
     } else {
         TvPlaylistScreenImpl(
             title = title,
-            message = message,
             channels = channels,
             query = query,
             onQuery = onQuery,

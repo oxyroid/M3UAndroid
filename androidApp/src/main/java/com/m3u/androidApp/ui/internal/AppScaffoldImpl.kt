@@ -39,7 +39,6 @@ import kotlinx.collections.immutable.ImmutableList
 @InternalComposeApi
 fun AppScaffoldImpl(
     rootDestination: Destination.Root?,
-    rootDestinations: ImmutableList<Destination.Root>,
     alwaysShowLabel: Boolean,
     fob: Fob?,
     title: String,
@@ -76,7 +75,7 @@ fun AppScaffoldImpl(
                     }
                 }
         ) {
-            Items(rootDestinations) { currentRootDestination ->
+            Items { currentRootDestination ->
                 NavigationItemLayout(
                     rootDestination = rootDestination,
                     fob = fob,

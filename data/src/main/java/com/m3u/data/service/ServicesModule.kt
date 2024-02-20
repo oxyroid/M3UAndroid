@@ -13,7 +13,7 @@ import com.m3u.data.television.http.HttpServer
 import com.m3u.data.television.http.internal.HttpServerImpl
 import com.m3u.data.television.nsd.NsdDeviceManager
 import com.m3u.data.television.nsd.internal.NsdDeviceManagerImpl
-import com.m3u.data.service.internal.MessageManagerImpl
+import com.m3u.data.service.internal.MessagerImpl
 import com.m3u.data.service.internal.PlayerManagerImpl
 import com.m3u.data.service.internal.TraceFileProviderImpl
 import com.m3u.data.repository.logger.CommonLogger
@@ -36,7 +36,7 @@ internal interface BindServicesModule {
 
     @Binds
     @Singleton
-    fun bindMessageManager(service: MessageManagerImpl): MessageManager
+    fun bindMessageManager(service: MessagerImpl): Messager
 
     @Binds
     @Singleton
