@@ -49,7 +49,7 @@ From PRs:
 - [x] DLNA screencast.
 - [ ] AirPlay screencast.
 - [ ] Steam segment recording.
-- [x] i18n.
+- [x] i18n (Internationalization).
 
 ### Android Development
 

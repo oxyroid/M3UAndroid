@@ -24,9 +24,9 @@ import com.m3u.data.database.dao.StreamDao
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.PlaylistWithStreams
 import com.m3u.data.database.model.Stream
+import com.m3u.data.parser.M3UParser
+import com.m3u.data.parser.toStream
 import com.m3u.data.repository.PlaylistRepository
-import com.m3u.data.repository.parser.M3UPlaylistParser
-import com.m3u.data.repository.parser.model.toStream
 import com.m3u.i18n.R.string
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineDispatcher
@@ -49,7 +49,7 @@ class PlaylistRepositoryImpl @Inject constructor(
     private val streamDao: StreamDao,
     private val logger: Logger,
     private val client: OkHttpClient,
-    @M3UPlaylistParser.Default private val parser: M3UPlaylistParser,
+    private val parser: M3UParser,
     @ApplicationContext private val context: Context,
     @Dispatcher(IO) private val ioDispatcher: CoroutineDispatcher
 ) : PlaylistRepository {

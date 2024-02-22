@@ -44,6 +44,10 @@ internal fun TvStreamItem(
                 elevation = spacing.small
             )
         ),
+        scale = CardDefaults.scale(
+            scale = 0.96f,
+            focusedScale = 1.1f
+        ),
         modifier = Modifier
             .then(
                 if (noPictureMode) Modifier

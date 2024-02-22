@@ -90,4 +90,10 @@
     <string name="feat_setting_restoring">restoring all playlists and channels</string>
 
     <string name="feat_setting_follow_system_theme">follow system theme</string>
+
+    <string name="feat_setting_data_source_m3u">M3U</string>
+    <string name="feat_setting_data_source_xtream">Xtream</string>
+    <string name="feat_setting_data_source_emby">Emby</string>
+    <string name="feat_setting_data_source_dropbox">Dropbox</string>
+    <string name="feat_setting_data_source_aliyun">Aliyun</string>
 </resources>

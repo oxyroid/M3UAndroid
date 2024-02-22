@@ -124,7 +124,7 @@ fun TextField(
                             shape = shape
                         )
                         .fillMaxWidth()
-                        .defaultMinSize(minHeight = 48.dp)
+                        .defaultMinSize(minHeight = 56.dp)
                         .padding(
                             top = if (singleLine) 0.dp else 12.5.dp,
                             bottom = if (singleLine) 2.5.dp else 12.5.dp,
@@ -227,7 +227,7 @@ fun PlaceholderField(
                     icon?.let { icon ->
                         Icon(
                             modifier = Modifier
-                                .size(48.dp)
+                                .size(56.dp)
                                 .padding(15.dp),
                             imageVector = icon,
                             contentDescription = null,
@@ -243,7 +243,7 @@ fun PlaceholderField(
                                 shape = shape
                             )
                             .fillMaxWidth()
-                            .defaultMinSize(minHeight = 48.dp)
+                            .defaultMinSize(minHeight = 56.dp)
                             .padding(
                                 start = if (icon == null) 15.dp else 0.dp,
                                 end = 15.dp

@@ -3,13 +3,6 @@ package com.m3u.features.setting.components
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.OpenInNew
 import androidx.compose.material3.Icon
@@ -17,17 +10,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import com.m3u.core.util.readFileName
 import com.m3u.i18n.R.string
-import com.m3u.material.model.LocalSpacing
+import com.m3u.material.components.ToggleableSelection
 
 @Composable
 internal fun LocalStorageButton(
@@ -38,7 +26,6 @@ internal fun LocalStorageButton(
 ) {
     val context = LocalContext.current
     val selected = uri != Uri.EMPTY
-    val spacing = LocalSpacing.current
     val launcher = rememberLauncherForActivityResult(
         ActivityResultContracts.GetContent()
     ) { result ->
@@ -64,35 +51,14 @@ internal fun LocalStorageButton(
     val text = if (selected) remember(uri) {
         uri.readFileName(context.contentResolver).orEmpty()
     } else stringResource(string.feat_setting_label_select_from_local_storage)
-    val color = MaterialTheme.colorScheme.surfaceVariant
-    val contentColor = MaterialTheme.colorScheme.onSurfaceVariant
-    Row(
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
-            .clip(MaterialTheme.shapes.medium)
-            .background(color)
-            .height(48.dp)
-            .fillMaxWidth()
-            .clickable(
-                onClick = {
-                    launcher.launch("audio/*")
-                },
-                enabled = true,
-                role = Role.Button
-            )
-            .padding(
-                horizontal = spacing.medium,
-                vertical = 12.5.dp
-            )
-            .then(modifier)
+
+    ToggleableSelection(
+        checked = false,
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        onChanged = { launcher.launch("audio/*") },
+        modifier = modifier
     ) {
-        Text(
-            text = text.uppercase(),
-            style = MaterialTheme.typography.bodyMedium,
-            color = contentColor,
-            fontWeight = FontWeight.SemiBold
-        )
+        Text(text.uppercase())
         Icon(
             imageVector = icon,
             contentDescription = null

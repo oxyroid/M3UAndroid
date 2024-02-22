@@ -25,6 +25,8 @@ import androidx.compose.ui.res.stringResource
 import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.data.database.model.Stream
 import com.m3u.features.setting.BackingUpAndRestoringState
+import com.m3u.features.setting.components.DataSource
+import com.m3u.features.setting.components.DataSourceSelection
 import com.m3u.features.setting.components.LocalStorageButton
 import com.m3u.features.setting.components.LocalStorageSwitch
 import com.m3u.features.setting.components.RemoteControlSubscribeSwitch
@@ -37,6 +39,7 @@ import com.m3u.material.ktx.isTelevision
 import com.m3u.material.ktx.plus
 import com.m3u.material.model.LocalSpacing
 import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.toPersistentList
 
 @Composable
 internal fun SubscriptionsFragment(
@@ -53,7 +56,7 @@ internal fun SubscriptionsFragment(
     onUrl: (String) -> Unit,
     onClipboard: (String) -> Unit,
     onSubscribe: () -> Unit,
-    onLocalStorage: () -> Unit,
+    onLocalStorage: (Boolean) -> Unit,
     onSubscribeForTv: () -> Unit,
     openDocument: (Uri) -> Unit,
     backup: () -> Unit,
@@ -99,6 +102,14 @@ internal fun SubscriptionsFragment(
                     }
                 }
             }
+        }
+
+        item {
+            DataSourceSelection(
+                selected = DataSource.M3U,
+                supported = DataSource.entries.toPersistentList(),
+                onSelected = {}
+            )
         }
 
         item {

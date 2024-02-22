@@ -1,8 +1,11 @@
-package com.m3u.data.repository.parser.model
+package com.m3u.data.parser
 
 import android.net.Uri
 import android.util.Log
 import com.m3u.data.database.model.Stream
+import java.io.InputStream
+
+interface M3UParser : Parser<InputStream, List<M3UData>>
 
 data class M3UData(
     val id: String = "",

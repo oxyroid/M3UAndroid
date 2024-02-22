@@ -169,7 +169,7 @@ private fun SettingScreen(
     onHidden: (Int) -> Unit,
     navigateToAbout: () -> Unit,
     localStorage: Boolean,
-    onLocalStorage: () -> Unit,
+    onLocalStorage: (Boolean) -> Unit,
     subscribeForTv: Boolean,
     onSubscribeForTv: () -> Unit,
     openDocument: (Uri) -> Unit,
