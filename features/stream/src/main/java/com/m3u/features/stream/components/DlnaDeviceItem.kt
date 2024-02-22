@@ -18,6 +18,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import org.jupnp.model.meta.Device
 
+@Deprecated("Add Device class to compose compiler configuration file.")
 @Immutable
 internal data class DeviceWrapper(
     val device: Device<*, *, *>?

@@ -19,4 +19,6 @@
 
     <string name="feat_stream_dialog_dlna_devices">DLNA Devices</string>
     <string name="feat_stream_dialog_choose_format">Choose Format</string>
+
+    <string name="feat_stream_open_in_external_player">open in external player</string>
 </resources>

@@ -1,6 +1,7 @@
 package com.m3u.features.stream.components
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -13,6 +14,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.OpenInNew
+import androidx.compose.material3.Icon
+import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
@@ -24,11 +29,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.m3u.core.util.basic.title
 import com.m3u.i18n.R.string
 import com.m3u.material.components.CircularProgressIndicator
+import com.m3u.material.components.OnDismiss
 import com.m3u.material.components.UnstableBadge
 import com.m3u.material.components.UnstableValue
-import com.m3u.material.components.OnDismiss
 import com.m3u.material.components.mask.MaskState
 import com.m3u.material.model.LocalSpacing
 import kotlinx.collections.immutable.ImmutableList
@@ -44,10 +50,13 @@ internal fun DlnaDevicesBottomSheet(
     onDismiss: OnDismiss,
     connectDlnaDevice: (device: Device<*, *, *>) -> Unit,
     disconnectDlnaDevice: (device: Device<*, *, *>) -> Unit,
+    openInExternalPlayer: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
     val state = rememberModalBottomSheetState()
+
+    val openInExternalPlayerString = stringResource(string.feat_stream_open_in_external_player)
 
     LaunchedEffect(isDevicesVisible) {
         if (isDevicesVisible) state.show()
@@ -99,6 +108,22 @@ internal fun DlnaDevicesBottomSheet(
                             maxHeight = 320.dp
                         )
                 ) {
+                    item {
+                        ListItem(
+                            headlineContent = {
+                                Text(openInExternalPlayerString.title())
+                            },
+                            trailingContent = {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Rounded.OpenInNew,
+                                    contentDescription = openInExternalPlayerString
+                                )
+                            },
+                            modifier = Modifier.clickable {
+                                openInExternalPlayer()
+                            }
+                        )
+                    }
                     items(devices) { device ->
                         DlnaDeviceItem(
                             deviceWrapper = rememberDeviceWrapper(device),

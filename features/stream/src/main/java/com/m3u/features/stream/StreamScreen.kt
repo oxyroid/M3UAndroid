@@ -1,6 +1,8 @@
 package com.m3u.features.stream
 
+import android.content.Intent
 import android.graphics.Rect
+import android.net.Uri
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -13,17 +15,21 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.core.unspecified.unspecifiable
 import com.m3u.core.util.basic.isNotEmpty
+import com.m3u.core.util.basic.title
 import com.m3u.features.stream.components.DlnaDevicesBottomSheet
 import com.m3u.features.stream.components.FormatsBottomSheet
 import com.m3u.features.stream.components.rememberDeviceWrapper
 import com.m3u.features.stream.fragments.StreamFragment
+import com.m3u.i18n.R.string
 import com.m3u.material.components.Background
 import com.m3u.material.components.mask.MaskInterceptor
 import com.m3u.material.components.mask.MaskState
@@ -39,8 +45,11 @@ fun StreamRoute(
     onBackPressed: () -> Unit,
     viewModel: StreamViewModel = hiltViewModel(),
 ) {
+    val openInExternalPlayerString = stringResource(string.feat_stream_open_in_external_player)
+
     val helper = LocalHelper.current
     val pref = LocalPref.current
+    val context = LocalContext.current
 
     val state: StreamState by viewModel.state.collectAsStateWithLifecycle()
     val playerState: StreamState.PlayerState by viewModel.playerState.collectAsStateWithLifecycle()
@@ -127,6 +136,15 @@ fun StreamRoute(
             connected = rememberDeviceWrapper(state.connected),
             connectDlnaDevice = { viewModel.onEvent(StreamEvent.ConnectDlnaDevice(it)) },
             disconnectDlnaDevice = { viewModel.onEvent(StreamEvent.DisconnectDlnaDevice(it)) },
+            openInExternalPlayer = {
+                val stream = metadata.stream ?: return@DlnaDevicesBottomSheet
+                context.startActivity(
+                    Intent(Intent.ACTION_VIEW).apply {
+                        setDataAndType(Uri.parse(stream.url), "video/*")
+                    }.let { Intent.createChooser(it, openInExternalPlayerString.title()) }
+                )
+                viewModel.openInExternalPlayer()
+            },
             onDismiss = { viewModel.onEvent(StreamEvent.CloseDlnaDevices) }
         )
 

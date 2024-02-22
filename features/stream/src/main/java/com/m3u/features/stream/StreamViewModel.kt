@@ -277,6 +277,10 @@ class StreamViewModel @Inject constructor(
         }
     }
 
+    internal fun openInExternalPlayer() {
+
+    }
+
     companion object {
         private val ALLOWED_TRACK_TYPES = arrayOf(
             C.TRACK_TYPE_AUDIO,
