@@ -58,7 +58,7 @@ class PlaylistRepositoryImpl @Inject constructor(
     @Dispatcher(IO) private val ioDispatcher: CoroutineDispatcher,
 ) : PlaylistRepository {
 
-    override fun subscribeM3U(
+    override fun m3u(
         title: String,
         url: String,
         strategy: Int
@@ -97,11 +97,12 @@ class PlaylistRepositoryImpl @Inject constructor(
     }
         .flowOn(ioDispatcher)
 
-    override suspend fun subscribeXtream(
+    override suspend fun xtream(
         title: String,
         address: String,
         username: String,
-        password: String
+        password: String,
+        strategy: Int
     ) {
         val input = XtreamInput(address, username, password)
         val output = xtreamParser.execute(input)
@@ -109,7 +110,7 @@ class PlaylistRepositoryImpl @Inject constructor(
         val allowedOutputFormats = output.allowedOutputFormats
         val playlist = Playlist(
             title = title,
-            url = "$address/api.php?username=$username&password=$password",
+            url = "$address/player_api.php?username=$username&password=$password",
             source = DataSource.Xtream
         )
         playlistDao.insert(playlist)
@@ -122,7 +123,11 @@ class PlaylistRepositoryImpl @Inject constructor(
                 playlistUrl = playlist.url
             )
         }
-        streamDao.insertAll(*streams.toTypedArray())
+        compareAndUpdateDB(
+            streamDao.getByPlaylistUrl(playlist.url),
+            streams,
+            strategy
+        )
     }
 
     override suspend fun backupOrThrow(uri: Uri): Unit = withContext(ioDispatcher) {

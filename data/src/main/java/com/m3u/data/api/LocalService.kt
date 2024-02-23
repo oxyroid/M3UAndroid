@@ -3,6 +3,7 @@ package com.m3u.data.api
 import com.m3u.core.architecture.Publisher
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.execute
+import com.m3u.data.database.model.DataSource
 import com.m3u.data.television.http.endpoint.DefRep
 import com.m3u.data.television.model.Television
 import kotlinx.coroutines.cancel
@@ -32,7 +33,11 @@ interface LocalService {
     @POST("/playlists/subscribe")
     suspend fun subscribe(
         @Query("title") title: String,
-        @Query("url") url: String
+        @Query("url") url: String,
+        @Query("address") address: String,
+        @Query("username") username: String,
+        @Query("password") password: String,
+        @Query("data_source") dataSource: DataSource
     ): DefRep?
 
     @POST("/remotes/{direction}")
@@ -107,9 +112,13 @@ class LocalPreparedService @Inject constructor(
 
     override suspend fun subscribe(
         title: String,
-        url: String
+        url: String,
+        address: String,
+        username: String,
+        password: String,
+        dataSource: DataSource
     ): DefRep? = logger.execute {
-        requireApi().subscribe(title, url)
+        requireApi().subscribe(title, url, address, username, password, dataSource)
     }
 
     override suspend fun remoteDirection(remoteDirectionValue: Int): DefRep? = logger.execute {

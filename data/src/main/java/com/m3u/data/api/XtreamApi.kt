@@ -15,12 +15,13 @@ interface XtreamApi {
             username: String,
             password: String,
             action: GetAll
-        ): String = createInfoUrl(address, username, password) + "&action=${action.path}"
+        ): String = createInfoUrl(address, username, password) + "&action=$action"
     }
 
     @JvmInline
     @Serializable
     value class GetAll(val path: String) {
+        override fun toString(): String = path
         companion object {
             val GET_LIVE_STREAMS = GetAll("get_live_streams")
             val GET_VOD_STREAMS = GetAll("get_vod_streams")

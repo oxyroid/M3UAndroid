@@ -23,7 +23,6 @@ import com.m3u.data.database.dao.ColorPackDao
 import com.m3u.data.database.model.ColorPack
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Stream
-import com.m3u.data.repository.PlaylistRepository
 import com.m3u.data.repository.StreamRepository
 import com.m3u.data.repository.observeAll
 import com.m3u.data.service.Messager
@@ -48,7 +47,6 @@ import javax.inject.Inject
 
 @HiltViewModel
 class SettingViewModel @Inject constructor(
-    private val playlistRepository: PlaylistRepository,
     private val streamRepository: StreamRepository,
     private val workManager: WorkManager,
     private val pref: Pref,
@@ -140,14 +138,6 @@ class SettingViewModel @Inject constructor(
     }
 
     private fun subscribe() {
-        when (selected) {
-            DataSource.M3U -> subscribeM3U()
-            DataSource.Xtream -> subscribeXtream()
-            else -> {}
-        }
-    }
-
-    private fun subscribeM3U() {
         val title = writable.value.title
         if (title.isEmpty()) {
             messager.emit(SettingMessage.EmptyTitle)
@@ -163,66 +153,44 @@ class SettingViewModel @Inject constructor(
             return
         }
 
-        if (subscribeForTv) {
+        val addressWithScheme = if (address.startWithScheme()) address
+        else "http://$address"
+
+        if (forTv) {
             viewModelScope.launch {
-                localService.subscribe(title, url)
-            }
-            writable.update {
-                it.copy(
-                    title = "",
-                    url = "",
-                    uri = Uri.EMPTY
+                localService.subscribe(
+                    title,
+                    url,
+                    addressWithScheme,
+                    username,
+                    password,
+                    selected
                 )
             }
+            clearAllInputs()
             return
         }
         workManager.cancelAllWorkByTag(url)
+        workManager.cancelAllWorkByTag(addressWithScheme)
         val request = OneTimeWorkRequestBuilder<SubscriptionWorker>()
             .setInputData(
                 workDataOf(
                     SubscriptionWorker.INPUT_STRING_TITLE to title,
                     SubscriptionWorker.INPUT_STRING_URL to url,
-                    SubscriptionWorker.INPUT_INT_STRATEGY to pref.playlistStrategy
+                    SubscriptionWorker.INPUT_INT_STRATEGY to pref.playlistStrategy,
+                    SubscriptionWorker.INPUT_STRING_ADDRESS to addressWithScheme,
+                    SubscriptionWorker.INPUT_STRING_USERNAME to username,
+                    SubscriptionWorker.INPUT_STRING_PASSWORD to password,
+                    SubscriptionWorker.INPUT_STRING_DATA_SOURCE to selected.value
                 )
             )
             .addTag(url)
+            .addTag(addressWithScheme)
             .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
             .build()
         workManager.enqueue(request)
         messager.emit(SettingMessage.Enqueued)
-        writable.update {
-            it.copy(
-                title = "",
-                url = "",
-                uri = Uri.EMPTY
-            )
-        }
-    }
-
-    private fun subscribeXtream() {
-        val title = writable.value.title
-        if (title.isEmpty()) {
-            messager.emit(SettingMessage.EmptyTitle)
-            return
-        }
-        val addressWithScheme = if (address.startWithScheme()) address
-        else "http://$address"
-        viewModelScope.launch {
-            playlistRepository.subscribeXtream(
-                title = title,
-                address = addressWithScheme,
-                username = username,
-                password = password
-            )
-            writable.update {
-                it.copy(
-                    title = ""
-                )
-            }
-            address = ""
-            username = ""
-            password = ""
-        }
+        clearAllInputs()
     }
 
     private fun onLocalStorage() {
@@ -295,7 +263,20 @@ class SettingViewModel @Inject constructor(
     private fun String.startWithScheme(): Boolean =
         startsWithAny("http://", "https://", ignoreCase = true)
 
-    internal var subscribeForTv by mutableStateOf(false)
+    private fun clearAllInputs() {
+        writable.update {
+            it.copy(
+                title = "",
+                url = "",
+                uri = Uri.EMPTY
+            )
+        }
+        address = ""
+        username = ""
+        password = ""
+    }
+
+    internal var forTv by mutableStateOf(false)
     internal var selected by mutableStateOf(DataSource.M3U)
     internal var address by mutableStateOf("")
     internal var username by mutableStateOf("")

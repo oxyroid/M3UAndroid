@@ -18,17 +18,18 @@ interface PlaylistRepository {
     fun observeWithStreams(url: String): Flow<PlaylistWithStreams?>
     suspend fun getWithStreams(url: String): PlaylistWithStreams?
 
-    fun subscribeM3U(
+    fun m3u(
         title: String,
         url: String,
         @PlaylistStrategy strategy: Int = PlaylistStrategy.ALL
     ): Flow<Resource<Unit>>
 
-    suspend fun subscribeXtream(
+    suspend fun xtream(
         title: String,
         address: String,
         username: String,
-        password: String
+        password: String,
+        @PlaylistStrategy strategy: Int = PlaylistStrategy.ALL
     )
 
     suspend fun unsubscribe(url: String): Playlist?
@@ -49,7 +50,7 @@ fun PlaylistRepository.refresh(
         check(!playlist.fromLocal) { "refreshing is not needed for local storage playlist." }
         when (playlist.source) {
             DataSource.M3U -> {
-                subscribeM3U(
+                m3u(
                     title = playlist.title,
                     url = url,
                     strategy = strategy
@@ -59,10 +60,10 @@ fun PlaylistRepository.refresh(
             }
 
             DataSource.Xtream -> {
-                val regex = """(.+?)/api.php\?username=(.+)&password=(.+)""".toRegex()
+                val regex = """(.+?)/player_api.php\?username=(.+)&password=(.+)""".toRegex()
                 val matchEntire = checkNotNull(regex.matchEntire(playlist.url)) { "invalidate url" }
                 send(Resource.Loading)
-                subscribeXtream(
+                xtream(
                     title = playlist.title,
                     address = matchEntire.groups[1]!!.value,
                     username = matchEntire.groups[2]!!.value,
