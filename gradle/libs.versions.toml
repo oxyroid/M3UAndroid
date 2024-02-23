@@ -51,7 +51,7 @@ servlet = "3.1.0"
 jetty = "9.3.14.v20161028"
 
 jupnp = "2.7.1"
-aboutlibraries = "10.10.0"
+aboutlibraries = "11.1.0-b03"
 ktor-server = "3.0.0-beta-1"
 
 [libraries]
