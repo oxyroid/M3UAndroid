@@ -17,5 +17,5 @@
     <string name="feat_stream_tooltip_screen_rotating">屏幕旋转</string>
 
     <string name="feat_stream_dialog_dlna_devices">DLNA 设备</string>
-    <string name="feat_stream_dialog_choose_format">选择格式</string>
+    <string name="feat_stream_dialog_choose_tracks">选择格式</string>
 </resources>

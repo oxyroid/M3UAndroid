@@ -11,29 +11,14 @@ import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import org.jupnp.model.meta.Device
 
-@Deprecated("Add Device class to compose compiler configuration file.")
-@Immutable
-internal data class DeviceWrapper(
-    val device: Device<*, *, *>?
-)
-
-@Composable
-internal fun rememberDeviceWrapper(device: Device<*, *, *>?): DeviceWrapper {
-    return remember(device) {
-        DeviceWrapper(device)
-    }
-}
-
 @Composable
 internal fun DlnaDeviceItem(
-    deviceWrapper: DeviceWrapper,
+    device: Device<*, *, *>?,
     connected: Boolean,
     requestConnection: () -> Unit,
     loseConnection: () -> Unit,
@@ -42,9 +27,7 @@ internal fun DlnaDeviceItem(
     val actualOnClick by rememberUpdatedState(if (connected) loseConnection else requestConnection)
 
     ListItem(
-        headlineContent = {
-            Text(deviceWrapper.device?.displayString.orEmpty())
-        },
+        headlineContent = { Text(device?.displayString.orEmpty()) },
         trailingContent = {
             Crossfade(connected, label = "icon") { connected ->
                 Icon(

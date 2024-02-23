@@ -2,6 +2,7 @@ package com.m3u.features.playlist.internal
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
@@ -45,7 +46,7 @@ import com.m3u.material.ktx.Edge
 import com.m3u.material.ktx.blurEdge
 import com.m3u.material.model.LocalHazeState
 import com.m3u.ui.Sort
-import com.m3u.ui.SortFullScreenDialog
+import com.m3u.ui.TvSortFullScreenDialog
 import com.m3u.ui.helper.LocalHelper
 import dev.chrisbanes.haze.HazeDefaults
 import dev.chrisbanes.haze.HazeStyle
@@ -78,12 +79,17 @@ internal fun TvPlaylistScreenImpl(
     val noPictureMode = pref.noPictureMode
     val darkMode = if (pref.followSystemTheme) isSystemInDarkTheme()
     else pref.darkMode
+    val useGridLayout = sort != Sort.UNSPECIFIED
 
-    val maxBrowserHeight = when {
-        noPictureMode -> 320.dp
-        multiCatalogs -> 256.dp
-        else -> 180.dp
-    }
+    val maxBrowserHeight by animateDpAsState(
+        targetValue = when {
+            useGridLayout -> 360.dp
+            noPictureMode -> 320.dp
+            multiCatalogs -> 256.dp
+            else -> 180.dp
+        },
+        label = "max-browser-height"
+    )
 
     var isSortSheetVisible by rememberSaveable { mutableStateOf(false) }
 
@@ -99,6 +105,7 @@ internal fun TvPlaylistScreenImpl(
                     stream = focus,
                     noPictureMode = noPictureMode,
                     maxBrowserHeight = maxBrowserHeight,
+                    isUnspecifiedSort = sort == Sort.UNSPECIFIED,
                     onRefresh = onRefresh,
                     openSearchDrawer = {},
                     openSortDrawer = { isSortSheetVisible = true },
@@ -112,13 +119,14 @@ internal fun TvPlaylistScreenImpl(
                 TvStreamGallery(
                     channels = channels,
                     maxBrowserHeight = maxBrowserHeight,
+                    useGridLayout = useGridLayout,
                     noPictureMode = noPictureMode,
-                    onClick = { stream, _, _ ->
+                    onClick = { stream ->
                         helper.play(stream.url)
                         navigateToStream()
                     },
-                    onLongClick = { stream, _, _ -> press = stream },
-                    onFocus = { stream, _, _ -> focus = stream },
+                    onLongClick = { stream -> press = stream },
+                    onFocus = { stream -> focus = stream },
                     modifier = Modifier.then(
                         if (noPictureMode || !darkMode) Modifier
                         else Modifier
@@ -146,7 +154,7 @@ internal fun TvPlaylistScreenImpl(
             createShortcut = createShortcut,
             onDismissRequest = { press = null }
         )
-        SortFullScreenDialog(
+        TvSortFullScreenDialog(
             visible = isSortSheetVisible,
             sort = sort,
             sorts = sorts,

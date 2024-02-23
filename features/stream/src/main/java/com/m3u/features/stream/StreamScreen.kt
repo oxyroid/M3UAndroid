@@ -27,7 +27,6 @@ import com.m3u.core.util.basic.isNotEmpty
 import com.m3u.core.util.basic.title
 import com.m3u.features.stream.components.DlnaDevicesBottomSheet
 import com.m3u.features.stream.components.FormatsBottomSheet
-import com.m3u.features.stream.components.rememberDeviceWrapper
 import com.m3u.features.stream.fragments.StreamFragment
 import com.m3u.i18n.R.string
 import com.m3u.material.components.Background
@@ -45,7 +44,7 @@ fun StreamRoute(
     onBackPressed: () -> Unit,
     viewModel: StreamViewModel = hiltViewModel(),
 ) {
-    val openInExternalPlayerString = stringResource(string.feat_stream_open_in_external_player)
+    val openInExternalPlayerString = stringResource(string.feat_stream_open_in_external_app)
 
     val helper = LocalHelper.current
     val pref = LocalPref.current
@@ -133,7 +132,7 @@ fun StreamRoute(
             searching = searching,
             isDevicesVisible = isDevicesVisible,
             devices = devices,
-            connected = rememberDeviceWrapper(state.connected),
+            connected = state.connected,
             connectDlnaDevice = { viewModel.onEvent(StreamEvent.ConnectDlnaDevice(it)) },
             disconnectDlnaDevice = { viewModel.onEvent(StreamEvent.DisconnectDlnaDevice(it)) },
             openInExternalPlayer = {

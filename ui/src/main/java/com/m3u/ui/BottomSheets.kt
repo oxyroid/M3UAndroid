@@ -19,6 +19,7 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Sort
+import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
@@ -42,6 +43,9 @@ import com.m3u.i18n.R.string
 import com.m3u.material.components.television.dialogFocusable
 import com.m3u.material.model.LocalSpacing
 import kotlinx.collections.immutable.ImmutableList
+import androidx.tv.material3.Icon as TvIcon
+import androidx.tv.material3.MaterialTheme as TvMaterialTheme
+import androidx.tv.material3.Text as TvText
 
 @Immutable
 enum class Sort(@StringRes val resId: Int) {
@@ -139,7 +143,7 @@ private fun SortBottomSheetItem(
 }
 
 @Composable
-fun SortFullScreenDialog(
+fun TvSortFullScreenDialog(
     visible: Boolean,
     sort: Sort,
     sorts: ImmutableList<Sort>,
@@ -147,7 +151,12 @@ fun SortFullScreenDialog(
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Box(Modifier.fillMaxSize().then(modifier)) {
+//    LocalFocusManager.current.moveFocus()
+    Box(
+        Modifier
+            .fillMaxSize()
+            .then(modifier)
+    ) {
         AnimatedVisibility(
             visible = visible,
             modifier = Modifier
@@ -158,7 +167,7 @@ fun SortFullScreenDialog(
             TvLazyColumn(
                 Modifier
                     .fillMaxHeight()
-                    .background(androidx.tv.material3.MaterialTheme.colorScheme.surfaceVariant)
+                    .background(TvMaterialTheme.colorScheme.surfaceVariant)
                     .padding(12.dp)
                     .selectableGroup()
                     .dialogFocusable(),
@@ -170,9 +179,17 @@ fun SortFullScreenDialog(
                         selected = currentSort == sort,
                         onClick = { onChanged(currentSort) },
                         leadingContent = {},
+                        trailingContent = {
+                            if (currentSort == sort) {
+                                TvIcon(
+                                    imageVector = Icons.Rounded.CheckCircle,
+                                    contentDescription = null
+                                )
+                            }
+                        },
                         scale = ListItemDefaults.scale(0.95f, 1f)
                     ) {
-                        androidx.tv.material3.Text(currentSort.name)
+                        TvText(currentSort.name)
                     }
                 }
             }

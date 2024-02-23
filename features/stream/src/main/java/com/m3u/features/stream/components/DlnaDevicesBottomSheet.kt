@@ -44,7 +44,7 @@ import org.jupnp.model.meta.Device
 internal fun DlnaDevicesBottomSheet(
     isDevicesVisible: Boolean,
     devices: ImmutableList<Device<*, *, *>>,
-    connected: DeviceWrapper?,
+    connected: Device<*, *, *>?,
     searching: Boolean,
     maskState: MaskState,
     onDismiss: OnDismiss,
@@ -56,7 +56,7 @@ internal fun DlnaDevicesBottomSheet(
     val spacing = LocalSpacing.current
     val state = rememberModalBottomSheetState()
 
-    val openInExternalPlayerString = stringResource(string.feat_stream_open_in_external_player)
+    val openInExternalPlayerString = stringResource(string.feat_stream_open_in_external_app)
 
     LaunchedEffect(isDevicesVisible) {
         if (isDevicesVisible) state.show()
@@ -126,8 +126,8 @@ internal fun DlnaDevicesBottomSheet(
                     }
                     items(devices) { device ->
                         DlnaDeviceItem(
-                            deviceWrapper = rememberDeviceWrapper(device),
-                            connected = device == connected?.device,
+                            device = device,
+                            connected = device == connected,
                             requestConnection = { connectDlnaDevice(device) },
                             loseConnection = { disconnectDlnaDevice(device) }
                         )

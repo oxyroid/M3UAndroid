@@ -77,7 +77,7 @@ internal fun FormatsBottomSheet(
                 maskState.sleep()
             }
             Text(
-                text = stringResource(string.feat_stream_dialog_choose_format),
+                text = stringResource(string.feat_stream_dialog_choose_tracks),
                 fontWeight = FontWeight.Bold,
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.padding(horizontal = spacing.medium)

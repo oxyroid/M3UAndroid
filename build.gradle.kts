@@ -30,10 +30,14 @@ subprojects {
                 "-opt-in=androidx.compose.material3.adaptive.navigation.suite.ExperimentalMaterial3AdaptiveNavigationSuiteApi",
                 "-opt-in=androidx.tv.material3.ExperimentalTvMaterial3Api",
                 "-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi",
-                "-P", "plugin:androidx.compose.compiler.plugins.kotlin:metricsDestination=$composeMetricsPath",
-                "-P", "plugin:androidx.compose.compiler.plugins.kotlin:reportsDestination=$composeMetricsPath",
-                "-P", "plugin:androidx.compose.compiler.plugins.kotlin:stabilityConfigurationPath=$composeStabilityConfigurationPath",
-                "-P", "plugin:androidx.compose.compiler.plugins.kotlin:experimentalStrongSkipping=true",
+                "-P",
+                "plugin:androidx.compose.compiler.plugins.kotlin:metricsDestination=$composeMetricsPath",
+                "-P",
+                "plugin:androidx.compose.compiler.plugins.kotlin:reportsDestination=$composeMetricsPath",
+                "-P",
+                "plugin:androidx.compose.compiler.plugins.kotlin:stabilityConfigurationPath=$composeStabilityConfigurationPath",
+                "-P",
+                "plugin:androidx.compose.compiler.plugins.kotlin:experimentalStrongSkipping=true",
             )
         }
     }

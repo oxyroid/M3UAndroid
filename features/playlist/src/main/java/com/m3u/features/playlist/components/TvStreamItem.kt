@@ -24,6 +24,7 @@ import androidx.tv.material3.Icon
 import androidx.tv.material3.Text
 import coil.compose.SubcomposeAsyncImage
 import com.m3u.data.database.model.Stream
+import com.m3u.material.ktx.thenIf
 import com.m3u.material.model.LocalSpacing
 
 @Composable
@@ -45,16 +46,15 @@ internal fun TvStreamItem(
             )
         ),
         scale = CardDefaults.scale(
-            scale = 0.96f,
+            scale = 0.95f,
             focusedScale = 1.1f
         ),
         modifier = Modifier
-            .then(
-                if (noPictureMode) Modifier
-                else Modifier
+            .thenIf(!noPictureMode) {
+                Modifier
                     .height(128.dp)
                     .aspectRatio(4 / 3f)
-            )
+            }
             .then(modifier)
     ) {
         Box(

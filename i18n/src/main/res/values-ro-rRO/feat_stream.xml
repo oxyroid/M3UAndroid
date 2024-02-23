@@ -18,5 +18,5 @@
     <string name="feat_stream_tooltip_choose_format">alege format</string>
 
     <string name="feat_stream_dialog_dlna_devices">Dispozitive DLNA</string>
-    <string name="feat_stream_dialog_choose_format">Alege Format</string>
+    <string name="feat_stream_dialog_choose_tracks">Alege Format</string>
 </resources>

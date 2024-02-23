@@ -96,7 +96,7 @@ private fun PlaylistGalleryImpl(
                 vertical = spacing.medium,
                 horizontal = spacing.large
             ) + contentPadding,
-            verticalArrangement = Arrangement.spacedBy(spacing.medium),
+            verticalArrangement = Arrangement.spacedBy(spacing.large),
             horizontalArrangement = Arrangement.spacedBy(spacing.large),
             modifier = modifier
         ) {

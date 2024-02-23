@@ -35,7 +35,7 @@ import com.m3u.material.ktx.thenIf
 import com.m3u.material.model.LocalHazeState
 import com.m3u.ui.Sort
 import com.m3u.ui.SortBottomSheet
-import com.m3u.ui.SortFullScreenDialog
+import com.m3u.ui.TvSortFullScreenDialog
 import com.m3u.ui.helper.Action
 import com.m3u.ui.helper.LocalHelper
 import dev.chrisbanes.haze.HazeDefaults
@@ -121,7 +121,7 @@ fun FavouriteRoute(
                 }
             )
         } else {
-            SortFullScreenDialog(
+            TvSortFullScreenDialog(
                 visible = dialogStatus != DialogStatus.Idle,
                 sort = sort,
                 sorts = sorts,
