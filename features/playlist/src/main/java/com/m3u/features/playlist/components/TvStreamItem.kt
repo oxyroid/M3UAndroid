@@ -23,6 +23,7 @@ import androidx.tv.material3.Glow
 import androidx.tv.material3.Icon
 import androidx.tv.material3.Text
 import coil.compose.SubcomposeAsyncImage
+import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.data.database.model.Stream
 import com.m3u.material.ktx.thenIf
 import com.m3u.material.model.LocalSpacing
@@ -33,9 +34,11 @@ internal fun TvStreamItem(
     onClick: () -> Unit,
     onLongClick: () -> Unit,
     modifier: Modifier = Modifier,
-    noPictureMode: Boolean = false
 ) {
+    val pref = LocalPref.current
     val spacing = LocalSpacing.current
+
+    val noPictureMode = pref.noPictureMode
     Card(
         onClick = onClick,
         onLongClick = onLongClick,

@@ -30,6 +30,7 @@ import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.data.database.model.Stream
 import com.m3u.features.playlist.R
 import com.m3u.material.components.IconButton
@@ -45,11 +46,14 @@ internal fun ImmersiveBackground(
     onRefresh: () -> Unit,
     openSearchDrawer: () -> Unit,
     openSortDrawer: () -> Unit,
-    modifier: Modifier = Modifier,
-    noPictureMode: Boolean = false,
+    modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
     val spacing = LocalSpacing.current
+    val pref = LocalPref.current
+
+    val noPictureMode = pref.noPictureMode
+
     Box(modifier) {
         if (stream != null) {
             Box(

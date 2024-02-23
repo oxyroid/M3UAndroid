@@ -151,7 +151,6 @@ fun TvSortFullScreenDialog(
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-//    LocalFocusManager.current.moveFocus()
     Box(
         Modifier
             .fillMaxSize()

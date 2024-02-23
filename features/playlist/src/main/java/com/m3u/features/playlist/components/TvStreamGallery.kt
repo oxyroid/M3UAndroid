@@ -32,7 +32,6 @@ internal fun TvStreamGallery(
     onLongClick: (Stream) -> Unit,
     onFocus: (Stream) -> Unit,
     modifier: Modifier = Modifier,
-    noPictureMode: Boolean = false
 ) {
     val spacing = LocalSpacing.current
     val multiCatalogs = channels.size > 1
@@ -67,7 +66,6 @@ internal fun TvStreamGallery(
                     ) { stream ->
                         TvStreamItem(
                             stream = stream,
-                            noPictureMode = noPictureMode,
                             onClick = {
                                 onClick(stream)
                             },
@@ -99,7 +97,6 @@ internal fun TvStreamGallery(
                 items(channel.streams) { stream ->
                     TvStreamItem(
                         stream = stream,
-                        noPictureMode = noPictureMode,
                         onClick = { onClick(stream) },
                         onLongClick = { onLongClick(stream) },
                         modifier = Modifier.onFocusChanged {

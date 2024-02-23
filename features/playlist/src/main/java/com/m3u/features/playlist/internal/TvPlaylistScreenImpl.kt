@@ -103,7 +103,6 @@ internal fun TvPlaylistScreenImpl(
                 ImmersiveBackground(
                     title = title,
                     stream = focus,
-                    noPictureMode = noPictureMode,
                     maxBrowserHeight = maxBrowserHeight,
                     isUnspecifiedSort = sort == Sort.UNSPECIFIED,
                     onRefresh = onRefresh,
@@ -120,7 +119,6 @@ internal fun TvPlaylistScreenImpl(
                     channels = channels,
                     maxBrowserHeight = maxBrowserHeight,
                     useGridLayout = useGridLayout,
-                    noPictureMode = noPictureMode,
                     onClick = { stream ->
                         helper.play(stream.url)
                         navigateToStream()
