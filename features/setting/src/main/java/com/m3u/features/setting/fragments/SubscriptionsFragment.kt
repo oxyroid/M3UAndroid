@@ -150,11 +150,13 @@ internal fun SubscriptionsFragment(
         }
 
         item {
-            LocalStorageSwitch(
-                checked = localStorage,
-                onChanged = onLocalStorage,
-                enabled = !subscribeForTv
-            )
+            if (selected == DataSource.M3U) {
+                LocalStorageSwitch(
+                    checked = localStorage,
+                    onChanged = onLocalStorage,
+                    enabled = !subscribeForTv
+                )
+            }
             if (!tv && remoteControl) {
                 RemoteControlSubscribeSwitch(
                     checked = subscribeForTv,
