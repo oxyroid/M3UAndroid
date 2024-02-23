@@ -23,6 +23,7 @@ import com.m3u.data.database.dao.ColorPackDao
 import com.m3u.data.database.model.ColorPack
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Stream
+import com.m3u.data.repository.PlaylistRepository
 import com.m3u.data.repository.StreamRepository
 import com.m3u.data.repository.observeAll
 import com.m3u.data.service.Messager
@@ -95,13 +96,27 @@ class SettingViewModel @Inject constructor(
     }
 
     internal fun onClipboard(url: String) {
-        val title = run {
-            val filePath = url.split("/")
-            val fileSplit = filePath.lastOrNull()?.split(".") ?: emptyList()
-            fileSplit.firstOrNull() ?: "Playlist_${System.currentTimeMillis()}"
+        when (selected) {
+            DataSource.M3U -> {
+                val title = run {
+                    val filePath = url.split("/")
+                    val fileSplit = filePath.lastOrNull()?.split(".") ?: emptyList()
+                    fileSplit.firstOrNull() ?: "Playlist_${System.currentTimeMillis()}"
+                }
+                onTitle(title)
+                onUrl(url)
+            }
+
+            DataSource.Xtream -> {
+                val input = runCatching { PlaylistRepository.decodeXtreamInput(url) }
+                    .getOrNull() ?: return
+                address = input.address
+                username = input.username
+                password = input.password
+            }
+
+            else -> {}
         }
-        onTitle(title)
-        onUrl(url)
     }
 
     private fun openDocument(uri: Uri) {
@@ -144,14 +159,6 @@ class SettingViewModel @Inject constructor(
             return
         }
         val url = readable.actualUrl
-        if (url == null) {
-            val warning = when {
-                readable.localStorage -> SettingMessage.EmptyFile
-                else -> SettingMessage.EmptyUrl
-            }
-            messager.emit(warning)
-            return
-        }
 
         val addressWithScheme = if (address.startWithScheme()) address
         else "http://$address"

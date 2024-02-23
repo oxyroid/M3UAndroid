@@ -10,10 +10,10 @@ data class SettingState(
     val uri: Uri = Uri.EMPTY,
     val localStorage: Boolean = false
 ) {
-    val actualUrl
+    val actualUrl: String
         get() = if (localStorage) {
-            uri.takeIf { uri != Uri.EMPTY }?.toString()
+            uri.takeIf { uri != Uri.EMPTY }?.toString().orEmpty()
         } else {
-            url.ifEmpty { null }
+            url
         }
 }

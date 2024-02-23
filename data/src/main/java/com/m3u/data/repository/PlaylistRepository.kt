@@ -6,6 +6,7 @@ import com.m3u.core.wrapper.Resource
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.PlaylistWithStreams
+import com.m3u.data.parser.XtreamInput
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.launchIn
@@ -39,6 +40,21 @@ interface PlaylistRepository {
     suspend fun backupOrThrow(uri: Uri)
 
     suspend fun restoreOrThrow(uri: Uri)
+
+    companion object {
+        fun decodeXtreamInput(url: String): XtreamInput {
+            val regex = """(.+?)/player_api.php\?username=(.+)&password=(.+)""".toRegex()
+            val matchEntire = checkNotNull(regex.matchEntire(url)) { "invalidate url" }
+            return XtreamInput(
+                address = matchEntire.groups[1]!!.value,
+                username = matchEntire.groups[2]!!.value,
+                password = matchEntire.groups[3]!!.value,
+            )
+        }
+
+        fun encodeXtreamInput(input: XtreamInput): String =
+            with(input) { "$address/player_api.php?username=$username&password=$password" }
+    }
 }
 
 fun PlaylistRepository.refresh(
@@ -60,14 +76,13 @@ fun PlaylistRepository.refresh(
             }
 
             DataSource.Xtream -> {
-                val regex = """(.+?)/player_api.php\?username=(.+)&password=(.+)""".toRegex()
-                val matchEntire = checkNotNull(regex.matchEntire(playlist.url)) { "invalidate url" }
+                val input = PlaylistRepository.decodeXtreamInput(playlist.url)
                 send(Resource.Loading)
                 xtream(
                     title = playlist.title,
-                    address = matchEntire.groups[1]!!.value,
-                    username = matchEntire.groups[2]!!.value,
-                    password = matchEntire.groups[3]!!.value,
+                    address = input.address,
+                    username = input.username,
+                    password = input.password,
                 )
                 send(Resource.Success(Unit))
             }

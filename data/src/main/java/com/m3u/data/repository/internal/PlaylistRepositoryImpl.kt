@@ -58,11 +58,7 @@ class PlaylistRepositoryImpl @Inject constructor(
     @Dispatcher(IO) private val ioDispatcher: CoroutineDispatcher,
 ) : PlaylistRepository {
 
-    override fun m3u(
-        title: String,
-        url: String,
-        strategy: Int
-    ): Flow<Resource<Unit>> = resourceFlow {
+    override fun m3u(title: String, url: String, strategy: Int): Flow<Resource<Unit>> = resourceFlow {
         try {
             val actualUrl = url.actualUrl()
             if (actualUrl == null) {
@@ -110,7 +106,7 @@ class PlaylistRepositoryImpl @Inject constructor(
         val allowedOutputFormats = output.allowedOutputFormats
         val playlist = Playlist(
             title = title,
-            url = "$address/player_api.php?username=$username&password=$password",
+            url = PlaylistRepository.encodeXtreamInput(input),
             source = DataSource.Xtream
         )
         playlistDao.insert(playlist)
