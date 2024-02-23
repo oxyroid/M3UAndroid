@@ -3,6 +3,7 @@ package com.m3u.data.repository
 import android.net.Uri
 import com.m3u.core.architecture.pref.annotation.PlaylistStrategy
 import com.m3u.core.wrapper.Resource
+import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.PlaylistWithStreams
 import kotlinx.coroutines.flow.Flow
@@ -17,11 +18,18 @@ interface PlaylistRepository {
     fun observeWithStreams(url: String): Flow<PlaylistWithStreams?>
     suspend fun getWithStreams(url: String): PlaylistWithStreams?
 
-    fun subscribe(
+    fun subscribeM3U(
         title: String,
         url: String,
         @PlaylistStrategy strategy: Int = PlaylistStrategy.ALL
     ): Flow<Resource<Unit>>
+
+    suspend fun subscribeXtream(
+        title: String,
+        address: String,
+        username: String,
+        password: String
+    )
 
     suspend fun unsubscribe(url: String): Playlist?
 
@@ -39,9 +47,32 @@ fun PlaylistRepository.refresh(
     try {
         val playlist = checkNotNull(get(url)) { "Cannot find playlist: $url" }
         check(!playlist.fromLocal) { "refreshing is not needed for local storage playlist." }
-        subscribe(playlist.title, url, strategy)
-            .onEach(::send)
-            .launchIn(this)
+        when (playlist.source) {
+            DataSource.M3U -> {
+                subscribeM3U(
+                    title = playlist.title,
+                    url = url,
+                    strategy = strategy
+                )
+                    .onEach(::send)
+                    .launchIn(this)
+            }
+
+            DataSource.Xtream -> {
+                val regex = """(.+?)/api.php\?username=(.+)&password=(.+)""".toRegex()
+                val matchEntire = checkNotNull(regex.matchEntire(playlist.url)) { "invalidate url" }
+                send(Resource.Loading)
+                subscribeXtream(
+                    title = playlist.title,
+                    address = matchEntire.groups[1]!!.value,
+                    username = matchEntire.groups[2]!!.value,
+                    password = matchEntire.groups[3]!!.value,
+                )
+                send(Resource.Success(Unit))
+            }
+
+            else -> throw RuntimeException("Refresh data source ${playlist.source} is unsupported currently.")
+        }
     } catch (e: Exception) {
         send(Resource.Failure(e.message))
     }

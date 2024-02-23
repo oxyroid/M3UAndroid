@@ -43,6 +43,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.core.util.basic.title
 import com.m3u.data.database.model.ColorPack
+import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Stream
 import com.m3u.features.setting.components.CanvasBottomSheet
 import com.m3u.features.setting.fragments.AppearanceFragment
@@ -51,9 +52,9 @@ import com.m3u.features.setting.fragments.preferences.PreferencesFragment
 import com.m3u.i18n.R.string
 import com.m3u.material.ktx.isTelevision
 import com.m3u.material.model.LocalHazeState
-import com.m3u.ui.Param
 import com.m3u.ui.EventBus
 import com.m3u.ui.EventHandler
+import com.m3u.ui.Param
 import com.m3u.ui.helper.LocalHelper
 import dev.chrisbanes.haze.HazeDefaults
 import dev.chrisbanes.haze.haze
@@ -137,6 +138,14 @@ fun SettingRoute(
                 colorInt = c
                 isDark = i
             },
+            selected = viewModel.selected,
+            onSelected = { viewModel.selected = it },
+            address = viewModel.address,
+            onAddress = { viewModel.address = it },
+            username = viewModel.username,
+            onUsername = { viewModel.username = it },
+            password = viewModel.password,
+            onPassword = { viewModel.password = it },
             modifier = modifier.fillMaxSize()
         )
         if (!tv) {
@@ -178,6 +187,14 @@ private fun SettingScreen(
     onClipboard: (String) -> Unit,
     packs: ImmutableList<ColorPack>,
     openColorCanvas: (Int, Boolean) -> Unit,
+    selected: DataSource,
+    onSelected: (DataSource) -> Unit,
+    address: String,
+    onAddress: (String) -> Unit,
+    username: String,
+    onUsername: (String) -> Unit,
+    password: String,
+    onPassword: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val helper = LocalHelper.current
@@ -262,6 +279,14 @@ private fun SettingScreen(
                                 onClipboard = onClipboard,
                                 backup = backup,
                                 restore = restore,
+                                selected = selected,
+                                onSelected = onSelected,
+                                address = address,
+                                onAddress = onAddress,
+                                username = username,
+                                onUsername = onUsername,
+                                password = password,
+                                onPassword = onPassword,
                                 modifier = Modifier.fillMaxSize()
                             )
                         }

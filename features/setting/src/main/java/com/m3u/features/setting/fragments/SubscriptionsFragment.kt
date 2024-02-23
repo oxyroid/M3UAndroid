@@ -15,17 +15,14 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.res.stringResource
 import com.m3u.core.architecture.pref.LocalPref
+import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Stream
 import com.m3u.features.setting.BackingUpAndRestoringState
-import com.m3u.features.setting.components.DataSource
 import com.m3u.features.setting.components.DataSourceSelection
 import com.m3u.features.setting.components.LocalStorageButton
 import com.m3u.features.setting.components.LocalStorageSwitch
@@ -47,6 +44,14 @@ internal fun SubscriptionsFragment(
     title: String,
     url: String,
     uri: Uri,
+    selected: DataSource,
+    onSelected: (DataSource) -> Unit,
+    address: String,
+    onAddress: (String) -> Unit,
+    username: String,
+    onUsername: (String) -> Unit,
+    password: String,
+    onPassword: (String) -> Unit,
     localStorage: Boolean,
     subscribeForTv: Boolean,
     backingUpOrRestoring: BackingUpAndRestoringState,
@@ -69,8 +74,6 @@ internal fun SubscriptionsFragment(
 
     val tv = isTelevision()
     val remoteControl = pref.remoteControl
-
-    val focusRequester = remember { FocusRequester() }
 
     LazyColumn(
         contentPadding = PaddingValues(spacing.medium) + contentPadding,
@@ -106,52 +109,43 @@ internal fun SubscriptionsFragment(
 
         item {
             DataSourceSelection(
-                selected = DataSource.M3U,
+                selected = selected,
                 supported = DataSource.entries.toPersistentList(),
-                onSelected = {}
+                onSelected = onSelected
             )
         }
 
         item {
-            PlaceholderField(
-                text = title,
-                placeholder = stringResource(string.feat_setting_placeholder_title).uppercase(),
-                onValueChange = onTitle,
-                keyboardActions = KeyboardActions(
-                    onNext = {
-                        focusRequester.requestFocus()
-                    }
-                ),
-                modifier = Modifier.fillMaxWidth()
-            )
-        }
-
-        item {
-            Crossfade(
-                targetState = localStorage,
-                label = "url"
-            ) { localStorage ->
-                if (!localStorage) {
-                    PlaceholderField(
-                        text = url,
-                        placeholder = stringResource(string.feat_setting_placeholder_url).uppercase(),
-                        onValueChange = onUrl,
-                        keyboardActions = KeyboardActions(
-                            onDone = {
-                                onSubscribe()
-                            }
-                        ),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .focusRequester(focusRequester)
-                    )
-                } else {
-                    LocalStorageButton(
-                        uri = uri,
+            when (selected) {
+                DataSource.M3U -> {
+                    M3UInputContent(
+                        title = title,
                         onTitle = onTitle,
+                        url = url,
+                        onUrl = onUrl,
+                        uri = uri,
                         openDocument = openDocument,
+                        onSubscribe = onSubscribe,
+                        localStorage = localStorage
                     )
                 }
+
+                DataSource.Xtream -> {
+                    XtreamInputContent(
+                        title = title,
+                        onTitle = onTitle,
+                        address = address,
+                        onAddress = onAddress,
+                        username = username,
+                        onUsername = onUsername,
+                        password = password,
+                        onPassword = onPassword
+                    )
+                }
+
+                DataSource.Emby -> {}
+                DataSource.Dropbox -> {}
+                DataSource.Aliyun -> {}
             }
         }
 
@@ -208,5 +202,99 @@ internal fun SubscriptionsFragment(
         item {
             Spacer(Modifier.imePadding())
         }
+    }
+}
+
+@Composable
+private fun M3UInputContent(
+    title: String,
+    onTitle: (String) -> Unit,
+    url: String,
+    onUrl: (String) -> Unit,
+    uri: Uri,
+    openDocument: (Uri) -> Unit,
+    onSubscribe: () -> Unit,
+    localStorage: Boolean,
+    modifier: Modifier = Modifier
+) {
+    val spacing = LocalSpacing.current
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(spacing.small)
+    ) {
+        PlaceholderField(
+            text = title,
+            placeholder = stringResource(string.feat_setting_placeholder_title).uppercase(),
+            onValueChange = onTitle,
+            modifier = Modifier.fillMaxWidth()
+        )
+        Crossfade(
+            targetState = localStorage,
+            label = "url"
+        ) { localStorage ->
+            if (!localStorage) {
+                PlaceholderField(
+                    text = url,
+                    placeholder = stringResource(string.feat_setting_placeholder_url).uppercase(),
+                    onValueChange = onUrl,
+                    keyboardActions = KeyboardActions(
+                        onDone = {
+                            onSubscribe()
+                        }
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                )
+            } else {
+                LocalStorageButton(
+                    uri = uri,
+                    onTitle = onTitle,
+                    openDocument = openDocument,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun XtreamInputContent(
+    title: String,
+    onTitle: (String) -> Unit,
+    address: String,
+    onAddress: (String) -> Unit,
+    username: String,
+    onUsername: (String) -> Unit,
+    password: String,
+    onPassword: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val spacing = LocalSpacing.current
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(spacing.small)
+    ) {
+        PlaceholderField(
+            text = title,
+            placeholder = stringResource(string.feat_setting_placeholder_title).uppercase(),
+            onValueChange = onTitle,
+            modifier = Modifier.fillMaxWidth()
+        )
+        PlaceholderField(
+            text = address,
+            placeholder = stringResource(string.feat_setting_placeholder_address).uppercase(),
+            onValueChange = onAddress,
+            modifier = Modifier.fillMaxWidth()
+        )
+        PlaceholderField(
+            text = username,
+            placeholder = stringResource(string.feat_setting_placeholder_username).uppercase(),
+            onValueChange = onUsername,
+            modifier = Modifier.fillMaxWidth()
+        )
+        PlaceholderField(
+            text = password,
+            placeholder = stringResource(string.feat_setting_placeholder_password).uppercase(),
+            onValueChange = onPassword,
+            modifier = Modifier.fillMaxWidth()
+        )
     }
 }

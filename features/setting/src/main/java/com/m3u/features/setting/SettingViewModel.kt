@@ -17,10 +17,13 @@ import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
 import com.m3u.core.architecture.pref.Pref
 import com.m3u.core.architecture.pref.observeAsFlow
 import com.m3u.core.architecture.viewmodel.BaseViewModel
+import com.m3u.core.util.basic.startsWithAny
 import com.m3u.data.api.LocalPreparedService
 import com.m3u.data.database.dao.ColorPackDao
 import com.m3u.data.database.model.ColorPack
+import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Stream
+import com.m3u.data.repository.PlaylistRepository
 import com.m3u.data.repository.StreamRepository
 import com.m3u.data.repository.observeAll
 import com.m3u.data.service.Messager
@@ -45,6 +48,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class SettingViewModel @Inject constructor(
+    private val playlistRepository: PlaylistRepository,
     private val streamRepository: StreamRepository,
     private val workManager: WorkManager,
     private val pref: Pref,
@@ -59,7 +63,6 @@ class SettingViewModel @Inject constructor(
         versionCode = publisher.versionCode,
     )
 ) {
-    internal var subscribeForTv by mutableStateOf(false)
     internal val hiddenStreams: StateFlow<ImmutableList<Stream>> = streamRepository
         .observeAll { it.hidden }
         .map { it.toImmutableList() }
@@ -137,6 +140,14 @@ class SettingViewModel @Inject constructor(
     }
 
     private fun subscribe() {
+        when (selected) {
+            DataSource.M3U -> subscribeM3U()
+            DataSource.Xtream -> subscribeXtream()
+            else -> {}
+        }
+    }
+
+    private fun subscribeM3U() {
         val title = writable.value.title
         if (title.isEmpty()) {
             messager.emit(SettingMessage.EmptyTitle)
@@ -165,9 +176,7 @@ class SettingViewModel @Inject constructor(
             }
             return
         }
-
         workManager.cancelAllWorkByTag(url)
-
         val request = OneTimeWorkRequestBuilder<SubscriptionWorker>()
             .setInputData(
                 workDataOf(
@@ -187,6 +196,32 @@ class SettingViewModel @Inject constructor(
                 url = "",
                 uri = Uri.EMPTY
             )
+        }
+    }
+
+    private fun subscribeXtream() {
+        val title = writable.value.title
+        if (title.isEmpty()) {
+            messager.emit(SettingMessage.EmptyTitle)
+            return
+        }
+        val addressWithScheme = if (address.startWithScheme()) address
+        else "http://$address"
+        viewModelScope.launch {
+            playlistRepository.subscribeXtream(
+                title = title,
+                address = addressWithScheme,
+                username = username,
+                password = password
+            )
+            writable.update {
+                it.copy(
+                    title = ""
+                )
+            }
+            address = ""
+            username = ""
+            password = ""
         }
     }
 
@@ -256,4 +291,13 @@ class SettingViewModel @Inject constructor(
         workManager.enqueue(request)
         messager.emit(SettingMessage.Restoring)
     }
+
+    private fun String.startWithScheme(): Boolean =
+        startsWithAny("http://", "https://", ignoreCase = true)
+
+    internal var subscribeForTv by mutableStateOf(false)
+    internal var selected by mutableStateOf(DataSource.M3U)
+    internal var address by mutableStateOf("")
+    internal var username by mutableStateOf("")
+    internal var password by mutableStateOf("")
 }

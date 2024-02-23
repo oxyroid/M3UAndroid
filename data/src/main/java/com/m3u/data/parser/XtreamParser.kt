@@ -2,9 +2,19 @@ package com.m3u.data.parser
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import java.io.InputStream
 
-interface XtreamParser: Parser<InputStream, List<XtreamData>>
+interface XtreamParser : Parser<XtreamInput, XtreamOutput>
+
+data class XtreamInput(
+    val address: String,
+    val username: String,
+    val password: String
+)
+
+data class XtreamOutput(
+    val all: List<XtreamData> = emptyList(),
+    val allowedOutputFormats: List<String> = emptyList()
+)
 
 @Serializable
 data class XtreamData(

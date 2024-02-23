@@ -21,10 +21,13 @@ import com.m3u.core.wrapper.emitResource
 import com.m3u.core.wrapper.resourceFlow
 import com.m3u.data.database.dao.PlaylistDao
 import com.m3u.data.database.dao.StreamDao
+import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.PlaylistWithStreams
 import com.m3u.data.database.model.Stream
 import com.m3u.data.parser.M3UParser
+import com.m3u.data.parser.XtreamInput
+import com.m3u.data.parser.XtreamParser
 import com.m3u.data.parser.toStream
 import com.m3u.data.repository.PlaylistRepository
 import com.m3u.i18n.R.string
@@ -49,12 +52,13 @@ class PlaylistRepositoryImpl @Inject constructor(
     private val streamDao: StreamDao,
     private val logger: Logger,
     private val client: OkHttpClient,
-    private val parser: M3UParser,
+    private val m3UParser: M3UParser,
+    private val xtreamParser: XtreamParser,
     @ApplicationContext private val context: Context,
-    @Dispatcher(IO) private val ioDispatcher: CoroutineDispatcher
+    @Dispatcher(IO) private val ioDispatcher: CoroutineDispatcher,
 ) : PlaylistRepository {
 
-    override fun subscribe(
+    override fun subscribeM3U(
         title: String,
         url: String,
         strategy: Int
@@ -92,6 +96,34 @@ class PlaylistRepositoryImpl @Inject constructor(
         }
     }
         .flowOn(ioDispatcher)
+
+    override suspend fun subscribeXtream(
+        title: String,
+        address: String,
+        username: String,
+        password: String
+    ) {
+        val input = XtreamInput(address, username, password)
+        val output = xtreamParser.execute(input)
+        val all = output.all
+        val allowedOutputFormats = output.allowedOutputFormats
+        val playlist = Playlist(
+            title = title,
+            url = "$address/api.php?username=$username&password=$password",
+            source = DataSource.Xtream
+        )
+        playlistDao.insert(playlist)
+        val streams = all.map {
+            Stream(
+                url = "$address/$username/$password/${it.streamId}.${allowedOutputFormats.first()}",
+                group = "",
+                title = it.name.orEmpty(),
+                cover = it.streamIcon,
+                playlistUrl = playlist.url
+            )
+        }
+        streamDao.insertAll(*streams.toTypedArray())
+    }
 
     override suspend fun backupOrThrow(uri: Uri): Unit = withContext(ioDispatcher) {
         val json = Json {
@@ -242,7 +274,7 @@ class PlaylistRepositoryImpl @Inject constructor(
         playlistUrl: String,
         input: InputStream
     ): List<Stream> = logger.execute {
-        parser.execute(input).map { it.toStream(playlistUrl, 0L) }
+        m3UParser.execute(input).map { it.toStream(playlistUrl, 0L) }
     } ?: emptyList()
 
     override suspend fun rename(url: String, target: String) = logger.sandBox {

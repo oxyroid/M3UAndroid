@@ -39,7 +39,7 @@ class SubscriptionWorker @AssistedInject constructor(
         } else {
             try {
                 playlistRepository
-                    .subscribe(title, url, strategy)
+                    .subscribeM3U(title, url, strategy)
                     .launchIn(this)
                 Result.success()
             } catch (e: Exception) {
