@@ -45,7 +45,7 @@ From PRs:
 - [x] Android TV adaptation.
 - [ ] Android Desktop, Car adaptation.
 - [ ] EPG support.
-- [ ] Xtream support.
+- [x] Xtream support.
 - [x] DLNA screencast.
 - [ ] AirPlay screencast.
 - [ ] Steam segment recording.
