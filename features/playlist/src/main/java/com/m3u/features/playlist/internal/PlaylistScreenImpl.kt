@@ -48,7 +48,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleStartEffect
 import com.m3u.core.wrapper.Event
 import com.m3u.data.database.model.Stream
-import com.m3u.features.playlist.Channel
+import com.m3u.features.playlist.Group
 import com.m3u.features.playlist.components.DialogStatus
 import com.m3u.features.playlist.components.PlaylistDialog
 import com.m3u.features.playlist.components.PlaylistTabRow
@@ -76,7 +76,7 @@ import kotlinx.coroutines.launch
 @Composable
 @InternalComposeApi
 internal fun PlaylistScreenImpl(
-    channels: ImmutableList<Channel>,
+    groups: ImmutableList<Group>,
     zapping: Stream?,
     query: String,
     onQuery: (String) -> Unit,
@@ -133,9 +133,9 @@ internal fun PlaylistScreenImpl(
         onStopOrDispose { }
     }
 
-    var currentPage by remember(channels.size) {
+    var currentPage by remember(groups.size) {
         mutableIntStateOf(
-            if (channels.isEmpty()) -1
+            if (groups.isEmpty()) -1
             else 0
         )
     }
@@ -200,7 +200,7 @@ internal fun PlaylistScreenImpl(
                 }
                 Column {
                     PlaylistTabRow(
-                        channels = channels,
+                        groups = groups,
                         page = currentPage,
                         onPageChanged = { currentPage = it }
                     )
@@ -208,9 +208,9 @@ internal fun PlaylistScreenImpl(
                         StreamGallery(
                             state = state,
                             rowCount = actualRowCount,
-                            streams = channels[currentPage].streams,
+                            streams = groups[currentPage].streams,
                             zapping = zapping,
-                            sort = sort,
+                            recently = sort == Sort.RECENTLY,
                             play = { url ->
                                 helper.play(url)
                                 navigateToStream()

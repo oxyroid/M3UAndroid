@@ -19,13 +19,13 @@ import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.data.database.model.Stream
-import com.m3u.features.playlist.Channel
+import com.m3u.features.playlist.Group
 import com.m3u.material.model.LocalSpacing
 import kotlinx.collections.immutable.ImmutableList
 
 @Composable
 internal fun TvStreamGallery(
-    channels: ImmutableList<Channel>,
+    groups: ImmutableList<Group>,
     maxBrowserHeight: Dp,
     useGridLayout: Boolean,
     onClick: (Stream) -> Unit,
@@ -34,7 +34,7 @@ internal fun TvStreamGallery(
     modifier: Modifier = Modifier,
 ) {
     val spacing = LocalSpacing.current
-    val multiCatalogs = channels.size > 1
+    val multiCatalogs = groups.size > 1
 
     if (!useGridLayout) {
         TvLazyColumn(
@@ -45,7 +45,7 @@ internal fun TvStreamGallery(
                 .fillMaxWidth()
                 .then(modifier)
         ) {
-            items(channels) { channel ->
+            items(groups) { channel ->
                 if (multiCatalogs) {
                     Text(
                         text = channel.title,
@@ -94,7 +94,7 @@ internal fun TvStreamGallery(
                 .heightIn(max = maxBrowserHeight)
                 .fillMaxWidth()
         ) {
-            channels.forEach { channel ->
+            groups.forEach { channel ->
                 items(channel.streams) { stream ->
                     TvStreamItem(
                         stream = stream,

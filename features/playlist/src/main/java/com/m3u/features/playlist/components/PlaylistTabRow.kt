@@ -16,7 +16,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import com.m3u.features.playlist.Channel
+import com.m3u.features.playlist.Group
 import com.m3u.material.components.IconButton
 import kotlinx.collections.immutable.ImmutableList
 
@@ -24,11 +24,11 @@ import kotlinx.collections.immutable.ImmutableList
 internal fun PlaylistTabRow(
     page: Int,
     onPageChanged: (Int) -> Unit,
-    channels: ImmutableList<Channel>,
+    groups: ImmutableList<Group>,
     modifier: Modifier = Modifier
 ) {
     Box(modifier) {
-        if (channels.size > 1) {
+        if (groups.size > 1) {
             Column {
                 val state = rememberLazyListState()
                 LazyRow(
@@ -42,7 +42,7 @@ internal fun PlaylistTabRow(
                             onClick = { /*TODO*/ }
                         )
                     }
-                    itemsIndexed(channels) { index, channel ->
+                    itemsIndexed(groups) { index, channel ->
                         val selected = page == index
                         Tab(
                             selected = selected,

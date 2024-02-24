@@ -16,7 +16,7 @@ import com.m3u.data.television.nsd.internal.NsdDeviceManagerImpl
 import com.m3u.data.service.internal.MessagerImpl
 import com.m3u.data.service.internal.PlayerManagerImpl
 import com.m3u.data.service.internal.TraceFileProviderImpl
-import com.m3u.data.repository.logger.CommonLogger
+import com.m3u.data.repository.logger.StubLogger
 import com.m3u.data.repository.logger.MessageLogger
 import com.m3u.data.service.internal.RemoteDirectionServiceImpl
 import dagger.Binds
@@ -44,7 +44,7 @@ internal interface BindServicesModule {
 
     @Binds
     @Singleton
-    fun bindCommonLogger(logger: CommonLogger): Logger
+    fun bindCommonLogger(logger: StubLogger): Logger
 
     @Binds
     @Singleton

@@ -36,7 +36,7 @@ data class Stream(
     @ColumnInfo(name = "hidden", defaultValue = "0")
     val hidden: Boolean = false,
     @ColumnInfo(name = "seen", defaultValue = "0")
-    val seen: Long = 0L,
+    val seen: Long = 0L
 ) : Likable<Stream> {
     override infix fun like(another: Stream): Boolean =
         this.url == another.url && this.playlistUrl == another.playlistUrl && this.cover == another.cover

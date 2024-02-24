@@ -1,6 +1,5 @@
 package com.m3u.ui
 
-import android.view.ViewGroup
 import androidx.annotation.OptIn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
@@ -50,30 +49,27 @@ fun Player(
     val clipMode = state.clipMode
 
     AndroidView(
+        modifier = modifier,
         factory = { context ->
             PlayerView(context).apply {
                 useController = false
-                layoutParams = ViewGroup.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.MATCH_PARENT
-                )
-                setShutterBackgroundColor(0x000000)
+            }
+        },
+        update = { view ->
+            view.apply {
+                this.player = player
+                setKeepScreenOn(keepScreenOn)
+                resizeMode = when (clipMode) {
+                    ClipMode.ADAPTIVE -> AspectRatioFrameLayout.RESIZE_MODE_FIT
+                    ClipMode.CLIP -> AspectRatioFrameLayout.RESIZE_MODE_ZOOM
+                    ClipMode.STRETCHED -> AspectRatioFrameLayout.RESIZE_MODE_FILL
+                    else -> AspectRatioFrameLayout.RESIZE_MODE_FIT
+                }
             }
         },
         onRelease = {
             it.player = null
-        },
-        modifier = modifier
-    ) { view ->
-        view.apply {
-            this.player = player
-            setKeepScreenOn(keepScreenOn)
-            resizeMode = when (clipMode) {
-                ClipMode.ADAPTIVE -> AspectRatioFrameLayout.RESIZE_MODE_FIT
-                ClipMode.CLIP -> AspectRatioFrameLayout.RESIZE_MODE_ZOOM
-                ClipMode.STRETCHED -> AspectRatioFrameLayout.RESIZE_MODE_FILL
-                else -> AspectRatioFrameLayout.RESIZE_MODE_FIT
-            }
+            it.keepScreenOn = false
         }
-    }
+    )
 }

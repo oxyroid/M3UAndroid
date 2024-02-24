@@ -10,7 +10,7 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -48,11 +48,11 @@ internal fun PlayerMask(
                 modifier = Modifier
                     .then(
                         Modifier.padding(
-                            top = if (tv) spacing.medium else spacing.none,
-                            bottom = if (!tv) spacing.medium else spacing.none
+                            top = if (tv) spacing.medium else spacing.small,
+                            bottom = if (!tv) spacing.medium else spacing.small
                         )
                     )
-                    .padding(WindowInsets.systemBars.asPaddingValues())
+                    .padding(WindowInsets.statusBars.asPaddingValues())
             ) {
                 Row(
                     modifier = Modifier

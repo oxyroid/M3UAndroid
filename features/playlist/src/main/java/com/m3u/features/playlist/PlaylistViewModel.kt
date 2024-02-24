@@ -4,7 +4,6 @@ import android.content.ComponentName
 import android.content.ContentResolver
 import android.content.Context
 import android.content.Intent
-import android.util.Log
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.graphics.drawable.IconCompat
@@ -25,6 +24,7 @@ import com.m3u.core.architecture.viewmodel.BaseViewModel
 import com.m3u.core.wrapper.Message
 import com.m3u.core.wrapper.Resource
 import com.m3u.core.wrapper.eventOf
+import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.Stream
 import com.m3u.data.repository.MediaRepository
@@ -38,6 +38,7 @@ import com.m3u.features.playlist.navigation.PlaylistNavigation
 import com.m3u.ui.Sort
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.ImmutableMap
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.CoroutineDispatcher
@@ -47,6 +48,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
@@ -72,8 +74,8 @@ class PlaylistViewModel @Inject constructor(
 ) : BaseViewModel<PlaylistState, PlaylistEvent>(
     emptyState = PlaylistState()
 ) {
-    internal val playlistUrl: StateFlow<String> =
-        savedStateHandle.getStateFlow(PlaylistNavigation.TYPE_URL, "")
+    internal val playlistUrl: StateFlow<String> = savedStateHandle
+        .getStateFlow(PlaylistNavigation.TYPE_URL, "")
 
     override fun onEvent(event: PlaylistEvent) {
         when (event) {
@@ -88,16 +90,8 @@ class PlaylistViewModel @Inject constructor(
         }
     }
 
-    private val zappingMode: StateFlow<Boolean> = pref
-        .observeAsFlow { it.zappingMode }
-        .stateIn(
-            scope = viewModelScope,
-            initialValue = Pref.DEFAULT_ZAPPING_MODE,
-            started = SharingStarted.WhileSubscribed(5_000)
-        )
-
     internal val zapping: StateFlow<Stream?> = combine(
-        zappingMode,
+        pref.observeAsFlow { it.zappingMode },
         playerManager.url,
         streamRepository.observeAll()
     ) { zappingMode, url, streams ->
@@ -122,9 +116,9 @@ class PlaylistViewModel @Inject constructor(
         }
         .flowOn(ioDispatcher)
         .onEach { refreshing ->
-            Log.e("TAG", "r: $refreshing", )
-            val message = if (refreshing) PlaylistMessage.Refreshing else Message.Dynamic.EMPTY
-            messager.emit(message)
+            messager.emit(
+                if (refreshing) PlaylistMessage.Refreshing else Message.Dynamic.EMPTY
+            )
         }
         .stateIn(
             scope = viewModelScope,
@@ -249,12 +243,12 @@ class PlaylistViewModel @Inject constructor(
         _query.update { text }
     }
 
-    private fun List<Stream>.toChannels(): List<Channel> = groupBy { it.group }
+    private fun List<Stream>.toChannels(): List<Group> = groupBy { it.group }
         .toList()
-        .map { Channel(it.first, it.second.toPersistentList()) }
+        .map { Group(it.first, it.second.toPersistentList()) }
 
-    private fun List<Stream>.toSingleChannel(): List<Channel> = listOf(
-        Channel("", toPersistentList())
+    private fun List<Stream>.toSingleChannel(): List<Group> = listOf(
+        Group("", toPersistentList())
     )
 
     internal val playlist: StateFlow<Playlist?> = playlistUrl.map { url ->
@@ -296,7 +290,7 @@ class PlaylistViewModel @Inject constructor(
         sortIndex.update { sorts.indexOf(sort).coerceAtLeast(0) }
     }
 
-    internal val channels: StateFlow<ImmutableList<Channel>> = combine(
+    internal val channels: StateFlow<ImmutableList<Group>> = combine(
         unsorted,
         sort
     ) { all, sort ->
@@ -310,7 +304,6 @@ class PlaylistViewModel @Inject constructor(
             ).toSingleChannel()
 
             Sort.RECENTLY -> all.sortedByDescending { it.seen }.toSingleChannel()
-
             Sort.UNSPECIFIED -> all.toChannels()
         }
             .toPersistentList()

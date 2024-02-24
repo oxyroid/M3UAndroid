@@ -116,7 +116,7 @@ internal fun PlaylistRoute(
             onQuery = { viewModel.onEvent(PlaylistEvent.Query(it)) },
             rowCount = pref.rowCount,
             zapping = zapping,
-            channels = channels,
+            groups = channels,
             scrollUp = state.scrollUp,
             sorts = sorts,
             sort = sort,
@@ -159,7 +159,7 @@ private fun PlaylistScreen(
     onQuery: (String) -> Unit,
     rowCount: Int,
     zapping: Stream?,
-    channels: ImmutableList<Channel>,
+    groups: ImmutableList<Group>,
     sorts: ImmutableList<Sort>,
     sort: Sort,
     onSort: (Sort) -> Unit,
@@ -203,7 +203,7 @@ private fun PlaylistScreen(
     val tv = isTelevision()
     if (!tv) {
         PlaylistScreenImpl(
-            channels = channels,
+            groups = groups,
             zapping = zapping,
             query = query,
             onQuery = onQuery,
@@ -225,7 +225,7 @@ private fun PlaylistScreen(
     } else {
         TvPlaylistScreenImpl(
             title = title,
-            channels = channels,
+            groups = groups,
             query = query,
             onQuery = onQuery,
             navigateToStream = navigateToStream,

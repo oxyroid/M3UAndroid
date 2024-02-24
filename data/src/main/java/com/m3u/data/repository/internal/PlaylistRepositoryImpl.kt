@@ -12,6 +12,7 @@ import com.m3u.core.architecture.dispatcher.Dispatcher
 import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.execute
+import com.m3u.core.architecture.logger.prefix
 import com.m3u.core.architecture.logger.sandBox
 import com.m3u.core.architecture.pref.Pref
 import com.m3u.core.architecture.pref.annotation.PlaylistStrategy
@@ -36,6 +37,8 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -50,7 +53,7 @@ import javax.inject.Inject
 class PlaylistRepositoryImpl @Inject constructor(
     private val playlistDao: PlaylistDao,
     private val streamDao: StreamDao,
-    private val logger: Logger,
+    logger: Logger,
     private val client: OkHttpClient,
     private val m3uParser: M3UParser,
     private val xtreamParser: XtreamParser,
@@ -59,27 +62,55 @@ class PlaylistRepositoryImpl @Inject constructor(
     @ApplicationContext private val context: Context,
     @Dispatcher(IO) private val ioDispatcher: CoroutineDispatcher,
 ) : PlaylistRepository {
+    private val logger = logger.prefix("playlist-repos")
 
-    override suspend fun m3u(title: String, url: String) = withContext(ioDispatcher) {
-        try {
-            val actualUrl = checkNotNull(url.actualUrl()) { "wrong url" }
-            val streams = when {
-                url.isSupportedNetworkUrl -> acquireNetwork(actualUrl)
-                url.isSupportedAndroidUrl -> acquireAndroid(actualUrl)
-                else -> error("unsupported url")
+    override suspend fun m3u(title: String, url: String) {
+        suspend fun parse(
+            playlistUrl: String,
+            input: InputStream
+        ): List<Stream> = logger.execute {
+            m3uParser.execute(input).map { it.toStream(playlistUrl, 0L) }
+        } ?: emptyList()
+
+        suspend fun acquireNetwork(url: String): List<Stream> {
+            val request = Request.Builder()
+                .url(url)
+                .build()
+            val response = withContext(ioDispatcher) {
+                client.newCall(request).execute()
             }
+            if (!response.isSuccessful) return emptyList()
+            val input = response.body?.byteStream()
+            return input?.use { parse(url, it) } ?: emptyList()
+        }
 
-            val playlist = Playlist(title, actualUrl)
-            playlistDao.insert(playlist)
+        suspend fun acquireAndroid(url: String): List<Stream> {
+            val uri = Uri.parse(url)
+            val input = context.contentResolver.openInputStream(uri)
+            return input?.use { parse(url, it) } ?: emptyList()
+        }
 
-            compareAndUpdateDB(
-                previous = streamDao.getByPlaylistUrl(url),
-                streams = streams
-            )
-        } catch (e: FileNotFoundException) {
-            error(context.getString(string.data_error_file_not_found))
-        } catch (e: Exception) {
-            logger.log(e)
+        withContext(ioDispatcher) {
+            try {
+                val actualUrl = checkNotNull(url.actualUrl()) { "wrong url" }
+                val streams = when {
+                    url.isSupportedNetworkUrl() -> acquireNetwork(actualUrl)
+                    url.isSupportedAndroidUrl() -> acquireAndroid(actualUrl)
+                    else -> error("unsupported url")
+                }
+
+                val playlist = Playlist(title, actualUrl)
+                playlistDao.insert(playlist)
+
+                compareAndUpdate(
+                    expect = streamDao.getByPlaylistUrl(url),
+                    update = streams
+                )
+            } catch (e: FileNotFoundException) {
+                error(context.getString(string.data_error_file_not_found))
+            } catch (e: Exception) {
+                logger.log(e)
+            }
         }
     }
 
@@ -90,19 +121,56 @@ class PlaylistRepositoryImpl @Inject constructor(
         password: String
     ) = withContext(ioDispatcher) {
         val input = XtreamInput(address, username, password)
-        val (all, _, _, allowedOutputFormats) = xtreamParser.execute(input)
+        val (
+            lives,
+            vods,
+            series,
+            liveCategories,
+            vodCategories,
+            serialCategories,
+            allowedOutputFormats
+        ) = xtreamParser.execute(input)
         val playlist = Playlist(
             title = title,
             url = XtreamInput.encodeToUrl(input),
             source = DataSource.Xtream
         )
         playlistDao.insert(playlist)
-        val streams = all.map {
-            it.toStream(address, username, password, allowedOutputFormats, playlist.url)
+        val liveStreams = lives.map { current ->
+            current.toStream(
+                address = address,
+                username = username,
+                password = password,
+                allowedOutputFormats = allowedOutputFormats,
+                playlistUrl = playlist.url,
+                category = liveCategories.find { it.categoryId == current.categoryId }?.categoryName.orEmpty()
+            )
         }
-        compareAndUpdateDB(
+
+//        val vodStreams = vods.map { current ->
+//            current.toStream(
+//                address = address,
+//                username = username,
+//                password = password,
+//                playlistUrl = playlist.url,
+//                category = vodCategories.find { it.categoryId == current.categoryId }?.categoryName.orEmpty()
+//            )
+//        }
+
+//        val serialStreams = series.map { current ->
+//            current.toStream(
+//                address = address,
+//                username = username,
+//                password = password,
+//                playlistUrl = playlist.url,
+//                category = serialCategories.find { it.categoryId == current.categoryId }?.categoryName.orEmpty(),
+//                containerExtension = allowedOutputFormats.first()
+//            )
+//        }
+        compareAndUpdate(
             streamDao.getByPlaylistUrl(playlist.url),
-            streams
+            liveStreams
+//                    + vodStreams + serialStreams
         )
     }
 
@@ -154,7 +222,6 @@ class PlaylistRepositoryImpl @Inject constructor(
             else -> throw RuntimeException("Refresh data source ${playlist.source} is unsupported currently.")
         }
     }
-
 
     override suspend fun backupOrThrow(uri: Uri): Unit = withContext(ioDispatcher) {
         val json = Json {
@@ -221,22 +288,24 @@ class PlaylistRepositoryImpl @Inject constructor(
         }
     }
 
-    private suspend inline fun compareAndUpdateDB(
-        previous: List<Stream>,
-        streams: List<Stream>
-    ) {
+    private val mutex = Mutex()
+
+    private suspend inline fun compareAndUpdate(
+        expect: List<Stream>,
+        update: List<Stream>
+    ) = mutex.withLock {
         val strategy = pref.playlistStrategy
         val skippedUrls = mutableListOf<String>()
         val grouped by lazy {
-            previous.groupBy { it.favourite }.withDefault { emptyList() }
+            expect.groupBy { it.favourite }.withDefault { emptyList() }
         }
         val invalidate = when (strategy) {
-            PlaylistStrategy.ALL -> previous
+            PlaylistStrategy.ALL -> expect
             PlaylistStrategy.SKIP_FAVORITE -> grouped.getValue(false)
             else -> emptyList()
         }
         invalidate.forEach { stream ->
-            if (stream belong streams) {
+            if (stream belong update) {
                 skippedUrls += stream.url
             } else {
                 streamDao.deleteByUrl(stream.url)
@@ -250,27 +319,9 @@ class PlaylistRepositoryImpl @Inject constructor(
 
             else -> emptyList()
         }
-        val needToBeInsertedStreams = streams.filterNot { it.url in existedUrls }
+        val needToBeInsertedStreams = update.filterNot { it.url in existedUrls }
 
         streamDao.insertAll(*needToBeInsertedStreams.toTypedArray())
-    }
-
-    private suspend fun acquireNetwork(url: String): List<Stream> {
-        val request = Request.Builder()
-            .url(url)
-            .build()
-        val response = withContext(ioDispatcher) {
-            client.newCall(request).execute()
-        }
-        if (!response.isSuccessful) return emptyList()
-        val input = response.body?.byteStream()
-        return input?.use { parse(url, it) } ?: emptyList()
-    }
-
-    private suspend fun acquireAndroid(url: String): List<Stream> {
-        val uri = Uri.parse(url)
-        val input = context.contentResolver.openInputStream(uri)
-        return input?.use { parse(url, it) } ?: emptyList()
     }
 
     override fun observeAll(): Flow<List<Playlist>> = playlistDao
@@ -301,49 +352,8 @@ class PlaylistRepositoryImpl @Inject constructor(
         }
     }
 
-    private suspend fun parse(
-        playlistUrl: String,
-        input: InputStream
-    ): List<Stream> = logger.execute {
-        m3uParser.execute(input).map { it.toStream(playlistUrl, 0L) }
-    } ?: emptyList()
-
     override suspend fun rename(url: String, target: String) = logger.sandBox {
         playlistDao.rename(url, target)
-    }
-
-    private val String.isSupportedNetworkUrl: Boolean
-        get() = this.startsWithAny(
-            "http://",
-            "https://",
-            ignoreCase = true
-        )
-    private val String.isSupportedAndroidUrl: Boolean
-        get() = this.startsWithAny(
-            ContentResolver.SCHEME_FILE,
-            ContentResolver.SCHEME_CONTENT,
-            ignoreCase = true
-        )
-
-    private suspend fun String.actualUrl(): String? {
-        return if (isSupportedNetworkUrl) this
-        else if (isSupportedAndroidUrl) {
-            val uri = Uri.parse(this) ?: return null
-            if (uri.scheme == ContentResolver.SCHEME_FILE) {
-                return uri.toString()
-            }
-            withContext(ioDispatcher) {
-                val resolver = context.contentResolver
-                val filename = uri.readFileName(resolver) ?: filenameWithTimezone
-                val content = uri.readFileContent(resolver).orEmpty()
-                val file = File(context.filesDir, filename)
-                file.writeText(content)
-
-                val newUrl = Uri.decode(file.toUri().toString())
-                playlistDao.updateUrl(this@actualUrl, newUrl)
-                newUrl
-            }
-        } else null
     }
 
     private val filenameWithTimezone: String get() = "File_${System.currentTimeMillis()}"
@@ -351,4 +361,40 @@ class PlaylistRepositoryImpl @Inject constructor(
     // Modified with `inline`
     private inline fun Reader.forEachLine(action: (String) -> Unit): Unit =
         useLines { it.forEach(action) }
+
+    private fun String.isSupportedNetworkUrl(): Boolean = startsWithAny(
+        "http://",
+        "https://",
+        ignoreCase = true
+    )
+
+    private fun String.isSupportedAndroidUrl(): Boolean = startsWithAny(
+        ContentResolver.SCHEME_FILE,
+        ContentResolver.SCHEME_CONTENT,
+        ignoreCase = true
+    )
+
+    private suspend fun String.actualUrl(): String? {
+        return when {
+            isSupportedNetworkUrl() -> this
+            isSupportedAndroidUrl() -> {
+                val uri = Uri.parse(this) ?: return null
+                if (uri.scheme == ContentResolver.SCHEME_FILE) {
+                    return uri.toString()
+                }
+                withContext(ioDispatcher) {
+                    val resolver = context.contentResolver
+                    val filename = uri.readFileName(resolver) ?: filenameWithTimezone
+                    val content = uri.readFileContent(resolver).orEmpty()
+                    val file = File(context.filesDir, filename)
+                    file.writeText(content)
+
+                    val newUrl = Uri.decode(file.toUri().toString())
+                    playlistDao.updateUrl(this@actualUrl, newUrl)
+                    newUrl
+                }
+            }
+            else -> null
+        }
+    }
 }

@@ -68,6 +68,7 @@ import com.m3u.material.components.mask.MaskButton
 import com.m3u.material.components.mask.MaskCircleButton
 import com.m3u.material.components.mask.MaskState
 import com.m3u.material.ktx.isTelevision
+import com.m3u.material.ktx.thenIf
 import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.Player
 import com.m3u.ui.helper.LocalHelper
@@ -169,12 +170,11 @@ internal fun StreamFragment(
 
             Player(
                 state = state,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .align(Alignment.Center)
+                modifier = Modifier.fillMaxSize()
             )
 
-            val shouldShowPlaceholder = cover.isNotEmpty() && playerState.videoSize.isEmpty
+            val shouldShowPlaceholder =
+                !pref.noPictureMode && cover.isNotEmpty() && playerState.videoSize.isEmpty
 
             CoverPlaceholder(
                 visible = shouldShowPlaceholder,
@@ -409,38 +409,36 @@ internal fun StreamFragment(
                             }
                         }
                     },
-                    modifier = Modifier
-                        .then(
-                            if (tv) Modifier
-                            else Modifier.detectVerticalMaskGestures(
-                                safe = 0.35f,
-                                threshold = 0.15f,
-                                volume = { deltaPixel ->
-                                    if (!pref.volumeGesture) return@detectVerticalMaskGestures
-                                    onVolume(
-                                        (currentVolume - (deltaPixel / maxHeight.value)).coerceIn(0f..1f)
+                    modifier = Modifier.thenIf(!tv) {
+                        Modifier.detectVerticalMaskGestures(
+                            safe = 0.35f,
+                            threshold = 0.15f,
+                            volume = { deltaPixel ->
+                                if (!pref.volumeGesture) return@detectVerticalMaskGestures
+                                onVolume(
+                                    (currentVolume - (deltaPixel / maxHeight.value)).coerceIn(0f..1f)
+                                )
+                            },
+                            brightness = { deltaPixel ->
+                                if (!pref.brightnessGesture) return@detectVerticalMaskGestures
+                                onBrightness(
+                                    (currentBrightness - deltaPixel / maxHeight.value).coerceIn(
+                                        0f..1f
                                     )
-                                },
-                                brightness = { deltaPixel ->
-                                    if (!pref.brightnessGesture) return@detectVerticalMaskGestures
-                                    onBrightness(
-                                        (currentBrightness - deltaPixel / maxHeight.value).coerceIn(
-                                            0f..1f
-                                        )
-                                    )
-                                },
-                                onDragStart = {
-                                    if (!pref.volumeGesture && !pref.brightnessGesture) return@detectVerticalMaskGestures
-                                    maskState.lock()
-                                    gesture = it
-                                },
-                                onDragEnd = {
-                                    if (!pref.volumeGesture && !pref.brightnessGesture) return@detectVerticalMaskGestures
-                                    maskState.unlock(400.milliseconds)
-                                    gesture = null
-                                }
-                            )
+                                )
+                            },
+                            onDragStart = {
+                                if (!pref.volumeGesture && !pref.brightnessGesture) return@detectVerticalMaskGestures
+                                maskState.lock()
+                                gesture = it
+                            },
+                            onDragEnd = {
+                                if (!pref.volumeGesture && !pref.brightnessGesture) return@detectVerticalMaskGestures
+                                maskState.unlock(400.milliseconds)
+                                gesture = null
+                            }
                         )
+                    }
                 )
             }
 

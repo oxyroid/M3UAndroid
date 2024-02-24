@@ -37,7 +37,7 @@ import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.data.database.model.Stream
-import com.m3u.features.playlist.Channel
+import com.m3u.features.playlist.Group
 import com.m3u.features.playlist.components.ImmersiveBackground
 import com.m3u.features.playlist.components.TvStreamGallery
 import com.m3u.i18n.R
@@ -58,7 +58,7 @@ import kotlinx.collections.immutable.ImmutableList
 @InternalComposeApi
 internal fun TvPlaylistScreenImpl(
     title: String,
-    channels: ImmutableList<Channel>,
+    groups: ImmutableList<Group>,
     query: String,
     onQuery: (String) -> Unit,
     sorts: ImmutableList<Sort>,
@@ -75,7 +75,7 @@ internal fun TvPlaylistScreenImpl(
     val helper = LocalHelper.current
     val pref = LocalPref.current
 
-    val multiCatalogs = channels.size > 1
+    val multiCatalogs = groups.size > 1
     val noPictureMode = pref.noPictureMode
     val darkMode = if (pref.followSystemTheme) isSystemInDarkTheme()
     else pref.darkMode
@@ -116,7 +116,7 @@ internal fun TvPlaylistScreenImpl(
             },
             list = {
                 TvStreamGallery(
-                    channels = channels,
+                    groups = groups,
                     maxBrowserHeight = maxBrowserHeight,
                     useGridLayout = useGridLayout,
                     onClick = { stream ->

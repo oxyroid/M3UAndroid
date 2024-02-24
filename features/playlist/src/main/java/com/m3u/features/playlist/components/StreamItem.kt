@@ -15,7 +15,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material3.CardDefaults
-import com.m3u.material.components.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
@@ -35,10 +34,12 @@ import androidx.compose.ui.unit.dp
 import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.data.database.model.Stream
 import com.m3u.i18n.R.string
+import com.m3u.material.components.Icon
 import com.m3u.material.components.Image
 import com.m3u.material.components.TextBadge
 import com.m3u.material.model.LocalSpacing
-import com.m3u.ui.Sort
+import com.m3u.ui.UiMode
+import com.m3u.ui.currentUiMode
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import java.net.URI
@@ -50,54 +51,53 @@ import kotlin.time.Duration.Companion.seconds
 @Composable
 internal fun StreamItem(
     stream: Stream,
-    noPictureMode: Boolean,
+    recently: Boolean,
+    zapping: Boolean,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    zapping: Boolean = false,
-    sort: Sort
+    modifier: Modifier = Modifier
 ) {
-    val pref = LocalPref.current
-    val compact = pref.compact
+    when (currentUiMode()) {
+        UiMode.DEFAULT -> {
+            StreamItemImpl(
+                stream = stream,
+                recently = recently,
+                zapping = zapping,
+                onClick = onClick,
+                onLongClick = onLongClick,
+                modifier = modifier
+            )
+        }
 
-    if (!compact) {
-        StreamItemImpl(
-            stream = stream,
-            noPictureMode = noPictureMode,
-            onClick = onClick,
-            onLongClick = onLongClick,
-            modifier = modifier,
-            zapping = zapping,
-            sort = sort
-        )
-    } else {
-        CompactStreamItem(
-            stream = stream,
-            noPictureMode = noPictureMode,
-            onClick = onClick,
-            onLongClick = onLongClick,
-            modifier = modifier,
-            zapping = zapping,
-            sort = sort
-        )
+        UiMode.COMPAT -> {
+            CompactStreamItem(
+                stream = stream,
+                recently = recently,
+                zapping = zapping,
+                onClick = onClick,
+                onLongClick = onLongClick,
+                modifier = modifier
+            )
+        }
+
+        else -> {}
     }
 }
 
 @Composable
 private fun StreamItemImpl(
     stream: Stream,
-    noPictureMode: Boolean,
+    recently: Boolean,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
     modifier: Modifier = Modifier,
     zapping: Boolean = false,
-    sort: Sort
 ) {
     val context = LocalContext.current
     val spacing = LocalSpacing.current
+    val pref = LocalPref.current
 
     val favourite = stream.favourite
-    val recently = sort == Sort.RECENTLY
 
     val recentlyString = stringResource(string.ui_sort_recently)
     val neverPlayedString = stringResource(string.ui_sort_never_played)
@@ -123,7 +123,7 @@ private fun StreamItemImpl(
                 .then(modifier)
         ) {
             AnimatedVisibility(
-                visible = !noPictureMode && !stream.cover.isNullOrEmpty()
+                visible = !pref.noPictureMode && !stream.cover.isNullOrEmpty()
             ) {
                 Image(
                     model = stream.cover,
@@ -152,7 +152,6 @@ private fun StreamItemImpl(
                         Text(
                             text = stream.title.trim(),
                             style = MaterialTheme.typography.titleSmall,
-                            fontSize = MaterialTheme.typography.titleSmall.fontSize,
                             overflow = TextOverflow.Ellipsis,
                             maxLines = 1,
                             fontWeight = FontWeight.Bold,
@@ -214,16 +213,15 @@ private fun StreamItemImpl(
 @Composable
 private fun CompactStreamItem(
     stream: Stream,
-    noPictureMode: Boolean,
+    recently: Boolean,
+    zapping: Boolean,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
     modifier: Modifier = Modifier,
-    zapping: Boolean = false,
-    sort: Sort
 ) {
     val spacing = LocalSpacing.current
     val favourite = stream.favourite
-    val recently = sort == Sort.RECENTLY
+    val pref = LocalPref.current
 
     val recentlyString = stringResource(string.ui_sort_recently)
     val neverPlayedString = stringResource(string.ui_sort_never_played)
@@ -258,7 +256,7 @@ private fun CompactStreamItem(
                 )
             },
             leadingContent = {
-                AnimatedVisibility(!noPictureMode && !stream.cover.isNullOrEmpty()) {
+                AnimatedVisibility(!pref.noPictureMode && !stream.cover.isNullOrEmpty()) {
                     Image(
                         model = stream.cover,
                         errorPlaceholder = stream.title,

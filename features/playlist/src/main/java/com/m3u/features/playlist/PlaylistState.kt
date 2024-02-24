@@ -7,10 +7,8 @@ import com.m3u.data.database.model.Stream
 import kotlinx.collections.immutable.ImmutableList
 
 @Immutable
-data class Channel(
+data class Group(
     val title: String,
-    // keep immutable
-    // @see PlaylistPager for reason
     val streams: ImmutableList<Stream>
 )
 

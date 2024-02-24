@@ -131,7 +131,6 @@ private fun FavoriteItemImpl(
                         Text(
                             text = stream.title.trim(),
                             style = MaterialTheme.typography.titleSmall,
-                            fontSize = MaterialTheme.typography.titleSmall.fontSize,
                             overflow = TextOverflow.Ellipsis,
                             maxLines = 1,
                             fontWeight = FontWeight.Bold,

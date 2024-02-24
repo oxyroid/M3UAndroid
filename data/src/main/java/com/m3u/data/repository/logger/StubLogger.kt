@@ -7,15 +7,7 @@ import com.m3u.core.wrapper.Message
 import javax.inject.Inject
 import kotlin.time.Duration
 
-/**
- * This is a wrapper of android logcat.
- * Its tag is always be "Logger".
- * You can only output info and error level logs.
- * And it only be effective when package is debug mode.
- *
- * This is the default Logger implement.
- */
-class CommonLogger @Inject constructor(
+class StubLogger @Inject constructor(
     private val publisher: Publisher
 ) : Logger {
     override fun log(

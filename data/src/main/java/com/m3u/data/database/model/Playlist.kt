@@ -81,8 +81,7 @@ enum class DataSource(
             else -> throw UnsupportedOperationException()
         }
 
-        fun ofOrNull(value: String): DataSource? =
-            runCatching { of(value) }.getOrNull()
+        fun ofOrNull(value: String): DataSource? = runCatching { of(value) }.getOrNull()
     }
 }
 
