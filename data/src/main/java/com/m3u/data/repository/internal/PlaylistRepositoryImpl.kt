@@ -35,7 +35,7 @@ import com.m3u.i18n.R.string
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -90,10 +90,10 @@ class PlaylistRepositoryImpl @Inject constructor(
         password: String
     ) = withContext(ioDispatcher) {
         val input = XtreamInput(address, username, password)
-        val (all, allowedOutputFormats) = xtreamParser.execute(input)
+        val (all, _, _, allowedOutputFormats) = xtreamParser.execute(input)
         val playlist = Playlist(
             title = title,
-            url = XtreamParser.encodeXtreamInput(input),
+            url = XtreamInput.encodeToUrl(input),
             source = DataSource.Xtream
         )
         playlistDao.insert(playlist)
@@ -129,7 +129,7 @@ class PlaylistRepositoryImpl @Inject constructor(
             }
 
             DataSource.Xtream -> {
-                val input = XtreamParser.decodeXtreamInput(playlist.url)
+                val input = XtreamInput.decodeFromUrl(playlist.url)
                 workManager.cancelAllWorkByTag(url)
                 workManager.cancelAllWorkByTag(input.address)
                 val request = OneTimeWorkRequestBuilder<SubscriptionWorker>()
@@ -273,17 +273,17 @@ class PlaylistRepositoryImpl @Inject constructor(
         return input?.use { parse(url, it) } ?: emptyList()
     }
 
-    override fun observeAll(): Flow<List<Playlist>> = logger.execute {
-        playlistDao.observeAll()
-    } ?: flow { }
+    override fun observeAll(): Flow<List<Playlist>> = playlistDao
+        .observeAll()
+        .catch { emit(emptyList()) }
 
-    override fun observe(url: String): Flow<Playlist?> = logger.execute {
-        playlistDao.observeByUrl(url)
-    } ?: flow { }
+    override fun observe(url: String): Flow<Playlist?> = playlistDao
+        .observeByUrl(url)
+        .catch { emit(null) }
 
-    override fun observeWithStreams(url: String): Flow<PlaylistWithStreams?> = logger.execute {
-        playlistDao.observeByUrlWithStreams(url)
-    } ?: flow { }
+    override fun observeWithStreams(url: String): Flow<PlaylistWithStreams?> = playlistDao
+        .observeByUrlWithStreams(url)
+        .catch { emit(null) }
 
     override suspend fun getWithStreams(url: String): PlaylistWithStreams? = logger.execute {
         playlistDao.getByUrlWithStreams(url)

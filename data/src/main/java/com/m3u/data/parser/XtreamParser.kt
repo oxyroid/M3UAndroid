@@ -5,9 +5,15 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import okhttp3.HttpUrl.Companion.toHttpUrl
 
-interface XtreamParser : Parser<XtreamInput, XtreamOutput> {
+interface XtreamParser : Parser<XtreamInput, XtreamOutput>
+
+data class XtreamInput(
+    val address: String, // scheme + host + port
+    val username: String,
+    val password: String
+) {
     companion object {
-        fun decodeXtreamInput(url: String): XtreamInput {
+        fun decodeFromUrl(url: String): XtreamInput {
             val httpUrl = url.toHttpUrl()
             return XtreamInput(
                 address = "${httpUrl.scheme}://${httpUrl.host}:${httpUrl.port}",
@@ -16,21 +22,16 @@ interface XtreamParser : Parser<XtreamInput, XtreamOutput> {
             )
         }
 
-        fun encodeXtreamInput(input: XtreamInput): String {
+        fun encodeToUrl(input: XtreamInput): String {
             return with(input) { "$address/player_api.php?username=$username&password=$password" }
         }
     }
 }
 
-
-data class XtreamInput(
-    val address: String, // scheme + host + port
-    val username: String,
-    val password: String
-)
-
 data class XtreamOutput(
-    val all: List<XtreamData> = emptyList(),
+    val lives: List<XtreamData> = emptyList(),
+    val vod: List<XtreamData> = emptyList(),
+    val series: List<XtreamData> = emptyList(),
     val allowedOutputFormats: List<String> = emptyList()
 )
 

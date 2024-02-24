@@ -7,7 +7,7 @@ import com.m3u.data.database.dao.StreamDao
 import com.m3u.data.database.model.Stream
 import com.m3u.data.repository.StreamRepository
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.catch
 import kotlinx.datetime.Clock
 import javax.inject.Inject
 import kotlin.time.Duration
@@ -16,13 +16,13 @@ class StreamRepositoryImpl @Inject constructor(
     private val streamDao: StreamDao,
     private val logger: Logger,
 ) : StreamRepository {
-    override fun observe(id: Int): Flow<Stream?> = logger.execute {
-        streamDao.observeById(id)
-    } ?: flow { }
+    override fun observe(id: Int): Flow<Stream?> = streamDao
+        .observeById(id)
+        .catch { emit(null) }
 
-    override fun observeAll(): Flow<List<Stream>> = logger.execute {
-        streamDao.observeAll()
-    } ?: flow { }
+    override fun observeAll(): Flow<List<Stream>> = streamDao
+        .observeAll()
+        .catch { emit(emptyList()) }
 
     override suspend fun get(id: Int): Stream? = logger.execute {
         streamDao.get(id)
@@ -53,10 +53,10 @@ class StreamRepositoryImpl @Inject constructor(
         streamDao.getPlayedRecently()
     }
 
-    override fun observeAllUnseenFavourites(limit: Duration): Flow<List<Stream>> {
-        return streamDao.observeAllUnseenFavourites(
+    override fun observeAllUnseenFavourites(limit: Duration): Flow<List<Stream>> =
+        streamDao.observeAllUnseenFavourites(
             limit = limit.inWholeMilliseconds,
             current = Clock.System.now().toEpochMilliseconds()
         )
-    }
+            .catch { emit(emptyList()) }
 }

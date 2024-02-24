@@ -43,7 +43,7 @@ internal class XtreamParserImpl @Inject constructor(
         val all: List<XtreamData> = newCall(actionUrl) ?: emptyList()
 
         XtreamOutput(
-            all = all,
+            lives = all,
             allowedOutputFormats = allowedOutputFormats
         )
     }

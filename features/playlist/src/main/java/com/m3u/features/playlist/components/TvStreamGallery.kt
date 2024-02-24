@@ -87,6 +87,7 @@ internal fun TvStreamGallery(
         val pref = LocalPref.current
         TvLazyVerticalGrid(
             columns = TvGridCells.Fixed(pref.rowCount + 5),
+            contentPadding = PaddingValues(spacing.medium),
             verticalArrangement = Arrangement.spacedBy(spacing.medium),
             horizontalArrangement = Arrangement.spacedBy(spacing.large),
             modifier = Modifier

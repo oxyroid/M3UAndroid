@@ -24,7 +24,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
-import com.m3u.material.components.Icon
 import androidx.tv.material3.LocalContentColor
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
@@ -33,6 +32,7 @@ import coil.request.ImageRequest
 import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.data.database.model.Stream
 import com.m3u.features.playlist.R
+import com.m3u.material.components.Icon
 import com.m3u.material.components.IconButton
 import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.SnackHost
@@ -92,7 +92,6 @@ internal fun ImmersiveBackground(
                         .padding(spacing.medium)
                         .fillMaxWidth()
                 ) {
-                    SnackHost()
                     Text(
                         text = stream.title,
                         style = MaterialTheme.typography.headlineLarge,

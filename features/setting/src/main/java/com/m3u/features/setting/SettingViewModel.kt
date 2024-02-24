@@ -23,7 +23,7 @@ import com.m3u.data.database.dao.ColorPackDao
 import com.m3u.data.database.model.ColorPack
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Stream
-import com.m3u.data.parser.XtreamParser
+import com.m3u.data.parser.XtreamInput
 import com.m3u.data.repository.StreamRepository
 import com.m3u.data.repository.observeAll
 import com.m3u.data.service.Messager
@@ -37,6 +37,7 @@ import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
@@ -73,7 +74,7 @@ class SettingViewModel @Inject constructor(
         )
 
     internal val packs: StateFlow<ImmutableList<ColorPack>> = combine(
-        colorPackDao.observeAllColorPacks(),
+        colorPackDao.observeAllColorPacks().catch { emit(emptyList()) },
         pref.observeAsFlow { it.followSystemTheme }
     ) { all, followSystemTheme -> if (followSystemTheme) all.filter { !it.isDark } else all }
         .map { it.toImmutableList() }
@@ -108,8 +109,7 @@ class SettingViewModel @Inject constructor(
             }
 
             DataSource.Xtream -> {
-                val input = runCatching { XtreamParser.decodeXtreamInput(url) }
-                    .getOrNull() ?: return
+                val input = runCatching { XtreamInput.decodeFromUrl(url) }.getOrNull() ?: return
                 address = input.address
                 username = input.username
                 password = input.password
