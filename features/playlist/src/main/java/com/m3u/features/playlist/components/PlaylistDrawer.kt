@@ -21,7 +21,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.tv.material3.DrawerState
 import androidx.tv.material3.DrawerValue
-import androidx.tv.material3.Icon
+import com.m3u.material.components.Icon
 import androidx.tv.material3.ModalNavigationDrawer
 import androidx.tv.material3.NavigationDrawerItem
 import androidx.tv.material3.NavigationDrawerItemDefaults

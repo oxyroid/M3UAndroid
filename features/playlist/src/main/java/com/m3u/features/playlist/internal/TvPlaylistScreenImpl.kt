@@ -30,7 +30,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.tv.foundation.lazy.list.TvLazyColumn
 import androidx.tv.material3.DenseListItem
-import androidx.tv.material3.Icon
+import com.m3u.material.components.Icon
 import androidx.tv.material3.ImmersiveList
 import androidx.tv.material3.ListItemDefaults
 import androidx.tv.material3.MaterialTheme

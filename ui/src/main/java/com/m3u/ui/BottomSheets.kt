@@ -20,7 +20,7 @@ import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Sort
 import androidx.compose.material.icons.rounded.CheckCircle
-import androidx.compose.material3.Icon
+import com.m3u.material.components.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -43,7 +43,6 @@ import com.m3u.i18n.R.string
 import com.m3u.material.components.television.dialogFocusable
 import com.m3u.material.model.LocalSpacing
 import kotlinx.collections.immutable.ImmutableList
-import androidx.tv.material3.Icon as TvIcon
 import androidx.tv.material3.MaterialTheme as TvMaterialTheme
 import androidx.tv.material3.Text as TvText
 
@@ -180,7 +179,7 @@ fun TvSortFullScreenDialog(
                         leadingContent = {},
                         trailingContent = {
                             if (currentSort == sort) {
-                                TvIcon(
+                                Icon(
                                     imageVector = Icons.Rounded.CheckCircle,
                                     contentDescription = null
                                 )

@@ -2,7 +2,7 @@ package com.m3u.features.crash.components
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Adb
-import androidx.compose.material3.Icon
+import com.m3u.material.components.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text

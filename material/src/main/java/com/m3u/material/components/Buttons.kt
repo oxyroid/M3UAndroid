@@ -13,7 +13,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.LocalContentColor
@@ -213,7 +212,7 @@ fun IconButton(
                 pressedContainerColor = tint
             )
         ) {
-            androidx.tv.material3.Icon(
+            Icon(
                 imageVector = icon,
                 contentDescription = contentDescription
             )

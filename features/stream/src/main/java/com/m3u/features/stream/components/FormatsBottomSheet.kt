@@ -18,7 +18,7 @@ import androidx.compose.material.icons.rounded.Audiotrack
 import androidx.compose.material.icons.rounded.ClosedCaption
 import androidx.compose.material.icons.rounded.DeviceUnknown
 import androidx.compose.material.icons.rounded.VideoLibrary
-import androidx.compose.material3.Icon
+import com.m3u.material.components.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet

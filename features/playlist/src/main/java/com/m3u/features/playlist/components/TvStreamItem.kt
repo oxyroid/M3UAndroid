@@ -20,7 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.tv.material3.Card
 import androidx.tv.material3.CardDefaults
 import androidx.tv.material3.Glow
-import androidx.tv.material3.Icon
+import com.m3u.material.components.Icon
 import androidx.tv.material3.Text
 import coil.compose.SubcomposeAsyncImage
 import com.m3u.core.architecture.pref.LocalPref
