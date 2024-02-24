@@ -28,7 +28,6 @@ internal class XtreamParserImpl @Inject constructor(
         ignoreUnknownKeys = true
     }
 
-    @OptIn(ExperimentalSerializationApi::class)
     override suspend fun execute(input: XtreamInput): XtreamOutput = withContext(ioDispatcher) {
         val (address, username, password) = input
         val infoUrl = XtreamApi.createInfoUrl(address, username, password)
@@ -38,39 +37,26 @@ internal class XtreamParserImpl @Inject constructor(
             password,
             XtreamApi.GetAll.GET_LIVE_STREAMS
         )
-        val info: XtreamInfo? = logger.execute {
-            okHttpClient.newCall(
-                Request.Builder()
-                    .url(infoUrl)
-                    .build()
-            )
-                .execute()
-                .takeIf { it.isSuccessful }
-                ?.body
-                ?.byteStream()
-                ?.let { json.decodeFromStream(it) }
-        }
-
-        info ?: return@withContext XtreamOutput()
-
+        val info: XtreamInfo = newCall(infoUrl) ?: return@withContext XtreamOutput()
         val allowedOutputFormats = info.userInfo.allowedOutputFormats
 
-        val all: List<XtreamData> = logger.execute {
-            okHttpClient.newCall(
-                Request.Builder()
-                    .url(actionUrl)
-                    .build()
-            )
-                .execute()
-                .takeIf { it.isSuccessful }
-                ?.body
-                ?.byteStream()
-                ?.let { json.decodeFromStream(it) }
-        } ?: emptyList()
+        val all: List<XtreamData> = newCall(actionUrl) ?: emptyList()
 
         XtreamOutput(
             all = all,
             allowedOutputFormats = allowedOutputFormats
         )
+    }
+
+    @OptIn(ExperimentalSerializationApi::class)
+    private inline fun <reified T> newCall(url: String): T? = logger.execute {
+        okHttpClient.newCall(
+            Request.Builder().url(url).build()
+        )
+            .execute()
+            .takeIf { it.isSuccessful }
+            ?.body
+            ?.byteStream()
+            ?.let { json.decodeFromStream(it) }
     }
 }

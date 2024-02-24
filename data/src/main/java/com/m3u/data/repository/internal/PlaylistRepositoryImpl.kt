@@ -4,21 +4,21 @@ import android.content.ContentResolver
 import android.content.Context
 import android.net.Uri
 import androidx.core.net.toUri
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.OutOfQuotaPolicy
+import androidx.work.WorkManager
+import androidx.work.workDataOf
 import com.m3u.core.architecture.dispatcher.Dispatcher
 import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.execute
 import com.m3u.core.architecture.logger.sandBox
+import com.m3u.core.architecture.pref.Pref
 import com.m3u.core.architecture.pref.annotation.PlaylistStrategy
 import com.m3u.core.util.basic.startsWithAny
 import com.m3u.core.util.belong
 import com.m3u.core.util.readFileContent
 import com.m3u.core.util.readFileName
-import com.m3u.core.wrapper.Resource
-import com.m3u.core.wrapper.emitException
-import com.m3u.core.wrapper.emitMessage
-import com.m3u.core.wrapper.emitResource
-import com.m3u.core.wrapper.resourceFlow
 import com.m3u.data.database.dao.PlaylistDao
 import com.m3u.data.database.dao.StreamDao
 import com.m3u.data.database.model.DataSource
@@ -30,12 +30,12 @@ import com.m3u.data.parser.XtreamInput
 import com.m3u.data.parser.XtreamParser
 import com.m3u.data.parser.toStream
 import com.m3u.data.repository.PlaylistRepository
+import com.m3u.data.worker.SubscriptionWorker
 import com.m3u.i18n.R.string
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -52,26 +52,21 @@ class PlaylistRepositoryImpl @Inject constructor(
     private val streamDao: StreamDao,
     private val logger: Logger,
     private val client: OkHttpClient,
-    private val m3UParser: M3UParser,
+    private val m3uParser: M3UParser,
     private val xtreamParser: XtreamParser,
+    private val pref: Pref,
+    private val workManager: WorkManager,
     @ApplicationContext private val context: Context,
     @Dispatcher(IO) private val ioDispatcher: CoroutineDispatcher,
 ) : PlaylistRepository {
 
-    override fun m3u(title: String, url: String, strategy: Int): Flow<Resource<Unit>> = resourceFlow {
+    override suspend fun m3u(title: String, url: String) = withContext(ioDispatcher) {
         try {
-            val actualUrl = url.actualUrl()
-            if (actualUrl == null) {
-                emitMessage("wrong url")
-                return@resourceFlow
-            }
+            val actualUrl = checkNotNull(url.actualUrl()) { "wrong url" }
             val streams = when {
                 url.isSupportedNetworkUrl -> acquireNetwork(actualUrl)
                 url.isSupportedAndroidUrl -> acquireAndroid(actualUrl)
-                else -> {
-                    emitMessage("unsupported url")
-                    return@resourceFlow
-                }
+                else -> error("unsupported url")
             }
 
             val playlist = Playlist(title, actualUrl)
@@ -79,52 +74,87 @@ class PlaylistRepositoryImpl @Inject constructor(
 
             compareAndUpdateDB(
                 previous = streamDao.getByPlaylistUrl(url),
-                streams = streams,
-                strategy = strategy
+                streams = streams
             )
-
-            emitResource(Unit)
         } catch (e: FileNotFoundException) {
             error(context.getString(string.data_error_file_not_found))
         } catch (e: Exception) {
             logger.log(e)
-            emitException(e)
         }
     }
-        .flowOn(ioDispatcher)
 
     override suspend fun xtream(
         title: String,
         address: String,
         username: String,
-        password: String,
-        strategy: Int
-    ) {
+        password: String
+    ) = withContext(ioDispatcher) {
         val input = XtreamInput(address, username, password)
-        val output = xtreamParser.execute(input)
-        val all = output.all
-        val allowedOutputFormats = output.allowedOutputFormats
+        val (all, allowedOutputFormats) = xtreamParser.execute(input)
         val playlist = Playlist(
             title = title,
-            url = PlaylistRepository.encodeXtreamInput(input),
+            url = XtreamParser.encodeXtreamInput(input),
             source = DataSource.Xtream
         )
         playlistDao.insert(playlist)
         val streams = all.map {
-            Stream(
-                url = "$address/$username/$password/${it.streamId}.${allowedOutputFormats.first()}",
-                group = "",
-                title = it.name.orEmpty(),
-                cover = it.streamIcon,
-                playlistUrl = playlist.url
-            )
+            it.toStream(address, username, password, allowedOutputFormats, playlist.url)
         }
         compareAndUpdateDB(
             streamDao.getByPlaylistUrl(playlist.url),
-            streams,
-            strategy
+            streams
         )
     }
+
+    override suspend fun refresh(url: String) = logger.sandBox {
+        val playlist = checkNotNull(get(url)) { "Cannot find playlist: $url" }
+        check(!playlist.fromLocal) { "refreshing is not needed for local storage playlist." }
+
+        when (playlist.source) {
+            DataSource.M3U -> {
+                workManager.cancelAllWorkByTag(url)
+                val request = OneTimeWorkRequestBuilder<SubscriptionWorker>()
+                    .setInputData(
+                        workDataOf(
+                            SubscriptionWorker.INPUT_STRING_TITLE to playlist.title,
+                            SubscriptionWorker.INPUT_STRING_URL to url,
+                            SubscriptionWorker.INPUT_STRING_DATA_SOURCE_VALUE to DataSource.M3U.value
+                        )
+                    )
+                    .addTag(url)
+                    .addTag(SubscriptionWorker.TAG)
+                    .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
+                    .build()
+                workManager.enqueue(request)
+            }
+
+            DataSource.Xtream -> {
+                val input = XtreamParser.decodeXtreamInput(playlist.url)
+                workManager.cancelAllWorkByTag(url)
+                workManager.cancelAllWorkByTag(input.address)
+                val request = OneTimeWorkRequestBuilder<SubscriptionWorker>()
+                    .setInputData(
+                        workDataOf(
+                            SubscriptionWorker.INPUT_STRING_TITLE to playlist.title,
+                            SubscriptionWorker.INPUT_STRING_URL to url,
+                            SubscriptionWorker.INPUT_STRING_ADDRESS to input.address,
+                            SubscriptionWorker.INPUT_STRING_USERNAME to input.username,
+                            SubscriptionWorker.INPUT_STRING_PASSWORD to input.password,
+                            SubscriptionWorker.INPUT_STRING_DATA_SOURCE_VALUE to DataSource.Xtream.value
+                        )
+                    )
+                    .addTag(url)
+                    .addTag(input.address)
+                    .addTag(SubscriptionWorker.TAG)
+                    .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
+                    .build()
+                workManager.enqueue(request)
+            }
+
+            else -> throw RuntimeException("Refresh data source ${playlist.source} is unsupported currently.")
+        }
+    }
+
 
     override suspend fun backupOrThrow(uri: Uri): Unit = withContext(ioDispatcher) {
         val json = Json {
@@ -193,9 +223,9 @@ class PlaylistRepositoryImpl @Inject constructor(
 
     private suspend inline fun compareAndUpdateDB(
         previous: List<Stream>,
-        streams: List<Stream>,
-        @PlaylistStrategy strategy: Int,
+        streams: List<Stream>
     ) {
+        val strategy = pref.playlistStrategy
         val skippedUrls = mutableListOf<String>()
         val grouped by lazy {
             previous.groupBy { it.favourite }.withDefault { emptyList() }
@@ -275,7 +305,7 @@ class PlaylistRepositoryImpl @Inject constructor(
         playlistUrl: String,
         input: InputStream
     ): List<Stream> = logger.execute {
-        m3UParser.execute(input).map { it.toStream(playlistUrl, 0L) }
+        m3uParser.execute(input).map { it.toStream(playlistUrl, 0L) }
     } ?: emptyList()
 
     override suspend fun rename(url: String, target: String) = logger.sandBox {

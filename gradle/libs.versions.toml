@@ -21,7 +21,7 @@ google-dagger = "2.50"
 
 haze = "0.5.0"
 io-coil = "2.5.0"
-kotlinx-serialization-json = "1.6.2"
+kotlinx-serialization-json = "1.6.3"
 kotlinx-serialization-converter-retrofit = "1.0.0"
 kotlinx-datetime = "0.5.0"
 kotlinx-collections-immutable = "0.3.7"
@@ -94,7 +94,6 @@ androidx-hilt-hilt-navigation-compose = { group = "androidx.hilt", name = "hilt-
 
 androidx-media3-media3-ui = { group = "androidx.media3", name = "media3-ui", version.ref = "androidx-media3" }
 androidx-media3-media3-session = { group = "androidx.media3", name = "media3-session", version.ref = "androidx-media3" }
-androidx-media3-media3-decoder = { group = "androidx.media3", name = "media3-decoder", version.ref = "androidx-media3" }
 androidx-media3-media3-container = { group = "androidx.media3", name = "media3-container", version.ref = "androidx-media3" }
 androidx-media3-media3-extractor = { group = "androidx.media3", name = "media3-extractor", version.ref = "androidx-media3" }
 androidx-media3-media3-exoplayer = { group = "androidx.media3", name = "media3-exoplayer", version.ref = "androidx-media3" }

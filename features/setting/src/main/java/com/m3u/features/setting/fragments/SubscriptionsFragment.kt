@@ -173,16 +173,14 @@ internal fun SubscriptionsFragment(
                     onClick = onSubscribe,
                     modifier = Modifier.fillMaxWidth()
                 )
-                if (!tv) {
-                    TonalButton(
-                        text = stringResource(string.feat_setting_label_parse_from_clipboard),
-                        enabled = !localStorage,
-                        onClick = {
-                            onClipboard(clipboardManager.getText()?.text.orEmpty())
-                        },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
+                TonalButton(
+                    text = stringResource(string.feat_setting_label_parse_from_clipboard),
+                    enabled = !localStorage,
+                    onClick = {
+                        onClipboard(clipboardManager.getText()?.text.orEmpty())
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
         }
         item {

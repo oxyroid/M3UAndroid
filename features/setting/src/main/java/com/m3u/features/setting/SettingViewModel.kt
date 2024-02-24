@@ -23,7 +23,7 @@ import com.m3u.data.database.dao.ColorPackDao
 import com.m3u.data.database.model.ColorPack
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Stream
-import com.m3u.data.repository.PlaylistRepository
+import com.m3u.data.parser.XtreamParser
 import com.m3u.data.repository.StreamRepository
 import com.m3u.data.repository.observeAll
 import com.m3u.data.service.Messager
@@ -50,7 +50,7 @@ import javax.inject.Inject
 class SettingViewModel @Inject constructor(
     private val streamRepository: StreamRepository,
     private val workManager: WorkManager,
-    private val pref: Pref,
+    pref: Pref,
     private val messager: Messager,
     private val localService: LocalPreparedService,
     publisher: Publisher,
@@ -108,7 +108,7 @@ class SettingViewModel @Inject constructor(
             }
 
             DataSource.Xtream -> {
-                val input = runCatching { PlaylistRepository.decodeXtreamInput(url) }
+                val input = runCatching { XtreamParser.decodeXtreamInput(url) }
                     .getOrNull() ?: return
                 address = input.address
                 username = input.username
@@ -184,15 +184,15 @@ class SettingViewModel @Inject constructor(
                 workDataOf(
                     SubscriptionWorker.INPUT_STRING_TITLE to title,
                     SubscriptionWorker.INPUT_STRING_URL to url,
-                    SubscriptionWorker.INPUT_INT_STRATEGY to pref.playlistStrategy,
                     SubscriptionWorker.INPUT_STRING_ADDRESS to addressWithScheme,
                     SubscriptionWorker.INPUT_STRING_USERNAME to username,
                     SubscriptionWorker.INPUT_STRING_PASSWORD to password,
-                    SubscriptionWorker.INPUT_STRING_DATA_SOURCE to selected.value
+                    SubscriptionWorker.INPUT_STRING_DATA_SOURCE_VALUE to selected.value
                 )
             )
             .addTag(url)
             .addTag(addressWithScheme)
+            .addTag(SubscriptionWorker.TAG)
             .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
             .build()
         workManager.enqueue(request)

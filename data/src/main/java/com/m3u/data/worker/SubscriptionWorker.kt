@@ -9,7 +9,6 @@ import androidx.work.CoroutineWorker
 import androidx.work.ForegroundInfo
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
-import com.m3u.core.architecture.pref.annotation.PlaylistStrategy
 import com.m3u.data.R
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.repository.PlaylistRepository
@@ -17,7 +16,6 @@ import com.m3u.i18n.R.string
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.flow.launchIn
 
 @HiltWorker
 class SubscriptionWorker @AssistedInject constructor(
@@ -27,14 +25,13 @@ class SubscriptionWorker @AssistedInject constructor(
     private val manager: NotificationManager
 ) : CoroutineWorker(context, params) {
     private val dataSource = inputData
-        .getString(INPUT_STRING_DATA_SOURCE)
+        .getString(INPUT_STRING_DATA_SOURCE_VALUE)
         ?.let { DataSource.of(it) }
     private val title = inputData.getString(INPUT_STRING_TITLE)
     private val address = inputData.getString(INPUT_STRING_ADDRESS)
     private val username = inputData.getString(INPUT_STRING_USERNAME)
     private val password = inputData.getString(INPUT_STRING_PASSWORD)
     private val url = inputData.getString(INPUT_STRING_URL)
-    private val strategy = inputData.getInt(INPUT_INT_STRATEGY, PlaylistStrategy.SKIP_FAVORITE)
     override suspend fun doWork(): Result = coroutineScope {
         dataSource ?: return@coroutineScope Result.failure()
         createChannel()
@@ -48,9 +45,7 @@ class SubscriptionWorker @AssistedInject constructor(
                     Result.failure(data)
                 } else {
                     try {
-                        playlistRepository
-                            .m3u(title, url, strategy)
-                            .launchIn(this)
+                        playlistRepository.m3u(title, url)
                         Result.success()
                     } catch (e: Exception) {
                         Result.failure()
@@ -69,7 +64,7 @@ class SubscriptionWorker @AssistedInject constructor(
                     Result.failure(data)
                 } else {
                     try {
-                        playlistRepository.xtream(title, address, username, password, strategy)
+                        playlistRepository.xtream(title, address, username, password)
                         Result.success()
                     } catch (e: Exception) {
                         Result.failure()
@@ -116,7 +111,7 @@ class SubscriptionWorker @AssistedInject constructor(
         const val INPUT_STRING_ADDRESS = "address"
         const val INPUT_STRING_USERNAME = "username"
         const val INPUT_STRING_PASSWORD = "password"
-        const val INPUT_STRING_DATA_SOURCE = "data-source"
-        const val INPUT_INT_STRATEGY = "strategy"
+        const val INPUT_STRING_DATA_SOURCE_VALUE = "data-source"
+        const val TAG = "subscription"
     }
 }

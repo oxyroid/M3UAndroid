@@ -77,7 +77,7 @@ internal fun PlaylistRoute(
     val playlistUrl by viewModel.playlistUrl.collectAsStateWithLifecycle()
     val playlist by viewModel.playlist.collectAsStateWithLifecycle()
     val channels by viewModel.channels.collectAsStateWithLifecycle()
-    val refreshing by viewModel.refreshing.collectAsStateWithLifecycle()
+    val refreshing by viewModel.subscribingOrRefreshing.collectAsStateWithLifecycle()
 
     val sorts = viewModel.sorts
     val sort by viewModel.sort.collectAsStateWithLifecycle()

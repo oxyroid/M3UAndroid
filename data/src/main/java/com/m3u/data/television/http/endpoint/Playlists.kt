@@ -60,15 +60,15 @@ data class Playlists @Inject constructor(
                         workDataOf(
                             SubscriptionWorker.INPUT_STRING_TITLE to title,
                             SubscriptionWorker.INPUT_STRING_URL to url,
-                            SubscriptionWorker.INPUT_INT_STRATEGY to pref.playlistStrategy,
                             SubscriptionWorker.INPUT_STRING_ADDRESS to address,
                             SubscriptionWorker.INPUT_STRING_USERNAME to username,
                             SubscriptionWorker.INPUT_STRING_PASSWORD to password,
-                            SubscriptionWorker.INPUT_STRING_DATA_SOURCE to dataSource.value
+                            SubscriptionWorker.INPUT_STRING_DATA_SOURCE_VALUE to dataSource.value
                         )
                     )
                     .addTag(url)
                     .addTag(title)
+                    .addTag(SubscriptionWorker.TAG)
                     .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
                     .build()
                 workManager.enqueue(request)

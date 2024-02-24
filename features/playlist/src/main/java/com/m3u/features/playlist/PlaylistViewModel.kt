@@ -4,6 +4,7 @@ import android.content.ComponentName
 import android.content.ContentResolver
 import android.content.Context
 import android.content.Intent
+import android.util.Log
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.graphics.drawable.IconCompat
@@ -12,7 +13,12 @@ import androidx.core.net.toUri
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import androidx.tvprovider.media.tv.TvContractCompat
+import androidx.work.WorkInfo
+import androidx.work.WorkManager
+import androidx.work.WorkQuery
 import com.m3u.core.Contracts
+import com.m3u.core.architecture.dispatcher.Dispatcher
+import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
 import com.m3u.core.architecture.pref.Pref
 import com.m3u.core.architecture.pref.observeAsFlow
 import com.m3u.core.architecture.viewmodel.BaseViewModel
@@ -24,9 +30,9 @@ import com.m3u.data.database.model.Stream
 import com.m3u.data.repository.MediaRepository
 import com.m3u.data.repository.PlaylistRepository
 import com.m3u.data.repository.StreamRepository
-import com.m3u.data.repository.refresh
 import com.m3u.data.service.Messager
 import com.m3u.data.service.PlayerManager
+import com.m3u.data.worker.SubscriptionWorker
 import com.m3u.features.playlist.PlaylistMessage.StreamCoverSaved
 import com.m3u.features.playlist.navigation.PlaylistNavigation
 import com.m3u.ui.Sort
@@ -34,14 +40,17 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toPersistentList
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -55,9 +64,11 @@ class PlaylistViewModel @Inject constructor(
     private val streamRepository: StreamRepository,
     private val playlistRepository: PlaylistRepository,
     private val mediaRepository: MediaRepository,
+    private val messager: Messager,
     playerManager: PlayerManager,
-    private val pref: Pref,
-    private val messager: Messager
+    pref: Pref,
+    workManager: WorkManager,
+    @Dispatcher(IO) ioDispatcher: CoroutineDispatcher
 ) : BaseViewModel<PlaylistState, PlaylistEvent>(
     emptyState = PlaylistState()
 ) {
@@ -99,20 +110,33 @@ class PlaylistViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5_000)
         )
 
-    private var _refreshing = MutableStateFlow(false)
-    internal val refreshing = _refreshing.asStateFlow()
+    internal val subscribingOrRefreshing: StateFlow<Boolean> = workManager
+        .getWorkInfosFlow(
+            WorkQuery.fromStates(
+                WorkInfo.State.RUNNING,
+                WorkInfo.State.ENQUEUED
+            )
+        )
+        .mapLatest { infos ->
+            infos.any { info -> SubscriptionWorker.TAG in info.tags }
+        }
+        .flowOn(ioDispatcher)
+        .onEach { refreshing ->
+            Log.e("TAG", "r: $refreshing", )
+            val message = if (refreshing) PlaylistMessage.Refreshing else Message.Dynamic.EMPTY
+            messager.emit(message)
+        }
+        .stateIn(
+            scope = viewModelScope,
+            initialValue = false,
+            started = SharingStarted.WhileSubscribed(5000)
+        )
 
     private fun refresh() {
         val url = playlistUrl.value
-        playlistRepository
-            .refresh(url, pref.playlistStrategy)
-            .onEach { resource ->
-                val refreshing = resource is Resource.Loading
-                _refreshing.update { refreshing }
-                val message = if (refreshing) PlaylistMessage.Refreshing else Message.Dynamic.EMPTY
-                messager.emit(message)
-            }
-            .launchIn(viewModelScope)
+        viewModelScope.launch {
+            playlistRepository.refresh(url)
+        }
     }
 
     private fun favourite(event: PlaylistEvent.Favourite) {
