@@ -53,6 +53,12 @@ data class Playlist(
             else -> null
         }
 
+    val typeWithSource: String?
+        get() {
+            if (type == null) return null
+            return "$source $type"
+        }
+
 
     override fun like(another: Playlist): Boolean {
         return title == another.title && url == another.url
@@ -108,7 +114,7 @@ sealed class DataSource(
     }
 }
 
-object DataSourceSerializer : KSerializer<DataSource> {
+private object DataSourceSerializer : KSerializer<DataSource> {
     override fun deserialize(decoder: Decoder): DataSource {
         return DataSource.of(decoder.decodeString())
     }

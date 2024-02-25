@@ -4,6 +4,7 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
@@ -12,6 +13,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.DriveFileMove
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
@@ -108,13 +110,22 @@ private fun PlaylistItemImpl(
                         tint = currentContentColor
                     )
                 }
-                Text(
-                    text = label,
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
+                Column {
+                    Text(
+                        text = label,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    if (type != null) {
+                        Text(
+                            text = type,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = LocalContentColor.current.copy(0.45f)
+                        )
+                    }
+                }
 
                 val currentPrimaryColor by animateColorAsState(
                     targetValue = theme.primary,
@@ -124,9 +135,6 @@ private fun PlaylistItemImpl(
                     targetValue = theme.onPrimary,
                     label = "playlist-item-on-primary"
                 )
-                if (type != null) {
-                    TextBadge(type)
-                }
                 Spacer(Modifier.weight(1f))
                 Box(
                     modifier = Modifier
@@ -166,16 +174,23 @@ private fun PlaylistItemImpl(
                         tint = currentContentColor
                     )
                 }
-                Text(
-                    text = label,
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                if (type != null) {
-                    TextBadge(type)
+                Column {
+                    androidx.tv.material3.Text(
+                        text = label,
+                        style = androidx.tv.material3.MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    if (type != null) {
+                        androidx.tv.material3.Text(
+                            text = type,
+                            style = androidx.tv.material3.MaterialTheme.typography.bodySmall,
+                            color = androidx.tv.material3.LocalContentColor.current.copy(0.45f)
+                        )
+                    }
                 }
+
                 Spacer(Modifier.weight(1f))
 
                 val currentPrimaryColor by animateColorAsState(
@@ -251,7 +266,9 @@ private fun CompactPlaylistItemImpl(
             )
         },
         headlineContent = {
-            if (type != null) { TextBadge(type) }
+            if (type != null) {
+                TextBadge(type)
+            }
         },
         modifier = Modifier
             .combinedClickable(

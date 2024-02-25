@@ -39,9 +39,9 @@ data class Playlists @Inject constructor(
 
                 val title = call.queryParameters["title"]
                 val url = call.queryParameters["url"]
-                val address = call.queryParameters["url"]
-                val username = call.queryParameters["url"]
-                val password = call.queryParameters["url"]
+                val address = call.queryParameters["address"]
+                val username = call.queryParameters["username"]
+                val password = call.queryParameters["password"]
 
                 if (title == null || url == null) {
                     call.respond(
