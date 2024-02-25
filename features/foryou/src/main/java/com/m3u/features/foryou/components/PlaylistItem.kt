@@ -4,13 +4,13 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.DriveFileMove
 import androidx.compose.material3.CardDefaults
-import com.m3u.material.components.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
@@ -26,7 +26,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.m3u.core.architecture.pref.LocalPref
+import com.m3u.material.components.Icon
 import com.m3u.material.components.OuterRow
+import com.m3u.material.components.TextBadge
 import com.m3u.material.ktx.isTelevision
 import com.m3u.material.model.LocalSpacing
 import androidx.tv.material3.Card as TvCard
@@ -34,6 +36,7 @@ import androidx.tv.material3.Card as TvCard
 @Composable
 internal fun PlaylistItem(
     label: String,
+    type: String?,
     number: Int,
     local: Boolean,
     onClick: () -> Unit,
@@ -46,6 +49,7 @@ internal fun PlaylistItem(
     if (!compact) {
         PlaylistItemImpl(
             label = label,
+            type = type,
             number = number,
             local = local,
             onClick = onClick,
@@ -55,6 +59,7 @@ internal fun PlaylistItem(
     } else {
         CompactPlaylistItemImpl(
             label = label,
+            type = type,
             number = number,
             local = local,
             onClick = onClick,
@@ -67,6 +72,7 @@ internal fun PlaylistItem(
 @Composable
 private fun PlaylistItemImpl(
     label: String,
+    type: String?,
     number: Int,
     local: Boolean,
     onClick: () -> Unit,
@@ -108,7 +114,6 @@ private fun PlaylistItemImpl(
                     fontWeight = FontWeight.SemiBold,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f)
                 )
 
                 val currentPrimaryColor by animateColorAsState(
@@ -119,6 +124,10 @@ private fun PlaylistItemImpl(
                     targetValue = theme.onPrimary,
                     label = "playlist-item-on-primary"
                 )
+                if (type != null) {
+                    TextBadge(type)
+                }
+                Spacer(Modifier.weight(1f))
                 Box(
                     modifier = Modifier
                         .clip(CircleShape)
@@ -162,9 +171,12 @@ private fun PlaylistItemImpl(
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.SemiBold,
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f)
+                    overflow = TextOverflow.Ellipsis
                 )
+                if (type != null) {
+                    TextBadge(type)
+                }
+                Spacer(Modifier.weight(1f))
 
                 val currentPrimaryColor by animateColorAsState(
                     targetValue = theme.primary,
@@ -203,6 +215,7 @@ private fun PlaylistItemImpl(
 @Composable
 private fun CompactPlaylistItemImpl(
     label: String,
+    type: String?,
     number: Int,
     local: Boolean,
     onClick: () -> Unit,
@@ -210,7 +223,7 @@ private fun CompactPlaylistItemImpl(
     modifier: Modifier = Modifier
 ) {
     ListItem(
-        headlineContent = {
+        overlineContent = {
             Text(
                 text = label,
                 style = MaterialTheme.typography.bodyMedium,
@@ -236,6 +249,9 @@ private fun CompactPlaylistItemImpl(
                 softWrap = false,
                 textAlign = TextAlign.Center
             )
+        },
+        headlineContent = {
+            if (type != null) { TextBadge(type) }
         },
         modifier = Modifier
             .combinedClickable(

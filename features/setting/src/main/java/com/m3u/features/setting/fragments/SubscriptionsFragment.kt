@@ -36,6 +36,7 @@ import com.m3u.material.ktx.isTelevision
 import com.m3u.material.ktx.plus
 import com.m3u.material.model.LocalSpacing
 import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toPersistentList
 
 @Composable
@@ -110,7 +111,13 @@ internal fun SubscriptionsFragment(
         item {
             DataSourceSelection(
                 selected = selected,
-                supported = DataSource.entries.toPersistentList(),
+                supported = persistentListOf(
+                    DataSource.M3U,
+                    DataSource.Xtream,
+                    DataSource.Emby,
+                    DataSource.Dropbox,
+                    DataSource.Aliyun
+                ),
                 onSelected = onSelected
             )
         }

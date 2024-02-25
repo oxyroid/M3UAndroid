@@ -11,7 +11,9 @@ interface XtreamParser : Parser<XtreamInput, XtreamOutput>
 data class XtreamInput(
     val address: String, // scheme + host + port
     val username: String,
-    val password: String
+    val password: String,
+    // DataSource.Xtream.TYPE_LIVE, DataSource.Xtream.TYPE_VOD, DataSource.Xtream.TYPE_SERIES
+    val type: String? = null // null means all
 ) {
     companion object {
         fun decodeFromUrl(url: String): XtreamInput {
@@ -20,12 +22,20 @@ data class XtreamInput(
             return XtreamInput(
                 address = "${httpUrl.scheme}://${httpUrl.host}:${httpUrl.port}",
                 username = httpUrl.queryParameter("username").orEmpty(),
-                password = httpUrl.queryParameter("password").orEmpty()
+                password = httpUrl.queryParameter("password").orEmpty(),
+                type = httpUrl.queryParameter("type")
             )
         }
 
         fun encodeToUrl(input: XtreamInput): String {
-            return with(input) { "$address/player_api.php?username=$username&password=$password" }
+            return with(input) {
+                buildString {
+                    append("$address/player_api.php?username=$username&password=$password&")
+                    if (type != null) {
+                        append("type=$type")
+                    }
+                }
+            }
         }
     }
 }
@@ -118,11 +128,7 @@ data class XtreamLive(
     val tvArchive: Int?,
     @SerialName("tv_archive_duration")
     val tvArchiveDuration: Int?
-) {
-    companion object {
-        const val GROUP = "Xtream-LIVE"
-    }
-}
+)
 
 @Serializable
 data class XtreamVod(
@@ -150,11 +156,7 @@ data class XtreamVod(
     val streamId: Int?,
     @SerialName("stream_type")
     val streamType: String?
-) {
-    companion object {
-        const val GROUP = "Xtream-VOD"
-    }
-}
+)
 
 @Serializable
 data class XtreamSerial(
@@ -190,11 +192,7 @@ data class XtreamSerial(
     val seriesId: Int?,
     @SerialName("youtube_trailer")
     val youtubeTrailer: String?
-) {
-    companion object {
-        const val GROUP = "Xtream-SERIES"
-    }
-}
+)
 
 fun XtreamLive.toStream(
     address: String,
@@ -208,8 +206,7 @@ fun XtreamLive.toStream(
     group = category,
     title = name.orEmpty(),
     cover = streamIcon,
-    playlistUrl = playlistUrl,
-    // nested = category
+    playlistUrl = playlistUrl
 )
 
 fun XtreamVod.toStream(
@@ -220,11 +217,10 @@ fun XtreamVod.toStream(
     category: String
 ): Stream = Stream(
     url = "$address/movie/$username/$password/$streamId.${containerExtension}",
-    group = XtreamVod.GROUP,
+    group = category,
     title = name.orEmpty(),
     cover = streamIcon,
-    playlistUrl = playlistUrl,
-    // nested = category
+    playlistUrl = playlistUrl
 )
 
 fun XtreamSerial.toStream(
@@ -236,11 +232,10 @@ fun XtreamSerial.toStream(
     containerExtension: String
 ): Stream = Stream(
     url = "$address/series/$username/$password/$seriesId.$containerExtension",
-    group = XtreamSerial.GROUP,
+    group = category,
     title = name.orEmpty(),
     cover = cover,
     playlistUrl = playlistUrl,
-    // nested = category
 )
 
 @Serializable

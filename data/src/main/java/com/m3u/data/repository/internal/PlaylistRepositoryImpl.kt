@@ -118,9 +118,10 @@ class PlaylistRepositoryImpl @Inject constructor(
         title: String,
         address: String,
         username: String,
-        password: String
+        password: String,
+        type: String?
     ) = withContext(ioDispatcher) {
-        val input = XtreamInput(address, username, password)
+        val input = XtreamInput(address, username, password, type)
         val (
             lives,
             vods,
@@ -130,48 +131,80 @@ class PlaylistRepositoryImpl @Inject constructor(
             serialCategories,
             allowedOutputFormats
         ) = xtreamParser.execute(input)
-        val playlist = Playlist(
-            title = title,
-            url = XtreamInput.encodeToUrl(input),
-            source = DataSource.Xtream
-        )
-        playlistDao.insert(playlist)
-        val liveStreams = lives.map { current ->
-            current.toStream(
-                address = address,
-                username = username,
-                password = password,
-                allowedOutputFormats = allowedOutputFormats,
-                playlistUrl = playlist.url,
-                category = liveCategories.find { it.categoryId == current.categoryId }?.categoryName.orEmpty()
+        val requiredLives = type == null || type == DataSource.Xtream.TYPE_LIVE
+        val requiredVods = type == null || type == DataSource.Xtream.TYPE_VOD
+        val requiredSeries = type == null || type == DataSource.Xtream.TYPE_SERIES
+        if (requiredLives) {
+            val playlist = Playlist(
+                title = title,
+                url = XtreamInput.encodeToUrl(input.copy(type = DataSource.Xtream.TYPE_LIVE)),
+                source = DataSource.Xtream
             )
+            val streams = lives.map { current ->
+                current.toStream(
+                    address = address,
+                    username = username,
+                    password = password,
+                    allowedOutputFormats = allowedOutputFormats,
+                    playlistUrl = playlist.url,
+                    category = liveCategories.find { it.categoryId == current.categoryId }?.categoryName.orEmpty()
+                )
+            }
+
+            playlistDao.insert(playlist)
+            compareAndUpdate(
+                streamDao.getByPlaylistUrl(playlist.url),
+                streams
+            )
+            logger.log("xtream: lives +[${streams.size}]")
+        }
+        if (requiredVods) {
+            val playlist = Playlist(
+                title = title,
+                url = XtreamInput.encodeToUrl(input.copy(type = DataSource.Xtream.TYPE_VOD)),
+                source = DataSource.Xtream
+            )
+            val streams = vods.map { current ->
+                current.toStream(
+                    address = address,
+                    username = username,
+                    password = password,
+                    playlistUrl = playlist.url,
+                    category = vodCategories.find { it.categoryId == current.categoryId }?.categoryName.orEmpty()
+                )
+            }
+
+            playlistDao.insert(playlist)
+            compareAndUpdate(
+                streamDao.getByPlaylistUrl(playlist.url),
+                streams
+            )
+            logger.log("xtream: vods +[${vods.size}]")
         }
 
-//        val vodStreams = vods.map { current ->
-//            current.toStream(
-//                address = address,
-//                username = username,
-//                password = password,
-//                playlistUrl = playlist.url,
-//                category = vodCategories.find { it.categoryId == current.categoryId }?.categoryName.orEmpty()
-//            )
-//        }
-
-//        val serialStreams = series.map { current ->
-//            current.toStream(
-//                address = address,
-//                username = username,
-//                password = password,
-//                playlistUrl = playlist.url,
-//                category = serialCategories.find { it.categoryId == current.categoryId }?.categoryName.orEmpty(),
-//                containerExtension = allowedOutputFormats.first()
-//            )
-//        }
-        compareAndUpdate(
-            streamDao.getByPlaylistUrl(playlist.url),
-            liveStreams
-//                    + vodStreams + serialStreams
-        )
+        if (requiredSeries) {
+            val playlist = Playlist(
+                title = title,
+                url = XtreamInput.encodeToUrl(input.copy(type = DataSource.Xtream.TYPE_SERIES)),
+                source = DataSource.Xtream
+            )
+            val streams = series.map { current ->
+                current.toStream(
+                    address = address,
+                    username = username,
+                    password = password,
+                    playlistUrl = playlist.url,
+                    category = serialCategories.find { it.categoryId == current.categoryId }?.categoryName.orEmpty(),
+                    containerExtension = allowedOutputFormats.first()
+                )
+            }
+            playlistDao.insert(playlist)
+            compareAndUpdate(
+                streamDao.getByPlaylistUrl(playlist.url),
+                streams
+            )
+            logger.log("xtream: series +[${streams.size}]")
+        }
     }
 
     override suspend fun refresh(url: String) = logger.sandBox {
@@ -326,15 +359,24 @@ class PlaylistRepositoryImpl @Inject constructor(
 
     override fun observeAll(): Flow<List<Playlist>> = playlistDao
         .observeAll()
-        .catch { emit(emptyList()) }
+        .catch {
+            logger.log(it)
+            emit(emptyList())
+        }
 
     override fun observe(url: String): Flow<Playlist?> = playlistDao
         .observeByUrl(url)
-        .catch { emit(null) }
+        .catch {
+            logger.log(it)
+            emit(null)
+        }
 
     override fun observeWithStreams(url: String): Flow<PlaylistWithStreams?> = playlistDao
         .observeByUrlWithStreams(url)
-        .catch { emit(null) }
+        .catch {
+            logger.log(it)
+            emit(null)
+        }
 
     override suspend fun getWithStreams(url: String): PlaylistWithStreams? = logger.execute {
         playlistDao.getByUrlWithStreams(url)
@@ -394,6 +436,7 @@ class PlaylistRepositoryImpl @Inject constructor(
                     newUrl
                 }
             }
+
             else -> null
         }
     }

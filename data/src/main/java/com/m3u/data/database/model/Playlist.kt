@@ -10,6 +10,7 @@ import androidx.room.PrimaryKey
 import androidx.room.Relation
 import com.m3u.core.util.Likable
 import com.m3u.core.util.basic.startsWithAny
+import com.m3u.data.parser.XtreamInput
 import com.m3u.i18n.R
 import kotlinx.serialization.Serializable
 
@@ -39,6 +40,13 @@ data class Playlist(
             )
         }
 
+    val type: String?
+        get() = when (source) {
+            DataSource.Xtream -> XtreamInput.decodeFromUrl(url).type
+            else -> null
+        }
+
+
     override fun like(another: Playlist): Boolean {
         return title == another.title && url == another.url
     }
@@ -58,16 +66,30 @@ data class PlaylistWithStreams(
     val streams: List<Stream>
 )
 
-enum class DataSource(
+@Serializable
+sealed class DataSource(
     @StringRes val resId: Int,
     val value: String,
     val supported: Boolean = false
 ) {
-    M3U(R.string.feat_setting_data_source_m3u, "m3u", true),
-    Xtream(R.string.feat_setting_data_source_xtream, "xtream", true),
-    Emby(R.string.feat_setting_data_source_emby, "emby"),
-    Dropbox(R.string.feat_setting_data_source_dropbox, "dropbox"),
-    Aliyun(R.string.feat_setting_data_source_aliyun, "aliyun");
+    @Serializable
+    object M3U : DataSource(R.string.feat_setting_data_source_m3u, "m3u", true)
+
+    @Serializable
+    object Xtream : DataSource(R.string.feat_setting_data_source_xtream, "xtream", true) {
+        const val TYPE_LIVE = "live"
+        const val TYPE_VOD = "vod"
+        const val TYPE_SERIES = "series"
+    }
+
+    @Serializable
+    object Emby : DataSource(R.string.feat_setting_data_source_emby, "emby")
+
+    @Serializable
+    object Dropbox : DataSource(R.string.feat_setting_data_source_dropbox, "dropbox")
+
+    @Serializable
+    object Aliyun : DataSource(R.string.feat_setting_data_source_aliyun, "aliyun");
 
     override fun toString(): String = value
 

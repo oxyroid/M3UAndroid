@@ -5,12 +5,15 @@ import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.execute
 import com.m3u.data.api.XtreamApi
+import com.m3u.data.database.model.DataSource
 import com.m3u.data.parser.XtreamCategory
 import com.m3u.data.parser.XtreamInfo
 import com.m3u.data.parser.XtreamInput
 import com.m3u.data.parser.XtreamLive
 import com.m3u.data.parser.XtreamOutput
 import com.m3u.data.parser.XtreamParser
+import com.m3u.data.parser.XtreamSerial
+import com.m3u.data.parser.XtreamVod
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.ExperimentalSerializationApi
@@ -30,7 +33,10 @@ internal class XtreamParserImpl @Inject constructor(
     }
 
     override suspend fun execute(input: XtreamInput): XtreamOutput = withContext(ioDispatcher) {
-        val (address, username, password) = input
+        val (address, username, password, type) = input
+        val requiredLives = type == null || type == DataSource.Xtream.TYPE_LIVE
+        val requiredVods = type == null || type == DataSource.Xtream.TYPE_VOD
+        val requiredSeries = type == null || type == DataSource.Xtream.TYPE_SERIES
         val infoUrl = XtreamApi.createInfoUrl(address, username, password)
         val liveStreamsUrl = XtreamApi.createActionUrl(
             address,
@@ -71,21 +77,21 @@ internal class XtreamParserImpl @Inject constructor(
         val info: XtreamInfo = newCall(infoUrl) ?: return@withContext XtreamOutput()
         val allowedOutputFormats = info.userInfo.allowedOutputFormats
 
-        val lives: List<XtreamLive> = newCall(liveStreamsUrl) ?: emptyList()
-//        val vods: List<XtreamVod> = newCall(vodStreamsUrl) ?: emptyList()
-//        val series: List<XtreamSerial> = newCall(seriesStreamsUrl) ?: emptyList()
+        val lives: List<XtreamLive> = if (requiredLives) newCall(liveStreamsUrl) ?: emptyList() else emptyList()
+        val vods: List<XtreamVod> = if (requiredVods) newCall(vodStreamsUrl) ?: emptyList() else emptyList()
+        val series: List<XtreamSerial> = if (requiredSeries) newCall(seriesStreamsUrl) ?: emptyList() else emptyList()
 
-        val liveCategories: List<XtreamCategory> = newCall(liveCategoriesUrl) ?: emptyList()
-//        val vodCategories: List<XtreamCategory> = newCall(vodCategoriesUrl) ?: emptyList()
-//        val serialCategories: List<XtreamCategory> = newCall(serialCategoriesUrl) ?: emptyList()
+        val liveCategories: List<XtreamCategory> = if (requiredLives) newCall(liveCategoriesUrl) ?: emptyList() else emptyList()
+        val vodCategories: List<XtreamCategory> = if (requiredVods) newCall(vodCategoriesUrl) ?: emptyList() else emptyList()
+        val serialCategories: List<XtreamCategory> = if (requiredSeries) newCall(serialCategoriesUrl) ?: emptyList() else emptyList()
 
         XtreamOutput(
             lives = lives,
-//            vods = vods,
-//            series = series,
+            vods = vods,
+            series = series,
             liveCategories = liveCategories,
-//            vodCategories = vodCategories,
-//            serialCategories = serialCategories,
+            vodCategories = vodCategories,
+            serialCategories = serialCategories,
             allowedOutputFormats = allowedOutputFormats
         )
     }

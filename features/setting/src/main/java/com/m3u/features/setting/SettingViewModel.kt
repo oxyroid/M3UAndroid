@@ -97,24 +97,20 @@ class SettingViewModel @Inject constructor(
     }
 
     internal fun onClipboard(url: String) {
+        val title = run {
+            val filePath = url.split("/")
+            val fileSplit = filePath.lastOrNull()?.split(".") ?: emptyList()
+            fileSplit.firstOrNull() ?: "Playlist_${System.currentTimeMillis()}"
+        }
+        onTitle(title)
+        onUrl(url)
         when (selected) {
-            DataSource.M3U -> {
-                val title = run {
-                    val filePath = url.split("/")
-                    val fileSplit = filePath.lastOrNull()?.split(".") ?: emptyList()
-                    fileSplit.firstOrNull() ?: "Playlist_${System.currentTimeMillis()}"
-                }
-                onTitle(title)
-                onUrl(url)
-            }
-
-            DataSource.Xtream -> {
+            is DataSource.Xtream -> {
                 val input = runCatching { XtreamInput.decodeFromUrl(url) }.getOrNull() ?: return
                 address = input.address
                 username = input.username
                 password = input.password
             }
-
             else -> {}
         }
     }
@@ -284,7 +280,7 @@ class SettingViewModel @Inject constructor(
     }
 
     internal var forTv by mutableStateOf(false)
-    internal var selected by mutableStateOf(DataSource.M3U)
+    internal var selected: DataSource by mutableStateOf(DataSource.M3U)
     internal var address by mutableStateOf("")
     internal var username by mutableStateOf("")
     internal var password by mutableStateOf("")

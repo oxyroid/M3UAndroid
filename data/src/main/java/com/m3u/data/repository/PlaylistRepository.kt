@@ -21,7 +21,8 @@ interface PlaylistRepository {
         title: String,
         address: String,
         username: String,
-        password: String
+        password: String,
+        type: String?
     )
 
     suspend fun refresh(url: String)

@@ -81,6 +81,7 @@ private fun PlaylistGalleryImpl(
             ) { detail ->
                 PlaylistItem(
                     label = detail.playlist.calculateUiTitle(),
+                    type = detail.playlist.type,
                     number = detail.count,
                     local = detail.playlist.fromLocal,
                     modifier = Modifier.fillMaxWidth(),
@@ -107,6 +108,7 @@ private fun PlaylistGalleryImpl(
             ) { detail ->
                 PlaylistItem(
                     label = detail.playlist.calculateUiTitle(),
+                    type = detail.playlist.type,
                     number = detail.count,
                     local = detail.playlist.fromLocal,
                     modifier = Modifier.fillMaxWidth(),
@@ -140,6 +142,7 @@ private fun CompactPlaylistGalleryImpl(
         ) { detail ->
             PlaylistItem(
                 label = detail.playlist.calculateUiTitle(),
+                type = detail.playlist.type,
                 number = detail.count,
                 local = detail.playlist.fromLocal,
                 modifier = Modifier.fillMaxWidth(),

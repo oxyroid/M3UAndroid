@@ -17,21 +17,18 @@ object Converters {
     }
 
     @TypeConverter
-    fun fromDataSource(from: DataSource): Int = when (from) {
-        DataSource.M3U -> 0
-        DataSource.Xtream -> 1
-        DataSource.Emby -> 2
-        DataSource.Dropbox -> 3
-        DataSource.Aliyun -> 4
+    fun fromMetadata(from: Map<String, String>): String {
+        return Json.encodeToString(from)
     }
 
     @TypeConverter
-    fun toDataSource(to: Int): DataSource = when (to) {
-        0 -> DataSource.M3U
-        1 -> DataSource.Xtream
-        2 -> DataSource.Emby
-        3 -> DataSource.Dropbox
-        4 -> DataSource.Aliyun
-        else -> throw RuntimeException("Unsupported playlist data source $to.")
+    fun toMetadata(to: String): Map<String, String> {
+        return Json.decodeFromString(to)
     }
+
+    @TypeConverter
+    fun fromDataSource(from: DataSource): String = from.value
+
+    @TypeConverter
+    fun toDataSource(to: String): DataSource = DataSource.of(to)
 }

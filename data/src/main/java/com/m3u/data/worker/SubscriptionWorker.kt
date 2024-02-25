@@ -11,27 +11,33 @@ import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import com.m3u.data.R
 import com.m3u.data.database.model.DataSource
+import com.m3u.data.parser.XtreamInput
 import com.m3u.data.repository.PlaylistRepository
+import com.m3u.data.service.Messager
 import com.m3u.i18n.R.string
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.coroutineScope
+import kotlinx.serialization.json.Json
 
 @HiltWorker
 class SubscriptionWorker @AssistedInject constructor(
     @Assisted private val context: Context,
     @Assisted params: WorkerParameters,
     private val playlistRepository: PlaylistRepository,
-    private val manager: NotificationManager
+    private val manager: NotificationManager,
+    private val messager: Messager
 ) : CoroutineWorker(context, params) {
     private val dataSource = inputData
         .getString(INPUT_STRING_DATA_SOURCE_VALUE)
-        ?.let { DataSource.of(it) }
+        ?.let { DataSource.ofOrNull(it) }
+
     private val title = inputData.getString(INPUT_STRING_TITLE)
     private val address = inputData.getString(INPUT_STRING_ADDRESS)
     private val username = inputData.getString(INPUT_STRING_USERNAME)
     private val password = inputData.getString(INPUT_STRING_PASSWORD)
     private val url = inputData.getString(INPUT_STRING_URL)
+
     override suspend fun doWork(): Result = coroutineScope {
         dataSource ?: return@coroutineScope Result.failure()
         createChannel()
@@ -58,21 +64,29 @@ class SubscriptionWorker @AssistedInject constructor(
                 address ?: return@coroutineScope Result.failure()
                 username ?: return@coroutineScope Result.failure()
                 password ?: return@coroutineScope Result.failure()
+                url ?: return@coroutineScope Result.failure()
                 if (title.isEmpty()) {
                     val message = context.getString(string.data_error_empty_title)
                     val data = workDataOf("message" to message)
+                    messager.emit(message)
                     Result.failure(data)
                 } else {
                     try {
-                        playlistRepository.xtream(title, address, username, password)
+                        val type = XtreamInput.decodeFromUrl(url).type
+                        playlistRepository.xtream(title, address, username, password, type)
                         Result.success()
                     } catch (e: Exception) {
-                        Result.failure()
+                        messager.emit(e.message.orEmpty())
+                        Result.failure(workDataOf("message" to e.message))
                     }
                 }
             }
 
-            else -> Result.failure()
+            else -> {
+                val message = "unsupported data source $dataSource"
+                messager.emit(message)
+                Result.failure(workDataOf("message" to message))
+            }
         }
     }
 
