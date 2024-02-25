@@ -17,16 +17,6 @@ object Converters {
     }
 
     @TypeConverter
-    fun fromMetadata(from: Map<String, String>): String {
-        return Json.encodeToString(from)
-    }
-
-    @TypeConverter
-    fun toMetadata(to: String): Map<String, String> {
-        return Json.decodeFromString(to)
-    }
-
-    @TypeConverter
     fun fromDataSource(from: DataSource): String = from.value
 
     @TypeConverter

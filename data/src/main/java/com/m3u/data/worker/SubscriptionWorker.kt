@@ -18,7 +18,6 @@ import com.m3u.i18n.R.string
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.coroutineScope
-import kotlinx.serialization.json.Json
 
 @HiltWorker
 class SubscriptionWorker @AssistedInject constructor(

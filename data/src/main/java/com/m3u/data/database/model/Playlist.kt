@@ -12,7 +12,13 @@ import com.m3u.core.util.Likable
 import com.m3u.core.util.basic.startsWithAny
 import com.m3u.data.parser.XtreamInput
 import com.m3u.i18n.R
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.descriptors.PrimitiveKind
+import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 
 @Entity(tableName = "playlists")
 @Immutable
@@ -28,6 +34,7 @@ data class Playlist(
     @ColumnInfo(name = "pinned_groups", defaultValue = "[]")
     val pinnedGroups: List<String> = emptyList(),
     @ColumnInfo(name = "source", defaultValue = "0")
+    @Serializable(with = DataSourceSerializer::class)
     val source: DataSource = DataSource.M3U
 ) : Likable<Playlist> {
     val fromLocal: Boolean
@@ -66,30 +73,24 @@ data class PlaylistWithStreams(
     val streams: List<Stream>
 )
 
-@Serializable
 sealed class DataSource(
     @StringRes val resId: Int,
     val value: String,
     val supported: Boolean = false
 ) {
-    @Serializable
     object M3U : DataSource(R.string.feat_setting_data_source_m3u, "m3u", true)
 
-    @Serializable
     object Xtream : DataSource(R.string.feat_setting_data_source_xtream, "xtream", true) {
         const val TYPE_LIVE = "live"
         const val TYPE_VOD = "vod"
         const val TYPE_SERIES = "series"
     }
 
-    @Serializable
     object Emby : DataSource(R.string.feat_setting_data_source_emby, "emby")
 
-    @Serializable
     object Dropbox : DataSource(R.string.feat_setting_data_source_dropbox, "dropbox")
 
-    @Serializable
-    object Aliyun : DataSource(R.string.feat_setting_data_source_aliyun, "aliyun");
+    object Aliyun : DataSource(R.string.feat_setting_data_source_aliyun, "aliyun")
 
     override fun toString(): String = value
 
@@ -104,6 +105,21 @@ sealed class DataSource(
         }
 
         fun ofOrNull(value: String): DataSource? = runCatching { of(value) }.getOrNull()
+    }
+}
+
+object DataSourceSerializer : KSerializer<DataSource> {
+    override fun deserialize(decoder: Decoder): DataSource {
+        return DataSource.of(decoder.decodeString())
+    }
+
+    override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor(
+        "com.m3u.data.database.model.DataSource",
+        PrimitiveKind.STRING
+    )
+
+    override fun serialize(encoder: Encoder, value: DataSource) {
+        encoder.encodeString(value.value)
     }
 }
 

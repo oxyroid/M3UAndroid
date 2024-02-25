@@ -37,7 +37,6 @@ import com.m3u.material.ktx.plus
 import com.m3u.material.model.LocalSpacing
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
-import kotlinx.collections.immutable.toPersistentList
 
 @Composable
 internal fun SubscriptionsFragment(
