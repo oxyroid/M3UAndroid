@@ -106,7 +106,7 @@ class SettingViewModel @Inject constructor(
         onUrl(url)
         when (selected) {
             is DataSource.Xtream -> {
-                val input = runCatching { XtreamInput.decodeFromUrl(url) }.getOrNull() ?: return
+                val input = XtreamInput.decodeFromPlaylistUrlOrNull(url) ?: return
                 address = input.address
                 username = input.username
                 password = input.password

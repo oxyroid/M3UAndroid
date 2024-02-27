@@ -71,7 +71,7 @@ class SubscriptionWorker @AssistedInject constructor(
                     Result.failure(data)
                 } else {
                     try {
-                        val type = XtreamInput.decodeFromUrl(url).type
+                        val type = XtreamInput.decodeFromPlaylistUrl(url).type
                         playlistRepository.xtream(title, address, username, password, type)
                         Result.success()
                     } catch (e: Exception) {

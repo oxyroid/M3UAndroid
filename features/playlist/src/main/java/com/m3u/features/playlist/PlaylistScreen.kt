@@ -40,6 +40,7 @@ import com.google.accompanist.permissions.rememberPermissionState
 import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.core.util.basic.title
 import com.m3u.core.wrapper.Event
+import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Stream
 import com.m3u.features.playlist.internal.PlaylistScreenImpl
 import com.m3u.features.playlist.internal.TvPlaylistScreenImpl
@@ -78,6 +79,7 @@ internal fun PlaylistRoute(
     val playlist by viewModel.playlist.collectAsStateWithLifecycle()
     val channels by viewModel.channels.collectAsStateWithLifecycle()
     val refreshing by viewModel.subscribingOrRefreshing.collectAsStateWithLifecycle()
+    val dataSourceType by viewModel.dataSourceType.collectAsStateWithLifecycle()
 
     val sorts = viewModel.sorts
     val sort by viewModel.sort.collectAsStateWithLifecycle()
@@ -121,7 +123,16 @@ internal fun PlaylistRoute(
             sorts = sorts,
             sort = sort,
             onSort = { viewModel.sort(it) },
-            navigateToStream = navigateToStream,
+            onStream = { stream ->
+                when (dataSourceType) {
+                    DataSource.Xtream.TYPE_SERIES -> {}
+                    DataSource.Xtream.TYPE_VOD -> {}
+                    else -> {
+                        helper.play(stream.url)
+                        navigateToStream()
+                    }
+                }
+            },
             onScrollUp = { viewModel.onEvent(PlaylistEvent.ScrollUp) },
             onRefresh = { viewModel.onEvent(PlaylistEvent.Refresh) },
             contentPadding = contentPadding,
@@ -165,7 +176,7 @@ private fun PlaylistScreen(
     onSort: (Sort) -> Unit,
     scrollUp: Event<Unit>,
     onRefresh: () -> Unit,
-    navigateToStream: () -> Unit,
+    onStream: (Stream) -> Unit,
     onScrollUp: () -> Unit,
     onFavorite: (streamId: Int, target: Boolean) -> Unit,
     hide: (streamId: Int) -> Unit,
@@ -210,7 +221,7 @@ private fun PlaylistScreen(
             rowCount = rowCount,
             scrollUp = scrollUp,
             contentPadding = contentPadding,
-            navigateToStream = navigateToStream,
+            onStream = onStream,
             isAtTopState = isAtTopState,
             onRefresh = onRefresh,
             sorts = sorts,
@@ -228,7 +239,7 @@ private fun PlaylistScreen(
             groups = groups,
             query = query,
             onQuery = onQuery,
-            navigateToStream = navigateToStream,
+            onStream = onStream,
             onRefresh = onRefresh,
             sorts = sorts,
             sort = sort,

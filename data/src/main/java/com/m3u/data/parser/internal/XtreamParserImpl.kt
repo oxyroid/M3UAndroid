@@ -77,13 +77,19 @@ internal class XtreamParserImpl @Inject constructor(
         val info: XtreamInfo = newCall(infoUrl) ?: return@withContext XtreamOutput()
         val allowedOutputFormats = info.userInfo.allowedOutputFormats
 
-        val lives: List<XtreamLive> = if (requiredLives) newCall(liveStreamsUrl) ?: emptyList() else emptyList()
-        val vods: List<XtreamVod> = if (requiredVods) newCall(vodStreamsUrl) ?: emptyList() else emptyList()
-        val series: List<XtreamSerial> = if (requiredSeries) newCall(seriesStreamsUrl) ?: emptyList() else emptyList()
+        val lives: List<XtreamLive> =
+            if (requiredLives) newCall(liveStreamsUrl) ?: emptyList() else emptyList()
+        val vods: List<XtreamVod> =
+            if (requiredVods) newCall(vodStreamsUrl) ?: emptyList() else emptyList()
+        val series: List<XtreamSerial> =
+            if (requiredSeries) newCall(seriesStreamsUrl) ?: emptyList() else emptyList()
 
-        val liveCategories: List<XtreamCategory> = if (requiredLives) newCall(liveCategoriesUrl) ?: emptyList() else emptyList()
-        val vodCategories: List<XtreamCategory> = if (requiredVods) newCall(vodCategoriesUrl) ?: emptyList() else emptyList()
-        val serialCategories: List<XtreamCategory> = if (requiredSeries) newCall(serialCategoriesUrl) ?: emptyList() else emptyList()
+        val liveCategories: List<XtreamCategory> =
+            if (requiredLives) newCall(liveCategoriesUrl) ?: emptyList() else emptyList()
+        val vodCategories: List<XtreamCategory> =
+            if (requiredVods) newCall(vodCategoriesUrl) ?: emptyList() else emptyList()
+        val serialCategories: List<XtreamCategory> =
+            if (requiredSeries) newCall(serialCategoriesUrl) ?: emptyList() else emptyList()
 
         XtreamOutput(
             lives = lives,
@@ -97,14 +103,16 @@ internal class XtreamParserImpl @Inject constructor(
     }
 
     @OptIn(ExperimentalSerializationApi::class)
-    private inline fun <reified T> newCall(url: String): T? = logger.execute {
-        okHttpClient.newCall(
-            Request.Builder().url(url).build()
-        )
-            .execute()
-            .takeIf { it.isSuccessful }
-            ?.body
-            ?.byteStream()
-            ?.let { json.decodeFromStream(it) }
+    private suspend inline fun <reified T> newCall(url: String): T? = withContext(ioDispatcher) {
+        logger.execute {
+            okHttpClient.newCall(
+                Request.Builder().url(url).build()
+            )
+                .execute()
+                .takeIf { it.isSuccessful }
+                ?.body
+                ?.byteStream()
+                ?.let { json.decodeFromStream(it) }
+        }
     }
 }

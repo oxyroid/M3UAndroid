@@ -16,13 +16,28 @@ data class XtreamInput(
     val type: String? = null // null means all
 ) {
     companion object {
+        fun decodeFromPlaylistUrl(url: String): XtreamInput {
+            val hasScheme = url.startsWithAny("http:", "https:", ignoreCase = true)
+            val httpUrl = if (hasScheme) url.toHttpUrl() else "http://$url".toHttpUrl()
+            val username = httpUrl.queryParameter("username").orEmpty()
+            val password = httpUrl.queryParameter("password").orEmpty()
+            return XtreamInput(
+                address = "${httpUrl.scheme}://${httpUrl.host}:${httpUrl.port}",
+                username = username,
+                password = password,
+                type = httpUrl.queryParameter("type")
+            )
+        }
+
         fun decodeFromUrl(url: String): XtreamInput {
             val hasScheme = url.startsWithAny("http:", "https:", ignoreCase = true)
             val httpUrl = if (hasScheme) url.toHttpUrl() else "http://$url".toHttpUrl()
+            val username = httpUrl.pathSegments.getOrNull(1).orEmpty()
+            val password = httpUrl.pathSegments.getOrNull(2).orEmpty()
             return XtreamInput(
                 address = "${httpUrl.scheme}://${httpUrl.host}:${httpUrl.port}",
-                username = httpUrl.queryParameter("username").orEmpty(),
-                password = httpUrl.queryParameter("password").orEmpty(),
+                username = username,
+                password = password,
                 type = httpUrl.queryParameter("type")
             )
         }
@@ -37,6 +52,12 @@ data class XtreamInput(
                 }
             }
         }
+
+        fun decodeFromPlaylistUrlOrNull(url: String): XtreamInput? =
+            runCatching { decodeFromPlaylistUrl(url) }.getOrNull()
+
+        fun decodeFromUrlOrNull(url: String): XtreamInput? =
+            runCatching { decodeFromUrl(url) }.getOrNull()
     }
 }
 

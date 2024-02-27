@@ -67,7 +67,7 @@ fun AppNavHost(
             currentDestination = currentDestination,
             contentPadding = contentPadding,
             navigateToPlaylist = { playlist ->
-                navController.navigateToPlaylist(playlist.url, tv)
+                navController.navigateToPlaylist(playlist.url, tv, playlist.type)
             },
             navigateToStream = {
                 if (pref.zappingMode && PlayerActivity.isInPipMode) return@rootGraph

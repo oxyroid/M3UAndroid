@@ -62,6 +62,7 @@ import androidx.tv.material3.Surface
 import com.m3u.material.ktx.InteractionType
 import com.m3u.material.ktx.interactionBorder
 import com.m3u.material.ktx.isTelevision
+import androidx.tv.material3.MaterialTheme as TvMaterialTheme
 
 @Composable
 fun TextField(
@@ -331,19 +332,19 @@ private fun TvTextFieldImpl(
         shape = ClickableSurfaceDefaults.shape(shape),
         scale = ClickableSurfaceDefaults.scale(focusedScale = 1f),
         colors = ClickableSurfaceDefaults.colors(
-            containerColor = androidx.tv.material3.MaterialTheme.colorScheme.inverseOnSurface,
-            focusedContainerColor = androidx.tv.material3.MaterialTheme.colorScheme.inverseOnSurface,
-            pressedContainerColor = androidx.tv.material3.MaterialTheme.colorScheme.inverseOnSurface,
-            focusedContentColor = androidx.tv.material3.MaterialTheme.colorScheme.onSurface,
-            pressedContentColor = androidx.tv.material3.MaterialTheme.colorScheme.onSurface
+            containerColor = TvMaterialTheme.colorScheme.inverseOnSurface,
+            focusedContainerColor = TvMaterialTheme.colorScheme.inverseOnSurface,
+            pressedContainerColor = TvMaterialTheme.colorScheme.inverseOnSurface,
+            focusedContentColor = TvMaterialTheme.colorScheme.onSurface,
+            pressedContentColor = TvMaterialTheme.colorScheme.onSurface
         ),
         border = ClickableSurfaceDefaults.border(
             focusedBorder = Border(
                 border = BorderStroke(
                     width = if (isFocus) 2.dp else 1.dp,
                     color = animateColorAsState(
-                        targetValue = if (isFocus) androidx.tv.material3.MaterialTheme.colorScheme.primary
-                        else androidx.tv.material3.MaterialTheme.colorScheme.border, label = ""
+                        targetValue = if (isFocus) TvMaterialTheme.colorScheme.primary
+                        else TvMaterialTheme.colorScheme.border, label = ""
                     ).value
                 ),
                 shape = shape
@@ -369,7 +370,7 @@ private fun TvTextFieldImpl(
                         androidx.tv.material3.Text(
                             modifier = Modifier.graphicsLayer { alpha = 0.6f },
                             text = placeholder,
-                            style = androidx.tv.material3.MaterialTheme.typography.titleSmall
+                            style = TvMaterialTheme.typography.titleSmall
                         )
                     }
                 }
@@ -412,8 +413,8 @@ private fun TvTextFieldImpl(
             keyboardActions = keyboardActions,
             maxLines = 1,
             interactionSource = interactionSource,
-            textStyle = androidx.tv.material3.MaterialTheme.typography.titleSmall.copy(
-                color = androidx.tv.material3.MaterialTheme.colorScheme.onSurface
+            textStyle = TvMaterialTheme.typography.titleSmall.copy(
+                color = TvMaterialTheme.colorScheme.onSurface
             )
         )
     }

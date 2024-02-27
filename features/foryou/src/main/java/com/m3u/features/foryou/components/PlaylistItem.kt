@@ -27,13 +27,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.material.components.Icon
 import com.m3u.material.components.OuterRow
 import com.m3u.material.components.TextBadge
-import com.m3u.material.ktx.isTelevision
 import com.m3u.material.model.LocalSpacing
+import com.m3u.ui.UiMode
+import com.m3u.ui.currentUiMode
 import androidx.tv.material3.Card as TvCard
+import androidx.tv.material3.MaterialTheme as TvMaterialTheme
 
 @Composable
 internal fun PlaylistItem(
@@ -45,29 +46,42 @@ internal fun PlaylistItem(
     onLongClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val pref = LocalPref.current
-    val compact = pref.compact
+    when (currentUiMode()) {
+        UiMode.Default -> {
+            PlaylistItemImpl(
+                label = label,
+                type = type,
+                number = number,
+                local = local,
+                onClick = onClick,
+                onLongClick = onLongClick,
+                modifier = modifier
+            )
+        }
 
-    if (!compact) {
-        PlaylistItemImpl(
-            label = label,
-            type = type,
-            number = number,
-            local = local,
-            onClick = onClick,
-            onLongClick = onLongClick,
-            modifier = modifier
-        )
-    } else {
-        CompactPlaylistItemImpl(
-            label = label,
-            type = type,
-            number = number,
-            local = local,
-            onClick = onClick,
-            onLongClick = onLongClick,
-            modifier = modifier
-        )
+        UiMode.Television -> {
+            TvPlaylistItemImpl(
+                label = label,
+                type = type,
+                number = number,
+                local = local,
+                onClick = onClick,
+                onLongClick = onLongClick,
+                modifier = modifier
+            )
+        }
+
+        UiMode.Compat -> {
+            CompactPlaylistItemImpl(
+                label = label,
+                type = type,
+                number = number,
+                local = local,
+                onClick = onClick,
+                onLongClick = onLongClick,
+                modifier = modifier
+            )
+        }
     }
 }
 
@@ -83,145 +97,159 @@ private fun PlaylistItemImpl(
 ) {
     val spacing = LocalSpacing.current
     val theme = MaterialTheme.colorScheme
-    val tv = isTelevision()
     val currentContentColor by animateColorAsState(
         targetValue = theme.onSurface,
         label = "playlist-item-content"
     )
-
-    if (!tv) {
-        OutlinedCard(
-            shape = RoundedCornerShape(spacing.medium),
-            border = CardDefaults.outlinedCardBorder(local),
-            modifier = modifier.semantics(mergeDescendants = true) { }
+    OutlinedCard(
+        shape = RoundedCornerShape(spacing.medium),
+        border = CardDefaults.outlinedCardBorder(local),
+        modifier = modifier.semantics(mergeDescendants = true) { }
+    ) {
+        OuterRow(
+            modifier = Modifier
+                .combinedClickable(
+                    onClick = onClick,
+                    onLongClick = onLongClick
+                ),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            OuterRow(
-                modifier = Modifier
-                    .combinedClickable(
-                        onClick = onClick,
-                        onLongClick = onLongClick
-                    ),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                if (local) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Rounded.DriveFileMove,
-                        contentDescription = null,
-                        tint = currentContentColor
-                    )
-                }
-                Column {
-                    Text(
-                        text = label,
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                    if (type != null) {
-                        Text(
-                            text = type,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = LocalContentColor.current.copy(0.45f)
-                        )
-                    }
-                }
-
-                val currentPrimaryColor by animateColorAsState(
-                    targetValue = theme.primary,
-                    label = "playlist-item-primary"
+            if (local) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Rounded.DriveFileMove,
+                    contentDescription = null,
+                    tint = currentContentColor
                 )
-                val currentOnPrimaryColor by animateColorAsState(
-                    targetValue = theme.onPrimary,
-                    label = "playlist-item-on-primary"
+            }
+            Column {
+                Text(
+                    text = label,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                 )
-                Spacer(Modifier.weight(1f))
-                Box(
-                    modifier = Modifier
-                        .clip(CircleShape)
-                        .background(currentPrimaryColor),
-                    contentAlignment = Alignment.Center
-                ) {
+                if (type != null) {
                     Text(
-                        color = currentOnPrimaryColor,
-                        text = number.toString(),
-                        style = MaterialTheme.typography.bodyMedium,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.padding(
-                            start = spacing.small,
-                            end = spacing.small,
-                            bottom = 2.dp,
-                        ),
-                        softWrap = false,
-                        textAlign = TextAlign.Center
+                        text = type,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = LocalContentColor.current.copy(0.45f)
                     )
                 }
             }
-        }
-    } else {
-        TvCard(
-            onClick = onClick,
-            onLongClick = onLongClick
-        ) {
-            OuterRow(
-                verticalAlignment = Alignment.CenterVertically
+
+            val currentPrimaryColor by animateColorAsState(
+                targetValue = theme.primary,
+                label = "playlist-item-primary"
+            )
+            val currentOnPrimaryColor by animateColorAsState(
+                targetValue = theme.onPrimary,
+                label = "playlist-item-on-primary"
+            )
+            Spacer(Modifier.weight(1f))
+            Box(
+                modifier = Modifier
+                    .clip(CircleShape)
+                    .background(currentPrimaryColor),
+                contentAlignment = Alignment.Center
             ) {
-                if (local) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Rounded.DriveFileMove,
-                        contentDescription = null,
-                        tint = currentContentColor
-                    )
-                }
-                Column {
+                Text(
+                    color = currentOnPrimaryColor,
+                    text = number.toString(),
+                    style = MaterialTheme.typography.bodyMedium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.padding(
+                        start = spacing.small,
+                        end = spacing.small,
+                        bottom = 2.dp,
+                    ),
+                    softWrap = false,
+                    textAlign = TextAlign.Center
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun TvPlaylistItemImpl(
+    label: String,
+    type: String?,
+    number: Int,
+    local: Boolean,
+    onClick: () -> Unit,
+    onLongClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val spacing = LocalSpacing.current
+    val theme = TvMaterialTheme.colorScheme
+    val currentContentColor by animateColorAsState(
+        targetValue = theme.onSurface,
+        label = "playlist-item-content"
+    )
+    TvCard(
+        onClick = onClick,
+        onLongClick = onLongClick,
+        modifier = modifier
+    ) {
+        OuterRow(
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            if (local) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Rounded.DriveFileMove,
+                    contentDescription = null,
+                    tint = currentContentColor
+                )
+            }
+            Column {
+                androidx.tv.material3.Text(
+                    text = label,
+                    style = TvMaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                if (type != null) {
                     androidx.tv.material3.Text(
-                        text = label,
-                        style = androidx.tv.material3.MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                    if (type != null) {
-                        androidx.tv.material3.Text(
-                            text = type,
-                            style = androidx.tv.material3.MaterialTheme.typography.bodySmall,
-                            color = androidx.tv.material3.LocalContentColor.current.copy(0.45f)
-                        )
-                    }
-                }
-
-                Spacer(Modifier.weight(1f))
-
-                val currentPrimaryColor by animateColorAsState(
-                    targetValue = theme.primary,
-                    label = "playlist-item-primary"
-                )
-                val currentOnPrimaryColor by animateColorAsState(
-                    targetValue = theme.onPrimary,
-                    label = "playlist-item-on-primary"
-                )
-                Box(
-                    modifier = Modifier
-                        .clip(CircleShape)
-                        .background(currentPrimaryColor),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        color = currentOnPrimaryColor,
-                        text = number.toString(),
-                        style = MaterialTheme.typography.bodyMedium,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.padding(
-                            start = spacing.small,
-                            end = spacing.small,
-                            bottom = 2.dp,
-                        ),
-                        softWrap = false,
-                        textAlign = TextAlign.Center
+                        text = type,
+                        style = TvMaterialTheme.typography.bodySmall,
+                        color = androidx.tv.material3.LocalContentColor.current.copy(0.45f)
                     )
                 }
+            }
+
+            Spacer(Modifier.weight(1f))
+
+            val currentPrimaryColor by animateColorAsState(
+                targetValue = theme.primary,
+                label = "playlist-item-primary"
+            )
+            val currentOnPrimaryColor by animateColorAsState(
+                targetValue = theme.onPrimary,
+                label = "playlist-item-on-primary"
+            )
+            Box(
+                modifier = Modifier
+                    .clip(CircleShape)
+                    .background(currentPrimaryColor),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    color = currentOnPrimaryColor,
+                    text = number.toString(),
+                    style = MaterialTheme.typography.bodyMedium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.padding(
+                        start = spacing.small,
+                        end = spacing.small,
+                        bottom = 2.dp,
+                    ),
+                    softWrap = false,
+                    textAlign = TextAlign.Center
+                )
             }
         }
     }

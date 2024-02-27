@@ -6,7 +6,6 @@ import android.provider.Settings
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.OpenInNew
-import androidx.compose.material.icons.rounded.Backup
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.PermDeviceInformation
 import androidx.compose.material.icons.rounded.Source
@@ -39,13 +38,6 @@ internal fun OtherPreferences(
                     }
                 context.startActivity(intent)
             }
-        )
-        // TODO: https://www.dropbox.com/developers/documentation/http/documentation#file_requests-list
-        Preference(
-            title = stringResource(R.string.feat_setting_dropbox).uppercase(),
-            icon = Icons.Rounded.Backup,
-            onClick = navigateToAbout,
-            enabled = false
         )
         Preference(
             title = stringResource(R.string.feat_setting_project_about).title(),

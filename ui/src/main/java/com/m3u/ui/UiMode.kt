@@ -5,12 +5,12 @@ import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.material.ktx.isTelevision
 
 enum class UiMode {
-    DEFAULT, TELEVISION, COMPAT
+    Default, Television, Compat
 }
 
 @Composable
-fun currentUiMode(): UiMode {
-    if (isTelevision()) return UiMode.TELEVISION
-    if (LocalPref.current.compact) return UiMode.COMPAT
-    return UiMode.DEFAULT
+fun currentUiMode(): UiMode = when {
+    isTelevision() -> UiMode.Television
+    LocalPref.current.compact -> UiMode.Compat
+    else -> UiMode.Default
 }

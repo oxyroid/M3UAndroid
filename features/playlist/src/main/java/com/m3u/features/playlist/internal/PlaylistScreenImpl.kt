@@ -85,7 +85,7 @@ internal fun PlaylistScreenImpl(
     sorts: ImmutableList<Sort>,
     sort: Sort,
     onSort: (Sort) -> Unit,
-    navigateToStream: () -> Unit,
+    onStream: (Stream) -> Unit,
     onRefresh: () -> Unit,
     onFavorite: (streamId: Int, target: Boolean) -> Unit,
     hide: (streamId: Int) -> Unit,
@@ -211,10 +211,7 @@ internal fun PlaylistScreenImpl(
                             streams = groups[currentPage].streams,
                             zapping = zapping,
                             recently = sort == Sort.RECENTLY,
-                            play = { url ->
-                                helper.play(url)
-                                navigateToStream()
-                            },
+                            onClick = onStream,
                             contentPadding = inner,
                             onMenu = { dialogStatus = DialogStatus.Selections(it) },
                             modifier = modifier.haze(

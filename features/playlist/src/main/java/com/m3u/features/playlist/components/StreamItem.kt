@@ -58,7 +58,7 @@ internal fun StreamItem(
     modifier: Modifier = Modifier
 ) {
     when (currentUiMode()) {
-        UiMode.DEFAULT -> {
+        UiMode.Default -> {
             StreamItemImpl(
                 stream = stream,
                 recently = recently,
@@ -69,7 +69,7 @@ internal fun StreamItem(
             )
         }
 
-        UiMode.COMPAT -> {
+        UiMode.Compat -> {
             CompactStreamItem(
                 stream = stream,
                 recently = recently,

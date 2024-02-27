@@ -92,11 +92,11 @@ class PlaylistRepositoryImpl @Inject constructor(
 
         withContext(ioDispatcher) {
             try {
-                val actualUrl = checkNotNull(url.actualUrl()) { "wrong url" }
+                val actualUrl = url.actualUrl()
                 val streams = when {
                     url.isSupportedNetworkUrl() -> acquireNetwork(actualUrl)
                     url.isSupportedAndroidUrl() -> acquireAndroid(actualUrl)
-                    else -> error("unsupported url")
+                    else -> emptyList() // never reach here!
                 }
 
                 val playlist = Playlist(title, actualUrl)
@@ -230,7 +230,7 @@ class PlaylistRepositoryImpl @Inject constructor(
             }
 
             DataSource.Xtream -> {
-                val input = XtreamInput.decodeFromUrl(playlist.url)
+                val input = XtreamInput.decodeFromPlaylistUrlOrNull(playlist.url) ?: return@sandBox
                 workManager.cancelAllWorkByTag(url)
                 workManager.cancelAllWorkByTag(input.address)
                 val request = OneTimeWorkRequestBuilder<SubscriptionWorker>()
@@ -416,11 +416,11 @@ class PlaylistRepositoryImpl @Inject constructor(
         ignoreCase = true
     )
 
-    private suspend fun String.actualUrl(): String? {
+    private suspend fun String.actualUrl(): String {
         return when {
             isSupportedNetworkUrl() -> this
             isSupportedAndroidUrl() -> {
-                val uri = Uri.parse(this) ?: return null
+                val uri = Uri.parse(this)
                 if (uri.scheme == ContentResolver.SCHEME_FILE) {
                     return uri.toString()
                 }
@@ -437,7 +437,7 @@ class PlaylistRepositoryImpl @Inject constructor(
                 }
             }
 
-            else -> null
+            else -> error("unsupported url scheme: $this")
         }
     }
 }

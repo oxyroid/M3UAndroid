@@ -30,7 +30,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.tv.foundation.lazy.list.TvLazyColumn
 import androidx.tv.material3.DenseListItem
-import com.m3u.material.components.Icon
 import androidx.tv.material3.ImmersiveList
 import androidx.tv.material3.ListItemDefaults
 import androidx.tv.material3.MaterialTheme
@@ -41,13 +40,13 @@ import com.m3u.features.playlist.Group
 import com.m3u.features.playlist.components.ImmersiveBackground
 import com.m3u.features.playlist.components.TvStreamGallery
 import com.m3u.i18n.R
+import com.m3u.material.components.Icon
 import com.m3u.material.components.television.dialogFocusable
 import com.m3u.material.ktx.Edge
 import com.m3u.material.ktx.blurEdge
 import com.m3u.material.model.LocalHazeState
 import com.m3u.ui.Sort
 import com.m3u.ui.TvSortFullScreenDialog
-import com.m3u.ui.helper.LocalHelper
 import dev.chrisbanes.haze.HazeDefaults
 import dev.chrisbanes.haze.HazeStyle
 import dev.chrisbanes.haze.haze
@@ -68,11 +67,10 @@ internal fun TvPlaylistScreenImpl(
     hide: (streamId: Int) -> Unit,
     savePicture: (streamId: Int) -> Unit,
     createShortcut: (streamId: Int) -> Unit,
-    navigateToStream: () -> Unit,
+    onStream: (Stream) -> Unit,
     onRefresh: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val helper = LocalHelper.current
     val pref = LocalPref.current
 
     val multiCatalogs = groups.size > 1
@@ -119,10 +117,7 @@ internal fun TvPlaylistScreenImpl(
                     groups = groups,
                     maxBrowserHeight = maxBrowserHeight,
                     useGridLayout = useGridLayout,
-                    onClick = { stream ->
-                        helper.play(stream.url)
-                        navigateToStream()
-                    },
+                    onClick = onStream,
                     onLongClick = { stream -> press = stream },
                     onFocus = { stream -> focus = stream },
                     modifier = Modifier.then(

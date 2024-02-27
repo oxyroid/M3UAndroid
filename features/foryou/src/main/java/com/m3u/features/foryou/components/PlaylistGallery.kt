@@ -13,13 +13,13 @@ import androidx.compose.ui.res.stringResource
 import androidx.tv.foundation.lazy.grid.TvGridCells
 import androidx.tv.foundation.lazy.grid.TvLazyVerticalGrid
 import androidx.tv.foundation.lazy.grid.items
-import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.data.database.model.Playlist
 import com.m3u.features.foryou.model.PlaylistDetail
 import com.m3u.i18n.R.string
-import com.m3u.material.ktx.isTelevision
 import com.m3u.material.ktx.plus
 import com.m3u.material.model.LocalSpacing
+import com.m3u.ui.UiMode
+import com.m3u.ui.currentUiMode
 import kotlinx.collections.immutable.ImmutableList
 
 @Composable
@@ -31,27 +31,39 @@ internal fun PlaylistGallery(
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier
 ) {
-    val pref = LocalPref.current
-    val compact = pref.compact
+    when (currentUiMode()) {
+        UiMode.Default -> {
+            PlaylistGalleryImpl(
+                rowCount = rowCount,
+                details = details,
+                navigateToPlaylist = navigateToPlaylist,
+                onMenu = onMenu,
+                contentPadding = contentPadding,
+                modifier = modifier
+            )
+        }
 
-    if (!compact) {
-        PlaylistGalleryImpl(
-            rowCount = rowCount,
-            details = details,
-            navigateToPlaylist = navigateToPlaylist,
-            onMenu = onMenu,
-            contentPadding = contentPadding,
-            modifier = modifier
-        )
-    } else {
-        CompactPlaylistGalleryImpl(
-            rowCount = rowCount,
-            details = details,
-            navigateToPlaylist = navigateToPlaylist,
-            onMenu = onMenu,
-            contentPadding = contentPadding,
-            modifier = modifier
-        )
+        UiMode.Television -> {
+            TvPlaylistGalleryImpl(
+                rowCount = rowCount,
+                details = details,
+                navigateToPlaylist = navigateToPlaylist,
+                onMenu = onMenu,
+                contentPadding = contentPadding,
+                modifier = modifier
+            )
+        }
+
+        UiMode.Compat -> {
+            CompactPlaylistGalleryImpl(
+                rowCount = rowCount,
+                details = details,
+                navigateToPlaylist = navigateToPlaylist,
+                onMenu = onMenu,
+                contentPadding = contentPadding,
+                modifier = modifier
+            )
+        }
     }
 }
 
@@ -65,60 +77,67 @@ private fun PlaylistGalleryImpl(
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
-    val tv = isTelevision()
-    if (!tv) {
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(rowCount),
-            contentPadding = PaddingValues(spacing.medium) + contentPadding,
-            verticalArrangement = Arrangement.spacedBy(spacing.medium),
-            horizontalArrangement = Arrangement.spacedBy(spacing.medium),
-            modifier = modifier
-        ) {
-            items(
-                items = details,
-                key = { it.playlist.url },
-                contentType = {}
-            ) { detail ->
-                PlaylistItem(
-                    label = detail.playlist.calculateUiTitle(),
-                    type = detail.playlist.typeWithSource,
-                    number = detail.count,
-                    local = detail.playlist.fromLocal,
-                    modifier = Modifier.fillMaxWidth(),
-                    onClick = { navigateToPlaylist(detail.playlist) },
-                    onLongClick = { onMenu(detail.playlist) }
-                )
-            }
-        }
-    } else {
-        TvLazyVerticalGrid(
-            columns = TvGridCells.Fixed(rowCount),
-            contentPadding = PaddingValues(
-                vertical = spacing.medium,
-                horizontal = spacing.large
-            ) + contentPadding,
-            verticalArrangement = Arrangement.spacedBy(spacing.large),
-            horizontalArrangement = Arrangement.spacedBy(spacing.large),
-            modifier = modifier
-        ) {
-            items(
-                items = details,
-                key = { it.playlist.url },
-                contentType = {}
-            ) { detail ->
-                PlaylistItem(
-                    label = detail.playlist.calculateUiTitle(),
-                    type = detail.playlist.typeWithSource,
-                    number = detail.count,
-                    local = detail.playlist.fromLocal,
-                    modifier = Modifier.fillMaxWidth(),
-                    onClick = { navigateToPlaylist(detail.playlist) },
-                    onLongClick = { onMenu(detail.playlist) }
-                )
-            }
+    LazyVerticalGrid(
+        columns = GridCells.Fixed(rowCount),
+        contentPadding = PaddingValues(spacing.medium) + contentPadding,
+        verticalArrangement = Arrangement.spacedBy(spacing.medium),
+        horizontalArrangement = Arrangement.spacedBy(spacing.medium),
+        modifier = modifier
+    ) {
+        items(
+            items = details,
+            key = { it.playlist.url },
+            contentType = {}
+        ) { detail ->
+            PlaylistItem(
+                label = detail.playlist.calculateUiTitle(),
+                type = detail.playlist.typeWithSource,
+                number = detail.count,
+                local = detail.playlist.fromLocal,
+                modifier = Modifier.fillMaxWidth(),
+                onClick = { navigateToPlaylist(detail.playlist) },
+                onLongClick = { onMenu(detail.playlist) }
+            )
         }
     }
+}
 
+@Composable
+private fun TvPlaylistGalleryImpl(
+    rowCount: Int,
+    details: ImmutableList<PlaylistDetail>,
+    navigateToPlaylist: (Playlist) -> Unit,
+    onMenu: (Playlist) -> Unit,
+    contentPadding: PaddingValues,
+    modifier: Modifier = Modifier
+) {
+    val spacing = LocalSpacing.current
+    TvLazyVerticalGrid(
+        columns = TvGridCells.Fixed(rowCount),
+        contentPadding = PaddingValues(
+            vertical = spacing.medium,
+            horizontal = spacing.large
+        ) + contentPadding,
+        verticalArrangement = Arrangement.spacedBy(spacing.large),
+        horizontalArrangement = Arrangement.spacedBy(spacing.large),
+        modifier = modifier
+    ) {
+        items(
+            items = details,
+            key = { it.playlist.url },
+            contentType = {}
+        ) { detail ->
+            PlaylistItem(
+                label = detail.playlist.calculateUiTitle(),
+                type = detail.playlist.typeWithSource,
+                number = detail.count,
+                local = detail.playlist.fromLocal,
+                modifier = Modifier.fillMaxWidth(),
+                onClick = { navigateToPlaylist(detail.playlist) },
+                onLongClick = { onMenu(detail.playlist) }
+            )
+        }
+    }
 }
 
 @Composable
@@ -152,7 +171,6 @@ private fun CompactPlaylistGalleryImpl(
         }
     }
 }
-
 
 @Composable
 private fun Playlist.calculateUiTitle(): String {
