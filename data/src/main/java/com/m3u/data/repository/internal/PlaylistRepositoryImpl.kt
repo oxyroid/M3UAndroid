@@ -20,6 +20,7 @@ import com.m3u.core.util.basic.startsWithAny
 import com.m3u.core.util.belong
 import com.m3u.core.util.readFileContent
 import com.m3u.core.util.readFileName
+import com.m3u.data.api.xtream.toStream
 import com.m3u.data.database.dao.PlaylistDao
 import com.m3u.data.database.dao.StreamDao
 import com.m3u.data.database.model.DataSource

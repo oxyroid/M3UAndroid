@@ -4,16 +4,16 @@ import com.m3u.core.architecture.dispatcher.Dispatcher
 import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.execute
-import com.m3u.data.api.XtreamApi
+import com.m3u.data.api.xtream.XtreamCategory
+import com.m3u.data.api.xtream.XtreamInfo
+import com.m3u.data.api.xtream.XtreamLive
+import com.m3u.data.api.xtream.XtreamSerial
+import com.m3u.data.api.xtream.XtreamVod
+import com.m3u.data.api.xtream.XtreamVodInfo
 import com.m3u.data.database.model.DataSource
-import com.m3u.data.parser.XtreamCategory
-import com.m3u.data.parser.XtreamInfo
 import com.m3u.data.parser.XtreamInput
-import com.m3u.data.parser.XtreamLive
 import com.m3u.data.parser.XtreamOutput
 import com.m3u.data.parser.XtreamParser
-import com.m3u.data.parser.XtreamSerial
-import com.m3u.data.parser.XtreamVod
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.ExperimentalSerializationApi
@@ -32,66 +32,60 @@ internal class XtreamParserImpl @Inject constructor(
         ignoreUnknownKeys = true
     }
 
-    override suspend fun execute(input: XtreamInput): XtreamOutput = withContext(ioDispatcher) {
+    override suspend fun execute(input: XtreamInput): XtreamOutput {
         val (address, username, password, type) = input
         val requiredLives = type == null || type == DataSource.Xtream.TYPE_LIVE
         val requiredVods = type == null || type == DataSource.Xtream.TYPE_VOD
         val requiredSeries = type == null || type == DataSource.Xtream.TYPE_SERIES
-        val infoUrl = XtreamApi.createInfoUrl(address, username, password)
-        val liveStreamsUrl = XtreamApi.createActionUrl(
+        val infoUrl = XtreamParser.createInfoUrl(address, username, password)
+        val liveStreamsUrl = XtreamParser.createActionUrl(
             address,
             username,
             password,
-            XtreamApi.Action.GET_LIVE_STREAMS
+            XtreamParser.Action.GET_LIVE_STREAMS
         )
-        val vodStreamsUrl = XtreamApi.createActionUrl(
+        val vodStreamsUrl = XtreamParser.createActionUrl(
             address,
             username,
             password,
-            XtreamApi.Action.GET_VOD_STREAMS
+            XtreamParser.Action.GET_VOD_STREAMS
         )
-        val seriesStreamsUrl = XtreamApi.createActionUrl(
+        val seriesStreamsUrl = XtreamParser.createActionUrl(
             address,
             username,
             password,
-            XtreamApi.Action.GET_SERIES_STREAMS
+            XtreamParser.Action.GET_SERIES_STREAMS
         )
-        val liveCategoriesUrl = XtreamApi.createActionUrl(
+        val liveCategoriesUrl = XtreamParser.createActionUrl(
             address,
             username,
             password,
-            XtreamApi.Action.GET_LIVE_CATEGORIES
+            XtreamParser.Action.GET_LIVE_CATEGORIES
         )
-        val vodCategoriesUrl = XtreamApi.createActionUrl(
+        val vodCategoriesUrl = XtreamParser.createActionUrl(
             address,
             username,
             password,
-            XtreamApi.Action.GET_VOD_CATEGORIES
+            XtreamParser.Action.GET_VOD_CATEGORIES
         )
-        val serialCategoriesUrl = XtreamApi.createActionUrl(
+        val serialCategoriesUrl = XtreamParser.createActionUrl(
             address,
             username,
             password,
-            XtreamApi.Action.GET_SERIES_CATEGORIES
+            XtreamParser.Action.GET_SERIES_CATEGORIES
         )
-        val info: XtreamInfo = newCall(infoUrl) ?: return@withContext XtreamOutput()
+        val info: XtreamInfo = newCall(infoUrl) ?: return XtreamOutput()
         val allowedOutputFormats = info.userInfo.allowedOutputFormats
 
-        val lives: List<XtreamLive> =
-            if (requiredLives) newCall(liveStreamsUrl) ?: emptyList() else emptyList()
-        val vods: List<XtreamVod> =
-            if (requiredVods) newCall(vodStreamsUrl) ?: emptyList() else emptyList()
-        val series: List<XtreamSerial> =
-            if (requiredSeries) newCall(seriesStreamsUrl) ?: emptyList() else emptyList()
+        val lives: List<XtreamLive> = if (requiredLives) newCall(liveStreamsUrl) ?: emptyList() else emptyList()
+        val vods: List<XtreamVod> = if (requiredVods) newCall(vodStreamsUrl) ?: emptyList() else emptyList()
+        val series: List<XtreamSerial> = if (requiredSeries) newCall(seriesStreamsUrl) ?: emptyList() else emptyList()
 
-        val liveCategories: List<XtreamCategory> =
-            if (requiredLives) newCall(liveCategoriesUrl) ?: emptyList() else emptyList()
-        val vodCategories: List<XtreamCategory> =
-            if (requiredVods) newCall(vodCategoriesUrl) ?: emptyList() else emptyList()
-        val serialCategories: List<XtreamCategory> =
-            if (requiredSeries) newCall(serialCategoriesUrl) ?: emptyList() else emptyList()
+        val liveCategories: List<XtreamCategory> = if (requiredLives) newCall(liveCategoriesUrl) ?: emptyList() else emptyList()
+        val vodCategories: List<XtreamCategory> = if (requiredVods) newCall(vodCategoriesUrl) ?: emptyList() else emptyList()
+        val serialCategories: List<XtreamCategory> = if (requiredSeries) newCall(serialCategoriesUrl) ?: emptyList() else emptyList()
 
-        XtreamOutput(
+        return XtreamOutput(
             lives = lives,
             vods = vods,
             series = series,
@@ -99,6 +93,23 @@ internal class XtreamParserImpl @Inject constructor(
             vodCategories = vodCategories,
             serialCategories = serialCategories,
             allowedOutputFormats = allowedOutputFormats
+        )
+    }
+
+    override suspend fun getVodInfo(
+        input: XtreamInput,
+        vodId: Int
+    ): XtreamVodInfo? {
+        val (address, username, password, type) = input
+        check(type == DataSource.Xtream.TYPE_VOD) { "xtream input type must be `vod`" }
+        return newCall(
+            XtreamParser.createActionUrl(
+                address,
+                username,
+                password,
+                XtreamParser.Action.GET_VOD_INFO,
+                XtreamParser.GET_VOD_INFO_PARAM_VOD_ID to vodId
+            )
         )
     }
 

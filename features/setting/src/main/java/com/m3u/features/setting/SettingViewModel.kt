@@ -17,7 +17,7 @@ import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
 import com.m3u.core.architecture.pref.Pref
 import com.m3u.core.architecture.pref.observeAsFlow
 import com.m3u.core.architecture.viewmodel.BaseViewModel
-import com.m3u.core.util.basic.startsWithAny
+import com.m3u.core.util.basic.startWithHttpScheme
 import com.m3u.data.api.LocalPreparedService
 import com.m3u.data.database.dao.ColorPackDao
 import com.m3u.data.database.model.ColorPack
@@ -111,6 +111,7 @@ class SettingViewModel @Inject constructor(
                 username = input.username
                 password = input.password
             }
+
             else -> {}
         }
     }
@@ -156,7 +157,7 @@ class SettingViewModel @Inject constructor(
         }
         val url = readable.actualUrl
 
-        val addressWithScheme = if (address.startWithScheme()) address
+        val addressWithScheme = if (address.startWithHttpScheme()) address
         else "http://$address"
 
         if (forTv) {
@@ -263,8 +264,6 @@ class SettingViewModel @Inject constructor(
         messager.emit(SettingMessage.Restoring)
     }
 
-    private fun String.startWithScheme(): Boolean =
-        startsWithAny("http://", "https://", ignoreCase = true)
 
     private fun clearAllInputs() {
         writable.update {

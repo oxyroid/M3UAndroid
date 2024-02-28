@@ -59,3 +59,6 @@ fun String.startsWithAny(vararg prefix: String, ignoreCase: Boolean = false): Bo
     }
     return false
 }
+
+fun String.startWithHttpScheme(): Boolean =
+    startsWithAny("http://", "https://", ignoreCase = true)

@@ -1,12 +1,83 @@
 package com.m3u.data.parser
 
 import com.m3u.core.util.basic.startsWithAny
-import com.m3u.data.database.model.Stream
-import kotlinx.serialization.SerialName
+import com.m3u.data.api.xtream.XtreamCategory
+import com.m3u.data.api.xtream.XtreamLive
+import com.m3u.data.api.xtream.XtreamSerial
+import com.m3u.data.api.xtream.XtreamVod
+import com.m3u.data.api.xtream.XtreamVodInfo
+import io.ktor.http.Url
 import kotlinx.serialization.Serializable
+import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 
-interface XtreamParser : Parser<XtreamInput, XtreamOutput>
+interface XtreamParser : Parser<XtreamInput, XtreamOutput> {
+    suspend fun getVodInfo(
+        input: XtreamInput,
+        vodId: Int
+    ): XtreamVodInfo?
+
+    companion object {
+        fun createInfoUrl(
+            address: String,
+            username: String,
+            password: String,
+            vararg params: Pair<String, Any>
+        ): String {
+            val url = Url(address)
+            val builder = HttpUrl.Builder()
+                .scheme("http")
+                .host(url.host)
+                .port(url.port)
+                .addPathSegment("player_api.php")
+                .addQueryParameter("username", username)
+                .addQueryParameter("password", password)
+
+            return params
+                .fold(builder) { prev, (k, v) -> prev.addQueryParameter(k, v.toString()) }
+                .build()
+                .toString()
+        }
+
+        fun createActionUrl(
+            address: String,
+            username: String,
+            password: String,
+            action: Action,
+            vararg params: Pair<String, Any>
+        ): String = createInfoUrl(address, username, password, *params) + "&action=$action"
+
+        val GET_VOD_INFO_PARAM_VOD_ID = "vod_id"
+    }
+
+    @JvmInline
+    @Serializable
+    value class Action(val path: String) {
+        override fun toString(): String = path
+
+        companion object {
+            val GET_LIVE_STREAMS = Action("get_live_streams")
+            val GET_VOD_STREAMS = Action("get_vod_streams")
+            val GET_SERIES_STREAMS = Action("get_series")
+            val GET_LIVE_CATEGORIES = Action("get_live_categories")
+            val GET_VOD_CATEGORIES = Action("get_vod_categories")
+            val GET_SERIES_CATEGORIES = Action("get_series_categories")
+            val GET_VOD_INFO = Action("get_vod_info")
+            fun of(value: String): Action {
+                return when (value) {
+                    GET_LIVE_STREAMS.path -> GET_LIVE_STREAMS
+                    GET_VOD_STREAMS.path -> GET_VOD_STREAMS
+                    GET_SERIES_STREAMS.path -> GET_SERIES_STREAMS
+                    GET_LIVE_CATEGORIES.path -> GET_LIVE_CATEGORIES
+                    GET_VOD_CATEGORIES.path -> GET_VOD_CATEGORIES
+                    GET_SERIES_CATEGORIES.path -> GET_SERIES_CATEGORIES
+                    GET_VOD_INFO.path -> GET_VOD_INFO
+                    else -> throw IllegalArgumentException(value)
+                }
+            }
+        }
+    }
+}
 
 data class XtreamInput(
     val address: String, // scheme + host + port
@@ -69,202 +140,4 @@ data class XtreamOutput(
     val vodCategories: List<XtreamCategory> = emptyList(),
     val serialCategories: List<XtreamCategory> = emptyList(),
     val allowedOutputFormats: List<String> = emptyList()
-)
-
-@Serializable
-data class XtreamInfo(
-    @SerialName("server_info")
-    val serverInfo: ServerInfo,
-    @SerialName("user_info")
-    val userInfo: UserInfo
-) {
-    @Serializable
-    data class ServerInfo(
-        @SerialName("https_port")
-        val httpsPort: String?,
-        @SerialName("port")
-        val port: String?,
-        @SerialName("rtmp_port")
-        val rtmpPort: String?,
-        @SerialName("server_protocol")
-        val serverProtocol: String?,
-        @SerialName("time_now")
-        val timeNow: String?,
-        @SerialName("timestamp_now")
-        val timestampNow: Int?,
-        @SerialName("timezone")
-        val timezone: String?,
-        @SerialName("url")
-        val url: String?
-    )
-
-    @Serializable
-    data class UserInfo(
-        @SerialName("active_cons")
-        val activeCons: String?,
-        @SerialName("allowed_output_formats")
-        val allowedOutputFormats: List<String>,
-        @SerialName("auth")
-        val auth: Int?,
-        @SerialName("created_at")
-        val createdAt: String?,
-        @SerialName("is_trial")
-        val isTrial: String?,
-        @SerialName("max_connections")
-        val maxConnections: String?,
-        @SerialName("message")
-        val message: String?,
-        @SerialName("password")
-        val password: String?,
-        @SerialName("status")
-        val status: String?,
-        @SerialName("username")
-        val username: String?
-    )
-}
-
-@Serializable
-data class XtreamLive(
-    @SerialName("added")
-    val added: String?,
-    @SerialName("category_id")
-    val categoryId: Int?,
-    @SerialName("custom_sid")
-    val customSid: String?,
-    @SerialName("direct_source")
-    val directSource: String?,
-    @SerialName("epg_channel_id")
-    val epgChannelId: String?,
-    @SerialName("name")
-    val name: String?,
-    @SerialName("num")
-    val num: Int?,
-    @SerialName("stream_icon")
-    val streamIcon: String?,
-    @SerialName("stream_id")
-    val streamId: Int?,
-    @SerialName("stream_type")
-    val streamType: String?,
-    @SerialName("tv_archive")
-    val tvArchive: Int?,
-    @SerialName("tv_archive_duration")
-    val tvArchiveDuration: Int?
-)
-
-@Serializable
-data class XtreamVod(
-    @SerialName("added")
-    val added: String?,
-    @SerialName("category_id")
-    val categoryId: Int?,
-    @SerialName("container_extension")
-    val containerExtension: String?,
-    @SerialName("custom_sid")
-    val customSid: String?,
-    @SerialName("direct_source")
-    val directSource: String?,
-    @SerialName("name")
-    val name: String?,
-    @SerialName("num")
-    val num: Int?,
-    @SerialName("rating")
-    val rating: String?,
-    @SerialName("rating_5based")
-    val rating5based: Double?,
-    @SerialName("stream_icon")
-    val streamIcon: String?,
-    @SerialName("stream_id")
-    val streamId: Int?,
-    @SerialName("stream_type")
-    val streamType: String?
-)
-
-@Serializable
-data class XtreamSerial(
-    @SerialName("backdrop_path")
-    val backdropPath: List<String>,
-    @SerialName("cast")
-    val cast: String?,
-    @SerialName("category_id")
-    val categoryId: Int?,
-    @SerialName("cover")
-    val cover: String?,
-    @SerialName("director")
-    val director: String?,
-    @SerialName("episode_run_time")
-    val episodeRunTime: String?,
-    @SerialName("genre")
-    val genre: String?,
-    @SerialName("last_modified")
-    val lastModified: String?,
-    @SerialName("name")
-    val name: String?,
-    @SerialName("num")
-    val num: Int?,
-    @SerialName("plot")
-    val plot: String?,
-    @SerialName("rating")
-    val rating: String?,
-    @SerialName("rating_5based")
-    val rating5based: Int?,
-    @SerialName("releaseDate")
-    val releaseDate: String?,
-    @SerialName("series_id")
-    val seriesId: Int?,
-    @SerialName("youtube_trailer")
-    val youtubeTrailer: String?
-)
-
-fun XtreamLive.toStream(
-    address: String,
-    username: String,
-    password: String,
-    allowedOutputFormats: List<String>,
-    playlistUrl: String,
-    category: String
-): Stream = Stream(
-    url = "$address/$streamType/$username/$password/$streamId.${allowedOutputFormats.first()}",
-    group = category,
-    title = name.orEmpty(),
-    cover = streamIcon,
-    playlistUrl = playlistUrl
-)
-
-fun XtreamVod.toStream(
-    address: String,
-    username: String,
-    password: String,
-    playlistUrl: String,
-    category: String
-): Stream = Stream(
-    url = "$address/movie/$username/$password/$streamId.${containerExtension}",
-    group = category,
-    title = name.orEmpty(),
-    cover = streamIcon,
-    playlistUrl = playlistUrl
-)
-
-fun XtreamSerial.toStream(
-    address: String,
-    username: String,
-    password: String,
-    playlistUrl: String,
-    category: String,
-    containerExtension: String
-): Stream = Stream(
-    url = "$address/series/$username/$password/$seriesId.$containerExtension",
-    group = category,
-    title = name.orEmpty(),
-    cover = cover,
-    playlistUrl = playlistUrl,
-)
-
-@Serializable
-data class XtreamCategory(
-    @SerialName("category_id")
-    val categoryId: Int?,
-    @SerialName("category_name")
-    val categoryName: String?,
-    @SerialName("parent_id")
-    val parentId: Int?
 )

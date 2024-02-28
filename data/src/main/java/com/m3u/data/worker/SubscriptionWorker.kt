@@ -9,6 +9,7 @@ import androidx.work.CoroutineWorker
 import androidx.work.ForegroundInfo
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
+import com.m3u.core.architecture.logger.Logger
 import com.m3u.data.R
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.parser.XtreamInput
@@ -25,7 +26,8 @@ class SubscriptionWorker @AssistedInject constructor(
     @Assisted params: WorkerParameters,
     private val playlistRepository: PlaylistRepository,
     private val manager: NotificationManager,
-    private val messager: Messager
+    private val messager: Messager,
+    private val logger: Logger
 ) : CoroutineWorker(context, params) {
     private val dataSource = inputData
         .getString(INPUT_STRING_DATA_SOURCE_VALUE)
@@ -75,7 +77,7 @@ class SubscriptionWorker @AssistedInject constructor(
                         playlistRepository.xtream(title, address, username, password, type)
                         Result.success()
                     } catch (e: Exception) {
-                        messager.emit(e.message.orEmpty())
+                        logger.log(e)
                         Result.failure(workDataOf("message" to e.message))
                     }
                 }
