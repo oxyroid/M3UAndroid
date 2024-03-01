@@ -37,6 +37,7 @@ android {
         }
         create("liteCodec") {
             dimension = "codec"
+            versionNameSuffix = "-lite"
         }
     }
     buildTypes {

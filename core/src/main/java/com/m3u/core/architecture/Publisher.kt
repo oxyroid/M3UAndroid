@@ -3,13 +3,13 @@ package com.m3u.core.architecture
 import kotlinx.serialization.Serializable
 
 interface Publisher {
-    val author: String get() = "realOxy"
     val repository: String get() = "M3UAndroid"
     val applicationId: String
     val versionName: String
     val versionCode: Int
     val debug: Boolean
     val snapshot: Boolean
+    val lite: Boolean
     val model: String
     val abi: Abi
     val isTelevision: Boolean

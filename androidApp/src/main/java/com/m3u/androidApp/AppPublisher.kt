@@ -12,7 +12,8 @@ class AppPublisher @Inject constructor(private val application: Application) : P
     override val versionName: String = BuildConfig.VERSION_NAME
     override val versionCode: Int = BuildConfig.VERSION_CODE
     override val debug: Boolean = BuildConfig.DEBUG
-    override val snapshot: Boolean = "snapshot" in BuildConfig.FLAVOR
+    override val snapshot: Boolean = BuildConfig.FLAVOR.contains("snapshotChannel", true)
+    override val lite: Boolean = BuildConfig.FLAVOR.contains("liteCodec" , true)
     override val model: String = Build.MODEL
     override val abi: Abi = Abi.of(Build.SUPPORTED_ABIS[0])
     override val isTelevision: Boolean
