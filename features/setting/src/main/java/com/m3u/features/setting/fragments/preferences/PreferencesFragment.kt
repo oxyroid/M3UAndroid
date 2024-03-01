@@ -14,11 +14,11 @@ import androidx.tv.foundation.lazy.list.TvLazyColumn
 import com.m3u.material.ktx.isTelevision
 import com.m3u.material.ktx.plus
 import com.m3u.material.model.LocalSpacing
-import com.m3u.ui.Param
+import com.m3u.ui.Settings
 
 @Composable
 internal fun PreferencesFragment(
-    fragment: Param.Setting,
+    fragment: Settings,
     contentPadding: PaddingValues,
     versionName: String,
     versionCode: Int,

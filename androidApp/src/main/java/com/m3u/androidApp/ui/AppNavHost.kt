@@ -21,9 +21,9 @@ import com.m3u.features.playlist.navigation.playlistTvScreen
 import com.m3u.features.stream.PlayerActivity
 import com.m3u.material.ktx.isTelevision
 import com.m3u.ui.Destination
-import com.m3u.ui.Param
 import com.m3u.ui.EventBus
 import com.m3u.ui.LocalNavController
+import com.m3u.ui.Settings
 
 @Composable
 fun AppNavHost(
@@ -67,7 +67,7 @@ fun AppNavHost(
             currentDestination = currentDestination,
             contentPadding = contentPadding,
             navigateToPlaylist = { playlist ->
-                navController.navigateToPlaylist(playlist.url, tv, playlist.type)
+                navController.navigateToPlaylist(playlist.url, tv)
             },
             navigateToStream = {
                 if (pref.zappingMode && PlayerActivity.isInPipMode) return@rootGraph
@@ -86,7 +86,7 @@ fun AppNavHost(
             },
             navigateToSettingPlaylistManagement = {
                 navigateToRoot(Destination.Root.Setting)
-                EventBus.setting = eventOf(Param.Setting.Playlists)
+                EventBus.settings = eventOf(Settings.Playlists)
             }
         )
 

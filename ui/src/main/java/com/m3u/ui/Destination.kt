@@ -53,17 +53,13 @@ sealed interface Destination {
 }
 
 @Immutable
-sealed interface Param {
+sealed interface Settings {
+    @Immutable
+    data object Default : Settings
 
     @Immutable
-    sealed interface Setting {
-        @Immutable
-        data object Default : Setting
+    data object Playlists : Settings
 
-        @Immutable
-        data object Playlists : Setting
-
-        @Immutable
-        data object Appearance : Setting
-    }
+    @Immutable
+    data object Appearance : Settings
 }

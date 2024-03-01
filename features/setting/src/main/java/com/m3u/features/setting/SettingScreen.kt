@@ -54,7 +54,7 @@ import com.m3u.material.ktx.isTelevision
 import com.m3u.material.model.LocalHazeState
 import com.m3u.ui.EventBus
 import com.m3u.ui.EventHandler
-import com.m3u.ui.Param
+import com.m3u.ui.Settings
 import com.m3u.ui.helper.LocalHelper
 import dev.chrisbanes.haze.HazeDefaults
 import dev.chrisbanes.haze.haze
@@ -206,26 +206,26 @@ private fun SettingScreen(
 
     val colorArgb = pref.colorArgb
 
-    var fragment: Param.Setting by remember {
-        mutableStateOf(Param.Setting.Default)
+    var fragment: Settings by remember {
+        mutableStateOf(Settings.Default)
     }
 
-    EventHandler(EventBus.setting) {
+    EventHandler(EventBus.settings) {
         fragment = it
     }
 
     LaunchedEffect(fragment, defaultTitle, playlistTitle, appearanceTitle) {
         helper.title = when (fragment) {
-            Param.Setting.Default -> defaultTitle
-            Param.Setting.Playlists -> playlistTitle
-            Param.Setting.Appearance -> appearanceTitle
+            Settings.Default -> defaultTitle
+            Settings.Playlists -> playlistTitle
+            Settings.Appearance -> appearanceTitle
         }.title()
     }
 
     val currentPaneScaffoldRole by remember {
         derivedStateOf {
             when (fragment) {
-                Param.Setting.Default -> ListDetailPaneScaffoldRole.List
+                Settings.Default -> ListDetailPaneScaffoldRole.List
                 else -> ListDetailPaneScaffoldRole.Detail
             }
         }
@@ -246,20 +246,20 @@ private fun SettingScreen(
                 versionName = versionName,
                 versionCode = versionCode,
                 navigateToPlaylistManagement = {
-                    fragment = Param.Setting.Playlists
+                    fragment = Settings.Playlists
                 },
                 navigateToThemeSelector = {
-                    fragment = Param.Setting.Appearance
+                    fragment = Settings.Appearance
                 },
                 navigateToAbout = navigateToAbout,
                 modifier = Modifier.fillMaxSize()
             )
         },
         detailPane = {
-            if (fragment != Param.Setting.Default) {
+            if (fragment != Settings.Default) {
                 AnimatedPane(Modifier) {
                     when (fragment) {
-                        Param.Setting.Playlists -> {
+                        Settings.Playlists -> {
                             SubscriptionsFragment(
                                 contentPadding = contentPadding,
                                 title = title,
@@ -291,7 +291,7 @@ private fun SettingScreen(
                             )
                         }
 
-                        Param.Setting.Appearance -> {
+                        Settings.Appearance -> {
                             AppearanceFragment(
                                 packs = packs,
                                 colorArgb = colorArgb,
@@ -313,9 +313,8 @@ private fun SettingScreen(
             )
             .testTag("feature:setting")
     )
-
-    BackHandler(fragment != Param.Setting.Default) {
-        fragment = Param.Setting.Default
+    BackHandler(fragment != Settings.Default) {
+        fragment = Settings.Default
     }
 }
 
