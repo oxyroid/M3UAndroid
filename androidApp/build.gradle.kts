@@ -20,16 +20,23 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         testInstrumentationRunnerArguments["androidx.benchmark.profiling.mode"] = "MethodTracing"
     }
-    flavorDimensions += "version"
+    flavorDimensions += setOf("channel", "codec")
     productFlavors {
-        create("full") {
-            dimension = "version"
+        create("stableChannel") {
+            dimension = "channel"
             isDefault = true
         }
-        create("snapshot") {
-            dimension = "version"
+        create("snapshotChannel") {
+            dimension = "channel"
             versionNameSuffix = "-snapshot"
             applicationIdSuffix = ".snapshot"
+        }
+        create("richCodec") {
+            dimension = "codec"
+            isDefault = true
+        }
+        create("liteCodec") {
+            dimension = "codec"
         }
     }
     buildTypes {
@@ -59,12 +66,17 @@ android {
                 .keys
                 .find { it.contains("testInstrumentationRunnerArguments") } != null
 
-            val snapshot = gradle
+            val snapshotChannel = gradle
                 .startParameter
                 .taskNames
-                .find { it.contains("snapshot", ignoreCase = true) } != null
+                .find { it.contains("snapshotChannel", ignoreCase = true) } != null
 
-            isEnable = !benchmark && !snapshot
+            val richCodec = gradle
+                .startParameter
+                .taskNames
+                .find { it.contains("richCodec", ignoreCase = true) } != null
+
+            isEnable = !benchmark && !snapshotChannel && richCodec
 
             reset()
             include("x86", "x86_64", "arm64-v8a", "armeabi-v7a")

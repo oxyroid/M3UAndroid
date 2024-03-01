@@ -27,13 +27,19 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
-    flavorDimensions += "version"
+    flavorDimensions += setOf("channel", "codec")
     productFlavors {
-        create("full") {
-            dimension = "version"
+        create("stableChannel") {
+            dimension = "channel"
         }
-        create("snapshot") {
-            dimension = "version"
+        create("snapshotChannel") {
+            dimension = "channel"
+        }
+        create("richCodec") {
+            dimension = "codec"
+        }
+        create("liteCodec") {
+            dimension = "codec"
         }
     }
 

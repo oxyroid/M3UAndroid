@@ -45,6 +45,16 @@ android {
 dependencies {
     implementation(project(":core"))
 
+    val richCodec = gradle
+        .startParameter
+        .taskNames
+        .find { it.contains("richCodec", ignoreCase = true) } != null
+    if (richCodec) {
+        implementation(project(":codec:rich"))
+    } else {
+        implementation(project(":codec:lite"))
+    }
+
     implementation(libs.androidx.core.core.ktx)
     implementation(libs.androidx.appcompat.appcompat)
 
@@ -76,8 +86,6 @@ dependencies {
     implementation(libs.androidx.work.work.runtime.ktx)
     implementation(libs.androidx.hilt.hilt.work)
     ksp(libs.androidx.hilt.hilt.compiler)
-
-    implementation(libs.nextlib.media3ext)
 
     implementation(libs.ktor.server.netty)
     implementation(libs.ktor.server.websockets)
