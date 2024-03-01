@@ -152,11 +152,11 @@ fun XtreamLive.toStream(
     address: String,
     username: String,
     password: String,
-    allowedOutputFormats: List<String>,
     playlistUrl: String,
-    category: String
+    category: String,
+    containerExtension: String
 ): Stream = Stream(
-    url = "$address/$streamType/$username/$password/$streamId.${allowedOutputFormats.first()}",
+    url = "$address/$streamType/$username/$password/$streamId.$containerExtension",
     group = category,
     title = name.orEmpty(),
     cover = streamIcon,
@@ -170,13 +170,15 @@ fun XtreamVod.toStream(
     playlistUrl: String,
     category: String
 ): Stream = Stream(
-    url = "$address/movie/$username/$password/$streamId.${containerExtension}",
+    url = "$address/$streamType/$username/$password/$streamId.${containerExtension}",
     group = category,
     title = name.orEmpty(),
     cover = streamIcon,
     playlistUrl = playlistUrl
 )
 
+// Url cannot be played directly that
+// you should get the container extension by get serial info api.
 fun XtreamSerial.toStream(
     address: String,
     username: String,

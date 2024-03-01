@@ -47,7 +47,7 @@ interface XtreamParser : Parser<XtreamInput, XtreamOutput> {
             vararg params: Pair<String, Any>
         ): String = createInfoUrl(address, username, password, *params) + "&action=$action"
 
-        val GET_VOD_INFO_PARAM_VOD_ID = "vod_id"
+        const val GET_VOD_INFO_PARAM_VOD_ID = "vod_id"
     }
 
     @JvmInline
@@ -62,7 +62,13 @@ interface XtreamParser : Parser<XtreamInput, XtreamOutput> {
             val GET_LIVE_CATEGORIES = Action("get_live_categories")
             val GET_VOD_CATEGORIES = Action("get_vod_categories")
             val GET_SERIES_CATEGORIES = Action("get_series_categories")
+
             val GET_VOD_INFO = Action("get_vod_info")
+
+            // series episode url
+            // http://{host}:{port}/series/{username}/{password}/{episode_id}.{episode_container_extension}
+            val GET_SERIES_INFO = Action("get_series_info")
+
             fun of(value: String): Action {
                 return when (value) {
                     GET_LIVE_STREAMS.path -> GET_LIVE_STREAMS
@@ -72,6 +78,7 @@ interface XtreamParser : Parser<XtreamInput, XtreamOutput> {
                     GET_VOD_CATEGORIES.path -> GET_VOD_CATEGORIES
                     GET_SERIES_CATEGORIES.path -> GET_SERIES_CATEGORIES
                     GET_VOD_INFO.path -> GET_VOD_INFO
+                    GET_SERIES_INFO.path -> GET_SERIES_INFO
                     else -> throw IllegalArgumentException(value)
                 }
             }
@@ -79,6 +86,7 @@ interface XtreamParser : Parser<XtreamInput, XtreamOutput> {
     }
 }
 
+// playlist or stream
 data class XtreamInput(
     val address: String, // scheme + host + port
     val username: String,
@@ -87,7 +95,7 @@ data class XtreamInput(
     val type: String? = null // null means all
 ) {
     companion object {
-        fun decodeFromPlaylistUrl(url: String): XtreamInput {
+        fun decodeFromUrl(url: String): XtreamInput {
             val hasScheme = url.startsWithAny("http:", "https:", ignoreCase = true)
             val httpUrl = if (hasScheme) url.toHttpUrl() else "http://$url".toHttpUrl()
             val username = httpUrl.queryParameter("username").orEmpty()
@@ -100,32 +108,20 @@ data class XtreamInput(
             )
         }
 
-        fun decodeFromUrl(url: String): XtreamInput {
-            val hasScheme = url.startsWithAny("http:", "https:", ignoreCase = true)
-            val httpUrl = if (hasScheme) url.toHttpUrl() else "http://$url".toHttpUrl()
-            val username = httpUrl.pathSegments.getOrNull(1).orEmpty()
-            val password = httpUrl.pathSegments.getOrNull(2).orEmpty()
-            return XtreamInput(
-                address = "${httpUrl.scheme}://${httpUrl.host}:${httpUrl.port}",
-                username = username,
-                password = password,
-                type = httpUrl.queryParameter("type")
-            )
-        }
-
-        fun encodeToUrl(input: XtreamInput): String {
-            return with(input) {
-                buildString {
-                    append("$address/player_api.php?username=$username&password=$password&")
-                    if (type != null) {
-                        append("type=$type")
-                    }
-                }
+        fun encodeToUrl(input: XtreamInput): String = with(input) {
+            val url = Url(address)
+            var builder = HttpUrl.Builder()
+                .scheme("http")
+                .host(url.host)
+                .port(url.port)
+                .addPathSegment("player_api.php")
+                .addQueryParameter("username", username)
+                .addQueryParameter("password", password)
+            if (type != null) {
+                builder = builder.addQueryParameter("type", type)
             }
+            builder.build().toString()
         }
-
-        fun decodeFromPlaylistUrlOrNull(url: String): XtreamInput? =
-            runCatching { decodeFromPlaylistUrl(url) }.getOrNull()
 
         fun decodeFromUrlOrNull(url: String): XtreamInput? =
             runCatching { decodeFromUrl(url) }.getOrNull()

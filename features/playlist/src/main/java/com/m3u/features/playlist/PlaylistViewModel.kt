@@ -73,8 +73,6 @@ class PlaylistViewModel @Inject constructor(
 ) {
     internal val playlistUrl: StateFlow<String> = savedStateHandle
         .getStateFlow(PlaylistNavigation.TYPE_URL, "")
-    internal val dataSourceType: StateFlow<String> = savedStateHandle
-        .getStateFlow(PlaylistNavigation.TYPE_DATA_SOURCE_TYPE, "")
 
     override fun onEvent(event: PlaylistEvent) {
         when (event) {
