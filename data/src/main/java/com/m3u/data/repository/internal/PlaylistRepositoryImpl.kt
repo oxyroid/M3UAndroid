@@ -146,9 +146,9 @@ class PlaylistRepositoryImpl @Inject constructor(
                     address = address,
                     username = username,
                     password = password,
-                    allowedOutputFormats = allowedOutputFormats,
                     playlistUrl = playlist.url,
-                    category = liveCategories.find { it.categoryId == current.categoryId }?.categoryName.orEmpty()
+                    category = liveCategories.find { it.categoryId == current.categoryId }?.categoryName.orEmpty(),
+                    containerExtension = allowedOutputFormats.first()
                 )
             }
 
@@ -196,7 +196,8 @@ class PlaylistRepositoryImpl @Inject constructor(
                     password = password,
                     playlistUrl = playlist.url,
                     category = serialCategories.find { it.categoryId == current.categoryId }?.categoryName.orEmpty(),
-                    containerExtension = allowedOutputFormats.first()
+                    // FIXME
+                    containerExtension = "mkv"
                 )
             }
             playlistDao.insert(playlist)
@@ -231,7 +232,7 @@ class PlaylistRepositoryImpl @Inject constructor(
             }
 
             DataSource.Xtream -> {
-                val input = XtreamInput.decodeFromPlaylistUrlOrNull(playlist.url) ?: return@sandBox
+                val input = XtreamInput.decodeFromUrlOrNull(playlist.url) ?: return@sandBox
                 workManager.cancelAllWorkByTag(url)
                 workManager.cancelAllWorkByTag(input.address)
                 val request = OneTimeWorkRequestBuilder<SubscriptionWorker>()

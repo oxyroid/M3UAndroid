@@ -21,32 +21,30 @@ private const val PLAYLIST_TV_ROUTE_PATH = "playlist_tv_route"
 
 object PlaylistNavigation {
     internal const val TYPE_URL = "url"
-    internal const val TYPE_DATA_SOURCE_TYPE = "data_source_type"
 
     const val PLAYLIST_ROUTE =
-        "$PLAYLIST_ROUTE_PATH?$TYPE_URL={$TYPE_URL}&$TYPE_DATA_SOURCE_TYPE={$TYPE_DATA_SOURCE_TYPE}"
+        "$PLAYLIST_ROUTE_PATH?$TYPE_URL={$TYPE_URL}"
 
-    internal fun createPlaylistRoute(url: String, type: String? = null): String {
-        return "$PLAYLIST_ROUTE_PATH?$TYPE_URL=$url&$TYPE_DATA_SOURCE_TYPE=$type"
+    internal fun createPlaylistRoute(url: String): String {
+        return "$PLAYLIST_ROUTE_PATH?$TYPE_URL=$url"
     }
 
     internal const val PLAYLIST_TV_ROUTE =
-        "$PLAYLIST_TV_ROUTE_PATH?$TYPE_URL={$TYPE_URL}&$TYPE_DATA_SOURCE_TYPE={$TYPE_DATA_SOURCE_TYPE}"
+        "$PLAYLIST_TV_ROUTE_PATH?$TYPE_URL={$TYPE_URL}"
 
-    internal fun createPlaylistTvRoute(url: String, type: String? = null): String {
-        return "$PLAYLIST_TV_ROUTE_PATH?${TYPE_URL}=$url&$TYPE_DATA_SOURCE_TYPE=$type"
+    internal fun createPlaylistTvRoute(url: String): String {
+        return "$PLAYLIST_TV_ROUTE_PATH?${TYPE_URL}=$url"
     }
 }
 
 fun NavController.navigateToPlaylist(
     playlistUrl: String,
     tv: Boolean = false,
-    type: String? = null,
     navOptions: NavOptions? = null,
 ) {
     val encodedUrl = Uri.encode(playlistUrl)
-    val route = if (tv) PlaylistNavigation.createPlaylistTvRoute(encodedUrl, type)
-    else PlaylistNavigation.createPlaylistRoute(encodedUrl, type)
+    val route = if (tv) PlaylistNavigation.createPlaylistTvRoute(encodedUrl)
+    else PlaylistNavigation.createPlaylistRoute(encodedUrl)
     this.navigate(route, navOptions)
 }
 

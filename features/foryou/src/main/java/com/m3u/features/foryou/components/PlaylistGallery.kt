@@ -91,7 +91,8 @@ private fun PlaylistGalleryImpl(
         ) { detail ->
             PlaylistItem(
                 label = detail.playlist.calculateUiTitle(),
-                type = detail.playlist.typeWithSource,
+                type = detail.playlist.type,
+                typeWithSource = detail.playlist.typeWithSource,
                 number = detail.count,
                 local = detail.playlist.fromLocal,
                 modifier = Modifier.fillMaxWidth(),
@@ -129,7 +130,8 @@ private fun TvPlaylistGalleryImpl(
         ) { detail ->
             PlaylistItem(
                 label = detail.playlist.calculateUiTitle(),
-                type = detail.playlist.typeWithSource,
+                type = detail.playlist.type,
+                typeWithSource = detail.playlist.typeWithSource,
                 number = detail.count,
                 local = detail.playlist.fromLocal,
                 modifier = Modifier.fillMaxWidth(),
@@ -161,7 +163,8 @@ private fun CompactPlaylistGalleryImpl(
         ) { detail ->
             PlaylistItem(
                 label = detail.playlist.calculateUiTitle(),
-                type = detail.playlist.typeWithSource,
+                type = detail.playlist.type,
+                typeWithSource = detail.playlist.typeWithSource,
                 number = detail.count,
                 local = detail.playlist.fromLocal,
                 modifier = Modifier.fillMaxWidth(),

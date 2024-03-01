@@ -295,11 +295,12 @@ internal fun StreamFragment(
                                 .weight(1f)
                         ) {
                             Text(
-                                text = playlistTitle.trim(),
+                                text = playlistTitle.trim().uppercase(),
                                 style = MaterialTheme.typography.titleSmall,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,
-                                modifier = Modifier.basicMarquee()
+                                modifier = Modifier.basicMarquee(),
+                                color = LocalContentColor.current.copy(0.54f)
                             )
                             Text(
                                 text = title.trim(),

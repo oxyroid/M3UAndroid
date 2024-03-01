@@ -3,6 +3,7 @@ package com.m3u.features.foryou.components
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -30,9 +31,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.m3u.data.database.model.DataSource
 import com.m3u.material.components.Icon
 import com.m3u.material.components.OuterRow
 import com.m3u.material.components.TextBadge
+import com.m3u.material.components.UnstableBadge
+import com.m3u.material.components.UnstableValue
 import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.UiMode
 import com.m3u.ui.currentUiMode
@@ -43,6 +47,7 @@ import androidx.tv.material3.MaterialTheme as TvMaterialTheme
 internal fun PlaylistItem(
     label: String,
     type: String?,
+    typeWithSource: String?,
     number: Int,
     local: Boolean,
     onClick: () -> Unit,
@@ -54,6 +59,7 @@ internal fun PlaylistItem(
             PlaylistItemImpl(
                 label = label,
                 type = type,
+                typeWithSource = typeWithSource,
                 number = number,
                 local = local,
                 onClick = onClick,
@@ -66,6 +72,7 @@ internal fun PlaylistItem(
             TvPlaylistItemImpl(
                 label = label,
                 type = type,
+                typeWithSource = typeWithSource,
                 number = number,
                 local = local,
                 onClick = onClick,
@@ -77,7 +84,7 @@ internal fun PlaylistItem(
         UiMode.Compat -> {
             CompactPlaylistItemImpl(
                 label = label,
-                type = type,
+                type = typeWithSource,
                 number = number,
                 local = local,
                 onClick = onClick,
@@ -92,6 +99,7 @@ internal fun PlaylistItem(
 private fun PlaylistItemImpl(
     label: String,
     type: String?,
+    typeWithSource: String?,
     number: Int,
     local: Boolean,
     onClick: () -> Unit,
@@ -124,7 +132,10 @@ private fun PlaylistItemImpl(
                     tint = currentContentColor
                 )
             }
-            Column(Modifier.alignByBaseline()) {
+            Column(
+                verticalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier.alignByBaseline()
+            ) {
                 Text(
                     text = label,
                     style = MaterialTheme.typography.bodyMedium.copy(
@@ -134,9 +145,9 @@ private fun PlaylistItemImpl(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
-                if (type != null) {
+                if (typeWithSource != null) {
                     Text(
-                        text = type.uppercase(),
+                        text = typeWithSource.uppercase(),
                         style = MaterialTheme.typography.bodySmall.copy(
                             letterSpacing = 1.sp,
                             baselineShift = BaselineShift.Subscript,
@@ -157,26 +168,34 @@ private fun PlaylistItemImpl(
                 label = "playlist-item-on-primary"
             )
             Spacer(Modifier.weight(1f))
-            Box(
-                modifier = Modifier
-                    .clip(CircleShape)
-                    .background(currentPrimaryColor),
-                contentAlignment = Alignment.Center
+            Column(
+                verticalArrangement = Arrangement.SpaceBetween,
+                horizontalAlignment = Alignment.End
             ) {
-                Text(
-                    color = currentOnPrimaryColor,
-                    text = number.toString(),
-                    style = MaterialTheme.typography.bodyMedium,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.padding(
-                        start = spacing.small,
-                        end = spacing.small,
-                        bottom = 2.dp,
-                    ),
-                    softWrap = false,
-                    textAlign = TextAlign.Center
-                )
+                Box(
+                    modifier = Modifier
+                        .clip(CircleShape)
+                        .background(currentPrimaryColor),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        color = currentOnPrimaryColor,
+                        text = number.toString(),
+                        style = MaterialTheme.typography.bodyMedium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.padding(
+                            start = spacing.small,
+                            end = spacing.small,
+                            bottom = 2.dp,
+                        ),
+                        softWrap = false,
+                        textAlign = TextAlign.Center
+                    )
+                }
+                if (type == DataSource.Xtream.TYPE_SERIES) {
+                    UnstableBadge(UnstableValue.EXPERIMENTAL)
+                }
             }
         }
     }
@@ -186,6 +205,7 @@ private fun PlaylistItemImpl(
 private fun TvPlaylistItemImpl(
     label: String,
     type: String?,
+    typeWithSource: String?,
     number: Int,
     local: Boolean,
     onClick: () -> Unit,
@@ -221,12 +241,15 @@ private fun TvPlaylistItemImpl(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
-                if (type != null) {
+                if (typeWithSource != null) {
                     androidx.tv.material3.Text(
-                        text = type,
+                        text = typeWithSource,
                         style = TvMaterialTheme.typography.bodySmall,
                         color = androidx.tv.material3.LocalContentColor.current.copy(0.45f)
                     )
+                    if (type == DataSource.Xtream.TYPE_SERIES) {
+                        UnstableBadge(UnstableValue.EXPERIMENTAL)
+                    }
                 }
             }
 

@@ -40,7 +40,6 @@ import com.google.accompanist.permissions.rememberPermissionState
 import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.core.util.basic.title
 import com.m3u.core.wrapper.Event
-import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Stream
 import com.m3u.features.playlist.internal.PlaylistScreenImpl
 import com.m3u.features.playlist.internal.TvPlaylistScreenImpl
@@ -79,7 +78,6 @@ internal fun PlaylistRoute(
     val playlist by viewModel.playlist.collectAsStateWithLifecycle()
     val channels by viewModel.channels.collectAsStateWithLifecycle()
     val refreshing by viewModel.subscribingOrRefreshing.collectAsStateWithLifecycle()
-    val dataSourceType by viewModel.dataSourceType.collectAsStateWithLifecycle()
 
     val sorts = viewModel.sorts
     val sort by viewModel.sort.collectAsStateWithLifecycle()
@@ -124,14 +122,8 @@ internal fun PlaylistRoute(
             sort = sort,
             onSort = { viewModel.sort(it) },
             onStream = { stream ->
-                when (dataSourceType) {
-                    DataSource.Xtream.TYPE_SERIES -> {}
-                    DataSource.Xtream.TYPE_VOD -> {}
-                    else -> {
-                        helper.play(stream.url)
-                        navigateToStream()
-                    }
-                }
+                helper.play(stream.url)
+                navigateToStream()
             },
             onScrollUp = { viewModel.onEvent(PlaylistEvent.ScrollUp) },
             onRefresh = { viewModel.onEvent(PlaylistEvent.Refresh) },
