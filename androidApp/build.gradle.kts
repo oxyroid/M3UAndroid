@@ -22,10 +22,12 @@ android {
     }
     flavorDimensions += setOf("channel", "codec")
     productFlavors {
+        // Official
         create("stableChannel") {
             dimension = "channel"
             isDefault = true
         }
+        // Github Workflow
         create("snapshotChannel") {
             dimension = "channel"
             versionNameSuffix = "-snapshot"
