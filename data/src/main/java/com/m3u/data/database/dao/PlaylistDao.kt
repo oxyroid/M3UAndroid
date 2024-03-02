@@ -74,6 +74,7 @@ interface PlaylistDao {
         )
     }
 
+    @Transaction
     suspend fun hideOrUnhideGroup(url: String, group: String) {
         val playlist = getByUrl(url) ?: return
         val prev = playlist.hiddenGroups
