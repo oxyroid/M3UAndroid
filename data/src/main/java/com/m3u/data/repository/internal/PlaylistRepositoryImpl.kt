@@ -101,7 +101,7 @@ class PlaylistRepositoryImpl @Inject constructor(
                 }
 
                 val playlist = Playlist(title, actualUrl)
-                playlistDao.insert(playlist)
+                playlistDao.insertOrReplace(playlist)
 
                 compareAndUpdate(
                     expect = streamDao.getByPlaylistUrl(url),
@@ -152,7 +152,7 @@ class PlaylistRepositoryImpl @Inject constructor(
                 )
             }
 
-            playlistDao.insert(playlist)
+            playlistDao.insertOrReplace(playlist)
             compareAndUpdate(
                 streamDao.getByPlaylistUrl(playlist.url),
                 streams
@@ -175,7 +175,7 @@ class PlaylistRepositoryImpl @Inject constructor(
                 )
             }
 
-            playlistDao.insert(playlist)
+            playlistDao.insertOrReplace(playlist)
             compareAndUpdate(
                 streamDao.getByPlaylistUrl(playlist.url),
                 streams
@@ -200,7 +200,7 @@ class PlaylistRepositoryImpl @Inject constructor(
                     containerExtension = "mkv"
                 )
             }
-            playlistDao.insert(playlist)
+            playlistDao.insertOrReplace(playlist)
             compareAndUpdate(
                 streamDao.getByPlaylistUrl(playlist.url),
                 streams
@@ -317,10 +317,21 @@ class PlaylistRepositoryImpl @Inject constructor(
                         else -> {}
                     }
                 }
-                playlistDao.insertAll(*playlists.toTypedArray())
+                playlistDao.insertOrReplaceAll(*playlists.toTypedArray())
                 streamDao.insertAll(*streams.toTypedArray())
             }
         }
+    }
+
+    override suspend fun pinOrUnpinGroup(url: String, group: String) = logger.sandBox {
+        playlistDao.updatePinnedGroups(url) { prev ->
+            if (group in prev) prev - group
+            else prev + group
+        }
+    }
+
+    override suspend fun hideOrUnhideGroup(url: String, group: String) = logger.sandBox {
+        playlistDao.hideOrUnhideGroup(url, group)
     }
 
     private val mutex = Mutex()

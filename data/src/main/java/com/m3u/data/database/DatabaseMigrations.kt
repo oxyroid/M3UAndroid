@@ -39,4 +39,10 @@ internal object DatabaseMigrations {
         toColumnName = "hidden"
     )
     class AutoMigration8To9 : AutoMigrationSpec
+
+    val MIGRATION_10_11 = object : Migration(10, 11) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE playlists ADD COLUMN hidden_groups TEXT NOT NULL DEFAULT '[]'")
+        }
+    }
 }

@@ -48,7 +48,7 @@ internal fun TvStreamGallery(
             items(groups) { channel ->
                 if (multiCatalogs) {
                     Text(
-                        text = channel.title,
+                        text = channel.name,
                         style = MaterialTheme.typography.headlineMedium,
                         modifier = Modifier.padding(spacing.medium)
                     )

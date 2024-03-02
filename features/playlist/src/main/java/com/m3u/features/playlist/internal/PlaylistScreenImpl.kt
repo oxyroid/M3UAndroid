@@ -77,6 +77,9 @@ import kotlinx.coroutines.launch
 @InternalComposeApi
 internal fun PlaylistScreenImpl(
     groups: ImmutableList<Group>,
+    pinnedGroups: ImmutableList<String>,
+    onPinOrUnpinGroup: (String) -> Unit,
+    onHideGroup: (String) -> Unit,
     zapping: Stream?,
     query: String,
     onQuery: (String) -> Unit,
@@ -144,7 +147,7 @@ internal fun PlaylistScreenImpl(
 
     BackdropScaffold(
         scaffoldState = scaffoldState,
-        appBar = { /*TODO*/ },
+        appBar = {},
         frontLayerShape = RectangleShape,
         peekHeight = 0.dp,
         backLayerContent = {
@@ -202,7 +205,10 @@ internal fun PlaylistScreenImpl(
                     PlaylistTabRow(
                         groups = groups,
                         page = currentPage,
-                        onPageChanged = { currentPage = it }
+                        onPageChanged = { currentPage = it },
+                        pinnedGroups = pinnedGroups,
+                        onPinOrUnpin = onPinOrUnpinGroup,
+                        onHide = onHideGroup
                     )
                     if (currentPage != -1) {
                         StreamGallery(

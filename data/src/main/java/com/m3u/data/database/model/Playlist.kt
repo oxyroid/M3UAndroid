@@ -33,6 +33,8 @@ data class Playlist(
     // extra fields
     @ColumnInfo(name = "pinned_groups", defaultValue = "[]")
     val pinnedGroups: List<String> = emptyList(),
+    @ColumnInfo(name = "hidden_groups", defaultValue = "[]")
+    val hiddenGroups: List<String> = emptyList(),
     @ColumnInfo(name = "source", defaultValue = "0")
     @Serializable(with = DataSourceSerializer::class)
     val source: DataSource = DataSource.M3U

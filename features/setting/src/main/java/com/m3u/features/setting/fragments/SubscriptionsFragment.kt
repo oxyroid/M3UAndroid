@@ -21,13 +21,15 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.res.stringResource
 import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.data.database.model.DataSource
+import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.Stream
 import com.m3u.features.setting.BackingUpAndRestoringState
 import com.m3u.features.setting.components.DataSourceSelection
+import com.m3u.features.setting.components.HiddenPlaylistGroupItem
 import com.m3u.features.setting.components.LocalStorageButton
 import com.m3u.features.setting.components.LocalStorageSwitch
 import com.m3u.features.setting.components.RemoteControlSubscribeSwitch
-import com.m3u.features.setting.components.hiddenStreamstreamItem
+import com.m3u.features.setting.components.HiddenStreamItem
 import com.m3u.i18n.R.string
 import com.m3u.material.components.Button
 import com.m3u.material.components.PlaceholderField
@@ -56,7 +58,9 @@ internal fun SubscriptionsFragment(
     subscribeForTv: Boolean,
     backingUpOrRestoring: BackingUpAndRestoringState,
     hiddenStreams: ImmutableList<Stream>,
-    onHidden: (Int) -> Unit,
+    hiddenGroupsWithPlaylists: ImmutableList<Pair<Playlist, String>>,
+    onUnhideStream: (Int) -> Unit,
+    onUnhidePlaylistGroup: (playlistUrl: String, group: String) -> Unit,
     onTitle: (String) -> Unit,
     onUrl: (String) -> Unit,
     onClipboard: (String) -> Unit,
@@ -98,9 +102,36 @@ internal fun SubscriptionsFragment(
                             )
                     )
                     hiddenStreams.forEach { stream ->
-                        hiddenStreamstreamItem(
+                        HiddenStreamItem(
                             stream = stream,
-                            onHidden = { onHidden(stream.id) }
+                            onHidden = { onUnhideStream(stream.id) }
+                        )
+                    }
+                }
+            }
+        }
+        if (hiddenGroupsWithPlaylists.isNotEmpty()) {
+            item {
+                Column(
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = stringResource(string.feat_setting_label_hidden_playlist_groups),
+                        color = MaterialTheme.colorScheme.onPrimary,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(MaterialTheme.shapes.medium)
+                            .background(MaterialTheme.colorScheme.primary)
+                            .padding(
+                                vertical = spacing.extraSmall,
+                                horizontal = spacing.medium
+                            )
+                    )
+                    hiddenGroupsWithPlaylists.forEach { (playlist, group) ->
+                        HiddenPlaylistGroupItem(
+                            playlist = playlist,
+                            group = group,
+                            onHidden = { onUnhidePlaylistGroup(playlist.url, group) }
                         )
                     }
                 }

@@ -8,7 +8,7 @@ import kotlinx.collections.immutable.ImmutableList
 
 @Immutable
 data class Group(
-    val title: String,
+    val name: String,
     val streams: ImmutableList<Stream>
 )
 

@@ -18,6 +18,7 @@
     <string name="feat_setting_experimental_mode">experimental mode</string>
     <string name="feat_setting_experimental_mode_description">unstable features can throw fatal errors</string>
     <string name="feat_setting_label_hidden_streams">hidden streams</string>
+    <string name="feat_setting_label_hidden_playlist_groups">hidden playlist categories</string>
     <string name="feat_setting_label_add_playlist">add playlist</string>
     <string name="feat_setting_label_parse_from_clipboard">parse clipboard</string>
     <string name="feat_setting_label_select_from_local_storage">select file</string>

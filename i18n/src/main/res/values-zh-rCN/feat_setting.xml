@@ -21,6 +21,7 @@
     <string name="feat_setting_experimental_mode">试验特性</string>
     <string name="feat_setting_experimental_mode_description">不稳定的功能可能引发致命错误</string>
     <string name="feat_setting_label_hidden_streams">屏蔽的频道</string>
+    <string name="feat_setting_label_hidden_playlist_groups">屏蔽的播放列表分类</string>
     <string name="feat_setting_label_add_playlist">新增订阅</string>
     <string name="feat_setting_label_parse_from_clipboard">解析剪贴板</string>
     <string name="feat_setting_label_select_from_local_storage">选择文件</string>

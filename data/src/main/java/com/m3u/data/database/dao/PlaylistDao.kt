@@ -13,10 +13,10 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface PlaylistDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insert(playlist: Playlist): Long
+    suspend fun insertOrReplace(playlist: Playlist): Long
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertAll(vararg playlists: Playlist)
+    suspend fun insertOrReplaceAll(vararg playlists: Playlist)
 
     @Delete
     suspend fun delete(vararg playlist: Playlist)
@@ -55,12 +55,33 @@ interface PlaylistDao {
     @Transaction
     suspend fun updateUrl(oldUrl: String, newUrl: String) {
         val playlist = getByUrl(oldUrl) ?: return
-        insert(
-            Playlist(
-                title = playlist.title,
+        insertOrReplace(
+            playlist.copy(
                 url = newUrl
             )
         )
+        // because the url is the primary key so we should delete it manual.
         deleteByUrl(oldUrl)
+    }
+
+    @Transaction
+    suspend fun updatePinnedGroups(url: String, updater: (List<String>) -> List<String>) {
+        val playlist = getByUrl(url) ?: return
+        insertOrReplace(
+            playlist.copy(
+                pinnedGroups = updater(playlist.pinnedGroups)
+            )
+        )
+    }
+
+    suspend fun hideOrUnhideGroup(url: String, group: String) {
+        val playlist = getByUrl(url) ?: return
+        val prev = playlist.hiddenGroups
+        insertOrReplace(
+            playlist.copy(
+                hiddenGroups = if (group in prev) prev - group
+                else prev + group
+            )
+        )
     }
 }

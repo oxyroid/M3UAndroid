@@ -22,8 +22,10 @@ import com.m3u.data.api.LocalPreparedService
 import com.m3u.data.database.dao.ColorPackDao
 import com.m3u.data.database.model.ColorPack
 import com.m3u.data.database.model.DataSource
+import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.Stream
 import com.m3u.data.parser.XtreamInput
+import com.m3u.data.repository.PlaylistRepository
 import com.m3u.data.repository.StreamRepository
 import com.m3u.data.repository.observeAll
 import com.m3u.data.service.Messager
@@ -34,6 +36,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
+import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -49,6 +52,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class SettingViewModel @Inject constructor(
+    private val playlistRepository: PlaylistRepository,
     private val streamRepository: StreamRepository,
     private val workManager: WorkManager,
     pref: Pref,
@@ -73,6 +77,27 @@ class SettingViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5_000L)
         )
 
+    internal val hiddenGroupsWithPlaylists: StateFlow<ImmutableList<Pair<Playlist, String>>> = playlistRepository
+        .observeAll()
+        .map { playlists ->
+            playlists
+                .filter { it.hiddenGroups.isNotEmpty() }
+                .flatMap { playlist -> playlist.hiddenGroups.map { playlist to it } }
+        }
+        .map { it.toPersistentList() }
+        .flowOn(ioDispatcher)
+        .stateIn(
+            scope = viewModelScope,
+            initialValue = persistentListOf(),
+            started = SharingStarted.WhileSubscribed(5_000L)
+        )
+
+    internal fun onUnhidePlaylistGroup(playlistUrl: String, group: String) {
+        viewModelScope.launch {
+            playlistRepository.hideOrUnhideGroup(playlistUrl, group)
+        }
+    }
+
     internal val packs: StateFlow<ImmutableList<ColorPack>> = combine(
         colorPackDao.observeAllColorPacks().catch { emit(emptyList()) },
         pref.observeAsFlow { it.followSystemTheme }
@@ -90,7 +115,6 @@ class SettingViewModel @Inject constructor(
             SettingEvent.Subscribe -> subscribe()
             is SettingEvent.OnTitle -> onTitle(event.title)
             is SettingEvent.OnUrl -> onUrl(event.url)
-            is SettingEvent.OnHidden -> onHidden(event.id)
             SettingEvent.OnLocalStorage -> onLocalStorage()
             is SettingEvent.OpenDocument -> openDocument(event.uri)
         }
@@ -124,7 +148,7 @@ class SettingViewModel @Inject constructor(
         }
     }
 
-    private fun onHidden(streamId: Int) {
+    internal fun onUnhideStream(streamId: Int) {
         val hidden = hiddenStreams.value.find { it.id == streamId }
         if (hidden != null) {
             viewModelScope.launch {

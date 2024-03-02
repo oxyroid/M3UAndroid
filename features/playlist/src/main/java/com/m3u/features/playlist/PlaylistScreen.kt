@@ -76,7 +76,8 @@ internal fun PlaylistRoute(
     val query by viewModel.query.collectAsStateWithLifecycle()
     val playlistUrl by viewModel.playlistUrl.collectAsStateWithLifecycle()
     val playlist by viewModel.playlist.collectAsStateWithLifecycle()
-    val channels by viewModel.channels.collectAsStateWithLifecycle()
+    val groups by viewModel.groups.collectAsStateWithLifecycle()
+    val pinnedGroups by viewModel.pinnedGroups.collectAsStateWithLifecycle()
     val refreshing by viewModel.subscribingOrRefreshing.collectAsStateWithLifecycle()
 
     val sorts = viewModel.sorts
@@ -116,7 +117,10 @@ internal fun PlaylistRoute(
             onQuery = { viewModel.onEvent(PlaylistEvent.Query(it)) },
             rowCount = pref.rowCount,
             zapping = zapping,
-            groups = channels,
+            groups = groups,
+            pinnedGroups = pinnedGroups,
+            onPinOrUnpinGroup = { viewModel.pinOrUnpinGroup(it) },
+            onHideGroup = { viewModel.hideGroup(it) },
             scrollUp = state.scrollUp,
             sorts = sorts,
             sort = sort,
@@ -163,6 +167,9 @@ private fun PlaylistScreen(
     rowCount: Int,
     zapping: Stream?,
     groups: ImmutableList<Group>,
+    pinnedGroups: ImmutableList<String>,
+    onPinOrUnpinGroup: (String) -> Unit,
+    onHideGroup: (String) -> Unit,
     sorts: ImmutableList<Sort>,
     sort: Sort,
     onSort: (Sort) -> Unit,
@@ -207,6 +214,9 @@ private fun PlaylistScreen(
     if (!tv) {
         PlaylistScreenImpl(
             groups = groups,
+            pinnedGroups = pinnedGroups,
+            onPinOrUnpinGroup = onPinOrUnpinGroup,
+            onHideGroup = onHideGroup,
             zapping = zapping,
             query = query,
             onQuery = onQuery,

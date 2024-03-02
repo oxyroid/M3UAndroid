@@ -240,16 +240,16 @@ class PlaylistViewModel @Inject constructor(
         _query.update { text }
     }
 
-    private fun List<Stream>.toChannels(): List<Group> = groupBy { it.group }
+    private fun List<Stream>.toGroups(): List<Group> = groupBy { it.group }
         .toList()
         .map { Group(it.first, it.second.toPersistentList()) }
 
-    private fun List<Stream>.toSingleChannel(): List<Group> = listOf(
+    private fun List<Stream>.toSingleGroup(): List<Group> = listOf(
         Group("", toPersistentList())
     )
 
-    internal val playlist: StateFlow<Playlist?> = playlistUrl.map { url ->
-        playlistRepository.get(url)
+    internal val playlist: StateFlow<Playlist?> = playlistUrl.flatMapLatest { url ->
+        playlistRepository.observe(url)
     }
         .stateIn(
             scope = viewModelScope,
@@ -263,8 +263,12 @@ class PlaylistViewModel @Inject constructor(
         },
         query
     ) { current, query ->
-        current?.streams?.filter { !it.hidden && it.title.contains(query, true) } ?: emptyList()
+        val hiddenGroups = current?.playlist?.hiddenGroups ?: emptyList()
+        current?.streams?.filter {
+            !it.hidden && it.group !in hiddenGroups && it.title.contains(query, true)
+        } ?: emptyList()
     }
+        .flowOn(ioDispatcher)
         .stateIn(
             scope = viewModelScope,
             initialValue = emptyList(),
@@ -287,27 +291,54 @@ class PlaylistViewModel @Inject constructor(
         sortIndex.update { sorts.indexOf(sort).coerceAtLeast(0) }
     }
 
-    internal val channels: StateFlow<ImmutableList<Group>> = combine(
-        unsorted,
-        sort
-    ) { all, sort ->
-        when (sort) {
-            Sort.ASC -> all.sortedWith(
-                compareBy(String.CASE_INSENSITIVE_ORDER) { it.title }
-            ).toSingleChannel()
-
-            Sort.DESC -> all.sortedWith(
-                compareByDescending(String.CASE_INSENSITIVE_ORDER) { it.title }
-            ).toSingleChannel()
-
-            Sort.RECENTLY -> all.sortedByDescending { it.seen }.toSingleChannel()
-            Sort.UNSPECIFIED -> all.toChannels()
-        }
-            .toPersistentList()
-    }
+    internal val pinnedGroups: StateFlow<ImmutableList<String>> = playlist
+        .map { it?.pinnedGroups ?: emptyList() }
+        .map { it.toPersistentList() }
+        .flowOn(ioDispatcher)
         .stateIn(
             scope = viewModelScope,
             initialValue = persistentListOf(),
             started = SharingStarted.WhileSubscribed(5_000L)
         )
+
+    internal val groups: StateFlow<ImmutableList<Group>> = combine(
+        unsorted,
+        sort,
+        pinnedGroups
+    ) { all, sort, pinnedGroups ->
+        when (sort) {
+            Sort.ASC -> all.sortedWith(
+                compareBy(String.CASE_INSENSITIVE_ORDER) { it.title }
+            ).toSingleGroup()
+
+            Sort.DESC -> all.sortedWith(
+                compareByDescending(String.CASE_INSENSITIVE_ORDER) { it.title }
+            ).toSingleGroup()
+
+            Sort.RECENTLY -> all.sortedByDescending { it.seen }.toSingleGroup()
+            Sort.UNSPECIFIED -> all.toGroups()
+        }
+            .sortedByDescending { it.name in pinnedGroups }
+            .toPersistentList()
+    }
+        .flowOn(ioDispatcher)
+        .stateIn(
+            scope = viewModelScope,
+            initialValue = persistentListOf(),
+            started = SharingStarted.WhileSubscribed(5_000L)
+        )
+
+    internal fun pinOrUnpinGroup(group: String) {
+        val currentPlaylistUrl = playlistUrl.value
+        viewModelScope.launch {
+            playlistRepository.pinOrUnpinGroup(currentPlaylistUrl, group)
+        }
+    }
+
+    internal fun hideGroup(group: String) {
+        val currentPlaylistUrl = playlistUrl.value
+        viewModelScope.launch {
+            playlistRepository.hideOrUnhideGroup(currentPlaylistUrl, group)
+        }
+    }
 }

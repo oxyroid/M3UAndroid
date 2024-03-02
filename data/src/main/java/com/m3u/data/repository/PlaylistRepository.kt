@@ -34,4 +34,8 @@ interface PlaylistRepository {
     suspend fun backupOrThrow(uri: Uri)
 
     suspend fun restoreOrThrow(uri: Uri)
+
+    suspend fun pinOrUnpinGroup(url: String, group: String)
+
+    suspend fun hideOrUnhideGroup(url: String, group: String)
 }

@@ -44,6 +44,7 @@ import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.core.util.basic.title
 import com.m3u.data.database.model.ColorPack
 import com.m3u.data.database.model.DataSource
+import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.Stream
 import com.m3u.features.setting.components.CanvasBottomSheet
 import com.m3u.features.setting.fragments.AppearanceFragment
@@ -77,6 +78,7 @@ fun SettingRoute(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val packs by viewModel.packs.collectAsStateWithLifecycle()
     val hiddenStreams by viewModel.hiddenStreams.collectAsStateWithLifecycle()
+    val hiddenGroupsWithPlaylists by viewModel.hiddenGroupsWithPlaylists.collectAsStateWithLifecycle()
     val backingUpOrRestoring by viewModel.backingUpOrRestoring.collectAsStateWithLifecycle()
 
     val sheetState = rememberModalBottomSheetState()
@@ -117,13 +119,17 @@ fun SettingRoute(
             uri = state.uri,
             backingUpOrRestoring = backingUpOrRestoring,
             hiddenStreams = hiddenStreams,
+            hiddenGroupsWithPlaylists = hiddenGroupsWithPlaylists,
             onTitle = { viewModel.onEvent(SettingEvent.OnTitle(it)) },
             onUrl = { viewModel.onEvent(SettingEvent.OnUrl(it)) },
             onSubscribe = {
                 controller?.hide()
                 viewModel.onEvent(SettingEvent.Subscribe)
             },
-            onHidden = { viewModel.onEvent(SettingEvent.OnHidden(it)) },
+            onUnhideStream = { viewModel.onUnhideStream(it) },
+            onUnhidePlaylistGroup = { playlistUrl, group ->
+                viewModel.onUnhidePlaylistGroup(playlistUrl, group)
+            },
             navigateToAbout = navigateToAbout,
             localStorage = state.localStorage,
             onLocalStorage = { viewModel.onEvent(SettingEvent.OnLocalStorage) },
@@ -175,7 +181,9 @@ private fun SettingScreen(
     onUrl: (String) -> Unit,
     onSubscribe: () -> Unit,
     hiddenStreams: ImmutableList<Stream>,
-    onHidden: (Int) -> Unit,
+    hiddenGroupsWithPlaylists: ImmutableList<Pair<Playlist, String>>,
+    onUnhideStream: (Int) -> Unit,
+    onUnhidePlaylistGroup: (playlistUrl: String, group: String) -> Unit,
     navigateToAbout: () -> Unit,
     localStorage: Boolean,
     onLocalStorage: (Boolean) -> Unit,
@@ -267,7 +275,9 @@ private fun SettingScreen(
                                 uri = uri,
                                 backingUpOrRestoring = backingUpOrRestoring,
                                 hiddenStreams = hiddenStreams,
-                                onHidden = onHidden,
+                                hiddenGroupsWithPlaylists = hiddenGroupsWithPlaylists,
+                                onUnhideStream = onUnhideStream,
+                                onUnhidePlaylistGroup = onUnhidePlaylistGroup,
                                 onTitle = onTitle,
                                 onUrl = onUrl,
                                 onSubscribe = onSubscribe,

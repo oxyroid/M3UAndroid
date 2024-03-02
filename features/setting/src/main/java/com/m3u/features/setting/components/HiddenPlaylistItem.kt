@@ -9,19 +9,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import com.m3u.data.database.model.Stream
+import com.m3u.data.database.model.Playlist
 
 @Composable
-internal fun hiddenStreamstreamItem(
-    stream: Stream,
+internal fun HiddenPlaylistGroupItem(
+    playlist: Playlist,
+    group: String,
     onHidden: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     ListItem(
         headlineContent = {
-            val text = stream.title
             Text(
-                text = text,
+                text = group,
                 style = MaterialTheme.typography.titleSmall,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
@@ -29,9 +29,8 @@ internal fun hiddenStreamstreamItem(
             )
         },
         supportingContent = {
-            val text = stream.url
             Text(
-                text = text,
+                text = playlist.title,
                 style = MaterialTheme.typography.bodyMedium,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
