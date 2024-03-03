@@ -159,6 +159,34 @@ data class XtreamVodInfo(
                 @SerialName("width")
                 val width: Int?
             )
+
+            @Serializable
+            data class Disposition(
+                @SerialName("attached_pic")
+                val attachedPic: Int?,
+                @SerialName("clean_effects")
+                val cleanEffects: Int?,
+                @SerialName("comment")
+                val comment: Int?,
+                @SerialName("default")
+                val default: Int?,
+                @SerialName("dub")
+                val dub: Int?,
+                @SerialName("forced")
+                val forced: Int?,
+                @SerialName("hearing_impaired")
+                val hearingImpaired: Int?,
+                @SerialName("karaoke")
+                val karaoke: Int?,
+                @SerialName("lyrics")
+                val lyrics: Int?,
+                @SerialName("original")
+                val original: Int?,
+                @SerialName("timed_thumbnails")
+                val timedThumbnails: Int?,
+                @SerialName("visual_impaired")
+                val visualImpaired: Int?
+            )
         }
     }
 
@@ -192,33 +220,5 @@ data class XtreamVodInfo(
         val releaseDate: String?,
         @SerialName("youtube_trailer")
         val youtubeTrailer: String?
-    )
-
-    @Serializable
-    data class Disposition(
-        @SerialName("attached_pic")
-        val attachedPic: Int?,
-        @SerialName("clean_effects")
-        val cleanEffects: Int?,
-        @SerialName("comment")
-        val comment: Int?,
-        @SerialName("default")
-        val default: Int?,
-        @SerialName("dub")
-        val dub: Int?,
-        @SerialName("forced")
-        val forced: Int?,
-        @SerialName("hearing_impaired")
-        val hearingImpaired: Int?,
-        @SerialName("karaoke")
-        val karaoke: Int?,
-        @SerialName("lyrics")
-        val lyrics: Int?,
-        @SerialName("original")
-        val original: Int?,
-        @SerialName("timed_thumbnails")
-        val timedThumbnails: Int?,
-        @SerialName("visual_impaired")
-        val visualImpaired: Int?
     )
 }

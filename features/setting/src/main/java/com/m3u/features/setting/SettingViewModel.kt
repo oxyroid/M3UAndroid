@@ -77,12 +77,12 @@ class SettingViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5_000L)
         )
 
-    internal val hiddenGroupsWithPlaylists: StateFlow<ImmutableList<Pair<Playlist, String>>> = playlistRepository
+    internal val hiddenCategoriesWithPlaylists: StateFlow<ImmutableList<Pair<Playlist, String>>> = playlistRepository
         .observeAll()
         .map { playlists ->
             playlists
-                .filter { it.hiddenGroups.isNotEmpty() }
-                .flatMap { playlist -> playlist.hiddenGroups.map { playlist to it } }
+                .filter { it.hiddenCategories.isNotEmpty() }
+                .flatMap { playlist -> playlist.hiddenCategories.map { playlist to it } }
         }
         .map { it.toPersistentList() }
         .flowOn(ioDispatcher)
@@ -92,9 +92,9 @@ class SettingViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5_000L)
         )
 
-    internal fun onUnhidePlaylistGroup(playlistUrl: String, group: String) {
+    internal fun onUnhidePlaylistCategory(playlistUrl: String, group: String) {
         viewModelScope.launch {
-            playlistRepository.hideOrUnhideGroup(playlistUrl, group)
+            playlistRepository.hideOrUnhideCategory(playlistUrl, group)
         }
     }
 
@@ -130,8 +130,8 @@ class SettingViewModel @Inject constructor(
         onUrl(url)
         when (selected) {
             is DataSource.Xtream -> {
-                val input = XtreamInput.decodeFromUrlOrNull(url) ?: return
-                address = input.address
+                val input = XtreamInput.decodeFromPlaylistUrlOrNull(url) ?: return
+                basicUrl = input.basicUrl
                 username = input.username
                 password = input.password
             }
@@ -181,8 +181,8 @@ class SettingViewModel @Inject constructor(
         }
         val url = readable.actualUrl
 
-        val addressWithScheme = if (address.startWithHttpScheme()) address
-        else "http://$address"
+        val addressWithScheme = if (basicUrl.startWithHttpScheme()) basicUrl
+        else "http://$basicUrl"
 
         if (forTv) {
             viewModelScope.launch {
@@ -205,7 +205,7 @@ class SettingViewModel @Inject constructor(
                 workDataOf(
                     SubscriptionWorker.INPUT_STRING_TITLE to title,
                     SubscriptionWorker.INPUT_STRING_URL to url,
-                    SubscriptionWorker.INPUT_STRING_ADDRESS to addressWithScheme,
+                    SubscriptionWorker.INPUT_STRING_BASIC_URL to addressWithScheme,
                     SubscriptionWorker.INPUT_STRING_USERNAME to username,
                     SubscriptionWorker.INPUT_STRING_PASSWORD to password,
                     SubscriptionWorker.INPUT_STRING_DATA_SOURCE_VALUE to selected.value
@@ -297,14 +297,14 @@ class SettingViewModel @Inject constructor(
                 uri = Uri.EMPTY
             )
         }
-        address = ""
+        basicUrl = ""
         username = ""
         password = ""
     }
 
     internal var forTv by mutableStateOf(false)
     internal var selected: DataSource by mutableStateOf(DataSource.M3U)
-    internal var address by mutableStateOf("")
+    internal var basicUrl by mutableStateOf("")
     internal var username by mutableStateOf("")
     internal var password by mutableStateOf("")
 }

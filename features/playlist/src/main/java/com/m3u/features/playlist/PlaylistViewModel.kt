@@ -240,12 +240,12 @@ class PlaylistViewModel @Inject constructor(
         _query.update { text }
     }
 
-    private fun List<Stream>.toGroups(): List<Group> = groupBy { it.group }
+    private fun List<Stream>.toCategories(): List<Category> = groupBy { it.category }
         .toList()
-        .map { Group(it.first, it.second.toPersistentList()) }
+        .map { (name, streams) -> Category(name, streams.toPersistentList()) }
 
-    private fun List<Stream>.toSingleGroup(): List<Group> = listOf(
-        Group("", toPersistentList())
+    private fun List<Stream>.toSingleCategory(): List<Category> = listOf(
+        Category("", toPersistentList())
     )
 
     internal val playlist: StateFlow<Playlist?> = playlistUrl.flatMapLatest { url ->
@@ -263,9 +263,9 @@ class PlaylistViewModel @Inject constructor(
         },
         query
     ) { current, query ->
-        val hiddenGroups = current?.playlist?.hiddenGroups ?: emptyList()
+        val hiddenCategories = current?.playlist?.hiddenCategories ?: emptyList()
         current?.streams?.filter {
-            !it.hidden && it.group !in hiddenGroups && it.title.contains(query, true)
+            !it.hidden && it.category !in hiddenCategories && it.title.contains(query, true)
         } ?: emptyList()
     }
         .flowOn(ioDispatcher)
@@ -291,8 +291,8 @@ class PlaylistViewModel @Inject constructor(
         sortIndex.update { sorts.indexOf(sort).coerceAtLeast(0) }
     }
 
-    internal val pinnedGroups: StateFlow<ImmutableList<String>> = playlist
-        .map { it?.pinnedGroups ?: emptyList() }
+    internal val pinnedCategories: StateFlow<ImmutableList<String>> = playlist
+        .map { it?.pinnedCategories ?: emptyList() }
         .map { it.toPersistentList() }
         .flowOn(ioDispatcher)
         .stateIn(
@@ -301,24 +301,24 @@ class PlaylistViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5_000L)
         )
 
-    internal val groups: StateFlow<ImmutableList<Group>> = combine(
+    internal val categories: StateFlow<ImmutableList<Category>> = combine(
         unsorted,
         sort,
-        pinnedGroups
-    ) { all, sort, pinnedGroups ->
+        pinnedCategories
+    ) { all, sort, pinnedCategories ->
         when (sort) {
             Sort.ASC -> all.sortedWith(
                 compareBy(String.CASE_INSENSITIVE_ORDER) { it.title }
-            ).toSingleGroup()
+            ).toSingleCategory()
 
             Sort.DESC -> all.sortedWith(
                 compareByDescending(String.CASE_INSENSITIVE_ORDER) { it.title }
-            ).toSingleGroup()
+            ).toSingleCategory()
 
-            Sort.RECENTLY -> all.sortedByDescending { it.seen }.toSingleGroup()
-            Sort.UNSPECIFIED -> all.toGroups()
+            Sort.RECENTLY -> all.sortedByDescending { it.seen }.toSingleCategory()
+            Sort.UNSPECIFIED -> all.toCategories()
         }
-            .sortedByDescending { it.name in pinnedGroups }
+            .sortedByDescending { it.name in pinnedCategories }
             .toPersistentList()
     }
         .flowOn(ioDispatcher)
@@ -328,17 +328,17 @@ class PlaylistViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5_000L)
         )
 
-    internal fun pinOrUnpinGroup(group: String) {
+    internal fun pinOrUnpinCategory(category: String) {
         val currentPlaylistUrl = playlistUrl.value
         viewModelScope.launch {
-            playlistRepository.pinOrUnpinGroup(currentPlaylistUrl, group)
+            playlistRepository.pinOrUnpinCategory(currentPlaylistUrl, category)
         }
     }
 
-    internal fun hideGroup(group: String) {
+    internal fun hideCategory(category: String) {
         val currentPlaylistUrl = playlistUrl.value
         viewModelScope.launch {
-            playlistRepository.hideOrUnhideGroup(currentPlaylistUrl, group)
+            playlistRepository.hideOrUnhideCategory(currentPlaylistUrl, category)
         }
     }
 }

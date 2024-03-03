@@ -40,7 +40,7 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
-import com.m3u.features.playlist.Group
+import com.m3u.features.playlist.Category
 import com.m3u.material.components.IconButton
 import com.m3u.material.model.LocalSpacing
 import kotlinx.collections.immutable.ImmutableList
@@ -50,16 +50,16 @@ import kotlinx.coroutines.launch
 internal fun PlaylistTabRow(
     page: Int,
     onPageChanged: (Int) -> Unit,
-    pinnedGroups: ImmutableList<String>,
-    onPinOrUnpin: (String) -> Unit,
-    onHide: (String) -> Unit,
-    groups: ImmutableList<Group>,
+    pinnedCategories: ImmutableList<String>,
+    onPinOrUnpinCategory: (String) -> Unit,
+    onHideCategory: (String) -> Unit,
+    categories: ImmutableList<Category>,
     modifier: Modifier = Modifier
 ) {
     Box(modifier) {
-        if (groups.size > 1) {
+        if (categories.size > 1) {
             val hapticFeedback = LocalHapticFeedback.current
-            var focusGroupName: String? by rememberSaveable { mutableStateOf(null) }
+            var focusCategory: String? by rememberSaveable { mutableStateOf(null) }
             Column {
                 val state = rememberLazyListState()
                 val coroutineScope = rememberCoroutineScope()
@@ -70,7 +70,7 @@ internal fun PlaylistTabRow(
                 ) {
                     stickyHeader {
                         AnimatedContent(
-                            targetState = focusGroupName,
+                            targetState = focusCategory,
                             label = "playlist-tab-row-action-buttons",
                             modifier = Modifier.background(
                                 MaterialTheme.colorScheme.background
@@ -86,16 +86,16 @@ internal fun PlaylistTabRow(
                                         icon = Icons.Rounded.PushPin,
                                         contentDescription = "pin",
                                         onClick = {
-                                            name.let(onPinOrUnpin)
-                                            focusGroupName = null
+                                            name.let(onPinOrUnpinCategory)
+                                            focusCategory = null
                                         }
                                     )
                                     IconButton(
                                         icon = Icons.Rounded.VisibilityOff,
                                         contentDescription = "hide",
                                         onClick = {
-                                            name.let(onHide)
-                                            focusGroupName = null
+                                            name.let(onHideCategory)
+                                            focusCategory = null
                                         }
                                     )
                                 }
@@ -108,20 +108,20 @@ internal fun PlaylistTabRow(
                             }
                         }
                     }
-                    itemsIndexed(groups) { index, channel ->
+                    itemsIndexed(categories) { index, channel ->
                         PlaylistTabRowItem(
                             name = channel.name,
                             selected = page == index,
-                            pinned = channel.name in pinnedGroups,
-                            focused = focusGroupName == channel.name,
-                            hasOtherFocused = focusGroupName != null && focusGroupName != channel.name,
+                            pinned = channel.name in pinnedCategories,
+                            focused = focusCategory == channel.name,
+                            hasOtherFocused = focusCategory != null && focusCategory != channel.name,
                             onClick = {
-                                if (focusGroupName == null) {
+                                if (focusCategory == null) {
                                     onPageChanged(index)
                                 }
                             },
                             onLongClick = {
-                                focusGroupName = channel.name
+                                focusCategory = channel.name
                                 hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
                                 coroutineScope.launch {
                                     state.animateScrollToItem(index)
@@ -132,8 +132,8 @@ internal fun PlaylistTabRow(
                 }
                 HorizontalDivider()
             }
-            BackHandler(focusGroupName != null) {
-                focusGroupName = null
+            BackHandler(focusCategory != null) {
+                focusCategory = null
             }
         }
     }

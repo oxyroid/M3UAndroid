@@ -78,7 +78,7 @@ fun SettingRoute(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val packs by viewModel.packs.collectAsStateWithLifecycle()
     val hiddenStreams by viewModel.hiddenStreams.collectAsStateWithLifecycle()
-    val hiddenGroupsWithPlaylists by viewModel.hiddenGroupsWithPlaylists.collectAsStateWithLifecycle()
+    val hiddenCategoriesWithPlaylists by viewModel.hiddenCategoriesWithPlaylists.collectAsStateWithLifecycle()
     val backingUpOrRestoring by viewModel.backingUpOrRestoring.collectAsStateWithLifecycle()
 
     val sheetState = rememberModalBottomSheetState()
@@ -119,7 +119,7 @@ fun SettingRoute(
             uri = state.uri,
             backingUpOrRestoring = backingUpOrRestoring,
             hiddenStreams = hiddenStreams,
-            hiddenGroupsWithPlaylists = hiddenGroupsWithPlaylists,
+            hiddenCategoriesWithPlaylists = hiddenCategoriesWithPlaylists,
             onTitle = { viewModel.onEvent(SettingEvent.OnTitle(it)) },
             onUrl = { viewModel.onEvent(SettingEvent.OnUrl(it)) },
             onSubscribe = {
@@ -127,8 +127,8 @@ fun SettingRoute(
                 viewModel.onEvent(SettingEvent.Subscribe)
             },
             onUnhideStream = { viewModel.onUnhideStream(it) },
-            onUnhidePlaylistGroup = { playlistUrl, group ->
-                viewModel.onUnhidePlaylistGroup(playlistUrl, group)
+            onUnhidePlaylistCategory = { playlistUrl, group ->
+                viewModel.onUnhidePlaylistCategory(playlistUrl, group)
             },
             navigateToAbout = navigateToAbout,
             localStorage = state.localStorage,
@@ -146,8 +146,8 @@ fun SettingRoute(
             },
             selected = viewModel.selected,
             onSelected = { viewModel.selected = it },
-            address = viewModel.address,
-            onAddress = { viewModel.address = it },
+            basicUrl = viewModel.basicUrl,
+            onBasicUrl = { viewModel.basicUrl = it },
             username = viewModel.username,
             onUsername = { viewModel.username = it },
             password = viewModel.password,
@@ -181,9 +181,9 @@ private fun SettingScreen(
     onUrl: (String) -> Unit,
     onSubscribe: () -> Unit,
     hiddenStreams: ImmutableList<Stream>,
-    hiddenGroupsWithPlaylists: ImmutableList<Pair<Playlist, String>>,
+    hiddenCategoriesWithPlaylists: ImmutableList<Pair<Playlist, String>>,
     onUnhideStream: (Int) -> Unit,
-    onUnhidePlaylistGroup: (playlistUrl: String, group: String) -> Unit,
+    onUnhidePlaylistCategory: (playlistUrl: String, group: String) -> Unit,
     navigateToAbout: () -> Unit,
     localStorage: Boolean,
     onLocalStorage: (Boolean) -> Unit,
@@ -197,8 +197,8 @@ private fun SettingScreen(
     openColorCanvas: (Int, Boolean) -> Unit,
     selected: DataSource,
     onSelected: (DataSource) -> Unit,
-    address: String,
-    onAddress: (String) -> Unit,
+    basicUrl: String,
+    onBasicUrl: (String) -> Unit,
     username: String,
     onUsername: (String) -> Unit,
     password: String,
@@ -275,9 +275,9 @@ private fun SettingScreen(
                                 uri = uri,
                                 backingUpOrRestoring = backingUpOrRestoring,
                                 hiddenStreams = hiddenStreams,
-                                hiddenGroupsWithPlaylists = hiddenGroupsWithPlaylists,
+                                hiddenCategoriesWithPlaylists = hiddenCategoriesWithPlaylists,
                                 onUnhideStream = onUnhideStream,
-                                onUnhidePlaylistGroup = onUnhidePlaylistGroup,
+                                onUnhidePlaylistCategory = onUnhidePlaylistCategory,
                                 onTitle = onTitle,
                                 onUrl = onUrl,
                                 onSubscribe = onSubscribe,
@@ -291,8 +291,8 @@ private fun SettingScreen(
                                 restore = restore,
                                 selected = selected,
                                 onSelected = onSelected,
-                                address = address,
-                                onAddress = onAddress,
+                                basicUrl = basicUrl,
+                                onBasicUrl = onBasicUrl,
                                 username = username,
                                 onUsername = onUsername,
                                 password = password,

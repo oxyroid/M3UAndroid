@@ -7,7 +7,7 @@ import com.m3u.data.database.model.Stream
 import kotlinx.collections.immutable.ImmutableList
 
 @Immutable
-data class Group(
+data class Category(
     val name: String,
     val streams: ImmutableList<Stream>
 )

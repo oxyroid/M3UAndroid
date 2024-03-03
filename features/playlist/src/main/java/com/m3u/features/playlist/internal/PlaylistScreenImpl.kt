@@ -48,7 +48,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleStartEffect
 import com.m3u.core.wrapper.Event
 import com.m3u.data.database.model.Stream
-import com.m3u.features.playlist.Group
+import com.m3u.features.playlist.Category
 import com.m3u.features.playlist.components.DialogStatus
 import com.m3u.features.playlist.components.PlaylistDialog
 import com.m3u.features.playlist.components.PlaylistTabRow
@@ -76,10 +76,10 @@ import kotlinx.coroutines.launch
 @Composable
 @InternalComposeApi
 internal fun PlaylistScreenImpl(
-    groups: ImmutableList<Group>,
-    pinnedGroups: ImmutableList<String>,
-    onPinOrUnpinGroup: (String) -> Unit,
-    onHideGroup: (String) -> Unit,
+    categories: ImmutableList<Category>,
+    pinnedCategories: ImmutableList<String>,
+    onPinOrUnpinCategory: (String) -> Unit,
+    onHideCategory: (String) -> Unit,
     zapping: Stream?,
     query: String,
     onQuery: (String) -> Unit,
@@ -136,9 +136,9 @@ internal fun PlaylistScreenImpl(
         onStopOrDispose { }
     }
 
-    var currentPage by remember(groups.size) {
+    var currentPage by remember(categories.size) {
         mutableIntStateOf(
-            if (groups.isEmpty()) -1
+            if (categories.isEmpty()) -1
             else 0
         )
     }
@@ -203,18 +203,18 @@ internal fun PlaylistScreenImpl(
                 }
                 Column {
                     PlaylistTabRow(
-                        groups = groups,
+                        categories = categories,
                         page = currentPage,
                         onPageChanged = { currentPage = it },
-                        pinnedGroups = pinnedGroups,
-                        onPinOrUnpin = onPinOrUnpinGroup,
-                        onHide = onHideGroup
+                        pinnedCategories = pinnedCategories,
+                        onPinOrUnpinCategory = onPinOrUnpinCategory,
+                        onHideCategory = onHideCategory
                     )
                     if (currentPage != -1) {
                         StreamGallery(
                             state = state,
                             rowCount = actualRowCount,
-                            streams = groups[currentPage].streams,
+                            streams = categories[currentPage].streams,
                             zapping = zapping,
                             recently = sort == Sort.RECENTLY,
                             onClick = onStream,

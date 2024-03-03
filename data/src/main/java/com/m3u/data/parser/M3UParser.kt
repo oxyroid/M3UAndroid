@@ -45,7 +45,7 @@ fun M3UData.toStream(
     }
     return Stream(
         url = actualUrl,
-        group = group,
+        category = group,
         title = title,
         cover = cover,
         playlistUrl = playlistUrl,

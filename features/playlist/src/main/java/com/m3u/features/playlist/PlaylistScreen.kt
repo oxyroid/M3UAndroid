@@ -76,8 +76,8 @@ internal fun PlaylistRoute(
     val query by viewModel.query.collectAsStateWithLifecycle()
     val playlistUrl by viewModel.playlistUrl.collectAsStateWithLifecycle()
     val playlist by viewModel.playlist.collectAsStateWithLifecycle()
-    val groups by viewModel.groups.collectAsStateWithLifecycle()
-    val pinnedGroups by viewModel.pinnedGroups.collectAsStateWithLifecycle()
+    val categories by viewModel.categories.collectAsStateWithLifecycle()
+    val pinnedCategories by viewModel.pinnedCategories.collectAsStateWithLifecycle()
     val refreshing by viewModel.subscribingOrRefreshing.collectAsStateWithLifecycle()
 
     val sorts = viewModel.sorts
@@ -117,10 +117,10 @@ internal fun PlaylistRoute(
             onQuery = { viewModel.onEvent(PlaylistEvent.Query(it)) },
             rowCount = pref.rowCount,
             zapping = zapping,
-            groups = groups,
-            pinnedGroups = pinnedGroups,
-            onPinOrUnpinGroup = { viewModel.pinOrUnpinGroup(it) },
-            onHideGroup = { viewModel.hideGroup(it) },
+            categories = categories,
+            pinnedCategories = pinnedCategories,
+            onPinOrUnpinCategory = { viewModel.pinOrUnpinCategory(it) },
+            onHideCategory = { viewModel.hideCategory(it) },
             scrollUp = state.scrollUp,
             sorts = sorts,
             sort = sort,
@@ -166,10 +166,10 @@ private fun PlaylistScreen(
     onQuery: (String) -> Unit,
     rowCount: Int,
     zapping: Stream?,
-    groups: ImmutableList<Group>,
-    pinnedGroups: ImmutableList<String>,
-    onPinOrUnpinGroup: (String) -> Unit,
-    onHideGroup: (String) -> Unit,
+    categories: ImmutableList<Category>,
+    pinnedCategories: ImmutableList<String>,
+    onPinOrUnpinCategory: (String) -> Unit,
+    onHideCategory: (String) -> Unit,
     sorts: ImmutableList<Sort>,
     sort: Sort,
     onSort: (Sort) -> Unit,
@@ -213,10 +213,10 @@ private fun PlaylistScreen(
     val tv = isTelevision()
     if (!tv) {
         PlaylistScreenImpl(
-            groups = groups,
-            pinnedGroups = pinnedGroups,
-            onPinOrUnpinGroup = onPinOrUnpinGroup,
-            onHideGroup = onHideGroup,
+            categories = categories,
+            pinnedCategories = pinnedCategories,
+            onPinOrUnpinCategory = onPinOrUnpinCategory,
+            onHideCategory = onHideCategory,
             zapping = zapping,
             query = query,
             onQuery = onQuery,
@@ -238,7 +238,7 @@ private fun PlaylistScreen(
     } else {
         TvPlaylistScreenImpl(
             title = title,
-            groups = groups,
+            categories = categories,
             query = query,
             onQuery = onQuery,
             onStream = onStream,

@@ -16,7 +16,7 @@ data class Stream(
     @ColumnInfo(name = "url")
     val url: String,
     @ColumnInfo(name = "group")
-    val group: String,
+    val category: String,
     @ColumnInfo(name = "title")
     val title: String,
     @ColumnInfo(name = "cover")
@@ -40,7 +40,7 @@ data class Stream(
 ) : Likable<Stream> {
     override infix fun like(another: Stream): Boolean =
         this.url == another.url && this.playlistUrl == another.playlistUrl && this.cover == another.cover
-                && this.group == another.group && this.title == another.title && this.licenseType == another.licenseType
+                && this.category == another.category && this.title == another.title && this.licenseType == another.licenseType
                 && this.licenseKey == another.licenseKey
 
     companion object {

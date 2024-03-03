@@ -19,12 +19,12 @@ interface XtreamParser : Parser<XtreamInput, XtreamOutput> {
 
     companion object {
         fun createInfoUrl(
-            address: String,
+            basicUrl: String,
             username: String,
             password: String,
             vararg params: Pair<String, Any>
         ): String {
-            val url = Url(address)
+            val url = Url(basicUrl)
             val builder = HttpUrl.Builder()
                 .scheme("http")
                 .host(url.host)
@@ -40,12 +40,12 @@ interface XtreamParser : Parser<XtreamInput, XtreamOutput> {
         }
 
         fun createActionUrl(
-            address: String,
+            basicUrl: String,
             username: String,
             password: String,
             action: Action,
             vararg params: Pair<String, Any>
-        ): String = createInfoUrl(address, username, password, *params) + "&action=$action"
+        ): String = createInfoUrl(basicUrl, username, password, *params) + "&action=$action"
 
         const val GET_VOD_INFO_PARAM_VOD_ID = "vod_id"
     }
@@ -88,43 +88,48 @@ interface XtreamParser : Parser<XtreamInput, XtreamOutput> {
 
 // playlist or stream
 data class XtreamInput(
-    val address: String, // scheme + host + port
+    val basicUrl: String, // scheme + host + port
     val username: String,
     val password: String,
     // DataSource.Xtream.TYPE_LIVE, DataSource.Xtream.TYPE_VOD, DataSource.Xtream.TYPE_SERIES
     val type: String? = null // null means all
 ) {
     companion object {
-        fun decodeFromUrl(url: String): XtreamInput {
+        // make sure the name is unique
+        private const val QUERY_TYPE = "xtream_type"
+        fun decodeFromPlaylistUrl(url: String): XtreamInput {
             val hasScheme = url.startsWithAny("http:", "https:", ignoreCase = true)
             val httpUrl = if (hasScheme) url.toHttpUrl() else "http://$url".toHttpUrl()
             val username = httpUrl.queryParameter("username").orEmpty()
             val password = httpUrl.queryParameter("password").orEmpty()
             return XtreamInput(
-                address = "${httpUrl.scheme}://${httpUrl.host}:${httpUrl.port}",
+                basicUrl = "${httpUrl.scheme}://${httpUrl.host}:${httpUrl.port}",
                 username = username,
                 password = password,
-                type = httpUrl.queryParameter("type")
+                type = httpUrl.queryParameter(QUERY_TYPE)
             )
         }
 
-        fun encodeToUrl(input: XtreamInput): String = with(input) {
-            val url = Url(address)
+        fun encodeToPlaylistUrl(
+            input: XtreamInput,
+            serverProtocol: String = "http",
+            port: Int? = null
+        ): String = with(input) {
+            val url = Url(basicUrl)
             var builder = HttpUrl.Builder()
-                .scheme("http")
+                .scheme(serverProtocol)
                 .host(url.host)
-                .port(url.port)
+                .port(port?: url.port)
                 .addPathSegment("player_api.php")
                 .addQueryParameter("username", username)
                 .addQueryParameter("password", password)
             if (type != null) {
-                builder = builder.addQueryParameter("type", type)
+                builder = builder.addQueryParameter(QUERY_TYPE, type)
             }
             builder.build().toString()
         }
 
-        fun decodeFromUrlOrNull(url: String): XtreamInput? =
-            runCatching { decodeFromUrl(url) }.getOrNull()
+        fun decodeFromPlaylistUrlOrNull(url: String): XtreamInput? = runCatching { decodeFromPlaylistUrl(url) }.getOrNull()
     }
 }
 
@@ -135,5 +140,7 @@ data class XtreamOutput(
     val liveCategories: List<XtreamCategory> = emptyList(),
     val vodCategories: List<XtreamCategory> = emptyList(),
     val serialCategories: List<XtreamCategory> = emptyList(),
-    val allowedOutputFormats: List<String> = emptyList()
+    val allowedOutputFormats: List<String> = emptyList(),
+    val serverProtocol: String = "http",
+    val port: Int? = null
 )

@@ -19,7 +19,7 @@ interface PlaylistRepository {
 
     suspend fun xtream(
         title: String,
-        address: String,
+        basicUrl: String,
         username: String,
         password: String,
         type: String?
@@ -35,7 +35,7 @@ interface PlaylistRepository {
 
     suspend fun restoreOrThrow(uri: Uri)
 
-    suspend fun pinOrUnpinGroup(url: String, group: String)
+    suspend fun pinOrUnpinCategory(url: String, category: String)
 
-    suspend fun hideOrUnhideGroup(url: String, group: String)
+    suspend fun hideOrUnhideCategory(url: String, category: String)
 }

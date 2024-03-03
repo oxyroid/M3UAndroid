@@ -35,11 +35,11 @@ internal fun DataSourceSelection(
         modifier = Modifier
             .fillMaxSize()
             .wrapContentSize(Alignment.TopStart)
+            .then(modifier)
     ) {
         ClickableSelection(
             onClick = { expanded = true },
             horizontalArrangement = Arrangement.SpaceBetween,
-            modifier = modifier
         ) {
             Text(stringResource(selected.resId))
             Icon(

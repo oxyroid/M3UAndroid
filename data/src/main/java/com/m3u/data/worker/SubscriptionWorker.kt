@@ -34,7 +34,7 @@ class SubscriptionWorker @AssistedInject constructor(
         ?.let { DataSource.ofOrNull(it) }
 
     private val title = inputData.getString(INPUT_STRING_TITLE)
-    private val address = inputData.getString(INPUT_STRING_ADDRESS)
+    private val basicUrl = inputData.getString(INPUT_STRING_BASIC_URL)
     private val username = inputData.getString(INPUT_STRING_USERNAME)
     private val password = inputData.getString(INPUT_STRING_PASSWORD)
     private val url = inputData.getString(INPUT_STRING_URL)
@@ -62,7 +62,7 @@ class SubscriptionWorker @AssistedInject constructor(
 
             DataSource.Xtream -> {
                 title ?: return@coroutineScope Result.failure()
-                address ?: return@coroutineScope Result.failure()
+                basicUrl ?: return@coroutineScope Result.failure()
                 username ?: return@coroutineScope Result.failure()
                 password ?: return@coroutineScope Result.failure()
                 url ?: return@coroutineScope Result.failure()
@@ -73,8 +73,8 @@ class SubscriptionWorker @AssistedInject constructor(
                     Result.failure(data)
                 } else {
                     try {
-                        val type = XtreamInput.decodeFromUrl(url).type
-                        playlistRepository.xtream(title, address, username, password, type)
+                        val type = XtreamInput.decodeFromPlaylistUrl(url).type
+                        playlistRepository.xtream(title, basicUrl, username, password, type)
                         Result.success()
                     } catch (e: Exception) {
                         logger.log(e)
@@ -123,7 +123,7 @@ class SubscriptionWorker @AssistedInject constructor(
         private const val NOTIFICATION_ID = 1224
         const val INPUT_STRING_TITLE = "title"
         const val INPUT_STRING_URL = "url"
-        const val INPUT_STRING_ADDRESS = "address"
+        const val INPUT_STRING_BASIC_URL = "basic_url"
         const val INPUT_STRING_USERNAME = "username"
         const val INPUT_STRING_PASSWORD = "password"
         const val INPUT_STRING_DATA_SOURCE_VALUE = "data-source"

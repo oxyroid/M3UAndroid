@@ -98,7 +98,7 @@
     <string name="feat_setting_data_source_dropbox">Dropbox</string>
     <string name="feat_setting_data_source_aliyun">Aliyun</string>
 
-    <string name="feat_setting_placeholder_address">address</string>
+    <string name="feat_setting_placeholder_basic_url">address</string>
     <string name="feat_setting_placeholder_username">username</string>
     <string name="feat_setting_placeholder_password">password</string>
 </resources>

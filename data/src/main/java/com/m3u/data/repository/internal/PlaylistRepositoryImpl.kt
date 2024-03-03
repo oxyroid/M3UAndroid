@@ -15,9 +15,7 @@ import com.m3u.core.architecture.logger.execute
 import com.m3u.core.architecture.logger.prefix
 import com.m3u.core.architecture.logger.sandBox
 import com.m3u.core.architecture.pref.Pref
-import com.m3u.core.architecture.pref.annotation.PlaylistStrategy
 import com.m3u.core.util.basic.startsWithAny
-import com.m3u.core.util.belong
 import com.m3u.core.util.readFileContent
 import com.m3u.core.util.readFileName
 import com.m3u.data.api.xtream.toStream
@@ -38,8 +36,6 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -103,8 +99,9 @@ class PlaylistRepositoryImpl @Inject constructor(
                 val playlist = Playlist(title, actualUrl)
                 playlistDao.insertOrReplace(playlist)
 
-                compareAndUpdate(
-                    expect = streamDao.getByPlaylistUrl(url),
+                streamDao.compareAndUpdate(
+                    strategy = pref.playlistStrategy,
+                    url = url,
                     update = streams
                 )
             } catch (e: FileNotFoundException) {
@@ -117,12 +114,12 @@ class PlaylistRepositoryImpl @Inject constructor(
 
     override suspend fun xtream(
         title: String,
-        address: String,
+        basicUrl: String,
         username: String,
         password: String,
         type: String?
     ) = withContext(ioDispatcher) {
-        val input = XtreamInput(address, username, password, type)
+        val input = XtreamInput(basicUrl, username, password, type)
         val (
             lives,
             vods,
@@ -130,7 +127,9 @@ class PlaylistRepositoryImpl @Inject constructor(
             liveCategories,
             vodCategories,
             serialCategories,
-            allowedOutputFormats
+            allowedOutputFormats,
+            serverProtocol,
+            port
         ) = xtreamParser.execute(input)
         val requiredLives = type == null || type == DataSource.Xtream.TYPE_LIVE
         val requiredVods = type == null || type == DataSource.Xtream.TYPE_VOD
@@ -138,12 +137,16 @@ class PlaylistRepositoryImpl @Inject constructor(
         if (requiredLives) {
             val playlist = Playlist(
                 title = title,
-                url = XtreamInput.encodeToUrl(input.copy(type = DataSource.Xtream.TYPE_LIVE)),
+                url = XtreamInput.encodeToPlaylistUrl(
+                    input = input.copy(type = DataSource.Xtream.TYPE_LIVE),
+                    serverProtocol = serverProtocol,
+                    port = port
+                ),
                 source = DataSource.Xtream
             )
             val streams = lives.map { current ->
                 current.toStream(
-                    address = address,
+                    basicUrl = basicUrl,
                     username = username,
                     password = password,
                     playlistUrl = playlist.url,
@@ -153,21 +156,26 @@ class PlaylistRepositoryImpl @Inject constructor(
             }
 
             playlistDao.insertOrReplace(playlist)
-            compareAndUpdate(
-                streamDao.getByPlaylistUrl(playlist.url),
-                streams
+            streamDao.compareAndUpdate(
+                strategy = pref.playlistStrategy,
+                url = playlist.url,
+                update = streams
             )
             logger.log("xtream: lives +[${streams.size}]")
         }
         if (requiredVods) {
             val playlist = Playlist(
                 title = title,
-                url = XtreamInput.encodeToUrl(input.copy(type = DataSource.Xtream.TYPE_VOD)),
+                url = XtreamInput.encodeToPlaylistUrl(
+                    input = input.copy(type = DataSource.Xtream.TYPE_VOD),
+                    serverProtocol = serverProtocol,
+                    port = port
+                ),
                 source = DataSource.Xtream
             )
             val streams = vods.map { current ->
                 current.toStream(
-                    address = address,
+                    basicUrl = basicUrl,
                     username = username,
                     password = password,
                     playlistUrl = playlist.url,
@@ -176,9 +184,10 @@ class PlaylistRepositoryImpl @Inject constructor(
             }
 
             playlistDao.insertOrReplace(playlist)
-            compareAndUpdate(
-                streamDao.getByPlaylistUrl(playlist.url),
-                streams
+            streamDao.compareAndUpdate(
+                strategy = pref.playlistStrategy,
+                url = playlist.url,
+                update = streams
             )
             logger.log("xtream: vods +[${vods.size}]")
         }
@@ -186,12 +195,16 @@ class PlaylistRepositoryImpl @Inject constructor(
         if (requiredSeries) {
             val playlist = Playlist(
                 title = title,
-                url = XtreamInput.encodeToUrl(input.copy(type = DataSource.Xtream.TYPE_SERIES)),
+                url = XtreamInput.encodeToPlaylistUrl(
+                    input = input.copy(type = DataSource.Xtream.TYPE_SERIES),
+                    serverProtocol = serverProtocol,
+                    port = port
+                ),
                 source = DataSource.Xtream
             )
             val streams = series.map { current ->
                 current.toStream(
-                    address = address,
+                    basicUrl = basicUrl,
                     username = username,
                     password = password,
                     playlistUrl = playlist.url,
@@ -201,9 +214,10 @@ class PlaylistRepositoryImpl @Inject constructor(
                 )
             }
             playlistDao.insertOrReplace(playlist)
-            compareAndUpdate(
-                streamDao.getByPlaylistUrl(playlist.url),
-                streams
+            streamDao.compareAndUpdate(
+                strategy = pref.playlistStrategy,
+                url = playlist.url,
+                update = streams
             )
             logger.log("xtream: series +[${streams.size}]")
         }
@@ -232,22 +246,22 @@ class PlaylistRepositoryImpl @Inject constructor(
             }
 
             DataSource.Xtream -> {
-                val input = XtreamInput.decodeFromUrlOrNull(playlist.url) ?: return@sandBox
+                val input = XtreamInput.decodeFromPlaylistUrlOrNull(playlist.url) ?: return@sandBox
                 workManager.cancelAllWorkByTag(url)
-                workManager.cancelAllWorkByTag(input.address)
+                workManager.cancelAllWorkByTag(input.basicUrl)
                 val request = OneTimeWorkRequestBuilder<SubscriptionWorker>()
                     .setInputData(
                         workDataOf(
                             SubscriptionWorker.INPUT_STRING_TITLE to playlist.title,
                             SubscriptionWorker.INPUT_STRING_URL to url,
-                            SubscriptionWorker.INPUT_STRING_ADDRESS to input.address,
+                            SubscriptionWorker.INPUT_STRING_BASIC_URL to input.basicUrl,
                             SubscriptionWorker.INPUT_STRING_USERNAME to input.username,
                             SubscriptionWorker.INPUT_STRING_PASSWORD to input.password,
                             SubscriptionWorker.INPUT_STRING_DATA_SOURCE_VALUE to DataSource.Xtream.value
                         )
                     )
                     .addTag(url)
-                    .addTag(input.address)
+                    .addTag(input.basicUrl)
                     .addTag(SubscriptionWorker.TAG)
                     .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
                     .build()
@@ -318,56 +332,20 @@ class PlaylistRepositoryImpl @Inject constructor(
                     }
                 }
                 playlistDao.insertOrReplaceAll(*playlists.toTypedArray())
-                streamDao.insertAll(*streams.toTypedArray())
+                streamDao.insertOrReplaceAll(*streams.toTypedArray())
             }
         }
     }
 
-    override suspend fun pinOrUnpinGroup(url: String, group: String) = logger.sandBox {
-        playlistDao.updatePinnedGroups(url) { prev ->
-            if (group in prev) prev - group
-            else prev + group
+    override suspend fun pinOrUnpinCategory(url: String, category: String) = logger.sandBox {
+        playlistDao.updatePinnedCategories(url) { prev ->
+            if (category in prev) prev - category
+            else prev + category
         }
     }
 
-    override suspend fun hideOrUnhideGroup(url: String, group: String) = logger.sandBox {
-        playlistDao.hideOrUnhideGroup(url, group)
-    }
-
-    private val mutex = Mutex()
-
-    private suspend inline fun compareAndUpdate(
-        expect: List<Stream>,
-        update: List<Stream>
-    ) = mutex.withLock {
-        val strategy = pref.playlistStrategy
-        val skippedUrls = mutableListOf<String>()
-        val grouped by lazy {
-            expect.groupBy { it.favourite }.withDefault { emptyList() }
-        }
-        val invalidate = when (strategy) {
-            PlaylistStrategy.ALL -> expect
-            PlaylistStrategy.SKIP_FAVORITE -> grouped.getValue(false)
-            else -> emptyList()
-        }
-        invalidate.forEach { stream ->
-            if (stream belong update) {
-                skippedUrls += stream.url
-            } else {
-                streamDao.deleteByUrl(stream.url)
-            }
-        }
-        val existedUrls = when (strategy) {
-            PlaylistStrategy.ALL -> skippedUrls
-            PlaylistStrategy.SKIP_FAVORITE -> grouped
-                .getValue(true)
-                .map { it.url } + skippedUrls
-
-            else -> emptyList()
-        }
-        val needToBeInsertedStreams = update.filterNot { it.url in existedUrls }
-
-        streamDao.insertAll(*needToBeInsertedStreams.toTypedArray())
+    override suspend fun hideOrUnhideCategory(url: String, category: String) = logger.sandBox {
+        playlistDao.hideOrUnhideCategory(url, category)
     }
 
     override fun observeAll(): Flow<List<Playlist>> = playlistDao

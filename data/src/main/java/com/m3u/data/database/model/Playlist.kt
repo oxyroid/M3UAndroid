@@ -32,9 +32,9 @@ data class Playlist(
     val url: String,
     // extra fields
     @ColumnInfo(name = "pinned_groups", defaultValue = "[]")
-    val pinnedGroups: List<String> = emptyList(),
+    val pinnedCategories: List<String> = emptyList(),
     @ColumnInfo(name = "hidden_groups", defaultValue = "[]")
-    val hiddenGroups: List<String> = emptyList(),
+    val hiddenCategories: List<String> = emptyList(),
     @ColumnInfo(name = "source", defaultValue = "0")
     @Serializable(with = DataSourceSerializer::class)
     val source: DataSource = DataSource.M3U
@@ -51,7 +51,7 @@ data class Playlist(
 
     val type: String?
         get() = when (source) {
-            DataSource.Xtream -> XtreamInput.decodeFromUrl(url).type
+            DataSource.Xtream -> XtreamInput.decodeFromPlaylistUrl(url).type
             else -> null
         }
 

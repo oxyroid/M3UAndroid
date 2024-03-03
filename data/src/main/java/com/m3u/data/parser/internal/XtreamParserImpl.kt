@@ -33,49 +33,52 @@ internal class XtreamParserImpl @Inject constructor(
     }
 
     override suspend fun execute(input: XtreamInput): XtreamOutput {
-        val (address, username, password, type) = input
+        val (basicUrl, username, password, type) = input
         val requiredLives = type == null || type == DataSource.Xtream.TYPE_LIVE
         val requiredVods = type == null || type == DataSource.Xtream.TYPE_VOD
         val requiredSeries = type == null || type == DataSource.Xtream.TYPE_SERIES
-        val infoUrl = XtreamParser.createInfoUrl(address, username, password)
+        val infoUrl = XtreamParser.createInfoUrl(basicUrl, username, password)
         val liveStreamsUrl = XtreamParser.createActionUrl(
-            address,
+            basicUrl,
             username,
             password,
             XtreamParser.Action.GET_LIVE_STREAMS
         )
         val vodStreamsUrl = XtreamParser.createActionUrl(
-            address,
+            basicUrl,
             username,
             password,
             XtreamParser.Action.GET_VOD_STREAMS
         )
         val seriesStreamsUrl = XtreamParser.createActionUrl(
-            address,
+            basicUrl,
             username,
             password,
             XtreamParser.Action.GET_SERIES_STREAMS
         )
         val liveCategoriesUrl = XtreamParser.createActionUrl(
-            address,
+            basicUrl,
             username,
             password,
             XtreamParser.Action.GET_LIVE_CATEGORIES
         )
         val vodCategoriesUrl = XtreamParser.createActionUrl(
-            address,
+            basicUrl,
             username,
             password,
             XtreamParser.Action.GET_VOD_CATEGORIES
         )
         val serialCategoriesUrl = XtreamParser.createActionUrl(
-            address,
+            basicUrl,
             username,
             password,
             XtreamParser.Action.GET_SERIES_CATEGORIES
         )
         val info: XtreamInfo = newCall(infoUrl) ?: return XtreamOutput()
         val allowedOutputFormats = info.userInfo.allowedOutputFormats
+        val serverProtocol = info.serverInfo.serverProtocol ?: "http"
+        val port = info.serverInfo.port?.toIntOrNull()
+        val httpsPort = info.serverInfo.httpsPort?.toIntOrNull()
 
         val lives: List<XtreamLive> = if (requiredLives) newCall(liveStreamsUrl) ?: emptyList() else emptyList()
         val vods: List<XtreamVod> = if (requiredVods) newCall(vodStreamsUrl) ?: emptyList() else emptyList()
@@ -92,7 +95,9 @@ internal class XtreamParserImpl @Inject constructor(
             liveCategories = liveCategories,
             vodCategories = vodCategories,
             serialCategories = serialCategories,
-            allowedOutputFormats = allowedOutputFormats
+            allowedOutputFormats = allowedOutputFormats,
+            serverProtocol = serverProtocol,
+            port = if (serverProtocol == "http") port else httpsPort
         )
     }
 

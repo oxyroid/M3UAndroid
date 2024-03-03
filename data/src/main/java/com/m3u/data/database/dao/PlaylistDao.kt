@@ -65,23 +65,23 @@ interface PlaylistDao {
     }
 
     @Transaction
-    suspend fun updatePinnedGroups(url: String, updater: (List<String>) -> List<String>) {
+    suspend fun updatePinnedCategories(url: String, updater: (List<String>) -> List<String>) {
         val playlist = getByUrl(url) ?: return
         insertOrReplace(
             playlist.copy(
-                pinnedGroups = updater(playlist.pinnedGroups)
+                pinnedCategories = updater(playlist.pinnedCategories)
             )
         )
     }
 
     @Transaction
-    suspend fun hideOrUnhideGroup(url: String, group: String) {
+    suspend fun hideOrUnhideCategory(url: String, category: String) {
         val playlist = getByUrl(url) ?: return
-        val prev = playlist.hiddenGroups
+        val prev = playlist.hiddenCategories
         insertOrReplace(
             playlist.copy(
-                hiddenGroups = if (group in prev) prev - group
-                else prev + group
+                hiddenCategories = if (category in prev) prev - category
+                else prev + category
             )
         )
     }

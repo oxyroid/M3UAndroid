@@ -1,6 +1,5 @@
 package com.m3u.features.setting.fragments
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -31,6 +30,7 @@ import com.m3u.material.components.Background
 import com.m3u.material.components.ThemeAddSelection
 import com.m3u.material.components.ThemeSelection
 import com.m3u.material.ktx.isTelevision
+import com.m3u.material.ktx.textHorizontalLabel
 import com.m3u.material.ktx.thenIf
 import com.m3u.material.model.LocalSpacing
 import kotlinx.collections.immutable.ImmutableList
@@ -64,13 +64,7 @@ internal fun AppearanceFragment(
                     text = stringResource(string.feat_setting_appearance_hint_edit_color).uppercase(),
                     color = MaterialTheme.colorScheme.onPrimary,
                     style = MaterialTheme.typography.labelMedium,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(MaterialTheme.colorScheme.primary)
-                        .padding(
-                            horizontal = spacing.medium,
-                            vertical = spacing.extraSmall
-                        )
+                    modifier = Modifier.textHorizontalLabel()
                 )
                 LazyRow(
                     modifier = Modifier.fillMaxWidth(),

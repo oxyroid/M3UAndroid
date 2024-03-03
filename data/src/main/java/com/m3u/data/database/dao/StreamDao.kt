@@ -5,13 +5,16 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Transaction
+import com.m3u.core.architecture.pref.annotation.PlaylistStrategy
+import com.m3u.core.util.belong
 import com.m3u.data.database.model.Stream
 import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface StreamDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertAll(vararg streams: Stream)
+    suspend fun insertOrReplaceAll(vararg streams: Stream)
 
     @Delete
     suspend fun delete(stream: Stream)
@@ -57,4 +60,40 @@ interface StreamDao {
 
     @Query("UPDATE streams SET seen = :target WHERE id = :id")
     suspend fun updateSeen(id: Int, target: Long)
+
+    @Transaction
+    suspend fun compareAndUpdate(
+        @PlaylistStrategy strategy: Int,
+        url: String,
+        update: List<Stream>
+    ) {
+        val expect = getByPlaylistUrl(url)
+        val skippedUrls = mutableListOf<String>()
+        val grouped by lazy {
+            expect.groupBy { it.favourite }.withDefault { emptyList() }
+        }
+        val invalidate = when (strategy) {
+            PlaylistStrategy.ALL -> expect
+            PlaylistStrategy.SKIP_FAVORITE -> grouped.getValue(false)
+            else -> emptyList()
+        }
+        invalidate.forEach { stream ->
+            if (stream belong update) {
+                skippedUrls += stream.url
+            } else {
+                deleteByUrl(stream.url)
+            }
+        }
+        val existedUrls = when (strategy) {
+            PlaylistStrategy.ALL -> skippedUrls
+            PlaylistStrategy.SKIP_FAVORITE -> grouped
+                .getValue(true)
+                .map { it.url } + skippedUrls
+
+            else -> emptyList()
+        }
+        val needToBeInsertedStreams = update.filterNot { it.url in existedUrls }
+
+        insertOrReplaceAll(*needToBeInsertedStreams.toTypedArray())
+    }
 }

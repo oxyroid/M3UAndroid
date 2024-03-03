@@ -39,7 +39,7 @@ data class Playlists @Inject constructor(
 
                 val title = call.queryParameters["title"]
                 val url = call.queryParameters["url"]
-                val address = call.queryParameters["address"]
+                val basicUrl = call.queryParameters["address"]
                 val username = call.queryParameters["username"]
                 val password = call.queryParameters["password"]
 
@@ -60,7 +60,7 @@ data class Playlists @Inject constructor(
                         workDataOf(
                             SubscriptionWorker.INPUT_STRING_TITLE to title,
                             SubscriptionWorker.INPUT_STRING_URL to url,
-                            SubscriptionWorker.INPUT_STRING_ADDRESS to address,
+                            SubscriptionWorker.INPUT_STRING_BASIC_URL to basicUrl,
                             SubscriptionWorker.INPUT_STRING_USERNAME to username,
                             SubscriptionWorker.INPUT_STRING_PASSWORD to password,
                             SubscriptionWorker.INPUT_STRING_DATA_SOURCE_VALUE to dataSource.value

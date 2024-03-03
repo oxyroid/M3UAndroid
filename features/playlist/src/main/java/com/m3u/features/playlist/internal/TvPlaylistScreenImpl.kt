@@ -36,7 +36,7 @@ import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.data.database.model.Stream
-import com.m3u.features.playlist.Group
+import com.m3u.features.playlist.Category
 import com.m3u.features.playlist.components.ImmersiveBackground
 import com.m3u.features.playlist.components.TvStreamGallery
 import com.m3u.i18n.R
@@ -57,7 +57,7 @@ import kotlinx.collections.immutable.ImmutableList
 @InternalComposeApi
 internal fun TvPlaylistScreenImpl(
     title: String,
-    groups: ImmutableList<Group>,
+    categories: ImmutableList<Category>,
     query: String,
     onQuery: (String) -> Unit,
     sorts: ImmutableList<Sort>,
@@ -73,7 +73,7 @@ internal fun TvPlaylistScreenImpl(
 ) {
     val pref = LocalPref.current
 
-    val multiCatalogs = groups.size > 1
+    val multiCategories = categories.size > 1
     val noPictureMode = pref.noPictureMode
     val darkMode = if (pref.followSystemTheme) isSystemInDarkTheme()
     else pref.darkMode
@@ -83,7 +83,7 @@ internal fun TvPlaylistScreenImpl(
         targetValue = when {
             useGridLayout -> 360.dp
             noPictureMode -> 320.dp
-            multiCatalogs -> 256.dp
+            multiCategories -> 256.dp
             else -> 180.dp
         },
         label = "max-browser-height"
@@ -114,7 +114,7 @@ internal fun TvPlaylistScreenImpl(
             },
             list = {
                 TvStreamGallery(
-                    groups = groups,
+                    categories = categories,
                     maxBrowserHeight = maxBrowserHeight,
                     useGridLayout = useGridLayout,
                     onClick = onStream,
