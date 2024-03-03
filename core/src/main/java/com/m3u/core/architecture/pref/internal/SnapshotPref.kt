@@ -152,6 +152,6 @@ class SnapshotPref @Inject constructor(
     }
 
     init {
-        // alwaysTv = false
+        alwaysTv = false
     }
 }

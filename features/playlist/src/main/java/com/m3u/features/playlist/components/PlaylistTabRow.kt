@@ -10,41 +10,44 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Menu
 import androidx.compose.material.icons.rounded.PushPin
 import androidx.compose.material.icons.rounded.VisibilityOff
 import androidx.compose.material.ripple.rememberRipple
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.unit.dp
 import com.m3u.features.playlist.Category
 import com.m3u.material.components.IconButton
 import com.m3u.material.model.LocalSpacing
 import kotlinx.collections.immutable.ImmutableList
-import kotlinx.coroutines.launch
 
 @Composable
 internal fun PlaylistTabRow(
@@ -54,18 +57,19 @@ internal fun PlaylistTabRow(
     onPinOrUnpinCategory: (String) -> Unit,
     onHideCategory: (String) -> Unit,
     categories: ImmutableList<Category>,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
+    val spacing = LocalSpacing.current
+    val hapticFeedback = LocalHapticFeedback.current
+    val state = rememberLazyListState()
     Box(modifier) {
         if (categories.size > 1) {
-            val hapticFeedback = LocalHapticFeedback.current
             var focusCategory: String? by rememberSaveable { mutableStateOf(null) }
             Column {
-                val state = rememberLazyListState()
-                val coroutineScope = rememberCoroutineScope()
                 LazyRow(
                     state = state,
                     verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(spacing.extraSmall),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     stickyHeader {
@@ -122,10 +126,8 @@ internal fun PlaylistTabRow(
                             },
                             onLongClick = {
                                 focusCategory = channel.name
+                                onPageChanged(index)
                                 hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
-                                coroutineScope.launch {
-                                    state.animateScrollToItem(index)
-                                }
                             }
                         )
                     }
@@ -148,7 +150,7 @@ private fun PlaylistTabRowItem(
     hasOtherFocused: Boolean,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val spacing = LocalSpacing.current
     val interactionSource = remember { MutableInteractionSource() }
@@ -158,18 +160,23 @@ private fun PlaylistTabRowItem(
             when {
                 focused -> 1f
                 hasOtherFocused -> 0.25f
-                selected -> 0.8f
+                selected -> 1f
                 else -> 0.65f
             }
         )
     ) {
         val indication = if (hasOtherFocused) null else rememberRipple()
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(spacing.small),
+        val shape = RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp)
+        Card(
+            colors = CardDefaults.cardColors(
+                containerColor = if (focused) LocalContentColor.current
+                else Color.Transparent,
+                contentColor = if (focused) MaterialTheme.colorScheme.surfaceVariant
+                else LocalContentColor.current
+            ),
+            shape = shape,
             modifier = Modifier
-                .padding(vertical = spacing.extraSmall)
-                .clip(MaterialTheme.shapes.medium)
+                .clip(shape)
                 .combinedClickable(
                     interactionSource = interactionSource,
                     indication = indication,
@@ -177,17 +184,29 @@ private fun PlaylistTabRowItem(
                     onLongClick = onLongClick,
                     role = Role.Tab
                 )
-                .padding(horizontal = spacing.medium)
-                .minimumInteractiveComponentSize()
                 .then(modifier)
         ) {
-            Text(
-                text = name,
-                style = MaterialTheme.typography.titleSmall.copy(
-                    textDecoration = if (pinned) TextDecoration.Underline else TextDecoration.None
-                ),
-                fontWeight = FontWeight.Bold.takeIf { (selected && !hasOtherFocused) || focused }
-            )
+            Box(
+                modifier = Modifier
+                    .padding(
+                        horizontal = spacing.medium,
+                        vertical = spacing.small
+                    )
+                    .heightIn(32.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = name,
+                    style = MaterialTheme.typography.titleSmall.copy(
+                        textDecoration = if (pinned) TextDecoration.Underline else TextDecoration.None
+                    ),
+                    fontWeight = when {
+                        focused -> FontWeight.Black
+                        selected && !hasOtherFocused -> FontWeight.Bold
+                        else -> null
+                    }
+                )
+            }
         }
     }
 }

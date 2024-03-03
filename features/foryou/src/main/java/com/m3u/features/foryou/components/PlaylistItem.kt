@@ -31,12 +31,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.m3u.data.database.model.DataSource
 import com.m3u.material.components.Icon
 import com.m3u.material.components.OuterRow
 import com.m3u.material.components.TextBadge
-import com.m3u.material.components.UnstableBadge
-import com.m3u.material.components.UnstableValue
 import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.UiMode
 import com.m3u.ui.currentUiMode
@@ -152,7 +149,8 @@ private fun PlaylistItemImpl(
                             letterSpacing = 1.sp,
                             baselineShift = BaselineShift.Subscript,
                             fontFamily = FontFamily.Cursive,
-                            fontWeight = FontWeight.SemiBold
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 10.sp
                         ),
                         color = LocalContentColor.current.copy(0.67f)
                     )
@@ -193,9 +191,6 @@ private fun PlaylistItemImpl(
                         textAlign = TextAlign.Center
                     )
                 }
-                if (type == DataSource.Xtream.TYPE_SERIES) {
-                    UnstableBadge(UnstableValue.EXPERIMENTAL)
-                }
             }
         }
     }
@@ -224,7 +219,7 @@ private fun TvPlaylistItemImpl(
         modifier = modifier
     ) {
         OuterRow(
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.Top
         ) {
             if (local) {
                 Icon(
@@ -247,9 +242,6 @@ private fun TvPlaylistItemImpl(
                         style = TvMaterialTheme.typography.bodySmall,
                         color = androidx.tv.material3.LocalContentColor.current.copy(0.45f)
                     )
-                    if (type == DataSource.Xtream.TYPE_SERIES) {
-                        UnstableBadge(UnstableValue.EXPERIMENTAL)
-                    }
                 }
             }
 
