@@ -100,8 +100,8 @@ private fun Selection(
         verticalAlignment = verticalAlignment,
         modifier = Modifier
             .fillMaxWidth()
-            .defaultMinSize(minHeight = 56.dp)
-            .clip(RoundedCornerShape(25))
+            .defaultMinSize(minHeight = SelectionsDefaults.MinHeight)
+            .clip(SelectionsDefaults.Shape)
             .background(actualColor)
             .then(modifier)
             .padding(horizontal = spacing.medium)
@@ -117,4 +117,9 @@ private fun Selection(
             content = { content() }
         )
     }
+}
+
+object SelectionsDefaults {
+    val Shape = RoundedCornerShape(25)
+    val MinHeight = 56.dp
 }

@@ -1,14 +1,17 @@
 package com.m3u.features.setting.components
 
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.KeyboardArrowUp
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -18,9 +21,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import com.m3u.data.database.model.DataSource
 import com.m3u.material.components.ClickableSelection
 import com.m3u.material.components.Icon
+import com.m3u.material.components.SelectionsDefaults
 import kotlinx.collections.immutable.ImmutableList
 
 @Composable
@@ -35,6 +40,7 @@ internal fun DataSourceSelection(
         modifier = Modifier
             .fillMaxSize()
             .wrapContentSize(Alignment.TopStart)
+            .border(1.dp, LocalContentColor.current.copy(0.38f), SelectionsDefaults.Shape)
             .then(modifier)
     ) {
         ClickableSelection(
@@ -58,6 +64,14 @@ internal fun DataSourceSelection(
             supported.forEach { current ->
                 DropdownMenuItem(
                     text = { Text(stringResource(current.resId)) },
+                    trailingIcon = {
+                        if (selected == current) {
+                            Icon(
+                                imageVector = Icons.Rounded.CheckCircle,
+                                contentDescription = null
+                            )
+                        }
+                    },
                     enabled = current.supported,
                     onClick = {
                         onSelected(current)
