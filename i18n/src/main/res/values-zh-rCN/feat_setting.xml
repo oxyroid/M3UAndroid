@@ -96,4 +96,10 @@
     <string name="feat_setting_restoring">恢复所有播放列表和频道中</string>
 
     <string name="feat_setting_follow_system_theme">跟随系统主题</string>
+
+    <string name="feat_setting_placeholder_basic_url">订阅地址</string>
+    <string name="feat_setting_placeholder_username">用户名</string>
+    <string name="feat_setting_placeholder_password">密码</string>
+
+    <string name="feat_setting_warning_xtream_takes_much_more_time">这可能会花费更久的时间</string>
 </resources>

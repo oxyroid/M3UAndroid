@@ -92,15 +92,15 @@
 
     <string name="feat_setting_follow_system_theme">follow system theme</string>
 
-    <string name="feat_setting_data_source_m3u">M3U</string>
-    <string name="feat_setting_data_source_xtream">Xtream</string>
-    <string name="feat_setting_data_source_emby">Emby</string>
-    <string name="feat_setting_data_source_dropbox">Dropbox</string>
-    <string name="feat_setting_data_source_aliyun">Aliyun</string>
+    <string name="feat_setting_data_source_m3u" translatable="false">M3U</string>
+    <string name="feat_setting_data_source_xtream" translatable="false">Xtream</string>
+    <string name="feat_setting_data_source_emby" translatable="false">Emby</string>
+    <string name="feat_setting_data_source_dropbox" translatable="false">Dropbox</string>
+    <string name="feat_setting_data_source_aliyun" translatable="false">Aliyun</string>
 
     <string name="feat_setting_placeholder_basic_url">address</string>
     <string name="feat_setting_placeholder_username">username</string>
     <string name="feat_setting_placeholder_password">password</string>
 
-    <string name="feat_setting_warning_xtream_takes_much_time">it may take much more time</string>
+    <string name="feat_setting_warning_xtream_takes_much_more_time">it may take much more time</string>
 </resources>

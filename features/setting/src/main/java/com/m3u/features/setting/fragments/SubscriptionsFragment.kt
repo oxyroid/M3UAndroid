@@ -51,7 +51,6 @@ import com.m3u.material.components.TonalButton
 import com.m3u.material.ktx.isTelevision
 import com.m3u.material.ktx.textHorizontalLabel
 import com.m3u.material.model.LocalSpacing
-import com.m3u.ui.FontFamilies
 import com.m3u.ui.helper.LocalHelper
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
@@ -330,7 +329,7 @@ fun HiddenStreamContentImpl(
         Text(
             text = stringResource(string.feat_setting_label_hidden_streams),
             color = MaterialTheme.colorScheme.onPrimary,
-            style = MaterialTheme.typography.labelLarge,
+            style = MaterialTheme.typography.labelMedium,
             modifier = Modifier.textHorizontalLabel()
         )
         hiddenStreams.forEach { stream ->
@@ -352,7 +351,7 @@ fun HiddenPlaylistCategoriesContentImpl(
         Text(
             text = stringResource(string.feat_setting_label_hidden_playlist_groups),
             color = MaterialTheme.colorScheme.onPrimary,
-            style = MaterialTheme.typography.labelLarge,
+            style = MaterialTheme.typography.labelMedium,
             modifier = Modifier.textHorizontalLabel()
         )
         hiddenCategoriesWithPlaylists.forEach { (playlist, category) ->
@@ -450,7 +449,7 @@ private fun XtreamInputContent(
             onValueChange = onPassword,
             modifier = Modifier.fillMaxWidth()
         )
-        Warning(stringResource(string.feat_setting_warning_xtream_takes_much_time))
+        Warning(stringResource(string.feat_setting_warning_xtream_takes_much_more_time))
     }
 }
 
@@ -470,9 +469,8 @@ private fun Warning(
         ) {
             Icon(imageVector = Icons.Rounded.Warning, contentDescription = null)
             Text(
-                text = text.uppercase(),
-                style = MaterialTheme.typography.labelLarge,
-                fontFamily = FontFamilies.LexendExa
+                text = text,
+                style = MaterialTheme.typography.labelLarge
             )
         }
     }
