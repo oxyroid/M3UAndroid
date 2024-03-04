@@ -51,6 +51,7 @@ import com.m3u.material.components.TonalButton
 import com.m3u.material.ktx.isTelevision
 import com.m3u.material.ktx.textHorizontalLabel
 import com.m3u.material.model.LocalSpacing
+import com.m3u.ui.FontFamilies
 import com.m3u.ui.helper.LocalHelper
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
@@ -469,8 +470,9 @@ private fun Warning(
         ) {
             Icon(imageVector = Icons.Rounded.Warning, contentDescription = null)
             Text(
-                text = text,
-                style = MaterialTheme.typography.labelLarge
+                text = text.uppercase(),
+                style = MaterialTheme.typography.labelLarge,
+                fontFamily = FontFamilies.LexendExa
             )
         }
     }

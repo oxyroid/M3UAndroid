@@ -24,7 +24,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.BaselineShift
 import androidx.compose.ui.text.style.TextAlign
@@ -34,6 +33,7 @@ import androidx.compose.ui.unit.sp
 import com.m3u.material.components.Icon
 import com.m3u.material.components.OuterRow
 import com.m3u.material.model.LocalSpacing
+import com.m3u.ui.FontFamilies
 import com.m3u.ui.UiMode
 import com.m3u.ui.currentUiMode
 import androidx.tv.material3.Card as TvCard
@@ -147,11 +147,11 @@ private fun PlaylistItemImpl(
                         style = MaterialTheme.typography.bodySmall.copy(
                             letterSpacing = 1.sp,
                             baselineShift = BaselineShift.Subscript,
-                            fontFamily = FontFamily.Cursive,
+                            fontFamily = FontFamilies.LexendExa,
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 10.sp
                         ),
-                        color = LocalContentColor.current.copy(0.67f)
+                        color = LocalContentColor.current.copy(0.45f)
                     )
                 }
             }

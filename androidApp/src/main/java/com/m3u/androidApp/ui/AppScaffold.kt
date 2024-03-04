@@ -39,6 +39,7 @@ import com.m3u.material.ktx.isTelevision
 import com.m3u.material.model.LocalHazeState
 import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.Destination
+import com.m3u.ui.FontFamilies
 import com.m3u.ui.helper.Action
 import com.m3u.ui.helper.Fob
 import com.m3u.ui.helper.LocalHelper
@@ -146,6 +147,7 @@ internal fun TopBarWithContent(
                             text = title,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
+                            fontFamily = FontFamilies.LexendExa,
                             modifier = Modifier.padding(horizontal = spacing.medium)
                         )
                     },
