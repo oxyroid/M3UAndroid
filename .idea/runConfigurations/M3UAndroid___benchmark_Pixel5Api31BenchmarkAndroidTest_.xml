@@ -10,7 +10,7 @@
       </option>
       <option name="taskNames">
         <list>
-          <option value=":benchmark:Pixel5Api31FullBenchmarkAndroidTest" />
+          <option value=":benchmark:Pixel5Api31StableChannelRichCodecBenchmarkAndroidTest" />
         </list>
       </option>
       <option name="vmOptions" />
