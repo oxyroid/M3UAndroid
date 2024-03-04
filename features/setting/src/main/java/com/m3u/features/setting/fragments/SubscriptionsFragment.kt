@@ -269,8 +269,9 @@ private fun MainContentImpl(
             Button(
                 text = stringResource(string.feat_setting_label_subscribe),
                 onClick = {
-                    when (postNotificationPermissionState.status) {
-                        is PermissionStatus.Denied -> {
+                    when {
+                        !postNotificationPermissionRequired -> {}
+                        postNotificationPermissionState.status is PermissionStatus.Denied -> {
                             if (postNotificationPermissionState.status.shouldShowRationale) {
                                 postNotificationPermissionState.launchPermissionRequest()
                             } else {
@@ -278,6 +279,7 @@ private fun MainContentImpl(
                             }
                             return@Button
                         }
+
                         else -> {}
                     }
                     onSubscribe()

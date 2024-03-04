@@ -139,8 +139,9 @@ internal fun PlaylistRoute(
             },
             onScrollUp = { viewModel.onEvent(PlaylistEvent.ScrollUp) },
             onRefresh = {
-                when (postNotificationPermissionState.status) {
-                    is PermissionStatus.Denied -> {
+                when {
+                    !postNotificationPermissionRequired -> {}
+                    postNotificationPermissionState.status is PermissionStatus.Denied -> {
                         if (postNotificationPermissionState.status.shouldShowRationale) {
                             postNotificationPermissionState.launchPermissionRequest()
                         } else {
