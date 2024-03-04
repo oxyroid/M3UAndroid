@@ -45,7 +45,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.LifecycleStartEffect
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import com.m3u.core.wrapper.Event
 import com.m3u.data.database.model.Stream
 import com.m3u.features.playlist.Category
@@ -120,7 +120,7 @@ internal fun PlaylistScreenImpl(
     var dialogStatus: DialogStatus by remember { mutableStateOf(DialogStatus.Idle) }
     var isSortSheetVisible by rememberSaveable { mutableStateOf(false) }
 
-    LifecycleStartEffect(Unit) {
+    LifecycleResumeEffect(Unit) {
         helper.actions = persistentListOf(
             Action(
                 icon = Icons.AutoMirrored.Rounded.Sort,
@@ -133,7 +133,9 @@ internal fun PlaylistScreenImpl(
                 onClick = onRefresh
             )
         )
-        onStopOrDispose { }
+        onPauseOrDispose {
+            helper.actions = persistentListOf()
+        }
     }
 
     var currentPage by remember(categories.size) {

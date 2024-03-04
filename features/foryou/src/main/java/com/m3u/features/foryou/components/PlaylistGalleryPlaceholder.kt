@@ -11,7 +11,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.sharp.QuestionMark
 import androidx.compose.material3.CardDefaults
-import com.m3u.material.components.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.runtime.Composable
@@ -31,8 +30,9 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.capitalize
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.intl.Locale
-import androidx.lifecycle.compose.LifecycleStartEffect
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import com.m3u.i18n.R
+import com.m3u.material.components.Icon
 import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.MonoText
 import kotlinx.coroutines.delay
@@ -57,8 +57,8 @@ internal fun PlaylistGalleryPlaceholder(
             expanded = false
         }
     }
-    LifecycleStartEffect {
-        onStopOrDispose {
+    LifecycleResumeEffect {
+        onPauseOrDispose {
             expanded = false
         }
     }

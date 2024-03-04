@@ -102,4 +102,6 @@
     <string name="feat_setting_placeholder_password">密码</string>
 
     <string name="feat_setting_warning_xtream_takes_much_more_time">这可能会花费更久的时间</string>
+
+    <string name="feat_setting_back_home">回到主页</string>
 </resources>

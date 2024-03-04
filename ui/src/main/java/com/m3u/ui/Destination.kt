@@ -53,13 +53,13 @@ sealed interface Destination {
 }
 
 @Immutable
-sealed interface Settings {
+sealed interface SettingFragment {
     @Immutable
-    data object Default : Settings
+    data object Default : SettingFragment
 
     @Immutable
-    data object Playlists : Settings
+    data object Playlists : SettingFragment
 
     @Immutable
-    data object Appearance : Settings
+    data object Appearance : SettingFragment
 }

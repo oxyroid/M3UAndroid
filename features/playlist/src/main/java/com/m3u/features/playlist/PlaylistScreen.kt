@@ -34,7 +34,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.compose.LifecycleStartEffect
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.google.accompanist.permissions.PermissionStatus
 import com.google.accompanist.permissions.rememberPermissionState
@@ -102,9 +102,9 @@ internal fun PlaylistRoute(
         Manifest.permission.POST_NOTIFICATIONS
     )
 
-    LifecycleStartEffect(playlist) {
+    LifecycleResumeEffect(playlist) {
         helper.title = playlist?.title?.title().orEmpty()
-        onStopOrDispose {
+        onPauseOrDispose {
         }
     }
 
@@ -149,6 +149,7 @@ internal fun PlaylistRoute(
                         }
                         return@PlaylistScreen
                     }
+
                     else -> {}
                 }
                 viewModel.onEvent(PlaylistEvent.Refresh)

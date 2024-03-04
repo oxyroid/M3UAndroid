@@ -23,7 +23,7 @@ import com.m3u.material.ktx.isTelevision
 import com.m3u.ui.Destination
 import com.m3u.ui.EventBus
 import com.m3u.ui.LocalNavController
-import com.m3u.ui.Settings
+import com.m3u.ui.SettingFragment
 
 @Composable
 fun AppNavHost(
@@ -86,7 +86,7 @@ fun AppNavHost(
             },
             navigateToSettingPlaylistManagement = {
                 navigateToRoot(Destination.Root.Setting)
-                EventBus.settings = eventOf(Settings.Playlists)
+                EventBus.settingFragment = eventOf(SettingFragment.Playlists)
             }
         )
 

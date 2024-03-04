@@ -29,13 +29,13 @@ import com.m3u.material.components.Preference
 import com.m3u.material.components.TextPreference
 import com.m3u.material.ktx.isTelevision
 import com.m3u.ui.Destination
-import com.m3u.ui.Settings
+import com.m3u.ui.SettingFragment
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 
 @Composable
 internal fun RegularPreferences(
-    fragment: Settings,
+    fragment: SettingFragment,
     navigateToPlaylistManagement: () -> Unit,
     navigateToThemeSelector: () -> Unit,
     modifier: Modifier = Modifier
@@ -47,13 +47,13 @@ internal fun RegularPreferences(
         Preference(
             title = stringResource(string.feat_setting_playlist_management).title(),
             icon = Icons.Rounded.MusicNote,
-            enabled = fragment != Settings.Playlists,
+            enabled = fragment != SettingFragment.Playlists,
             onClick = navigateToPlaylistManagement
         )
         Preference(
             title = stringResource(string.feat_setting_appearance).title(),
             icon = Icons.Rounded.ColorLens,
-            enabled = fragment != Settings.Appearance,
+            enabled = fragment != SettingFragment.Appearance,
             onClick = navigateToThemeSelector
         )
         TextPreference(

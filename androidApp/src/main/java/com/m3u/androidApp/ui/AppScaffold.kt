@@ -1,10 +1,17 @@
 package com.m3u.androidApp.ui
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -12,7 +19,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import com.m3u.material.components.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -22,6 +28,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.InternalComposeApi
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -34,6 +41,7 @@ import com.m3u.androidApp.ui.internal.AppScaffoldImpl
 import com.m3u.androidApp.ui.internal.AppScaffoldRailImpl
 import com.m3u.androidApp.ui.internal.AppScaffoldTvImpl
 import com.m3u.material.components.Background
+import com.m3u.material.components.Icon
 import com.m3u.material.components.IconButton
 import com.m3u.material.ktx.isTelevision
 import com.m3u.material.model.LocalHazeState
@@ -143,33 +151,54 @@ internal fun TopBarWithContent(
                 TopAppBar(
                     colors = TopAppBarDefaults.topAppBarColors(Color.Transparent),
                     title = {
-                        Text(
-                            text = title,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            fontFamily = FontFamilies.LexendExa,
-                            modifier = Modifier.padding(horizontal = spacing.medium)
-                        )
+                        Row(
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.defaultMinSize(minHeight = 56.dp)
+                        ) {
+                            AnimatedContent(
+                                targetState = title,
+                                label = "app-scaffold-title",
+                                transitionSpec = {
+                                    fadeIn() togetherWith fadeOut()
+                                },
+                                modifier = Modifier.weight(1f)
+                            ) { title ->
+                                Text(
+                                    text = title,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    fontFamily = FontFamilies.LexendExa,
+                                    modifier = Modifier.padding(horizontal = spacing.medium)
+                                )
+                            }
+                            Row {
+                                actions.forEach { action ->
+                                    IconButton(
+                                        icon = action.icon,
+                                        contentDescription = action.contentDescription,
+                                        onClick = action.onClick
+                                    )
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.width(spacing.medium))
+                        }
                     },
                     navigationIcon = {
-                        if (onBackPressed != null) {
-                            IconButton(
-                                icon = Icons.AutoMirrored.Rounded.ArrowBack,
-                                contentDescription = null,
-                                onClick = onBackPressed,
-                                modifier = Modifier.wrapContentSize()
-                            )
+                        AnimatedContent(
+                            targetState = onBackPressed,
+                            label = "app-scaffold-icon"
+                        ) { onBackPressed ->
+                            if (onBackPressed != null) {
+                                IconButton(
+                                    icon = Icons.AutoMirrored.Rounded.ArrowBack,
+                                    contentDescription = null,
+                                    onClick = onBackPressed,
+                                    modifier = Modifier.wrapContentSize()
+                                )
+                            }
                         }
-                    },
-                    actions = {
-                        actions.forEach { action ->
-                            IconButton(
-                                icon = action.icon,
-                                contentDescription = action.contentDescription,
-                                onClick = action.onClick
-                            )
-                        }
-                        Spacer(modifier = Modifier.width(spacing.medium))
                     },
                     modifier = Modifier
                         .hazeChild(hazeState, style = HazeStyle(blurRadius = 6.dp))

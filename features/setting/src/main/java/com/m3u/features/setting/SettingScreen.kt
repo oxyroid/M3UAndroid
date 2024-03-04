@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.ChangeCircle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.adaptive.AnimatedPane
 import androidx.compose.material3.adaptive.HingePolicy
@@ -25,7 +27,6 @@ import androidx.compose.material3.adaptive.separatingVerticalHingeBounds
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -39,6 +40,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.core.util.basic.title
@@ -57,7 +59,8 @@ import com.m3u.ui.Destination
 import com.m3u.ui.EventBus
 import com.m3u.ui.EventHandler
 import com.m3u.ui.LocalVisiblePageInfos
-import com.m3u.ui.Settings
+import com.m3u.ui.SettingFragment
+import com.m3u.ui.helper.Fob
 import com.m3u.ui.helper.LocalHelper
 import dev.chrisbanes.haze.HazeDefaults
 import dev.chrisbanes.haze.haze
@@ -72,9 +75,6 @@ fun SettingRoute(
     viewModel: SettingViewModel = hiltViewModel()
 ) {
     val tv = isTelevision()
-    val title = stringResource(string.ui_title_setting)
-
-    val helper = LocalHelper.current
     val controller = LocalSoftwareKeyboardController.current
 
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -104,11 +104,6 @@ fun SettingRoute(
     }
     val restore = {
         openDocumentLauncher.launch(arrayOf("text/*"))
-    }
-
-    LaunchedEffect(title) {
-        helper.title = title.title()
-        helper.actions = persistentListOf()
     }
 
     Box {
@@ -216,11 +211,9 @@ private fun SettingScreen(
 
     val colorArgb = pref.colorArgb
 
-    var fragment: Settings by remember {
-        mutableStateOf(Settings.Default)
-    }
+    var fragment: SettingFragment by remember { mutableStateOf(SettingFragment.Default) }
 
-    EventHandler(EventBus.settings) {
+    EventHandler(EventBus.settingFragment) {
         fragment = it
     }
 
@@ -231,19 +224,32 @@ private fun SettingScreen(
     }
 
     if (isPageInfoVisible) {
-        LaunchedEffect(fragment, defaultTitle, playlistTitle, appearanceTitle) {
+        LifecycleResumeEffect(fragment, defaultTitle, playlistTitle, appearanceTitle, fragment) {
             helper.title = when (fragment) {
-                Settings.Default -> defaultTitle
-                Settings.Playlists -> playlistTitle
-                Settings.Appearance -> appearanceTitle
+                SettingFragment.Default -> defaultTitle
+                SettingFragment.Playlists -> playlistTitle
+                SettingFragment.Appearance -> appearanceTitle
             }.title()
+            if (fragment != SettingFragment.Default) {
+                helper.fob = Fob(
+                    rootDestination = Destination.Root.Setting,
+                    icon = Icons.Rounded.ChangeCircle,
+                    iconTextId = string.feat_setting_back_home
+                ) {
+                    fragment = SettingFragment.Default
+                }
+            }
+            helper.actions = persistentListOf()
+            onPauseOrDispose {
+                helper.fob = null
+            }
         }
     }
 
     val currentPaneScaffoldRole by remember {
         derivedStateOf {
             when (fragment) {
-                Settings.Default -> ListDetailPaneScaffoldRole.List
+                SettingFragment.Default -> ListDetailPaneScaffoldRole.List
                 else -> ListDetailPaneScaffoldRole.Detail
             }
         }
@@ -264,20 +270,20 @@ private fun SettingScreen(
                 versionName = versionName,
                 versionCode = versionCode,
                 navigateToPlaylistManagement = {
-                    fragment = Settings.Playlists
+                    fragment = SettingFragment.Playlists
                 },
                 navigateToThemeSelector = {
-                    fragment = Settings.Appearance
+                    fragment = SettingFragment.Appearance
                 },
                 navigateToAbout = navigateToAbout,
                 modifier = Modifier.fillMaxSize()
             )
         },
         detailPane = {
-            if (fragment != Settings.Default) {
+            if (fragment != SettingFragment.Default) {
                 AnimatedPane(Modifier) {
                     when (fragment) {
-                        Settings.Playlists -> {
+                        SettingFragment.Playlists -> {
                             SubscriptionsFragment(
                                 contentPadding = contentPadding,
                                 title = title,
@@ -311,7 +317,7 @@ private fun SettingScreen(
                             )
                         }
 
-                        Settings.Appearance -> {
+                        SettingFragment.Appearance -> {
                             AppearanceFragment(
                                 colorPacks = colorPacks,
                                 colorArgb = colorArgb,
@@ -333,8 +339,8 @@ private fun SettingScreen(
             )
             .testTag("feature:setting")
     )
-    BackHandler(fragment != Settings.Default) {
-        fragment = Settings.Default
+    BackHandler(fragment != SettingFragment.Default) {
+        fragment = SettingFragment.Default
     }
 }
 
