@@ -13,6 +13,7 @@ import androidx.compose.material.icons.rounded.Extension
 import androidx.compose.material.icons.rounded.FlashOn
 import androidx.compose.material.icons.rounded.Loop
 import androidx.compose.material.icons.rounded.PictureInPicture
+import androidx.compose.material.icons.rounded.ReplayCircleFilled
 import androidx.compose.material.icons.rounded.ScreenRotation
 import androidx.compose.material.icons.rounded.SettingsEthernet
 import androidx.compose.runtime.Composable
@@ -93,6 +94,12 @@ fun OptionalPreferences(modifier: Modifier = Modifier) {
                         icon = Icons.AutoMirrored.Rounded.VolumeUp,
                         checked = pref.volumeGesture,
                         onChanged = { pref.volumeGesture = !pref.volumeGesture }
+                    )
+                    CheckBoxSharedPreference(
+                        title = string.feat_setting_always_replay,
+                        icon = Icons.Rounded.ReplayCircleFilled,
+                        checked = pref.alwaysShowReplay,
+                        onChanged = { pref.alwaysShowReplay = !pref.alwaysShowReplay }
                     )
                 }
 

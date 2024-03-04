@@ -44,11 +44,11 @@ class StreamViewModel @Inject constructor(
     private val streamRepository: StreamRepository,
     playlistRepository: PlaylistRepository,
     private val playerManager: PlayerManager,
-    logger: Logger,
+    before: Logger,
 ) : BaseViewModel<StreamState, StreamEvent>(
     emptyState = StreamState()
 ), OnDeviceRegistryListener, OnDeviceControlListener {
-    private val logger = logger.prefix("stream")
+    private val logger = before.prefix("feat-stream")
     private val _devices = MutableStateFlow<ImmutableList<Device<*, *, *>>>(persistentListOf())
 
     // searched screencast devices
@@ -128,6 +128,7 @@ class StreamViewModel @Inject constructor(
         playerManager.videoSize,
         playerManager.playerError
     ) { player, playState, videoSize, playerError ->
+        logger.log(playerError?.errorCodeName.orEmpty())
         StreamState.PlayerState(
             playState = playState,
             videoSize = videoSize,

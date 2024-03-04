@@ -7,7 +7,7 @@ import com.chuckerteam.chucker.api.ChuckerInterceptor
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.data.Certs
-import com.m3u.data.SSL
+import com.m3u.data.SSLs
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -53,7 +53,7 @@ internal object ApiModule {
                 }
             }
             .addInterceptor(ChuckerInterceptor(application))
-            .sslSocketFactory(SSL.TLSTrustAll.socketFactory, Certs.TrustAll)
+            .sslSocketFactory(SSLs.TLSTrustAll.socketFactory, Certs.TrustAll)
             .hostnameVerifier { _, _ -> true }
             .build()
     }

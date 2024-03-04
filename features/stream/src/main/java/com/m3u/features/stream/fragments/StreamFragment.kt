@@ -1,9 +1,14 @@
 package com.m3u.features.stream.fragments
 
 import android.content.pm.ActivityInfo
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.animateIntAsState
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -70,6 +75,7 @@ import com.m3u.material.components.mask.MaskState
 import com.m3u.material.ktx.isTelevision
 import com.m3u.material.ktx.thenIf
 import com.m3u.material.model.LocalSpacing
+import com.m3u.ui.FontFamilies
 import com.m3u.ui.Player
 import com.m3u.ui.helper.LocalHelper
 import com.m3u.ui.rememberPlayerState
@@ -270,11 +276,20 @@ internal fun StreamFragment(
                         }
                     },
                     body = {
-                        MaskCircleButton(
-                            state = maskState,
-                            icon = Icons.Rounded.Refresh,
-                            onClick = replay
-                        )
+                        AnimatedVisibility(
+                            visible = pref.alwaysShowReplay || playerState.playState in arrayOf(
+                                Player.STATE_IDLE,
+                                Player.STATE_ENDED
+                            ) || playerState.playerError != null,
+                            enter = fadeIn() + scaleIn(initialScale = 0.85f),
+                            exit = fadeOut() + scaleOut(targetScale = 0.85f)
+                        ) {
+                            MaskCircleButton(
+                                state = maskState,
+                                icon = Icons.Rounded.Refresh,
+                                onClick = replay
+                            )
+                        }
                     },
                     footer = {
                         val spacing = LocalSpacing.current
@@ -296,11 +311,12 @@ internal fun StreamFragment(
                         ) {
                             Text(
                                 text = playlistTitle.trim().uppercase(),
-                                style = MaterialTheme.typography.titleSmall,
+                                style = MaterialTheme.typography.labelMedium,
                                 maxLines = 1,
+                                color = LocalContentColor.current.copy(0.54f),
+                                fontFamily = FontFamilies.LexendExa,
                                 overflow = TextOverflow.Ellipsis,
-                                modifier = Modifier.basicMarquee(),
-                                color = LocalContentColor.current.copy(0.54f)
+                                modifier = Modifier.basicMarquee()
                             )
                             Text(
                                 text = title.trim(),
@@ -319,49 +335,45 @@ internal fun StreamFragment(
                                     modifier = Modifier.height(spacing.small)
                                 )
                             }
-                            when {
-                                playStateDisplayText.isNotEmpty() -> {
-                                    Text(
-                                        text = playStateDisplayText.uppercase(),
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = LocalContentColor.current.copy(alpha = 0.75f),
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis,
-                                        modifier = Modifier.basicMarquee()
-                                    )
-                                }
-
-                                exceptionDisplayText.isNotEmpty() -> {
-                                    Text(
-                                        text = exceptionDisplayText,
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = theme.error,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis,
-                                        modifier = Modifier.basicMarquee()
-                                    )
-                                }
-
-                                getCurrentMediaItemAvailable -> {
-                                    val fontWeight by animateIntAsState(
-                                        targetValue = if (bufferedPosition != null) 800
-                                        else 400,
-                                        label = "position-text-font-weight"
-                                    )
-                                    Text(
-                                        text = StreamFragmentDefaults.timeunitDisplayTest(
-                                            (bufferedPosition ?: contentPosition).toDuration(
-                                                DurationUnit.MILLISECONDS
-                                            )
-                                        ),
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = LocalContentColor.current.copy(alpha = 0.75f),
-                                        maxLines = 1,
-                                        fontWeight = FontWeight(fontWeight),
-                                        overflow = TextOverflow.Ellipsis,
-                                        modifier = Modifier.basicMarquee()
-                                    )
-                                }
+                            if (playStateDisplayText.isNotEmpty()) {
+                                Text(
+                                    text = playStateDisplayText.uppercase(),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = LocalContentColor.current.copy(alpha = 0.75f),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier.basicMarquee()
+                                )
+                            }
+                            if (exceptionDisplayText.isNotBlank()) {
+                                Text(
+                                    text = exceptionDisplayText,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = theme.error,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier.basicMarquee()
+                                )
+                            }
+                            if (getCurrentMediaItemAvailable) {
+                                val fontWeight by animateIntAsState(
+                                    targetValue = if (bufferedPosition != null) 800
+                                    else 400,
+                                    label = "position-text-font-weight"
+                                )
+                                Text(
+                                    text = StreamFragmentDefaults.timeunitDisplayTest(
+                                        (bufferedPosition ?: contentPosition).toDuration(
+                                            DurationUnit.MILLISECONDS
+                                        )
+                                    ),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = LocalContentColor.current.copy(alpha = 0.75f),
+                                    maxLines = 1,
+                                    fontWeight = FontWeight(fontWeight),
+                                    overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier.basicMarquee()
+                                )
                             }
                         }
                         if (!tv) {

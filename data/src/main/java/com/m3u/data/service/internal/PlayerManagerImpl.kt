@@ -35,6 +35,7 @@ import com.m3u.core.architecture.dispatcher.M3uDispatchers.Main
 import com.m3u.core.architecture.pref.Pref
 import com.m3u.core.architecture.pref.annotation.ReconnectMode
 import com.m3u.core.architecture.pref.observeAsFlow
+import com.m3u.data.SSLs
 import com.m3u.data.service.PlayerManager
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineDispatcher
@@ -172,6 +173,10 @@ class PlayerManagerImpl @Inject constructor(
 
             MimeTypes.APPLICATION_RTSP -> {
                 val mediaSource = RtspMediaSource.Factory()
+                    .setDebugLoggingEnabled(true)
+                    .setTimeoutMs(4000)
+                    .setForceUseRtpTcp(true)
+                    .setSocketFactory(SSLs.TLSTrustAll.socketFactory)
                     .createMediaSource(MediaItem.fromUri(url))
                 currentPlayer.setMediaSource(mediaSource)
             }
@@ -251,6 +256,7 @@ class PlayerManagerImpl @Inject constructor(
         }
     }
 
+    @Volatile
     private var mimeType: String? = null
         set(value) {
             Log.e("PlayerManagerImpl", "tryMimeType: $value")
@@ -259,6 +265,7 @@ class PlayerManagerImpl @Inject constructor(
 
     override fun onPlayerErrorChanged(error: PlaybackException?) {
         super.onPlayerErrorChanged(error)
+        Log.e("TAG", "${error?.errorCode}, ${error?.errorCodeName}, $mimeType")
         when (error?.errorCode) {
             PlaybackException.ERROR_CODE_BEHIND_LIVE_WINDOW -> {
                 _player.value?.let {
@@ -306,11 +313,13 @@ class PlayerManagerImpl @Inject constructor(
                     }
 
                     MimeTypes.APPLICATION_RTSP -> {
-                        mimeType = null
+                        _playbackError.value = error
+                        return
                     }
 
                     else -> {
-                        mimeType = null
+                        _playbackError.value = error
+                        return
                     }
                 }
             }

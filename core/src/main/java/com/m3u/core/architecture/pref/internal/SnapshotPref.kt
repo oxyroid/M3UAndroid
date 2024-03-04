@@ -6,6 +6,7 @@ import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import com.m3u.core.architecture.pref.Pref
+import com.m3u.core.architecture.pref.Pref.Companion.ALWAYS_SHOW_REFRESH
 import com.m3u.core.architecture.pref.Pref.Companion.ALWAYS_TV
 import com.m3u.core.architecture.pref.Pref.Companion.AUTO_REFRESH
 import com.m3u.core.architecture.pref.Pref.Companion.BRIGHTNESS_GESTURE
@@ -14,6 +15,7 @@ import com.m3u.core.architecture.pref.Pref.Companion.COLOR_ARGB
 import com.m3u.core.architecture.pref.Pref.Companion.COMPACT
 import com.m3u.core.architecture.pref.Pref.Companion.CONNECT_TIMEOUT
 import com.m3u.core.architecture.pref.Pref.Companion.DARK_MODE
+import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_ALWAYS_SHOW_REFRESH
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_ALWAYS_TV
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_AUTO_REFRESH
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_BRIGHTNESS_GESTURE
@@ -137,15 +139,14 @@ class SnapshotPref @Inject constructor(
     sharedPreferences.intAsState(DEFAULT_COLOR_ARGB, COLOR_ARGB)
     override var tunneling: Boolean by
     sharedPreferences.booleanAsState(DEFAULT_TUNNELING, TUNNELING)
-
     override var alwaysTv: Boolean by
     sharedPreferences.booleanAsState(DEFAULT_ALWAYS_TV, ALWAYS_TV)
-
     override var remoteControl: Boolean by
     sharedPreferences.booleanAsState(DEFAULT_REMOTE_CONTROL, REMOTE_CONTROL)
-
     override var progress: Boolean by
     sharedPreferences.booleanAsState(DEFAULT_PROGRESS, PROGRESS)
+    override var alwaysShowReplay: Boolean by
+    sharedPreferences.booleanAsState(DEFAULT_ALWAYS_SHOW_REFRESH, ALWAYS_SHOW_REFRESH)
 
     companion object {
         private const val SHARED_SETTINGS = "shared_settings"
