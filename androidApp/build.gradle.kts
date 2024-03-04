@@ -14,8 +14,8 @@ android {
         applicationId = "com.m3u.androidApp"
         minSdk = 26
         targetSdk = 33
-        versionCode = 129
-        versionName = "1.14.0-beta04"
+        versionCode = 130
+        versionName = "1.14.0-beta05"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         testInstrumentationRunnerArguments["androidx.benchmark.profiling.mode"] = "MethodTracing"
