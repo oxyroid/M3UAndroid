@@ -6,6 +6,7 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -19,6 +20,7 @@ import com.m3u.features.setting.SettingRoute
 import com.m3u.material.ktx.Edge
 import com.m3u.material.ktx.blurEdge
 import com.m3u.ui.Destination
+import com.m3u.ui.LocalVisiblePageInfos
 
 const val ROOT_ROUTE = "root_route"
 
@@ -75,31 +77,35 @@ private fun RootGraph(
                 color = MaterialTheme.colorScheme.background
             )
     ) { page ->
-        when (Destination.Root.entries[page]) {
-            Destination.Root.Foryou -> {
-                ForyouRoute(
-                    navigateToPlaylist = navigateToPlaylist,
-                    navigateToStream = navigateToStream,
-                    navigateToSettingPlaylistManagement = navigateToSettingPlaylistManagement,
-                    contentPadding = contentPadding,
-                    modifier = Modifier.fillMaxSize()
-                )
-            }
+        CompositionLocalProvider(
+            LocalVisiblePageInfos provides pagerState.layoutInfo.visiblePagesInfo
+        ) {
+            when (Destination.Root.entries[page]) {
+                Destination.Root.Foryou -> {
+                    ForyouRoute(
+                        navigateToPlaylist = navigateToPlaylist,
+                        navigateToStream = navigateToStream,
+                        navigateToSettingPlaylistManagement = navigateToSettingPlaylistManagement,
+                        contentPadding = contentPadding,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
 
-            Destination.Root.Favourite -> {
-                FavouriteRoute(
-                    navigateToStream = navigateToStream,
-                    contentPadding = contentPadding,
-                    modifier = Modifier.fillMaxSize()
-                )
-            }
+                Destination.Root.Favourite -> {
+                    FavouriteRoute(
+                        navigateToStream = navigateToStream,
+                        contentPadding = contentPadding,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
 
-            Destination.Root.Setting -> {
-                SettingRoute(
-                    navigateToAbout = navigateToAbout,
-                    contentPadding = contentPadding,
-                    modifier = Modifier.fillMaxSize()
-                )
+                Destination.Root.Setting -> {
+                    SettingRoute(
+                        navigateToAbout = navigateToAbout,
+                        contentPadding = contentPadding,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
             }
         }
     }

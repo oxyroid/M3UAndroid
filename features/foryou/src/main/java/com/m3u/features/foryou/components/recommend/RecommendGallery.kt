@@ -8,6 +8,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
@@ -41,10 +42,13 @@ internal fun RecommendGallery(
 
     if (!tv) {
         val state = rememberPagerState { recommend.size }
-        Column(modifier) {
+        Column(
+            modifier = modifier,
+            verticalArrangement = Arrangement.spacedBy(spacing.medium)
+        ) {
             HorizontalPager(
                 state = state,
-                contentPadding = PaddingValues(spacing.medium),
+                contentPadding = PaddingValues(horizontal = spacing.medium),
                 modifier = Modifier.animateContentSize()
             ) { page ->
                 val spec = recommend[page]

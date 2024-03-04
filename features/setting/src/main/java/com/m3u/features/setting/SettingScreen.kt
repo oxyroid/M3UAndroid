@@ -53,8 +53,10 @@ import com.m3u.features.setting.fragments.preferences.PreferencesFragment
 import com.m3u.i18n.R.string
 import com.m3u.material.ktx.isTelevision
 import com.m3u.material.model.LocalHazeState
+import com.m3u.ui.Destination
 import com.m3u.ui.EventBus
 import com.m3u.ui.EventHandler
+import com.m3u.ui.LocalVisiblePageInfos
 import com.m3u.ui.Settings
 import com.m3u.ui.helper.LocalHelper
 import dev.chrisbanes.haze.HazeDefaults
@@ -104,7 +106,7 @@ fun SettingRoute(
         openDocumentLauncher.launch(arrayOf("text/*"))
     }
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(title) {
         helper.title = title.title()
         helper.actions = persistentListOf()
     }
@@ -222,12 +224,20 @@ private fun SettingScreen(
         fragment = it
     }
 
-    LaunchedEffect(fragment, defaultTitle, playlistTitle, appearanceTitle) {
-        helper.title = when (fragment) {
-            Settings.Default -> defaultTitle
-            Settings.Playlists -> playlistTitle
-            Settings.Appearance -> appearanceTitle
-        }.title()
+    val visiblePageInfos = LocalVisiblePageInfos.current
+    val pageIndex = remember { Destination.Root.entries.indexOf(Destination.Root.Setting) }
+    val isPageInfoVisible = remember(pageIndex, visiblePageInfos) {
+        visiblePageInfos.find { it.index == pageIndex } != null
+    }
+
+    if (isPageInfoVisible) {
+        LaunchedEffect(fragment, defaultTitle, playlistTitle, appearanceTitle) {
+            helper.title = when (fragment) {
+                Settings.Default -> defaultTitle
+                Settings.Playlists -> playlistTitle
+                Settings.Appearance -> appearanceTitle
+            }.title()
+        }
     }
 
     val currentPaneScaffoldRole by remember {

@@ -33,6 +33,8 @@ import com.m3u.material.ktx.interceptVolumeEvent
 import com.m3u.material.ktx.isTelevision
 import com.m3u.material.ktx.thenIf
 import com.m3u.material.model.LocalHazeState
+import com.m3u.ui.Destination
+import com.m3u.ui.LocalVisiblePageInfos
 import com.m3u.ui.Sort
 import com.m3u.ui.SortBottomSheet
 import com.m3u.ui.TvSortFullScreenDialog
@@ -67,15 +69,23 @@ fun FavouriteRoute(
     var isSortSheetVisible by rememberSaveable { mutableStateOf(false) }
     var dialogStatus: DialogStatus by remember { mutableStateOf(DialogStatus.Idle) }
 
-    LaunchedEffect(title) {
-        helper.title = title.title()
-        helper.actions = persistentListOf(
-            Action(
-                icon = Icons.AutoMirrored.Rounded.Sort,
-                contentDescription = "sort",
-                onClick = { isSortSheetVisible = true }
+    val visiblePageInfos = LocalVisiblePageInfos.current
+    val pageIndex = remember { Destination.Root.entries.indexOf(Destination.Root.Favourite) }
+    val isPageInfoVisible = remember(pageIndex, visiblePageInfos) {
+        visiblePageInfos.find { it.index == pageIndex } != null
+    }
+
+    if (isPageInfoVisible) {
+        LaunchedEffect(title) {
+            helper.title = title.title()
+            helper.actions = persistentListOf(
+                Action(
+                    icon = Icons.AutoMirrored.Rounded.Sort,
+                    contentDescription = "sort",
+                    onClick = { isSortSheetVisible = true }
+                )
             )
-        )
+        }
     }
 
     Background {

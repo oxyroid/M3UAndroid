@@ -33,7 +33,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.m3u.material.components.Icon
 import com.m3u.material.components.OuterRow
-import com.m3u.material.components.TextBadge
 import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.UiMode
 import com.m3u.ui.currentUiMode
@@ -320,7 +319,14 @@ private fun CompactPlaylistItemImpl(
         },
         headlineContent = {
             if (type != null) {
-                TextBadge(type)
+                Text(
+                    text = type,
+                    style = MaterialTheme.typography.labelMedium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    softWrap = false,
+                    textAlign = TextAlign.Center
+                )
             }
         },
         modifier = Modifier
