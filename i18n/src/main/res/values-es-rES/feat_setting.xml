@@ -17,7 +17,8 @@
     <string name="feat_setting_god_mode_description">ajusta la distribución con los botones del volumen</string>
     <string name="feat_setting_experimental_mode">modo experimental</string>
     <string name="feat_setting_experimental_mode_description">acciones no estables que traerían resultados inesperados</string>
-    <string name="feat_setting_label_hidden_streams">directos bloqueados</string>
+    <string name="feat_setting_label_hidden_streams">directos ocultados</string>
+    <string name="feat_setting_label_hidden_playlist_groups">categorías de playlist ocultadas</string>
     <string name="feat_setting_label_add_playlist">añadir playlist</string>
     <string name="feat_setting_label_parse_from_clipboard">obtener del portapapeles</string>
     <string name="feat_setting_label_select_from_local_storage">seleccionar archivo</string>
@@ -87,4 +88,14 @@
     <string name="feat_setting_backing_up">respaldando todos los playlists y canales</string>
     <string name="feat_setting_restoring">restaurando todos los playlists y canales</string>
     <string name="feat_setting_follow_system_theme">seguir tema del sistema</string>
+
+    <string name="feat_setting_placeholder_basic_url">dirección</string>
+    <string name="feat_setting_placeholder_username">usuario</string>
+    <string name="feat_setting_placeholder_password">contraseña</string>
+
+    <string name="feat_setting_warning_xtream_takes_much_more_time">podría tomar muchísimo tiempo</string>
+
+    <string name="feat_setting_back_home">retroceso a inicio</string>
+
+    <string name="feat_setting_always_replay">siempre mostrar un botón de reproducción</string>
 </resources>

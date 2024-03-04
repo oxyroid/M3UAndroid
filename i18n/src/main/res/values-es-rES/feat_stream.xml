@@ -19,4 +19,6 @@
 
     <string name="feat_stream_dialog_dlna_devices">Dispositivos DLNA</string>
     <string name="feat_stream_dialog_choose_tracks">Escoger formato</string>
+
+    <string name="feat_stream_open_in_external_app">abrir en una app externa</string>
 </resources>
