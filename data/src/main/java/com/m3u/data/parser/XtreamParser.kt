@@ -12,11 +12,6 @@ import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 
 interface XtreamParser : Parser<XtreamInput, XtreamOutput> {
-    suspend fun getVodInfo(
-        input: XtreamInput,
-        vodId: Int
-    ): XtreamStreamInfo?
-
     suspend fun getSeriesInfo(
         input: XtreamInput,
         seriesId: Int
@@ -52,7 +47,6 @@ interface XtreamParser : Parser<XtreamInput, XtreamOutput> {
             vararg params: Pair<String, Any>
         ): String = createInfoUrl(basicUrl, username, password, *params) + "&action=$action"
 
-        const val GET_VOD_INFO_PARAM_ID = "vod_id"
         const val GET_SERIES_INFO_PARAM_ID = "series_id"
     }
 

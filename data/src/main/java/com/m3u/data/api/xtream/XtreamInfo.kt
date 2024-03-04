@@ -177,21 +177,3 @@ fun XtreamVod.toStream(
     cover = streamIcon,
     playlistUrl = playlistUrl
 )
-
-// Url cannot be played directly that
-// you should get the container extension by get serial info api.
-fun XtreamSerial.toStream(
-    basicUrl: String,
-    username: String,
-    password: String,
-    playlistUrl: String,
-    category: String,
-    // see "target_container"
-    containerExtension: String
-): Stream = Stream(
-    url = "$basicUrl/series/$username/$password/$seriesId.$containerExtension",
-    category = category,
-    title = name.orEmpty(),
-    cover = cover,
-    playlistUrl = playlistUrl,
-)
