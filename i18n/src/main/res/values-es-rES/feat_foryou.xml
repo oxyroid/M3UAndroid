@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="feat_foryou_hidden_streams_playlist">directos bloqueados</string>
+    <string name="feat_foryou_hidden_streams_playlist">directos ocultados</string>
     <string name="feat_foryou_unsubscribe_playlist">desuscribirse</string>
     <string name="feat_foryou_copy_playlist_url">copiar url</string>
     <string name="feat_foryou_rename_playlist">renombrar</string>
