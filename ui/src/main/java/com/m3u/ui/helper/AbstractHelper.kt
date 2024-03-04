@@ -25,6 +25,7 @@ import com.m3u.core.util.basic.rational
 import com.m3u.core.util.context.isDarkMode
 import com.m3u.core.util.context.isPortraitMode
 import com.m3u.core.wrapper.Message
+import com.m3u.data.service.Messager
 import com.m3u.data.service.PlayerManager
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
@@ -37,6 +38,7 @@ class AbstractHelper(
     private val mainDispatcher: CoroutineDispatcher,
     private val playerManager: PlayerManager,
     private val activity: ComponentActivity,
+    private val messager: Messager,
     title: MutableState<String> = mutableStateOf(""),
     actions: MutableState<ImmutableList<Action>> = mutableStateOf(persistentListOf()),
     fob: MutableState<Fob?> = mutableStateOf(null),
@@ -127,6 +129,10 @@ class AbstractHelper(
         activity.lifecycleScope.launch(mainDispatcher) {
             Toast.makeText(activity, message, Toast.LENGTH_SHORT).show()
         }
+    }
+
+    override fun snack(message: String) {
+        messager.emit(message)
     }
 
     override fun play(url: String) {

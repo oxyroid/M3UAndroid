@@ -27,6 +27,7 @@ class TvPlaylistActivity : AppCompatActivity() {
         AbstractHelper(
             activity = this,
             mainDispatcher = mainDispatcher,
+            messager = messager,
             playerManager = playerManager,
             message = messager.message,
         )

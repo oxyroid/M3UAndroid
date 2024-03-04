@@ -3,6 +3,7 @@
 package com.m3u.features.playlist
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.res.Configuration.UI_MODE_TYPE_APPLIANCE
 import android.content.res.Configuration.UI_MODE_TYPE_CAR
 import android.content.res.Configuration.UI_MODE_TYPE_DESK
@@ -37,6 +38,7 @@ import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.google.accompanist.permissions.PermissionStatus
 import com.google.accompanist.permissions.rememberPermissionState
+import com.google.accompanist.permissions.shouldShowRationale
 import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.core.util.basic.title
 import com.m3u.core.wrapper.Event
@@ -92,6 +94,14 @@ internal fun PlaylistRoute(
         Manifest.permission.WRITE_EXTERNAL_STORAGE
     )
 
+    val postNotificationPermissionRequired =
+        Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
+
+    @SuppressLint("InlinedApi")
+    val postNotificationPermissionState = rememberPermissionState(
+        Manifest.permission.POST_NOTIFICATIONS
+    )
+
     LifecycleStartEffect(playlist) {
         helper.title = playlist?.title?.title().orEmpty()
         onStopOrDispose {
@@ -128,7 +138,20 @@ internal fun PlaylistRoute(
                 navigateToStream()
             },
             onScrollUp = { viewModel.onEvent(PlaylistEvent.ScrollUp) },
-            onRefresh = { viewModel.onEvent(PlaylistEvent.Refresh) },
+            onRefresh = {
+                when (postNotificationPermissionState.status) {
+                    is PermissionStatus.Denied -> {
+                        if (postNotificationPermissionState.status.shouldShowRationale) {
+                            postNotificationPermissionState.launchPermissionRequest()
+                        } else {
+                            helper.snack("Please allow POST_NOTIFICATION permission in setting")
+                        }
+                        return@PlaylistScreen
+                    }
+                    else -> {}
+                }
+                viewModel.onEvent(PlaylistEvent.Refresh)
+            },
             contentPadding = contentPadding,
             onFavorite = { id, target -> viewModel.onEvent(PlaylistEvent.Favourite(id, target)) },
             hide = { id -> viewModel.onEvent(PlaylistEvent.Hide(id)) },

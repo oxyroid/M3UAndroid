@@ -11,6 +11,7 @@ import androidx.activity.result.contract.ActivityResultContracts.CreateDocument
 import com.m3u.core.architecture.dispatcher.Dispatcher
 import com.m3u.core.architecture.dispatcher.M3uDispatchers.Main
 import com.m3u.core.architecture.pref.Pref
+import com.m3u.data.service.Messager
 import com.m3u.data.service.PlayerManager
 import com.m3u.data.service.RemoteDirectionService
 import com.m3u.ui.Toolkit
@@ -27,6 +28,7 @@ class CrashActivity : ComponentActivity() {
         AbstractHelper(
             activity = this,
             mainDispatcher = mainDispatcher,
+            messager = messager,
             playerManager = playerManager
         )
     }
@@ -43,7 +45,11 @@ class CrashActivity : ComponentActivity() {
     lateinit var mainDispatcher: CoroutineDispatcher
 
     @Inject
+    lateinit var messager: Messager
+
+    @Inject
     lateinit var remoteDirectionService: RemoteDirectionService
+
     override fun onCreate(savedInstanceState: Bundle?) {
         INSTANCE = this
         enableEdgeToEdge()

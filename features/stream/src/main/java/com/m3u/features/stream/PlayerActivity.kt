@@ -14,6 +14,7 @@ import com.m3u.core.architecture.dispatcher.Dispatcher
 import com.m3u.core.architecture.dispatcher.M3uDispatchers.Main
 import com.m3u.core.architecture.pref.Pref
 import com.m3u.data.repository.StreamRepository
+import com.m3u.data.service.Messager
 import com.m3u.data.service.PlayerManager
 import com.m3u.data.service.RemoteDirectionService
 import com.m3u.ui.Toolkit
@@ -30,6 +31,7 @@ class PlayerActivity : ComponentActivity() {
         AbstractHelper(
             activity = this,
             mainDispatcher = mainDispatcher,
+            messager = messager,
             playerManager = playerManager
         )
     }
@@ -52,6 +54,9 @@ class PlayerActivity : ComponentActivity() {
     @Inject
     @Dispatcher(Main)
     lateinit var mainDispatcher: CoroutineDispatcher
+
+    @Inject
+    lateinit var messager: Messager
 
     @Inject
     lateinit var remoteDirectionService: RemoteDirectionService

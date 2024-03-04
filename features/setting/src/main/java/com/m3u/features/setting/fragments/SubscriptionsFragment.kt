@@ -30,6 +30,7 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.res.stringResource
 import com.google.accompanist.permissions.PermissionStatus
 import com.google.accompanist.permissions.rememberPermissionState
+import com.google.accompanist.permissions.shouldShowRationale
 import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
@@ -50,6 +51,7 @@ import com.m3u.material.components.TonalButton
 import com.m3u.material.ktx.isTelevision
 import com.m3u.material.ktx.textHorizontalLabel
 import com.m3u.material.model.LocalSpacing
+import com.m3u.ui.helper.LocalHelper
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 
@@ -183,6 +185,7 @@ private fun MainContentImpl(
     val spacing = LocalSpacing.current
     val pref = LocalPref.current
     val clipboardManager = LocalClipboardManager.current
+    val helper = LocalHelper.current
 
     val tv = isTelevision()
     val remoteControl = pref.remoteControl
@@ -266,12 +269,16 @@ private fun MainContentImpl(
             Button(
                 text = stringResource(string.feat_setting_label_subscribe),
                 onClick = {
-                    val shouldShowRationale = with(postNotificationPermissionState.status) {
-                        this is PermissionStatus.Denied && shouldShowRationale
-                    }
-                    if (postNotificationPermissionRequired && shouldShowRationale) {
-                        postNotificationPermissionState.launchPermissionRequest()
-                        return@Button
+                    when (postNotificationPermissionState.status) {
+                        is PermissionStatus.Denied -> {
+                            if (postNotificationPermissionState.status.shouldShowRationale) {
+                                postNotificationPermissionState.launchPermissionRequest()
+                            } else {
+                                helper.snack("Please allow POST_NOTIFICATION permission in setting")
+                            }
+                            return@Button
+                        }
+                        else -> {}
                     }
                     onSubscribe()
                 },
@@ -320,6 +327,7 @@ fun HiddenStreamContentImpl(
         Text(
             text = stringResource(string.feat_setting_label_hidden_streams),
             color = MaterialTheme.colorScheme.onPrimary,
+            style = MaterialTheme.typography.labelLarge,
             modifier = Modifier.textHorizontalLabel()
         )
         hiddenStreams.forEach { stream ->
@@ -341,6 +349,7 @@ fun HiddenPlaylistCategoriesContentImpl(
         Text(
             text = stringResource(string.feat_setting_label_hidden_playlist_groups),
             color = MaterialTheme.colorScheme.onPrimary,
+            style = MaterialTheme.typography.labelLarge,
             modifier = Modifier.textHorizontalLabel()
         )
         hiddenCategoriesWithPlaylists.forEach { (playlist, category) ->

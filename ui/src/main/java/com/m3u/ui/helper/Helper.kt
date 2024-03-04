@@ -38,6 +38,7 @@ interface Helper {
 
     fun enterPipMode(size: Rect)
     fun toast(message: String)
+    fun snack(message: String)
     fun play(url: String)
     fun replay()
 }
