@@ -5,7 +5,7 @@ import com.m3u.data.api.xtream.XtreamCategory
 import com.m3u.data.api.xtream.XtreamLive
 import com.m3u.data.api.xtream.XtreamSerial
 import com.m3u.data.api.xtream.XtreamVod
-import com.m3u.data.api.xtream.XtreamVodInfo
+import com.m3u.data.api.xtream.XtreamStreamInfo
 import io.ktor.http.Url
 import kotlinx.serialization.Serializable
 import okhttp3.HttpUrl
@@ -15,7 +15,12 @@ interface XtreamParser : Parser<XtreamInput, XtreamOutput> {
     suspend fun getVodInfo(
         input: XtreamInput,
         vodId: Int
-    ): XtreamVodInfo?
+    ): XtreamStreamInfo?
+
+    suspend fun getSeriesInfo(
+        input: XtreamInput,
+        seriesId: Int
+    ): XtreamStreamInfo?
 
     companion object {
         fun createInfoUrl(
@@ -47,7 +52,8 @@ interface XtreamParser : Parser<XtreamInput, XtreamOutput> {
             vararg params: Pair<String, Any>
         ): String = createInfoUrl(basicUrl, username, password, *params) + "&action=$action"
 
-        const val GET_VOD_INFO_PARAM_VOD_ID = "vod_id"
+        const val GET_VOD_INFO_PARAM_ID = "vod_id"
+        const val GET_SERIES_INFO_PARAM_ID = "series_id"
     }
 
     @JvmInline

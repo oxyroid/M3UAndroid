@@ -37,7 +37,7 @@ import kotlinx.collections.immutable.ImmutableList
 
 @Composable
 internal fun AppearanceFragment(
-    packs: ImmutableList<ColorPack>,
+    colorPacks: ImmutableList<ColorPack>,
     colorArgb: Int,
     openColorCanvas: (Int, Boolean) -> Unit,
     modifier: Modifier = Modifier,
@@ -70,20 +70,20 @@ internal fun AppearanceFragment(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    items(packs, key = { "${it.argb}_${it.isDark}" }) { pack ->
+                    items(colorPacks, key = { "${it.argb}_${it.isDark}" }) { colorPack ->
                         val selected =
-                            !useDynamicColors && colorArgb == pack.argb && isDarkMode == pack.isDark
+                            !useDynamicColors && colorArgb == colorPack.argb && isDarkMode == colorPack.isDark
                         ThemeSelection(
-                            argb = pack.argb,
-                            isDark = pack.isDark,
+                            argb = colorPack.argb,
+                            isDark = colorPack.isDark,
                             selected = selected,
                             onClick = {
                                 pref.useDynamicColors = false
-                                pref.colorArgb = pack.argb
-                                pref.darkMode = pack.isDark
+                                pref.colorArgb = colorPack.argb
+                                pref.darkMode = colorPack.isDark
                             },
-                            onLongClick = { openColorCanvas(pack.argb, pack.isDark) },
-                            name = pack.name,
+                            onLongClick = { openColorCanvas(colorPack.argb, colorPack.isDark) },
+                            name = colorPack.name,
                             leftContentDescription = stringResource(string.ui_theme_card_left),
                             rightContentDescription = stringResource(string.ui_theme_card_right),
                             modifier = Modifier.animateItemPlacement()
@@ -101,7 +101,7 @@ internal fun AppearanceFragment(
                     horizontalArrangement = Arrangement.spacedBy(spacing.medium),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    items(packs, key = { "${it.argb}_${it.isDark}" }) { pack ->
+                    items(colorPacks, key = { "${it.argb}_${it.isDark}" }) { pack ->
 
                         val selected =
                             !useDynamicColors && colorArgb == pack.argb && isDarkMode == pack.isDark

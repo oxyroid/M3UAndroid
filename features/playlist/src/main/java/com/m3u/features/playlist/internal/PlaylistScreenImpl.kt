@@ -203,9 +203,9 @@ internal fun PlaylistScreenImpl(
                 }
                 Column {
                     PlaylistTabRow(
-                        categories = categories,
                         page = currentPage,
                         onPageChanged = { currentPage = it },
+                        categories = categories,
                         pinnedCategories = pinnedCategories,
                         onPinOrUnpinCategory = onPinOrUnpinCategory,
                         onHideCategory = onHideCategory

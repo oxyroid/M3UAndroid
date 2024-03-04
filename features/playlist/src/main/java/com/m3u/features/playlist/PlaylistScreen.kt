@@ -108,8 +108,6 @@ internal fun PlaylistRoute(
         viewModel.onEvent(PlaylistEvent.Query(""))
     }
 
-    BackHandler(refreshing) {}
-
     Background {
         PlaylistScreen(
             title = playlist?.title.orEmpty(),

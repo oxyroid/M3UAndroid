@@ -48,6 +48,7 @@ import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.datetime.Clock
 import javax.inject.Inject
 
 @HiltViewModel
@@ -98,7 +99,7 @@ class SettingViewModel @Inject constructor(
         }
     }
 
-    internal val packs: StateFlow<ImmutableList<ColorPack>> = combine(
+    internal val colorPacks: StateFlow<ImmutableList<ColorPack>> = combine(
         colorPackDao.observeAllColorPacks().catch { emit(emptyList()) },
         pref.observeAsFlow { it.followSystemTheme }
     ) { all, followSystemTheme -> if (followSystemTheme) all.filter { !it.isDark } else all }
@@ -134,6 +135,7 @@ class SettingViewModel @Inject constructor(
                 basicUrl = input.basicUrl
                 username = input.username
                 password = input.password
+                onTitle("Xtream_${Clock.System.now().toEpochMilliseconds()}")
             }
 
             else -> {}

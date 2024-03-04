@@ -9,7 +9,7 @@ import com.m3u.data.api.xtream.XtreamInfo
 import com.m3u.data.api.xtream.XtreamLive
 import com.m3u.data.api.xtream.XtreamSerial
 import com.m3u.data.api.xtream.XtreamVod
-import com.m3u.data.api.xtream.XtreamVodInfo
+import com.m3u.data.api.xtream.XtreamStreamInfo
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.parser.XtreamInput
 import com.m3u.data.parser.XtreamOutput
@@ -28,8 +28,10 @@ internal class XtreamParserImpl @Inject constructor(
     private val okHttpClient: OkHttpClient,
     private val logger: Logger
 ) : XtreamParser {
+    @OptIn(ExperimentalSerializationApi::class)
     private val json = Json {
         ignoreUnknownKeys = true
+        explicitNulls = false
     }
 
     override suspend fun execute(input: XtreamInput): XtreamOutput {
@@ -104,16 +106,30 @@ internal class XtreamParserImpl @Inject constructor(
     override suspend fun getVodInfo(
         input: XtreamInput,
         vodId: Int
-    ): XtreamVodInfo? {
-        val (address, username, password, type) = input
+    ): XtreamStreamInfo? {
+        val (basicUrl, username, password, type) = input
         check(type == DataSource.Xtream.TYPE_VOD) { "xtream input type must be `vod`" }
         return newCall(
             XtreamParser.createActionUrl(
-                address,
+                basicUrl,
                 username,
                 password,
                 XtreamParser.Action.GET_VOD_INFO,
-                XtreamParser.GET_VOD_INFO_PARAM_VOD_ID to vodId
+                XtreamParser.GET_VOD_INFO_PARAM_ID to vodId
+            )
+        )
+    }
+
+    override suspend fun getSeriesInfo(input: XtreamInput, seriesId: Int): XtreamStreamInfo? {
+        val (basicUrl, username, password, type) = input
+        check(type == DataSource.Xtream.TYPE_SERIES) { "xtream input type must be `series`" }
+        return newCall(
+            XtreamParser.createActionUrl(
+                basicUrl,
+                username,
+                password,
+                XtreamParser.Action.GET_SERIES_INFO,
+                XtreamParser.GET_SERIES_INFO_PARAM_ID to seriesId
             )
         )
     }

@@ -50,6 +50,7 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
+import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -105,12 +106,13 @@ class PlaylistViewModel @Inject constructor(
         .getWorkInfosFlow(
             WorkQuery.fromStates(
                 WorkInfo.State.RUNNING,
-                WorkInfo.State.ENQUEUED
+                WorkInfo.State.ENQUEUED,
             )
         )
         .mapLatest { infos ->
             infos.any { info -> SubscriptionWorker.TAG in info.tags }
         }
+        .onCompletion { messager.emit(Message.Dynamic.EMPTY) }
         .flowOn(ioDispatcher)
         .onEach { refreshing ->
             messager.emit(

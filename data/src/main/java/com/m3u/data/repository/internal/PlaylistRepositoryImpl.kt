@@ -34,6 +34,7 @@ import com.m3u.data.worker.SubscriptionWorker
 import com.m3u.i18n.R.string
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.withContext
@@ -144,6 +145,7 @@ class PlaylistRepositoryImpl @Inject constructor(
                 ),
                 source = DataSource.Xtream
             )
+            playlistDao.insertOrReplace(playlist)
             val streams = lives.map { current ->
                 current.toStream(
                     basicUrl = basicUrl,
@@ -154,8 +156,6 @@ class PlaylistRepositoryImpl @Inject constructor(
                     containerExtension = allowedOutputFormats.first()
                 )
             }
-
-            playlistDao.insertOrReplace(playlist)
             streamDao.compareAndUpdate(
                 strategy = pref.playlistStrategy,
                 url = playlist.url,
@@ -173,6 +173,7 @@ class PlaylistRepositoryImpl @Inject constructor(
                 ),
                 source = DataSource.Xtream
             )
+            playlistDao.insertOrReplace(playlist)
             val streams = vods.map { current ->
                 current.toStream(
                     basicUrl = basicUrl,
@@ -182,8 +183,6 @@ class PlaylistRepositoryImpl @Inject constructor(
                     category = vodCategories.find { it.categoryId == current.categoryId }?.categoryName.orEmpty()
                 )
             }
-
-            playlistDao.insertOrReplace(playlist)
             streamDao.compareAndUpdate(
                 strategy = pref.playlistStrategy,
                 url = playlist.url,
@@ -202,18 +201,25 @@ class PlaylistRepositoryImpl @Inject constructor(
                 ),
                 source = DataSource.Xtream
             )
-            val streams = series.map { current ->
-                current.toStream(
-                    basicUrl = basicUrl,
-                    username = username,
-                    password = password,
-                    playlistUrl = playlist.url,
-                    category = serialCategories.find { it.categoryId == current.categoryId }?.categoryName.orEmpty(),
-                    // FIXME
-                    containerExtension = "mkv"
-                )
-            }
             playlistDao.insertOrReplace(playlist)
+            val streams = series.flatMap { current ->
+                ensureActive()
+                val seriesInfo = xtreamParser.getSeriesInfo(
+                    input = input.copy(type = DataSource.Xtream.TYPE_SERIES),
+                    seriesId = current.seriesId ?: return@flatMap emptyList()
+                ) ?: return@flatMap emptyList()
+                seriesInfo.episodes.flatMap { (_, episodes) ->
+                    episodes.map { episode ->
+                        Stream(
+                            url = "$basicUrl/series/$username/$password/${episode.id}.${episode.containerExtension}",
+                            category = serialCategories.find { it.categoryId == current.categoryId }?.categoryName.orEmpty(),
+                            title = current.name.orEmpty() + " " + episode.title.orEmpty(),
+                            cover = current.cover,
+                            playlistUrl = playlist.url,
+                        )
+                    }
+                }
+            }
             streamDao.compareAndUpdate(
                 strategy = pref.playlistStrategy,
                 url = playlist.url,

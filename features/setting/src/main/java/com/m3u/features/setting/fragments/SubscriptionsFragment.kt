@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
@@ -14,9 +15,13 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Warning
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboardManager
@@ -35,6 +40,7 @@ import com.m3u.features.setting.components.RemoteControlSubscribeSwitch
 import com.m3u.i18n.R.string
 import com.m3u.material.components.Button
 import com.m3u.material.components.HorizontalPagerIndicator
+import com.m3u.material.components.Icon
 import com.m3u.material.components.PlaceholderField
 import com.m3u.material.components.TonalButton
 import com.m3u.material.ktx.isTelevision
@@ -81,7 +87,7 @@ internal fun SubscriptionsFragment(
 ) {
     val spacing = LocalSpacing.current
     val pagerState = rememberPagerState { SubscriptionsFragmentPage.entries.size }
-    
+
     Box {
         HorizontalPager(
             state = pagerState,
@@ -419,5 +425,29 @@ private fun XtreamInputContent(
             onValueChange = onPassword,
             modifier = Modifier.fillMaxWidth()
         )
+        Warning(stringResource(string.feat_setting_warning_xtream_takes_much_time))
+    }
+}
+
+@Composable
+private fun Warning(
+    text: String,
+    modifier: Modifier = Modifier
+) {
+    val spacing = LocalSpacing.current
+    CompositionLocalProvider(
+        LocalContentColor provides LocalContentColor.current.copy(0.54f)
+    ) {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(spacing.small),
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = modifier
+        ) {
+            Icon(imageVector = Icons.Rounded.Warning, contentDescription = null)
+            Text(
+                text = text,
+                style = MaterialTheme.typography.labelLarge
+            )
+        }
     }
 }

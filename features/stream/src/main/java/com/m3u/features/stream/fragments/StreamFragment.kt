@@ -249,7 +249,7 @@ internal fun StreamFragment(
                                 else stringResource(string.feat_stream_tooltip_record)
                             )
                         }
-                        if (!tv && pref.screencast && playerState.playState != Player.STATE_IDLE) {
+                        if (!tv && pref.screencast) {
                             MaskButton(
                                 state = maskState,
                                 icon = Icons.Rounded.Cast,

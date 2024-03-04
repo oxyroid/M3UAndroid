@@ -4,7 +4,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class XtreamVodInfo(
+data class XtreamStreamInfo(
     @SerialName("episodes")
     val episodes: Map<Int, List<Episode>> = emptyMap(),
     @SerialName("info")
@@ -143,7 +143,7 @@ data class XtreamVodInfo(
                 @SerialName("profile")
                 val profile: String?,
                 @SerialName("r_frame_rate")
-                val rFrameRate: Int?,
+                val rFrameRate: String?,
                 @SerialName("refs")
                 val refs: Int?,
                 @SerialName("sample_aspect_ratio")

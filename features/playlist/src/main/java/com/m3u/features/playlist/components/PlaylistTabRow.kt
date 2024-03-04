@@ -53,11 +53,11 @@ import kotlinx.collections.immutable.ImmutableList
 internal fun PlaylistTabRow(
     page: Int,
     onPageChanged: (Int) -> Unit,
+    categories: ImmutableList<Category>,
     pinnedCategories: ImmutableList<String>,
     onPinOrUnpinCategory: (String) -> Unit,
     onHideCategory: (String) -> Unit,
-    categories: ImmutableList<Category>,
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
     val hapticFeedback = LocalHapticFeedback.current

@@ -65,15 +65,15 @@ class SubscriptionWorker @AssistedInject constructor(
                 basicUrl ?: return@coroutineScope Result.failure()
                 username ?: return@coroutineScope Result.failure()
                 password ?: return@coroutineScope Result.failure()
-                url ?: return@coroutineScope Result.failure()
                 if (title.isEmpty()) {
+                    url ?: return@coroutineScope Result.failure()
                     val message = context.getString(string.data_error_empty_title)
                     val data = workDataOf("message" to message)
                     messager.emit(message)
                     Result.failure(data)
                 } else {
                     try {
-                        val type = XtreamInput.decodeFromPlaylistUrl(url).type
+                        val type = url?.let { XtreamInput.decodeFromPlaylistUrl(it).type }
                         playlistRepository.xtream(title, basicUrl, username, password, type)
                         Result.success()
                     } catch (e: Exception) {

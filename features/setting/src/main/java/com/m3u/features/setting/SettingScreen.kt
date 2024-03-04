@@ -76,7 +76,7 @@ fun SettingRoute(
     val controller = LocalSoftwareKeyboardController.current
 
     val state by viewModel.state.collectAsStateWithLifecycle()
-    val packs by viewModel.packs.collectAsStateWithLifecycle()
+    val colorPacks by viewModel.colorPacks.collectAsStateWithLifecycle()
     val hiddenStreams by viewModel.hiddenStreams.collectAsStateWithLifecycle()
     val hiddenCategoriesWithPlaylists by viewModel.hiddenCategoriesWithPlaylists.collectAsStateWithLifecycle()
     val backingUpOrRestoring by viewModel.backingUpOrRestoring.collectAsStateWithLifecycle()
@@ -139,7 +139,7 @@ fun SettingRoute(
             backup = backup,
             restore = restore,
             onClipboard = { viewModel.onClipboard(it) },
-            packs = packs,
+            colorPacks = colorPacks,
             openColorCanvas = { c, i ->
                 colorInt = c
                 isDark = i
@@ -193,7 +193,7 @@ private fun SettingScreen(
     backup: () -> Unit,
     restore: () -> Unit,
     onClipboard: (String) -> Unit,
-    packs: ImmutableList<ColorPack>,
+    colorPacks: ImmutableList<ColorPack>,
     openColorCanvas: (Int, Boolean) -> Unit,
     selected: DataSource,
     onSelected: (DataSource) -> Unit,
@@ -303,7 +303,7 @@ private fun SettingScreen(
 
                         Settings.Appearance -> {
                             AppearanceFragment(
-                                packs = packs,
+                                colorPacks = colorPacks,
                                 colorArgb = colorArgb,
                                 openColorCanvas = openColorCanvas,
                                 contentPadding = contentPadding
