@@ -62,7 +62,11 @@ class PlaylistRepositoryImpl @Inject constructor(
 ) : PlaylistRepository {
     private val logger = logger.prefix("playlist-repos")
 
-    override suspend fun m3u(title: String, url: String) {
+    override suspend fun m3u(
+        title: String,
+        url: String,
+        callback: (count: Int, total: Int) -> Unit
+    ) {
         suspend fun parse(
             playlistUrl: String,
             input: InputStream
@@ -88,6 +92,8 @@ class PlaylistRepositoryImpl @Inject constructor(
             return input?.use { parse(url, it) } ?: emptyList()
         }
 
+        var currentCount = 0
+        callback(currentCount, -1)
         withContext(ioDispatcher) {
             try {
                 val actualUrl = url.actualUrl()
@@ -96,6 +102,8 @@ class PlaylistRepositoryImpl @Inject constructor(
                     url.isSupportedAndroidUrl() -> acquireAndroid(actualUrl)
                     else -> emptyList() // never reach here!
                 }
+                currentCount += streams.size
+                callback(currentCount, -1)
 
                 val playlist = Playlist(title, actualUrl)
                 playlistDao.insertOrReplace(playlist)
@@ -118,7 +126,8 @@ class PlaylistRepositoryImpl @Inject constructor(
         basicUrl: String,
         username: String,
         password: String,
-        type: String?
+        type: String?,
+        callback: (count: Int, total: Int) -> Unit
     ) = withContext(ioDispatcher) {
         val input = XtreamInput(basicUrl, username, password, type)
         val (
@@ -132,9 +141,21 @@ class PlaylistRepositoryImpl @Inject constructor(
             serverProtocol,
             port
         ) = xtreamParser.execute(input)
+
         val requiredLives = type == null || type == DataSource.Xtream.TYPE_LIVE
         val requiredVods = type == null || type == DataSource.Xtream.TYPE_VOD
         val requiredSeries = type == null || type == DataSource.Xtream.TYPE_SERIES
+
+        val total = run {
+            var i = 0
+            if (requiredLives) i += lives.size
+            if (requiredVods) i += vods.size
+            if (requiredSeries) i += series.size
+            i
+        }
+        var currentCount = 0
+        callback(currentCount, total)
+
         if (requiredLives) {
             val playlist = Playlist(
                 title = title,
@@ -154,7 +175,10 @@ class PlaylistRepositoryImpl @Inject constructor(
                     playlistUrl = playlist.url,
                     category = liveCategories.find { it.categoryId == current.categoryId }?.categoryName.orEmpty(),
                     containerExtension = allowedOutputFormats.first()
-                )
+                ).also {
+                    currentCount += 1
+                    callback(currentCount, total)
+                }
             }
             streamDao.compareAndUpdate(
                 strategy = pref.playlistStrategy,
@@ -181,7 +205,10 @@ class PlaylistRepositoryImpl @Inject constructor(
                     password = password,
                     playlistUrl = playlist.url,
                     category = vodCategories.find { it.categoryId == current.categoryId }?.categoryName.orEmpty()
-                )
+                ).also {
+                    currentCount += 1
+                    callback(currentCount, total)
+                }
             }
             streamDao.compareAndUpdate(
                 strategy = pref.playlistStrategy,
@@ -218,6 +245,9 @@ class PlaylistRepositoryImpl @Inject constructor(
                             playlistUrl = playlist.url,
                         )
                     }
+                }.also {
+                    currentCount += 1
+                    callback(currentCount, total)
                 }
             }
             streamDao.compareAndUpdate(

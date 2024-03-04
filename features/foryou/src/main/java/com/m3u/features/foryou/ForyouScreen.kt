@@ -137,20 +137,21 @@ private fun ForyouScreen(
     Background(modifier) {
         Box {
             val showPlaylist = details.isNotEmpty()
+            val header = @Composable {
+                RecommendGallery(
+                    recommend = recommend,
+                    navigateToStream = navigateToStream,
+                    navigateToPlaylist = navigateToPlaylist,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
             if (showPlaylist) {
                 PlaylistGallery(
                     rowCount = actualRowCount,
                     details = details,
                     navigateToPlaylist = navigateToPlaylist,
                     onMenu = { dialog = ForyouDialog.Selections(it) },
-                    header = {
-                        RecommendGallery(
-                            recommend = recommend,
-                            navigateToStream = navigateToStream,
-                            navigateToPlaylist = navigateToPlaylist,
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    },
+                    header = header.takeIf { recommend.isNotEmpty() },
                     contentPadding = contentPadding,
                     modifier = Modifier
                         .fillMaxSize()

@@ -1,6 +1,9 @@
 package com.m3u.features.setting.fragments
 
+import android.Manifest
+import android.annotation.SuppressLint
 import android.net.Uri
+import android.os.Build
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -14,7 +17,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.material3.LocalContentColor
@@ -26,6 +28,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.res.stringResource
+import com.google.accompanist.permissions.PermissionStatus
+import com.google.accompanist.permissions.rememberPermissionState
 import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
@@ -211,7 +215,6 @@ private fun MainContentImpl(
                         onUrl = onUrl,
                         uri = uri,
                         openDocument = openDocument,
-                        onSubscribe = onSubscribe,
                         localStorage = localStorage
                     )
                 }
@@ -253,9 +256,25 @@ private fun MainContentImpl(
         }
 
         item {
+            val postNotificationPermissionRequired =
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
+
+            @SuppressLint("InlinedApi")
+            val postNotificationPermissionState = rememberPermissionState(
+                Manifest.permission.POST_NOTIFICATIONS
+            )
             Button(
                 text = stringResource(string.feat_setting_label_subscribe),
-                onClick = onSubscribe,
+                onClick = {
+                    val shouldShowRationale = with(postNotificationPermissionState.status) {
+                        this is PermissionStatus.Denied && shouldShowRationale
+                    }
+                    if (postNotificationPermissionRequired && shouldShowRationale) {
+                        postNotificationPermissionState.launchPermissionRequest()
+                        return@Button
+                    }
+                    onSubscribe()
+                },
                 modifier = Modifier.fillMaxWidth()
             )
             TonalButton(
@@ -342,7 +361,6 @@ private fun M3UInputContent(
     onUrl: (String) -> Unit,
     uri: Uri,
     openDocument: (Uri) -> Unit,
-    onSubscribe: () -> Unit,
     localStorage: Boolean,
     modifier: Modifier = Modifier
 ) {
@@ -366,11 +384,6 @@ private fun M3UInputContent(
                     text = url,
                     placeholder = stringResource(string.feat_setting_placeholder_url).uppercase(),
                     onValueChange = onUrl,
-                    keyboardActions = KeyboardActions(
-                        onDone = {
-                            onSubscribe()
-                        }
-                    ),
                     modifier = Modifier.fillMaxWidth()
                 )
             } else {

@@ -52,10 +52,25 @@ class SubscriptionWorker @AssistedInject constructor(
                     Result.failure(data)
                 } else {
                     try {
-                        playlistRepository.m3u(title, url)
+                        playlistRepository.m3u(
+                            title = title,
+                            url = url,
+                            callback = { count, total ->
+                                val notification = createNotification()
+                                    .setContentText("[$count/${total.takeIf { it != -1 } ?: "~"}] Downloading...")
+                                    .setProgress(total, count, count == -1)
+                                    .build()
+                                manager.notify(NOTIFICATION_ID, notification)
+                            }
+                        )
                         Result.success()
                     } catch (e: Exception) {
                         Result.failure()
+                    } finally {
+                        val notification = createNotification()
+                            .setContentText("Completed")
+                            .build()
+                        manager.notify(NOTIFICATION_ID, notification)
                     }
                 }
             }
@@ -73,12 +88,30 @@ class SubscriptionWorker @AssistedInject constructor(
                     Result.failure(data)
                 } else {
                     try {
-                        val type = url?.let { XtreamInput.decodeFromPlaylistUrl(it).type }
-                        playlistRepository.xtream(title, basicUrl, username, password, type)
+                        val type = url?.let { XtreamInput.decodeFromPlaylistUrlOrNull(it)?.type }
+                        playlistRepository.xtream(
+                            title = title,
+                            basicUrl = basicUrl,
+                            username = username,
+                            password = password,
+                            type = type,
+                            callback = { count, total ->
+                                val notification = createNotification()
+                                    .setContentText("[$count/${total.takeIf { it != -1 } ?: "~"}] Downloading...")
+                                    .setProgress(total, count, count == -1)
+                                    .build()
+                                manager.notify(NOTIFICATION_ID, notification)
+                            }
+                        )
                         Result.success()
                     } catch (e: Exception) {
                         logger.log(e)
                         Result.failure(workDataOf("message" to e.message))
+                    } finally {
+                        val notification = createNotification()
+                            .setContentText("Completed")
+                            .build()
+                        manager.notify(NOTIFICATION_ID, notification)
                     }
                 }
             }
@@ -91,12 +124,6 @@ class SubscriptionWorker @AssistedInject constructor(
         }
     }
 
-    private val builder = Notification.Builder(context, CHANNEL_ID)
-        .setSmallIcon(R.drawable.round_file_download_24)
-        .setContentTitle(title.orEmpty())
-        .setContentText(url.orEmpty())
-        .setOngoing(true)
-
     private fun createChannel() {
         val channel = NotificationChannel(
             CHANNEL_ID, NOTIFICATION_NAME, NotificationManager.IMPORTANCE_LOW
@@ -106,15 +133,13 @@ class SubscriptionWorker @AssistedInject constructor(
     }
 
     override suspend fun getForegroundInfo(): ForegroundInfo {
-        return ForegroundInfo(NOTIFICATION_ID, createNotification())
+        return ForegroundInfo(NOTIFICATION_ID, createNotification().build())
     }
 
-    private fun createNotification(): Notification {
+    private fun createNotification(): Notification.Builder {
         return Notification.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.round_file_download_24)
             .setContentTitle(title)
-            .setContentText(url)
-            .build()
     }
 
     companion object {

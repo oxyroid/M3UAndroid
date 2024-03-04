@@ -183,7 +183,7 @@ class SettingViewModel @Inject constructor(
         }
         val url = readable.actualUrl
 
-        val addressWithScheme = if (basicUrl.startWithHttpScheme()) basicUrl
+        val basicUrl = if (basicUrl.startWithHttpScheme()) basicUrl
         else "http://$basicUrl"
 
         if (forTv) {
@@ -191,7 +191,7 @@ class SettingViewModel @Inject constructor(
                 localService.subscribe(
                     title,
                     url,
-                    addressWithScheme,
+                    basicUrl,
                     username,
                     password,
                     selected
@@ -201,20 +201,20 @@ class SettingViewModel @Inject constructor(
             return
         }
         workManager.cancelAllWorkByTag(url)
-        workManager.cancelAllWorkByTag(addressWithScheme)
+        workManager.cancelAllWorkByTag(basicUrl)
         val request = OneTimeWorkRequestBuilder<SubscriptionWorker>()
             .setInputData(
                 workDataOf(
                     SubscriptionWorker.INPUT_STRING_TITLE to title,
                     SubscriptionWorker.INPUT_STRING_URL to url,
-                    SubscriptionWorker.INPUT_STRING_BASIC_URL to addressWithScheme,
+                    SubscriptionWorker.INPUT_STRING_BASIC_URL to basicUrl,
                     SubscriptionWorker.INPUT_STRING_USERNAME to username,
                     SubscriptionWorker.INPUT_STRING_PASSWORD to password,
                     SubscriptionWorker.INPUT_STRING_DATA_SOURCE_VALUE to selected.value
                 )
             )
             .addTag(url)
-            .addTag(addressWithScheme)
+            .addTag(basicUrl)
             .addTag(SubscriptionWorker.TAG)
             .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
             .build()

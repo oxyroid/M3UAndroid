@@ -4,8 +4,8 @@ import com.m3u.core.util.basic.startsWithAny
 import com.m3u.data.api.xtream.XtreamCategory
 import com.m3u.data.api.xtream.XtreamLive
 import com.m3u.data.api.xtream.XtreamSerial
-import com.m3u.data.api.xtream.XtreamVod
 import com.m3u.data.api.xtream.XtreamStreamInfo
+import com.m3u.data.api.xtream.XtreamVod
 import io.ktor.http.Url
 import kotlinx.serialization.Serializable
 import okhttp3.HttpUrl
@@ -119,7 +119,7 @@ data class XtreamInput(
             var builder = HttpUrl.Builder()
                 .scheme(serverProtocol)
                 .host(url.host)
-                .port(port?: url.port)
+                .port(port ?: url.port)
                 .addPathSegment("player_api.php")
                 .addQueryParameter("username", username)
                 .addQueryParameter("password", password)
@@ -129,7 +129,8 @@ data class XtreamInput(
             builder.build().toString()
         }
 
-        fun decodeFromPlaylistUrlOrNull(url: String): XtreamInput? = runCatching { decodeFromPlaylistUrl(url) }.getOrNull()
+        fun decodeFromPlaylistUrlOrNull(url: String): XtreamInput? =
+            runCatching { decodeFromPlaylistUrl(url) }.getOrNull()
     }
 }
 

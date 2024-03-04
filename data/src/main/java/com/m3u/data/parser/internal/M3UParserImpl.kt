@@ -31,7 +31,12 @@ internal class M3UParserImpl @Inject constructor(
         const val KODI_LICENSE_KEY = "inputstream.adaptive.license_key"
     }
 
-    override suspend fun execute(input: InputStream): List<M3UData> = withContext(ioDispatcher) {
+    override suspend fun execute(
+        input: InputStream,
+        callback: (count: Int, total: Int) -> Unit
+    ): List<M3UData> = withContext(ioDispatcher) {
+        var currentCount = 0
+        callback(currentCount, -1)
         val lines = input
             .bufferedReader()
             .lineSequence()
@@ -99,6 +104,8 @@ internal class M3UParserImpl @Inject constructor(
             kodiMatches.clear()
 
             entries.add(entry)
+            currentCount += 1
+            callback(currentCount, -1)
         }
         entries
     }

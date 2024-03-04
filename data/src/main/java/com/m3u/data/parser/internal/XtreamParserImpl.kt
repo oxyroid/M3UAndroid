@@ -34,7 +34,12 @@ internal class XtreamParserImpl @Inject constructor(
         explicitNulls = false
     }
 
-    override suspend fun execute(input: XtreamInput): XtreamOutput {
+    override suspend fun execute(
+        input: XtreamInput,
+        callback: (count: Int, total: Int) -> Unit
+    ): XtreamOutput {
+        var currentCount = 0
+        callback(currentCount, -1)
         val (basicUrl, username, password, type) = input
         val requiredLives = type == null || type == DataSource.Xtream.TYPE_LIVE
         val requiredVods = type == null || type == DataSource.Xtream.TYPE_VOD
@@ -83,8 +88,14 @@ internal class XtreamParserImpl @Inject constructor(
         val httpsPort = info.serverInfo.httpsPort?.toIntOrNull()
 
         val lives: List<XtreamLive> = if (requiredLives) newCall(liveStreamsUrl) ?: emptyList() else emptyList()
+        currentCount += lives.size
+        callback(currentCount, -1)
         val vods: List<XtreamVod> = if (requiredVods) newCall(vodStreamsUrl) ?: emptyList() else emptyList()
+        currentCount += vods.size
+        callback(currentCount, -1)
         val series: List<XtreamSerial> = if (requiredSeries) newCall(seriesStreamsUrl) ?: emptyList() else emptyList()
+        currentCount += series.size
+        callback(currentCount, -1)
 
         val liveCategories: List<XtreamCategory> = if (requiredLives) newCall(liveCategoriesUrl) ?: emptyList() else emptyList()
         val vodCategories: List<XtreamCategory> = if (requiredVods) newCall(vodCategoriesUrl) ?: emptyList() else emptyList()

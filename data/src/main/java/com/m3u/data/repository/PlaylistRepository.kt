@@ -15,6 +15,7 @@ interface PlaylistRepository {
     suspend fun m3u(
         title: String,
         url: String,
+        callback: (count: Int, total: Int) -> Unit = { _, _ -> }
     )
 
     suspend fun xtream(
@@ -22,7 +23,8 @@ interface PlaylistRepository {
         basicUrl: String,
         username: String,
         password: String,
-        type: String?
+        type: String?,
+        callback: (count: Int, total: Int) -> Unit = { _, _ -> }
     )
 
     suspend fun refresh(url: String)
