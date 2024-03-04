@@ -14,8 +14,8 @@ android {
         applicationId = "com.m3u.androidApp"
         minSdk = 26
         targetSdk = 33
-        versionCode = 131
-        versionName = "1.14.0-beta06"
+        versionCode = 132
+        versionName = "1.14.0-beta07"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         testInstrumentationRunnerArguments["androidx.benchmark.profiling.mode"] = "MethodTracing"
@@ -107,6 +107,15 @@ android {
             "/META-INF/INDEX.LIST",
             "/META-INF/io.netty.versions.properties"
         )
+    }
+    applicationVariants.all {
+        outputs
+            .map { it as com.android.build.gradle.internal.api.ApkVariantOutputImpl }
+            .forEach { output ->
+                val abi = output.getFilter("ABI") ?: "universal"
+                val versionName = output.versionNameOverride
+                output.outputFileName = "${versionName}_$abi.apk"
+            }
     }
 }
 
