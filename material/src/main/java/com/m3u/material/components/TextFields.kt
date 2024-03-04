@@ -311,7 +311,6 @@ fun PlaceholderField(
             modifier = modifier
         )
     }
-
 }
 
 @OptIn(ExperimentalComposeUiApi::class)
@@ -328,95 +327,100 @@ private fun TvTextFieldImpl(
     val focusManager = LocalFocusManager.current
     val interactionSource = remember { MutableInteractionSource() }
     val isFocus by interactionSource.collectIsFocusedAsState()
-    Surface(
-        shape = ClickableSurfaceDefaults.shape(shape),
-        scale = ClickableSurfaceDefaults.scale(focusedScale = 1f),
-        colors = ClickableSurfaceDefaults.colors(
-            containerColor = TvMaterialTheme.colorScheme.inverseOnSurface,
-            focusedContainerColor = TvMaterialTheme.colorScheme.inverseOnSurface,
-            pressedContainerColor = TvMaterialTheme.colorScheme.inverseOnSurface,
-            focusedContentColor = TvMaterialTheme.colorScheme.onSurface,
-            pressedContentColor = TvMaterialTheme.colorScheme.onSurface
-        ),
-        border = ClickableSurfaceDefaults.border(
-            focusedBorder = Border(
-                border = BorderStroke(
-                    width = if (isFocus) 2.dp else 1.dp,
-                    color = animateColorAsState(
-                        targetValue = if (isFocus) TvMaterialTheme.colorScheme.primary
-                        else TvMaterialTheme.colorScheme.border, label = ""
-                    ).value
-                ),
-                shape = shape
-            )
-        ),
-        tonalElevation = 2.dp,
-        modifier = modifier
-            .padding(horizontal = 8.dp)
-            .padding(top = 8.dp),
-        onClick = { focusRequester.requestFocus() }
+
+    val theme = MaterialTheme.colorScheme
+    CompositionLocalProvider(
+        LocalTextSelectionColors provides TextSelectionColors(
+            handleColor = theme.primary,
+            backgroundColor = theme.primary.copy(alpha = 0.45f)
+        )
     ) {
-        BasicTextField(
-            value = value,
-            onValueChange = onValueChange,
-            decorationBox = {
-                Box(
-                    modifier = Modifier
-                        .padding(vertical = 16.dp)
-                        .padding(start = 20.dp),
-                ) {
-                    it()
-                    if (value.isEmpty()) {
-                        androidx.tv.material3.Text(
-                            modifier = Modifier.graphicsLayer { alpha = 0.6f },
-                            text = placeholder,
-                            style = TvMaterialTheme.typography.titleSmall
-                        )
-                    }
-                }
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(
-                    vertical = 4.dp,
-                    horizontal = 8.dp
+        Surface(
+            shape = ClickableSurfaceDefaults.shape(shape),
+            scale = ClickableSurfaceDefaults.scale(focusedScale = 1f),
+            colors = ClickableSurfaceDefaults.colors(
+                containerColor = TvMaterialTheme.colorScheme.inverseOnSurface,
+                focusedContainerColor = TvMaterialTheme.colorScheme.inverseOnSurface,
+                pressedContainerColor = TvMaterialTheme.colorScheme.inverseOnSurface,
+                focusedContentColor = TvMaterialTheme.colorScheme.onSurface,
+                pressedContentColor = TvMaterialTheme.colorScheme.onSurface
+            ),
+            border = ClickableSurfaceDefaults.border(
+                focusedBorder = Border(
+                    border = BorderStroke(
+                        width = if (isFocus) 2.dp else 1.dp,
+                        color = animateColorAsState(
+                            targetValue = if (isFocus) TvMaterialTheme.colorScheme.primary
+                            else TvMaterialTheme.colorScheme.border, label = ""
+                        ).value
+                    ),
+                    shape = shape
                 )
-                .focusRequester(focusRequester)
-                .onKeyEvent {
-                    if (it.nativeKeyEvent.action == KeyEvent.ACTION_UP) {
-                        when (it.nativeKeyEvent.keyCode) {
-                            KeyEvent.KEYCODE_DPAD_DOWN -> {
-                                focusManager.moveFocus(FocusDirection.Down)
-                            }
-
-                            KeyEvent.KEYCODE_DPAD_UP -> {
-                                focusManager.moveFocus(FocusDirection.Up)
-                            }
-
-                            KeyEvent.KEYCODE_BACK -> {
-                                focusManager.moveFocus(FocusDirection.Exit)
-                            }
+            ),
+            tonalElevation = 2.dp,
+            modifier = modifier,
+            onClick = { focusRequester.requestFocus() }
+        ) {
+            BasicTextField(
+                value = value,
+                onValueChange = onValueChange,
+                decorationBox = { innerTextField ->
+                    Box(
+                        contentAlignment = Alignment.CenterStart,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .defaultMinSize(minHeight = 56.dp)
+                            .padding(horizontal = 16.dp),
+                    ) {
+                        innerTextField()
+                        if (value.isEmpty()) {
+                            androidx.tv.material3.Text(
+                                modifier = Modifier.graphicsLayer { alpha = 0.6f },
+                                text = placeholder,
+                                style = TvMaterialTheme.typography.titleSmall
+                            )
                         }
                     }
-                    true
                 },
-            cursorBrush = Brush.verticalGradient(
-                colors = listOf(
-                    LocalContentColor.current,
-                    LocalContentColor.current,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .focusRequester(focusRequester)
+                    .onKeyEvent {
+                        if (it.nativeKeyEvent.action == KeyEvent.ACTION_UP) {
+                            when (it.nativeKeyEvent.keyCode) {
+                                KeyEvent.KEYCODE_DPAD_DOWN -> {
+                                    focusManager.moveFocus(FocusDirection.Down)
+                                }
+
+                                KeyEvent.KEYCODE_DPAD_UP -> {
+                                    focusManager.moveFocus(FocusDirection.Up)
+                                }
+
+                                KeyEvent.KEYCODE_BACK -> {
+                                    focusManager.moveFocus(FocusDirection.Exit)
+                                }
+                            }
+                        }
+                        true
+                    },
+                cursorBrush = Brush.verticalGradient(
+                    colors = listOf(
+                        LocalContentColor.current,
+                        LocalContentColor.current,
+                    )
+                ),
+                keyboardOptions = KeyboardOptions(
+                    autoCorrect = false,
+                    imeAction = ImeAction.Search
+                ),
+                keyboardActions = keyboardActions,
+                maxLines = 1,
+                interactionSource = interactionSource,
+                textStyle = TvMaterialTheme.typography.titleSmall.copy(
+                    color = TvMaterialTheme.colorScheme.onSurface
                 )
-            ),
-            keyboardOptions = KeyboardOptions(
-                autoCorrect = false,
-                imeAction = ImeAction.Search
-            ),
-            keyboardActions = keyboardActions,
-            maxLines = 1,
-            interactionSource = interactionSource,
-            textStyle = TvMaterialTheme.typography.titleSmall.copy(
-                color = TvMaterialTheme.colorScheme.onSurface
             )
-        )
+        }
     }
 }
 
