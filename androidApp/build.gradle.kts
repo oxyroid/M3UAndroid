@@ -1,3 +1,6 @@
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+
 plugins {
     alias(libs.plugins.com.android.application)
     alias(libs.plugins.org.jetbrains.kotlin.android)
@@ -14,7 +17,7 @@ android {
         applicationId = "com.m3u.androidApp"
         minSdk = 26
         targetSdk = 33
-        versionCode = 132
+        versionCode = 133
         versionName = "1.14.0-beta07"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -30,7 +33,7 @@ android {
         // Github Workflow
         create("snapshotChannel") {
             dimension = "channel"
-            versionNameSuffix = "-snapshot"
+            versionNameSuffix = "-snapshot[${LocalDateTime.now().format(DateTimeFormatter.ofPattern("MMddHHmm"))}]"
             applicationIdSuffix = ".snapshot"
         }
         create("richCodec") {
