@@ -16,7 +16,6 @@ import androidx.media3.common.Tracks
 import androidx.media3.common.VideoSize
 import androidx.media3.common.util.SystemClock
 import androidx.media3.datasource.DataSource
-import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.datasource.okhttp.OkHttpDataSource
 import androidx.media3.datasource.rtmp.RtmpDataSource
 import androidx.media3.exoplayer.DefaultLoadControl
@@ -36,6 +35,8 @@ import com.m3u.core.architecture.pref.Pref
 import com.m3u.core.architecture.pref.annotation.ReconnectMode
 import com.m3u.core.architecture.pref.observeAsFlow
 import com.m3u.data.SSLs
+import com.m3u.data.repository.PlaylistRepository
+import com.m3u.data.repository.StreamRepository
 import com.m3u.data.service.PlayerManager
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineDispatcher
@@ -50,6 +51,7 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.updateAndGet
+import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient
 import javax.inject.Inject
 
@@ -57,6 +59,8 @@ class PlayerManagerImpl @Inject constructor(
     @ApplicationContext private val context: Context,
     private val okHttpClient: OkHttpClient,
     private val pref: Pref,
+    private val playlistRepository: PlaylistRepository,
+    private val streamRepository: StreamRepository,
     @Dispatcher(Main) mainDispatcher: CoroutineDispatcher
 ) : PlayerManager, Player.Listener, MediaSession.Callback {
     private val _player = MutableStateFlow<ExoPlayer?>(null)
@@ -76,12 +80,10 @@ class PlayerManagerImpl @Inject constructor(
 
     private val coroutineScope = CoroutineScope(mainDispatcher)
 
-    private fun createPlayer(): ExoPlayer {
+    private fun createPlayer(
+        dsf: DataSource.Factory
+    ): ExoPlayer {
         val rf = Codecs.createRenderersFactory(context)
-        val dsf = DefaultDataSource.Factory(
-            context,
-            buildHttpDataSourceFactory()
-        )
         val msf = DefaultMediaSourceFactory(dsf)
 
         val ts = DefaultTrackSelector(context).apply {
@@ -158,61 +160,64 @@ class PlayerManagerImpl @Inject constructor(
     }
 
     private fun tryPlay(mimeType: String?) {
-        val url = this.url.value ?: return
-        val dataSourceFactory = buildHttpDataSourceFactory()
-        val currentPlayer = _player.updateAndGet { prev ->
-            prev ?: createPlayer()
-        }!!
+        val currentUrl = this.url.value ?: return
+        coroutineScope.launch {
+            val stream = streamRepository.getByUrl(currentUrl)
+            val playlist = stream?.playlistUrl?.let { playlistRepository.get(it) }
+            val dataSourceFactory = buildHttpDataSourceFactory(playlist?.userAgent)
+            val currentPlayer = _player.updateAndGet { prev ->
+                prev ?: createPlayer(dataSourceFactory)
+            }!!
+            when (mimeType) {
+                MimeTypes.APPLICATION_SS -> {
+                    val mediaSource = ProgressiveMediaSource.Factory(dataSourceFactory)
+                        .createMediaSource(MediaItem.fromUri(currentUrl))
+                    currentPlayer.setMediaSource(mediaSource)
+                }
 
-        when (mimeType) {
-            MimeTypes.APPLICATION_SS -> {
-                val mediaSource = ProgressiveMediaSource.Factory(dataSourceFactory)
-                    .createMediaSource(MediaItem.fromUri(url))
-                currentPlayer.setMediaSource(mediaSource)
-            }
+                MimeTypes.APPLICATION_RTSP -> {
+                    val mediaSource = RtspMediaSource.Factory()
+                        .setDebugLoggingEnabled(true)
+                        .setTimeoutMs(4000)
+                        .setForceUseRtpTcp(true)
+                        .setSocketFactory(SSLs.TLSTrustAll.socketFactory)
+                        .createMediaSource(MediaItem.fromUri(currentUrl))
+                    currentPlayer.setMediaSource(mediaSource)
+                }
 
-            MimeTypes.APPLICATION_RTSP -> {
-                val mediaSource = RtspMediaSource.Factory()
-                    .setDebugLoggingEnabled(true)
-                    .setTimeoutMs(4000)
-                    .setForceUseRtpTcp(true)
-                    .setSocketFactory(SSLs.TLSTrustAll.socketFactory)
-                    .createMediaSource(MediaItem.fromUri(url))
-                currentPlayer.setMediaSource(mediaSource)
-            }
+                MimeTypes.APPLICATION_M3U8 -> {
+                    val hlsMediaSource = HlsMediaSource.Factory(dataSourceFactory)
+                        .setAllowChunklessPreparation(false)
+                        .createMediaSource(MediaItem.fromUri(currentUrl))
+                    currentPlayer.setMediaSource(hlsMediaSource)
+                }
 
-            MimeTypes.APPLICATION_M3U8 -> {
-                val hlsMediaSource = HlsMediaSource.Factory(dataSourceFactory)
-                    .setAllowChunklessPreparation(false)
-                    .createMediaSource(MediaItem.fromUri(url))
-                currentPlayer.setMediaSource(hlsMediaSource)
-            }
+                MIMETYPE_RTMP -> {
+                    val factory = RtmpDataSource.Factory()
+                    val mediaSourceFactory = DefaultMediaSourceFactory(factory)
+                    val mediaItem = MediaItem.Builder()
+                        .setUri(currentUrl)
+                        .build()
+                    val mediaSource = mediaSourceFactory.createMediaSource(mediaItem)
+                    currentPlayer.setMediaSource(mediaSource)
+                }
 
-            MIMETYPE_RTMP -> {
-                val factory = RtmpDataSource.Factory()
-                val mediaSourceFactory = DefaultMediaSourceFactory(factory)
-                val mediaItem = MediaItem.Builder()
-                    .setUri(url)
-                    .build()
-                val mediaSource = mediaSourceFactory.createMediaSource(mediaItem)
-                currentPlayer.setMediaSource(mediaSource)
-            }
-
-            else -> {
-                val mediaSourceFactory = DefaultMediaSourceFactory(dataSourceFactory)
-                val mediaItem = MediaItem.Builder()
-                    .setUri(url)
-                    .apply {
-                        if (mimeType != null) {
-                            setMimeType(mimeType)
+                else -> {
+                    val mediaSourceFactory = DefaultMediaSourceFactory(dataSourceFactory)
+                    val mediaItem = MediaItem.Builder()
+                        .setUri(currentUrl)
+                        .apply {
+                            if (mimeType != null) {
+                                setMimeType(mimeType)
+                            }
                         }
-                    }
-                    .build()
-                val mediaSource = mediaSourceFactory.createMediaSource(mediaItem)
-                currentPlayer.setMediaSource(mediaSource)
+                        .build()
+                    val mediaSource = mediaSourceFactory.createMediaSource(mediaItem)
+                    currentPlayer.setMediaSource(mediaSource)
+                }
             }
+            currentPlayer.prepare()
         }
-        currentPlayer.prepare()
     }
 
     override fun release() {
@@ -385,9 +390,11 @@ class PlayerManagerImpl @Inject constructor(
             .build()
     }
 
-    private fun buildHttpDataSourceFactory(): DataSource.Factory {
-        //  Credentials.basic()
+    private fun buildHttpDataSourceFactory(
+        userAgent: String?
+    ): DataSource.Factory {
         return OkHttpDataSource.Factory(okHttpClient)
+            .setUserAgent(userAgent)
     }
 
     override fun onTracksChanged(tracks: Tracks) {

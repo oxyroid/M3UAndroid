@@ -85,4 +85,14 @@ interface PlaylistDao {
             )
         )
     }
+
+    @Transaction
+    suspend fun updateUserAgent(url: String, userAgent: String?) {
+        val playlist = getByUrl(url) ?: return
+        insertOrReplace(
+            playlist.copy(
+                userAgent = userAgent
+            )
+        )
+    }
 }

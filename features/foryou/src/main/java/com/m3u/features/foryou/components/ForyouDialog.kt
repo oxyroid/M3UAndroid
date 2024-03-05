@@ -4,7 +4,9 @@ import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Abc
 import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.material.icons.rounded.VerifiedUser
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -13,9 +15,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboardManager
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
+import com.m3u.core.util.basic.title
 import com.m3u.data.database.model.Playlist
 import com.m3u.i18n.R.string
 import com.m3u.material.components.AppDialog
@@ -23,23 +26,20 @@ import com.m3u.material.components.DialogItem
 import com.m3u.material.components.DialogTextField
 import com.m3u.material.model.LocalSpacing
 
-internal typealias OnUpdateStatus = (ForyouDialog) -> Unit
-internal typealias OnUnsubscribe = (playlistUrl: String) -> Unit
-internal typealias OnRename = (playlistUrl: String, target: String) -> Unit
-
-internal sealed class ForyouDialog {
-    data object Idle : ForyouDialog()
+internal sealed class ForyouDialogState {
+    data object Idle : ForyouDialogState()
     data class Selections(
         val playlist: Playlist
-    ) : ForyouDialog()
+    ) : ForyouDialogState()
 }
 
 @Composable
 internal fun ForyouDialog(
-    status: ForyouDialog,
-    update: OnUpdateStatus,
-    unsubscribe: OnUnsubscribe,
-    rename: OnRename,
+    status: ForyouDialogState,
+    update: (ForyouDialogState) -> Unit,
+    unsubscribe: (playlistUrl: String) -> Unit,
+    rename: (playlistUrl: String, title: String) -> Unit,
+    editUserAgent: (playlistUrl: String, userAgent: String?) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var editMode by remember { mutableStateOf(false) }
@@ -48,10 +48,10 @@ internal fun ForyouDialog(
         label = "foryou-dialog-border"
     )
     AppDialog(
-        visible = status is ForyouDialog.Selections,
+        visible = status is ForyouDialogState.Selections,
         onDismiss = {
             if (!editMode) {
-                update(ForyouDialog.Idle)
+                update(ForyouDialogState.Idle)
             }
         },
         border = BorderStroke(
@@ -62,44 +62,54 @@ internal fun ForyouDialog(
         modifier = modifier,
         content = {
             val theme = MaterialTheme.colorScheme
-            val context = LocalContext.current
-            val currentStatus = remember { status as ForyouDialog.Selections }
-            if (status is ForyouDialog.Selections) {
-                val editable = with(currentStatus.playlist) {
-                    !fromLocal || title.isNotEmpty()
+            val currentStatus = remember { status as ForyouDialogState.Selections }
+            if (status is ForyouDialogState.Selections) {
+                var editedTitle by remember(currentStatus.playlist.title) {
+                    mutableStateOf(currentStatus.playlist.title)
                 }
-                var renamedText by remember(currentStatus) {
-                    mutableStateOf(
-                        with(currentStatus.playlist) {
-                            if (editable) title else context.getString(string.feat_foryou_imported_playlist_title)
-                        }
-                    )
+                var editedUserAgent by remember(currentStatus.playlist.userAgent) {
+                    mutableStateOf(currentStatus.playlist.userAgent.orEmpty())
                 }
                 DialogTextField(
-                    text = renamedText,
-                    onTextChange = { renamedText = it },
+                    text = editedTitle,
+                    onTextChange = { editedTitle = it },
                     readOnly = !editMode,
-                    icon = Icons.Rounded.Edit.takeIf { editable },
+                    leadingIcon = Icons.Rounded.Abc,
+                    trainingIcon = Icons.Rounded.Edit,
                     iconTint = if (editMode) theme.primary else theme.onBackground,
-                    onIconClick = {
-                        val target = !editMode
-                        if (!target && renamedText != currentStatus.playlist.title) {
-                            rename(currentStatus.playlist.url, renamedText)
+                    onTrainingIconClick = {
+                        val targetEditMode = !editMode
+                        if (!targetEditMode && editedTitle != currentStatus.playlist.title) {
+                            rename(currentStatus.playlist.url, editedTitle)
                         }
-                        editMode = target
+                        if (!targetEditMode && editedTitle != currentStatus.playlist.userAgent) {
+                            editUserAgent(
+                                currentStatus.playlist.url,
+                                editedUserAgent.ifEmpty { null }
+                            )
+                        }
+                        editMode = targetEditMode
                     }
+                )
+                DialogTextField(
+                    text = editedUserAgent,
+                    onTextChange = { editedUserAgent = it },
+                    placeholder = stringResource(string.feat_foryou_user_agent).title(),
+                    readOnly = !editMode,
+                    leadingIcon = Icons.Rounded.VerifiedUser,
+                    iconTint = if (editMode) theme.primary else theme.onBackground
                 )
                 if (!editMode) {
                     DialogItem(string.feat_foryou_unsubscribe_playlist) {
                         unsubscribe(currentStatus.playlist.url)
-                        update(ForyouDialog.Idle)
+                        update(ForyouDialogState.Idle)
                     }
                     if (!currentStatus.playlist.fromLocal) {
                         val clipboardManager = LocalClipboardManager.current
                         DialogItem(string.feat_foryou_copy_playlist_url) {
                             val annotatedString = AnnotatedString(currentStatus.playlist.url)
                             clipboardManager.setText(annotatedString)
-                            update(ForyouDialog.Idle)
+                            update(ForyouDialogState.Idle)
                         }
                     }
                 }

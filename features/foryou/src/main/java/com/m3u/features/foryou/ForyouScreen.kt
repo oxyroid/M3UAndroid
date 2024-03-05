@@ -26,8 +26,7 @@ import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.core.util.basic.title
 import com.m3u.data.database.model.Playlist
 import com.m3u.features.foryou.components.ForyouDialog
-import com.m3u.features.foryou.components.OnRename
-import com.m3u.features.foryou.components.OnUnsubscribe
+import com.m3u.features.foryou.components.ForyouDialogState
 import com.m3u.features.foryou.components.PlaylistGallery
 import com.m3u.features.foryou.components.PlaylistGalleryPlaceholder
 import com.m3u.features.foryou.components.recommend.Recommend
@@ -99,6 +98,7 @@ fun ForyouRoute(
                 navigateToSettingPlaylistManagement = navigateToSettingPlaylistManagement,
                 unsubscribe = { viewModel.unsubscribe(it) },
                 rename = { playlistUrl, target -> viewModel.rename(playlistUrl, target) },
+                updateUserAgent = { playlistUrl, userAgent -> viewModel.updateUserAgent(playlistUrl, userAgent) },
                 modifier = Modifier
                     .fillMaxSize()
                     .thenIf(!tv && pref.godMode) {
@@ -124,8 +124,9 @@ private fun ForyouScreen(
     navigateToPlaylist: (Playlist) -> Unit,
     navigateToStream: () -> Unit,
     navigateToSettingPlaylistManagement: () -> Unit,
-    unsubscribe: OnUnsubscribe,
-    rename: OnRename,
+    unsubscribe: (playlistUrl: String) -> Unit,
+    rename: (playlistUrl: String, label: String) -> Unit,
+    updateUserAgent: (playlistUrl: String, userAgent: String?) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val configuration = LocalConfiguration.current
@@ -136,7 +137,7 @@ private fun ForyouScreen(
             else -> rowCount + 2
         }
     }
-    var dialog: ForyouDialog by remember { mutableStateOf(ForyouDialog.Idle) }
+    var dialogState: ForyouDialogState by remember { mutableStateOf(ForyouDialogState.Idle) }
     Background(modifier) {
         Box {
             val showPlaylist = details.isNotEmpty()
@@ -153,7 +154,7 @@ private fun ForyouScreen(
                     rowCount = actualRowCount,
                     details = details,
                     navigateToPlaylist = navigateToPlaylist,
-                    onMenu = { dialog = ForyouDialog.Selections(it) },
+                    onMenu = { dialogState = ForyouDialogState.Selections(it) },
                     header = header.takeIf { recommend.isNotEmpty() },
                     contentPadding = contentPadding,
                     modifier = Modifier
@@ -172,15 +173,16 @@ private fun ForyouScreen(
                 }
             }
             ForyouDialog(
-                status = dialog,
-                update = { dialog = it },
+                status = dialogState,
+                update = { dialogState = it },
                 unsubscribe = unsubscribe,
-                rename = rename
+                rename = rename,
+                editUserAgent = updateUserAgent
             )
         }
     }
 
-    BackHandler(dialog != ForyouDialog.Idle) {
-        dialog = ForyouDialog.Idle
+    BackHandler(dialogState != ForyouDialogState.Idle) {
+        dialogState = ForyouDialogState.Idle
     }
 }

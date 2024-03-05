@@ -103,4 +103,10 @@ class ForyouViewModel @Inject constructor(
             playlistRepository.rename(playlistUrl, target)
         }
     }
+
+    internal fun updateUserAgent(playlistUrl: String, userAgent: String?) {
+        viewModelScope.launch {
+            playlistRepository.updateUserAgent(playlistUrl, userAgent)
+        }
+    }
 }

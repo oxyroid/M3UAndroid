@@ -37,7 +37,9 @@ data class Playlist(
     val hiddenCategories: List<String> = emptyList(),
     @ColumnInfo(name = "source", defaultValue = "0")
     @Serializable(with = DataSourceSerializer::class)
-    val source: DataSource = DataSource.M3U
+    val source: DataSource = DataSource.M3U,
+    @ColumnInfo(name = "user_agent", defaultValue = "NULL")
+    val userAgent: String? = null
 ) : Likable<Playlist> {
     val fromLocal: Boolean
         get() {

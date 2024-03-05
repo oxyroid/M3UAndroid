@@ -40,4 +40,6 @@ interface PlaylistRepository {
     suspend fun pinOrUnpinCategory(url: String, category: String)
 
     suspend fun hideOrUnhideCategory(url: String, category: String)
+
+    suspend fun updateUserAgent(url: String, userAgent: String?)
 }

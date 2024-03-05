@@ -37,11 +37,13 @@ fun DialogTextField(
     modifier: Modifier = Modifier,
     backgroundColor: Color = Color.Unspecified,
     contentColor: Color = Color.Unspecified,
+    placeholder: String = "",
     onTextChange: (String) -> Unit = {},
-    icon: ImageVector? = null,
+    leadingIcon: ImageVector? = null,
+    trainingIcon: ImageVector? = null,
     iconTint: Color = backgroundColor,
     readOnly: Boolean = true,
-    onIconClick: (() -> Unit)? = null,
+    onTrainingIconClick: (() -> Unit)? = null,
 ) {
     val theme = MaterialTheme.colorScheme
     val spacing = LocalSpacing.current
@@ -50,6 +52,13 @@ fun DialogTextField(
         horizontalArrangement = Arrangement.spacedBy(spacing.medium),
         modifier = modifier
     ) {
+        if (leadingIcon != null) {
+            Icon(
+                imageVector = leadingIcon,
+                tint = iconTint.takeOrElse { MaterialTheme.colorScheme.onBackground },
+                contentDescription = null
+            )
+        }
         TextField(
             text = text,
             onValueChange = onTextChange,
@@ -59,14 +68,15 @@ fun DialogTextField(
             readOnly = readOnly,
             fontWeight = FontWeight.ExtraBold,
             fontSize = 20.sp,
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(1f),
+            placeholder = placeholder
         )
 
-        if (onIconClick != null && icon != null) {
+        if (onTrainingIconClick != null && trainingIcon != null) {
             IconButton(
-                icon = icon,
+                icon = trainingIcon,
                 tint = iconTint.takeOrElse { MaterialTheme.colorScheme.onBackground },
-                onClick = onIconClick,
+                onClick = onTrainingIconClick,
                 contentDescription = null
             )
         }
@@ -121,10 +131,10 @@ fun DialogTextField(
         text = stringResource(id = resId),
         backgroundColor = color,
         onTextChange = onTextChange,
-        icon = icon,
+        trainingIcon = icon,
         iconTint = iconTint,
         readOnly = readOnly,
-        onIconClick = onIconClick
+        onTrainingIconClick = onIconClick
     )
 }
 

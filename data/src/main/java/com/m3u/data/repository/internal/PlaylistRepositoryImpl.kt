@@ -425,6 +425,10 @@ class PlaylistRepositoryImpl @Inject constructor(
         playlistDao.rename(url, target)
     }
 
+    override suspend fun updateUserAgent(url: String, userAgent: String?) = logger.sandBox {
+        playlistDao.updateUserAgent(url, userAgent)
+    }
+
     private val filenameWithTimezone: String get() = "File_${System.currentTimeMillis()}"
 
     // Modified with `inline`
