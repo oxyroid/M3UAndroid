@@ -4,6 +4,7 @@ package com.m3u.features.playlist
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.content.Intent
 import android.content.res.Configuration.UI_MODE_TYPE_APPLIANCE
 import android.content.res.Configuration.UI_MODE_TYPE_CAR
 import android.content.res.Configuration.UI_MODE_TYPE_DESK
@@ -12,6 +13,7 @@ import android.content.res.Configuration.UI_MODE_TYPE_TELEVISION
 import android.content.res.Configuration.UI_MODE_TYPE_VR_HEADSET
 import android.content.res.Configuration.UI_MODE_TYPE_WATCH
 import android.os.Build
+import android.provider.Settings
 import android.view.KeyEvent
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
@@ -145,7 +147,14 @@ internal fun PlaylistRoute(
                         if (postNotificationPermissionState.status.shouldShowRationale) {
                             postNotificationPermissionState.launchPermissionRequest()
                         } else {
-                            helper.snack("Please allow POST_NOTIFICATION permission in setting")
+                            val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                                .apply {
+                                    putExtra(
+                                        Settings.EXTRA_APP_PACKAGE,
+                                        helper.activityContext.packageName
+                                    )
+                                }
+                            helper.activityContext.startActivity(intent)
                         }
                         return@PlaylistScreen
                     }
