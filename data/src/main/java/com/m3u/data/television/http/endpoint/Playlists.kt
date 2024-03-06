@@ -1,6 +1,8 @@
 package com.m3u.data.television.http.endpoint
 
 import android.content.Context
+import androidx.work.Constraints
+import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.OutOfQuotaPolicy
 import androidx.work.WorkManager
@@ -70,6 +72,11 @@ data class Playlists @Inject constructor(
                     .addTag(title)
                     .addTag(SubscriptionWorker.TAG)
                     .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
+                    .setConstraints(
+                        Constraints.Builder()
+                            .setRequiredNetworkType(NetworkType.CONNECTED)
+                            .build()
+                    )
                     .build()
                 workManager.enqueue(request)
                 call.respond(
