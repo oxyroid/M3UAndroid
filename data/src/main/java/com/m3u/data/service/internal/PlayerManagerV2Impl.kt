@@ -56,6 +56,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -79,17 +80,6 @@ class PlayerManagerV2Impl @Inject constructor(
     private val mainCoroutineScope = CoroutineScope(mainDispatcher)
     private val ioCoroutineScope = CoroutineScope(ioDispatcher)
 
-    private val logger = before.prefix("player-manager")
-    private val json = Json {
-        prettyPrint = true
-    }
-
-    private fun Logger.debug(block: () -> String) {
-        if (BuildConfig.DEBUG) {
-            log(block())
-        }
-    }
-
     override val player = MutableStateFlow<ExoPlayer?>(null)
     override val size = MutableStateFlow(Rect())
 
@@ -100,49 +90,62 @@ class PlayerManagerV2Impl @Inject constructor(
         .flatMapLatest { streamId ->
             streamId?.let { streamRepository.observe(it) } ?: flowOf(null)
         }
-        .distinctUntilChanged { old, new ->
-            when {
-                old == null && new == null -> true
-                old == null -> false
-                new == null -> false
-                else -> old like new
-            }
-        }
-        .onEach { logger.debug { "stream: ${json.encodeToString(it)}" } }
         .flowOn(ioDispatcher)
-        .onEach { stream ->
-            val streamUrl = stream?.url ?: return@onEach
-            val wrapper = MimetypeWrapper.Unspecified(streamUrl).next()
-            logger.debug { "init wrapper: $wrapper" }
-            this.wrapper = wrapper
-            when (wrapper) {
-                is MimetypeWrapper.Maybe -> play(mimeType = wrapper.mimeType, url = streamUrl)
-                is MimetypeWrapper.Trying -> play(mimeType = wrapper.mimeType, url = streamUrl)
-                else -> return@onEach
-            }
-
-            observePreferencesChangingJob?.cancel()
-            observePreferencesChangingJob = mainCoroutineScope.launch {
-                observePreferencesChanging { timeout, tunneling ->
-                    if (timeout != currentConnectTimeout || tunneling != currentTunneling) {
-                        logger.debug { "preferences changed, replaying..." }
-                        replay()
-                        currentConnectTimeout = timeout
-                        currentTunneling = tunneling
-                    }
-                }
-            }
-        }
-        .flowOn(mainDispatcher)
         .stateIn(
             scope = ioCoroutineScope,
             initialValue = null,
             started = SharingStarted.Lazily
         )
 
+    init {
+        stream
+            .distinctUntilChanged { old, new ->
+                when {
+                    old == null && new == null -> true
+                    old == null -> false
+                    new == null -> false
+                    else -> old like new
+                }
+            }
+            .onEach { stream ->
+                val streamUrl = stream?.url ?: return@onEach
+                streamRepository.reportPlayed(stream.id)
+                val wrapper = MimetypeWrapper.Unspecified(streamUrl).next()
+                logger.debug { "init wrapper: $wrapper" }
+                this.wrapper = wrapper
+                when (wrapper) {
+                    is MimetypeWrapper.Maybe -> play(mimeType = wrapper.mimeType, url = streamUrl)
+                    is MimetypeWrapper.Trying -> play(mimeType = wrapper.mimeType, url = streamUrl)
+                    else -> return@onEach
+                }
+
+                observePreferencesChangingJob?.cancel()
+                observePreferencesChangingJob = mainCoroutineScope.launch {
+                    observePreferencesChanging { timeout, tunneling ->
+                        if (timeout != currentConnectTimeout || tunneling != currentTunneling) {
+                            logger.debug { "preferences changed, replaying..." }
+                            replay()
+                            currentConnectTimeout = timeout
+                            currentTunneling = tunneling
+                        }
+                    }
+                }
+            }
+            .flowOn(mainDispatcher)
+            .onEach { logger.debug { "stream: ${json.encodeToString(it)}" } }
+            .launchIn(mainCoroutineScope)
+    }
+
+
     override val playlist = stream.flatMapLatest { stream ->
         stream?.let { playlistRepository.observe(it.playlistUrl) } ?: flowOf(null)
     }
+        .stateIn(
+            scope = ioCoroutineScope,
+            initialValue = null,
+            started = SharingStarted.Lazily
+        )
+    private val likablePlaylist = playlist
         .distinctUntilChanged { old, new ->
             when {
                 old == null && new == null -> true
@@ -154,11 +157,6 @@ class PlayerManagerV2Impl @Inject constructor(
         .onEach {
             logger.debug { "playlist: ${json.encodeToString(it)}" }
         }
-        .stateIn(
-            scope = ioCoroutineScope,
-            initialValue = null,
-            started = SharingStarted.Lazily
-        )
 
     override val playbackState = MutableStateFlow<@Player.State Int>(Player.STATE_IDLE)
     override val playbackException = MutableStateFlow<PlaybackException?>(null)
@@ -197,6 +195,7 @@ class PlayerManagerV2Impl @Inject constructor(
 
             else -> DefaultMediaSourceFactory(dataSourceFactory)
         }
+        logger.debug { "media-source-factory: ${mediaSourceFactory::class.qualifiedName}" }
         val player = player.updateAndGet { prev ->
             prev ?: createPlayer(mediaSourceFactory, tunneling)
         }!!
@@ -320,6 +319,24 @@ class PlayerManagerV2Impl @Inject constructor(
         if (state == Player.STATE_ENDED && pref.reconnectMode == ReconnectMode.RECONNECT) {
             mainCoroutineScope.launch { replay() }
         }
+        logger.debug { "playback-state: $state" }
+        when (state) {
+            Player.STATE_READY -> {
+                logger.debug {
+                    val currentPlayer = player.value ?: return@debug ""
+                    val getCurrentMediaItem =
+                        currentPlayer.isCommandAvailable(Player.COMMAND_GET_CURRENT_MEDIA_ITEM)
+                    if (!getCurrentMediaItem) {
+                        return@debug "get-current-media-item: false"
+                    }
+                    val seekable = currentPlayer.isCurrentMediaItemSeekable
+                    val dynamic = currentPlayer.isCurrentMediaItemDynamic
+                    "get-current-media-item: $getCurrentMediaItem, dynamic: $dynamic, seekable: $seekable"
+                }
+            }
+
+            else -> {}
+        }
     }
 
     private var wrapper: MimetypeWrapper = MimetypeWrapper.Unsupported
@@ -357,7 +374,7 @@ class PlayerManagerV2Impl @Inject constructor(
 
             else -> {
                 if (error != null) {
-                    logger.debug {"[${PlaybackException.getErrorCodeName(error.errorCode)}] See player for detail" }
+                    logger.debug { "[${PlaybackException.getErrorCodeName(error.errorCode)}] See player for detail" }
                 }
                 playbackException.value = error
             }
@@ -367,6 +384,17 @@ class PlayerManagerV2Impl @Inject constructor(
     override fun onTracksChanged(tracks: Tracks) {
         super.onTracksChanged(tracks)
         tracksGroups.value = tracks.groups
+    }
+
+    private val logger = before.prefix("player-manager")
+    private val json = Json {
+        prettyPrint = true
+    }
+
+    private fun Logger.debug(block: () -> String) {
+        if (BuildConfig.DEBUG) {
+            log(block())
+        }
     }
 }
 
@@ -403,15 +431,15 @@ private sealed class MimetypeWrapper : Iterator<MimetypeWrapper> {
                 else -> null
             }
                 .let { maybeMimetype ->
-                    maybeMimetype?.let { Maybe(it) } ?: Trying(MimeTypes.APPLICATION_M3U8)
+                    maybeMimetype?.let { Maybe(it) } ?: Trying(MimeTypes.APPLICATION_SS)
                 }
         }
 
-        is Maybe -> Trying(MimeTypes.APPLICATION_M3U8)
+        is Maybe -> Trying(MimeTypes.APPLICATION_SS)
         is Trying -> when (mimeType) {
+            MimeTypes.APPLICATION_SS -> Trying(MimeTypes.APPLICATION_M3U8)
             MimeTypes.APPLICATION_M3U8 -> Trying(MimeTypes.APPLICATION_MPD)
-            MimeTypes.APPLICATION_MPD -> Trying(MimeTypes.APPLICATION_SS)
-            MimeTypes.APPLICATION_SS -> Trying(MimeTypes.APPLICATION_RTSP)
+            MimeTypes.APPLICATION_MPD -> Trying(MimeTypes.APPLICATION_RTSP)
             else -> Unsupported
         }
 

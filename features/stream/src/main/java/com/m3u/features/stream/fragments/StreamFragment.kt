@@ -1,6 +1,7 @@
 package com.m3u.features.stream.fragments
 
 import android.content.pm.ActivityInfo
+import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
@@ -118,23 +119,30 @@ internal fun StreamFragment(
     val currentVolume by rememberUpdatedState(volume)
     val currentBrightness by rememberUpdatedState(brightness)
 
-    val getCurrentMediaItemAvailable by remember(playerState.player, pref.progress) {
+    val shouldShowSeekbar by remember(
+        playerState.player,
+        pref.progress,
+        playerState.playState
+    ) {
         derivedStateOf {
             when {
                 !pref.progress -> false
-                playerState.player?.isCurrentMediaItemDynamic == true -> false
-                else -> playerState.player
-                    ?.isCommandAvailable(COMMAND_GET_CURRENT_MEDIA_ITEM)
-                    ?: false
+                playerState.player == null -> false
+                !playerState.player.isCommandAvailable(COMMAND_GET_CURRENT_MEDIA_ITEM) -> false
+                else -> with(playerState.player) {
+                    !isCurrentMediaItemDynamic && isCurrentMediaItemSeekable
+                }
+            }.also {
+                Log.e("TAG", "r $it")
             }
         }
     }
 
     val contentPosition by produceState(
         initialValue = -1L,
-        getCurrentMediaItemAvailable
+        shouldShowSeekbar
     ) {
-        while (getCurrentMediaItemAvailable) {
+        while (shouldShowSeekbar) {
             delay(50.milliseconds)
             value = playerState.player?.currentPosition ?: -1L
         }
@@ -142,9 +150,9 @@ internal fun StreamFragment(
     }
     val contentDuration by produceState(
         initialValue = -1L,
-        getCurrentMediaItemAvailable
+        shouldShowSeekbar
     ) {
-        while (getCurrentMediaItemAvailable) {
+        while (shouldShowSeekbar) {
             delay(50.milliseconds)
             value = playerState.player?.duration?.absoluteValue ?: -1L
         }
@@ -330,7 +338,7 @@ internal fun StreamFragment(
                             val exceptionDisplayText =
                                 playbackExceptionDisplayText(playerState.playerError)
 
-                            if (playStateDisplayText.isNotEmpty() || exceptionDisplayText.isNotEmpty() || getCurrentMediaItemAvailable) {
+                            if (playStateDisplayText.isNotEmpty() || exceptionDisplayText.isNotEmpty() || shouldShowSeekbar) {
                                 Spacer(
                                     modifier = Modifier.height(spacing.small)
                                 )
@@ -355,7 +363,7 @@ internal fun StreamFragment(
                                     modifier = Modifier.basicMarquee()
                                 )
                             }
-                            if (getCurrentMediaItemAvailable) {
+                            if (shouldShowSeekbar) {
                                 val fontWeight by animateIntAsState(
                                     targetValue = if (bufferedPosition != null) 800
                                     else 400,
@@ -401,7 +409,7 @@ internal fun StreamFragment(
                     },
                     slider = {
                         when {
-                            getCurrentMediaItemAvailable -> {
+                            shouldShowSeekbar -> {
                                 val animContentPosition by animateFloatAsState(
                                     targetValue = (bufferedPosition
                                         ?: contentPosition.coerceAtLeast(0L)).toFloat(),

@@ -31,9 +31,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -67,7 +65,6 @@ class StreamViewModel @Inject constructor(
             .trackFormats
             .map { all ->
                 all
-//                    .filter { it.key in ALLOWED_TRACK_TYPES }
                     .mapValues { (_, formats) -> formats.toPersistentList() }
                     .toImmutableMap()
             }
@@ -80,11 +77,7 @@ class StreamViewModel @Inject constructor(
     internal val selectedFormats: StateFlow<ImmutableMap<@C.TrackType Int, Format?>> =
         playerManager
             .selectedFormats
-            .map { all ->
-                all
-//                    .filter { it.key in ALLOWED_TRACK_TYPES }
-                    .toPersistentMap()
-            }
+            .map { all -> all.toPersistentMap() }
             .stateIn(
                 scope = viewModelScope,
                 initialValue = persistentMapOf(),
@@ -131,23 +124,13 @@ class StreamViewModel @Inject constructor(
             initialValue = StreamState.PlayerState()
         )
 
-    init {
-        playerManager
-            .stream
-            .onEach { stream ->
-                stream ?: return@onEach
-                streamRepository.reportPlayed(stream.id)
-            }
-            .launchIn(viewModelScope)
-    }
-
     override fun onEvent(event: StreamEvent) {
         when (event) {
             StreamEvent.OpenDlnaDevices -> openDlnaDevices()
             StreamEvent.CloseDlnaDevices -> closeDlnaDevices()
             is StreamEvent.ConnectDlnaDevice -> connectDlnaDevice(event.device)
             is StreamEvent.DisconnectDlnaDevice -> disconnectDlnaDevice(event.device)
-            is StreamEvent.OnFavourite -> onFavourite(event.streamId)
+            StreamEvent.OnFavourite -> onFavourite()
             is StreamEvent.OnVolume -> onVolume(event.volume)
         }
     }
@@ -205,9 +188,9 @@ class StreamViewModel @Inject constructor(
         _recording.update { !it }
     }
 
-    private fun onFavourite(streamId: Int) {
+    private fun onFavourite() {
         viewModelScope.launch {
-            val stream = streamRepository.get(streamId) ?: return@launch
+            val stream = this@StreamViewModel.stream.value ?: return@launch
             val id = stream.id
             val target = !stream.favourite
             streamRepository.setFavourite(id, target)

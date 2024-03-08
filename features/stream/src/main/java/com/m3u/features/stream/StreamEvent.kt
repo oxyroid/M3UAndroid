@@ -8,5 +8,5 @@ sealed interface StreamEvent {
     data class ConnectDlnaDevice(val device: Device<*, *, *>) : StreamEvent
     data class DisconnectDlnaDevice(val device: Device<*, *, *>) : StreamEvent
     data class OnVolume(val volume: Float) : StreamEvent
-    data class OnFavourite(val streamId: Int) : StreamEvent
+    data object OnFavourite : StreamEvent
 }
