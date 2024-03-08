@@ -6,9 +6,12 @@ import androidx.media3.common.Format
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.prefix
 import com.m3u.core.architecture.viewmodel.BaseViewModel
-import com.m3u.data.repository.PlaylistRepository
+import com.m3u.data.database.model.Playlist
+import com.m3u.data.database.model.Stream
 import com.m3u.data.repository.StreamRepository
-import com.m3u.data.service.PlayerManager
+import com.m3u.data.service.PlayerManagerV2
+import com.m3u.data.service.selectedFormats
+import com.m3u.data.service.trackFormats
 import com.m3u.dlna.DLNACastManager
 import com.m3u.dlna.OnDeviceRegistryListener
 import com.m3u.dlna.control.DeviceControl
@@ -42,8 +45,7 @@ import kotlin.time.Duration.Companion.milliseconds
 @HiltViewModel
 class StreamViewModel @Inject constructor(
     private val streamRepository: StreamRepository,
-    playlistRepository: PlaylistRepository,
-    private val playerManager: PlayerManager,
+    private val playerManager: PlayerManagerV2,
     before: Logger,
 ) : BaseViewModel<StreamState, StreamEvent>(
     emptyState = StreamState()
@@ -57,21 +59,8 @@ class StreamViewModel @Inject constructor(
     private val _volume: MutableStateFlow<Float> = MutableStateFlow(1f)
     internal val volume = _volume.asStateFlow()
 
-    // playlist and stream info
-    internal val metadata: StateFlow<StreamState.Metadata> = combine(
-        playerManager.url,
-        streamRepository.observeAll(),
-        playlistRepository.observeAll()
-    ) { url, streams, playlists ->
-        val stream = streams.find { it.url == url }
-        val playlist = playlists.find { it.url == stream?.playlistUrl }
-        StreamState.Metadata(playlist, stream)
-    }
-        .stateIn(
-            scope = viewModelScope,
-            initialValue = StreamState.Metadata(),
-            started = SharingStarted.WhileSubscribed(5_000)
-        )
+    internal val stream: StateFlow<Stream?> = playerManager.stream
+    internal val playlist: StateFlow<Playlist?> = playerManager.playlist
 
     internal val formats: StateFlow<ImmutableMap<Int, ImmutableList<Format>>> =
         playerManager
@@ -90,7 +79,7 @@ class StreamViewModel @Inject constructor(
 
     internal val selectedFormats: StateFlow<ImmutableMap<@C.TrackType Int, Format?>> =
         playerManager
-            .selected
+            .selectedFormats
             .map { all ->
                 all
 //                    .filter { it.key in ALLOWED_TRACK_TYPES }
@@ -103,14 +92,14 @@ class StreamViewModel @Inject constructor(
             )
 
     internal fun chooseTrack(type: @C.TrackType Int, format: Format) {
-        val groups = playerManager.groups.value
+        val groups = playerManager.tracksGroups.value
         val group = groups.find { it.type == type } ?: return
         val trackGroup = group.mediaTrackGroup
         for (index in 0 until trackGroup.length) {
             if (trackGroup.getFormat(index).id == format.id) {
                 playerManager.chooseTrack(
                     group = trackGroup,
-                    trackIndex = index
+                    index = index
                 )
                 break
             }
@@ -125,14 +114,14 @@ class StreamViewModel @Inject constructor(
     internal val playerState: StateFlow<StreamState.PlayerState> = combine(
         playerManager.player,
         playerManager.playbackState,
-        playerManager.videoSize,
-        playerManager.playerError
-    ) { player, playState, videoSize, playerError ->
-        logger.log(playerError?.errorCodeName.orEmpty())
+        playerManager.size,
+        playerManager.playbackException
+    ) { player, playState, videoSize, playbackException ->
+        logger.log(playbackException?.errorCodeName.orEmpty())
         StreamState.PlayerState(
             playState = playState,
             videoSize = videoSize,
-            playerError = playerError,
+            playerError = playbackException,
             player = player
         )
     }
@@ -144,10 +133,9 @@ class StreamViewModel @Inject constructor(
 
     init {
         playerManager
-            .url
-            .onEach { url ->
-                url ?: return@onEach
-                val stream = streamRepository.getByUrl(url) ?: return@onEach
+            .stream
+            .onEach { stream ->
+                stream ?: return@onEach
                 streamRepository.reportPlayed(stream.id)
             }
             .launchIn(viewModelScope)
@@ -159,7 +147,7 @@ class StreamViewModel @Inject constructor(
             StreamEvent.CloseDlnaDevices -> closeDlnaDevices()
             is StreamEvent.ConnectDlnaDevice -> connectDlnaDevice(event.device)
             is StreamEvent.DisconnectDlnaDevice -> disconnectDlnaDevice(event.device)
-            is StreamEvent.OnFavourite -> onFavourite(event.url)
+            is StreamEvent.OnFavourite -> onFavourite(event.streamId)
             is StreamEvent.OnVolume -> onVolume(event.volume)
         }
     }
@@ -217,9 +205,9 @@ class StreamViewModel @Inject constructor(
         _recording.update { !it }
     }
 
-    private fun onFavourite(url: String) {
+    private fun onFavourite(streamId: Int) {
         viewModelScope.launch {
-            val stream = streamRepository.getByUrl(url) ?: return@launch
+            val stream = streamRepository.get(streamId) ?: return@launch
             val id = stream.id
             val target = !stream.favourite
             streamRepository.setFavourite(id, target)
@@ -243,8 +231,8 @@ class StreamViewModel @Inject constructor(
 
     override fun onConnected(device: Device<*, *, *>) {
         writable.update { it.copy(connected = device) }
-        val url = metadata.value.stream?.url ?: return
-        val title = metadata.value.stream?.title.orEmpty()
+        val url = stream.value?.url ?: return
+        val title = stream.value?.title.orEmpty()
 
         controlPoint?.setAVTransportURI(
             uri = url,

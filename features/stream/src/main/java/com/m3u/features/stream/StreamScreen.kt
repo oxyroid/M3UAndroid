@@ -10,6 +10,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
@@ -25,6 +26,8 @@ import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.core.unspecified.unspecifiable
 import com.m3u.core.util.basic.isNotEmpty
 import com.m3u.core.util.basic.title
+import com.m3u.data.database.model.Playlist
+import com.m3u.data.database.model.Stream
 import com.m3u.features.stream.components.DlnaDevicesBottomSheet
 import com.m3u.features.stream.components.FormatsBottomSheet
 import com.m3u.features.stream.fragments.StreamFragment
@@ -37,6 +40,7 @@ import com.m3u.ui.helper.LocalHelper
 import com.m3u.ui.helper.OnPipModeChanged
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
 
 @Composable
 fun StreamRoute(
@@ -49,10 +53,12 @@ fun StreamRoute(
     val helper = LocalHelper.current
     val pref = LocalPref.current
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
 
     val state: StreamState by viewModel.state.collectAsStateWithLifecycle()
     val playerState: StreamState.PlayerState by viewModel.playerState.collectAsStateWithLifecycle()
-    val metadata: StreamState.Metadata by viewModel.metadata.collectAsStateWithLifecycle()
+    val stream by viewModel.stream.collectAsStateWithLifecycle()
+    val playlist by viewModel.playlist.collectAsStateWithLifecycle()
     val devices by viewModel.devices.collectAsStateWithLifecycle()
     val isDevicesVisible by viewModel.isDevicesVisible.collectAsStateWithLifecycle()
     val searching by viewModel.searching.collectAsStateWithLifecycle()
@@ -136,10 +142,10 @@ fun StreamRoute(
             connectDlnaDevice = { viewModel.onEvent(StreamEvent.ConnectDlnaDevice(it)) },
             disconnectDlnaDevice = { viewModel.onEvent(StreamEvent.DisconnectDlnaDevice(it)) },
             openInExternalPlayer = {
-                val stream = metadata.stream ?: return@DlnaDevicesBottomSheet
+                val streamUrl = stream?.url ?: return@DlnaDevicesBottomSheet
                 context.startActivity(
                     Intent(Intent.ACTION_VIEW).apply {
-                        setDataAndType(Uri.parse(stream.url), "video/*")
+                        setDataAndType(Uri.parse(streamUrl), "video/*")
                     }.let { Intent.createChooser(it, openInExternalPlayerString.title()) }
                 )
                 viewModel.openInExternalPlayer()
@@ -170,13 +176,14 @@ fun StreamRoute(
             onBackPressed = onBackPressed,
             maskState = maskState,
             playerState = playerState,
-            metadata = metadata,
+            playlist = playlist,
+            stream = stream,
             formatsIsNotEmpty = formats.isNotEmpty(),
             brightness = brightness,
             volume = volume,
             onBrightness = { brightness = it },
             onVolume = { viewModel.onEvent(StreamEvent.OnVolume(it)) },
-            replay = { helper.replay() },
+            replay = { coroutineScope.launch { helper.replay() } },
             modifier = modifier
         )
     }
@@ -186,11 +193,12 @@ fun StreamRoute(
 private fun StreamScreen(
     recording: Boolean,
     onRecord: () -> Unit,
-    onFavourite: (String) -> Unit,
+    onFavourite: (Int) -> Unit,
     onBackPressed: () -> Unit,
     maskState: MaskState,
     playerState: StreamState.PlayerState,
-    metadata: StreamState.Metadata,
+    playlist: Playlist?,
+    stream: Stream?,
     formatsIsNotEmpty: Boolean,
     openDlnaDevices: () -> Unit,
     openChooseFormat: () -> Unit,
@@ -201,10 +209,6 @@ private fun StreamScreen(
     replay: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val stream = metadata.stream
-    val playlist = metadata.playlist
-
-    val url = stream?.url.orEmpty()
     val title = stream?.title ?: "--"
     val cover = stream?.cover.orEmpty()
     val playlistTitle = playlist?.title ?: "--"
@@ -220,7 +224,7 @@ private fun StreamScreen(
         recording = recording,
         favourite = favourite,
         onRecord = onRecord,
-        onFavourite = { onFavourite(url) },
+        onFavourite = { stream?.id?.let { onFavourite(it) } },
         openDlnaDevices = openDlnaDevices,
         openChooseFormat = openChooseFormat,
         onBackPressed = onBackPressed,

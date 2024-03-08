@@ -30,7 +30,7 @@ import com.m3u.data.repository.MediaRepository
 import com.m3u.data.repository.PlaylistRepository
 import com.m3u.data.repository.StreamRepository
 import com.m3u.data.service.Messager
-import com.m3u.data.service.PlayerManager
+import com.m3u.data.service.PlayerManagerV2
 import com.m3u.data.worker.SubscriptionWorker
 import com.m3u.features.playlist.PlaylistMessage.StreamCoverSaved
 import com.m3u.features.playlist.navigation.PlaylistNavigation
@@ -65,7 +65,7 @@ class PlaylistViewModel @Inject constructor(
     private val playlistRepository: PlaylistRepository,
     private val mediaRepository: MediaRepository,
     private val messager: Messager,
-    playerManager: PlayerManager,
+    playerManager: PlayerManagerV2,
     pref: Pref,
     workManager: WorkManager,
     @Dispatcher(IO) ioDispatcher: CoroutineDispatcher
@@ -90,11 +90,11 @@ class PlaylistViewModel @Inject constructor(
 
     internal val zapping: StateFlow<Stream?> = combine(
         pref.observeAsFlow { it.zappingMode },
-        playerManager.url,
+        playerManager.stream,
         streamRepository.observeAll()
-    ) { zappingMode, url, streams ->
+    ) { zappingMode, stream, streams ->
         if (!zappingMode) null
-        else streams.find { it.url == url }
+        else streams.find { it.url == stream?.url }
     }
         .stateIn(
             scope = viewModelScope,
@@ -210,7 +210,7 @@ class PlaylistViewModel @Inject constructor(
                             context,
                             Contracts.PLAYER_ACTIVITY
                         )
-                        putExtra(Contracts.PLAYER_SHORTCUT_STREAM_URL, stream.url)
+                        putExtra(Contracts.PLAYER_SHORTCUT_STREAM_ID, stream.id)
                     }
                 )
                 .build()

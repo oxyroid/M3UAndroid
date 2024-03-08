@@ -26,7 +26,7 @@ import com.m3u.core.util.context.isDarkMode
 import com.m3u.core.util.context.isPortraitMode
 import com.m3u.core.wrapper.Message
 import com.m3u.data.service.Messager
-import com.m3u.data.service.PlayerManager
+import com.m3u.data.service.PlayerManagerV2
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.CoroutineDispatcher
@@ -36,7 +36,7 @@ import kotlinx.coroutines.launch
 
 class AbstractHelper(
     private val mainDispatcher: CoroutineDispatcher,
-    private val playerManager: PlayerManager,
+    private val playerManager: PlayerManagerV2,
     private val activity: ComponentActivity,
     private val messager: Messager,
     title: MutableState<String> = mutableStateOf(""),
@@ -135,11 +135,11 @@ class AbstractHelper(
         messager.emit(message)
     }
 
-    override fun play(url: String) {
-        playerManager.play(url)
+    override suspend fun play(streamId: Int) {
+        playerManager.play(streamId)
     }
 
-    override fun replay() {
+    override suspend fun replay() {
         playerManager.replay()
     }
 

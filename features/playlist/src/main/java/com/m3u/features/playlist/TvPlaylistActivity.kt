@@ -13,7 +13,7 @@ import com.m3u.core.architecture.dispatcher.Dispatcher
 import com.m3u.core.architecture.dispatcher.M3uDispatchers.Main
 import com.m3u.core.architecture.pref.Pref
 import com.m3u.data.service.Messager
-import com.m3u.data.service.PlayerManager
+import com.m3u.data.service.PlayerManagerV2
 import com.m3u.data.service.RemoteDirectionService
 import com.m3u.ui.Toolkit
 import com.m3u.ui.helper.AbstractHelper
@@ -40,7 +40,7 @@ class TvPlaylistActivity : AppCompatActivity() {
     lateinit var pref: Pref
 
     @Inject
-    lateinit var playerManager: PlayerManager
+    lateinit var playerManager: PlayerManagerV2
 
     @Inject
     @Dispatcher(Main)

@@ -63,7 +63,6 @@ data class Playlist(
             return "$source $type"
         }
 
-
     override fun like(another: Playlist): Boolean {
         return title == another.title && url == another.url
     }

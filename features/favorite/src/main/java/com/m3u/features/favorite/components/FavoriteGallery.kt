@@ -18,7 +18,6 @@ import com.m3u.material.ktx.isTelevision
 import com.m3u.material.ktx.plus
 import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.Sort
-import com.m3u.ui.helper.LocalHelper
 import kotlinx.collections.immutable.ImmutableList
 
 @Composable
@@ -28,8 +27,8 @@ internal fun FavouriteGallery(
     zapping: Stream?,
     rowCount: Int,
     sort: Sort,
-    navigateToStream: () -> Unit,
-    onMenu: (Stream) -> Unit,
+    onClick: (Stream) -> Unit,
+    onLongClick: (Stream) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val pref = LocalPref.current
@@ -42,8 +41,8 @@ internal fun FavouriteGallery(
             zapping = zapping,
             rowCount = rowCount,
             sort = sort,
-            navigateToStream = navigateToStream,
-            onMenu = onMenu,
+            onClick = onClick,
+            onLongClick = onLongClick,
             modifier = modifier
         )
     } else {
@@ -53,8 +52,8 @@ internal fun FavouriteGallery(
             zapping = zapping,
             rowCount = rowCount,
             sort = sort,
-            navigateToStream = navigateToStream,
-            onMenu = onMenu,
+            onClick = onClick,
+            onLongClick = onLongClick,
             modifier = modifier
         )
     }
@@ -67,13 +66,12 @@ private fun FavouriteGalleryImpl(
     zapping: Stream?,
     rowCount: Int,
     sort: Sort,
-    navigateToStream: () -> Unit,
-    onMenu: (Stream) -> Unit,
+    onClick: (Stream) -> Unit,
+    onLongClick: (Stream) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
     val pref = LocalPref.current
-    val helper = LocalHelper.current
     val tv = isTelevision()
     if (!tv) {
         LazyVerticalStaggeredGrid(
@@ -93,13 +91,8 @@ private fun FavouriteGalleryImpl(
                     noPictureMode = pref.noPictureMode,
                     zapping = zapping == stream,
                     sort = sort,
-                    onClick = {
-                        helper.play(stream.url)
-                        navigateToStream()
-                    },
-                    onLongClick = {
-                        onMenu(stream)
-                    },
+                    onClick = { onClick(stream) },
+                    onLongClick = { onLongClick(stream) },
                     modifier = Modifier.fillMaxWidth()
                 )
             }
@@ -125,13 +118,8 @@ private fun FavouriteGalleryImpl(
                     noPictureMode = pref.noPictureMode,
                     zapping = zapping == stream,
                     sort = sort,
-                    onClick = {
-                        helper.play(stream.url)
-                        navigateToStream()
-                    },
-                    onLongClick = {
-                        onMenu(stream)
-                    },
+                    onClick = { onClick(stream) },
+                    onLongClick = { onLongClick(stream) },
                     modifier = Modifier.fillMaxWidth()
                 )
             }
@@ -146,13 +134,12 @@ private fun CompactFavouriteGalleryImpl(
     zapping: Stream?,
     rowCount: Int,
     sort: Sort,
-    navigateToStream: () -> Unit,
-    onMenu: (Stream) -> Unit,
+    onClick: (Stream) -> Unit,
+    onLongClick: (Stream) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
     val pref = LocalPref.current
-    val helper = LocalHelper.current
 
     val tv = isTelevision()
     if (!tv) {
@@ -171,13 +158,8 @@ private fun CompactFavouriteGalleryImpl(
                     noPictureMode = pref.noPictureMode,
                     zapping = zapping == stream,
                     sort = sort,
-                    onClick = {
-                        helper.play(stream.url)
-                        navigateToStream()
-                    },
-                    onLongClick = {
-                        onMenu(stream)
-                    },
+                    onClick = { onClick(stream) },
+                    onLongClick = { onLongClick(stream) },
                     modifier = Modifier.fillMaxWidth()
                 )
             }
@@ -199,13 +181,8 @@ private fun CompactFavouriteGalleryImpl(
                     noPictureMode = pref.noPictureMode,
                     zapping = zapping == stream,
                     sort = sort,
-                    onClick = {
-                        helper.play(stream.url)
-                        navigateToStream()
-                    },
-                    onLongClick = {
-                        onMenu(stream)
-                    },
+                    onClick = { onClick(stream) },
+                    onLongClick = { onLongClick(stream) },
                     modifier = Modifier.fillMaxWidth()
                 )
             }

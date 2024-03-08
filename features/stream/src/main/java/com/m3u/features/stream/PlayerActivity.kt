@@ -15,7 +15,7 @@ import com.m3u.core.architecture.dispatcher.M3uDispatchers.Main
 import com.m3u.core.architecture.pref.Pref
 import com.m3u.data.repository.StreamRepository
 import com.m3u.data.service.Messager
-import com.m3u.data.service.PlayerManager
+import com.m3u.data.service.PlayerManagerV2
 import com.m3u.data.service.RemoteDirectionService
 import com.m3u.ui.Toolkit
 import com.m3u.ui.helper.AbstractHelper
@@ -46,7 +46,7 @@ class PlayerActivity : ComponentActivity() {
     lateinit var pref: Pref
 
     @Inject
-    lateinit var playerManager: PlayerManager
+    lateinit var playerManager: PlayerManagerV2
 
     @Inject
     lateinit var streamRepository: StreamRepository
@@ -61,7 +61,7 @@ class PlayerActivity : ComponentActivity() {
     @Inject
     lateinit var remoteDirectionService: RemoteDirectionService
 
-    private val shortcutStreamUrlLiveData = MutableLiveData<String?>(null)
+    private val shortcutStreamIdLiveData = MutableLiveData<Int?>(null)
     private val shortcutRecentlyLiveData = MutableLiveData(false)
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -81,16 +81,16 @@ class PlayerActivity : ComponentActivity() {
                 )
             }
         }
-        shortcutStreamUrlLiveData.observe(this) { streamId ->
-            if (streamId != null) {
-                helper.play(streamId)
+        shortcutStreamIdLiveData.observe(this) { streamId ->
+            lifecycleScope.launch {
+                streamId?.let { helper.play(it) }
             }
         }
         shortcutRecentlyLiveData.observe(this) { recently ->
             if (recently) {
                 lifecycleScope.launch {
                     val stream = streamRepository.getPlayedRecently() ?: return@launch
-                    helper.play(stream.url)
+                    helper.play(stream.id)
                 }
             }
         }
@@ -104,8 +104,9 @@ class PlayerActivity : ComponentActivity() {
     }
 
     private fun handleIntent(intent: Intent) {
-        shortcutStreamUrlLiveData.value = intent
-            .getStringExtra(Contracts.PLAYER_SHORTCUT_STREAM_URL)
+        shortcutStreamIdLiveData.value = intent
+            .getIntExtra(Contracts.PLAYER_SHORTCUT_STREAM_ID, -1)
+            .takeIf { it != -1 }
         shortcutRecentlyLiveData.value = intent
             .getBooleanExtra(Contracts.PLAYER_SHORTCUT_STREAM_RECENTLY, false)
     }

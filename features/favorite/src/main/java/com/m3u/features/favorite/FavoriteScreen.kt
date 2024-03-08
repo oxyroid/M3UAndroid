@@ -12,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -44,6 +45,7 @@ import dev.chrisbanes.haze.HazeDefaults
 import dev.chrisbanes.haze.haze
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.coroutines.launch
 
 @Composable
 fun FavouriteRoute(
@@ -58,6 +60,7 @@ fun FavouriteRoute(
     val helper = LocalHelper.current
     val pref = LocalPref.current
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
 
     val streams by viewModel.streams.collectAsStateWithLifecycle()
     val zapping by viewModel.zapping.collectAsStateWithLifecycle()
@@ -98,8 +101,13 @@ fun FavouriteRoute(
                 rowCount = pref.rowCount,
                 streams = streams,
                 zapping = zapping,
-                navigateToStream = navigateToStream,
-                onMenu = { dialogStatus = DialogStatus.Selections(it) },
+                onClickStream = { stream ->
+                    coroutineScope.launch {
+                        helper.play(stream.id)
+                        navigateToStream()
+                    }
+                },
+                onLongClickStream = { dialogStatus = DialogStatus.Selections(it) },
                 sort = sort,
                 modifier = Modifier
                     .fillMaxSize()
@@ -151,9 +159,9 @@ private fun FavoriteScreen(
     rowCount: Int,
     streams: ImmutableList<Stream>,
     zapping: Stream?,
-    navigateToStream: () -> Unit,
+    onClickStream: (Stream) -> Unit,
+    onLongClickStream: (Stream) -> Unit,
     sort: Sort,
-    onMenu: (Stream) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val configuration = LocalConfiguration.current
@@ -168,8 +176,8 @@ private fun FavoriteScreen(
         zapping = zapping,
         rowCount = actualRowCount,
         sort = sort,
-        navigateToStream = navigateToStream,
-        onMenu = onMenu,
+        onClick = onClickStream,
+        onLongClick = onLongClickStream,
         modifier = modifier.haze(
             LocalHazeState.current,
             HazeDefaults.style(MaterialTheme.colorScheme.surface)

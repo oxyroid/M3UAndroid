@@ -10,6 +10,7 @@ interface StreamRepository {
     fun observe(id: Int): Flow<Stream?>
     fun observeAll(): Flow<List<Stream>>
     suspend fun get(id: Int): Stream?
+    @Deprecated("stream url is not unique")
     suspend fun getByUrl(url: String): Stream?
     suspend fun getByPlaylistUrl(playlistUrl: String): List<Stream>
     suspend fun setFavourite(id: Int, target: Boolean)

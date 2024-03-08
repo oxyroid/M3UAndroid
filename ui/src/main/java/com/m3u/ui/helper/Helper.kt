@@ -39,8 +39,8 @@ interface Helper {
     fun enterPipMode(size: Rect)
     fun toast(message: String)
     fun snack(message: String)
-    fun play(url: String)
-    fun replay()
+    suspend fun play(streamId: Int)
+    suspend fun replay()
 }
 
 val Helper.useRailNav: Boolean

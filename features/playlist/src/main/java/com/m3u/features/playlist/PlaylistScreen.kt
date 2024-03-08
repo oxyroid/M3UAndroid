@@ -30,6 +30,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -61,6 +62,7 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
 
 @Composable
 internal fun PlaylistRoute(
@@ -72,6 +74,7 @@ internal fun PlaylistRoute(
     val context = LocalContext.current
     val pref = LocalPref.current
     val helper = LocalHelper.current
+    val coroutineScope = rememberCoroutineScope()
 
     val tv = isTelevision()
 
@@ -136,8 +139,10 @@ internal fun PlaylistRoute(
             sort = sort,
             onSort = { viewModel.sort(it) },
             onStream = { stream ->
-                helper.play(stream.url)
-                navigateToStream()
+                coroutineScope.launch {
+                    helper.play(stream.id)
+                    navigateToStream()
+                }
             },
             onScrollUp = { viewModel.onEvent(PlaylistEvent.ScrollUp) },
             onRefresh = {

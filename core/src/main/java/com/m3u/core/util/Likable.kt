@@ -17,3 +17,4 @@ infix fun <T : Likable<T>> T.notbelong(collection: Collection<T>): Boolean =
 infix fun <T : Likable<T>> Collection<T>.hold(element: T): Boolean = this.any { it like element }
 infix fun <T : Likable<T>> Collection<T>.nothold(element: T): Boolean =
     this.all { it notlike element }
+

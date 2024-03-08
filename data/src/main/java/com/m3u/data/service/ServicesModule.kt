@@ -9,16 +9,16 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.work.WorkManager
 import com.m3u.core.architecture.TraceFileProvider
 import com.m3u.core.architecture.logger.Logger
+import com.m3u.data.repository.logger.MessageLogger
+import com.m3u.data.repository.logger.StubLogger
+import com.m3u.data.service.internal.MessagerImpl
+import com.m3u.data.service.internal.PlayerManagerV2Impl
+import com.m3u.data.service.internal.RemoteDirectionServiceImpl
+import com.m3u.data.service.internal.TraceFileProviderImpl
 import com.m3u.data.television.http.HttpServer
 import com.m3u.data.television.http.internal.HttpServerImpl
 import com.m3u.data.television.nsd.NsdDeviceManager
 import com.m3u.data.television.nsd.internal.NsdDeviceManagerImpl
-import com.m3u.data.service.internal.MessagerImpl
-import com.m3u.data.service.internal.PlayerManagerImpl
-import com.m3u.data.service.internal.TraceFileProviderImpl
-import com.m3u.data.repository.logger.StubLogger
-import com.m3u.data.repository.logger.MessageLogger
-import com.m3u.data.service.internal.RemoteDirectionServiceImpl
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -32,7 +32,7 @@ import javax.inject.Singleton
 internal interface BindServicesModule {
     @Binds
     @Singleton
-    fun bindPlayerManager(service: PlayerManagerImpl): PlayerManager
+    fun bindPlayerManagerV2(impl: PlayerManagerV2Impl): PlayerManagerV2
 
     @Binds
     @Singleton

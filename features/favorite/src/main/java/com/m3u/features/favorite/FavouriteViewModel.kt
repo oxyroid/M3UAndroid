@@ -15,10 +15,10 @@ import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
 import com.m3u.core.architecture.pref.Pref
 import com.m3u.core.architecture.pref.observeAsFlow
 import com.m3u.data.database.model.Stream
-import com.m3u.data.service.PlayerManager
 import com.m3u.data.repository.MediaRepository
 import com.m3u.data.repository.StreamRepository
 import com.m3u.data.repository.observeAll
+import com.m3u.data.service.PlayerManagerV2
 import com.m3u.ui.Sort
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.collections.immutable.ImmutableList
@@ -41,7 +41,7 @@ class FavouriteViewModel @Inject constructor(
     private val streamRepository: StreamRepository,
     private val mediaRepository: MediaRepository,
     pref: Pref,
-    playerManager: PlayerManager,
+    playerManager: PlayerManagerV2,
     @Dispatcher(IO) ioDispatcher: CoroutineDispatcher
 ) : ViewModel() {
     private val zappingMode = pref
@@ -53,13 +53,11 @@ class FavouriteViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5_000)
         )
 
-    val zapping = combine(
+    val zapping: StateFlow<Stream?> = combine(
         zappingMode,
-        playerManager.url,
-        streamRepository.observeAll()
-    ) { zappingMode, url, streams ->
-        if (!zappingMode) null
-        else streams.find { it.url == url }
+        playerManager.stream
+    ) { zappingMode, stream ->
+        stream.takeIf { zappingMode }
     }
         .flowOn(ioDispatcher)
         .stateIn(
@@ -97,6 +95,7 @@ class FavouriteViewModel @Inject constructor(
                 Sort.DESC -> all.sortedWith(
                     compareByDescending(String.CASE_INSENSITIVE_ORDER) { it.title }
                 )
+
                 Sort.RECENTLY -> all.sortedByDescending { it.seen }
             }
                 .toPersistentList()
@@ -133,7 +132,7 @@ class FavouriteViewModel @Inject constructor(
                             context,
                             Contracts.PLAYER_ACTIVITY
                         )
-                        putExtra(Contracts.PLAYER_SHORTCUT_STREAM_URL, stream.url)
+                        putExtra(Contracts.PLAYER_SHORTCUT_STREAM_ID, stream.id)
                     }
                 )
                 .build()

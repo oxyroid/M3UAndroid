@@ -4,8 +4,6 @@ import android.graphics.Rect
 import androidx.compose.runtime.Immutable
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
-import com.m3u.data.database.model.Playlist
-import com.m3u.data.database.model.Stream
 import org.jupnp.model.meta.Device
 
 data class StreamState(
@@ -17,11 +15,5 @@ data class StreamState(
         val videoSize: Rect = Rect(),
         val playerError: PlaybackException? = null,
         val player: Player? = null
-    )
-
-    @Immutable
-    data class Metadata(
-        val playlist: Playlist? = null,
-        val stream: Stream? = null
     )
 }

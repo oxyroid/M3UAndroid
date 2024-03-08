@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.tv.material3.Carousel
@@ -25,6 +26,7 @@ import com.m3u.material.ktx.isTelevision
 import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.EventBus
 import com.m3u.ui.helper.LocalHelper
+import kotlinx.coroutines.launch
 import kotlin.math.absoluteValue
 
 @OptIn(ExperimentalAnimationApi::class)
@@ -37,6 +39,7 @@ internal fun RecommendGallery(
 ) {
     val spacing = LocalSpacing.current
     val helper = LocalHelper.current
+    val coroutineScope = rememberCoroutineScope()
 
     val tv = isTelevision()
 
@@ -60,8 +63,10 @@ internal fun RecommendGallery(
                     onClick = {
                         when (spec) {
                             is Recommend.UnseenSpec -> {
-                                helper.play(spec.stream.url)
-                                navigateToStream()
+                                coroutineScope.launch {
+                                    helper.play(spec.stream.id)
+                                    navigateToStream()
+                                }
                             }
 
                             is Recommend.DiscoverSpec -> {
@@ -97,8 +102,10 @@ internal fun RecommendGallery(
                 onClick = {
                     when (spec) {
                         is Recommend.UnseenSpec -> {
-                            helper.play(spec.stream.url)
-                            navigateToStream()
+                            coroutineScope.launch {
+                                helper.play(spec.stream.id)
+                                navigateToStream()
+                            }
                         }
 
                         is Recommend.DiscoverSpec -> {
