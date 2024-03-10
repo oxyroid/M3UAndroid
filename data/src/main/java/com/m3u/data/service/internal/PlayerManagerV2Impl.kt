@@ -37,6 +37,7 @@ import com.m3u.core.architecture.logger.prefix
 import com.m3u.core.architecture.pref.Pref
 import com.m3u.core.architecture.pref.annotation.ReconnectMode
 import com.m3u.core.architecture.pref.observeAsFlow
+import com.m3u.core.util.distinctUntilUnlike
 import com.m3u.data.BuildConfig
 import com.m3u.data.SSLs
 import com.m3u.data.repository.PlaylistRepository
@@ -52,7 +53,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
@@ -99,16 +100,10 @@ class PlayerManagerV2Impl @Inject constructor(
 
     init {
         stream
-            .distinctUntilChanged { old, new ->
-                when {
-                    old == null && new == null -> true
-                    old == null -> false
-                    new == null -> false
-                    else -> old like new
-                }
-            }
+            .filterNotNull()
+            .distinctUntilUnlike()
             .onEach { stream ->
-                val streamUrl = stream?.url ?: return@onEach
+                val streamUrl = stream.url
                 streamRepository.reportPlayed(stream.id)
                 val wrapper = MimetypeWrapper.Unspecified(streamUrl).next()
                 logger.debug { "init wrapper: $wrapper" }
@@ -145,18 +140,6 @@ class PlayerManagerV2Impl @Inject constructor(
             initialValue = null,
             started = SharingStarted.Lazily
         )
-    private val likablePlaylist = playlist
-        .distinctUntilChanged { old, new ->
-            when {
-                old == null && new == null -> true
-                old == null -> false
-                new == null -> false
-                else -> old like new
-            }
-        }
-        .onEach {
-            logger.debug { "playlist: ${json.encodeToString(it)}" }
-        }
 
     override val playbackState = MutableStateFlow<@Player.State Int>(Player.STATE_IDLE)
     override val playbackException = MutableStateFlow<PlaybackException?>(null)
@@ -408,6 +391,15 @@ private sealed class MimetypeWrapper : Iterator<MimetypeWrapper> {
     class Trying(val mimeType: String) : MimetypeWrapper()
     object Unsupported : MimetypeWrapper()
 
+    companion object {
+        val ORDER_DEFAULT = arrayOf(
+            MimeTypes.APPLICATION_SS,
+            MimeTypes.APPLICATION_M3U8,
+            MimeTypes.APPLICATION_MPD,
+            MimeTypes.APPLICATION_RTSP
+        )
+    }
+
     override fun toString(): String = when (this) {
         is Maybe -> "Maybe[$mimeType]"
         is Trying -> "Trying[$mimeType]"
@@ -431,16 +423,16 @@ private sealed class MimetypeWrapper : Iterator<MimetypeWrapper> {
                 else -> null
             }
                 .let { maybeMimetype ->
-                    maybeMimetype?.let { Maybe(it) } ?: Trying(MimeTypes.APPLICATION_SS)
+                    maybeMimetype?.let { Maybe(it) } ?: Trying(ORDER_DEFAULT.first())
                 }
         }
 
-        is Maybe -> Trying(MimeTypes.APPLICATION_SS)
-        is Trying -> when (mimeType) {
-            MimeTypes.APPLICATION_SS -> Trying(MimeTypes.APPLICATION_M3U8)
-            MimeTypes.APPLICATION_M3U8 -> Trying(MimeTypes.APPLICATION_MPD)
-            MimeTypes.APPLICATION_MPD -> Trying(MimeTypes.APPLICATION_RTSP)
-            else -> Unsupported
+        is Maybe -> Trying(ORDER_DEFAULT.first())
+        is Trying -> {
+            ORDER_DEFAULT
+                .getOrNull(ORDER_DEFAULT.indexOf(mimeType) + 1)
+                ?.let { Trying(it) }
+                ?: Unsupported
         }
 
         else -> throw IllegalArgumentException()

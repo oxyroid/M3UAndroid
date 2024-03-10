@@ -1,7 +1,6 @@
 package com.m3u.features.stream.fragments
 
 import android.content.pm.ActivityInfo
-import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
@@ -132,8 +131,6 @@ internal fun StreamFragment(
                 else -> with(playerState.player) {
                     !isCurrentMediaItemDynamic && isCurrentMediaItemSeekable
                 }
-            }.also {
-                Log.e("TAG", "r $it")
             }
         }
     }
