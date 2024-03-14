@@ -95,6 +95,7 @@ internal fun PlaylistScreenImpl(
     onSavePicture: (streamId: Int) -> Unit,
     createShortcut: (streamId: Int) -> Unit,
     isAtTopState: MutableState<Boolean>,
+    singleLineTitle: Boolean,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues()
 ) {
@@ -219,6 +220,7 @@ internal fun PlaylistScreenImpl(
                             streams = categories[currentPage].streams,
                             zapping = zapping,
                             recently = sort == Sort.RECENTLY,
+                            singleLineTitle = singleLineTitle,
                             onClick = onStream,
                             contentPadding = inner,
                             onMenu = { dialogStatus = DialogStatus.Selections(it) },

@@ -25,6 +25,7 @@ internal fun StreamGallery(
     streams: ImmutableList<Stream>,
     zapping: Stream?,
     recently: Boolean,
+    singleLineTitle: Boolean,
     onClick: (Stream) -> Unit,
     onMenu: (Stream) -> Unit,
     modifier: Modifier = Modifier,
@@ -41,7 +42,8 @@ internal fun StreamGallery(
                 onClick = onClick,
                 onMenu = onMenu,
                 modifier = modifier,
-                contentPadding = contentPadding
+                contentPadding = contentPadding,
+                singleLineTitle = singleLineTitle
             )
         }
 
@@ -70,6 +72,7 @@ private fun StreamGalleryImpl(
     streams: ImmutableList<Stream>,
     zapping: Stream?,
     recently: Boolean,
+    singleLineTitle: Boolean,
     onClick: (Stream) -> Unit,
     onMenu: (Stream) -> Unit,
     modifier: Modifier = Modifier,
@@ -97,6 +100,7 @@ private fun StreamGalleryImpl(
                 onClick = { onClick(stream) },
                 onLongClick = { onMenu(stream) },
                 modifier = Modifier.fillMaxWidth(),
+                singleLineTitle = singleLineTitle
             )
         }
     }
