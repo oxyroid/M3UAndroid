@@ -169,7 +169,7 @@ class PlaylistRepositoryImpl @Inject constructor(
                 source = DataSource.Xtream
             )
             playlistDao.insertOrReplace(playlist)
-            val streams = lives.map { current ->
+            lives.forEach { current ->
                 current.toStream(
                     basicUrl = basicUrl,
                     username = username,
@@ -177,17 +177,13 @@ class PlaylistRepositoryImpl @Inject constructor(
                     playlistUrl = playlist.url,
                     category = liveCategories.find { it.categoryId == current.categoryId }?.categoryName.orEmpty(),
                     containerExtension = allowedOutputFormats.first()
-                ).also {
+                ).also { stream ->
                     currentCount += 1
                     callback(currentCount, total)
+                    streamDao.insertOrReplace(stream)
                 }
             }
-            streamDao.compareAndUpdate(
-                strategy = pref.playlistStrategy,
-                url = playlist.url,
-                update = streams
-            )
-            logger.log("xtream: lives +[${streams.size}]")
+            logger.log("xtream: lives +[${lives.size}]")
         }
         if (requiredVods) {
             val playlist = Playlist(
@@ -200,23 +196,19 @@ class PlaylistRepositoryImpl @Inject constructor(
                 source = DataSource.Xtream
             )
             playlistDao.insertOrReplace(playlist)
-            val streams = vods.map { current ->
+            vods.forEach { current ->
                 current.toStream(
                     basicUrl = basicUrl,
                     username = username,
                     password = password,
                     playlistUrl = playlist.url,
                     category = vodCategories.find { it.categoryId == current.categoryId }?.categoryName.orEmpty()
-                ).also {
+                ).also { stream ->
                     currentCount += 1
                     callback(currentCount, total)
+                    streamDao.insertOrReplace(stream)
                 }
             }
-            streamDao.compareAndUpdate(
-                strategy = pref.playlistStrategy,
-                url = playlist.url,
-                update = streams
-            )
             logger.log("xtream: vods +[${vods.size}]")
         }
 
@@ -231,12 +223,12 @@ class PlaylistRepositoryImpl @Inject constructor(
                 source = DataSource.Xtream
             )
             playlistDao.insertOrReplace(playlist)
-            val streams = series.flatMap { current ->
+            series.forEach { current ->
                 ensureActive()
                 val seriesInfo = xtreamParser.getSeriesInfo(
                     input = input.copy(type = DataSource.Xtream.TYPE_SERIES),
-                    seriesId = current.seriesId ?: return@flatMap emptyList()
-                ) ?: return@flatMap emptyList()
+                    seriesId = current.seriesId ?: return@forEach
+                ) ?: return@forEach
                 seriesInfo.episodes.flatMap { (_, episodes) ->
                     episodes.map { episode ->
                         Stream(
@@ -245,19 +237,15 @@ class PlaylistRepositoryImpl @Inject constructor(
                             title = current.name.orEmpty() + " " + episode.title.orEmpty(),
                             cover = current.cover,
                             playlistUrl = playlist.url,
-                        )
+                        ).also { stream ->
+                            currentCount += 1
+                            callback(currentCount, total)
+                            streamDao.insertOrReplace(stream)
+                        }
                     }
-                }.also {
-                    currentCount += 1
-                    callback(currentCount, total)
                 }
             }
-            streamDao.compareAndUpdate(
-                strategy = pref.playlistStrategy,
-                url = playlist.url,
-                update = streams
-            )
-            logger.log("xtream: series +[${streams.size}]")
+            logger.log("xtream: series +[${series.size}]")
         }
     }
 

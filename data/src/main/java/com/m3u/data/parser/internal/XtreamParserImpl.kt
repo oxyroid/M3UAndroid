@@ -32,6 +32,7 @@ internal class XtreamParserImpl @Inject constructor(
     private val json = Json {
         ignoreUnknownKeys = true
         explicitNulls = false
+        isLenient = true
     }
 
     override suspend fun execute(
@@ -87,19 +88,25 @@ internal class XtreamParserImpl @Inject constructor(
         val port = info.serverInfo.port?.toIntOrNull()
         val httpsPort = info.serverInfo.httpsPort?.toIntOrNull()
 
-        val lives: List<XtreamLive> = if (requiredLives) newCall(liveStreamsUrl) ?: emptyList() else emptyList()
+        val lives: List<XtreamLive> =
+            if (requiredLives) newCall(liveStreamsUrl) ?: emptyList() else emptyList()
         currentCount += lives.size
         callback(currentCount, -1)
-        val vods: List<XtreamVod> = if (requiredVods) newCall(vodStreamsUrl) ?: emptyList() else emptyList()
+        val vods: List<XtreamVod> =
+            if (requiredVods) newCall(vodStreamsUrl) ?: emptyList() else emptyList()
         currentCount += vods.size
         callback(currentCount, -1)
-        val series: List<XtreamSerial> = if (requiredSeries) newCall(seriesStreamsUrl) ?: emptyList() else emptyList()
+        val series: List<XtreamSerial> =
+            if (requiredSeries) newCall(seriesStreamsUrl) ?: emptyList() else emptyList()
         currentCount += series.size
         callback(currentCount, -1)
 
-        val liveCategories: List<XtreamCategory> = if (requiredLives) newCall(liveCategoriesUrl) ?: emptyList() else emptyList()
-        val vodCategories: List<XtreamCategory> = if (requiredVods) newCall(vodCategoriesUrl) ?: emptyList() else emptyList()
-        val serialCategories: List<XtreamCategory> = if (requiredSeries) newCall(serialCategoriesUrl) ?: emptyList() else emptyList()
+        val liveCategories: List<XtreamCategory> =
+            if (requiredLives) newCall(liveCategoriesUrl) ?: emptyList() else emptyList()
+        val vodCategories: List<XtreamCategory> =
+            if (requiredVods) newCall(vodCategoriesUrl) ?: emptyList() else emptyList()
+        val serialCategories: List<XtreamCategory> =
+            if (requiredSeries) newCall(serialCategoriesUrl) ?: emptyList() else emptyList()
 
         return XtreamOutput(
             lives = lives,

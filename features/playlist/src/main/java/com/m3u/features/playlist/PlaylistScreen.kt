@@ -27,6 +27,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.InternalComposeApi
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -45,6 +46,7 @@ import com.google.accompanist.permissions.shouldShowRationale
 import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.core.util.basic.title
 import com.m3u.core.wrapper.Event
+import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Stream
 import com.m3u.features.playlist.internal.PlaylistScreenImpl
 import com.m3u.features.playlist.internal.TvPlaylistScreenImpl
@@ -87,6 +89,14 @@ internal fun PlaylistRoute(
     val pinnedCategories by viewModel.pinnedCategories.collectAsStateWithLifecycle()
     val refreshing by viewModel.subscribingOrRefreshing.collectAsStateWithLifecycle()
 
+    val singleLineTitle by remember {
+        derivedStateOf {
+            when (playlist?.type) {
+                DataSource.Xtream.TYPE_SERIES -> false
+                else -> true
+            }
+        }
+    }
     val sorts = viewModel.sorts
     val sort by viewModel.sort.collectAsStateWithLifecycle()
 
@@ -179,6 +189,7 @@ internal fun PlaylistRoute(
                 viewModel.onEvent(PlaylistEvent.SavePicture(it))
             },
             createShortcut = { viewModel.onEvent(PlaylistEvent.CreateShortcut(context, it)) },
+            singleLineTitle = singleLineTitle,
             modifier = Modifier
                 .fillMaxSize()
                 .thenIf(!tv && pref.godMode) {
@@ -219,6 +230,7 @@ private fun PlaylistScreen(
     savePicture: (streamId: Int) -> Unit,
     createShortcut: (streamId: Int) -> Unit,
     contentPadding: PaddingValues,
+    singleLineTitle: Boolean,
     modifier: Modifier = Modifier
 ) {
     val helper = LocalHelper.current
@@ -270,6 +282,7 @@ private fun PlaylistScreen(
             hide = hide,
             onSavePicture = savePicture,
             createShortcut = createShortcut,
+            singleLineTitle = singleLineTitle,
             modifier = modifier
         )
     } else {

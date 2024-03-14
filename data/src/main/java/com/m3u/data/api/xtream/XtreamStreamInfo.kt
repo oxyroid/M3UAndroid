@@ -6,11 +6,11 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class XtreamStreamInfo(
     @SerialName("episodes")
-    val episodes: Map<Int, List<Episode>> = emptyMap(),
+    val episodes: Map<String, List<Episode>> = emptyMap(),
     @SerialName("info")
     val info: Info?,
-    @SerialName("seasons")
-    val seasons: List<String> = emptyList()
+//    @SerialName("seasons")
+//    val seasons: List<String?> = emptyList()
 ) {
     @Serializable
     data class Episode(
@@ -23,13 +23,13 @@ data class XtreamStreamInfo(
         @SerialName("direct_source")
         val directSource: String?,
         @SerialName("episode_num")
-        val episodeNum: Int?,
+        val episodeNum: String?,
         @SerialName("id")
         val id: String?,
         @SerialName("info")
         val info: Info?,
         @SerialName("season")
-        val season: Int?,
+        val season: String?,
         @SerialName("title")
         val title: String?
     ) {
@@ -38,11 +38,11 @@ data class XtreamStreamInfo(
             @SerialName("audio")
             val audio: Audio?,
             @SerialName("bitrate")
-            val bitrate: Int?,
+            val bitrate: String?,
             @SerialName("duration")
             val duration: String?,
             @SerialName("duration_secs")
-            val durationSecs: Int?,
+            val durationSecs: String?,
             @SerialName("video")
             val video: Video?
         ) {
@@ -51,9 +51,9 @@ data class XtreamStreamInfo(
                 @SerialName("avg_frame_rate")
                 val avgFrameRate: String?,
                 @SerialName("bits_per_sample")
-                val bitsPerSample: Int?,
+                val bitsPerSample: String?,
                 @SerialName("channels")
-                val channels: Int?,
+                val channels: String?,
                 @SerialName("codec_long_name")
                 val codecLongName: String?,
                 @SerialName("codec_name")
@@ -71,7 +71,7 @@ data class XtreamStreamInfo(
                 @SerialName("dmix_mode")
                 val dmixMode: String?,
                 @SerialName("index")
-                val index: Int?,
+                val index: String?,
                 @SerialName("loro_cmixlev")
                 val loroCmixlev: String?,
                 @SerialName("loro_surmixlev")
@@ -87,7 +87,7 @@ data class XtreamStreamInfo(
                 @SerialName("sample_rate")
                 val sampleRate: String?,
                 @SerialName("start_pts")
-                val startPts: Int?,
+                val startPts: String?,
                 @SerialName("start_time")
                 val startTime: String?,
                 @SerialName("tags")
@@ -117,9 +117,9 @@ data class XtreamStreamInfo(
                 @SerialName("codec_type")
                 val codecType: String?,
                 @SerialName("coded_height")
-                val codedHeight: Int?,
+                val codedHeight: String?,
                 @SerialName("coded_width")
-                val codedWidth: Int?,
+                val codedWidth: String?,
                 @SerialName("display_aspect_ratio")
                 val displayAspectRatio: String?,
                 @SerialName("disposition")
@@ -127,15 +127,15 @@ data class XtreamStreamInfo(
                 @SerialName("field_order")
                 val fieldOrder: String?,
                 @SerialName("has_b_frames")
-                val hasBFrames: Int?,
+                val hasBFrames: String?,
                 @SerialName("height")
-                val height: Int?,
+                val height: String?,
                 @SerialName("index")
-                val index: Int?,
+                val index: String?,
                 @SerialName("is_avc")
                 val isAvc: Boolean = false,
                 @SerialName("level")
-                val level: Int?,
+                val level: String?,
                 @SerialName("nal_length_size")
                 val nalLengthSize: String?,
                 @SerialName("pix_fmt")
@@ -145,11 +145,11 @@ data class XtreamStreamInfo(
                 @SerialName("r_frame_rate")
                 val rFrameRate: String?,
                 @SerialName("refs")
-                val refs: Int?,
+                val refs: String?,
                 @SerialName("sample_aspect_ratio")
                 val sampleAspectRatio: String?,
                 @SerialName("start_pts")
-                val startPts: Int?,
+                val startPts: String?,
                 @SerialName("start_time")
                 val startTime: String?,
                 @SerialName("tags")
@@ -157,35 +157,35 @@ data class XtreamStreamInfo(
                 @SerialName("time_base")
                 val timeBase: String?,
                 @SerialName("width")
-                val width: Int?
+                val width: String?
             )
 
             @Serializable
             data class Disposition(
                 @SerialName("attached_pic")
-                val attachedPic: Int?,
+                val attachedPic: String?,
                 @SerialName("clean_effects")
-                val cleanEffects: Int?,
+                val cleanEffects: String?,
                 @SerialName("comment")
-                val comment: Int?,
+                val comment: String?,
                 @SerialName("default")
-                val default: Int?,
+                val default: String?,
                 @SerialName("dub")
-                val dub: Int?,
+                val dub: String?,
                 @SerialName("forced")
-                val forced: Int?,
+                val forced: String?,
                 @SerialName("hearing_impaired")
-                val hearingImpaired: Int?,
+                val hearingImpaired: String?,
                 @SerialName("karaoke")
-                val karaoke: Int?,
+                val karaoke: String?,
                 @SerialName("lyrics")
-                val lyrics: Int?,
+                val lyrics: String?,
                 @SerialName("original")
-                val original: Int?,
+                val original: String?,
                 @SerialName("timed_thumbnails")
-                val timedThumbnails: Int?,
+                val timedThumbnails: String?,
                 @SerialName("visual_impaired")
-                val visualImpaired: Int?
+                val visualImpaired: String?
             )
         }
     }
@@ -215,7 +215,7 @@ data class XtreamStreamInfo(
         @SerialName("rating")
         val rating: String?,
         @SerialName("rating_5based")
-        val rating5based: Int?,
+        val rating5based: String?,
         @SerialName("releaseDate")
         val releaseDate: String?,
         @SerialName("youtube_trailer")

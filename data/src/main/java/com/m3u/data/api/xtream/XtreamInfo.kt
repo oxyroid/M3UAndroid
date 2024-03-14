@@ -87,65 +87,63 @@ data class XtreamLive(
 @Serializable
 data class XtreamVod(
     @SerialName("added")
-    val added: String?,
+    val added: String? = null,
     @SerialName("category_id")
-    val categoryId: Int?,
+    val categoryId: Int? = null,
     @SerialName("container_extension")
-    val containerExtension: String?,
+    val containerExtension: String? = null,
     @SerialName("custom_sid")
-    val customSid: String?,
+    val customSid: String? = null,
     @SerialName("direct_source")
-    val directSource: String?,
+    val directSource: String? = null,
     @SerialName("name")
-    val name: String?,
+    val name: String? = null,
     @SerialName("num")
-    val num: Int?,
+    val num: String? = null,
     @SerialName("rating")
-    val rating: String?,
+    val rating: String? = null,
     @SerialName("rating_5based")
-    val rating5based: Double?,
+    val rating5based: String? = null,
     @SerialName("stream_icon")
-    val streamIcon: String?,
+    val streamIcon: String? = null,
     @SerialName("stream_id")
-    val streamId: Int?,
+    val streamId: Int? = null,
     @SerialName("stream_type")
-    val streamType: String?
+    val streamType: String? = null
 )
 
 @Serializable
 data class XtreamSerial(
-    @SerialName("backdrop_path")
-    val backdropPath: List<String>,
     @SerialName("cast")
-    val cast: String?,
+    val cast: String? = null,
     @SerialName("category_id")
-    val categoryId: Int?,
+    val categoryId: Int? = null,
     @SerialName("cover")
-    val cover: String?,
+    val cover: String? = null,
     @SerialName("director")
-    val director: String?,
+    val director: String? = null,
     @SerialName("episode_run_time")
-    val episodeRunTime: String?,
+    val episodeRunTime: String? = null,
     @SerialName("genre")
-    val genre: String?,
+    val genre: String? = null,
     @SerialName("last_modified")
-    val lastModified: String?,
+    val lastModified: String? = null,
     @SerialName("name")
-    val name: String?,
+    val name: String? = null,
     @SerialName("num")
-    val num: Int?,
+    val num: String? = null,
     @SerialName("plot")
-    val plot: String?,
+    val plot: String? = null,
     @SerialName("rating")
-    val rating: String?,
+    val rating: String? = null,
     @SerialName("rating_5based")
-    val rating5based: Int?,
+    val rating5based: String? = null,
     @SerialName("releaseDate")
-    val releaseDate: String?,
+    val releaseDate: String? = null,
     @SerialName("series_id")
-    val seriesId: Int?,
+    val seriesId: Int? = null,
     @SerialName("youtube_trailer")
-    val youtubeTrailer: String?
+    val youtubeTrailer: String? = null
 )
 
 fun XtreamLive.toStream(

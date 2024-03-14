@@ -55,7 +55,8 @@ internal fun StreamItem(
     zapping: Boolean,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    singleLineTitle: Boolean = true
 ) {
     when (currentUiMode()) {
         UiMode.Default -> {
@@ -65,7 +66,8 @@ internal fun StreamItem(
                 zapping = zapping,
                 onClick = onClick,
                 onLongClick = onLongClick,
-                modifier = modifier
+                modifier = modifier,
+                singleLineTitle = singleLineTitle
             )
         }
 
@@ -76,7 +78,8 @@ internal fun StreamItem(
                 zapping = zapping,
                 onClick = onClick,
                 onLongClick = onLongClick,
-                modifier = modifier
+                modifier = modifier,
+                singleLineTitle = singleLineTitle
             )
         }
 
@@ -92,6 +95,7 @@ private fun StreamItemImpl(
     onLongClick: () -> Unit,
     modifier: Modifier = Modifier,
     zapping: Boolean = false,
+    singleLineTitle: Boolean = true
 ) {
     val context = LocalContext.current
     val spacing = LocalSpacing.current
@@ -153,7 +157,7 @@ private fun StreamItemImpl(
                             text = stream.title.trim(),
                             style = MaterialTheme.typography.titleSmall,
                             overflow = TextOverflow.Ellipsis,
-                            maxLines = 1,
+                            maxLines = if (singleLineTitle) 1 else Int.MAX_VALUE,
                             fontWeight = FontWeight.Bold,
                         )
                         if (recently) {
@@ -218,6 +222,7 @@ private fun CompactStreamItem(
     onClick: () -> Unit,
     onLongClick: () -> Unit,
     modifier: Modifier = Modifier,
+    singleLineTitle: Boolean = true
 ) {
     val spacing = LocalSpacing.current
     val favourite = stream.favourite
@@ -242,7 +247,7 @@ private fun CompactStreamItem(
                     style = MaterialTheme.typography.titleSmall,
                     fontSize = MaterialTheme.typography.titleSmall.fontSize,
                     overflow = TextOverflow.Ellipsis,
-                    maxLines = 1,
+                    maxLines = if (singleLineTitle) 1 else Int.MAX_VALUE,
                     fontWeight = FontWeight.Bold
                 )
             },
