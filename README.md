@@ -51,7 +51,6 @@ From PRs:
 - DRM support.
 - Movie downloading & Steam recording.
 - Android TV favourite.
-- Xtream
 
 ### Android Development
 
