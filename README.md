@@ -37,19 +37,21 @@ From PRs:
 - [Romanian](i18n/src/main/res/values-ro-rRO),
   thanks [@iboboc](https://github.com/iboboc/M3UAndroid)
 
-### Features & Roadmap
+### Features
 
-- [x] Playlist Management.
-- [x] Streaming media analysis capabilities.
-- [x] Android Tablet adaptation.
-- [x] Android TV adaptation.
-- [ ] Android Desktop, Car adaptation.
-- [ ] EPG support.
-- [x] Xtream support.
-- [x] DLNA screencast.
-- [ ] AirPlay screencast.
-- [ ] Steam segment recording.
-- [x] i18n (Internationalization).
+- Playlist Management.
+- Streaming media analysis capabilities.
+- Xtream support.
+- DLNA screencast.
+- i18n (Internationalization).
+
+### Roadmap
+
+- EPG support.
+- DRM support.
+- Movie downloading & Steam recording.
+- Android TV favourite.
+- Xtream
 
 ### Android Development
 
