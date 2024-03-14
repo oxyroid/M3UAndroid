@@ -1,7 +1,13 @@
 package com.m3u.data.service.internal
 
+import android.content.ContentValues
 import android.content.Context
 import android.graphics.Rect
+import android.net.Uri
+import android.os.Build
+import android.provider.ContactsContract.Directory
+import android.provider.MediaStore
+import androidx.core.net.toFile
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
@@ -12,7 +18,10 @@ import androidx.media3.common.TrackGroup
 import androidx.media3.common.TrackSelectionOverride
 import androidx.media3.common.Tracks
 import androidx.media3.common.VideoSize
+import androidx.media3.database.StandaloneDatabaseProvider
 import androidx.media3.datasource.DataSource
+import androidx.media3.datasource.cache.NoOpCacheEvictor
+import androidx.media3.datasource.cache.SimpleCache
 import androidx.media3.datasource.okhttp.OkHttpDataSource
 import androidx.media3.datasource.rtmp.RtmpDataSource
 import androidx.media3.exoplayer.DefaultLoadControl
@@ -20,6 +29,10 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.LoadControl
 import androidx.media3.exoplayer.RenderersFactory
 import androidx.media3.exoplayer.hls.HlsMediaSource
+import androidx.media3.exoplayer.offline.DownloadHelper
+import androidx.media3.exoplayer.offline.DownloadManager
+import androidx.media3.exoplayer.offline.DownloadRequest
+import androidx.media3.exoplayer.offline.DownloadService
 import androidx.media3.exoplayer.rtsp.RtspMediaSource
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.exoplayer.source.MediaSource
@@ -66,7 +79,9 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
+import java.util.UUID
 import javax.inject.Inject
+import kotlin.random.Random
 
 class PlayerManagerV2Impl @Inject constructor(
     @Dispatcher(Main) mainDispatcher: CoroutineDispatcher,
@@ -76,6 +91,7 @@ class PlayerManagerV2Impl @Inject constructor(
     private val pref: Pref,
     private val playlistRepository: PlaylistRepository,
     private val streamRepository: StreamRepository,
+    private val downloadManager: DownloadManager,
     before: Logger
 ) : PlayerManagerV2, Player.Listener, MediaSession.Callback {
     private val mainCoroutineScope = CoroutineScope(mainDispatcher)
@@ -223,6 +239,13 @@ class PlayerManagerV2Impl @Inject constructor(
             .build()
     }
 
+    override fun download() {
+        val downloadRequest = DownloadRequest.Builder(UUID.randomUUID().toString(), Uri.EMPTY)
+            .build()
+        downloadManager
+        DownloadService.sendAddDownload()
+    }
+
     override fun clearTrack(type: @C.TrackType Int) {
         val currentPlayer = player.value ?: return
         currentPlayer.trackSelectionParameters = currentPlayer
@@ -274,10 +297,9 @@ class PlayerManagerV2Impl @Inject constructor(
         }
     }
 
-    private fun createHttpDataSourceFactory(userAgent: String?): DataSource.Factory {
-        return OkHttpDataSource.Factory(okHttpClient)
+    private fun createHttpDataSourceFactory(userAgent: String?): DataSource.Factory =
+        OkHttpDataSource.Factory(okHttpClient)
             .setUserAgent(userAgent)
-    }
 
     private suspend fun observePreferencesChanging(
         onChanged: suspend (timeout: Long, tunneling: Boolean) -> Unit

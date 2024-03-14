@@ -29,6 +29,7 @@ interface PlayerManagerV2 {
     suspend fun play(streamId: Int)
     suspend fun replay()
     fun release()
+    fun download()
 }
 
 val PlayerManagerV2.trackFormats: Flow<Map<@C.TrackType Int, List<Format>>>
