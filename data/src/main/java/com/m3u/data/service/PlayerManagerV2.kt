@@ -32,6 +32,7 @@ interface PlayerManagerV2 {
     suspend fun play(command: MediaCommand)
     suspend fun replay()
     fun release()
+    fun download()
 }
 
 sealed class MediaCommand(open val streamId: Int) {
