@@ -4,13 +4,14 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Star
@@ -21,9 +22,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.movableContentOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -56,7 +59,7 @@ internal fun StreamItem(
     onClick: () -> Unit,
     onLongClick: () -> Unit,
     modifier: Modifier = Modifier,
-    singleLineTitle: Boolean = true
+    isVodOrSeriesPlaylist: Boolean = true
 ) {
     when (currentUiMode()) {
         UiMode.Default -> {
@@ -67,7 +70,7 @@ internal fun StreamItem(
                 onClick = onClick,
                 onLongClick = onLongClick,
                 modifier = modifier,
-                singleLineTitle = singleLineTitle
+                isVodOrSeriesPlaylist = isVodOrSeriesPlaylist
             )
         }
 
@@ -79,7 +82,7 @@ internal fun StreamItem(
                 onClick = onClick,
                 onLongClick = onLongClick,
                 modifier = modifier,
-                singleLineTitle = singleLineTitle
+                isVodOrSeriesPlaylist = isVodOrSeriesPlaylist
             )
         }
 
@@ -95,7 +98,7 @@ private fun StreamItemImpl(
     onLongClick: () -> Unit,
     modifier: Modifier = Modifier,
     zapping: Boolean = false,
-    singleLineTitle: Boolean = true
+    isVodOrSeriesPlaylist: Boolean = true
 ) {
     val context = LocalContext.current
     val spacing = LocalSpacing.current
@@ -106,12 +109,38 @@ private fun StreamItemImpl(
     val recentlyString = stringResource(string.ui_sort_recently)
     val neverPlayedString = stringResource(string.ui_sort_never_played)
 
+    val noPictureMode = pref.noPictureMode
+
     val scheme = remember(stream) {
         try {
             URI(stream.url).scheme
         } catch (ignored: Exception) {
             null
         } ?: context.getString(string.feat_playlist_scheme_unknown).uppercase()
+    }
+
+    val onlyPictureMode = remember(stream.cover, isVodOrSeriesPlaylist, noPictureMode) {
+        when {
+            noPictureMode -> false
+            else -> isVodOrSeriesPlaylist
+        }
+    }
+
+    val star = remember(favourite) {
+        movableContentOf {
+            Crossfade(
+                targetState = favourite,
+                label = "stream-item-favourite"
+            ) { favourite ->
+                if (favourite) {
+                    Icon(
+                        imageVector = Icons.Rounded.Star,
+                        contentDescription = null,
+                        tint = Color(0xffffcd3c)
+                    )
+                }
+            }
+        }
     }
 
     OutlinedCard(
@@ -126,88 +155,88 @@ private fun StreamItemImpl(
                 )
                 .then(modifier)
         ) {
-            AnimatedVisibility(
-                visible = !pref.noPictureMode && !stream.cover.isNullOrEmpty()
-            ) {
-                Image(
-                    model = stream.cover,
-                    errorPlaceholder = stream.title,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .aspectRatio(4 / 3f)
-                )
-            }
-            Column(
-                modifier = Modifier.padding(spacing.medium),
-                verticalArrangement = Arrangement.spacedBy(spacing.small)
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column(
-                        // icon-button-tokens: icon-size
+            AnimatedVisibility(!noPictureMode) {
+                Box {
+                    Image(
+                        model = stream.cover,
+                        errorPlaceholder = stream.title,
+                        contentScale = ContentScale.Crop,
                         modifier = Modifier
-                            .heightIn(min = 24.dp)
-                            .weight(1f)
-                    ) {
-                        Text(
-                            text = stream.title.trim(),
-                            style = MaterialTheme.typography.titleSmall,
-                            overflow = TextOverflow.Ellipsis,
-                            maxLines = if (singleLineTitle) 1 else Int.MAX_VALUE,
-                            fontWeight = FontWeight.Bold,
-                        )
-                        if (recently) {
-                            Text(
-                                text = remember(stream.seen) {
-                                    val now = Clock.System.now()
-                                    val instant = Instant.fromEpochMilliseconds(stream.seen)
-                                    val duration = now - instant
-                                    duration.toComponents { days, hours, minutes, seconds, _ ->
-                                        when {
-                                            stream.seen == 0L -> neverPlayedString
-                                            days > 0 -> days.days.toString()
-                                            hours > 0 -> hours.hours.toString()
-                                            minutes > 0 -> minutes.minutes.toString()
-                                            seconds > 0 -> seconds.seconds.toString()
-                                            else -> recentlyString
-                                        }
-                                    }
-                                },
-                                style = MaterialTheme.typography.bodySmall,
-                                color = LocalContentColor.current.copy(0.56f)
+                            .fillMaxWidth()
+                            .aspectRatio(
+                                if (!isVodOrSeriesPlaylist) 4 / 3f else 2 / 3f
                             )
-                        }
-                    }
-                    Crossfade(
-                        targetState = favourite,
-                        label = "stream-item-favourite"
-                    ) { favourite ->
-                        if (favourite) {
-                            Icon(
-                                imageVector = Icons.Rounded.Star,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.tertiary
-                            )
-                        }
+                    )
+                    if (onlyPictureMode && favourite) {
+                        Box(
+                            modifier = Modifier
+                                .padding(spacing.small)
+                                .align(Alignment.BottomEnd)
+                        ) { star() }
                     }
                 }
-
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(spacing.extraSmall)
+            }
+            if (!onlyPictureMode) {
+                Column(
+                    modifier = Modifier.padding(spacing.medium),
+                    verticalArrangement = Arrangement.spacedBy(spacing.small)
                 ) {
-                    TextBadge(scheme)
-                    Text(
-                        text = stream.url.trim(),
-                        maxLines = 1,
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontSize = MaterialTheme.typography.bodyMedium.fontSize,
-                        overflow = TextOverflow.Ellipsis
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(
+                            // icon-button-tokens: icon-size
+                            modifier = Modifier
+                                .heightIn(min = 24.dp)
+                                .weight(1f)
+                        ) {
+                            Text(
+                                text = stream.title.trim(),
+                                style = MaterialTheme.typography.titleSmall,
+                                overflow = TextOverflow.Ellipsis,
+                                maxLines = 1,
+                                fontWeight = FontWeight.Bold,
+                            )
+                            if (recently) {
+                                Text(
+                                    text = remember(stream.seen) {
+                                        val now = Clock.System.now()
+                                        val instant = Instant.fromEpochMilliseconds(stream.seen)
+                                        val duration = now - instant
+                                        duration.toComponents { days, hours, minutes, seconds, _ ->
+                                            when {
+                                                stream.seen == 0L -> neverPlayedString
+                                                days > 0 -> days.days.toString()
+                                                hours > 0 -> hours.hours.toString()
+                                                minutes > 0 -> minutes.minutes.toString()
+                                                seconds > 0 -> seconds.seconds.toString()
+                                                else -> recentlyString
+                                            }
+                                        }
+                                    },
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = LocalContentColor.current.copy(0.56f)
+                                )
+                            }
+                        }
+                        star()
+                    }
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(spacing.extraSmall)
+                    ) {
+                        TextBadge(scheme)
+                        Text(
+                            text = stream.url.trim(),
+                            maxLines = 1,
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontSize = MaterialTheme.typography.bodyMedium.fontSize,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
                 }
             }
         }
@@ -222,7 +251,7 @@ private fun CompactStreamItem(
     onClick: () -> Unit,
     onLongClick: () -> Unit,
     modifier: Modifier = Modifier,
-    singleLineTitle: Boolean = true
+    isVodOrSeriesPlaylist: Boolean = true
 ) {
     val spacing = LocalSpacing.current
     val favourite = stream.favourite
@@ -247,7 +276,7 @@ private fun CompactStreamItem(
                     style = MaterialTheme.typography.titleSmall,
                     fontSize = MaterialTheme.typography.titleSmall.fontSize,
                     overflow = TextOverflow.Ellipsis,
-                    maxLines = if (singleLineTitle) 1 else Int.MAX_VALUE,
+                    maxLines = 1,
                     fontWeight = FontWeight.Bold
                 )
             },
@@ -267,7 +296,11 @@ private fun CompactStreamItem(
                         errorPlaceholder = stream.title,
                         contentScale = ContentScale.Crop,
                         shape = RoundedCornerShape(spacing.small),
-                        modifier = Modifier.size(48.dp)
+                        modifier = Modifier
+                            .width(48.dp)
+                            .aspectRatio(
+                                if (!isVodOrSeriesPlaylist) 1f else 2 / 3f
+                            )
                     )
                 }
             },

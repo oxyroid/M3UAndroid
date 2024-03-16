@@ -69,6 +69,13 @@ data class Playlist(
 
     companion object {
         const val URL_IMPORTED = "imported"
+
+        val SERIES_TYPES = arrayOf(
+            DataSource.Xtream.TYPE_SERIES
+        )
+        val VOD_TYPES = arrayOf(
+            DataSource.Xtream.TYPE_VOD
+        )
     }
 }
 
@@ -80,6 +87,10 @@ data class PlaylistWithStreams(
         entityColumn = "playlistUrl"
     )
     val streams: List<Stream>
+)
+data class PlaylistWithCount(
+    val playlist: Playlist,
+    val count: Int
 )
 
 sealed class DataSource(

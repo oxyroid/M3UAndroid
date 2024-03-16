@@ -21,11 +21,11 @@ import androidx.compose.ui.Modifier
 import androidx.tv.material3.Carousel
 import com.m3u.core.wrapper.eventOf
 import com.m3u.data.database.model.Playlist
+import com.m3u.data.database.model.Stream
 import com.m3u.material.components.HorizontalPagerIndicator
 import com.m3u.material.ktx.isTelevision
 import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.EventBus
-import com.m3u.ui.helper.LocalHelper
 import kotlinx.coroutines.launch
 import kotlin.math.absoluteValue
 
@@ -33,12 +33,11 @@ import kotlin.math.absoluteValue
 @Composable
 internal fun RecommendGallery(
     recommend: Recommend,
-    navigateToStream: () -> Unit,
+    onClickStream: (Stream) -> Unit,
     navigateToPlaylist: (Playlist) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
-    val helper = LocalHelper.current
     val coroutineScope = rememberCoroutineScope()
 
     val tv = isTelevision()
@@ -62,13 +61,7 @@ internal fun RecommendGallery(
                     pageOffset = pageOffset,
                     onClick = {
                         when (spec) {
-                            is Recommend.UnseenSpec -> {
-                                coroutineScope.launch {
-                                    helper.play(spec.stream.id)
-                                    navigateToStream()
-                                }
-                            }
-
+                            is Recommend.UnseenSpec -> onClickStream(spec.stream)
                             is Recommend.DiscoverSpec -> {
                                 EventBus.discoverCategory = eventOf(spec.category)
                                 navigateToPlaylist(spec.playlist)
@@ -103,8 +96,9 @@ internal fun RecommendGallery(
                     when (spec) {
                         is Recommend.UnseenSpec -> {
                             coroutineScope.launch {
-                                helper.play(spec.stream.id)
-                                navigateToStream()
+                                // TODO
+//                                helper.play(spec.stream.id)
+//                                navigateToStream()
                             }
                         }
 

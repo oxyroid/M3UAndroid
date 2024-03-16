@@ -2,16 +2,13 @@ package com.m3u.core.wrapper
 
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
-import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.channelFlow
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
-import kotlin.experimental.ExperimentalTypeInference
 
+@Immutable
 sealed class Resource<out T> {
     @Immutable
     data object Loading : Resource<Nothing>()
@@ -27,39 +24,23 @@ sealed class Resource<out T> {
     ) : Resource<T>()
 }
 
+fun <T> Resource<T>.takeOrElse(block: () -> T): T = if (this is Resource.Success) this.data
+else block()
+
+fun <T, R> Flow<Resource<T>>.mapResource(transform: (T) -> R): Flow<Resource<R>> = map {
+    when (it) {
+        Resource.Loading -> Resource.Loading
+        is Resource.Success -> Resource.Success(transform(it.data))
+        is Resource.Failure -> Resource.Failure(it.message)
+    }
+}
+
 fun <T> Flow<T>.asResource(): Flow<Resource<T>> = map<T, Resource<T>> { Resource.Success(it) }
     .onStart { emit(Resource.Loading) }
     .catch { emit(Resource.Failure(it.message)) }
 
-@OptIn(ExperimentalTypeInference::class)
-fun <T> resourceFlow(@BuilderInference block: suspend FlowCollector<Resource<T>>.() -> Unit) =
-    flow {
-        emit(Resource.Loading)
-        block()
-    }
-
-@OptIn(ExperimentalTypeInference::class)
-fun <T> resourceChannelFlow(@BuilderInference block: suspend ProducerScope<Resource<T>>.() -> Unit) =
-    channelFlow {
-        send(Resource.Loading)
-        block()
-    }
-
-@JvmName("emitResource")
-suspend fun <T> FlowCollector<Resource<T>>.emitResource(value: T) = emit(Resource.Success(value))
-
-@JvmName("emitMessage")
-suspend fun <T> FlowCollector<Resource<T>>.emitMessage(message: String?) =
-    emit(Resource.Failure(message))
-
-@JvmName("emitException")
-suspend fun <T> FlowCollector<Resource<T>>.emitException(exception: Exception?) =
-    emitMessage(exception?.message)
-
-suspend fun <T> ProducerScope<Resource<T>>.sendResource(value: T) = send(Resource.Success(value))
-
-suspend fun <T> ProducerScope<Resource<T>>.sendMessage(message: String?) =
-    send(Resource.Failure(message))
-
-suspend fun <T> ProducerScope<Resource<T>>.sendException(exception: Exception?) =
-    sendMessage(exception?.message)
+fun <T> resource(block: suspend () -> T): Flow<Resource<T>> = channelFlow<Resource<T>> {
+    trySend(Resource.Success(block()))
+}
+    .onStart { emit(Resource.Loading) }
+    .catch { emit(Resource.Failure(it.message)) }

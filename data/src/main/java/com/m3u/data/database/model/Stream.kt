@@ -6,9 +6,16 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.m3u.core.util.Likable
+import com.m3u.data.api.xtream.XtreamStreamInfo
+import io.ktor.http.URLBuilder
+import io.ktor.http.Url
+import io.ktor.http.appendPathSegments
+import io.ktor.http.path
 import kotlinx.serialization.Serializable
 
-@Entity(tableName = "streams")
+@Entity(
+    tableName = "streams"
+)
 @Immutable
 @Serializable
 @Keep
@@ -21,7 +28,7 @@ data class Stream(
     val title: String,
     @ColumnInfo(name = "cover")
     val cover: String? = null,
-    @ColumnInfo(name = "playlistUrl")
+    @ColumnInfo(name = "playlistUrl", index = true)
     val playlistUrl: String,
     @ColumnInfo(name = "license_type", defaultValue = "NULL")
     val licenseType: String? = null,
@@ -31,7 +38,7 @@ data class Stream(
     @ColumnInfo(name = "id")
     val id: Int = 0,
     // extra fields
-    @ColumnInfo(name = "favourite")
+    @ColumnInfo(name = "favourite", index = true)
     val favourite: Boolean = false,
     @ColumnInfo(name = "hidden", defaultValue = "0")
     val hidden: Boolean = false,
@@ -48,4 +55,15 @@ data class Stream(
         const val LICENSE_TYPE_CLEAR_KEY = "clearkey"
         const val LICENSE_TYPE_PLAY_READY = "com.microsoft.playready"
     }
+}
+
+fun Stream.copyXtreamEpisode(episode: XtreamStreamInfo.Episode): Stream {
+    val url = Url(url)
+    val newUrl = URLBuilder(url)
+        .apply { path(*url.pathSegments.dropLast(1).toTypedArray()) }
+        .appendPathSegments("${episode.id}.${episode.containerExtension}")
+        .build()
+    return copy(
+        url = newUrl.toString(),
+    )
 }

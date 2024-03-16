@@ -14,6 +14,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -25,13 +26,15 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.core.util.basic.title
 import com.m3u.data.database.model.Playlist
+import com.m3u.data.database.model.PlaylistWithCount
+import com.m3u.data.database.model.Stream
+import com.m3u.data.service.PlayerManagerV2
 import com.m3u.features.foryou.components.ForyouDialog
 import com.m3u.features.foryou.components.ForyouDialogState
 import com.m3u.features.foryou.components.PlaylistGallery
 import com.m3u.features.foryou.components.PlaylistGalleryPlaceholder
 import com.m3u.features.foryou.components.recommend.Recommend
 import com.m3u.features.foryou.components.recommend.RecommendGallery
-import com.m3u.features.foryou.model.PlaylistDetail
 import com.m3u.i18n.R.string
 import com.m3u.material.components.Background
 import com.m3u.material.ktx.interceptVolumeEvent
@@ -39,6 +42,7 @@ import com.m3u.material.ktx.isTelevision
 import com.m3u.material.ktx.thenIf
 import com.m3u.material.model.LocalHazeState
 import com.m3u.ui.Destination
+import com.m3u.ui.EpisodesBottomSheet
 import com.m3u.ui.LocalVisiblePageInfos
 import com.m3u.ui.helper.Action
 import com.m3u.ui.helper.LocalHelper
@@ -46,6 +50,7 @@ import dev.chrisbanes.haze.HazeDefaults
 import dev.chrisbanes.haze.haze
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.coroutines.launch
 
 @Composable
 fun ForyouRoute(
@@ -58,18 +63,23 @@ fun ForyouRoute(
 ) {
     val helper = LocalHelper.current
     val pref = LocalPref.current
+    val visiblePageInfos = LocalVisiblePageInfos.current
+    val coroutineScope = rememberCoroutineScope()
 
     val tv = isTelevision()
     val title = stringResource(string.ui_title_foryou)
 
-    val visiblePageInfos = LocalVisiblePageInfos.current
     val pageIndex = remember { Destination.Root.entries.indexOf(Destination.Root.Foryou) }
     val isPageInfoVisible = remember(pageIndex, visiblePageInfos) {
         visiblePageInfos.find { it.index == pageIndex } != null
     }
 
-    val details by viewModel.details.collectAsStateWithLifecycle()
+    val playlistCounts by viewModel.playlistCounts.collectAsStateWithLifecycle()
     val recommend by viewModel.recommend.collectAsStateWithLifecycle()
+    val episodes by viewModel.episodes.collectAsStateWithLifecycle()
+
+    var series: Stream? by remember { mutableStateOf(null) }
+
     if (isPageInfoVisible) {
         LifecycleResumeEffect(title) {
             helper.title = title.title()
@@ -89,16 +99,35 @@ fun ForyouRoute(
     Background {
         Box(modifier) {
             ForyouScreen(
-                details = details,
+                playlistCounts = playlistCounts,
                 recommend = recommend,
                 rowCount = pref.rowCount,
                 contentPadding = contentPadding,
                 navigateToPlaylist = navigateToPlaylist,
-                navigateToStream = navigateToStream,
+                onClickStream = { stream ->
+                    coroutineScope.launch {
+                        val playlist = viewModel.getPlaylist(stream.playlistUrl)
+                        when {
+                            playlist?.type in Playlist.SERIES_TYPES -> {
+                                series = stream
+                            }
+
+                            else -> {
+                                helper.play(PlayerManagerV2.Input.Live(stream.id))
+                                navigateToStream()
+                            }
+                        }
+                    }
+                },
                 navigateToSettingPlaylistManagement = navigateToSettingPlaylistManagement,
                 unsubscribe = { viewModel.unsubscribe(it) },
                 rename = { playlistUrl, target -> viewModel.rename(playlistUrl, target) },
-                updateUserAgent = { playlistUrl, userAgent -> viewModel.updateUserAgent(playlistUrl, userAgent) },
+                updateUserAgent = { playlistUrl, userAgent ->
+                    viewModel.updateUserAgent(
+                        playlistUrl,
+                        userAgent
+                    )
+                },
                 modifier = Modifier
                     .fillMaxSize()
                     .thenIf(!tv && pref.godMode) {
@@ -111,6 +140,28 @@ fun ForyouRoute(
                         }
                     }
             )
+
+            EpisodesBottomSheet(
+                series = series,
+                episodes = episodes,
+                onEpisodeClick = { episode ->
+                    coroutineScope.launch {
+                        series?.let {
+                            val input = PlayerManagerV2.Input.XtreamEpisode(
+                                streamId = it.id,
+                                episode = episode
+                            )
+                            helper.play(input)
+                            navigateToStream()
+                        }
+                    }
+                },
+                onRefresh = { series?.let { viewModel.onRequestEpisodes(it) } },
+                onDismissRequest = {
+                    series = null
+                    viewModel.onClearEpisodes()
+                }
+            )
         }
     }
 }
@@ -118,11 +169,11 @@ fun ForyouRoute(
 @Composable
 private fun ForyouScreen(
     rowCount: Int,
-    details: ImmutableList<PlaylistDetail>,
+    playlistCounts: ImmutableList<PlaylistWithCount>,
     recommend: Recommend,
     contentPadding: PaddingValues,
     navigateToPlaylist: (Playlist) -> Unit,
-    navigateToStream: () -> Unit,
+    onClickStream: (Stream) -> Unit,
     navigateToSettingPlaylistManagement: () -> Unit,
     unsubscribe: (playlistUrl: String) -> Unit,
     rename: (playlistUrl: String, label: String) -> Unit,
@@ -140,19 +191,19 @@ private fun ForyouScreen(
     var dialogState: ForyouDialogState by remember { mutableStateOf(ForyouDialogState.Idle) }
     Background(modifier) {
         Box {
-            val showPlaylist = details.isNotEmpty()
+            val showPlaylist = playlistCounts.isNotEmpty()
             val header = @Composable {
                 RecommendGallery(
                     recommend = recommend,
-                    navigateToStream = navigateToStream,
                     navigateToPlaylist = navigateToPlaylist,
+                    onClickStream = onClickStream,
                     modifier = Modifier.fillMaxWidth()
                 )
             }
             if (showPlaylist) {
                 PlaylistGallery(
                     rowCount = actualRowCount,
-                    details = details,
+                    playlistCounts = playlistCounts,
                     navigateToPlaylist = navigateToPlaylist,
                     onMenu = { dialogState = ForyouDialogState.Selections(it) },
                     header = header.takeIf { recommend.isNotEmpty() },

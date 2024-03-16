@@ -20,11 +20,17 @@ import com.m3u.core.architecture.pref.Pref
 import com.m3u.core.util.basic.startsWithAny
 import com.m3u.core.util.readFileContent
 import com.m3u.core.util.readFileName
+import com.m3u.data.api.xtream.XtreamLive
+import com.m3u.data.api.xtream.XtreamSerial
+import com.m3u.data.api.xtream.XtreamStreamInfo
+import com.m3u.data.api.xtream.XtreamVod
+import com.m3u.data.api.xtream.asStream
 import com.m3u.data.api.xtream.toStream
 import com.m3u.data.database.dao.PlaylistDao
 import com.m3u.data.database.dao.StreamDao
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
+import com.m3u.data.database.model.PlaylistWithCount
 import com.m3u.data.database.model.PlaylistWithStreams
 import com.m3u.data.database.model.Stream
 import com.m3u.data.parser.M3UParser
@@ -35,10 +41,15 @@ import com.m3u.data.repository.PlaylistRepository
 import com.m3u.data.worker.SubscriptionWorker
 import com.m3u.i18n.R.string
 import dagger.hilt.android.qualifiers.ApplicationContext
+import io.ktor.http.Url
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -128,125 +139,103 @@ class PlaylistRepositoryImpl @Inject constructor(
         basicUrl: String,
         username: String,
         password: String,
-        type: String?,
-        callback: (count: Int, total: Int) -> Unit
-    ) = withContext(ioDispatcher) {
+        type: String?
+    ): Unit = withContext(ioDispatcher) {
         val input = XtreamInput(basicUrl, username, password, type)
         val (
-            lives,
-            vods,
-            series,
             liveCategories,
             vodCategories,
             serialCategories,
             allowedOutputFormats,
             serverProtocol,
             port
-        ) = xtreamParser.execute(input)
+        ) = xtreamParser.output(input)
+        val livePlaylist = Playlist(
+            title = title,
+            url = XtreamInput.encodeToPlaylistUrl(
+                input = input.copy(type = DataSource.Xtream.TYPE_LIVE),
+                serverProtocol = serverProtocol,
+                port = port
+            ),
+            source = DataSource.Xtream
+        )
+        val vodPlaylist = Playlist(
+            title = title,
+            url = XtreamInput.encodeToPlaylistUrl(
+                input = input.copy(type = DataSource.Xtream.TYPE_VOD),
+                serverProtocol = serverProtocol,
+                port = port
+            ),
+            source = DataSource.Xtream
+        )
+        val seriesPlaylist = Playlist(
+            title = title,
+            url = XtreamInput.encodeToPlaylistUrl(
+                input = input.copy(type = DataSource.Xtream.TYPE_SERIES),
+                serverProtocol = serverProtocol,
+                port = port
+            ),
+            source = DataSource.Xtream
+        )
 
         val requiredLives = type == null || type == DataSource.Xtream.TYPE_LIVE
         val requiredVods = type == null || type == DataSource.Xtream.TYPE_VOD
         val requiredSeries = type == null || type == DataSource.Xtream.TYPE_SERIES
 
-        val total = run {
-            var i = 0
-            if (requiredLives) i += lives.size
-            if (requiredVods) i += vods.size
-            if (requiredSeries) i += series.size
-            i
-        }
-        var currentCount = 0
-        callback(currentCount, total)
-
         if (requiredLives) {
-            val playlist = Playlist(
-                title = title,
-                url = XtreamInput.encodeToPlaylistUrl(
-                    input = input.copy(type = DataSource.Xtream.TYPE_LIVE),
-                    serverProtocol = serverProtocol,
-                    port = port
-                ),
-                source = DataSource.Xtream
-            )
-            playlistDao.insertOrReplace(playlist)
-            lives.forEach { current ->
-                current.toStream(
-                    basicUrl = basicUrl,
-                    username = username,
-                    password = password,
-                    playlistUrl = playlist.url,
-                    category = liveCategories.find { it.categoryId == current.categoryId }?.categoryName.orEmpty(),
-                    containerExtension = allowedOutputFormats.first()
-                ).also { stream ->
-                    currentCount += 1
-                    callback(currentCount, total)
-                    streamDao.insertOrReplace(stream)
-                }
-            }
-            logger.log("xtream: lives +[${lives.size}]")
+            unsubscribe(livePlaylist.url)
+            playlistDao.insertOrReplace(livePlaylist)
         }
         if (requiredVods) {
-            val playlist = Playlist(
-                title = title,
-                url = XtreamInput.encodeToPlaylistUrl(
-                    input = input.copy(type = DataSource.Xtream.TYPE_VOD),
-                    serverProtocol = serverProtocol,
-                    port = port
-                ),
-                source = DataSource.Xtream
-            )
-            playlistDao.insertOrReplace(playlist)
-            vods.forEach { current ->
-                current.toStream(
-                    basicUrl = basicUrl,
-                    username = username,
-                    password = password,
-                    playlistUrl = playlist.url,
-                    category = vodCategories.find { it.categoryId == current.categoryId }?.categoryName.orEmpty()
-                ).also { stream ->
-                    currentCount += 1
-                    callback(currentCount, total)
-                    streamDao.insertOrReplace(stream)
-                }
-            }
-            logger.log("xtream: vods +[${vods.size}]")
+            unsubscribe(vodPlaylist.url)
+            playlistDao.insertOrReplace(vodPlaylist)
+        }
+        if (requiredSeries) {
+            unsubscribe(seriesPlaylist.url)
+            playlistDao.insertOrReplace(seriesPlaylist)
         }
 
-        if (requiredSeries) {
-            val playlist = Playlist(
-                title = title,
-                url = XtreamInput.encodeToPlaylistUrl(
-                    input = input.copy(type = DataSource.Xtream.TYPE_SERIES),
-                    serverProtocol = serverProtocol,
-                    port = port
-                ),
-                source = DataSource.Xtream
-            )
-            playlistDao.insertOrReplace(playlist)
-            series.forEach { current ->
-                ensureActive()
-                val seriesInfo = xtreamParser.getSeriesInfo(
-                    input = input.copy(type = DataSource.Xtream.TYPE_SERIES),
-                    seriesId = current.seriesId ?: return@forEach
-                ) ?: return@forEach
-                seriesInfo.episodes.flatMap { (_, episodes) ->
-                    episodes.map { episode ->
-                        Stream(
-                            url = "$basicUrl/series/$username/$password/${episode.id}.${episode.containerExtension}",
-                            category = serialCategories.find { it.categoryId == current.categoryId }?.categoryName.orEmpty(),
-                            title = current.name.orEmpty() + " " + episode.title.orEmpty(),
-                            cover = current.cover,
-                            playlistUrl = playlist.url,
-                        ).also { stream ->
-                            currentCount += 1
-                            callback(currentCount, total)
-                            streamDao.insertOrReplace(stream)
-                        }
+        xtreamParser
+            .entityOutputs(input)
+            .map { current ->
+                when (current) {
+                    is XtreamLive -> {
+                        current.toStream(
+                            basicUrl = basicUrl,
+                            username = username,
+                            password = password,
+                            playlistUrl = livePlaylist.url,
+                            category = liveCategories.find { it.categoryId == current.categoryId }?.categoryName.orEmpty(),
+                            containerExtension = allowedOutputFormats.first()
+                        )
+                    }
+
+                    is XtreamVod -> {
+                        current.toStream(
+                            basicUrl = basicUrl,
+                            username = username,
+                            password = password,
+                            playlistUrl = vodPlaylist.url,
+                            category = vodCategories.find { it.categoryId == current.categoryId }?.categoryName.orEmpty()
+                        )
+                    }
+
+                    // we save serial as stream
+                    // when we click the serial stream, we should call serialInfo api
+                    // for its episodes.
+                    is XtreamSerial -> {
+                        current.asStream(
+                            basicUrl = basicUrl,
+                            username = username,
+                            password = password,
+                            playlistUrl = seriesPlaylist.url,
+                            category = serialCategories.find { it.categoryId == current.categoryId }?.categoryName.orEmpty()
+                        )
                     }
                 }
             }
-            logger.log("xtream: series +[${series.size}]")
-        }
+            .onEach { stream -> streamDao.insertOrReplace(stream) }
+            .launchIn(this)
     }
 
     override suspend fun refresh(url: String) = logger.sandBox {
@@ -427,6 +416,28 @@ class PlaylistRepositoryImpl @Inject constructor(
 
     override suspend fun updateUserAgent(url: String, userAgent: String?) = logger.sandBox {
         playlistDao.updateUserAgent(url, userAgent)
+    }
+
+    override fun observePlaylistCounts(): Flow<List<PlaylistWithCount>> = combine(
+        playlistDao.observeAll(),
+        streamDao.observeAll()
+    ) { playlists, _ ->
+        playlists.map { playlist ->
+//            val count = streams.count { it.playlistUrl == playlist.url }
+            val count = streamDao.getCountByPlaylistUrl(playlist.url)
+            PlaylistWithCount(playlist, count)
+        }
+    }
+        .flowOn(ioDispatcher)
+        .catch { emit(emptyList()) }
+
+    override suspend fun readEpisodesOrThrow(series: Stream): List<XtreamStreamInfo.Episode> {
+        val playlist = checkNotNull(get(series.playlistUrl)) { "playlist is not exist" }
+        val seriesInfo = xtreamParser.getSeriesInfoOrThrow(
+            input = XtreamInput.decodeFromPlaylistUrl(playlist.url),
+            seriesId = Url(series.url).pathSegments.last().toInt()
+        )
+        return seriesInfo.episodes.flatMap { it.value }
     }
 
     private val filenameWithTimezone: String get() = "File_${System.currentTimeMillis()}"

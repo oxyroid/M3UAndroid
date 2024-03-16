@@ -24,7 +24,9 @@ import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.core.util.basic.title
+import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.Stream
+import com.m3u.data.service.PlayerManagerV2
 import com.m3u.features.favorite.components.DialogStatus
 import com.m3u.features.favorite.components.FavoriteDialog
 import com.m3u.features.favorite.components.FavouriteGallery
@@ -35,6 +37,7 @@ import com.m3u.material.ktx.isTelevision
 import com.m3u.material.ktx.thenIf
 import com.m3u.material.model.LocalHazeState
 import com.m3u.ui.Destination
+import com.m3u.ui.EpisodesBottomSheet
 import com.m3u.ui.LocalVisiblePageInfos
 import com.m3u.ui.Sort
 import com.m3u.ui.SortBottomSheet
@@ -63,6 +66,7 @@ fun FavouriteRoute(
     val coroutineScope = rememberCoroutineScope()
 
     val streams by viewModel.streams.collectAsStateWithLifecycle()
+    val episodes by viewModel.episodes.collectAsStateWithLifecycle()
     val zapping by viewModel.zapping.collectAsStateWithLifecycle()
     val sorts = viewModel.sorts
     val sort by viewModel.sort.collectAsStateWithLifecycle()
@@ -77,6 +81,8 @@ fun FavouriteRoute(
     val isPageInfoVisible = remember(pageIndex, visiblePageInfos) {
         visiblePageInfos.find { it.index == pageIndex } != null
     }
+
+    var series: Stream? by remember { mutableStateOf(null) }
 
     if (isPageInfoVisible) {
         LifecycleResumeEffect(title) {
@@ -95,35 +101,62 @@ fun FavouriteRoute(
     }
 
     Background {
-        val content = @Composable {
-            FavoriteScreen(
-                contentPadding = contentPadding,
-                rowCount = pref.rowCount,
-                streams = streams,
-                zapping = zapping,
-                onClickStream = { stream ->
-                    coroutineScope.launch {
-                        helper.play(stream.id)
-                        navigateToStream()
-                    }
-                },
-                onLongClickStream = { dialogStatus = DialogStatus.Selections(it) },
-                sort = sort,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .thenIf(!tv && pref.godMode) {
-                        Modifier.interceptVolumeEvent { event ->
-                            pref.rowCount = when (event) {
-                                KeyEvent.KEYCODE_VOLUME_UP -> (pref.rowCount - 1).coerceAtLeast(1)
-                                KeyEvent.KEYCODE_VOLUME_DOWN -> (pref.rowCount + 1).coerceAtMost(2)
-                                else -> return@interceptVolumeEvent
-                            }
+        FavoriteScreen(
+            contentPadding = contentPadding,
+            rowCount = pref.rowCount,
+            streams = streams,
+            zapping = zapping,
+            onClickStream = { stream ->
+                coroutineScope.launch {
+                    val playlist = viewModel.getPlaylist(stream.playlistUrl)
+                    when {
+                        playlist?.type in Playlist.SERIES_TYPES -> {
+                            series = stream
+                        }
+
+                        else -> {
+                            helper.play(PlayerManagerV2.Input.Live(stream.id))
+                            navigateToStream()
                         }
                     }
-                    .then(modifier)
-            )
-        }
-        content()
+                }
+            },
+            onLongClickStream = { dialogStatus = DialogStatus.Selections(it) },
+            sort = sort,
+            modifier = Modifier
+                .fillMaxSize()
+                .thenIf(!tv && pref.godMode) {
+                    Modifier.interceptVolumeEvent { event ->
+                        pref.rowCount = when (event) {
+                            KeyEvent.KEYCODE_VOLUME_UP -> (pref.rowCount - 1).coerceAtLeast(1)
+                            KeyEvent.KEYCODE_VOLUME_DOWN -> (pref.rowCount + 1).coerceAtMost(2)
+                            else -> return@interceptVolumeEvent
+                        }
+                    }
+                }
+                .then(modifier)
+        )
+        EpisodesBottomSheet(
+            series = series,
+            episodes = episodes,
+            onEpisodeClick = { episode ->
+                coroutineScope.launch {
+                    series?.let {
+                        val input = PlayerManagerV2.Input.XtreamEpisode(
+                            streamId = it.id,
+                            episode = episode
+                        )
+                        helper.play(input)
+                        navigateToStream()
+                    }
+                }
+            },
+            onRefresh = { series?.let { viewModel.onRequestEpisodes(it) } },
+            onDismissRequest = {
+                series = null
+                viewModel.onClearEpisodes()
+            }
+        )
         if (!tv) {
             SortBottomSheet(
                 visible = isSortSheetVisible,

@@ -1,21 +1,24 @@
 package com.m3u.data.parser
 
 import com.m3u.core.util.basic.startsWithAny
-import com.m3u.data.api.xtream.XtreamCategory
-import com.m3u.data.api.xtream.XtreamLive
-import com.m3u.data.api.xtream.XtreamSerial
+import com.m3u.data.api.xtream.XtreamEntityOutput
+import com.m3u.data.api.xtream.XtreamOutput
 import com.m3u.data.api.xtream.XtreamStreamInfo
-import com.m3u.data.api.xtream.XtreamVod
 import io.ktor.http.Url
+import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.Serializable
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 
-interface XtreamParser : Parser<XtreamInput, XtreamOutput> {
-    suspend fun getSeriesInfo(
+interface XtreamParser {
+    suspend fun getSeriesInfoOrThrow(
         input: XtreamInput,
         seriesId: Int
-    ): XtreamStreamInfo?
+    ): XtreamStreamInfo
+
+    fun entityOutputs(input: XtreamInput): Flow<XtreamEntityOutput>
+
+    suspend fun output(input: XtreamInput): XtreamOutput
 
     companion object {
         fun createInfoUrl(
@@ -133,15 +136,3 @@ data class XtreamInput(
             runCatching { decodeFromPlaylistUrl(url) }.getOrNull()
     }
 }
-
-data class XtreamOutput(
-    val lives: List<XtreamLive> = emptyList(),
-    val vods: List<XtreamVod> = emptyList(),
-    val series: List<XtreamSerial> = emptyList(),
-    val liveCategories: List<XtreamCategory> = emptyList(),
-    val vodCategories: List<XtreamCategory> = emptyList(),
-    val serialCategories: List<XtreamCategory> = emptyList(),
-    val allowedOutputFormats: List<String> = emptyList(),
-    val serverProtocol: String = "http",
-    val port: Int? = null
-)

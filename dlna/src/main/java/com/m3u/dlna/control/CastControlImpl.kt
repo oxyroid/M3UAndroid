@@ -60,7 +60,6 @@ class CastControlImpl(
             controlPoint,
             device.findService(DLNACastManager.SERVICE_TYPE_CONTENT_DIRECTORY)
         )
-        //TODO: check the parser
         contentService.subscribe(object : SubscriptionListener {}, AVTransportLastChangeParser())
     }
 

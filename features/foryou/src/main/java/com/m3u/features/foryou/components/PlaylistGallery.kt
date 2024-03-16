@@ -19,7 +19,7 @@ import androidx.tv.foundation.lazy.grid.TvGridItemSpan
 import androidx.tv.foundation.lazy.grid.TvLazyVerticalGrid
 import androidx.tv.foundation.lazy.grid.itemsIndexed
 import com.m3u.data.database.model.Playlist
-import com.m3u.features.foryou.model.PlaylistDetail
+import com.m3u.data.database.model.PlaylistWithCount
 import com.m3u.i18n.R.string
 import com.m3u.material.ktx.plus
 import com.m3u.material.model.LocalSpacing
@@ -30,7 +30,7 @@ import kotlinx.collections.immutable.ImmutableList
 @Composable
 internal fun PlaylistGallery(
     rowCount: Int,
-    details: ImmutableList<PlaylistDetail>,
+    playlistCounts: ImmutableList<PlaylistWithCount>,
     navigateToPlaylist: (Playlist) -> Unit,
     onMenu: (Playlist) -> Unit,
     modifier: Modifier = Modifier,
@@ -41,7 +41,7 @@ internal fun PlaylistGallery(
         UiMode.Default -> {
             PlaylistGalleryImpl(
                 rowCount = rowCount,
-                details = details,
+                playlistCounts = playlistCounts,
                 navigateToPlaylist = navigateToPlaylist,
                 onMenu = onMenu,
                 contentPadding = contentPadding,
@@ -53,7 +53,7 @@ internal fun PlaylistGallery(
         UiMode.Television -> {
             TvPlaylistGalleryImpl(
                 rowCount = rowCount,
-                details = details,
+                playlistCounts = playlistCounts,
                 navigateToPlaylist = navigateToPlaylist,
                 onMenu = onMenu,
                 contentPadding = contentPadding,
@@ -65,7 +65,7 @@ internal fun PlaylistGallery(
         UiMode.Compat -> {
             CompactPlaylistGalleryImpl(
                 rowCount = rowCount,
-                details = details,
+                playlistCounts = playlistCounts,
                 navigateToPlaylist = navigateToPlaylist,
                 onMenu = onMenu,
                 contentPadding = contentPadding,
@@ -79,7 +79,7 @@ internal fun PlaylistGallery(
 @Composable
 private fun PlaylistGalleryImpl(
     rowCount: Int,
-    details: ImmutableList<PlaylistDetail>,
+    playlistCounts: ImmutableList<PlaylistWithCount>,
     navigateToPlaylist: (Playlist) -> Unit,
     onMenu: (Playlist) -> Unit,
     contentPadding: PaddingValues,
@@ -100,21 +100,21 @@ private fun PlaylistGalleryImpl(
             }
         }
         itemsIndexed(
-            items = details,
-            key = { _, detail -> detail.playlist.url },
+            items = playlistCounts,
+            key = { _, playlistCount -> playlistCount.playlist.url },
             contentType = { _, _ -> }
-        ) { index, detail ->
+        ) { index, playlistCount ->
             PlaylistItem(
                 label = PlaylistGalleryDefaults.calculateUiTitle(
-                    title = detail.playlist.title,
-                    fromLocal = detail.playlist.fromLocal
+                    title = playlistCount.playlist.title,
+                    fromLocal = playlistCount.playlist.fromLocal
                 ),
-                type = detail.playlist.type,
-                typeWithSource = detail.playlist.typeWithSource,
-                number = detail.count,
-                local = detail.playlist.fromLocal,
-                onClick = { navigateToPlaylist(detail.playlist) },
-                onLongClick = { onMenu(detail.playlist) },
+                type = playlistCount.playlist.type,
+                typeWithSource = playlistCount.playlist.typeWithSource,
+                count = playlistCount.count,
+                local = playlistCount.playlist.fromLocal,
+                onClick = { navigateToPlaylist(playlistCount.playlist) },
+                onLongClick = { onMenu(playlistCount.playlist) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(
@@ -131,7 +131,7 @@ private fun PlaylistGalleryImpl(
 @Composable
 private fun TvPlaylistGalleryImpl(
     rowCount: Int,
-    details: ImmutableList<PlaylistDetail>,
+    playlistCounts: ImmutableList<PlaylistWithCount>,
     navigateToPlaylist: (Playlist) -> Unit,
     onMenu: (Playlist) -> Unit,
     contentPadding: PaddingValues,
@@ -152,21 +152,21 @@ private fun TvPlaylistGalleryImpl(
             }
         }
         itemsIndexed(
-            items = details,
+            items = playlistCounts,
             key = { _, it -> it.playlist.url },
             contentType = { _, _ -> }
-        ) { index, detail ->
+        ) { index, playlistCount ->
             PlaylistItem(
                 label = PlaylistGalleryDefaults.calculateUiTitle(
-                    title = detail.playlist.title,
-                    fromLocal = detail.playlist.fromLocal
+                    title = playlistCount.playlist.title,
+                    fromLocal = playlistCount.playlist.fromLocal
                 ),
-                type = detail.playlist.type,
-                typeWithSource = detail.playlist.typeWithSource,
-                number = detail.count,
-                local = detail.playlist.fromLocal,
-                onClick = { navigateToPlaylist(detail.playlist) },
-                onLongClick = { onMenu(detail.playlist) },
+                type = playlistCount.playlist.type,
+                typeWithSource = playlistCount.playlist.typeWithSource,
+                count = playlistCount.count,
+                local = playlistCount.playlist.fromLocal,
+                onClick = { navigateToPlaylist(playlistCount.playlist) },
+                onLongClick = { onMenu(playlistCount.playlist) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(
@@ -184,7 +184,7 @@ private fun TvPlaylistGalleryImpl(
 @Composable
 private fun CompactPlaylistGalleryImpl(
     rowCount: Int,
-    details: ImmutableList<PlaylistDetail>,
+    playlistCounts: ImmutableList<PlaylistWithCount>,
     navigateToPlaylist: (Playlist) -> Unit,
     onMenu: (Playlist) -> Unit,
     contentPadding: PaddingValues,
@@ -202,7 +202,7 @@ private fun CompactPlaylistGalleryImpl(
             }
         }
         items(
-            items = details,
+            items = playlistCounts,
             key = { it.playlist.url },
             contentType = {}
         ) { detail ->
@@ -213,7 +213,7 @@ private fun CompactPlaylistGalleryImpl(
                 ),
                 type = detail.playlist.type,
                 typeWithSource = detail.playlist.typeWithSource,
-                number = detail.count,
+                count = detail.count,
                 local = detail.playlist.fromLocal,
                 onClick = { navigateToPlaylist(detail.playlist) },
                 onLongClick = { onMenu(detail.playlist) },

@@ -44,7 +44,7 @@ internal fun PlaylistItem(
     label: String,
     type: String?,
     typeWithSource: String?,
-    number: Int,
+    count: Int,
     local: Boolean,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
@@ -56,7 +56,7 @@ internal fun PlaylistItem(
                 label = label,
                 type = type,
                 typeWithSource = typeWithSource,
-                number = number,
+                count = count,
                 local = local,
                 onClick = onClick,
                 onLongClick = onLongClick,
@@ -69,7 +69,7 @@ internal fun PlaylistItem(
                 label = label,
                 type = type,
                 typeWithSource = typeWithSource,
-                number = number,
+                count = count,
                 local = local,
                 onClick = onClick,
                 onLongClick = onLongClick,
@@ -81,7 +81,7 @@ internal fun PlaylistItem(
             CompactPlaylistItemImpl(
                 label = label,
                 type = typeWithSource,
-                number = number,
+                count = count,
                 local = local,
                 onClick = onClick,
                 onLongClick = onLongClick,
@@ -96,7 +96,7 @@ private fun PlaylistItemImpl(
     label: String,
     type: String?,
     typeWithSource: String?,
-    number: Int,
+    count: Int,
     local: Boolean,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
@@ -177,7 +177,7 @@ private fun PlaylistItemImpl(
                 ) {
                     Text(
                         color = currentOnPrimaryColor,
-                        text = number.toString(),
+                        text = count.toString(),
                         style = MaterialTheme.typography.bodyMedium,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
@@ -200,7 +200,7 @@ private fun TvPlaylistItemImpl(
     label: String,
     type: String?,
     typeWithSource: String?,
-    number: Int,
+    count: Int,
     local: Boolean,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
@@ -262,7 +262,7 @@ private fun TvPlaylistItemImpl(
             ) {
                 Text(
                     color = currentOnPrimaryColor,
-                    text = number.toString(),
+                    text = count.toString(),
                     style = MaterialTheme.typography.bodyMedium,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
@@ -283,7 +283,7 @@ private fun TvPlaylistItemImpl(
 private fun CompactPlaylistItemImpl(
     label: String,
     type: String?,
-    number: Int,
+    count: Int,
     local: Boolean,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
@@ -309,7 +309,7 @@ private fun CompactPlaylistItemImpl(
         },
         trailingContent = {
             Text(
-                text = number.toString(),
+                text = count.toString(),
                 style = MaterialTheme.typography.bodyMedium,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,

@@ -37,9 +37,9 @@ import com.m3u.core.architecture.logger.prefix
 import com.m3u.core.architecture.pref.Pref
 import com.m3u.core.architecture.pref.annotation.ReconnectMode
 import com.m3u.core.architecture.pref.observeAsFlow
-import com.m3u.core.util.distinctUntilUnlike
 import com.m3u.data.BuildConfig
 import com.m3u.data.SSLs
+import com.m3u.data.database.model.copyXtreamEpisode
 import com.m3u.data.repository.PlaylistRepository
 import com.m3u.data.repository.StreamRepository
 import com.m3u.data.service.PlayerManagerV2
@@ -53,12 +53,14 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.updateAndGet
@@ -84,12 +86,31 @@ class PlayerManagerV2Impl @Inject constructor(
     override val player = MutableStateFlow<ExoPlayer?>(null)
     override val size = MutableStateFlow(Rect())
 
-    private val streamId = MutableStateFlow<Int?>(null)
+    private val inputChannel = MutableStateFlow<PlayerManagerV2.Input?>(null)
+    private val playableStream = inputChannel
+        .flatMapLatest { input ->
+            when (input) {
+                is PlayerManagerV2.Input.Live -> streamRepository.observe(input.streamId)
+                is PlayerManagerV2.Input.XtreamEpisode -> streamRepository
+                    .observe(input.streamId)
+                    .map { it?.copyXtreamEpisode(input.episode) }
 
-    override val stream = streamId
-        .onEach { logger.debug { "streamId: $it" } }
-        .flatMapLatest { streamId ->
-            streamId?.let { streamRepository.observe(it) } ?: flowOf(null)
+                else -> flowOf(null)
+            }
+        }
+        .shareIn(
+            scope = ioCoroutineScope,
+            started = SharingStarted.Lazily
+        )
+
+    override val stream = inputChannel
+        .onEach { logger.debug { "receive inputChannel: $it" } }
+        .flatMapLatest { input ->
+            when (input) {
+                is PlayerManagerV2.Input.Live -> streamRepository.observe(input.streamId)
+                is PlayerManagerV2.Input.XtreamEpisode -> streamRepository.observe(input.streamId)
+                else -> flowOf(null)
+            }
         }
         .flowOn(ioDispatcher)
         .stateIn(
@@ -99,29 +120,41 @@ class PlayerManagerV2Impl @Inject constructor(
         )
 
     init {
-        stream
-            .filterNotNull()
-            .distinctUntilUnlike()
+        playableStream
+            .distinctUntilChanged { old, new ->
+                if (old == null || new == null) false
+                else old like new
+            }
             .onEach { stream ->
-                val streamUrl = stream.url
-                streamRepository.reportPlayed(stream.id)
-                val wrapper = MimetypeWrapper.Unspecified(streamUrl).next()
-                logger.debug { "init wrapper: $wrapper" }
-                this.wrapper = wrapper
-                when (wrapper) {
-                    is MimetypeWrapper.Maybe -> play(mimeType = wrapper.mimeType, url = streamUrl)
-                    is MimetypeWrapper.Trying -> play(mimeType = wrapper.mimeType, url = streamUrl)
-                    else -> return@onEach
-                }
+                if (stream != null) {
+                    val streamUrl = stream.url
+                    streamRepository.reportPlayed(stream.id)
+                    val wrapper = MimetypeWrapper.Unspecified(streamUrl).next()
+                    logger.debug { "init wrapper: $wrapper" }
+                    this.wrapper = wrapper
+                    when (wrapper) {
+                        is MimetypeWrapper.Maybe -> play(
+                            mimeType = wrapper.mimeType,
+                            url = streamUrl
+                        )
 
-                observePreferencesChangingJob?.cancel()
-                observePreferencesChangingJob = mainCoroutineScope.launch {
-                    observePreferencesChanging { timeout, tunneling ->
-                        if (timeout != currentConnectTimeout || tunneling != currentTunneling) {
-                            logger.debug { "preferences changed, replaying..." }
-                            replay()
-                            currentConnectTimeout = timeout
-                            currentTunneling = tunneling
+                        is MimetypeWrapper.Trying -> play(
+                            mimeType = wrapper.mimeType,
+                            url = streamUrl
+                        )
+
+                        else -> return@onEach
+                    }
+
+                    observePreferencesChangingJob?.cancel()
+                    observePreferencesChangingJob = mainCoroutineScope.launch {
+                        observePreferencesChanging { timeout, tunneling ->
+                            if (timeout != currentConnectTimeout || tunneling != currentTunneling) {
+                                logger.debug { "preferences changed, replaying..." }
+                                replay()
+                                currentConnectTimeout = timeout
+                                currentTunneling = tunneling
+                            }
                         }
                     }
                 }
@@ -130,7 +163,6 @@ class PlayerManagerV2Impl @Inject constructor(
             .onEach { logger.debug { "stream: ${json.encodeToString(it)}" } }
             .launchIn(mainCoroutineScope)
     }
-
 
     override val playlist = stream.flatMapLatest { stream ->
         stream?.let { playlistRepository.observe(it.playlistUrl) } ?: flowOf(null)
@@ -149,8 +181,9 @@ class PlayerManagerV2Impl @Inject constructor(
     private var currentTunneling = pref.tunneling
     private var observePreferencesChangingJob: Job? = null
 
-    override suspend fun play(streamId: Int) {
-        this.streamId.value = streamId
+    override suspend fun play(input: PlayerManagerV2.Input) {
+        release()
+        inputChannel.value = input
     }
 
     private fun play(
@@ -189,9 +222,9 @@ class PlayerManagerV2Impl @Inject constructor(
     }
 
     override suspend fun replay() {
-        val streamId = stream.value?.id
+        val prev = inputChannel.value
         release()
-        streamId?.let { play(it) }
+        inputChannel.value = prev
     }
 
     override fun release() {
@@ -202,7 +235,7 @@ class PlayerManagerV2Impl @Inject constructor(
             it.stop()
             it.release()
             it.removeListener(this)
-            streamId.value = null
+            inputChannel.value = null
             size.value = Rect()
             playbackState.value = Player.STATE_IDLE
             playbackException.value = null

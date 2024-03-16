@@ -412,13 +412,11 @@ internal fun StreamFragment(
                                         ?: contentPosition.coerceAtLeast(0L)).toFloat(),
                                     label = "anim-content-position"
                                 )
-                                val enabled = playerState.playState == Player.STATE_READY
                                 Slider(
                                     value = animContentPosition,
                                     valueRange = 0f..contentDuration
                                         .coerceAtLeast(0L)
                                         .toFloat(),
-                                    enabled = enabled,
                                     onValueChange = {
                                         bufferedPosition = it.roundToLong()
                                         maskState.wake()

@@ -17,18 +17,13 @@ import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.execute
 import com.m3u.core.architecture.logger.sandBox
-import com.m3u.core.wrapper.Resource
-import com.m3u.core.wrapper.emitException
-import com.m3u.core.wrapper.emitResource
-import com.m3u.core.wrapper.resourceFlow
 import com.m3u.data.repository.MediaRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.ktor.util.cio.writeChannel
 import io.ktor.utils.io.ByteReadChannel
 import io.ktor.utils.io.copyAndClose
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.InputStream
 import java.io.OutputStream
@@ -51,24 +46,18 @@ class MediaRepositoryImpl @Inject constructor(
         applicationName
     )
 
-    override fun savePicture(url: String): Flow<Resource<File>> = resourceFlow {
-        try {
-            val drawable = checkNotNull(loadDrawable(url))
-            val bitmap = drawable.toBitmap()
-            val name = "Picture_${System.currentTimeMillis()}.png"
-            pictureDirectory.mkdirs()
-            val file = File(pictureDirectory, name)
-            file.outputStream().buffered().use {
-                bitmap.compress(Bitmap.CompressFormat.PNG, BITMAP_QUALITY, it)
-                it.flush()
-            }
-            emitResource(file)
-        } catch (e: Exception) {
-            logger.log(e)
-            emitException(e)
+    override suspend fun savePicture(url: String): File = withContext(ioDispatcher) {
+        val drawable = checkNotNull(loadDrawable(url))
+        val bitmap = drawable.toBitmap()
+        val name = "Picture_${System.currentTimeMillis()}.png"
+        pictureDirectory.mkdirs()
+        val file = File(pictureDirectory, name)
+        file.outputStream().buffered().use {
+            bitmap.compress(Bitmap.CompressFormat.PNG, BITMAP_QUALITY, it)
+            it.flush()
         }
+        file
     }
-        .flowOn(ioDispatcher)
 
     override suspend fun installApk(channel: ByteReadChannel) = logger.sandBox {
         val dir = downloadDirectory.resolve("apks")

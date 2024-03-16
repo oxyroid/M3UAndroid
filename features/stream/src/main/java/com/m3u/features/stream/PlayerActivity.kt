@@ -83,14 +83,16 @@ class PlayerActivity : ComponentActivity() {
         }
         shortcutStreamIdLiveData.observe(this) { streamId ->
             lifecycleScope.launch {
-                streamId?.let { helper.play(it) }
+                // TODO
+//                streamId?.let { helper.play(it) }
             }
         }
         shortcutRecentlyLiveData.observe(this) { recently ->
             if (recently) {
                 lifecycleScope.launch {
-                    val stream = streamRepository.getPlayedRecently() ?: return@launch
-                    helper.play(stream.id)
+                    // TODO
+//                    val stream = streamRepository.getPlayedRecently() ?: return@launch
+//                    helper.play(stream.id)
                 }
             }
         }

@@ -7,23 +7,17 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.navigationBarsIgnoringVisibility
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Sort
 import androidx.compose.material.icons.rounded.CheckCircle
-import com.m3u.material.components.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
@@ -40,6 +34,8 @@ import androidx.tv.foundation.lazy.list.items
 import androidx.tv.material3.DenseListItem
 import androidx.tv.material3.ListItemDefaults
 import com.m3u.i18n.R.string
+import com.m3u.material.components.BottomSheet
+import com.m3u.material.components.Icon
 import com.m3u.material.components.television.dialogFocusable
 import com.m3u.material.model.LocalSpacing
 import kotlinx.collections.immutable.ImmutableList
@@ -65,51 +61,40 @@ fun SortBottomSheet(
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
-    if (visible) {
-        ModalBottomSheet(
-            sheetState = sheetState,
-            onDismissRequest = onDismissRequest,
-            modifier = modifier,
-            windowInsets = WindowInsets(0)
-        ) {
+    BottomSheet(
+        sheetState = sheetState,
+        visible = visible,
+        header = {
+            Icon(
+                imageVector = Icons.AutoMirrored.Rounded.Sort,
+                contentDescription = "sort"
+            )
+            Text(
+                text = stringResource(string.ui_sort),
+                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.weight(1f)
+            )
+        },
+        body = {
             Column(
-                modifier = Modifier.padding(WindowInsets.navigationBarsIgnoringVisibility.asPaddingValues())
+                verticalArrangement = Arrangement.spacedBy(spacing.small),
+                modifier = Modifier
+                    .selectableGroup()
+                    .padding(spacing.medium)
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(spacing.medium),
-                    modifier = Modifier.padding(
-                        horizontal = spacing.medium
+                sorts.forEach { current ->
+                    SortBottomSheetItem(
+                        sort = current,
+                        selected = current == sort,
+                        onSelected = { onChanged(current) }
                     )
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Rounded.Sort,
-                        contentDescription = "sort"
-                    )
-                    Text(
-                        text = stringResource(string.ui_sort),
-                        fontWeight = FontWeight.Bold,
-                        style = MaterialTheme.typography.titleMedium,
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(spacing.small),
-                    modifier = Modifier
-                        .selectableGroup()
-                        .padding(spacing.medium)
-                ) {
-                    sorts.forEach { current ->
-                        SortBottomSheetItem(
-                            sort = current,
-                            selected = current == sort,
-                            onSelected = { onChanged(current) }
-                        )
-                    }
                 }
             }
-        }
-    }
+        },
+        onDismissRequest = onDismissRequest,
+        modifier = modifier
+    )
 }
 
 @Composable
