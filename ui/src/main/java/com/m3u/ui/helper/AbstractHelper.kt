@@ -135,8 +135,8 @@ class AbstractHelper(
         messager.emit(message)
     }
 
-    override suspend fun play(streamId: Int) {
-        playerManager.play(streamId)
+    override suspend fun play(input: PlayerManagerV2.Input) {
+        playerManager.play(input)
     }
 
     override suspend fun replay() {

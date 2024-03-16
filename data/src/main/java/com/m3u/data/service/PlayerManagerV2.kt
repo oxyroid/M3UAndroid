@@ -7,6 +7,7 @@ import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.TrackGroup
 import androidx.media3.common.Tracks
+import com.m3u.data.api.xtream.XtreamStreamInfo
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.Stream
 import kotlinx.coroutines.flow.Flow
@@ -26,9 +27,17 @@ interface PlayerManagerV2 {
     val tracksGroups: StateFlow<List<Tracks.Group>>
     fun chooseTrack(group: TrackGroup, index: Int)
     fun clearTrack(type: @C.TrackType Int)
-    suspend fun play(streamId: Int)
+    suspend fun play(input: Input)
     suspend fun replay()
     fun release()
+
+    sealed class Input(open val streamId: Int) {
+        data class Live(override val streamId: Int) : Input(streamId)
+        data class XtreamEpisode(
+            override val streamId: Int,
+            val episode: XtreamStreamInfo.Episode
+        ) : Input(streamId)
+    }
     fun download()
 }
 

@@ -14,8 +14,14 @@ import com.m3u.core.architecture.dispatcher.Dispatcher
 import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
 import com.m3u.core.architecture.pref.Pref
 import com.m3u.core.architecture.pref.observeAsFlow
+import com.m3u.core.wrapper.Resource
+import com.m3u.core.wrapper.mapResource
+import com.m3u.core.wrapper.resource
+import com.m3u.data.api.xtream.XtreamStreamInfo
+import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.Stream
 import com.m3u.data.repository.MediaRepository
+import com.m3u.data.repository.PlaylistRepository
 import com.m3u.data.repository.StreamRepository
 import com.m3u.data.repository.observeAll
 import com.m3u.data.service.PlayerManagerV2
@@ -29,6 +35,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -38,10 +46,11 @@ import javax.inject.Inject
 
 @HiltViewModel
 class FavouriteViewModel @Inject constructor(
+    private val playlistRepository: PlaylistRepository,
     private val streamRepository: StreamRepository,
     private val mediaRepository: MediaRepository,
     pref: Pref,
-    playerManager: PlayerManagerV2,
+    private val playerManager: PlayerManagerV2,
     @Dispatcher(IO) ioDispatcher: CoroutineDispatcher
 ) : ViewModel() {
     private val zappingMode = pref
@@ -139,4 +148,28 @@ class FavouriteViewModel @Inject constructor(
             ShortcutManagerCompat.pushDynamicShortcut(context, shortcutInfo)
         }
     }
+
+    private val series = MutableStateFlow<Stream?>(null)
+    internal val episodes: StateFlow<Resource<ImmutableList<XtreamStreamInfo.Episode>>> = series
+        .flatMapLatest { series ->
+            if (series == null) flow { }
+            else resource { playlistRepository.readEpisodesOrThrow(series) }
+                .mapResource { it.toPersistentList() }
+        }
+        .stateIn(
+            scope = viewModelScope,
+            initialValue = Resource.Loading,
+            started = SharingStarted.Lazily
+        )
+
+    internal fun onRequestEpisodes(series: Stream) {
+        this.series.value = series
+    }
+
+    internal fun onClearEpisodes() {
+        this.series.value = null
+    }
+
+    internal suspend fun getPlaylist(playlistUrl: String): Playlist? =
+        playlistRepository.get(playlistUrl)
 }

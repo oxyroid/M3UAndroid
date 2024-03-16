@@ -11,6 +11,7 @@ import androidx.core.app.PictureInPictureModeChangedInfo
 import androidx.core.util.Consumer
 import com.m3u.core.unspecified.UBoolean
 import com.m3u.core.wrapper.Message
+import com.m3u.data.service.PlayerManagerV2
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.flow.StateFlow
 
@@ -39,7 +40,7 @@ interface Helper {
     fun enterPipMode(size: Rect)
     fun toast(message: String)
     fun snack(message: String)
-    suspend fun play(streamId: Int)
+    suspend fun play(input: PlayerManagerV2.Input)
     suspend fun replay()
 }
 

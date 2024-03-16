@@ -46,6 +46,12 @@ interface StreamDao {
     @Query("SELECT * FROM streams ORDER BY id")
     fun observeAll(): Flow<List<Stream>>
 
+    @Query("SELECT COUNT(playlistUrl) FROM streams WHERE playlistUrl = :playlistUrl")
+    fun observeCountByPlaylistUrl(playlistUrl: String): Flow<Int>
+
+    @Query("SELECT COUNT(playlistUrl) FROM streams WHERE playlistUrl = :playlistUrl")
+    suspend fun getCountByPlaylistUrl(playlistUrl: String): Int
+
     @Query("SELECT * FROM streams ORDER BY id")
     suspend fun getAll(): List<Stream>
 

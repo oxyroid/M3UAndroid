@@ -17,6 +17,7 @@ import android.provider.Settings
 import android.view.KeyEvent
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -33,6 +34,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -46,8 +48,10 @@ import com.google.accompanist.permissions.shouldShowRationale
 import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.core.util.basic.title
 import com.m3u.core.wrapper.Event
-import com.m3u.data.database.model.DataSource
+import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.Stream
+import com.m3u.data.service.PlayerManagerV2
+import com.m3u.ui.EpisodesBottomSheet
 import com.m3u.features.playlist.internal.PlaylistScreenImpl
 import com.m3u.features.playlist.internal.TvPlaylistScreenImpl
 import com.m3u.i18n.R.string
@@ -86,17 +90,21 @@ internal fun PlaylistRoute(
     val playlistUrl by viewModel.playlistUrl.collectAsStateWithLifecycle()
     val playlist by viewModel.playlist.collectAsStateWithLifecycle()
     val categories by viewModel.categories.collectAsStateWithLifecycle()
+    val episodes by viewModel.episodes.collectAsStateWithLifecycle()
     val pinnedCategories by viewModel.pinnedCategories.collectAsStateWithLifecycle()
     val refreshing by viewModel.subscribingOrRefreshing.collectAsStateWithLifecycle()
 
-    val singleLineTitle by remember {
+    val isSeriesPlaylist by remember {
         derivedStateOf {
-            when (playlist?.type) {
-                DataSource.Xtream.TYPE_SERIES -> false
-                else -> true
-            }
+            playlist?.type in Playlist.SERIES_TYPES
         }
     }
+    val isVodPlaylist by remember {
+        derivedStateOf {
+            playlist?.type in Playlist.VOD_TYPES
+        }
+    }
+
     val sorts = viewModel.sorts
     val sort by viewModel.sort.collectAsStateWithLifecycle()
 
@@ -117,6 +125,8 @@ internal fun PlaylistRoute(
         Manifest.permission.POST_NOTIFICATIONS
     )
 
+    var series: Stream? by remember { mutableStateOf(null) }
+
     LifecycleResumeEffect(playlist) {
         helper.title = playlist?.title?.title().orEmpty()
         onPauseOrDispose {
@@ -134,75 +144,113 @@ internal fun PlaylistRoute(
     }
 
     Background {
-        PlaylistScreen(
-            title = playlist?.title.orEmpty(),
-            query = query,
-            onQuery = { viewModel.onEvent(PlaylistEvent.Query(it)) },
-            rowCount = pref.rowCount,
-            zapping = zapping,
-            categories = categories,
-            pinnedCategories = pinnedCategories,
-            onPinOrUnpinCategory = { viewModel.pinOrUnpinCategory(it) },
-            onHideCategory = { viewModel.hideCategory(it) },
-            scrollUp = state.scrollUp,
-            sorts = sorts,
-            sort = sort,
-            onSort = { viewModel.sort(it) },
-            onStream = { stream ->
-                coroutineScope.launch {
-                    helper.play(stream.id)
-                    navigateToStream()
-                }
-            },
-            onScrollUp = { viewModel.onEvent(PlaylistEvent.ScrollUp) },
-            onRefresh = {
-                when {
-                    !postNotificationPermissionRequired -> {}
-                    postNotificationPermissionState.status is PermissionStatus.Denied -> {
-                        if (postNotificationPermissionState.status.shouldShowRationale) {
-                            postNotificationPermissionState.launchPermissionRequest()
-                        } else {
-                            val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
-                                .apply {
-                                    putExtra(
-                                        Settings.EXTRA_APP_PACKAGE,
-                                        helper.activityContext.packageName
-                                    )
-                                }
-                            helper.activityContext.startActivity(intent)
+        Box {
+            PlaylistScreen(
+                title = playlist?.title.orEmpty(),
+                query = query,
+                onQuery = { viewModel.onEvent(PlaylistEvent.Query(it)) },
+                rowCount = pref.rowCount,
+                zapping = zapping,
+                categories = categories,
+                pinnedCategories = pinnedCategories,
+                onPinOrUnpinCategory = { viewModel.pinOrUnpinCategory(it) },
+                onHideCategory = { viewModel.hideCategory(it) },
+                scrollUp = state.scrollUp,
+                sorts = sorts,
+                sort = sort,
+                onSort = { viewModel.sort(it) },
+                onStream = { stream ->
+                    if (!isSeriesPlaylist) {
+                        coroutineScope.launch {
+                            helper.play(PlayerManagerV2.Input.Live(stream.id))
+                            navigateToStream()
                         }
+                    } else {
+                        series = stream
+                    }
+                },
+                onScrollUp = { viewModel.onEvent(PlaylistEvent.ScrollUp) },
+                onRefresh = {
+                    when {
+                        !postNotificationPermissionRequired -> {}
+                        postNotificationPermissionState.status is PermissionStatus.Denied -> {
+                            if (postNotificationPermissionState.status.shouldShowRationale) {
+                                postNotificationPermissionState.launchPermissionRequest()
+                            } else {
+                                val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                                    .apply {
+                                        putExtra(
+                                            Settings.EXTRA_APP_PACKAGE,
+                                            helper.activityContext.packageName
+                                        )
+                                    }
+                                helper.activityContext.startActivity(intent)
+                            }
+                            return@PlaylistScreen
+                        }
+
+                        else -> {}
+                    }
+                    viewModel.onEvent(PlaylistEvent.Refresh)
+                },
+                contentPadding = contentPadding,
+                onFavorite = { id, target ->
+                    viewModel.onEvent(
+                        PlaylistEvent.Favourite(
+                            id,
+                            target
+                        )
+                    )
+                },
+                hide = { id -> viewModel.onEvent(PlaylistEvent.Hide(id)) },
+                savePicture = {
+                    if (writeExternalPermissionRequired && writeExternalPermissionState.status is PermissionStatus.Denied) {
+                        writeExternalPermissionState.launchPermissionRequest()
                         return@PlaylistScreen
                     }
-
-                    else -> {}
-                }
-                viewModel.onEvent(PlaylistEvent.Refresh)
-            },
-            contentPadding = contentPadding,
-            onFavorite = { id, target -> viewModel.onEvent(PlaylistEvent.Favourite(id, target)) },
-            hide = { id -> viewModel.onEvent(PlaylistEvent.Hide(id)) },
-            savePicture = {
-                if (writeExternalPermissionRequired && writeExternalPermissionState.status is PermissionStatus.Denied) {
-                    writeExternalPermissionState.launchPermissionRequest()
-                    return@PlaylistScreen
-                }
-                viewModel.onEvent(PlaylistEvent.SavePicture(it))
-            },
-            createShortcut = { viewModel.onEvent(PlaylistEvent.CreateShortcut(context, it)) },
-            singleLineTitle = singleLineTitle,
-            modifier = Modifier
-                .fillMaxSize()
-                .thenIf(!tv && pref.godMode) {
-                    Modifier.interceptVolumeEvent { event ->
-                        pref.rowCount = when (event) {
-                            KeyEvent.KEYCODE_VOLUME_UP -> (pref.rowCount - 1).coerceAtLeast(1)
-                            KeyEvent.KEYCODE_VOLUME_DOWN -> (pref.rowCount + 1).coerceAtMost(2)
-                            else -> return@interceptVolumeEvent
+                    viewModel.onEvent(PlaylistEvent.SavePicture(it))
+                },
+                createShortcut = { viewModel.onEvent(PlaylistEvent.CreateShortcut(context, it)) },
+                isVodPlaylist = isVodPlaylist,
+                isSeriesPlaylist = isSeriesPlaylist,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .thenIf(!tv && pref.godMode) {
+                        Modifier.interceptVolumeEvent { event ->
+                            pref.rowCount = when (event) {
+                                KeyEvent.KEYCODE_VOLUME_UP -> (pref.rowCount - 1).coerceAtLeast(1)
+                                KeyEvent.KEYCODE_VOLUME_DOWN -> (pref.rowCount + 1).coerceAtMost(2)
+                                else -> return@interceptVolumeEvent
+                            }
                         }
                     }
-                }
-                .then(modifier)
-        )
+                    .then(modifier)
+            )
+
+            if (isSeriesPlaylist) {
+                EpisodesBottomSheet(
+                    series = series,
+                    episodes = episodes,
+                    onEpisodeClick = { episode ->
+                        coroutineScope.launch {
+                            series?.let {
+                                val input = PlayerManagerV2.Input.XtreamEpisode(
+                                    streamId = it.id,
+                                    episode = episode
+                                )
+                                helper.play(input)
+                                navigateToStream()
+                            }
+                        }
+                    },
+                    onRefresh = { series?.let { viewModel.onRequestEpisodes(it) } },
+                    onDismissRequest = {
+                        series = null
+                        viewModel.onClearEpisodes()
+                    }
+                )
+            }
+        }
     }
 }
 
@@ -230,7 +278,8 @@ private fun PlaylistScreen(
     savePicture: (streamId: Int) -> Unit,
     createShortcut: (streamId: Int) -> Unit,
     contentPadding: PaddingValues,
-    singleLineTitle: Boolean,
+    isVodPlaylist: Boolean,
+    isSeriesPlaylist: Boolean,
     modifier: Modifier = Modifier
 ) {
     val helper = LocalHelper.current
@@ -282,7 +331,7 @@ private fun PlaylistScreen(
             hide = hide,
             onSavePicture = savePicture,
             createShortcut = createShortcut,
-            singleLineTitle = singleLineTitle,
+            isVodOrSeriesPlaylist = isVodPlaylist || isSeriesPlaylist,
             modifier = modifier
         )
     } else {

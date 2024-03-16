@@ -29,6 +29,7 @@ object DatabaseModule {
         M3UDatabase::class.java,
         "m3u-database"
     )
+        .fallbackToDestructiveMigration()
         .addCallback(
             object : RoomDatabase.Callback() {
                 override fun onCreate(db: SupportSQLiteDatabase) {

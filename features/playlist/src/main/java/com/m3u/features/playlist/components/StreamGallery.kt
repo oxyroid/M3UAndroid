@@ -11,6 +11,7 @@ import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.data.database.model.Stream
 import com.m3u.material.ktx.plus
 import com.m3u.material.model.LocalSpacing
@@ -25,9 +26,9 @@ internal fun StreamGallery(
     streams: ImmutableList<Stream>,
     zapping: Stream?,
     recently: Boolean,
-    singleLineTitle: Boolean,
+    isVodOrSeriesPlaylist: Boolean,
     onClick: (Stream) -> Unit,
-    onMenu: (Stream) -> Unit,
+    onLongClick: (Stream) -> Unit,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(0.dp),
 ) {
@@ -40,10 +41,10 @@ internal fun StreamGallery(
                 zapping = zapping,
                 recently = recently,
                 onClick = onClick,
-                onMenu = onMenu,
+                onLongClick = onLongClick,
                 modifier = modifier,
                 contentPadding = contentPadding,
-                singleLineTitle = singleLineTitle
+                isVodOrSeriesPlaylist = isVodOrSeriesPlaylist
             )
         }
 
@@ -55,7 +56,7 @@ internal fun StreamGallery(
                 zapping = zapping,
                 recently = recently,
                 onClick = onClick,
-                onMenu = onMenu,
+                onMenu = onLongClick,
                 modifier = modifier,
                 contentPadding = contentPadding
             )
@@ -72,17 +73,24 @@ private fun StreamGalleryImpl(
     streams: ImmutableList<Stream>,
     zapping: Stream?,
     recently: Boolean,
-    singleLineTitle: Boolean,
+    isVodOrSeriesPlaylist: Boolean,
     onClick: (Stream) -> Unit,
-    onMenu: (Stream) -> Unit,
+    onLongClick: (Stream) -> Unit,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(0.dp),
 ) {
     val spacing = LocalSpacing.current
+    val pref = LocalPref.current
+
+    val actualRowCount = when {
+        pref.noPictureMode -> rowCount
+        isVodOrSeriesPlaylist -> rowCount + 2
+        else -> rowCount
+    }
 
     LazyVerticalStaggeredGrid(
         state = state,
-        columns = StaggeredGridCells.Fixed(rowCount),
+        columns = StaggeredGridCells.Fixed(actualRowCount),
         verticalItemSpacing = spacing.medium,
         horizontalArrangement = Arrangement.spacedBy(spacing.medium),
         contentPadding = PaddingValues(spacing.medium) + contentPadding,
@@ -97,10 +105,10 @@ private fun StreamGalleryImpl(
                 stream = stream,
                 recently = recently,
                 zapping = zapping == stream,
+                isVodOrSeriesPlaylist = isVodOrSeriesPlaylist,
                 onClick = { onClick(stream) },
-                onLongClick = { onMenu(stream) },
-                modifier = Modifier.fillMaxWidth(),
-                singleLineTitle = singleLineTitle
+                onLongClick = { onLongClick(stream) },
+                modifier = Modifier.fillMaxWidth()
             )
         }
     }

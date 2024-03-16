@@ -94,14 +94,7 @@ class SubscriptionWorker @AssistedInject constructor(
                             basicUrl = basicUrl,
                             username = username,
                             password = password,
-                            type = type,
-                            callback = { count, total ->
-                                val notification = createNotification()
-                                    .setContentText("[$count/${total.takeIf { it != -1 } ?: "~"}] Downloading...")
-                                    .setProgress(total, count, count == -1)
-                                    .build()
-                                manager.notify(NOTIFICATION_ID, notification)
-                            }
+                            type = type
                         )
                         Result.success()
                     } catch (e: Exception) {

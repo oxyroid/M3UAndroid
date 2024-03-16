@@ -56,6 +56,17 @@ data class XtreamInfo(
     )
 }
 
+data class XtreamOutput(
+    val liveCategories: List<XtreamCategory> = emptyList(),
+    val vodCategories: List<XtreamCategory> = emptyList(),
+    val serialCategories: List<XtreamCategory> = emptyList(),
+    val allowedOutputFormats: List<String> = emptyList(),
+    val serverProtocol: String = "http",
+    val port: Int? = null
+)
+
+sealed interface XtreamEntityOutput
+
 @Serializable
 data class XtreamLive(
     @SerialName("added")
@@ -82,7 +93,7 @@ data class XtreamLive(
     val tvArchive: Int?,
     @SerialName("tv_archive_duration")
     val tvArchiveDuration: Int?
-)
+): XtreamEntityOutput
 
 @Serializable
 data class XtreamVod(
@@ -110,7 +121,7 @@ data class XtreamVod(
     val streamId: Int? = null,
     @SerialName("stream_type")
     val streamType: String? = null
-)
+): XtreamEntityOutput
 
 @Serializable
 data class XtreamSerial(
@@ -144,7 +155,7 @@ data class XtreamSerial(
     val seriesId: Int? = null,
     @SerialName("youtube_trailer")
     val youtubeTrailer: String? = null
-)
+): XtreamEntityOutput
 
 fun XtreamLive.toStream(
     basicUrl: String,
@@ -173,5 +184,19 @@ fun XtreamVod.toStream(
     category = category,
     title = name.orEmpty(),
     cover = streamIcon,
+    playlistUrl = playlistUrl
+)
+
+fun XtreamSerial.asStream(
+    basicUrl: String,
+    username: String,
+    password: String,
+    playlistUrl: String,
+    category: String
+): Stream = Stream(
+    url = "$basicUrl/series/$username/$password/$seriesId",
+    category = category,
+    title = name.orEmpty(),
+    cover = cover,
     playlistUrl = playlistUrl
 )

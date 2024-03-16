@@ -95,7 +95,7 @@ internal fun PlaylistScreenImpl(
     onSavePicture: (streamId: Int) -> Unit,
     createShortcut: (streamId: Int) -> Unit,
     isAtTopState: MutableState<Boolean>,
-    singleLineTitle: Boolean,
+    isVodOrSeriesPlaylist: Boolean,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues()
 ) {
@@ -220,10 +220,10 @@ internal fun PlaylistScreenImpl(
                             streams = categories[currentPage].streams,
                             zapping = zapping,
                             recently = sort == Sort.RECENTLY,
-                            singleLineTitle = singleLineTitle,
+                            isVodOrSeriesPlaylist = isVodOrSeriesPlaylist,
                             onClick = onStream,
                             contentPadding = inner,
-                            onMenu = { dialogStatus = DialogStatus.Selections(it) },
+                            onLongClick = { dialogStatus = DialogStatus.Selections(it) },
                             modifier = modifier.haze(
                                 LocalHazeState.current,
                                 HazeDefaults.style(MaterialTheme.colorScheme.surface)
@@ -243,7 +243,6 @@ internal fun PlaylistScreenImpl(
                 connection = connection,
             )
     )
-
 
     SortBottomSheet(
         visible = isSortSheetVisible,

@@ -4,6 +4,7 @@ import android.content.ComponentName
 import android.content.ContentResolver
 import android.content.Context
 import android.content.Intent
+import android.util.Log
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.graphics.drawable.IconCompat
@@ -24,6 +25,9 @@ import com.m3u.core.architecture.viewmodel.BaseViewModel
 import com.m3u.core.wrapper.Message
 import com.m3u.core.wrapper.Resource
 import com.m3u.core.wrapper.eventOf
+import com.m3u.core.wrapper.mapResource
+import com.m3u.core.wrapper.resource
+import com.m3u.data.api.xtream.XtreamStreamInfo
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.Stream
 import com.m3u.data.repository.MediaRepository
@@ -46,6 +50,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
@@ -161,8 +166,7 @@ class PlaylistViewModel @Inject constructor(
                 messager.emit(PlaylistMessage.StreamCoverNotFound)
                 return@launch
             }
-            mediaRepository
-                .savePicture(cover)
+            resource { mediaRepository.savePicture(cover) }
                 .onEach { resource ->
                     when (resource) {
                         Resource.Loading -> {}
@@ -342,5 +346,27 @@ class PlaylistViewModel @Inject constructor(
         viewModelScope.launch {
             playlistRepository.hideOrUnhideCategory(currentPlaylistUrl, category)
         }
+    }
+
+    private val series = MutableStateFlow<Stream?>(null)
+    internal val episodes: StateFlow<Resource<ImmutableList<XtreamStreamInfo.Episode>>> = series
+        .flatMapLatest { series ->
+            if (series == null) flow {  Log.e("TAG", "123")  }
+            else resource { playlistRepository.readEpisodesOrThrow(series) }
+                .mapResource { it.toPersistentList() }
+                .onEach { Log.e("TAG", "$it") }
+        }
+        .stateIn(
+            scope = viewModelScope,
+            initialValue = Resource.Loading,
+            started = SharingStarted.Lazily
+        )
+
+    internal fun onRequestEpisodes(series: Stream) {
+        this.series.value = series
+    }
+
+    internal fun onClearEpisodes() {
+        this.series.value = null
     }
 }
