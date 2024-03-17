@@ -1,13 +1,9 @@
 package com.m3u.data.service.internal
 
-import android.content.ContentValues
 import android.content.Context
 import android.graphics.Rect
-import android.net.Uri
-import android.os.Build
-import android.provider.ContactsContract.Directory
-import android.provider.MediaStore
-import androidx.core.net.toFile
+import android.os.Environment
+import androidx.core.net.toUri
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
@@ -18,10 +14,7 @@ import androidx.media3.common.TrackGroup
 import androidx.media3.common.TrackSelectionOverride
 import androidx.media3.common.Tracks
 import androidx.media3.common.VideoSize
-import androidx.media3.database.StandaloneDatabaseProvider
 import androidx.media3.datasource.DataSource
-import androidx.media3.datasource.cache.NoOpCacheEvictor
-import androidx.media3.datasource.cache.SimpleCache
 import androidx.media3.datasource.okhttp.OkHttpDataSource
 import androidx.media3.datasource.rtmp.RtmpDataSource
 import androidx.media3.exoplayer.DefaultLoadControl
@@ -29,7 +22,6 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.LoadControl
 import androidx.media3.exoplayer.RenderersFactory
 import androidx.media3.exoplayer.hls.HlsMediaSource
-import androidx.media3.exoplayer.offline.DownloadHelper
 import androidx.media3.exoplayer.offline.DownloadManager
 import androidx.media3.exoplayer.offline.DownloadRequest
 import androidx.media3.exoplayer.offline.DownloadService
@@ -56,6 +48,7 @@ import com.m3u.data.SSLs
 import com.m3u.data.repository.PlaylistRepository
 import com.m3u.data.repository.StreamRepository
 import com.m3u.data.service.PlayerManagerV2
+import com.m3u.data.service.StreamDownloadService
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.ktor.http.Url
 import kotlinx.coroutines.CoroutineDispatcher
@@ -79,9 +72,9 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
+import java.io.File
 import java.util.UUID
 import javax.inject.Inject
-import kotlin.random.Random
 
 class PlayerManagerV2Impl @Inject constructor(
     @Dispatcher(Main) mainDispatcher: CoroutineDispatcher,
@@ -240,10 +233,22 @@ class PlayerManagerV2Impl @Inject constructor(
     }
 
     override fun download() {
-        val downloadRequest = DownloadRequest.Builder(UUID.randomUUID().toString(), Uri.EMPTY)
+        val downloadRequest = DownloadRequest.Builder(
+            UUID.randomUUID().toString(),
+            downloadDirectory.toUri()
+        )
             .build()
-        downloadManager
-        DownloadService.sendAddDownload()
+
+        DownloadService.sendAddDownload(
+            context,
+            StreamDownloadService::class.java,
+            downloadRequest,
+            true
+        )
+    }
+
+    private val downloadDirectory: File by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
+        context.getExternalFilesDir(null) ?: context.filesDir
     }
 
     override fun clearTrack(type: @C.TrackType Int) {

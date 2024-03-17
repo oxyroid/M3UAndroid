@@ -44,6 +44,7 @@ android {
 
 dependencies {
     implementation(project(":core"))
+    implementation(libs.androidx.media3.exoplayer.workmanager)
 
     val richCodec = gradle
         .startParameter
