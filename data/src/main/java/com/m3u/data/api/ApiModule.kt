@@ -3,7 +3,6 @@
 package com.m3u.data.api
 
 import android.app.Application
-import com.chuckerteam.chucker.api.ChuckerInterceptor
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.data.Certs
@@ -52,7 +51,7 @@ internal object ApiModule {
                         .build()
                 }
             }
-            .addInterceptor(ChuckerInterceptor(application))
+//            .addInterceptor(ChuckerInterceptor(application))
             .sslSocketFactory(SSLs.TLSTrustAll.socketFactory, Certs.TrustAll)
             .hostnameVerifier { _, _ -> true }
             .build()

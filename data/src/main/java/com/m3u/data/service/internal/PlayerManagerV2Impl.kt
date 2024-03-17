@@ -278,7 +278,6 @@ class PlayerManagerV2Impl @Inject constructor(
                 .setContentType(C.AUDIO_CONTENT_TYPE_MOVIE)
                 .build()
             setAudioAttributes(attributes, true)
-            addAnalyticsListener(EventLogger())
             playWhenReady = true
             addListener(this@PlayerManagerV2Impl)
         }
