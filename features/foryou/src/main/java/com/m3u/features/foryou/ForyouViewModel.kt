@@ -99,7 +99,7 @@ class ForyouViewModel @Inject constructor(
         .stateIn(
             scope = viewModelScope,
             initialValue = Resource.Loading,
-            started = SharingStarted.Lazily
+            started = SharingStarted.WhileSubscribed(5_000L)
         )
 
     internal fun onRequestEpisodes(series: Stream) {

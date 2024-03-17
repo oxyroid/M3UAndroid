@@ -122,7 +122,7 @@ class AppViewModel @Inject constructor(
         .stateIn(
             scope = viewModelScope,
             initialValue = RemoteControlSheetValue.Idle,
-            started = SharingStarted.Lazily
+            started = SharingStarted.WhileSubscribed(5_000L)
         )
 
     private var checkTelevisionCodeOnSmartphoneJob: Job? = null

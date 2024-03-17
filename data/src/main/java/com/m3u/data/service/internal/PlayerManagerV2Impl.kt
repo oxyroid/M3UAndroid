@@ -93,7 +93,7 @@ class PlayerManagerV2Impl @Inject constructor(
     override val player = MutableStateFlow<ExoPlayer?>(null)
     override val size = MutableStateFlow(Rect())
 
-    private val inputChannel = MutableStateFlow<PlayerManagerV2.Input?>(null)
+    override val inputChannel = MutableStateFlow<PlayerManagerV2.Input?>(null)
     private val playableStream = inputChannel
         .flatMapLatest { input ->
             when (input) {
@@ -107,7 +107,7 @@ class PlayerManagerV2Impl @Inject constructor(
         }
         .shareIn(
             scope = ioCoroutineScope,
-            started = SharingStarted.Lazily
+            started = SharingStarted.WhileSubscribed(5_000L)
         )
 
     override val stream = inputChannel
@@ -123,7 +123,7 @@ class PlayerManagerV2Impl @Inject constructor(
         .stateIn(
             scope = ioCoroutineScope,
             initialValue = null,
-            started = SharingStarted.Lazily
+            started = SharingStarted.WhileSubscribed(5_000L)
         )
 
     init {
@@ -177,7 +177,7 @@ class PlayerManagerV2Impl @Inject constructor(
         .stateIn(
             scope = ioCoroutineScope,
             initialValue = null,
-            started = SharingStarted.Lazily
+            started = SharingStarted.WhileSubscribed(5_000L)
         )
 
     override val playbackState = MutableStateFlow<@Player.State Int>(Player.STATE_IDLE)
