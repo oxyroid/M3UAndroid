@@ -17,9 +17,7 @@ import androidx.media3.common.VideoSize
 import androidx.media3.datasource.DataSource
 import androidx.media3.datasource.okhttp.OkHttpDataSource
 import androidx.media3.datasource.rtmp.RtmpDataSource
-import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.exoplayer.LoadControl
 import androidx.media3.exoplayer.RenderersFactory
 import androidx.media3.exoplayer.hls.HlsMediaSource
 import androidx.media3.exoplayer.offline.DownloadManager
@@ -300,7 +298,6 @@ class PlayerManagerV2Impl @Inject constructor(
         .setMediaSourceFactory(mediaSourceFactory)
         .setRenderersFactory(renderersFactory)
         .setTrackSelector(createTrackSelector(tunneling))
-        .setLoadControl(loadControl)
         .setHandleAudioBecomingNoisy(true)
         .build()
         .apply {
@@ -316,13 +313,6 @@ class PlayerManagerV2Impl @Inject constructor(
 
     private val renderersFactory: RenderersFactory by lazy {
         Codecs.createRenderersFactory(context)
-    }
-
-    private val loadControl: LoadControl by lazy {
-        DefaultLoadControl.Builder()
-            .setPrioritizeTimeOverSizeThresholds(true)
-            .setTargetBufferBytes(C.LENGTH_UNSET)
-            .build()
     }
 
     private fun createTrackSelector(tunneling: Boolean): TrackSelector {

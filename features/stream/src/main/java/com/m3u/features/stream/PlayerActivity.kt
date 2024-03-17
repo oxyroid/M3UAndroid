@@ -13,6 +13,8 @@ import com.m3u.core.Contracts
 import com.m3u.core.architecture.dispatcher.Dispatcher
 import com.m3u.core.architecture.dispatcher.M3uDispatchers.Main
 import com.m3u.core.architecture.pref.Pref
+import com.m3u.data.database.model.Playlist
+import com.m3u.data.repository.PlaylistRepository
 import com.m3u.data.repository.StreamRepository
 import com.m3u.data.service.Messager
 import com.m3u.data.service.PlayerManagerV2
@@ -52,6 +54,9 @@ class PlayerActivity : ComponentActivity() {
     lateinit var streamRepository: StreamRepository
 
     @Inject
+    lateinit var playlistRepository: PlaylistRepository
+
+    @Inject
     @Dispatcher(Main)
     lateinit var mainDispatcher: CoroutineDispatcher
 
@@ -82,17 +87,27 @@ class PlayerActivity : ComponentActivity() {
             }
         }
         shortcutStreamIdLiveData.observe(this) { streamId ->
-            lifecycleScope.launch {
-                // TODO
-//                streamId?.let { helper.play(it) }
-            }
+            streamId ?: return@observe
+            play(streamId)
         }
         shortcutRecentlyLiveData.observe(this) { recently ->
             if (recently) {
                 lifecycleScope.launch {
-                    // TODO
-//                    val stream = streamRepository.getPlayedRecently() ?: return@launch
-//                    helper.play(stream.id)
+                    val stream = streamRepository.getPlayedRecently() ?: return@launch
+                    play(stream.id)
+                }
+            }
+        }
+    }
+
+    private fun play(streamId: Int) {
+        lifecycleScope.launch {
+            val stream = streamRepository.get(streamId) ?: return@launch
+            val playlist = playlistRepository.get(stream.playlistUrl)
+            when {
+                playlist?.type in Playlist.SERIES_TYPES -> {} // TODO
+                else -> {
+                    helper.play(PlayerManagerV2.Input.Live(stream.id))
                 }
             }
         }
