@@ -118,7 +118,9 @@ class PlaylistRepositoryImpl @Inject constructor(
                 currentCount += streams.size
                 callback(currentCount, -1)
 
-                val playlist = Playlist(title, actualUrl)
+                val playlist = playlistDao.getByUrl(actualUrl)?.copy(
+                    title = title
+                ) ?: Playlist(title, actualUrl, source = DataSource.M3U)
                 playlistDao.insertOrReplace(playlist)
 
                 streamDao.compareAndUpdate(
@@ -150,33 +152,55 @@ class PlaylistRepositoryImpl @Inject constructor(
             serverProtocol,
             port
         ) = xtreamParser.output(input)
-        val livePlaylist = Playlist(
-            title = title,
-            url = XtreamInput.encodeToPlaylistUrl(
-                input = input.copy(type = DataSource.Xtream.TYPE_LIVE),
-                serverProtocol = serverProtocol,
-                port = port
-            ),
-            source = DataSource.Xtream
-        )
-        val vodPlaylist = Playlist(
-            title = title,
-            url = XtreamInput.encodeToPlaylistUrl(
-                input = input.copy(type = DataSource.Xtream.TYPE_VOD),
-                serverProtocol = serverProtocol,
-                port = port
-            ),
-            source = DataSource.Xtream
-        )
-        val seriesPlaylist = Playlist(
-            title = title,
-            url = XtreamInput.encodeToPlaylistUrl(
-                input = input.copy(type = DataSource.Xtream.TYPE_SERIES),
-                serverProtocol = serverProtocol,
-                port = port
-            ),
-            source = DataSource.Xtream
-        )
+
+        val livePlaylist = XtreamInput.encodeToPlaylistUrl(
+            input = input.copy(type = DataSource.Xtream.TYPE_LIVE),
+            serverProtocol = serverProtocol,
+            port = port
+        ).let { url ->
+            playlistDao.getByUrl(url)
+                ?.takeIf { it.source == DataSource.Xtream }
+                ?.copy(
+                    title = title
+                )
+                ?: Playlist(
+                    title = title,
+                    url = url,
+                    source = DataSource.Xtream
+                )
+        }
+        val vodPlaylist = XtreamInput.encodeToPlaylistUrl(
+            input = input.copy(type = DataSource.Xtream.TYPE_VOD),
+            serverProtocol = serverProtocol,
+            port = port
+        ).let { url ->
+            playlistDao.getByUrl(url)
+                ?.takeIf { it.source == DataSource.Xtream }
+                ?.copy(
+                    title = title
+                )
+                ?: Playlist(
+                    title = title,
+                    url = url,
+                    source = DataSource.Xtream
+                )
+        }
+        val seriesPlaylist = XtreamInput.encodeToPlaylistUrl(
+            input = input.copy(type = DataSource.Xtream.TYPE_SERIES),
+            serverProtocol = serverProtocol,
+            port = port
+        ).let { url ->
+            playlistDao.getByUrl(url)
+                ?.takeIf { it.source == DataSource.Xtream }
+                ?.copy(
+                    title = title
+                )
+                ?: Playlist(
+                    title = title,
+                    url = url,
+                    source = DataSource.Xtream
+                )
+        }
 
         val requiredLives = type == null || type == DataSource.Xtream.TYPE_LIVE
         val requiredVods = type == null || type == DataSource.Xtream.TYPE_VOD
