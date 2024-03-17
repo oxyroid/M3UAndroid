@@ -24,6 +24,10 @@ interface Logger {
     annotation class MessageImpl
 }
 
+fun Logger.debug(block: () -> Any?) {
+    log(block().toString())
+}
+
 fun Logger.prefix(text: String): PrefixLogger = PrefixLogger(this, text)
 
 class PrefixLogger(

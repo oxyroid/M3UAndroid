@@ -33,11 +33,11 @@ import com.m3u.core.architecture.dispatcher.Dispatcher
 import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
 import com.m3u.core.architecture.dispatcher.M3uDispatchers.Main
 import com.m3u.core.architecture.logger.Logger
+import com.m3u.core.architecture.logger.debug
 import com.m3u.core.architecture.logger.prefix
 import com.m3u.core.architecture.pref.Pref
 import com.m3u.core.architecture.pref.annotation.ReconnectMode
 import com.m3u.core.architecture.pref.observeAsFlow
-import com.m3u.data.BuildConfig
 import com.m3u.data.SSLs
 import com.m3u.data.database.model.copyXtreamEpisode
 import com.m3u.data.repository.PlaylistRepository
@@ -405,12 +405,6 @@ class PlayerManagerV2Impl @Inject constructor(
     private val logger = before.prefix("player-manager")
     private val json = Json {
         prettyPrint = true
-    }
-
-    private fun Logger.debug(block: () -> String) {
-        if (BuildConfig.DEBUG) {
-            log(block())
-        }
     }
 }
 
