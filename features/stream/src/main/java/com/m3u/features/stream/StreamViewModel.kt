@@ -59,6 +59,15 @@ class StreamViewModel @Inject constructor(
 
     internal val stream: StateFlow<Stream?> = playerManager.stream
     internal val playlist: StateFlow<Playlist?> = playerManager.playlist
+    
+    internal val addToFavouriteAllowed: StateFlow<Boolean> = playerManager
+        .inputChannel
+        .map { it is PlayerManagerV2.Input.Live }
+        .stateIn(
+            scope = viewModelScope,
+            initialValue = false,
+            started = SharingStarted.WhileSubscribed(5_000L)
+        )
 
     internal val formats: StateFlow<ImmutableMap<Int, ImmutableList<Format>>> =
         playerManager
@@ -71,7 +80,7 @@ class StreamViewModel @Inject constructor(
             .stateIn(
                 scope = viewModelScope,
                 initialValue = persistentMapOf(),
-                started = SharingStarted.Lazily
+                started = SharingStarted.WhileSubscribed(5_000L)
             )
 
     internal val selectedFormats: StateFlow<ImmutableMap<@C.TrackType Int, Format?>> =
@@ -81,7 +90,7 @@ class StreamViewModel @Inject constructor(
             .stateIn(
                 scope = viewModelScope,
                 initialValue = persistentMapOf(),
-                started = SharingStarted.Lazily
+                started = SharingStarted.WhileSubscribed(5_000L)
             )
 
     internal fun chooseTrack(type: @C.TrackType Int, format: Format) {

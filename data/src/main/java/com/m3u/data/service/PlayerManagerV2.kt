@@ -31,6 +31,8 @@ interface PlayerManagerV2 {
     suspend fun replay()
     fun release()
 
+    val inputChannel: StateFlow<Input?>
+
     sealed class Input(open val streamId: Int) {
         data class Live(override val streamId: Int) : Input(streamId)
         data class XtreamEpisode(
