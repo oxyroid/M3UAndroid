@@ -1,3 +1,5 @@
+@file:Suppress("unused")
+
 package com.m3u.data.parser.xtream
 
 import kotlinx.serialization.SerialName
@@ -7,29 +9,29 @@ import kotlinx.serialization.Serializable
 data class XtreamStreamInfo(
     @SerialName("episodes")
     val episodes: Map<String, List<Episode>> = emptyMap(),
-    @SerialName("info")
-    val info: Info?,
+//    @SerialName("info")
+//    val info: Info?,
 //    @SerialName("seasons")
 //    val seasons: List<String?> = emptyList()
 ) {
     @Serializable
     data class Episode(
-        @SerialName("added")
-        val added: String?,
+//        @SerialName("added")
+//        val added: String?,
         @SerialName("container_extension")
         val containerExtension: String?,
-        @SerialName("custom_sid")
-        val customSid: String?,
-        @SerialName("direct_source")
-        val directSource: String?,
+//        @SerialName("custom_sid")
+//        val customSid: String?,
+//        @SerialName("direct_source")
+//        val directSource: String?,
         @SerialName("episode_num")
         val episodeNum: String?,
         @SerialName("id")
         val id: String?,
-        @SerialName("info")
-        val info: Info?,
-        @SerialName("season")
-        val season: String?,
+//        @SerialName("info")
+//        val info: Info?,
+//        @SerialName("season")
+//        val season: String?,
         @SerialName("title")
         val title: String?
     ) {
