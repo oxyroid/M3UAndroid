@@ -12,7 +12,7 @@ import com.m3u.data.database.model.Stream
 import kotlinx.coroutines.flow.Flow
 
 @Dao
-interface StreamDao {
+internal interface StreamDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertOrReplace(stream: Stream)
 

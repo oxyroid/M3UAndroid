@@ -12,7 +12,7 @@ import kotlinx.datetime.Clock
 import javax.inject.Inject
 import kotlin.time.Duration
 
-class StreamRepositoryImpl @Inject constructor(
+internal class StreamRepositoryImpl @Inject constructor(
     private val streamDao: StreamDao,
     private val logger: Logger,
 ) : StreamRepository {

@@ -6,7 +6,7 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.m3u.core.util.Likable
-import com.m3u.data.api.xtream.XtreamStreamInfo
+import com.m3u.data.parser.xtream.XtreamStreamInfo
 import io.ktor.http.URLBuilder
 import io.ktor.http.Url
 import io.ktor.http.appendPathSegments

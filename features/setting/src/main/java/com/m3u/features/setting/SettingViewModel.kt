@@ -26,7 +26,7 @@ import com.m3u.data.database.model.ColorPack
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.Stream
-import com.m3u.data.parser.XtreamInput
+import com.m3u.data.parser.xtream.XtreamInput
 import com.m3u.data.repository.PlaylistRepository
 import com.m3u.data.repository.StreamRepository
 import com.m3u.data.repository.observeAll

@@ -1,9 +1,7 @@
-package com.m3u.data.parser.internal
+package com.m3u.data.parser.m3u
 
 import com.m3u.core.architecture.dispatcher.Dispatcher
 import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
-import com.m3u.data.parser.M3UData
-import com.m3u.data.parser.M3UParser
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 import java.io.InputStream

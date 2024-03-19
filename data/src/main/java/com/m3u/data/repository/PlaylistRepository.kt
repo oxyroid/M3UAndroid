@@ -1,7 +1,7 @@
 package com.m3u.data.repository
 
 import android.net.Uri
-import com.m3u.data.api.xtream.XtreamStreamInfo
+import com.m3u.data.parser.xtream.XtreamStreamInfo
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.PlaylistWithCount
 import com.m3u.data.database.model.PlaylistWithStreams

@@ -1,13 +1,10 @@
-package com.m3u.data.parser
+package com.m3u.data.parser.m3u
 
 import android.net.Uri
 import android.util.Log
 import com.m3u.data.database.model.Stream
-import java.io.InputStream
 
-interface M3UParser : Parser<InputStream, List<M3UData>>
-
-data class M3UData(
+internal data class M3UData(
     val id: String = "",
     val name: String = "",
     val cover: String = "",
@@ -19,7 +16,7 @@ data class M3UData(
     val licenseKey: String? = null,
 )
 
-fun M3UData.toStream(
+internal fun M3UData.toStream(
     playlistUrl: String,
     seen: Long
 ): Stream {

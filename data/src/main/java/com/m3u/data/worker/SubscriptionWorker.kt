@@ -12,7 +12,7 @@ import androidx.work.workDataOf
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.data.R
 import com.m3u.data.database.model.DataSource
-import com.m3u.data.parser.XtreamInput
+import com.m3u.data.parser.xtream.XtreamInput
 import com.m3u.data.repository.PlaylistRepository
 import com.m3u.data.service.Messager
 import com.m3u.i18n.R.string

@@ -1,4 +1,4 @@
-package com.m3u.data.api.xtream
+package com.m3u.data.parser.xtream
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
