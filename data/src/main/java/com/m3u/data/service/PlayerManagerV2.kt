@@ -7,7 +7,7 @@ import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.TrackGroup
 import androidx.media3.common.Tracks
-import com.m3u.data.api.xtream.XtreamStreamInfo
+import com.m3u.data.parser.xtream.XtreamStreamInfo
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.Stream
 import kotlinx.coroutines.Dispatchers

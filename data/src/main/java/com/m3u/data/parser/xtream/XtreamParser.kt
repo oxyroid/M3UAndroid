@@ -1,9 +1,6 @@
-package com.m3u.data.parser
+package com.m3u.data.parser.xtream
 
 import com.m3u.core.util.basic.startsWithAny
-import com.m3u.data.api.xtream.XtreamEntityOutput
-import com.m3u.data.api.xtream.XtreamOutput
-import com.m3u.data.api.xtream.XtreamStreamInfo
 import io.ktor.http.Url
 import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.Serializable
@@ -16,7 +13,7 @@ interface XtreamParser {
         seriesId: Int
     ): XtreamStreamInfo
 
-    fun entityOutputs(input: XtreamInput): Flow<XtreamEntityOutput>
+    fun entityOutputs(input: XtreamInput): Flow<XtreamMediaOutput>
 
     suspend fun output(input: XtreamInput): XtreamOutput
 

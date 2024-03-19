@@ -20,12 +20,6 @@ import com.m3u.core.architecture.pref.Pref
 import com.m3u.core.util.basic.startsWithAny
 import com.m3u.core.util.readFileContent
 import com.m3u.core.util.readFileName
-import com.m3u.data.api.xtream.XtreamLive
-import com.m3u.data.api.xtream.XtreamSerial
-import com.m3u.data.api.xtream.XtreamStreamInfo
-import com.m3u.data.api.xtream.XtreamVod
-import com.m3u.data.api.xtream.asStream
-import com.m3u.data.api.xtream.toStream
 import com.m3u.data.database.dao.PlaylistDao
 import com.m3u.data.database.dao.StreamDao
 import com.m3u.data.database.model.DataSource
@@ -33,10 +27,16 @@ import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.PlaylistWithCount
 import com.m3u.data.database.model.PlaylistWithStreams
 import com.m3u.data.database.model.Stream
-import com.m3u.data.parser.M3UParser
-import com.m3u.data.parser.XtreamInput
-import com.m3u.data.parser.XtreamParser
-import com.m3u.data.parser.toStream
+import com.m3u.data.parser.m3u.M3UParser
+import com.m3u.data.parser.m3u.toStream
+import com.m3u.data.parser.xtream.XtreamInput
+import com.m3u.data.parser.xtream.XtreamLive
+import com.m3u.data.parser.xtream.XtreamParser
+import com.m3u.data.parser.xtream.XtreamSerial
+import com.m3u.data.parser.xtream.XtreamStreamInfo
+import com.m3u.data.parser.xtream.XtreamVod
+import com.m3u.data.parser.xtream.asStream
+import com.m3u.data.parser.xtream.toStream
 import com.m3u.data.repository.PlaylistRepository
 import com.m3u.data.worker.SubscriptionWorker
 import com.m3u.i18n.R.string
@@ -61,7 +61,7 @@ import java.io.InputStream
 import java.io.Reader
 import javax.inject.Inject
 
-class PlaylistRepositoryImpl @Inject constructor(
+internal class PlaylistRepositoryImpl @Inject constructor(
     private val playlistDao: PlaylistDao,
     private val streamDao: StreamDao,
     logger: Logger,

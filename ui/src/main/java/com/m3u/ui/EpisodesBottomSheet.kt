@@ -22,7 +22,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.m3u.core.wrapper.Resource
 import com.m3u.core.wrapper.takeOrElse
-import com.m3u.data.api.xtream.XtreamStreamInfo
+import com.m3u.data.parser.xtream.XtreamStreamInfo
 import com.m3u.data.database.model.Stream
 import com.m3u.material.components.BottomSheet
 import com.m3u.material.components.CircularProgressIndicator

@@ -1,20 +1,10 @@
-package com.m3u.data.parser.internal
+package com.m3u.data.parser.xtream
 
 import com.m3u.core.architecture.dispatcher.Dispatcher
 import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.execute
-import com.m3u.data.api.xtream.XtreamCategory
-import com.m3u.data.api.xtream.XtreamEntityOutput
-import com.m3u.data.api.xtream.XtreamInfo
-import com.m3u.data.api.xtream.XtreamLive
-import com.m3u.data.api.xtream.XtreamOutput
-import com.m3u.data.api.xtream.XtreamSerial
-import com.m3u.data.api.xtream.XtreamStreamInfo
-import com.m3u.data.api.xtream.XtreamVod
 import com.m3u.data.database.model.DataSource
-import com.m3u.data.parser.XtreamInput
-import com.m3u.data.parser.XtreamParser
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
@@ -48,7 +38,7 @@ internal class XtreamParserImpl @Inject constructor(
         .readTimeout(Duration.ofMillis(Int.MAX_VALUE.toLong()))
         .build()
 
-    override fun entityOutputs(input: XtreamInput): Flow<XtreamEntityOutput> = channelFlow {
+    override fun entityOutputs(input: XtreamInput): Flow<XtreamMediaOutput> = channelFlow {
         val (basicUrl, username, password, type) = input
         val requiredLives = type == null || type == DataSource.Xtream.TYPE_LIVE
         val requiredVods = type == null || type == DataSource.Xtream.TYPE_VOD

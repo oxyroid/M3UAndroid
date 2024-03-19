@@ -17,7 +17,7 @@ import com.m3u.core.architecture.pref.observeAsFlow
 import com.m3u.core.wrapper.Resource
 import com.m3u.core.wrapper.mapResource
 import com.m3u.core.wrapper.resource
-import com.m3u.data.api.xtream.XtreamStreamInfo
+import com.m3u.data.parser.xtream.XtreamStreamInfo
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.Stream
 import com.m3u.data.repository.MediaRepository

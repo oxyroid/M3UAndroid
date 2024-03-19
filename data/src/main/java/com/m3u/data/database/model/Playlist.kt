@@ -10,7 +10,7 @@ import androidx.room.PrimaryKey
 import androidx.room.Relation
 import com.m3u.core.util.Likable
 import com.m3u.core.util.basic.startsWithAny
-import com.m3u.data.parser.XtreamInput
+import com.m3u.data.parser.xtream.XtreamInput
 import com.m3u.i18n.R
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable

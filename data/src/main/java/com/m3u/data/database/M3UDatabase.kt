@@ -35,7 +35,7 @@ import com.m3u.data.database.model.Stream
     ]
 )
 @TypeConverters(Converters::class)
-abstract class M3UDatabase : RoomDatabase() {
+internal abstract class M3UDatabase : RoomDatabase() {
     abstract fun streamDao(): StreamDao
     abstract fun playlistDao(): PlaylistDao
     abstract fun colorPackDao(): ColorPackDao
