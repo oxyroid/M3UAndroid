@@ -8,52 +8,52 @@ sealed interface XtreamMediaOutput
 
 @Serializable
 data class XtreamLive(
-    @SerialName("added")
-    val added: String?,
+//    @SerialName("added")
+//    val added: String?,
     @SerialName("category_id")
     val categoryId: Int?,
-    @SerialName("custom_sid")
-    val customSid: String?,
-    @SerialName("direct_source")
-    val directSource: String?,
+//    @SerialName("custom_sid")
+//    val customSid: String?,
+//    @SerialName("direct_source")
+//    val directSource: String?,
     @SerialName("epg_channel_id")
     val epgChannelId: String?,
     @SerialName("name")
     val name: String?,
-    @SerialName("num")
-    val num: Int?,
+//    @SerialName("num")
+//    val num: Int?,
     @SerialName("stream_icon")
     val streamIcon: String?,
     @SerialName("stream_id")
     val streamId: Int?,
     @SerialName("stream_type")
     val streamType: String?,
-    @SerialName("tv_archive")
-    val tvArchive: Int?,
-    @SerialName("tv_archive_duration")
-    val tvArchiveDuration: Int?
+//    @SerialName("tv_archive")
+//    val tvArchive: Int?,
+//    @SerialName("tv_archive_duration")
+//    val tvArchiveDuration: Int?
 ) : XtreamMediaOutput
 
 @Serializable
 data class XtreamVod(
-    @SerialName("added")
-    val added: String? = null,
+//    @SerialName("added")
+//    val added: String? = null,
     @SerialName("category_id")
     val categoryId: Int? = null,
     @SerialName("container_extension")
     val containerExtension: String? = null,
-    @SerialName("custom_sid")
-    val customSid: String? = null,
-    @SerialName("direct_source")
-    val directSource: String? = null,
+//    @SerialName("custom_sid")
+//    val customSid: String? = null,
+//    @SerialName("direct_source")
+//    val directSource: String? = null,
     @SerialName("name")
     val name: String? = null,
-    @SerialName("num")
-    val num: String? = null,
-    @SerialName("rating")
-    val rating: String? = null,
-    @SerialName("rating_5based")
-    val rating5based: String? = null,
+//    @SerialName("num")
+//    val num: String? = null,
+//    @SerialName("rating")
+//    val rating: String? = null,
+//    @SerialName("rating_5based")
+//    val rating5based: String? = null,
     @SerialName("stream_icon")
     val streamIcon: String? = null,
     @SerialName("stream_id")
@@ -64,36 +64,36 @@ data class XtreamVod(
 
 @Serializable
 data class XtreamSerial(
-    @SerialName("cast")
-    val cast: String? = null,
+//    @SerialName("cast")
+//    val cast: String? = null,
     @SerialName("category_id")
     val categoryId: Int? = null,
     @SerialName("cover")
     val cover: String? = null,
-    @SerialName("director")
-    val director: String? = null,
-    @SerialName("episode_run_time")
-    val episodeRunTime: String? = null,
-    @SerialName("genre")
-    val genre: String? = null,
-    @SerialName("last_modified")
-    val lastModified: String? = null,
+//    @SerialName("director")
+//    val director: String? = null,
+//    @SerialName("episode_run_time")
+//    val episodeRunTime: String? = null,
+//    @SerialName("genre")
+//    val genre: String? = null,
+//    @SerialName("last_modified")
+//    val lastModified: String? = null,
     @SerialName("name")
     val name: String? = null,
-    @SerialName("num")
-    val num: String? = null,
-    @SerialName("plot")
-    val plot: String? = null,
-    @SerialName("rating")
-    val rating: String? = null,
-    @SerialName("rating_5based")
-    val rating5based: String? = null,
-    @SerialName("releaseDate")
-    val releaseDate: String? = null,
+//    @SerialName("num")
+//    val num: String? = null,
+//    @SerialName("plot")
+//    val plot: String? = null,
+//    @SerialName("rating")
+//    val rating: String? = null,
+//    @SerialName("rating_5based")
+//    val rating5based: String? = null,
+//    @SerialName("releaseDate")
+//    val releaseDate: String? = null,
     @SerialName("series_id")
     val seriesId: Int? = null,
-    @SerialName("youtube_trailer")
-    val youtubeTrailer: String? = null
+//    @SerialName("youtube_trailer")
+//    val youtubeTrailer: String? = null
 ) : XtreamMediaOutput
 
 fun XtreamLive.toStream(
