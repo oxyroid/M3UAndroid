@@ -27,6 +27,7 @@ import com.m3u.core.util.context.isPortraitMode
 import com.m3u.core.wrapper.Message
 import com.m3u.data.service.Messager
 import com.m3u.data.service.PlayerManagerV2
+import com.m3u.data.service.MediaCommand
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.CoroutineDispatcher
@@ -135,8 +136,8 @@ class AbstractHelper(
         messager.emit(message)
     }
 
-    override suspend fun play(input: PlayerManagerV2.Input) {
-        playerManager.play(input)
+    override suspend fun play(mediaCommand: MediaCommand) {
+        playerManager.play(mediaCommand)
     }
 
     override suspend fun replay() {

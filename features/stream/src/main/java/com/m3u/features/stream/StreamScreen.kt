@@ -68,7 +68,7 @@ fun StreamRoute(
 
     val volume by viewModel.volume.collectAsStateWithLifecycle()
     val recording by viewModel.recording.collectAsStateWithLifecycle()
-    val addToFavouriteAllowed by viewModel.addToFavouriteAllowed.collectAsStateWithLifecycle()
+    val isSeriesPlaylist by viewModel.isSeriesPlaylist.collectAsStateWithLifecycle()
 
     var brightness by rememberSaveable { mutableFloatStateOf(helper.brightness) }
     var isPipMode by rememberSaveable { mutableStateOf(false) }
@@ -170,7 +170,7 @@ fun StreamRoute(
 
         StreamScreen(
             recording = recording,
-            addToFavouriteAllowed = addToFavouriteAllowed,
+            isSeriesPlaylist = isSeriesPlaylist,
             openDlnaDevices = { viewModel.onEvent(StreamEvent.OpenDlnaDevices) },
             openChooseFormat = { choosing = true },
             onRecord = { viewModel.record() },
@@ -194,7 +194,7 @@ fun StreamRoute(
 @Composable
 private fun StreamScreen(
     recording: Boolean,
-    addToFavouriteAllowed: Boolean,
+    isSeriesPlaylist: Boolean,
     onRecord: () -> Unit,
     onFavourite: () -> Unit,
     onBackPressed: () -> Unit,
@@ -226,7 +226,7 @@ private fun StreamScreen(
         maskState = maskState,
         recording = recording,
         favourite = favourite,
-        addToFavouriteAllowed = addToFavouriteAllowed,
+        isSeriesPlaylist = isSeriesPlaylist,
         onRecord = onRecord,
         onFavourite = onFavourite,
         openDlnaDevices = openDlnaDevices,

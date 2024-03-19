@@ -7,7 +7,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.lifecycleScope
 import com.m3u.core.Contracts
 import com.m3u.core.architecture.dispatcher.Dispatcher
@@ -19,6 +18,7 @@ import com.m3u.data.repository.StreamRepository
 import com.m3u.data.service.Messager
 import com.m3u.data.service.PlayerManagerV2
 import com.m3u.data.service.RemoteDirectionService
+import com.m3u.data.service.MediaCommand
 import com.m3u.ui.Toolkit
 import com.m3u.ui.helper.AbstractHelper
 import dagger.hilt.android.AndroidEntryPoint
@@ -66,9 +66,6 @@ class PlayerActivity : ComponentActivity() {
     @Inject
     lateinit var remoteDirectionService: RemoteDirectionService
 
-    private val shortcutStreamIdLiveData = MutableLiveData<Int?>(null)
-    private val shortcutRecentlyLiveData = MutableLiveData(false)
-
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
@@ -86,28 +83,17 @@ class PlayerActivity : ComponentActivity() {
                 )
             }
         }
-        shortcutStreamIdLiveData.observe(this) { streamId ->
-            streamId ?: return@observe
-            play(streamId)
-        }
-        shortcutRecentlyLiveData.observe(this) { recently ->
-            if (recently) {
-                lifecycleScope.launch {
-                    val stream = streamRepository.getPlayedRecently() ?: return@launch
-                    play(stream.id)
-                }
-            }
-        }
     }
 
-    private fun play(streamId: Int) {
+    private fun playFromShortcuts(streamId: Int) {
         lifecycleScope.launch {
             val stream = streamRepository.get(streamId) ?: return@launch
             val playlist = playlistRepository.get(stream.playlistUrl)
             when {
-                playlist?.type in Playlist.SERIES_TYPES -> {} // TODO
+                // series can not be played from shortcuts
+                playlist?.type in Playlist.SERIES_TYPES -> {}
                 else -> {
-                    helper.play(PlayerManagerV2.Input.Live(stream.id))
+                    helper.play(MediaCommand.Live(stream.id))
                 }
             }
         }
@@ -121,11 +107,19 @@ class PlayerActivity : ComponentActivity() {
     }
 
     private fun handleIntent(intent: Intent) {
-        shortcutStreamIdLiveData.value = intent
+        val shortcutStreamId = intent
             .getIntExtra(Contracts.PLAYER_SHORTCUT_STREAM_ID, -1)
             .takeIf { it != -1 }
-        shortcutRecentlyLiveData.value = intent
-            .getBooleanExtra(Contracts.PLAYER_SHORTCUT_STREAM_RECENTLY, false)
+        val recently =
+            intent.getBooleanExtra(Contracts.PLAYER_SHORTCUT_STREAM_RECENTLY, false)
+
+        shortcutStreamId?.let { playFromShortcuts(it) }
+        if (recently) {
+            lifecycleScope.launch {
+                val stream = streamRepository.getPlayedRecently() ?: return@launch
+                playFromShortcuts(stream.id)
+            }
+        }
     }
 
     override fun onUserLeaveHint() {

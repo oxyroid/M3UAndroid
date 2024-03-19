@@ -32,6 +32,7 @@ class StreamRepositoryImpl @Inject constructor(
         streamDao.getByPlaylistUrl(playlistUrl)
     } ?: emptyList()
 
+    @Deprecated("stream url is not unique")
     override suspend fun getByUrl(url: String): Stream? = logger.execute {
         streamDao.getByUrl(url)
     }
