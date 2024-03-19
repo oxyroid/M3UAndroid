@@ -53,7 +53,7 @@
     <string name="feat_setting_zapping_mode_description">vizualizare rapida inainte de deschidere canal</string>
     <string name="feat_setting_gesture_brightness">gesturi luminozitate</string>
     <string name="feat_setting_gesture_volume">gesturi volum</string>
-    <string name="feat_setting_record">inregistrare segment</string>
+    <string name="feat_setting_download_or_cache">inregistrare segment</string>
     <string name="feat_setting_screencast">proiectare</string>
     <string name="feat_setting_screen_rotating">rotire ecran</string>
     <string name="feat_setting_screen_rotating_description">disponibil cand optiunea de rotire ecran nu este blocata in sistem</string>

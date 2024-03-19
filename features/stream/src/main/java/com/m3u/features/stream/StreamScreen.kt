@@ -3,6 +3,7 @@ package com.m3u.features.stream
 import android.content.Intent
 import android.graphics.Rect
 import android.net.Uri
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -10,14 +11,13 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
@@ -28,19 +28,20 @@ import com.m3u.core.util.basic.isNotEmpty
 import com.m3u.core.util.basic.title
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.Stream
+import com.m3u.features.stream.components.CoverPlaceholder
 import com.m3u.features.stream.components.DlnaDevicesBottomSheet
 import com.m3u.features.stream.components.FormatsBottomSheet
-import com.m3u.features.stream.fragments.StreamFragment
 import com.m3u.i18n.R.string
 import com.m3u.material.components.Background
 import com.m3u.material.components.mask.MaskInterceptor
 import com.m3u.material.components.mask.MaskState
 import com.m3u.material.components.mask.rememberMaskState
+import com.m3u.ui.Player
 import com.m3u.ui.helper.LocalHelper
 import com.m3u.ui.helper.OnPipModeChanged
+import com.m3u.ui.rememberPlayerState
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.launch
 
 @Composable
 fun StreamRoute(
@@ -53,13 +54,12 @@ fun StreamRoute(
     val helper = LocalHelper.current
     val pref = LocalPref.current
     val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
 
-    val state: StreamState by viewModel.state.collectAsStateWithLifecycle()
-    val playerState: StreamState.PlayerState by viewModel.playerState.collectAsStateWithLifecycle()
+    val playerState: PlayerState by viewModel.playerState.collectAsStateWithLifecycle()
     val stream by viewModel.stream.collectAsStateWithLifecycle()
     val playlist by viewModel.playlist.collectAsStateWithLifecycle()
     val devices by viewModel.devices.collectAsStateWithLifecycle()
+    val connected by viewModel.connected.collectAsStateWithLifecycle()
     val isDevicesVisible by viewModel.isDevicesVisible.collectAsStateWithLifecycle()
     val searching by viewModel.searching.collectAsStateWithLifecycle()
 
@@ -67,7 +67,7 @@ fun StreamRoute(
     val selectedFormats by viewModel.selectedFormats.collectAsStateWithLifecycle()
 
     val volume by viewModel.volume.collectAsStateWithLifecycle()
-    val recording by viewModel.recording.collectAsStateWithLifecycle()
+    val downloadOrCaching by viewModel.downloadOrCaching.collectAsStateWithLifecycle()
     val isSeriesPlaylist by viewModel.isSeriesPlaylist.collectAsStateWithLifecycle()
 
     var brightness by rememberSaveable { mutableFloatStateOf(helper.brightness) }
@@ -91,7 +91,7 @@ fun StreamRoute(
             }
         }
         onPauseOrDispose {
-            viewModel.onEvent(StreamEvent.CloseDlnaDevices)
+            viewModel.closeDlnaDevices()
         }
     }
 
@@ -134,14 +134,35 @@ fun StreamRoute(
         color = Color.Black,
         contentColor = Color.White
     ) {
+        StreamScreen(
+            downloadOrCaching = downloadOrCaching,
+            isSeriesPlaylist = isSeriesPlaylist,
+            openDlnaDevices = { viewModel.openDlnaDevices() },
+            openChooseFormat = { choosing = true },
+            downloadOrCache = viewModel::downloadOrCache,
+            stopDownloadOrCache = viewModel::stopDownloadOrCache,
+            onFavourite = { viewModel.onFavourite() },
+            onBackPressed = onBackPressed,
+            maskState = maskState,
+            playerState = playerState,
+            playlist = playlist,
+            stream = stream,
+            formatsIsNotEmpty = formats.isNotEmpty(),
+            brightness = brightness,
+            volume = volume,
+            onBrightness = { brightness = it },
+            onVolume = { viewModel.onVolume(it) },
+            modifier = modifier
+        )
+
         DlnaDevicesBottomSheet(
             maskState = maskState,
             searching = searching,
             isDevicesVisible = isDevicesVisible,
             devices = devices,
-            connected = state.connected,
-            connectDlnaDevice = { viewModel.onEvent(StreamEvent.ConnectDlnaDevice(it)) },
-            disconnectDlnaDevice = { viewModel.onEvent(StreamEvent.DisconnectDlnaDevice(it)) },
+            connected = connected,
+            connectDlnaDevice = { viewModel.connectDlnaDevice(it) },
+            disconnectDlnaDevice = { viewModel.disconnectDlnaDevice(it) },
             openInExternalPlayer = {
                 val streamUrl = stream?.url ?: return@DlnaDevicesBottomSheet
                 context.startActivity(
@@ -151,7 +172,7 @@ fun StreamRoute(
                 )
                 viewModel.openInExternalPlayer()
             },
-            onDismiss = { viewModel.onEvent(StreamEvent.CloseDlnaDevices) }
+            onDismiss = { viewModel.closeDlnaDevices() }
         )
 
         FormatsBottomSheet(
@@ -167,49 +188,28 @@ fun StreamRoute(
                 viewModel.clearTrack(type)
             }
         )
-
-        StreamScreen(
-            recording = recording,
-            isSeriesPlaylist = isSeriesPlaylist,
-            openDlnaDevices = { viewModel.onEvent(StreamEvent.OpenDlnaDevices) },
-            openChooseFormat = { choosing = true },
-            onRecord = { viewModel.record() },
-            onFavourite = { viewModel.onEvent(StreamEvent.OnFavourite) },
-            onBackPressed = onBackPressed,
-            maskState = maskState,
-            playerState = playerState,
-            playlist = playlist,
-            stream = stream,
-            formatsIsNotEmpty = formats.isNotEmpty(),
-            brightness = brightness,
-            volume = volume,
-            onBrightness = { brightness = it },
-            onVolume = { viewModel.onEvent(StreamEvent.OnVolume(it)) },
-            replay = { coroutineScope.launch { helper.replay() } },
-            modifier = modifier
-        )
     }
 }
 
 @Composable
 private fun StreamScreen(
-    recording: Boolean,
-    isSeriesPlaylist: Boolean,
-    onRecord: () -> Unit,
-    onFavourite: () -> Unit,
-    onBackPressed: () -> Unit,
     maskState: MaskState,
-    playerState: StreamState.PlayerState,
+    playerState: PlayerState,
     playlist: Playlist?,
     stream: Stream?,
+    isSeriesPlaylist: Boolean,
     formatsIsNotEmpty: Boolean,
-    openDlnaDevices: () -> Unit,
-    openChooseFormat: () -> Unit,
     volume: Float,
     brightness: Float,
+    onFavourite: () -> Unit,
+    onBackPressed: () -> Unit,
+    openDlnaDevices: () -> Unit,
+    openChooseFormat: () -> Unit,
     onVolume: (Float) -> Unit,
     onBrightness: (Float) -> Unit,
-    replay: () -> Unit,
+    downloadOrCaching: Boolean,
+    downloadOrCache: () -> Unit,
+    stopDownloadOrCache: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val title = stream?.title ?: "--"
@@ -217,28 +217,59 @@ private fun StreamScreen(
     val playlistTitle = playlist?.title ?: "--"
     val favourite = stream?.favourite ?: false
 
-    StreamFragment(
-        playerState = playerState,
-        title = title,
-        cover = cover,
-        formatsIsNotEmpty = formatsIsNotEmpty,
-        playlistTitle = playlistTitle,
-        maskState = maskState,
-        recording = recording,
-        favourite = favourite,
-        isSeriesPlaylist = isSeriesPlaylist,
-        onRecord = onRecord,
-        onFavourite = onFavourite,
-        openDlnaDevices = openDlnaDevices,
-        openChooseFormat = openChooseFormat,
-        onBackPressed = onBackPressed,
-        replay = replay,
-        brightness = brightness,
-        volume = volume,
-        onBrightness = onBrightness,
-        onVolume = onVolume,
-        modifier = modifier
-            .fillMaxSize()
-            .testTag("features:stream")
-    )
+    val pref = LocalPref.current
+
+    Background(
+        color = Color.Black,
+        contentColor = Color.White,
+    ) {
+        Box(modifier) {
+            val state = rememberPlayerState(
+                player = playerState.player,
+                clipMode = pref.clipMode
+            )
+
+            Player(
+                state = state,
+                modifier = Modifier.fillMaxSize()
+            )
+
+            val shouldShowPlaceholder =
+                !pref.noPictureMode && cover.isNotEmpty() && playerState.videoSize.isEmpty
+
+            CoverPlaceholder(
+                visible = shouldShowPlaceholder,
+                cover = cover,
+                modifier = Modifier.align(Alignment.Center)
+            )
+
+            PlayerMaskImpl(
+                cover = cover,
+                title = title,
+                playlistTitle = playlistTitle,
+                playerState = playerState,
+                volume = volume,
+                brightness = brightness,
+                maskState = maskState,
+                downloadOrCaching = downloadOrCaching,
+                downloadOrCache = downloadOrCache,
+                stopDownloadOrCache = stopDownloadOrCache,
+                favourite = favourite,
+                isSeriesPlaylist = isSeriesPlaylist,
+                formatsIsNotEmpty = formatsIsNotEmpty,
+                onFavourite = onFavourite,
+                onBackPressed = onBackPressed,
+                openDlnaDevices = openDlnaDevices,
+                openChooseFormat = openChooseFormat,
+                onVolume = onVolume,
+                onBrightness = onBrightness,
+            )
+
+            LaunchedEffect(playerState.playerError) {
+                if (playerState.playerError != null) {
+                    maskState.wake()
+                }
+            }
+        }
+    }
 }

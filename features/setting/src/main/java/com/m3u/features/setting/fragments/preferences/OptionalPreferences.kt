@@ -16,6 +16,7 @@ import androidx.compose.material.icons.rounded.PictureInPicture
 import androidx.compose.material.icons.rounded.ReplayCircleFilled
 import androidx.compose.material.icons.rounded.ScreenRotation
 import androidx.compose.material.icons.rounded.SettingsEthernet
+import androidx.compose.material.icons.rounded.SlowMotionVideo
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -116,6 +117,13 @@ fun OptionalPreferences(modifier: Modifier = Modifier) {
                         icon = Icons.Rounded.Cast,
                         checked = pref.screencast,
                         onChanged = { pref.screencast = !pref.screencast }
+                    )
+
+                    CheckBoxSharedPreference(
+                        title = string.feat_setting_download_or_cache,
+                        icon = Icons.Rounded.SlowMotionVideo,
+                        checked = pref.downloadOrCache,
+                        onChanged = { pref.downloadOrCache = !pref.downloadOrCache }
                     )
                 }
 

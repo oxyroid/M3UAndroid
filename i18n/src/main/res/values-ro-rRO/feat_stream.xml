@@ -10,8 +10,8 @@
     <string name="feat_stream_tooltip_unmute">sunet</string>
     <string name="feat_stream_tooltip_favourite">favorit</string>
     <string name="feat_stream_tooltip_unfavourite">nefavorit</string>
-    <string name="feat_stream_tooltip_record">inregistrare</string>
-    <string name="feat_stream_tooltip_unrecord">neinregistrare</string>
+    <string name="feat_stream_tooltip_download">inregistrare</string>
+    <string name="feat_stream_tooltip_stop_download">neinregistrare</string>
     <string name="feat_stream_tooltip_cast">proiectare ecran</string>
     <string name="feat_stream_tooltip_enter_pip_mode">mod PIP</string>
     <string name="feat_stream_tooltip_screen_rotating">rotire ecran</string>

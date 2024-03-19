@@ -1,4 +1,4 @@
-package com.m3u.features.stream.fragments
+package com.m3u.features.stream
 
 import android.database.ContentObserver
 import android.os.Handler
@@ -18,7 +18,7 @@ import com.m3u.i18n.R.string
 import kotlin.math.absoluteValue
 import kotlin.time.Duration
 
-internal object StreamFragmentDefaults {
+internal object PlayerMaskImplDefaults {
     /**
      * @param safe The percent of horizontal area from center that will not trigger the gesture.
      * @param threshold The percent of vertical area that can respond to gestures.

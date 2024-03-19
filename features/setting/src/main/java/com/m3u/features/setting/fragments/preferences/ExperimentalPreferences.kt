@@ -6,7 +6,6 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Dangerous
-import androidx.compose.material.icons.rounded.SlowMotionVideo
 import androidx.compose.material.icons.rounded.Tv
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -43,12 +42,6 @@ internal fun ExperimentalPreference(
             )
         ) {
             Column {
-                CheckBoxSharedPreference(
-                    title = string.feat_setting_record,
-                    icon = Icons.Rounded.SlowMotionVideo,
-                    checked = pref.record,
-                    onChanged = { pref.record = !pref.record }
-                )
                 if (!tv) {
                     CheckBoxSharedPreference(
                         title = string.feat_setting_always_television,
