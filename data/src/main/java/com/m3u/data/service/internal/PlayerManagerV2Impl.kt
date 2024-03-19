@@ -29,22 +29,24 @@ import androidx.media3.exoplayer.source.MediaSource
 import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
 import androidx.media3.exoplayer.trackselection.TrackSelector
-import androidx.media3.exoplayer.util.EventLogger
 import androidx.media3.session.MediaSession
 import com.m3u.codec.Codecs
 import com.m3u.core.architecture.dispatcher.Dispatcher
 import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
 import com.m3u.core.architecture.dispatcher.M3uDispatchers.Main
 import com.m3u.core.architecture.logger.Logger
-import com.m3u.core.architecture.logger.debug
+import com.m3u.core.architecture.logger.post
 import com.m3u.core.architecture.logger.prefix
 import com.m3u.core.architecture.pref.Pref
 import com.m3u.core.architecture.pref.annotation.ReconnectMode
 import com.m3u.core.architecture.pref.observeAsFlow
 import com.m3u.data.SSLs
+import com.m3u.data.database.model.Playlist
+import com.m3u.data.database.model.Stream
 import com.m3u.data.database.model.copyXtreamEpisode
 import com.m3u.data.repository.PlaylistRepository
 import com.m3u.data.repository.StreamRepository
+import com.m3u.data.service.MediaCommand
 import com.m3u.data.service.PlayerManagerV2
 import com.m3u.data.service.StreamDownloadService
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -55,22 +57,17 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.launch
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
 import java.io.File
 import java.util.UUID
@@ -93,85 +90,28 @@ class PlayerManagerV2Impl @Inject constructor(
     override val player = MutableStateFlow<ExoPlayer?>(null)
     override val size = MutableStateFlow(Rect())
 
-    override val inputChannel = MutableStateFlow<PlayerManagerV2.Input?>(null)
-    private val playableStream = inputChannel
+    private val mediaCommand = MutableStateFlow<MediaCommand?>(null)
+
+    override val stream: StateFlow<Stream?> = mediaCommand
+        .onEach { logger.post { "receive media command: $it" } }
         .flatMapLatest { input ->
             when (input) {
-                is PlayerManagerV2.Input.Live -> streamRepository.observe(input.streamId)
-                is PlayerManagerV2.Input.XtreamEpisode -> streamRepository
+                is MediaCommand.Live -> streamRepository.observe(input.streamId)
+                is MediaCommand.XtreamEpisode -> streamRepository
                     .observe(input.streamId)
                     .map { it?.copyXtreamEpisode(input.episode) }
 
                 else -> flowOf(null)
             }
         }
-        .shareIn(
-            scope = ioCoroutineScope,
-            started = SharingStarted.WhileSubscribed(5_000L)
-        )
-
-    override val stream = inputChannel
-        .onEach { logger.debug { "receive inputChannel: $it" } }
-        .flatMapLatest { input ->
-            when (input) {
-                is PlayerManagerV2.Input.Live -> streamRepository.observe(input.streamId)
-                is PlayerManagerV2.Input.XtreamEpisode -> streamRepository.observe(input.streamId)
-                else -> flowOf(null)
-            }
-        }
-        .flowOn(ioDispatcher)
         .stateIn(
             scope = ioCoroutineScope,
             initialValue = null,
             started = SharingStarted.WhileSubscribed(5_000L)
         )
 
-    init {
-        playableStream
-            .distinctUntilChanged { old, new ->
-                if (old == null || new == null) false
-                else old like new
-            }
-            .onEach { stream ->
-                if (stream != null) {
-                    val streamUrl = stream.url
-                    streamRepository.reportPlayed(stream.id)
-                    val wrapper = MimetypeWrapper.Unspecified(streamUrl).next()
-                    logger.debug { "init wrapper: $wrapper" }
-                    this.wrapper = wrapper
-                    when (wrapper) {
-                        is MimetypeWrapper.Maybe -> play(
-                            mimeType = wrapper.mimeType,
-                            url = streamUrl
-                        )
-
-                        is MimetypeWrapper.Trying -> play(
-                            mimeType = wrapper.mimeType,
-                            url = streamUrl
-                        )
-
-                        else -> return@onEach
-                    }
-
-                    observePreferencesChangingJob?.cancel()
-                    observePreferencesChangingJob = mainCoroutineScope.launch {
-                        observePreferencesChanging { timeout, tunneling ->
-                            if (timeout != currentConnectTimeout || tunneling != currentTunneling) {
-                                logger.debug { "preferences changed, replaying..." }
-                                replay()
-                                currentConnectTimeout = timeout
-                                currentTunneling = tunneling
-                            }
-                        }
-                    }
-                }
-            }
-            .flowOn(mainDispatcher)
-            .onEach { logger.debug { "stream: ${json.encodeToString(it)}" } }
-            .launchIn(mainCoroutineScope)
-    }
-
-    override val playlist = stream.flatMapLatest { stream ->
+    override val playlist: StateFlow<Playlist?> = mediaCommand.flatMapLatest { command ->
+        val stream = command?.let { streamRepository.get(it.streamId) }
         stream?.let { playlistRepository.observe(it.playlistUrl) } ?: flowOf(null)
     }
         .stateIn(
@@ -188,19 +128,59 @@ class PlayerManagerV2Impl @Inject constructor(
     private var currentTunneling = pref.tunneling
     private var observePreferencesChangingJob: Job? = null
 
-    override suspend fun play(input: PlayerManagerV2.Input) {
+    override suspend fun play(command: MediaCommand) {
         release()
-        inputChannel.value = input
+        mediaCommand.value = command
+        val stream = when (command) {
+            is MediaCommand.Live -> streamRepository.get(command.streamId)
+            is MediaCommand.XtreamEpisode -> streamRepository
+                .get(command.streamId)
+                ?.copyXtreamEpisode(command.episode)
+        }
+        if (stream != null) {
+            val streamUrl = stream.url
+            streamRepository.reportPlayed(stream.id)
+
+            val wrapper = MimetypeWrapper.Unspecified(streamUrl).next()
+            mimetypeWrapper = wrapper
+            logger.post { "init wrapper: $wrapper" }
+
+            when (wrapper) {
+                is MimetypeWrapper.Maybe -> tryPlay(
+                    mimeType = wrapper.mimeType,
+                    url = streamUrl
+                )
+
+                is MimetypeWrapper.Trying -> tryPlay(
+                    mimeType = wrapper.mimeType,
+                    url = streamUrl
+                )
+
+                else -> return
+            }
+
+            observePreferencesChangingJob?.cancel()
+            observePreferencesChangingJob = mainCoroutineScope.launch {
+                observePreferencesChanging { timeout, tunneling ->
+                    if (timeout != currentConnectTimeout || tunneling != currentTunneling) {
+                        logger.post { "preferences changed, replaying..." }
+                        replay()
+                        currentConnectTimeout = timeout
+                        currentTunneling = tunneling
+                    }
+                }
+            }
+        }
     }
 
-    private fun play(
+    private fun tryPlay(
         mimeType: String?,
         url: String = stream.value?.url.orEmpty(),
         userAgent: String? = playlist.value?.userAgent,
         rtmp: Boolean = Url(url).protocol.name == "rtmp",
         tunneling: Boolean = pref.tunneling
     ) {
-        logger.debug { "play, mimetype: $mimeType, url: $url, user-agent: $userAgent, rtmp: $rtmp, tunneling: $tunneling" }
+        logger.post { "play, mimetype: $mimeType, url: $url, user-agent: $userAgent, rtmp: $rtmp, tunneling: $tunneling" }
         val dataSourceFactory = if (rtmp) {
             RtmpDataSource.Factory()
         } else {
@@ -218,7 +198,7 @@ class PlayerManagerV2Impl @Inject constructor(
 
             else -> DefaultMediaSourceFactory(dataSourceFactory)
         }
-        logger.debug { "media-source-factory: ${mediaSourceFactory::class.qualifiedName}" }
+        logger.post { "media-source-factory: ${mediaSourceFactory::class.qualifiedName}" }
         val player = player.updateAndGet { prev ->
             prev ?: createPlayer(mediaSourceFactory, tunneling)
         }!!
@@ -229,9 +209,9 @@ class PlayerManagerV2Impl @Inject constructor(
     }
 
     override suspend fun replay() {
-        val prev = inputChannel.value
+        val prev = mediaCommand.value
         release()
-        inputChannel.value = prev
+        prev?.let { play(it) }
     }
 
     override fun release() {
@@ -242,12 +222,12 @@ class PlayerManagerV2Impl @Inject constructor(
             it.stop()
             it.release()
             it.removeListener(this)
-            inputChannel.value = null
+            mediaCommand.value = null
             size.value = Rect()
             playbackState.value = Player.STATE_IDLE
             playbackException.value = null
             tracksGroups.value = emptyList()
-            wrapper = MimetypeWrapper.Unsupported
+            mimetypeWrapper = MimetypeWrapper.Unsupported
             null
         }
     }
@@ -351,15 +331,15 @@ class PlayerManagerV2Impl @Inject constructor(
         if (state == Player.STATE_ENDED && pref.reconnectMode == ReconnectMode.RECONNECT) {
             mainCoroutineScope.launch { replay() }
         }
-        logger.debug { "playback-state: $state" }
+        logger.post { "playback-state: $state" }
         when (state) {
             Player.STATE_READY -> {
-                logger.debug {
-                    val currentPlayer = player.value ?: return@debug ""
+                logger.post {
+                    val currentPlayer = player.value ?: return@post ""
                     val getCurrentMediaItem =
                         currentPlayer.isCommandAvailable(Player.COMMAND_GET_CURRENT_MEDIA_ITEM)
                     if (!getCurrentMediaItem) {
-                        return@debug "get-current-media-item: false"
+                        return@post "get-current-media-item: false"
                     }
                     val seekable = currentPlayer.isCurrentMediaItemSeekable
                     val dynamic = currentPlayer.isCurrentMediaItemDynamic
@@ -371,13 +351,13 @@ class PlayerManagerV2Impl @Inject constructor(
         }
     }
 
-    private var wrapper: MimetypeWrapper = MimetypeWrapper.Unsupported
+    private var mimetypeWrapper: MimetypeWrapper = MimetypeWrapper.Unsupported
 
-    override fun onPlayerErrorChanged(error: PlaybackException?) {
-        super.onPlayerErrorChanged(error)
-        when (error?.errorCode) {
+    override fun onPlayerErrorChanged(exception: PlaybackException?) {
+        super.onPlayerErrorChanged(exception)
+        when (exception?.errorCode) {
             PlaybackException.ERROR_CODE_BEHIND_LIVE_WINDOW -> {
-                logger.debug { "error! behind live window" }
+                logger.post { "error! behind live window" }
                 player.value?.let {
                     it.seekToDefaultPosition()
                     it.prepare()
@@ -388,15 +368,18 @@ class PlayerManagerV2Impl @Inject constructor(
             PlaybackException.ERROR_CODE_PARSING_MANIFEST_MALFORMED,
             PlaybackException.ERROR_CODE_PARSING_CONTAINER_UNSUPPORTED,
             PlaybackException.ERROR_CODE_PARSING_MANIFEST_UNSUPPORTED -> {
-                if (wrapper.hasNext()) {
-                    val next = wrapper.next()
-                    logger.debug { "[${PlaybackException.getErrorCodeName(error.errorCode)}] Try another mimetype, from $wrapper to $next" }
-                    wrapper = next
+                if (mimetypeWrapper.hasNext()) {
+                    val next = mimetypeWrapper.next()
+                    logger.post {
+                        "[${PlaybackException.getErrorCodeName(exception.errorCode)}] " +
+                                "Try another mimetype, from $mimetypeWrapper to $next"
+                    }
+                    mimetypeWrapper = next
                     when (next) {
-                        is MimetypeWrapper.Maybe -> play(next.mimeType)
-                        is MimetypeWrapper.Trying -> play(next.mimeType)
+                        is MimetypeWrapper.Maybe -> tryPlay(next.mimeType)
+                        is MimetypeWrapper.Trying -> tryPlay(next.mimeType)
                         else -> {
-                            playbackException.value = error
+                            playbackException.value = exception
                         }
                     }
                 }
@@ -405,10 +388,12 @@ class PlayerManagerV2Impl @Inject constructor(
             PlaybackException.ERROR_CODE_IO_UNSPECIFIED -> {}
 
             else -> {
-                if (error != null) {
-                    logger.debug { "[${PlaybackException.getErrorCodeName(error.errorCode)}] See player for detail" }
+                if (exception != null) {
+                    logger.post {
+                        "[${PlaybackException.getErrorCodeName(exception.errorCode)}] See player for detail"
+                    }
                 }
-                playbackException.value = error
+                playbackException.value = exception
             }
         }
     }
@@ -419,9 +404,6 @@ class PlayerManagerV2Impl @Inject constructor(
     }
 
     private val logger = before.prefix("player-manager")
-    private val json = Json {
-        prettyPrint = true
-    }
 }
 
 private fun VideoSize.toRect(): Rect {

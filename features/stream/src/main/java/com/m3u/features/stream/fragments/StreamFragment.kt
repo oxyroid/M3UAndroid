@@ -96,7 +96,7 @@ internal fun StreamFragment(
     maskState: MaskState,
     recording: Boolean,
     favourite: Boolean,
-    addToFavouriteAllowed: Boolean,
+    isSeriesPlaylist: Boolean,
     volume: Float,
     brightness: Float,
     onVolume: (Float) -> Unit,
@@ -233,7 +233,7 @@ internal fun StreamFragment(
                                 MaskGesture.BRIGHTNESS -> Color.Unspecified
                             }
                         )
-                        if (addToFavouriteAllowed) {
+                        if (!isSeriesPlaylist) {
                             MaskButton(
                                 state = maskState,
                                 icon = Icons.Rounded.Star,

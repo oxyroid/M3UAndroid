@@ -50,8 +50,7 @@ import com.m3u.core.util.basic.title
 import com.m3u.core.wrapper.Event
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.Stream
-import com.m3u.data.service.PlayerManagerV2
-import com.m3u.ui.EpisodesBottomSheet
+import com.m3u.data.service.MediaCommand
 import com.m3u.features.playlist.internal.PlaylistScreenImpl
 import com.m3u.features.playlist.internal.TvPlaylistScreenImpl
 import com.m3u.i18n.R.string
@@ -61,6 +60,7 @@ import com.m3u.material.ktx.isTelevision
 import com.m3u.material.ktx.thenIf
 import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.Destination
+import com.m3u.ui.EpisodesBottomSheet
 import com.m3u.ui.Sort
 import com.m3u.ui.helper.Fob
 import com.m3u.ui.helper.LocalHelper
@@ -162,7 +162,7 @@ internal fun PlaylistRoute(
                 onStream = { stream ->
                     if (!isSeriesPlaylist) {
                         coroutineScope.launch {
-                            helper.play(PlayerManagerV2.Input.Live(stream.id))
+                            helper.play(MediaCommand.Live(stream.id))
                             navigateToStream()
                         }
                     } else {
@@ -234,7 +234,7 @@ internal fun PlaylistRoute(
                     onEpisodeClick = { episode ->
                         coroutineScope.launch {
                             series?.let {
-                                val input = PlayerManagerV2.Input.XtreamEpisode(
+                                val input = MediaCommand.XtreamEpisode(
                                     streamId = it.id,
                                     episode = episode
                                 )

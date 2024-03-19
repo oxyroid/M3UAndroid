@@ -24,7 +24,7 @@ interface Logger {
     annotation class MessageImpl
 }
 
-fun Logger.debug(block: () -> Any?) {
+fun Logger.post(block: () -> Any?) {
     log(block().toString())
 }
 

@@ -10,8 +10,10 @@ import androidx.media3.common.Tracks
 import com.m3u.data.api.xtream.XtreamStreamInfo
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.Stream
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 
 interface PlayerManagerV2 {
@@ -27,20 +29,17 @@ interface PlayerManagerV2 {
     val tracksGroups: StateFlow<List<Tracks.Group>>
     fun chooseTrack(group: TrackGroup, index: Int)
     fun clearTrack(type: @C.TrackType Int)
-    suspend fun play(input: Input)
+    suspend fun play(command: MediaCommand)
     suspend fun replay()
     fun release()
+}
 
-    val inputChannel: StateFlow<Input?>
-
-    sealed class Input(open val streamId: Int) {
-        data class Live(override val streamId: Int) : Input(streamId)
-        data class XtreamEpisode(
-            override val streamId: Int,
-            val episode: XtreamStreamInfo.Episode
-        ) : Input(streamId)
-    }
-    fun download()
+sealed class MediaCommand(open val streamId: Int) {
+    data class Live(override val streamId: Int) : MediaCommand(streamId)
+    data class XtreamEpisode(
+        override val streamId: Int,
+        val episode: XtreamStreamInfo.Episode
+    ) : MediaCommand(streamId)
 }
 
 val PlayerManagerV2.trackFormats: Flow<Map<@C.TrackType Int, List<Format>>>
@@ -52,6 +51,7 @@ val PlayerManagerV2.trackFormats: Flow<Map<@C.TrackType Int, List<Format>>>
                     .flatten()
             }
     }
+        .flowOn(Dispatchers.IO)
 
 val PlayerManagerV2.selectedFormats: Flow<Map<@C.TrackType Int, Format?>>
     get() = tracksGroups.map { all ->
@@ -74,3 +74,4 @@ val PlayerManagerV2.selectedFormats: Flow<Map<@C.TrackType Int, Format?>>
                 format
             }
     }
+        .flowOn(Dispatchers.IO)

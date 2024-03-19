@@ -10,9 +10,10 @@ import androidx.media3.common.Tracks
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 
+@Deprecated("It will be removed in the future, use PlayerManagerV2 instead")
 interface PlayerManager {
     val player: Flow<Player?>
-    
+
     val videoSize: StateFlow<Rect>
     val playbackState: StateFlow<@Player.State Int>
     val playerError: StateFlow<PlaybackException?>

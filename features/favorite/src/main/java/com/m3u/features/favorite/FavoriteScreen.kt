@@ -26,7 +26,7 @@ import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.core.util.basic.title
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.Stream
-import com.m3u.data.service.PlayerManagerV2
+import com.m3u.data.service.MediaCommand
 import com.m3u.features.favorite.components.DialogStatus
 import com.m3u.features.favorite.components.FavoriteDialog
 import com.m3u.features.favorite.components.FavouriteGallery
@@ -115,7 +115,7 @@ fun FavouriteRoute(
                         }
 
                         else -> {
-                            helper.play(PlayerManagerV2.Input.Live(stream.id))
+                            helper.play(MediaCommand.Live(stream.id))
                             navigateToStream()
                         }
                     }
@@ -142,7 +142,7 @@ fun FavouriteRoute(
             onEpisodeClick = { episode ->
                 coroutineScope.launch {
                     series?.let {
-                        val input = PlayerManagerV2.Input.XtreamEpisode(
+                        val input = MediaCommand.XtreamEpisode(
                             streamId = it.id,
                             episode = episode
                         )

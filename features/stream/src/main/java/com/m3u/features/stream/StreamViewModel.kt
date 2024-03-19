@@ -6,6 +6,7 @@ import androidx.media3.common.Format
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.prefix
 import com.m3u.core.architecture.viewmodel.BaseViewModel
+import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.Stream
 import com.m3u.data.repository.StreamRepository
@@ -60,9 +61,9 @@ class StreamViewModel @Inject constructor(
     internal val stream: StateFlow<Stream?> = playerManager.stream
     internal val playlist: StateFlow<Playlist?> = playerManager.playlist
     
-    internal val addToFavouriteAllowed: StateFlow<Boolean> = playerManager
-        .inputChannel
-        .map { it is PlayerManagerV2.Input.Live }
+    internal val isSeriesPlaylist: StateFlow<Boolean> = playerManager
+        .playlist
+        .map { it?.type == DataSource.Xtream.TYPE_SERIES }
         .stateIn(
             scope = viewModelScope,
             initialValue = false,
