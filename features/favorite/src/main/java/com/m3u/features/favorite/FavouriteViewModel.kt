@@ -50,7 +50,7 @@ class FavouriteViewModel @Inject constructor(
     private val streamRepository: StreamRepository,
     private val mediaRepository: MediaRepository,
     pref: Pref,
-    private val playerManager: PlayerManagerV2,
+    playerManager: PlayerManagerV2,
     @Dispatcher(IO) ioDispatcher: CoroutineDispatcher
 ) : ViewModel() {
     private val zappingMode = pref
@@ -92,25 +92,24 @@ class FavouriteViewModel @Inject constructor(
         sortIndex.update { sorts.indexOf(sort).coerceAtLeast(0) }
     }
 
-    val streamsResource: StateFlow<Resource<ImmutableList<Stream>>> = flattenResource {
-        streamRepository
-            .observeAll { it.favourite }
-            .combine(sort) { all, sort ->
-                when (sort) {
-                    Sort.UNSPECIFIED -> all
-                    Sort.ASC -> all.sortedWith(
-                        compareBy(String.CASE_INSENSITIVE_ORDER) { it.title }
-                    )
+    val streamsResource: StateFlow<Resource<ImmutableList<Stream>>> = streamRepository
+        .observeAll { it.favourite }
+        .combine(sort) { all, sort ->
+            when (sort) {
+                Sort.UNSPECIFIED -> all
+                Sort.ASC -> all.sortedWith(
+                    compareBy(String.CASE_INSENSITIVE_ORDER) { it.title }
+                )
 
-                    Sort.DESC -> all.sortedWith(
-                        compareByDescending(String.CASE_INSENSITIVE_ORDER) { it.title }
-                    )
+                Sort.DESC -> all.sortedWith(
+                    compareByDescending(String.CASE_INSENSITIVE_ORDER) { it.title }
+                )
 
-                    Sort.RECENTLY -> all.sortedByDescending { it.seen }
-                }
-                    .toPersistentList()
+                Sort.RECENTLY -> all.sortedByDescending { it.seen }
             }
-    }
+                .toPersistentList()
+        }
+        .flattenResource()
         .flowOn(ioDispatcher)
         .stateIn(
             scope = viewModelScope,
