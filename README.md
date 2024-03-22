@@ -1,7 +1,6 @@
 # M3UAndroid
 
-> This branch is only for my Graduation Project
-> The download feature won't be merge to the master branch.
+> This branch is only for my Graduation Project and it won't be merge to the master branch.
 
 <a href="https://t.me/m3u_android"><img src="https://img.shields.io/badge/Telegram-2CA5E0?style=flat&logo=telegram&logoColor=white"></a>
 

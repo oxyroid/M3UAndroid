@@ -2,7 +2,6 @@ package com.m3u.data.service.internal
 
 import android.content.Context
 import android.graphics.Rect
-import android.os.Environment
 import androidx.core.net.toUri
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
@@ -20,7 +19,6 @@ import androidx.media3.datasource.rtmp.RtmpDataSource
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.RenderersFactory
 import androidx.media3.exoplayer.hls.HlsMediaSource
-import androidx.media3.exoplayer.offline.DownloadManager
 import androidx.media3.exoplayer.offline.DownloadRequest
 import androidx.media3.exoplayer.offline.DownloadService
 import androidx.media3.exoplayer.rtsp.RtspMediaSource
@@ -81,7 +79,6 @@ class PlayerManagerV2Impl @Inject constructor(
     private val pref: Pref,
     private val playlistRepository: PlaylistRepository,
     private val streamRepository: StreamRepository,
-    private val downloadManager: DownloadManager,
     before: Logger
 ) : PlayerManagerV2, Player.Listener, MediaSession.Callback {
     private val mainCoroutineScope = CoroutineScope(mainDispatcher)
