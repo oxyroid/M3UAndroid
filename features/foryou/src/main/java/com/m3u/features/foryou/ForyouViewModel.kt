@@ -9,7 +9,7 @@ import com.m3u.core.architecture.pref.observeAsFlow
 import com.m3u.core.wrapper.Resource
 import com.m3u.core.wrapper.flattenResource
 import com.m3u.core.wrapper.mapResource
-import com.m3u.core.wrapper.resource
+import com.m3u.core.wrapper.resourceflow
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.Stream
 import com.m3u.data.parser.xtream.XtreamStreamInfo
@@ -93,7 +93,7 @@ class ForyouViewModel @Inject constructor(
     internal val episodes: StateFlow<Resource<ImmutableList<XtreamStreamInfo.Episode>>> = series
         .flatMapLatest { series ->
             if (series == null) flow { }
-            else resource { playlistRepository.readEpisodesOrThrow(series) }
+            else resourceflow { playlistRepository.readEpisodesOrThrow(series) }
                 .mapResource { it.toPersistentList() }
         }
         .stateIn(

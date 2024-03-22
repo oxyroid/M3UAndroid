@@ -26,7 +26,7 @@ import com.m3u.core.wrapper.Message
 import com.m3u.core.wrapper.Resource
 import com.m3u.core.wrapper.eventOf
 import com.m3u.core.wrapper.mapResource
-import com.m3u.core.wrapper.resource
+import com.m3u.core.wrapper.resourceflow
 import com.m3u.data.parser.xtream.XtreamStreamInfo
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.Stream
@@ -166,7 +166,7 @@ class PlaylistViewModel @Inject constructor(
                 messager.emit(PlaylistMessage.StreamCoverNotFound)
                 return@launch
             }
-            resource { mediaRepository.savePicture(cover) }
+            resourceflow { mediaRepository.savePicture(cover) }
                 .onEach { resource ->
                     when (resource) {
                         Resource.Loading -> {}
@@ -352,7 +352,7 @@ class PlaylistViewModel @Inject constructor(
     internal val episodes: StateFlow<Resource<ImmutableList<XtreamStreamInfo.Episode>>> = series
         .flatMapLatest { series ->
             if (series == null) flow {  Log.e("TAG", "123")  }
-            else resource { playlistRepository.readEpisodesOrThrow(series) }
+            else resourceflow { playlistRepository.readEpisodesOrThrow(series) }
                 .mapResource { it.toPersistentList() }
                 .onEach { Log.e("TAG", "$it") }
         }
