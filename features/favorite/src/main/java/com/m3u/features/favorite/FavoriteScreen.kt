@@ -24,6 +24,7 @@ import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.core.util.basic.title
+import com.m3u.core.wrapper.Resource
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.Stream
 import com.m3u.data.service.MediaCommand
@@ -65,7 +66,7 @@ fun FavouriteRoute(
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
 
-    val streams by viewModel.streams.collectAsStateWithLifecycle()
+    val streamsResource by viewModel.streamsResource.collectAsStateWithLifecycle()
     val episodes by viewModel.episodes.collectAsStateWithLifecycle()
     val zapping by viewModel.zapping.collectAsStateWithLifecycle()
     val sorts = viewModel.sorts
@@ -104,7 +105,7 @@ fun FavouriteRoute(
         FavoriteScreen(
             contentPadding = contentPadding,
             rowCount = pref.rowCount,
-            streams = streams,
+            streamsResource = streamsResource,
             zapping = zapping,
             onClickStream = { stream ->
                 coroutineScope.launch {
@@ -190,7 +191,7 @@ fun FavouriteRoute(
 private fun FavoriteScreen(
     contentPadding: PaddingValues,
     rowCount: Int,
-    streams: ImmutableList<Stream>,
+    streamsResource: Resource<ImmutableList<Stream>>,
     zapping: Stream?,
     onClickStream: (Stream) -> Unit,
     onLongClickStream: (Stream) -> Unit,
@@ -205,7 +206,7 @@ private fun FavoriteScreen(
     }
     FavouriteGallery(
         contentPadding = contentPadding,
-        streams = streams,
+        streamsResource = streamsResource,
         zapping = zapping,
         rowCount = actualRowCount,
         sort = sort,

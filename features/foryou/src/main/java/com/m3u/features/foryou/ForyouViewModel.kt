@@ -9,16 +9,15 @@ import com.m3u.core.architecture.pref.observeAsFlow
 import com.m3u.core.wrapper.Resource
 import com.m3u.core.wrapper.mapResource
 import com.m3u.core.wrapper.resource
+import com.m3u.core.wrapper.flattenResource
 import com.m3u.data.parser.xtream.XtreamStreamInfo
 import com.m3u.data.database.model.Playlist
-import com.m3u.data.database.model.PlaylistWithCount
 import com.m3u.data.database.model.Stream
 import com.m3u.data.repository.PlaylistRepository
 import com.m3u.data.repository.StreamRepository
 import com.m3u.features.foryou.components.recommend.Recommend
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.collections.immutable.ImmutableList
-import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -42,13 +41,15 @@ class ForyouViewModel @Inject constructor(
     pref: Pref,
     @Dispatcher(IO) ioDispatcher: CoroutineDispatcher
 ) : ViewModel() {
-    internal val playlistCounts: StateFlow<ImmutableList<PlaylistWithCount>> = playlistRepository
-        .observePlaylistCounts()
-        .map { it.toPersistentList() }
+    internal val playlistCountsResource = flattenResource {
+        playlistRepository
+            .observePlaylistCounts()
+            .map { it.toPersistentList() }
+    }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = persistentListOf()
+            initialValue = Resource.Loading
         )
 
     private val unseensDuration = pref

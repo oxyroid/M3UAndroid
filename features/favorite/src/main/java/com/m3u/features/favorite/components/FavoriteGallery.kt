@@ -1,18 +1,22 @@
 package com.m3u.features.favorite.components
 
 import androidx.compose.foundation.layout.Arrangement
+ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.items
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.tv.foundation.lazy.grid.TvGridCells
 import androidx.tv.foundation.lazy.grid.TvLazyVerticalGrid
 import androidx.tv.foundation.lazy.grid.items
 import com.m3u.core.architecture.pref.LocalPref
+import com.m3u.core.wrapper.Resource
 import com.m3u.data.database.model.Stream
 import com.m3u.material.ktx.isTelevision
 import com.m3u.material.ktx.plus
@@ -23,7 +27,7 @@ import kotlinx.collections.immutable.ImmutableList
 @Composable
 internal fun FavouriteGallery(
     contentPadding: PaddingValues,
-    streams: ImmutableList<Stream>,
+    streamsResource: Resource<ImmutableList<Stream>>,
     zapping: Stream?,
     rowCount: Int,
     sort: Sort,
@@ -34,28 +38,40 @@ internal fun FavouriteGallery(
     val pref = LocalPref.current
     val compact = pref.compact
 
-    if (!compact) {
-        FavouriteGalleryImpl(
-            contentPadding = contentPadding,
-            streams = streams,
-            zapping = zapping,
-            rowCount = rowCount,
-            sort = sort,
-            onClick = onClick,
-            onLongClick = onLongClick,
-            modifier = modifier
-        )
-    } else {
-        CompactFavouriteGalleryImpl(
-            contentPadding = contentPadding,
-            streams = streams,
-            zapping = zapping,
-            rowCount = rowCount,
-            sort = sort,
-            onClick = onClick,
-            onLongClick = onLongClick,
-            modifier = modifier
-        )
+    Box(modifier) {
+        when (streamsResource) {
+            Resource.Loading -> {
+                LinearProgressIndicator(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(contentPadding)
+                )
+            }
+            is Resource.Success -> {
+                if (!compact) {
+                    FavouriteGalleryImpl(
+                        contentPadding = contentPadding,
+                        streams = streamsResource.data,
+                        zapping = zapping,
+                        rowCount = rowCount,
+                        sort = sort,
+                        onClick = onClick,
+                        onLongClick = onLongClick
+                    )
+                } else {
+                    CompactFavouriteGalleryImpl(
+                        contentPadding = contentPadding,
+                        streams = streamsResource.data,
+                        zapping = zapping,
+                        rowCount = rowCount,
+                        sort = sort,
+                        onClick = onClick,
+                        onLongClick = onLongClick
+                    )
+                }
+            }
+            is Resource.Failure -> {}
+        }
     }
 }
 
