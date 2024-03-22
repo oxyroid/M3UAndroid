@@ -7,8 +7,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -25,6 +27,7 @@ import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.core.util.basic.title
+import com.m3u.core.wrapper.Resource
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.PlaylistWithCount
 import com.m3u.data.database.model.Stream
@@ -74,7 +77,7 @@ fun ForyouRoute(
         visiblePageInfos.find { it.index == pageIndex } != null
     }
 
-    val playlistCounts by viewModel.playlistCounts.collectAsStateWithLifecycle()
+    val playlistCountsResource by viewModel.playlistCountsResource.collectAsStateWithLifecycle()
     val recommend by viewModel.recommend.collectAsStateWithLifecycle()
     val episodes by viewModel.episodes.collectAsStateWithLifecycle()
 
@@ -99,7 +102,7 @@ fun ForyouRoute(
     Background {
         Box(modifier) {
             ForyouScreen(
-                playlistCounts = playlistCounts,
+                playlistCountsResource = playlistCountsResource,
                 recommend = recommend,
                 rowCount = pref.rowCount,
                 contentPadding = contentPadding,
@@ -169,7 +172,7 @@ fun ForyouRoute(
 @Composable
 private fun ForyouScreen(
     rowCount: Int,
-    playlistCounts: ImmutableList<PlaylistWithCount>,
+    playlistCountsResource: Resource<ImmutableList<PlaylistWithCount>>,
     recommend: Recommend,
     contentPadding: PaddingValues,
     navigateToPlaylist: (Playlist) -> Unit,
@@ -190,46 +193,58 @@ private fun ForyouScreen(
     }
     var dialogState: ForyouDialogState by remember { mutableStateOf(ForyouDialogState.Idle) }
     Background(modifier) {
-        Box {
-            val showPlaylist = playlistCounts.isNotEmpty()
-            val header = @Composable {
-                RecommendGallery(
-                    recommend = recommend,
-                    navigateToPlaylist = navigateToPlaylist,
-                    onClickStream = onClickStream,
-                    modifier = Modifier.fillMaxWidth()
+        when (playlistCountsResource) {
+            Resource.Loading -> {
+                LinearProgressIndicator(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(contentPadding)
                 )
             }
-            if (showPlaylist) {
-                PlaylistGallery(
-                    rowCount = actualRowCount,
-                    playlistCounts = playlistCounts,
-                    navigateToPlaylist = navigateToPlaylist,
-                    onMenu = { dialogState = ForyouDialogState.Selections(it) },
-                    header = header.takeIf { recommend.isNotEmpty() },
-                    contentPadding = contentPadding,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .haze(
-                            LocalHazeState.current,
-                            HazeDefaults.style(MaterialTheme.colorScheme.surface)
+            is Resource.Success -> {
+                Box {
+                    val showPlaylist = playlistCountsResource.data.isNotEmpty()
+                    val header = @Composable {
+                        RecommendGallery(
+                            recommend = recommend,
+                            navigateToPlaylist = navigateToPlaylist,
+                            onClickStream = onClickStream,
+                            modifier = Modifier.fillMaxWidth()
                         )
-                )
-            } else {
-                Box(Modifier.fillMaxSize()) {
-                    PlaylistGalleryPlaceholder(
-                        navigateToSettingPlaylistManagement = navigateToSettingPlaylistManagement,
-                        modifier = Modifier.align(Alignment.Center)
+                    }
+                    if (showPlaylist) {
+                        PlaylistGallery(
+                            rowCount = actualRowCount,
+                            playlistCounts = playlistCountsResource.data,
+                            navigateToPlaylist = navigateToPlaylist,
+                            onMenu = { dialogState = ForyouDialogState.Selections(it) },
+                            header = header.takeIf { recommend.isNotEmpty() },
+                            contentPadding = contentPadding,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .haze(
+                                    LocalHazeState.current,
+                                    HazeDefaults.style(MaterialTheme.colorScheme.surface)
+                                )
+                        )
+                    } else {
+                        Box(Modifier.fillMaxSize()) {
+                            PlaylistGalleryPlaceholder(
+                                navigateToSettingPlaylistManagement = navigateToSettingPlaylistManagement,
+                                modifier = Modifier.align(Alignment.Center)
+                            )
+                        }
+                    }
+                    ForyouDialog(
+                        status = dialogState,
+                        update = { dialogState = it },
+                        unsubscribe = unsubscribe,
+                        rename = rename,
+                        editUserAgent = updateUserAgent
                     )
                 }
             }
-            ForyouDialog(
-                status = dialogState,
-                update = { dialogState = it },
-                unsubscribe = unsubscribe,
-                rename = rename,
-                editUserAgent = updateUserAgent
-            )
+            is Resource.Failure -> {}
         }
     }
 

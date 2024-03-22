@@ -5,7 +5,9 @@ import androidx.compose.runtime.Stable
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.onStart
 
 @Immutable
@@ -44,3 +46,11 @@ fun <T> resource(block: suspend () -> T): Flow<Resource<T>> = channelFlow<Resour
 }
     .onStart { emit(Resource.Loading) }
     .catch { emit(Resource.Failure(it.message)) }
+
+fun <T> flattenResource(block: () -> Flow<T>): Flow<Resource<T>> = channelFlow {
+    block()
+        .onStart { send(Resource.Loading) }
+        .catch { send(Resource.Failure(it.message)) }
+        .onEach { send(Resource.Success(it)) }
+        .collect()
+}
