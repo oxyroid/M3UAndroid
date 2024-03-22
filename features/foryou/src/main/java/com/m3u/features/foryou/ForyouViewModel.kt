@@ -7,12 +7,12 @@ import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
 import com.m3u.core.architecture.pref.Pref
 import com.m3u.core.architecture.pref.observeAsFlow
 import com.m3u.core.wrapper.Resource
+import com.m3u.core.wrapper.flattenResource
 import com.m3u.core.wrapper.mapResource
 import com.m3u.core.wrapper.resource
-import com.m3u.core.wrapper.flattenResource
-import com.m3u.data.parser.xtream.XtreamStreamInfo
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.Stream
+import com.m3u.data.parser.xtream.XtreamStreamInfo
 import com.m3u.data.repository.PlaylistRepository
 import com.m3u.data.repository.StreamRepository
 import com.m3u.features.foryou.components.recommend.Recommend
@@ -41,11 +41,10 @@ class ForyouViewModel @Inject constructor(
     pref: Pref,
     @Dispatcher(IO) ioDispatcher: CoroutineDispatcher
 ) : ViewModel() {
-    internal val playlistCountsResource = flattenResource {
-        playlistRepository
-            .observePlaylistCounts()
-            .map { it.toPersistentList() }
-    }
+    internal val playlistCountsResource = playlistRepository
+        .observePlaylistCounts()
+        .map { it.toPersistentList() }
+        .flattenResource()
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),

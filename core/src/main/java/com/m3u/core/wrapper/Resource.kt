@@ -47,8 +47,10 @@ fun <T> resource(block: suspend () -> T): Flow<Resource<T>> = channelFlow<Resour
     .onStart { emit(Resource.Loading) }
     .catch { emit(Resource.Failure(it.message)) }
 
-fun <T> flattenResource(block: () -> Flow<T>): Flow<Resource<T>> = channelFlow {
-    block()
+fun <T> Flow<T>.flattenResource(): Flow<Resource<T>> = flattenResourceImpl(this)
+
+private fun <T> flattenResourceImpl(flow: Flow<T>): Flow<Resource<T>> = channelFlow {
+    flow
         .onStart { send(Resource.Loading) }
         .catch { send(Resource.Failure(it.message)) }
         .onEach { send(Resource.Success(it)) }
