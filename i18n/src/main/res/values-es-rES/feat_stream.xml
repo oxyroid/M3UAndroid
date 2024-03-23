@@ -3,7 +3,7 @@
     <string name="feat_stream_playback_state_idle">en pausa</string>
     <string name="feat_stream_playback_state_buffering">cargando</string>
     <string name="feat_stream_playback_state_ready">listo</string>
-    <string name="feat_stream_playback_state_ended">completado</string>
+    <string name="feat_stream_playback_state_ended">se ha completado</string>
 
     <string name="feat_stream_tooltip_on_back_pressed">atrás</string>
     <string name="feat_stream_tooltip_mute">silenciar</string>

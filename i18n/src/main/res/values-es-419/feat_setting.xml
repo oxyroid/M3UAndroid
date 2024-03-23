@@ -2,7 +2,7 @@
 <resources>
     <string name="feat_setting_placeholder_url">dirección de playlist</string>
     <string name="feat_setting_app_version">versión de app</string>
-    <string name="feat_setting_label_subscribe">subscribir</string>
+    <string name="feat_setting_label_subscribe">subscribirse</string>
     <string name="feat_setting_success_subscribe">subscripción completa</string>
     <string name="feat_setting_failed_malformed_url">dirección malformateada (%s)</string>
     <string name="feat_setting_error_empty_title">el nombre de playlist name está vacío</string>
@@ -11,53 +11,53 @@
     <string name="feat_setting_sync_mode_all">todo</string>
     <string name="feat_setting_sync_mode_skip_favourite">saltar favorito</string>
     <string name="feat_setting_sync_mode">modo de sincronización</string>
-    <string name="feat_setting_playlist_management">administrar playlist</string>
+    <string name="feat_setting_playlist_management">gestionar playlist</string>
     <string name="feat_setting_connect_timeout">límite de conexión</string>
     <string name="feat_setting_god_mode">modo dios</string>
     <string name="feat_setting_god_mode_description">ajusta la distribución con los botones del volumen</string>
     <string name="feat_setting_experimental_mode">modo experimental</string>
-    <string name="feat_setting_experimental_mode_description">características inestables con efectos inesperados</string>
-    <string name="feat_setting_label_hidden_streams">emisiones ocultadas</string>
-    <string name="feat_setting_label_hidden_playlist_groups">categorías de playlist ocultadas</string>
+    <string name="feat_setting_experimental_mode_description">funciones inestables con efectos inesperados</string>
+    <string name="feat_setting_label_hidden_streams">emisiones ocultas</string>
+    <string name="feat_setting_label_hidden_playlist_groups">categorías de playlist ocultas</string>
     <string name="feat_setting_label_add_playlist">añadir playlist</string>
     <string name="feat_setting_label_parse_from_clipboard">obtener del portapapeles</string>
     <string name="feat_setting_label_select_from_local_storage">seleccionar archivo</string>
     <string name="feat_setting_label_parse_from_disk">obtener del archivo</string>
-    <string name="feat_setting_clip_mode">modo de video clip</string>
+    <string name="feat_setting_clip_mode">modo de clip de video</string>
     <string name="feat_setting_clip_mode_adaptive">adaptativo</string>
-    <string name="feat_setting_clip_mode_clip">centrar</string>
+    <string name="feat_setting_clip_mode_clip">centrado</string>
     <string name="feat_setting_clip_mode_stretched">estirado</string>
-    <string name="feat_setting_auto_refresh">autorefrescar</string>
-    <string name="feat_setting_auto_refresh_description">se actualiza automáticamente al ingresar la playlist</string>
+    <string name="feat_setting_auto_refresh">autoactualizar</string>
+    <string name="feat_setting_auto_refresh_description">actualiza automáticamente al ingresar la playlist</string>
 
     <string name="feat_setting_always_television">siempre en televisión</string>
-    <string name="feat_setting_always_television_description">será revertido cuando se reinicia la app</string>
+    <string name="feat_setting_always_television_description">se revertirá cuando se reinicia la app</string>
 
     <string name="feat_setting_full_info_player">reproductor con información detallada</string>
     <string name="feat_setting_full_info_player_description">muestra más detalles en el reproductor</string>
-    <string name="feat_setting_progress">barra deslizante</string>
+    <string name="feat_setting_progress">barra deslizable</string>
     <string name="feat_setting_initial_screen">Pantalla inicial</string>
     <string name="feat_setting_no_picture_mode">modo sin imagen</string>
     <string name="feat_setting_no_picture_mode_description">podría mejorar el rendimiento</string>
     <string name="feat_setting_system_setting">ajustes de sistema</string>
     <string name="feat_setting_script_management_import_js">importar Javascript</string>
-    <string name="feat_setting_enqueue_subscribe">la suscripción fue realizada e incluida a la lista</string>
+    <string name="feat_setting_enqueue_subscribe">se procesó la suscripción y se añadió a la fila</string>
     <string name="feat_setting_dropbox">dropbox</string>
-    <string name="feat_setting_project_about">acerca del proyecto</string>
+    <string name="feat_setting_project_about">sobre el proyecto</string>
     <string name="feat_setting_local_storage">almacenamiento local</string>
-    <string name="feat_setting_error_unselected_file">aún no se seleccionó al archivo</string>
-    <string name="feat_setting_error_blank_url">url en blanco</string>
+    <string name="feat_setting_error_unselected_file">el archivo todavía se seleccionó</string>
+    <string name="feat_setting_error_blank_url">url vacía</string>
     <string name="feat_setting_use_dynamic_colors">colores dinámicos</string>
     <string name="feat_setting_use_dynamic_colors_unavailable">disponible desde Android 12</string>
-    <string name="feat_setting_not_implementation">esa característica no está disponible para esa versión</string>
+    <string name="feat_setting_not_implementation">esa función no está disponible para esa versión</string>
     <string name="feat_setting_zapping_mode">Modo zapeo</string>
-    <string name="feat_setting_zapping_mode_description">Realiza una vista previa de las emisiones</string>
+    <string name="feat_setting_zapping_mode_description">Permite previsualizar las emisiones</string>
     <string name="feat_setting_gesture_brightness">gestos de brillo</string>
     <string name="feat_setting_gesture_volume">gestos de volumen</string>
     <string name="feat_setting_screencast">screencast</string>
     <string name="feat_setting_screen_rotating">rotación de pantalla</string>
-    <string name="feat_setting_screen_rotating_description">disponible cuando el mecanismo de rotación está desbloqueado</string>
-    <string name="feat_setting_optional_player_features">características opcionales de reproducción</string>
+    <string name="feat_setting_screen_rotating_description">disponible cuando el mecanismo de rotación no está bloqueado</string>
+    <string name="feat_setting_optional_player_features">funciones opcionales de reproducción</string>
     <string name="feat_setting_unseen_limit">recomendaciones de emisiones favortias vistas hace tiempo</string>
     <string name="feat_setting_reconnect_mode">autoreconectar</string>
     <string name="feat_setting_reconnect_mode_no">nunca</string>
@@ -68,7 +68,7 @@
     <string name="feat_setting_appearance_hint_edit_color">mantén pulsado para modificar el color</string>
 
 
-    <string name="feat_setting_tunneling">modo tunelado</string>
+    <string name="feat_setting_tunneling">modo entunelado</string>
     <string name="feat_setting_tunneling_description">mejora el desempeño en contenido 4K/HDR</string>
     <string name="feat_setting_label_backup">respaldar</string>
     <string name="feat_setting_label_restore">restaurar</string>
@@ -79,10 +79,10 @@
     <string name="feat_setting_canvas_reset">reiniciar</string>
 
     <string name="feat_setting_remote_control">control remoto</string>
-    <string name="feat_setting_remote_control_description">activa la habilidad de controlar remotamente la TV</string>
+    <string name="feat_setting_remote_control_description">permite controlar la TV a distancia</string>
 
     <string name="feat_setting_remote_control_tv_side">control remoto</string>
-    <string name="feat_setting_remote_control_tv_side_description">permite a los móviles controlar tu TV</string>
+    <string name="feat_setting_remote_control_tv_side_description">permite a los celulares controlar tu TV</string>
     <string name="feat_setting_subscribe_for_tv">para television</string>
     <string name="feat_setting_backing_up">respaldando todos los playlists y canales</string>
     <string name="feat_setting_restoring">restaurando todos los playlists y canales</string>
@@ -92,11 +92,11 @@
     <string name="feat_setting_placeholder_username">usuario</string>
     <string name="feat_setting_placeholder_password">contraseña</string>
 
-    <string name="feat_setting_warning_xtream_takes_much_more_time">podría tomar muchísimo tiempo</string>
+    <string name="feat_setting_warning_xtream_takes_much_more_time">eso tomaría muchísimo tiempo</string>
 
     <string name="feat_setting_back_home">ir a inicio</string>
 
-    <string name="feat_setting_always_replay">siempre mostrar un botón de reproducción</string>
+    <string name="feat_setting_always_replay">mostrar siempre un botón de reproducción</string>
 
     <string name="feat_setting_clear_cache">limpiar caché (%s)</string>
 </resources>
