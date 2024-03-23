@@ -317,8 +317,8 @@ class PlayerManagerV2Impl @Inject constructor(
                 OkHttpDataSource.Factory(okHttpClient)
                     .setUserAgent(userAgent)
             )
-            .setFlags(CacheDataSource.FLAG_IGNORE_CACHE_FOR_UNSET_LENGTH_REQUESTS or CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR)
             .setCache(cache)
+            .setFlags(CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR)
 
     private suspend fun observePreferencesChanging(
         onChanged: suspend (timeout: Long, tunneling: Boolean) -> Unit
