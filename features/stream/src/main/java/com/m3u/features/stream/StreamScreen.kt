@@ -11,6 +11,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
@@ -22,10 +23,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.media3.exoplayer.offline.Download
 import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.core.unspecified.unspecifiable
 import com.m3u.core.util.basic.isNotEmpty
 import com.m3u.core.util.basic.title
+import com.m3u.core.wrapper.Resource
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.Stream
 import com.m3u.features.stream.components.CoverPlaceholder
@@ -65,10 +68,17 @@ fun StreamRoute(
 
     val formats by viewModel.formats.collectAsStateWithLifecycle()
     val selectedFormats by viewModel.selectedFormats.collectAsStateWithLifecycle()
+    val downloadsResource by viewModel.downloadsResource.collectAsStateWithLifecycle()
 
     val volume by viewModel.volume.collectAsStateWithLifecycle()
-    val downloadOrCaching by viewModel.downloadOrCaching.collectAsStateWithLifecycle()
     val isSeriesPlaylist by viewModel.isSeriesPlaylist.collectAsStateWithLifecycle()
+
+    val download = remember(stream, downloadsResource) {
+        val streamUrl = stream?.url ?: return@remember null
+        (downloadsResource as? Resource.Success)
+            ?.data
+            ?.find { it.request.uri.toString() == streamUrl }
+    }
 
     var brightness by rememberSaveable { mutableFloatStateOf(helper.brightness) }
     var isPipMode by rememberSaveable { mutableStateOf(false) }
@@ -135,12 +145,9 @@ fun StreamRoute(
         contentColor = Color.White
     ) {
         StreamScreen(
-            downloadOrCaching = downloadOrCaching,
             isSeriesPlaylist = isSeriesPlaylist,
             openDlnaDevices = { viewModel.openDlnaDevices() },
             openChooseFormat = { choosing = true },
-            downloadOrCache = viewModel::downloadOrCache,
-            stopDownloadOrCache = viewModel::stopDownloadOrCache,
             onFavourite = { viewModel.onFavourite() },
             onBackPressed = onBackPressed,
             maskState = maskState,
@@ -152,6 +159,8 @@ fun StreamRoute(
             volume = volume,
             onBrightness = { brightness = it },
             onVolume = { viewModel.onVolume(it) },
+            download = download,
+            onDownload = { viewModel.onDownload() },
             modifier = modifier
         )
 
@@ -201,15 +210,14 @@ private fun StreamScreen(
     formatsIsNotEmpty: Boolean,
     volume: Float,
     brightness: Float,
+    download: Download?,
+    onDownload: () -> Unit,
     onFavourite: () -> Unit,
     onBackPressed: () -> Unit,
     openDlnaDevices: () -> Unit,
     openChooseFormat: () -> Unit,
     onVolume: (Float) -> Unit,
     onBrightness: (Float) -> Unit,
-    downloadOrCaching: Boolean,
-    downloadOrCache: () -> Unit,
-    stopDownloadOrCache: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val title = stream?.title ?: "--"
@@ -251,9 +259,6 @@ private fun StreamScreen(
                 volume = volume,
                 brightness = brightness,
                 maskState = maskState,
-                downloadOrCaching = downloadOrCaching,
-                downloadOrCache = downloadOrCache,
-                stopDownloadOrCache = stopDownloadOrCache,
                 favourite = favourite,
                 isSeriesPlaylist = isSeriesPlaylist,
                 formatsIsNotEmpty = formatsIsNotEmpty,
@@ -263,6 +268,8 @@ private fun StreamScreen(
                 openChooseFormat = openChooseFormat,
                 onVolume = onVolume,
                 onBrightness = onBrightness,
+                download = download,
+                onDownload = onDownload
             )
 
             LaunchedEffect(playerState.playerError) {

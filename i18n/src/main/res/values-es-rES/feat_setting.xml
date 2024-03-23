@@ -54,7 +54,6 @@
     <string name="feat_setting_zapping_mode_description">Un vistazo a los directos antes de reproducirlos</string>
     <string name="feat_setting_gesture_brightness">gestos de brillo</string>
     <string name="feat_setting_gesture_volume">gestos de volumen</string>
-    <string name="feat_setting_download_or_cache">grabación de segmento</string>
     <string name="feat_setting_screencast">screencast</string>
     <string name="feat_setting_screen_rotating">rotación de pantalla</string>
     <string name="feat_setting_screen_rotating_description">disponible cuando el mecanismo de rotación está desbloqueado</string>

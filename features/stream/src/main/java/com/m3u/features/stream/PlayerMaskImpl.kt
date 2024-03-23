@@ -25,11 +25,10 @@ import androidx.compose.material.icons.automirrored.rounded.VolumeUp
 import androidx.compose.material.icons.rounded.Cast
 import androidx.compose.material.icons.rounded.DarkMode
 import androidx.compose.material.icons.rounded.Download
+import androidx.compose.material.icons.rounded.DownloadDone
 import androidx.compose.material.icons.rounded.HighQuality
 import androidx.compose.material.icons.rounded.LightMode
 import androidx.compose.material.icons.rounded.PictureInPicture
-import androidx.compose.material.icons.rounded.RadioButtonChecked
-import androidx.compose.material.icons.rounded.RadioButtonUnchecked
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.ScreenRotationAlt
 import androidx.compose.material.icons.rounded.Star
@@ -58,6 +57,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.media3.common.Player
+import androidx.media3.exoplayer.offline.Download
 import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.core.util.basic.isNotEmpty
 import com.m3u.features.stream.PlayerMaskImplDefaults.detectVerticalMaskGestures
@@ -89,9 +89,6 @@ internal fun PlayerMaskImpl(
     volume: Float,
     brightness: Float,
     maskState: MaskState,
-    downloadOrCaching: Boolean,
-    downloadOrCache: () -> Unit,
-    stopDownloadOrCache: () -> Unit,
     favourite: Boolean,
     isSeriesPlaylist: Boolean,
     formatsIsNotEmpty: Boolean,
@@ -101,6 +98,8 @@ internal fun PlayerMaskImpl(
     openChooseFormat: () -> Unit,
     onVolume: (Float) -> Unit,
     onBrightness: (Float) -> Unit,
+    download: Download?,
+    onDownload: () -> Unit
 ) {
     val pref = LocalPref.current
     val helper = LocalHelper.current
@@ -114,14 +113,13 @@ internal fun PlayerMaskImpl(
     var gesture: MaskGesture? by remember { mutableStateOf(null) }
     val muted = currentVolume == 0f
 
-    val staticAndSeekable by remember(
+    val isProgressEnabled = pref.progress
+    val isStaticAndSeekable by remember(
         playerState.player,
-        pref.progress,
         playerState.playState
     ) {
         derivedStateOf {
             when {
-                !pref.progress -> false
                 playerState.player == null -> false
                 !playerState.player.isCommandAvailable(Player.COMMAND_GET_CURRENT_MEDIA_ITEM) -> false
                 else -> with(playerState.player) {
@@ -133,9 +131,10 @@ internal fun PlayerMaskImpl(
 
     val contentPosition by produceState(
         initialValue = -1L,
-        staticAndSeekable
+        isStaticAndSeekable,
+        isProgressEnabled
     ) {
-        while (staticAndSeekable) {
+        while (isProgressEnabled && isStaticAndSeekable) {
             delay(50.milliseconds)
             value = playerState.player?.currentPosition ?: -1L
         }
@@ -143,9 +142,10 @@ internal fun PlayerMaskImpl(
     }
     val contentDuration by produceState(
         initialValue = -1L,
-        staticAndSeekable
+        isStaticAndSeekable,
+        isProgressEnabled
     ) {
-        while (staticAndSeekable) {
+        while (isProgressEnabled && isStaticAndSeekable) {
             delay(50.milliseconds)
             value = playerState.player?.duration?.absoluteValue ?: -1L
         }
@@ -222,23 +222,26 @@ internal fun PlayerMaskImpl(
                         contentDescription = stringResource(string.feat_stream_tooltip_choose_format)
                     )
                 }
-                if (pref.downloadOrCache && playerState.videoSize.isNotEmpty) {
+                if (isStaticAndSeekable) {
                     MaskButton(
                         state = maskState,
-                        icon = when {
-                            downloadOrCaching -> if (staticAndSeekable) Icons.Rounded.StopCircle
-                            else Icons.Rounded.RadioButtonChecked
-
-                            else -> if (staticAndSeekable) Icons.Rounded.Download
-                            else Icons.Rounded.RadioButtonUnchecked
+                        icon = when (download?.state) {
+                            Download.STATE_DOWNLOADING -> Icons.Rounded.StopCircle
+                            Download.STATE_COMPLETED -> Icons.Rounded.DownloadDone
+                            else -> Icons.Rounded.Download
                         },
-                        tint = if (downloadOrCaching) MaterialTheme.colorScheme.error
-                        else Color.Unspecified,
-                        onClick = if (downloadOrCaching) stopDownloadOrCache else downloadOrCache,
-                        contentDescription = if (downloadOrCaching) stringResource(string.feat_stream_tooltip_stop_download)
-                        else stringResource(string.feat_stream_tooltip_download)
+                        tint = when (download?.state) {
+                            Download.STATE_DOWNLOADING -> MaterialTheme.colorScheme.error
+                            else -> Color.Unspecified
+                        },
+                        onClick = onDownload,
+                        contentDescription = when (download?.state) {
+                            Download.STATE_DOWNLOADING -> stringResource(string.feat_stream_tooltip_stop_download)
+                            else -> stringResource(string.feat_stream_tooltip_download)
+                        }
                     )
                 }
+
                 if (!tv && pref.screencast) {
                     MaskButton(
                         state = maskState,
@@ -317,7 +320,10 @@ internal fun PlayerMaskImpl(
                     val exceptionDisplayText =
                         PlayerMaskImplDefaults.playbackExceptionDisplayText(playerState.playerError)
 
-                    if (playStateDisplayText.isNotEmpty() || exceptionDisplayText.isNotEmpty() || staticAndSeekable) {
+                    if (playStateDisplayText.isNotEmpty()
+                        || exceptionDisplayText.isNotEmpty()
+                        || (isStaticAndSeekable && isProgressEnabled)
+                    ) {
                         Spacer(
                             modifier = Modifier.height(spacing.small)
                         )
@@ -342,7 +348,7 @@ internal fun PlayerMaskImpl(
                             modifier = Modifier.basicMarquee()
                         )
                     }
-                    if (staticAndSeekable) {
+                    if (isProgressEnabled && isStaticAndSeekable) {
                         val fontWeight by animateIntAsState(
                             targetValue = if (bufferedPosition != null) 800
                             else 400,
@@ -388,7 +394,7 @@ internal fun PlayerMaskImpl(
             },
             slider = {
                 when {
-                    staticAndSeekable -> {
+                    isProgressEnabled && isStaticAndSeekable -> {
                         val animContentPosition by animateFloatAsState(
                             targetValue = (bufferedPosition
                                 ?: contentPosition.coerceAtLeast(0L)).toFloat(),

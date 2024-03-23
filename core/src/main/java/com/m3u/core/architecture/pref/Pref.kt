@@ -38,7 +38,6 @@ interface Pref {
     var zappingMode: Boolean
     var brightnessGesture: Boolean
     var volumeGesture: Boolean
-    var downloadOrCache: Boolean
     var screencast: Boolean
     var screenRotating: Boolean
 
@@ -80,7 +79,6 @@ interface Pref {
         const val DEFAULT_ZAPPING_MODE = false
         const val DEFAULT_BRIGHTNESS_GESTURE = true
         const val DEFAULT_VOLUME_GESTURE = true
-        const val DEFAULT_DOWNLOAD_OR_CACHE = false
         const val DEFAULT_SCREENCAST = true
         const val DEFAULT_SCREEN_ROTATING = false
 
@@ -113,7 +111,6 @@ interface Pref {
         const val ZAPPING_MODE = "zapping-mode"
         const val BRIGHTNESS_GESTURE = "brightness-gesture"
         const val VOLUME_GESTURE = "volume-gesture"
-        const val DOWNLOAD_OR_CACHE = "download-or-cache"
         const val SCREENCAST = "screencast"
         const val SCREEN_ROTATING = "screen-rotating"
         const val UNSEENS_MILLISECONDS = "unseens-milliseconds"

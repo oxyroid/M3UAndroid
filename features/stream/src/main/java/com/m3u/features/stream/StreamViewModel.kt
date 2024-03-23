@@ -6,6 +6,8 @@ import androidx.media3.common.C
 import androidx.media3.common.Format
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.prefix
+import com.m3u.core.wrapper.Resource
+import com.m3u.core.wrapper.asResource
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.Stream
@@ -118,7 +120,6 @@ class StreamViewModel @Inject constructor(
         playerManager.size,
         playerManager.playbackException
     ) { player, playState, videoSize, playbackException ->
-        logger.log(playbackException?.errorCodeName.orEmpty())
         PlayerState(
             playState = playState,
             videoSize = videoSize,
@@ -179,17 +180,6 @@ class StreamViewModel @Inject constructor(
         controlPoint?.stop()
         controlPoint = null
         DLNACastManager.disconnectDevice(device)
-    }
-
-    private val _downloadOrCaching = MutableStateFlow(false)
-    internal val downloadOrCaching = _downloadOrCaching.asStateFlow()
-
-    internal fun downloadOrCache() {
-        playerManager.download()
-    }
-
-    internal fun stopDownloadOrCache() {
-        _downloadOrCaching.update { !it }
     }
 
     internal fun onFavourite() {
@@ -255,5 +245,20 @@ class StreamViewModel @Inject constructor(
 
     internal fun openInExternalPlayer() {
 
+    }
+
+    internal val downloadsResource = playerManager
+        .downloads
+        .asResource()
+        .stateIn(
+            scope = viewModelScope,
+            initialValue = Resource.Loading,
+            started = SharingStarted.WhileSubscribed(5_000L)
+        )
+
+    internal fun onDownload() {
+        viewModelScope.launch {
+            playerManager.onDownload()
+        }
     }
 }

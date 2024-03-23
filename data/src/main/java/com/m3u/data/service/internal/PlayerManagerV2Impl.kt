@@ -1,8 +1,9 @@
 package com.m3u.data.service.internal
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Rect
-import androidx.core.net.toUri
+import android.net.Uri
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
@@ -14,11 +15,15 @@ import androidx.media3.common.TrackSelectionOverride
 import androidx.media3.common.Tracks
 import androidx.media3.common.VideoSize
 import androidx.media3.datasource.DataSource
+import androidx.media3.datasource.cache.Cache
+import androidx.media3.datasource.cache.CacheDataSource
 import androidx.media3.datasource.okhttp.OkHttpDataSource
 import androidx.media3.datasource.rtmp.RtmpDataSource
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.RenderersFactory
 import androidx.media3.exoplayer.hls.HlsMediaSource
+import androidx.media3.exoplayer.offline.Download
+import androidx.media3.exoplayer.offline.DownloadManager
 import androidx.media3.exoplayer.offline.DownloadRequest
 import androidx.media3.exoplayer.offline.DownloadService
 import androidx.media3.exoplayer.rtsp.RtspMediaSource
@@ -60,6 +65,7 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
@@ -67,8 +73,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient
-import java.io.File
-import java.util.UUID
 import javax.inject.Inject
 
 class PlayerManagerV2Impl @Inject constructor(
@@ -79,6 +83,8 @@ class PlayerManagerV2Impl @Inject constructor(
     private val pref: Pref,
     private val playlistRepository: PlaylistRepository,
     private val streamRepository: StreamRepository,
+    private val cache: Cache,
+    downloadManager: DownloadManager,
     before: Logger
 ) : PlayerManagerV2, Player.Listener, MediaSession.Callback {
     private val mainCoroutineScope = CoroutineScope(mainDispatcher)
@@ -137,13 +143,15 @@ class PlayerManagerV2Impl @Inject constructor(
         if (stream != null) {
             val streamUrl = stream.url
             streamRepository.reportPlayed(stream.id)
+            val playlist = playlistRepository.get(stream.playlistUrl)
 
             val iterator = MimetypeIterator.Unspecified(streamUrl)
             this.iterator = iterator
             logger.post { "init mimetype: $iterator" }
             tryPlay(
                 mimeType = null,
-                url = streamUrl
+                url = streamUrl,
+                userAgent = playlist?.userAgent,
             )
 
             observePreferencesChangingJob?.cancel()
@@ -160,14 +168,65 @@ class PlayerManagerV2Impl @Inject constructor(
         }
     }
 
+    override val downloads: StateFlow<List<Download>> = downloadManager
+        .allDownloadsAsFlow()
+        .onEach {
+            logger.post {
+                "all downloads: ${it.map { it.state }}"
+            }
+        }
+        .flowOn(ioDispatcher)
+        .stateIn(
+            scope = ioCoroutineScope,
+            started = SharingStarted.WhileSubscribed(5_000L),
+            initialValue = emptyList()
+        )
+
+    override suspend fun onDownload() {
+        val command = mediaCommand.value ?: return
+        val stream = when (command) {
+            is MediaCommand.Live -> streamRepository.get(command.streamId)
+            is MediaCommand.XtreamEpisode -> streamRepository
+                .get(command.streamId)
+                ?.copyXtreamEpisode(command.episode)
+        }
+        if (stream != null) {
+            val streamUrl = stream.url
+            val playlist = playlistRepository.get(stream.playlistUrl)
+
+            val download = downloads.value.find {
+                it.request.uri.toString() == streamUrl
+            }
+            @SuppressLint("SwitchIntDef")
+            when (download?.state) {
+                null, Download.STATE_FAILED, Download.STATE_STOPPED -> tryAddDownload(
+                    mimeType = iterator.mimeTypeOrNull,
+                    url = streamUrl,
+                    userAgent = playlist?.userAgent
+                )
+
+                Download.STATE_DOWNLOADING, Download.STATE_QUEUED, Download.STATE_RESTARTING ->
+                    tryRemoveDownload(streamUrl)
+
+                else -> {}
+            }
+        }
+    }
+
     private fun tryPlay(
         mimeType: String?,
         url: String = stream.value?.url.orEmpty(),
-        userAgent: String? = playlist.value?.userAgent,
-        rtmp: Boolean = Url(url).protocol.name == "rtmp",
-        tunneling: Boolean = pref.tunneling
+        userAgent: String? = playlist.value?.userAgent
     ) {
-        logger.post { "play, mimetype: $mimeType, url: $url, user-agent: $userAgent, rtmp: $rtmp, tunneling: $tunneling" }
+        val rtmp: Boolean = Url(url).protocol.name == "rtmp"
+        val tunneling: Boolean = pref.tunneling
+        logger.post {
+            "play, mimetype: $mimeType," +
+                    " url: $url," +
+                    " user-agent: $userAgent," +
+                    " rtmp: $rtmp, " +
+                    "tunneling: $tunneling"
+        }
         val dataSourceFactory = if (rtmp) {
             RtmpDataSource.Factory()
         } else {
@@ -193,6 +252,43 @@ class PlayerManagerV2Impl @Inject constructor(
         val mediaSource: MediaSource = mediaSourceFactory.createMediaSource(mediaItem)
         player.setMediaSource(mediaSource)
         player.prepare()
+    }
+
+    private fun tryAddDownload(
+        mimeType: String?,
+        url: String,
+        userAgent: String?,
+    ) {
+        val rtmp: Boolean = Url(url).protocol.name == "rtmp"
+        val tunneling: Boolean = pref.tunneling
+
+        logger.post {
+            "download, mimetype: $mimeType," +
+                    " url: $url," +
+                    " user-agent: $userAgent," +
+                    " rtmp: $rtmp, " +
+                    "tunneling: $tunneling"
+        }
+
+        DownloadService.sendAddDownload(
+            context,
+            StreamDownloadService::class.java,
+            DownloadRequest.Builder(
+                url,
+                Uri.parse(url)
+            )
+                .build(),
+            false
+        )
+    }
+
+    private fun tryRemoveDownload(url: String) {
+        DownloadService.sendRemoveDownload(
+            context,
+            StreamDownloadService::class.java,
+            url,
+            false
+        )
     }
 
     override suspend fun replay() {
@@ -228,25 +324,6 @@ class PlayerManagerV2Impl @Inject constructor(
             .setOverrideForType(override)
             .setTrackTypeDisabled(type, false)
             .build()
-    }
-
-    override fun download() {
-        val downloadRequest = DownloadRequest.Builder(
-            UUID.randomUUID().toString(),
-            downloadDirectory.toUri()
-        )
-            .build()
-
-        DownloadService.sendAddDownload(
-            context,
-            StreamDownloadService::class.java,
-            downloadRequest,
-            true
-        )
-    }
-
-    private val downloadDirectory: File by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
-        context.getExternalFilesDir(null) ?: context.filesDir
     }
 
     override fun clearTrack(type: @C.TrackType Int) {
@@ -292,8 +369,12 @@ class PlayerManagerV2Impl @Inject constructor(
     }
 
     private fun createHttpDataSourceFactory(userAgent: String?): DataSource.Factory =
-        OkHttpDataSource.Factory(okHttpClient)
-            .setUserAgent(userAgent)
+        CacheDataSource.Factory()
+            .setUpstreamDataSourceFactory(
+                OkHttpDataSource.Factory(okHttpClient)
+                    .setUserAgent(userAgent)
+            )
+            .setCache(cache)
 
     private suspend fun observePreferencesChanging(
         onChanged: suspend (timeout: Long, tunneling: Boolean) -> Unit
@@ -400,6 +481,12 @@ private sealed class MimetypeIterator : Iterator<MimetypeIterator> {
     class Unspecified(val url: String) : MimetypeIterator()
     class Trying(val mimeType: String) : MimetypeIterator()
     object Unsupported : MimetypeIterator()
+
+    val mimeTypeOrNull: String?
+        get() = when (this) {
+            is Trying -> mimeType
+            else -> null
+        }
 
     companion object {
         val ORDER_DEFAULT = arrayOf(

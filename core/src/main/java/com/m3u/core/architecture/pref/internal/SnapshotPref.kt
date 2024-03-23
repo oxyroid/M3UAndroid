@@ -32,7 +32,6 @@ import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_NO_PICTURE_MODE
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_PLAYLIST_STRATEGY
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_PROGRESS
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_RECONNECT_MODE
-import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_DOWNLOAD_OR_CACHE
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_REMOTE_CONTROL
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_ROOT_DESTINATION
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_ROW_COUNT
@@ -51,7 +50,6 @@ import com.m3u.core.architecture.pref.Pref.Companion.NO_PICTURE_MODE
 import com.m3u.core.architecture.pref.Pref.Companion.PLAYLIST_STRATEGY
 import com.m3u.core.architecture.pref.Pref.Companion.PROGRESS
 import com.m3u.core.architecture.pref.Pref.Companion.RECONNECT_MODE
-import com.m3u.core.architecture.pref.Pref.Companion.DOWNLOAD_OR_CACHE
 import com.m3u.core.architecture.pref.Pref.Companion.REMOTE_CONTROL
 import com.m3u.core.architecture.pref.Pref.Companion.ROOT_DESTINATION
 import com.m3u.core.architecture.pref.Pref.Companion.ROW_COUNT
@@ -121,8 +119,6 @@ class SnapshotPref @Inject constructor(
     sharedPreferences.booleanAsState(DEFAULT_BRIGHTNESS_GESTURE, BRIGHTNESS_GESTURE)
     override var volumeGesture: Boolean by
     sharedPreferences.booleanAsState(DEFAULT_VOLUME_GESTURE, VOLUME_GESTURE)
-    override var downloadOrCache: Boolean by
-    sharedPreferences.booleanAsState(DEFAULT_DOWNLOAD_OR_CACHE, DOWNLOAD_OR_CACHE)
     override var screencast: Boolean by
     sharedPreferences.booleanAsState(DEFAULT_SCREENCAST, SCREENCAST)
     override var screenRotating: Boolean by

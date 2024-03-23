@@ -59,7 +59,6 @@
     <string name="feat_setting_zapping_mode_description">开启小窗预览而不是直接播放</string>
     <string name="feat_setting_gesture_brightness">亮度手势</string>
     <string name="feat_setting_gesture_volume">音量手势</string>
-    <string name="feat_setting_download_or_cache">下载或缓存</string>
     <string name="feat_setting_screencast">投屏</string>
     <string name="feat_setting_screen_rotating">屏幕旋转</string>
     <string name="feat_setting_screen_rotating_description">只有当系统屏幕旋转解锁时可用</string>
