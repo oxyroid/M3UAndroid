@@ -1,8 +1,12 @@
 package com.m3u.features.stream
 
+import android.Manifest
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.graphics.Rect
 import android.net.Uri
+import android.os.Build
+import android.provider.Settings
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
@@ -24,6 +28,9 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.exoplayer.offline.Download
+import com.google.accompanist.permissions.PermissionStatus
+import com.google.accompanist.permissions.rememberPermissionState
+import com.google.accompanist.permissions.shouldShowRationale
 import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.core.unspecified.unspecifiable
 import com.m3u.core.util.basic.isNotEmpty
@@ -86,6 +93,14 @@ fun StreamRoute(
     var choosing by rememberSaveable { mutableStateOf(false) }
 
     val maskState = rememberMaskState()
+
+    val postNotificationPermissionRequired =
+        Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
+
+    @SuppressLint("InlinedApi")
+    val postNotificationPermissionState = rememberPermissionState(
+        Manifest.permission.POST_NOTIFICATIONS
+    )
 
     LifecycleResumeEffect {
         with(helper) {
@@ -160,7 +175,29 @@ fun StreamRoute(
             onBrightness = { brightness = it },
             onVolume = { viewModel.onVolume(it) },
             download = download,
-            onDownload = { viewModel.onDownload() },
+            onDownload = {
+                when {
+                    !postNotificationPermissionRequired -> {}
+                    postNotificationPermissionState.status is PermissionStatus.Denied -> {
+                        if (postNotificationPermissionState.status.shouldShowRationale) {
+                            postNotificationPermissionState.launchPermissionRequest()
+                        } else {
+                            val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                                .apply {
+                                    putExtra(
+                                        Settings.EXTRA_APP_PACKAGE,
+                                        helper.activityContext.packageName
+                                    )
+                                }
+                            helper.activityContext.startActivity(intent)
+                        }
+                        return@StreamScreen
+                    }
+
+                    else -> {}
+                }
+                viewModel.onDownload()
+            },
             modifier = modifier
         )
 
