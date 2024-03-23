@@ -10,6 +10,7 @@ import com.m3u.core.architecture.pref.Pref.Companion.ALWAYS_SHOW_REFRESH
 import com.m3u.core.architecture.pref.Pref.Companion.ALWAYS_TV
 import com.m3u.core.architecture.pref.Pref.Companion.AUTO_REFRESH
 import com.m3u.core.architecture.pref.Pref.Companion.BRIGHTNESS_GESTURE
+import com.m3u.core.architecture.pref.Pref.Companion.CACHE
 import com.m3u.core.architecture.pref.Pref.Companion.CLIP_MODE
 import com.m3u.core.architecture.pref.Pref.Companion.COLOR_ARGB
 import com.m3u.core.architecture.pref.Pref.Companion.COMPACT
@@ -19,12 +20,12 @@ import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_ALWAYS_SHOW_REFRESH
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_ALWAYS_TV
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_AUTO_REFRESH
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_BRIGHTNESS_GESTURE
+import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_CACHE
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_CLIP_MODE
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_COLOR_ARGB
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_COMPACT
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_CONNECT_TIMEOUT
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_DARK_MODE
-import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_EXPERIMENTAL_MODE
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_FOLLOW_SYSTEM_THEME
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_FULL_INFO_PLAYER
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_GOD_MODE
@@ -32,7 +33,6 @@ import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_NO_PICTURE_MODE
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_PLAYLIST_STRATEGY
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_PROGRESS
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_RECONNECT_MODE
-import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_RECORD
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_REMOTE_CONTROL
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_ROOT_DESTINATION
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_ROW_COUNT
@@ -43,7 +43,6 @@ import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_UNSEENS_MILLISECOND
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_USE_DYNAMIC_COLORS
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_VOLUME_GESTURE
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_ZAPPING_MODE
-import com.m3u.core.architecture.pref.Pref.Companion.EXPERIMENTAL_MODE
 import com.m3u.core.architecture.pref.Pref.Companion.FOLLOW_SYSTEM_THEME
 import com.m3u.core.architecture.pref.Pref.Companion.FULL_INFO_PLAYER
 import com.m3u.core.architecture.pref.Pref.Companion.GOD_MODE
@@ -51,7 +50,6 @@ import com.m3u.core.architecture.pref.Pref.Companion.NO_PICTURE_MODE
 import com.m3u.core.architecture.pref.Pref.Companion.PLAYLIST_STRATEGY
 import com.m3u.core.architecture.pref.Pref.Companion.PROGRESS
 import com.m3u.core.architecture.pref.Pref.Companion.RECONNECT_MODE
-import com.m3u.core.architecture.pref.Pref.Companion.RECORD
 import com.m3u.core.architecture.pref.Pref.Companion.REMOTE_CONTROL
 import com.m3u.core.architecture.pref.Pref.Companion.ROOT_DESTINATION
 import com.m3u.core.architecture.pref.Pref.Companion.ROW_COUNT
@@ -91,8 +89,6 @@ class SnapshotPref @Inject constructor(
     sharedPreferences.longAsState(DEFAULT_CONNECT_TIMEOUT, CONNECT_TIMEOUT)
     override var godMode: Boolean by
     sharedPreferences.booleanAsState(DEFAULT_GOD_MODE, GOD_MODE)
-    override var experimentalMode: Boolean by
-    sharedPreferences.booleanAsState(DEFAULT_EXPERIMENTAL_MODE, EXPERIMENTAL_MODE)
 
     @ClipMode
     override var clipMode: Int by
@@ -121,8 +117,6 @@ class SnapshotPref @Inject constructor(
     sharedPreferences.booleanAsState(DEFAULT_BRIGHTNESS_GESTURE, BRIGHTNESS_GESTURE)
     override var volumeGesture: Boolean by
     sharedPreferences.booleanAsState(DEFAULT_VOLUME_GESTURE, VOLUME_GESTURE)
-    override var record: Boolean by
-    sharedPreferences.booleanAsState(DEFAULT_RECORD, RECORD)
     override var screencast: Boolean by
     sharedPreferences.booleanAsState(DEFAULT_SCREENCAST, SCREENCAST)
     override var screenRotating: Boolean by
@@ -147,6 +141,8 @@ class SnapshotPref @Inject constructor(
     sharedPreferences.booleanAsState(DEFAULT_PROGRESS, PROGRESS)
     override var alwaysShowReplay: Boolean by
     sharedPreferences.booleanAsState(DEFAULT_ALWAYS_SHOW_REFRESH, ALWAYS_SHOW_REFRESH)
+    override var cache: Boolean by
+    sharedPreferences.booleanAsState(DEFAULT_CACHE, CACHE)
 
     companion object {
         private const val SHARED_SETTINGS = "shared_settings"

@@ -1,7 +1,9 @@
 package com.m3u.data.service.internal
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Rect
+import android.net.Uri
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
@@ -13,11 +15,17 @@ import androidx.media3.common.TrackSelectionOverride
 import androidx.media3.common.Tracks
 import androidx.media3.common.VideoSize
 import androidx.media3.datasource.DataSource
+import androidx.media3.datasource.cache.Cache
+import androidx.media3.datasource.cache.CacheDataSource
 import androidx.media3.datasource.okhttp.OkHttpDataSource
 import androidx.media3.datasource.rtmp.RtmpDataSource
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.RenderersFactory
 import androidx.media3.exoplayer.hls.HlsMediaSource
+import androidx.media3.exoplayer.offline.Download
+import androidx.media3.exoplayer.offline.DownloadManager
+import androidx.media3.exoplayer.offline.DownloadRequest
+import androidx.media3.exoplayer.offline.DownloadService
 import androidx.media3.exoplayer.rtsp.RtspMediaSource
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.exoplayer.source.MediaSource
@@ -43,6 +51,7 @@ import com.m3u.data.repository.PlaylistRepository
 import com.m3u.data.repository.StreamRepository
 import com.m3u.data.service.MediaCommand
 import com.m3u.data.service.PlayerManagerV2
+import com.m3u.data.service.StreamDownloadService
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.ktor.http.Url
 import kotlinx.coroutines.CoroutineDispatcher
@@ -56,6 +65,7 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
@@ -73,6 +83,8 @@ class PlayerManagerV2Impl @Inject constructor(
     private val pref: Pref,
     private val playlistRepository: PlaylistRepository,
     private val streamRepository: StreamRepository,
+    private val cache: Cache,
+    downloadManager: DownloadManager,
     before: Logger
 ) : PlayerManagerV2, Player.Listener, MediaSession.Callback {
     private val mainCoroutineScope = CoroutineScope(mainDispatcher)
@@ -131,24 +143,16 @@ class PlayerManagerV2Impl @Inject constructor(
         if (stream != null) {
             val streamUrl = stream.url
             streamRepository.reportPlayed(stream.id)
+            val playlist = playlistRepository.get(stream.playlistUrl)
 
-            val wrapper = MimetypeWrapper.Unspecified(streamUrl).next()
-            mimetypeWrapper = wrapper
-            logger.post { "init wrapper: $wrapper" }
-
-            when (wrapper) {
-                is MimetypeWrapper.Maybe -> tryPlay(
-                    mimeType = wrapper.mimeType,
-                    url = streamUrl
-                )
-
-                is MimetypeWrapper.Trying -> tryPlay(
-                    mimeType = wrapper.mimeType,
-                    url = streamUrl
-                )
-
-                else -> return
-            }
+            val iterator = MimetypeIterator.Unspecified(streamUrl)
+            this.iterator = iterator
+            logger.post { "init mimetype: $iterator" }
+            tryPlay(
+                mimeType = null,
+                url = streamUrl,
+                userAgent = playlist?.userAgent,
+            )
 
             observePreferencesChangingJob?.cancel()
             observePreferencesChangingJob = mainCoroutineScope.launch {
@@ -164,14 +168,60 @@ class PlayerManagerV2Impl @Inject constructor(
         }
     }
 
+    override val downloads: StateFlow<List<Download>> = downloadManager
+        .observeDownloads()
+        .flowOn(ioDispatcher)
+        .stateIn(
+            scope = ioCoroutineScope,
+            started = SharingStarted.WhileSubscribed(5_000L),
+            initialValue = emptyList()
+        )
+
+    override suspend fun onDownload() {
+        val command = mediaCommand.value ?: return
+        val stream = when (command) {
+            is MediaCommand.Live -> streamRepository.get(command.streamId)
+            is MediaCommand.XtreamEpisode -> streamRepository
+                .get(command.streamId)
+                ?.copyXtreamEpisode(command.episode)
+        }
+        if (stream != null) {
+            val streamUrl = stream.url
+            val playlist = playlistRepository.get(stream.playlistUrl)
+
+            val download = downloads.value.find {
+                it.request.uri.toString() == streamUrl
+            }
+            @SuppressLint("SwitchIntDef")
+            when (download?.state) {
+                null, Download.STATE_FAILED, Download.STATE_STOPPED -> tryAddDownload(
+                    mimeType = iterator.mimeTypeOrNull,
+                    url = streamUrl,
+                    userAgent = playlist?.userAgent
+                )
+
+                Download.STATE_DOWNLOADING, Download.STATE_QUEUED, Download.STATE_RESTARTING ->
+                    tryRemoveDownload(streamUrl)
+
+                else -> {}
+            }
+        }
+    }
+
     private fun tryPlay(
         mimeType: String?,
         url: String = stream.value?.url.orEmpty(),
-        userAgent: String? = playlist.value?.userAgent,
-        rtmp: Boolean = Url(url).protocol.name == "rtmp",
-        tunneling: Boolean = pref.tunneling
+        userAgent: String? = playlist.value?.userAgent
     ) {
-        logger.post { "play, mimetype: $mimeType, url: $url, user-agent: $userAgent, rtmp: $rtmp, tunneling: $tunneling" }
+        val rtmp: Boolean = Url(url).protocol.name == "rtmp"
+        val tunneling: Boolean = pref.tunneling
+        logger.post {
+            "play, mimetype: $mimeType," +
+                    " url: $url," +
+                    " user-agent: $userAgent," +
+                    " rtmp: $rtmp, " +
+                    "tunneling: $tunneling"
+        }
         val dataSourceFactory = if (rtmp) {
             RtmpDataSource.Factory()
         } else {
@@ -199,6 +249,43 @@ class PlayerManagerV2Impl @Inject constructor(
         player.prepare()
     }
 
+    private fun tryAddDownload(
+        mimeType: String?,
+        url: String,
+        userAgent: String?,
+    ) {
+        val rtmp: Boolean = Url(url).protocol.name == "rtmp"
+        val tunneling: Boolean = pref.tunneling
+
+        logger.post {
+            "download, mimetype: $mimeType," +
+                    " url: $url," +
+                    " user-agent: $userAgent," +
+                    " rtmp: $rtmp, " +
+                    "tunneling: $tunneling"
+        }
+
+        DownloadService.sendAddDownload(
+            context,
+            StreamDownloadService::class.java,
+            DownloadRequest.Builder(
+                url,
+                Uri.parse(url)
+            )
+                .build(),
+            false
+        )
+    }
+
+    private fun tryRemoveDownload(url: String) {
+        DownloadService.sendRemoveDownload(
+            context,
+            StreamDownloadService::class.java,
+            url,
+            false
+        )
+    }
+
     override suspend fun replay() {
         val prev = mediaCommand.value
         release()
@@ -218,7 +305,7 @@ class PlayerManagerV2Impl @Inject constructor(
             playbackState.value = Player.STATE_IDLE
             playbackException.value = null
             tracksGroups.value = emptyList()
-            mimetypeWrapper = MimetypeWrapper.Unsupported
+            iterator = MimetypeIterator.Unsupported
             null
         }
     }
@@ -276,10 +363,13 @@ class PlayerManagerV2Impl @Inject constructor(
         }
     }
 
-    private fun createHttpDataSourceFactory(userAgent: String?): DataSource.Factory {
-        return OkHttpDataSource.Factory(okHttpClient)
-            .setUserAgent(userAgent)
-    }
+    private fun createHttpDataSourceFactory(userAgent: String?): DataSource.Factory =
+        CacheDataSource.Factory()
+            .setUpstreamDataSourceFactory(
+                OkHttpDataSource.Factory(okHttpClient)
+                    .setUserAgent(userAgent)
+            )
+            .setCache(cache)
 
     private suspend fun observePreferencesChanging(
         onChanged: suspend (timeout: Long, tunneling: Boolean) -> Unit
@@ -324,7 +414,7 @@ class PlayerManagerV2Impl @Inject constructor(
         }
     }
 
-    private var mimetypeWrapper: MimetypeWrapper = MimetypeWrapper.Unsupported
+    private var iterator: MimetypeIterator = MimetypeIterator.Unsupported
 
     override fun onPlayerErrorChanged(exception: PlaybackException?) {
         super.onPlayerErrorChanged(exception)
@@ -341,16 +431,15 @@ class PlayerManagerV2Impl @Inject constructor(
             PlaybackException.ERROR_CODE_PARSING_MANIFEST_MALFORMED,
             PlaybackException.ERROR_CODE_PARSING_CONTAINER_UNSUPPORTED,
             PlaybackException.ERROR_CODE_PARSING_MANIFEST_UNSUPPORTED -> {
-                if (mimetypeWrapper.hasNext()) {
-                    val next = mimetypeWrapper.next()
+                if (iterator.hasNext()) {
+                    val next = iterator.next()
                     logger.post {
                         "[${PlaybackException.getErrorCodeName(exception.errorCode)}] " +
-                                "Try another mimetype, from $mimetypeWrapper to $next"
+                                "Try another mimetype, from $iterator to $next"
                     }
-                    mimetypeWrapper = next
+                    iterator = next
                     when (next) {
-                        is MimetypeWrapper.Maybe -> tryPlay(next.mimeType)
-                        is MimetypeWrapper.Trying -> tryPlay(next.mimeType)
+                        is MimetypeIterator.Trying -> tryPlay(next.mimeType)
                         else -> {
                             playbackException.value = exception
                         }
@@ -383,11 +472,16 @@ private fun VideoSize.toRect(): Rect {
     return Rect(0, 0, width, height)
 }
 
-private sealed class MimetypeWrapper : Iterator<MimetypeWrapper> {
-    class Unspecified(val url: String) : MimetypeWrapper()
-    class Maybe(val mimeType: String) : MimetypeWrapper()
-    class Trying(val mimeType: String) : MimetypeWrapper()
-    object Unsupported : MimetypeWrapper()
+private sealed class MimetypeIterator : Iterator<MimetypeIterator> {
+    class Unspecified(val url: String) : MimetypeIterator()
+    class Trying(val mimeType: String) : MimetypeIterator()
+    object Unsupported : MimetypeIterator()
+
+    val mimeTypeOrNull: String?
+        get() = when (this) {
+            is Trying -> mimeType
+            else -> null
+        }
 
     companion object {
         val ORDER_DEFAULT = arrayOf(
@@ -399,7 +493,6 @@ private sealed class MimetypeWrapper : Iterator<MimetypeWrapper> {
     }
 
     override fun toString(): String = when (this) {
-        is Maybe -> "Maybe[$mimeType]"
         is Trying -> "Trying[$mimeType]"
         is Unspecified -> "Unspecified[$url]"
         Unsupported -> "Unsupported"
@@ -407,25 +500,8 @@ private sealed class MimetypeWrapper : Iterator<MimetypeWrapper> {
 
     override fun hasNext(): Boolean = this != Unsupported
 
-    override fun next(): MimetypeWrapper = when (this) {
-        is Unspecified -> {
-            when {
-                url.contains(".m3u", true) ||
-                        url.contains(".m3u8", true) -> MimeTypes.APPLICATION_M3U8
-
-                url.contains(".mpd", true) -> MimeTypes.APPLICATION_MPD
-                url.contains(".ism", true) -> MimeTypes.APPLICATION_SS
-                url.startsWith("rtsp://", true) ||
-                        url.contains(".sdp", true) -> MimeTypes.APPLICATION_RTSP
-                // cannot determine mine-type
-                else -> null
-            }
-                .let { maybeMimetype ->
-                    maybeMimetype?.let { Maybe(it) } ?: Trying(ORDER_DEFAULT.first())
-                }
-        }
-
-        is Maybe -> Trying(ORDER_DEFAULT.first())
+    override fun next(): MimetypeIterator = when (this) {
+        is Unspecified -> Trying(ORDER_DEFAULT.first())
         is Trying -> {
             ORDER_DEFAULT
                 .getOrNull(ORDER_DEFAULT.indexOf(mimeType) + 1)

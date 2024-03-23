@@ -7,7 +7,7 @@ import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
 import com.m3u.core.architecture.pref.Pref
 import com.m3u.core.architecture.pref.observeAsFlow
 import com.m3u.core.wrapper.Resource
-import com.m3u.core.wrapper.flattenResource
+import com.m3u.core.wrapper.asResource
 import com.m3u.core.wrapper.mapResource
 import com.m3u.core.wrapper.resourceflow
 import com.m3u.data.database.model.Playlist
@@ -44,7 +44,7 @@ class ForyouViewModel @Inject constructor(
     internal val playlistCountsResource = playlistRepository
         .observePlaylistCounts()
         .map { it.toPersistentList() }
-        .flattenResource()
+        .asResource()
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),

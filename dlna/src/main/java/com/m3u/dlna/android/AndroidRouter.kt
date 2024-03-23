@@ -10,6 +10,9 @@ import android.net.ConnectivityManager
 import android.net.NetworkInfo
 import android.net.wifi.WifiManager
 import com.m3u.dlna.android.NetworkUtils.getConnectedNetworkInfo
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.jupnp.UpnpServiceConfiguration
 import org.jupnp.model.ModelUtil
 import org.jupnp.protocol.ProtocolFactory
@@ -118,7 +121,7 @@ open class AndroidRouter(
             }
         } else {
             if (lock.isHeld) {
-                lock.release();
+                lock.release()
             }
         }
     }
@@ -128,19 +131,22 @@ open class AndroidRouter(
             if (intent.action != ConnectivityManager.CONNECTIVITY_ACTION) return
             displayIntentInfo(intent)
             var networkInfo = getConnectedNetworkInfo(context)
-            if (this@AndroidRouter.networkInfo != null && networkInfo == null) {
-                for (i in 1..3) {
-                    try {
-                        Thread.sleep(1000)
-                    } catch (e: InterruptedException) {
-                        return
+
+            CoroutineScope(Dispatchers.IO).launch {
+                if (this@AndroidRouter.networkInfo != null && networkInfo == null) {
+                    for (i in 1..3) {
+                        try {
+                            Thread.sleep(1000)
+                        } catch (e: InterruptedException) {
+                            return@launch
+                        }
+                        networkInfo = getConnectedNetworkInfo(context)
+                        if (networkInfo != null) break
                     }
-                    networkInfo = getConnectedNetworkInfo(context)
-                    if (networkInfo != null) break
                 }
-            }
-            if (!isSameNetworkType(this@AndroidRouter.networkInfo, networkInfo)) {
-                this@AndroidRouter.networkInfo = networkInfo
+                if (!isSameNetworkType(this@AndroidRouter.networkInfo, networkInfo)) {
+                    this@AndroidRouter.networkInfo = networkInfo
+                }
             }
         }
 

@@ -14,8 +14,8 @@ import com.m3u.core.wrapper.flattenResource
 import com.m3u.data.api.LocalPreparedService
 import com.m3u.data.repository.ConnectionToTelevisionValue
 import com.m3u.data.repository.TelevisionRepository
-import com.m3u.data.repository.UpdateState
 import com.m3u.data.repository.UpdateKey
+import com.m3u.data.repository.UpdateState
 import com.m3u.data.television.Utils
 import com.m3u.data.television.http.HttpServer
 import com.m3u.data.television.model.Television

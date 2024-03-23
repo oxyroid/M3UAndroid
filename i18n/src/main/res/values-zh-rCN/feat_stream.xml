@@ -9,8 +9,8 @@
     <string name="feat_stream_tooltip_unmute">取消静音</string>
     <string name="feat_stream_tooltip_favourite">收藏</string>
     <string name="feat_stream_tooltip_unfavourite">取消收藏</string>
-    <string name="feat_stream_tooltip_record">录制</string>
-    <string name="feat_stream_tooltip_unrecord">停止录制</string>
+    <string name="feat_stream_tooltip_download">下载</string>
+    <string name="feat_stream_tooltip_stop_download">停止下载</string>
     <string name="feat_stream_tooltip_cast">投屏</string>
     <string name="feat_stream_tooltip_enter_pip_mode">画中画模式</string>
     <string name="feat_stream_tooltip_choose_format">选择格式</string>

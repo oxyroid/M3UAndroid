@@ -21,7 +21,6 @@ interface Pref {
     @ConnectTimeout
     var connectTimeout: Long
     var godMode: Boolean
-    var experimentalMode: Boolean
 
     @ClipMode
     var clipMode: Int
@@ -38,7 +37,6 @@ interface Pref {
     var zappingMode: Boolean
     var brightnessGesture: Boolean
     var volumeGesture: Boolean
-    var record: Boolean
     var screencast: Boolean
     var screenRotating: Boolean
 
@@ -55,6 +53,8 @@ interface Pref {
     var progress: Boolean
     var alwaysShowReplay: Boolean
 
+    var cache: Boolean
+
     companion object {
         @PlaylistStrategy
         const val DEFAULT_PLAYLIST_STRATEGY = PlaylistStrategy.SKIP_FAVORITE
@@ -63,7 +63,6 @@ interface Pref {
         @ConnectTimeout
         const val DEFAULT_CONNECT_TIMEOUT = ConnectTimeout.SHORT
         const val DEFAULT_GOD_MODE = false
-        const val DEFAULT_EXPERIMENTAL_MODE = false
 
         @ClipMode
         const val DEFAULT_CLIP_MODE = ClipMode.ADAPTIVE
@@ -80,7 +79,6 @@ interface Pref {
         const val DEFAULT_ZAPPING_MODE = false
         const val DEFAULT_BRIGHTNESS_GESTURE = true
         const val DEFAULT_VOLUME_GESTURE = true
-        const val DEFAULT_RECORD = false
         const val DEFAULT_SCREENCAST = true
         const val DEFAULT_SCREEN_ROTATING = false
 
@@ -94,13 +92,13 @@ interface Pref {
         const val DEFAULT_REMOTE_CONTROL = false
         const val DEFAULT_PROGRESS = false
         const val DEFAULT_ALWAYS_SHOW_REFRESH = false
+        const val DEFAULT_CACHE = false
 
         const val PLAYLIST_STRATEGY = "playlist-strategy"
         const val ROW_COUNT = "rowCount"
 
         const val CONNECT_TIMEOUT = "connect-timeout"
         const val GOD_MODE = "god-mode"
-        const val EXPERIMENTAL_MODE = "experimental-mode"
 
         const val CLIP_MODE = "clip-mode"
         const val AUTO_REFRESH = "auto-refresh"
@@ -113,7 +111,6 @@ interface Pref {
         const val ZAPPING_MODE = "zapping-mode"
         const val BRIGHTNESS_GESTURE = "brightness-gesture"
         const val VOLUME_GESTURE = "volume-gesture"
-        const val RECORD = "record"
         const val SCREENCAST = "screencast"
         const val SCREEN_ROTATING = "screen-rotating"
         const val UNSEENS_MILLISECONDS = "unseens-milliseconds"
@@ -125,6 +122,7 @@ interface Pref {
         const val REMOTE_CONTROL = "remote-control"
         const val PROGRESS = "progress"
         const val ALWAYS_SHOW_REFRESH = "always-show-refresh"
+        const val CACHE = "cache"
     }
 }
 

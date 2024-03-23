@@ -1,11 +1,13 @@
 package com.m3u.features.stream
 
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.C
 import androidx.media3.common.Format
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.prefix
-import com.m3u.core.architecture.viewmodel.BaseViewModel
+import com.m3u.core.wrapper.Resource
+import com.m3u.core.wrapper.asResource
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.Stream
@@ -46,9 +48,7 @@ class StreamViewModel @Inject constructor(
     private val streamRepository: StreamRepository,
     private val playerManager: PlayerManagerV2,
     before: Logger,
-) : BaseViewModel<StreamState, StreamEvent>(
-    emptyState = StreamState()
-), OnDeviceRegistryListener, OnDeviceControlListener {
+) : ViewModel(), OnDeviceRegistryListener, OnDeviceControlListener {
     private val logger = before.prefix("feat-stream")
     private val _devices = MutableStateFlow<ImmutableList<Device<*, *, *>>>(persistentListOf())
 
@@ -60,7 +60,7 @@ class StreamViewModel @Inject constructor(
 
     internal val stream: StateFlow<Stream?> = playerManager.stream
     internal val playlist: StateFlow<Playlist?> = playerManager.playlist
-    
+
     internal val isSeriesPlaylist: StateFlow<Boolean> = playerManager
         .playlist
         .map { it?.type == DataSource.Xtream.TYPE_SERIES }
@@ -114,14 +114,13 @@ class StreamViewModel @Inject constructor(
     }
 
     // stream playing state
-    internal val playerState: StateFlow<StreamState.PlayerState> = combine(
+    internal val playerState: StateFlow<PlayerState> = combine(
         playerManager.player,
         playerManager.playbackState,
         playerManager.size,
         playerManager.playbackException
     ) { player, playState, videoSize, playbackException ->
-        logger.log(playbackException?.errorCodeName.orEmpty())
-        StreamState.PlayerState(
+        PlayerState(
             playState = playState,
             videoSize = videoSize,
             playerError = playbackException,
@@ -131,19 +130,8 @@ class StreamViewModel @Inject constructor(
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = StreamState.PlayerState()
+            initialValue = PlayerState()
         )
-
-    override fun onEvent(event: StreamEvent) {
-        when (event) {
-            StreamEvent.OpenDlnaDevices -> openDlnaDevices()
-            StreamEvent.CloseDlnaDevices -> closeDlnaDevices()
-            is StreamEvent.ConnectDlnaDevice -> connectDlnaDevice(event.device)
-            is StreamEvent.DisconnectDlnaDevice -> disconnectDlnaDevice(event.device)
-            StreamEvent.OnFavourite -> onFavourite()
-            is StreamEvent.OnVolume -> onVolume(event.volume)
-        }
-    }
 
     private val _isDevicesVisible: MutableStateFlow<Boolean> = MutableStateFlow(false)
 
@@ -155,7 +143,10 @@ class StreamViewModel @Inject constructor(
     // searching or not
     internal val searching = _searching.asStateFlow()
 
-    private fun openDlnaDevices() {
+    private val _connected = MutableStateFlow<Device<*, *, *>?>(null)
+    internal val connected = _connected.asStateFlow()
+
+    internal fun openDlnaDevices() {
         try {
             DLNACastManager.registerDeviceListener(this)
         } catch (ignore: Exception) {
@@ -168,7 +159,7 @@ class StreamViewModel @Inject constructor(
         _isDevicesVisible.value = true
     }
 
-    private fun closeDlnaDevices() {
+    internal fun closeDlnaDevices() {
         try {
             _searching.value = false
             _isDevicesVisible.value = false
@@ -181,24 +172,17 @@ class StreamViewModel @Inject constructor(
 
     private var controlPoint: DeviceControl? = null
 
-    private fun connectDlnaDevice(device: Device<*, *, *>) {
+    internal fun connectDlnaDevice(device: Device<*, *, *>) {
         controlPoint = DLNACastManager.connectDevice(device, this)
     }
 
-    private fun disconnectDlnaDevice(device: Device<*, *, *>) {
+    internal fun disconnectDlnaDevice(device: Device<*, *, *>) {
         controlPoint?.stop()
         controlPoint = null
         DLNACastManager.disconnectDevice(device)
     }
 
-    private val _recording = MutableStateFlow(false)
-    internal val recording = _recording.asStateFlow()
-
-    internal fun record() {
-        _recording.update { !it }
-    }
-
-    private fun onFavourite() {
+    internal fun onFavourite() {
         viewModelScope.launch {
             val stream = this@StreamViewModel.stream.value ?: return@launch
             val id = stream.id
@@ -207,7 +191,7 @@ class StreamViewModel @Inject constructor(
         }
     }
 
-    private fun onVolume(target: Float) {
+    internal fun onVolume(target: Float) {
         _volume.update { target }
 
         playerState.value.player?.volume = target
@@ -223,7 +207,7 @@ class StreamViewModel @Inject constructor(
     }
 
     override fun onConnected(device: Device<*, *, *>) {
-        writable.update { it.copy(connected = device) }
+        _connected.value = device
         val url = stream.value?.url ?: return
         val title = stream.value?.title.orEmpty()
 
@@ -243,7 +227,7 @@ class StreamViewModel @Inject constructor(
     }
 
     override fun onDisconnected(device: Device<*, *, *>) {
-        writable.update { it.copy(connected = null) }
+        _connected.value = null
         controlPoint?.stop()
         controlPoint = null
     }
@@ -261,5 +245,20 @@ class StreamViewModel @Inject constructor(
 
     internal fun openInExternalPlayer() {
 
+    }
+
+    internal val downloadsResource = playerManager
+        .downloads
+        .asResource()
+        .stateIn(
+            scope = viewModelScope,
+            initialValue = Resource.Loading,
+            started = SharingStarted.WhileSubscribed(5_000L)
+        )
+
+    internal fun onDownload() {
+        viewModelScope.launch {
+            playerManager.onDownload()
+        }
     }
 }
