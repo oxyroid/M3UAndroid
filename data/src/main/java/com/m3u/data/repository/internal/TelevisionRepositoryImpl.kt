@@ -10,7 +10,7 @@ import com.m3u.core.architecture.pref.Pref
 import com.m3u.core.architecture.pref.observeAsFlow
 import com.m3u.core.util.coroutine.onTimeout
 import com.m3u.core.wrapper.Resource
-import com.m3u.core.wrapper.flattenResource
+import com.m3u.core.wrapper.asResource
 import com.m3u.data.api.LocalPreparedService
 import com.m3u.data.repository.ConnectionToTelevisionValue
 import com.m3u.data.repository.TelevisionRepository
@@ -156,7 +156,7 @@ class TelevisionRepositoryImpl @Inject constructor(
             connectToTelevisionJob?.cancel()
             connectToTelevisionJob = localService
                 .prepare(completed.host, completed.port)
-                .flattenResource()
+                .asResource()
                 .onEach { resource ->
                     when (resource) {
                         Resource.Loading -> {
