@@ -43,6 +43,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.core.architecture.pref.LocalPref
+import com.m3u.core.unspecified.DataUnit
 import com.m3u.core.util.basic.title
 import com.m3u.data.database.model.ColorPack
 import com.m3u.data.database.model.DataSource
@@ -82,6 +83,8 @@ fun SettingRoute(
     val hiddenStreams by viewModel.hiddenStreams.collectAsStateWithLifecycle()
     val hiddenCategoriesWithPlaylists by viewModel.hiddenCategoriesWithPlaylists.collectAsStateWithLifecycle()
     val backingUpOrRestoring by viewModel.backingUpOrRestoring.collectAsStateWithLifecycle()
+
+    val cacheSpace by viewModel.cacheSpace.collectAsStateWithLifecycle()
 
     val sheetState = rememberModalBottomSheetState()
     var colorInt: Int? by remember { mutableStateOf(null) }
@@ -149,6 +152,8 @@ fun SettingRoute(
             onUsername = { viewModel.username = it },
             password = viewModel.password,
             onPassword = { viewModel.password = it },
+            cacheSpace = cacheSpace,
+            onClearCache = { viewModel.clearCache() },
             modifier = modifier.fillMaxSize()
         )
         if (!tv) {
@@ -200,6 +205,8 @@ private fun SettingScreen(
     onUsername: (String) -> Unit,
     password: String,
     onPassword: (String) -> Unit,
+    cacheSpace: DataUnit,
+    onClearCache: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val helper = LocalHelper.current
@@ -276,6 +283,8 @@ private fun SettingScreen(
                     fragment = SettingFragment.Appearance
                 },
                 navigateToAbout = navigateToAbout,
+                cacheSpace = cacheSpace,
+                onClearCache = onClearCache,
                 modifier = Modifier.fillMaxSize()
             )
         },

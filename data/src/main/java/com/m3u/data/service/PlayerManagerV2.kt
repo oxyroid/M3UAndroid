@@ -27,12 +27,14 @@ interface PlayerManagerV2 {
     val playbackException: StateFlow<PlaybackException?>
 
     val tracksGroups: StateFlow<List<Tracks.Group>>
+    val cacheSpace: Flow<Long>
 
     fun chooseTrack(group: TrackGroup, index: Int)
     fun clearTrack(type: @C.TrackType Int)
     suspend fun play(command: MediaCommand)
     suspend fun replay()
     fun release()
+    fun clearCache()
 }
 
 sealed class MediaCommand(open val streamId: Int) {

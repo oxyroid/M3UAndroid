@@ -242,9 +242,9 @@ fun SwitchPreference(
 }
 
 @Composable
-fun IconPreference(
+fun TrailingIconPreference(
     title: String,
-    imageVector: ImageVector,
+    trailingIcon: ImageVector,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     content: String? = null,
@@ -262,13 +262,13 @@ fun IconPreference(
         trailing = {
             if (!isTelevision()) {
                 Icon(
-                    imageVector = imageVector,
+                    imageVector = trailingIcon,
                     contentDescription = null,
                     tint = LocalContentColor.current.copy(alpha = 0.65f)
                 )
             } else {
                 androidx.tv.material3.Icon(
-                    imageVector = imageVector,
+                    imageVector = trailingIcon,
                     contentDescription = null,
                 )
             }

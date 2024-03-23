@@ -53,12 +53,15 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
@@ -69,6 +72,7 @@ import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient
 import javax.inject.Inject
+import kotlin.time.Duration.Companion.seconds
 
 class PlayerManagerV2Impl @Inject constructor(
     @Dispatcher(Main) mainDispatcher: CoroutineDispatcher,
@@ -237,6 +241,15 @@ class PlayerManagerV2Impl @Inject constructor(
         }
     }
 
+    override fun clearCache() {
+        cache.keys.forEach {
+            cache.getCachedSpans(it)
+                .forEach { span ->
+                    cache.removeSpan(span)
+                }
+        }
+    }
+
     override fun chooseTrack(group: TrackGroup, index: Int) {
         val currentPlayer = player.value ?: return
         val type = group.type
@@ -255,6 +268,13 @@ class PlayerManagerV2Impl @Inject constructor(
             .buildUpon()
             .setTrackTypeDisabled(type, true)
             .build()
+    }
+
+    override val cacheSpace: Flow<Long> = flow {
+        while (true) {
+            emit(cache.cacheSpace)
+            delay(5.seconds)
+        }
     }
 
     private fun createPlayer(
