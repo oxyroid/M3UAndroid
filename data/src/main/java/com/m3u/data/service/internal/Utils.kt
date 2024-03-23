@@ -42,16 +42,14 @@ fun DownloadManager.observeDownloads(
     }
 }
 
-private fun DownloadManager.getDownloads(@Download.State vararg states: Int): List<Download> {
-    return try {
-        buildList {
-            val cursor = downloadIndex.getDownloads(*states)
-            while (cursor.moveToNext()) {
-                add(cursor.download)
-            }
-            cursor.close()
+private fun DownloadManager.getDownloads(@Download.State vararg states: Int): List<Download> = try {
+    buildList {
+        val cursor = downloadIndex.getDownloads(*states)
+        while (cursor.moveToNext()) {
+            add(cursor.download)
         }
-    } catch (e: Exception) {
-        emptyList()
+        cursor.close()
     }
+} catch (e: Exception) {
+    emptyList()
 }
