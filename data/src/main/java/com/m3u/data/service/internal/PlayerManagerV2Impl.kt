@@ -475,7 +475,7 @@ private fun VideoSize.toRect(): Rect {
     return Rect(0, 0, width, height)
 }
 
-private sealed class MimetypeIterator : Iterator<MimetypeIterator> {
+private sealed class MimetypeIterator {
     class Unspecified(val url: String) : MimetypeIterator()
     class Trying(val mimeType: String) : MimetypeIterator()
     object Unsupported : MimetypeIterator()
@@ -501,9 +501,9 @@ private sealed class MimetypeIterator : Iterator<MimetypeIterator> {
         Unsupported -> "Unsupported"
     }
 
-    override fun hasNext(): Boolean = this != Unsupported
+    operator fun hasNext(): Boolean = this != Unsupported
 
-    override fun next(): MimetypeIterator = when (this) {
+    operator fun next(): MimetypeIterator = when (this) {
         is Unspecified -> Trying(ORDER_DEFAULT.first())
         is Trying -> {
             ORDER_DEFAULT
