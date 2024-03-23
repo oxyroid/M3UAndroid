@@ -7,11 +7,13 @@ import kotlinx.coroutines.channels.trySendBlocking
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 
-fun DownloadManager.allDownloadsAsFlow(): Flow<List<Download>> = callbackFlow {
+fun DownloadManager.observeDownloads(
+    @Download.State vararg states: Int
+): Flow<List<Download>> = callbackFlow {
     val listener = object : DownloadManager.Listener {
         override fun onInitialized(downloadManager: DownloadManager) {
             trySendBlocking(
-                downloadManager.getAllDownloads()
+                downloadManager.getDownloads(*states)
             )
         }
 
@@ -21,7 +23,7 @@ fun DownloadManager.allDownloadsAsFlow(): Flow<List<Download>> = callbackFlow {
             finalException: Exception?
         ) {
             trySendBlocking(
-                downloadManager.getAllDownloads()
+                downloadManager.getDownloads(*states)
             )
         }
 
@@ -30,7 +32,7 @@ fun DownloadManager.allDownloadsAsFlow(): Flow<List<Download>> = callbackFlow {
             download: Download
         ) {
             trySendBlocking(
-                downloadManager.getAllDownloads()
+                downloadManager.getDownloads(*states)
             )
         }
     }
@@ -40,18 +42,10 @@ fun DownloadManager.allDownloadsAsFlow(): Flow<List<Download>> = callbackFlow {
     }
 }
 
-
-private fun DownloadManager.getAllDownloads(): List<Download> {
+private fun DownloadManager.getDownloads(@Download.State vararg states: Int): List<Download> {
     return try {
         buildList {
-            val cursor = downloadIndex.getDownloads(
-                Download.STATE_DOWNLOADING,
-                Download.STATE_COMPLETED,
-                Download.STATE_FAILED,
-                Download.STATE_QUEUED,
-                Download.STATE_RESTARTING,
-                Download.STATE_REMOVING
-            )
+            val cursor = downloadIndex.getDownloads(*states)
             while (cursor.moveToNext()) {
                 add(cursor.download)
             }

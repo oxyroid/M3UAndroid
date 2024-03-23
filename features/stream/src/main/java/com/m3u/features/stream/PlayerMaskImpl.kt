@@ -153,12 +153,6 @@ internal fun PlayerMaskImpl(
     }
 
     var bufferedPosition: Long? by remember { mutableStateOf(null) }
-    LaunchedEffect(bufferedPosition) {
-        delay(800.milliseconds)
-        bufferedPosition?.let {
-            playerState.player?.seekTo(it)
-        }
-    }
     LaunchedEffect(playerState.playState) {
         if (playerState.playState == Player.STATE_READY) {
             bufferedPosition = null
@@ -408,6 +402,9 @@ internal fun PlayerMaskImpl(
                             onValueChange = {
                                 bufferedPosition = it.roundToLong()
                                 maskState.wake()
+                            },
+                            onValueChangeFinished = {
+                                bufferedPosition?.let { playerState.player?.seekTo(it) }
                             }
                         )
                     }

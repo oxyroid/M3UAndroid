@@ -169,12 +169,14 @@ class PlayerManagerV2Impl @Inject constructor(
     }
 
     override val downloads: StateFlow<List<Download>> = downloadManager
-        .allDownloadsAsFlow()
-        .onEach {
-            logger.post {
-                "all downloads: ${it.map { it.state }}"
-            }
-        }
+        .observeDownloads(
+            Download.STATE_DOWNLOADING,
+            Download.STATE_COMPLETED,
+            Download.STATE_FAILED,
+            Download.STATE_QUEUED,
+            Download.STATE_RESTARTING,
+            Download.STATE_REMOVING
+        )
         .flowOn(ioDispatcher)
         .stateIn(
             scope = ioCoroutineScope,
