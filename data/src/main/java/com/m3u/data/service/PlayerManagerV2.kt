@@ -7,9 +7,10 @@ import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.TrackGroup
 import androidx.media3.common.Tracks
-import com.m3u.data.parser.xtream.XtreamStreamInfo
+import androidx.media3.exoplayer.offline.Download
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.Stream
+import com.m3u.data.parser.xtream.XtreamStreamInfo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
@@ -27,9 +28,13 @@ interface PlayerManagerV2 {
     val playbackException: StateFlow<PlaybackException?>
 
     val tracksGroups: StateFlow<List<Tracks.Group>>
+
+    val downloads: StateFlow<List<Download>>
+
     fun chooseTrack(group: TrackGroup, index: Int)
     fun clearTrack(type: @C.TrackType Int)
     suspend fun play(command: MediaCommand)
+    suspend fun onDownload()
     suspend fun replay()
     fun release()
 }

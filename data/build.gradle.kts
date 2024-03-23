@@ -1,5 +1,6 @@
 plugins {
     alias(libs.plugins.com.android.library)
+    alias(libs.plugins.com.google.dagger.hilt.android)
     alias(libs.plugins.com.google.devtools.ksp)
     alias(libs.plugins.org.jetbrains.kotlin.android)
     alias(libs.plugins.org.jetbrains.kotlin.serialization)
@@ -44,6 +45,7 @@ android {
 
 dependencies {
     implementation(project(":core"))
+    implementation(libs.androidx.media3.exoplayer.workmanager)
 
     val richCodec = gradle
         .startParameter

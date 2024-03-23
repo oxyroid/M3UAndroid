@@ -1,4 +1,4 @@
-package com.m3u.features.stream.fragments
+package com.m3u.features.stream
 
 internal enum class MaskGesture {
     VOLUME, BRIGHTNESS

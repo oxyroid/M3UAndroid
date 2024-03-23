@@ -6,9 +6,12 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Dangerous
-import androidx.compose.material.icons.rounded.SlowMotionVideo
 import androidx.compose.material.icons.rounded.Tv
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -26,15 +29,16 @@ internal fun ExperimentalPreference(
     val pref = LocalPref.current
     val tv = isTelevision()
 
+    var experimentalMode by remember { mutableStateOf(false) }
     Column(modifier) {
         Preference(
             title = stringResource(string.feat_setting_experimental_mode).title(),
             content = stringResource(string.feat_setting_experimental_mode_description),
             icon = Icons.Rounded.Dangerous,
-            onClick = { pref.experimentalMode = !pref.experimentalMode }
+            onClick = { experimentalMode = !experimentalMode }
         )
         AnimatedVisibility(
-            visible = pref.experimentalMode,
+            visible = experimentalMode,
             enter = expandVertically(
                 expandFrom = Alignment.Bottom
             ),
@@ -43,12 +47,6 @@ internal fun ExperimentalPreference(
             )
         ) {
             Column {
-                CheckBoxSharedPreference(
-                    title = string.feat_setting_record,
-                    icon = Icons.Rounded.SlowMotionVideo,
-                    checked = pref.record,
-                    onChanged = { pref.record = !pref.record }
-                )
                 if (!tv) {
                     CheckBoxSharedPreference(
                         title = string.feat_setting_always_television,

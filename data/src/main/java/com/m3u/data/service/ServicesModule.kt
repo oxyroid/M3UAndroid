@@ -6,6 +6,12 @@ import android.app.NotificationManager
 import android.content.Context
 import android.net.nsd.NsdManager
 import androidx.core.app.NotificationManagerCompat
+import androidx.media3.database.StandaloneDatabaseProvider
+import androidx.media3.datasource.DefaultDataSource
+import androidx.media3.datasource.cache.Cache
+import androidx.media3.datasource.cache.LeastRecentlyUsedCacheEvictor
+import androidx.media3.datasource.cache.SimpleCache
+import androidx.media3.exoplayer.offline.DownloadManager
 import androidx.work.WorkManager
 import com.m3u.core.architecture.TraceFileProvider
 import com.m3u.core.architecture.logger.Logger
@@ -25,6 +31,8 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import java.io.File
+import java.util.concurrent.Executors
 import javax.inject.Singleton
 
 @Module
@@ -89,5 +97,44 @@ object ProvidedServicesModule {
     @Singleton
     fun provideNsdManager(@ApplicationContext context: Context): NsdManager {
         return context.getSystemService(Context.NSD_SERVICE) as NsdManager
+    }
+
+    @Provides
+    @Singleton
+    fun provideDatabaseProvider(
+        @ApplicationContext context: Context
+    ): StandaloneDatabaseProvider = StandaloneDatabaseProvider(context)
+
+    @Provides
+    @Singleton
+    fun provideCache(
+        @ApplicationContext applicationContext: Context,
+        databaseProvider: StandaloneDatabaseProvider
+    ): Cache {
+        val downloadDirectory = File(
+            applicationContext.getExternalFilesDir(null) ?: applicationContext.filesDir,
+            "downloads"
+        )
+        return SimpleCache(
+            downloadDirectory,
+            LeastRecentlyUsedCacheEvictor(24L * 1024 * 1024 * 1024),
+            databaseProvider
+        )
+    }
+
+    @Provides
+    @Singleton
+    fun provideDownloadManager(
+        @ApplicationContext applicationContext: Context,
+        databaseProvider: StandaloneDatabaseProvider,
+        cache: Cache
+    ): DownloadManager {
+        return DownloadManager(
+            applicationContext,
+            databaseProvider,
+            cache,
+            DefaultDataSource.Factory(applicationContext),
+            Executors.newFixedThreadPool(6)
+        )
     }
 }
