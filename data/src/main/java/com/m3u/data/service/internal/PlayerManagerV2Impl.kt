@@ -201,7 +201,7 @@ class PlayerManagerV2Impl @Inject constructor(
                 )
 
                 Download.STATE_DOWNLOADING, Download.STATE_QUEUED, Download.STATE_RESTARTING ->
-                    tryRemoveDownload(streamUrl)
+                    tryStopDownload(streamUrl)
 
                 else -> {}
             }
@@ -264,6 +264,8 @@ class PlayerManagerV2Impl @Inject constructor(
                     " rtmp: $rtmp, " +
                     "tunneling: $tunneling"
         }
+        // rtmp is unsupported currently
+        if (rtmp) return
 
         DownloadService.sendAddDownload(
             context,
@@ -277,11 +279,12 @@ class PlayerManagerV2Impl @Inject constructor(
         )
     }
 
-    private fun tryRemoveDownload(url: String) {
-        DownloadService.sendRemoveDownload(
+    private fun tryStopDownload(url: String) {
+        DownloadService.sendSetStopReason(
             context,
             StreamDownloadService::class.java,
             url,
+            1,
             false
         )
     }
