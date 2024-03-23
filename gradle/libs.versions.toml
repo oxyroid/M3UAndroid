@@ -25,6 +25,7 @@ kotlinx-serialization-json = "1.6.3"
 kotlinx-serialization-converter-retrofit = "1.0.0"
 kotlinx-datetime = "0.5.0"
 kotlinx-collections-immutable = "0.3.7"
+kotlinx-coroutine = "1.7.3"
 
 chucker = "4.0.0"
 logbackAndroid = "3.0.0"
@@ -135,6 +136,8 @@ kotlinx-serialization-coverter-retrofit = { group = "com.jakewharton.retrofit", 
 kotlinx-collections-immutable = { group = "org.jetbrains.kotlinx", name = "kotlinx-collections-immutable", version.ref = "kotlinx-collections-immutable" }
 
 kotlinx-datetime = { group = "org.jetbrains.kotlinx", name = "kotlinx-datetime", version.ref = "kotlinx-datetime" }
+
+kotlinx-coroutines-core-jvm = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm", version.ref = "kotlinx-coroutine" }
 
 com-google-android-material-material = { group = "com.google.android.material", name = "material", version.ref = "com-google-android-material" }
 

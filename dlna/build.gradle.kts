@@ -51,4 +51,6 @@ dependencies {
     implementation(libs.jetty.client)
 
     implementation(libs.slf4j.api)
+
+    implementation(libs.kotlinx.coroutines.core.jvm)
 }
