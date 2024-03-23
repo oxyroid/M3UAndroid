@@ -160,7 +160,8 @@ class FavouriteViewModel @Inject constructor(
         .stateIn(
             scope = viewModelScope,
             initialValue = Resource.Loading,
-            started = SharingStarted.WhileSubscribed(5_000L)
+            // don't lose
+            started = SharingStarted.Lazily
         )
 
     internal fun onRequestEpisodes(series: Stream) {

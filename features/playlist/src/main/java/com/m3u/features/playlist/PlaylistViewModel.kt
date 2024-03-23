@@ -4,7 +4,6 @@ import android.content.ComponentName
 import android.content.ContentResolver
 import android.content.Context
 import android.content.Intent
-import android.util.Log
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.graphics.drawable.IconCompat
@@ -351,15 +350,15 @@ class PlaylistViewModel @Inject constructor(
     private val series = MutableStateFlow<Stream?>(null)
     internal val episodes: StateFlow<Resource<ImmutableList<XtreamStreamInfo.Episode>>> = series
         .flatMapLatest { series ->
-            if (series == null) flow { Log.e("TAG", "123") }
+            if (series == null) flow {}
             else resource { playlistRepository.readEpisodesOrThrow(series) }
                 .mapResource { it.toPersistentList() }
-                .onEach { Log.e("TAG", "$it") }
         }
         .stateIn(
             scope = viewModelScope,
             initialValue = Resource.Loading,
-            started = SharingStarted.WhileSubscribed(5_000L)
+            // don't lose
+            started = SharingStarted.Lazily
         )
 
     internal fun onRequestEpisodes(series: Stream) {
