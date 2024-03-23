@@ -9,6 +9,7 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.media3.database.StandaloneDatabaseProvider
 import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.datasource.cache.Cache
+import androidx.media3.datasource.cache.LeastRecentlyUsedCacheEvictor
 import androidx.media3.datasource.cache.NoOpCacheEvictor
 import androidx.media3.datasource.cache.SimpleCache
 import androidx.media3.exoplayer.offline.DownloadManager
@@ -117,7 +118,7 @@ object ProvidedServicesModule {
         )
         return SimpleCache(
             downloadDirectory,
-            NoOpCacheEvictor(),
+            LeastRecentlyUsedCacheEvictor(24L * 1024 * 1024 * 1024),
             databaseProvider
         )
     }
