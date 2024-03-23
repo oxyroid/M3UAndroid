@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="feat_setting_placeholder_url">enlace a playlist</string>
-    <string name="feat_setting_app_version">versión app</string>
+    <string name="feat_setting_placeholder_url">dirección de playlist</string>
+    <string name="feat_setting_app_version">versión de app</string>
     <string name="feat_setting_label_subscribe">subscribir</string>
     <string name="feat_setting_success_subscribe">subscripción completa</string>
-    <string name="feat_setting_failed_malformed_url">url malformateada (%s)</string>
+    <string name="feat_setting_failed_malformed_url">dirección malformateada (%s)</string>
     <string name="feat_setting_error_empty_title">el nombre de playlist name está vacío</string>
     <string name="feat_setting_placeholder_title">nombre de playlist</string>
     <string name="feat_setting_label_subscribing">suscribiendo</string>
@@ -16,8 +16,8 @@
     <string name="feat_setting_god_mode">modo dios</string>
     <string name="feat_setting_god_mode_description">ajusta la distribución con los botones del volumen</string>
     <string name="feat_setting_experimental_mode">modo experimental</string>
-    <string name="feat_setting_experimental_mode_description">acciones no estables que traerían resultados inesperados</string>
-    <string name="feat_setting_label_hidden_streams">directos ocultados</string>
+    <string name="feat_setting_experimental_mode_description">características inestables con efectos inesperados</string>
+    <string name="feat_setting_label_hidden_streams">emisiones ocultadas</string>
     <string name="feat_setting_label_hidden_playlist_groups">categorías de playlist ocultadas</string>
     <string name="feat_setting_label_add_playlist">añadir playlist</string>
     <string name="feat_setting_label_parse_from_clipboard">obtener del portapapeles</string>
@@ -25,10 +25,10 @@
     <string name="feat_setting_label_parse_from_disk">obtener del archivo</string>
     <string name="feat_setting_clip_mode">modo de video clip</string>
     <string name="feat_setting_clip_mode_adaptive">adaptativo</string>
-    <string name="feat_setting_clip_mode_clip">clip</string>
+    <string name="feat_setting_clip_mode_clip">centrar</string>
     <string name="feat_setting_clip_mode_stretched">estirado</string>
     <string name="feat_setting_auto_refresh">autorefrescar</string>
-    <string name="feat_setting_auto_refresh_description">se actualiza automáticamente al ingresar lista de reproducción</string>
+    <string name="feat_setting_auto_refresh_description">se actualiza automáticamente al ingresar la playlist</string>
 
     <string name="feat_setting_always_television">siempre en televisión</string>
     <string name="feat_setting_always_television_description">será revertido cuando se reinicia la app</string>
@@ -48,18 +48,18 @@
     <string name="feat_setting_error_unselected_file">aún no se seleccionó al archivo</string>
     <string name="feat_setting_error_blank_url">url en blanco</string>
     <string name="feat_setting_use_dynamic_colors">colores dinámicos</string>
-    <string name="feat_setting_use_dynamic_colors_unavailable">está disponible en Android 12 y posteriores</string>
-    <string name="feat_setting_not_implementation">esa característica no está disponible en esta versión</string>
+    <string name="feat_setting_use_dynamic_colors_unavailable">disponible desde Android 12</string>
+    <string name="feat_setting_not_implementation">esa característica no está disponible para esa versión</string>
     <string name="feat_setting_zapping_mode">Modo zapeo</string>
-    <string name="feat_setting_zapping_mode_description">Un vistazo a los directos antes de reproducirlos</string>
+    <string name="feat_setting_zapping_mode_description">Realiza una vista previa de las emisiones</string>
     <string name="feat_setting_gesture_brightness">gestos de brillo</string>
     <string name="feat_setting_gesture_volume">gestos de volumen</string>
     <string name="feat_setting_screencast">screencast</string>
     <string name="feat_setting_screen_rotating">rotación de pantalla</string>
     <string name="feat_setting_screen_rotating_description">disponible cuando el mecanismo de rotación está desbloqueado</string>
     <string name="feat_setting_optional_player_features">características opcionales de reproducción</string>
-    <string name="feat_setting_unseen_limit">recomendar streams favoritos vistos muy antes</string>
-    <string name="feat_setting_reconnect_mode">auto reconectar</string>
+    <string name="feat_setting_unseen_limit">recomendaciones de emisiones favortias vistas hace tiempo</string>
+    <string name="feat_setting_reconnect_mode">autoreconectar</string>
     <string name="feat_setting_reconnect_mode_no">nunca</string>
     <string name="feat_setting_reconnect_mode_retry">cuando falla</string>
     <string name="feat_setting_reconnect_mode_reconnect">siempre</string>
@@ -82,7 +82,7 @@
     <string name="feat_setting_remote_control_description">activa la habilidad de controlar remotamente la TV</string>
 
     <string name="feat_setting_remote_control_tv_side">control remoto</string>
-    <string name="feat_setting_remote_control_tv_side_description">permite a los smartphones controlar tu TV</string>
+    <string name="feat_setting_remote_control_tv_side_description">permite a los móviles controlar tu TV</string>
     <string name="feat_setting_subscribe_for_tv">para television</string>
     <string name="feat_setting_backing_up">respaldando todos los playlists y canales</string>
     <string name="feat_setting_restoring">restaurando todos los playlists y canales</string>
@@ -97,4 +97,6 @@
     <string name="feat_setting_back_home">ir a inicio</string>
 
     <string name="feat_setting_always_replay">siempre mostrar un botón de reproducción</string>
+
+    <string name="feat_setting_clear_cache">limpiar caché (%s)</string>
 </resources>

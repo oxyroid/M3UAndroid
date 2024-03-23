@@ -10,7 +10,7 @@
     <string name="feat_playlist_query_placeholder">ingresa la palabra clave</string>
     <string name="feat_playlist_error_playlist_url_not_found">la url del playlist no existe</string>
     <string name="feat_playlist_error_stream_cover_not_found">la portada no existe</string>
-    <string name="feat_playlist_error_stream_not_found">el directo no existe</string>
+    <string name="feat_playlist_error_stream_not_found">la emisión no existe</string>
     <string name="feat_playlist_success_save_cover">guardada to (%s)</string>
     <string name="feat_playlist_refreshing">actualizando</string>
     <string name="feat_playlist_scroll_up">subir</string>
