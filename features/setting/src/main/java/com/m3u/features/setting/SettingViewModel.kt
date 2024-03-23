@@ -19,6 +19,8 @@ import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
 import com.m3u.core.architecture.pref.Pref
 import com.m3u.core.architecture.pref.observeAsFlow
 import com.m3u.core.architecture.viewmodel.BaseViewModel
+import com.m3u.core.unspecified.DataUnit
+import com.m3u.core.unspecified.KB
 import com.m3u.core.util.basic.startWithHttpScheme
 import com.m3u.data.api.LocalPreparedService
 import com.m3u.data.database.dao.ColorPackDao
@@ -31,6 +33,7 @@ import com.m3u.data.repository.PlaylistRepository
 import com.m3u.data.repository.StreamRepository
 import com.m3u.data.repository.observeAll
 import com.m3u.data.service.Messager
+import com.m3u.data.service.PlayerManagerV2
 import com.m3u.data.worker.BackupWorker
 import com.m3u.data.worker.RestoreWorker
 import com.m3u.data.worker.SubscriptionWorker
@@ -61,6 +64,7 @@ class SettingViewModel @Inject constructor(
     pref: Pref,
     private val messager: Messager,
     private val localService: LocalPreparedService,
+    private val playerManager: PlayerManagerV2,
     publisher: Publisher,
     colorPackDao: ColorPackDao,
     @Dispatcher(IO) private val ioDispatcher: CoroutineDispatcher
@@ -80,20 +84,21 @@ class SettingViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5_000L)
         )
 
-    internal val hiddenCategoriesWithPlaylists: StateFlow<ImmutableList<Pair<Playlist, String>>> = playlistRepository
-        .observeAll()
-        .map { playlists ->
-            playlists
-                .filter { it.hiddenCategories.isNotEmpty() }
-                .flatMap { playlist -> playlist.hiddenCategories.map { playlist to it } }
-        }
-        .map { it.toPersistentList() }
-        .flowOn(ioDispatcher)
-        .stateIn(
-            scope = viewModelScope,
-            initialValue = persistentListOf(),
-            started = SharingStarted.WhileSubscribed(5_000L)
-        )
+    internal val hiddenCategoriesWithPlaylists: StateFlow<ImmutableList<Pair<Playlist, String>>> =
+        playlistRepository
+            .observeAll()
+            .map { playlists ->
+                playlists
+                    .filter { it.hiddenCategories.isNotEmpty() }
+                    .flatMap { playlist -> playlist.hiddenCategories.map { playlist to it } }
+            }
+            .map { it.toPersistentList() }
+            .flowOn(ioDispatcher)
+            .stateIn(
+                scope = viewModelScope,
+                initialValue = persistentListOf(),
+                started = SharingStarted.WhileSubscribed(5_000L)
+            )
 
     internal fun onUnhidePlaylistCategory(playlistUrl: String, group: String) {
         viewModelScope.launch {
@@ -297,6 +302,14 @@ class SettingViewModel @Inject constructor(
         messager.emit(SettingMessage.Restoring)
     }
 
+    internal val cacheSpace: StateFlow<DataUnit> = playerManager
+        .cacheSpace
+        .map { DataUnit.of(it) }
+        .stateIn(
+            scope = viewModelScope,
+            initialValue = 0.0.KB,
+            started = SharingStarted.Lazily
+        )
 
     private fun clearAllInputs() {
         writable.update {
@@ -309,6 +322,10 @@ class SettingViewModel @Inject constructor(
         basicUrl = ""
         username = ""
         password = ""
+    }
+
+    internal fun clearCache() {
+        playerManager.clearCache()
     }
 
     internal var forTv by mutableStateOf(false)

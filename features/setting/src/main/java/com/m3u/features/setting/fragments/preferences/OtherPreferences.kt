@@ -6,6 +6,7 @@ import android.provider.Settings
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.OpenInNew
+import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.PermDeviceInformation
 import androidx.compose.material.icons.rounded.Source
@@ -13,24 +14,27 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import com.m3u.core.unspecified.DataUnit
 import com.m3u.core.util.basic.title
-import com.m3u.i18n.R
-import com.m3u.material.components.IconPreference
+import com.m3u.i18n.R.string
 import com.m3u.material.components.Preference
+import com.m3u.material.components.TrailingIconPreference
 
 @Composable
 internal fun OtherPreferences(
     versionName: String,
     versionCode: Int,
+    cacheSpace: DataUnit,
+    onClearCache: () -> Unit,
     navigateToAbout: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
     Column(modifier) {
-        IconPreference(
-            title = stringResource(R.string.feat_setting_system_setting).title(),
-            imageVector = Icons.AutoMirrored.Rounded.OpenInNew,
+        TrailingIconPreference(
+            title = stringResource(string.feat_setting_system_setting).title(),
             icon = Icons.Rounded.PermDeviceInformation,
+            trailingIcon = Icons.AutoMirrored.Rounded.OpenInNew,
             onClick = {
                 val intent =
                     Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
@@ -40,12 +44,17 @@ internal fun OtherPreferences(
             }
         )
         Preference(
-            title = stringResource(R.string.feat_setting_project_about).title(),
+            title = stringResource(string.feat_setting_clear_cache, cacheSpace.toString()).title(),
+            icon = Icons.Rounded.Delete,
+            onClick = onClearCache
+        )
+        Preference(
+            title = stringResource(string.feat_setting_project_about).title(),
             icon = Icons.Rounded.Source,
             onClick = navigateToAbout
         )
         Preference(
-            title = stringResource(R.string.feat_setting_app_version).title(),
+            title = stringResource(string.feat_setting_app_version).title(),
             content = "$versionName ($versionCode)",
             icon = Icons.Rounded.Info,
         )
