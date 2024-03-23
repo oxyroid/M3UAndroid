@@ -138,23 +138,13 @@ class PlayerManagerV2Impl @Inject constructor(
             val streamUrl = stream.url
             streamRepository.reportPlayed(stream.id)
 
-            val wrapper = MimetypeWrapper.Unspecified(streamUrl).next()
-            mimetypeWrapper = wrapper
-            logger.post { "init wrapper: $wrapper" }
-
-            when (wrapper) {
-                is MimetypeWrapper.Maybe -> tryPlay(
-                    mimeType = wrapper.mimeType,
-                    url = streamUrl
-                )
-
-                is MimetypeWrapper.Trying -> tryPlay(
-                    mimeType = wrapper.mimeType,
-                    url = streamUrl
-                )
-
-                else -> return
-            }
+            val iterator = MimetypeIterator.Unspecified(streamUrl)
+            this.iterator = iterator
+            logger.post { "init mimetype: $iterator" }
+            tryPlay(
+                mimeType = null,
+                url = streamUrl
+            )
 
             observePreferencesChangingJob?.cancel()
             observePreferencesChangingJob = mainCoroutineScope.launch {
@@ -224,7 +214,7 @@ class PlayerManagerV2Impl @Inject constructor(
             playbackState.value = Player.STATE_IDLE
             playbackException.value = null
             tracksGroups.value = emptyList()
-            mimetypeWrapper = MimetypeWrapper.Unsupported
+            iterator = MimetypeIterator.Unsupported
             null
         }
     }
@@ -348,7 +338,7 @@ class PlayerManagerV2Impl @Inject constructor(
         }
     }
 
-    private var mimetypeWrapper: MimetypeWrapper = MimetypeWrapper.Unsupported
+    private var iterator: MimetypeIterator = MimetypeIterator.Unsupported
 
     override fun onPlayerErrorChanged(exception: PlaybackException?) {
         super.onPlayerErrorChanged(exception)
@@ -365,16 +355,15 @@ class PlayerManagerV2Impl @Inject constructor(
             PlaybackException.ERROR_CODE_PARSING_MANIFEST_MALFORMED,
             PlaybackException.ERROR_CODE_PARSING_CONTAINER_UNSUPPORTED,
             PlaybackException.ERROR_CODE_PARSING_MANIFEST_UNSUPPORTED -> {
-                if (mimetypeWrapper.hasNext()) {
-                    val next = mimetypeWrapper.next()
+                if (iterator.hasNext()) {
+                    val next = iterator.next()
                     logger.post {
                         "[${PlaybackException.getErrorCodeName(exception.errorCode)}] " +
-                                "Try another mimetype, from $mimetypeWrapper to $next"
+                                "Try another mimetype, from $iterator to $next"
                     }
-                    mimetypeWrapper = next
+                    iterator = next
                     when (next) {
-                        is MimetypeWrapper.Maybe -> tryPlay(next.mimeType)
-                        is MimetypeWrapper.Trying -> tryPlay(next.mimeType)
+                        is MimetypeIterator.Trying -> tryPlay(next.mimeType)
                         else -> {
                             playbackException.value = exception
                         }
@@ -407,11 +396,10 @@ private fun VideoSize.toRect(): Rect {
     return Rect(0, 0, width, height)
 }
 
-private sealed class MimetypeWrapper : Iterator<MimetypeWrapper> {
-    class Unspecified(val url: String) : MimetypeWrapper()
-    class Maybe(val mimeType: String) : MimetypeWrapper()
-    class Trying(val mimeType: String) : MimetypeWrapper()
-    object Unsupported : MimetypeWrapper()
+private sealed class MimetypeIterator : Iterator<MimetypeIterator> {
+    class Unspecified(val url: String) : MimetypeIterator()
+    class Trying(val mimeType: String) : MimetypeIterator()
+    object Unsupported : MimetypeIterator()
 
     companion object {
         val ORDER_DEFAULT = arrayOf(
@@ -423,7 +411,6 @@ private sealed class MimetypeWrapper : Iterator<MimetypeWrapper> {
     }
 
     override fun toString(): String = when (this) {
-        is Maybe -> "Maybe[$mimeType]"
         is Trying -> "Trying[$mimeType]"
         is Unspecified -> "Unspecified[$url]"
         Unsupported -> "Unsupported"
@@ -431,25 +418,8 @@ private sealed class MimetypeWrapper : Iterator<MimetypeWrapper> {
 
     override fun hasNext(): Boolean = this != Unsupported
 
-    override fun next(): MimetypeWrapper = when (this) {
-        is Unspecified -> {
-            when {
-                url.contains(".m3u", true) ||
-                        url.contains(".m3u8", true) -> MimeTypes.APPLICATION_M3U8
-
-                url.contains(".mpd", true) -> MimeTypes.APPLICATION_MPD
-                url.contains(".ism", true) -> MimeTypes.APPLICATION_SS
-                url.startsWith("rtsp://", true) ||
-                        url.contains(".sdp", true) -> MimeTypes.APPLICATION_RTSP
-                // cannot determine mine-type
-                else -> null
-            }
-                .let { maybeMimetype ->
-                    maybeMimetype?.let { Maybe(it) } ?: Trying(ORDER_DEFAULT.first())
-                }
-        }
-
-        is Maybe -> Trying(ORDER_DEFAULT.first())
+    override fun next(): MimetypeIterator = when (this) {
+        is Unspecified -> Trying(ORDER_DEFAULT.first())
         is Trying -> {
             ORDER_DEFAULT
                 .getOrNull(ORDER_DEFAULT.indexOf(mimeType) + 1)
