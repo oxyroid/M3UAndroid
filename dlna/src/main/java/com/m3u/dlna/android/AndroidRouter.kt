@@ -121,7 +121,7 @@ open class AndroidRouter(
             }
         } else {
             if (lock.isHeld) {
-                lock.release();
+                lock.release()
             }
         }
     }

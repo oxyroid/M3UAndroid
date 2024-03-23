@@ -216,7 +216,7 @@ internal fun PlayerMaskImpl(
                         contentDescription = stringResource(string.feat_stream_tooltip_choose_format)
                     )
                 }
-                if (isStaticAndSeekable) {
+                if (isStaticAndSeekable && pref.cache) {
                     MaskButton(
                         state = maskState,
                         icon = when (download?.state) {
