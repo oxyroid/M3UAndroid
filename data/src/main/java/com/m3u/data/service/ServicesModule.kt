@@ -117,7 +117,7 @@ object ProvidedServicesModule {
         )
         return SimpleCache(
             downloadDirectory,
-            LeastRecentlyUsedCacheEvictor(24L * 1024 * 1024 * 1024),
+            LeastRecentlyUsedCacheEvictor(2L * 1024 * 1024 * 1024),
             databaseProvider
         )
     }

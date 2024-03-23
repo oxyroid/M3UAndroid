@@ -106,6 +106,4 @@
     <string name="feat_setting_back_home">back home</string>
 
     <string name="feat_setting_always_replay">always show replay button</string>
-
-    <string name="feat_setting_cache">cache</string>
 </resources>

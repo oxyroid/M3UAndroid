@@ -24,15 +24,12 @@ import androidx.compose.material.icons.automirrored.rounded.VolumeOff
 import androidx.compose.material.icons.automirrored.rounded.VolumeUp
 import androidx.compose.material.icons.rounded.Cast
 import androidx.compose.material.icons.rounded.DarkMode
-import androidx.compose.material.icons.rounded.Download
-import androidx.compose.material.icons.rounded.DownloadDone
 import androidx.compose.material.icons.rounded.HighQuality
 import androidx.compose.material.icons.rounded.LightMode
 import androidx.compose.material.icons.rounded.PictureInPicture
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.ScreenRotationAlt
 import androidx.compose.material.icons.rounded.Star
-import androidx.compose.material.icons.rounded.StopCircle
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
@@ -57,7 +54,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.media3.common.Player
-import androidx.media3.exoplayer.offline.Download
 import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.core.util.basic.isNotEmpty
 import com.m3u.features.stream.PlayerMaskImplDefaults.detectVerticalMaskGestures
@@ -97,9 +93,7 @@ internal fun PlayerMaskImpl(
     openDlnaDevices: () -> Unit,
     openChooseFormat: () -> Unit,
     onVolume: (Float) -> Unit,
-    onBrightness: (Float) -> Unit,
-    download: Download?,
-    onDownload: () -> Unit
+    onBrightness: (Float) -> Unit
 ) {
     val pref = LocalPref.current
     val helper = LocalHelper.current
@@ -214,25 +208,6 @@ internal fun PlayerMaskImpl(
                         icon = Icons.Rounded.HighQuality,
                         onClick = openChooseFormat,
                         contentDescription = stringResource(string.feat_stream_tooltip_choose_format)
-                    )
-                }
-                if (isStaticAndSeekable && pref.cache) {
-                    MaskButton(
-                        state = maskState,
-                        icon = when (download?.state) {
-                            Download.STATE_DOWNLOADING -> Icons.Rounded.StopCircle
-                            Download.STATE_COMPLETED -> Icons.Rounded.DownloadDone
-                            else -> Icons.Rounded.Download
-                        },
-                        tint = when (download?.state) {
-                            Download.STATE_DOWNLOADING -> MaterialTheme.colorScheme.error
-                            else -> Color.Unspecified
-                        },
-                        onClick = onDownload,
-                        contentDescription = when (download?.state) {
-                            Download.STATE_DOWNLOADING -> stringResource(string.feat_stream_tooltip_stop_download)
-                            else -> stringResource(string.feat_stream_tooltip_download)
-                        }
                     )
                 }
 

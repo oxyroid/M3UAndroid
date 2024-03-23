@@ -6,8 +6,6 @@ import androidx.media3.common.C
 import androidx.media3.common.Format
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.prefix
-import com.m3u.core.wrapper.Resource
-import com.m3u.core.wrapper.asResource
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.Stream
@@ -245,20 +243,5 @@ class StreamViewModel @Inject constructor(
 
     internal fun openInExternalPlayer() {
 
-    }
-
-    internal val downloadsResource = playerManager
-        .downloads
-        .asResource()
-        .stateIn(
-            scope = viewModelScope,
-            initialValue = Resource.Loading,
-            started = SharingStarted.WhileSubscribed(5_000L)
-        )
-
-    internal fun onDownload() {
-        viewModelScope.launch {
-            playerManager.onDownload()
-        }
     }
 }

@@ -1,12 +1,8 @@
 package com.m3u.features.stream
 
-import android.Manifest
-import android.annotation.SuppressLint
 import android.content.Intent
 import android.graphics.Rect
 import android.net.Uri
-import android.os.Build
-import android.provider.Settings
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
@@ -15,7 +11,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
@@ -27,15 +22,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.media3.exoplayer.offline.Download
-import com.google.accompanist.permissions.PermissionStatus
-import com.google.accompanist.permissions.rememberPermissionState
-import com.google.accompanist.permissions.shouldShowRationale
 import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.core.unspecified.unspecifiable
 import com.m3u.core.util.basic.isNotEmpty
 import com.m3u.core.util.basic.title
-import com.m3u.core.wrapper.Resource
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.Stream
 import com.m3u.features.stream.components.CoverPlaceholder
@@ -75,17 +65,9 @@ fun StreamRoute(
 
     val formats by viewModel.formats.collectAsStateWithLifecycle()
     val selectedFormats by viewModel.selectedFormats.collectAsStateWithLifecycle()
-    val downloadsResource by viewModel.downloadsResource.collectAsStateWithLifecycle()
 
     val volume by viewModel.volume.collectAsStateWithLifecycle()
     val isSeriesPlaylist by viewModel.isSeriesPlaylist.collectAsStateWithLifecycle()
-
-    val download = remember(stream, downloadsResource) {
-        val streamUrl = stream?.url ?: return@remember null
-        (downloadsResource as? Resource.Success)
-            ?.data
-            ?.find { it.request.uri.toString() == streamUrl }
-    }
 
     var brightness by rememberSaveable { mutableFloatStateOf(helper.brightness) }
     var isPipMode by rememberSaveable { mutableStateOf(false) }
@@ -93,14 +75,6 @@ fun StreamRoute(
     var choosing by rememberSaveable { mutableStateOf(false) }
 
     val maskState = rememberMaskState()
-
-    val postNotificationPermissionRequired =
-        Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
-
-    @SuppressLint("InlinedApi")
-    val postNotificationPermissionState = rememberPermissionState(
-        Manifest.permission.POST_NOTIFICATIONS
-    )
 
     LifecycleResumeEffect {
         with(helper) {
@@ -174,30 +148,6 @@ fun StreamRoute(
             volume = volume,
             onBrightness = { brightness = it },
             onVolume = { viewModel.onVolume(it) },
-            download = download,
-            onDownload = {
-                when {
-                    !postNotificationPermissionRequired -> {}
-                    postNotificationPermissionState.status is PermissionStatus.Denied -> {
-                        if (postNotificationPermissionState.status.shouldShowRationale) {
-                            postNotificationPermissionState.launchPermissionRequest()
-                        } else {
-                            val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
-                                .apply {
-                                    putExtra(
-                                        Settings.EXTRA_APP_PACKAGE,
-                                        helper.activityContext.packageName
-                                    )
-                                }
-                            helper.activityContext.startActivity(intent)
-                        }
-                        return@StreamScreen
-                    }
-
-                    else -> {}
-                }
-                viewModel.onDownload()
-            },
             modifier = modifier
         )
 
@@ -247,8 +197,6 @@ private fun StreamScreen(
     formatsIsNotEmpty: Boolean,
     volume: Float,
     brightness: Float,
-    download: Download?,
-    onDownload: () -> Unit,
     onFavourite: () -> Unit,
     onBackPressed: () -> Unit,
     openDlnaDevices: () -> Unit,
@@ -304,9 +252,7 @@ private fun StreamScreen(
                 openDlnaDevices = openDlnaDevices,
                 openChooseFormat = openChooseFormat,
                 onVolume = onVolume,
-                onBrightness = onBrightness,
-                download = download,
-                onDownload = onDownload
+                onBrightness = onBrightness
             )
 
             LaunchedEffect(playerState.playerError) {

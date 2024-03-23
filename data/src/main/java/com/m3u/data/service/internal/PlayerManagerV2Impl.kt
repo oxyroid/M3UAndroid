@@ -1,9 +1,7 @@
 package com.m3u.data.service.internal
 
-import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Rect
-import android.net.Uri
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
@@ -24,8 +22,6 @@ import androidx.media3.exoplayer.RenderersFactory
 import androidx.media3.exoplayer.hls.HlsMediaSource
 import androidx.media3.exoplayer.offline.Download
 import androidx.media3.exoplayer.offline.DownloadManager
-import androidx.media3.exoplayer.offline.DownloadRequest
-import androidx.media3.exoplayer.offline.DownloadService
 import androidx.media3.exoplayer.rtsp.RtspMediaSource
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.exoplayer.source.MediaSource
@@ -51,7 +47,6 @@ import com.m3u.data.repository.PlaylistRepository
 import com.m3u.data.repository.StreamRepository
 import com.m3u.data.service.MediaCommand
 import com.m3u.data.service.PlayerManagerV2
-import com.m3u.data.service.StreamDownloadService
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.ktor.http.Url
 import kotlinx.coroutines.CoroutineDispatcher
@@ -168,7 +163,7 @@ class PlayerManagerV2Impl @Inject constructor(
         }
     }
 
-    override val downloads: StateFlow<List<Download>> = downloadManager
+    private val downloads: StateFlow<List<Download>> = downloadManager
         .observeDownloads()
         .flowOn(ioDispatcher)
         .stateIn(
@@ -176,37 +171,6 @@ class PlayerManagerV2Impl @Inject constructor(
             started = SharingStarted.WhileSubscribed(5_000L),
             initialValue = emptyList()
         )
-
-    override suspend fun onDownload() {
-        val command = mediaCommand.value ?: return
-        val stream = when (command) {
-            is MediaCommand.Live -> streamRepository.get(command.streamId)
-            is MediaCommand.XtreamEpisode -> streamRepository
-                .get(command.streamId)
-                ?.copyXtreamEpisode(command.episode)
-        }
-        if (stream != null) {
-            val streamUrl = stream.url
-            val playlist = playlistRepository.get(stream.playlistUrl)
-
-            val download = downloads.value.find {
-                it.request.uri.toString() == streamUrl
-            }
-            @SuppressLint("SwitchIntDef")
-            when (download?.state) {
-                null, Download.STATE_FAILED, Download.STATE_STOPPED -> tryAddDownload(
-                    mimeType = iterator.mimeTypeOrNull,
-                    url = streamUrl,
-                    userAgent = playlist?.userAgent
-                )
-
-                Download.STATE_DOWNLOADING, Download.STATE_QUEUED, Download.STATE_RESTARTING ->
-                    tryStopDownload(streamUrl)
-
-                else -> {}
-            }
-        }
-    }
 
     private fun tryPlay(
         mimeType: String?,
@@ -247,46 +211,6 @@ class PlayerManagerV2Impl @Inject constructor(
         val mediaSource: MediaSource = mediaSourceFactory.createMediaSource(mediaItem)
         player.setMediaSource(mediaSource)
         player.prepare()
-    }
-
-    private fun tryAddDownload(
-        mimeType: String?,
-        url: String,
-        userAgent: String?,
-    ) {
-        val rtmp: Boolean = Url(url).protocol.name == "rtmp"
-        val tunneling: Boolean = pref.tunneling
-
-        logger.post {
-            "download, mimetype: $mimeType," +
-                    " url: $url," +
-                    " user-agent: $userAgent," +
-                    " rtmp: $rtmp, " +
-                    "tunneling: $tunneling"
-        }
-        // rtmp is unsupported currently
-        if (rtmp) return
-
-        DownloadService.sendAddDownload(
-            context,
-            StreamDownloadService::class.java,
-            DownloadRequest.Builder(
-                url,
-                Uri.parse(url)
-            )
-                .build(),
-            false
-        )
-    }
-
-    private fun tryStopDownload(url: String) {
-        DownloadService.sendSetStopReason(
-            context,
-            StreamDownloadService::class.java,
-            url,
-            1,
-            false
-        )
     }
 
     override suspend fun replay() {

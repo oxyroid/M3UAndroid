@@ -10,7 +10,6 @@ import com.m3u.core.architecture.pref.Pref.Companion.ALWAYS_SHOW_REFRESH
 import com.m3u.core.architecture.pref.Pref.Companion.ALWAYS_TV
 import com.m3u.core.architecture.pref.Pref.Companion.AUTO_REFRESH
 import com.m3u.core.architecture.pref.Pref.Companion.BRIGHTNESS_GESTURE
-import com.m3u.core.architecture.pref.Pref.Companion.CACHE
 import com.m3u.core.architecture.pref.Pref.Companion.CLIP_MODE
 import com.m3u.core.architecture.pref.Pref.Companion.COLOR_ARGB
 import com.m3u.core.architecture.pref.Pref.Companion.COMPACT
@@ -20,7 +19,6 @@ import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_ALWAYS_SHOW_REFRESH
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_ALWAYS_TV
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_AUTO_REFRESH
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_BRIGHTNESS_GESTURE
-import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_CACHE
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_CLIP_MODE
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_COLOR_ARGB
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_COMPACT
@@ -141,8 +139,6 @@ class SnapshotPref @Inject constructor(
     sharedPreferences.booleanAsState(DEFAULT_PROGRESS, PROGRESS)
     override var alwaysShowReplay: Boolean by
     sharedPreferences.booleanAsState(DEFAULT_ALWAYS_SHOW_REFRESH, ALWAYS_SHOW_REFRESH)
-    override var cache: Boolean by
-    sharedPreferences.booleanAsState(DEFAULT_CACHE, CACHE)
 
     companion object {
         private const val SHARED_SETTINGS = "shared_settings"
