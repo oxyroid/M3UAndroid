@@ -3,7 +3,7 @@
     <string name="feat_stream_playback_state_idle">en pausa</string>
     <string name="feat_stream_playback_state_buffering">cargando</string>
     <string name="feat_stream_playback_state_ready">listo</string>
-    <string name="feat_stream_playback_state_ended">se ha completado</string>
+    <string name="feat_stream_playback_state_ended">completo</string>
 
     <string name="feat_stream_tooltip_on_back_pressed">atrás</string>
     <string name="feat_stream_tooltip_mute">silenciar</string>
@@ -11,11 +11,11 @@
     <string name="feat_stream_tooltip_favourite">favorito</string>
     <string name="feat_stream_tooltip_unfavourite">no favorito</string>
     <string name="feat_stream_tooltip_download">descargar</string>
-    <string name="feat_stream_tooltip_stop_download">dejar de descargar</string>
+    <string name="feat_stream_tooltip_stop_download">detener descarga</string>
     <string name="feat_stream_tooltip_cast">transmitir en pantalla</string>
     <string name="feat_stream_tooltip_enter_pip_mode">modo PIP</string>
     <string name="feat_stream_tooltip_screen_rotating">rotación de pantalla</string>
-    <string name="feat_stream_tooltip_choose_format">Escoger formato</string>
+    <string name="feat_stream_tooltip_choose_format">Elegir formato</string>
 
     <string name="feat_stream_dialog_dlna_devices">Dispositivos DLNA</string>
     <string name="feat_stream_dialog_choose_tracks">Escoger pista</string>

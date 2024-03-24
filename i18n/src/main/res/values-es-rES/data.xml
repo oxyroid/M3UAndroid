@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="data_error_file_not_found">archivo no encontrado</string>
-    <string name="data_error_empty_title">el playlist no tiene nombre</string>
+    <string name="data_error_file_not_found">el archivo no fue encontrado</string>
+    <string name="data_error_empty_title">la lista de reproducción no tiene nombre</string>
+    <string name="data_channel_name_stream_download_service">Servicio de descarga de transmisión</string>
+    <string name="data_channel_description_stream_download_service">Descripción de descarga de transmisión</string>
 </resources>
