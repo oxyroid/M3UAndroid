@@ -127,12 +127,12 @@ internal fun ImmersiveBackground(
                     maxLines = 1
                 )
                 Spacer(modifier = Modifier.weight(1f))
+                IconButton(
+                    icon = Icons.Rounded.Search,
+                    contentDescription = "search",
+                    onClick = openSearchDrawer
+                )
                 if (!paging) {
-                    IconButton(
-                        icon = Icons.Rounded.Search,
-                        contentDescription = "search",
-                        onClick = openSearchDrawer
-                    )
                     IconButton(
                         icon = Icons.AutoMirrored.Rounded.Sort,
                         contentDescription = "sort",

@@ -162,7 +162,6 @@ internal fun PlaylistScreenImpl(
             appBar = {},
             frontLayerShape = RectangleShape,
             peekHeight = 0.dp,
-            gesturesEnabled = !pref.paging,
             backLayerContent = {
                 val coroutineScope = rememberCoroutineScope()
                 LaunchedEffect(scaffoldState.currentValue) {
