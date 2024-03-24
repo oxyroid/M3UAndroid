@@ -100,7 +100,7 @@
 
     <string name="feat_setting_clear_cache">limpiar caché (%s)</string>
 
-    <string name="feat_setting_paging">paginación de canales</string>
+    <string name="feat_setting_paging">numeración de canales</string>
     <string name="feat_setting_paging_description">
         útil para grandes cantidades de canales,
         pero el ordenado y el agrupado serán desactivados al mismo tiempo
