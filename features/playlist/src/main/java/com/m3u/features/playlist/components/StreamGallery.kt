@@ -11,6 +11,7 @@ import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.paging.compose.LazyPagingItems
 import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.data.database.model.Stream
 import com.m3u.material.ktx.plus
@@ -24,6 +25,7 @@ internal fun StreamGallery(
     state: LazyStaggeredGridState,
     rowCount: Int,
     streams: ImmutableList<Stream>,
+    streamPaged: LazyPagingItems<Stream>,
     zapping: Stream?,
     recently: Boolean,
     isVodOrSeriesPlaylist: Boolean,
@@ -38,6 +40,7 @@ internal fun StreamGallery(
                 state = state,
                 rowCount = rowCount,
                 streams = streams,
+                streamPaged = streamPaged,
                 zapping = zapping,
                 recently = recently,
                 onClick = onClick,
@@ -53,10 +56,11 @@ internal fun StreamGallery(
                 state = state,
                 rowCount = rowCount,
                 streams = streams,
+                streamPaged = streamPaged,
                 zapping = zapping,
                 recently = recently,
                 onClick = onClick,
-                onMenu = onLongClick,
+                onLongClick = onLongClick,
                 modifier = modifier,
                 contentPadding = contentPadding
             )
@@ -71,6 +75,7 @@ private fun StreamGalleryImpl(
     state: LazyStaggeredGridState,
     rowCount: Int,
     streams: ImmutableList<Stream>,
+    streamPaged: LazyPagingItems<Stream>,
     zapping: Stream?,
     recently: Boolean,
     isVodOrSeriesPlaylist: Boolean,
@@ -96,20 +101,36 @@ private fun StreamGalleryImpl(
         contentPadding = PaddingValues(spacing.medium) + contentPadding,
         modifier = modifier.fillMaxSize()
     ) {
-        items(
-            items = streams,
-            key = { stream -> stream.id },
-            contentType = { it.cover.isNullOrEmpty() }
-        ) { stream ->
-            StreamItem(
-                stream = stream,
-                recently = recently,
-                zapping = zapping == stream,
-                isVodOrSeriesPlaylist = isVodOrSeriesPlaylist,
-                onClick = { onClick(stream) },
-                onLongClick = { onLongClick(stream) },
-                modifier = Modifier.fillMaxWidth()
-            )
+        if (!pref.paging) {
+            items(
+                items = streams,
+                key = { stream -> stream.id },
+                contentType = { it.cover.isNullOrEmpty() }
+            ) { stream ->
+                StreamItem(
+                    stream = stream,
+                    recently = recently,
+                    zapping = zapping == stream,
+                    isVodOrSeriesPlaylist = isVodOrSeriesPlaylist,
+                    onClick = { onClick(stream) },
+                    onLongClick = { onLongClick(stream) },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        } else {
+            items(streamPaged.itemCount) {
+                streamPaged[it]?.let { stream ->
+                    StreamItem(
+                        stream = stream,
+                        recently = recently,
+                        zapping = zapping == stream,
+                        isVodOrSeriesPlaylist = isVodOrSeriesPlaylist,
+                        onClick = { onClick(stream) },
+                        onLongClick = { onLongClick(stream) },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            }
         }
     }
 }
@@ -119,32 +140,49 @@ private fun CompactStreamGalleryImpl(
     state: LazyStaggeredGridState,
     rowCount: Int,
     streams: ImmutableList<Stream>,
+    streamPaged: LazyPagingItems<Stream>,
     zapping: Stream?,
     recently: Boolean,
     onClick: (Stream) -> Unit,
-    onMenu: (Stream) -> Unit,
+    onLongClick: (Stream) -> Unit,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(0.dp),
 ) {
+    val pref = LocalPref.current
     LazyVerticalStaggeredGrid(
         state = state,
         columns = StaggeredGridCells.Fixed(rowCount),
         contentPadding = contentPadding,
         modifier = modifier.fillMaxSize()
     ) {
-        items(
-            items = streams,
-            key = { stream -> stream.id },
-            contentType = { it.cover.isNullOrEmpty() }
-        ) { stream ->
-            StreamItem(
-                stream = stream,
-                recently = recently,
-                zapping = zapping == stream,
-                onClick = { onClick(stream) },
-                onLongClick = { onMenu(stream) },
-                modifier = Modifier.fillMaxWidth(),
-            )
+        if (!pref.paging) {
+            items(
+                items = streams,
+                key = { stream -> stream.id },
+                contentType = { it.cover.isNullOrEmpty() }
+            ) { stream ->
+                StreamItem(
+                    stream = stream,
+                    recently = recently,
+                    zapping = zapping == stream,
+                    onClick = { onClick(stream) },
+                    onLongClick = { onLongClick(stream) },
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+        } else {
+            items(streamPaged.itemCount) {
+                streamPaged[it]?.let { stream ->
+                    StreamItem(
+                        stream = stream,
+                        recently = recently,
+                        zapping = zapping == stream,
+                        onClick = { onClick(stream) },
+                        onLongClick = { onLongClick(stream) },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            }
         }
     }
 }

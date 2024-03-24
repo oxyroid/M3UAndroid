@@ -5,6 +5,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ColorLens
 import androidx.compose.material.icons.rounded.DeviceHub
 import androidx.compose.material.icons.rounded.FitScreen
+import androidx.compose.material.icons.rounded.FlashOn
 import androidx.compose.material.icons.rounded.HideImage
 import androidx.compose.material.icons.rounded.MusicNote
 import androidx.compose.material.icons.rounded.Pages
@@ -146,6 +147,14 @@ internal fun RegularPreferences(
             icon = Icons.Rounded.Refresh,
             checked = pref.autoRefresh,
             onChanged = { pref.autoRefresh = !pref.autoRefresh }
+        )
+
+        CheckBoxSharedPreference(
+            title = string.feat_setting_paging,
+            content = string.feat_setting_paging_description,
+            icon = Icons.Rounded.FlashOn,
+            checked = pref.paging,
+            onChanged = { pref.paging = !pref.paging }
         )
 
         CheckBoxSharedPreference(

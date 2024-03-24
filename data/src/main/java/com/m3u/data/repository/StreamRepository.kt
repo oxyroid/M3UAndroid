@@ -1,5 +1,6 @@
 package com.m3u.data.repository
 
+import androidx.paging.PagingSource
 import com.m3u.data.database.model.Stream
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -9,6 +10,7 @@ import kotlin.time.Duration
 interface StreamRepository {
     fun observe(id: Int): Flow<Stream?>
     fun observeAll(): Flow<List<Stream>>
+    fun pagingAllByPlaylistUrl(url: String): PagingSource<Int, Stream>
     suspend fun get(id: Int): Stream?
     @Deprecated("stream url is not unique")
     suspend fun getByUrl(url: String): Stream?

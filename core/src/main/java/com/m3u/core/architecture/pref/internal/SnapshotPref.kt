@@ -28,6 +28,7 @@ import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_FOLLOW_SYSTEM_THEME
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_FULL_INFO_PLAYER
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_GOD_MODE
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_NO_PICTURE_MODE
+import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_PAGING
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_PLAYLIST_STRATEGY
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_PROGRESS
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_RECONNECT_MODE
@@ -45,6 +46,7 @@ import com.m3u.core.architecture.pref.Pref.Companion.FOLLOW_SYSTEM_THEME
 import com.m3u.core.architecture.pref.Pref.Companion.FULL_INFO_PLAYER
 import com.m3u.core.architecture.pref.Pref.Companion.GOD_MODE
 import com.m3u.core.architecture.pref.Pref.Companion.NO_PICTURE_MODE
+import com.m3u.core.architecture.pref.Pref.Companion.PAGING
 import com.m3u.core.architecture.pref.Pref.Companion.PLAYLIST_STRATEGY
 import com.m3u.core.architecture.pref.Pref.Companion.PROGRESS
 import com.m3u.core.architecture.pref.Pref.Companion.RECONNECT_MODE
@@ -139,6 +141,8 @@ class SnapshotPref @Inject constructor(
     sharedPreferences.booleanAsState(DEFAULT_PROGRESS, PROGRESS)
     override var alwaysShowReplay: Boolean by
     sharedPreferences.booleanAsState(DEFAULT_ALWAYS_SHOW_REFRESH, ALWAYS_SHOW_REFRESH)
+    override var paging: Boolean by
+    sharedPreferences.booleanAsState(DEFAULT_PAGING, PAGING)
 
     companion object {
         private const val SHARED_SETTINGS = "shared_settings"

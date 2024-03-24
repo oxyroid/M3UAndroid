@@ -46,6 +46,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
+import androidx.paging.compose.LazyPagingItems
+import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.core.wrapper.Event
 import com.m3u.data.database.model.Stream
 import com.m3u.features.playlist.Category
@@ -69,6 +71,7 @@ import dev.chrisbanes.haze.HazeDefaults
 import dev.chrisbanes.haze.haze
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
@@ -77,6 +80,7 @@ import kotlinx.coroutines.launch
 @InternalComposeApi
 internal fun PlaylistScreenImpl(
     categories: ImmutableList<Category>,
+    streamPaged: LazyPagingItems<Stream>,
     pinnedCategories: ImmutableList<String>,
     onPinOrUnpinCategory: (String) -> Unit,
     onHideCategory: (String) -> Unit,
@@ -102,6 +106,9 @@ internal fun PlaylistScreenImpl(
     val helper = LocalHelper.current
     val spacing = LocalSpacing.current
     val configuration = LocalConfiguration.current
+    val pref = LocalPref.current
+    val focusManager = LocalFocusManager.current
+
     val scaffoldState = rememberBackdropScaffoldState(BackdropValue.Concealed)
     val connection = remember {
         object : NestedScrollConnection {
@@ -114,26 +121,27 @@ internal fun PlaylistScreenImpl(
     val currentColor = MaterialTheme.colorScheme.background
     val currentContentColor = MaterialTheme.colorScheme.onBackground
 
-    val focusManager = LocalFocusManager.current
-
     val sheetState = rememberModalBottomSheetState()
 
     var dialogStatus: DialogStatus by remember { mutableStateOf(DialogStatus.Idle) }
     var isSortSheetVisible by rememberSaveable { mutableStateOf(false) }
 
+    // FIXME: Pass pref.paging will make topbar tremble.
     LifecycleResumeEffect(Unit) {
-        helper.actions = persistentListOf(
-            Action(
-                icon = Icons.AutoMirrored.Rounded.Sort,
-                contentDescription = "sort",
-                onClick = { isSortSheetVisible = true }
-            ),
+        helper.actions = buildList {
+            if (!pref.paging) {
+                Action(
+                    icon = Icons.AutoMirrored.Rounded.Sort,
+                    contentDescription = "sort",
+                    onClick = { isSortSheetVisible = true }
+                ).also { add(it) }
+            }
             Action(
                 icon = Icons.Rounded.Refresh,
                 contentDescription = "refresh",
                 onClick = onRefresh
-            )
-        )
+            ).also { add(it) }
+        }.toPersistentList()
         onPauseOrDispose {
             helper.actions = persistentListOf()
         }
@@ -148,117 +156,124 @@ internal fun PlaylistScreenImpl(
 
     val (inner, outer) = contentPadding split WindowInsetsSides.Bottom
 
-    BackdropScaffold(
-        scaffoldState = scaffoldState,
-        appBar = {},
-        frontLayerShape = RectangleShape,
-        peekHeight = 0.dp,
-        backLayerContent = {
-            val coroutineScope = rememberCoroutineScope()
-            LaunchedEffect(scaffoldState.currentValue) {
-                if (scaffoldState.isConcealed) {
-                    focusManager.clearFocus()
-                }
-            }
-            BackHandler(scaffoldState.isRevealed || query.isNotEmpty()) {
-                if (scaffoldState.isRevealed) {
-                    coroutineScope.launch {
-                        scaffoldState.conceal()
+    Box {
+        BackdropScaffold(
+            scaffoldState = scaffoldState,
+            appBar = {},
+            frontLayerShape = RectangleShape,
+            peekHeight = 0.dp,
+            gesturesEnabled = !pref.paging,
+            backLayerContent = {
+                val coroutineScope = rememberCoroutineScope()
+                LaunchedEffect(scaffoldState.currentValue) {
+                    if (scaffoldState.isConcealed) {
+                        focusManager.clearFocus()
                     }
                 }
-                if (query.isNotEmpty()) {
-                    onQuery("")
-                }
-            }
-            Box(
-                modifier = Modifier
-                    .padding(spacing.medium)
-                    .fillMaxWidth()
-            ) {
-                TextField(
-                    text = query,
-                    onValueChange = onQuery,
-                    fontWeight = FontWeight.Bold,
-                    placeholder = stringResource(string.feat_playlist_query_placeholder).uppercase()
-                )
-            }
-        },
-        frontLayerContent = {
-            Background(
-                modifier = Modifier.fillMaxSize()
-            ) {
-                val state = rememberLazyStaggeredGridState()
-                LaunchedEffect(Unit) {
-                    snapshotFlow { state.isAtTop }
-                        .onEach { isAtTopState.value = it }
-                        .launchIn(this)
-                }
-                EventHandler(scrollUp) {
-                    state.scrollToItem(0)
-                }
-                val orientation = configuration.orientation
-                val actualRowCount = remember(orientation, rowCount) {
-                    when (orientation) {
-                        ORIENTATION_LANDSCAPE -> rowCount + 2
-                        ORIENTATION_PORTRAIT -> rowCount
-                        else -> rowCount
+                BackHandler(scaffoldState.isRevealed || query.isNotEmpty()) {
+                    if (scaffoldState.isRevealed) {
+                        coroutineScope.launch {
+                            scaffoldState.conceal()
+                        }
+                    }
+                    if (query.isNotEmpty()) {
+                        onQuery("")
                     }
                 }
-                Column {
-                    PlaylistTabRow(
-                        page = currentPage,
-                        onPageChanged = { currentPage = it },
-                        categories = categories,
-                        pinnedCategories = pinnedCategories,
-                        onPinOrUnpinCategory = onPinOrUnpinCategory,
-                        onHideCategory = onHideCategory
+                Box(
+                    modifier = Modifier
+                        .padding(spacing.medium)
+                        .fillMaxWidth()
+                ) {
+                    TextField(
+                        text = query,
+                        onValueChange = onQuery,
+                        fontWeight = FontWeight.Bold,
+                        placeholder = stringResource(string.feat_playlist_query_placeholder).uppercase()
                     )
-                    if (currentPage != -1) {
-                        StreamGallery(
-                            state = state,
-                            rowCount = actualRowCount,
-                            streams = categories[currentPage].streams,
-                            zapping = zapping,
-                            recently = sort == Sort.RECENTLY,
-                            isVodOrSeriesPlaylist = isVodOrSeriesPlaylist,
-                            onClick = onStream,
-                            contentPadding = inner,
-                            onLongClick = { dialogStatus = DialogStatus.Selections(it) },
-                            modifier = modifier.haze(
-                                LocalHazeState.current,
-                                HazeDefaults.style(MaterialTheme.colorScheme.surface)
-                            )
+                }
+            },
+            frontLayerContent = {
+                Background(
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    val state = rememberLazyStaggeredGridState()
+                    LaunchedEffect(Unit) {
+                        snapshotFlow { state.isAtTop }
+                            .onEach { isAtTopState.value = it }
+                            .launchIn(this)
+                    }
+                    EventHandler(scrollUp) {
+                        state.scrollToItem(0)
+                    }
+                    val orientation = configuration.orientation
+                    val actualRowCount = remember(orientation, rowCount) {
+                        when (orientation) {
+                            ORIENTATION_LANDSCAPE -> rowCount + 2
+                            ORIENTATION_PORTRAIT -> rowCount
+                            else -> rowCount
+                        }
+                    }
+                    Column {
+                        PlaylistTabRow(
+                            page = currentPage,
+                            onPageChanged = { currentPage = it },
+                            categories = categories,
+                            pinnedCategories = pinnedCategories,
+                            onPinOrUnpinCategory = onPinOrUnpinCategory,
+                            onHideCategory = onHideCategory
                         )
+                        if (pref.paging || currentPage != -1) {
+                            StreamGallery(
+                                state = state,
+                                rowCount = actualRowCount,
+                                streams = if (pref.paging) persistentListOf()
+                                else categories[currentPage].streams,
+                                streamPaged = streamPaged,
+                                zapping = zapping,
+                                recently = sort == Sort.RECENTLY,
+                                isVodOrSeriesPlaylist = isVodOrSeriesPlaylist,
+                                onClick = onStream,
+                                contentPadding = inner,
+                                onLongClick = {
+                                    dialogStatus = DialogStatus.Selections(it)
+                                },
+                                modifier = modifier.haze(
+                                    LocalHazeState.current,
+                                    HazeDefaults.style(MaterialTheme.colorScheme.surface)
+                                )
+                            )
+                        }
                     }
                 }
-            }
-        },
-        backLayerBackgroundColor = Color.Transparent,
-        backLayerContentColor = currentContentColor,
-        frontLayerScrimColor = currentColor.copy(alpha = 0.45f),
-        frontLayerBackgroundColor = Color.Transparent,
-        modifier = Modifier
-            .padding(outer)
-            .nestedScroll(
-                connection = connection,
-            )
-    )
+            },
+            backLayerBackgroundColor = Color.Transparent,
+            backLayerContentColor = currentContentColor,
+            frontLayerScrimColor = currentColor.copy(alpha = 0.45f),
+            frontLayerBackgroundColor = Color.Transparent,
+            modifier = Modifier
+                .padding(outer)
+                .nestedScroll(
+                    connection = connection,
+                )
+        )
 
-    SortBottomSheet(
-        visible = isSortSheetVisible,
-        sort = sort,
-        sorts = sorts,
-        sheetState = sheetState,
-        onChanged = onSort,
-        onDismissRequest = { isSortSheetVisible = false }
-    )
+        SortBottomSheet(
+            visible = isSortSheetVisible,
+            sort = sort,
+            sorts = sorts,
+            sheetState = sheetState,
+            onChanged = onSort,
+            onDismissRequest = { isSortSheetVisible = false }
+        )
 
-    PlaylistDialog(
-        status = dialogStatus,
-        onUpdate = { dialogStatus = it },
-        onFavorite = onFavorite,
-        hide = hide,
-        onSavePicture = onSavePicture,
-        createShortcut = createShortcut
-    )
+        PlaylistDialog(
+            status = dialogStatus,
+            onUpdate = { dialogStatus = it },
+            onFavorite = onFavorite,
+            hide = hide,
+            onSavePicture = onSavePicture,
+            createShortcut = createShortcut
+        )
+    }
 }

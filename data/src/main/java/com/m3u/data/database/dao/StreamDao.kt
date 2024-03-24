@@ -1,5 +1,6 @@
 package com.m3u.data.database.dao
 
+import androidx.paging.PagingSource
 import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
@@ -45,6 +46,9 @@ internal interface StreamDao {
 
     @Query("SELECT * FROM streams ORDER BY id")
     fun observeAll(): Flow<List<Stream>>
+
+    @Query("SELECT * FROM streams WHERE playlistUrl = :url ORDER BY id")
+    fun pagingAllByPlaylistUrl(url: String): PagingSource<Int, Stream>
 
     @Query("SELECT COUNT(playlistUrl) FROM streams WHERE playlistUrl = :playlistUrl")
     fun observeCountByPlaylistUrl(playlistUrl: String): Flow<Int>

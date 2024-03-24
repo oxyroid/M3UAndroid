@@ -9,6 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.unit.Dp
+import androidx.paging.compose.LazyPagingItems
 import androidx.tv.foundation.lazy.grid.TvGridCells
 import androidx.tv.foundation.lazy.grid.TvLazyVerticalGrid
 import androidx.tv.foundation.lazy.grid.items
@@ -26,6 +27,7 @@ import kotlinx.collections.immutable.ImmutableList
 @Composable
 internal fun TvStreamGallery(
     categories: ImmutableList<Category>,
+    streamPaged: LazyPagingItems<Stream>,
     maxBrowserHeight: Dp,
     useGridLayout: Boolean,
     onClick: (Stream) -> Unit,
@@ -33,8 +35,11 @@ internal fun TvStreamGallery(
     onFocus: (Stream) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val pref = LocalPref.current
     val spacing = LocalSpacing.current
     val multiCategories = categories.size > 1
+
+    val paging = pref.paging
 
     if (!useGridLayout) {
         TvLazyColumn(
@@ -84,7 +89,6 @@ internal fun TvStreamGallery(
             }
         }
     } else {
-        val pref = LocalPref.current
         TvLazyVerticalGrid(
             columns = TvGridCells.Fixed(pref.rowCount + 5),
             contentPadding = PaddingValues(spacing.medium),
@@ -94,18 +98,40 @@ internal fun TvStreamGallery(
                 .heightIn(max = maxBrowserHeight)
                 .fillMaxWidth()
         ) {
-            categories.forEach { channel ->
-                items(channel.streams) { stream ->
-                    TvStreamItem(
-                        stream = stream,
-                        onClick = { onClick(stream) },
-                        onLongClick = { onLongClick(stream) },
-                        modifier = Modifier.onFocusChanged {
-                            if (it.hasFocus) {
-                                onFocus(stream)
+            if (!paging) {
+                categories.forEach { channel ->
+                    items(channel.streams) { stream ->
+                        TvStreamItem(
+                            stream = stream,
+                            onClick = { onClick(stream) },
+                            onLongClick = { onLongClick(stream) },
+                            modifier = Modifier.onFocusChanged {
+                                if (it.hasFocus) {
+                                    onFocus(stream)
+                                }
                             }
-                        }
-                    )
+                        )
+                    }
+                }
+            } else {
+                items(streamPaged.itemCount) {
+                    streamPaged[it]?.let { stream ->
+                        TvStreamItem(
+                            stream = stream,
+                            onClick = {
+                                onClick(stream)
+                            },
+                            onLongClick = {
+                                onLongClick(stream)
+                            },
+                            modifier = Modifier
+                                .onFocusChanged { focusState ->
+                                    if (focusState.hasFocus) {
+                                        onFocus(stream)
+                                    }
+                                }
+                        )
+                    }
                 }
             }
         }

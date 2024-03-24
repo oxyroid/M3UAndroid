@@ -11,6 +11,11 @@ import androidx.core.graphics.drawable.toBitmap
 import androidx.core.net.toUri
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
+import androidx.paging.PagingData
+import androidx.paging.cachedIn
+import androidx.paging.filter
 import androidx.tvprovider.media.tv.TvContractCompat
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
@@ -43,6 +48,7 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -262,11 +268,41 @@ class PlaylistViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5_000L)
         )
 
+    internal val streamPaged: Flow<PagingData<Stream>> = playlistUrl
+        .flatMapLatest { playlistUrl ->
+            Pager(
+                PagingConfig(20)
+            ) {
+                streamRepository.pagingAllByPlaylistUrl(playlistUrl)
+            }
+                .flow
+                .cachedIn(viewModelScope)
+        }
+        .let { flow ->
+            combine(
+                flow,
+                playlist,
+                query,
+                pref.observeAsFlow { it.paging }
+            ) { streams, playlist, query, paging ->
+                if (!paging) return@combine PagingData.empty()
+                val hiddenCategories = playlist?.hiddenCategories ?: emptyList()
+                streams.filter { stream ->
+                    !stream.hidden && stream.category !in hiddenCategories
+                            && stream.title.contains(query, true)
+                }
+            }
+        }
+        .flowOn(ioDispatcher)
+
     private val unsorted: StateFlow<List<Stream>> = combine(
         playlistUrl.flatMapLatest { url ->
-            playlistRepository.observeWithStreams(url)
+            pref.observeAsFlow { it.paging }.flatMapLatest { paging ->
+                if (paging) flow { }
+                else playlistRepository.observeWithStreams(url)
+            }
         },
-        query
+        query,
     ) { current, query ->
         val hiddenCategories = current?.playlist?.hiddenCategories ?: emptyList()
         current?.streams?.filter {

@@ -108,4 +108,10 @@
     <string name="feat_setting_always_replay">always show replay button</string>
 
     <string name="feat_setting_clear_cache">clear cache (%s)</string>
+
+    <string name="feat_setting_paging">paging channels</string>
+    <string name="feat_setting_paging_description">
+        useful for large amounts of channels,
+        but searching and sorting will be disabled at the same time
+    </string>
 </resources>

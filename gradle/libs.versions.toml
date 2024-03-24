@@ -31,6 +31,8 @@ chucker = "4.0.0"
 logbackAndroid = "3.0.0"
 lottie-compose = "6.3.0"
 nextLib = "0.6.0"
+pagingCompose = "3.3.0-alpha05"
+pagingRuntimeKtx = "3.2.1"
 slf4j-api = "2.0.11"
 
 squareup-retrofit2 = "2.9.0"
@@ -80,6 +82,8 @@ androidx-compose-material3-material3 = { group = "androidx.compose.material3", n
 androidx-compose-material3-material3-window-size-clazz = { group = "androidx.compose.material3", name = "material3-window-size-class", version.ref = "androidx-compose-material3" }
 androidx-compose-material3-material3-adaptive = { group = "androidx.compose.material3", name = "material3-adaptive", version.ref = "androidx-compose-material3-adaptive" }
 
+androidx-paging-compose = { module = "androidx.paging:paging-compose", version.ref = "pagingCompose" }
+androidx-paging-runtime-ktx = { module = "androidx.paging:paging-runtime-ktx", version.ref = "pagingRuntimeKtx" }
 androidx-tv-tv-foundation = { group = "androidx.tv", name = "tv-foundation", version.ref = "androidx-tv" }
 androidx-tv-tv-material = { group = "androidx.tv", name = "tv-material", version.ref = "androidx-tv" }
 
@@ -114,6 +118,7 @@ io-coil-kt-coil-compose = { group = "io.coil-kt", name = "coil-compose", version
 
 androidx-room-room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "androidx-room" }
 androidx-room-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "androidx-room" }
+androidx-room-room-paging = { group = "androidx.room", name = "room-paging", version.ref = "androidx-room" }
 androidx-room-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "androidx-room" }
 
 androidx-tvprovider-tvprovider = { group = "androidx.tvprovider", name = "tvprovider", version.ref = "androidx-tvprovider" }

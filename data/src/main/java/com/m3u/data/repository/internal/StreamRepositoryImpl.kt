@@ -1,5 +1,6 @@
 package com.m3u.data.repository.internal
 
+import androidx.paging.PagingSource
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.execute
 import com.m3u.core.architecture.logger.sandBox
@@ -23,6 +24,9 @@ internal class StreamRepositoryImpl @Inject constructor(
     override fun observeAll(): Flow<List<Stream>> = streamDao
         .observeAll()
         .catch { emit(emptyList()) }
+
+    override fun pagingAllByPlaylistUrl(url: String): PagingSource<Int, Stream> = streamDao
+        .pagingAllByPlaylistUrl(url)
 
     override suspend fun get(id: Int): Stream? = logger.execute {
         streamDao.get(id)

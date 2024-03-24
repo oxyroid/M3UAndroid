@@ -42,6 +42,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.paging.compose.LazyPagingItems
+import androidx.paging.compose.collectAsLazyPagingItems
 import com.google.accompanist.permissions.PermissionStatus
 import com.google.accompanist.permissions.rememberPermissionState
 import com.google.accompanist.permissions.shouldShowRationale
@@ -90,6 +92,7 @@ internal fun PlaylistRoute(
     val playlistUrl by viewModel.playlistUrl.collectAsStateWithLifecycle()
     val playlist by viewModel.playlist.collectAsStateWithLifecycle()
     val categories by viewModel.categories.collectAsStateWithLifecycle()
+    val streamPaged = viewModel.streamPaged.collectAsLazyPagingItems()
     val episodes by viewModel.episodes.collectAsStateWithLifecycle()
     val pinnedCategories by viewModel.pinnedCategories.collectAsStateWithLifecycle()
     val refreshing by viewModel.subscribingOrRefreshing.collectAsStateWithLifecycle()
@@ -152,6 +155,7 @@ internal fun PlaylistRoute(
                 rowCount = pref.rowCount,
                 zapping = zapping,
                 categories = categories,
+                streamPaged = streamPaged,
                 pinnedCategories = pinnedCategories,
                 onPinOrUnpinCategory = { viewModel.pinOrUnpinCategory(it) },
                 onHideCategory = { viewModel.hideCategory(it) },
@@ -263,6 +267,7 @@ private fun PlaylistScreen(
     rowCount: Int,
     zapping: Stream?,
     categories: ImmutableList<Category>,
+    streamPaged: LazyPagingItems<Stream>,
     pinnedCategories: ImmutableList<String>,
     onPinOrUnpinCategory: (String) -> Unit,
     onHideCategory: (String) -> Unit,
@@ -312,6 +317,7 @@ private fun PlaylistScreen(
     if (!tv) {
         PlaylistScreenImpl(
             categories = categories,
+            streamPaged = streamPaged,
             pinnedCategories = pinnedCategories,
             onPinOrUnpinCategory = onPinOrUnpinCategory,
             onHideCategory = onHideCategory,
@@ -338,6 +344,7 @@ private fun PlaylistScreen(
         TvPlaylistScreenImpl(
             title = title,
             categories = categories,
+            streamPaged = streamPaged,
             query = query,
             onQuery = onQuery,
             onStream = onStream,

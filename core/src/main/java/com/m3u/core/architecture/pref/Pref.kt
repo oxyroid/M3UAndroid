@@ -52,6 +52,7 @@ interface Pref {
     var remoteControl: Boolean
     var progress: Boolean
     var alwaysShowReplay: Boolean
+    var paging: Boolean
 
     companion object {
         @PlaylistStrategy
@@ -90,6 +91,7 @@ interface Pref {
         const val DEFAULT_REMOTE_CONTROL = false
         const val DEFAULT_PROGRESS = false
         const val DEFAULT_ALWAYS_SHOW_REFRESH = false
+        const val DEFAULT_PAGING = false
 
         const val PLAYLIST_STRATEGY = "playlist-strategy"
         const val ROW_COUNT = "rowCount"
@@ -119,6 +121,7 @@ interface Pref {
         const val REMOTE_CONTROL = "remote-control"
         const val PROGRESS = "progress"
         const val ALWAYS_SHOW_REFRESH = "always-show-refresh"
+        const val PAGING = "paging"
     }
 }
 

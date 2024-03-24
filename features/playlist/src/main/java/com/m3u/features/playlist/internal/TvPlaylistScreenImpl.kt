@@ -28,6 +28,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.paging.compose.LazyPagingItems
 import androidx.tv.foundation.lazy.list.TvLazyColumn
 import androidx.tv.material3.DenseListItem
 import androidx.tv.material3.ImmersiveList
@@ -58,6 +59,7 @@ import kotlinx.collections.immutable.ImmutableList
 internal fun TvPlaylistScreenImpl(
     title: String,
     categories: ImmutableList<Category>,
+    streamPaged: LazyPagingItems<Stream>,
     query: String,
     onQuery: (String) -> Unit,
     sorts: ImmutableList<Sort>,
@@ -73,11 +75,12 @@ internal fun TvPlaylistScreenImpl(
 ) {
     val pref = LocalPref.current
 
+    val paging = pref.paging
     val multiCategories = categories.size > 1
     val noPictureMode = pref.noPictureMode
     val darkMode = if (pref.followSystemTheme) isSystemInDarkTheme()
     else pref.darkMode
-    val useGridLayout = sort != Sort.UNSPECIFIED
+    val useGridLayout = sort != Sort.UNSPECIFIED || paging
 
     val maxBrowserHeight by animateDpAsState(
         targetValue = when {
@@ -115,6 +118,7 @@ internal fun TvPlaylistScreenImpl(
             list = {
                 TvStreamGallery(
                     categories = categories,
+                    streamPaged = streamPaged,
                     maxBrowserHeight = maxBrowserHeight,
                     useGridLayout = useGridLayout,
                     onClick = onStream,

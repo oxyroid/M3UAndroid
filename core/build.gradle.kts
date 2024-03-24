@@ -55,4 +55,7 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
 
     api(libs.kotlinx.datetime)
+
+    api(libs.androidx.paging.runtime.ktx)
+    api(libs.androidx.paging.compose)
 }
