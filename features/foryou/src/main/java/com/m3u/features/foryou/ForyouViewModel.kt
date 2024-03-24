@@ -47,7 +47,7 @@ class ForyouViewModel @Inject constructor(
         .asResource()
         .stateIn(
             scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000),
+            started = SharingStarted.Lazily,
             initialValue = Resource.Loading
         )
 
@@ -57,7 +57,7 @@ class ForyouViewModel @Inject constructor(
         .flowOn(ioDispatcher)
         .stateIn(
             scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000L),
+            started = SharingStarted.Lazily,
             initialValue = Duration.INFINITE
         )
 
