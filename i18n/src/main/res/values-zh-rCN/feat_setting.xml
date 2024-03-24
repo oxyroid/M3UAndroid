@@ -110,6 +110,6 @@
 
     <string name="feat_setting_paging">分页加载频道</string>
     <string name="feat_setting_paging_description">
-        加载大量频道很有用，但是与此同时搜索和排序会被禁用
+        加载大量频道很有用，但是与此同时搜索、排序和分组会被禁用
     </string>
 </resources>
