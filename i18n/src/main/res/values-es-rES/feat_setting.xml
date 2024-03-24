@@ -4,7 +4,7 @@
     <string name="feat_setting_app_version">versión de app</string>
     <string name="feat_setting_label_subscribe">subscribirse</string>
     <string name="feat_setting_success_subscribe">subscripción completada</string>
-    <string name="feat_setting_failed_malformed_url">dirección malformateada (%s)</string>
+    <string name="feat_setting_failed_malformed_url">dirección mal formateada (%s)</string>
     <string name="feat_setting_error_empty_title">el nombre de la lista name está vacío</string>
     <string name="feat_setting_placeholder_title">nombre de lista</string>
     <string name="feat_setting_label_subscribing">suscribiéndose</string>
