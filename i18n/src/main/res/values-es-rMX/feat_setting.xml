@@ -30,7 +30,7 @@
     <string name="feat_setting_auto_refresh">autoactualizar</string>
     <string name="feat_setting_auto_refresh_description">actualiza automáticamente al ingresar la playlist</string>
 
-    <string name="feat_setting_always_television">siempre en televisión</string>
+    <string name="feat_setting_always_television">siempre como televisor</string>
     <string name="feat_setting_always_television_description">se revertirá cuando se reinicia la app</string>
 
     <string name="feat_setting_full_info_player">reproductor con información detallada</string>
@@ -83,7 +83,7 @@
 
     <string name="feat_setting_remote_control_tv_side">control remoto</string>
     <string name="feat_setting_remote_control_tv_side_description">permite a los celulares controlar tu TV</string>
-    <string name="feat_setting_subscribe_for_tv">para television</string>
+    <string name="feat_setting_subscribe_for_tv">para televisor</string>
     <string name="feat_setting_backing_up">respaldando todos los playlists y canales</string>
     <string name="feat_setting_restoring">restaurando todos los playlists y canales</string>
     <string name="feat_setting_follow_system_theme">seguir tema del sistema</string>
@@ -99,4 +99,9 @@
     <string name="feat_setting_always_replay">mostrar siempre un botón de reproducción</string>
 
     <string name="feat_setting_clear_cache">limpiar caché (%s)</string>
+
+    <string name="feat_setting_paging_description">
+        útil para grandes cantidades de canales,
+        pero el ordenado y el agrupado se desactivarán a la vez
+    </string>
 </resources>
