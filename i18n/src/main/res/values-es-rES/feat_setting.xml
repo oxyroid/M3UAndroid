@@ -14,7 +14,7 @@
     <string name="feat_setting_playlist_management">administrar lista</string>
     <string name="feat_setting_connect_timeout">límite de conexión</string>
     <string name="feat_setting_god_mode">modo dios</string>
-    <string name="feat_setting_god_mode_description">ajusta la distribución con los botones del volumen</string>
+    <string name="feat_setting_god_mode_description">establece la distribución con los botones del volumen</string>
     <string name="feat_setting_experimental_mode">modo experimental</string>
     <string name="feat_setting_experimental_mode_description">características inestables con efectos inesperados</string>
     <string name="feat_setting_label_hidden_streams">emisiones ocultadas</string>
@@ -65,7 +65,7 @@
     <string name="feat_setting_reconnect_mode_reconnect">siempre</string>
     <string name="feat_setting_compact">modo compacto</string>
     <string name="feat_setting_appearance">apariencia</string>
-    <string name="feat_setting_appearance_hint_edit_color">continue pulsando para modificar el color</string>
+    <string name="feat_setting_appearance_hint_edit_color">continúe pulsando para modificar el color</string>
 
 
     <string name="feat_setting_tunneling">modo entunelado</string>
@@ -78,12 +78,12 @@
     <string name="feat_setting_canvas_apply">aplicar</string>
     <string name="feat_setting_canvas_reset">reiniciar</string>
 
-    <string name="feat_setting_remote_control">control remoto</string>
-    <string name="feat_setting_remote_control_description">permite controlar remotamente la TV</string>
+    <string name="feat_setting_remote_control">mando a distancia</string>
+    <string name="feat_setting_remote_control_description">permite operar remotamente la TV</string>
 
-    <string name="feat_setting_remote_control_tv_side">control remoto</string>
-    <string name="feat_setting_remote_control_tv_side_description">permite a los móviles controlar su TV</string>
-    <string name="feat_setting_subscribe_for_tv">para television</string>
+    <string name="feat_setting_remote_control_tv_side">mando a distancia</string>
+    <string name="feat_setting_remote_control_tv_side_description">permite a los móviles operar su TV</string>
+    <string name="feat_setting_subscribe_for_tv">para televisión</string>
     <string name="feat_setting_backing_up">respaldando todos los canales y listas</string>
     <string name="feat_setting_restoring">restaurando todos los canales y listas</string>
     <string name="feat_setting_follow_system_theme">seguir tema del sistema</string>
@@ -99,4 +99,10 @@
     <string name="feat_setting_always_replay">mostrar siempre un botón de reproducción</string>
 
     <string name="feat_setting_clear_cache">limpiar caché (%s)</string>
+
+    <string name="feat_setting_paging">numeración de canales</string>
+    <string name="feat_setting_paging_description">
+        útil para grandes cantidades de canales,
+        pero el ordenado y el agrupado serán desactivados al mismo tiempo
+    </string>
 </resources>
