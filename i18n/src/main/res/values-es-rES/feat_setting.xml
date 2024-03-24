@@ -78,11 +78,11 @@
     <string name="feat_setting_canvas_apply">aplicar</string>
     <string name="feat_setting_canvas_reset">reiniciar</string>
 
-    <string name="feat_setting_remote_control">control remoto</string>
-    <string name="feat_setting_remote_control_description">permite controlar remotamente la TV</string>
+    <string name="feat_setting_remote_control">mando a distancia</string>
+    <string name="feat_setting_remote_control_description">permite operar remotamente la TV</string>
 
-    <string name="feat_setting_remote_control_tv_side">control remoto</string>
-    <string name="feat_setting_remote_control_tv_side_description">permite a los móviles controlar su TV</string>
+    <string name="feat_setting_remote_control_tv_side">mando a distancia</string>
+    <string name="feat_setting_remote_control_tv_side_description">permite a los móviles operar su TV</string>
     <string name="feat_setting_subscribe_for_tv">para televisión</string>
     <string name="feat_setting_backing_up">respaldando todos los canales y listas</string>
     <string name="feat_setting_restoring">restaurando todos los canales y listas</string>
