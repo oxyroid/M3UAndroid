@@ -12,6 +12,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -193,16 +194,17 @@ private fun ForyouScreen(
     }
     var dialogState: ForyouDialogState by remember { mutableStateOf(ForyouDialogState.Idle) }
     Background(modifier) {
-        when (playlistCountsResource) {
-            Resource.Loading -> {
-                LinearProgressIndicator(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(contentPadding)
-                )
-            }
-            is Resource.Success -> {
-                Box {
+        Box {
+            when (playlistCountsResource) {
+                Resource.Loading -> {
+                    LinearProgressIndicator(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(contentPadding)
+                    )
+                }
+
+                is Resource.Success -> {
                     val showPlaylist = playlistCountsResource.data.isNotEmpty()
                     val header = @Composable {
                         RecommendGallery(
@@ -243,8 +245,15 @@ private fun ForyouScreen(
                         editUserAgent = updateUserAgent
                     )
                 }
+
+                is Resource.Failure -> {
+                    Text(
+                        text = playlistCountsResource.message.orEmpty(),
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.align(Alignment.Center)
+                    )
+                }
             }
-            is Resource.Failure -> {}
         }
     }
 

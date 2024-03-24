@@ -24,7 +24,6 @@ import com.m3u.data.parser.xtream.XtreamStreamInfo
 import com.m3u.data.repository.MediaRepository
 import com.m3u.data.repository.PlaylistRepository
 import com.m3u.data.repository.StreamRepository
-import com.m3u.data.repository.observeAll
 import com.m3u.data.service.PlayerManagerV2
 import com.m3u.ui.Sort
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -93,7 +92,7 @@ class FavouriteViewModel @Inject constructor(
     }
 
     val streamsResource: StateFlow<Resource<ImmutableList<Stream>>> = streamRepository
-        .observeAll { it.favourite }
+        .observeAllFavourite()
         .combine(sort) { all, sort ->
             when (sort) {
                 Sort.UNSPECIFIED -> all

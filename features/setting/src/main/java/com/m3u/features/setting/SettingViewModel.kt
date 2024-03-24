@@ -31,7 +31,6 @@ import com.m3u.data.database.model.Stream
 import com.m3u.data.parser.xtream.XtreamInput
 import com.m3u.data.repository.PlaylistRepository
 import com.m3u.data.repository.StreamRepository
-import com.m3u.data.repository.observeAll
 import com.m3u.data.service.Messager
 import com.m3u.data.service.PlayerManagerV2
 import com.m3u.data.worker.BackupWorker
@@ -75,7 +74,7 @@ class SettingViewModel @Inject constructor(
     )
 ) {
     internal val hiddenStreams: StateFlow<ImmutableList<Stream>> = streamRepository
-        .observeAll { it.hidden }
+        .observeAllHidden()
         .map { it.toImmutableList() }
         .flowOn(ioDispatcher)
         .stateIn(

@@ -64,4 +64,10 @@ internal class StreamRepositoryImpl @Inject constructor(
             current = Clock.System.now().toEpochMilliseconds()
         )
             .catch { emit(emptyList()) }
+
+    override fun observeAllFavourite(): Flow<List<Stream>> = streamDao.observeAllFavourite()
+        .catch { emit(emptyList()) }
+
+    override fun observeAllHidden(): Flow<List<Stream>> = streamDao.observeAllHidden()
+        .catch { emit(emptyList()) }
 }

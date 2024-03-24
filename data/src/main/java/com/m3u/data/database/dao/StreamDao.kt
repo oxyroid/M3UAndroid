@@ -47,6 +47,12 @@ internal interface StreamDao {
     @Query("SELECT * FROM streams ORDER BY id")
     fun observeAll(): Flow<List<Stream>>
 
+    @Query("SELECT * FROM streams WHERE favourite = 1 ORDER BY id")
+    fun observeAllFavourite(): Flow<List<Stream>>
+
+    @Query("SELECT * FROM streams WHERE hidden = 1 ORDER BY id")
+    fun observeAllHidden(): Flow<List<Stream>>
+
     @Query("SELECT * FROM streams WHERE playlistUrl = :url ORDER BY id")
     fun pagingAllByPlaylistUrl(url: String): PagingSource<Int, Stream>
 
