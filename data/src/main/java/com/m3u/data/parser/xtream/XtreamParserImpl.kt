@@ -64,17 +64,17 @@ internal class XtreamParserImpl @Inject constructor(
         if (requiredLives) launch {
             newSequenceCall<XtreamLive>(liveStreamsUrl)
                 .asFlow()
-                .collect { live -> trySend(live) }
+                .collect { live -> send(live) }
         }
         if (requiredVods) launch {
             newSequenceCall<XtreamVod>(vodStreamsUrl)
                 .asFlow()
-                .collect { vod -> trySend(vod) }
+                .collect { vod -> send(vod) }
         }
         if (requiredSeries) launch {
             newSequenceCall<XtreamSerial>(seriesStreamsUrl)
                 .asFlow()
-                .collect { serial -> trySend(serial) }
+                .collect { serial -> send(serial) }
         }
     }
 
