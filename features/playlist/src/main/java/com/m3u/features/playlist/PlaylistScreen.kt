@@ -50,6 +50,7 @@ import com.google.accompanist.permissions.shouldShowRationale
 import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.core.util.basic.title
 import com.m3u.core.wrapper.Event
+import com.m3u.core.wrapper.eventOf
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.Stream
 import com.m3u.data.service.MediaCommand
@@ -86,9 +87,7 @@ internal fun PlaylistRoute(
 
     val tv = isTelevision()
 
-    val state by viewModel.state.collectAsStateWithLifecycle()
     val zapping by viewModel.zapping.collectAsStateWithLifecycle()
-    val query by viewModel.query.collectAsStateWithLifecycle()
     val playlistUrl by viewModel.playlistUrl.collectAsStateWithLifecycle()
     val playlist by viewModel.playlist.collectAsStateWithLifecycle()
     val categories by viewModel.categories.collectAsStateWithLifecycle()
@@ -138,20 +137,20 @@ internal fun PlaylistRoute(
 
     LaunchedEffect(pref.autoRefresh, playlistUrl) {
         if (playlistUrl.isNotEmpty() && pref.autoRefresh) {
-            viewModel.onEvent(PlaylistEvent.Refresh)
+            viewModel.refresh()
         }
     }
 
-    BackHandler(query.isNotEmpty()) {
-        viewModel.onEvent(PlaylistEvent.Query(""))
+    BackHandler(viewModel.query.isNotEmpty()) {
+        viewModel.query = ""
     }
 
     Background {
         Box {
             PlaylistScreen(
                 title = playlist?.title.orEmpty(),
-                query = query,
-                onQuery = { viewModel.onEvent(PlaylistEvent.Query(it)) },
+                query = viewModel.query,
+                onQuery = { viewModel.query = it },
                 rowCount = pref.rowCount,
                 zapping = zapping,
                 categories = categories,
@@ -159,7 +158,7 @@ internal fun PlaylistRoute(
                 pinnedCategories = pinnedCategories,
                 onPinOrUnpinCategory = { viewModel.pinOrUnpinCategory(it) },
                 onHideCategory = { viewModel.hideCategory(it) },
-                scrollUp = state.scrollUp,
+                scrollUp = viewModel.scrollUp,
                 sorts = sorts,
                 sort = sort,
                 onSort = { viewModel.sort(it) },
@@ -173,7 +172,7 @@ internal fun PlaylistRoute(
                         series = stream
                     }
                 },
-                onScrollUp = { viewModel.onEvent(PlaylistEvent.ScrollUp) },
+                onScrollUp = { viewModel.scrollUp = eventOf(Unit) },
                 onRefresh = {
                     when {
                         !postNotificationPermissionRequired -> {}
@@ -195,26 +194,20 @@ internal fun PlaylistRoute(
 
                         else -> {}
                     }
-                    viewModel.onEvent(PlaylistEvent.Refresh)
+                    viewModel.refresh()
                 },
                 contentPadding = contentPadding,
-                onFavorite = { id, target ->
-                    viewModel.onEvent(
-                        PlaylistEvent.Favourite(
-                            id,
-                            target
-                        )
-                    )
-                },
-                hide = { id -> viewModel.onEvent(PlaylistEvent.Hide(id)) },
-                savePicture = {
+                onFavorite = viewModel::favourite,
+                hide = viewModel::hide,
+                savePicture = { id ->
                     if (writeExternalPermissionRequired && writeExternalPermissionState.status is PermissionStatus.Denied) {
                         writeExternalPermissionState.launchPermissionRequest()
                         return@PlaylistScreen
                     }
-                    viewModel.onEvent(PlaylistEvent.SavePicture(it))
+                    viewModel.savePicture(id)
                 },
-                createShortcut = { viewModel.onEvent(PlaylistEvent.CreateShortcut(context, it)) },
+                createShortcut = { id -> viewModel.createShortcut(context, id) },
+                createTvRecommend = { id -> viewModel.createTvRecommend(context, id) },
                 isVodPlaylist = isVodPlaylist,
                 isSeriesPlaylist = isSeriesPlaylist,
                 modifier = Modifier
@@ -282,6 +275,7 @@ private fun PlaylistScreen(
     hide: (streamId: Int) -> Unit,
     savePicture: (streamId: Int) -> Unit,
     createShortcut: (streamId: Int) -> Unit,
+    createTvRecommend: (streamId: Int) -> Unit,
     contentPadding: PaddingValues,
     isVodPlaylist: Boolean,
     isSeriesPlaylist: Boolean,
@@ -355,7 +349,8 @@ private fun PlaylistScreen(
             onFavorite = onFavorite,
             hide = hide,
             savePicture = savePicture,
-            createShortcut = createShortcut,
+            createTvRecommend = createTvRecommend,
+            isVodOrSeriesPlaylist = isVodPlaylist || isSeriesPlaylist,
             modifier = modifier
         )
     }

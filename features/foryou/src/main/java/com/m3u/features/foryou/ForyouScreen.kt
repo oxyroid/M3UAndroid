@@ -218,8 +218,8 @@ private fun ForyouScreen(
                         PlaylistGallery(
                             rowCount = actualRowCount,
                             playlistCounts = playlistCountsResource.data,
-                            navigateToPlaylist = navigateToPlaylist,
-                            onMenu = { dialogState = ForyouDialogState.Selections(it) },
+                            onClick = navigateToPlaylist,
+                            onLongClick = { dialogState = ForyouDialogState.Selections(it) },
                             header = header.takeIf { recommend.isNotEmpty() },
                             contentPadding = contentPadding,
                             modifier = Modifier

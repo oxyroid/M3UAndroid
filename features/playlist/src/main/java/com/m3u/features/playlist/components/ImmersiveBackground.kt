@@ -42,7 +42,6 @@ internal fun ImmersiveBackground(
     title: String,
     stream: Stream?,
     maxBrowserHeight: Dp,
-    isUnspecifiedSort: Boolean,
     onRefresh: () -> Unit,
     openSearchDrawer: () -> Unit,
     openSortDrawer: () -> Unit,

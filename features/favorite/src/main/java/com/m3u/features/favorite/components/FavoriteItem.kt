@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -27,7 +26,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.tv.material3.Card
 import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.data.database.model.Stream
 import com.m3u.i18n.R.string
@@ -43,6 +41,8 @@ import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
+import androidx.tv.material3.ListItem as TvListItem
+import androidx.tv.material3.Text as TvText
 
 @Composable
 internal fun FavoriteItem(
@@ -175,75 +175,40 @@ private fun FavoriteItemImpl(
             }
         }
     } else {
-        Card(
-            onClick = onClick,
-            onLongClick = onLongClick
-        ) {
-            AnimatedVisibility(!noPictureMode && !stream.cover.isNullOrEmpty()) {
-                Image(
-                    model = stream.cover,
-                    errorPlaceholder = stream.title,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .aspectRatio(4 / 3f)
+        TvListItem(
+            headlineContent = {
+                TvText(
+                    text = stream.title.trim(),
+                    overflow = TextOverflow.Ellipsis,
+                    maxLines = 1
                 )
-            }
-            Column(
-                modifier = Modifier.padding(spacing.medium),
-                verticalArrangement = Arrangement.spacedBy(spacing.small)
-            ) {
-                Column(
-                    // icon-button-tokens: icon-size
-                    modifier = Modifier
-                        .heightIn(min = 24.dp)
-                ) {
-                    Text(
-                        text = stream.title.trim(),
-                        style = MaterialTheme.typography.titleSmall,
-                        fontSize = MaterialTheme.typography.titleSmall.fontSize,
-                        overflow = TextOverflow.Ellipsis,
-                        maxLines = 1,
-                        fontWeight = FontWeight.Bold,
-                    )
-                    if (recently) {
-                        Text(
-                            text = remember(stream.seen) {
-                                val now = Clock.System.now()
-                                val instant = Instant.fromEpochMilliseconds(stream.seen)
-                                val duration = now - instant
-                                duration.toComponents { days, hours, minutes, seconds, _ ->
-                                    when {
-                                        stream.seen == 0L -> neverPlayedString
-                                        days > 0 -> days.days.toString()
-                                        hours > 0 -> hours.hours.toString()
-                                        minutes > 0 -> minutes.minutes.toString()
-                                        seconds > 0 -> seconds.seconds.toString()
-                                        else -> recentlyString
-                                    }
+            },
+            trailingContent = if (recently) {
+                {
+                    TvText(
+                        text = remember(stream.seen) {
+                            val now = Clock.System.now()
+                            val instant = Instant.fromEpochMilliseconds(stream.seen)
+                            val duration = now - instant
+                            duration.toComponents { days, hours, minutes, seconds, _ ->
+                                when {
+                                    stream.seen == 0L -> neverPlayedString
+                                    days > 0 -> days.days.toString()
+                                    hours > 0 -> hours.hours.toString()
+                                    minutes > 0 -> minutes.minutes.toString()
+                                    seconds > 0 -> seconds.seconds.toString()
+                                    else -> recentlyString
                                 }
-                            },
-                            style = MaterialTheme.typography.bodySmall,
-                            color = LocalContentColor.current.copy(0.56f)
-                        )
-                    }
-                }
-
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(spacing.extraSmall)
-                ) {
-                    TextBadge(scheme)
-                    Text(
-                        text = stream.url.trim(),
-                        maxLines = 1,
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontSize = MaterialTheme.typography.bodyMedium.fontSize,
-                        overflow = TextOverflow.Ellipsis
+                            }
+                        }
                     )
                 }
-            }
-        }
+            } else null,
+            selected = false,
+            onClick = onClick,
+            onLongClick = onLongClick,
+            modifier = modifier
+        )
     }
 }
 

@@ -31,8 +31,8 @@ import kotlinx.collections.immutable.ImmutableList
 internal fun PlaylistGallery(
     rowCount: Int,
     playlistCounts: ImmutableList<PlaylistWithCount>,
-    navigateToPlaylist: (Playlist) -> Unit,
-    onMenu: (Playlist) -> Unit,
+    onClick: (Playlist) -> Unit,
+    onLongClick: (Playlist) -> Unit,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
     header: (@Composable () -> Unit)? = null
@@ -42,8 +42,8 @@ internal fun PlaylistGallery(
             PlaylistGalleryImpl(
                 rowCount = rowCount,
                 playlistCounts = playlistCounts,
-                navigateToPlaylist = navigateToPlaylist,
-                onMenu = onMenu,
+                onClick = onClick,
+                onLongClick = onLongClick,
                 contentPadding = contentPadding,
                 modifier = modifier,
                 header = header
@@ -54,8 +54,8 @@ internal fun PlaylistGallery(
             TvPlaylistGalleryImpl(
                 rowCount = rowCount,
                 playlistCounts = playlistCounts,
-                navigateToPlaylist = navigateToPlaylist,
-                onMenu = onMenu,
+                onClick = onClick,
+                onLongClick = onLongClick,
                 contentPadding = contentPadding,
                 modifier = modifier,
                 header = header
@@ -66,8 +66,8 @@ internal fun PlaylistGallery(
             CompactPlaylistGalleryImpl(
                 rowCount = rowCount,
                 playlistCounts = playlistCounts,
-                navigateToPlaylist = navigateToPlaylist,
-                onMenu = onMenu,
+                navigateToPlaylist = onClick,
+                onMenu = onLongClick,
                 contentPadding = contentPadding,
                 modifier = modifier,
                 header = header
@@ -80,8 +80,8 @@ internal fun PlaylistGallery(
 private fun PlaylistGalleryImpl(
     rowCount: Int,
     playlistCounts: ImmutableList<PlaylistWithCount>,
-    navigateToPlaylist: (Playlist) -> Unit,
-    onMenu: (Playlist) -> Unit,
+    onClick: (Playlist) -> Unit,
+    onLongClick: (Playlist) -> Unit,
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
     header: (@Composable () -> Unit)? = null
@@ -113,8 +113,8 @@ private fun PlaylistGalleryImpl(
                 typeWithSource = playlistCount.playlist.typeWithSource,
                 count = playlistCount.count,
                 local = playlistCount.playlist.fromLocal,
-                onClick = { navigateToPlaylist(playlistCount.playlist) },
-                onLongClick = { onMenu(playlistCount.playlist) },
+                onClick = { onClick(playlistCount.playlist) },
+                onLongClick = { onLongClick(playlistCount.playlist) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(
@@ -132,8 +132,8 @@ private fun PlaylistGalleryImpl(
 private fun TvPlaylistGalleryImpl(
     rowCount: Int,
     playlistCounts: ImmutableList<PlaylistWithCount>,
-    navigateToPlaylist: (Playlist) -> Unit,
-    onMenu: (Playlist) -> Unit,
+    onClick: (Playlist) -> Unit,
+    onLongClick: (Playlist) -> Unit,
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
     header: (@Composable () -> Unit)? = null
@@ -153,8 +153,7 @@ private fun TvPlaylistGalleryImpl(
         }
         itemsIndexed(
             items = playlistCounts,
-            key = { _, it -> it.playlist.url },
-            contentType = { _, _ -> }
+            key = { _, it -> it.playlist.url }
         ) { index, playlistCount ->
             PlaylistItem(
                 label = PlaylistGalleryDefaults.calculateUiTitle(
@@ -165,8 +164,8 @@ private fun TvPlaylistGalleryImpl(
                 typeWithSource = playlistCount.playlist.typeWithSource,
                 count = playlistCount.count,
                 local = playlistCount.playlist.fromLocal,
-                onClick = { navigateToPlaylist(playlistCount.playlist) },
-                onLongClick = { onMenu(playlistCount.playlist) },
+                onClick = { onClick(playlistCount.playlist) },
+                onLongClick = { onLongClick(playlistCount.playlist) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(

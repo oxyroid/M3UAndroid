@@ -30,6 +30,7 @@ internal fun TvStreamGallery(
     streamPaged: LazyPagingItems<Stream>,
     maxBrowserHeight: Dp,
     useGridLayout: Boolean,
+    isVodOrSeriesPlaylist: Boolean,
     onClick: (Stream) -> Unit,
     onLongClick: (Stream) -> Unit,
     onFocus: (Stream) -> Unit,
@@ -71,26 +72,24 @@ internal fun TvStreamGallery(
                     ) { stream ->
                         TvStreamItem(
                             stream = stream,
-                            onClick = {
-                                onClick(stream)
-                            },
-                            onLongClick = {
-                                onLongClick(stream)
-                            },
-                            modifier = Modifier
-                                .onFocusChanged {
-                                    if (it.hasFocus) {
-                                        onFocus(stream)
-                                    }
+                            isVodOrSeriesPlaylist = isVodOrSeriesPlaylist,
+                            onClick = { onClick(stream) },
+                            onLongClick = { onLongClick(stream) },
+                            modifier = Modifier.onFocusChanged {
+                                if (it.hasFocus) {
+                                    onFocus(stream)
                                 }
+                            }
                         )
                     }
                 }
             }
         }
     } else {
+        val actualRowCount = if (isVodOrSeriesPlaylist) pref.rowCount + 7
+        else pref.rowCount + 5
         TvLazyVerticalGrid(
-            columns = TvGridCells.Fixed(pref.rowCount + 5),
+            columns = TvGridCells.Fixed(actualRowCount),
             contentPadding = PaddingValues(spacing.medium),
             verticalArrangement = Arrangement.spacedBy(spacing.medium),
             horizontalArrangement = Arrangement.spacedBy(spacing.large),
@@ -103,13 +102,15 @@ internal fun TvStreamGallery(
                     items(channel.streams) { stream ->
                         TvStreamItem(
                             stream = stream,
+                            isVodOrSeriesPlaylist = isVodOrSeriesPlaylist,
                             onClick = { onClick(stream) },
                             onLongClick = { onLongClick(stream) },
-                            modifier = Modifier.onFocusChanged {
-                                if (it.hasFocus) {
-                                    onFocus(stream)
+                            modifier = Modifier
+                                .onFocusChanged {
+                                    if (it.hasFocus) {
+                                        onFocus(stream)
+                                    }
                                 }
-                            }
                         )
                     }
                 }
@@ -118,6 +119,7 @@ internal fun TvStreamGallery(
                     streamPaged[it]?.let { stream ->
                         TvStreamItem(
                             stream = stream,
+                            isVodOrSeriesPlaylist = isVodOrSeriesPlaylist,
                             onClick = {
                                 onClick(stream)
                             },

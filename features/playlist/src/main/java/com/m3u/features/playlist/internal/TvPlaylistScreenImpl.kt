@@ -68,9 +68,10 @@ internal fun TvPlaylistScreenImpl(
     onFavorite: (streamId: Int, target: Boolean) -> Unit,
     hide: (streamId: Int) -> Unit,
     savePicture: (streamId: Int) -> Unit,
-    createShortcut: (streamId: Int) -> Unit,
+    createTvRecommend: (streamId: Int) -> Unit,
     onStream: (Stream) -> Unit,
     onRefresh: () -> Unit,
+    isVodOrSeriesPlaylist: Boolean,
     modifier: Modifier = Modifier
 ) {
     val pref = LocalPref.current
@@ -84,7 +85,7 @@ internal fun TvPlaylistScreenImpl(
 
     val maxBrowserHeight by animateDpAsState(
         targetValue = when {
-            useGridLayout -> 360.dp
+            useGridLayout || isVodOrSeriesPlaylist -> 360.dp
             noPictureMode -> 320.dp
             multiCategories -> 256.dp
             else -> 180.dp
@@ -105,7 +106,6 @@ internal fun TvPlaylistScreenImpl(
                     title = title,
                     stream = focus,
                     maxBrowserHeight = maxBrowserHeight,
-                    isUnspecifiedSort = sort == Sort.UNSPECIFIED,
                     onRefresh = onRefresh,
                     openSearchDrawer = {},
                     openSortDrawer = { isSortSheetVisible = true },
@@ -121,6 +121,7 @@ internal fun TvPlaylistScreenImpl(
                     streamPaged = streamPaged,
                     maxBrowserHeight = maxBrowserHeight,
                     useGridLayout = useGridLayout,
+                    isVodOrSeriesPlaylist = isVodOrSeriesPlaylist,
                     onClick = onStream,
                     onLongClick = { stream -> press = stream },
                     onFocus = { stream -> focus = stream },
@@ -148,7 +149,7 @@ internal fun TvPlaylistScreenImpl(
             onFavorite = onFavorite,
             hide = hide,
             savePicture = savePicture,
-            createShortcut = createShortcut,
+            createShortcutOrTvRecommend = createTvRecommend,
             onDismissRequest = { press = null }
         )
         TvSortFullScreenDialog(
@@ -167,7 +168,7 @@ private fun MenuFullScreenDialog(
     onFavorite: (streamId: Int, target: Boolean) -> Unit,
     hide: (streamId: Int) -> Unit,
     savePicture: (streamId: Int) -> Unit,
-    createShortcut: (streamId: Int) -> Unit,
+    createShortcutOrTvRecommend: (streamId: Int) -> Unit,
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -263,7 +264,7 @@ private fun MenuFullScreenDialog(
                         selected = false,
                         onClick = {
                             stream?.let {
-                                createShortcut(it.id)
+                                createShortcutOrTvRecommend(it.id)
                                 onDismissRequest()
                             }
                         },

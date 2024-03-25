@@ -36,8 +36,9 @@ import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.FontFamilies
 import com.m3u.ui.UiMode
 import com.m3u.ui.currentUiMode
-import androidx.tv.material3.Card as TvCard
+import androidx.tv.material3.ListItem as TvListItem
 import androidx.tv.material3.MaterialTheme as TvMaterialTheme
+import androidx.tv.material3.Text as TvText
 
 @Composable
 internal fun PlaylistItem(
@@ -70,7 +71,6 @@ internal fun PlaylistItem(
                 type = type,
                 typeWithSource = typeWithSource,
                 count = count,
-                local = local,
                 onClick = onClick,
                 onLongClick = onLongClick,
                 modifier = modifier
@@ -201,67 +201,42 @@ private fun TvPlaylistItemImpl(
     type: String?,
     typeWithSource: String?,
     count: Int,
-    local: Boolean,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
     val theme = TvMaterialTheme.colorScheme
-    val currentContentColor by animateColorAsState(
-        targetValue = theme.onSurface,
-        label = "playlist-item-content"
-    )
-    TvCard(
+    TvListItem(
+        selected = false,
         onClick = onClick,
         onLongClick = onLongClick,
-        modifier = modifier
-    ) {
-        OuterRow(
-            verticalAlignment = Alignment.Top
-        ) {
-            if (local) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Rounded.DriveFileMove,
-                    contentDescription = null,
-                    tint = currentContentColor
-                )
-            }
-            Column {
-                androidx.tv.material3.Text(
-                    text = label,
-                    style = TvMaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.SemiBold,
+        headlineContent = {
+            TvText(
+                text = label,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        },
+        supportingContent = if (typeWithSource != null) {
+            {
+                TvText(
+                    text = typeWithSource,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
+                    style = TvMaterialTheme.typography.bodyMedium
                 )
-                if (typeWithSource != null) {
-                    androidx.tv.material3.Text(
-                        text = typeWithSource,
-                        style = TvMaterialTheme.typography.bodySmall,
-                        color = androidx.tv.material3.LocalContentColor.current.copy(0.45f)
-                    )
-                }
             }
-
-            Spacer(Modifier.weight(1f))
-
-            val currentPrimaryColor by animateColorAsState(
-                targetValue = theme.primary,
-                label = "playlist-item-primary"
-            )
-            val currentOnPrimaryColor by animateColorAsState(
-                targetValue = theme.onPrimary,
-                label = "playlist-item-on-primary"
-            )
+        } else null,
+        trailingContent = {
             Box(
                 modifier = Modifier
                     .clip(CircleShape)
-                    .background(currentPrimaryColor),
+                    .background(theme.primary),
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    color = currentOnPrimaryColor,
+                TvText(
+                    color = theme.onPrimary,
                     text = count.toString(),
                     style = MaterialTheme.typography.bodyMedium,
                     maxLines = 1,
@@ -275,8 +250,9 @@ private fun TvPlaylistItemImpl(
                     textAlign = TextAlign.Center
                 )
             }
-        }
-    }
+        },
+        modifier = modifier
+    )
 }
 
 @Composable

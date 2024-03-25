@@ -1,6 +1,7 @@
 package com.m3u.features.stream
 
 import android.content.pm.ActivityInfo
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
@@ -153,6 +154,11 @@ internal fun PlayerMaskImpl(
         }
     }
 
+    if (tv) {
+        BackHandler(maskState.visible) {
+            maskState.sleep()
+        }
+    }
 
     BoxWithConstraints {
         PlayerMask(
