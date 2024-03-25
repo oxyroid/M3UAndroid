@@ -47,7 +47,10 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -58,6 +61,8 @@ import java.io.FileNotFoundException
 import java.io.InputStream
 import java.io.Reader
 import javax.inject.Inject
+
+private const val BUFFER_XTREAM_CAPACITY = 100
 
 internal class PlaylistRepositoryImpl @Inject constructor(
     private val playlistDao: PlaylistDao,
@@ -217,6 +222,9 @@ internal class PlaylistRepositoryImpl @Inject constructor(
             playlistDao.insertOrReplace(seriesPlaylist)
         }
 
+        val buffer = mutableListOf<Stream>()
+        val mutex = Mutex()
+
         xtreamParser
             .entityOutputs(input)
             .map { current ->
@@ -256,7 +264,24 @@ internal class PlaylistRepositoryImpl @Inject constructor(
                     }
                 }
             }
-            .onEach { stream -> streamDao.insertOrReplace(stream) }
+            .onEach { stream ->
+                buffer += stream
+                if (buffer.size >= BUFFER_XTREAM_CAPACITY) {
+                    mutex.withLock {
+                        // check again
+                        if (buffer.size >= BUFFER_XTREAM_CAPACITY) {
+                            streamDao.insertOrReplaceAll(*buffer.toTypedArray())
+                            buffer.clear()
+                        }
+                    }
+                }
+            }
+            .onCompletion {
+                // lock again
+                mutex.withLock {
+                    streamDao.insertOrReplaceAll(*buffer.toTypedArray())
+                }
+            }
             .launchIn(this)
     }
 
