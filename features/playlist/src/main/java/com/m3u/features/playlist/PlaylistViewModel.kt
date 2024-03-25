@@ -1,21 +1,28 @@
 package com.m3u.features.playlist
 
+import android.annotation.SuppressLint
 import android.content.ComponentName
-import android.content.ContentResolver
+import android.content.ContentUris
 import android.content.Context
 import android.content.Intent
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.graphics.drawable.IconCompat
 import androidx.core.graphics.drawable.toBitmap
-import androidx.core.net.toUri
 import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import androidx.paging.filter
+import androidx.tvprovider.media.tv.Channel
+import androidx.tvprovider.media.tv.PreviewProgram
 import androidx.tvprovider.media.tv.TvContractCompat
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
@@ -25,10 +32,10 @@ import com.m3u.core.architecture.dispatcher.Dispatcher
 import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
 import com.m3u.core.architecture.pref.Pref
 import com.m3u.core.architecture.pref.observeAsFlow
-import com.m3u.core.architecture.viewmodel.BaseViewModel
+import com.m3u.core.wrapper.Event
 import com.m3u.core.wrapper.Message
 import com.m3u.core.wrapper.Resource
-import com.m3u.core.wrapper.eventOf
+import com.m3u.core.wrapper.handledEvent
 import com.m3u.core.wrapper.mapResource
 import com.m3u.core.wrapper.resource
 import com.m3u.data.database.model.Playlist
@@ -52,7 +59,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
@@ -66,7 +72,6 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-import androidx.tvprovider.media.tv.Channel as TvChannel
 
 @HiltViewModel
 class PlaylistViewModel @Inject constructor(
@@ -78,30 +83,15 @@ class PlaylistViewModel @Inject constructor(
     playerManager: PlayerManagerV2,
     pref: Pref,
     workManager: WorkManager,
-    @Dispatcher(IO) ioDispatcher: CoroutineDispatcher
-) : BaseViewModel<PlaylistState, PlaylistEvent>(
-    emptyState = PlaylistState()
-) {
+    @Dispatcher(IO) private val ioDispatcher: CoroutineDispatcher
+) : ViewModel() {
     internal val playlistUrl: StateFlow<String> = savedStateHandle
         .getStateFlow(PlaylistNavigation.TYPE_URL, "")
-
-    override fun onEvent(event: PlaylistEvent) {
-        when (event) {
-            PlaylistEvent.Refresh -> refresh()
-            is PlaylistEvent.Favourite -> favourite(event)
-            PlaylistEvent.ScrollUp -> scrollUp()
-            is PlaylistEvent.Hide -> hide(event)
-            is PlaylistEvent.SavePicture -> savePicture(event)
-            is PlaylistEvent.Query -> query(event)
-            is PlaylistEvent.CreateShortcut -> createShortcut(event.context, event.id)
-            is PlaylistEvent.CreateTvRecommend -> createTvRecommend(event.contentResolver, event.id)
-        }
-    }
 
     internal val zapping: StateFlow<Stream?> = combine(
         pref.observeAsFlow { it.zappingMode },
         playerManager.stream,
-        streamRepository.observeAll()
+        playlistUrl.flatMapLatest { streamRepository.observeAllByPlaylistUrl(it) }
     ) { zappingMode, stream, streams ->
         if (!zappingMode) null
         else streams.find { it.url == stream?.url }
@@ -135,31 +125,22 @@ class PlaylistViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5000)
         )
 
-    private fun refresh() {
+    internal fun refresh() {
         val url = playlistUrl.value
         viewModelScope.launch {
             playlistRepository.refresh(url)
         }
     }
 
-    private fun favourite(event: PlaylistEvent.Favourite) {
+    internal fun favourite(id: Int, target: Boolean) {
         viewModelScope.launch {
-            val id = event.id
-            val target = event.target
             streamRepository.setFavourite(id, target)
         }
     }
 
-    private fun scrollUp() {
-        writable.update {
-            it.copy(
-                scrollUp = eventOf(Unit)
-            )
-        }
-    }
+    internal var scrollUp: Event<Unit> by mutableStateOf(handledEvent())
 
-    private fun savePicture(event: PlaylistEvent.SavePicture) {
-        val id = event.id
+    internal fun savePicture(id: Int) {
         viewModelScope.launch {
             val stream = streamRepository.get(id)
             if (stream == null) {
@@ -188,9 +169,8 @@ class PlaylistViewModel @Inject constructor(
         }
     }
 
-    private fun hide(event: PlaylistEvent.Hide) {
+    internal fun hide(id: Int) {
         viewModelScope.launch {
-            val id = event.id
             val stream = streamRepository.get(id)
             if (stream == null) {
                 messager.emit(PlaylistMessage.StreamNotFound)
@@ -200,7 +180,7 @@ class PlaylistViewModel @Inject constructor(
         }
     }
 
-    private fun createShortcut(context: Context, id: Int) {
+    internal fun createShortcut(context: Context, id: Int) {
         val shortcutId = "stream_$id"
         viewModelScope.launch {
             val stream = streamRepository.get(id) ?: return@launch
@@ -227,29 +207,53 @@ class PlaylistViewModel @Inject constructor(
         }
     }
 
-    private fun createTvRecommend(contentResolver: ContentResolver, id: Int) {
-        viewModelScope.launch {
+    @SuppressLint("RestrictedApi")
+    internal fun createTvRecommend(
+        context: Context,
+        id: Int
+    ) {
+        viewModelScope.launch(ioDispatcher) {
             val stream = streamRepository.get(id) ?: return@launch
-            val bitmap = stream.cover?.let { mediaRepository.loadDrawable(it)?.toBitmap() }
-            val channel = TvChannel.Builder()
+            val logo = stream.cover?.let { mediaRepository.loadDrawable(it)?.toBitmap() }
+            val channel = Channel.Builder()
                 .setType(TvContractCompat.Channels.TYPE_PREVIEW)
-                .setDisplayName(stream.title)
-                .setInternalProviderId(id.toString())
-                .setAppLinkIntentUri("content://channelsample.com/category/$id".toUri())
+                .setDisplayName("M3U")
+                .setAppLinkIntent(
+                    Intent(Intent.ACTION_VIEW).apply {
+                        component = ComponentName.createRelative(
+                            context,
+                            Contracts.PLAYER_ACTIVITY
+                        )
+                        putExtra(Contracts.PLAYER_SHORTCUT_STREAM_ID, stream.id)
+                    }
+                )
                 .build()
-            contentResolver.insert(
-                TvContractCompat.Channels.CONTENT_URI,
-                channel.toContentValues()
+            val channelUri = checkNotNull(
+                context.contentResolver.insert(
+                    TvContractCompat.Channels.CONTENT_URI,
+                    channel.toContentValues()
+                )
+            )
+            val channelId = ContentUris.parseId(channelUri)
+            val program = PreviewProgram.Builder()
+                .setChannelId(channelId)
+                .setType(TvContractCompat.PreviewPrograms.TYPE_CLIP)
+                .setTitle("Title")
+                .setDescription("Program description")
+//                .setPosterArtUri(uri)
+//                .setIntentUri(uri)
+                .setInternalProviderId(stream.id.toString())
+                .build()
+            val programUri = checkNotNull(
+                context.contentResolver.insert(
+                    TvContractCompat.PreviewPrograms.CONTENT_URI,
+                    program.toContentValues()
+                )
             )
         }
     }
 
-    private val _query: MutableStateFlow<String> = MutableStateFlow("")
-    internal val query: StateFlow<String> = _query.asStateFlow()
-    private fun query(event: PlaylistEvent.Query) {
-        val text = event.text
-        _query.update { text }
-    }
+    internal var query: String by mutableStateOf("")
 
     private fun List<Stream>.toCategories(): List<Category> = groupBy { it.category }
         .toList()
@@ -282,7 +286,7 @@ class PlaylistViewModel @Inject constructor(
             combine(
                 flow,
                 playlist,
-                query,
+                snapshotFlow { query },
                 pref.observeAsFlow { it.paging }
             ) { streams, playlist, query, paging ->
                 if (!paging) return@combine PagingData.empty()
@@ -302,7 +306,7 @@ class PlaylistViewModel @Inject constructor(
                 else playlistRepository.observeWithStreams(url)
             }
         },
-        query,
+        snapshotFlow { query },
     ) { current, query ->
         val hiddenCategories = current?.playlist?.hiddenCategories ?: emptyList()
         current?.streams?.filter {

@@ -88,8 +88,12 @@ data class PlaylistWithStreams(
     )
     val streams: List<Stream>
 )
+
+@Keep
 data class PlaylistWithCount(
+    @Embedded
     val playlist: Playlist,
+    @ColumnInfo("count")
     val count: Int
 )
 

@@ -38,22 +38,25 @@ internal interface StreamDao {
     @Query("SELECT * FROM streams WHERE url = :url")
     suspend fun getByUrl(url: String): Stream?
 
-    @Query("SELECT * FROM streams WHERE playlistUrl = :playlistUrl ORDER BY id")
+    @Query("SELECT * FROM streams WHERE playlistUrl = :playlistUrl")
     suspend fun getByPlaylistUrl(playlistUrl: String): List<Stream>
 
     @Query("SELECT * FROM streams WHERE id = :id")
     fun observeById(id: Int): Flow<Stream?>
 
-    @Query("SELECT * FROM streams ORDER BY id")
-    fun observeAll(): Flow<List<Stream>>
+    @Query("SELECT * FROM streams WHERE playlistUrl = :playlistUrl")
+    fun observeAllByPlaylistUrl(playlistUrl: String): Flow<List<Stream>>
 
-    @Query("SELECT * FROM streams WHERE favourite = 1 ORDER BY id")
+    @Query("SELECT * FROM streams WHERE hidden = 0")
+    fun observeAllUnhidden(): Flow<List<Stream>>
+
+    @Query("SELECT * FROM streams WHERE favourite = 1")
     fun observeAllFavourite(): Flow<List<Stream>>
 
-    @Query("SELECT * FROM streams WHERE hidden = 1 ORDER BY id")
+    @Query("SELECT * FROM streams WHERE hidden = 1")
     fun observeAllHidden(): Flow<List<Stream>>
 
-    @Query("SELECT * FROM streams WHERE playlistUrl = :url ORDER BY id")
+    @Query("SELECT * FROM streams WHERE playlistUrl = :url")
     fun pagingAllByPlaylistUrl(url: String): PagingSource<Int, Stream>
 
     @Query("SELECT COUNT(playlistUrl) FROM streams WHERE playlistUrl = :playlistUrl")
@@ -61,9 +64,6 @@ internal interface StreamDao {
 
     @Query("SELECT COUNT(playlistUrl) FROM streams WHERE playlistUrl = :playlistUrl")
     suspend fun getCountByPlaylistUrl(playlistUrl: String): Int
-
-    @Query("SELECT * FROM streams ORDER BY id")
-    suspend fun getAll(): List<Stream>
 
     @Query("SELECT * FROM streams WHERE favourite = 1 AND seen + :limit < :current ORDER BY seen")
     fun observeAllUnseenFavourites(

@@ -7,7 +7,8 @@ import kotlin.time.Duration
 
 interface StreamRepository {
     fun observe(id: Int): Flow<Stream?>
-    fun observeAll(): Flow<List<Stream>>
+
+    fun observeAllByPlaylistUrl(playlistUrl: String): Flow<List<Stream>>
     fun pagingAllByPlaylistUrl(url: String): PagingSource<Int, Stream>
     suspend fun get(id: Int): Stream?
 

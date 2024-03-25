@@ -45,7 +45,7 @@ interface PlaylistRepository {
 
     suspend fun updateUserAgent(url: String, userAgent: String?)
 
-    fun observePlaylistCounts(): Flow<List<PlaylistWithCount>>
+    fun observeAllCounts(): Flow<List<PlaylistWithCount>>
 
     suspend fun readEpisodesOrThrow(series: Stream): List<XtreamStreamInfo.Episode>
 }

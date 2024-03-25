@@ -7,6 +7,7 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
 import com.m3u.data.database.model.Playlist
+import com.m3u.data.database.model.PlaylistWithCount
 import com.m3u.data.database.model.PlaylistWithStreams
 import kotlinx.coroutines.flow.Flow
 
@@ -44,6 +45,10 @@ interface PlaylistDao {
     @Transaction
     @Query("SELECT * FROM playlists WHERE url = :url ORDER BY title")
     fun observeByUrlWithStreams(url: String): Flow<PlaylistWithStreams?>
+
+    @Transaction
+    @Query("SELECT playlists.*, COUNT(streams.id) AS count FROM playlists LEFT JOIN streams ON playlists.url = streams.playlistUrl GROUP BY playlists.url")
+    fun observeAllCounts(): Flow<List<PlaylistWithCount>>
 
     @Transaction
     @Query("SELECT * FROM playlists WHERE url = :url ORDER BY title")

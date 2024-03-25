@@ -42,7 +42,7 @@ class ForyouViewModel @Inject constructor(
     @Dispatcher(IO) ioDispatcher: CoroutineDispatcher
 ) : ViewModel() {
     internal val playlistCountsResource = playlistRepository
-        .observePlaylistCounts()
+        .observeAllCounts()
         .map { it.toPersistentList() }
         .asResource()
         .stateIn(

@@ -3,6 +3,7 @@ package com.m3u.data.repository.internal
 import androidx.paging.PagingSource
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.execute
+import com.m3u.core.architecture.logger.prefix
 import com.m3u.core.architecture.logger.sandBox
 import com.m3u.data.database.dao.StreamDao
 import com.m3u.data.database.model.Stream
@@ -15,14 +16,15 @@ import kotlin.time.Duration
 
 internal class StreamRepositoryImpl @Inject constructor(
     private val streamDao: StreamDao,
-    private val logger: Logger,
+    logger: Logger,
 ) : StreamRepository {
+    private val logger = logger.prefix("stream-repos")
     override fun observe(id: Int): Flow<Stream?> = streamDao
         .observeById(id)
         .catch { emit(null) }
 
-    override fun observeAll(): Flow<List<Stream>> = streamDao
-        .observeAll()
+    override fun observeAllByPlaylistUrl(playlistUrl: String): Flow<List<Stream>> = streamDao
+        .observeAllByPlaylistUrl(playlistUrl)
         .catch { emit(emptyList()) }
 
     override fun pagingAllByPlaylistUrl(url: String): PagingSource<Int, Stream> = streamDao

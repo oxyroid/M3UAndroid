@@ -45,8 +45,6 @@ import io.ktor.http.Url
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
@@ -442,18 +440,9 @@ internal class PlaylistRepositoryImpl @Inject constructor(
         playlistDao.updateUserAgent(url, userAgent)
     }
 
-    override fun observePlaylistCounts(): Flow<List<PlaylistWithCount>> = combine(
-        playlistDao.observeAll(),
-        streamDao.observeAll()
-    ) { playlists, _ ->
-        playlists.map { playlist ->
-//            val count = streams.count { it.playlistUrl == playlist.url }
-            val count = streamDao.getCountByPlaylistUrl(playlist.url)
-            PlaylistWithCount(playlist, count)
-        }
-    }
-        .flowOn(ioDispatcher)
-        .catch { emit(emptyList()) }
+    override fun observeAllCounts(): Flow<List<PlaylistWithCount>> =
+        playlistDao.observeAllCounts()
+            .catch { emit(emptyList()) }
 
     override suspend fun readEpisodesOrThrow(series: Stream): List<XtreamStreamInfo.Episode> {
         val playlist = checkNotNull(get(series.playlistUrl)) { "playlist is not exist" }
