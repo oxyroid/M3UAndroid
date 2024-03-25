@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.Flow
 
 interface PlaylistRepository {
     fun observeAll(): Flow<List<Playlist>>
+    fun observePlaylistUrls(): Flow<List<String>>
     suspend fun get(url: String): Playlist?
     fun observe(url: String): Flow<Playlist?>
     fun observeWithStreams(url: String): Flow<PlaylistWithStreams?>

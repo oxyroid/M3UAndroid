@@ -388,6 +388,13 @@ internal class PlaylistRepositoryImpl @Inject constructor(
             emit(emptyList())
         }
 
+    override fun observePlaylistUrls(): Flow<List<String>> = playlistDao
+        .observePlaylistUrls()
+        .catch {
+            logger.log(it)
+            emit(emptyList())
+        }
+
     override fun observe(url: String): Flow<Playlist?> = playlistDao
         .observeByUrl(url)
         .catch {
