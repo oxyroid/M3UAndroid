@@ -40,6 +40,7 @@ import com.m3u.core.wrapper.mapResource
 import com.m3u.core.wrapper.resource
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.Stream
+import com.m3u.data.parser.xtream.XtreamInput
 import com.m3u.data.parser.xtream.XtreamStreamInfo
 import com.m3u.data.repository.MediaRepository
 import com.m3u.data.repository.PlaylistRepository
@@ -65,7 +66,6 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
@@ -109,8 +109,17 @@ class PlaylistViewModel @Inject constructor(
                 WorkInfo.State.ENQUEUED,
             )
         )
-        .mapLatest { infos ->
-            infos.any { info -> SubscriptionWorker.TAG in info.tags }
+        .combine(playlistUrl) { infos, playlistUrl ->
+            infos.any { info ->
+                var isCorrectedWorker = false
+                var isCurrentPlaylist = false
+                info.tags.forEach { tag ->
+                    if (SubscriptionWorker.TAG == tag) isCorrectedWorker = true
+                    if (playlistUrl == tag) isCurrentPlaylist = true
+                    if (isCorrectedWorker && isCurrentPlaylist) return@any true
+                }
+                false
+            }
         }
         .onCompletion { messager.emit(Message.Dynamic.EMPTY) }
         .flowOn(ioDispatcher)

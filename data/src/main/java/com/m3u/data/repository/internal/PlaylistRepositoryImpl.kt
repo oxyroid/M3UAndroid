@@ -4,12 +4,7 @@ import android.content.ContentResolver
 import android.content.Context
 import android.net.Uri
 import androidx.core.net.toUri
-import androidx.work.Constraints
-import androidx.work.NetworkType
-import androidx.work.OneTimeWorkRequestBuilder
-import androidx.work.OutOfQuotaPolicy
 import androidx.work.WorkManager
-import androidx.work.workDataOf
 import com.m3u.core.architecture.dispatcher.Dispatcher
 import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
 import com.m3u.core.architecture.logger.Logger
@@ -291,56 +286,22 @@ internal class PlaylistRepositoryImpl @Inject constructor(
 
         when (playlist.source) {
             DataSource.M3U -> {
-                workManager.cancelAllWorkByTag(url)
-                val request = OneTimeWorkRequestBuilder<SubscriptionWorker>()
-                    .setInputData(
-                        workDataOf(
-                            SubscriptionWorker.INPUT_STRING_TITLE to playlist.title,
-                            SubscriptionWorker.INPUT_STRING_URL to url,
-                            SubscriptionWorker.INPUT_STRING_DATA_SOURCE_VALUE to DataSource.M3U.value
-                        )
-                    )
-                    .addTag(url)
-                    .addTag(SubscriptionWorker.TAG)
-                    .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
-                    .setConstraints(
-                        Constraints.Builder()
-                            .setRequiredNetworkType(NetworkType.CONNECTED)
-                            .build()
-                    )
-                    .build()
-                workManager.enqueue(request)
+                SubscriptionWorker.m3u(workManager, playlist.title, url)
             }
 
             DataSource.Xtream -> {
-                val input = XtreamInput.decodeFromPlaylistUrlOrNull(playlist.url) ?: return@sandBox
-                workManager.cancelAllWorkByTag(url)
-                workManager.cancelAllWorkByTag(input.basicUrl)
-                val request = OneTimeWorkRequestBuilder<SubscriptionWorker>()
-                    .setInputData(
-                        workDataOf(
-                            SubscriptionWorker.INPUT_STRING_TITLE to playlist.title,
-                            SubscriptionWorker.INPUT_STRING_URL to url,
-                            SubscriptionWorker.INPUT_STRING_BASIC_URL to input.basicUrl,
-                            SubscriptionWorker.INPUT_STRING_USERNAME to input.username,
-                            SubscriptionWorker.INPUT_STRING_PASSWORD to input.password,
-                            SubscriptionWorker.INPUT_STRING_DATA_SOURCE_VALUE to DataSource.Xtream.value
-                        )
-                    )
-                    .addTag(url)
-                    .addTag(input.basicUrl)
-                    .addTag(SubscriptionWorker.TAG)
-                    .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
-                    .setConstraints(
-                        Constraints.Builder()
-                            .setRequiredNetworkType(NetworkType.CONNECTED)
-                            .build()
-                    )
-                    .build()
-                workManager.enqueue(request)
+                val xtreamInput = XtreamInput.decodeFromPlaylistUrl(url)
+                SubscriptionWorker.xtream(
+                    workManager = workManager,
+                    title = playlist.title,
+                    url = url,
+                    basicUrl = xtreamInput.basicUrl,
+                    username = xtreamInput.username,
+                    password = xtreamInput.password
+                )
             }
 
-            else -> throw RuntimeException("Refresh data source ${playlist.source} is unsupported currently.")
+            else -> throw IllegalStateException("Refresh data source ${playlist.source} is unsupported currently.")
         }
     }
 

@@ -1,12 +1,7 @@
 package com.m3u.data.television.http.endpoint
 
 import android.content.Context
-import androidx.work.Constraints
-import androidx.work.NetworkType
-import androidx.work.OneTimeWorkRequestBuilder
-import androidx.work.OutOfQuotaPolicy
 import androidx.work.WorkManager
-import androidx.work.workDataOf
 import com.m3u.core.architecture.pref.Pref
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.worker.SubscriptionWorker
@@ -54,31 +49,14 @@ data class Playlists @Inject constructor(
                     )
                     return@post
                 }
-                workManager.cancelAllWorkByTag(url)
-                workManager.cancelAllWorkByTag(title)
-
-                val request = OneTimeWorkRequestBuilder<SubscriptionWorker>()
-                    .setInputData(
-                        workDataOf(
-                            SubscriptionWorker.INPUT_STRING_TITLE to title,
-                            SubscriptionWorker.INPUT_STRING_URL to url,
-                            SubscriptionWorker.INPUT_STRING_BASIC_URL to basicUrl,
-                            SubscriptionWorker.INPUT_STRING_USERNAME to username,
-                            SubscriptionWorker.INPUT_STRING_PASSWORD to password,
-                            SubscriptionWorker.INPUT_STRING_DATA_SOURCE_VALUE to dataSource.value
-                        )
-                    )
-                    .addTag(url)
-                    .addTag(title)
-                    .addTag(SubscriptionWorker.TAG)
-                    .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
-                    .setConstraints(
-                        Constraints.Builder()
-                            .setRequiredNetworkType(NetworkType.CONNECTED)
-                            .build()
-                    )
-                    .build()
-                workManager.enqueue(request)
+                SubscriptionWorker.any(
+                    workManager = workManager,
+                    title = title,
+                    url = url,
+                    basicUrl = basicUrl,
+                    username = username,
+                    password = password
+                )
                 call.respond(
                     DefRep(result = true)
                 )

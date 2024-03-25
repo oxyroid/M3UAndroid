@@ -2,6 +2,9 @@ package com.m3u.features.foryou
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.work.WorkInfo
+import androidx.work.WorkManager
+import androidx.work.WorkQuery
 import com.m3u.core.architecture.dispatcher.Dispatcher
 import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
 import com.m3u.core.architecture.pref.Pref
@@ -11,18 +14,23 @@ import com.m3u.core.wrapper.asResource
 import com.m3u.core.wrapper.mapResource
 import com.m3u.core.wrapper.resource
 import com.m3u.data.database.model.Playlist
+import com.m3u.data.database.model.PlaylistWithCount
 import com.m3u.data.database.model.Stream
 import com.m3u.data.parser.xtream.XtreamStreamInfo
 import com.m3u.data.repository.PlaylistRepository
 import com.m3u.data.repository.StreamRepository
+import com.m3u.data.worker.SubscriptionWorker
 import com.m3u.features.foryou.components.recommend.Recommend
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.PersistentList
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
@@ -39,17 +47,38 @@ class ForyouViewModel @Inject constructor(
     private val playlistRepository: PlaylistRepository,
     streamRepository: StreamRepository,
     pref: Pref,
-    @Dispatcher(IO) ioDispatcher: CoroutineDispatcher
+    @Dispatcher(IO) ioDispatcher: CoroutineDispatcher,
+    workManager: WorkManager,
 ) : ViewModel() {
-    internal val playlistCountsResource = playlistRepository
-        .observeAllCounts()
-        .map { it.toPersistentList() }
-        .asResource()
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.Lazily,
-            initialValue = Resource.Loading
+    internal val playlistCountsResource: StateFlow<Resource<PersistentList<PlaylistWithCount>>> =
+        playlistRepository
+            .observeAllCounts()
+            .map { it.toPersistentList() }
+            .asResource()
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.Lazily,
+                initialValue = Resource.Loading
+            )
+
+    internal val subscribingPlaylistUrls: StateFlow<PersistentList<String>> =
+        workManager.getWorkInfosFlow(
+            WorkQuery.fromStates(
+                WorkInfo.State.RUNNING,
+                WorkInfo.State.ENQUEUED,
+            )
         )
+            .combine(playlistRepository.observePlaylistUrls()) { infos, playlistUrls ->
+                infos
+                    .filter { info -> SubscriptionWorker.TAG in info.tags }
+                    .mapNotNull { info -> info.tags.firstOrNull { it in playlistUrls } }
+                    .toPersistentList()
+            }
+            .stateIn(
+                scope = viewModelScope,
+                initialValue = persistentListOf(),
+                started = SharingStarted.WhileSubscribed(5_000L)
+            )
 
     private val unseensDuration = pref
         .observeAsFlow { it.unseensMilliseconds }

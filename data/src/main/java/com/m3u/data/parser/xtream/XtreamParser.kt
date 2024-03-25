@@ -97,16 +97,23 @@ data class XtreamInput(
     companion object {
         // make sure the name is unique
         private const val QUERY_TYPE = "xtream_type"
-        fun decodeFromPlaylistUrl(url: String): XtreamInput {
+        fun decodeFromPlaylistUrl(url: String): XtreamInput = try {
             val hasScheme = url.startsWithAny("http:", "https:", ignoreCase = true)
             val httpUrl = if (hasScheme) url.toHttpUrl() else "http://$url".toHttpUrl()
             val username = httpUrl.queryParameter("username").orEmpty()
             val password = httpUrl.queryParameter("password").orEmpty()
-            return XtreamInput(
+            XtreamInput(
                 basicUrl = "${httpUrl.scheme}://${httpUrl.host}:${httpUrl.port}",
                 username = username,
                 password = password,
                 type = httpUrl.queryParameter(QUERY_TYPE)
+            )
+        } catch (e: Exception) {
+            error(
+                """
+                Corrupted Data! It explicitly declares itself to be Xtream but is not.
+                ${e.stackTraceToString()}
+                """.trimIndent()
             )
         }
 

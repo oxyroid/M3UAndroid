@@ -5,8 +5,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.viewModelScope
-import androidx.work.Constraints
-import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.OutOfQuotaPolicy
 import androidx.work.WorkInfo
@@ -206,30 +204,14 @@ class SettingViewModel @Inject constructor(
             clearAllInputs()
             return
         }
-        workManager.cancelAllWorkByTag(url)
-        workManager.cancelAllWorkByTag(basicUrl)
-        val request = OneTimeWorkRequestBuilder<SubscriptionWorker>()
-            .setInputData(
-                workDataOf(
-                    SubscriptionWorker.INPUT_STRING_TITLE to title,
-                    SubscriptionWorker.INPUT_STRING_URL to url,
-                    SubscriptionWorker.INPUT_STRING_BASIC_URL to basicUrl,
-                    SubscriptionWorker.INPUT_STRING_USERNAME to username,
-                    SubscriptionWorker.INPUT_STRING_PASSWORD to password,
-                    SubscriptionWorker.INPUT_STRING_DATA_SOURCE_VALUE to selected.value
-                )
-            )
-            .addTag(url)
-            .addTag(basicUrl)
-            .addTag(SubscriptionWorker.TAG)
-            .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
-            .setConstraints(
-                Constraints.Builder()
-                    .setRequiredNetworkType(NetworkType.CONNECTED)
-                    .build()
-            )
-            .build()
-        workManager.enqueue(request)
+        SubscriptionWorker.any(
+            workManager = workManager,
+            title = title,
+            url = url,
+            basicUrl = basicUrl,
+            username = username,
+            password = password
+        )
         messager.emit(SettingMessage.Enqueued)
         clearAllInputs()
     }

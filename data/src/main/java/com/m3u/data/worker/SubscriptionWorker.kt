@@ -5,8 +5,13 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
 import androidx.hilt.work.HiltWorker
+import androidx.work.Constraints
 import androidx.work.CoroutineWorker
 import androidx.work.ForegroundInfo
+import androidx.work.NetworkType
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.OutOfQuotaPolicy
+import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import com.m3u.core.architecture.logger.Logger
@@ -146,5 +151,114 @@ class SubscriptionWorker @AssistedInject constructor(
         const val INPUT_STRING_PASSWORD = "password"
         const val INPUT_STRING_DATA_SOURCE_VALUE = "data-source"
         const val TAG = "subscription"
+
+        fun m3u(
+            workManager: WorkManager,
+            title: String,
+            url: String
+        ) {
+            workManager.cancelAllWorkByTag(url)
+            val request = OneTimeWorkRequestBuilder<SubscriptionWorker>()
+                .setInputData(
+                    workDataOf(
+                        INPUT_STRING_TITLE to title,
+                        INPUT_STRING_URL to url,
+                        INPUT_STRING_DATA_SOURCE_VALUE to DataSource.M3U.value
+                    )
+                )
+                .addTag(url)
+                .addTag(TAG)
+                .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
+                .setConstraints(
+                    Constraints.Builder()
+                        .setRequiredNetworkType(NetworkType.CONNECTED)
+                        .build()
+                )
+                .build()
+            workManager.enqueue(request)
+        }
+
+        fun xtream(
+            workManager: WorkManager,
+            title: String,
+            url: String,
+            basicUrl: String,
+            username: String,
+            password: String,
+        ) {
+            workManager.cancelAllWorkByTag(url)
+            workManager.cancelAllWorkByTag(basicUrl)
+            val request = OneTimeWorkRequestBuilder<SubscriptionWorker>()
+                .setInputData(
+                    workDataOf(
+                        INPUT_STRING_TITLE to title,
+                        INPUT_STRING_URL to url,
+                        INPUT_STRING_BASIC_URL to basicUrl,
+                        INPUT_STRING_USERNAME to username,
+                        INPUT_STRING_PASSWORD to password,
+                        INPUT_STRING_DATA_SOURCE_VALUE to DataSource.Xtream.value
+                    )
+                )
+                .addTag(url)
+                .addTag(basicUrl)
+                .apply {
+                    val xtreamInput = checkNotNull(XtreamInput.decodeFromPlaylistUrlOrNull(url))
+                    if (xtreamInput.type == null) {
+                        addTag(
+                            XtreamInput.encodeToPlaylistUrl(
+                                xtreamInput.copy(
+                                    type = DataSource.Xtream.TYPE_LIVE
+                                )
+                            )
+                        )
+                        addTag(
+                            XtreamInput.encodeToPlaylistUrl(
+                                xtreamInput.copy(
+                                    type = DataSource.Xtream.TYPE_SERIES
+                                )
+                            )
+                        )
+                        addTag(
+                            XtreamInput.encodeToPlaylistUrl(
+                                xtreamInput.copy(
+                                    type = DataSource.Xtream.TYPE_VOD
+                                )
+                            )
+                        )
+                    }
+                }
+                .addTag(TAG)
+                .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
+                .setConstraints(
+                    Constraints.Builder()
+                        .setRequiredNetworkType(NetworkType.CONNECTED)
+                        .build()
+                )
+                .build()
+            workManager.enqueue(request)
+        }
+
+        fun any(
+            workManager: WorkManager,
+            title: String,
+            url: String,
+            basicUrl: String? = null,
+            username: String? = null,
+            password: String? = null
+        ) {
+            val xtreamInput = XtreamInput.decodeFromPlaylistUrlOrNull(url)
+            when {
+                xtreamInput != null -> xtream(
+                    workManager,
+                    title,
+                    url, // include type param
+                    basicUrl ?: xtreamInput.basicUrl,
+                    username ?: xtreamInput.username,
+                    password ?: xtreamInput.password
+                )
+                // m3u for now
+                else -> m3u(workManager, title, url)
+            }
+        }
     }
 }
