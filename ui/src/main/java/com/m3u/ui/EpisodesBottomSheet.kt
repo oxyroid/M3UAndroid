@@ -1,7 +1,9 @@
 package com.m3u.ui
 
 import androidx.compose.animation.Crossfade
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -9,7 +11,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Refresh
-import androidx.compose.material3.Badge
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
@@ -21,6 +22,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
 import com.m3u.core.wrapper.Resource
 import com.m3u.core.wrapper.takeOrElse
 import com.m3u.data.database.model.Stream
@@ -29,6 +34,7 @@ import com.m3u.material.components.BottomSheet
 import com.m3u.material.components.CircularProgressIndicator
 import com.m3u.material.components.IconButton
 import com.m3u.material.model.LocalSpacing
+import com.m3u.material.shape.AbsoluteSmoothCornerShape
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 
@@ -134,10 +140,29 @@ private fun XtreamEpisodeItem(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val spacing = LocalSpacing.current
     ListItem(
         trailingContent = {
-            Badge {
-                Text(episode.episodeNum.toString())
+            Box(
+                modifier = Modifier
+                    .clip(AbsoluteSmoothCornerShape(spacing.medium, 65))
+                    .background(MaterialTheme.colorScheme.primary),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    color = MaterialTheme.colorScheme.onPrimary,
+                    text = episode.episodeNum.toString(),
+                    style = MaterialTheme.typography.bodyMedium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.padding(
+                        start = spacing.small,
+                        end = spacing.small,
+                        bottom = 2.dp,
+                    ),
+                    softWrap = false,
+                    textAlign = TextAlign.Center
+                )
             }
         },
         headlineContent = {

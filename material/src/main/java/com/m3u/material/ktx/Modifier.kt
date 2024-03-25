@@ -10,7 +10,7 @@ import androidx.compose.ui.composed
 import androidx.compose.ui.graphics.Color
 import com.m3u.material.model.LocalSpacing
 
-fun Modifier.thenIf(condition: Boolean, factory: () -> Modifier): Modifier = then(
+inline fun Modifier.thenIf(condition: Boolean, factory: () -> Modifier): Modifier = then(
     if (condition) factory() else Modifier
 )
 

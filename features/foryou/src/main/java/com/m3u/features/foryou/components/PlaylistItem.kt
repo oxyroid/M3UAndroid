@@ -8,8 +8,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.DriveFileMove
 import androidx.compose.material3.CardDefaults
@@ -26,6 +24,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.BaselineShift
+import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -33,6 +32,7 @@ import androidx.compose.ui.unit.sp
 import com.m3u.material.components.Icon
 import com.m3u.material.components.OuterRow
 import com.m3u.material.model.LocalSpacing
+import com.m3u.material.shape.AbsoluteSmoothCornerShape
 import com.m3u.ui.FontFamilies
 import com.m3u.ui.UiMode
 import com.m3u.ui.currentUiMode
@@ -109,7 +109,7 @@ private fun PlaylistItemImpl(
         label = "playlist-item-content"
     )
     OutlinedCard(
-        shape = RoundedCornerShape(spacing.medium),
+        shape = AbsoluteSmoothCornerShape(spacing.medium, 65),
         border = CardDefaults.outlinedCardBorder(local),
         modifier = modifier.semantics(mergeDescendants = true) { }
     ) {
@@ -171,14 +171,19 @@ private fun PlaylistItemImpl(
             ) {
                 Box(
                     modifier = Modifier
-                        .clip(CircleShape)
+                        .clip(AbsoluteSmoothCornerShape(spacing.small, 65))
                         .background(currentPrimaryColor),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
                         color = currentOnPrimaryColor,
                         text = count.toString(),
-                        style = MaterialTheme.typography.bodyMedium,
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            lineHeightStyle = LineHeightStyle(
+                                alignment = LineHeightStyle.Alignment.Center,
+                                trim = LineHeightStyle.Trim.None
+                            )
+                        ),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.padding(
@@ -187,7 +192,8 @@ private fun PlaylistItemImpl(
                             bottom = 2.dp,
                         ),
                         softWrap = false,
-                        textAlign = TextAlign.Center
+                        textAlign = TextAlign.Center,
+                        fontFamily = FontFamilies.LexendExa
                     )
                 }
             }
@@ -231,14 +237,19 @@ private fun TvPlaylistItemImpl(
         trailingContent = {
             Box(
                 modifier = Modifier
-                    .clip(CircleShape)
+                    .clip(AbsoluteSmoothCornerShape(spacing.small, 65))
                     .background(theme.primary),
                 contentAlignment = Alignment.Center
             ) {
                 TvText(
                     color = theme.onPrimary,
                     text = count.toString(),
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = TvMaterialTheme.typography.bodyMedium.copy(
+                        lineHeightStyle = LineHeightStyle(
+                            alignment = LineHeightStyle.Alignment.Center,
+                            trim = LineHeightStyle.Trim.None
+                        )
+                    ),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.padding(
@@ -247,7 +258,8 @@ private fun TvPlaylistItemImpl(
                         bottom = 2.dp,
                     ),
                     softWrap = false,
-                    textAlign = TextAlign.Center
+                    textAlign = TextAlign.Center,
+                    fontFamily = FontFamilies.LexendExa
                 )
             }
         },

@@ -41,6 +41,7 @@ import com.m3u.material.components.Icon
 import com.m3u.material.components.Image
 import com.m3u.material.components.TextBadge
 import com.m3u.material.model.LocalSpacing
+import com.m3u.material.shape.AbsoluteSmoothCornerShape
 import com.m3u.ui.UiMode
 import com.m3u.ui.currentUiMode
 import kotlinx.datetime.Clock
@@ -145,7 +146,8 @@ private fun StreamItemImpl(
 
     OutlinedCard(
         modifier = Modifier.semantics(mergeDescendants = true) { },
-        border = CardDefaults.outlinedCardBorder(zapping)
+        border = CardDefaults.outlinedCardBorder(zapping),
+        shape = AbsoluteSmoothCornerShape(spacing.medium, 65),
     ) {
         Column(
             modifier = Modifier

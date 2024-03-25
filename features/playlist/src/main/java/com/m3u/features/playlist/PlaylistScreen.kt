@@ -34,7 +34,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -95,6 +94,7 @@ internal fun PlaylistRoute(
     val episodes by viewModel.episodes.collectAsStateWithLifecycle()
     val pinnedCategories by viewModel.pinnedCategories.collectAsStateWithLifecycle()
     val refreshing by viewModel.subscribingOrRefreshing.collectAsStateWithLifecycle()
+    val series by viewModel.series.collectAsStateWithLifecycle()
 
     val isSeriesPlaylist by remember {
         derivedStateOf {
@@ -127,7 +127,6 @@ internal fun PlaylistRoute(
         Manifest.permission.POST_NOTIFICATIONS
     )
 
-    var series: Stream? by remember { mutableStateOf(null) }
 
     LifecycleResumeEffect(playlist) {
         helper.title = playlist?.title?.title().orEmpty()
@@ -169,7 +168,7 @@ internal fun PlaylistRoute(
                             navigateToStream()
                         }
                     } else {
-                        series = stream
+                        viewModel.series.value = stream
                     }
                 },
                 onScrollUp = { viewModel.scrollUp = eventOf(Unit) },
@@ -240,10 +239,9 @@ internal fun PlaylistRoute(
                             }
                         }
                     },
-                    onRefresh = { series?.let { viewModel.onRequestEpisodes(it) } },
+                    onRefresh = { viewModel.seriesReplay.value += 1 },
                     onDismissRequest = {
-                        series = null
-                        viewModel.onClearEpisodes()
+                        viewModel.series.value = null
                     }
                 )
             }

@@ -33,6 +33,7 @@ import com.m3u.material.components.Image
 import com.m3u.material.components.TextBadge
 import com.m3u.material.ktx.isTelevision
 import com.m3u.material.model.LocalSpacing
+import com.m3u.material.shape.AbsoluteSmoothCornerShape
 import com.m3u.ui.Sort
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
@@ -103,7 +104,8 @@ private fun FavoriteItemImpl(
 
     if (!tv) {
         OutlinedCard(
-            border = CardDefaults.outlinedCardBorder(zapping)
+            border = CardDefaults.outlinedCardBorder(zapping),
+            shape = AbsoluteSmoothCornerShape(spacing.medium, 65)
         ) {
             Column(
                 modifier = Modifier

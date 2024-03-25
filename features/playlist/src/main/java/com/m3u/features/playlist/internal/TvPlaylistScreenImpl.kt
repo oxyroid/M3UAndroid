@@ -45,6 +45,7 @@ import com.m3u.material.components.Icon
 import com.m3u.material.components.television.dialogFocusable
 import com.m3u.material.ktx.Edge
 import com.m3u.material.ktx.blurEdge
+import com.m3u.material.ktx.thenIf
 import com.m3u.material.model.LocalHazeState
 import com.m3u.ui.Sort
 import com.m3u.ui.TvSortFullScreenDialog
@@ -125,9 +126,8 @@ internal fun TvPlaylistScreenImpl(
                     onClick = onStream,
                     onLongClick = { stream -> press = stream },
                     onFocus = { stream -> focus = stream },
-                    modifier = Modifier.then(
-                        if (noPictureMode || !darkMode) Modifier
-                        else Modifier
+                    modifier = Modifier.thenIf(!noPictureMode && darkMode) {
+                        Modifier
                             .hazeChild(
                                 LocalHazeState.current,
                                 style = HazeStyle(blurRadius = 4.dp)
@@ -136,7 +136,7 @@ internal fun TvPlaylistScreenImpl(
                                 color = MaterialTheme.colorScheme.background,
                                 edge = Edge.Top
                             )
-                    )
+                    }
                 )
             }
         )
