@@ -48,7 +48,9 @@ class StreamViewModel @Inject constructor(
     // searched screencast devices
     internal val devices = _devices.asStateFlow()
 
-    private val _volume: MutableStateFlow<Float> = MutableStateFlow(1f)
+    private val _volume: MutableStateFlow<Float> by lazy {
+        MutableStateFlow(audioManager.getStreamVolume(AudioManager.STREAM_MUSIC) / 100f)
+    }
     internal val volume = _volume.asStateFlow()
 
     internal val stream: StateFlow<Stream?> = playerManager.stream
@@ -176,10 +178,8 @@ class StreamViewModel @Inject constructor(
 
     internal fun onFavourite() {
         viewModelScope.launch {
-            val stream = this@StreamViewModel.stream.value ?: return@launch
-            val id = stream.id
-            val target = !stream.favourite
-            streamRepository.setFavourite(id, target)
+            val id = stream.value?.id ?: return@launch
+            streamRepository.favouriteOrUnfavourite(id)
         }
     }
 
