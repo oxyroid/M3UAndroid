@@ -82,7 +82,7 @@ fun ForyouRoute(
     val recommend by viewModel.recommend.collectAsStateWithLifecycle()
     val episodes by viewModel.episodes.collectAsStateWithLifecycle()
 
-    var series: Stream? by remember { mutableStateOf(null) }
+    val series: Stream? by viewModel.series.collectAsStateWithLifecycle()
 
     if (isPageInfoVisible) {
         LifecycleResumeEffect(title) {
@@ -113,7 +113,7 @@ fun ForyouRoute(
                         val playlist = viewModel.getPlaylist(stream.playlistUrl)
                         when {
                             playlist?.type in Playlist.SERIES_TYPES -> {
-                                series = stream
+                                viewModel.series.value = stream
                             }
 
                             else -> {
@@ -160,11 +160,8 @@ fun ForyouRoute(
                         }
                     }
                 },
-                onRefresh = { series?.let { viewModel.onRequestEpisodes(it) } },
-                onDismissRequest = {
-                    series = null
-                    viewModel.onClearEpisodes()
-                }
+                onRefresh = { series?.let { viewModel.seriesReplay.value += 1 } },
+                onDismissRequest = { viewModel.series.value = null }
             )
         }
     }

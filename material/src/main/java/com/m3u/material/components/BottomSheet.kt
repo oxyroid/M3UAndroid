@@ -18,7 +18,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.m3u.material.ktx.Edge
-import com.m3u.material.ktx.blurEdge
+import com.m3u.material.ktx.blurEdges
 import com.m3u.material.ktx.thenIf
 import com.m3u.material.model.LocalSpacing
 
@@ -56,8 +56,8 @@ fun BottomSheet(
                 Column(
                     content = body,
                     modifier = Modifier.thenIf(blurBody) {
-                        Modifier.blurEdge(
-                            edge = Edge.Top,
+                        Modifier.blurEdges(
+                            edges = listOf(Edge.Top, Edge.Bottom),
                             color = MaterialTheme.colorScheme.background
                         )
                     }

@@ -1,10 +1,13 @@
 package com.m3u.data.parser.xtream
 
+import android.content.Context
+import com.chuckerteam.chucker.api.ChuckerInterceptor
 import com.m3u.core.architecture.dispatcher.Dispatcher
 import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.execute
 import com.m3u.data.database.model.DataSource
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
@@ -23,16 +26,23 @@ import javax.inject.Inject
 internal class XtreamParserImpl @Inject constructor(
     @Dispatcher(IO) private val ioDispatcher: CoroutineDispatcher,
     okHttpClient: OkHttpClient,
-    private val logger: Logger
+    private val logger: Logger,
+    @ApplicationContext context: Context
 ) : XtreamParser {
     @OptIn(ExperimentalSerializationApi::class)
-    private val json: Json get() = Json {
-        ignoreUnknownKeys = true
-        explicitNulls = false
-        isLenient = true
-    }
+    private val json: Json
+        get() = Json {
+            ignoreUnknownKeys = true
+            explicitNulls = false
+            isLenient = true
+        }
     private val okHttpClient = okHttpClient
         .newBuilder()
+        .addInterceptor(
+            ChuckerInterceptor.Builder(context)
+                .maxContentLength(10240)
+                .build()
+        )
         .callTimeout(Duration.ofMillis(Int.MAX_VALUE.toLong()))
         .connectTimeout(Duration.ofMillis(Int.MAX_VALUE.toLong()))
         .readTimeout(Duration.ofMillis(Int.MAX_VALUE.toLong()))
@@ -154,7 +164,8 @@ internal class XtreamParserImpl @Inject constructor(
     }
 
     @OptIn(ExperimentalSerializationApi::class)
-    private suspend inline fun <reified T> newCallOrThrow(url: String): T = withContext(ioDispatcher) {
+    private suspend inline fun <reified T> newCallOrThrow(url: String): T =
+        withContext(ioDispatcher) {
             okHttpClient.newCall(
                 Request.Builder().url(url).build()
             )
@@ -163,7 +174,7 @@ internal class XtreamParserImpl @Inject constructor(
                 .body!!
                 .byteStream()
                 .let { json.decodeFromStream(it) }
-    }
+        }
 
     @OptIn(ExperimentalSerializationApi::class)
     private inline fun <reified T> newSequenceCall(url: String): Sequence<T> =

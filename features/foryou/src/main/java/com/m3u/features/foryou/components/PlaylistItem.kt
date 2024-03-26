@@ -1,22 +1,23 @@
 package com.m3u.features.foryou.components
 
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.DriveFileMove
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ListItem
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -29,11 +30,12 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.m3u.material.components.Icon
-import com.m3u.material.components.OuterRow
 import com.m3u.material.ktx.isTelevision
 import com.m3u.material.model.LocalSpacing
 import com.m3u.material.shape.AbsoluteSmoothCornerShape
+import com.m3u.ui.Badge
 import com.m3u.ui.FontFamilies
+import com.m3u.ui.TextBadge
 import androidx.tv.material3.ListItem as TvListItem
 import androidx.tv.material3.MaterialTheme as TvMaterialTheme
 import androidx.tv.material3.Text as TvText
@@ -42,7 +44,6 @@ import androidx.tv.material3.Text as TvText
 internal fun PlaylistItem(
     label: String,
     type: String?,
-    typeWithSource: String?,
     count: Int,
     local: Boolean,
     onClick: () -> Unit,
@@ -54,7 +55,6 @@ internal fun PlaylistItem(
         SmartphonePlaylistItemImpl(
             label = label,
             type = type,
-            typeWithSource = typeWithSource,
             count = count,
             local = local,
             onClick = onClick,
@@ -65,7 +65,6 @@ internal fun PlaylistItem(
         TvPlaylistItemImpl(
             label = label,
             type = type,
-            typeWithSource = typeWithSource,
             count = count,
             onClick = onClick,
             onLongClick = onLongClick,
@@ -78,7 +77,6 @@ internal fun PlaylistItem(
 private fun SmartphonePlaylistItemImpl(
     label: String,
     type: String?,
-    typeWithSource: String?,
     count: Int,
     local: Boolean,
     onClick: () -> Unit,
@@ -86,35 +84,13 @@ private fun SmartphonePlaylistItemImpl(
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
-    val theme = MaterialTheme.colorScheme
-    val currentContentColor by animateColorAsState(
-        targetValue = theme.onSurface,
-        label = "playlist-item-content"
-    )
     OutlinedCard(
         shape = AbsoluteSmoothCornerShape(spacing.medium, 65),
         border = CardDefaults.outlinedCardBorder(local),
         modifier = modifier.semantics(mergeDescendants = true) { }
     ) {
-        OuterRow(
-            modifier = Modifier
-                .combinedClickable(
-                    onClick = onClick,
-                    onLongClick = onLongClick
-                ),
-            verticalAlignment = Alignment.Top
-        ) {
-            if (local) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Rounded.DriveFileMove,
-                    contentDescription = null,
-                    tint = currentContentColor
-                )
-            }
-            Column(
-                verticalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier.alignByBaseline()
-            ) {
+        ListItem(
+            headlineContent = {
                 Text(
                     text = label,
                     style = MaterialTheme.typography.bodyMedium.copy(
@@ -124,9 +100,11 @@ private fun SmartphonePlaylistItemImpl(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
-                if (typeWithSource != null) {
+            },
+            supportingContent = {
+                if (type != null) {
                     Text(
-                        text = typeWithSource.uppercase(),
+                        text = type.uppercase(),
                         style = MaterialTheme.typography.bodySmall.copy(
                             letterSpacing = 1.sp,
                             baselineShift = BaselineShift.Subscript,
@@ -137,50 +115,42 @@ private fun SmartphonePlaylistItemImpl(
                         color = LocalContentColor.current.copy(0.45f)
                     )
                 }
-            }
-
-            val currentPrimaryColor by animateColorAsState(
-                targetValue = theme.primary,
-                label = "playlist-item-primary"
-            )
-            val currentOnPrimaryColor by animateColorAsState(
-                targetValue = theme.onPrimary,
-                label = "playlist-item-on-primary"
-            )
-            Spacer(Modifier.weight(1f))
-            Column(
-                verticalArrangement = Arrangement.SpaceBetween,
-                horizontalAlignment = Alignment.End
-            ) {
-                Box(
-                    modifier = Modifier
-                        .clip(AbsoluteSmoothCornerShape(spacing.small, 65))
-                        .background(currentPrimaryColor),
-                    contentAlignment = Alignment.Center
+            },
+            trailingContent = {
+                Column(
+                    horizontalAlignment = Alignment.End,
+                    verticalArrangement = Arrangement.spacedBy(spacing.extraSmall)
                 ) {
-                    Text(
-                        color = currentOnPrimaryColor,
-                        text = count.toString(),
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            lineHeightStyle = LineHeightStyle(
-                                alignment = LineHeightStyle.Alignment.Center,
-                                trim = LineHeightStyle.Trim.None
-                            )
-                        ),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.padding(
-                            start = spacing.small,
-                            end = spacing.small,
-                            bottom = 2.dp,
-                        ),
-                        softWrap = false,
-                        textAlign = TextAlign.Center,
-                        fontFamily = FontFamilies.LexendExa
+                    TextBadge(
+                        text = count.toString()
                     )
+                    Row(
+                        Modifier.height(16.dp)
+                    ) {
+                        if (local) {
+                            Badge(
+                                color = MaterialTheme.colorScheme.secondary,
+                                shape = AbsoluteSmoothCornerShape(
+                                    cornerRadiusTL = spacing.extraSmall,
+                                    cornerRadiusTR = spacing.extraSmall,
+                                    cornerRadiusBL = spacing.extraSmall,
+                                    cornerRadiusBR = spacing.small
+                                )
+                            ) {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Rounded.DriveFileMove,
+                                    contentDescription = null,
+                                )
+                            }
+                        }
+                    }
                 }
-            }
-        }
+            },
+            modifier = Modifier.combinedClickable(
+                onClick = onClick,
+                onLongClick = onLongClick
+            )
+        )
     }
 }
 
@@ -188,7 +158,6 @@ private fun SmartphonePlaylistItemImpl(
 private fun TvPlaylistItemImpl(
     label: String,
     type: String?,
-    typeWithSource: String?,
     count: Int,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
@@ -207,10 +176,10 @@ private fun TvPlaylistItemImpl(
                 overflow = TextOverflow.Ellipsis,
             )
         },
-        supportingContent = if (typeWithSource != null) {
+        supportingContent = if (type != null) {
             {
                 TvText(
-                    text = typeWithSource,
+                    text = type,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     style = TvMaterialTheme.typography.bodyMedium

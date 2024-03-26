@@ -5,6 +5,7 @@ import android.content.Context
 import android.net.Uri
 import androidx.core.net.toUri
 import androidx.work.WorkManager
+import com.chuckerteam.chucker.api.ChuckerInterceptor
 import com.m3u.core.architecture.dispatcher.Dispatcher
 import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
 import com.m3u.core.architecture.logger.Logger
@@ -64,7 +65,7 @@ internal class PlaylistRepositoryImpl @Inject constructor(
     private val playlistDao: PlaylistDao,
     private val streamDao: StreamDao,
     logger: Logger,
-    private val client: OkHttpClient,
+    client: OkHttpClient,
     private val m3uParser: M3UParser,
     private val xtreamParser: XtreamParser,
     private val pref: Pref,
@@ -73,6 +74,14 @@ internal class PlaylistRepositoryImpl @Inject constructor(
     @Dispatcher(IO) private val ioDispatcher: CoroutineDispatcher,
 ) : PlaylistRepository {
     private val logger = logger.prefix("playlist-repos")
+    private val client = client
+        .newBuilder()
+        .addInterceptor(
+            ChuckerInterceptor.Builder(context)
+                .maxContentLength(10240)
+                .build()
+        )
+        .build()
 
     override suspend fun m3u(
         title: String,

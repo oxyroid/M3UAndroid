@@ -1,7 +1,6 @@
 package com.m3u.core.wrapper
 
 import androidx.compose.runtime.Immutable
-import androidx.compose.runtime.Stable
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.channelFlow
@@ -13,19 +12,12 @@ sealed class Resource<out T> {
     @Immutable
     data object Loading : Resource<Nothing>()
 
-    @Stable
-    data class Success<out T>(
-        val data: T
-    ) : Resource<T>()
+    @Immutable
+    data class Success<out T>(val data: T) : Resource<T>()
 
-    @Stable
-    data class Failure<out T>(
-        val message: String?
-    ) : Resource<T>()
+    @Immutable
+    data class Failure<out T>(val message: String?) : Resource<T>()
 }
-
-fun <T> Resource<T>.takeOrElse(block: () -> T): T = if (this is Resource.Success) this.data
-else block()
 
 fun <T, R> Flow<Resource<T>>.mapResource(transform: (T) -> R): Flow<Resource<R>> = map {
     when (it) {

@@ -2,7 +2,6 @@
 
 package com.m3u.data.api
 
-import android.app.Application
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.data.Certs
@@ -29,8 +28,7 @@ internal object ApiModule {
     @Provides
     @Singleton
     fun provideOkhttpClient(
-        logger: Logger,
-        application: Application
+        logger: Logger
     ): OkHttpClient {
         return OkHttpClient.Builder()
             .authenticator(Authenticator.JAVA_NET_AUTHENTICATOR)
@@ -51,7 +49,6 @@ internal object ApiModule {
                         .build()
                 }
             }
-//            .addInterceptor(ChuckerInterceptor(application))
             .sslSocketFactory(SSLs.TLSTrustAll.socketFactory, Certs.TrustAll)
             .hostnameVerifier { _, _ -> true }
             .build()

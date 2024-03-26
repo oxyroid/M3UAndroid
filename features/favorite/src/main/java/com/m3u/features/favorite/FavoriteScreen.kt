@@ -83,7 +83,7 @@ fun FavouriteRoute(
         visiblePageInfos.find { it.index == pageIndex } != null
     }
 
-    var series: Stream? by remember { mutableStateOf(null) }
+    val series: Stream? by viewModel.series.collectAsStateWithLifecycle()
 
     if (isPageInfoVisible) {
         LifecycleResumeEffect(title) {
@@ -113,7 +113,7 @@ fun FavouriteRoute(
                     val playlist = viewModel.getPlaylist(stream.playlistUrl)
                     when {
                         playlist?.type in Playlist.SERIES_TYPES -> {
-                            series = stream
+                            viewModel.series.value = stream
                         }
 
                         else -> {
@@ -152,11 +152,8 @@ fun FavouriteRoute(
                     }
                 }
             },
-            onRefresh = { series?.let { viewModel.onRequestEpisodes(it) } },
-            onDismissRequest = {
-                series = null
-                viewModel.onClearEpisodes()
-            }
+            onRefresh = { series?.let { viewModel.seriesReplay.value += 1 } },
+            onDismissRequest = { viewModel.series.value = null }
         )
         if (!tv) {
             SortBottomSheet(

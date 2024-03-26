@@ -12,6 +12,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Refresh
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
@@ -30,7 +31,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.m3u.core.wrapper.Resource
-import com.m3u.core.wrapper.takeOrElse
 import com.m3u.data.database.model.Stream
 import com.m3u.data.parser.xtream.XtreamStreamInfo
 import com.m3u.material.components.BottomSheet
@@ -39,7 +39,6 @@ import com.m3u.material.components.IconButton
 import com.m3u.material.model.LocalSpacing
 import com.m3u.material.shape.AbsoluteSmoothCornerShape
 import kotlinx.collections.immutable.ImmutableList
-import kotlinx.collections.immutable.persistentListOf
 
 @Composable
 fun EpisodesBottomSheet(
@@ -55,13 +54,12 @@ fun EpisodesBottomSheet(
     val sheetState = rememberModalBottomSheetState()
     val currentOnRefresh by rememberUpdatedState(onRefresh)
 
-    val actualEpisodes = episodes.takeOrElse { persistentListOf() }
     val visible = series != null
     val loading = episodes == Resource.Loading
 
     LaunchedEffect(series) { currentOnRefresh() }
 
-    LaunchedEffect(episodes) {
+    LaunchedEffect(episodes is Resource.Success) {
         if (loading) sheetState.partialExpand()
         else sheetState.expand()
     }
@@ -98,6 +96,7 @@ fun EpisodesBottomSheet(
             }
         },
         body = {
+            HorizontalDivider()
             when (episodes) {
                 is Resource.Failure -> {
                     Text(
@@ -123,13 +122,19 @@ fun EpisodesBottomSheet(
                         )
                     }
                 }
-                item { Spacer(modifier = Modifier.height(spacing.medium)) }
-                items(actualEpisodes) { episode ->
-                    XtreamEpisodeItem(
-                        episode = episode,
-                        onClick = { onEpisodeClick(episode) },
-                        modifier = Modifier.padding(horizontal = spacing.medium)
-                    )
+                item { Spacer(modifier = Modifier.height(spacing.small)) }
+                when (episodes) {
+                    is Resource.Success -> {
+                        items(episodes.data) { episode ->
+                            XtreamEpisodeItem(
+                                episode = episode,
+                                onClick = { onEpisodeClick(episode) },
+                                modifier = Modifier.padding(horizontal = spacing.medium)
+                            )
+                        }
+                    }
+
+                    else -> {}
                 }
             }
         },

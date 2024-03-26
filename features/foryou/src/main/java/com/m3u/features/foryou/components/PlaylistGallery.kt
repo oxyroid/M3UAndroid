@@ -92,8 +92,7 @@ private fun SmartphonePlaylistGalleryImpl(
                     title = playlistCount.playlist.title,
                     fromLocal = playlistCount.playlist.fromLocal
                 ),
-                type = playlistCount.playlist.type,
-                typeWithSource = playlistCount.playlist.typeWithSource,
+                type = playlistCount.playlist.typeWithSource,
                 count = playlistCount.count,
                 local = playlistCount.playlist.fromLocal,
                 onClick = { onClick(playlistCount.playlist) },
@@ -143,8 +142,7 @@ private fun TvPlaylistGalleryImpl(
                     title = playlistCount.playlist.title,
                     fromLocal = playlistCount.playlist.fromLocal
                 ),
-                type = playlistCount.playlist.type,
-                typeWithSource = playlistCount.playlist.typeWithSource,
+                type = playlistCount.playlist.typeWithSource,
                 count = playlistCount.count,
                 local = playlistCount.playlist.fromLocal,
                 onClick = { onClick(playlistCount.playlist) },

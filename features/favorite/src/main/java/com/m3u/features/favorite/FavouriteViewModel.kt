@@ -149,8 +149,10 @@ class FavouriteViewModel @Inject constructor(
         }
     }
 
-    private val series = MutableStateFlow<Stream?>(null)
+    internal val series = MutableStateFlow<Stream?>(null)
+    internal val seriesReplay = MutableStateFlow(0)
     internal val episodes: StateFlow<Resource<ImmutableList<XtreamStreamInfo.Episode>>> = series
+        .combine(seriesReplay) { series, _ -> series }
         .flatMapLatest { series ->
             if (series == null) flow { }
             else resource { playlistRepository.readEpisodesOrThrow(series) }
@@ -162,14 +164,6 @@ class FavouriteViewModel @Inject constructor(
             // don't lose
             started = SharingStarted.Lazily
         )
-
-    internal fun onRequestEpisodes(series: Stream) {
-        this.series.value = series
-    }
-
-    internal fun onClearEpisodes() {
-        this.series.value = null
-    }
 
     internal suspend fun getPlaylist(playlistUrl: String): Playlist? =
         playlistRepository.get(playlistUrl)

@@ -33,8 +33,8 @@ import com.m3u.core.util.basic.title
 import com.m3u.i18n.R.string
 import com.m3u.material.components.CircularProgressIndicator
 import com.m3u.material.components.OnDismiss
-import com.m3u.material.components.UnstableBadge
-import com.m3u.material.components.UnstableValue
+import com.m3u.ui.UnstableBadge
+import com.m3u.ui.UnstableValue
 import com.m3u.material.components.mask.MaskState
 import com.m3u.material.model.LocalSpacing
 import kotlinx.collections.immutable.ImmutableList
