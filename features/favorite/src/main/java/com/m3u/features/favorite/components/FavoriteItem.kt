@@ -40,6 +40,7 @@ internal fun FavoriteItem(
     onLongClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    // TODO: split smartphone and television impl.
     FavoriteItemImpl(
         stream = stream,
         recently = recently,
