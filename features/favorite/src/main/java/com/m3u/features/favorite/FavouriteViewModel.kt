@@ -27,8 +27,6 @@ import com.m3u.data.repository.StreamRepository
 import com.m3u.data.service.PlayerManagerV2
 import com.m3u.ui.Sort
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.collections.immutable.ImmutableList
-import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -74,7 +72,7 @@ class FavouriteViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5_000)
         )
 
-    val sorts: ImmutableList<Sort> = Sort.entries.toPersistentList()
+    val sorts: List<Sort> = Sort.entries
 
     private val sortIndex = MutableStateFlow(0)
 
@@ -91,7 +89,7 @@ class FavouriteViewModel @Inject constructor(
         sortIndex.update { sorts.indexOf(sort).coerceAtLeast(0) }
     }
 
-    val streamsResource: StateFlow<Resource<ImmutableList<Stream>>> = streamRepository
+    val streamsResource: StateFlow<Resource<List<Stream>>> = streamRepository
         .observeAllFavourite()
         .combine(sort) { all, sort ->
             when (sort) {
@@ -106,7 +104,7 @@ class FavouriteViewModel @Inject constructor(
 
                 Sort.RECENTLY -> all.sortedByDescending { it.seen }
             }
-                .toPersistentList()
+                
         }
         .asResource()
         .flowOn(ioDispatcher)
@@ -151,12 +149,12 @@ class FavouriteViewModel @Inject constructor(
 
     internal val series = MutableStateFlow<Stream?>(null)
     internal val seriesReplay = MutableStateFlow(0)
-    internal val episodes: StateFlow<Resource<ImmutableList<XtreamStreamInfo.Episode>>> = series
+    internal val episodes: StateFlow<Resource<List<XtreamStreamInfo.Episode>>> = series
         .combine(seriesReplay) { series, _ -> series }
         .flatMapLatest { series ->
             if (series == null) flow { }
             else resource { playlistRepository.readEpisodesOrThrow(series) }
-                .mapResource { it.toPersistentList() }
+                .mapResource { it }
         }
         .stateIn(
             scope = viewModelScope,

@@ -53,17 +53,16 @@ import dev.chrisbanes.haze.HazeDefaults
 import dev.chrisbanes.haze.HazeStyle
 import dev.chrisbanes.haze.haze
 import dev.chrisbanes.haze.hazeChild
-import kotlinx.collections.immutable.ImmutableList
 
 @Composable
 @InternalComposeApi
 internal fun TvPlaylistScreenImpl(
     title: String,
-    categories: ImmutableList<Category>,
+    categories: List<Category>,
     streamPaged: LazyPagingItems<Stream>,
     query: String,
     onQuery: (String) -> Unit,
-    sorts: ImmutableList<Sort>,
+    sorts: List<Sort>,
     sort: Sort,
     onSort: (Sort) -> Unit,
     onFavorite: (streamId: Int, target: Boolean) -> Unit,

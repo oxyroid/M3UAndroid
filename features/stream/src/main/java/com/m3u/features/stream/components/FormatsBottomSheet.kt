@@ -42,15 +42,13 @@ import com.m3u.i18n.R.string
 import com.m3u.material.components.OnDismiss
 import com.m3u.material.components.mask.MaskState
 import com.m3u.material.model.LocalSpacing
-import kotlinx.collections.immutable.ImmutableList
-import kotlinx.collections.immutable.ImmutableMap
 import kotlinx.coroutines.launch
 
 @Composable
 internal fun FormatsBottomSheet(
     visible: Boolean,
-    formats: ImmutableMap<Int, ImmutableList<Format>>,
-    selectedFormats: ImmutableMap<Int, Format?>,
+    formats: Map<Int, List<Format>>,
+    selectedFormats: Map<Int, Format?>,
     maskState: MaskState,
     onDismiss: OnDismiss,
     onChooseTrack: (@C.TrackType Int, Format) -> Unit,

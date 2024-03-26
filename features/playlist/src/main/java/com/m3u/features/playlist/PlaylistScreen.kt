@@ -64,7 +64,6 @@ import com.m3u.ui.EpisodesBottomSheet
 import com.m3u.ui.Sort
 import com.m3u.ui.helper.Fob
 import com.m3u.ui.helper.LocalHelper
-import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -238,12 +237,12 @@ private fun PlaylistScreen(
     onQuery: (String) -> Unit,
     rowCount: Int,
     zapping: Stream?,
-    categories: ImmutableList<Category>,
+    categories: List<Category>,
     streamPaged: LazyPagingItems<Stream>,
-    pinnedCategories: ImmutableList<String>,
+    pinnedCategories: List<String>,
     onPinOrUnpinCategory: (String) -> Unit,
     onHideCategory: (String) -> Unit,
-    sorts: ImmutableList<Sort>,
+    sorts: List<Sort>,
     sort: Sort,
     onSort: (Sort) -> Unit,
     scrollUp: Event<Unit>,

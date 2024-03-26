@@ -22,8 +22,6 @@ import com.m3u.ui.Destination
 import com.m3u.ui.helper.Action
 import com.m3u.ui.helper.Fob
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.collections.immutable.ImmutableList
-import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -161,7 +159,7 @@ class AppViewModel @Inject constructor(
     )
 
     val title = mutableStateOf("")
-    val actions: MutableState<ImmutableList<Action>> = mutableStateOf(persistentListOf())
+    val actions: MutableState<List<Action>> = mutableStateOf(emptyList())
     val fob = mutableStateOf<Fob?>(null)
     var code by mutableStateOf("")
     var isConnectSheetVisible by mutableStateOf(false)

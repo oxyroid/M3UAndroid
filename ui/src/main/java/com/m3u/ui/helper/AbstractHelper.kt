@@ -1,5 +1,6 @@
 package com.m3u.ui.helper
 
+
 import android.app.PictureInPictureParams
 import android.content.Context
 import android.graphics.Color
@@ -25,11 +26,9 @@ import com.m3u.core.util.basic.rational
 import com.m3u.core.util.context.isDarkMode
 import com.m3u.core.util.context.isPortraitMode
 import com.m3u.core.wrapper.Message
+import com.m3u.data.service.MediaCommand
 import com.m3u.data.service.Messager
 import com.m3u.data.service.PlayerManagerV2
-import com.m3u.data.service.MediaCommand
-import kotlinx.collections.immutable.ImmutableList
-import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -41,7 +40,7 @@ class AbstractHelper(
     private val activity: ComponentActivity,
     private val messager: Messager,
     title: MutableState<String> = mutableStateOf(""),
-    actions: MutableState<ImmutableList<Action>> = mutableStateOf(persistentListOf()),
+    actions: MutableState<List<Action>> = mutableStateOf(emptyList()),
     fob: MutableState<Fob?> = mutableStateOf(null),
     override val message: StateFlow<Message> = MutableStateFlow(Message.Dynamic.EMPTY)
 ) : Helper {
@@ -52,7 +51,7 @@ class AbstractHelper(
     }
 
     override var title: String by title
-    override var actions: ImmutableList<Action> by actions
+    override var actions: List<Action> by actions
     override var fob: Fob? by fob
 
     init {

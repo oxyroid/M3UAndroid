@@ -35,10 +35,6 @@ import com.m3u.data.worker.BackupWorker
 import com.m3u.data.worker.RestoreWorker
 import com.m3u.data.worker.SubscriptionWorker
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.collections.immutable.ImmutableList
-import kotlinx.collections.immutable.persistentListOf
-import kotlinx.collections.immutable.toImmutableList
-import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -71,17 +67,16 @@ class SettingViewModel @Inject constructor(
         versionCode = publisher.versionCode,
     )
 ) {
-    internal val hiddenStreams: StateFlow<ImmutableList<Stream>> = streamRepository
+    internal val hiddenStreams: StateFlow<List<Stream>> = streamRepository
         .observeAllHidden()
-        .map { it.toImmutableList() }
         .flowOn(ioDispatcher)
         .stateIn(
             scope = viewModelScope,
-            initialValue = persistentListOf(),
+            initialValue = emptyList(),
             started = SharingStarted.WhileSubscribed(5_000L)
         )
 
-    internal val hiddenCategoriesWithPlaylists: StateFlow<ImmutableList<Pair<Playlist, String>>> =
+    internal val hiddenCategoriesWithPlaylists: StateFlow<List<Pair<Playlist, String>>> =
         playlistRepository
             .observeAll()
             .map { playlists ->
@@ -89,11 +84,10 @@ class SettingViewModel @Inject constructor(
                     .filter { it.hiddenCategories.isNotEmpty() }
                     .flatMap { playlist -> playlist.hiddenCategories.map { playlist to it } }
             }
-            .map { it.toPersistentList() }
             .flowOn(ioDispatcher)
             .stateIn(
                 scope = viewModelScope,
-                initialValue = persistentListOf(),
+                initialValue = emptyList(),
                 started = SharingStarted.WhileSubscribed(5_000L)
             )
 
@@ -103,16 +97,15 @@ class SettingViewModel @Inject constructor(
         }
     }
 
-    internal val colorPacks: StateFlow<ImmutableList<ColorPack>> = combine(
+    internal val colorPacks: StateFlow<List<ColorPack>> = combine(
         colorPackDao.observeAllColorPacks().catch { emit(emptyList()) },
         pref.observeAsFlow { it.followSystemTheme }
     ) { all, followSystemTheme -> if (followSystemTheme) all.filter { !it.isDark } else all }
-        .map { it.toImmutableList() }
         .flowOn(ioDispatcher)
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = persistentListOf()
+            initialValue = emptyList()
         )
 
     override fun onEvent(event: SettingEvent) {

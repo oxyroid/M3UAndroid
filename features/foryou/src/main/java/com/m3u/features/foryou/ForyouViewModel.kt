@@ -22,10 +22,6 @@ import com.m3u.data.repository.StreamRepository
 import com.m3u.data.worker.SubscriptionWorker
 import com.m3u.features.foryou.components.recommend.Recommend
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.collections.immutable.ImmutableList
-import kotlinx.collections.immutable.PersistentList
-import kotlinx.collections.immutable.persistentListOf
-import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -50,10 +46,9 @@ class ForyouViewModel @Inject constructor(
     @Dispatcher(IO) ioDispatcher: CoroutineDispatcher,
     workManager: WorkManager,
 ) : ViewModel() {
-    internal val playlistCountsResource: StateFlow<Resource<PersistentList<PlaylistWithCount>>> =
+    internal val playlistCountsResource: StateFlow<Resource<List<PlaylistWithCount>>> =
         playlistRepository
             .observeAllCounts()
-            .map { it.toPersistentList() }
             .asResource()
             .stateIn(
                 scope = viewModelScope,
@@ -61,7 +56,7 @@ class ForyouViewModel @Inject constructor(
                 initialValue = Resource.Loading
             )
 
-    internal val subscribingPlaylistUrls: StateFlow<PersistentList<String>> =
+    internal val subscribingPlaylistUrls: StateFlow<List<String>> =
         workManager.getWorkInfosFlow(
             WorkQuery.fromStates(
                 WorkInfo.State.RUNNING,
@@ -72,11 +67,11 @@ class ForyouViewModel @Inject constructor(
                 infos
                     .filter { info -> SubscriptionWorker.TAG in info.tags }
                     .mapNotNull { info -> info.tags.firstOrNull { it in playlistUrls } }
-                    .toPersistentList()
+
             }
             .stateIn(
                 scope = viewModelScope,
-                initialValue = persistentListOf(),
+                initialValue = emptyList(),
                 started = SharingStarted.WhileSubscribed(5_000L)
             )
 
@@ -120,12 +115,12 @@ class ForyouViewModel @Inject constructor(
 
     internal val series = MutableStateFlow<Stream?>(null)
     internal val seriesReplay = MutableStateFlow(0)
-    internal val episodes: StateFlow<Resource<ImmutableList<XtreamStreamInfo.Episode>>> = series
+    internal val episodes: StateFlow<Resource<List<XtreamStreamInfo.Episode>>> = series
         .combine(seriesReplay) { series, _ -> series }
         .flatMapLatest { series ->
             if (series == null) flow { }
             else resource { playlistRepository.readEpisodesOrThrow(series) }
-                .mapResource { it.toPersistentList() }
+                .mapResource { it }
         }
         .stateIn(
             scope = viewModelScope,

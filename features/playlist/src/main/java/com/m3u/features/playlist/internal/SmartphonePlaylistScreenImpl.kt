@@ -69,9 +69,6 @@ import com.m3u.ui.helper.Action
 import com.m3u.ui.helper.LocalHelper
 import dev.chrisbanes.haze.HazeDefaults
 import dev.chrisbanes.haze.haze
-import kotlinx.collections.immutable.ImmutableList
-import kotlinx.collections.immutable.persistentListOf
-import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
@@ -79,9 +76,9 @@ import kotlinx.coroutines.launch
 @Composable
 @InternalComposeApi
 internal fun SmartphonePlaylistScreenImpl(
-    categories: ImmutableList<Category>,
+    categories: List<Category>,
     streamPaged: LazyPagingItems<Stream>,
-    pinnedCategories: ImmutableList<String>,
+    pinnedCategories: List<String>,
     onPinOrUnpinCategory: (String) -> Unit,
     onHideCategory: (String) -> Unit,
     zapping: Stream?,
@@ -89,7 +86,7 @@ internal fun SmartphonePlaylistScreenImpl(
     onQuery: (String) -> Unit,
     rowCount: Int,
     scrollUp: Event<Unit>,
-    sorts: ImmutableList<Sort>,
+    sorts: List<Sort>,
     sort: Sort,
     onSort: (Sort) -> Unit,
     onStream: (Stream) -> Unit,
@@ -141,9 +138,9 @@ internal fun SmartphonePlaylistScreenImpl(
                 contentDescription = "refresh",
                 onClick = onRefresh
             ).also { add(it) }
-        }.toPersistentList()
+        }
         onPauseOrDispose {
-            helper.actions = persistentListOf()
+            helper.actions = emptyList()
         }
     }
 
@@ -226,7 +223,7 @@ internal fun SmartphonePlaylistScreenImpl(
                             SmartphoneStreamGallery(
                                 state = state,
                                 rowCount = actualRowCount,
-                                streams = if (pref.paging) persistentListOf()
+                                streams = if (pref.paging) emptyList()
                                 else categories[currentPage].streams,
                                 streamPaged = streamPaged,
                                 zapping = zapping,

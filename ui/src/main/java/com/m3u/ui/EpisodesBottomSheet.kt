@@ -38,13 +38,12 @@ import com.m3u.material.components.CircularProgressIndicator
 import com.m3u.material.components.IconButton
 import com.m3u.material.model.LocalSpacing
 import com.m3u.material.shape.AbsoluteSmoothCornerShape
-import kotlinx.collections.immutable.ImmutableList
 
 @Composable
 fun EpisodesBottomSheet(
     series: Stream?,
     // FIXME: Use shared Episode Class
-    episodes: Resource<ImmutableList<XtreamStreamInfo.Episode>>,
+    episodes: Resource<List<XtreamStreamInfo.Episode>>,
     onRefresh: () -> Unit,
     onEpisodeClick: (XtreamStreamInfo.Episode) -> Unit,
     onDismissRequest: () -> Unit,

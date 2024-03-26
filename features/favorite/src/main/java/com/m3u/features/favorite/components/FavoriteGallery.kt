@@ -20,12 +20,12 @@ import com.m3u.data.database.model.Stream
 import com.m3u.material.ktx.isTelevision
 import com.m3u.material.ktx.plus
 import com.m3u.material.model.LocalSpacing
-import kotlinx.collections.immutable.ImmutableList
+
 
 @Composable
 internal fun FavouriteGallery(
     contentPadding: PaddingValues,
-    streamsResource: Resource<ImmutableList<Stream>>,
+    streamsResource: Resource<List<Stream>>,
     zapping: Stream?,
     recently: Boolean,
     rowCount: Int,
@@ -63,7 +63,7 @@ internal fun FavouriteGallery(
 @Composable
 private fun FavouriteGalleryImpl(
     contentPadding: PaddingValues,
-    streams: ImmutableList<Stream>,
+    streams: List<Stream>,
     zapping: Stream?,
     recently: Boolean,
     rowCount: Int,

@@ -5,6 +5,7 @@ import android.content.ComponentName
 import android.content.ContentUris
 import android.content.Context
 import android.content.Intent
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -51,9 +52,6 @@ import com.m3u.features.playlist.PlaylistMessage.StreamCoverSaved
 import com.m3u.features.playlist.navigation.PlaylistNavigation
 import com.m3u.ui.Sort
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.collections.immutable.ImmutableList
-import kotlinx.collections.immutable.persistentListOf
-import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -265,10 +263,10 @@ class PlaylistViewModel @Inject constructor(
 
     private fun List<Stream>.toCategories(): List<Category> = groupBy { it.category }
         .toList()
-        .map { (name, streams) -> Category(name, streams.toPersistentList()) }
+        .map { (name, streams) -> Category(name, streams) }
 
     private fun List<Stream>.toSingleCategory(): List<Category> = listOf(
-        Category("", toPersistentList())
+        Category("", toList())
     )
 
     internal val playlist: StateFlow<Playlist?> = playlistUrl.flatMapLatest { url ->
@@ -328,7 +326,7 @@ class PlaylistViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5_000L)
         )
 
-    internal val sorts: ImmutableList<Sort> = Sort.entries.toPersistentList()
+    internal val sorts: List<Sort> = Sort.entries
 
     private val sortIndex: MutableStateFlow<Int> = MutableStateFlow(0)
 
@@ -344,17 +342,17 @@ class PlaylistViewModel @Inject constructor(
         sortIndex.update { sorts.indexOf(sort).coerceAtLeast(0) }
     }
 
-    internal val pinnedCategories: StateFlow<ImmutableList<String>> = playlist
+    internal val pinnedCategories: StateFlow<List<String>> = playlist
         .map { it?.pinnedCategories ?: emptyList() }
-        .map { it.toPersistentList() }
+        
         .flowOn(ioDispatcher)
         .stateIn(
             scope = viewModelScope,
-            initialValue = persistentListOf(),
+            initialValue = emptyList(),
             started = SharingStarted.WhileSubscribed(5_000L)
         )
 
-    internal val categories: StateFlow<ImmutableList<Category>> = combine(
+    internal val categories: StateFlow<List<Category>> = combine(
         unsorted,
         sort,
         pinnedCategories
@@ -372,12 +370,12 @@ class PlaylistViewModel @Inject constructor(
             Sort.UNSPECIFIED -> all.toCategories()
         }
             .sortedByDescending { it.name in pinnedCategories }
-            .toPersistentList()
+            
     }
         .flowOn(ioDispatcher)
         .stateIn(
             scope = viewModelScope,
-            initialValue = persistentListOf(),
+            initialValue = emptyList(),
             started = SharingStarted.WhileSubscribed(5_000L)
         )
 
@@ -398,12 +396,12 @@ class PlaylistViewModel @Inject constructor(
     internal val series = MutableStateFlow<Stream?>(null)
     internal val seriesReplay = MutableStateFlow(0)
 
-    internal val episodes: StateFlow<Resource<ImmutableList<XtreamStreamInfo.Episode>>> = series
+    internal val episodes: StateFlow<Resource<List<XtreamStreamInfo.Episode>>> = series
         .combine(seriesReplay) { series, _ -> series }
         .flatMapLatest { series ->
             if (series == null) flow {}
             else resource { playlistRepository.readEpisodesOrThrow(series) }
-                .mapResource { it.toPersistentList() }
+                .mapResource { it }
         }
         .stateIn(
             scope = viewModelScope,
@@ -412,3 +410,9 @@ class PlaylistViewModel @Inject constructor(
             started = SharingStarted.Lazily
         )
 }
+
+@Immutable
+data class Category(
+    val name: String,
+    val streams: List<Stream>
+)

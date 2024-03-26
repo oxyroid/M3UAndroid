@@ -55,8 +55,6 @@ dependencies {
 
     implementation(libs.com.airbnb.android.lottie.compose)
 
-    api(libs.kotlinx.collections.immutable)
-
     api(libs.androidx.tv.tv.foundation)
     api(libs.androidx.tv.tv.material)
 

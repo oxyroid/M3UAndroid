@@ -52,8 +52,6 @@ import com.m3u.ui.helper.Action
 import com.m3u.ui.helper.LocalHelper
 import dev.chrisbanes.haze.HazeDefaults
 import dev.chrisbanes.haze.haze
-import kotlinx.collections.immutable.ImmutableList
-import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.launch
 
 @Composable
@@ -87,7 +85,7 @@ fun ForyouRoute(
     if (isPageInfoVisible) {
         LifecycleResumeEffect(title) {
             helper.title = title.title()
-            helper.actions = persistentListOf(
+            helper.actions = listOf(
                 Action(
                     icon = Icons.Rounded.Add,
                     contentDescription = "add",
@@ -95,7 +93,7 @@ fun ForyouRoute(
                 )
             )
             onPauseOrDispose {
-                helper.actions = persistentListOf()
+                helper.actions = emptyList()
             }
         }
     }
@@ -170,7 +168,7 @@ fun ForyouRoute(
 @Composable
 private fun ForyouScreen(
     rowCount: Int,
-    playlistCountsResource: Resource<ImmutableList<PlaylistWithCount>>,
+    playlistCountsResource: Resource<List<PlaylistWithCount>>,
     recommend: Recommend,
     contentPadding: PaddingValues,
     navigateToPlaylist: (Playlist) -> Unit,

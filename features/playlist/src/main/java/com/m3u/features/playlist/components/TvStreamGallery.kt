@@ -22,11 +22,10 @@ import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.data.database.model.Stream
 import com.m3u.features.playlist.Category
 import com.m3u.material.model.LocalSpacing
-import kotlinx.collections.immutable.ImmutableList
 
 @Composable
 internal fun TvStreamGallery(
-    categories: ImmutableList<Category>,
+    categories: List<Category>,
     streamPaged: LazyPagingItems<Stream>,
     maxBrowserHeight: Dp,
     useGridLayout: Boolean,

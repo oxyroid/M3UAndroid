@@ -55,13 +55,12 @@ import com.m3u.ui.helper.useRailNav
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.HazeStyle
 import dev.chrisbanes.haze.hazeChild
-import kotlinx.collections.immutable.ImmutableList
 
 @Composable
 @OptIn(InternalComposeApi::class)
 internal fun AppScaffold(
     title: String,
-    actions: ImmutableList<Action>,
+    actions: List<Action>,
     rootDestination: Destination.Root?,
     fob: Fob?,
     navigateToRoot: (Destination.Root) -> Unit,
@@ -138,7 +137,7 @@ internal fun TopBarWithContent(
     windowInsets: WindowInsets,
     title: String,
     onBackPressed: (() -> Unit)?,
-    actions: ImmutableList<Action>,
+    actions: List<Action>,
     content: @Composable BoxScope.(PaddingValues) -> Unit
 ) {
     val tv = isTelevision()

@@ -251,6 +251,7 @@ class SubscriptionWorker @AssistedInject constructor(
                 DataSource.M3U -> {
                     m3u(workManager, title, url)
                 }
+
                 DataSource.Xtream -> {
                     val xtreamInput = XtreamInput.decodeFromPlaylistUrlOrNull(url)
                     when {
@@ -264,7 +265,8 @@ class SubscriptionWorker @AssistedInject constructor(
                         )
                     }
                 }
-                else -> return
+
+                else -> throw IllegalArgumentException("DataSource $dataSource is unsupported for worker.")
             }
         }
     }

@@ -16,7 +16,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.SettingsRemote
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FloatingActionButtonDefaults
-import com.m3u.material.components.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -34,6 +33,7 @@ import com.m3u.androidApp.ui.sheet.RemoteControlSheet
 import com.m3u.androidApp.ui.sheet.RemoteControlSheetValue
 import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.data.television.model.RemoteDirection
+import com.m3u.material.components.Icon
 import com.m3u.material.ktx.isTelevision
 import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.Destination
@@ -42,7 +42,7 @@ import com.m3u.ui.LocalNavController
 import com.m3u.ui.SnackHost
 import com.m3u.ui.helper.Action
 import com.m3u.ui.helper.Fob
-import kotlinx.collections.immutable.ImmutableList
+
 
 @Composable
 fun App(
@@ -115,7 +115,7 @@ fun App(
 @Composable
 private fun AppImpl(
     title: String,
-    actions: ImmutableList<Action>,
+    actions: List<Action>,
     fob: Fob?,
     rootDestination: Destination.Root,
     isRemoteControlSheetVisible: Boolean,

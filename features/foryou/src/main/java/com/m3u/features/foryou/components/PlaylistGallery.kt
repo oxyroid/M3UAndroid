@@ -23,12 +23,11 @@ import com.m3u.i18n.R.string
 import com.m3u.material.ktx.isTelevision
 import com.m3u.material.ktx.plus
 import com.m3u.material.model.LocalSpacing
-import kotlinx.collections.immutable.ImmutableList
 
 @Composable
 internal fun PlaylistGallery(
     rowCount: Int,
-    playlistCounts: ImmutableList<PlaylistWithCount>,
+    playlistCounts: List<PlaylistWithCount>,
     onClick: (Playlist) -> Unit,
     onLongClick: (Playlist) -> Unit,
     modifier: Modifier = Modifier,
@@ -62,7 +61,7 @@ internal fun PlaylistGallery(
 @Composable
 private fun SmartphonePlaylistGalleryImpl(
     rowCount: Int,
-    playlistCounts: ImmutableList<PlaylistWithCount>,
+    playlistCounts: List<PlaylistWithCount>,
     onClick: (Playlist) -> Unit,
     onLongClick: (Playlist) -> Unit,
     contentPadding: PaddingValues,
@@ -113,7 +112,7 @@ private fun SmartphonePlaylistGalleryImpl(
 @Composable
 private fun TvPlaylistGalleryImpl(
     rowCount: Int,
-    playlistCounts: ImmutableList<PlaylistWithCount>,
+    playlistCounts: List<PlaylistWithCount>,
     onClick: (Playlist) -> Unit,
     onLongClick: (Playlist) -> Unit,
     contentPadding: PaddingValues,

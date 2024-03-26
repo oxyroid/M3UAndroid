@@ -12,7 +12,6 @@ import androidx.core.util.Consumer
 import com.m3u.core.unspecified.UBoolean
 import com.m3u.core.wrapper.Message
 import com.m3u.data.service.MediaCommand
-import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.flow.StateFlow
 
 typealias OnUserLeaveHint = () -> Unit
@@ -21,7 +20,7 @@ typealias OnPipModeChanged = Consumer<PictureInPictureModeChangedInfo>
 @Stable
 interface Helper {
     var title: String
-    var actions: ImmutableList<Action>
+    var actions: List<Action>
     var fob: Fob?
     var statusBarVisibility: UBoolean
     var navigationBarVisibility: UBoolean

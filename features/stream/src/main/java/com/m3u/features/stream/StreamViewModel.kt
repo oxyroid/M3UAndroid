@@ -20,13 +20,6 @@ import com.m3u.dlna.control.DeviceControl
 import com.m3u.dlna.control.OnDeviceControlListener
 import com.m3u.dlna.control.ServiceActionCallback
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.collections.immutable.ImmutableList
-import kotlinx.collections.immutable.ImmutableMap
-import kotlinx.collections.immutable.persistentListOf
-import kotlinx.collections.immutable.persistentMapOf
-import kotlinx.collections.immutable.toImmutableMap
-import kotlinx.collections.immutable.toPersistentList
-import kotlinx.collections.immutable.toPersistentMap
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -50,7 +43,7 @@ class StreamViewModel @Inject constructor(
     before: Logger,
 ) : ViewModel(), OnDeviceRegistryListener, OnDeviceControlListener {
     private val logger = before.prefix("feat-stream")
-    private val _devices = MutableStateFlow<ImmutableList<Device<*, *, *>>>(persistentListOf())
+    private val _devices = MutableStateFlow<List<Device<*, *, *>>>(emptyList())
 
     // searched screencast devices
     internal val devices = _devices.asStateFlow()
@@ -70,27 +63,26 @@ class StreamViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5_000L)
         )
 
-    internal val formats: StateFlow<ImmutableMap<Int, ImmutableList<Format>>> =
+    internal val formats: StateFlow<Map<Int, List<Format>>> =
         playerManager
             .trackFormats
             .map { all ->
                 all
-                    .mapValues { (_, formats) -> formats.toPersistentList() }
-                    .toImmutableMap()
+                    .mapValues { (_, formats) -> formats }
+                    .toMap()
             }
             .stateIn(
                 scope = viewModelScope,
-                initialValue = persistentMapOf(),
+                initialValue = emptyMap(),
                 started = SharingStarted.WhileSubscribed(5_000L)
             )
 
-    internal val selectedFormats: StateFlow<ImmutableMap<@C.TrackType Int, Format?>> =
+    internal val selectedFormats: StateFlow<Map<@C.TrackType Int, Format?>> =
         playerManager
             .selectedFormats
-            .map { all -> all.toPersistentMap() }
             .stateIn(
                 scope = viewModelScope,
-                initialValue = persistentMapOf(),
+                initialValue = emptyMap(),
                 started = SharingStarted.WhileSubscribed(5_000L)
             )
 
@@ -163,7 +155,7 @@ class StreamViewModel @Inject constructor(
         try {
             _searching.value = false
             _isDevicesVisible.value = false
-            _devices.value = persistentListOf()
+            _devices.value = emptyList()
             DLNACastManager.unregisterListener(this)
         } catch (ignore: Exception) {
 
@@ -204,11 +196,11 @@ class StreamViewModel @Inject constructor(
     }
 
     override fun onDeviceAdded(device: Device<*, *, *>) {
-        _devices.update { (it + device).toPersistentList() }
+        _devices.update { (it + device) }
     }
 
     override fun onDeviceRemoved(device: Device<*, *, *>) {
-        _devices.update { (it - device).toPersistentList() }
+        _devices.update { (it - device) }
     }
 
     override fun onConnected(device: Device<*, *, *>) {

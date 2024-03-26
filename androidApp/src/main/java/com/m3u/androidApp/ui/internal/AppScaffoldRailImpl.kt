@@ -19,7 +19,6 @@ import com.m3u.androidApp.ui.TopBarWithContent
 import com.m3u.ui.Destination
 import com.m3u.ui.helper.Action
 import com.m3u.ui.helper.Fob
-import kotlinx.collections.immutable.ImmutableList
 
 @Composable
 @InternalComposeApi
@@ -30,7 +29,7 @@ internal fun AppScaffoldRailImpl(
     title: String,
     navigateToRoot: (Destination.Root) -> Unit,
     onBackPressed: (() -> Unit)?,
-    actions: ImmutableList<Action>,
+    actions: List<Action>,
     content: @Composable BoxScope.(PaddingValues) -> Unit,
     modifier: Modifier = Modifier
 ) {

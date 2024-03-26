@@ -47,14 +47,13 @@ import androidx.compose.ui.unit.dp
 import com.m3u.features.playlist.Category
 import com.m3u.material.components.IconButton
 import com.m3u.material.model.LocalSpacing
-import kotlinx.collections.immutable.ImmutableList
 
 @Composable
 internal fun PlaylistTabRow(
     page: Int,
     onPageChanged: (Int) -> Unit,
-    categories: ImmutableList<Category>,
-    pinnedCategories: ImmutableList<String>,
+    categories: List<Category>,
+    pinnedCategories: List<String>,
     onPinOrUnpinCategory: (String) -> Unit,
     onHideCategory: (String) -> Unit,
     modifier: Modifier = Modifier

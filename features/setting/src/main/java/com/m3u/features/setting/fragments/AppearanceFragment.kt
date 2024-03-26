@@ -32,11 +32,10 @@ import com.m3u.material.ktx.isTelevision
 import com.m3u.material.ktx.textHorizontalLabel
 import com.m3u.material.ktx.thenIf
 import com.m3u.material.model.LocalSpacing
-import kotlinx.collections.immutable.ImmutableList
 
 @Composable
 internal fun AppearanceFragment(
-    colorPacks: ImmutableList<ColorPack>,
+    colorPacks: List<ColorPack>,
     colorArgb: Int,
     openColorCanvas: (Int, Boolean) -> Unit,
     modifier: Modifier = Modifier,

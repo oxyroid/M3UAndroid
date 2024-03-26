@@ -47,8 +47,6 @@ import com.m3u.ui.helper.Action
 import com.m3u.ui.helper.LocalHelper
 import dev.chrisbanes.haze.HazeDefaults
 import dev.chrisbanes.haze.haze
-import kotlinx.collections.immutable.ImmutableList
-import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.launch
 
 @Composable
@@ -88,7 +86,7 @@ fun FavouriteRoute(
     if (isPageInfoVisible) {
         LifecycleResumeEffect(title) {
             helper.title = title.title()
-            helper.actions = persistentListOf(
+            helper.actions = listOf(
                 Action(
                     icon = Icons.AutoMirrored.Rounded.Sort,
                     contentDescription = "sort",
@@ -96,7 +94,7 @@ fun FavouriteRoute(
                 )
             )
             onPauseOrDispose {
-                helper.actions = persistentListOf()
+                helper.actions = emptyList()
             }
         }
     }
@@ -188,7 +186,7 @@ fun FavouriteRoute(
 private fun FavoriteScreen(
     contentPadding: PaddingValues,
     rowCount: Int,
-    streamsResource: Resource<ImmutableList<Stream>>,
+    streamsResource: Resource<List<Stream>>,
     zapping: Stream?,
     recently: Boolean,
     onClickStream: (Stream) -> Unit,

@@ -52,8 +52,6 @@ import com.m3u.material.ktx.isTelevision
 import com.m3u.material.ktx.textHorizontalLabel
 import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.helper.LocalHelper
-import kotlinx.collections.immutable.ImmutableList
-import kotlinx.collections.immutable.persistentListOf
 
 private enum class SubscriptionsFragmentPage {
     MAIN, HIDDEN_STREAMS, HIDDEN_PLAYLIST_CATEGORIES
@@ -76,8 +74,8 @@ internal fun SubscriptionsFragment(
     localStorage: Boolean,
     subscribeForTv: Boolean,
     backingUpOrRestoring: BackingUpAndRestoringState,
-    hiddenStreams: ImmutableList<Stream>,
-    hiddenCategoriesWithPlaylists: ImmutableList<Pair<Playlist, String>>,
+    hiddenStreams: List<Stream>,
+    hiddenCategoriesWithPlaylists: List<Pair<Playlist, String>>,
     onUnhideStream: (Int) -> Unit,
     onUnhidePlaylistCategory: (playlistUrl: String, category: String) -> Unit,
     onTitle: (String) -> Unit,
@@ -197,7 +195,7 @@ private fun MainContentImpl(
         item {
             DataSourceSelection(
                 selected = selected,
-                supported = persistentListOf(
+                supported = listOf(
                     DataSource.M3U,
                     DataSource.Xtream,
                     DataSource.Emby,
@@ -317,7 +315,7 @@ private fun MainContentImpl(
 
 @Composable
 fun HiddenStreamContentImpl(
-    hiddenStreams: ImmutableList<Stream>,
+    hiddenStreams: List<Stream>,
     onUnhideStream: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -341,7 +339,7 @@ fun HiddenStreamContentImpl(
 
 @Composable
 fun HiddenPlaylistCategoriesContentImpl(
-    hiddenCategoriesWithPlaylists: ImmutableList<Pair<Playlist, String>>,
+    hiddenCategoriesWithPlaylists: List<Pair<Playlist, String>>,
     onUnhidePlaylistCategory: (playlistUrl: String, category: String) -> Unit,
     modifier: Modifier = Modifier
 ) {

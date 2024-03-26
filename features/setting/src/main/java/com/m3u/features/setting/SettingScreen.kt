@@ -65,8 +65,6 @@ import com.m3u.ui.helper.Fob
 import com.m3u.ui.helper.LocalHelper
 import dev.chrisbanes.haze.HazeDefaults
 import dev.chrisbanes.haze.haze
-import kotlinx.collections.immutable.ImmutableList
-import kotlinx.collections.immutable.persistentListOf
 
 @Composable
 fun SettingRoute(
@@ -180,8 +178,8 @@ private fun SettingScreen(
     onTitle: (String) -> Unit,
     onUrl: (String) -> Unit,
     onSubscribe: () -> Unit,
-    hiddenStreams: ImmutableList<Stream>,
-    hiddenCategoriesWithPlaylists: ImmutableList<Pair<Playlist, String>>,
+    hiddenStreams: List<Stream>,
+    hiddenCategoriesWithPlaylists: List<Pair<Playlist, String>>,
     onUnhideStream: (Int) -> Unit,
     onUnhidePlaylistCategory: (playlistUrl: String, group: String) -> Unit,
     localStorage: Boolean,
@@ -192,7 +190,7 @@ private fun SettingScreen(
     backup: () -> Unit,
     restore: () -> Unit,
     onClipboard: (String) -> Unit,
-    colorPacks: ImmutableList<ColorPack>,
+    colorPacks: List<ColorPack>,
     openColorCanvas: (Int, Boolean) -> Unit,
     selected: DataSource,
     onSelected: (DataSource) -> Unit,
@@ -243,7 +241,7 @@ private fun SettingScreen(
                     fragment = SettingFragment.Default
                 }
             }
-            helper.actions = persistentListOf()
+            helper.actions = emptyList()
             onPauseOrDispose {
                 helper.fob = null
             }

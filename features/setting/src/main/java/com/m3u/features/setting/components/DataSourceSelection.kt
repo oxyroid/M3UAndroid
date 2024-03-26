@@ -26,13 +26,12 @@ import com.m3u.data.database.model.DataSource
 import com.m3u.material.components.ClickableSelection
 import com.m3u.material.components.Icon
 import com.m3u.material.components.SelectionsDefaults
-import kotlinx.collections.immutable.ImmutableList
 
 @Composable
 internal fun DataSourceSelection(
     selected: DataSource,
     onSelected: (DataSource) -> Unit,
-    supported: ImmutableList<DataSource>,
+    supported: List<DataSource>,
     modifier: Modifier = Modifier
 ) {
     var expanded by remember { mutableStateOf(false) }

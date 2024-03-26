@@ -16,13 +16,12 @@ import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.data.database.model.Stream
 import com.m3u.material.ktx.plus
 import com.m3u.material.model.LocalSpacing
-import kotlinx.collections.immutable.ImmutableList
 
 @Composable
 internal fun SmartphoneStreamGallery(
     state: LazyStaggeredGridState,
     rowCount: Int,
-    streams: ImmutableList<Stream>,
+    streams: List<Stream>,
     streamPaged: LazyPagingItems<Stream>,
     zapping: Stream?,
     recently: Boolean,
@@ -51,7 +50,7 @@ internal fun SmartphoneStreamGallery(
 private fun SmartphoneStreamGalleryImpl(
     state: LazyStaggeredGridState,
     rowCount: Int,
-    streams: ImmutableList<Stream>,
+    streams: List<Stream>,
     streamPaged: LazyPagingItems<Stream>,
     zapping: Stream?,
     recently: Boolean,

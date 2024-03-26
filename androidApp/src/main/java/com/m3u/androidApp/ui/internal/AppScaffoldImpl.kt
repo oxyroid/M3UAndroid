@@ -33,7 +33,6 @@ import com.m3u.ui.helper.Action
 import com.m3u.ui.helper.Fob
 import dev.chrisbanes.haze.HazeStyle
 import dev.chrisbanes.haze.hazeChild
-import kotlinx.collections.immutable.ImmutableList
 
 @Composable
 @InternalComposeApi
@@ -44,7 +43,7 @@ fun AppScaffoldImpl(
     title: String,
     navigateToRoot: (Destination.Root) -> Unit,
     onBackPressed: (() -> Unit)?,
-    actions: ImmutableList<Action>,
+    actions: List<Action>,
     content: @Composable BoxScope.(PaddingValues) -> Unit,
     modifier: Modifier = Modifier
 ) {

@@ -38,7 +38,7 @@ import com.m3u.material.components.BottomSheet
 import com.m3u.material.components.Icon
 import com.m3u.material.components.television.dialogFocusable
 import com.m3u.material.model.LocalSpacing
-import kotlinx.collections.immutable.ImmutableList
+
 import androidx.tv.material3.MaterialTheme as TvMaterialTheme
 import androidx.tv.material3.Text as TvText
 
@@ -54,7 +54,7 @@ enum class Sort(@StringRes val resId: Int) {
 fun SortBottomSheet(
     visible: Boolean,
     sort: Sort,
-    sorts: ImmutableList<Sort>,
+    sorts: List<Sort>,
     sheetState: SheetState,
     onChanged: (Sort) -> Unit,
     onDismissRequest: () -> Unit,
@@ -130,7 +130,7 @@ private fun SortBottomSheetItem(
 fun TvSortFullScreenDialog(
     visible: Boolean,
     sort: Sort,
-    sorts: ImmutableList<Sort>,
+    sorts: List<Sort>,
     onChanged: (Sort) -> Unit,
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier,

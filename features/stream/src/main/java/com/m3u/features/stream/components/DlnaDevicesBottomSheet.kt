@@ -37,13 +37,12 @@ import com.m3u.ui.UnstableBadge
 import com.m3u.ui.UnstableValue
 import com.m3u.material.components.mask.MaskState
 import com.m3u.material.model.LocalSpacing
-import kotlinx.collections.immutable.ImmutableList
 import org.jupnp.model.meta.Device
 
 @Composable
 internal fun DlnaDevicesBottomSheet(
     isDevicesVisible: Boolean,
-    devices: ImmutableList<Device<*, *, *>>,
+    devices: List<Device<*, *, *>>,
     connected: Device<*, *, *>?,
     searching: Boolean,
     maskState: MaskState,
