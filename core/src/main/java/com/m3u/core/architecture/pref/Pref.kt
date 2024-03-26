@@ -67,7 +67,7 @@ interface Pref {
         const val DEFAULT_AUTO_REFRESH = false
         const val DEFAULT_FULL_INFO_PLAYER = false
         const val DEFAULT_ROOT_DESTINATION = 0
-        const val DEFAULT_NO_PICTURE_MODE = true
+        const val DEFAULT_NO_PICTURE_MODE = false
         const val DEFAULT_DARK_MODE = true
 
         @ChecksSdkIntAtLeast(api = Build.VERSION_CODES.S)
@@ -87,7 +87,7 @@ interface Pref {
         const val DEFAULT_TUNNELING = false
         const val DEFAULT_ALWAYS_TV = false
         const val DEFAULT_REMOTE_CONTROL = false
-        const val DEFAULT_PROGRESS = false
+        const val DEFAULT_PROGRESS = true
         const val DEFAULT_ALWAYS_SHOW_REFRESH = false
         const val DEFAULT_PAGING = false
 
