@@ -136,7 +136,6 @@ dependencies {
     implementation(project(":features:playlist"))
     implementation(project(":features:stream"))
     implementation(project(":features:crash"))
-    implementation(project(":features:about"))
 
     implementation(libs.androidx.core.core.ktx)
     implementation(libs.androidx.appcompat.appcompat)

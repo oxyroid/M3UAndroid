@@ -25,8 +25,7 @@ include(
     ":features:stream",
     ":features:playlist",
     ":features:favorite",
-    ":features:crash",
-    ":features:about"
+    ":features:crash"
 )
 include(":benchmark")
 include(":i18n")

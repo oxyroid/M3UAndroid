@@ -9,7 +9,6 @@ import androidx.compose.material.icons.automirrored.rounded.OpenInNew
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.PermDeviceInformation
-import androidx.compose.material.icons.rounded.Source
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -26,7 +25,6 @@ internal fun OtherPreferences(
     versionCode: Int,
     cacheSpace: DataUnit,
     onClearCache: () -> Unit,
-    navigateToAbout: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -47,11 +45,6 @@ internal fun OtherPreferences(
             title = stringResource(string.feat_setting_clear_cache, cacheSpace.toString()).title(),
             icon = Icons.Rounded.Delete,
             onClick = onClearCache
-        )
-        Preference(
-            title = stringResource(string.feat_setting_project_about).title(),
-            icon = Icons.Rounded.Source,
-            onClick = navigateToAbout
         )
         Preference(
             title = stringResource(string.feat_setting_app_version).title(),

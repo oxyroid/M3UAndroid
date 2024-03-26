@@ -71,7 +71,6 @@ import kotlinx.collections.immutable.persistentListOf
 @Composable
 fun SettingRoute(
     contentPadding: PaddingValues,
-    navigateToAbout: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: SettingViewModel = hiltViewModel()
 ) {
@@ -130,7 +129,6 @@ fun SettingRoute(
             onUnhidePlaylistCategory = { playlistUrl, group ->
                 viewModel.onUnhidePlaylistCategory(playlistUrl, group)
             },
-            navigateToAbout = navigateToAbout,
             localStorage = state.localStorage,
             onLocalStorage = { viewModel.onEvent(SettingEvent.OnLocalStorage) },
             subscribeForTv = viewModel.forTv,
@@ -186,7 +184,6 @@ private fun SettingScreen(
     hiddenCategoriesWithPlaylists: ImmutableList<Pair<Playlist, String>>,
     onUnhideStream: (Int) -> Unit,
     onUnhidePlaylistCategory: (playlistUrl: String, group: String) -> Unit,
-    navigateToAbout: () -> Unit,
     localStorage: Boolean,
     onLocalStorage: (Boolean) -> Unit,
     subscribeForTv: Boolean,
@@ -282,7 +279,6 @@ private fun SettingScreen(
                 navigateToThemeSelector = {
                     fragment = SettingFragment.Appearance
                 },
-                navigateToAbout = navigateToAbout,
                 cacheSpace = cacheSpace,
                 onClearCache = onClearCache,
                 modifier = Modifier.fillMaxSize()

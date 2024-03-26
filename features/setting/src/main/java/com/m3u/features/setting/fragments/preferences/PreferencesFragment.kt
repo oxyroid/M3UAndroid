@@ -25,7 +25,6 @@ internal fun PreferencesFragment(
     versionCode: Int,
     navigateToPlaylistManagement: () -> Unit,
     navigateToThemeSelector: () -> Unit,
-    navigateToAbout: () -> Unit,
     cacheSpace: DataUnit,
     onClearCache: () -> Unit,
     modifier: Modifier = Modifier
@@ -59,7 +58,6 @@ internal fun PreferencesFragment(
                 OtherPreferences(
                     versionName = versionName,
                     versionCode = versionCode,
-                    navigateToAbout = navigateToAbout,
                     cacheSpace = cacheSpace,
                     onClearCache = onClearCache
                 )
@@ -92,7 +90,6 @@ internal fun PreferencesFragment(
                 OtherPreferences(
                     versionName = versionName,
                     versionCode = versionCode,
-                    navigateToAbout = navigateToAbout,
                     cacheSpace = cacheSpace,
                     onClearCache = onClearCache
                 )

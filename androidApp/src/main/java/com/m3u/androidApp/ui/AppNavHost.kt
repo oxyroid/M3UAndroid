@@ -13,8 +13,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.compose.NavHost
 import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.core.wrapper.eventOf
-import com.m3u.features.about.navigation.aboutScreen
-import com.m3u.features.about.navigation.navigateToAbout
 import com.m3u.features.playlist.navigation.navigateToPlaylist
 import com.m3u.features.playlist.navigation.playlistScreen
 import com.m3u.features.playlist.navigation.playlistTvScreen
@@ -81,9 +79,6 @@ fun AppNavHost(
                     options.toBundle()
                 )
             },
-            navigateToAbout = {
-                navController.navigateToAbout()
-            },
             navigateToSettingPlaylistManagement = {
                 navigateToRoot(Destination.Root.Setting)
                 EventBus.settingFragment = eventOf(SettingFragment.Playlists)
@@ -91,6 +86,5 @@ fun AppNavHost(
         )
 
         playlistTvScreen()
-        aboutScreen(contentPadding)
     }
 }
