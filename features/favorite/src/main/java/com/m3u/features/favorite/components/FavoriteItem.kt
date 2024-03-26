@@ -1,8 +1,6 @@
 package com.m3u.features.favorite.components
 
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.height
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.LocalContentColor
@@ -12,16 +10,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
-import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.data.database.model.Stream
 import com.m3u.i18n.R.string
-import com.m3u.material.components.Image
 import com.m3u.material.model.LocalSpacing
 import com.m3u.material.shape.AbsoluteSmoothCornerShape
 import kotlinx.datetime.Clock
@@ -61,12 +55,9 @@ private fun FavoriteItemImpl(
     zapping: Boolean = false
 ) {
     val spacing = LocalSpacing.current
-    val pref = LocalPref.current
 
     val recentlyString = stringResource(string.ui_sort_recently)
     val neverPlayedString = stringResource(string.ui_sort_never_played)
-
-    val noPictureMode = pref.noPictureMode
 
     OutlinedCard(
         modifier = Modifier.semantics(mergeDescendants = true) { },
@@ -83,18 +74,6 @@ private fun FavoriteItemImpl(
                     fontWeight = FontWeight.Bold,
                 )
             },
-            leadingContent = if (!noPictureMode) {
-                {
-                    Image(
-                        model = stream.cover,
-                        transparentPlaceholder = true,
-                        contentScale = ContentScale.Fit,
-                        modifier = Modifier
-                            .height(56.dp)
-                            .aspectRatio(1f)
-                    )
-                }
-            } else null,
             supportingContent = {
                 if (recently) {
                     Text(
