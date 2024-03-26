@@ -55,5 +55,4 @@ dependencies {
     implementation(libs.androidx.hilt.hilt.work)
 
     implementation(libs.androidx.compose.material3.material3.adaptive)
-    implementation(libs.com.google.accompanist.accompanist.permissions)
 }

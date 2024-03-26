@@ -107,6 +107,7 @@ fun FavouriteRoute(
             rowCount = pref.rowCount,
             streamsResource = streamsResource,
             zapping = zapping,
+            recently = sort == Sort.RECENTLY,
             onClickStream = { stream ->
                 coroutineScope.launch {
                     val playlist = viewModel.getPlaylist(stream.playlistUrl)
@@ -123,7 +124,6 @@ fun FavouriteRoute(
                 }
             },
             onLongClickStream = { dialogStatus = DialogStatus.Selections(it) },
-            sort = sort,
             modifier = Modifier
                 .fillMaxSize()
                 .thenIf(!tv && pref.godMode) {
@@ -193,9 +193,9 @@ private fun FavoriteScreen(
     rowCount: Int,
     streamsResource: Resource<ImmutableList<Stream>>,
     zapping: Stream?,
+    recently: Boolean,
     onClickStream: (Stream) -> Unit,
     onLongClickStream: (Stream) -> Unit,
-    sort: Sort,
     modifier: Modifier = Modifier
 ) {
     val configuration = LocalConfiguration.current
@@ -208,8 +208,8 @@ private fun FavoriteScreen(
         contentPadding = contentPadding,
         streamsResource = streamsResource,
         zapping = zapping,
+        recently = recently,
         rowCount = actualRowCount,
-        sort = sort,
         onClick = onClickStream,
         onLongClick = onLongClickStream,
         modifier = modifier.haze(

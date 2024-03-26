@@ -1,7 +1,7 @@
 package com.m3u.features.favorite.components
 
 import androidx.compose.foundation.layout.Arrangement
- import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -21,7 +21,6 @@ import com.m3u.data.database.model.Stream
 import com.m3u.material.ktx.isTelevision
 import com.m3u.material.ktx.plus
 import com.m3u.material.model.LocalSpacing
-import com.m3u.ui.Sort
 import kotlinx.collections.immutable.ImmutableList
 
 @Composable
@@ -29,8 +28,8 @@ internal fun FavouriteGallery(
     contentPadding: PaddingValues,
     streamsResource: Resource<ImmutableList<Stream>>,
     zapping: Stream?,
+    recently: Boolean,
     rowCount: Int,
-    sort: Sort,
     onClick: (Stream) -> Unit,
     onLongClick: (Stream) -> Unit,
     modifier: Modifier = Modifier
@@ -47,14 +46,15 @@ internal fun FavouriteGallery(
                         .padding(contentPadding)
                 )
             }
+
             is Resource.Success -> {
                 if (!compact) {
                     FavouriteGalleryImpl(
                         contentPadding = contentPadding,
                         streams = streamsResource.data,
                         zapping = zapping,
+                        recently = recently,
                         rowCount = rowCount,
-                        sort = sort,
                         onClick = onClick,
                         onLongClick = onLongClick
                     )
@@ -63,13 +63,14 @@ internal fun FavouriteGallery(
                         contentPadding = contentPadding,
                         streams = streamsResource.data,
                         zapping = zapping,
+                        recently = recently,
                         rowCount = rowCount,
-                        sort = sort,
                         onClick = onClick,
                         onLongClick = onLongClick
                     )
                 }
             }
+
             is Resource.Failure -> {}
         }
     }
@@ -80,14 +81,13 @@ private fun FavouriteGalleryImpl(
     contentPadding: PaddingValues,
     streams: ImmutableList<Stream>,
     zapping: Stream?,
+    recently: Boolean,
     rowCount: Int,
-    sort: Sort,
     onClick: (Stream) -> Unit,
     onLongClick: (Stream) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
-    val pref = LocalPref.current
     val tv = isTelevision()
     if (!tv) {
         LazyVerticalStaggeredGrid(
@@ -104,11 +104,10 @@ private fun FavouriteGalleryImpl(
             ) { stream ->
                 FavoriteItem(
                     stream = stream,
-                    noPictureMode = pref.noPictureMode,
                     zapping = zapping == stream,
-                    sort = sort,
                     onClick = { onClick(stream) },
                     onLongClick = { onLongClick(stream) },
+                    recently = recently,
                     modifier = Modifier.fillMaxWidth()
                 )
             }
@@ -131,9 +130,8 @@ private fun FavouriteGalleryImpl(
             ) { stream ->
                 FavoriteItem(
                     stream = stream,
-                    noPictureMode = pref.noPictureMode,
                     zapping = zapping == stream,
-                    sort = sort,
+                    recently = recently,
                     onClick = { onClick(stream) },
                     onLongClick = { onLongClick(stream) },
                     modifier = Modifier.fillMaxWidth()
@@ -148,14 +146,13 @@ private fun CompactFavouriteGalleryImpl(
     contentPadding: PaddingValues,
     streams: ImmutableList<Stream>,
     zapping: Stream?,
+    recently: Boolean,
     rowCount: Int,
-    sort: Sort,
     onClick: (Stream) -> Unit,
     onLongClick: (Stream) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
-    val pref = LocalPref.current
 
     val tv = isTelevision()
     if (!tv) {
@@ -171,9 +168,8 @@ private fun CompactFavouriteGalleryImpl(
             ) { stream ->
                 FavoriteItem(
                     stream = stream,
-                    noPictureMode = pref.noPictureMode,
                     zapping = zapping == stream,
-                    sort = sort,
+                    recently = recently,
                     onClick = { onClick(stream) },
                     onLongClick = { onLongClick(stream) },
                     modifier = Modifier.fillMaxWidth()
@@ -194,9 +190,8 @@ private fun CompactFavouriteGalleryImpl(
             ) { stream ->
                 FavoriteItem(
                     stream = stream,
-                    noPictureMode = pref.noPictureMode,
                     zapping = zapping == stream,
-                    sort = sort,
+                    recently = recently,
                     onClick = { onClick(stream) },
                     onLongClick = { onLongClick(stream) },
                     modifier = Modifier.fillMaxWidth()

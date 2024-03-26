@@ -1,11 +1,12 @@
 package com.m3u.ui
 
-import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -14,7 +15,9 @@ import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -66,6 +69,7 @@ fun EpisodesBottomSheet(
     BottomSheet(
         sheetState = sheetState,
         visible = visible,
+        blurBody = true,
         header = {
             series?.let {
                 Text(
@@ -74,24 +78,22 @@ fun EpisodesBottomSheet(
                 )
             }
             Spacer(modifier = Modifier.weight(1f))
-            Crossfade(
-                targetState = episodes,
-                label = "episodes-bottom-sheet-status"
-            ) { resource ->
-                when (resource) {
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier.minimumInteractiveComponentSize()
+            ) {
+                when (episodes) {
                     Resource.Loading -> {
                         CircularProgressIndicator()
                     }
 
-                    is Resource.Failure -> {
+                    else -> {
                         IconButton(
                             icon = Icons.Rounded.Refresh,
                             contentDescription = null,
                             onClick = onRefresh
                         )
                     }
-
-                    is Resource.Success -> {}
                 }
             }
         },
@@ -111,8 +113,8 @@ fun EpisodesBottomSheet(
             LazyColumn(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f)
-                    .padding(top = spacing.medium)
+                    .weight(1f),
+                verticalArrangement = Arrangement.spacedBy(spacing.small)
             ) {
                 if (loading) {
                     stickyHeader {
@@ -121,10 +123,12 @@ fun EpisodesBottomSheet(
                         )
                     }
                 }
+                item { Spacer(modifier = Modifier.height(spacing.medium)) }
                 items(actualEpisodes) { episode ->
                     XtreamEpisodeItem(
                         episode = episode,
-                        onClick = { onEpisodeClick(episode) }
+                        onClick = { onEpisodeClick(episode) },
+                        modifier = Modifier.padding(horizontal = spacing.medium)
                     )
                 }
             }
@@ -141,36 +145,41 @@ private fun XtreamEpisodeItem(
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
-    ListItem(
-        trailingContent = {
-            Box(
-                modifier = Modifier
-                    .clip(AbsoluteSmoothCornerShape(spacing.medium, 65))
-                    .background(MaterialTheme.colorScheme.primary),
-                contentAlignment = Alignment.Center
-            ) {
+    OutlinedCard(
+        shape = AbsoluteSmoothCornerShape(spacing.medium, 65),
+        modifier = modifier
+    ) {
+        ListItem(
+            trailingContent = {
+                Box(
+                    modifier = Modifier
+                        .clip(AbsoluteSmoothCornerShape(spacing.medium, 65))
+                        .background(MaterialTheme.colorScheme.primary),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        color = MaterialTheme.colorScheme.onPrimary,
+                        text = episode.episodeNum.toString(),
+                        style = MaterialTheme.typography.bodyMedium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.padding(
+                            start = spacing.small,
+                            end = spacing.small,
+                            bottom = 2.dp,
+                        ),
+                        softWrap = false,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            },
+            headlineContent = {
                 Text(
-                    color = MaterialTheme.colorScheme.onPrimary,
-                    text = episode.episodeNum.toString(),
-                    style = MaterialTheme.typography.bodyMedium,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.padding(
-                        start = spacing.small,
-                        end = spacing.small,
-                        bottom = 2.dp,
-                    ),
-                    softWrap = false,
-                    textAlign = TextAlign.Center
+                    text = episode.title.orEmpty(),
+                    style = MaterialTheme.typography.bodyMedium
                 )
-            }
-        },
-        headlineContent = {
-            Text(
-                text = episode.title.orEmpty(),
-                style = MaterialTheme.typography.bodyMedium
-            )
-        },
-        modifier = modifier.clickable { onClick() }
-    )
+            },
+            modifier = Modifier.clickable { onClick() }
+        )
+    }
 }

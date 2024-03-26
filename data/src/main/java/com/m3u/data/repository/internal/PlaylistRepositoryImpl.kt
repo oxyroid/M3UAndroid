@@ -58,6 +58,7 @@ import java.io.Reader
 import javax.inject.Inject
 
 private const val BUFFER_XTREAM_CAPACITY = 100
+private const val BUFFER_RESTORE_CAPACITY = 400
 
 internal class PlaylistRepositoryImpl @Inject constructor(
     private val playlistDao: PlaylistDao,
@@ -341,10 +342,10 @@ internal class PlaylistRepositoryImpl @Inject constructor(
             val json = Json {
                 ignoreUnknownKeys = true
             }
+            val mutex = Mutex()
             context.contentResolver.openInputStream(uri)?.use {
                 val reader = it.bufferedReader()
 
-                val playlists = mutableListOf<Playlist>()
                 val streams = mutableListOf<Stream>()
                 reader.forEachLine { line ->
                     if (line.isBlank()) return@forEachLine
@@ -353,19 +354,28 @@ internal class PlaylistRepositoryImpl @Inject constructor(
                     when {
                         encodedPlaylist != null -> logger.sandBox {
                             val playlist = json.decodeFromString<Playlist>(encodedPlaylist)
-                            playlists.add(playlist)
+                            playlistDao.insertOrReplace(playlist)
                         }
 
                         encodedStream != null -> logger.sandBox {
                             val stream = json.decodeFromString<Stream>(encodedStream)
                             streams.add(stream)
+                            if (streams.size >= BUFFER_RESTORE_CAPACITY) {
+                                mutex.withLock {
+                                    if (streams.size >= BUFFER_RESTORE_CAPACITY) {
+                                        streamDao.insertOrReplaceAll(*streams.toTypedArray())
+                                        streams.clear()
+                                    }
+                                }
+                            }
                         }
 
                         else -> {}
                     }
                 }
-                playlistDao.insertOrReplaceAll(*playlists.toTypedArray())
-                streamDao.insertOrReplaceAll(*streams.toTypedArray())
+                mutex.withLock {
+                    streamDao.insertOrReplaceAll(*streams.toTypedArray())
+                }
             }
         }
     }

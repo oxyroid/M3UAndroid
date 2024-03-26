@@ -54,6 +54,5 @@ dependencies {
     implementation(libs.androidx.hilt.hilt.navigation.compose)
     ksp(libs.com.google.dagger.hilt.compiler)
 
-    implementation(libs.com.google.accompanist.accompanist.permissions)
     implementation(libs.jupnp)
 }

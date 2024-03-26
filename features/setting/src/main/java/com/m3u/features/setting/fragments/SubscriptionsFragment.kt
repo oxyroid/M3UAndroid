@@ -4,7 +4,6 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.net.Uri
-import android.os.Build
 import android.provider.Settings
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.Arrangement
@@ -30,9 +29,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.res.stringResource
-import com.google.accompanist.permissions.PermissionStatus
 import com.google.accompanist.permissions.rememberPermissionState
-import com.google.accompanist.permissions.shouldShowRationale
 import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
@@ -50,6 +47,7 @@ import com.m3u.material.components.HorizontalPagerIndicator
 import com.m3u.material.components.Icon
 import com.m3u.material.components.PlaceholderField
 import com.m3u.material.components.TonalButton
+import com.m3u.material.ktx.checkPermissionOrRationale
 import com.m3u.material.ktx.isTelevision
 import com.m3u.material.ktx.textHorizontalLabel
 import com.m3u.material.model.LocalSpacing
@@ -261,37 +259,28 @@ private fun MainContentImpl(
         }
 
         item {
-            val postNotificationPermissionRequired =
-                Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
-
             @SuppressLint("InlinedApi")
-            val postNotificationPermissionState = rememberPermissionState(
+            val postNotificationPermission = rememberPermissionState(
                 Manifest.permission.POST_NOTIFICATIONS
             )
             Button(
                 text = stringResource(string.feat_setting_label_subscribe),
                 onClick = {
-                    when {
-                        !postNotificationPermissionRequired -> {}
-                        postNotificationPermissionState.status is PermissionStatus.Denied -> {
-                            if (postNotificationPermissionState.status.shouldShowRationale) {
-                                postNotificationPermissionState.launchPermissionRequest()
-                            } else {
-                                val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
-                                    .apply {
-                                        putExtra(
-                                            Settings.EXTRA_APP_PACKAGE,
-                                            helper.activityContext.packageName
-                                        )
-                                    }
-                                helper.activityContext.startActivity(intent)
-                            }
-                            return@Button
+                    postNotificationPermission.checkPermissionOrRationale(
+                        showRationale = {
+                            val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                                .apply {
+                                    putExtra(
+                                        Settings.EXTRA_APP_PACKAGE,
+                                        helper.activityContext.packageName
+                                    )
+                                }
+                            helper.activityContext.startActivity(intent)
+                        },
+                        block = {
+                            onSubscribe()
                         }
-
-                        else -> {}
-                    }
-                    onSubscribe()
+                    )
                 },
                 modifier = Modifier.fillMaxWidth()
             )

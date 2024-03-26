@@ -63,7 +63,6 @@ dependencies {
 
     implementation(libs.androidx.work.work.runtime.ktx)
 
-    implementation(libs.com.google.accompanist.accompanist.permissions)
     implementation(libs.androidx.tvprovider.tvprovider)
 }
 

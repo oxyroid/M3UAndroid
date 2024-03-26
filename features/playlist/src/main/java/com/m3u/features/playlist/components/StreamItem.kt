@@ -3,16 +3,12 @@ package com.m3u.features.playlist.components
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material3.CardDefaults
@@ -28,7 +24,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -39,14 +34,12 @@ import com.m3u.data.database.model.Stream
 import com.m3u.i18n.R.string
 import com.m3u.material.components.Icon
 import com.m3u.material.components.Image
-import com.m3u.material.components.TextBadge
 import com.m3u.material.model.LocalSpacing
 import com.m3u.material.shape.AbsoluteSmoothCornerShape
 import com.m3u.ui.UiMode
 import com.m3u.ui.currentUiMode
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
-import java.net.URI
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
@@ -101,7 +94,6 @@ private fun StreamItemImpl(
     zapping: Boolean = false,
     isVodOrSeriesPlaylist: Boolean = true
 ) {
-    val context = LocalContext.current
     val spacing = LocalSpacing.current
     val pref = LocalPref.current
 
@@ -111,14 +103,6 @@ private fun StreamItemImpl(
     val neverPlayedString = stringResource(string.ui_sort_never_played)
 
     val noPictureMode = pref.noPictureMode
-
-    val scheme = remember(stream) {
-        try {
-            URI(stream.url).scheme
-        } catch (ignored: Exception) {
-            null
-        } ?: context.getString(string.feat_playlist_scheme_unknown).uppercase()
-    }
 
     val onlyPictureMode = remember(stream.cover, isVodOrSeriesPlaylist, noPictureMode) {
         when {
@@ -149,96 +133,89 @@ private fun StreamItemImpl(
         border = CardDefaults.outlinedCardBorder(zapping),
         shape = AbsoluteSmoothCornerShape(spacing.medium, 65),
     ) {
-        Column(
-            modifier = Modifier
-                .combinedClickable(
-                    onClick = onClick,
-                    onLongClick = onLongClick
-                )
-                .then(modifier)
-        ) {
-            AnimatedVisibility(!noPictureMode) {
-                Box {
-                    Image(
-                        model = stream.cover,
-                        errorPlaceholder = stream.title,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .aspectRatio(
-                                if (!isVodOrSeriesPlaylist) 4 / 3f else 2 / 3f
-                            )
+        if (!onlyPictureMode) {
+            ListItem(
+                headlineContent = {
+                    Text(
+                        text = stream.title.trim(),
+                        style = MaterialTheme.typography.titleSmall,
+                        overflow = TextOverflow.Ellipsis,
+                        maxLines = 1,
+                        fontWeight = FontWeight.Bold,
                     )
-                    if (onlyPictureMode && favourite) {
-                        Box(
+                },
+                leadingContent = if (!noPictureMode) {
+                    {
+                        Image(
+                            model = stream.cover,
+                            transparentPlaceholder = true,
+                            contentScale = ContentScale.Fit,
                             modifier = Modifier
-                                .padding(spacing.small)
-                                .align(Alignment.BottomEnd)
-                        ) { star() }
-                    }
-                }
-            }
-            if (!onlyPictureMode) {
-                Column(
-                    modifier = Modifier.padding(spacing.medium),
-                    verticalArrangement = Arrangement.spacedBy(spacing.small)
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Column(
-                            // icon-button-tokens: icon-size
-                            modifier = Modifier
-                                .heightIn(min = 24.dp)
-                                .weight(1f)
-                        ) {
-                            Text(
-                                text = stream.title.trim(),
-                                style = MaterialTheme.typography.titleSmall,
-                                overflow = TextOverflow.Ellipsis,
-                                maxLines = 1,
-                                fontWeight = FontWeight.Bold,
-                            )
-                            if (recently) {
-                                Text(
-                                    text = remember(stream.seen) {
-                                        val now = Clock.System.now()
-                                        val instant = Instant.fromEpochMilliseconds(stream.seen)
-                                        val duration = now - instant
-                                        duration.toComponents { days, hours, minutes, seconds, _ ->
-                                            when {
-                                                stream.seen == 0L -> neverPlayedString
-                                                days > 0 -> days.days.toString()
-                                                hours > 0 -> hours.hours.toString()
-                                                minutes > 0 -> minutes.minutes.toString()
-                                                seconds > 0 -> seconds.seconds.toString()
-                                                else -> recentlyString
-                                            }
-                                        }
-                                    },
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = LocalContentColor.current.copy(0.56f)
+                                .height(56.dp)
+                                .aspectRatio(
+                                    if (!isVodOrSeriesPlaylist) 1f else 2 / 3f
                                 )
-                            }
-                        }
-                        star()
-                    }
-
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(spacing.extraSmall)
-                    ) {
-                        TextBadge(scheme)
-                        Text(
-                            text = stream.url.trim(),
-                            maxLines = 1,
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontSize = MaterialTheme.typography.bodyMedium.fontSize,
-                            overflow = TextOverflow.Ellipsis
                         )
                     }
+                } else null,
+                supportingContent = {
+                    if (recently) {
+                        Text(
+                            text = remember(stream.seen) {
+                                val now = Clock.System.now()
+                                val instant = Instant.fromEpochMilliseconds(stream.seen)
+                                val duration = now - instant
+                                duration.toComponents { days, hours, minutes, seconds, _ ->
+                                    when {
+                                        stream.seen == 0L -> neverPlayedString
+                                        days > 0 -> days.days.toString()
+                                        hours > 0 -> hours.hours.toString()
+                                        minutes > 0 -> minutes.minutes.toString()
+                                        seconds > 0 -> seconds.seconds.toString()
+                                        else -> recentlyString
+                                    }
+                                }
+                            },
+                            style = MaterialTheme.typography.bodySmall,
+                            color = LocalContentColor.current.copy(0.56f)
+                        )
+                    }
+                },
+                trailingContent = {
+                    star()
+                },
+                modifier = Modifier
+                    .combinedClickable(
+                        onClick = onClick,
+                        onLongClick = onLongClick
+                    )
+                    .then(modifier)
+            )
+        } else {
+            Box(
+                modifier = Modifier
+                    .combinedClickable(
+                        onClick = onClick,
+                        onLongClick = onLongClick
+                    )
+                    .then(modifier)
+            ) {
+                Image(
+                    model = stream.cover,
+                    errorPlaceholder = stream.title,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .aspectRatio(
+                            if (!isVodOrSeriesPlaylist) 4 / 3f else 2 / 3f
+                        )
+                )
+                if (favourite) {
+                    Box(
+                        modifier = Modifier
+                            .padding(spacing.small)
+                            .align(Alignment.BottomEnd)
+                    ) { star() }
                 }
             }
         }
@@ -255,7 +232,6 @@ private fun CompactStreamItem(
     modifier: Modifier = Modifier,
     isVodOrSeriesPlaylist: Boolean = true
 ) {
-    val spacing = LocalSpacing.current
     val favourite = stream.favourite
     val pref = LocalPref.current
 
@@ -295,11 +271,10 @@ private fun CompactStreamItem(
                 AnimatedVisibility(!pref.noPictureMode && !stream.cover.isNullOrEmpty()) {
                     Image(
                         model = stream.cover,
-                        errorPlaceholder = stream.title,
-                        contentScale = ContentScale.Crop,
-                        shape = RoundedCornerShape(spacing.small),
+                        transparentPlaceholder = true,
+                        contentScale = ContentScale.Fit,
                         modifier = Modifier
-                            .width(48.dp)
+                            .height(56.dp)
                             .aspectRatio(
                                 if (!isVodOrSeriesPlaylist) 1f else 2 / 3f
                             )

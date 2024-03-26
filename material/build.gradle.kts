@@ -62,4 +62,6 @@ dependencies {
 
     api(libs.com.google.android.material.material)
     api(libs.haze)
+
+    api(libs.com.google.accompanist.accompanist.permissions)
 }

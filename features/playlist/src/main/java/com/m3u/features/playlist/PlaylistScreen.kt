@@ -12,7 +12,6 @@ import android.content.res.Configuration.UI_MODE_TYPE_NORMAL
 import android.content.res.Configuration.UI_MODE_TYPE_TELEVISION
 import android.content.res.Configuration.UI_MODE_TYPE_VR_HEADSET
 import android.content.res.Configuration.UI_MODE_TYPE_WATCH
-import android.os.Build
 import android.provider.Settings
 import android.view.KeyEvent
 import androidx.activity.compose.BackHandler
@@ -43,9 +42,7 @@ import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
-import com.google.accompanist.permissions.PermissionStatus
 import com.google.accompanist.permissions.rememberPermissionState
-import com.google.accompanist.permissions.shouldShowRationale
 import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.core.util.basic.title
 import com.m3u.core.wrapper.Event
@@ -57,6 +54,7 @@ import com.m3u.features.playlist.internal.PlaylistScreenImpl
 import com.m3u.features.playlist.internal.TvPlaylistScreenImpl
 import com.m3u.i18n.R.string
 import com.m3u.material.components.Background
+import com.m3u.material.ktx.checkPermissionOrRationale
 import com.m3u.material.ktx.interceptVolumeEvent
 import com.m3u.material.ktx.isTelevision
 import com.m3u.material.ktx.thenIf
@@ -110,23 +108,14 @@ internal fun PlaylistRoute(
     val sorts = viewModel.sorts
     val sort by viewModel.sort.collectAsStateWithLifecycle()
 
-    // If you try to check or request the WRITE_EXTERNAL_STORAGE on Android 13+,
-    // it will always return false.
-    // So you'll have to skip the permission check/request completely on Android 13+.
-    val writeExternalPermissionRequired = Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU
-
-    val writeExternalPermissionState = rememberPermissionState(
+    val writeExternalPermission = rememberPermissionState(
         Manifest.permission.WRITE_EXTERNAL_STORAGE
     )
 
-    val postNotificationPermissionRequired =
-        Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
-
     @SuppressLint("InlinedApi")
-    val postNotificationPermissionState = rememberPermissionState(
+    val postNotificationPermission = rememberPermissionState(
         Manifest.permission.POST_NOTIFICATIONS
     )
-
 
     LifecycleResumeEffect(playlist) {
         helper.title = playlist?.title?.title().orEmpty()
@@ -173,37 +162,29 @@ internal fun PlaylistRoute(
                 },
                 onScrollUp = { viewModel.scrollUp = eventOf(Unit) },
                 onRefresh = {
-                    when {
-                        !postNotificationPermissionRequired -> {}
-                        postNotificationPermissionState.status is PermissionStatus.Denied -> {
-                            if (postNotificationPermissionState.status.shouldShowRationale) {
-                                postNotificationPermissionState.launchPermissionRequest()
-                            } else {
-                                val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
-                                    .apply {
-                                        putExtra(
-                                            Settings.EXTRA_APP_PACKAGE,
-                                            helper.activityContext.packageName
-                                        )
-                                    }
-                                helper.activityContext.startActivity(intent)
-                            }
-                            return@PlaylistScreen
+                    postNotificationPermission.checkPermissionOrRationale(
+                        showRationale = {
+                            val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                                .apply {
+                                    putExtra(
+                                        Settings.EXTRA_APP_PACKAGE,
+                                        helper.activityContext.packageName
+                                    )
+                                }
+                            helper.activityContext.startActivity(intent)
+                        },
+                        block = {
+                            viewModel.refresh()
                         }
-
-                        else -> {}
-                    }
-                    viewModel.refresh()
+                    )
                 },
                 contentPadding = contentPadding,
                 onFavorite = viewModel::favourite,
                 hide = viewModel::hide,
                 savePicture = { id ->
-                    if (writeExternalPermissionRequired && writeExternalPermissionState.status is PermissionStatus.Denied) {
-                        writeExternalPermissionState.launchPermissionRequest()
-                        return@PlaylistScreen
+                    writeExternalPermission.checkPermissionOrRationale {
+                        viewModel.savePicture(id)
                     }
-                    viewModel.savePicture(id)
                 },
                 createShortcut = { id -> viewModel.createShortcut(context, id) },
                 createTvRecommend = { id -> viewModel.createTvRecommend(context, id) },
