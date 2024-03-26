@@ -4,6 +4,7 @@ package com.m3u.data.service
 
 import android.app.NotificationManager
 import android.content.Context
+import android.media.AudioManager
 import android.net.nsd.NsdManager
 import androidx.core.app.NotificationManagerCompat
 import androidx.media3.database.StandaloneDatabaseProvider
@@ -136,5 +137,13 @@ object ProvidedServicesModule {
             DefaultDataSource.Factory(applicationContext),
             Executors.newFixedThreadPool(6)
         )
+    }
+
+    @Provides
+    @Singleton
+    fun provideAudioManager(
+        @ApplicationContext applicationContext: Context
+    ): AudioManager {
+        return applicationContext.getSystemService(Context.AUDIO_SERVICE) as AudioManager
     }
 }

@@ -1,5 +1,6 @@
 package com.m3u.features.stream
 
+import android.media.AudioManager
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.C
@@ -45,6 +46,7 @@ import kotlin.time.Duration.Companion.milliseconds
 class StreamViewModel @Inject constructor(
     private val streamRepository: StreamRepository,
     private val playerManager: PlayerManagerV2,
+    private val audioManager: AudioManager,
     before: Logger,
 ) : ViewModel(), OnDeviceRegistryListener, OnDeviceControlListener {
     private val logger = before.prefix("feat-stream")
@@ -192,7 +194,12 @@ class StreamViewModel @Inject constructor(
     internal fun onVolume(target: Float) {
         _volume.update { target }
 
-        playerState.value.player?.volume = target
+        audioManager.setStreamVolume(
+            AudioManager.STREAM_MUSIC,
+            (target * 100).roundToInt(),
+            AudioManager.FLAG_VIBRATE
+        )
+
         controlPoint?.setVolume((target * 100).roundToInt(), null)
     }
 
