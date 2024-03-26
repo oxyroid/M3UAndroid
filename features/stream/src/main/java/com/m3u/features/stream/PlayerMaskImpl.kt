@@ -35,6 +35,7 @@ import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -45,6 +46,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -70,8 +72,11 @@ import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.FontFamilies
 import com.m3u.ui.helper.LocalHelper
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlin.math.absoluteValue
+import kotlin.math.roundToInt
 import kotlin.math.roundToLong
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.DurationUnit
@@ -107,6 +112,29 @@ internal fun PlayerMaskImpl(
     val currentBrightness by rememberUpdatedState(brightness)
     var gesture: MaskGesture? by remember { mutableStateOf(null) }
     val muted = currentVolume == 0f
+    val tooltipState = rememberTooltipState()
+
+    val defaultBrightnessOrVolumeContentDescription =
+        if (muted) stringResource(string.feat_stream_tooltip_unmute)
+        else stringResource(string.feat_stream_tooltip_mute)
+
+    val brightnessOrVolumeContentDescription by remember {
+        derivedStateOf {
+            when (gesture) {
+                MaskGesture.VOLUME -> "${(currentVolume.coerceIn(0f..1f) * 100).roundToInt()}%"
+                MaskGesture.BRIGHTNESS -> "${(currentBrightness.coerceIn(0f..1f) * 100).roundToInt()}%"
+                else -> defaultBrightnessOrVolumeContentDescription
+            }
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        snapshotFlow { gesture }
+            .onEach {
+                tooltipState.transition.targetState = it != null
+            }
+            .collect()
+    }
 
     val isProgressEnabled = pref.progress
     val isStaticAndSeekable by remember(
@@ -174,6 +202,7 @@ internal fun PlayerMaskImpl(
 
                 MaskButton(
                     state = maskState,
+                    tooltipState = tooltipState,
                     icon = when (gesture) {
                         MaskGesture.BRIGHTNESS -> when {
                             brightness < 0.5f -> Icons.Rounded.DarkMode
@@ -189,8 +218,7 @@ internal fun PlayerMaskImpl(
                     onClick = {
                         onVolume(if (volume != 0f) 0f else 1f)
                     },
-                    contentDescription = if (muted) stringResource(string.feat_stream_tooltip_unmute)
-                    else stringResource(string.feat_stream_tooltip_mute),
+                    contentDescription = brightnessOrVolumeContentDescription,
                     tint = when (gesture) {
                         null -> if (muted) MaterialTheme.colorScheme.error else Color.Unspecified
                         MaskGesture.VOLUME -> if (muted) MaterialTheme.colorScheme.error else Color.Unspecified
@@ -395,6 +423,7 @@ internal fun PlayerMaskImpl(
                 Modifier.detectVerticalMaskGestures(
                     safe = 0.35f,
                     threshold = 0.15f,
+                    time = 0.65f,
                     volume = { deltaPixel ->
                         if (!pref.volumeGesture) return@detectVerticalMaskGestures
                         onVolume(

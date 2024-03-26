@@ -26,6 +26,7 @@ internal object PlayerMaskImplDefaults {
     fun Modifier.detectVerticalMaskGestures(
         safe: Float = 0f,
         threshold: Float = 0f,
+        time: Float = 1f,
         volume: (pixel: Float) -> Unit,
         brightness: (pixel: Float) -> Unit,
         onDragStart: ((MaskGesture) -> Unit)? = null,
@@ -59,8 +60,8 @@ internal object PlayerMaskImplDefaults {
                     total += dragAmount.absoluteValue / size.height
                     if (total < threshold) return@detectVerticalDragGestures
                     when (gesture) {
-                        MaskGesture.BRIGHTNESS -> brightness(dragAmount)
-                        MaskGesture.VOLUME -> volume(dragAmount)
+                        MaskGesture.BRIGHTNESS -> brightness(dragAmount * time)
+                        MaskGesture.VOLUME -> volume(dragAmount * time)
                         null -> {}
                     }
                 }
