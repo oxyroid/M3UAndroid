@@ -12,7 +12,6 @@ import com.m3u.core.architecture.pref.Pref.Companion.AUTO_REFRESH
 import com.m3u.core.architecture.pref.Pref.Companion.BRIGHTNESS_GESTURE
 import com.m3u.core.architecture.pref.Pref.Companion.CLIP_MODE
 import com.m3u.core.architecture.pref.Pref.Companion.COLOR_ARGB
-import com.m3u.core.architecture.pref.Pref.Companion.COMPACT
 import com.m3u.core.architecture.pref.Pref.Companion.CONNECT_TIMEOUT
 import com.m3u.core.architecture.pref.Pref.Companion.DARK_MODE
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_ALWAYS_SHOW_REFRESH
@@ -21,7 +20,6 @@ import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_AUTO_REFRESH
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_BRIGHTNESS_GESTURE
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_CLIP_MODE
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_COLOR_ARGB
-import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_COMPACT
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_CONNECT_TIMEOUT
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_DARK_MODE
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_FOLLOW_SYSTEM_THEME
@@ -127,8 +125,6 @@ class SnapshotPref @Inject constructor(
     sharedPreferences.longAsState(DEFAULT_UNSEENS_MILLISECONDS, UNSEENS_MILLISECONDS)
     override var reconnectMode: Int by
     sharedPreferences.intAsState(DEFAULT_RECONNECT_MODE, RECONNECT_MODE)
-    override var compact: Boolean by
-    sharedPreferences.booleanAsState(DEFAULT_COMPACT, COMPACT)
     override var colorArgb: Int by
     sharedPreferences.intAsState(DEFAULT_COLOR_ARGB, COLOR_ARGB)
     override var tunneling: Boolean by

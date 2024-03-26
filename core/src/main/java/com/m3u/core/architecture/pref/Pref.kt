@@ -45,7 +45,6 @@ interface Pref {
 
     @ReconnectMode
     var reconnectMode: Int
-    var compact: Boolean
     var colorArgb: Int
     var tunneling: Boolean
     var alwaysTv: Boolean
@@ -84,7 +83,6 @@ interface Pref {
         @UnseensMilliseconds
         const val DEFAULT_UNSEENS_MILLISECONDS = UnseensMilliseconds.DAYS_3
         const val DEFAULT_RECONNECT_MODE = ReconnectMode.NO
-        const val DEFAULT_COMPACT = false
         const val DEFAULT_COLOR_ARGB = 0xD0BCFF
         const val DEFAULT_TUNNELING = false
         const val DEFAULT_ALWAYS_TV = false
@@ -114,7 +112,6 @@ interface Pref {
         const val SCREEN_ROTATING = "screen-rotating"
         const val UNSEENS_MILLISECONDS = "unseens-milliseconds"
         const val RECONNECT_MODE = "reconnect-mode"
-        const val COMPACT = "compact"
         const val COLOR_ARGB = "color-argb"
         const val TUNNELING = "tunneling"
         const val ALWAYS_TV = "always-tv"

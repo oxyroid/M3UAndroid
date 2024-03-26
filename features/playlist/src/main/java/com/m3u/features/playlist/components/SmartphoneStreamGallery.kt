@@ -16,12 +16,10 @@ import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.data.database.model.Stream
 import com.m3u.material.ktx.plus
 import com.m3u.material.model.LocalSpacing
-import com.m3u.ui.UiMode
-import com.m3u.ui.currentUiMode
 import kotlinx.collections.immutable.ImmutableList
 
 @Composable
-internal fun StreamGallery(
+internal fun SmartphoneStreamGallery(
     state: LazyStaggeredGridState,
     rowCount: Int,
     streams: ImmutableList<Stream>,
@@ -34,44 +32,23 @@ internal fun StreamGallery(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(0.dp),
 ) {
-    when (currentUiMode()) {
-        UiMode.Default -> {
-            StreamGalleryImpl(
-                state = state,
-                rowCount = rowCount,
-                streams = streams,
-                streamPaged = streamPaged,
-                zapping = zapping,
-                recently = recently,
-                onClick = onClick,
-                onLongClick = onLongClick,
-                modifier = modifier,
-                contentPadding = contentPadding,
-                isVodOrSeriesPlaylist = isVodOrSeriesPlaylist
-            )
-        }
-
-        UiMode.Compat -> {
-            CompactStreamGalleryImpl(
-                state = state,
-                rowCount = rowCount,
-                streams = streams,
-                streamPaged = streamPaged,
-                zapping = zapping,
-                recently = recently,
-                onClick = onClick,
-                onLongClick = onLongClick,
-                modifier = modifier,
-                contentPadding = contentPadding
-            )
-        }
-
-        else -> {}
-    }
+    SmartphoneStreamGalleryImpl(
+        state = state,
+        rowCount = rowCount,
+        streams = streams,
+        streamPaged = streamPaged,
+        zapping = zapping,
+        recently = recently,
+        onClick = onClick,
+        onLongClick = onLongClick,
+        modifier = modifier,
+        contentPadding = contentPadding,
+        isVodOrSeriesPlaylist = isVodOrSeriesPlaylist
+    )
 }
 
 @Composable
-private fun StreamGalleryImpl(
+private fun SmartphoneStreamGalleryImpl(
     state: LazyStaggeredGridState,
     rowCount: Int,
     streams: ImmutableList<Stream>,
@@ -107,7 +84,7 @@ private fun StreamGalleryImpl(
                 key = { stream -> stream.id },
                 contentType = { it.cover.isNullOrEmpty() }
             ) { stream ->
-                StreamItem(
+                SmartphoneStreamItem(
                     stream = stream,
                     recently = recently,
                     zapping = zapping == stream,
@@ -120,63 +97,11 @@ private fun StreamGalleryImpl(
         } else {
             items(streamPaged.itemCount) {
                 streamPaged[it]?.let { stream ->
-                    StreamItem(
+                    SmartphoneStreamItem(
                         stream = stream,
                         recently = recently,
                         zapping = zapping == stream,
                         isVodOrSeriesPlaylist = isVodOrSeriesPlaylist,
-                        onClick = { onClick(stream) },
-                        onLongClick = { onLongClick(stream) },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun CompactStreamGalleryImpl(
-    state: LazyStaggeredGridState,
-    rowCount: Int,
-    streams: ImmutableList<Stream>,
-    streamPaged: LazyPagingItems<Stream>,
-    zapping: Stream?,
-    recently: Boolean,
-    onClick: (Stream) -> Unit,
-    onLongClick: (Stream) -> Unit,
-    modifier: Modifier = Modifier,
-    contentPadding: PaddingValues = PaddingValues(0.dp),
-) {
-    val pref = LocalPref.current
-    LazyVerticalStaggeredGrid(
-        state = state,
-        columns = StaggeredGridCells.Fixed(rowCount),
-        contentPadding = contentPadding,
-        modifier = modifier.fillMaxSize()
-    ) {
-        if (!pref.paging) {
-            items(
-                items = streams,
-                key = { stream -> stream.id },
-                contentType = { it.cover.isNullOrEmpty() }
-            ) { stream ->
-                StreamItem(
-                    stream = stream,
-                    recently = recently,
-                    zapping = zapping == stream,
-                    onClick = { onClick(stream) },
-                    onLongClick = { onLongClick(stream) },
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
-        } else {
-            items(streamPaged.itemCount) {
-                streamPaged[it]?.let { stream ->
-                    StreamItem(
-                        stream = stream,
-                        recently = recently,
-                        zapping = zapping == stream,
                         onClick = { onClick(stream) },
                         onLongClick = { onLongClick(stream) },
                         modifier = Modifier.fillMaxWidth()

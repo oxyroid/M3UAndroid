@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.DriveFileMove
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ListItem
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
@@ -31,11 +30,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.m3u.material.components.Icon
 import com.m3u.material.components.OuterRow
+import com.m3u.material.ktx.isTelevision
 import com.m3u.material.model.LocalSpacing
 import com.m3u.material.shape.AbsoluteSmoothCornerShape
 import com.m3u.ui.FontFamilies
-import com.m3u.ui.UiMode
-import com.m3u.ui.currentUiMode
 import androidx.tv.material3.ListItem as TvListItem
 import androidx.tv.material3.MaterialTheme as TvMaterialTheme
 import androidx.tv.material3.Text as TvText
@@ -51,48 +49,33 @@ internal fun PlaylistItem(
     onLongClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    when (currentUiMode()) {
-        UiMode.Default -> {
-            PlaylistItemImpl(
-                label = label,
-                type = type,
-                typeWithSource = typeWithSource,
-                count = count,
-                local = local,
-                onClick = onClick,
-                onLongClick = onLongClick,
-                modifier = modifier
-            )
-        }
-
-        UiMode.Television -> {
-            TvPlaylistItemImpl(
-                label = label,
-                type = type,
-                typeWithSource = typeWithSource,
-                count = count,
-                onClick = onClick,
-                onLongClick = onLongClick,
-                modifier = modifier
-            )
-        }
-
-        UiMode.Compat -> {
-            CompactPlaylistItemImpl(
-                label = label,
-                type = typeWithSource,
-                count = count,
-                local = local,
-                onClick = onClick,
-                onLongClick = onLongClick,
-                modifier = modifier
-            )
-        }
+    val tv = isTelevision()
+    if (!tv) {
+        SmartphonePlaylistItemImpl(
+            label = label,
+            type = type,
+            typeWithSource = typeWithSource,
+            count = count,
+            local = local,
+            onClick = onClick,
+            onLongClick = onLongClick,
+            modifier = modifier
+        )
+    } else {
+        TvPlaylistItemImpl(
+            label = label,
+            type = type,
+            typeWithSource = typeWithSource,
+            count = count,
+            onClick = onClick,
+            onLongClick = onLongClick,
+            modifier = modifier
+        )
     }
 }
 
 @Composable
-private fun PlaylistItemImpl(
+private fun SmartphonePlaylistItemImpl(
     label: String,
     type: String?,
     typeWithSource: String?,
@@ -264,64 +247,5 @@ private fun TvPlaylistItemImpl(
             }
         },
         modifier = modifier
-    )
-}
-
-@Composable
-private fun CompactPlaylistItemImpl(
-    label: String,
-    type: String?,
-    count: Int,
-    local: Boolean,
-    onClick: () -> Unit,
-    onLongClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    ListItem(
-        overlineContent = {
-            Text(
-                text = label,
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.SemiBold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-        },
-        leadingContent = {
-            if (local) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Rounded.DriveFileMove,
-                    contentDescription = null
-                )
-            }
-        },
-        trailingContent = {
-            Text(
-                text = count.toString(),
-                style = MaterialTheme.typography.bodyMedium,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                softWrap = false,
-                textAlign = TextAlign.Center
-            )
-        },
-        headlineContent = {
-            if (type != null) {
-                Text(
-                    text = type,
-                    style = MaterialTheme.typography.labelMedium,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    softWrap = false,
-                    textAlign = TextAlign.Center
-                )
-            }
-        },
-        modifier = Modifier
-            .combinedClickable(
-                onClick = onClick,
-                onLongClick = onLongClick
-            )
-            .then(modifier)
     )
 }

@@ -62,7 +62,6 @@
     <string name="feat_setting_reconnect_mode_no">niciodata</string>
     <string name="feat_setting_reconnect_mode_retry">doar la eroare</string>
     <string name="feat_setting_reconnect_mode_reconnect">intotdeauna</string>
-    <string name="feat_setting_compact">mod compact</string>
 
     <string name="feat_setting_appearance">aspect</string>
     <string name="feat_setting_appearance_hint_edit_color">apasare lunga pentru a modifica culorile</string>

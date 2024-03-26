@@ -54,7 +54,7 @@ import com.m3u.features.playlist.Category
 import com.m3u.features.playlist.components.DialogStatus
 import com.m3u.features.playlist.components.PlaylistDialog
 import com.m3u.features.playlist.components.PlaylistTabRow
-import com.m3u.features.playlist.components.StreamGallery
+import com.m3u.features.playlist.components.SmartphoneStreamGallery
 import com.m3u.i18n.R.string
 import com.m3u.material.components.Background
 import com.m3u.material.components.TextField
@@ -78,7 +78,7 @@ import kotlinx.coroutines.launch
 
 @Composable
 @InternalComposeApi
-internal fun PlaylistScreenImpl(
+internal fun SmartphonePlaylistScreenImpl(
     categories: ImmutableList<Category>,
     streamPaged: LazyPagingItems<Stream>,
     pinnedCategories: ImmutableList<String>,
@@ -223,7 +223,7 @@ internal fun PlaylistScreenImpl(
                             onHideCategory = onHideCategory
                         )
                         if (pref.paging || currentPage != -1) {
-                            StreamGallery(
+                            SmartphoneStreamGallery(
                                 state = state,
                                 rowCount = actualRowCount,
                                 streams = if (pref.paging) persistentListOf()

@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -21,10 +20,9 @@ import androidx.tv.foundation.lazy.grid.itemsIndexed
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.PlaylistWithCount
 import com.m3u.i18n.R.string
+import com.m3u.material.ktx.isTelevision
 import com.m3u.material.ktx.plus
 import com.m3u.material.model.LocalSpacing
-import com.m3u.ui.UiMode
-import com.m3u.ui.currentUiMode
 import kotlinx.collections.immutable.ImmutableList
 
 @Composable
@@ -37,47 +35,32 @@ internal fun PlaylistGallery(
     contentPadding: PaddingValues = PaddingValues(),
     header: (@Composable () -> Unit)? = null
 ) {
-    when (currentUiMode()) {
-        UiMode.Default -> {
-            PlaylistGalleryImpl(
-                rowCount = rowCount,
-                playlistCounts = playlistCounts,
-                onClick = onClick,
-                onLongClick = onLongClick,
-                contentPadding = contentPadding,
-                modifier = modifier,
-                header = header
-            )
-        }
-
-        UiMode.Television -> {
-            TvPlaylistGalleryImpl(
-                rowCount = rowCount,
-                playlistCounts = playlistCounts,
-                onClick = onClick,
-                onLongClick = onLongClick,
-                contentPadding = contentPadding,
-                modifier = modifier,
-                header = header
-            )
-        }
-
-        UiMode.Compat -> {
-            CompactPlaylistGalleryImpl(
-                rowCount = rowCount,
-                playlistCounts = playlistCounts,
-                navigateToPlaylist = onClick,
-                onMenu = onLongClick,
-                contentPadding = contentPadding,
-                modifier = modifier,
-                header = header
-            )
-        }
+    val tv = isTelevision()
+    if (!tv) {
+        SmartphonePlaylistGalleryImpl(
+            rowCount = rowCount,
+            playlistCounts = playlistCounts,
+            onClick = onClick,
+            onLongClick = onLongClick,
+            contentPadding = contentPadding,
+            modifier = modifier,
+            header = header
+        )
+    } else {
+        TvPlaylistGalleryImpl(
+            rowCount = rowCount,
+            playlistCounts = playlistCounts,
+            onClick = onClick,
+            onLongClick = onLongClick,
+            contentPadding = contentPadding,
+            modifier = modifier,
+            header = header
+        )
     }
 }
 
 @Composable
-private fun PlaylistGalleryImpl(
+private fun SmartphonePlaylistGalleryImpl(
     rowCount: Int,
     playlistCounts: ImmutableList<PlaylistWithCount>,
     onClick: (Playlist) -> Unit,
@@ -175,48 +158,6 @@ private fun TvPlaylistGalleryImpl(
                             padding = spacing.large
                         )
                     )
-            )
-        }
-    }
-}
-
-@Composable
-private fun CompactPlaylistGalleryImpl(
-    rowCount: Int,
-    playlistCounts: ImmutableList<PlaylistWithCount>,
-    navigateToPlaylist: (Playlist) -> Unit,
-    onMenu: (Playlist) -> Unit,
-    contentPadding: PaddingValues,
-    modifier: Modifier = Modifier,
-    header: (@Composable () -> Unit)? = null
-) {
-    LazyVerticalGrid(
-        columns = GridCells.Fixed(rowCount),
-        contentPadding = contentPadding,
-        modifier = modifier
-    ) {
-        if (header != null) {
-            item(span = { GridItemSpan(rowCount) }) {
-                header()
-            }
-        }
-        items(
-            items = playlistCounts,
-            key = { it.playlist.url },
-            contentType = {}
-        ) { detail ->
-            PlaylistItem(
-                label = PlaylistGalleryDefaults.calculateUiTitle(
-                    title = detail.playlist.title,
-                    fromLocal = detail.playlist.fromLocal
-                ),
-                type = detail.playlist.type,
-                typeWithSource = detail.playlist.typeWithSource,
-                count = detail.count,
-                local = detail.playlist.fromLocal,
-                onClick = { navigateToPlaylist(detail.playlist) },
-                onLongClick = { onMenu(detail.playlist) },
-                modifier = Modifier.fillMaxWidth()
             )
         }
     }

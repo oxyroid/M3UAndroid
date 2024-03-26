@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Bento
 import androidx.compose.material.icons.rounded.ColorLens
 import androidx.compose.material.icons.rounded.DarkMode
 import androidx.compose.material3.HorizontalDivider
@@ -143,15 +142,6 @@ internal fun AppearanceFragment(
                 onChanged = { pref.useDynamicColors = !useDynamicColors },
                 enabled = useDynamicColorsAvailable
             )
-
-            if (!tv) {
-                CheckBoxSharedPreference(
-                    title = string.feat_setting_compact,
-                    icon = Icons.Rounded.Bento,
-                    checked = pref.compact,
-                    onChanged = { pref.compact = !pref.compact }
-                )
-            }
         }
     }
 }

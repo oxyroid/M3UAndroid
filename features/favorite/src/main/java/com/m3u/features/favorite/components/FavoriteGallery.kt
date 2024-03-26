@@ -15,7 +15,6 @@ import androidx.compose.ui.Modifier
 import androidx.tv.foundation.lazy.grid.TvGridCells
 import androidx.tv.foundation.lazy.grid.TvLazyVerticalGrid
 import androidx.tv.foundation.lazy.grid.items
-import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.core.wrapper.Resource
 import com.m3u.data.database.model.Stream
 import com.m3u.material.ktx.isTelevision
@@ -34,9 +33,6 @@ internal fun FavouriteGallery(
     onLongClick: (Stream) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val pref = LocalPref.current
-    val compact = pref.compact
-
     Box(modifier) {
         when (streamsResource) {
             Resource.Loading -> {
@@ -48,27 +44,15 @@ internal fun FavouriteGallery(
             }
 
             is Resource.Success -> {
-                if (!compact) {
-                    FavouriteGalleryImpl(
-                        contentPadding = contentPadding,
-                        streams = streamsResource.data,
-                        zapping = zapping,
-                        recently = recently,
-                        rowCount = rowCount,
-                        onClick = onClick,
-                        onLongClick = onLongClick
-                    )
-                } else {
-                    CompactFavouriteGalleryImpl(
-                        contentPadding = contentPadding,
-                        streams = streamsResource.data,
-                        zapping = zapping,
-                        recently = recently,
-                        rowCount = rowCount,
-                        onClick = onClick,
-                        onLongClick = onLongClick
-                    )
-                }
+                FavouriteGalleryImpl(
+                    contentPadding = contentPadding,
+                    streams = streamsResource.data,
+                    zapping = zapping,
+                    recently = recently,
+                    rowCount = rowCount,
+                    onClick = onClick,
+                    onLongClick = onLongClick
+                )
             }
 
             is Resource.Failure -> {}
@@ -121,66 +105,6 @@ private fun FavouriteGalleryImpl(
                 vertical = spacing.medium,
                 horizontal = spacing.large
             ) + contentPadding,
-            modifier = modifier.fillMaxSize(),
-        ) {
-            items(
-                items = streams,
-                key = { it.id },
-                contentType = { it.cover.isNullOrEmpty() }
-            ) { stream ->
-                FavoriteItem(
-                    stream = stream,
-                    zapping = zapping == stream,
-                    recently = recently,
-                    onClick = { onClick(stream) },
-                    onLongClick = { onLongClick(stream) },
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun CompactFavouriteGalleryImpl(
-    contentPadding: PaddingValues,
-    streams: ImmutableList<Stream>,
-    zapping: Stream?,
-    recently: Boolean,
-    rowCount: Int,
-    onClick: (Stream) -> Unit,
-    onLongClick: (Stream) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val spacing = LocalSpacing.current
-
-    val tv = isTelevision()
-    if (!tv) {
-        LazyVerticalStaggeredGrid(
-            columns = StaggeredGridCells.Fixed(rowCount),
-            contentPadding = contentPadding,
-            modifier = modifier.fillMaxSize(),
-        ) {
-            items(
-                items = streams,
-                key = { it.id },
-                contentType = { it.cover.isNullOrEmpty() }
-            ) { stream ->
-                FavoriteItem(
-                    stream = stream,
-                    zapping = zapping == stream,
-                    recently = recently,
-                    onClick = { onClick(stream) },
-                    onLongClick = { onLongClick(stream) },
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-        }
-    } else {
-        TvLazyVerticalGrid(
-            columns = TvGridCells.Fixed(rowCount),
-            horizontalArrangement = Arrangement.spacedBy(spacing.medium),
-            contentPadding = contentPadding,
             modifier = modifier.fillMaxSize(),
         ) {
             items(

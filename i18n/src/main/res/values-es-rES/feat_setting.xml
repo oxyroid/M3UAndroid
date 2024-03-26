@@ -63,7 +63,6 @@
     <string name="feat_setting_reconnect_mode_no">nunca</string>
     <string name="feat_setting_reconnect_mode_retry">cuando falla</string>
     <string name="feat_setting_reconnect_mode_reconnect">siempre</string>
-    <string name="feat_setting_compact">modo compacto</string>
     <string name="feat_setting_appearance">apariencia</string>
     <string name="feat_setting_appearance_hint_edit_color">continúe pulsando para modificar el color</string>
 

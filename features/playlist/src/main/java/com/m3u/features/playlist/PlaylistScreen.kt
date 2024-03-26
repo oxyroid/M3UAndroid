@@ -50,7 +50,7 @@ import com.m3u.core.wrapper.eventOf
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.Stream
 import com.m3u.data.service.MediaCommand
-import com.m3u.features.playlist.internal.PlaylistScreenImpl
+import com.m3u.features.playlist.internal.SmartphonePlaylistScreenImpl
 import com.m3u.features.playlist.internal.TvPlaylistScreenImpl
 import com.m3u.i18n.R.string
 import com.m3u.material.components.Background
@@ -288,7 +288,7 @@ private fun PlaylistScreen(
 
     val tv = isTelevision()
     if (!tv) {
-        PlaylistScreenImpl(
+        SmartphonePlaylistScreenImpl(
             categories = categories,
             streamPaged = streamPaged,
             pinnedCategories = pinnedCategories,
