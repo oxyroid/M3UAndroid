@@ -2,7 +2,6 @@ package com.m3u.features.foryou
 
 import android.content.res.Configuration.ORIENTATION_PORTRAIT
 import android.view.KeyEvent
-import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -33,8 +32,6 @@ import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.PlaylistWithCount
 import com.m3u.data.database.model.Stream
 import com.m3u.data.service.MediaCommand
-import com.m3u.features.foryou.components.ForyouDialog
-import com.m3u.features.foryou.components.ForyouDialogState
 import com.m3u.features.foryou.components.PlaylistGallery
 import com.m3u.features.foryou.components.PlaylistGalleryPlaceholder
 import com.m3u.features.foryou.components.recommend.Recommend
@@ -48,6 +45,8 @@ import com.m3u.material.model.LocalHazeState
 import com.m3u.ui.Destination
 import com.m3u.ui.EpisodesBottomSheet
 import com.m3u.ui.LocalVisiblePageInfos
+import com.m3u.ui.MediaSheet
+import com.m3u.ui.MediaSheetValue
 import com.m3u.ui.helper.Action
 import com.m3u.ui.helper.LocalHelper
 import dev.chrisbanes.haze.HazeDefaults
@@ -122,14 +121,9 @@ fun ForyouRoute(
                     }
                 },
                 navigateToSettingPlaylistManagement = navigateToSettingPlaylistManagement,
-                unsubscribe = { viewModel.unsubscribe(it) },
-                rename = { playlistUrl, target -> viewModel.rename(playlistUrl, target) },
-                updateUserAgent = { playlistUrl, userAgent ->
-                    viewModel.updateUserAgent(
-                        playlistUrl,
-                        userAgent
-                    )
-                },
+                onUnsubscribePlaylist = viewModel::onUnsubscribePlaylist,
+                onEditPlaylistTitle = viewModel::onEditPlaylistTitle,
+                onEditPlaylistUserAgent = viewModel::onEditPlaylistUserAgent,
                 modifier = Modifier
                     .fillMaxSize()
                     .thenIf(!tv && pref.godMode) {
@@ -148,9 +142,9 @@ fun ForyouRoute(
                 episodes = episodes,
                 onEpisodeClick = { episode ->
                     coroutineScope.launch {
-                        series?.let {
+                        series?.let { stream ->
                             val input = MediaCommand.XtreamEpisode(
-                                streamId = it.id,
+                                streamId = stream.id,
                                 episode = episode
                             )
                             helper.play(input)
@@ -174,9 +168,9 @@ private fun ForyouScreen(
     navigateToPlaylist: (Playlist) -> Unit,
     onClickStream: (Stream) -> Unit,
     navigateToSettingPlaylistManagement: () -> Unit,
-    unsubscribe: (playlistUrl: String) -> Unit,
-    rename: (playlistUrl: String, label: String) -> Unit,
-    updateUserAgent: (playlistUrl: String, userAgent: String?) -> Unit,
+    onUnsubscribePlaylist: (playlistUrl: String) -> Unit,
+    onEditPlaylistTitle: (playlistUrl: String, label: String) -> Unit,
+    onEditPlaylistUserAgent: (playlistUrl: String, userAgent: String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val configuration = LocalConfiguration.current
@@ -187,7 +181,9 @@ private fun ForyouScreen(
             else -> rowCount + 2
         }
     }
-    var dialogState: ForyouDialogState by remember { mutableStateOf(ForyouDialogState.Idle) }
+    var mediaSheetValue: MediaSheetValue.ForyouScreen by remember {
+        mutableStateOf(MediaSheetValue.ForyouScreen())
+    }
     Background(modifier) {
         Box {
             when (playlistCountsResource) {
@@ -214,7 +210,7 @@ private fun ForyouScreen(
                             rowCount = actualRowCount,
                             playlistCounts = playlistCountsResource.data,
                             onClick = navigateToPlaylist,
-                            onLongClick = { dialogState = ForyouDialogState.Selections(it) },
+                            onLongClick = { mediaSheetValue = MediaSheetValue.ForyouScreen(it) },
                             header = header.takeIf { recommend.isNotEmpty() },
                             contentPadding = contentPadding,
                             modifier = Modifier
@@ -232,12 +228,17 @@ private fun ForyouScreen(
                             )
                         }
                     }
-                    ForyouDialog(
-                        status = dialogState,
-                        update = { dialogState = it },
-                        unsubscribe = unsubscribe,
-                        rename = rename,
-                        editUserAgent = updateUserAgent
+
+                    MediaSheet(
+                        value = mediaSheetValue,
+                        onUnsubscribePlaylist = { onUnsubscribePlaylist(it.url) },
+                        onEditPlaylistTitle = { playlist, title ->
+                            onEditPlaylistTitle(playlist.url, title)
+                        },
+                        onEditPlaylistUserAgent = { playlist, userAgent ->
+                            onEditPlaylistUserAgent(playlist.url, userAgent)
+                        },
+                        onDismissRequest = { mediaSheetValue = MediaSheetValue.ForyouScreen() }
                     )
                 }
 
@@ -250,9 +251,5 @@ private fun ForyouScreen(
                 }
             }
         }
-    }
-
-    BackHandler(dialogState != ForyouDialogState.Idle) {
-        dialogState = ForyouDialogState.Idle
     }
 }

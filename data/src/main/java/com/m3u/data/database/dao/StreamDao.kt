@@ -72,7 +72,7 @@ internal interface StreamDao {
     ): Flow<List<Stream>>
 
     @Query("UPDATE streams SET favourite = :target WHERE id = :id")
-    suspend fun setFavourite(id: Int, target: Boolean)
+    suspend fun favouriteOrUnfavourite(id: Int, target: Boolean)
 
     @Query("UPDATE streams SET hidden = :target WHERE id = :id")
     suspend fun hide(id: Int, target: Boolean)

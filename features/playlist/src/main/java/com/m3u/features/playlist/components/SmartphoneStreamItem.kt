@@ -51,27 +51,6 @@ internal fun SmartphoneStreamItem(
     modifier: Modifier = Modifier,
     isVodOrSeriesPlaylist: Boolean = true
 ) {
-    SmartphoneStreamItemImpl(
-        stream = stream,
-        recently = recently,
-        zapping = zapping,
-        onClick = onClick,
-        onLongClick = onLongClick,
-        modifier = modifier,
-        isVodOrSeriesPlaylist = isVodOrSeriesPlaylist
-    )
-}
-
-@Composable
-private fun SmartphoneStreamItemImpl(
-    stream: Stream,
-    recently: Boolean,
-    onClick: () -> Unit,
-    onLongClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    zapping: Boolean = false,
-    isVodOrSeriesPlaylist: Boolean = true
-) {
     val spacing = LocalSpacing.current
     val pref = LocalPref.current
 
@@ -181,7 +160,7 @@ private fun SmartphoneStreamItemImpl(
                 Image(
                     model = stream.cover,
                     errorPlaceholder = stream.title,
-                    contentScale = ContentScale.Crop,
+                    contentScale = ContentScale.Fit,
                     modifier = Modifier
                         .fillMaxWidth()
                         .aspectRatio(

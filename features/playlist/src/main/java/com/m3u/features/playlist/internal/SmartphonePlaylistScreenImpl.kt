@@ -51,8 +51,6 @@ import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.core.wrapper.Event
 import com.m3u.data.database.model.Stream
 import com.m3u.features.playlist.Category
-import com.m3u.features.playlist.components.DialogStatus
-import com.m3u.features.playlist.components.PlaylistDialog
 import com.m3u.features.playlist.components.PlaylistTabRow
 import com.m3u.features.playlist.components.SmartphoneStreamGallery
 import com.m3u.i18n.R.string
@@ -63,6 +61,8 @@ import com.m3u.material.ktx.split
 import com.m3u.material.model.LocalHazeState
 import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.EventHandler
+import com.m3u.ui.MediaSheet
+import com.m3u.ui.MediaSheetValue
 import com.m3u.ui.Sort
 import com.m3u.ui.SortBottomSheet
 import com.m3u.ui.helper.Action
@@ -91,10 +91,10 @@ internal fun SmartphonePlaylistScreenImpl(
     onSort: (Sort) -> Unit,
     onStream: (Stream) -> Unit,
     onRefresh: () -> Unit,
-    onFavorite: (streamId: Int, target: Boolean) -> Unit,
-    hide: (streamId: Int) -> Unit,
-    onSavePicture: (streamId: Int) -> Unit,
-    createShortcut: (streamId: Int) -> Unit,
+    favourite: (streamId: Int) -> Unit,
+    onHide: (streamId: Int) -> Unit,
+    onSaveCover: (streamId: Int) -> Unit,
+    onCreateShortcut: (streamId: Int) -> Unit,
     isAtTopState: MutableState<Boolean>,
     isVodOrSeriesPlaylist: Boolean,
     modifier: Modifier = Modifier,
@@ -120,7 +120,7 @@ internal fun SmartphonePlaylistScreenImpl(
 
     val sheetState = rememberModalBottomSheetState()
 
-    var dialogStatus: DialogStatus by remember { mutableStateOf(DialogStatus.Idle) }
+    var mediaSheetValue: MediaSheetValue.PlaylistScreen by remember { mutableStateOf(MediaSheetValue.PlaylistScreen()) }
     var isSortSheetVisible by rememberSaveable { mutableStateOf(false) }
 
     // FIXME: Pass pref.paging will make topbar tremble.
@@ -232,7 +232,7 @@ internal fun SmartphonePlaylistScreenImpl(
                                 onClick = onStream,
                                 contentPadding = inner,
                                 onLongClick = {
-                                    dialogStatus = DialogStatus.Selections(it)
+                                    mediaSheetValue = MediaSheetValue.PlaylistScreen(it)
                                 },
                                 modifier = modifier.haze(
                                     LocalHazeState.current,
@@ -263,13 +263,13 @@ internal fun SmartphonePlaylistScreenImpl(
             onDismissRequest = { isSortSheetVisible = false }
         )
 
-        PlaylistDialog(
-            status = dialogStatus,
-            onUpdate = { dialogStatus = it },
-            onFavorite = onFavorite,
-            hide = hide,
-            onSavePicture = onSavePicture,
-            createShortcut = createShortcut
+        MediaSheet(
+            value = mediaSheetValue,
+            onFavouriteStream = { stream -> favourite(stream.id) },
+            onHideStream = { stream -> onHide(stream.id) },
+            onSaveStreamCover = { stream -> onSaveCover(stream.id) },
+            onCreateStreamShortcut = { stream -> onCreateShortcut(stream.id) },
+            onDismissRequest = { mediaSheetValue = MediaSheetValue.PlaylistScreen() }
         )
     }
 }

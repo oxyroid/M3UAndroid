@@ -135,9 +135,9 @@ fun StreamRoute(
     ) {
         StreamScreen(
             isSeriesPlaylist = isSeriesPlaylist,
-            openDlnaDevices = { viewModel.openDlnaDevices() },
+            openDlnaDevices = viewModel::openDlnaDevices,
             openChooseFormat = { choosing = true },
-            onFavourite = { viewModel.onFavourite() },
+            onFavourite = viewModel::onFavourite,
             onBackPressed = onBackPressed,
             maskState = maskState,
             playerState = playerState,
@@ -147,7 +147,7 @@ fun StreamRoute(
             brightness = brightness,
             volume = volume,
             onBrightness = { brightness = it },
-            onVolume = { viewModel.onVolume(it) },
+            onVolume = viewModel::onVolume,
             modifier = modifier
         )
 

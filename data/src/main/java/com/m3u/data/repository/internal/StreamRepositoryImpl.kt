@@ -43,8 +43,9 @@ internal class StreamRepositoryImpl @Inject constructor(
         streamDao.getByUrl(url)
     }
 
-    override suspend fun setFavourite(id: Int, target: Boolean) = logger.sandBox {
-        streamDao.setFavourite(id, target)
+    override suspend fun favouriteOrUnfavourite(id: Int) = logger.sandBox {
+        val current = streamDao.get(id)?.favourite ?: return@sandBox
+        streamDao.favouriteOrUnfavourite(id, !current)
     }
 
     override suspend fun hide(id: Int, target: Boolean) = logger.sandBox {

@@ -178,7 +178,7 @@ internal fun PlaylistRoute(
                     )
                 },
                 contentPadding = contentPadding,
-                onFavorite = viewModel::favourite,
+                favourite = viewModel::favourite,
                 hide = viewModel::hide,
                 savePicture = { id ->
                     writeExternalPermission.checkPermissionOrRationale {
@@ -249,7 +249,7 @@ private fun PlaylistScreen(
     onRefresh: () -> Unit,
     onStream: (Stream) -> Unit,
     onScrollUp: () -> Unit,
-    onFavorite: (streamId: Int, target: Boolean) -> Unit,
+    favourite: (streamId: Int) -> Unit,
     hide: (streamId: Int) -> Unit,
     savePicture: (streamId: Int) -> Unit,
     createShortcut: (streamId: Int) -> Unit,
@@ -305,10 +305,10 @@ private fun PlaylistScreen(
             sorts = sorts,
             sort = sort,
             onSort = onSort,
-            onFavorite = onFavorite,
-            hide = hide,
-            onSavePicture = savePicture,
-            createShortcut = createShortcut,
+            favourite = favourite,
+            onHide = hide,
+            onSaveCover = savePicture,
+            onCreateShortcut = createShortcut,
             isVodOrSeriesPlaylist = isVodPlaylist || isSeriesPlaylist,
             modifier = modifier
         )
@@ -324,7 +324,7 @@ private fun PlaylistScreen(
             sorts = sorts,
             sort = sort,
             onSort = onSort,
-            onFavorite = onFavorite,
+            favorite = favourite,
             hide = hide,
             savePicture = savePicture,
             createTvRecommend = createTvRecommend,

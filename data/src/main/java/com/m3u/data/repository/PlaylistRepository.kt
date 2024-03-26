@@ -34,7 +34,7 @@ interface PlaylistRepository {
 
     suspend fun unsubscribe(url: String): Playlist?
 
-    suspend fun rename(url: String, target: String)
+    suspend fun onEditPlaylistTitle(url: String, title: String)
 
     suspend fun backupOrThrow(uri: Uri)
 
@@ -44,7 +44,7 @@ interface PlaylistRepository {
 
     suspend fun hideOrUnhideCategory(url: String, category: String)
 
-    suspend fun updateUserAgent(url: String, userAgent: String?)
+    suspend fun onEditPlaylistUserAgent(url: String, userAgent: String)
 
     fun observeAllCounts(): Flow<List<PlaylistWithCount>>
 

@@ -95,21 +95,21 @@ class ForyouViewModel @Inject constructor(
             initialValue = Recommend()
         )
 
-    internal fun unsubscribe(url: String) {
+    internal fun onUnsubscribePlaylist(url: String) {
         viewModelScope.launch {
             playlistRepository.unsubscribe(url)
         }
     }
 
-    internal fun rename(playlistUrl: String, target: String) {
+    internal fun onEditPlaylistTitle(playlistUrl: String, title: String) {
         viewModelScope.launch {
-            playlistRepository.rename(playlistUrl, target)
+            playlistRepository.onEditPlaylistTitle(playlistUrl, title)
         }
     }
 
-    internal fun updateUserAgent(playlistUrl: String, userAgent: String?) {
+    internal fun onEditPlaylistUserAgent(playlistUrl: String, userAgent: String) {
         viewModelScope.launch {
-            playlistRepository.updateUserAgent(playlistUrl, userAgent)
+            playlistRepository.onEditPlaylistUserAgent(playlistUrl, userAgent)
         }
     }
 

@@ -104,7 +104,7 @@ class FavouriteViewModel @Inject constructor(
 
                 Sort.RECENTLY -> all.sortedByDescending { it.seen }
             }
-                
+
         }
         .asResource()
         .flowOn(ioDispatcher)
@@ -114,9 +114,9 @@ class FavouriteViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5_000L)
         )
 
-    fun cancelFavourite(id: Int) {
+    fun favourite(id: Int) {
         viewModelScope.launch {
-            streamRepository.setFavourite(id, false)
+            streamRepository.favouriteOrUnfavourite(id)
         }
     }
 

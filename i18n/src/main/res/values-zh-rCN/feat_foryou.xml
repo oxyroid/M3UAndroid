@@ -10,4 +10,7 @@
     <string name="feat_foryou_recommend_unseen_more_than_days">超过 %d 天</string>
     <string name="feat_foryou_recommend_unseen_days">%d 天</string>
     <string name="feat_foryou_recommend_unseen_hours">%d 小时</string>
+    <string name="feat_foryou_title">标题</string>
+    <string name="feat_foryou_user_agent">用户代理（UA）</string>
+    <string name="feat_foryou_apply_changes">应用</string>
 </resources>

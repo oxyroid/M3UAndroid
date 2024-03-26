@@ -65,7 +65,7 @@ internal fun TvPlaylistScreenImpl(
     sorts: List<Sort>,
     sort: Sort,
     onSort: (Sort) -> Unit,
-    onFavorite: (streamId: Int, target: Boolean) -> Unit,
+    favorite: (streamId: Int) -> Unit,
     hide: (streamId: Int) -> Unit,
     savePicture: (streamId: Int) -> Unit,
     createTvRecommend: (streamId: Int) -> Unit,
@@ -145,7 +145,7 @@ internal fun TvPlaylistScreenImpl(
         content()
         MenuFullScreenDialog(
             stream = press,
-            onFavorite = onFavorite,
+            favorite = favorite,
             hide = hide,
             savePicture = savePicture,
             createShortcutOrTvRecommend = createTvRecommend,
@@ -164,7 +164,7 @@ internal fun TvPlaylistScreenImpl(
 @Composable
 private fun MenuFullScreenDialog(
     stream: Stream?,
-    onFavorite: (streamId: Int, target: Boolean) -> Unit,
+    favorite: (streamId: Int) -> Unit,
     hide: (streamId: Int) -> Unit,
     savePicture: (streamId: Int) -> Unit,
     createShortcutOrTvRecommend: (streamId: Int) -> Unit,
@@ -219,7 +219,7 @@ private fun MenuFullScreenDialog(
                         selected = false,
                         onClick = {
                             stream?.let { stream ->
-                                onFavorite(stream.id, !stream.favourite)
+                                favorite(stream.id)
                                 onDismissRequest()
                             }
                         },

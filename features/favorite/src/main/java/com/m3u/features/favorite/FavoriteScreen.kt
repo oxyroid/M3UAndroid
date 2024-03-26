@@ -28,8 +28,6 @@ import com.m3u.core.wrapper.Resource
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.Stream
 import com.m3u.data.service.MediaCommand
-import com.m3u.features.favorite.components.DialogStatus
-import com.m3u.features.favorite.components.FavoriteDialog
 import com.m3u.features.favorite.components.FavouriteGallery
 import com.m3u.i18n.R
 import com.m3u.material.components.Background
@@ -40,6 +38,8 @@ import com.m3u.material.model.LocalHazeState
 import com.m3u.ui.Destination
 import com.m3u.ui.EpisodesBottomSheet
 import com.m3u.ui.LocalVisiblePageInfos
+import com.m3u.ui.MediaSheet
+import com.m3u.ui.MediaSheetValue
 import com.m3u.ui.Sort
 import com.m3u.ui.SortBottomSheet
 import com.m3u.ui.TvSortFullScreenDialog
@@ -73,7 +73,9 @@ fun FavouriteRoute(
     val sheetState = rememberModalBottomSheetState()
 
     var isSortSheetVisible by rememberSaveable { mutableStateOf(false) }
-    var dialogStatus: DialogStatus by remember { mutableStateOf(DialogStatus.Idle) }
+    var mediaSheetValue: MediaSheetValue.FavouriteScreen by remember {
+        mutableStateOf(MediaSheetValue.FavouriteScreen())
+    }
 
     val visiblePageInfos = LocalVisiblePageInfos.current
     val pageIndex = remember { Destination.Root.entries.indexOf(Destination.Root.Favourite) }
@@ -121,7 +123,7 @@ fun FavouriteRoute(
                     }
                 }
             },
-            onLongClickStream = { dialogStatus = DialogStatus.Selections(it) },
+            onLongClickStream = { mediaSheetValue = MediaSheetValue.FavouriteScreen(it) },
             modifier = Modifier
                 .fillMaxSize()
                 .thenIf(!tv && pref.godMode) {
@@ -162,21 +164,19 @@ fun FavouriteRoute(
                 onChanged = { viewModel.sort(it) },
                 onDismissRequest = { isSortSheetVisible = false }
             )
-            FavoriteDialog(
-                status = dialogStatus,
-                onUpdate = { dialogStatus = it },
-                cancelFavorite = { id -> viewModel.cancelFavourite(id) },
-                createShortcut = { id ->
-                    viewModel.createShortcut(context, id)
-                }
+            MediaSheet(
+                value = mediaSheetValue,
+                onFavouriteStream = { stream -> viewModel.favourite(stream.id) },
+                onCreateStreamShortcut = { stream -> viewModel.createShortcut(context, stream.id) },
+                onDismissRequest = { mediaSheetValue = MediaSheetValue.FavouriteScreen() }
             )
         } else {
             TvSortFullScreenDialog(
-                visible = dialogStatus != DialogStatus.Idle,
+                visible = (mediaSheetValue as? MediaSheetValue.FavouriteScreen)?.stream != null,
                 sort = sort,
                 sorts = sorts,
                 onChanged = { viewModel.sort(it) },
-                onDismissRequest = { dialogStatus = DialogStatus.Idle }
+                onDismissRequest = { mediaSheetValue = MediaSheetValue.FavouriteScreen() }
             )
         }
     }

@@ -15,7 +15,7 @@ interface StreamRepository {
     @Deprecated("stream url is not unique")
     suspend fun getByUrl(url: String): Stream?
     suspend fun getByPlaylistUrl(playlistUrl: String): List<Stream>
-    suspend fun setFavourite(id: Int, target: Boolean)
+    suspend fun favouriteOrUnfavourite(id: Int)
     suspend fun hide(id: Int, target: Boolean)
     suspend fun reportPlayed(id: Int)
     suspend fun getPlayedRecently(): Stream?

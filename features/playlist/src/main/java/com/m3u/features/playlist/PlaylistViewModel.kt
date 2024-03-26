@@ -138,9 +138,9 @@ class PlaylistViewModel @Inject constructor(
         }
     }
 
-    internal fun favourite(id: Int, target: Boolean) {
+    internal fun favourite(id: Int) {
         viewModelScope.launch {
-            streamRepository.setFavourite(id, target)
+            streamRepository.favouriteOrUnfavourite(id)
         }
     }
 

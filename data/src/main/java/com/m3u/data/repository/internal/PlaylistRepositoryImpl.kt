@@ -444,11 +444,11 @@ internal class PlaylistRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun rename(url: String, target: String) = logger.sandBox {
-        playlistDao.rename(url, target)
+    override suspend fun onEditPlaylistTitle(url: String, title: String) = logger.sandBox {
+        playlistDao.rename(url, title)
     }
 
-    override suspend fun updateUserAgent(url: String, userAgent: String?) = logger.sandBox {
+    override suspend fun onEditPlaylistUserAgent(url: String, userAgent: String) = logger.sandBox {
         playlistDao.updateUserAgent(url, userAgent)
     }
 
