@@ -210,7 +210,8 @@ class SettingViewModel @Inject constructor(
             url = url,
             basicUrl = basicUrl,
             username = username,
-            password = password
+            password = password,
+            dataSource = selected
         )
         messager.emit(SettingMessage.Enqueued)
         clearAllInputs()

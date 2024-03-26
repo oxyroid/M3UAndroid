@@ -55,7 +55,8 @@ data class Playlists @Inject constructor(
                     url = url,
                     basicUrl = basicUrl,
                     username = username,
-                    password = password
+                    password = password,
+                    dataSource = dataSource
                 )
                 call.respond(
                     DefRep(result = true)

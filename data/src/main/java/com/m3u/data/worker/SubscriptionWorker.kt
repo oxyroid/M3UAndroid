@@ -244,20 +244,27 @@ class SubscriptionWorker @AssistedInject constructor(
             url: String,
             basicUrl: String? = null,
             username: String? = null,
-            password: String? = null
+            password: String? = null,
+            dataSource: DataSource
         ) {
-            val xtreamInput = XtreamInput.decodeFromPlaylistUrlOrNull(url)
-            when {
-                xtreamInput != null -> xtream(
-                    workManager,
-                    title,
-                    url, // include type param
-                    basicUrl ?: xtreamInput.basicUrl,
-                    username ?: xtreamInput.username,
-                    password ?: xtreamInput.password
-                )
-                // m3u for now
-                else -> m3u(workManager, title, url)
+            when (dataSource) {
+                DataSource.M3U -> {
+                    m3u(workManager, title, url)
+                }
+                DataSource.Xtream -> {
+                    val xtreamInput = XtreamInput.decodeFromPlaylistUrlOrNull(url)
+                    when {
+                        xtreamInput != null -> xtream(
+                            workManager,
+                            title,
+                            url, // include type param
+                            basicUrl ?: xtreamInput.basicUrl,
+                            username ?: xtreamInput.username,
+                            password ?: xtreamInput.password
+                        )
+                    }
+                }
+                else -> return
             }
         }
     }
