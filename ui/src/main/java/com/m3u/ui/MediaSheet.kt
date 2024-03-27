@@ -25,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.font.FontWeight
 import com.m3u.core.util.basic.title
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.Stream
@@ -305,7 +306,8 @@ private fun MediaSheetItem(
             headlineContent = {
                 Text(
                     text = stringResource(stringRes).title(),
-                    style = MaterialTheme.typography.bodyMedium
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.SemiBold
                 )
             },
             modifier = Modifier.clickable { onClick() }
