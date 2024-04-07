@@ -24,9 +24,9 @@ interface XtreamParser {
             password: String,
             vararg params: Pair<String, Any>
         ): String {
-            val url = Url(basicUrl)
+            val url = basicUrl.toHttpUrl()
             val builder = HttpUrl.Builder()
-                .scheme("http")
+                .scheme(url.scheme)
                 .host(url.host)
                 .port(url.port)
                 .addPathSegment("player_api.php")
