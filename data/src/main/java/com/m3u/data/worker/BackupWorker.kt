@@ -1,6 +1,8 @@
 package com.m3u.data.worker
 
 import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.content.Context
 import android.net.Uri
 import androidx.hilt.work.HiltWorker
@@ -16,10 +18,12 @@ import dagger.assisted.AssistedInject
 class BackupWorker @AssistedInject constructor(
     @Assisted private val context: Context,
     @Assisted params: WorkerParameters,
-    private val playlistRepository: PlaylistRepository
+    private val playlistRepository: PlaylistRepository,
+    private val notificationManager: NotificationManager
 ) : CoroutineWorker(context, params) {
     private val uri = inputData.getString(INPUT_URI)?.let { Uri.parse(it) }
     override suspend fun doWork(): Result {
+        createChannel()
         uri ?: return Result.failure()
         try {
             playlistRepository.backupOrThrow(uri)
@@ -37,13 +41,20 @@ class BackupWorker @AssistedInject constructor(
         return Notification.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.round_file_download_24)
             .setContentTitle("Backing up")
-            .setContentText("Please wait")
             .build()
     }
 
+    private fun createChannel() {
+        val channel = NotificationChannel(
+            CHANNEL_ID, NOTIFICATION_NAME, NotificationManager.IMPORTANCE_LOW
+        )
+        channel.description = "display subscribe task progress"
+        notificationManager.createNotificationChannel(channel)
+    }
 
     companion object {
         private const val CHANNEL_ID = "subscribe_channel"
+        private const val NOTIFICATION_NAME = "restore task"
         private const val NOTIFICATION_ID = 1225
         const val TAG = "backup"
         const val INPUT_URI = "uri"
