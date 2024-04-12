@@ -229,7 +229,7 @@ class StreamViewModel @Inject constructor(
         controlPoint = null
     }
 
-    fun release() {
+    fun destroy() {
         try {
             controlPoint?.stop()
             controlPoint = null
@@ -238,6 +238,10 @@ class StreamViewModel @Inject constructor(
         } catch (ignored: Exception) {
 
         }
+    }
+
+    fun pauseOrContinue(isContinued: Boolean) {
+        playerManager.pauseOrContinue(isContinued)
     }
 
     internal fun openInExternalPlayer() {

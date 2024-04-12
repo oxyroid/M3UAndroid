@@ -35,6 +35,7 @@ interface PlayerManagerV2 {
     suspend fun replay()
     fun release()
     fun clearCache()
+    fun pauseOrContinue(value: Boolean)
 }
 
 sealed class MediaCommand(open val streamId: Int) {

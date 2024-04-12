@@ -414,6 +414,15 @@ class PlayerManagerV2Impl @Inject constructor(
         tracksGroups.value = tracks.groups
     }
 
+    override fun pauseOrContinue(value: Boolean) {
+        player.value?.apply {
+            if (!value) pause() else {
+                playWhenReady = true
+                prepare()
+            }
+        }
+    }
+
     private val logger = before.prefix("player-manager")
 }
 

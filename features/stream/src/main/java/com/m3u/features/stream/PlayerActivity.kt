@@ -15,10 +15,10 @@ import com.m3u.core.architecture.pref.Pref
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.repository.PlaylistRepository
 import com.m3u.data.repository.StreamRepository
+import com.m3u.data.service.MediaCommand
 import com.m3u.data.service.Messager
 import com.m3u.data.service.PlayerManagerV2
 import com.m3u.data.service.RemoteDirectionService
-import com.m3u.data.service.MediaCommand
 import com.m3u.ui.Toolkit
 import com.m3u.ui.helper.AbstractHelper
 import dagger.hilt.android.AndroidEntryPoint
@@ -132,10 +132,20 @@ class PlayerActivity : ComponentActivity() {
         helper.applyConfiguration()
     }
 
+    override fun onResume() {
+        super.onResume()
+        viewModel.pauseOrContinue(true)
+    }
+
     override fun onPause() {
         super.onPause()
-        if (isFinishing) {
-            viewModel.release()
+        if (!isInPictureInPictureMode) {
+            viewModel.pauseOrContinue(false)
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        viewModel.destroy()
     }
 }
