@@ -35,7 +35,6 @@ import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -46,7 +45,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -60,9 +58,9 @@ import androidx.media3.common.Player
 import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.core.util.basic.isNotEmpty
 import com.m3u.features.stream.PlayerMaskImplDefaults.detectVerticalMaskGestures
+import com.m3u.features.stream.components.MaskTextButton
 import com.m3u.features.stream.components.PlayerMask
 import com.m3u.i18n.R.string
-import com.m3u.ui.Image
 import com.m3u.material.components.mask.MaskButton
 import com.m3u.material.components.mask.MaskCircleButton
 import com.m3u.material.components.mask.MaskState
@@ -70,10 +68,9 @@ import com.m3u.material.ktx.isTelevision
 import com.m3u.material.ktx.thenIf
 import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.FontFamilies
+import com.m3u.ui.Image
 import com.m3u.ui.helper.LocalHelper
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlin.math.absoluteValue
 import kotlin.math.roundToInt
@@ -112,28 +109,19 @@ internal fun PlayerMaskImpl(
     val currentBrightness by rememberUpdatedState(brightness)
     var gesture: MaskGesture? by remember { mutableStateOf(null) }
     val muted = currentVolume == 0f
-    val tooltipState = rememberTooltipState()
 
     val defaultBrightnessOrVolumeContentDescription =
         if (muted) stringResource(string.feat_stream_tooltip_unmute)
         else stringResource(string.feat_stream_tooltip_mute)
 
-    val brightnessOrVolumeContentDescription by remember {
+    val brightnessOrVolumeText by remember {
         derivedStateOf {
             when (gesture) {
                 MaskGesture.VOLUME -> "${(currentVolume.coerceIn(0f..1f) * 100).roundToInt()}%"
                 MaskGesture.BRIGHTNESS -> "${(currentBrightness.coerceIn(0f..1f) * 100).roundToInt()}%"
-                else -> defaultBrightnessOrVolumeContentDescription
+                else -> null
             }
         }
-    }
-
-    LaunchedEffect(Unit) {
-        snapshotFlow { gesture }
-            .onEach {
-                tooltipState.transition.targetState = it != null
-            }
-            .collect()
     }
 
     val isProgressEnabled = pref.progress
@@ -200,9 +188,8 @@ internal fun PlayerMaskImpl(
                 )
                 Spacer(modifier = Modifier.weight(1f))
 
-                MaskButton(
+                MaskTextButton(
                     state = maskState,
-                    tooltipState = tooltipState,
                     icon = when (gesture) {
                         MaskGesture.BRIGHTNESS -> when {
                             brightness < 0.5f -> Icons.Rounded.DarkMode
@@ -215,15 +202,14 @@ internal fun PlayerMaskImpl(
                             else -> Icons.AutoMirrored.Rounded.VolumeUp
                         }
                     },
-                    onClick = {
-                        onVolume(if (volume != 0f) 0f else 1f)
-                    },
-                    contentDescription = brightnessOrVolumeContentDescription,
+                    text = brightnessOrVolumeText,
                     tint = when (gesture) {
                         null -> if (muted) MaterialTheme.colorScheme.error else Color.Unspecified
                         MaskGesture.VOLUME -> if (muted) MaterialTheme.colorScheme.error else Color.Unspecified
                         MaskGesture.BRIGHTNESS -> Color.Unspecified
-                    }
+                    },
+                    onClick = { onVolume(if (volume != 0f) 0f else 1f) },
+                    contentDescription = defaultBrightnessOrVolumeContentDescription
                 )
                 if (!isSeriesPlaylist) {
                     MaskButton(

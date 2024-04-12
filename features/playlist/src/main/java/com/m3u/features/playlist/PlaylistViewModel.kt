@@ -321,11 +321,11 @@ class PlaylistViewModel @Inject constructor(
         sort
     ) { playlistUrl, query, sort -> Triple(playlistUrl, query, sort) }
         .flatMapLatest { (playlistUrl, query, sort) ->
-
-            Pager(
-                PagingConfig(20)
-            ) {
+            Pager(PagingConfig(20)) {
                 // streamDao.pagingAllByPlaylistUrl
+                // streamDao.pagingAllByPlaylistUrlAsc
+                // streamDao.pagingAllByPlaylistUrlDesc
+                // streamDao.pagingAllByPlaylistUrlRecently
                 streamRepository.pagingAllByPlaylistUrl(
                     playlistUrl,
                     query,
@@ -354,7 +354,6 @@ class PlaylistViewModel @Inject constructor(
             }
         }
         .flowOn(ioDispatcher)
-
 
     internal val pinnedCategories: StateFlow<List<String>> = playlist
         .map { it?.pinnedCategories ?: emptyList() }
