@@ -280,26 +280,26 @@ class PlaylistViewModel @Inject constructor(
 
     internal val streamPaged: Flow<PagingData<Stream>> = playlistUrl
         .flatMapLatest { playlistUrl ->
-            Pager(
-                PagingConfig(20)
-            ) {
-                streamRepository.pagingAllByPlaylistUrl(playlistUrl)
+            snapshotFlow { query }.flatMapLatest { query ->
+                Pager(
+                    PagingConfig(20)
+                ) {
+                    streamRepository.pagingAllByPlaylistUrl(playlistUrl, query)
+                }
+                    .flow
+                    .cachedIn(viewModelScope)
             }
-                .flow
-                .cachedIn(viewModelScope)
         }
         .let { flow ->
             combine(
                 flow,
                 playlist,
-                snapshotFlow { query },
                 pref.observeAsFlow { it.paging }
-            ) { streams, playlist, query, paging ->
+            ) { streams, playlist, paging ->
                 if (!paging) return@combine PagingData.empty()
                 val hiddenCategories = playlist?.hiddenCategories ?: emptyList()
                 streams.filter { stream ->
                     !stream.hidden && stream.category !in hiddenCategories
-                            && stream.title.contains(query, true)
                 }
             }
         }
@@ -344,7 +344,7 @@ class PlaylistViewModel @Inject constructor(
 
     internal val pinnedCategories: StateFlow<List<String>> = playlist
         .map { it?.pinnedCategories ?: emptyList() }
-        
+
         .flowOn(ioDispatcher)
         .stateIn(
             scope = viewModelScope,
@@ -370,7 +370,7 @@ class PlaylistViewModel @Inject constructor(
             Sort.UNSPECIFIED -> all.toCategories()
         }
             .sortedByDescending { it.name in pinnedCategories }
-            
+
     }
         .flowOn(ioDispatcher)
         .stateIn(

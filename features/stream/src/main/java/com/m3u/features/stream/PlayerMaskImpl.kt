@@ -62,7 +62,7 @@ import com.m3u.core.util.basic.isNotEmpty
 import com.m3u.features.stream.PlayerMaskImplDefaults.detectVerticalMaskGestures
 import com.m3u.features.stream.components.PlayerMask
 import com.m3u.i18n.R.string
-import com.m3u.material.components.Image
+import com.m3u.ui.Image
 import com.m3u.material.components.mask.MaskButton
 import com.m3u.material.components.mask.MaskCircleButton
 import com.m3u.material.components.mask.MaskState

@@ -13,7 +13,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
-import com.m3u.material.components.Image
+import com.m3u.ui.Image
 import com.m3u.material.model.LocalDuration
 import com.m3u.material.model.LocalSpacing
 

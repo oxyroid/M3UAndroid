@@ -1,4 +1,4 @@
-package com.m3u.material.components
+package com.m3u.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -38,7 +38,7 @@ fun Image(
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     shape = shape,
-                    color = MaterialTheme.colorScheme.secondary
+                    color = MaterialTheme.colorScheme.surfaceContainerLow
                 ) {
 
                 }
@@ -49,13 +49,15 @@ fun Image(
                 Box(
                     modifier = Modifier
                         .clip(shape)
-                        .background(MaterialTheme.colorScheme.secondary)
+                        .background(MaterialTheme.colorScheme.surfaceContainerLow)
                         .padding(spacing.small),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
                         text = errorPlaceholder.orEmpty(),
-                        style = MaterialTheme.typography.bodySmall
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontFamily = FontFamilies.LexendExa,
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                 }
             }
