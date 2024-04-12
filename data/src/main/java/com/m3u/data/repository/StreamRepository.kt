@@ -9,7 +9,10 @@ interface StreamRepository {
     fun observe(id: Int): Flow<Stream?>
 
     fun observeAllByPlaylistUrl(playlistUrl: String): Flow<List<Stream>>
-    fun pagingAllByPlaylistUrl(url: String): PagingSource<Int, Stream>
+    fun pagingAllByPlaylistUrl(
+        url: String,
+        query: String
+    ): PagingSource<Int, Stream>
     suspend fun get(id: Int): Stream?
 
     @Deprecated("stream url is not unique")

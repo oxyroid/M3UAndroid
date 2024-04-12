@@ -56,8 +56,11 @@ internal interface StreamDao {
     @Query("SELECT * FROM streams WHERE hidden = 1")
     fun observeAllHidden(): Flow<List<Stream>>
 
-    @Query("SELECT * FROM streams WHERE playlistUrl = :url")
-    fun pagingAllByPlaylistUrl(url: String): PagingSource<Int, Stream>
+    @Query("SELECT * FROM streams WHERE playlistUrl = :url AND title LIKE '%'||:query||'%'")
+    fun pagingAllByPlaylistUrl(
+        url: String,
+        query: String
+    ): PagingSource<Int, Stream>
 
     @Query("SELECT COUNT(playlistUrl) FROM streams WHERE playlistUrl = :playlistUrl")
     fun observeCountByPlaylistUrl(playlistUrl: String): Flow<Int>

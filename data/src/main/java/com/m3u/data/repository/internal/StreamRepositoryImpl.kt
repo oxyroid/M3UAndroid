@@ -27,8 +27,10 @@ internal class StreamRepositoryImpl @Inject constructor(
         .observeAllByPlaylistUrl(playlistUrl)
         .catch { emit(emptyList()) }
 
-    override fun pagingAllByPlaylistUrl(url: String): PagingSource<Int, Stream> = streamDao
-        .pagingAllByPlaylistUrl(url)
+    override fun pagingAllByPlaylistUrl(
+        url: String,
+        query: String
+    ): PagingSource<Int, Stream> = streamDao.pagingAllByPlaylistUrl(url, query)
 
     override suspend fun get(id: Int): Stream? = logger.execute {
         streamDao.get(id)
