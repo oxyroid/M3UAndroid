@@ -39,6 +39,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
@@ -164,6 +165,8 @@ internal fun PlayerMaskImpl(
     }
 
     var bufferedPosition: Long? by remember { mutableStateOf(null) }
+    var volumeBeforeMuted: Float by remember { mutableFloatStateOf(1f) }
+
     LaunchedEffect(playerState.playState) {
         if (playerState.playState == Player.STATE_READY) {
             bufferedPosition = null
@@ -208,7 +211,14 @@ internal fun PlayerMaskImpl(
                         MaskGesture.VOLUME -> if (muted) MaterialTheme.colorScheme.error else Color.Unspecified
                         MaskGesture.BRIGHTNESS -> Color.Unspecified
                     },
-                    onClick = { onVolume(if (volume != 0f) 0f else 1f) },
+                    onClick = {
+                        onVolume(
+                            if (volume != 0f) {
+                                volumeBeforeMuted = volume
+                                0f
+                            } else volumeBeforeMuted
+                        )
+                    },
                     contentDescription = defaultBrightnessOrVolumeContentDescription
                 )
                 if (!isSeriesPlaylist) {
