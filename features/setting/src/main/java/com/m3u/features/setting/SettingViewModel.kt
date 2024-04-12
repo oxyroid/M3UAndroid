@@ -197,15 +197,19 @@ class SettingViewModel @Inject constructor(
             clearAllInputs()
             return
         }
-        SubscriptionWorker.any(
-            workManager = workManager,
-            title = title,
-            url = url,
-            basicUrl = basicUrl,
-            username = username,
-            password = password,
-            dataSource = selected
-        )
+        when (selected) {
+            DataSource.M3U -> SubscriptionWorker.m3u(workManager, title, url)
+            DataSource.Xtream -> SubscriptionWorker.xtream(
+                workManager,
+                title,
+                url,
+                basicUrl,
+                username,
+                password
+            )
+
+            else -> {}
+        }
         messager.emit(SettingMessage.Enqueued)
         clearAllInputs()
     }

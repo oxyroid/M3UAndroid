@@ -202,7 +202,11 @@ class SubscriptionWorker @AssistedInject constructor(
                 .addTag(url)
                 .addTag(basicUrl)
                 .apply {
-                    val xtreamInput = checkNotNull(XtreamInput.decodeFromPlaylistUrlOrNull(url))
+                    val xtreamInput = XtreamInput.decodeFromPlaylistUrlOrNull(url) ?: XtreamInput(
+                        basicUrl = basicUrl,
+                        username = username,
+                        password = password
+                    )
                     if (xtreamInput.type == null) {
                         addTag(
                             XtreamInput.encodeToPlaylistUrl(
@@ -236,38 +240,6 @@ class SubscriptionWorker @AssistedInject constructor(
                 )
                 .build()
             workManager.enqueue(request)
-        }
-
-        fun any(
-            workManager: WorkManager,
-            title: String,
-            url: String,
-            basicUrl: String? = null,
-            username: String? = null,
-            password: String? = null,
-            dataSource: DataSource
-        ) {
-            when (dataSource) {
-                DataSource.M3U -> {
-                    m3u(workManager, title, url)
-                }
-
-                DataSource.Xtream -> {
-                    val xtreamInput = XtreamInput.decodeFromPlaylistUrlOrNull(url)
-                    when {
-                        xtreamInput != null -> xtream(
-                            workManager,
-                            title,
-                            url, // include type param
-                            basicUrl ?: xtreamInput.basicUrl,
-                            username ?: xtreamInput.username,
-                            password ?: xtreamInput.password
-                        )
-                    }
-                }
-
-                else -> throw IllegalArgumentException("DataSource $dataSource is unsupported for worker.")
-            }
         }
     }
 }

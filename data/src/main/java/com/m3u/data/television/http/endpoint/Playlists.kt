@@ -49,15 +49,19 @@ data class Playlists @Inject constructor(
                     )
                     return@post
                 }
-                SubscriptionWorker.any(
-                    workManager = workManager,
-                    title = title,
-                    url = url,
-                    basicUrl = basicUrl,
-                    username = username,
-                    password = password,
-                    dataSource = dataSource
-                )
+                when (dataSource) {
+                    DataSource.M3U -> SubscriptionWorker.m3u(workManager, title, url)
+                    DataSource.Xtream -> SubscriptionWorker.xtream(
+                        workManager,
+                        title,
+                        url,
+                        basicUrl.orEmpty(),
+                        username.orEmpty(),
+                        password.orEmpty()
+                    )
+
+                    else -> {}
+                }
                 call.respond(
                     DefRep(result = true)
                 )
