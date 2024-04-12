@@ -52,7 +52,6 @@ internal fun ImmersiveBackground(
     val pref = LocalPref.current
 
     val noPictureMode = pref.noPictureMode
-    val paging = pref.paging
 
     Box(modifier) {
         if (stream != null) {
@@ -131,13 +130,11 @@ internal fun ImmersiveBackground(
                     contentDescription = "search",
                     onClick = openSearchDrawer
                 )
-                if (!paging) {
-                    IconButton(
-                        icon = Icons.AutoMirrored.Rounded.Sort,
-                        contentDescription = "sort",
-                        onClick = openSortDrawer
-                    )
-                }
+                IconButton(
+                    icon = Icons.AutoMirrored.Rounded.Sort,
+                    contentDescription = "sort",
+                    onClick = openSortDrawer
+                )
                 IconButton(
                     icon = Icons.Rounded.Refresh,
                     contentDescription = "refresh",

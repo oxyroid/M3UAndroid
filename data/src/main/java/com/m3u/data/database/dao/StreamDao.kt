@@ -62,6 +62,24 @@ internal interface StreamDao {
         query: String
     ): PagingSource<Int, Stream>
 
+    @Query("SELECT * FROM streams WHERE playlistUrl = :url AND title LIKE '%'||:query||'%' ORDER BY title ASC")
+    fun pagingAllByPlaylistUrlAsc(
+        url: String,
+        query: String
+    ): PagingSource<Int, Stream>
+
+    @Query("SELECT * FROM streams WHERE playlistUrl = :url AND title LIKE '%'||:query||'%' ORDER BY title DESC")
+    fun pagingAllByPlaylistUrlDesc(
+        url: String,
+        query: String
+    ): PagingSource<Int, Stream>
+
+    @Query("SELECT * FROM streams WHERE playlistUrl = :url AND title LIKE '%'||:query||'%' ORDER BY seen")
+    fun pagingAllByPlaylistUrlRecently(
+        url: String,
+        query: String
+    ): PagingSource<Int, Stream>
+
     @Query("SELECT COUNT(playlistUrl) FROM streams WHERE playlistUrl = :playlistUrl")
     fun observeCountByPlaylistUrl(playlistUrl: String): Flow<Int>
 

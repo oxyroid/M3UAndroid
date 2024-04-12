@@ -278,33 +278,6 @@ class PlaylistViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5_000L)
         )
 
-    internal val streamPaged: Flow<PagingData<Stream>> = playlistUrl
-        .flatMapLatest { playlistUrl ->
-            snapshotFlow { query }.flatMapLatest { query ->
-                Pager(
-                    PagingConfig(20)
-                ) {
-                    streamRepository.pagingAllByPlaylistUrl(playlistUrl, query)
-                }
-                    .flow
-                    .cachedIn(viewModelScope)
-            }
-        }
-        .let { flow ->
-            combine(
-                flow,
-                playlist,
-                pref.observeAsFlow { it.paging }
-            ) { streams, playlist, paging ->
-                if (!paging) return@combine PagingData.empty()
-                val hiddenCategories = playlist?.hiddenCategories ?: emptyList()
-                streams.filter { stream ->
-                    !stream.hidden && stream.category !in hiddenCategories
-                }
-            }
-        }
-        .flowOn(ioDispatcher)
-
     private val unsorted: StateFlow<List<Stream>> = combine(
         playlistUrl.flatMapLatest { url ->
             pref.observeAsFlow { it.paging }.flatMapLatest { paging ->
@@ -341,6 +314,47 @@ class PlaylistViewModel @Inject constructor(
     internal fun sort(sort: Sort) {
         sortIndex.update { sorts.indexOf(sort).coerceAtLeast(0) }
     }
+
+    internal val streamPaged: Flow<PagingData<Stream>> = combine(
+        playlistUrl,
+        snapshotFlow { query },
+        sort
+    ) { playlistUrl, query, sort -> Triple(playlistUrl, query, sort) }
+        .flatMapLatest { (playlistUrl, query, sort) ->
+
+            Pager(
+                PagingConfig(20)
+            ) {
+                // streamDao.pagingAllByPlaylistUrl
+                streamRepository.pagingAllByPlaylistUrl(
+                    playlistUrl,
+                    query,
+                    when (sort) {
+                        Sort.UNSPECIFIED -> StreamRepository.Sort.UNSPECIFIED
+                        Sort.ASC -> StreamRepository.Sort.ASC
+                        Sort.DESC -> StreamRepository.Sort.DESC
+                        Sort.RECENTLY -> StreamRepository.Sort.RECENTLY
+                    }
+                )
+            }
+                .flow
+                .cachedIn(viewModelScope)
+        }
+        .let { flow ->
+            combine(
+                flow,
+                playlist,
+                pref.observeAsFlow { it.paging }
+            ) { streams, playlist, paging ->
+                if (!paging) return@combine PagingData.empty()
+                val hiddenCategories = playlist?.hiddenCategories ?: emptyList()
+                streams.filter { stream ->
+                    !stream.hidden && stream.category !in hiddenCategories
+                }
+            }
+        }
+        .flowOn(ioDispatcher)
+
 
     internal val pinnedCategories: StateFlow<List<String>> = playlist
         .map { it?.pinnedCategories ?: emptyList() }

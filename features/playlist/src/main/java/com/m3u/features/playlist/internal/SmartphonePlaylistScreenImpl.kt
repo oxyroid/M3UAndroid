@@ -123,16 +123,13 @@ internal fun SmartphonePlaylistScreenImpl(
     var mediaSheetValue: MediaSheetValue.PlaylistScreen by remember { mutableStateOf(MediaSheetValue.PlaylistScreen()) }
     var isSortSheetVisible by rememberSaveable { mutableStateOf(false) }
 
-    // FIXME: Pass pref.paging will make topbar tremble.
     LifecycleResumeEffect(Unit) {
         helper.actions = buildList {
-            if (!pref.paging) {
-                Action(
-                    icon = Icons.AutoMirrored.Rounded.Sort,
-                    contentDescription = "sort",
-                    onClick = { isSortSheetVisible = true }
-                ).also { add(it) }
-            }
+            Action(
+                icon = Icons.AutoMirrored.Rounded.Sort,
+                contentDescription = "sort",
+                onClick = { isSortSheetVisible = true }
+            ).also { add(it) }
             Action(
                 icon = Icons.Rounded.Refresh,
                 contentDescription = "refresh",

@@ -11,8 +11,10 @@ interface StreamRepository {
     fun observeAllByPlaylistUrl(playlistUrl: String): Flow<List<Stream>>
     fun pagingAllByPlaylistUrl(
         url: String,
-        query: String
+        query: String,
+        sort: Sort
     ): PagingSource<Int, Stream>
+
     suspend fun get(id: Int): Stream?
 
     @Deprecated("stream url is not unique")
@@ -25,4 +27,11 @@ interface StreamRepository {
     fun observeAllUnseenFavourites(limit: Duration): Flow<List<Stream>>
     fun observeAllFavourite(): Flow<List<Stream>>
     fun observeAllHidden(): Flow<List<Stream>>
+
+    enum class Sort {
+        UNSPECIFIED,
+        ASC,
+        DESC,
+        RECENTLY
+    }
 }
