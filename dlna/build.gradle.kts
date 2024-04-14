@@ -31,10 +31,7 @@ android {
         jvmTarget = "17"
     }
     packaging {
-        resources.excludes += setOf(
-            "/META-INF/beans.xml",
-            "/META-INF/{AL2.0,LGPL2.1}"
-        )
+        resources.excludes += "META-INF/**"
     }
 }
 

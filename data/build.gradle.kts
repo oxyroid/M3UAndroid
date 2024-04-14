@@ -5,7 +5,6 @@ plugins {
     alias(libs.plugins.org.jetbrains.kotlin.android)
     alias(libs.plugins.org.jetbrains.kotlin.serialization)
 }
-
 android {
     namespace = "com.m3u.data"
     compileSdk = 34
@@ -40,6 +39,9 @@ android {
     }
     composeOptions {
         kotlinCompilerExtensionVersion = libs.versions.compose.compiler.get()
+    }
+    packaging {
+        resources.excludes += "META-INF/**"
     }
 }
 
