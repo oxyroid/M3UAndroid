@@ -87,7 +87,7 @@ fun StreamRoute(
     var choosing by rememberSaveable { mutableStateOf(false) }
 
     val maskState = rememberMaskState()
-    val pullPanelLayoutState = rememberPullPanelLayoutState()
+    val pullPanelLayoutState = rememberPullPanelLayoutState(PullPanelLayoutValue.EXPANDED)
 
     LifecycleResumeEffect {
         with(helper) {

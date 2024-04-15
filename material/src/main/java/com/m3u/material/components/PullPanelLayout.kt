@@ -40,19 +40,25 @@ fun PullPanelLayout(
     content: @Composable () -> Unit,
     modifier: Modifier = Modifier,
     state: PullPanelLayoutState = rememberPullPanelLayoutState(),
-    initialOffset: Float = 0f,
     aspectRatio: Float = 16 / 10f,
     enabled: Boolean = true,
     onOffsetChanged: (Float) -> Unit = {},
     onValueChanged: (PullPanelLayoutValue) -> Unit = {}
 ) {
-    var offset: Float by remember(initialOffset) { mutableFloatStateOf(initialOffset) }
+    var savedMaxHeight by remember { mutableIntStateOf(0) }
+    var savedMaxWidth by remember { mutableIntStateOf(0) }
+    var offset: Float by remember(state, savedMaxHeight) {
+        mutableFloatStateOf(
+            when (state.value) {
+                PullPanelLayoutValue.EXPANDED -> savedMaxHeight.toFloat()
+                PullPanelLayoutValue.COLLAPSED -> 0f
+            }
+        )
+    }
     val currentOffset by animateFloatAsState(
         targetValue = offset,
         label = "offset"
     )
-    var savedMaxHeight by remember { mutableIntStateOf(0) }
-    var savedMaxWidth by remember { mutableIntStateOf(0) }
     LaunchedEffect(enabled) {
         if (!enabled) {
             offset = 0f
