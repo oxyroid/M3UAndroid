@@ -29,6 +29,7 @@ import com.m3u.data.repository.PlaylistRepository
 import com.m3u.i18n.R.string
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -59,6 +60,9 @@ class SubscriptionWorker @AssistedInject constructor(
     override suspend fun doWork(): Result = coroutineScope {
         dataSource ?: return@coroutineScope Result.failure()
         createChannel()
+        coroutineContext[Job]?.invokeOnCompletion {
+            manager.cancel(notificationId)
+        }
         when (dataSource) {
             DataSource.M3U -> {
                 title ?: return@coroutineScope Result.failure()
@@ -119,7 +123,6 @@ class SubscriptionWorker @AssistedInject constructor(
                             val notification = createN10nBuilder()
                                 .setContentText(findProgressContentText(count))
                                 .setActions(cancelAction)
-                                .setOngoing(true)
                                 .build()
                             manager.notify(notificationId, notification)
                             logger.post { "xtream callback" }
@@ -141,10 +144,7 @@ class SubscriptionWorker @AssistedInject constructor(
             }
 
             else -> {
-                val message = "unsupported data source $dataSource"
-                createN10nBuilder()
-                    .setContentText(message)
-                    .buildThenNotify()
+                // do nothing
                 Result.failure()
             }
         }
@@ -152,7 +152,7 @@ class SubscriptionWorker @AssistedInject constructor(
 
     private fun createChannel() {
         val channel = NotificationChannel(
-            CHANNEL_ID, NOTIFICATION_NAME, NotificationManager.IMPORTANCE_LOW
+            CHANNEL_ID, NOTIFICATION_NAME, NotificationManager.IMPORTANCE_DEFAULT
         )
         channel.description = "display subscribe task progress"
         manager.createNotificationChannel(channel)
