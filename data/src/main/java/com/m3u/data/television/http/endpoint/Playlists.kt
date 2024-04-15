@@ -36,6 +36,7 @@ data class Playlists @Inject constructor(
 
                 val title = call.queryParameters["title"]
                 val url = call.queryParameters["url"]
+                val epg = call.queryParameters["epg"]
                 val basicUrl = call.queryParameters["address"]
                 val username = call.queryParameters["username"]
                 val password = call.queryParameters["password"]
@@ -50,7 +51,7 @@ data class Playlists @Inject constructor(
                     return@post
                 }
                 when (dataSource) {
-                    DataSource.M3U -> SubscriptionWorker.m3u(workManager, title, url)
+                    DataSource.M3U -> SubscriptionWorker.m3u(workManager, title, url, epg)
                     DataSource.Xtream -> SubscriptionWorker.xtream(
                         workManager,
                         title,

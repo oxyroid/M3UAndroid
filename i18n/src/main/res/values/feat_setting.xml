@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="feat_setting_placeholder_url">playlist link</string>
     <string name="feat_setting_app_version">app version</string>
     <string name="feat_setting_label_subscribe">subscribe</string>
     <string name="feat_setting_success_subscribe">subscribe successfully</string>
     <string name="feat_setting_failed_malformed_url">malformed url (%s)</string>
     <string name="feat_setting_error_empty_title">playlist name is empty</string>
     <string name="feat_setting_placeholder_title">playlist name</string>
+    <string name="feat_setting_placeholder_url">playlist link</string>
+    <string name="feat_setting_placeholder_epg">epg link</string>
     <string name="feat_setting_label_subscribing">subscribing</string>
     <string name="feat_setting_sync_mode_all">sync all</string>
     <string name="feat_setting_sync_mode_skip_favourite_and_hidden">keep favourite and hidden channels</string>
@@ -45,6 +46,7 @@
     <string name="feat_setting_dropbox">dropbox</string>
     <string name="feat_setting_project_about">about project</string>
     <string name="feat_setting_local_storage">local storage</string>
+    <string name="feat_setting_epg">EPG</string>
     <string name="feat_setting_error_unselected_file">no file selected yet</string>
     <string name="feat_setting_error_blank_url">blank url</string>
     <string name="feat_setting_use_dynamic_colors">dynamic colors</string>

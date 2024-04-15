@@ -54,6 +54,7 @@ class SubscriptionWorker @AssistedInject constructor(
     private val username = inputData.getString(INPUT_STRING_USERNAME)
     private val password = inputData.getString(INPUT_STRING_PASSWORD)
     private val url = inputData.getString(INPUT_STRING_URL)
+    private val epg = inputData.getString(INPUT_STRING_EPG)
     private val notificationId: Int by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
         ATOMIC_NOTIFICATION_ID.incrementAndGet()
     }
@@ -68,8 +69,8 @@ class SubscriptionWorker @AssistedInject constructor(
         }
         when (dataSource) {
             DataSource.M3U -> {
-                title ?: return@coroutineScope Result.failure()
-                url ?: return@coroutineScope Result.failure()
+                val title = title ?: return@coroutineScope Result.failure()
+                val url = url ?: return@coroutineScope Result.failure()
                 if (title.isEmpty()) {
                     val message = context.getString(string.data_error_empty_title)
                     createN10nBuilder()
@@ -78,7 +79,7 @@ class SubscriptionWorker @AssistedInject constructor(
                     Result.failure()
                 } else {
                     try {
-                        playlistRepository.m3uOrThrow(title, url) { count ->
+                        playlistRepository.m3uOrThrow(title, url, epg) { count ->
                             val notification = createN10nBuilder()
                                 .setContentText(findProgressContentText(count))
                                 .setActions(cancelAction)
@@ -218,18 +219,20 @@ class SubscriptionWorker @AssistedInject constructor(
     companion object {
         private const val CHANNEL_ID = "subscribe_channel"
         private const val NOTIFICATION_NAME = "subscribe task"
-        const val INPUT_STRING_TITLE = "title"
-        const val INPUT_STRING_URL = "url"
-        const val INPUT_STRING_BASIC_URL = "basic_url"
-        const val INPUT_STRING_USERNAME = "username"
-        const val INPUT_STRING_PASSWORD = "password"
-        const val INPUT_STRING_DATA_SOURCE_VALUE = "data-source"
+        private const val INPUT_STRING_TITLE = "title"
+        private const val INPUT_STRING_URL = "url"
+        private const val INPUT_STRING_EPG = "epg"
+        private const val INPUT_STRING_BASIC_URL = "basic_url"
+        private const val INPUT_STRING_USERNAME = "username"
+        private const val INPUT_STRING_PASSWORD = "password"
+        private const val INPUT_STRING_DATA_SOURCE_VALUE = "data-source"
         const val TAG = "subscription"
 
         fun m3u(
             workManager: WorkManager,
             title: String,
-            url: String
+            url: String,
+            epg: String? = null
         ) {
             workManager.cancelAllWorkByTag(url)
             val request = OneTimeWorkRequestBuilder<SubscriptionWorker>()
@@ -237,6 +240,7 @@ class SubscriptionWorker @AssistedInject constructor(
                     workDataOf(
                         INPUT_STRING_TITLE to title,
                         INPUT_STRING_URL to url,
+                        INPUT_STRING_EPG to epg,
                         INPUT_STRING_DATA_SOURCE_VALUE to DataSource.M3U.value
                     )
                 )

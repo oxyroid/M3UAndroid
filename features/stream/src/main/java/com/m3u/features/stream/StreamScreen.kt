@@ -3,8 +3,6 @@ package com.m3u.features.stream
 import android.content.Intent
 import android.graphics.Rect
 import android.net.Uri
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
@@ -22,11 +20,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.tv.material3.Text
 import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.core.unspecified.unspecifiable
 import com.m3u.core.util.basic.isNotEmpty
@@ -150,14 +146,12 @@ fun StreamRoute(
             state = pullPanelLayoutState,
             enabled = isEpgPanelSupported && isEpgPreferenceEnabled,
             panel = {
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(Color.DarkGray.copy(0.38f))
-                        .border(2.dp, Color.DarkGray)
-                ) {
-                    Text("EPG Panel")
+                Background {
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                    }
                 }
             },
             content = {
@@ -214,7 +208,6 @@ fun StreamRoute(
                         setDataAndType(Uri.parse(streamUrl), "video/*")
                     }.let { Intent.createChooser(it, openInExternalPlayerString.title()) }
                 )
-                viewModel.openInExternalPlayer()
             },
             onDismiss = { viewModel.closeDlnaDevices() }
         )

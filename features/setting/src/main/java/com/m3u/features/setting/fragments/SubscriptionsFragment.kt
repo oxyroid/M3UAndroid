@@ -25,6 +25,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboardManager
@@ -36,6 +40,7 @@ import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.Stream
 import com.m3u.features.setting.BackingUpAndRestoringState
 import com.m3u.features.setting.components.DataSourceSelection
+import com.m3u.features.setting.components.EPGSwitch
 import com.m3u.features.setting.components.HiddenPlaylistGroupItem
 import com.m3u.features.setting.components.HiddenStreamItem
 import com.m3u.features.setting.components.LocalStorageButton
@@ -80,6 +85,8 @@ internal fun SubscriptionsFragment(
     onUnhidePlaylistCategory: (playlistUrl: String, category: String) -> Unit,
     onTitle: (String) -> Unit,
     onUrl: (String) -> Unit,
+    epg: String,
+    onEpg: (String) -> Unit,
     onClipboard: (String) -> Unit,
     onSubscribe: () -> Unit,
     onLocalStorage: (Boolean) -> Unit,
@@ -124,7 +131,9 @@ internal fun SubscriptionsFragment(
                         onSubscribeForTv = onSubscribeForTv,
                         openDocument = openDocument,
                         backup = backup,
-                        restore = restore
+                        restore = restore,
+                        epg = epg,
+                        onEpg = onEpg
                     )
                 }
 
@@ -171,6 +180,8 @@ private fun MainContentImpl(
     backingUpOrRestoring: BackingUpAndRestoringState,
     onTitle: (String) -> Unit,
     onUrl: (String) -> Unit,
+    epg: String,
+    onEpg: (String) -> Unit,
     onClipboard: (String) -> Unit,
     onSubscribe: () -> Unit,
     onLocalStorage: (Boolean) -> Unit,
@@ -187,6 +198,9 @@ private fun MainContentImpl(
 
     val tv = isTelevision()
     val remoteControl = pref.remoteControl
+
+    var useEpg by remember { mutableStateOf(false) }
+
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(spacing.small),
         contentPadding = PaddingValues(spacing.medium),
@@ -215,6 +229,9 @@ private fun MainContentImpl(
                         url = url,
                         onUrl = onUrl,
                         uri = uri,
+                        useEpg = useEpg,
+                        epg = epg,
+                        onEpg = onEpg,
                         openDocument = openDocument,
                         localStorage = localStorage
                     )
@@ -252,6 +269,14 @@ private fun MainContentImpl(
                     checked = subscribeForTv,
                     onChanged = onSubscribeForTv,
                     enabled = !localStorage
+                )
+            }
+        }
+        item {
+            if (selected == DataSource.M3U) {
+                EPGSwitch(
+                    checked = useEpg,
+                    onChanged = { useEpg = it }
                 )
             }
         }
@@ -367,6 +392,9 @@ private fun M3UInputContent(
     url: String,
     onUrl: (String) -> Unit,
     uri: Uri,
+    useEpg: Boolean,
+    epg: String,
+    onEpg: (String) -> Unit,
     openDocument: (Uri) -> Unit,
     localStorage: Boolean,
     modifier: Modifier = Modifier
@@ -400,6 +428,14 @@ private fun M3UInputContent(
                     openDocument = openDocument,
                 )
             }
+        }
+        if (useEpg) {
+            PlaceholderField(
+                text = epg,
+                placeholder = stringResource(string.feat_setting_placeholder_epg).uppercase(),
+                onValueChange = onEpg,
+                modifier = Modifier.fillMaxWidth()
+            )
         }
     }
 }

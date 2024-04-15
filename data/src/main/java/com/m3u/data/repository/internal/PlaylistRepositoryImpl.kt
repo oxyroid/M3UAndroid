@@ -91,6 +91,7 @@ internal class PlaylistRepositoryImpl @Inject constructor(
     override suspend fun m3uOrThrow(
         title: String,
         url: String,
+        epgUrl: String?,
         callback: (count: Int) -> Unit
     ) {
         fun parse(
@@ -137,8 +138,9 @@ internal class PlaylistRepositoryImpl @Inject constructor(
         }
         safeClearStreamByPlaylistUrl(url)
         val playlist = playlistDao.getByUrl(actualUrl)?.copy(
-            title = title
-        ) ?: Playlist(title, actualUrl, source = DataSource.M3U)
+            title = title,
+            epgUrl = epgUrl
+        ) ?: Playlist(title, actualUrl, epgUrl = epgUrl, source = DataSource.M3U)
         playlistDao.insertOrReplace(playlist)
 
         val buffer = mutableListOf<Stream>()
@@ -348,7 +350,7 @@ internal class PlaylistRepositoryImpl @Inject constructor(
 
         when (playlist.source) {
             DataSource.M3U -> {
-                SubscriptionWorker.m3u(workManager, playlist.title, url)
+                SubscriptionWorker.m3u(workManager, playlist.title, url, playlist.epgUrl)
             }
 
             DataSource.Xtream -> {

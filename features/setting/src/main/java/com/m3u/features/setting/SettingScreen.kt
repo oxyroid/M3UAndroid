@@ -148,6 +148,8 @@ fun SettingRoute(
             onUsername = { viewModel.username = it },
             password = viewModel.password,
             onPassword = { viewModel.password = it },
+            epg = viewModel.epg,
+            onEpg = { viewModel.epg = it },
             cacheSpace = cacheSpace,
             onClearCache = { viewModel.clearCache() },
             modifier = modifier.fillMaxSize()
@@ -200,6 +202,8 @@ private fun SettingScreen(
     onUsername: (String) -> Unit,
     password: String,
     onPassword: (String) -> Unit,
+    epg: String,
+    onEpg: (String) -> Unit,
     cacheSpace: DataUnit,
     onClearCache: () -> Unit,
     modifier: Modifier = Modifier
@@ -316,6 +320,8 @@ private fun SettingScreen(
                                 onUsername = onUsername,
                                 password = password,
                                 onPassword = onPassword,
+                                epg = epg,
+                                onEpg = onEpg,
                                 modifier = Modifier.fillMaxSize()
                             )
                         }

@@ -14,12 +14,12 @@ object Profiles {
 
     val PARSER_M3U = Profile("parser-m3u")
     val PARSER_XTREAM = Profile("parser-xtream")
-//     val PARSER_EPG = false
+    val PARSER_EPG = Profile("parser-epg")
 
     val SERVICE_PLAYER = Profile("service-player")
     val SERVICE_NSD = Profile("service-nsd")
 
     val WORKER_BACKUP = Profile("worker-backup")
     val WORKER_RESTORE = Profile("worker-restore")
-    val WORKER_SUBSCRIPTION = Profile("worker-subscription", true)
+    val WORKER_SUBSCRIPTION = Profile("worker-subscription")
 }

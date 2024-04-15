@@ -197,6 +197,7 @@ class SettingViewModel @Inject constructor(
                     basicUrl,
                     username,
                     password,
+                    epg.ifBlank { null },
                     selected
                 )
             }
@@ -204,7 +205,7 @@ class SettingViewModel @Inject constructor(
             return
         }
         when (selected) {
-            DataSource.M3U -> SubscriptionWorker.m3u(workManager, title, url)
+            DataSource.M3U -> SubscriptionWorker.m3u(workManager, title, url, epg)
             DataSource.Xtream -> SubscriptionWorker.xtream(
                 workManager,
                 title,
@@ -307,6 +308,7 @@ class SettingViewModel @Inject constructor(
         basicUrl = ""
         username = ""
         password = ""
+        epg = ""
     }
 
     internal fun clearCache() {
@@ -318,4 +320,5 @@ class SettingViewModel @Inject constructor(
     internal var basicUrl by mutableStateOf("")
     internal var username by mutableStateOf("")
     internal var password by mutableStateOf("")
+    internal var epg by mutableStateOf("")
 }

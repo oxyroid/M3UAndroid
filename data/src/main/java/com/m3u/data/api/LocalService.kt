@@ -37,6 +37,7 @@ interface LocalService {
         @Query("address") basicUrl: String,
         @Query("username") username: String,
         @Query("password") password: String,
+        @Query("epg") epg: String?,
         @Query("data_source") dataSource: DataSource
     ): DefRep?
 
@@ -116,9 +117,10 @@ class LocalPreparedService @Inject constructor(
         basicUrl: String,
         username: String,
         password: String,
+        epg: String?,
         dataSource: DataSource
     ): DefRep? = logger.execute {
-        requireApi().subscribe(title, url, basicUrl, username, password, dataSource)
+        requireApi().subscribe(title, url, basicUrl, username, password, epg, dataSource)
     }
 
     override suspend fun remoteDirection(remoteDirectionValue: Int): DefRep? = logger.execute {
