@@ -70,7 +70,7 @@ fun PullPanelLayout(
         val maxWidth = constraints.maxWidth
         savedMaxHeight = maxHeight
         savedMaxWidth = maxWidth
-        val panelLayerPlaceable = subcompose(true, panel)
+        val panelLayerPlaceable = subcompose(PullPanelLayoutState.EXPANDED, panel)
             .first()
             .measure(
                 constraints
@@ -83,7 +83,7 @@ fun PullPanelLayout(
                     )
             )
 
-        val contentPlaceable = subcompose(Unit, content)
+        val contentPlaceable = subcompose(PullPanelLayoutState.COLLAPSED, content)
             .first()
             .measure(
                 constraints
