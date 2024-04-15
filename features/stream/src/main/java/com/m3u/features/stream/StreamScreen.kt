@@ -163,8 +163,14 @@ fun StreamRoute(
             content = {
                 StreamPlayer(
                     isSeriesPlaylist = isSeriesPlaylist,
-                    openDlnaDevices = viewModel::openDlnaDevices,
-                    openChooseFormat = { choosing = true },
+                    openDlnaDevices = {
+                        viewModel.openDlnaDevices()
+                        pullPanelLayoutState.collapse()
+                    },
+                    openChooseFormat = {
+                        choosing = true
+                        pullPanelLayoutState.collapse()
+                    },
                     onFavourite = viewModel::onFavourite,
                     onBackPressed = onBackPressed,
                     maskState = maskState,
