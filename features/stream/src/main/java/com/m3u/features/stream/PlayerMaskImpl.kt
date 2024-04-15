@@ -2,7 +2,6 @@ package com.m3u.features.stream
 
 import android.content.pm.ActivityInfo
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.animateIntAsState
@@ -12,9 +11,13 @@ import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -58,7 +61,7 @@ import androidx.compose.ui.unit.dp
 import androidx.media3.common.Player
 import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.core.util.basic.isNotEmpty
-import com.m3u.features.stream.PlayerMaskImplDefaults.detectVerticalMaskGestures
+import com.m3u.features.stream.PlayerMaskImplDefaults.detectVerticalGesture
 import com.m3u.features.stream.components.MaskTextButton
 import com.m3u.features.stream.components.PlayerMask
 import com.m3u.i18n.R.string
@@ -97,7 +100,8 @@ internal fun PlayerMaskImpl(
     openDlnaDevices: () -> Unit,
     openChooseFormat: () -> Unit,
     onVolume: (Float) -> Unit,
-    onBrightness: (Float) -> Unit
+    onBrightness: (Float) -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val pref = LocalPref.current
     val helper = LocalHelper.current
@@ -179,7 +183,7 @@ internal fun PlayerMaskImpl(
         }
     }
 
-    BoxWithConstraints {
+    Box(modifier) {
         PlayerMask(
             state = maskState,
             header = {
@@ -262,20 +266,80 @@ internal fun PlayerMaskImpl(
                 }
             },
             body = {
-                AnimatedVisibility(
-                    visible = pref.alwaysShowReplay || playerState.playState in arrayOf(
-                        Player.STATE_IDLE,
-                        Player.STATE_ENDED
-                    ) || playerState.playerError != null,
-                    enter = fadeIn() + scaleIn(initialScale = 0.85f),
-                    exit = fadeOut() + scaleOut(targetScale = 0.85f)
+                BoxWithConstraints(Modifier.weight(1f)) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .thenIf(!tv && pref.brightnessGesture) {
+                                Modifier.detectVerticalGesture(
+                                    time = 0.65f,
+                                    onDragStart = {
+                                        maskState.lock()
+                                        gesture = MaskGesture.BRIGHTNESS
+                                    },
+                                    onDragEnd = {
+                                        maskState.unlock(400.milliseconds)
+                                        gesture = null
+                                    },
+                                    onVerticalDrag = { deltaPixel ->
+                                        onBrightness(
+                                            (currentBrightness - deltaPixel / this@BoxWithConstraints.maxHeight.value)
+                                                .coerceIn(0f..1f)
+                                        )
+                                    }
+                                )
+                            }
+                    )
+                }
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier
+                        .fillMaxWidth(0.45f)
+                        .fillMaxHeight()
                 ) {
-                    MaskCircleButton(
-                        state = maskState,
-                        icon = Icons.Rounded.Refresh,
-                        onClick = {
-                            coroutineScope.launch { helper.replay() }
-                        }
+                    androidx.compose.animation.AnimatedVisibility(
+                        visible = pref.alwaysShowReplay || playerState.playState in arrayOf(
+                            Player.STATE_IDLE,
+                            Player.STATE_ENDED
+                        ) || playerState.playerError != null,
+                        enter = fadeIn() + scaleIn(initialScale = 0.85f),
+                        exit = fadeOut() + scaleOut(targetScale = 0.85f),
+                    ) {
+                        MaskCircleButton(
+                            state = maskState,
+                            icon = Icons.Rounded.Refresh,
+                            onClick = {
+                                coroutineScope.launch { helper.replay() }
+                            }
+                        )
+                    }
+                }
+                BoxWithConstraints(
+                    Modifier
+                        .weight(1f)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .thenIf(!tv && pref.volumeGesture) {
+                                Modifier.detectVerticalGesture(
+                                    time = 0.65f,
+                                    onDragStart = {
+                                        maskState.lock()
+                                        gesture = MaskGesture.VOLUME
+                                    },
+                                    onDragEnd = {
+                                        maskState.unlock(400.milliseconds)
+                                        gesture = null
+                                    },
+                                    onVerticalDrag = { deltaPixel ->
+                                        onVolume(
+                                            (currentVolume - (deltaPixel / this@BoxWithConstraints.maxHeight.value))
+                                                .coerceIn(0f..1f)
+                                        )
+                                    }
+                                )
+                            }
                     )
                 }
             },
@@ -414,37 +478,6 @@ internal fun PlayerMaskImpl(
                         )
                     }
                 }
-            },
-            modifier = Modifier.thenIf(!tv) {
-                Modifier.detectVerticalMaskGestures(
-                    safe = 0.35f,
-                    threshold = 0.15f,
-                    time = 0.65f,
-                    volume = { deltaPixel ->
-                        if (!pref.volumeGesture) return@detectVerticalMaskGestures
-                        onVolume(
-                            (currentVolume - (deltaPixel / maxHeight.value)).coerceIn(0f..1f)
-                        )
-                    },
-                    brightness = { deltaPixel ->
-                        if (!pref.brightnessGesture) return@detectVerticalMaskGestures
-                        onBrightness(
-                            (currentBrightness - deltaPixel / maxHeight.value).coerceIn(
-                                0f..1f
-                            )
-                        )
-                    },
-                    onDragStart = {
-                        if (!pref.volumeGesture && !pref.brightnessGesture) return@detectVerticalMaskGestures
-                        maskState.lock()
-                        gesture = it
-                    },
-                    onDragEnd = {
-                        if (!pref.volumeGesture && !pref.brightnessGesture) return@detectVerticalMaskGestures
-                        maskState.unlock(400.milliseconds)
-                        gesture = null
-                    }
-                )
             }
         )
     }

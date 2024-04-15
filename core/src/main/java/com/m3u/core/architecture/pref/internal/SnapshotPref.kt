@@ -22,6 +22,7 @@ import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_CLIP_MODE
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_COLOR_ARGB
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_CONNECT_TIMEOUT
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_DARK_MODE
+import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_EPG
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_FOLLOW_SYSTEM_THEME
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_FULL_INFO_PLAYER
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_GOD_MODE
@@ -40,6 +41,7 @@ import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_UNSEENS_MILLISECOND
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_USE_DYNAMIC_COLORS
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_VOLUME_GESTURE
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_ZAPPING_MODE
+import com.m3u.core.architecture.pref.Pref.Companion.EPG
 import com.m3u.core.architecture.pref.Pref.Companion.FOLLOW_SYSTEM_THEME
 import com.m3u.core.architecture.pref.Pref.Companion.FULL_INFO_PLAYER
 import com.m3u.core.architecture.pref.Pref.Companion.GOD_MODE
@@ -139,6 +141,8 @@ class SnapshotPref @Inject constructor(
     sharedPreferences.booleanAsState(DEFAULT_ALWAYS_SHOW_REFRESH, ALWAYS_SHOW_REFRESH)
     override var paging: Boolean by
     sharedPreferences.booleanAsState(DEFAULT_PAGING, PAGING)
+    override var epg: Boolean by
+    sharedPreferences.booleanAsState(DEFAULT_EPG, EPG)
 
     companion object {
         private const val SHARED_SETTINGS = "shared_settings"

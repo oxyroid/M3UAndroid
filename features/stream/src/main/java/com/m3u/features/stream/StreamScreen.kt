@@ -3,6 +3,8 @@ package com.m3u.features.stream
 import android.content.Intent
 import android.graphics.Rect
 import android.net.Uri
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
@@ -17,11 +19,14 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.tv.material3.Text
 import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.core.unspecified.unspecifiable
 import com.m3u.core.util.basic.isNotEmpty
@@ -33,6 +38,8 @@ import com.m3u.features.stream.components.DlnaDevicesBottomSheet
 import com.m3u.features.stream.components.FormatsBottomSheet
 import com.m3u.i18n.R.string
 import com.m3u.material.components.Background
+import com.m3u.material.components.PullPanelLayout
+import com.m3u.material.components.PullPanelLayoutState
 import com.m3u.material.components.mask.MaskInterceptor
 import com.m3u.material.components.mask.MaskState
 import com.m3u.material.components.mask.rememberMaskState
@@ -54,6 +61,10 @@ fun StreamRoute(
     val helper = LocalHelper.current
     val pref = LocalPref.current
     val context = LocalContext.current
+    val configuration = LocalConfiguration.current
+
+    val isEpgPanelSupported = configuration.screenWidthDp < configuration.screenHeightDp
+    val isEpgPreferenceEnabled = pref.epg
 
     val playerState: PlayerState by viewModel.playerState.collectAsStateWithLifecycle()
     val stream by viewModel.stream.collectAsStateWithLifecycle()
@@ -133,22 +144,49 @@ fun StreamRoute(
         color = Color.Black,
         contentColor = Color.White
     ) {
-        StreamScreen(
-            isSeriesPlaylist = isSeriesPlaylist,
-            openDlnaDevices = viewModel::openDlnaDevices,
-            openChooseFormat = { choosing = true },
-            onFavourite = viewModel::onFavourite,
-            onBackPressed = onBackPressed,
-            maskState = maskState,
-            playerState = playerState,
-            playlist = playlist,
-            stream = stream,
-            formatsIsNotEmpty = formats.isNotEmpty(),
-            brightness = brightness,
-            volume = volume,
-            onBrightness = { brightness = it },
-            onVolume = viewModel::onVolume,
-            modifier = modifier
+        PullPanelLayout(
+            enabled = isEpgPanelSupported && isEpgPreferenceEnabled,
+            panel = {
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.DarkGray.copy(0.38f))
+                        .border(2.dp, Color.DarkGray)
+                ) {
+                    Text("EPG Panel")
+                }
+            },
+            content = {
+                StreamPlayer(
+                    isSeriesPlaylist = isSeriesPlaylist,
+                    openDlnaDevices = viewModel::openDlnaDevices,
+                    openChooseFormat = { choosing = true },
+                    onFavourite = viewModel::onFavourite,
+                    onBackPressed = onBackPressed,
+                    maskState = maskState,
+                    playerState = playerState,
+                    playlist = playlist,
+                    stream = stream,
+                    formatsIsNotEmpty = formats.isNotEmpty(),
+                    brightness = brightness,
+                    volume = volume,
+                    onBrightness = { brightness = it },
+                    onVolume = viewModel::onVolume,
+                    modifier = modifier
+                )
+            },
+            onStateChanged = { state ->
+                when (state) {
+                    PullPanelLayoutState.EXPANDED -> {
+                        maskState.lock()
+                    }
+
+                    PullPanelLayoutState.COLLAPSED -> {
+                        maskState.unlock()
+                    }
+                }
+            }
         )
 
         DlnaDevicesBottomSheet(
@@ -188,7 +226,7 @@ fun StreamRoute(
 }
 
 @Composable
-private fun StreamScreen(
+private fun StreamPlayer(
     maskState: MaskState,
     playerState: PlayerState,
     playlist: Playlist?,

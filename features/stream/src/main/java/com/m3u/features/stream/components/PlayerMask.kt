@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
@@ -54,39 +53,39 @@ internal fun PlayerMask(
                     )
                     .padding(WindowInsets.statusBars.asPaddingValues())
             ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = spacing.medium)
-                        .align(Alignment.TopCenter),
-                    horizontalArrangement = Arrangement.spacedBy(
-                        if (!tv) spacing.none else spacing.medium,
-                        Alignment.End
-                    ),
-                    verticalAlignment = Alignment.Top,
-                    content = header
-                )
-                Row(
-                    modifier = Modifier
-                        .padding(horizontal = spacing.medium)
-                        .fillMaxSize(),
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically,
-                    content = body
-                )
-                Column(
-                    modifier = Modifier
-                        .padding(horizontal = spacing.medium)
-                        .align(Alignment.BottomCenter)
-                ) {
+                Column {
                     Row(
                         modifier = Modifier
-                            .fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(spacing.medium),
-                        verticalAlignment = Alignment.Bottom,
-                        content = footer
+                            .fillMaxWidth()
+                            .padding(horizontal = spacing.medium),
+                        horizontalArrangement = Arrangement.spacedBy(
+                            if (!tv) spacing.none else spacing.medium,
+                            Alignment.End
+                        ),
+                        verticalAlignment = Alignment.Top,
+                        content = header
                     )
-                    slider?.invoke()
+                    Row(
+                        modifier = Modifier
+                            .padding(horizontal = spacing.medium)
+                            .fillMaxWidth()
+                            .weight(1f),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically,
+                        content = body
+                    )
+                    Column(
+                        modifier = Modifier.padding(horizontal = spacing.medium)
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(spacing.medium),
+                            verticalAlignment = Alignment.Bottom,
+                            content = footer
+                        )
+                        slider?.invoke()
+                    }
                 }
             }
         }

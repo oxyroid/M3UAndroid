@@ -19,51 +19,22 @@ import kotlin.math.absoluteValue
 import kotlin.time.Duration
 
 internal object PlayerMaskImplDefaults {
-    /**
-     * @param safe The percent of horizontal area from center that will not trigger the gesture.
-     * @param threshold The percent of vertical area that can respond to gestures.
-     */
-    fun Modifier.detectVerticalMaskGestures(
-        safe: Float = 0f,
-        threshold: Float = 0f,
+    fun Modifier.detectVerticalGesture(
+        threshold: Float = 0.15f,
         time: Float = 1f,
-        volume: (pixel: Float) -> Unit,
-        brightness: (pixel: Float) -> Unit,
-        onDragStart: ((MaskGesture) -> Unit)? = null,
+        onVerticalDrag: (pixel: Float) -> Unit,
+        onDragStart: (() -> Unit)? = null,
         onDragEnd: (() -> Unit)? = null
     ): Modifier {
-        var gesture: MaskGesture? = null
         var total = 0f
         return this then Modifier.pointerInput(Unit) {
             detectVerticalDragGestures(
-                onDragStart = { start ->
-                    when (start.x / size.width) {
-                        in 0f..(1 - safe) / 2 ->
-                            gesture = MaskGesture.BRIGHTNESS.also { onDragStart?.invoke(it) }
-
-                        in (1 + safe) / 2..1f ->
-                            gesture = MaskGesture.VOLUME.also { onDragStart?.invoke(it) }
-
-                        else -> {}
-                    }
-                },
-                onDragEnd = {
-                    onDragEnd?.invoke()
-                    gesture = null
-                    total = 0f
-                },
-                onDragCancel = {
-                    gesture = null
-                    total = 0f
-                },
+                onDragStart = { onDragStart?.invoke() },
+                onDragEnd = { onDragEnd?.invoke() },
                 onVerticalDrag = { _, dragAmount ->
                     total += dragAmount.absoluteValue / size.height
                     if (total < threshold) return@detectVerticalDragGestures
-                    when (gesture) {
-                        MaskGesture.BRIGHTNESS -> brightness(dragAmount * time)
-                        MaskGesture.VOLUME -> volume(dragAmount * time)
-                        null -> {}
-                    }
+                    onVerticalDrag(dragAmount * time)
                 }
             )
         }
@@ -128,8 +99,6 @@ internal object PlayerMaskImplDefaults {
         }
 
     private val Int.fixClockUnit: String
-        get() {
-            return if (this < 10) return "0$this"
-            else this.toString()
-        }
+        get() = if (this < 10) "0$this"
+        else this.toString()
 }

@@ -52,6 +52,7 @@ interface Pref {
     var progress: Boolean
     var alwaysShowReplay: Boolean
     var paging: Boolean
+    var epg: Boolean
 
     companion object {
         @PlaylistStrategy
@@ -90,6 +91,7 @@ interface Pref {
         const val DEFAULT_PROGRESS = true
         const val DEFAULT_ALWAYS_SHOW_REFRESH = false
         const val DEFAULT_PAGING = false
+        const val DEFAULT_EPG = true
 
         const val KEEP_FAVOURITE_AND_HIDDEN = "playlist-strategy"
         const val ROW_COUNT = "rowCount"
@@ -119,6 +121,7 @@ interface Pref {
         const val PROGRESS = "progress"
         const val ALWAYS_SHOW_REFRESH = "always-show-refresh"
         const val PAGING = "paging"
+        const val EPG = "epg"
     }
 }
 

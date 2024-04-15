@@ -16,6 +16,7 @@ import androidx.compose.material.icons.rounded.PictureInPicture
 import androidx.compose.material.icons.rounded.ReplayCircleFilled
 import androidx.compose.material.icons.rounded.ScreenRotation
 import androidx.compose.material.icons.rounded.SettingsEthernet
+import androidx.compose.material.icons.rounded.Slideshow
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -100,6 +101,12 @@ fun OptionalPreferences(modifier: Modifier = Modifier) {
                         icon = Icons.Rounded.ReplayCircleFilled,
                         checked = pref.alwaysShowReplay,
                         onChanged = { pref.alwaysShowReplay = !pref.alwaysShowReplay }
+                    )
+                    CheckBoxSharedPreference(
+                        title = string.feat_setting_epg_panel,
+                        icon = Icons.Rounded.Slideshow,
+                        checked = pref.epg,
+                        onChanged = { pref.epg = !pref.epg }
                     )
                 }
 
