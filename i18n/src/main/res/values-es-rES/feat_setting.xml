@@ -9,7 +9,7 @@
     <string name="feat_setting_placeholder_title">nombre de lista</string>
     <string name="feat_setting_label_subscribing">suscribiéndose</string>
     <string name="feat_setting_sync_mode_all">todo</string>
-    <string name="feat_setting_sync_mode_skip_favourite">omitir favorito</string>
+    <string name="feat_setting_sync_mode_skip_favourite_and_hidden">omitir favorito</string>
     <string name="feat_setting_sync_mode">forma de sincronizado</string>
     <string name="feat_setting_playlist_management">administrar lista</string>
     <string name="feat_setting_connect_timeout">límite de conexión</string>

@@ -13,9 +13,9 @@ interface XtreamParser {
         seriesId: Int
     ): XtreamStreamInfo
 
-    fun entityOutputs(input: XtreamInput): Flow<XtreamMediaOutput>
+    fun parse(input: XtreamInput): Flow<XtreamData>
 
-    suspend fun output(input: XtreamInput): XtreamOutput
+    suspend fun getXtreamOutput(input: XtreamInput): XtreamOutput
 
     companion object {
         fun createInfoUrl(

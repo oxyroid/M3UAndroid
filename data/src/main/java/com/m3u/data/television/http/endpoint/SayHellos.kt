@@ -42,7 +42,7 @@ data class SayHellos @Inject constructor(
                 call.respond(info)
             }
 
-            post("/update") {
+            post("/install") {
                 messager.sandBox {
                     val version = call.queryParameters["version"]
                     if (version == null) {

@@ -4,7 +4,7 @@ import com.m3u.data.database.model.Stream
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-sealed interface XtreamMediaOutput
+sealed interface XtreamData
 
 @Serializable
 data class XtreamLive(
@@ -32,7 +32,7 @@ data class XtreamLive(
 //    val tvArchive: Int?,
 //    @SerialName("tv_archive_duration")
 //    val tvArchiveDuration: Int?
-) : XtreamMediaOutput
+) : XtreamData
 
 @Serializable
 data class XtreamVod(
@@ -60,7 +60,7 @@ data class XtreamVod(
     val streamId: Int? = null,
     @SerialName("stream_type")
     val streamType: String? = null
-) : XtreamMediaOutput
+) : XtreamData
 
 @Serializable
 data class XtreamSerial(
@@ -94,7 +94,7 @@ data class XtreamSerial(
     val seriesId: Int? = null,
 //    @SerialName("youtube_trailer")
 //    val youtubeTrailer: String? = null
-) : XtreamMediaOutput
+) : XtreamData
 
 fun XtreamLive.toStream(
     basicUrl: String,

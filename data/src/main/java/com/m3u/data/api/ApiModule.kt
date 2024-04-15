@@ -4,6 +4,7 @@ package com.m3u.data.api
 
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import com.m3u.core.architecture.logger.Logger
+import com.m3u.core.architecture.logger.post
 import com.m3u.data.Certs
 import com.m3u.data.SSLs
 import dagger.Module
@@ -19,6 +20,7 @@ import okhttp3.Response
 import okhttp3.ResponseBody.Companion.toResponseBody
 import retrofit2.Retrofit
 import retrofit2.create
+import java.net.SocketException
 import java.net.SocketTimeoutException
 import javax.inject.Singleton
 
@@ -28,7 +30,8 @@ internal object ApiModule {
     @Provides
     @Singleton
     fun provideOkhttpClient(
-        logger: Logger
+        logger: Logger,
+        @Logger.MessageImpl messager: Logger
     ): OkHttpClient {
         return OkHttpClient.Builder()
             .authenticator(Authenticator.JAVA_NET_AUTHENTICATOR)
@@ -36,7 +39,11 @@ internal object ApiModule {
                 val request = chain.request()
                 try {
                     chain.proceed(request)
+                } catch (e: SocketException) {
+                    messager.post { e.localizedMessage }
+                    throw e
                 } catch (e: SocketTimeoutException) {
+                    messager.post { e.localizedMessage }
                     throw e
                 } catch (e: Exception) {
                     logger.log(e)
@@ -45,7 +52,7 @@ internal object ApiModule {
                         .protocol(Protocol.HTTP_1_1)
                         .code(999)
                         .message(e.message.orEmpty())
-                        .body("{${e}}".toResponseBody(null))
+                        .body("{${e}}".toResponseBody())
                         .build()
                 }
             }

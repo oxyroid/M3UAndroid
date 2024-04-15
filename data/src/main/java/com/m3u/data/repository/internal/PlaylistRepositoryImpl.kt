@@ -6,14 +6,16 @@ import android.net.Uri
 import androidx.core.net.toUri
 import androidx.work.WorkManager
 import com.chuckerteam.chucker.api.ChuckerInterceptor
-import com.m3u.core.architecture.logger.Profiles
 import com.m3u.core.architecture.dispatcher.Dispatcher
 import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
 import com.m3u.core.architecture.logger.Logger
+import com.m3u.core.architecture.logger.Profiles
 import com.m3u.core.architecture.logger.execute
 import com.m3u.core.architecture.logger.install
+import com.m3u.core.architecture.logger.post
 import com.m3u.core.architecture.logger.sandBox
 import com.m3u.core.architecture.pref.Pref
+import com.m3u.core.architecture.pref.annotation.PlaylistStrategy
 import com.m3u.core.util.basic.startsWithAny
 import com.m3u.core.util.readFileContent
 import com.m3u.core.util.readFileName
@@ -36,13 +38,15 @@ import com.m3u.data.parser.xtream.asStream
 import com.m3u.data.parser.xtream.toStream
 import com.m3u.data.repository.PlaylistRepository
 import com.m3u.data.worker.SubscriptionWorker
-import com.m3u.i18n.R.string
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.ktor.http.Url
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onEach
@@ -54,11 +58,11 @@ import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.io.File
-import java.io.FileNotFoundException
 import java.io.InputStream
 import java.io.Reader
 import javax.inject.Inject
 
+private const val BUFFER_M3U_CAPACITY = 500
 private const val BUFFER_XTREAM_CAPACITY = 100
 private const val BUFFER_RESTORE_CAPACITY = 400
 
@@ -84,73 +88,100 @@ internal class PlaylistRepositoryImpl @Inject constructor(
         )
         .build()
 
-    override suspend fun m3u(
+    override suspend fun m3uOrThrow(
         title: String,
         url: String,
-        callback: (count: Int, total: Int) -> Unit
+        callback: (count: Int) -> Unit
     ) {
-        suspend fun parse(
+        fun parse(
             playlistUrl: String,
             input: InputStream
-        ): List<Stream> = logger.execute {
-            m3uParser.execute(input).map { it.toStream(playlistUrl, 0L) }
-        } ?: emptyList()
+        ): Flow<Stream> = m3uParser
+            .parse(input)
+            .map { it.toStream(playlistUrl, 0L) }
 
-        suspend fun acquireNetwork(url: String): List<Stream> {
+        fun acquireNetwork(url: String): Flow<Stream> = channelFlow {
             val request = Request.Builder()
                 .url(url)
                 .build()
-            val response = withContext(ioDispatcher) {
-                client.newCall(request).execute()
-            }
-            if (!response.isSuccessful) return emptyList()
-            val input = response.body?.byteStream()
-            return input?.use { parse(url, it) } ?: emptyList()
-        }
+            val response = client.newCall(request).execute()
 
-        suspend fun acquireAndroid(url: String): List<Stream> {
+            val input = response.body?.byteStream()
+            if (input != null) {
+                parse(url, input).collect { send(it) }
+                input.close()
+            }
+            close()
+        }
+            .flowOn(ioDispatcher)
+
+        fun acquireAndroid(url: String): Flow<Stream> = channelFlow<Stream> {
             val uri = Uri.parse(url)
             val input = context.contentResolver.openInputStream(uri)
-            return input?.use { parse(url, it) } ?: emptyList()
+            if (input != null) {
+                parse(url, input).collect { send(it) }
+                input.close()
+            }
+            close()
         }
+            .flowOn(ioDispatcher)
 
         var currentCount = 0
-        callback(currentCount, -1)
-        withContext(ioDispatcher) {
-            try {
-                val actualUrl = url.actualUrl()
-                val streams = when {
-                    url.isSupportedNetworkUrl() -> acquireNetwork(actualUrl)
-                    url.isSupportedAndroidUrl() -> acquireAndroid(actualUrl)
-                    else -> emptyList() // never reach here!
-                }
-                currentCount += streams.size
-                callback(currentCount, -1)
-
-                val playlist = playlistDao.getByUrl(actualUrl)?.copy(
-                    title = title
-                ) ?: Playlist(title, actualUrl, source = DataSource.M3U)
-                playlistDao.insertOrReplace(playlist)
-
-                streamDao.compareAndUpdate(
-                    strategy = pref.playlistStrategy,
-                    url = url,
-                    update = streams
-                )
-            } catch (e: FileNotFoundException) {
-                error(context.getString(string.data_error_file_not_found))
-            } catch (e: Exception) {
-                logger.log(e)
-            }
+        callback(currentCount)
+        val actualUrl = url.actualUrl()
+        logger.post {
+            """
+                url: $url
+                actual-url: $actualUrl
+            """.trimIndent()
         }
+        safeClearStreamByPlaylistUrl(url)
+        val playlist = playlistDao.getByUrl(actualUrl)?.copy(
+            title = title
+        ) ?: Playlist(title, actualUrl, source = DataSource.M3U)
+        playlistDao.insertOrReplace(playlist)
+
+        val buffer = mutableListOf<Stream>()
+        val mutex = Mutex()
+
+        when {
+            url.isSupportedNetworkUrl() -> acquireNetwork(actualUrl)
+            url.isSupportedAndroidUrl() -> acquireAndroid(actualUrl)
+            else -> flow { } // never reach here!
+        }
+            .onEach { stream ->
+                buffer += stream
+                if (buffer.size >= BUFFER_M3U_CAPACITY) {
+                    mutex.withLock {
+                        // check again
+                        if (buffer.size >= BUFFER_M3U_CAPACITY) {
+                            currentCount += buffer.size
+                            callback(currentCount)
+                            streamDao.insertOrReplaceAll(*buffer.toTypedArray())
+                            buffer.clear()
+                        }
+                    }
+                }
+            }
+            .onCompletion {
+                // lock again
+                mutex.withLock {
+                    streamDao.insertOrReplaceAll(*buffer.toTypedArray())
+                    currentCount += buffer.size
+                    callback(currentCount)
+                }
+            }
+            .flowOn(ioDispatcher)
+            .collect()
     }
 
-    override suspend fun xtream(
+    override suspend fun xtreamOrThrow(
         title: String,
         basicUrl: String,
         username: String,
         password: String,
-        type: String?
+        type: String?,
+        callback: (count: Int) -> Unit
     ): Unit = withContext(ioDispatcher) {
         val input = XtreamInput(basicUrl, username, password, type)
         val (
@@ -160,7 +191,7 @@ internal class PlaylistRepositoryImpl @Inject constructor(
             allowedOutputFormats,
             serverProtocol,
             port
-        ) = xtreamParser.output(input)
+        ) = xtreamParser.getXtreamOutput(input)
 
         val livePlaylist = XtreamInput.encodeToPlaylistUrl(
             input = input.copy(type = DataSource.Xtream.TYPE_LIVE),
@@ -214,25 +245,27 @@ internal class PlaylistRepositoryImpl @Inject constructor(
         val requiredLives = type == null || type == DataSource.Xtream.TYPE_LIVE
         val requiredVods = type == null || type == DataSource.Xtream.TYPE_VOD
         val requiredSeries = type == null || type == DataSource.Xtream.TYPE_SERIES
-
         if (requiredLives) {
-            unsubscribe(livePlaylist.url)
+            safeClearStreamByPlaylistUrl(livePlaylist.url)
             playlistDao.insertOrReplace(livePlaylist)
         }
         if (requiredVods) {
-            unsubscribe(vodPlaylist.url)
+            safeClearStreamByPlaylistUrl(vodPlaylist.url)
             playlistDao.insertOrReplace(vodPlaylist)
         }
         if (requiredSeries) {
-            unsubscribe(seriesPlaylist.url)
+            safeClearStreamByPlaylistUrl(seriesPlaylist.url)
             playlistDao.insertOrReplace(seriesPlaylist)
         }
+
+        var currentCount = 0
+        callback(currentCount)
 
         val buffer = mutableListOf<Stream>()
         val mutex = Mutex()
 
         xtreamParser
-            .entityOutputs(input)
+            .parse(input)
             .map { current ->
                 when (current) {
                     is XtreamLive -> {
@@ -276,6 +309,8 @@ internal class PlaylistRepositoryImpl @Inject constructor(
                     mutex.withLock {
                         // check again
                         if (buffer.size >= BUFFER_XTREAM_CAPACITY) {
+                            currentCount += buffer.size
+                            callback(currentCount)
                             streamDao.insertOrReplaceAll(*buffer.toTypedArray())
                             buffer.clear()
                         }
@@ -285,10 +320,12 @@ internal class PlaylistRepositoryImpl @Inject constructor(
             .onCompletion {
                 // lock again
                 mutex.withLock {
+                    currentCount += buffer.size
+                    callback(currentCount)
                     streamDao.insertOrReplaceAll(*buffer.toTypedArray())
                 }
             }
-            .launchIn(this)
+            .collect()
     }
 
     override suspend fun refresh(url: String) = logger.sandBox {
@@ -485,14 +522,14 @@ internal class PlaylistRepositoryImpl @Inject constructor(
     )
 
     private suspend fun String.actualUrl(): String {
-        return when {
-            isSupportedNetworkUrl() -> this
+        when {
+            isSupportedNetworkUrl() -> return this
             isSupportedAndroidUrl() -> {
                 val uri = Uri.parse(this)
                 if (uri.scheme == ContentResolver.SCHEME_FILE) {
                     return uri.toString()
                 }
-                withContext(ioDispatcher) {
+                return withContext(ioDispatcher) {
                     val resolver = context.contentResolver
                     val filename = uri.readFileName(resolver) ?: filenameWithTimezone
                     val content = uri.readFileContent(resolver).orEmpty()
@@ -506,6 +543,16 @@ internal class PlaylistRepositoryImpl @Inject constructor(
             }
 
             else -> error("unsupported url scheme: $this")
+        }
+    }
+
+    private suspend fun safeClearStreamByPlaylistUrl(playlistUrl: String) {
+        when (pref.keepFavouriteAndHidden) {
+            PlaylistStrategy.KEEP_FAVOURITE_AND_HIDDEN -> {
+                streamDao.deleteUnfavouriteAndUnhiddenByPlaylistUrl(playlistUrl)
+            }
+
+            else -> streamDao.deleteByPlaylistUrl(playlistUrl)
         }
     }
 }

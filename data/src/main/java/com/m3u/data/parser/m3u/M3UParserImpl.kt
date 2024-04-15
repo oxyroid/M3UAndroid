@@ -6,9 +6,10 @@ import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.Profiles
 import com.m3u.core.architecture.logger.install
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
 import java.io.InputStream
-import java.util.LinkedList
 import javax.inject.Inject
 
 internal class M3UParserImpl @Inject constructor(
@@ -35,12 +36,7 @@ internal class M3UParserImpl @Inject constructor(
         const val KODI_LICENSE_KEY = "inputstream.adaptive.license_key"
     }
 
-    override suspend fun execute(
-        input: InputStream,
-        callback: (count: Int, total: Int) -> Unit
-    ): List<M3UData> = withContext(ioDispatcher) {
-        var currentCount = 0
-        callback(currentCount, -1)
+    override fun parse(input: InputStream): Flow<M3UData> = flow {
         val lines = input
             .bufferedReader()
             .lineSequence()
@@ -48,10 +44,6 @@ internal class M3UParserImpl @Inject constructor(
             .map { it.trimEnd() }
             .dropWhile { it == M3U_HEADER_MARK }
             .iterator()
-
-        if (!lines.hasNext()) return@withContext emptyList<M3UData>()
-
-        val entries = LinkedList<M3UData>()
 
         var currentLine: String
         var infoMatch: MatchResult? = null
@@ -68,8 +60,6 @@ internal class M3UParserImpl @Inject constructor(
                 }
                 if (lines.hasNext()) {
                     currentLine = lines.next()
-                } else {
-                    return@withContext entries
                 }
             }
             if (infoMatch == null && !currentLine.startsWith("#")) continue
@@ -107,10 +97,8 @@ internal class M3UParserImpl @Inject constructor(
             infoMatch = null
             kodiMatches.clear()
 
-            entries.add(entry)
-            currentCount += 1
-            callback(currentCount, -1)
+            emit(entry)
         }
-        entries
     }
+        .flowOn(ioDispatcher)
 }

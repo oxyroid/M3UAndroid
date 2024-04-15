@@ -52,7 +52,7 @@ internal class XtreamParserImpl @Inject constructor(
         .readTimeout(Duration.ofMillis(Int.MAX_VALUE.toLong()))
         .build()
 
-    override fun entityOutputs(input: XtreamInput): Flow<XtreamMediaOutput> = channelFlow {
+    override fun parse(input: XtreamInput): Flow<XtreamData> = channelFlow {
         val (basicUrl, username, password, type) = input
         val requiredLives = type == null || type == DataSource.Xtream.TYPE_LIVE
         val requiredVods = type == null || type == DataSource.Xtream.TYPE_VOD
@@ -92,7 +92,7 @@ internal class XtreamParserImpl @Inject constructor(
         }
     }
 
-    override suspend fun output(input: XtreamInput): XtreamOutput {
+    override suspend fun getXtreamOutput(input: XtreamInput): XtreamOutput {
         val (basicUrl, username, password, type) = input
         val requiredLives = type == null || type == DataSource.Xtream.TYPE_LIVE
         val requiredVods = type == null || type == DataSource.Xtream.TYPE_VOD

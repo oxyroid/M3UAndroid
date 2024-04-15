@@ -27,7 +27,7 @@ import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_FULL_INFO_PLAYER
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_GOD_MODE
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_NO_PICTURE_MODE
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_PAGING
-import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_PLAYLIST_STRATEGY
+import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_KEEP_FAVOURITE_AND_HIDDEN
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_PROGRESS
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_RECONNECT_MODE
 import com.m3u.core.architecture.pref.Pref.Companion.DEFAULT_REMOTE_CONTROL
@@ -45,7 +45,7 @@ import com.m3u.core.architecture.pref.Pref.Companion.FULL_INFO_PLAYER
 import com.m3u.core.architecture.pref.Pref.Companion.GOD_MODE
 import com.m3u.core.architecture.pref.Pref.Companion.NO_PICTURE_MODE
 import com.m3u.core.architecture.pref.Pref.Companion.PAGING
-import com.m3u.core.architecture.pref.Pref.Companion.PLAYLIST_STRATEGY
+import com.m3u.core.architecture.pref.Pref.Companion.KEEP_FAVOURITE_AND_HIDDEN
 import com.m3u.core.architecture.pref.Pref.Companion.PROGRESS
 import com.m3u.core.architecture.pref.Pref.Companion.RECONNECT_MODE
 import com.m3u.core.architecture.pref.Pref.Companion.REMOTE_CONTROL
@@ -76,8 +76,8 @@ class SnapshotPref @Inject constructor(
         context.getSharedPreferences(SHARED_SETTINGS, Context.MODE_PRIVATE)
 
     @PlaylistStrategy
-    override var playlistStrategy: Int by
-    sharedPreferences.intAsState(DEFAULT_PLAYLIST_STRATEGY, PLAYLIST_STRATEGY)
+    override var keepFavouriteAndHidden: Int by
+    sharedPreferences.intAsState(DEFAULT_KEEP_FAVOURITE_AND_HIDDEN, KEEP_FAVOURITE_AND_HIDDEN)
 
     override var rowCount: Int by
     sharedPreferences.intAsState(DEFAULT_ROW_COUNT, ROW_COUNT)

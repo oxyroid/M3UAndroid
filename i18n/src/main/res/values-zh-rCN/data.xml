@@ -2,4 +2,9 @@
 <resources>
     <string name="data_error_file_not_found">文件不存在</string>
     <string name="data_error_empty_title">订阅名称为空</string>
+
+    <string name="data_worker_subscription_action_cancel">取消</string>
+    <string name="data_worker_subscription_action_retry">重试</string>
+    <string name="data_worker_subscription_content_completed">完成</string>
+    <string name="data_worker_subscription_content_progress">已下载 %d 个频道</string>
 </resources>

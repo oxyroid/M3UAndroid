@@ -15,7 +15,7 @@ import kotlinx.coroutines.flow.Flow
 @Stable
 interface Pref {
     @PlaylistStrategy
-    var playlistStrategy: Int
+    var keepFavouriteAndHidden: Int
     var rowCount: Int
 
     @ConnectTimeout
@@ -55,7 +55,7 @@ interface Pref {
 
     companion object {
         @PlaylistStrategy
-        const val DEFAULT_PLAYLIST_STRATEGY = PlaylistStrategy.SKIP_FAVORITE
+        const val DEFAULT_KEEP_FAVOURITE_AND_HIDDEN = PlaylistStrategy.KEEP_FAVOURITE_AND_HIDDEN
         const val DEFAULT_ROW_COUNT = 1
 
         @ConnectTimeout
@@ -91,7 +91,7 @@ interface Pref {
         const val DEFAULT_ALWAYS_SHOW_REFRESH = false
         const val DEFAULT_PAGING = false
 
-        const val PLAYLIST_STRATEGY = "playlist-strategy"
+        const val KEEP_FAVOURITE_AND_HIDDEN = "playlist-strategy"
         const val ROW_COUNT = "rowCount"
 
         const val CONNECT_TIMEOUT = "connect-timeout"

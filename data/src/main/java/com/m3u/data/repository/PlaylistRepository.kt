@@ -16,18 +16,19 @@ interface PlaylistRepository {
     fun observeWithStreams(url: String): Flow<PlaylistWithStreams?>
     suspend fun getWithStreams(url: String): PlaylistWithStreams?
 
-    suspend fun m3u(
+    suspend fun m3uOrThrow(
         title: String,
         url: String,
-        callback: (count: Int, total: Int) -> Unit = { _, _ -> }
+        callback: (count: Int) -> Unit = {}
     )
 
-    suspend fun xtream(
+    suspend fun xtreamOrThrow(
         title: String,
         basicUrl: String,
         username: String,
         password: String,
-        type: String?
+        type: String?,
+        callback: (count: Int) -> Unit = {}
     )
 
     suspend fun refresh(url: String)

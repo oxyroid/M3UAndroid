@@ -3,7 +3,11 @@ package com.m3u.data.worker
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
+import android.graphics.Color
+import android.graphics.drawable.Icon
 import androidx.hilt.work.HiltWorker
 import androidx.work.Constraints
 import androidx.work.CoroutineWorker
@@ -17,15 +21,16 @@ import androidx.work.workDataOf
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.Profiles
 import com.m3u.core.architecture.logger.install
+import com.m3u.core.architecture.logger.post
 import com.m3u.data.R
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.parser.xtream.XtreamInput
 import com.m3u.data.repository.PlaylistRepository
-import com.m3u.data.service.Messager
 import com.m3u.i18n.R.string
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.coroutineScope
+import java.util.concurrent.atomic.AtomicInteger
 
 @HiltWorker
 class SubscriptionWorker @AssistedInject constructor(
@@ -33,7 +38,7 @@ class SubscriptionWorker @AssistedInject constructor(
     @Assisted params: WorkerParameters,
     private val playlistRepository: PlaylistRepository,
     private val manager: NotificationManager,
-    private val messager: Messager,
+    private val workManager: WorkManager,
     delegate: Logger
 ) : CoroutineWorker(context, params) {
     private val logger = delegate.install(Profiles.WORKER_SUBSCRIPTION)
@@ -47,6 +52,9 @@ class SubscriptionWorker @AssistedInject constructor(
     private val username = inputData.getString(INPUT_STRING_USERNAME)
     private val password = inputData.getString(INPUT_STRING_PASSWORD)
     private val url = inputData.getString(INPUT_STRING_URL)
+    private val notificationId: Int by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
+        ATOMIC_NOTIFICATION_ID.incrementAndGet()
+    }
 
     override suspend fun doWork(): Result = coroutineScope {
         dataSource ?: return@coroutineScope Result.failure()
@@ -57,29 +65,35 @@ class SubscriptionWorker @AssistedInject constructor(
                 url ?: return@coroutineScope Result.failure()
                 if (title.isEmpty()) {
                     val message = context.getString(string.data_error_empty_title)
-                    val data = workDataOf("message" to message)
-                    Result.failure(data)
+                    createN10nBuilder()
+                        .setContentText(message)
+                        .buildThenNotify()
+                    Result.failure()
                 } else {
                     try {
-                        playlistRepository.m3u(
-                            title = title,
-                            url = url,
-                            callback = { count, total ->
-                                val notification = createNotification()
-                                    .setContentText("[$count/${total.takeIf { it != -1 } ?: "~"}] Downloading...")
-                                    .setProgress(total, count, count == -1)
-                                    .build()
-                                manager.notify(NOTIFICATION_ID, notification)
-                            }
-                        )
+                        playlistRepository.m3uOrThrow(title, url) { count ->
+                            val notification = createN10nBuilder()
+                                .setContentText(findProgressContentText(count))
+                                .setActions(cancelAction)
+                                .setOngoing(true)
+                                .build()
+                            manager.notify(notificationId, notification)
+                            logger.post { "m3u callback" }
+                        }
+
+                        logger.post { "m3u suspend resumed" }
+                        createN10nBuilder()
+                            .setContentText(findCompleteContentText())
+                            .buildThenNotify()
                         Result.success()
                     } catch (e: Exception) {
+                        createN10nBuilder()
+                            .setContentText(e.localizedMessage.orEmpty())
+                            .setActions(retryAction)
+                            .setColor(Color.RED)
+                            .buildThenNotify()
+                        e.printStackTrace()
                         Result.failure()
-                    } finally {
-                        val notification = createNotification()
-                            .setContentText("Completed")
-                            .build()
-                        manager.notify(NOTIFICATION_ID, notification)
                     }
                 }
             }
@@ -92,36 +106,46 @@ class SubscriptionWorker @AssistedInject constructor(
                 if (title.isEmpty()) {
                     url ?: return@coroutineScope Result.failure()
                     val message = context.getString(string.data_error_empty_title)
-                    val data = workDataOf("message" to message)
-                    messager.emit(message)
-                    Result.failure(data)
+                    createN10nBuilder()
+                        .setContentText(message)
+                        .buildThenNotify()
+                    Result.failure()
                 } else {
                     try {
                         val type = url?.let { XtreamInput.decodeFromPlaylistUrlOrNull(it)?.type }
-                        playlistRepository.xtream(
-                            title = title,
-                            basicUrl = basicUrl,
-                            username = username,
-                            password = password,
-                            type = type
-                        )
+                        playlistRepository.xtreamOrThrow(
+                            title, basicUrl, username, password, type
+                        ) { count ->
+                            val notification = createN10nBuilder()
+                                .setContentText(findProgressContentText(count))
+                                .setActions(cancelAction)
+                                .setOngoing(true)
+                                .build()
+                            manager.notify(notificationId, notification)
+                            logger.post { "xtream callback" }
+                        }
+                        logger.post { "xtream suspend resumed" }
+                        createN10nBuilder()
+                            .setContentText(findCompleteContentText())
+                            .buildThenNotify()
                         Result.success()
                     } catch (e: Exception) {
-                        logger.log(e)
-                        Result.failure(workDataOf("message" to e.message))
-                    } finally {
-                        val notification = createNotification()
-                            .setContentText("Completed")
-                            .build()
-                        manager.notify(NOTIFICATION_ID, notification)
+                        createN10nBuilder()
+                            .setContentText(e.localizedMessage.orEmpty())
+                            .setActions(retryAction)
+                            .setColor(Color.RED)
+                            .buildThenNotify()
+                        Result.failure()
                     }
                 }
             }
 
             else -> {
                 val message = "unsupported data source $dataSource"
-                messager.emit(message)
-                Result.failure(workDataOf("message" to message))
+                createN10nBuilder()
+                    .setContentText(message)
+                    .buildThenNotify()
+                Result.failure()
             }
         }
     }
@@ -134,20 +158,63 @@ class SubscriptionWorker @AssistedInject constructor(
         manager.createNotificationChannel(channel)
     }
 
-    override suspend fun getForegroundInfo(): ForegroundInfo {
-        return ForegroundInfo(NOTIFICATION_ID, createNotification().build())
+    private fun Notification.Builder.buildThenNotify() {
+        if (isStopped) return
+        manager.notify(notificationId, build())
     }
 
-    private fun createNotification(): Notification.Builder {
-        return Notification.Builder(context, CHANNEL_ID)
+    override suspend fun getForegroundInfo(): ForegroundInfo {
+        return ForegroundInfo(notificationId, createN10nBuilder().build())
+    }
+
+    private fun createN10nBuilder(): Notification.Builder =
+        Notification.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.round_file_download_24)
             .setContentTitle(title)
+
+    private fun findCancelActionTitle() =
+        context.getString(string.data_worker_subscription_action_cancel)
+
+    private fun findRetryActionTitle() =
+        context.getString(string.data_worker_subscription_action_retry)
+
+    private fun findCompleteContentText() =
+        context.getString(string.data_worker_subscription_content_completed)
+
+    private fun findProgressContentText(count: Int) =
+        context.getString(string.data_worker_subscription_content_progress, count)
+
+    private val cancelAction: Notification.Action by lazy {
+        Notification.Action.Builder(
+            Icon.createWithResource(
+                context,
+                R.drawable.round_cancel_24
+            ),
+            findCancelActionTitle(),
+            workManager.createCancelPendingIntent(id)
+        )
+            .build()
+    }
+    private val retryAction: Notification.Action by lazy {
+        Notification.Action.Builder(
+            Icon.createWithResource(
+                context,
+                R.drawable.round_refresh_24
+            ),
+            findRetryActionTitle(),
+            PendingIntent.getForegroundService(
+                context,
+                1234,
+                Intent(),
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+            )
+        )
+            .build()
     }
 
     companion object {
         private const val CHANNEL_ID = "subscribe_channel"
         private const val NOTIFICATION_NAME = "subscribe task"
-        private const val NOTIFICATION_ID = 1224
         const val INPUT_STRING_TITLE = "title"
         const val INPUT_STRING_URL = "url"
         const val INPUT_STRING_BASIC_URL = "basic_url"
@@ -245,5 +312,7 @@ class SubscriptionWorker @AssistedInject constructor(
                 .build()
             workManager.enqueue(request)
         }
+
+        private val ATOMIC_NOTIFICATION_ID = AtomicInteger()
     }
 }
