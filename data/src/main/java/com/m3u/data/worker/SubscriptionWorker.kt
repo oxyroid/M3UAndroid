@@ -29,6 +29,7 @@ import com.m3u.data.repository.PlaylistRepository
 import com.m3u.i18n.R.string
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import java.util.concurrent.atomic.AtomicInteger
@@ -38,7 +39,7 @@ class SubscriptionWorker @AssistedInject constructor(
     @Assisted private val context: Context,
     @Assisted params: WorkerParameters,
     private val playlistRepository: PlaylistRepository,
-    private val manager: NotificationManager,
+    private val notificationManager: NotificationManager,
     private val workManager: WorkManager,
     delegate: Logger
 ) : CoroutineWorker(context, params) {
@@ -60,8 +61,10 @@ class SubscriptionWorker @AssistedInject constructor(
     override suspend fun doWork(): Result = coroutineScope {
         dataSource ?: return@coroutineScope Result.failure()
         createChannel()
-        coroutineContext[Job]?.invokeOnCompletion {
-            manager.cancel(notificationId)
+        coroutineContext[Job]?.invokeOnCompletion { cause ->
+            if (cause is CancellationException) {
+                notificationManager.cancel(notificationId)
+            }
         }
         when (dataSource) {
             DataSource.M3U -> {
@@ -81,7 +84,7 @@ class SubscriptionWorker @AssistedInject constructor(
                                 .setActions(cancelAction)
                                 .setOngoing(true)
                                 .build()
-                            manager.notify(notificationId, notification)
+                            notificationManager.notify(notificationId, notification)
                             logger.post { "m3u callback" }
                         }
 
@@ -124,7 +127,7 @@ class SubscriptionWorker @AssistedInject constructor(
                                 .setContentText(findProgressContentText(count))
                                 .setActions(cancelAction)
                                 .build()
-                            manager.notify(notificationId, notification)
+                            notificationManager.notify(notificationId, notification)
                             logger.post { "xtream callback" }
                         }
                         logger.post { "xtream suspend resumed" }
@@ -155,12 +158,12 @@ class SubscriptionWorker @AssistedInject constructor(
             CHANNEL_ID, NOTIFICATION_NAME, NotificationManager.IMPORTANCE_DEFAULT
         )
         channel.description = "display subscribe task progress"
-        manager.createNotificationChannel(channel)
+        notificationManager.createNotificationChannel(channel)
     }
 
     private fun Notification.Builder.buildThenNotify() {
         if (isStopped) return
-        manager.notify(notificationId, build())
+        notificationManager.notify(notificationId, build())
     }
 
     override suspend fun getForegroundInfo(): ForegroundInfo {
