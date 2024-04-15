@@ -6,7 +6,8 @@ import androidx.lifecycle.viewModelScope
 import androidx.media3.common.C
 import androidx.media3.common.Format
 import com.m3u.core.architecture.logger.Logger
-import com.m3u.core.architecture.logger.prefix
+import com.m3u.core.architecture.logger.Profiles
+import com.m3u.core.architecture.logger.install
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.Stream
@@ -40,9 +41,9 @@ class StreamViewModel @Inject constructor(
     private val streamRepository: StreamRepository,
     private val playerManager: PlayerManagerV2,
     private val audioManager: AudioManager,
-    before: Logger,
+    delegate: Logger
 ) : ViewModel(), OnDeviceRegistryListener, OnDeviceControlListener {
-    private val logger = before.prefix("feat-stream")
+    private val logger = delegate.install(Profiles.VIEWMODEL_STREAM)
     private val _devices = MutableStateFlow<List<Device<*, *, *>>>(emptyList())
 
     // searched screencast devices

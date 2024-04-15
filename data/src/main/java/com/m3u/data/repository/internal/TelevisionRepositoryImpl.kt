@@ -1,11 +1,12 @@
 package com.m3u.data.repository.internal
 
 import android.net.nsd.NsdServiceInfo
+import com.m3u.core.architecture.logger.Profiles
 import com.m3u.core.architecture.Publisher
 import com.m3u.core.architecture.dispatcher.Dispatcher
 import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
 import com.m3u.core.architecture.logger.Logger
-import com.m3u.core.architecture.logger.prefix
+import com.m3u.core.architecture.logger.install
 import com.m3u.core.architecture.pref.Pref
 import com.m3u.core.architecture.pref.observeAsFlow
 import com.m3u.core.util.coroutine.onTimeout
@@ -52,7 +53,7 @@ class TelevisionRepositoryImpl @Inject constructor(
     publisher: Publisher,
     @Dispatcher(IO) ioDispatcher: CoroutineDispatcher
 ) : TelevisionRepository() {
-    private val logger = logger.prefix("tv-repos")
+    private val logger = logger.install(Profiles.REPOS_TELEVISION)
     private val isTelevision = publisher.isTelevision
     private val coroutineScope = CoroutineScope(ioDispatcher)
 

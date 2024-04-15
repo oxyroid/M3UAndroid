@@ -12,6 +12,9 @@ import androidx.lifecycle.viewModelScope
 import com.m3u.core.Contracts
 import com.m3u.core.architecture.dispatcher.Dispatcher
 import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
+import com.m3u.core.architecture.logger.Logger
+import com.m3u.core.architecture.logger.Profiles
+import com.m3u.core.architecture.logger.install
 import com.m3u.core.architecture.pref.Pref
 import com.m3u.core.architecture.pref.observeAsFlow
 import com.m3u.core.wrapper.Resource
@@ -48,8 +51,11 @@ class FavouriteViewModel @Inject constructor(
     private val mediaRepository: MediaRepository,
     pref: Pref,
     playerManager: PlayerManagerV2,
-    @Dispatcher(IO) ioDispatcher: CoroutineDispatcher
+    @Dispatcher(IO) ioDispatcher: CoroutineDispatcher,
+    delegate: Logger
 ) : ViewModel() {
+    private val logger = delegate.install(Profiles.VIEWMODEL_FAVOURITE)
+
     private val zappingMode = pref
         .observeAsFlow { it.zappingMode }
         .flowOn(ioDispatcher)

@@ -7,6 +7,9 @@ import androidx.work.WorkManager
 import androidx.work.WorkQuery
 import com.m3u.core.architecture.dispatcher.Dispatcher
 import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
+import com.m3u.core.architecture.logger.Logger
+import com.m3u.core.architecture.logger.Profiles
+import com.m3u.core.architecture.logger.install
 import com.m3u.core.architecture.pref.Pref
 import com.m3u.core.architecture.pref.observeAsFlow
 import com.m3u.core.wrapper.Resource
@@ -45,7 +48,10 @@ class ForyouViewModel @Inject constructor(
     pref: Pref,
     @Dispatcher(IO) ioDispatcher: CoroutineDispatcher,
     workManager: WorkManager,
+    delegate: Logger
 ) : ViewModel() {
+    private val logger = delegate.install(Profiles.VIEWMODEL_FORYOU)
+
     internal val playlistCountsResource: StateFlow<Resource<List<PlaylistWithCount>>> =
         playlistRepository
             .observeAllCounts()

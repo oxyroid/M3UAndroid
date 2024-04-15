@@ -4,8 +4,8 @@ package com.m3u.data.parser
 
 import com.m3u.data.parser.m3u.M3UParser
 import com.m3u.data.parser.m3u.M3UParserImpl
-import com.m3u.data.parser.xtream.XtreamParserImpl
 import com.m3u.data.parser.xtream.XtreamParser
+import com.m3u.data.parser.xtream.XtreamParserImpl
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn

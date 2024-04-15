@@ -6,11 +6,12 @@ import android.net.Uri
 import androidx.core.net.toUri
 import androidx.work.WorkManager
 import com.chuckerteam.chucker.api.ChuckerInterceptor
+import com.m3u.core.architecture.logger.Profiles
 import com.m3u.core.architecture.dispatcher.Dispatcher
 import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.execute
-import com.m3u.core.architecture.logger.prefix
+import com.m3u.core.architecture.logger.install
 import com.m3u.core.architecture.logger.sandBox
 import com.m3u.core.architecture.pref.Pref
 import com.m3u.core.util.basic.startsWithAny
@@ -64,7 +65,7 @@ private const val BUFFER_RESTORE_CAPACITY = 400
 internal class PlaylistRepositoryImpl @Inject constructor(
     private val playlistDao: PlaylistDao,
     private val streamDao: StreamDao,
-    logger: Logger,
+    delegate: Logger,
     client: OkHttpClient,
     private val m3uParser: M3UParser,
     private val xtreamParser: XtreamParser,
@@ -73,7 +74,7 @@ internal class PlaylistRepositoryImpl @Inject constructor(
     @ApplicationContext private val context: Context,
     @Dispatcher(IO) private val ioDispatcher: CoroutineDispatcher,
 ) : PlaylistRepository {
-    private val logger = logger.prefix("playlist-repos")
+    private val logger = delegate.install(Profiles.REPOS_PLAYLIST)
     private val client = client
         .newBuilder()
         .addInterceptor(

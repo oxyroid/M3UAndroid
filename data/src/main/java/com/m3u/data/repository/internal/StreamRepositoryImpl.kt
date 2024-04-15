@@ -1,9 +1,10 @@
 package com.m3u.data.repository.internal
 
 import androidx.paging.PagingSource
+import com.m3u.core.architecture.logger.Profiles
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.execute
-import com.m3u.core.architecture.logger.prefix
+import com.m3u.core.architecture.logger.install
 import com.m3u.core.architecture.logger.sandBox
 import com.m3u.data.database.dao.StreamDao
 import com.m3u.data.database.model.Stream
@@ -18,7 +19,7 @@ internal class StreamRepositoryImpl @Inject constructor(
     private val streamDao: StreamDao,
     logger: Logger,
 ) : StreamRepository {
-    private val logger = logger.prefix("stream-repos")
+    private val logger = logger.install(Profiles.REPOS_STREAM)
     override fun observe(id: Int): Flow<Stream?> = streamDao
         .observeById(id)
         .catch { emit(null) }

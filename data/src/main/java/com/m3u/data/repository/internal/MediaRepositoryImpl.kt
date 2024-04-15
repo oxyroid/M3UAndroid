@@ -12,10 +12,12 @@ import coil.Coil
 import coil.request.ErrorResult
 import coil.request.ImageRequest
 import coil.request.SuccessResult
+import com.m3u.core.architecture.logger.Profiles
 import com.m3u.core.architecture.dispatcher.Dispatcher
 import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.execute
+import com.m3u.core.architecture.logger.install
 import com.m3u.core.architecture.logger.sandBox
 import com.m3u.data.repository.MediaRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -33,9 +35,10 @@ private const val BITMAP_QUALITY = 100
 
 class MediaRepositoryImpl @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val logger: Logger,
+    delegate: Logger,
     @Dispatcher(IO) private val ioDispatcher: CoroutineDispatcher
 ) : MediaRepository {
+    private val logger = delegate.install(Profiles.REPOS_MEDIA)
     private val applicationName = "M3U"
     private val pictureDirectory = File(
         Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),

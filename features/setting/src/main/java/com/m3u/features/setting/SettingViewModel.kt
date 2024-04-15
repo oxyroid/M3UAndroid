@@ -14,6 +14,9 @@ import androidx.work.workDataOf
 import com.m3u.core.architecture.Publisher
 import com.m3u.core.architecture.dispatcher.Dispatcher
 import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
+import com.m3u.core.architecture.logger.Logger
+import com.m3u.core.architecture.logger.Profiles
+import com.m3u.core.architecture.logger.install
 import com.m3u.core.architecture.pref.Pref
 import com.m3u.core.architecture.pref.observeAsFlow
 import com.m3u.core.architecture.viewmodel.BaseViewModel
@@ -60,13 +63,16 @@ class SettingViewModel @Inject constructor(
     private val playerManager: PlayerManagerV2,
     publisher: Publisher,
     colorPackDao: ColorPackDao,
-    @Dispatcher(IO) private val ioDispatcher: CoroutineDispatcher
+    @Dispatcher(IO) private val ioDispatcher: CoroutineDispatcher,
+    delegate: Logger
 ) : BaseViewModel<SettingState, SettingEvent>(
     emptyState = SettingState(
         versionName = publisher.versionName,
         versionCode = publisher.versionCode,
     )
 ) {
+    private val logger = delegate.install(Profiles.VIEWMODEL_SETTING)
+
     internal val hiddenStreams: StateFlow<List<Stream>> = streamRepository
         .observeAllHidden()
         .flowOn(ioDispatcher)

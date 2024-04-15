@@ -31,6 +31,9 @@ import androidx.work.WorkQuery
 import com.m3u.core.Contracts
 import com.m3u.core.architecture.dispatcher.Dispatcher
 import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
+import com.m3u.core.architecture.logger.Logger
+import com.m3u.core.architecture.logger.Profiles
+import com.m3u.core.architecture.logger.install
 import com.m3u.core.architecture.pref.Pref
 import com.m3u.core.architecture.pref.observeAsFlow
 import com.m3u.core.wrapper.Event
@@ -80,8 +83,11 @@ class PlaylistViewModel @Inject constructor(
     playerManager: PlayerManagerV2,
     pref: Pref,
     workManager: WorkManager,
-    @Dispatcher(IO) private val ioDispatcher: CoroutineDispatcher
+    @Dispatcher(IO) private val ioDispatcher: CoroutineDispatcher,
+    delegate: Logger
 ) : ViewModel() {
+    private val logger = delegate.install(Profiles.VIEWMODEL_PLAYLIST)
+
     internal val playlistUrl: StateFlow<String> = savedStateHandle
         .getStateFlow(PlaylistNavigation.TYPE_URL, "")
 

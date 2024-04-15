@@ -2,6 +2,9 @@ package com.m3u.data.parser.m3u
 
 import com.m3u.core.architecture.dispatcher.Dispatcher
 import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
+import com.m3u.core.architecture.logger.Logger
+import com.m3u.core.architecture.logger.Profiles
+import com.m3u.core.architecture.logger.install
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 import java.io.InputStream
@@ -9,8 +12,11 @@ import java.util.LinkedList
 import javax.inject.Inject
 
 internal class M3UParserImpl @Inject constructor(
-    @Dispatcher(IO) private val ioDispatcher: CoroutineDispatcher
+    @Dispatcher(IO) private val ioDispatcher: CoroutineDispatcher,
+    delegate: Logger
 ) : M3UParser {
+    private val logger = delegate.install(Profiles.PARSER_M3U)
+
     companion object {
         private const val M3U_HEADER_MARK = "#EXTM3U"
         private const val M3U_INFO_MARK = "#EXTINF:"

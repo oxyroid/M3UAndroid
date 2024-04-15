@@ -2,10 +2,11 @@ package com.m3u.data.television.nsd.internal
 
 import android.net.nsd.NsdManager
 import android.net.nsd.NsdServiceInfo
+import com.m3u.core.architecture.logger.Profiles
 import com.m3u.core.architecture.dispatcher.Dispatcher
 import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
 import com.m3u.core.architecture.logger.Logger
-import com.m3u.core.architecture.logger.prefix
+import com.m3u.core.architecture.logger.install
 import com.m3u.data.television.Utils
 import com.m3u.data.television.nsd.NsdDeviceManager
 import com.m3u.data.television.nsd.NsdDeviceManager.Companion.META_DATA_PIN
@@ -20,10 +21,11 @@ import javax.inject.Inject
 
 class NsdDeviceManagerImpl @Inject constructor(
     private val nsdManager: NsdManager,
-    actualLogger: Logger,
+    delegate: Logger,
     @Dispatcher(IO) private val ioDispatcher: CoroutineDispatcher
 ) : NsdDeviceManager {
-    private val logger = actualLogger.prefix("nsd")
+    private val logger = delegate.install(Profiles.SERVICE_NSD)
+
     override fun search(): Flow<List<NsdServiceInfo>> = callbackFlow<List<NsdServiceInfo>> {
         logger.log("search")
         val result = mutableListOf<NsdServiceInfo>()

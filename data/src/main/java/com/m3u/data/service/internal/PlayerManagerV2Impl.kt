@@ -30,12 +30,13 @@ import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
 import androidx.media3.exoplayer.trackselection.TrackSelector
 import androidx.media3.session.MediaSession
 import com.m3u.codec.Codecs
+import com.m3u.core.architecture.logger.Profiles
 import com.m3u.core.architecture.dispatcher.Dispatcher
 import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
 import com.m3u.core.architecture.dispatcher.M3uDispatchers.Main
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.post
-import com.m3u.core.architecture.logger.prefix
+import com.m3u.core.architecture.logger.install
 import com.m3u.core.architecture.pref.Pref
 import com.m3u.core.architecture.pref.annotation.ReconnectMode
 import com.m3u.core.architecture.pref.observeAsFlow
@@ -84,7 +85,7 @@ class PlayerManagerV2Impl @Inject constructor(
     private val streamRepository: StreamRepository,
     private val cache: Cache,
     downloadManager: DownloadManager,
-    before: Logger
+    delegate: Logger
 ) : PlayerManagerV2, Player.Listener, MediaSession.Callback {
     private val mainCoroutineScope = CoroutineScope(mainDispatcher)
     private val ioCoroutineScope = CoroutineScope(ioDispatcher)
@@ -363,8 +364,6 @@ class PlayerManagerV2Impl @Inject constructor(
         }
     }
 
-    private var iterator: MimetypeIterator = MimetypeIterator.Unsupported
-
     override fun onPlayerErrorChanged(exception: PlaybackException?) {
         super.onPlayerErrorChanged(exception)
         when (exception?.errorCode) {
@@ -423,7 +422,10 @@ class PlayerManagerV2Impl @Inject constructor(
         }
     }
 
-    private val logger = before.prefix("player-manager")
+
+    private var iterator: MimetypeIterator = MimetypeIterator.Unsupported
+
+    private val logger = delegate.install(Profiles.SERVICE_PLAYER)
 }
 
 private fun VideoSize.toRect(): Rect {
