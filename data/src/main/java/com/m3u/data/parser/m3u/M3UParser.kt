@@ -1,6 +1,11 @@
 package com.m3u.data.parser.m3u
 
-import com.m3u.data.parser.Parser
 import java.io.InputStream
 
-internal interface M3UParser : Parser<InputStream, List<M3UData>>
+internal interface M3UParser {
+    // TODO: convert to flow api.
+    suspend fun execute(
+        input: InputStream,
+        callback: (count: Int, total: Int) -> Unit = { _, _ -> }
+    ): List<M3UData>
+}
