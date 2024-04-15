@@ -9,6 +9,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -16,8 +17,21 @@ import androidx.compose.ui.layout.SubcomposeLayout
 import androidx.compose.ui.unit.offset
 import kotlin.math.roundToInt
 
-enum class PullPanelLayoutState {
+enum class PullPanelLayoutValue {
     EXPANDED, COLLAPSED
+}
+
+interface PullPanelLayoutState {
+    val value: PullPanelLayoutValue
+    fun expand()
+    fun collapse()
+}
+
+@Composable
+fun rememberPullPanelLayoutState(
+    initialValue: PullPanelLayoutValue = PullPanelLayoutValue.COLLAPSED
+): PullPanelLayoutState = remember(initialValue) {
+    PullPanelLayoutStateImpl(initialValue)
 }
 
 @Composable
@@ -25,11 +39,12 @@ fun PullPanelLayout(
     panel: @Composable () -> Unit,
     content: @Composable () -> Unit,
     modifier: Modifier = Modifier,
+    state: PullPanelLayoutState = rememberPullPanelLayoutState(),
     initialOffset: Float = 0f,
     aspectRatio: Float = 16 / 10f,
     enabled: Boolean = true,
     onOffsetChanged: (Float) -> Unit = {},
-    onStateChanged: (PullPanelLayoutState) -> Unit = {}
+    onValueChanged: (PullPanelLayoutValue) -> Unit = {}
 ) {
     var offset: Float by remember(initialOffset) { mutableFloatStateOf(initialOffset) }
     val currentOffset by animateFloatAsState(
@@ -42,7 +57,8 @@ fun PullPanelLayout(
         if (!enabled) {
             offset = 0f
             onOffsetChanged(0f)
-            onStateChanged(PullPanelLayoutState.COLLAPSED)
+            onValueChanged(PullPanelLayoutValue.COLLAPSED)
+            state.collapse()
         }
     }
     SubcomposeLayout(
@@ -57,10 +73,12 @@ fun PullPanelLayout(
                 },
                 onDragStopped = {
                     offset = if (offset <= savedMaxWidth * aspectRatio / 2) {
-                        onStateChanged(PullPanelLayoutState.COLLAPSED)
+                        onValueChanged(PullPanelLayoutValue.COLLAPSED)
+                        state.collapse()
                         0f
                     } else {
-                        onStateChanged(PullPanelLayoutState.EXPANDED)
+                        onValueChanged(PullPanelLayoutValue.EXPANDED)
+                        state.expand()
                         savedMaxWidth * aspectRatio
                     }.also(onOffsetChanged)
                 }
@@ -70,7 +88,7 @@ fun PullPanelLayout(
         val maxWidth = constraints.maxWidth
         savedMaxHeight = maxHeight
         savedMaxWidth = maxWidth
-        val panelLayerPlaceable = subcompose(PullPanelLayoutState.EXPANDED, panel)
+        val panelLayerPlaceable = subcompose(PullPanelLayoutValue.EXPANDED, panel)
             .first()
             .measure(
                 constraints
@@ -83,7 +101,7 @@ fun PullPanelLayout(
                     )
             )
 
-        val contentPlaceable = subcompose(PullPanelLayoutState.COLLAPSED, content)
+        val contentPlaceable = subcompose(PullPanelLayoutValue.COLLAPSED, content)
             .first()
             .measure(
                 constraints
@@ -100,3 +118,17 @@ fun PullPanelLayout(
         }
     }
 }
+
+private class PullPanelLayoutStateImpl(
+    initialValue: PullPanelLayoutValue = PullPanelLayoutValue.COLLAPSED
+) : PullPanelLayoutState {
+    override var value: PullPanelLayoutValue by mutableStateOf(initialValue)
+    override fun expand() {
+        value = PullPanelLayoutValue.EXPANDED
+    }
+
+    override fun collapse() {
+        value = PullPanelLayoutValue.COLLAPSED
+    }
+}
+

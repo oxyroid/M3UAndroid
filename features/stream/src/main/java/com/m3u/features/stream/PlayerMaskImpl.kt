@@ -94,6 +94,7 @@ internal fun PlayerMaskImpl(
     maskState: MaskState,
     favourite: Boolean,
     isSeriesPlaylist: Boolean,
+    isEpgShowing: Boolean,
     formatsIsNotEmpty: Boolean,
     onFavourite: () -> Unit,
     onBackPressed: () -> Unit,
@@ -298,10 +299,10 @@ internal fun PlayerMaskImpl(
                         .fillMaxHeight()
                 ) {
                     androidx.compose.animation.AnimatedVisibility(
-                        visible = pref.alwaysShowReplay || playerState.playState in arrayOf(
+                        visible = !isEpgShowing && (pref.alwaysShowReplay || playerState.playState in arrayOf(
                             Player.STATE_IDLE,
                             Player.STATE_ENDED
-                        ) || playerState.playerError != null,
+                        ) || playerState.playerError != null),
                         enter = fadeIn() + scaleIn(initialScale = 0.85f),
                         exit = fadeOut() + scaleOut(targetScale = 0.85f),
                     ) {

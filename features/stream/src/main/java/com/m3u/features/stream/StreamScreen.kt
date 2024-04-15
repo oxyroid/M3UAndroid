@@ -39,10 +39,11 @@ import com.m3u.features.stream.components.FormatsBottomSheet
 import com.m3u.i18n.R.string
 import com.m3u.material.components.Background
 import com.m3u.material.components.PullPanelLayout
-import com.m3u.material.components.PullPanelLayoutState
+import com.m3u.material.components.PullPanelLayoutValue
 import com.m3u.material.components.mask.MaskInterceptor
 import com.m3u.material.components.mask.MaskState
 import com.m3u.material.components.mask.rememberMaskState
+import com.m3u.material.components.rememberPullPanelLayoutState
 import com.m3u.ui.Player
 import com.m3u.ui.helper.LocalHelper
 import com.m3u.ui.helper.OnPipModeChanged
@@ -86,6 +87,7 @@ fun StreamRoute(
     var choosing by rememberSaveable { mutableStateOf(false) }
 
     val maskState = rememberMaskState()
+    val pullPanelLayoutState = rememberPullPanelLayoutState()
 
     LifecycleResumeEffect {
         with(helper) {
@@ -145,6 +147,7 @@ fun StreamRoute(
         contentColor = Color.White
     ) {
         PullPanelLayout(
+            state = pullPanelLayoutState,
             enabled = isEpgPanelSupported && isEpgPreferenceEnabled,
             panel = {
                 Box(
@@ -169,6 +172,7 @@ fun StreamRoute(
                     playlist = playlist,
                     stream = stream,
                     formatsIsNotEmpty = formats.isNotEmpty(),
+                    isEpgShowing = pullPanelLayoutState.value == PullPanelLayoutValue.EXPANDED,
                     brightness = brightness,
                     volume = volume,
                     onBrightness = { brightness = it },
@@ -176,13 +180,13 @@ fun StreamRoute(
                     modifier = modifier
                 )
             },
-            onStateChanged = { state ->
+            onValueChanged = { state ->
                 when (state) {
-                    PullPanelLayoutState.EXPANDED -> {
+                    PullPanelLayoutValue.EXPANDED -> {
                         maskState.lock()
                     }
 
-                    PullPanelLayoutState.COLLAPSED -> {
+                    PullPanelLayoutValue.COLLAPSED -> {
                         maskState.unlock()
                     }
                 }
@@ -233,6 +237,7 @@ private fun StreamPlayer(
     stream: Stream?,
     isSeriesPlaylist: Boolean,
     formatsIsNotEmpty: Boolean,
+    isEpgShowing: Boolean,
     volume: Float,
     brightness: Float,
     onFavourite: () -> Unit,
@@ -285,6 +290,7 @@ private fun StreamPlayer(
                 favourite = favourite,
                 isSeriesPlaylist = isSeriesPlaylist,
                 formatsIsNotEmpty = formatsIsNotEmpty,
+                isEpgShowing = isEpgShowing,
                 onFavourite = onFavourite,
                 onBackPressed = onBackPressed,
                 openDlnaDevices = openDlnaDevices,
