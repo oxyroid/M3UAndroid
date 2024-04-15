@@ -40,7 +40,7 @@ fun PullPanelLayout(
     content: @Composable () -> Unit,
     modifier: Modifier = Modifier,
     state: PullPanelLayoutState = rememberPullPanelLayoutState(),
-    aspectRatio: Float = 16 / 10f,
+    aspectRatio: Float = 10 / 7f,
     enabled: Boolean = true,
     onOffsetChanged: (Float) -> Unit = {},
     onValueChanged: (PullPanelLayoutValue) -> Unit = {}
