@@ -173,6 +173,9 @@ internal class PlaylistRepositoryImpl @Inject constructor(
             }
             .flowOn(ioDispatcher)
             .collect()
+        if (pref.keepFavouriteAndHidden == PlaylistStrategy.KEEP_FAVOURITE_AND_HIDDEN) {
+            streamDao.mergeUnfavouriteOrUnhiddenIfNeededByPlaylistUrl(url)
+        }
     }
 
     override suspend fun xtreamOrThrow(
@@ -326,6 +329,17 @@ internal class PlaylistRepositoryImpl @Inject constructor(
                 }
             }
             .collect()
+        if (pref.keepFavouriteAndHidden == PlaylistStrategy.KEEP_FAVOURITE_AND_HIDDEN) {
+            if (requiredLives) {
+                streamDao.mergeUnfavouriteOrUnhiddenIfNeededByPlaylistUrl(livePlaylist.url)
+            }
+            if (requiredVods) {
+                streamDao.mergeUnfavouriteOrUnhiddenIfNeededByPlaylistUrl(vodPlaylist.url)
+            }
+            if (requiredSeries) {
+                streamDao.mergeUnfavouriteOrUnhiddenIfNeededByPlaylistUrl(seriesPlaylist.url)
+            }
+        }
     }
 
     override suspend fun refresh(url: String) = logger.sandBox {
@@ -547,12 +561,10 @@ internal class PlaylistRepositoryImpl @Inject constructor(
     }
 
     private suspend fun safeClearStreamByPlaylistUrl(playlistUrl: String) {
-        when (pref.keepFavouriteAndHidden) {
-            PlaylistStrategy.KEEP_FAVOURITE_AND_HIDDEN -> {
-                streamDao.deleteUnfavouriteAndUnhiddenByPlaylistUrl(playlistUrl)
-            }
-
-            else -> streamDao.deleteByPlaylistUrl(playlistUrl)
+        if (pref.keepFavouriteAndHidden == PlaylistStrategy.KEEP_FAVOURITE_AND_HIDDEN) {
+            streamDao.deleteUnfavouriteAndUnhiddenByPlaylistUrl(playlistUrl)
+        } else {
+            streamDao.deleteByPlaylistUrl(playlistUrl)
         }
     }
 }
