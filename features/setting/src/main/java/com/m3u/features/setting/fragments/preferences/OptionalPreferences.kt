@@ -104,6 +104,7 @@ fun OptionalPreferences(modifier: Modifier = Modifier) {
                     )
                     CheckBoxSharedPreference(
                         title = string.feat_setting_epg_panel,
+                        content = string.feat_setting_epg_panel_description,
                         icon = Icons.Rounded.Slideshow,
                         checked = pref.epg,
                         onChanged = { pref.epg = !pref.epg }
