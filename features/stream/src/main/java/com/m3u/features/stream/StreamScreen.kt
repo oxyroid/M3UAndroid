@@ -60,9 +60,6 @@ fun StreamRoute(
     val context = LocalContext.current
     val configuration = LocalConfiguration.current
 
-    val isEpgPanelSupported = configuration.screenWidthDp < configuration.screenHeightDp
-    val isEpgPreferenceEnabled = pref.epg
-
     val playerState: PlayerState by viewModel.playerState.collectAsStateWithLifecycle()
     val stream by viewModel.stream.collectAsStateWithLifecycle()
     val playlist by viewModel.playlist.collectAsStateWithLifecycle()
@@ -81,6 +78,10 @@ fun StreamRoute(
     var isPipMode by rememberSaveable { mutableStateOf(false) }
     var isAutoZappingMode by rememberSaveable { mutableStateOf(true) }
     var choosing by rememberSaveable { mutableStateOf(false) }
+
+    val isEpgPanelSupported = configuration.screenWidthDp < configuration.screenHeightDp
+    val isEpgPreferenceEnabled = pref.epg
+    val isEpgSet = playlist?.epgUrl != null
 
     val maskState = rememberMaskState()
     val pullPanelLayoutState = rememberPullPanelLayoutState()
@@ -144,7 +145,7 @@ fun StreamRoute(
     ) {
         PullPanelLayout(
             state = pullPanelLayoutState,
-            enabled = isEpgPanelSupported && isEpgPreferenceEnabled,
+            enabled = isEpgPanelSupported && isEpgPreferenceEnabled && isEpgSet,
             panel = {
                 Background {
                     Box(
