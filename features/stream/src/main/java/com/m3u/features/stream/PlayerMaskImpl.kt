@@ -2,6 +2,9 @@ package com.m3u.features.stream
 
 import android.content.pm.ActivityInfo
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.animateIntAsState
@@ -14,6 +17,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -83,8 +87,9 @@ import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
-internal fun PlayerMaskImpl(
+internal fun SharedTransitionScope.PlayerMaskImpl(
     cover: String,
     title: String,
     playlistTitle: String,
@@ -94,7 +99,7 @@ internal fun PlayerMaskImpl(
     maskState: MaskState,
     favourite: Boolean,
     isSeriesPlaylist: Boolean,
-    isEpgShowing: Boolean,
+    isPanelShowing: Boolean,
     formatsIsNotEmpty: Boolean,
     onFavourite: () -> Unit,
     onBackPressed: () -> Unit,
@@ -106,6 +111,7 @@ internal fun PlayerMaskImpl(
 ) {
     val pref = LocalPref.current
     val helper = LocalHelper.current
+    val spacing = LocalSpacing.current
     val tv = isTelevision()
     val coroutineScope = rememberCoroutineScope()
 
@@ -299,7 +305,7 @@ internal fun PlayerMaskImpl(
                         .fillMaxHeight()
                 ) {
                     androidx.compose.animation.AnimatedVisibility(
-                        visible = !isEpgShowing && (pref.alwaysShowReplay || playerState.playState in arrayOf(
+                        visible = !isPanelShowing && (pref.alwaysShowReplay || playerState.playState in arrayOf(
                             Player.STATE_IDLE,
                             Player.STATE_ENDED
                         ) || playerState.playerError != null),
@@ -345,7 +351,6 @@ internal fun PlayerMaskImpl(
                 }
             },
             footer = {
-                val spacing = LocalSpacing.current
                 if (pref.fullInfoPlayer && cover.isNotEmpty()) {
                     Image(
                         model = cover,
@@ -362,23 +367,38 @@ internal fun PlayerMaskImpl(
                         .animateContentSize()
                         .weight(1f)
                 ) {
-                    Text(
-                        text = playlistTitle.trim().uppercase(),
-                        style = MaterialTheme.typography.labelMedium,
-                        maxLines = 1,
-                        color = LocalContentColor.current.copy(0.54f),
-                        fontFamily = FontFamilies.LexendExa,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.basicMarquee()
-                    )
-                    Text(
-                        text = title.trim(),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.ExtraBold,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.basicMarquee()
-                    )
+                    AnimatedVisibility(!isPanelShowing) {
+                        Text(
+                            text = playlistTitle.trim().uppercase(),
+                            style = MaterialTheme.typography.labelMedium,
+                            maxLines = 1,
+                            color = LocalContentColor.current.copy(0.54f),
+                            fontFamily = FontFamilies.LexendExa,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier
+                                .basicMarquee()
+                                .sharedElement(
+                                    state = rememberSharedContentState("playlist-title"),
+                                    this
+                                )
+                        )
+                    }
+                    AnimatedVisibility(!isPanelShowing) {
+                        Text(
+                            text = title.trim(),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.ExtraBold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier
+                                .basicMarquee()
+                                .sharedElement(
+                                    state = rememberSharedContentState("stream-title"),
+                                    this
+                                )
+                        )
+                    }
+
                     val playStateDisplayText =
                         PlayerMaskImplDefaults.playStateDisplayText(playerState.playState)
                     val exceptionDisplayText =
@@ -412,26 +432,7 @@ internal fun PlayerMaskImpl(
                             modifier = Modifier.basicMarquee()
                         )
                     }
-                    if (isProgressEnabled && isStaticAndSeekable) {
-                        val fontWeight by animateIntAsState(
-                            targetValue = if (bufferedPosition != null) 800
-                            else 400,
-                            label = "position-text-font-weight"
-                        )
-                        Text(
-                            text = PlayerMaskImplDefaults.timeunitDisplayTest(
-                                (bufferedPosition ?: contentPosition).toDuration(
-                                    DurationUnit.MILLISECONDS
-                                )
-                            ),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = LocalContentColor.current.copy(alpha = 0.75f),
-                            maxLines = 1,
-                            fontWeight = FontWeight(fontWeight),
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.basicMarquee()
-                        )
-                    }
+
                 }
                 if (!tv) {
                     val autoRotating by PlayerMaskImplDefaults.IsAutoRotatingEnabled
@@ -464,19 +465,43 @@ internal fun PlayerMaskImpl(
                                 ?: contentPosition.coerceAtLeast(0L)).toFloat(),
                             label = "anim-content-position"
                         )
-                        Slider(
-                            value = animContentPosition,
-                            valueRange = 0f..contentDuration
-                                .coerceAtLeast(0L)
-                                .toFloat(),
-                            onValueChange = {
-                                bufferedPosition = it.roundToLong()
-                                maskState.wake()
-                            },
-                            onValueChangeFinished = {
-                                bufferedPosition?.let { playerState.player?.seekTo(it) }
-                            }
+                        val fontWeight by animateIntAsState(
+                            targetValue = if (bufferedPosition != null) 800
+                            else 400,
+                            label = "position-text-font-weight"
                         )
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(spacing.medium),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = PlayerMaskImplDefaults.timeunitDisplayTest(
+                                    (bufferedPosition ?: contentPosition)
+                                        .toDuration(DurationUnit.MILLISECONDS)
+                                ),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = LocalContentColor.current.copy(alpha = 0.75f),
+                                maxLines = 1,
+                                fontWeight = FontWeight(fontWeight),
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.basicMarquee()
+                            )
+                            Slider(
+                                value = animContentPosition,
+                                valueRange = 0f..contentDuration
+                                    .coerceAtLeast(0L)
+                                    .toFloat(),
+                                onValueChange = {
+                                    bufferedPosition = it.roundToLong()
+                                    maskState.wake()
+                                },
+                                onValueChangeFinished = {
+                                    bufferedPosition?.let { playerState.player?.seekTo(it) }
+                                },
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+
                     }
                 }
             }

@@ -5,6 +5,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.C
 import androidx.media3.common.Format
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
+import androidx.paging.PagingData
+import androidx.paging.cachedIn
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.Profiles
 import com.m3u.core.architecture.logger.install
@@ -22,11 +26,13 @@ import com.m3u.dlna.control.OnDeviceControlListener
 import com.m3u.dlna.control.ServiceActionCallback
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -245,7 +251,15 @@ class StreamViewModel @Inject constructor(
         playerManager.pauseOrContinue(isContinued)
     }
 
-    internal fun openInExternalPlayer() {
-
+    internal val neighboring: Flow<PagingData<Stream>> = playlist.flatMapLatest { playlist ->
+        Pager(PagingConfig(10)) {
+            streamRepository.pagingAllByPlaylistUrl(
+                playlist?.url.orEmpty(),
+                "",
+                StreamRepository.Sort.UNSPECIFIED
+            )
+        }
+            .flow
+            .cachedIn(viewModelScope)
     }
 }

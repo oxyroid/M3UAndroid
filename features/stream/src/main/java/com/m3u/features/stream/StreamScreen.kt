@@ -3,8 +3,24 @@ package com.m3u.features.stream
 import android.content.Intent
 import android.graphics.Rect
 import android.net.Uri
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionLayout
+import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.foundation.basicMarquee
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.shape.AbsoluteRoundedCornerShape
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -20,15 +36,19 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.paging.compose.collectAsLazyPagingItems
 import com.m3u.core.architecture.pref.LocalPref
 import com.m3u.core.unspecified.unspecifiable
 import com.m3u.core.util.basic.isNotEmpty
 import com.m3u.core.util.basic.title
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.Stream
+import com.m3u.data.service.MediaCommand
 import com.m3u.features.stream.components.CoverPlaceholder
 import com.m3u.features.stream.components.DlnaDevicesBottomSheet
 import com.m3u.features.stream.components.FormatsBottomSheet
@@ -40,13 +60,18 @@ import com.m3u.material.components.mask.MaskInterceptor
 import com.m3u.material.components.mask.MaskState
 import com.m3u.material.components.mask.rememberMaskState
 import com.m3u.material.components.rememberPullPanelLayoutState
+import com.m3u.material.model.LocalSpacing
+import com.m3u.ui.FontFamilies
 import com.m3u.ui.Player
 import com.m3u.ui.helper.LocalHelper
 import com.m3u.ui.helper.OnPipModeChanged
 import com.m3u.ui.rememberPlayerState
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.milliseconds
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun StreamRoute(
     modifier: Modifier = Modifier,
@@ -59,6 +84,7 @@ fun StreamRoute(
     val pref = LocalPref.current
     val context = LocalContext.current
     val configuration = LocalConfiguration.current
+    val spacing = LocalSpacing.current
 
     val playerState: PlayerState by viewModel.playerState.collectAsStateWithLifecycle()
     val stream by viewModel.stream.collectAsStateWithLifecycle()
@@ -74,19 +100,22 @@ fun StreamRoute(
     val volume by viewModel.volume.collectAsStateWithLifecycle()
     val isSeriesPlaylist by viewModel.isSeriesPlaylist.collectAsStateWithLifecycle()
 
+    val neighboring = viewModel.neighboring.collectAsLazyPagingItems()
+
     var brightness by rememberSaveable { mutableFloatStateOf(helper.brightness) }
     var isPipMode by rememberSaveable { mutableStateOf(false) }
     var isAutoZappingMode by rememberSaveable { mutableStateOf(true) }
     var choosing by rememberSaveable { mutableStateOf(false) }
 
-    val isEpgPanelSupported = configuration.screenWidthDp < configuration.screenHeightDp
+    val isPanelSupported = configuration.screenWidthDp < configuration.screenHeightDp
     val isEpgPreferenceEnabled = pref.epg
-    val isEpgSet = playlist?.epgUrl != null
 
     val maskState = rememberMaskState()
     val pullPanelLayoutState = rememberPullPanelLayoutState()
 
-    LifecycleResumeEffect {
+    val isPanelShowing = pullPanelLayoutState.value == PullPanelLayoutValue.EXPANDED
+
+    LifecycleResumeEffect(Unit) {
         with(helper) {
             isSystemBarUseDarkMode = true.unspecifiable
             statusBarVisibility = false.unspecifiable
@@ -143,56 +172,133 @@ fun StreamRoute(
         color = Color.Black,
         contentColor = Color.White
     ) {
-        PullPanelLayout(
-            state = pullPanelLayoutState,
-            enabled = isEpgPanelSupported && isEpgPreferenceEnabled && isEpgSet,
-            panel = {
-                Background {
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier.fillMaxSize()
-                    ) {
-                    }
-                }
-            },
-            content = {
-                StreamPlayer(
-                    isSeriesPlaylist = isSeriesPlaylist,
-                    openDlnaDevices = {
-                        viewModel.openDlnaDevices()
-                        pullPanelLayoutState.collapse()
-                    },
-                    openChooseFormat = {
-                        choosing = true
-                        pullPanelLayoutState.collapse()
-                    },
-                    onFavourite = viewModel::onFavourite,
-                    onBackPressed = onBackPressed,
-                    maskState = maskState,
-                    playerState = playerState,
-                    playlist = playlist,
-                    stream = stream,
-                    formatsIsNotEmpty = formats.isNotEmpty(),
-                    isEpgShowing = pullPanelLayoutState.value == PullPanelLayoutValue.EXPANDED,
-                    brightness = brightness,
-                    volume = volume,
-                    onBrightness = { brightness = it },
-                    onVolume = viewModel::onVolume,
-                    modifier = modifier
-                )
-            },
-            onValueChanged = { state ->
-                when (state) {
-                    PullPanelLayoutValue.EXPANDED -> {
-                        maskState.lock()
-                    }
+        SharedTransitionLayout {
+            PullPanelLayout(
+                state = pullPanelLayoutState,
+                enabled = isPanelSupported,
+                panel = {
+                    Background {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(vertical = spacing.medium)
+                        ) {
+                            AnimatedVisibility(
+                                visible = isPanelShowing,
+                                modifier = Modifier.padding(horizontal = spacing.medium)
+                            ) {
+                                Text(
+                                    text = stream?.title.orEmpty().trim(),
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier
+                                        .basicMarquee()
+                                        .sharedElement(
+                                            state = rememberSharedContentState("stream-title"),
+                                            this
+                                        )
+                                )
+                            }
+                            AnimatedVisibility(
+                                visible = isPanelShowing,
+                                modifier = Modifier.padding(horizontal = spacing.medium)
+                            ) {
+                                Text(
+                                    text = playlist?.title.orEmpty().trim().uppercase(),
+                                    style = MaterialTheme.typography.labelMedium,
+                                    maxLines = 1,
+                                    color = LocalContentColor.current.copy(0.54f),
+                                    fontFamily = FontFamilies.LexendExa,
+                                    overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier
+                                        .basicMarquee()
+                                        .sharedElement(
+                                            state = rememberSharedContentState("playlist-title"),
+                                            this
+                                        )
+                                )
+                            }
 
-                    PullPanelLayoutValue.COLLAPSED -> {
-                        maskState.unlock()
+                            LazyRow(
+                                horizontalArrangement = Arrangement.spacedBy(spacing.medium),
+                                contentPadding = PaddingValues(spacing.medium)
+                            ) {
+                                items(neighboring.itemCount) { i ->
+                                    neighboring[i]?.let { currentStream ->
+                                        val playing = currentStream.id == stream?.id
+                                        Card(
+                                            colors = CardDefaults.cardColors(
+                                                containerColor = if (!playing) MaterialTheme.colorScheme.surface
+                                                else MaterialTheme.colorScheme.onSurface,
+                                                contentColor = if (!playing) MaterialTheme.colorScheme.onSurface
+                                                else MaterialTheme.colorScheme.surface
+                                            ),
+                                            shape = AbsoluteRoundedCornerShape(spacing.medium),
+                                            elevation = CardDefaults.cardElevation(
+                                                if (playing) spacing.none else spacing.small
+                                            ),
+                                            onClick = {
+                                                coroutineScope.launch {
+                                                    helper.play(
+                                                        MediaCommand.Live(currentStream.id)
+                                                    )
+                                                }
+                                            }
+                                        ) {
+                                            Text(
+                                                text = currentStream.title,
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                fontWeight = FontWeight.SemiBold.takeIf { playing },
+                                                modifier = Modifier.padding(spacing.medium)
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                content = {
+                    StreamPlayer(
+                        isSeriesPlaylist = isSeriesPlaylist,
+                        openDlnaDevices = {
+                            viewModel.openDlnaDevices()
+                            pullPanelLayoutState.collapse()
+                        },
+                        openChooseFormat = {
+                            choosing = true
+                            pullPanelLayoutState.collapse()
+                        },
+                        onFavourite = viewModel::onFavourite,
+                        onBackPressed = onBackPressed,
+                        maskState = maskState,
+                        playerState = playerState,
+                        playlist = playlist,
+                        stream = stream,
+                        formatsIsNotEmpty = formats.isNotEmpty(),
+                        isPanelShowing = isPanelShowing,
+                        brightness = brightness,
+                        volume = volume,
+                        onBrightness = { brightness = it },
+                        onVolume = viewModel::onVolume,
+                        modifier = modifier
+                    )
+                },
+                onValueChanged = { state ->
+                    when (state) {
+                        PullPanelLayoutValue.EXPANDED -> {
+                            maskState.lock(PullPanelLayoutValue.EXPANDED)
+                        }
+
+                        PullPanelLayoutValue.COLLAPSED -> {
+                            maskState.unlock(PullPanelLayoutValue.EXPANDED, 2400.milliseconds)
+                        }
                     }
                 }
-            }
-        )
+            )
+        }
 
         DlnaDevicesBottomSheet(
             maskState = maskState,
@@ -229,15 +335,16 @@ fun StreamRoute(
     }
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
-private fun StreamPlayer(
+private fun SharedTransitionScope.StreamPlayer(
     maskState: MaskState,
     playerState: PlayerState,
     playlist: Playlist?,
     stream: Stream?,
     isSeriesPlaylist: Boolean,
     formatsIsNotEmpty: Boolean,
-    isEpgShowing: Boolean,
+    isPanelShowing: Boolean,
     volume: Float,
     brightness: Float,
     onFavourite: () -> Unit,
@@ -290,7 +397,7 @@ private fun StreamPlayer(
                 favourite = favourite,
                 isSeriesPlaylist = isSeriesPlaylist,
                 formatsIsNotEmpty = formatsIsNotEmpty,
-                isEpgShowing = isEpgShowing,
+                isPanelShowing = isPanelShowing,
                 onFavourite = onFavourite,
                 onBackPressed = onBackPressed,
                 openDlnaDevices = openDlnaDevices,
