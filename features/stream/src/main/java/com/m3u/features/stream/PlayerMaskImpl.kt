@@ -99,7 +99,7 @@ internal fun SharedTransitionScope.PlayerMaskImpl(
     maskState: MaskState,
     favourite: Boolean,
     isSeriesPlaylist: Boolean,
-    isPanelShowing: Boolean,
+    isPanelExpanded: Boolean,
     formatsIsNotEmpty: Boolean,
     onFavourite: () -> Unit,
     onBackPressed: () -> Unit,
@@ -301,14 +301,14 @@ internal fun SharedTransitionScope.PlayerMaskImpl(
                 Box(
                     contentAlignment = Alignment.Center,
                     modifier = Modifier
-                        .fillMaxWidth(0.45f)
+                        .fillMaxWidth(0.65f)
                         .fillMaxHeight()
                 ) {
                     androidx.compose.animation.AnimatedVisibility(
-                        visible = !isPanelShowing && (pref.alwaysShowReplay || playerState.playState in arrayOf(
+                        visible = (!isPanelExpanded && pref.alwaysShowReplay) || playerState.playState in arrayOf(
                             Player.STATE_IDLE,
                             Player.STATE_ENDED
-                        ) || playerState.playerError != null),
+                        ) || playerState.playerError != null,
                         enter = fadeIn() + scaleIn(initialScale = 0.85f),
                         exit = fadeOut() + scaleOut(targetScale = 0.85f),
                     ) {
@@ -321,10 +321,7 @@ internal fun SharedTransitionScope.PlayerMaskImpl(
                         )
                     }
                 }
-                BoxWithConstraints(
-                    Modifier
-                        .weight(1f)
-                ) {
+                BoxWithConstraints(Modifier.weight(1f)) {
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
@@ -367,7 +364,7 @@ internal fun SharedTransitionScope.PlayerMaskImpl(
                         .animateContentSize()
                         .weight(1f)
                 ) {
-                    AnimatedVisibility(!isPanelShowing) {
+                    AnimatedVisibility(!isPanelExpanded) {
                         Text(
                             text = playlistTitle.trim().uppercase(),
                             style = MaterialTheme.typography.labelMedium,
@@ -383,7 +380,7 @@ internal fun SharedTransitionScope.PlayerMaskImpl(
                                 )
                         )
                     }
-                    AnimatedVisibility(!isPanelShowing) {
+                    AnimatedVisibility(!isPanelExpanded) {
                         Text(
                             text = title.trim(),
                             style = MaterialTheme.typography.titleMedium,

@@ -65,5 +65,6 @@ fun Stream.copyXtreamEpisode(episode: XtreamStreamInfo.Episode): Stream {
         .build()
     return copy(
         url = newUrl.toString(),
+        title = episode.title.orEmpty()
     )
 }

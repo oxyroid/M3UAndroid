@@ -149,3 +149,6 @@ private object DataSourceSerializer : KSerializer<DataSource> {
     }
 }
 
+fun Playlist.copyXtreamSeries(series: Stream): Playlist = copy(
+    title = series.title
+)

@@ -44,6 +44,7 @@ import com.m3u.data.SSLs
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.Stream
 import com.m3u.data.database.model.copyXtreamEpisode
+import com.m3u.data.database.model.copyXtreamSeries
 import com.m3u.data.repository.PlaylistRepository
 import com.m3u.data.repository.StreamRepository
 import com.m3u.data.service.MediaCommand
@@ -97,14 +98,14 @@ class PlayerManagerV2Impl @Inject constructor(
 
     override val stream: StateFlow<Stream?> = mediaCommand
         .onEach { logger.post { "receive media command: $it" } }
-        .flatMapLatest { input ->
-            when (input) {
-                is MediaCommand.Live -> streamRepository.observe(input.streamId)
+        .flatMapLatest { command ->
+            when (command) {
+                is MediaCommand.Live -> streamRepository.observe(command.streamId)
                 is MediaCommand.XtreamEpisode -> streamRepository
-                    .observe(input.streamId)
-                    .map { it?.copyXtreamEpisode(input.episode) }
+                    .observe(command.streamId)
+                    .map { it?.copyXtreamEpisode(command.episode) }
 
-                else -> flowOf(null)
+                else -> flow {  }
             }
         }
         .stateIn(
@@ -114,8 +115,21 @@ class PlayerManagerV2Impl @Inject constructor(
         )
 
     override val playlist: StateFlow<Playlist?> = mediaCommand.flatMapLatest { command ->
-        val stream = command?.let { streamRepository.get(it.streamId) }
-        stream?.let { playlistRepository.observe(it.playlistUrl) } ?: flowOf(null)
+        when (command) {
+            is MediaCommand.Live -> {
+                val stream = streamRepository.get(command.streamId)
+                stream?.let { playlistRepository.observe(it.playlistUrl) } ?: flow {  }
+            }
+            is MediaCommand.XtreamEpisode -> {
+                val stream = streamRepository.get(command.streamId)
+                stream?.let {
+                    playlistRepository
+                        .observe(it.playlistUrl)
+                        .map { prev -> prev?.copyXtreamSeries(stream) }
+                } ?: flow {  }
+            }
+            null -> flow {  }
+        }
     }
         .stateIn(
             scope = ioCoroutineScope,
