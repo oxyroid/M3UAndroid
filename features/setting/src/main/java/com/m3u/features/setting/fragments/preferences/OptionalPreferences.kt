@@ -6,6 +6,7 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.VolumeUp
+import androidx.compose.material.icons.rounded.Archive
 import androidx.compose.material.icons.rounded.BrightnessMedium
 import androidx.compose.material.icons.rounded.Cast
 import androidx.compose.material.icons.rounded.Details
@@ -17,6 +18,7 @@ import androidx.compose.material.icons.rounded.ReplayCircleFilled
 import androidx.compose.material.icons.rounded.ScreenRotation
 import androidx.compose.material.icons.rounded.SettingsEthernet
 import androidx.compose.material.icons.rounded.Slideshow
+import androidx.compose.material.icons.rounded.Unarchive
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -103,9 +105,9 @@ fun OptionalPreferences(modifier: Modifier = Modifier) {
                         onChanged = { pref.alwaysShowReplay = !pref.alwaysShowReplay }
                     )
                     CheckBoxSharedPreference(
-                        title = string.feat_setting_epg_panel,
-                        content = string.feat_setting_epg_panel_description,
-                        icon = Icons.Rounded.Slideshow,
+                        title = string.feat_setting_player_panel,
+                        content = string.feat_setting_player_panel_description,
+                        icon = Icons.Rounded.Unarchive,
                         checked = pref.epg,
                         onChanged = { pref.epg = !pref.epg }
                     )
