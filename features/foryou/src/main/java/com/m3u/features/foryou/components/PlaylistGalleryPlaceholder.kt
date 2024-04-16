@@ -57,7 +57,7 @@ internal fun PlaylistGalleryPlaceholder(
             expanded = false
         }
     }
-    LifecycleResumeEffect {
+    LifecycleResumeEffect(Unit) {
         onPauseOrDispose {
             expanded = false
         }
