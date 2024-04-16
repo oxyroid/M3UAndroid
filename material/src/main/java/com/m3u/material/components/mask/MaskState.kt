@@ -11,6 +11,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.time.Duration
@@ -20,8 +21,8 @@ interface MaskState {
     val visible: Boolean
     fun wake()
     fun sleep()
-    fun lock()
-    fun unlock(delay: Duration = Duration.ZERO)
+    fun lock(key: Any)
+    fun unlock(key: Any, delay: Duration = Duration.ZERO)
     fun intercept(interceptor: MaskInterceptor?)
 }
 
@@ -35,7 +36,10 @@ private class MaskStateCoroutineImpl(
 ) : MaskState, CoroutineScope by coroutineScope {
     private var currentTime: Long by mutableLongStateOf(systemClock)
     private var lastTime: Long by mutableLongStateOf(0L)
-    private var locked: Boolean by mutableStateOf(false)
+    private var keys by mutableStateOf<Set<Any>>(emptySet())
+    private val locked: Boolean by derivedStateOf {
+        keys.isNotEmpty()
+    }
 
     override val visible: Boolean by derivedStateOf {
         val before = (locked || (currentTime - lastTime <= minDuration))
@@ -62,15 +66,26 @@ private class MaskStateCoroutineImpl(
         lastTime = 0
     }
 
-    override fun lock() {
-        locked = true
+    override fun lock(key: Any) {
+        unlockedJobs.remove(key)?.cancel()
+        keys += key
     }
 
-    override fun unlock(delay: Duration) {
-        launch {
+    @Volatile
+    private var unlockedJobs = mutableMapOf<Any, Job>()
+
+    override fun unlock(key: Any, delay: Duration) {
+        unlockedJobs[key] = launch {
             delay(delay)
-            locked = false
+            if (key in unlockedJobs) {
+                unlockImpl(key)
+            }
+            unlockedJobs.remove(key)
         }
+    }
+
+    private fun unlockImpl(key: Any) {
+        keys -= key
     }
 
     @Volatile

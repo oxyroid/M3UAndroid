@@ -275,11 +275,11 @@ internal fun PlayerMaskImpl(
                                 Modifier.detectVerticalGesture(
                                     time = 0.65f,
                                     onDragStart = {
-                                        maskState.lock()
+                                        maskState.lock(MaskGesture.BRIGHTNESS)
                                         gesture = MaskGesture.BRIGHTNESS
                                     },
                                     onDragEnd = {
-                                        maskState.unlock(400.milliseconds)
+                                        maskState.unlock(MaskGesture.BRIGHTNESS, 400.milliseconds)
                                         gesture = null
                                     },
                                     onVerticalDrag = { deltaPixel ->
@@ -326,11 +326,11 @@ internal fun PlayerMaskImpl(
                                 Modifier.detectVerticalGesture(
                                     time = 0.65f,
                                     onDragStart = {
-                                        maskState.lock()
+                                        maskState.lock(MaskGesture.VOLUME)
                                         gesture = MaskGesture.VOLUME
                                     },
                                     onDragEnd = {
-                                        maskState.unlock(400.milliseconds)
+                                        maskState.unlock(MaskGesture.VOLUME, 400.milliseconds)
                                         gesture = null
                                     },
                                     onVerticalDrag = { deltaPixel ->
