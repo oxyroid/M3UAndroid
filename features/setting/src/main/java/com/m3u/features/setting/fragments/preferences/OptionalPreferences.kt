@@ -6,7 +6,6 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.VolumeUp
-import androidx.compose.material.icons.rounded.Archive
 import androidx.compose.material.icons.rounded.BrightnessMedium
 import androidx.compose.material.icons.rounded.Cast
 import androidx.compose.material.icons.rounded.Details
@@ -17,7 +16,6 @@ import androidx.compose.material.icons.rounded.PictureInPicture
 import androidx.compose.material.icons.rounded.ReplayCircleFilled
 import androidx.compose.material.icons.rounded.ScreenRotation
 import androidx.compose.material.icons.rounded.SettingsEthernet
-import androidx.compose.material.icons.rounded.Slideshow
 import androidx.compose.material.icons.rounded.Unarchive
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
