@@ -3,9 +3,9 @@ package com.m3u.features.stream
 import android.content.Intent
 import android.graphics.Rect
 import android.net.Uri
-import androidx.compose.animation.ExperimentalSharedTransitionApi
-import androidx.compose.animation.SharedTransitionLayout
-import androidx.compose.animation.SharedTransitionScope
+//import androidx.compose.animation.ExperimentalSharedTransitionApi
+//import androidx.compose.animation.SharedTransitionLayout
+//import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
@@ -53,7 +53,7 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlin.time.Duration.Companion.milliseconds
 
-@OptIn(ExperimentalSharedTransitionApi::class)
+//@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun StreamRoute(
     modifier: Modifier = Modifier,
@@ -153,7 +153,7 @@ fun StreamRoute(
         color = Color.Black,
         contentColor = Color.White
     ) {
-        SharedTransitionLayout {
+//        SharedTransitionLayout {
             PullPanelLayout(
                 state = pullPanelLayoutState,
                 enabled = isPanelSupported,
@@ -239,12 +239,14 @@ fun StreamRoute(
                 viewModel.clearTrack(type)
             }
         )
-    }
+//    }
 }
 
-@OptIn(ExperimentalSharedTransitionApi::class)
+//@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
-private fun SharedTransitionScope.StreamPlayer(
+private fun
+//        SharedTransitionScope.
+        StreamPlayer(
     maskState: MaskState,
     playerState: PlayerState,
     playlist: Playlist?,

@@ -4,17 +4,19 @@ androidx-core-splashscreen = "1.0.1"
 androidx-appcompat = "1.6.1"
 androidx-activity = "1.8.2"
 androidx-lifecycle = "2.7.0"
-androidx-compose = "1.7.0-SNAPSHOT"
+androidx-compose = "1.6.5"
 androidx-compose-material3 = "1.2.1"
 androidx-compose-material3-adaptive = "1.0.0-alpha06"
 androidx-navigation = "2.7.7"
 androidx-hilt = "1.2.0"
 androidx-tv = "1.0.0-alpha10"
-androidx-media3 = "1.3.0"
+androidx-media3 = "1.3.1"
 androidx-work = "2.9.0"
 androidx-room = "2.6.1"
 androidx-tvprovider = "1.0.0"
 androidx-startup = "1.1.1"
+androidx-paging-compose = "3.3.0-beta01"
+androidx-paging-runtime-ktx = "3.2.1"
 
 google-accompanist = "0.34.0"
 google-dagger = "2.50"
@@ -30,23 +32,21 @@ chucker = "4.0.0"
 logbackAndroid = "3.0.0"
 lottie-compose = "6.3.0"
 nextLib = "0.6.0"
-pagingCompose = "3.3.0-alpha05"
-pagingRuntimeKtx = "3.2.1"
 slf4j-api = "2.0.11"
 
 squareup-retrofit2 = "2.9.0"
 squareup-leakcanary = "2.13"
 
-kotlin = "1.9.22"
+kotlin = "1.9.23"
 android-gradle-plugin = "8.2.2"
 dagger-plugin = "2.50"
-ksp-plugin = "1.9.22-1.0.17"
+ksp-plugin = "1.9.23-1.0.20"
 
-compose_compiler = "1.5.8"
+compose_compiler = "1.5.11"
 androidx-test-ext-junit = "1.1.5"
 espresso-core = "3.5.1"
 com-google-android-material = "1.11.0"
-androidx-test-uiautomator = "2.2.0"
+androidx-test-uiautomator = "2.3.0"
 androidx-benchmark = "1.2.3"
 
 servlet = "3.1.0"
@@ -54,7 +54,6 @@ jetty = "9.3.14.v20161028"
 
 jupnp = "2.7.1"
 ktor-server = "3.0.0-beta-1"
-media3ExoplayerWorkmanager = "1.3.0"
 
 [libraries]
 androidx-core-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "androidx-core" }
@@ -80,8 +79,8 @@ androidx-compose-material3-material3 = { group = "androidx.compose.material3", n
 androidx-compose-material3-material3-window-size-clazz = { group = "androidx.compose.material3", name = "material3-window-size-class", version.ref = "androidx-compose-material3" }
 androidx-compose-material3-material3-adaptive = { group = "androidx.compose.material3", name = "material3-adaptive", version.ref = "androidx-compose-material3-adaptive" }
 
-androidx-paging-compose = { module = "androidx.paging:paging-compose", version.ref = "pagingCompose" }
-androidx-paging-runtime-ktx = { module = "androidx.paging:paging-runtime-ktx", version.ref = "pagingRuntimeKtx" }
+androidx-paging-compose = { module = "androidx.paging:paging-compose", version.ref = "androidx-paging-compose" }
+androidx-paging-runtime-ktx = { module = "androidx.paging:paging-runtime-ktx", version.ref = "androidx-paging-runtime-ktx" }
 androidx-tv-tv-foundation = { group = "androidx.tv", name = "tv-foundation", version.ref = "androidx-tv" }
 androidx-tv-tv-material = { group = "androidx.tv", name = "tv-material", version.ref = "androidx-tv" }
 
@@ -162,7 +161,7 @@ slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j-api" }
 
 jupnp = { group = "org.jupnp", name = "org.jupnp", version.ref = "jupnp" }
 jupnp-support = { group = "org.jupnp", name = "org.jupnp.support", version.ref = "jupnp" }
-androidx-media3-exoplayer-workmanager = { group = "androidx.media3", name = "media3-exoplayer-workmanager", version.ref = "media3ExoplayerWorkmanager" }
+androidx-media3-exoplayer-workmanager = { group = "androidx.media3", name = "media3-exoplayer-workmanager", version.ref = "androidx-media3" }
 
 [plugins]
 com-android-application = { id = "com.android.application", version.ref = "android-gradle-plugin" }

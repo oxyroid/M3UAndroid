@@ -1,8 +1,8 @@
 package com.m3u.features.stream.components
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.ExperimentalSharedTransitionApi
-import androidx.compose.animation.SharedTransitionScope
+//import androidx.compose.animation.ExperimentalSharedTransitionApi
+//import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -17,6 +17,7 @@ import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -29,9 +30,11 @@ import com.m3u.ui.FontFamilies
 import com.m3u.ui.helper.LocalHelper
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalSharedTransitionApi::class)
+//@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
-internal fun SharedTransitionScope.StreamPanel(
+internal fun
+//        SharedTransitionScope.
+        StreamPanel(
     title: String,
     playlistTitle: String,
     streamId: Int,
@@ -42,6 +45,7 @@ internal fun SharedTransitionScope.StreamPanel(
 ) {
     val spacing = LocalSpacing.current
     val helper = LocalHelper.current
+    val coroutineScope = rememberCoroutineScope()
     Background {
         Column(
             modifier = modifier
@@ -60,10 +64,10 @@ internal fun SharedTransitionScope.StreamPanel(
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier
                         .basicMarquee()
-                        .sharedElement(
-                            state = rememberSharedContentState("stream-title"),
-                            this
-                        )
+//                        .sharedElement(
+//                            state = rememberSharedContentState("stream-title"),
+//                            this
+//                        )
                 )
             }
             AnimatedVisibility(
@@ -79,10 +83,10 @@ internal fun SharedTransitionScope.StreamPanel(
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier
                         .basicMarquee()
-                        .sharedElement(
-                            state = rememberSharedContentState("playlist-title"),
-                            this
-                        )
+//                        .sharedElement(
+//                            state = rememberSharedContentState("playlist-title"),
+//                            this
+//                        )
                 )
             }
 

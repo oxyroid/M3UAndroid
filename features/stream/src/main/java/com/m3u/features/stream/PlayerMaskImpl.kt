@@ -3,8 +3,8 @@ package com.m3u.features.stream
 import android.content.pm.ActivityInfo
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.ExperimentalSharedTransitionApi
-import androidx.compose.animation.SharedTransitionScope
+//import androidx.compose.animation.ExperimentalSharedTransitionApi
+//import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.animateIntAsState
@@ -87,9 +87,11 @@ import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 
-@OptIn(ExperimentalSharedTransitionApi::class)
+//@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
-internal fun SharedTransitionScope.PlayerMaskImpl(
+internal fun
+//        SharedTransitionScope.
+        PlayerMaskImpl(
     cover: String,
     title: String,
     playlistTitle: String,
@@ -374,10 +376,10 @@ internal fun SharedTransitionScope.PlayerMaskImpl(
                             overflow = TextOverflow.Ellipsis,
                             modifier = Modifier
                                 .basicMarquee()
-                                .sharedElement(
-                                    state = rememberSharedContentState("playlist-title"),
-                                    this
-                                )
+//                                .sharedElement(
+//                                    state = rememberSharedContentState("playlist-title"),
+//                                    this
+//                                )
                         )
                     }
                     AnimatedVisibility(!isPanelExpanded) {
@@ -389,10 +391,10 @@ internal fun SharedTransitionScope.PlayerMaskImpl(
                             overflow = TextOverflow.Ellipsis,
                             modifier = Modifier
                                 .basicMarquee()
-                                .sharedElement(
-                                    state = rememberSharedContentState("stream-title"),
-                                    this
-                                )
+//                                .sharedElement(
+//                                    state = rememberSharedContentState("stream-title"),
+//                                    this
+//                                )
                         )
                     }
 
