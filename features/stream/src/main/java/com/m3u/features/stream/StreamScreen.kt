@@ -14,6 +14,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
@@ -83,10 +84,10 @@ fun StreamRoute(
 
     val neighboring = viewModel.neighboring.collectAsLazyPagingItems()
 
-    var brightness by rememberSaveable { mutableFloatStateOf(helper.brightness) }
-    var isPipMode by rememberSaveable { mutableStateOf(false) }
-    var isAutoZappingMode by rememberSaveable { mutableStateOf(true) }
-    var choosing by rememberSaveable { mutableStateOf(false) }
+    var brightness by remember { mutableFloatStateOf(helper.brightness) }
+    var isPipMode by remember { mutableStateOf(false) }
+    var isAutoZappingMode by remember { mutableStateOf(true) }
+    var choosing by remember { mutableStateOf(false) }
 
     val isPanelSupported = configuration.screenWidthDp < configuration.screenHeightDp
     val isEpgPreferenceEnabled = preferences.epg

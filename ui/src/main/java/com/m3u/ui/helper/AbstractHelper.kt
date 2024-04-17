@@ -5,6 +5,7 @@ import android.app.PictureInPictureParams
 import android.content.Context
 import android.graphics.Color
 import android.graphics.Rect
+import android.provider.Settings
 import android.view.ViewConfiguration
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -104,7 +105,10 @@ class AbstractHelper(
         }
 
     override var brightness: Float
-        get() = activity.window.attributes.screenBrightness
+        get() = Settings.System.getInt(
+            activity.contentResolver,
+            Settings.System.SCREEN_BRIGHTNESS
+        ) / 255f
         set(value) {
             activity.window.attributes = activity.window.attributes.apply {
                 screenBrightness = value
