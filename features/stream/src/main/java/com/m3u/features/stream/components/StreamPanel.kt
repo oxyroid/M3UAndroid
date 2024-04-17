@@ -1,6 +1,8 @@
 package com.m3u.features.stream.components
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 //import androidx.compose.animation.ExperimentalSharedTransitionApi
 //import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.foundation.basicMarquee
@@ -72,6 +74,8 @@ internal fun
             }
             AnimatedVisibility(
                 visible = isPanelExpanded,
+                enter = fadeIn(),
+                exit = fadeOut(),
                 modifier = Modifier.padding(horizontal = spacing.medium)
             ) {
                 Text(

@@ -1,10 +1,10 @@
 package com.m3u.features.stream
 
+//import androidx.compose.animation.ExperimentalSharedTransitionApi
+//import androidx.compose.animation.SharedTransitionScope
 import android.content.pm.ActivityInfo
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
-//import androidx.compose.animation.ExperimentalSharedTransitionApi
-//import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.animateIntAsState
@@ -366,7 +366,11 @@ internal fun
                         .animateContentSize()
                         .weight(1f)
                 ) {
-                    AnimatedVisibility(!isPanelExpanded) {
+                    AnimatedVisibility(
+                        visible = !isPanelExpanded,
+                        enter = fadeIn(),
+                        exit = fadeOut()
+                    ) {
                         Text(
                             text = playlistTitle.trim().uppercase(),
                             style = MaterialTheme.typography.labelMedium,
@@ -382,7 +386,11 @@ internal fun
 //                                )
                         )
                     }
-                    AnimatedVisibility(!isPanelExpanded) {
+                    AnimatedVisibility(
+                        visible = !isPanelExpanded,
+                        enter = fadeIn(),
+                        exit = fadeOut()
+                    ) {
                         Text(
                             text = title.trim(),
                             style = MaterialTheme.typography.titleMedium,
