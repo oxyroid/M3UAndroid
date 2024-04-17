@@ -329,7 +329,7 @@ internal fun
                             .fillMaxSize()
                             .thenIf(!tv && preferences.volumeGesture) {
                                 Modifier.detectVerticalGesture(
-                                    time = 0.65f,
+                                    time = 0.35f,
                                     onDragStart = {
                                         maskState.lock(MaskGesture.VOLUME)
                                         gesture = MaskGesture.VOLUME
