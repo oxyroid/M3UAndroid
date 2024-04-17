@@ -42,7 +42,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.m3u.core.architecture.pref.LocalPref
+import com.m3u.core.architecture.preferences.LocalPreferences
 import com.m3u.core.unspecified.DataUnit
 import com.m3u.core.util.basic.title
 import com.m3u.data.database.model.ColorPack
@@ -209,13 +209,13 @@ private fun SettingScreen(
     modifier: Modifier = Modifier
 ) {
     val helper = LocalHelper.current
-    val pref = LocalPref.current
+    val preferences = LocalPreferences.current
 
     val defaultTitle = stringResource(string.ui_title_setting)
     val playlistTitle = stringResource(string.feat_setting_playlist_management)
     val appearanceTitle = stringResource(string.feat_setting_appearance)
 
-    val colorArgb = pref.colorArgb
+    val colorArgb = preferences.colorArgb
 
     var fragment: SettingFragment by remember { mutableStateOf(SettingFragment.Default) }
 

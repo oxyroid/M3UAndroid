@@ -2,7 +2,7 @@ package com.m3u.data.television.http.endpoint
 
 import android.content.Context
 import androidx.work.WorkManager
-import com.m3u.core.architecture.pref.Pref
+import com.m3u.core.architecture.preferences.Preferences
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.worker.SubscriptionWorker
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -16,7 +16,7 @@ import javax.inject.Singleton
 @Singleton
 data class Playlists @Inject constructor(
     private val workManager: WorkManager,
-    private val pref: Pref,
+    private val preferences: Preferences,
     @ApplicationContext private val context: Context
 ) : Endpoint {
     override fun apply(route: Route) {

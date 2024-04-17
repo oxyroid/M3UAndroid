@@ -34,8 +34,7 @@ import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.Profiles
 import com.m3u.core.architecture.logger.install
-import com.m3u.core.architecture.pref.Pref
-import com.m3u.core.architecture.pref.observeAsFlow
+import com.m3u.core.architecture.preferences.Preferences
 import com.m3u.core.wrapper.Event
 import com.m3u.core.wrapper.Message
 import com.m3u.core.wrapper.Resource
@@ -81,7 +80,7 @@ class PlaylistViewModel @Inject constructor(
     private val mediaRepository: MediaRepository,
     private val messager: Messager,
     playerManager: PlayerManagerV2,
-    pref: Pref,
+    preferences: Preferences,
     workManager: WorkManager,
     @Dispatcher(IO) private val ioDispatcher: CoroutineDispatcher,
     delegate: Logger
@@ -92,7 +91,7 @@ class PlaylistViewModel @Inject constructor(
         .getStateFlow(PlaylistNavigation.TYPE_URL, "")
 
     internal val zapping: StateFlow<Stream?> = combine(
-        pref.observeAsFlow { it.zappingMode },
+        snapshotFlow { preferences.zappingMode },
         playerManager.stream,
         playlistUrl.flatMapLatest { streamRepository.observeAllByPlaylistUrl(it) }
     ) { zappingMode, stream, streams ->
@@ -286,7 +285,7 @@ class PlaylistViewModel @Inject constructor(
 
     private val unsorted: StateFlow<List<Stream>> = combine(
         playlistUrl.flatMapLatest { url ->
-            pref.observeAsFlow { it.paging }.flatMapLatest { paging ->
+            snapshotFlow { preferences.paging }.flatMapLatest { paging ->
                 if (paging) flow { }
                 else playlistRepository.observeWithStreams(url)
             }
@@ -350,7 +349,7 @@ class PlaylistViewModel @Inject constructor(
             combine(
                 flow,
                 playlist,
-                pref.observeAsFlow { it.paging }
+                snapshotFlow { preferences.paging }
             ) { streams, playlist, paging ->
                 if (!paging) return@combine PagingData.empty()
                 val hiddenCategories = playlist?.hiddenCategories ?: emptyList()

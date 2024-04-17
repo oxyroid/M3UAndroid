@@ -11,8 +11,7 @@ import com.m3u.androidApp.ui.sheet.RemoteControlSheetValue
 import com.m3u.core.architecture.Publisher
 import com.m3u.core.architecture.dispatcher.Dispatcher
 import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
-import com.m3u.core.architecture.pref.Pref
-import com.m3u.core.architecture.pref.observeAsFlow
+import com.m3u.core.architecture.preferences.Preferences
 import com.m3u.data.api.LocalPreparedService
 import com.m3u.data.repository.ConnectionToTelevisionValue
 import com.m3u.data.repository.TelevisionRepository
@@ -43,7 +42,7 @@ class AppViewModel @Inject constructor(
     messager: Messager,
     private val televisionRepository: TelevisionRepository,
     private val localService: LocalPreparedService,
-    private val pref: Pref,
+    private val preferences: Preferences,
     private val publisher: Publisher,
     @Dispatcher(IO) private val ioDispatcher: CoroutineDispatcher,
 ) : ViewModel() {
@@ -128,7 +127,7 @@ class AppViewModel @Inject constructor(
             televisionCodeOnSmartphone.emit(code)
         }
         checkTelevisionCodeOnSmartphoneJob?.cancel()
-        checkTelevisionCodeOnSmartphoneJob = pref.observeAsFlow { it.remoteControl }
+        checkTelevisionCodeOnSmartphoneJob = snapshotFlow { preferences.remoteControl }
             .onEach { remoteControl ->
                 if (!remoteControl) {
                     forgetTelevisionCodeOnSmartphone()
@@ -150,7 +149,7 @@ class AppViewModel @Inject constructor(
     }
 
     var rootDestination: Destination.Root by mutableStateOf(
-        when (pref.rootDestination) {
+        when (preferences.rootDestination) {
             0 -> Destination.Root.Foryou
             1 -> Destination.Root.Favourite
             2 -> Destination.Root.Setting

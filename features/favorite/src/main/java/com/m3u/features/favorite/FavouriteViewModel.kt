@@ -3,6 +3,7 @@ package com.m3u.features.favorite
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import androidx.compose.runtime.snapshotFlow
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.graphics.drawable.IconCompat
@@ -15,8 +16,7 @@ import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.Profiles
 import com.m3u.core.architecture.logger.install
-import com.m3u.core.architecture.pref.Pref
-import com.m3u.core.architecture.pref.observeAsFlow
+import com.m3u.core.architecture.preferences.Preferences
 import com.m3u.core.wrapper.Resource
 import com.m3u.core.wrapper.asResource
 import com.m3u.core.wrapper.mapResource
@@ -49,19 +49,18 @@ class FavouriteViewModel @Inject constructor(
     private val playlistRepository: PlaylistRepository,
     private val streamRepository: StreamRepository,
     private val mediaRepository: MediaRepository,
-    pref: Pref,
+    preferences: Preferences,
     playerManager: PlayerManagerV2,
     @Dispatcher(IO) ioDispatcher: CoroutineDispatcher,
     delegate: Logger
 ) : ViewModel() {
     private val logger = delegate.install(Profiles.VIEWMODEL_FAVOURITE)
 
-    private val zappingMode = pref
-        .observeAsFlow { it.zappingMode }
+    private val zappingMode = snapshotFlow { preferences.zappingMode }
         .flowOn(ioDispatcher)
         .stateIn(
             scope = viewModelScope,
-            initialValue = Pref.DEFAULT_ZAPPING_MODE,
+            initialValue = Preferences.DEFAULT_ZAPPING_MODE,
             started = SharingStarted.WhileSubscribed(5_000)
         )
 

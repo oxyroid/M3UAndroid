@@ -14,8 +14,8 @@ import com.m3u.core.architecture.logger.execute
 import com.m3u.core.architecture.logger.install
 import com.m3u.core.architecture.logger.post
 import com.m3u.core.architecture.logger.sandBox
-import com.m3u.core.architecture.pref.Pref
-import com.m3u.core.architecture.pref.annotation.PlaylistStrategy
+import com.m3u.core.architecture.preferences.Preferences
+import com.m3u.core.architecture.preferences.annotation.PlaylistStrategy
 import com.m3u.core.util.basic.startsWithAny
 import com.m3u.core.util.readFileContent
 import com.m3u.core.util.readFileName
@@ -73,7 +73,7 @@ internal class PlaylistRepositoryImpl @Inject constructor(
     client: OkHttpClient,
     private val m3uParser: M3UParser,
     private val xtreamParser: XtreamParser,
-    private val pref: Pref,
+    private val preferences: Preferences,
     private val workManager: WorkManager,
     @ApplicationContext private val context: Context,
     @Dispatcher(IO) private val ioDispatcher: CoroutineDispatcher,
@@ -175,7 +175,7 @@ internal class PlaylistRepositoryImpl @Inject constructor(
             }
             .flowOn(ioDispatcher)
             .collect()
-        if (pref.keepFavouriteAndHidden == PlaylistStrategy.KEEP_FAVOURITE_AND_HIDDEN) {
+        if (preferences.keepFavouriteAndHidden == PlaylistStrategy.KEEP_FAVOURITE_AND_HIDDEN) {
             streamDao.mergeUnfavouriteOrUnhiddenIfNeededByPlaylistUrl(url)
         }
     }
@@ -331,7 +331,7 @@ internal class PlaylistRepositoryImpl @Inject constructor(
                 }
             }
             .collect()
-        if (pref.keepFavouriteAndHidden == PlaylistStrategy.KEEP_FAVOURITE_AND_HIDDEN) {
+        if (preferences.keepFavouriteAndHidden == PlaylistStrategy.KEEP_FAVOURITE_AND_HIDDEN) {
             if (requiredLives) {
                 streamDao.mergeUnfavouriteOrUnhiddenIfNeededByPlaylistUrl(livePlaylist.url)
             }
@@ -563,7 +563,7 @@ internal class PlaylistRepositoryImpl @Inject constructor(
     }
 
     private suspend fun safeClearStreamByPlaylistUrl(playlistUrl: String) {
-        if (pref.keepFavouriteAndHidden == PlaylistStrategy.KEEP_FAVOURITE_AND_HIDDEN) {
+        if (preferences.keepFavouriteAndHidden == PlaylistStrategy.KEEP_FAVOURITE_AND_HIDDEN) {
             streamDao.deleteUnfavouriteAndUnhiddenByPlaylistUrl(playlistUrl)
         } else {
             streamDao.deleteByPlaylistUrl(playlistUrl)

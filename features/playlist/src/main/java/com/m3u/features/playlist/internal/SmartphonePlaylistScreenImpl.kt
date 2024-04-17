@@ -47,7 +47,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.paging.compose.LazyPagingItems
-import com.m3u.core.architecture.pref.LocalPref
+import com.m3u.core.architecture.preferences.LocalPreferences
 import com.m3u.core.wrapper.Event
 import com.m3u.data.database.model.Stream
 import com.m3u.features.playlist.Category
@@ -103,7 +103,7 @@ internal fun SmartphonePlaylistScreenImpl(
     val helper = LocalHelper.current
     val spacing = LocalSpacing.current
     val configuration = LocalConfiguration.current
-    val pref = LocalPref.current
+    val preferences = LocalPreferences.current
     val focusManager = LocalFocusManager.current
 
     val scaffoldState = rememberBackdropScaffoldState(BackdropValue.Concealed)
@@ -216,11 +216,11 @@ internal fun SmartphonePlaylistScreenImpl(
                             onPinOrUnpinCategory = onPinOrUnpinCategory,
                             onHideCategory = onHideCategory
                         )
-                        if (pref.paging || currentPage != -1) {
+                        if (preferences.paging || currentPage != -1) {
                             SmartphoneStreamGallery(
                                 state = state,
                                 rowCount = actualRowCount,
-                                streams = if (pref.paging) emptyList()
+                                streams = if (preferences.paging) emptyList()
                                 else categories[currentPage].streams,
                                 streamPaged = streamPaged,
                                 zapping = zapping,

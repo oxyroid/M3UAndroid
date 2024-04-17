@@ -23,7 +23,7 @@ import androidx.tv.material3.CardDefaults
 import androidx.tv.material3.Glow
 import androidx.tv.material3.Text
 import coil.compose.SubcomposeAsyncImage
-import com.m3u.core.architecture.pref.LocalPref
+import com.m3u.core.architecture.preferences.LocalPreferences
 import com.m3u.data.database.model.Stream
 import com.m3u.material.components.Icon
 import com.m3u.material.ktx.thenIf
@@ -37,10 +37,10 @@ internal fun TvStreamItem(
     onLongClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val pref = LocalPref.current
+    val preferences = LocalPreferences.current
     val spacing = LocalSpacing.current
 
-    val noPictureMode = pref.noPictureMode
+    val noPictureMode = preferences.noPictureMode
 
     val onlyPictureMode = remember(stream.cover, isVodOrSeriesPlaylist, noPictureMode) {
         when {

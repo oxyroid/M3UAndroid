@@ -2,6 +2,7 @@ package com.m3u.data.service.internal
 
 import android.content.Context
 import android.graphics.Rect
+import androidx.compose.runtime.snapshotFlow
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
@@ -30,16 +31,15 @@ import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
 import androidx.media3.exoplayer.trackselection.TrackSelector
 import androidx.media3.session.MediaSession
 import com.m3u.codec.Codecs
-import com.m3u.core.architecture.logger.Profiles
 import com.m3u.core.architecture.dispatcher.Dispatcher
 import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
 import com.m3u.core.architecture.dispatcher.M3uDispatchers.Main
 import com.m3u.core.architecture.logger.Logger
-import com.m3u.core.architecture.logger.post
+import com.m3u.core.architecture.logger.Profiles
 import com.m3u.core.architecture.logger.install
-import com.m3u.core.architecture.pref.Pref
-import com.m3u.core.architecture.pref.annotation.ReconnectMode
-import com.m3u.core.architecture.pref.observeAsFlow
+import com.m3u.core.architecture.logger.post
+import com.m3u.core.architecture.preferences.Preferences
+import com.m3u.core.architecture.preferences.annotation.ReconnectMode
 import com.m3u.data.SSLs
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.Stream
@@ -80,7 +80,7 @@ class PlayerManagerV2Impl @Inject constructor(
     @Dispatcher(IO) ioDispatcher: CoroutineDispatcher,
     @ApplicationContext private val context: Context,
     private val okHttpClient: OkHttpClient,
-    private val pref: Pref,
+    private val preferences: Preferences,
     private val playlistRepository: PlaylistRepository,
     private val streamRepository: StreamRepository,
     private val cache: Cache,
@@ -104,7 +104,7 @@ class PlayerManagerV2Impl @Inject constructor(
                     .observe(command.streamId)
                     .map { it?.copyXtreamEpisode(command.episode) }
 
-                else -> flow {  }
+                else -> flow { }
             }
         }
         .stateIn(
@@ -117,17 +117,19 @@ class PlayerManagerV2Impl @Inject constructor(
         when (command) {
             is MediaCommand.Live -> {
                 val stream = streamRepository.get(command.streamId)
-                stream?.let { playlistRepository.observe(it.playlistUrl) } ?: flow {  }
+                stream?.let { playlistRepository.observe(it.playlistUrl) } ?: flow { }
             }
+
             is MediaCommand.XtreamEpisode -> {
                 val stream = streamRepository.get(command.streamId)
                 stream?.let {
                     playlistRepository
                         .observe(it.playlistUrl)
                         .map { prev -> prev?.copyXtreamSeries(stream) }
-                } ?: flow {  }
+                } ?: flow { }
             }
-            null -> flow {  }
+
+            null -> flow { }
         }
     }
         .stateIn(
@@ -140,8 +142,8 @@ class PlayerManagerV2Impl @Inject constructor(
     override val playbackException = MutableStateFlow<PlaybackException?>(null)
     override val tracksGroups = MutableStateFlow<List<Tracks.Group>>(emptyList())
 
-    private var currentConnectTimeout = pref.connectTimeout
-    private var currentTunneling = pref.tunneling
+    private var currentConnectTimeout = preferences.connectTimeout
+    private var currentTunneling = preferences.tunneling
     private var observePreferencesChangingJob: Job? = null
 
     override suspend fun play(command: MediaCommand) {
@@ -196,7 +198,7 @@ class PlayerManagerV2Impl @Inject constructor(
         userAgent: String? = playlist.value?.userAgent
     ) {
         val rtmp: Boolean = Url(url).protocol.name == "rtmp"
-        val tunneling: Boolean = pref.tunneling
+        val tunneling: Boolean = preferences.tunneling
         logger.post {
             "play, mimetype: $mimeType," +
                     " url: $url," +
@@ -338,8 +340,8 @@ class PlayerManagerV2Impl @Inject constructor(
         onChanged: suspend (timeout: Long, tunneling: Boolean) -> Unit
     ): Unit = coroutineScope {
         combine(
-            pref.observeAsFlow { it.connectTimeout },
-            pref.observeAsFlow { it.tunneling }
+            snapshotFlow { preferences.connectTimeout },
+            snapshotFlow { preferences.tunneling }
         ) { timeout, tunneling ->
             onChanged(timeout, tunneling)
         }
@@ -354,7 +356,7 @@ class PlayerManagerV2Impl @Inject constructor(
     override fun onPlaybackStateChanged(state: Int) {
         super.onPlaybackStateChanged(state)
         playbackState.value = state
-        if (state == Player.STATE_ENDED && pref.reconnectMode == ReconnectMode.RECONNECT) {
+        if (state == Player.STATE_ENDED && preferences.reconnectMode == ReconnectMode.RECONNECT) {
             mainCoroutineScope.launch { replay() }
         }
         logger.post { "playback-state: $state" }
@@ -365,11 +367,11 @@ class PlayerManagerV2Impl @Inject constructor(
                     val getCurrentMediaItem =
                         currentPlayer.isCommandAvailable(Player.COMMAND_GET_CURRENT_MEDIA_ITEM)
                     if (!getCurrentMediaItem) {
-                        return@post "get-current-media-item: false"
+                        return@post "dynamic, seekable: unknown"
                     }
                     val seekable = currentPlayer.isCurrentMediaItemSeekable
                     val dynamic = currentPlayer.isCurrentMediaItemDynamic
-                    "get-current-media-item: $getCurrentMediaItem, dynamic: $dynamic, seekable: $seekable"
+                    "dynamic: $dynamic, seekable: $seekable"
                 }
             }
 

@@ -10,8 +10,8 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalView
-import com.m3u.core.architecture.pref.LocalPref
-import com.m3u.core.architecture.pref.Pref
+import com.m3u.core.architecture.preferences.LocalPreferences
+import com.m3u.core.architecture.preferences.Preferences
 import com.m3u.core.unspecified.unspecifiable
 import com.m3u.data.service.RemoteDirectionService
 import com.m3u.material.LocalM3UHapticFeedback
@@ -27,7 +27,7 @@ import kotlin.time.Duration.Companion.milliseconds
 @Composable
 fun Toolkit(
     helper: Helper,
-    pref: Pref,
+    preferences: Preferences,
     actions: SharedFlow<RemoteDirectionService.Action>,
     alwaysUseDarkTheme: Boolean = false,
     content: @Composable () -> Unit
@@ -41,8 +41,8 @@ fun Toolkit(
     }
     val useDarkTheme = when {
         alwaysUseDarkTheme -> true
-        pref.followSystemTheme -> isSystemInDarkTheme()
-        else -> pref.darkMode
+        preferences.followSystemTheme -> isSystemInDarkTheme()
+        else -> preferences.darkMode
     }
 
     LaunchedEffect(view, actions) {
@@ -68,14 +68,14 @@ fun Toolkit(
 
     CompositionLocalProvider(
         LocalHelper provides helper,
-        LocalPref provides pref,
-        LocalAlwaysTelevision provides pref.alwaysTv,
+        LocalPreferences provides preferences,
+        LocalAlwaysTelevision provides preferences.alwaysTv,
         LocalM3UHapticFeedback provides createM3UHapticFeedback()
     ) {
         Theme(
-            argb = pref.colorArgb,
+            argb = preferences.colorArgb,
             useDarkTheme = useDarkTheme,
-            useDynamicColors = pref.useDynamicColors,
+            useDynamicColors = preferences.useDynamicColors,
             typography = smartphoneTypography,
         ) {
             LaunchedEffect(useDarkTheme) {

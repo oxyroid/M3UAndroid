@@ -15,7 +15,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import com.m3u.core.architecture.pref.LocalPref
+import com.m3u.core.architecture.preferences.LocalPreferences
 import com.m3u.core.util.basic.title
 import com.m3u.features.setting.components.CheckBoxSharedPreference
 import com.m3u.i18n.R.string
@@ -26,7 +26,7 @@ import com.m3u.material.ktx.isTelevision
 internal fun ExperimentalPreference(
     modifier: Modifier = Modifier
 ) {
-    val pref = LocalPref.current
+    val preferences = LocalPreferences.current
     val tv = isTelevision()
 
     var experimentalMode by remember { mutableStateOf(false) }
@@ -52,8 +52,8 @@ internal fun ExperimentalPreference(
                         title = string.feat_setting_always_television,
                         content = string.feat_setting_always_television_description,
                         icon = Icons.Rounded.Tv,
-                        checked = pref.alwaysTv,
-                        onChanged = { pref.alwaysTv = !pref.alwaysTv }
+                        checked = preferences.alwaysTv,
+                        onChanged = { preferences.alwaysTv = !preferences.alwaysTv }
                     )
                 }
             }

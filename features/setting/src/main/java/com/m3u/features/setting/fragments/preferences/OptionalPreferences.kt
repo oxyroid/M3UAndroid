@@ -25,8 +25,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import com.m3u.core.architecture.pref.LocalPref
-import com.m3u.core.architecture.pref.annotation.ReconnectMode
+import com.m3u.core.architecture.preferences.LocalPreferences
+import com.m3u.core.architecture.preferences.annotation.ReconnectMode
 import com.m3u.core.util.basic.title
 import com.m3u.features.setting.components.CheckBoxSharedPreference
 import com.m3u.i18n.R.string
@@ -36,8 +36,9 @@ import com.m3u.material.ktx.isTelevision
 
 @Composable
 fun OptionalPreferences(modifier: Modifier = Modifier) {
-    val pref = LocalPref.current
+    val preferences = LocalPreferences.current
     val tv = isTelevision()
+
     var expended by rememberSaveable { mutableStateOf(false) }
 
     Column(modifier) {
@@ -60,54 +61,54 @@ fun OptionalPreferences(modifier: Modifier = Modifier) {
                     title = string.feat_setting_tunneling,
                     content = string.feat_setting_tunneling_description,
                     icon = Icons.Rounded.FlashOn,
-                    checked = pref.tunneling,
-                    onChanged = { pref.tunneling = !pref.tunneling }
+                    checked = preferences.tunneling,
+                    onChanged = { preferences.tunneling = !preferences.tunneling }
                 )
                 CheckBoxSharedPreference(
                     title = string.feat_setting_full_info_player,
                     content = string.feat_setting_full_info_player_description,
                     icon = Icons.Rounded.Details,
-                    checked = pref.fullInfoPlayer,
-                    onChanged = { pref.fullInfoPlayer = !pref.fullInfoPlayer }
+                    checked = preferences.fullInfoPlayer,
+                    onChanged = { preferences.fullInfoPlayer = !preferences.fullInfoPlayer }
                 )
                 CheckBoxSharedPreference(
                     title = string.feat_setting_progress,
                     icon = Icons.Rounded.SettingsEthernet,
-                    checked = pref.progress,
-                    onChanged = { pref.progress = !pref.progress }
+                    checked = preferences.progress,
+                    onChanged = { preferences.progress = !preferences.progress }
                 )
                 if (!tv) {
                     CheckBoxSharedPreference(
                         title = string.feat_setting_zapping_mode,
                         content = string.feat_setting_zapping_mode_description,
                         icon = Icons.Rounded.PictureInPicture,
-                        checked = pref.zappingMode,
-                        onChanged = { pref.zappingMode = !pref.zappingMode }
+                        checked = preferences.zappingMode,
+                        onChanged = { preferences.zappingMode = !preferences.zappingMode }
                     )
                     CheckBoxSharedPreference(
                         title = string.feat_setting_gesture_brightness,
                         icon = Icons.Rounded.BrightnessMedium,
-                        checked = pref.brightnessGesture,
-                        onChanged = { pref.brightnessGesture = !pref.brightnessGesture }
+                        checked = preferences.brightnessGesture,
+                        onChanged = { preferences.brightnessGesture = !preferences.brightnessGesture }
                     )
                     CheckBoxSharedPreference(
                         title = string.feat_setting_gesture_volume,
                         icon = Icons.AutoMirrored.Rounded.VolumeUp,
-                        checked = pref.volumeGesture,
-                        onChanged = { pref.volumeGesture = !pref.volumeGesture }
+                        checked = preferences.volumeGesture,
+                        onChanged = { preferences.volumeGesture = !preferences.volumeGesture }
                     )
                     CheckBoxSharedPreference(
                         title = string.feat_setting_always_replay,
                         icon = Icons.Rounded.ReplayCircleFilled,
-                        checked = pref.alwaysShowReplay,
-                        onChanged = { pref.alwaysShowReplay = !pref.alwaysShowReplay }
+                        checked = preferences.alwaysShowReplay,
+                        onChanged = { preferences.alwaysShowReplay = !preferences.alwaysShowReplay }
                     )
                     CheckBoxSharedPreference(
                         title = string.feat_setting_player_panel,
                         content = string.feat_setting_player_panel_description,
                         icon = Icons.Rounded.Unarchive,
-                        checked = pref.epg,
-                        onChanged = { pref.epg = !pref.epg }
+                        checked = preferences.epg,
+                        onChanged = { preferences.epg = !preferences.epg }
                     )
                 }
 
@@ -116,27 +117,27 @@ fun OptionalPreferences(modifier: Modifier = Modifier) {
                         title = string.feat_setting_screen_rotating,
                         content = string.feat_setting_screen_rotating_description,
                         icon = Icons.Rounded.ScreenRotation,
-                        checked = pref.screenRotating,
-                        onChanged = { pref.screenRotating = !pref.screenRotating }
+                        checked = preferences.screenRotating,
+                        onChanged = { preferences.screenRotating = !preferences.screenRotating }
                     )
                     CheckBoxSharedPreference(
                         title = string.feat_setting_screencast,
                         icon = Icons.Rounded.Cast,
-                        checked = pref.screencast,
-                        onChanged = { pref.screencast = !pref.screencast }
+                        checked = preferences.screencast,
+                        onChanged = { preferences.screencast = !preferences.screencast }
                     )
                 }
 
                 TextPreference(
                     title = stringResource(string.feat_setting_reconnect_mode).title(),
                     icon = Icons.Rounded.Loop,
-                    trailing = when (pref.reconnectMode) {
+                    trailing = when (preferences.reconnectMode) {
                         ReconnectMode.RETRY -> stringResource(string.feat_setting_reconnect_mode_retry)
                         ReconnectMode.RECONNECT -> stringResource(string.feat_setting_reconnect_mode_reconnect)
                         else -> stringResource(string.feat_setting_reconnect_mode_no)
                     },
                     onClick = {
-                        pref.reconnectMode = when (pref.reconnectMode) {
+                        preferences.reconnectMode = when (preferences.reconnectMode) {
                             ReconnectMode.RETRY -> ReconnectMode.RECONNECT
                             ReconnectMode.RECONNECT -> ReconnectMode.NO
                             else -> ReconnectMode.RETRY

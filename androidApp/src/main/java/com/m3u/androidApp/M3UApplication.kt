@@ -4,7 +4,7 @@ import android.app.Application
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
 import com.m3u.core.architecture.logger.Logger
-import com.m3u.core.architecture.pref.Pref
+import com.m3u.core.architecture.preferences.Preferences
 import com.m3u.dlna.DLNACastManager
 import com.m3u.features.crash.CrashHandler
 import com.m3u.material.ktx.isTelevision
@@ -24,12 +24,12 @@ class M3UApplication : Application(), Configuration.Provider {
     lateinit var messager: Logger
 
     @Inject
-    lateinit var pref: Pref
+    lateinit var preferences: Preferences
 
     override fun onCreate() {
         super.onCreate()
         Thread.setDefaultUncaughtExceptionHandler(handler)
-        if (!resources.configuration.isTelevision() && !pref.alwaysTv) {
+        if (!resources.configuration.isTelevision() && !preferences.alwaysTv) {
             DLNACastManager.bindCastService(this@M3UApplication)
         }
     }

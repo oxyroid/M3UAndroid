@@ -10,7 +10,7 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts.CreateDocument
 import com.m3u.core.architecture.dispatcher.Dispatcher
 import com.m3u.core.architecture.dispatcher.M3uDispatchers.Main
-import com.m3u.core.architecture.pref.Pref
+import com.m3u.core.architecture.preferences.Preferences
 import com.m3u.data.service.Messager
 import com.m3u.data.service.PlayerManagerV2
 import com.m3u.data.service.RemoteDirectionService
@@ -34,7 +34,7 @@ class CrashActivity : ComponentActivity() {
     }
 
     @Inject
-    lateinit var pref: Pref
+    lateinit var preferences: Preferences
     private lateinit var launcher: ActivityResultLauncher<String>
 
     @Inject
@@ -64,7 +64,7 @@ class CrashActivity : ComponentActivity() {
         }
         setContent {
             Toolkit(
-                pref = pref,
+                preferences = preferences,
                 helper = helper,
                 actions = remoteDirectionService.actions
             ) {

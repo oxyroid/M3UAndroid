@@ -43,7 +43,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.google.accompanist.permissions.rememberPermissionState
-import com.m3u.core.architecture.pref.LocalPref
+import com.m3u.core.architecture.preferences.LocalPreferences
 import com.m3u.core.util.basic.title
 import com.m3u.core.wrapper.Event
 import com.m3u.core.wrapper.eventOf
@@ -77,7 +77,7 @@ internal fun PlaylistRoute(
     contentPadding: PaddingValues = PaddingValues()
 ) {
     val context = LocalContext.current
-    val pref = LocalPref.current
+    val preferences = LocalPreferences.current
     val helper = LocalHelper.current
     val coroutineScope = rememberCoroutineScope()
 
@@ -122,8 +122,8 @@ internal fun PlaylistRoute(
         }
     }
 
-    LaunchedEffect(pref.autoRefresh, playlistUrl) {
-        if (playlistUrl.isNotEmpty() && pref.autoRefresh) {
+    LaunchedEffect(preferences.autoRefresh, playlistUrl) {
+        if (playlistUrl.isNotEmpty() && preferences.autoRefresh) {
             viewModel.refresh()
         }
     }
@@ -138,7 +138,7 @@ internal fun PlaylistRoute(
                 title = playlist?.title.orEmpty(),
                 query = viewModel.query,
                 onQuery = { viewModel.query = it },
-                rowCount = pref.rowCount,
+                rowCount = preferences.rowCount,
                 zapping = zapping,
                 categories = categories,
                 streamPaged = streamPaged,
@@ -191,11 +191,11 @@ internal fun PlaylistRoute(
                 isSeriesPlaylist = isSeriesPlaylist,
                 modifier = Modifier
                     .fillMaxSize()
-                    .thenIf(!tv && pref.godMode) {
+                    .thenIf(!tv && preferences.godMode) {
                         Modifier.interceptVolumeEvent { event ->
-                            pref.rowCount = when (event) {
-                                KeyEvent.KEYCODE_VOLUME_UP -> (pref.rowCount - 1).coerceAtLeast(1)
-                                KeyEvent.KEYCODE_VOLUME_DOWN -> (pref.rowCount + 1).coerceAtMost(2)
+                            preferences.rowCount = when (event) {
+                                KeyEvent.KEYCODE_VOLUME_UP -> (preferences.rowCount - 1).coerceAtLeast(1)
+                                KeyEvent.KEYCODE_VOLUME_DOWN -> (preferences.rowCount + 1).coerceAtMost(2)
                                 else -> return@interceptVolumeEvent
                             }
                         }

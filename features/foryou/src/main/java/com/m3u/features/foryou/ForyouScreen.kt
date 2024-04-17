@@ -25,7 +25,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.m3u.core.architecture.pref.LocalPref
+import com.m3u.core.architecture.preferences.LocalPreferences
 import com.m3u.core.util.basic.title
 import com.m3u.core.wrapper.Resource
 import com.m3u.data.database.model.Playlist
@@ -63,7 +63,7 @@ fun ForyouRoute(
     viewModel: ForyouViewModel = hiltViewModel()
 ) {
     val helper = LocalHelper.current
-    val pref = LocalPref.current
+    val preferences = LocalPreferences.current
     val visiblePageInfos = LocalVisiblePageInfos.current
     val coroutineScope = rememberCoroutineScope()
 
@@ -102,7 +102,7 @@ fun ForyouRoute(
             ForyouScreen(
                 playlistCountsResource = playlistCountsResource,
                 recommend = recommend,
-                rowCount = pref.rowCount,
+                rowCount = preferences.rowCount,
                 contentPadding = contentPadding,
                 navigateToPlaylist = navigateToPlaylist,
                 onClickStream = { stream ->
@@ -126,11 +126,11 @@ fun ForyouRoute(
                 onEditPlaylistUserAgent = viewModel::onEditPlaylistUserAgent,
                 modifier = Modifier
                     .fillMaxSize()
-                    .thenIf(!tv && pref.godMode) {
+                    .thenIf(!tv && preferences.godMode) {
                         Modifier.interceptVolumeEvent { event ->
-                            pref.rowCount = when (event) {
-                                KeyEvent.KEYCODE_VOLUME_UP -> (pref.rowCount - 1).coerceAtLeast(1)
-                                KeyEvent.KEYCODE_VOLUME_DOWN -> (pref.rowCount + 1).coerceAtMost(2)
+                            preferences.rowCount = when (event) {
+                                KeyEvent.KEYCODE_VOLUME_UP -> (preferences.rowCount - 1).coerceAtLeast(1)
+                                KeyEvent.KEYCODE_VOLUME_DOWN -> (preferences.rowCount + 1).coerceAtMost(2)
                                 else -> return@interceptVolumeEvent
                             }
                         }

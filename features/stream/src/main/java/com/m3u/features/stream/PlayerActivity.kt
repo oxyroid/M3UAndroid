@@ -11,7 +11,7 @@ import androidx.lifecycle.lifecycleScope
 import com.m3u.core.Contracts
 import com.m3u.core.architecture.dispatcher.Dispatcher
 import com.m3u.core.architecture.dispatcher.M3uDispatchers.Main
-import com.m3u.core.architecture.pref.Pref
+import com.m3u.core.architecture.preferences.Preferences
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.repository.PlaylistRepository
 import com.m3u.data.repository.StreamRepository
@@ -45,7 +45,7 @@ class PlayerActivity : ComponentActivity() {
     }
 
     @Inject
-    lateinit var pref: Pref
+    lateinit var preferences: Preferences
 
     @Inject
     lateinit var playerManager: PlayerManagerV2
@@ -73,7 +73,7 @@ class PlayerActivity : ComponentActivity() {
         setContent {
             Toolkit(
                 helper = helper,
-                pref = pref,
+                preferences = preferences,
                 alwaysUseDarkTheme = true,
                 actions = remoteDirectionService.actions
             ) {

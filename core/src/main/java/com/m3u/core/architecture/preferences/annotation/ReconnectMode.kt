@@ -1,4 +1,4 @@
-package com.m3u.core.architecture.pref.annotation
+package com.m3u.core.architecture.preferences.annotation
 
 @Target(
     AnnotationTarget.CLASS,
@@ -7,9 +7,10 @@ package com.m3u.core.architecture.pref.annotation
     AnnotationTarget.TYPE
 )
 @Retention(AnnotationRetention.SOURCE)
-annotation class PlaylistStrategy {
+annotation class ReconnectMode {
     companion object {
-        const val ALL = 0
-        const val KEEP_FAVOURITE_AND_HIDDEN = 1
+        const val NO = 0
+        const val RETRY = 1
+        const val RECONNECT = 2
     }
 }

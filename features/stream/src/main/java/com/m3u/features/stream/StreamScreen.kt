@@ -27,7 +27,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.compose.collectAsLazyPagingItems
-import com.m3u.core.architecture.pref.LocalPref
+import com.m3u.core.architecture.preferences.LocalPreferences
 import com.m3u.core.unspecified.unspecifiable
 import com.m3u.core.util.basic.isNotEmpty
 import com.m3u.core.util.basic.title
@@ -63,7 +63,7 @@ fun StreamRoute(
     val openInExternalPlayerString = stringResource(string.feat_stream_open_in_external_app)
 
     val helper = LocalHelper.current
-    val pref = LocalPref.current
+    val preferences = LocalPreferences.current
     val context = LocalContext.current
     val configuration = LocalConfiguration.current
 
@@ -89,7 +89,7 @@ fun StreamRoute(
     var choosing by rememberSaveable { mutableStateOf(false) }
 
     val isPanelSupported = configuration.screenWidthDp < configuration.screenHeightDp
-    val isEpgPreferenceEnabled = pref.epg
+    val isEpgPreferenceEnabled = preferences.epg
 
     val maskState = rememberMaskState()
     val pullPanelLayoutState = rememberPullPanelLayoutState()
@@ -114,9 +114,9 @@ fun StreamRoute(
         }
     }
 
-    LaunchedEffect(pref.zappingMode, playerState.videoSize) {
+    LaunchedEffect(preferences.zappingMode, playerState.videoSize) {
         val videoSize = playerState.videoSize
-        if (isAutoZappingMode && pref.zappingMode && !isPipMode) {
+        if (isAutoZappingMode && preferences.zappingMode && !isPipMode) {
             maskState.sleep()
             val rect = if (videoSize.isNotEmpty) videoSize
             else Rect(0, 0, 1920, 1080)
@@ -267,7 +267,7 @@ private fun SharedTransitionScope.StreamPlayer(
     val playlistTitle = playlist?.title ?: "--"
     val favourite = stream?.favourite ?: false
 
-    val pref = LocalPref.current
+    val preferences = LocalPreferences.current
 
     Background(
         color = Color.Black,
@@ -276,7 +276,7 @@ private fun SharedTransitionScope.StreamPlayer(
         Box(modifier) {
             val state = rememberPlayerState(
                 player = playerState.player,
-                clipMode = pref.clipMode
+                clipMode = preferences.clipMode
             )
 
             Player(
@@ -285,7 +285,7 @@ private fun SharedTransitionScope.StreamPlayer(
             )
 
             val shouldShowPlaceholder =
-                !pref.noPictureMode && cover.isNotEmpty() && playerState.videoSize.isEmpty
+                !preferences.noPictureMode && cover.isNotEmpty() && playerState.videoSize.isEmpty
 
             CoverPlaceholder(
                 visible = shouldShowPlaceholder,

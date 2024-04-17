@@ -35,7 +35,7 @@ import androidx.tv.material3.ImmersiveList
 import androidx.tv.material3.ListItemDefaults
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
-import com.m3u.core.architecture.pref.LocalPref
+import com.m3u.core.architecture.preferences.LocalPreferences
 import com.m3u.data.database.model.Stream
 import com.m3u.features.playlist.Category
 import com.m3u.features.playlist.components.ImmersiveBackground
@@ -74,13 +74,13 @@ internal fun TvPlaylistScreenImpl(
     isVodOrSeriesPlaylist: Boolean,
     modifier: Modifier = Modifier
 ) {
-    val pref = LocalPref.current
+    val preferences = LocalPreferences.current
 
-    val paging = pref.paging
+    val paging = preferences.paging
     val multiCategories = categories.size > 1
-    val noPictureMode = pref.noPictureMode
-    val darkMode = if (pref.followSystemTheme) isSystemInDarkTheme()
-    else pref.darkMode
+    val noPictureMode = preferences.noPictureMode
+    val darkMode = if (preferences.followSystemTheme) isSystemInDarkTheme()
+    else preferences.darkMode
     val useGridLayout = sort != Sort.UNSPECIFIED || paging
 
     val maxBrowserHeight by animateDpAsState(

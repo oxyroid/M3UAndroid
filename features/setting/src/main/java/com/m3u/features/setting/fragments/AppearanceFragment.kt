@@ -20,8 +20,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.tv.foundation.lazy.list.TvLazyRow
 import androidx.tv.foundation.lazy.list.items
-import com.m3u.core.architecture.pref.LocalPref
-import com.m3u.core.architecture.pref.Pref
+import com.m3u.core.architecture.preferences.LocalPreferences
+import com.m3u.core.architecture.preferences.Preferences
 import com.m3u.data.database.model.ColorPack
 import com.m3u.features.setting.components.CheckBoxSharedPreference
 import com.m3u.i18n.R.string
@@ -42,10 +42,10 @@ internal fun AppearanceFragment(
     contentPadding: PaddingValues = PaddingValues()
 ) {
     val spacing = LocalSpacing.current
-    val pref = LocalPref.current
+    val preferences = LocalPreferences.current
 
-    val isDarkMode = pref.darkMode
-    val useDynamicColors = pref.useDynamicColors
+    val isDarkMode = preferences.darkMode
+    val useDynamicColors = preferences.useDynamicColors
     val tv = isTelevision()
 
     Background {
@@ -76,9 +76,9 @@ internal fun AppearanceFragment(
                             isDark = colorPack.isDark,
                             selected = selected,
                             onClick = {
-                                pref.useDynamicColors = false
-                                pref.colorArgb = colorPack.argb
-                                pref.darkMode = colorPack.isDark
+                                preferences.useDynamicColors = false
+                                preferences.colorArgb = colorPack.argb
+                                preferences.darkMode = colorPack.isDark
                             },
                             onLongClick = { openColorCanvas(colorPack.argb, colorPack.isDark) },
                             name = colorPack.name,
@@ -109,9 +109,9 @@ internal fun AppearanceFragment(
                             isDark = pack.isDark,
                             selected = selected,
                             onClick = {
-                                pref.useDynamicColors = false
-                                pref.colorArgb = pack.argb
-                                pref.darkMode = pack.isDark
+                                preferences.useDynamicColors = false
+                                preferences.colorArgb = pack.argb
+                                preferences.darkMode = pack.isDark
                             },
                             onLongClick = { },
                             name = pack.name,
@@ -127,18 +127,18 @@ internal fun AppearanceFragment(
             CheckBoxSharedPreference(
                 title = string.feat_setting_follow_system_theme,
                 icon = Icons.Rounded.DarkMode,
-                checked = pref.followSystemTheme,
-                onChanged = { pref.followSystemTheme = !pref.followSystemTheme },
+                checked = preferences.followSystemTheme,
+                onChanged = { preferences.followSystemTheme = !preferences.followSystemTheme },
             )
 
-            val useDynamicColorsAvailable = Pref.DEFAULT_USE_DYNAMIC_COLORS
+            val useDynamicColorsAvailable = Preferences.DEFAULT_USE_DYNAMIC_COLORS
 
             CheckBoxSharedPreference(
                 title = string.feat_setting_use_dynamic_colors,
                 content = string.feat_setting_use_dynamic_colors_unavailable.takeUnless { useDynamicColorsAvailable },
                 icon = Icons.Rounded.ColorLens,
                 checked = useDynamicColors,
-                onChanged = { pref.useDynamicColors = !useDynamicColors },
+                onChanged = { preferences.useDynamicColors = !useDynamicColors },
                 enabled = useDynamicColorsAvailable
             )
         }

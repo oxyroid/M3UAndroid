@@ -31,7 +31,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.m3u.androidApp.ui.sheet.RemoteControlSheet
 import com.m3u.androidApp.ui.sheet.RemoteControlSheetValue
-import com.m3u.core.architecture.pref.LocalPref
+import com.m3u.core.architecture.preferences.LocalPreferences
 import com.m3u.data.television.model.RemoteDirection
 import com.m3u.material.components.Icon
 import com.m3u.material.ktx.isTelevision
@@ -132,7 +132,7 @@ private fun AppImpl(
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
-    val pref = LocalPref.current
+    val preferences = LocalPreferences.current
 
     val tv = isTelevision()
 
@@ -164,7 +164,7 @@ private fun AppImpl(
         ) {
             SnackHost(Modifier.weight(1f))
             AnimatedVisibility(
-                visible = !tv && pref.remoteControl,
+                visible = !tv && preferences.remoteControl,
                 enter = scaleIn(initialScale = 0.65f) + fadeIn(),
                 exit = scaleOut(targetScale = 0.65f) + fadeOut(),
             ) {

@@ -22,7 +22,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.m3u.core.architecture.pref.LocalPref
+import com.m3u.core.architecture.preferences.LocalPreferences
 import com.m3u.core.util.basic.title
 import com.m3u.core.wrapper.Resource
 import com.m3u.data.database.model.Playlist
@@ -60,7 +60,7 @@ fun FavouriteRoute(
 
     val title = stringResource(R.string.ui_title_favourite)
     val helper = LocalHelper.current
-    val pref = LocalPref.current
+    val preferences = LocalPreferences.current
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
 
@@ -104,7 +104,7 @@ fun FavouriteRoute(
     Background {
         FavoriteScreen(
             contentPadding = contentPadding,
-            rowCount = pref.rowCount,
+            rowCount = preferences.rowCount,
             streamsResource = streamsResource,
             zapping = zapping,
             recently = sort == Sort.RECENTLY,
@@ -126,11 +126,11 @@ fun FavouriteRoute(
             onLongClickStream = { mediaSheetValue = MediaSheetValue.FavouriteScreen(it) },
             modifier = Modifier
                 .fillMaxSize()
-                .thenIf(!tv && pref.godMode) {
+                .thenIf(!tv && preferences.godMode) {
                     Modifier.interceptVolumeEvent { event ->
-                        pref.rowCount = when (event) {
-                            KeyEvent.KEYCODE_VOLUME_UP -> (pref.rowCount - 1).coerceAtLeast(1)
-                            KeyEvent.KEYCODE_VOLUME_DOWN -> (pref.rowCount + 1).coerceAtMost(2)
+                        preferences.rowCount = when (event) {
+                            KeyEvent.KEYCODE_VOLUME_UP -> (preferences.rowCount - 1).coerceAtLeast(1)
+                            KeyEvent.KEYCODE_VOLUME_DOWN -> (preferences.rowCount + 1).coerceAtMost(2)
                             else -> return@interceptVolumeEvent
                         }
                     }

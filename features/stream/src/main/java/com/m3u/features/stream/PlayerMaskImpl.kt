@@ -63,7 +63,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.media3.common.Player
-import com.m3u.core.architecture.pref.LocalPref
+import com.m3u.core.architecture.preferences.LocalPreferences
 import com.m3u.core.util.basic.isNotEmpty
 import com.m3u.features.stream.PlayerMaskImplDefaults.detectVerticalGesture
 import com.m3u.features.stream.components.MaskTextButton
@@ -109,7 +109,7 @@ internal fun SharedTransitionScope.PlayerMaskImpl(
     onBrightness: (Float) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val pref = LocalPref.current
+    val preferences = LocalPreferences.current
     val helper = LocalHelper.current
     val spacing = LocalSpacing.current
     val tv = isTelevision()
@@ -136,7 +136,7 @@ internal fun SharedTransitionScope.PlayerMaskImpl(
         }
     }
 
-    val isProgressEnabled = pref.progress
+    val isProgressEnabled = preferences.progress
     val isStaticAndSeekable by remember(
         playerState.player,
         playerState.playState
@@ -252,7 +252,7 @@ internal fun SharedTransitionScope.PlayerMaskImpl(
                     )
                 }
 
-                if (!tv && pref.screencast) {
+                if (!tv && preferences.screencast) {
                     MaskButton(
                         state = maskState,
                         icon = Icons.Rounded.Cast,
@@ -277,7 +277,7 @@ internal fun SharedTransitionScope.PlayerMaskImpl(
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
-                            .thenIf(!tv && pref.brightnessGesture) {
+                            .thenIf(!tv && preferences.brightnessGesture) {
                                 Modifier.detectVerticalGesture(
                                     time = 0.65f,
                                     onDragStart = {
@@ -305,7 +305,7 @@ internal fun SharedTransitionScope.PlayerMaskImpl(
                         .fillMaxHeight()
                 ) {
                     androidx.compose.animation.AnimatedVisibility(
-                        visible = (!isPanelExpanded && pref.alwaysShowReplay) || playerState.playState in arrayOf(
+                        visible = (!isPanelExpanded && preferences.alwaysShowReplay) || playerState.playState in arrayOf(
                             Player.STATE_IDLE,
                             Player.STATE_ENDED
                         ) || playerState.playerError != null,
@@ -325,7 +325,7 @@ internal fun SharedTransitionScope.PlayerMaskImpl(
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
-                            .thenIf(!tv && pref.volumeGesture) {
+                            .thenIf(!tv && preferences.volumeGesture) {
                                 Modifier.detectVerticalGesture(
                                     time = 0.65f,
                                     onDragStart = {
@@ -348,7 +348,7 @@ internal fun SharedTransitionScope.PlayerMaskImpl(
                 }
             },
             footer = {
-                if (pref.fullInfoPlayer && cover.isNotEmpty()) {
+                if (preferences.fullInfoPlayer && cover.isNotEmpty()) {
                     Image(
                         model = cover,
                         modifier = Modifier
@@ -439,7 +439,7 @@ internal fun SharedTransitionScope.PlayerMaskImpl(
                                 ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
                         }
                     }
-                    if (pref.screenRotating && !autoRotating) {
+                    if (preferences.screenRotating && !autoRotating) {
                         MaskButton(
                             state = maskState,
                             icon = Icons.Rounded.ScreenRotationAlt,

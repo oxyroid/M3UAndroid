@@ -11,7 +11,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.compose.NavHost
-import com.m3u.core.architecture.pref.LocalPref
+import com.m3u.core.architecture.preferences.LocalPreferences
 import com.m3u.core.wrapper.eventOf
 import com.m3u.features.playlist.navigation.navigateToPlaylist
 import com.m3u.features.playlist.navigation.playlistScreen
@@ -32,7 +32,7 @@ fun AppNavHost(
     startDestination: String = ROOT_ROUTE
 ) {
     val context = LocalContext.current
-    val pref = LocalPref.current
+    val preferences = LocalPreferences.current
     val navController = LocalNavController.current
 
     val tv = isTelevision()
@@ -46,7 +46,7 @@ fun AppNavHost(
     ) {
         playlistScreen(
             navigateToStream = {
-                if (pref.zappingMode && PlayerActivity.isInPipMode) return@playlistScreen
+                if (preferences.zappingMode && PlayerActivity.isInPipMode) return@playlistScreen
                 val options = ActivityOptions.makeCustomAnimation(
                     context,
                     0,
@@ -68,7 +68,7 @@ fun AppNavHost(
                 navController.navigateToPlaylist(playlist.url, tv)
             },
             navigateToStream = {
-                if (pref.zappingMode && PlayerActivity.isInPipMode) return@rootGraph
+                if (preferences.zappingMode && PlayerActivity.isInPipMode) return@rootGraph
                 val options = ActivityOptions.makeCustomAnimation(
                     context,
                     0,

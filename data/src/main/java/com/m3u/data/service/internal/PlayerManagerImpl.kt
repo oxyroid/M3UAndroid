@@ -3,6 +3,7 @@ package com.m3u.data.service.internal
 import android.content.Context
 import android.graphics.Rect
 import android.util.Log
+import androidx.compose.runtime.snapshotFlow
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.Format
@@ -31,9 +32,8 @@ import androidx.media3.session.MediaSession
 import com.m3u.codec.Codecs
 import com.m3u.core.architecture.dispatcher.Dispatcher
 import com.m3u.core.architecture.dispatcher.M3uDispatchers.Main
-import com.m3u.core.architecture.pref.Pref
-import com.m3u.core.architecture.pref.annotation.ReconnectMode
-import com.m3u.core.architecture.pref.observeAsFlow
+import com.m3u.core.architecture.preferences.Preferences
+import com.m3u.core.architecture.preferences.annotation.ReconnectMode
 import com.m3u.data.SSLs
 import com.m3u.data.repository.PlaylistRepository
 import com.m3u.data.repository.StreamRepository
@@ -58,7 +58,7 @@ import javax.inject.Inject
 class PlayerManagerImpl @Inject constructor(
     @ApplicationContext private val context: Context,
     private val okHttpClient: OkHttpClient,
-    private val pref: Pref,
+    private val preferences: Preferences,
     private val playlistRepository: PlaylistRepository,
     private val streamRepository: StreamRepository,
     @Dispatcher(Main) mainDispatcher: CoroutineDispatcher
@@ -90,7 +90,7 @@ class PlayerManagerImpl @Inject constructor(
             setParameters(
                 buildUponParameters()
                     .setForceHighestSupportedBitrate(true)
-                    .setTunnelingEnabled(pref.tunneling)
+                    .setTunnelingEnabled(preferences.tunneling)
             )
         }
 
@@ -121,8 +121,8 @@ class PlayerManagerImpl @Inject constructor(
 
     private var listenPrefJob: Job? = null
 
-    private var currentConnectTimeout = pref.connectTimeout
-    private var currentTunneling = pref.tunneling
+    private var currentConnectTimeout = preferences.connectTimeout
+    private var currentTunneling = preferences.tunneling
 
     private fun parseMimetype(url: String): String? {
         return when {
@@ -146,8 +146,8 @@ class PlayerManagerImpl @Inject constructor(
 
         listenPrefJob?.cancel()
         listenPrefJob = combine(
-            pref.observeAsFlow { it.connectTimeout },
-            pref.observeAsFlow { it.tunneling }
+            snapshotFlow { preferences.connectTimeout },
+            snapshotFlow { preferences.tunneling }
         )
         { timeout, tunneling ->
             if (timeout != currentConnectTimeout || tunneling != currentTunneling) {
@@ -253,7 +253,7 @@ class PlayerManagerImpl @Inject constructor(
     override fun onPlaybackStateChanged(state: Int) {
         super.onPlaybackStateChanged(state)
         _playbackState.value = state
-        if (state == Player.STATE_ENDED && pref.reconnectMode == ReconnectMode.RECONNECT) {
+        if (state == Player.STATE_ENDED && preferences.reconnectMode == ReconnectMode.RECONNECT) {
             _player.value?.let {
                 it.seekToDefaultPosition()
                 it.prepare()

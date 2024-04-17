@@ -14,7 +14,7 @@ import com.m3u.androidApp.ui.App
 import com.m3u.androidApp.ui.AppViewModel
 import com.m3u.core.architecture.dispatcher.Dispatcher
 import com.m3u.core.architecture.dispatcher.M3uDispatchers.Main
-import com.m3u.core.architecture.pref.Pref
+import com.m3u.core.architecture.preferences.Preferences
 import com.m3u.data.service.Messager
 import com.m3u.data.service.PlayerManagerV2
 import com.m3u.data.service.RemoteDirectionService
@@ -41,7 +41,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     @Inject
-    lateinit var pref: Pref
+    lateinit var preferences: Preferences
 
     @Inject
     lateinit var playerManager: PlayerManagerV2
@@ -78,7 +78,7 @@ class MainActivity : AppCompatActivity() {
         setContent {
             Toolkit(
                 helper = helper,
-                pref = pref,
+                preferences = preferences,
                 actions = remoteDirectionService.actions
             ) {
                 App(

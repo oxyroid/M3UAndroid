@@ -1,5 +1,6 @@
 package com.m3u.features.foryou
 
+import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.work.WorkInfo
@@ -10,8 +11,7 @@ import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.Profiles
 import com.m3u.core.architecture.logger.install
-import com.m3u.core.architecture.pref.Pref
-import com.m3u.core.architecture.pref.observeAsFlow
+import com.m3u.core.architecture.preferences.Preferences
 import com.m3u.core.wrapper.Resource
 import com.m3u.core.wrapper.asResource
 import com.m3u.core.wrapper.mapResource
@@ -45,7 +45,7 @@ import kotlin.time.toDuration
 class ForyouViewModel @Inject constructor(
     private val playlistRepository: PlaylistRepository,
     streamRepository: StreamRepository,
-    pref: Pref,
+    preferences: Preferences,
     @Dispatcher(IO) ioDispatcher: CoroutineDispatcher,
     workManager: WorkManager,
     delegate: Logger
@@ -81,8 +81,7 @@ class ForyouViewModel @Inject constructor(
                 started = SharingStarted.WhileSubscribed(5_000L)
             )
 
-    private val unseensDuration = pref
-        .observeAsFlow { it.unseensMilliseconds }
+    private val unseensDuration = snapshotFlow { preferences.unseensMilliseconds }
         .map { it.toDuration(DurationUnit.MILLISECONDS) }
         .flowOn(ioDispatcher)
         .stateIn(

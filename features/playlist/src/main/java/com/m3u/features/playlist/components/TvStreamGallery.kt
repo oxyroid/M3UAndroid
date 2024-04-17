@@ -18,7 +18,7 @@ import androidx.tv.foundation.lazy.list.TvLazyRow
 import androidx.tv.foundation.lazy.list.items
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
-import com.m3u.core.architecture.pref.LocalPref
+import com.m3u.core.architecture.preferences.LocalPreferences
 import com.m3u.data.database.model.Stream
 import com.m3u.features.playlist.Category
 import com.m3u.material.model.LocalSpacing
@@ -35,11 +35,11 @@ internal fun TvStreamGallery(
     onFocus: (Stream) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val pref = LocalPref.current
+    val preferences = LocalPreferences.current
     val spacing = LocalSpacing.current
     val multiCategories = categories.size > 1
 
-    val paging = pref.paging
+    val paging = preferences.paging
 
     if (!useGridLayout) {
         TvLazyColumn(
@@ -85,8 +85,8 @@ internal fun TvStreamGallery(
             }
         }
     } else {
-        val actualRowCount = if (isVodOrSeriesPlaylist) pref.rowCount + 7
-        else pref.rowCount + 5
+        val actualRowCount = if (isVodOrSeriesPlaylist) preferences.rowCount + 7
+        else preferences.rowCount + 5
         TvLazyVerticalGrid(
             columns = TvGridCells.Fixed(actualRowCount),
             contentPadding = PaddingValues(spacing.medium),

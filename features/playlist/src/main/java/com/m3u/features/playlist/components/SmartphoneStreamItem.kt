@@ -27,7 +27,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.m3u.core.architecture.pref.LocalPref
+import com.m3u.core.architecture.preferences.LocalPreferences
 import com.m3u.data.database.model.Stream
 import com.m3u.i18n.R.string
 import com.m3u.material.components.Icon
@@ -52,14 +52,14 @@ internal fun SmartphoneStreamItem(
     isVodOrSeriesPlaylist: Boolean = true
 ) {
     val spacing = LocalSpacing.current
-    val pref = LocalPref.current
+    val preferences = LocalPreferences.current
 
     val favourite = stream.favourite
 
     val recentlyString = stringResource(string.ui_sort_recently)
     val neverPlayedString = stringResource(string.ui_sort_never_played)
 
-    val noPictureMode = pref.noPictureMode
+    val noPictureMode = preferences.noPictureMode
 
     val onlyPictureMode = remember(stream.cover, isVodOrSeriesPlaylist, noPictureMode) {
         when {

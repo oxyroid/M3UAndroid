@@ -4,6 +4,7 @@ import android.net.Uri
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.viewModelScope
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.OutOfQuotaPolicy
@@ -17,8 +18,7 @@ import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.Profiles
 import com.m3u.core.architecture.logger.install
-import com.m3u.core.architecture.pref.Pref
-import com.m3u.core.architecture.pref.observeAsFlow
+import com.m3u.core.architecture.preferences.Preferences
 import com.m3u.core.architecture.viewmodel.BaseViewModel
 import com.m3u.core.unspecified.DataUnit
 import com.m3u.core.unspecified.KB
@@ -57,7 +57,7 @@ class SettingViewModel @Inject constructor(
     private val playlistRepository: PlaylistRepository,
     private val streamRepository: StreamRepository,
     private val workManager: WorkManager,
-    pref: Pref,
+    preferences: Preferences,
     private val messager: Messager,
     private val localService: LocalPreparedService,
     private val playerManager: PlayerManagerV2,
@@ -105,7 +105,7 @@ class SettingViewModel @Inject constructor(
 
     internal val colorPacks: StateFlow<List<ColorPack>> = combine(
         colorPackDao.observeAllColorPacks().catch { emit(emptyList()) },
-        pref.observeAsFlow { it.followSystemTheme }
+        snapshotFlow { preferences.followSystemTheme }
     ) { all, followSystemTheme -> if (followSystemTheme) all.filter { !it.isDark } else all }
         .flowOn(ioDispatcher)
         .stateIn(

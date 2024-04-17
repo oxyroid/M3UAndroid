@@ -12,7 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.paging.compose.LazyPagingItems
-import com.m3u.core.architecture.pref.LocalPref
+import com.m3u.core.architecture.preferences.LocalPreferences
 import com.m3u.data.database.model.Stream
 import com.m3u.material.ktx.plus
 import com.m3u.material.model.LocalSpacing
@@ -61,10 +61,10 @@ private fun SmartphoneStreamGalleryImpl(
     contentPadding: PaddingValues = PaddingValues(0.dp),
 ) {
     val spacing = LocalSpacing.current
-    val pref = LocalPref.current
+    val preferences = LocalPreferences.current
 
     val actualRowCount = when {
-        pref.noPictureMode -> rowCount
+        preferences.noPictureMode -> rowCount
         isVodOrSeriesPlaylist -> rowCount + 2
         else -> rowCount
     }
@@ -77,7 +77,7 @@ private fun SmartphoneStreamGalleryImpl(
         contentPadding = PaddingValues(spacing.medium) + contentPadding,
         modifier = modifier.fillMaxSize()
     ) {
-        if (!pref.paging) {
+        if (!preferences.paging) {
             items(
                 items = streams,
                 key = { stream -> stream.id },

@@ -1,14 +1,14 @@
 package com.m3u.data.repository.internal
 
 import android.net.nsd.NsdServiceInfo
-import com.m3u.core.architecture.logger.Profiles
+import androidx.compose.runtime.snapshotFlow
 import com.m3u.core.architecture.Publisher
 import com.m3u.core.architecture.dispatcher.Dispatcher
 import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
 import com.m3u.core.architecture.logger.Logger
+import com.m3u.core.architecture.logger.Profiles
 import com.m3u.core.architecture.logger.install
-import com.m3u.core.architecture.pref.Pref
-import com.m3u.core.architecture.pref.observeAsFlow
+import com.m3u.core.architecture.preferences.Preferences
 import com.m3u.core.util.coroutine.onTimeout
 import com.m3u.core.wrapper.Resource
 import com.m3u.core.wrapper.asResource
@@ -49,7 +49,7 @@ class TelevisionRepositoryImpl @Inject constructor(
     private val server: HttpServer,
     private val localService: LocalPreparedService,
     logger: Logger,
-    pref: Pref,
+    preferences: Preferences,
     publisher: Publisher,
     @Dispatcher(IO) ioDispatcher: CoroutineDispatcher
 ) : TelevisionRepository() {
@@ -59,8 +59,8 @@ class TelevisionRepositoryImpl @Inject constructor(
 
     init {
         combine(
-            pref.observeAsFlow { it.remoteControl },
-            pref.observeAsFlow { it.alwaysTv }
+            snapshotFlow { preferences.remoteControl },
+            snapshotFlow { preferences.alwaysTv }
         ) { remoteControl, alwaysTv ->
             when {
                 !remoteControl -> closeBroadcastOnTelevision()
