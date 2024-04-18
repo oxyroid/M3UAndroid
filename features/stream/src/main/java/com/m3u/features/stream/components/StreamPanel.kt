@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.AbsoluteRoundedCornerShape
@@ -48,8 +49,6 @@ internal fun
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
-    val helper = LocalHelper.current
-    val coroutineScope = rememberCoroutineScope()
     Background {
         Column(
             modifier = modifier
@@ -97,58 +96,97 @@ internal fun
             }
 
             if (!isSeriesPlaylist) {
-                val state = rememberLazyListState()
-                if (isPanelExpanded) {
-                    LaunchedEffect(neighboring.itemCount) {
-                        var index = -1
-                        for (i in 0 until neighboring.itemCount) {
-                            if (neighboring[i]?.id == streamId) {
-                                index = i
-                                break
-                            }
-                        }
-                        if (index != -1) {
-                            state.animateScrollToItem(index, -120)
+                StreamPanelNeighboringSelector(
+                    neighboring = neighboring,
+                    streamId = streamId,
+                    isPanelExpanded = isPanelExpanded
+                )
+            }
+        }
+    }
+}
+
+@Composable
+// TODO: Support Xtream Series Episodes.
+private fun StreamPanelNeighboringSelector(
+    neighboring: LazyPagingItems<Stream>,
+    streamId: Int,
+    isPanelExpanded: Boolean,
+    modifier: Modifier = Modifier
+) {
+    val spacing = LocalSpacing.current
+    val helper = LocalHelper.current
+
+    val lazyListState = rememberLazyListState()
+    val coroutineScope = rememberCoroutineScope()
+
+    AnimateScrollToStreamEffect(
+        neighboring = neighboring,
+        streamId = streamId,
+        isPanelExpanded = isPanelExpanded,
+        lazyListState = lazyListState
+    )
+
+    LazyRow(
+        state = lazyListState,
+        horizontalArrangement = Arrangement.spacedBy(spacing.medium),
+        contentPadding = PaddingValues(spacing.medium),
+        modifier = modifier
+    ) {
+        items(neighboring.itemCount) { i ->
+            neighboring[i]?.let { currentStream ->
+                val playing = currentStream.id == streamId
+                Card(
+                    colors = CardDefaults.cardColors(
+                        containerColor = if (!playing) MaterialTheme.colorScheme.surface
+                        else MaterialTheme.colorScheme.onSurface,
+                        contentColor = if (!playing) MaterialTheme.colorScheme.onSurface
+                        else MaterialTheme.colorScheme.surface
+                    ),
+                    shape = AbsoluteRoundedCornerShape(spacing.medium),
+                    elevation = CardDefaults.cardElevation(
+                        if (playing) spacing.none else spacing.small
+                    ),
+                    onClick = {
+                        coroutineScope.launch {
+                            helper.play(
+                                MediaCommand.Live(currentStream.id)
+                            )
                         }
                     }
-                }
-                LazyRow(
-                    state = state,
-                    horizontalArrangement = Arrangement.spacedBy(spacing.medium),
-                    contentPadding = PaddingValues(spacing.medium)
                 ) {
-                    items(neighboring.itemCount) { i ->
-                        neighboring[i]?.let { currentStream ->
-                            val playing = currentStream.id == streamId
-                            Card(
-                                colors = CardDefaults.cardColors(
-                                    containerColor = if (!playing) MaterialTheme.colorScheme.surface
-                                    else MaterialTheme.colorScheme.onSurface,
-                                    contentColor = if (!playing) MaterialTheme.colorScheme.onSurface
-                                    else MaterialTheme.colorScheme.surface
-                                ),
-                                shape = AbsoluteRoundedCornerShape(spacing.medium),
-                                elevation = CardDefaults.cardElevation(
-                                    if (playing) spacing.none else spacing.small
-                                ),
-                                onClick = {
-                                    coroutineScope.launch {
-                                        helper.play(
-                                            MediaCommand.Live(currentStream.id)
-                                        )
-                                    }
-                                }
-                            ) {
-                                Text(
-                                    text = currentStream.title,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    fontWeight = FontWeight.SemiBold.takeIf { playing },
-                                    modifier = Modifier.padding(spacing.medium)
-                                )
-                            }
-                        }
-                    }
+                    Text(
+                        text = currentStream.title,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold.takeIf { playing },
+                        modifier = Modifier.padding(spacing.medium)
+                    )
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun AnimateScrollToStreamEffect(
+    neighboring: LazyPagingItems<Stream>,
+    streamId: Int,
+    isPanelExpanded: Boolean,
+    lazyListState: LazyListState,
+    // FIXME: Don't use hard number.
+    scrollOffset: Int = -120
+) {
+    if (isPanelExpanded) {
+        LaunchedEffect(neighboring.itemCount) {
+            var index = -1
+            for (i in 0 until neighboring.itemCount) {
+                if (neighboring[i]?.id == streamId) {
+                    index = i
+                    break
+                }
+            }
+            if (index != -1) {
+                lazyListState.animateScrollToItem(index, scrollOffset)
             }
         }
     }
