@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.AbsoluteRoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -19,6 +20,7 @@ import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -95,7 +97,23 @@ internal fun
             }
 
             if (!isSeriesPlaylist) {
+                val state = rememberLazyListState()
+                if (isPanelExpanded) {
+                    LaunchedEffect(neighboring.itemCount) {
+                        var index = -1
+                        for (i in 0 until neighboring.itemCount) {
+                            if (neighboring[i]?.id == streamId) {
+                                index = i
+                                break
+                            }
+                        }
+                        if (index != -1) {
+                            state.animateScrollToItem(index, -120)
+                        }
+                    }
+                }
                 LazyRow(
+                    state = state,
                     horizontalArrangement = Arrangement.spacedBy(spacing.medium),
                     contentPadding = PaddingValues(spacing.medium)
                 ) {
