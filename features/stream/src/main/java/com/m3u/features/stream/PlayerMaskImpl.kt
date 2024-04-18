@@ -335,7 +335,7 @@ internal fun
                                         gesture = MaskGesture.VOLUME
                                     },
                                     onDragEnd = {
-                                        maskState.unlock(MaskGesture.BRIGHTNESS, 1800.milliseconds)
+                                        maskState.unlock(MaskGesture.VOLUME, 1800.milliseconds)
                                         gesture = null
                                     },
                                     onVerticalDrag = { deltaPixel ->
