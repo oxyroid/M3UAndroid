@@ -29,6 +29,13 @@ data class Playlist(
     val title: String,
     @PrimaryKey
     @ColumnInfo(name = "url")
+    // subscribing url
+    // it may contains the special query param
+    // which is only used in this project in order to distinguish between different types.
+    // for example, if the source is [DataSource.Xtream],
+    // you can use [XtreamInput.decodeFromPlaylistUrl] get its real information include
+    // basicUrl, username, password, type(the special query param) and etc.
+    // and then in the xtream-parser we can parse the data only for special type streams.
     val url: String,
     // extra fields
     @ColumnInfo(name = "pinned_groups", defaultValue = "[]")
@@ -66,7 +73,8 @@ data class Playlist(
         }
 
     override fun like(another: Playlist): Boolean {
-        return title == another.title && url == another.url && epgUrl == another.epgUrl
+        return title == another.title && url == another.url
+                && epgUrl == another.epgUrl && source == another.source
     }
 
     companion object {

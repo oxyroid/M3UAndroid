@@ -95,7 +95,7 @@ data class XtreamInput(
     val type: String? = null // null means all
 ) {
     companion object {
-        // make sure the name is unique
+        // the name is only used in this project so make sure it is unique
         private const val QUERY_TYPE = "xtream_type"
         fun decodeFromPlaylistUrl(url: String): XtreamInput = try {
             val hasScheme = url.startsWithAny("http:", "https:", ignoreCase = true)

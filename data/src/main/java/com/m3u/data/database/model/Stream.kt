@@ -21,6 +21,9 @@ import kotlinx.serialization.Serializable
 @Keep
 data class Stream(
     @ColumnInfo(name = "url")
+    // playable url
+    // if its playlist type is in [Playlist.SERIES_TYPES]
+    // you should load its episodes instead of playing it.
     val url: String,
     @ColumnInfo(name = "group")
     val category: String,
