@@ -7,7 +7,9 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.m3u.data.database.dao.ColorPackDao
+import com.m3u.data.database.dao.EpisodeDao
 import com.m3u.data.database.dao.PlaylistDao
+import com.m3u.data.database.dao.ProgrammeDao
 import com.m3u.data.database.dao.StreamDao
 import com.m3u.data.database.example.ColorPackExample
 import dagger.Module
@@ -55,6 +57,18 @@ internal object DatabaseModule {
     fun providePlaylistDao(
         database: M3UDatabase
     ): PlaylistDao = database.playlistDao()
+
+    @Provides
+    @Singleton
+    fun provideProgrammeDao(
+        database: M3UDatabase
+    ): ProgrammeDao = database.programmeDao()
+
+    @Provides
+    @Singleton
+    fun provideEpisodeDao(
+        database: M3UDatabase
+    ): EpisodeDao = database.episodeDao()
 
     @Provides
     @Singleton

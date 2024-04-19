@@ -14,7 +14,7 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 internal interface StreamDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertOrReplace(stream: Stream)
+    suspend fun insertOrReplace(stream: Stream): Long
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertOrReplaceAll(vararg streams: Stream)
@@ -52,6 +52,12 @@ internal interface StreamDao {
 
     @Query("SELECT * FROM streams WHERE url = :url")
     suspend fun getByUrl(url: String): Stream?
+
+    @Query("SELECT * FROM streams WHERE url = :url AND playlistUrl = :playlistUrl")
+    suspend fun getByPlaylistUrlAndUrl(playlistUrl: String, url: String): Stream?
+
+    @Query("SELECT * FROM streams WHERE title = :title AND playlistUrl = :playlistUrl")
+    suspend fun getByPlaylistUrlAndTitle(playlistUrl: String, title: String): Stream?
 
     @Query("SELECT * FROM streams WHERE playlistUrl = :playlistUrl")
     suspend fun getByPlaylistUrl(playlistUrl: String): List<Stream>

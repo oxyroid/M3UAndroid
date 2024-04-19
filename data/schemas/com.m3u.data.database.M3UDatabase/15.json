@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 15,
-    "identityHash": "428b44ee5114492feed2017eb9f8a4c4",
+    "identityHash": "9eaeaf0e36777960282e181a52f78a98",
     "entities": [
       {
         "tableName": "streams",
@@ -220,7 +220,7 @@
       },
       {
         "tableName": "programmes",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`stream_id` INTEGER NOT NULL, `start` INTEGER NOT NULL, `end` INTEGER NOT NULL, `title` TEXT NOT NULL, `description` TEXT NOT NULL, `icon` TEXT, `categories` TEXT NOT NULL, `id` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`stream_id` INTEGER NOT NULL, `start` INTEGER NOT NULL, `end` INTEGER NOT NULL, `title` TEXT NOT NULL, `description` TEXT NOT NULL, `icon` TEXT, `categories` TEXT NOT NULL, `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL)",
         "fields": [
           {
             "fieldPath": "streamId",
@@ -272,7 +272,7 @@
           }
         ],
         "primaryKey": {
-          "autoGenerate": false,
+          "autoGenerate": true,
           "columnNames": [
             "id"
           ]
@@ -317,7 +317,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '428b44ee5114492feed2017eb9f8a4c4')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '9eaeaf0e36777960282e181a52f78a98')"
     ]
   }
 }
