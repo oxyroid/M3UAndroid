@@ -24,7 +24,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
-import androidx.tv.material3.LocalContentColor
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import coil.compose.AsyncImage
@@ -96,13 +95,6 @@ internal fun ImmersiveBackground(
                         style = MaterialTheme.typography.headlineLarge,
                         fontWeight = FontWeight.ExtraBold,
                         maxLines = 1
-                    )
-                    Text(
-                        text = stream.url,
-                        style = MaterialTheme.typography.headlineMedium,
-                        color = LocalContentColor.current.copy(0.68f),
-                        maxLines = 1,
-                        softWrap = false
                     )
                     Spacer(
                         modifier = Modifier.heightIn(min = maxBrowserHeight)
