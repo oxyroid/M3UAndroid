@@ -119,6 +119,7 @@ fun Preference(
                     androidx.tv.material3.Text(
                         text = title,
                         style = MaterialTheme.typography.titleMedium,
+                        maxLines = 1,
                     )
                 },
                 supportingContent = {
@@ -310,6 +311,7 @@ fun TextPreference(
             } else {
                 androidx.tv.material3.Text(
                     text = trailing.uppercase(),
+                    color = androidx.tv.material3.MaterialTheme.colorScheme.primary,
                     style = androidx.tv.material3.MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Bold,
                     maxLines = 1,
