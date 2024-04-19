@@ -91,8 +91,7 @@ class Preferences @Inject constructor(
     sharedPreferences.booleanAsState(DEFAULT_ALWAYS_SHOW_REFRESH, ALWAYS_SHOW_REFRESH)
     var paging: Boolean by
     sharedPreferences.booleanAsState(DEFAULT_PAGING, PAGING)
-    var epg: Boolean by
-    sharedPreferences.booleanAsState(DEFAULT_EPG, EPG)
+    var playerPanel: Boolean by sharedPreferences.booleanAsState(DEFAULT_PLAYER_PANEL, PLAYER_PANEL)
 
     companion object {
         private const val SHARED_SETTINGS = "shared_settings"
@@ -133,7 +132,7 @@ class Preferences @Inject constructor(
         const val DEFAULT_PROGRESS = true
         const val DEFAULT_ALWAYS_SHOW_REFRESH = false
         const val DEFAULT_PAGING = false
-        const val DEFAULT_EPG = true
+        const val DEFAULT_PLAYER_PANEL = true
 
         const val KEEP_FAVOURITE_AND_HIDDEN = "playlist-strategy"
         const val ROW_COUNT = "rowCount"
@@ -163,7 +162,7 @@ class Preferences @Inject constructor(
         const val PROGRESS = "progress"
         const val ALWAYS_SHOW_REFRESH = "always-show-refresh"
         const val PAGING = "paging"
-        const val EPG = "epg"
+        const val PLAYER_PANEL = "player_panel"
     }
 
     init {

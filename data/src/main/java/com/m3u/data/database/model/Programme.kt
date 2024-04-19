@@ -10,6 +10,7 @@ import androidx.room.PrimaryKey
 @Immutable
 @Keep
 // for epg
+// dynamic only when it is from xtream live.
 data class Programme(
     @ColumnInfo(name = "stream_id")
     val streamId: Int,
@@ -25,7 +26,7 @@ data class Programme(
     val icon: String? = null,
     @ColumnInfo(name = "categories")
     val categories: List<String>,
-    @PrimaryKey
+    @PrimaryKey(autoGenerate = true)
     @ColumnInfo(name = "id")
     val id: Int = 0
 )

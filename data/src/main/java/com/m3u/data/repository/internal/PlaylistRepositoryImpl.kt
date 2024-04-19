@@ -20,12 +20,17 @@ import com.m3u.core.util.basic.startsWithAny
 import com.m3u.core.util.readFileContent
 import com.m3u.core.util.readFileName
 import com.m3u.data.database.dao.PlaylistDao
+import com.m3u.data.database.dao.ProgrammeDao
 import com.m3u.data.database.dao.StreamDao
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.PlaylistWithCount
 import com.m3u.data.database.model.PlaylistWithStreams
 import com.m3u.data.database.model.Stream
+import com.m3u.data.parser.epg.EpgData
+import com.m3u.data.parser.epg.EpgParser
+import com.m3u.data.parser.epg.toProgramme
+import com.m3u.data.parser.m3u.M3UData
 import com.m3u.data.parser.m3u.M3UParser
 import com.m3u.data.parser.m3u.toStream
 import com.m3u.data.parser.xtream.XtreamInput
@@ -58,7 +63,6 @@ import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.io.File
-import java.io.InputStream
 import java.io.Reader
 import javax.inject.Inject
 
@@ -69,17 +73,19 @@ private const val BUFFER_RESTORE_CAPACITY = 400
 internal class PlaylistRepositoryImpl @Inject constructor(
     private val playlistDao: PlaylistDao,
     private val streamDao: StreamDao,
+    private val programmeDao: ProgrammeDao,
     delegate: Logger,
     client: OkHttpClient,
     private val m3uParser: M3UParser,
     private val xtreamParser: XtreamParser,
+    private val epgParser: EpgParser,
     private val preferences: Preferences,
     private val workManager: WorkManager,
     @ApplicationContext private val context: Context,
     @Dispatcher(IO) private val ioDispatcher: CoroutineDispatcher,
 ) : PlaylistRepository {
     private val logger = delegate.install(Profiles.REPOS_PLAYLIST)
-    private val client = client
+    private val okHttpClient = client
         .newBuilder()
         .addInterceptor(
             ChuckerInterceptor.Builder(context)
@@ -94,38 +100,36 @@ internal class PlaylistRepositoryImpl @Inject constructor(
         epgUrl: String?,
         callback: (count: Int) -> Unit
     ) {
-        fun parse(
-            playlistUrl: String,
-            input: InputStream
-        ): Flow<Stream> = m3uParser
-            .parse(input)
-            .map { it.toStream(playlistUrl, 0L) }
+        // fixme: store tvg-id and download epg when user need it.
+        val epgData = if (epgUrl != null) {
+            downloadEpgOrThrow(epgUrl)
+        } else EpgData()
 
-        fun acquireNetwork(url: String): Flow<Stream> = channelFlow {
+        val programmes = epgData.programmes.toMutableList()
+
+        fun acquireNetwork(url: String): Flow<M3UData> = channelFlow {
             val request = Request.Builder()
                 .url(url)
                 .build()
-            val response = client.newCall(request).execute()
+            val response = okHttpClient.newCall(request).execute()
 
             val input = response.body?.byteStream()
             if (input != null) {
-                parse(url, input).collect { send(it) }
+                m3uParser.parse(input).collect { send(it) }
                 input.close()
             }
             close()
-        }
-            .flowOn(ioDispatcher)
+        }.flowOn(ioDispatcher)
 
-        fun acquireAndroid(url: String): Flow<Stream> = channelFlow<Stream> {
+        fun acquireAndroid(url: String): Flow<M3UData> = channelFlow {
             val uri = Uri.parse(url)
             val input = context.contentResolver.openInputStream(uri)
             if (input != null) {
-                parse(url, input).collect { send(it) }
+                m3uParser.parse(input).collect { send(it) }
                 input.close()
             }
             close()
-        }
-            .flowOn(ioDispatcher)
+        }.flowOn(ioDispatcher)
 
         var currentCount = 0
         callback(currentCount)
@@ -143,7 +147,7 @@ internal class PlaylistRepositoryImpl @Inject constructor(
         ) ?: Playlist(title, actualUrl, epgUrl = epgUrl, source = DataSource.M3U)
         playlistDao.insertOrReplace(playlist)
 
-        val buffer = mutableListOf<Stream>()
+//        val cache = mutableListOf<Stream>()
         val mutex = Mutex()
 
         when {
@@ -151,38 +155,67 @@ internal class PlaylistRepositoryImpl @Inject constructor(
             url.isSupportedAndroidUrl() -> acquireAndroid(actualUrl)
             else -> flow { } // never reach here!
         }
-            .onEach { stream ->
-                buffer += stream
-                if (buffer.size >= BUFFER_M3U_CAPACITY) {
+            .onEach { m3uData ->
+                val streamId = streamDao.insertOrReplace(m3uData.toStream(url)).toInt()
+                val channel = epgData.channels.find { it.id == m3uData.id }
+                if (channel != null) {
                     mutex.withLock {
-                        // check again
-                        if (buffer.size >= BUFFER_M3U_CAPACITY) {
-                            currentCount += buffer.size
-                            callback(currentCount)
-                            streamDao.insertOrReplaceAll(*buffer.toTypedArray())
-                            buffer.clear()
+                        val iterator = programmes.listIterator()
+                        while (iterator.hasNext()) {
+                            val programme = iterator.next()
+                            if (programme.channel != channel.id) continue
+                            programmeDao.insertOrReplace(programme.toProgramme(streamId))
+                            iterator.remove()
                         }
                     }
                 }
+
+                // todo: hide now
+//                if (cache.size >= BUFFER_M3U_CAPACITY) {
+//                    mutex.withLock {
+//                        // check again
+//                        if (cache.size >= BUFFER_M3U_CAPACITY) {
+//                            currentCount += cache.size
+//                            callback(currentCount)
+//                            streamDao.insertOrReplaceAll(
+//                                *cache.map { it.toStream(url, 0L) }.toTypedArray()
+//                            )
+//                            cache.clear()
+//                        }
+//                    }
+//                }
             }
-            .onCompletion {
-                // lock again
-                mutex.withLock {
-                    streamDao.insertOrReplaceAll(*buffer.toTypedArray())
-                    currentCount += buffer.size
-                    callback(currentCount)
-                }
-            }
+//            .onCompletion {
+//                // lock again
+//                mutex.withLock {
+//                    streamDao.insertOrReplaceAll(
+//                        *cache.map { it.toStream(url, 0L) }.toTypedArray()
+//                    )
+//                    currentCount += cache.size
+//                    callback(currentCount)
+//                }
+//            }
             .flowOn(ioDispatcher)
             .collect()
         if (preferences.keepFavouriteAndHidden == PlaylistStrategy.KEEP_FAVOURITE_AND_HIDDEN) {
             streamDao.mergeUnfavouriteOrUnhiddenIfNeededByPlaylistUrl(url)
         }
-
-        if (epgUrl != null) {
-
-        }
     }
+
+    private suspend fun downloadEpgOrThrow(
+        epgUrl: String,
+    ): EpgData = okHttpClient.newCall(
+        Request.Builder()
+            .url(epgUrl)
+            .build()
+    )
+        .execute()
+        .body
+        ?.byteStream()
+        ?.use { input ->
+            epgParser.execute(input) { _, _ -> }
+        }
+        .let { checkNotNull(it) }
 
     override suspend fun xtreamOrThrow(
         title: String,
@@ -204,7 +237,7 @@ internal class PlaylistRepositoryImpl @Inject constructor(
 
         // we like ts but not m3u8.
         val liveContainerExtension = if ("ts" in allowedOutputFormats) "ts"
-        else allowedOutputFormats.firstOrNull()?: "ts"
+        else allowedOutputFormats.firstOrNull() ?: "ts"
 
         val livePlaylist = XtreamInput.encodeToPlaylistUrl(
             input = input.copy(type = DataSource.Xtream.TYPE_LIVE),

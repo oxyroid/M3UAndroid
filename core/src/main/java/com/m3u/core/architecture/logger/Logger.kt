@@ -8,15 +8,16 @@ import kotlin.time.Duration.Companion.seconds
 interface Logger {
     fun log(
         text: String,
-        level: Int = Message.LEVEL_ERROR,
-        tag: String = "LOGGER",
+        level: Int = Message.LEVEL_INFO,
+        tag: String = Thread.currentThread().name,
         duration: Duration = 5.seconds,
         type: Int = Message.TYPE_SNACK
     )
 
     fun log(
         throwable: Throwable,
-        tag: String = "LOGGER"
+        level: Int = Message.LEVEL_ERROR,
+        tag: String = Thread.currentThread().name
     )
 
     @Qualifier

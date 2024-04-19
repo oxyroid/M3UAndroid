@@ -64,7 +64,7 @@ internal class M3UParserImpl @Inject constructor(
             }
             if (infoMatch == null && !currentLine.startsWith("#")) continue
 
-            val title = infoMatch?.groups?.get(3)?.value.orEmpty()
+            val title = infoMatch?.groups?.get(3)?.value.orEmpty().trim()
             val duration = infoMatch?.groups?.get(1)?.value?.toDouble() ?: -1.0
             val metadata = buildMap {
                 val text = infoMatch?.groups?.get(2)?.value.orEmpty().trim()
@@ -72,14 +72,14 @@ internal class M3UParserImpl @Inject constructor(
                 for (match in matches) {
                     val key = match.groups[1]!!.value
                     val value = match.groups[2]?.value?.ifBlank { null } ?: continue
-                    put(key, value)
+                    put(key.trim(), value.trim())
                 }
             }
             val kodiMetadata = buildMap {
                 for (match in kodiMatches) {
                     val key = match.groups[1]!!.value
                     val value = match.groups[2]?.value?.ifBlank { null } ?: continue
-                    put(key, value)
+                    put(key.trim(), value.trim())
                 }
             }
             val entry = M3UData(

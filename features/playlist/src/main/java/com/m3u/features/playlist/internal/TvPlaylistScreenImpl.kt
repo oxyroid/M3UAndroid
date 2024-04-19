@@ -125,7 +125,7 @@ internal fun TvPlaylistScreenImpl(
                     onClick = onStream,
                     onLongClick = { stream -> press = stream },
                     onFocus = { stream -> focus = stream },
-                    modifier = Modifier.thenIf(!noPictureMode && darkMode) {
+                    modifier = Modifier.thenIf(darkMode) {
                         Modifier
                             .hazeChild(
                                 LocalHazeState.current,

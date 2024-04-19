@@ -58,4 +58,5 @@ dependencies {
     ksp(libs.com.google.dagger.hilt.compiler)
 
     implementation(libs.jupnp)
+    implementation(libs.minabox)
 }

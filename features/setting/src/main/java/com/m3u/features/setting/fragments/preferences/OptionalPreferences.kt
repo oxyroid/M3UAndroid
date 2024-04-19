@@ -107,8 +107,8 @@ fun OptionalPreferences(modifier: Modifier = Modifier) {
                         title = string.feat_setting_player_panel,
                         content = string.feat_setting_player_panel_description,
                         icon = Icons.Rounded.Unarchive,
-                        checked = preferences.epg,
-                        onChanged = { preferences.epg = !preferences.epg }
+                        checked = preferences.playerPanel,
+                        onChanged = { preferences.playerPanel = !preferences.playerPanel }
                     )
                 }
 

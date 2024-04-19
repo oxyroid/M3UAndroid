@@ -28,10 +28,26 @@ class StubLogger @Inject constructor(
 
     override fun log(
         throwable: Throwable,
+        level: Int,
         tag: String
     ) {
         if (publisher.debug) {
-            Log.e(tag, throwable.message, throwable)
+            when (level) {
+                Message.LEVEL_EMPTY -> {}
+                Message.LEVEL_INFO -> {
+                    Log.i(tag, throwable.message, throwable)
+                }
+
+                Message.LEVEL_WARN -> {
+                    Log.w(tag, throwable.message, throwable)
+                }
+
+                Message.LEVEL_ERROR -> {
+                    Log.e(tag, throwable.message, throwable)
+                }
+
+                else -> {}
+            }
         }
     }
 }

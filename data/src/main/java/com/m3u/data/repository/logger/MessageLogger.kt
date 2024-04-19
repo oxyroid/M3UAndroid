@@ -34,7 +34,8 @@ class MessageLogger @Inject constructor(
 
     override fun log(
         throwable: Throwable,
-        tag: String
+        level: Int,
+        tag: String,
     ) {
         val info = throwable.stackTraceToString()
         throwable.message?.let(::log)
@@ -44,7 +45,8 @@ class MessageLogger @Inject constructor(
             $info
             =====
             """.trimIndent(),
-            tag = tag
+            level = level,
+            tag = tag,
         )
     }
 }

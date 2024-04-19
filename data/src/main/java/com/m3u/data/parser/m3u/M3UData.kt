@@ -18,7 +18,7 @@ internal data class M3UData(
 
 internal fun M3UData.toStream(
     playlistUrl: String,
-    seen: Long
+    seen: Long = 0L
 ): Stream {
     val fileScheme = "file:///"
     val actualUrl = run {

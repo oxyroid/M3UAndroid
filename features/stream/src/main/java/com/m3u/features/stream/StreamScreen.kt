@@ -1,11 +1,11 @@
 package com.m3u.features.stream
 
-import android.content.Intent
-import android.graphics.Rect
-import android.net.Uri
 //import androidx.compose.animation.ExperimentalSharedTransitionApi
 //import androidx.compose.animation.SharedTransitionLayout
 //import androidx.compose.animation.SharedTransitionScope
+import android.content.Intent
+import android.graphics.Rect
+import android.net.Uri
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
@@ -15,7 +15,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -37,7 +36,7 @@ import com.m3u.data.database.model.Stream
 import com.m3u.features.stream.components.CoverPlaceholder
 import com.m3u.features.stream.components.DlnaDevicesBottomSheet
 import com.m3u.features.stream.components.FormatsBottomSheet
-import com.m3u.features.stream.components.StreamPanel
+import com.m3u.features.stream.components.PlayerPanel
 import com.m3u.i18n.R.string
 import com.m3u.material.components.Background
 import com.m3u.material.components.PullPanelLayout
@@ -83,6 +82,7 @@ fun StreamRoute(
     val isSeriesPlaylist by viewModel.isSeriesPlaylist.collectAsStateWithLifecycle()
 
     val neighboring = viewModel.neighboring.collectAsLazyPagingItems()
+    val programmes = viewModel.programme.collectAsLazyPagingItems()
 
     var brightness by remember { mutableFloatStateOf(helper.brightness) }
     var isPipMode by remember { mutableStateOf(false) }
@@ -90,7 +90,6 @@ fun StreamRoute(
     var choosing by remember { mutableStateOf(false) }
 
     val isPanelSupported = configuration.screenWidthDp < configuration.screenHeightDp
-    val isEpgPreferenceEnabled = preferences.epg
 
     val maskState = rememberMaskState()
     val pullPanelLayoutState = rememberPullPanelLayoutState()
@@ -155,91 +154,92 @@ fun StreamRoute(
         contentColor = Color.White
     ) {
 //        SharedTransitionLayout {
-            PullPanelLayout(
-                state = pullPanelLayoutState,
-                enabled = isPanelSupported,
-                onValueChanged = { state ->
-                    when (state) {
-                        PullPanelLayoutValue.EXPANDED -> {
-                            maskState.lock(PullPanelLayoutValue.EXPANDED)
-                        }
-
-                        PullPanelLayoutValue.COLLAPSED -> {
-                            maskState.unlock(PullPanelLayoutValue.EXPANDED, 1800.milliseconds)
-                        }
+        PullPanelLayout(
+            state = pullPanelLayoutState,
+            enabled = isPanelSupported,
+            onValueChanged = { state ->
+                when (state) {
+                    PullPanelLayoutValue.EXPANDED -> {
+                        maskState.lock(PullPanelLayoutValue.EXPANDED)
                     }
-                },
-                panel = {
-                    StreamPanel(
-                        title = stream?.title.orEmpty(),
-                        playlistTitle = playlist?.title.orEmpty(),
-                        streamId = stream?.id ?: -1,
-                        isPanelExpanded = isPanelExpanded,
-                        isSeriesPlaylist = isSeriesPlaylist,
-                        neighboring = neighboring
-                    )
-                },
-                content = {
-                    StreamPlayer(
-                        isSeriesPlaylist = isSeriesPlaylist,
-                        openDlnaDevices = {
-                            viewModel.openDlnaDevices()
-                            pullPanelLayoutState.collapse()
-                        },
-                        openChooseFormat = {
-                            choosing = true
-                            pullPanelLayoutState.collapse()
-                        },
-                        onFavourite = viewModel::onFavourite,
-                        onBackPressed = onBackPressed,
-                        maskState = maskState,
-                        playerState = playerState,
-                        playlist = playlist,
-                        stream = stream,
-                        formatsIsNotEmpty = formats.isNotEmpty(),
-                        isPanelExpanded = isPanelExpanded,
-                        brightness = brightness,
-                        volume = volume,
-                        onBrightness = { brightness = it },
-                        onVolume = viewModel::onVolume,
-                        modifier = modifier
-                    )
-                }
-            )
-        }
 
-        DlnaDevicesBottomSheet(
-            maskState = maskState,
-            searching = searching,
-            isDevicesVisible = isDevicesVisible,
-            devices = devices,
-            connected = connected,
-            connectDlnaDevice = { viewModel.connectDlnaDevice(it) },
-            disconnectDlnaDevice = { viewModel.disconnectDlnaDevice(it) },
-            openInExternalPlayer = {
-                val streamUrl = stream?.url ?: return@DlnaDevicesBottomSheet
-                context.startActivity(
-                    Intent(Intent.ACTION_VIEW).apply {
-                        setDataAndType(Uri.parse(streamUrl), "video/*")
-                    }.let { Intent.createChooser(it, openInExternalPlayerString.title()) }
+                    PullPanelLayoutValue.COLLAPSED -> {
+                        maskState.unlock(PullPanelLayoutValue.EXPANDED, 1800.milliseconds)
+                    }
+                }
+            },
+            panel = {
+                PlayerPanel(
+                    title = stream?.title.orEmpty(),
+                    playlistTitle = playlist?.title.orEmpty(),
+                    streamId = stream?.id ?: -1,
+                    isPanelExpanded = isPanelExpanded,
+                    isSeriesPlaylist = isSeriesPlaylist,
+                    neighboring = neighboring,
+                    programmes = programmes
                 )
             },
-            onDismiss = { viewModel.closeDlnaDevices() }
-        )
-
-        FormatsBottomSheet(
-            visible = choosing,
-            formats = formats,
-            selectedFormats = selectedFormats,
-            maskState = maskState,
-            onDismiss = { choosing = false },
-            onChooseTrack = { type, format ->
-                viewModel.chooseTrack(type, format)
-            },
-            onClearTrack = { type ->
-                viewModel.clearTrack(type)
+            content = {
+                StreamPlayer(
+                    isSeriesPlaylist = isSeriesPlaylist,
+                    openDlnaDevices = {
+                        viewModel.openDlnaDevices()
+                        pullPanelLayoutState.collapse()
+                    },
+                    openChooseFormat = {
+                        choosing = true
+                        pullPanelLayoutState.collapse()
+                    },
+                    onFavourite = viewModel::onFavourite,
+                    onBackPressed = onBackPressed,
+                    maskState = maskState,
+                    playerState = playerState,
+                    playlist = playlist,
+                    stream = stream,
+                    formatsIsNotEmpty = formats.isNotEmpty(),
+                    isPanelExpanded = isPanelExpanded,
+                    volume = volume,
+                    onVolume = viewModel::onVolume,
+                    brightness = brightness,
+                    onBrightness = { brightness = it },
+                    modifier = modifier
+                )
             }
         )
+    }
+
+    DlnaDevicesBottomSheet(
+        maskState = maskState,
+        searching = searching,
+        isDevicesVisible = isDevicesVisible,
+        devices = devices,
+        connected = connected,
+        connectDlnaDevice = { viewModel.connectDlnaDevice(it) },
+        disconnectDlnaDevice = { viewModel.disconnectDlnaDevice(it) },
+        openInExternalPlayer = {
+            val streamUrl = stream?.url ?: return@DlnaDevicesBottomSheet
+            context.startActivity(
+                Intent(Intent.ACTION_VIEW).apply {
+                    setDataAndType(Uri.parse(streamUrl), "video/*")
+                }.let { Intent.createChooser(it, openInExternalPlayerString.title()) }
+            )
+        },
+        onDismiss = { viewModel.closeDlnaDevices() }
+    )
+
+    FormatsBottomSheet(
+        visible = choosing,
+        formats = formats,
+        selectedFormats = selectedFormats,
+        maskState = maskState,
+        onDismiss = { choosing = false },
+        onChooseTrack = { type, format ->
+            viewModel.chooseTrack(type, format)
+        },
+        onClearTrack = { type ->
+            viewModel.clearTrack(type)
+        }
+    )
 //    }
 }
 

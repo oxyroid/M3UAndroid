@@ -125,8 +125,6 @@ private fun TelevisionFavouriteItemImpl(
     onLongClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val spacing = LocalSpacing.current
-
     androidx.tv.material3.ListItem(
         selected = false,
         onClick = onClick,

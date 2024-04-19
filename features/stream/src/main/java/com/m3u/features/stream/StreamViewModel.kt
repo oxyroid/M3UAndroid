@@ -1,6 +1,7 @@
 package com.m3u.features.stream
 
 import android.media.AudioManager
+import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.C
@@ -9,9 +10,11 @@ import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
+import androidx.paging.map
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.Profiles
 import com.m3u.core.architecture.logger.install
+import com.m3u.data.database.dao.ProgrammeDao
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.Stream
@@ -24,6 +27,7 @@ import com.m3u.dlna.OnDeviceRegistryListener
 import com.m3u.dlna.control.DeviceControl
 import com.m3u.dlna.control.OnDeviceControlListener
 import com.m3u.dlna.control.ServiceActionCallback
+import com.m3u.features.stream.Utils.toEOrSh
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -37,17 +41,32 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.datetime.Instant
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import org.jupnp.model.meta.Device
 import javax.inject.Inject
 import kotlin.math.roundToInt
 import kotlin.time.Duration.Companion.milliseconds
+
+class ProgrammeGuide {
+    @Immutable
+    // sh: start hour, eh: end hour
+    data class Programme(
+        val sh: Float,
+        val eh: Float,
+        val programmeId: Int,
+        val title: String
+    )
+}
 
 @HiltViewModel
 class StreamViewModel @Inject constructor(
     private val streamRepository: StreamRepository,
     private val playerManager: PlayerManagerV2,
     private val audioManager: AudioManager,
-    delegate: Logger
+    private val programmeDao: ProgrammeDao,
+    delegate: Logger,
 ) : ViewModel(), OnDeviceRegistryListener, OnDeviceControlListener {
     private val logger = delegate.install(Profiles.VIEWMODEL_STREAM)
     private val _devices = MutableStateFlow<List<Device<*, *, *>>>(emptyList())
@@ -262,4 +281,28 @@ class StreamViewModel @Inject constructor(
             .flow
             .cachedIn(viewModelScope)
     }
+
+    internal val programme: Flow<PagingData<ProgrammeGuide.Programme>> =
+        stream.flatMapLatest { stream ->
+            Pager(PagingConfig(5)) {
+                programmeDao.pagingAllByStreamId(stream?.id ?: -1)
+            }
+                .flow
+                .map {
+                    it.map { prev ->
+                        val sh = Instant.fromEpochMilliseconds(prev.start)
+                            .toLocalDateTime(TimeZone.currentSystemDefault())
+                            .run { hour + minute / 60f + second / 3600f }
+
+                        val eh = Instant.fromEpochMilliseconds(prev.end).toEOrSh()
+                        ProgrammeGuide.Programme(
+                            sh = sh,
+                            eh = eh,
+                            programmeId = prev.id,
+                            title = prev.title
+                        )
+                    }
+                }
+                .cachedIn(viewModelScope)
+        }
 }
