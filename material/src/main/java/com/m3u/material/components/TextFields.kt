@@ -118,6 +118,7 @@ fun TextField(
             ),
             keyboardOptions = KeyboardOptions(
                 keyboardType = keyboardType,
+                autoCorrect = false,
                 imeAction = imeAction ?: if (singleLine) ImeAction.Done else ImeAction.Default
             ),
             interactionSource = interactionSource,
@@ -221,6 +222,7 @@ fun PlaceholderField(
                 ),
                 keyboardOptions = KeyboardOptions(
                     keyboardType = keyboardType,
+                    autoCorrect = false,
                     imeAction = imeAction
                 ),
                 interactionSource = interactionSource,
