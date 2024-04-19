@@ -178,6 +178,10 @@ internal class PlaylistRepositoryImpl @Inject constructor(
         if (preferences.keepFavouriteAndHidden == PlaylistStrategy.KEEP_FAVOURITE_AND_HIDDEN) {
             streamDao.mergeUnfavouriteOrUnhiddenIfNeededByPlaylistUrl(url)
         }
+
+        if (epgUrl != null) {
+
+        }
     }
 
     override suspend fun xtreamOrThrow(
@@ -197,6 +201,10 @@ internal class PlaylistRepositoryImpl @Inject constructor(
             serverProtocol,
             port
         ) = xtreamParser.getXtreamOutput(input)
+
+        // we like ts but not m3u8.
+        val liveContainerExtension = if ("ts" in allowedOutputFormats) "ts"
+        else allowedOutputFormats.firstOrNull()?: "ts"
 
         val livePlaylist = XtreamInput.encodeToPlaylistUrl(
             input = input.copy(type = DataSource.Xtream.TYPE_LIVE),
@@ -280,7 +288,7 @@ internal class PlaylistRepositoryImpl @Inject constructor(
                             password = password,
                             playlistUrl = livePlaylist.url,
                             category = liveCategories.find { it.categoryId == current.categoryId }?.categoryName.orEmpty(),
-                            containerExtension = allowedOutputFormats.first()
+                            containerExtension = liveContainerExtension
                         )
                     }
 
