@@ -16,6 +16,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import com.m3u.data.database.model.Stream
 import com.m3u.i18n.R.string
+import com.m3u.material.ktx.isTelevision
 import com.m3u.material.model.LocalSpacing
 import com.m3u.material.shape.AbsoluteSmoothCornerShape
 import kotlinx.datetime.Clock
@@ -35,18 +36,28 @@ internal fun FavoriteItem(
     modifier: Modifier = Modifier
 ) {
     // TODO: split smartphone and television impl.
-    FavoriteItemImpl(
-        stream = stream,
-        recently = recently,
-        zapping = zapping,
-        onClick = onClick,
-        onLongClick = onLongClick,
-        modifier = modifier
-    )
+    val tv = isTelevision()
+    if (!tv) {
+        SmartphoneFavoriteItemImpl(
+            stream = stream,
+            recently = recently,
+            zapping = zapping,
+            onClick = onClick,
+            onLongClick = onLongClick,
+            modifier = modifier
+        )
+    } else {
+        TelevisionFavouriteItemImpl(
+            stream = stream,
+            onClick = onClick,
+            onLongClick = onLongClick,
+            modifier = modifier
+        )
+    }
 }
 
 @Composable
-private fun FavoriteItemImpl(
+private fun SmartphoneFavoriteItemImpl(
     stream: Stream,
     recently: Boolean,
     onClick: () -> Unit,
@@ -105,4 +116,28 @@ private fun FavoriteItemImpl(
                 .then(modifier)
         )
     }
+}
+
+@Composable
+private fun TelevisionFavouriteItemImpl(
+    stream: Stream,
+    onClick: () -> Unit,
+    onLongClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val spacing = LocalSpacing.current
+
+    androidx.tv.material3.ListItem(
+        selected = false,
+        onClick = onClick,
+        onLongClick = onLongClick,
+        headlineContent = {
+            androidx.tv.material3.Text(
+                text = stream.title,
+                style = androidx.tv.material3.MaterialTheme.typography.bodyMedium,
+                maxLines = 1
+            )
+        },
+        modifier = modifier
+    )
 }
