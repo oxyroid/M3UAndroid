@@ -13,7 +13,9 @@ import androidx.room.PrimaryKey
 data class Episode(
     @ColumnInfo(name = "title")
     val title: String,
-    // streamId whose playlist's type is in [Playlist.SERIES_TYPES].
+    // series is a special stream
+    // if a playlist type is one of [Playlist.SERIES_TYPES]
+    // then its all streams are series.
     @ColumnInfo(name = "series_id")
     val seriesId: Int,
     @ColumnInfo(name = "season")
