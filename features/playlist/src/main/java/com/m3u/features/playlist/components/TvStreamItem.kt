@@ -25,6 +25,7 @@ import androidx.tv.material3.Text
 import coil.compose.SubcomposeAsyncImage
 import com.m3u.core.architecture.preferences.LocalPreferences
 import com.m3u.data.database.model.Stream
+import com.m3u.material.components.CircularProgressIndicator
 import com.m3u.material.components.Icon
 import com.m3u.material.ktx.thenIf
 import com.m3u.material.model.LocalSpacing
@@ -41,13 +42,7 @@ internal fun TvStreamItem(
     val spacing = LocalSpacing.current
 
     val noPictureMode = preferences.noPictureMode
-
-    val onlyPictureMode = remember(stream.cover, isVodOrSeriesPlaylist, noPictureMode) {
-        when {
-            noPictureMode -> false
-            else -> isVodOrSeriesPlaylist
-        }
-    }
+    val isCoverExisted = !stream.cover.isNullOrEmpty()
 
     Card(
         onClick = onClick,
@@ -76,7 +71,8 @@ internal fun TvStreamItem(
             contentAlignment = Alignment.Center,
             modifier = Modifier.fillMaxSize()
         ) {
-            if (!onlyPictureMode || stream.cover.isNullOrEmpty()) {
+
+            if (!isCoverExisted || noPictureMode) {
                 Text(
                     text = stream.title,
                     textAlign = TextAlign.Center,
@@ -90,6 +86,21 @@ internal fun TvStreamItem(
                     model = stream.cover,
                     contentScale = ContentScale.Crop,
                     contentDescription = stream.title,
+                    loading = {
+                        Column(
+                            verticalArrangement = Arrangement.SpaceAround,
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(spacing.medium)
+                        ) {
+                            Text(
+                                text = stream.title,
+                                maxLines = 1
+                            )
+                            CircularProgressIndicator()
+                        }
+                    },
                     error = {
                         Column(
                             verticalArrangement = Arrangement.SpaceAround,
