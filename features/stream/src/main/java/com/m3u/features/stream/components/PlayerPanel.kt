@@ -6,8 +6,8 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.basicMarquee
@@ -28,6 +28,7 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.AbsoluteRoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.KeyboardDoubleArrowUp
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -44,6 +45,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -241,6 +243,7 @@ private fun PanelProgramGuide(
     val spacing = LocalSpacing.current
     val minaBoxState = rememberMinaBoxState()
     val eOrSh by produceCurrentEOrShState()
+    val coroutineScope = rememberCoroutineScope()
     var zoom: PanelZoom by remember { mutableStateOf(PanelZoom.DEFAULT) }
     val zoomModifier = Modifier.pointerInput(Unit) {
         detectTapGestures(
@@ -260,9 +263,13 @@ private fun PanelProgramGuide(
         label = "minabox-cell-height"
     )
 
+    val animateToCurrentEOrSh: suspend () -> Unit by rememberUpdatedState {
+        minaBoxState.animateTo(0f, eOrSh * currentHeight + scrollOffset)
+    }
+
     if (isPanelExpanded) {
         LaunchedEffect(Unit) {
-            minaBoxState.animateTo(0f, eOrSh * currentHeight + scrollOffset)
+            animateToCurrentEOrSh()
         }
     }
     BoxWithConstraints(zoomModifier.then(modifier), Alignment.Center) {
@@ -361,19 +368,41 @@ private fun PanelProgramGuide(
                 CurrentTimeLine()
             }
         }
-        AnimatedVisibility(
-            visible = !isProgrammesRefreshing && isPanelExpanded,
-            enter = fadeIn() + slideInVertically { it / 2 },
-            exit = fadeOut() + slideOutVertically { it / 2 },
+        ConstraintLayout(
             modifier = Modifier
                 .padding(spacing.medium)
                 .align(Alignment.BottomEnd)
         ) {
-            SmallFloatingActionButton(onRefreshProgrammesIgnoreCache) {
+            val (refresh, scroll) = createRefs()
+            SmallFloatingActionButton(
+                onClick = { coroutineScope.launch { animateToCurrentEOrSh() } },
+                modifier = Modifier.constrainAs(scroll) {
+                    this.end.linkTo(parent.end)
+                    this.bottom.linkTo(parent.bottom)
+                }
+            ) {
                 Icon(
-                    imageVector = Icons.Rounded.Refresh,
-                    contentDescription = "refresh playlist programmes"
+                    imageVector = Icons.Rounded.KeyboardDoubleArrowUp,
+                    contentDescription = "scroll to current timeline"
                 )
+            }
+
+            AnimatedVisibility(
+                visible = !isProgrammesRefreshing,
+                enter = fadeIn() + scaleIn(),
+                exit = fadeOut() + scaleOut(),
+                modifier = Modifier.constrainAs(refresh) {
+                    this.end.linkTo(scroll.start)
+                    this.top.linkTo(scroll.top)
+                    this.bottom.linkTo(scroll.bottom)
+                }
+            ) {
+                SmallFloatingActionButton(onRefreshProgrammesIgnoreCache) {
+                    Icon(
+                        imageVector = Icons.Rounded.Refresh,
+                        contentDescription = "refresh playlist programmes"
+                    )
+                }
             }
         }
     }
@@ -409,9 +438,10 @@ private fun ProgrammeCell(
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
+    val colorScheme = MaterialTheme.colorScheme
     Surface(
-        color = MaterialTheme.colorScheme.tertiaryContainer,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+        color = colorScheme.tertiaryContainer,
+        border = BorderStroke(1.dp, colorScheme.outline),
         shape = AbsoluteRoundedCornerShape(4.dp),
         modifier = modifier
     ) {

@@ -23,6 +23,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.withContext
+import kotlinx.datetime.Instant
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import javax.inject.Inject
@@ -56,11 +57,11 @@ internal class ProgrammeRepositoryImpl @Inject constructor(
             val epgData = downloadEpgOrThrow(epgUrl)
             val channels = epgData.channels
             val programmes = epgData.programmes
-            val leftRange = programmes.firstOrNull()
-                ?.start
-                ?.let { EpgProgramme.readEpochMilliseconds(it) }
-                ?: 0L
-            programmeDao.clearByPlaylistUrlAndLeftRange(playlistUrl, leftRange)
+            val startEdge = programmes.minOfOrNull { programme ->
+                programme.start?.let { EpgProgramme.readEpochMilliseconds(it) } ?: Long.MAX_VALUE
+            } ?: 0L
+            logger.post { "start-edge: ${Instant.fromEpochMilliseconds(startEdge)}" }
+            programmeDao.clearByPlaylistUrlAndStartEdge(playlistUrl, startEdge)
             programmes.forEach { epgProgramme ->
                 val channel = channels.find { it.id == epgProgramme.channel } ?: return@forEach
                 val stream = streamDao.getByPlaylistUrlAndChannelId(
@@ -74,7 +75,15 @@ internal class ProgrammeRepositoryImpl @Inject constructor(
                     streamId = stream.id,
                     playlistUrl = playlistUrl
                 )
-                programmeDao.insertOrReplace(programme)
+                val contains = programmeDao.contains(
+                    programme.playlistUrl,
+                    programme.streamId,
+                    programme.start,
+                    programme.end
+                )
+                if (!contains) {
+                    programmeDao.insertOrReplace(programme)
+                }
             }
         } finally {
             refreshingPlaylistUrls.value -= playlistUrl
