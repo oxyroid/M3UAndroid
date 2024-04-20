@@ -1,6 +1,5 @@
 package com.m3u.data.repository.internal
 
-import android.app.Application
 import androidx.paging.PagingSource
 import com.m3u.core.architecture.dispatcher.Dispatcher
 import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
@@ -38,8 +37,7 @@ internal class ProgrammeRepositoryImpl @Inject constructor(
     private val epgParser: EpgParser,
     @OkhttpClient(true) private val okHttpClient: OkHttpClient,
     @Dispatcher(IO) private val ioDispatcher: CoroutineDispatcher,
-    delegate: Logger,
-    private val application: Application
+    delegate: Logger
 ) : ProgrammeRepository {
     private val logger = delegate.install(Profiles.REPOS_PROGRAMME)
     override val refreshingPlaylistUrls = MutableStateFlow<List<String>>(emptyList())
@@ -97,7 +95,6 @@ internal class ProgrammeRepositoryImpl @Inject constructor(
     private suspend fun downloadEpgOrThrow(
         epgUrl: String,
     ): EpgData {
-        application.cacheDir
         val isGzip = epgUrl
             .toHttpUrlOrNull()
             ?.pathSegments
