@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="feat_setting_placeholder_url">dirección de lista</string>
     <string name="feat_setting_app_version">versión de app</string>
     <string name="feat_setting_label_subscribe">subscribirse</string>
     <string name="feat_setting_success_subscribe">subscripción completada</string>
