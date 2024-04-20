@@ -6,8 +6,17 @@ package com.m3u.features.stream
 import android.content.Intent
 import android.graphics.Rect
 import android.net.Uri
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.systemBarsIgnoringVisibility
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -15,6 +24,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -23,6 +33,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -37,6 +48,7 @@ import com.m3u.features.stream.components.CoverPlaceholder
 import com.m3u.features.stream.components.DlnaDevicesBottomSheet
 import com.m3u.features.stream.components.FormatsBottomSheet
 import com.m3u.features.stream.components.PlayerPanel
+import com.m3u.features.stream.components.VerticalGestureArea
 import com.m3u.i18n.R.string
 import com.m3u.material.components.Background
 import com.m3u.material.components.PullPanelLayout
@@ -45,6 +57,7 @@ import com.m3u.material.components.mask.MaskInterceptor
 import com.m3u.material.components.mask.MaskState
 import com.m3u.material.components.mask.rememberMaskState
 import com.m3u.material.components.rememberPullPanelLayoutState
+import com.m3u.material.ktx.plus
 import com.m3u.ui.Player
 import com.m3u.ui.helper.LocalHelper
 import com.m3u.ui.helper.OnPipModeChanged
@@ -272,6 +285,12 @@ private fun
     val favourite = stream?.favourite ?: false
 
     val preferences = LocalPreferences.current
+    var gesture: MaskGesture? by remember { mutableStateOf(null) }
+
+    // because they will be updated frequently,
+    // they must be wrapped with rememberUpdatedState when using them.
+    val currentVolume by rememberUpdatedState(volume)
+    val currentBrightness by rememberUpdatedState(brightness)
 
     Background(
         color = Color.Black,
@@ -304,6 +323,7 @@ private fun
                 playerState = playerState,
                 volume = volume,
                 brightness = brightness,
+                gesture = gesture,
                 maskState = maskState,
                 favourite = favourite,
                 isSeriesPlaylist = isSeriesPlaylist,
@@ -313,9 +333,50 @@ private fun
                 onBackPressed = onBackPressed,
                 openDlnaDevices = openDlnaDevices,
                 openChooseFormat = openChooseFormat,
-                onVolume = onVolume,
-                onBrightness = onBrightness
+                onVolume = onVolume
             )
+
+            Row(
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(
+                        WindowInsets.systemBarsIgnoringVisibility.asPaddingValues()
+                                + PaddingValues(vertical = 56.dp)
+                    )
+            ) {
+                VerticalGestureArea(
+                    percent = currentBrightness,
+                    onDragStart = {
+                        maskState.lock(MaskGesture.BRIGHTNESS)
+                        gesture = MaskGesture.BRIGHTNESS
+                    },
+                    onDragEnd = {
+                        maskState.unlock(MaskGesture.BRIGHTNESS, 400.milliseconds)
+                        gesture = null
+                    },
+                    onDrag = onBrightness,
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .fillMaxWidth(0.18f)
+                )
+                VerticalGestureArea(
+                    percent = currentVolume,
+                    onDragStart = {
+                        maskState.lock(MaskGesture.VOLUME)
+                        gesture = MaskGesture.VOLUME
+                    },
+                    onDragEnd = {
+                        maskState.unlock(MaskGesture.VOLUME, 400.milliseconds)
+                        gesture = null
+                    },
+                    onDrag = onVolume,
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .fillMaxWidth(0.18f)
+                )
+            }
 
             LaunchedEffect(playerState.playerError) {
                 if (playerState.playerError != null) {

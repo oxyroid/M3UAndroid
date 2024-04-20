@@ -15,13 +15,10 @@ import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -65,15 +62,14 @@ import androidx.compose.ui.unit.dp
 import androidx.media3.common.Player
 import com.m3u.core.architecture.preferences.LocalPreferences
 import com.m3u.core.util.basic.isNotEmpty
-import com.m3u.features.stream.PlayerMaskImplDefaults.detectVerticalGesture
 import com.m3u.features.stream.components.MaskTextButton
 import com.m3u.features.stream.components.PlayerMask
 import com.m3u.i18n.R.string
 import com.m3u.material.components.mask.MaskButton
 import com.m3u.material.components.mask.MaskCircleButton
+import com.m3u.material.components.mask.MaskPanel
 import com.m3u.material.components.mask.MaskState
 import com.m3u.material.ktx.isTelevision
-import com.m3u.material.ktx.thenIf
 import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.FontFamilies
 import com.m3u.ui.Image
@@ -98,6 +94,7 @@ internal fun
     playerState: PlayerState,
     volume: Float,
     brightness: Float,
+    gesture: MaskGesture?,
     maskState: MaskState,
     favourite: Boolean,
     isSeriesPlaylist: Boolean,
@@ -108,7 +105,6 @@ internal fun
     openDlnaDevices: () -> Unit,
     openChooseFormat: () -> Unit,
     onVolume: (Float) -> Unit,
-    onBrightness: (Float) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val preferences = LocalPreferences.current
@@ -121,16 +117,17 @@ internal fun
     // they must be wrapped with rememberUpdatedState when using them.
     val currentVolume by rememberUpdatedState(volume)
     val currentBrightness by rememberUpdatedState(brightness)
-    var gesture: MaskGesture? by remember { mutableStateOf(null) }
+    val currentGesture by rememberUpdatedState(gesture)
     val muted = currentVolume == 0f
 
-    val defaultBrightnessOrVolumeContentDescription =
-        if (muted) stringResource(string.feat_stream_tooltip_unmute)
-        else stringResource(string.feat_stream_tooltip_mute)
+    val defaultBrightnessOrVolumeContentDescription = when {
+        muted -> stringResource(string.feat_stream_tooltip_unmute)
+        else -> stringResource(string.feat_stream_tooltip_mute)
+    }
 
     val brightnessOrVolumeText by remember {
         derivedStateOf {
-            when (gesture) {
+            when (currentGesture) {
                 MaskGesture.VOLUME -> "${(currentVolume.coerceIn(0f..1f) * 100).roundToInt()}%"
                 MaskGesture.BRIGHTNESS -> "${(currentBrightness.coerceIn(0f..1f) * 100).roundToInt()}%"
                 else -> null
@@ -192,7 +189,11 @@ internal fun
         }
     }
 
-    Box(modifier) {
+    Box {
+        MaskPanel(
+            state = maskState
+        )
+
         PlayerMask(
             state = maskState,
             header = {
@@ -206,7 +207,7 @@ internal fun
 
                 MaskTextButton(
                     state = maskState,
-                    icon = when (gesture) {
+                    icon = when (currentGesture) {
                         MaskGesture.BRIGHTNESS -> when {
                             brightness < 0.5f -> Icons.Rounded.DarkMode
                             else -> Icons.Rounded.LightMode
@@ -219,7 +220,7 @@ internal fun
                         }
                     },
                     text = brightnessOrVolumeText,
-                    tint = when (gesture) {
+                    tint = when (currentGesture) {
                         null -> if (muted) MaterialTheme.colorScheme.error else Color.Unspecified
                         MaskGesture.VOLUME -> if (muted) MaterialTheme.colorScheme.error else Color.Unspecified
                         MaskGesture.BRIGHTNESS -> Color.Unspecified
@@ -275,36 +276,9 @@ internal fun
                 }
             },
             body = {
-                BoxWithConstraints(Modifier.weight(1f)) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .thenIf(!tv && preferences.brightnessGesture) {
-                                Modifier.detectVerticalGesture(
-                                    time = 0.65f,
-                                    onDragStart = {
-                                        maskState.lock(MaskGesture.BRIGHTNESS)
-                                        gesture = MaskGesture.BRIGHTNESS
-                                    },
-                                    onDragEnd = {
-                                        maskState.unlock(MaskGesture.BRIGHTNESS, 1800.milliseconds)
-                                        gesture = null
-                                    },
-                                    onVerticalDrag = { deltaPixel ->
-                                        onBrightness(
-                                            (currentBrightness - deltaPixel / this@BoxWithConstraints.maxHeight.value)
-                                                .coerceIn(0f..1f)
-                                        )
-                                    }
-                                )
-                            }
-                    )
-                }
                 Box(
                     contentAlignment = Alignment.Center,
-                    modifier = Modifier
-                        .fillMaxWidth(0.65f)
-                        .fillMaxHeight()
+                    modifier = Modifier.fillMaxSize()
                 ) {
                     androidx.compose.animation.AnimatedVisibility(
                         visible = (!isPanelExpanded && preferences.alwaysShowReplay) || playerState.playState in arrayOf(
@@ -312,7 +286,7 @@ internal fun
                             Player.STATE_ENDED
                         ) || playerState.playerError != null,
                         enter = fadeIn() + scaleIn(initialScale = 0.85f),
-                        exit = fadeOut() + scaleOut(targetScale = 0.85f),
+                        exit = fadeOut() + scaleOut(targetScale = 0.85f)
                     ) {
                         MaskCircleButton(
                             state = maskState,
@@ -322,31 +296,6 @@ internal fun
                             }
                         )
                     }
-                }
-                BoxWithConstraints(Modifier.weight(1f)) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .thenIf(!tv && preferences.volumeGesture) {
-                                Modifier.detectVerticalGesture(
-                                    time = 0.35f,
-                                    onDragStart = {
-                                        maskState.lock(MaskGesture.VOLUME)
-                                        gesture = MaskGesture.VOLUME
-                                    },
-                                    onDragEnd = {
-                                        maskState.unlock(MaskGesture.VOLUME, 1800.milliseconds)
-                                        gesture = null
-                                    },
-                                    onVerticalDrag = { deltaPixel ->
-                                        onVolume(
-                                            (currentVolume - (deltaPixel / this@BoxWithConstraints.maxHeight.value))
-                                                .coerceIn(0f..1f)
-                                        )
-                                    }
-                                )
-                            }
-                    )
                 }
             },
             footer = {
@@ -511,7 +460,9 @@ internal fun
 
                     }
                 }
-            }
+            },
+            modifier = modifier
         )
     }
+
 }

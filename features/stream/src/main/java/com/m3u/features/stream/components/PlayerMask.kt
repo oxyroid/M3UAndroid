@@ -1,7 +1,6 @@
 package com.m3u.features.stream.components
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
@@ -17,7 +16,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import com.m3u.material.components.mask.Mask
-import com.m3u.material.components.mask.MaskPanel
 import com.m3u.material.components.mask.MaskState
 import com.m3u.material.ktx.isTelevision
 import com.m3u.material.model.LocalSpacing
@@ -37,55 +35,50 @@ internal fun PlayerMask(
         LocalContentColor provides Color.White,
         androidx.tv.material3.LocalContentColor provides Color.White
     ) {
-        Box(modifier) {
-            MaskPanel(
-                state = state
-            )
-            Mask(
-                state = state,
-                color = Color.Black.copy(alpha = 0.54f),
-                modifier = Modifier
-                    .then(
-                        Modifier.padding(
-                            top = if (tv) spacing.medium else spacing.small,
-                            bottom = if (!tv) spacing.medium else spacing.small
-                        )
+        Mask(
+            state = state,
+            color = Color.Black.copy(alpha = 0.54f),
+            modifier = modifier
+                .then(
+                    Modifier.padding(
+                        top = if (tv) spacing.medium else spacing.small,
+                        bottom = if (!tv) spacing.medium else spacing.small
                     )
-                    .padding(WindowInsets.statusBars.asPaddingValues())
-            ) {
-                Column {
+                )
+                .padding(WindowInsets.statusBars.asPaddingValues())
+        ) {
+            Column {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = spacing.medium),
+                    horizontalArrangement = Arrangement.spacedBy(
+                        if (!tv) spacing.none else spacing.medium,
+                        Alignment.End
+                    ),
+                    verticalAlignment = Alignment.Top,
+                    content = header
+                )
+                Row(
+                    modifier = Modifier
+                        .padding(horizontal = spacing.medium)
+                        .fillMaxWidth()
+                        .weight(1f),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically,
+                    content = body
+                )
+                Column(
+                    modifier = Modifier.padding(horizontal = spacing.medium)
+                ) {
                     Row(
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = spacing.medium),
-                        horizontalArrangement = Arrangement.spacedBy(
-                            if (!tv) spacing.none else spacing.medium,
-                            Alignment.End
-                        ),
-                        verticalAlignment = Alignment.Top,
-                        content = header
+                            .fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(spacing.medium),
+                        verticalAlignment = Alignment.Bottom,
+                        content = footer
                     )
-                    Row(
-                        modifier = Modifier
-                            .padding(horizontal = spacing.medium)
-                            .fillMaxWidth()
-                            .weight(1f),
-                        horizontalArrangement = Arrangement.Center,
-                        verticalAlignment = Alignment.CenterVertically,
-                        content = body
-                    )
-                    Column(
-                        modifier = Modifier.padding(horizontal = spacing.medium)
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(spacing.medium),
-                            verticalAlignment = Alignment.Bottom,
-                            content = footer
-                        )
-                        slider?.invoke()
-                    }
+                    slider?.invoke()
                 }
             }
         }

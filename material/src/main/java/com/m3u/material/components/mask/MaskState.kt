@@ -64,6 +64,12 @@ private class MaskStateCoroutineImpl(
 
     override fun sleep() {
         lastTime = 0
+        val iterator = unlockedJobs.iterator()
+        while (iterator.hasNext()) {
+            val entity = iterator.next()
+            unlockImpl(entity.key)
+            entity.value.cancel()
+        }
     }
 
     override fun lock(key: Any) {

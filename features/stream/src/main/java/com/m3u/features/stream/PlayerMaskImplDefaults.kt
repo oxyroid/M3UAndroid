@@ -31,10 +31,11 @@ internal object PlayerMaskImplDefaults {
             detectVerticalDragGestures(
                 onDragStart = { onDragStart?.invoke() },
                 onDragEnd = { onDragEnd?.invoke() },
-                onVerticalDrag = { _, dragAmount ->
+                onVerticalDrag = { change, dragAmount ->
                     total += dragAmount.absoluteValue / size.height
                     if (total < threshold) return@detectVerticalDragGestures
                     onVerticalDrag(dragAmount * time)
+                    change.consume()
                 }
             )
         }
