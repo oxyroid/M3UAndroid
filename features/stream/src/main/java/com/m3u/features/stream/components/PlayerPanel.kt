@@ -10,9 +10,6 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsHoveredAsState
-import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -46,7 +43,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -227,11 +223,6 @@ private fun PanelProgramGuide(
 ) {
     val minaBoxState = rememberMinaBoxState()
     val eOrSh by produceCurrentEOrShState()
-    if (isPanelExpanded) {
-        LaunchedEffect(Unit) {
-            minaBoxState.animateTo(0f, eOrSh * height + scrollOffset)
-        }
-    }
     var zoom: PanelZoom by remember { mutableStateOf(PanelZoom.DEFAULT) }
     val zoomModifier = Modifier.pointerInput(Unit) {
         detectTapGestures(
@@ -247,8 +238,15 @@ private fun PanelProgramGuide(
     }
 
     val currentHeight: Float by animateFloatAsState(
-        height * zoom.time
+        targetValue = height * zoom.time,
+        label = "minabox-cell-height"
     )
+
+    if (isPanelExpanded) {
+        LaunchedEffect(Unit) {
+            minaBoxState.animateTo(0f, eOrSh * currentHeight + scrollOffset)
+        }
+    }
     BoxWithConstraints(zoomModifier.then(modifier), Alignment.Center) {
         MinaBox(
             state = minaBoxState
@@ -289,7 +287,7 @@ private fun PanelProgramGuide(
                 layoutInfo = { index ->
                     MinaBoxItem(
                         x = -timelineWidth / 5,
-                        y = index * currentHeight - currentHeight / 2  + padding * 2,
+                        y = index * currentHeight - currentHeight / 2 + padding * 2,
                         width = timelineWidth,
                         height = currentHeight
                     )
@@ -371,30 +369,14 @@ private fun AnimateScrollToStreamEffect(
 @Composable
 private fun ProgrammeCell(
     programme: ProgrammeGuide.Programme,
-    modifier: Modifier = Modifier,
-    onClick: (() -> Unit)? = null
+    modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
-    val interactionSource = remember { MutableInteractionSource() }
-    val isPressed by interactionSource.collectIsPressedAsState()
-    val isHovered by interactionSource.collectIsHoveredAsState()
-    val scale by animateFloatAsState(
-        if (isPressed || isHovered) 0.95f else 1f,
-        label = "programme-cell-scale"
-    )
     Surface(
         color = MaterialTheme.colorScheme.tertiaryContainer,
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
         shape = AbsoluteRoundedCornerShape(4.dp),
-        onClick = onClick ?: {},
-        enabled = onClick != null,
-        interactionSource = interactionSource,
-        modifier = Modifier
-            .graphicsLayer {
-                scaleX = scale
-                scaleY = scale
-            }
-            .then(modifier)
+        modifier = modifier
     ) {
         FlowColumn(
             modifier = Modifier

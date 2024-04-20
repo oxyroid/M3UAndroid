@@ -42,8 +42,6 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Instant
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
 import org.jupnp.model.meta.Device
 import javax.inject.Inject
 import kotlin.math.roundToInt
@@ -290,10 +288,7 @@ class StreamViewModel @Inject constructor(
                 .flow
                 .map {
                     it.map { prev ->
-                        val sh = Instant.fromEpochMilliseconds(prev.start)
-                            .toLocalDateTime(TimeZone.currentSystemDefault())
-                            .run { hour + minute / 60f + second / 3600f }
-
+                        val sh = Instant.fromEpochMilliseconds(prev.start).toEOrSh()
                         val eh = Instant.fromEpochMilliseconds(prev.end).toEOrSh()
                         ProgrammeGuide.Programme(
                             sh = sh,
