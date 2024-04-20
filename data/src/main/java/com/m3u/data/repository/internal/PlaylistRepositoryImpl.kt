@@ -27,9 +27,7 @@ import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.PlaylistWithCount
 import com.m3u.data.database.model.PlaylistWithStreams
 import com.m3u.data.database.model.Stream
-import com.m3u.data.parser.epg.EpgData
 import com.m3u.data.parser.epg.EpgParser
-import com.m3u.data.parser.epg.toProgramme
 import com.m3u.data.parser.m3u.M3UData
 import com.m3u.data.parser.m3u.M3UParser
 import com.m3u.data.parser.m3u.toStream
@@ -50,7 +48,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onCompletion
@@ -63,6 +60,7 @@ import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.io.File
+import java.io.InputStream
 import java.io.Reader
 import javax.inject.Inject
 
@@ -100,37 +98,6 @@ internal class PlaylistRepositoryImpl @Inject constructor(
         epgUrl: String?,
         callback: (count: Int) -> Unit
     ) {
-        // fixme: store tvg-id and download epg when user need it.
-        val epgData = if (epgUrl != null) {
-            downloadEpgOrThrow(epgUrl)
-        } else EpgData()
-
-        val programmes = epgData.programmes.toMutableList()
-
-        fun acquireNetwork(url: String): Flow<M3UData> = channelFlow {
-            val request = Request.Builder()
-                .url(url)
-                .build()
-            val response = okHttpClient.newCall(request).execute()
-
-            val input = response.body?.byteStream()
-            if (input != null) {
-                m3uParser.parse(input).collect { send(it) }
-                input.close()
-            }
-            close()
-        }.flowOn(ioDispatcher)
-
-        fun acquireAndroid(url: String): Flow<M3UData> = channelFlow {
-            val uri = Uri.parse(url)
-            val input = context.contentResolver.openInputStream(uri)
-            if (input != null) {
-                m3uParser.parse(input).collect { send(it) }
-                input.close()
-            }
-            close()
-        }.flowOn(ioDispatcher)
-
         var currentCount = 0
         callback(currentCount)
         val actualUrl = url.actualUrl()
@@ -147,75 +114,51 @@ internal class PlaylistRepositoryImpl @Inject constructor(
         ) ?: Playlist(title, actualUrl, epgUrl = epgUrl, source = DataSource.M3U)
         playlistDao.insertOrReplace(playlist)
 
-//        val cache = mutableListOf<Stream>()
+        val cache = mutableListOf<M3UData>()
         val mutex = Mutex()
 
-        when {
-            url.isSupportedNetworkUrl() -> acquireNetwork(actualUrl)
-            url.isSupportedAndroidUrl() -> acquireAndroid(actualUrl)
-            else -> flow { } // never reach here!
+        channelFlow {
+            when {
+                url.isSupportedNetworkUrl() -> openNetworkInput(actualUrl)
+                url.isSupportedAndroidUrl() -> openFileInput(actualUrl)
+                else -> null
+            }?.use { input ->
+                m3uParser.parse(input).collect { send(it) }
+            }
+            close()
         }
             .onEach { m3uData ->
-                val streamId = streamDao.insertOrReplace(m3uData.toStream(url)).toInt()
-                val channel = epgData.channels.find { it.id == m3uData.id }
-                if (channel != null) {
+                cache += m3uData
+                if (cache.size >= BUFFER_M3U_CAPACITY) {
                     mutex.withLock {
-                        val iterator = programmes.listIterator()
-                        while (iterator.hasNext()) {
-                            val programme = iterator.next()
-                            if (programme.channel != channel.id) continue
-                            programmeDao.insertOrReplace(programme.toProgramme(streamId))
-                            iterator.remove()
+                        // check again
+                        if (cache.size >= BUFFER_M3U_CAPACITY) {
+                            currentCount += cache.size
+                            callback(currentCount)
+                            streamDao.insertOrReplaceAll(
+                                *cache.map { it.toStream(url) }.toTypedArray()
+                            )
+                            cache.clear()
                         }
                     }
                 }
-
-                // todo: hide now
-//                if (cache.size >= BUFFER_M3U_CAPACITY) {
-//                    mutex.withLock {
-//                        // check again
-//                        if (cache.size >= BUFFER_M3U_CAPACITY) {
-//                            currentCount += cache.size
-//                            callback(currentCount)
-//                            streamDao.insertOrReplaceAll(
-//                                *cache.map { it.toStream(url, 0L) }.toTypedArray()
-//                            )
-//                            cache.clear()
-//                        }
-//                    }
-//                }
             }
-//            .onCompletion {
-//                // lock again
-//                mutex.withLock {
-//                    streamDao.insertOrReplaceAll(
-//                        *cache.map { it.toStream(url, 0L) }.toTypedArray()
-//                    )
-//                    currentCount += cache.size
-//                    callback(currentCount)
-//                }
-//            }
+            .onCompletion {
+                // lock again
+                mutex.withLock {
+                    streamDao.insertOrReplaceAll(
+                        *cache.map { it.toStream(url) }.toTypedArray()
+                    )
+                    currentCount += cache.size
+                    callback(currentCount)
+                }
+            }
             .flowOn(ioDispatcher)
             .collect()
         if (preferences.keepFavouriteAndHidden == PlaylistStrategy.KEEP_FAVOURITE_AND_HIDDEN) {
             streamDao.mergeUnfavouriteOrUnhiddenIfNeededByPlaylistUrl(url)
         }
     }
-
-    private suspend fun downloadEpgOrThrow(
-        epgUrl: String,
-    ): EpgData = okHttpClient.newCall(
-        Request.Builder()
-            .url(epgUrl)
-            .build()
-    )
-        .execute()
-        .body
-        ?.byteStream()
-        ?.use { input ->
-            epgParser.execute(input) { _, _ -> }
-        }
-        .let { checkNotNull(it) }
 
     override suspend fun xtreamOrThrow(
         title: String,
@@ -557,6 +500,7 @@ internal class PlaylistRepositoryImpl @Inject constructor(
             input = XtreamInput.decodeFromPlaylistUrl(playlist.url),
             seriesId = Url(series.url).pathSegments.last().toInt()
         )
+        // fixme: do not flatmap
         return seriesInfo.episodes.flatMap { it.value }
     }
 
@@ -609,5 +553,18 @@ internal class PlaylistRepositoryImpl @Inject constructor(
         } else {
             streamDao.deleteByPlaylistUrl(playlistUrl)
         }
+    }
+
+    private fun openNetworkInput(url: String): InputStream? {
+        val request = Request.Builder()
+            .url(url)
+            .build()
+        val response = okHttpClient.newCall(request).execute()
+        return response.body?.byteStream()
+    }
+
+    private fun openFileInput(url: String): InputStream? {
+        val uri = Uri.parse(url)
+        return context.contentResolver.openInputStream(uri)
     }
 }

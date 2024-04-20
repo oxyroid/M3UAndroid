@@ -93,6 +93,7 @@ fun StreamRoute(
 
     val volume by viewModel.volume.collectAsStateWithLifecycle()
     val isSeriesPlaylist by viewModel.isSeriesPlaylist.collectAsStateWithLifecycle()
+    val isProgrammesRefreshing: Boolean by viewModel.isProgrammesRefreshing.collectAsStateWithLifecycle()
 
     val neighboring = viewModel.neighboring.collectAsLazyPagingItems()
     val programmes = viewModel.programme.collectAsLazyPagingItems()
@@ -175,6 +176,7 @@ fun StreamRoute(
                 when (state) {
                     PullPanelLayoutValue.EXPANDED -> {
                         maskState.lock(PullPanelLayoutValue.EXPANDED)
+                        viewModel.checkOrRefreshProgrammes()
                     }
 
                     PullPanelLayoutValue.COLLAPSED -> {
@@ -189,8 +191,12 @@ fun StreamRoute(
                     streamId = stream?.id ?: -1,
                     isPanelExpanded = isPanelExpanded,
                     isSeriesPlaylist = isSeriesPlaylist,
+                    isProgrammesRefreshing = isProgrammesRefreshing,
                     neighboring = neighboring,
-                    programmes = programmes
+                    programmes = programmes,
+                    onRefreshProgrammesIgnoreCache = {
+                        viewModel.checkOrRefreshProgrammes(true)
+                    }
                 )
             },
             content = {

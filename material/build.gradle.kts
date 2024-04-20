@@ -45,6 +45,7 @@ dependencies {
     api(libs.androidx.compose.material.material.icons.extended)
     api(libs.androidx.compose.material3.material3)
     api(libs.androidx.compose.material3.material3.window.size.clazz)
+    api(libs.androidx.constraintlayout.constraintlayout.compose)
     debugApi(libs.androidx.compose.ui.ui.tooling)
     debugApi(libs.androidx.compose.ui.ui.tooling.preview)
 

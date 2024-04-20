@@ -14,6 +14,8 @@ import androidx.room.PrimaryKey
 data class Programme(
     @ColumnInfo(name = "stream_id")
     val streamId: Int,
+    @ColumnInfo(name = "playlist_url")
+    val playlistUrl: String,
     @ColumnInfo(name = "start")
     val start: Long,
     @ColumnInfo(name = "end")
@@ -29,4 +31,12 @@ data class Programme(
     @PrimaryKey(autoGenerate = true)
     @ColumnInfo(name = "id")
     val id: Int = 0
+)
+
+@Keep
+data class ProgrammeSnapshot(
+    @ColumnInfo(name = "playlist_url")
+    val playlistUrl: String,
+    @ColumnInfo(name = "end")
+    val end: Long,
 )

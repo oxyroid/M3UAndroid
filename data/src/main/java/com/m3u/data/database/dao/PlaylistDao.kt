@@ -12,7 +12,7 @@ import com.m3u.data.database.model.PlaylistWithStreams
 import kotlinx.coroutines.flow.Flow
 
 @Dao
-interface PlaylistDao {
+internal interface PlaylistDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertOrReplace(playlist: Playlist): Long
 
@@ -30,6 +30,9 @@ interface PlaylistDao {
 
     @Query("SELECT * FROM playlists ORDER BY title")
     fun observeAll(): Flow<List<Playlist>>
+
+    @Query("SELECT * FROM playlists WHERE epg_url != NULL ORDER BY title")
+    fun observeAllContainsEpgUrl(): Flow<List<Playlist>>
 
     @Query("SELECT url FROM playlists ORDER BY title")
     fun observePlaylistUrls(): Flow<List<String>>

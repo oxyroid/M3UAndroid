@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 15,
-    "identityHash": "9eaeaf0e36777960282e181a52f78a98",
+    "identityHash": "8198938e558a8515add639d606af1053",
     "entities": [
       {
         "tableName": "streams",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`url` TEXT NOT NULL, `group` TEXT NOT NULL, `title` TEXT NOT NULL, `cover` TEXT, `playlistUrl` TEXT NOT NULL, `license_type` TEXT DEFAULT NULL, `license_key` TEXT DEFAULT NULL, `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `favourite` INTEGER NOT NULL, `hidden` INTEGER NOT NULL DEFAULT 0, `seen` INTEGER NOT NULL DEFAULT 0)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`url` TEXT NOT NULL, `group` TEXT NOT NULL, `title` TEXT NOT NULL, `cover` TEXT, `playlistUrl` TEXT NOT NULL, `license_type` TEXT DEFAULT NULL, `license_key` TEXT DEFAULT NULL, `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `favourite` INTEGER NOT NULL, `hidden` INTEGER NOT NULL DEFAULT 0, `seen` INTEGER NOT NULL DEFAULT 0, `channel_id` TEXT DEFAULT NULL)",
         "fields": [
           {
             "fieldPath": "url",
@@ -77,6 +77,13 @@
             "affinity": "INTEGER",
             "notNull": true,
             "defaultValue": "0"
+          },
+          {
+            "fieldPath": "channelId",
+            "columnName": "channel_id",
+            "affinity": "TEXT",
+            "notNull": false,
+            "defaultValue": "NULL"
           }
         ],
         "primaryKey": {
@@ -220,12 +227,18 @@
       },
       {
         "tableName": "programmes",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`stream_id` INTEGER NOT NULL, `start` INTEGER NOT NULL, `end` INTEGER NOT NULL, `title` TEXT NOT NULL, `description` TEXT NOT NULL, `icon` TEXT, `categories` TEXT NOT NULL, `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`stream_id` INTEGER NOT NULL, `playlist_url` TEXT NOT NULL, `start` INTEGER NOT NULL, `end` INTEGER NOT NULL, `title` TEXT NOT NULL, `description` TEXT NOT NULL, `icon` TEXT, `categories` TEXT NOT NULL, `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL)",
         "fields": [
           {
             "fieldPath": "streamId",
             "columnName": "stream_id",
             "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "playlistUrl",
+            "columnName": "playlist_url",
+            "affinity": "TEXT",
             "notNull": true
           },
           {
@@ -317,7 +330,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '9eaeaf0e36777960282e181a52f78a98')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '8198938e558a8515add639d606af1053')"
     ]
   }
 }

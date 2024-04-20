@@ -62,6 +62,9 @@ internal interface StreamDao {
     @Query("SELECT * FROM streams WHERE playlistUrl = :playlistUrl")
     suspend fun getByPlaylistUrl(playlistUrl: String): List<Stream>
 
+    @Query("SELECT * FROM streams WHERE playlistUrl = :playlistUrl AND channel_id = :channelId")
+    suspend fun getByPlaylistUrlAndChannelId(playlistUrl: String, channelId: String): Stream?
+
     @Query("SELECT * FROM streams WHERE id = :id")
     fun observeById(id: Int): Flow<Stream?>
 

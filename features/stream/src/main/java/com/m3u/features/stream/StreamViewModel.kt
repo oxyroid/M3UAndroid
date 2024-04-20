@@ -14,10 +14,12 @@ import androidx.paging.map
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.Profiles
 import com.m3u.core.architecture.logger.install
+import com.m3u.core.architecture.logger.post
 import com.m3u.data.database.dao.ProgrammeDao
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.Stream
+import com.m3u.data.repository.ProgrammeRepository
 import com.m3u.data.repository.StreamRepository
 import com.m3u.data.service.PlayerManagerV2
 import com.m3u.data.service.selectedFormats
@@ -36,11 +38,13 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import org.jupnp.model.meta.Device
 import javax.inject.Inject
@@ -54,7 +58,9 @@ class ProgrammeGuide {
         val sh: Float,
         val eh: Float,
         val programmeId: Int,
-        val title: String
+        val title: String,
+        val desc: String,
+        val icon: String?
     )
 }
 
@@ -63,6 +69,7 @@ class StreamViewModel @Inject constructor(
     private val streamRepository: StreamRepository,
     private val playerManager: PlayerManagerV2,
     private val audioManager: AudioManager,
+    private val programmeRepository: ProgrammeRepository,
     private val programmeDao: ProgrammeDao,
     delegate: Logger,
 ) : ViewModel(), OnDeviceRegistryListener, OnDeviceControlListener {
@@ -79,6 +86,17 @@ class StreamViewModel @Inject constructor(
 
     internal val stream: StateFlow<Stream?> = playerManager.stream
     internal val playlist: StateFlow<Playlist?> = playerManager.playlist
+
+    init {
+        viewModelScope.launch {
+            programmeDao.observeAll()
+                .first()
+                .map { Instant.fromEpochMilliseconds(it.end) }
+                .sorted()
+                .asReversed()
+                .let { logger.post { it } }
+        }
+    }
 
     internal val isSeriesPlaylist: StateFlow<Boolean> = playerManager
         .playlist
@@ -283,7 +301,7 @@ class StreamViewModel @Inject constructor(
     internal val programme: Flow<PagingData<ProgrammeGuide.Programme>> =
         stream.flatMapLatest { stream ->
             Pager(PagingConfig(5)) {
-                programmeDao.pagingAllByStreamId(stream?.id ?: -1)
+                programmeRepository.pagingAllByStreamId(stream?.id ?: -1)
             }
                 .flow
                 .map {
@@ -294,10 +312,51 @@ class StreamViewModel @Inject constructor(
                             sh = sh,
                             eh = eh,
                             programmeId = prev.id,
-                            title = prev.title
+                            title = prev.title,
+                            desc = prev.description,
+                            icon = prev.icon
                         )
                     }
                 }
                 .cachedIn(viewModelScope)
         }
+
+    internal val isProgrammesRefreshing: StateFlow<Boolean> = combine(
+        playlist,
+        programmeRepository.refreshingPlaylistUrls
+    ) { playlist, urls ->
+        playlist?.url in urls
+    }
+        .stateIn(
+            scope = viewModelScope,
+            // disable refresh button by default
+            initialValue = true,
+            started = SharingStarted.WhileSubscribed(5_000L)
+        )
+
+    internal fun checkOrRefreshProgrammes(ignoreCache: Boolean = false) {
+        val epochMilliseconds = Clock.System.now().toEpochMilliseconds()
+        logger.post { "Now: ${Instant.fromEpochMilliseconds(epochMilliseconds)}" }
+        viewModelScope.launch {
+            val snapshots = programmeRepository
+                .observeSnapshotsGroupedByPlaylistUrl()
+                .first()
+            val stream = stream.value ?: return@launch
+            val snapshot = snapshots.find { it.playlistUrl == stream.playlistUrl }
+            if (ignoreCache || snapshot == null || snapshot.end < epochMilliseconds) {
+                programmeRepository.fetchProgrammesOrThrow(stream.playlistUrl)
+                logger.post {
+                    if (snapshot == null) {
+                        "Cached programme is not existed, fetching..."
+                    } else {
+                        val expired = Instant.fromEpochMilliseconds(snapshot.end)
+                        "Cached programme is expired (in $expired), fetching..."
+                    }
+                }
+            } else {
+                val expired = Instant.fromEpochMilliseconds(snapshot.end)
+                logger.post { "Cached programme is validate. Expired: $expired" }
+            }
+        }
+    }
 }

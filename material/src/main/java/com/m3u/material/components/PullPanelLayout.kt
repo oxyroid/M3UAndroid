@@ -66,13 +66,17 @@ fun PullPanelLayout(
                 PullPanelLayoutValue.EXPANDED -> {
                     offset = constraints.maxWidth * aspectRatio
                     onOffsetChanged(offset)
-                    onValueChanged(PullPanelLayoutValue.EXPANDED)
+                    if (state.value != PullPanelLayoutValue.EXPANDED) {
+                        onValueChanged(PullPanelLayoutValue.EXPANDED)
+                    }
                 }
 
                 PullPanelLayoutValue.COLLAPSED -> {
                     offset = 0f
                     onOffsetChanged(offset)
-                    onValueChanged(PullPanelLayoutValue.COLLAPSED)
+                    if (state.value != PullPanelLayoutValue.COLLAPSED) {
+                        onValueChanged(PullPanelLayoutValue.COLLAPSED)
+                    }
                 }
             }
         }
@@ -97,11 +101,16 @@ fun PullPanelLayout(
                     },
                     onDragStopped = {
                         offset = if (offset <= constraints.maxWidth * aspectRatio / 2) {
-                            onValueChanged(PullPanelLayoutValue.COLLAPSED)
+
+                            if (state.value != PullPanelLayoutValue.COLLAPSED) {
+                                onValueChanged(PullPanelLayoutValue.COLLAPSED)
+                            }
                             state.collapse()
                             0f
                         } else {
-                            onValueChanged(PullPanelLayoutValue.EXPANDED)
+                            if (state.value != PullPanelLayoutValue.EXPANDED) {
+                                onValueChanged(PullPanelLayoutValue.EXPANDED)
+                            }
                             state.expand()
                             constraints.maxWidth * aspectRatio
                         }.also(onOffsetChanged)

@@ -6,6 +6,8 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.basicMarquee
@@ -15,19 +17,24 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowColumn
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredHeight
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.AbsoluteRoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -48,13 +55,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
+import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.paging.compose.LazyPagingItems
+import coil.compose.AsyncImage
 import com.m3u.data.database.model.Stream
 import com.m3u.data.service.MediaCommand
 import com.m3u.features.stream.ProgrammeGuide
 import com.m3u.features.stream.Utils.formatEOrSh
 import com.m3u.features.stream.Utils.toEOrSh
 import com.m3u.material.components.Background
+import com.m3u.material.components.Icon
+import com.m3u.material.ktx.Edge
+import com.m3u.material.ktx.blurEdges
 import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.FontFamilies
 import com.m3u.ui.helper.LocalHelper
@@ -77,8 +89,10 @@ internal fun
     streamId: Int,
     isSeriesPlaylist: Boolean,
     isPanelExpanded: Boolean,
+    isProgrammesRefreshing: Boolean,
     neighboring: LazyPagingItems<Stream>,
     programmes: LazyPagingItems<ProgrammeGuide.Programme>,
+    onRefreshProgrammesIgnoreCache: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
@@ -138,7 +152,9 @@ internal fun
 
             PanelProgramGuide(
                 isPanelExpanded = isPanelExpanded,
+                isProgrammesRefreshing = isProgrammesRefreshing,
                 programmes = programmes,
+                onRefreshProgrammesIgnoreCache = onRefreshProgrammesIgnoreCache,
                 modifier = Modifier.fillMaxWidth()
             )
         }
@@ -213,6 +229,7 @@ private enum class PanelZoom(val time: Float) {
 @Composable
 private fun PanelProgramGuide(
     isPanelExpanded: Boolean,
+    isProgrammesRefreshing: Boolean,
     programmes: LazyPagingItems<ProgrammeGuide.Programme>,
     modifier: Modifier = Modifier,
     timelineWidth: Float = 128f,
@@ -220,7 +237,9 @@ private fun PanelProgramGuide(
     padding: Float = 16f,
     eOrShSize: Float = 32f,
     scrollOffset: Int = -120,
+    onRefreshProgrammesIgnoreCache: () -> Unit
 ) {
+    val spacing = LocalSpacing.current
     val minaBoxState = rememberMinaBoxState()
     val eOrSh by produceCurrentEOrShState()
     var zoom: PanelZoom by remember { mutableStateOf(PanelZoom.DEFAULT) }
@@ -249,7 +268,11 @@ private fun PanelProgramGuide(
     }
     BoxWithConstraints(zoomModifier.then(modifier), Alignment.Center) {
         MinaBox(
-            state = minaBoxState
+            state = minaBoxState,
+            modifier = Modifier.blurEdges(
+                MaterialTheme.colorScheme.surface,
+                listOf(Edge.Top, Edge.Bottom)
+            )
         ) {
             // timelines
             items(
@@ -339,6 +362,21 @@ private fun PanelProgramGuide(
                 CurrentTimeLine()
             }
         }
+        AnimatedVisibility(
+            visible = !isProgrammesRefreshing,
+            enter = fadeIn() + slideInVertically { it / 2 },
+            exit = fadeOut() + slideOutVertically { it / 2 },
+            modifier = Modifier
+                .padding(spacing.medium)
+                .align(Alignment.BottomEnd)
+        ) {
+            SmallFloatingActionButton(onRefreshProgrammesIgnoreCache) {
+                Icon(
+                    imageVector = Icons.Rounded.Refresh,
+                    contentDescription = "refresh playlist programmes"
+                )
+            }
+        }
     }
 }
 
@@ -378,12 +416,13 @@ private fun ProgrammeCell(
         shape = AbsoluteRoundedCornerShape(4.dp),
         modifier = modifier
     ) {
-        FlowColumn(
+        FlowRow(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(4.dp),
             horizontalArrangement = Arrangement.spacedBy(spacing.small),
-            verticalArrangement = Arrangement.spacedBy(spacing.small)
+            verticalArrangement = Arrangement.spacedBy(spacing.small),
+            maxItemsInEachRow = 2
         ) {
             val start = programme.sh
             val end = programme.eh
@@ -395,11 +434,34 @@ private fun ProgrammeCell(
                 color = LocalContentColor.current.copy(0.65f),
                 fontFamily = FontFamilies.LexendExa
             )
+            ConstraintLayout {
+                val (icon, title) = createRefs()
+                AsyncImage(
+                    model = programme.icon,
+                    contentDescription = null,
+                    modifier = Modifier
+                        .size(48.dp)
+                        .constrainAs(icon) {
+                            this.end.linkTo(title.start, 4.dp)
+                            this.top.linkTo(title.top)
+                            this.bottom.linkTo(title.bottom)
+                        }
+                )
+                Text(
+                    text = programme.title,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontFamily = FontFamilies.LexendExa,
+                    modifier = Modifier.constrainAs(title) {
+                        this.end.linkTo(parent.end)
+                    }
+                )
+            }
             Text(
-                text = programme.title,
-                maxLines = 1,
+                text = programme.desc,
                 overflow = TextOverflow.Ellipsis,
-                style = MaterialTheme.typography.titleMedium,
+                style = MaterialTheme.typography.bodyMedium,
                 fontFamily = FontFamilies.LexendExa
             )
         }

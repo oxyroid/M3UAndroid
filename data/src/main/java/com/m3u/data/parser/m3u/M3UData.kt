@@ -48,6 +48,7 @@ internal fun M3UData.toStream(
         playlistUrl = playlistUrl,
         seen = seen,
         licenseType = licenseType,
-        licenseKey = licenseKey
+        licenseKey = licenseKey,
+        channelId = id
     )
 }
