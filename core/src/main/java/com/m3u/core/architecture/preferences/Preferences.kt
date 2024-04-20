@@ -2,8 +2,6 @@ package com.m3u.core.architecture.preferences
 
 import android.content.Context
 import android.content.SharedPreferences
-import android.os.Build
-import androidx.annotation.ChecksSdkIntAtLeast
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
@@ -113,8 +111,7 @@ class Preferences @Inject constructor(
         const val DEFAULT_NO_PICTURE_MODE = false
         const val DEFAULT_DARK_MODE = true
 
-        @ChecksSdkIntAtLeast(api = Build.VERSION_CODES.S)
-        val DEFAULT_USE_DYNAMIC_COLORS = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+        const val DEFAULT_USE_DYNAMIC_COLORS = false
         const val DEFAULT_FOLLOW_SYSTEM_THEME = false
 
         const val DEFAULT_ZAPPING_MODE = false
@@ -126,7 +123,7 @@ class Preferences @Inject constructor(
         @UnseensMilliseconds
         const val DEFAULT_UNSEENS_MILLISECONDS = UnseensMilliseconds.DAYS_3
         const val DEFAULT_RECONNECT_MODE = ReconnectMode.NO
-        const val DEFAULT_COLOR_ARGB = 0xD0BCFF
+        const val DEFAULT_COLOR_ARGB = 0x5E6738
         const val DEFAULT_TUNNELING = false
         const val DEFAULT_ALWAYS_TV = false
         const val DEFAULT_REMOTE_CONTROL = false

@@ -1,5 +1,6 @@
 package com.m3u.features.setting.fragments
 
+import android.os.Build
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -21,7 +22,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.tv.foundation.lazy.list.TvLazyRow
 import androidx.tv.foundation.lazy.list.items
 import com.m3u.core.architecture.preferences.LocalPreferences
-import com.m3u.core.architecture.preferences.Preferences
 import com.m3u.data.database.model.ColorPack
 import com.m3u.features.setting.components.CheckBoxSharedPreference
 import com.m3u.i18n.R.string
@@ -131,7 +131,7 @@ internal fun AppearanceFragment(
                 onChanged = { preferences.followSystemTheme = !preferences.followSystemTheme },
             )
 
-            val useDynamicColorsAvailable = Preferences.DEFAULT_USE_DYNAMIC_COLORS
+            val useDynamicColorsAvailable = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
 
             CheckBoxSharedPreference(
                 title = string.feat_setting_use_dynamic_colors,
