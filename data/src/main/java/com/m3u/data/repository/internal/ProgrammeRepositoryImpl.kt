@@ -1,5 +1,6 @@
 package com.m3u.data.repository.internal
 
+import android.app.Application
 import androidx.paging.PagingSource
 import com.m3u.core.architecture.dispatcher.Dispatcher
 import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
@@ -24,8 +25,10 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.Instant
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import java.util.zip.GZIPInputStream
 import javax.inject.Inject
 
 internal class ProgrammeRepositoryImpl @Inject constructor(
@@ -35,7 +38,8 @@ internal class ProgrammeRepositoryImpl @Inject constructor(
     private val epgParser: EpgParser,
     @OkhttpClient(true) private val okHttpClient: OkHttpClient,
     @Dispatcher(IO) private val ioDispatcher: CoroutineDispatcher,
-    delegate: Logger
+    delegate: Logger,
+    private val application: Application
 ) : ProgrammeRepository {
     private val logger = delegate.install(Profiles.REPOS_PROGRAMME)
     override val refreshingPlaylistUrls = MutableStateFlow<List<String>>(emptyList())
@@ -92,18 +96,32 @@ internal class ProgrammeRepositoryImpl @Inject constructor(
 
     private suspend fun downloadEpgOrThrow(
         epgUrl: String,
-    ): EpgData = withContext(ioDispatcher) {
-        okHttpClient.newCall(
-            Request.Builder()
-                .url(epgUrl)
-                .build()
-        )
-            .execute()
-            .body
-            ?.byteStream()
-            ?.use { input ->
-                epgParser.execute(input) { _, _ -> }
-            }
-            .let { checkNotNull(it) }
+    ): EpgData {
+        application.cacheDir
+        val isGzip = epgUrl
+            .toHttpUrlOrNull()
+            ?.pathSegments
+            ?.lastOrNull()
+            ?.endsWith(".gz", true)
+            ?: false
+        return withContext(ioDispatcher) {
+            okHttpClient.newCall(
+                Request.Builder()
+                    .url(epgUrl)
+                    .build()
+            )
+                .execute()
+                .body
+                ?.byteStream()
+                ?.let {
+                    if (isGzip) {
+                        GZIPInputStream(it).buffered()
+                    } else it
+                }
+                ?.use { input ->
+                    epgParser.execute(input) { _, _ -> }
+                }
+                .let { checkNotNull(it) }
+        }
     }
 }
