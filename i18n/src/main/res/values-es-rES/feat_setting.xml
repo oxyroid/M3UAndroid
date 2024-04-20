@@ -111,6 +111,6 @@
     <string name="feat_setting_paging">numeración de canales</string>
     <string name="feat_setting_paging_description">
         útil para demasiados canales,
-        pero dejarán de agruparse al mismo tiempo
+        pero dejarán de ser agrupadas al mismo tiempo
     </string>
 </resources>
