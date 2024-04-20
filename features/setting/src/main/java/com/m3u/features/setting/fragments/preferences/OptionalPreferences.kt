@@ -14,6 +14,7 @@ import androidx.compose.material.icons.rounded.FlashOn
 import androidx.compose.material.icons.rounded.Loop
 import androidx.compose.material.icons.rounded.PictureInPicture
 import androidx.compose.material.icons.rounded.ReplayCircleFilled
+import androidx.compose.material.icons.rounded.Save
 import androidx.compose.material.icons.rounded.ScreenRotation
 import androidx.compose.material.icons.rounded.SettingsEthernet
 import androidx.compose.material.icons.rounded.Unarchive
@@ -109,6 +110,13 @@ fun OptionalPreferences(modifier: Modifier = Modifier) {
                         icon = Icons.Rounded.Unarchive,
                         checked = preferences.panel,
                         onChanged = { preferences.panel = !preferences.panel }
+                    )
+                    CheckBoxSharedPreference(
+                        title = string.feat_setting_cache,
+                        content = string.feat_setting_cache_description,
+                        checked = preferences.cache,
+                        icon = Icons.Rounded.Save,
+                        onChanged = { preferences.cache = !preferences.cache }
                     )
                 }
 

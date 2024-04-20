@@ -92,6 +92,7 @@ class Preferences @Inject constructor(
     var paging: Boolean by
     sharedPreferences.booleanAsState(DEFAULT_PAGING, PAGING)
     var panel: Boolean by sharedPreferences.booleanAsState(DEFAULT_PLAYER_PANEL, PLAYER_PANEL)
+    var cache: Boolean by sharedPreferences.booleanAsState(DEFAULT_CACHE, CACHE)
 
     companion object {
         private const val SHARED_SETTINGS = "shared_settings"
@@ -133,6 +134,7 @@ class Preferences @Inject constructor(
         const val DEFAULT_ALWAYS_SHOW_REFRESH = false
         const val DEFAULT_PAGING = false
         const val DEFAULT_PLAYER_PANEL = true
+        const val DEFAULT_CACHE = false
 
         const val KEEP_FAVOURITE_AND_HIDDEN = "playlist-strategy"
         const val ROW_COUNT = "rowCount"
@@ -163,6 +165,7 @@ class Preferences @Inject constructor(
         const val ALWAYS_SHOW_REFRESH = "always-show-refresh"
         const val PAGING = "paging"
         const val PLAYER_PANEL = "player_panel"
+        const val CACHE = "cache"
     }
 
     init {

@@ -144,6 +144,7 @@ class PlayerManagerV2Impl @Inject constructor(
 
     private var currentConnectTimeout = preferences.connectTimeout
     private var currentTunneling = preferences.tunneling
+    private var currentCache = preferences.cache
     private var observePreferencesChangingJob: Job? = null
 
     override suspend fun play(command: MediaCommand) {
@@ -171,12 +172,13 @@ class PlayerManagerV2Impl @Inject constructor(
 
             observePreferencesChangingJob?.cancel()
             observePreferencesChangingJob = mainCoroutineScope.launch {
-                observePreferencesChanging { timeout, tunneling ->
-                    if (timeout != currentConnectTimeout || tunneling != currentTunneling) {
+                observePreferencesChanging { timeout, tunneling, cache ->
+                    if (timeout != currentConnectTimeout || tunneling != currentTunneling || cache != currentCache) {
                         logger.post { "preferences changed, replaying..." }
                         replay()
                         currentConnectTimeout = timeout
                         currentTunneling = tunneling
+                        currentCache = cache
                     }
                 }
             }
@@ -327,23 +329,28 @@ class PlayerManagerV2Impl @Inject constructor(
         }
     }
 
-    private fun createHttpDataSourceFactory(userAgent: String?): DataSource.Factory =
-        CacheDataSource.Factory()
-            .setUpstreamDataSourceFactory(
-                OkHttpDataSource.Factory(okHttpClient)
-                    .setUserAgent(userAgent)
-            )
-            .setCache(cache)
-            .setFlags(CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR)
+    private fun createHttpDataSourceFactory(userAgent: String?): DataSource.Factory {
+        val upstream = OkHttpDataSource.Factory(okHttpClient)
+            .setUserAgent(userAgent)
+        return if (preferences.cache) {
+            CacheDataSource.Factory()
+                .setUpstreamDataSourceFactory(
+                    upstream
+                )
+                .setCache(cache)
+                .setFlags(CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR)
+        } else upstream
+    }
 
     private suspend fun observePreferencesChanging(
-        onChanged: suspend (timeout: Long, tunneling: Boolean) -> Unit
+        onChanged: suspend (timeout: Long, tunneling: Boolean, cache: Boolean) -> Unit
     ): Unit = coroutineScope {
         combine(
             snapshotFlow { preferences.connectTimeout },
-            snapshotFlow { preferences.tunneling }
-        ) { timeout, tunneling ->
-            onChanged(timeout, tunneling)
+            snapshotFlow { preferences.tunneling },
+            snapshotFlow { preferences.cache }
+        ) { timeout, tunneling, cache ->
+            onChanged(timeout, tunneling, cache)
         }
             .collect()
     }

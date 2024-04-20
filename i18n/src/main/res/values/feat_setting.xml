@@ -108,9 +108,11 @@
 
     <string name="feat_setting_always_replay">always show replay button</string>
 
-    <string name="feat_setting_player_panel">Player Panel</string>
+    <string name="feat_setting_player_panel">player panel</string>
     <string name="feat_setting_player_panel_description">swipe up the player to expand it in portrait mode</string>
 
+    <string name="feat_setting_cache">cache while playing</string>
+    <string name="feat_setting_cache_description">this option may prevent normal playback</string>
     <string name="feat_setting_clear_cache">clear cache (%s)</string>
 
     <string name="feat_setting_paging">paging channels</string>
