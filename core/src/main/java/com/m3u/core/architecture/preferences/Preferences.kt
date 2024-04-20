@@ -91,7 +91,7 @@ class Preferences @Inject constructor(
     sharedPreferences.booleanAsState(DEFAULT_ALWAYS_SHOW_REFRESH, ALWAYS_SHOW_REFRESH)
     var paging: Boolean by
     sharedPreferences.booleanAsState(DEFAULT_PAGING, PAGING)
-    var playerPanel: Boolean by sharedPreferences.booleanAsState(DEFAULT_PLAYER_PANEL, PLAYER_PANEL)
+    var panel: Boolean by sharedPreferences.booleanAsState(DEFAULT_PLAYER_PANEL, PLAYER_PANEL)
 
     companion object {
         private const val SHARED_SETTINGS = "shared_settings"

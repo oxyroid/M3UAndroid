@@ -90,6 +90,7 @@ fun StreamRoute(
     var choosing by remember { mutableStateOf(false) }
 
     val isPanelSupported = configuration.screenWidthDp < configuration.screenHeightDp
+    val isPanelEnabled = preferences.panel
 
     val maskState = rememberMaskState()
     val pullPanelLayoutState = rememberPullPanelLayoutState()
@@ -156,7 +157,7 @@ fun StreamRoute(
 //        SharedTransitionLayout {
         PullPanelLayout(
             state = pullPanelLayoutState,
-            enabled = isPanelSupported,
+            enabled = isPanelSupported && isPanelEnabled,
             onValueChanged = { state ->
                 when (state) {
                     PullPanelLayoutValue.EXPANDED -> {
