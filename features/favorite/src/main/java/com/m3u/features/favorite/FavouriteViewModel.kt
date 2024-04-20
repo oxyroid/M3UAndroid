@@ -27,7 +27,7 @@ import com.m3u.data.parser.xtream.XtreamStreamInfo
 import com.m3u.data.repository.MediaRepository
 import com.m3u.data.repository.PlaylistRepository
 import com.m3u.data.repository.StreamRepository
-import com.m3u.data.service.PlayerManagerV2
+import com.m3u.data.service.PlayerManager
 import com.m3u.ui.Sort
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
@@ -50,7 +50,7 @@ class FavouriteViewModel @Inject constructor(
     private val streamRepository: StreamRepository,
     private val mediaRepository: MediaRepository,
     preferences: Preferences,
-    playerManager: PlayerManagerV2,
+    playerManager: PlayerManager,
     @Dispatcher(IO) ioDispatcher: CoroutineDispatcher,
     delegate: Logger
 ) : ViewModel() {

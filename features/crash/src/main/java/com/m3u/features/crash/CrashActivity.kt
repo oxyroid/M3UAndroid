@@ -12,7 +12,7 @@ import com.m3u.core.architecture.dispatcher.Dispatcher
 import com.m3u.core.architecture.dispatcher.M3uDispatchers.Main
 import com.m3u.core.architecture.preferences.Preferences
 import com.m3u.data.service.Messager
-import com.m3u.data.service.PlayerManagerV2
+import com.m3u.data.service.PlayerManager
 import com.m3u.data.service.RemoteDirectionService
 import com.m3u.ui.Toolkit
 import com.m3u.ui.helper.AbstractHelper
@@ -38,7 +38,7 @@ class CrashActivity : ComponentActivity() {
     private lateinit var launcher: ActivityResultLauncher<String>
 
     @Inject
-    lateinit var playerManager: PlayerManagerV2
+    lateinit var playerManager: PlayerManager
 
     @Inject
     @Dispatcher(Main)

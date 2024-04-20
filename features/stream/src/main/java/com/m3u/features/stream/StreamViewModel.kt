@@ -15,13 +15,12 @@ import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.Profiles
 import com.m3u.core.architecture.logger.install
 import com.m3u.core.architecture.logger.post
-import com.m3u.data.database.dao.ProgrammeDao
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.Stream
 import com.m3u.data.repository.ProgrammeRepository
 import com.m3u.data.repository.StreamRepository
-import com.m3u.data.service.PlayerManagerV2
+import com.m3u.data.service.PlayerManager
 import com.m3u.data.service.selectedFormats
 import com.m3u.data.service.trackFormats
 import com.m3u.dlna.DLNACastManager
@@ -67,10 +66,9 @@ class ProgrammeGuide {
 @HiltViewModel
 class StreamViewModel @Inject constructor(
     private val streamRepository: StreamRepository,
-    private val playerManager: PlayerManagerV2,
+    private val playerManager: PlayerManager,
     private val audioManager: AudioManager,
     private val programmeRepository: ProgrammeRepository,
-    private val programmeDao: ProgrammeDao,
     delegate: Logger,
 ) : ViewModel(), OnDeviceRegistryListener, OnDeviceControlListener {
     private val logger = delegate.install(Profiles.VIEWMODEL_STREAM)
@@ -86,17 +84,6 @@ class StreamViewModel @Inject constructor(
 
     internal val stream: StateFlow<Stream?> = playerManager.stream
     internal val playlist: StateFlow<Playlist?> = playerManager.playlist
-
-    init {
-        viewModelScope.launch {
-            programmeDao.observeAll()
-                .first()
-                .map { Instant.fromEpochMilliseconds(it.end) }
-                .sorted()
-                .asReversed()
-                .let { logger.post { it } }
-        }
-    }
 
     internal val isSeriesPlaylist: StateFlow<Boolean> = playerManager
         .playlist

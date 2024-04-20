@@ -48,7 +48,7 @@ import com.m3u.data.repository.MediaRepository
 import com.m3u.data.repository.PlaylistRepository
 import com.m3u.data.repository.StreamRepository
 import com.m3u.data.service.Messager
-import com.m3u.data.service.PlayerManagerV2
+import com.m3u.data.service.PlayerManager
 import com.m3u.data.worker.SubscriptionWorker
 import com.m3u.features.playlist.PlaylistMessage.StreamCoverSaved
 import com.m3u.features.playlist.navigation.PlaylistNavigation
@@ -79,7 +79,7 @@ class PlaylistViewModel @Inject constructor(
     private val playlistRepository: PlaylistRepository,
     private val mediaRepository: MediaRepository,
     private val messager: Messager,
-    playerManager: PlayerManagerV2,
+    playerManager: PlayerManager,
     preferences: Preferences,
     workManager: WorkManager,
     @Dispatcher(IO) private val ioDispatcher: CoroutineDispatcher,

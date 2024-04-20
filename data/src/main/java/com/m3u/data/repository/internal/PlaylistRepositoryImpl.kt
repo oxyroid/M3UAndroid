@@ -5,7 +5,6 @@ import android.content.Context
 import android.net.Uri
 import androidx.core.net.toUri
 import androidx.work.WorkManager
-import com.chuckerteam.chucker.api.ChuckerInterceptor
 import com.m3u.core.architecture.dispatcher.Dispatcher
 import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
 import com.m3u.core.architecture.logger.Logger
@@ -19,15 +18,14 @@ import com.m3u.core.architecture.preferences.annotation.PlaylistStrategy
 import com.m3u.core.util.basic.startsWithAny
 import com.m3u.core.util.readFileContent
 import com.m3u.core.util.readFileName
+import com.m3u.data.api.OkhttpClient
 import com.m3u.data.database.dao.PlaylistDao
-import com.m3u.data.database.dao.ProgrammeDao
 import com.m3u.data.database.dao.StreamDao
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.PlaylistWithCount
 import com.m3u.data.database.model.PlaylistWithStreams
 import com.m3u.data.database.model.Stream
-import com.m3u.data.parser.epg.EpgParser
 import com.m3u.data.parser.m3u.M3UData
 import com.m3u.data.parser.m3u.M3UParser
 import com.m3u.data.parser.m3u.toStream
@@ -71,26 +69,16 @@ private const val BUFFER_RESTORE_CAPACITY = 400
 internal class PlaylistRepositoryImpl @Inject constructor(
     private val playlistDao: PlaylistDao,
     private val streamDao: StreamDao,
-    private val programmeDao: ProgrammeDao,
     delegate: Logger,
-    client: OkHttpClient,
+    @OkhttpClient(true) private val okHttpClient: OkHttpClient,
     private val m3uParser: M3UParser,
     private val xtreamParser: XtreamParser,
-    private val epgParser: EpgParser,
     private val preferences: Preferences,
     private val workManager: WorkManager,
     @ApplicationContext private val context: Context,
     @Dispatcher(IO) private val ioDispatcher: CoroutineDispatcher,
 ) : PlaylistRepository {
     private val logger = delegate.install(Profiles.REPOS_PLAYLIST)
-    private val okHttpClient = client
-        .newBuilder()
-        .addInterceptor(
-            ChuckerInterceptor.Builder(context)
-                .maxContentLength(10240)
-                .build()
-        )
-        .build()
 
     override suspend fun m3uOrThrow(
         title: String,

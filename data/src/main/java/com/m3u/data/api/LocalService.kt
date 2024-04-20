@@ -48,7 +48,7 @@ interface LocalService {
 @Singleton
 class LocalPreparedService @Inject constructor(
     private val builder: Retrofit.Builder,
-    private val okHttpClient: OkHttpClient,
+    @OkhttpClient(true) private val okHttpClient: OkHttpClient,
     @Logger.MessageImpl private val logger: Logger,
     private val publisher: Publisher,
 ) : LocalService {

@@ -1,15 +1,13 @@
 package com.m3u.data.parser.xtream
 
-import android.content.Context
-import com.chuckerteam.chucker.api.ChuckerInterceptor
 import com.m3u.core.architecture.dispatcher.Dispatcher
 import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.Profiles
 import com.m3u.core.architecture.logger.execute
 import com.m3u.core.architecture.logger.install
+import com.m3u.data.api.OkhttpClient
 import com.m3u.data.database.model.DataSource
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
@@ -27,9 +25,8 @@ import javax.inject.Inject
 
 internal class XtreamParserImpl @Inject constructor(
     @Dispatcher(IO) private val ioDispatcher: CoroutineDispatcher,
-    okHttpClient: OkHttpClient,
-    delegate: Logger,
-    @ApplicationContext context: Context
+    @OkhttpClient(true) okHttpClient: OkHttpClient,
+    delegate: Logger
 ) : XtreamParser {
     private val logger = delegate.install(Profiles.PARSER_XTREAM)
 
@@ -42,11 +39,6 @@ internal class XtreamParserImpl @Inject constructor(
         }
     private val okHttpClient = okHttpClient
         .newBuilder()
-        .addInterceptor(
-            ChuckerInterceptor.Builder(context)
-                .maxContentLength(10240)
-                .build()
-        )
         .callTimeout(Duration.ofMillis(Int.MAX_VALUE.toLong()))
         .connectTimeout(Duration.ofMillis(Int.MAX_VALUE.toLong()))
         .readTimeout(Duration.ofMillis(Int.MAX_VALUE.toLong()))

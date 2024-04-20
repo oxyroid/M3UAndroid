@@ -17,7 +17,7 @@ import com.m3u.data.repository.PlaylistRepository
 import com.m3u.data.repository.StreamRepository
 import com.m3u.data.service.MediaCommand
 import com.m3u.data.service.Messager
-import com.m3u.data.service.PlayerManagerV2
+import com.m3u.data.service.PlayerManager
 import com.m3u.data.service.RemoteDirectionService
 import com.m3u.ui.Toolkit
 import com.m3u.ui.helper.AbstractHelper
@@ -48,7 +48,7 @@ class PlayerActivity : ComponentActivity() {
     lateinit var preferences: Preferences
 
     @Inject
-    lateinit var playerManager: PlayerManagerV2
+    lateinit var playerManager: PlayerManager
 
     @Inject
     lateinit var streamRepository: StreamRepository

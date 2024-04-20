@@ -19,7 +19,7 @@ import com.m3u.core.architecture.logger.Logger
 import com.m3u.data.repository.logger.MessageLogger
 import com.m3u.data.repository.logger.StubLogger
 import com.m3u.data.service.internal.MessagerImpl
-import com.m3u.data.service.internal.PlayerManagerV2Impl
+import com.m3u.data.service.internal.PlayerManagerImpl
 import com.m3u.data.service.internal.RemoteDirectionServiceImpl
 import com.m3u.data.service.internal.TraceFileProviderImpl
 import com.m3u.data.television.http.HttpServer
@@ -41,7 +41,7 @@ import javax.inject.Singleton
 internal interface BindServicesModule {
     @Binds
     @Singleton
-    fun bindPlayerManagerV2(impl: PlayerManagerV2Impl): PlayerManagerV2
+    fun bindPlayerManager(impl: PlayerManagerImpl): PlayerManager
 
     @Binds
     @Singleton

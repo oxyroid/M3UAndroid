@@ -33,7 +33,7 @@ import com.m3u.data.parser.xtream.XtreamInput
 import com.m3u.data.repository.PlaylistRepository
 import com.m3u.data.repository.StreamRepository
 import com.m3u.data.service.Messager
-import com.m3u.data.service.PlayerManagerV2
+import com.m3u.data.service.PlayerManager
 import com.m3u.data.worker.BackupWorker
 import com.m3u.data.worker.RestoreWorker
 import com.m3u.data.worker.SubscriptionWorker
@@ -60,7 +60,7 @@ class SettingViewModel @Inject constructor(
     preferences: Preferences,
     private val messager: Messager,
     private val localService: LocalPreparedService,
-    private val playerManager: PlayerManagerV2,
+    private val playerManager: PlayerManager,
     publisher: Publisher,
     colorPackDao: ColorPackDao,
     @Dispatcher(IO) private val ioDispatcher: CoroutineDispatcher,

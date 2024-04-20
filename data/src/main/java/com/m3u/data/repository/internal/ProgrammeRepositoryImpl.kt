@@ -7,6 +7,7 @@ import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.Profiles
 import com.m3u.core.architecture.logger.install
 import com.m3u.core.architecture.logger.post
+import com.m3u.data.api.OkhttpClient
 import com.m3u.data.database.dao.PlaylistDao
 import com.m3u.data.database.dao.ProgrammeDao
 import com.m3u.data.database.dao.StreamDao
@@ -31,7 +32,7 @@ internal class ProgrammeRepositoryImpl @Inject constructor(
     private val streamDao: StreamDao,
     private val programmeDao: ProgrammeDao,
     private val epgParser: EpgParser,
-    private val okHttpClient: OkHttpClient,
+    @OkhttpClient(true) private val okHttpClient: OkHttpClient,
     @Dispatcher(IO) private val ioDispatcher: CoroutineDispatcher,
     delegate: Logger
 ) : ProgrammeRepository {

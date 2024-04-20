@@ -29,7 +29,7 @@ import com.m3u.core.util.context.isPortraitMode
 import com.m3u.core.wrapper.Message
 import com.m3u.data.service.MediaCommand
 import com.m3u.data.service.Messager
-import com.m3u.data.service.PlayerManagerV2
+import com.m3u.data.service.PlayerManager
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -37,7 +37,7 @@ import kotlinx.coroutines.launch
 
 class AbstractHelper(
     private val mainDispatcher: CoroutineDispatcher,
-    private val playerManager: PlayerManagerV2,
+    private val playerManager: PlayerManager,
     private val activity: ComponentActivity,
     private val messager: Messager,
     title: MutableState<String> = mutableStateOf(""),
