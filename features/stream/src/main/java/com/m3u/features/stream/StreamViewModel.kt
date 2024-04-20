@@ -20,6 +20,7 @@ import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.Stream
 import com.m3u.data.repository.ProgrammeRepository
 import com.m3u.data.repository.StreamRepository
+import com.m3u.data.service.Messager
 import com.m3u.data.service.PlayerManager
 import com.m3u.data.service.selectedFormats
 import com.m3u.data.service.trackFormats
@@ -70,6 +71,7 @@ class StreamViewModel @Inject constructor(
     private val audioManager: AudioManager,
     private val programmeRepository: ProgrammeRepository,
     delegate: Logger,
+    private val messager: Messager
 ) : ViewModel(), OnDeviceRegistryListener, OnDeviceControlListener {
     private val logger = delegate.install(Profiles.VIEWMODEL_STREAM)
     private val _devices = MutableStateFlow<List<Device<*, *, *>>>(emptyList())
@@ -331,7 +333,6 @@ class StreamViewModel @Inject constructor(
             val stream = stream.value ?: return@launch
             val snapshot = snapshots.find { it.playlistUrl == stream.playlistUrl }
             if (ignoreCache || snapshot == null || snapshot.end < epochMilliseconds) {
-                programmeRepository.fetchProgrammesOrThrow(stream.playlistUrl)
                 logger.post {
                     if (snapshot == null) {
                         "Cached programme is not existed, fetching..."
@@ -339,6 +340,13 @@ class StreamViewModel @Inject constructor(
                         val expired = Instant.fromEpochMilliseconds(snapshot.end)
                         "Cached programme is expired (in $expired), fetching..."
                     }
+                }
+                val result = runCatching {
+                    programmeRepository.fetchProgrammesOrThrow(stream.playlistUrl)
+                }
+                if (result.isFailure) {
+                    messager.emit(result.exceptionOrNull()?.message.orEmpty())
+                    return@launch
                 }
             } else {
                 val expired = Instant.fromEpochMilliseconds(snapshot.end)
