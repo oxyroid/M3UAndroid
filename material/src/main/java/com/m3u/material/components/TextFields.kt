@@ -18,7 +18,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.AbsoluteRoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -438,5 +438,5 @@ private object TextFieldDefaults {
     fun contentColor() = MaterialTheme.colorScheme.onSurface
 
     @Composable
-    fun shape() = RoundedCornerShape(25)
+    fun shape() = AbsoluteRoundedCornerShape(16.dp)
 }

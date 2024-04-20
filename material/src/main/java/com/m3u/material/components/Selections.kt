@@ -9,7 +9,7 @@ import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.selection.toggleable
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.AbsoluteRoundedCornerShape
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
@@ -120,6 +120,6 @@ private fun Selection(
 }
 
 object SelectionsDefaults {
-    val Shape = RoundedCornerShape(25)
+    val Shape = AbsoluteRoundedCornerShape(16.dp)
     val MinHeight = 56.dp
 }
