@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="feat_setting_placeholder_url">dirección de playlist</string>
     <string name="feat_setting_app_version">versión de app</string>
     <string name="feat_setting_label_subscribe">subscribirse</string>
     <string name="feat_setting_success_subscribe">subscripción completa</string>
     <string name="feat_setting_failed_malformed_url">dirección mal estructurada (%s)</string>
     <string name="feat_setting_error_empty_title">el nombre de playlist name está vacío</string>
     <string name="feat_setting_placeholder_title">nombre de playlist</string>
+    <string name="feat_setting_placeholder_url">enlace a playlist</string>
+    <string name="feat_setting_placeholder_epg">enlace a EPG</string>
     <string name="feat_setting_label_subscribing">suscribiendo</string>
     <string name="feat_setting_sync_mode_all">todo</string>
     <string name="feat_setting_sync_mode_skip_favourite_and_hidden">saltar favorito</string>
@@ -45,6 +46,7 @@
     <string name="feat_setting_dropbox">dropbox</string>
     <string name="feat_setting_project_about">sobre el proyecto</string>
     <string name="feat_setting_local_storage">almacenamiento local</string>
+    <string name="feat_setting_epg">EPG</string>
     <string name="feat_setting_error_unselected_file">el archivo todavía se seleccionó</string>
     <string name="feat_setting_error_blank_url">url vacía</string>
     <string name="feat_setting_use_dynamic_colors">colores dinámicos</string>
@@ -97,13 +99,17 @@
 
     <string name="feat_setting_always_replay">mostrar siempre un botón de reproducción</string>
 
+    <string name="feat_setting_player_panel">panel del reproductor</string>
+    <string name="feat_setting_player_panel_description">desliza arriba del reproductor en vertical para expandirlo</string>
+
+    <string name="feat_setting_cache">usar caché cuando reproduce</string>
+    <string name="feat_setting_cache_description">esta opción puede interferir la reproducción normal</string>
+
     <string name="feat_setting_clear_cache">limpiar caché (%s)</string>
 
     <string name="feat_setting_paging">numerado de canales</string>
-
-    <!--invalidate-->
-<!--    <string name="feat_setting_paging_description">-->
-<!--        útil para grandes cantidades de canales,-->
-<!--        pero el ordenado y el agrupado se desactivarán a la vez-->
-<!--    </string>-->
+    <string name="feat_setting_paging_description">
+        útil para muchísimos canales,
+        pero dejarán de agruparse a la vez
+    </string>
 </resources>
