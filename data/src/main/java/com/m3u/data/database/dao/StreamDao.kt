@@ -98,7 +98,7 @@ internal interface StreamDao {
         query: String
     ): PagingSource<Int, Stream>
 
-    @Query("SELECT * FROM streams WHERE playlistUrl = :url AND title LIKE '%'||:query||'%' ORDER BY seen")
+    @Query("SELECT * FROM streams WHERE playlistUrl = :url AND title LIKE '%'||:query||'%' ORDER BY seen DESC")
     fun pagingAllByPlaylistUrlRecently(
         url: String,
         query: String
