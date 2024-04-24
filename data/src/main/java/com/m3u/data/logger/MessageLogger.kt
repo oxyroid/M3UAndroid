@@ -1,4 +1,4 @@
-package com.m3u.data.repository.logger
+package com.m3u.data.logger
 
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.wrapper.Message

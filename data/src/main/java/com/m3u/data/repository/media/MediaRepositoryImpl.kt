@@ -1,4 +1,4 @@
-package com.m3u.data.repository.internal
+package com.m3u.data.repository.media
 
 import android.content.Context
 import android.content.Intent
@@ -19,7 +19,6 @@ import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.execute
 import com.m3u.core.architecture.logger.install
 import com.m3u.core.architecture.logger.sandBox
-import com.m3u.data.repository.MediaRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.ktor.util.cio.writeChannel
 import io.ktor.utils.io.ByteReadChannel

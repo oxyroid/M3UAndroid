@@ -46,8 +46,8 @@ import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.Stream
 import com.m3u.data.database.model.copyXtreamEpisode
 import com.m3u.data.database.model.copyXtreamSeries
-import com.m3u.data.repository.PlaylistRepository
-import com.m3u.data.repository.StreamRepository
+import com.m3u.data.repository.playlist.PlaylistRepository
+import com.m3u.data.repository.stream.StreamRepository
 import com.m3u.data.service.MediaCommand
 import com.m3u.data.service.PlayerManager
 import dagger.hilt.android.qualifiers.ApplicationContext

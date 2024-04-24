@@ -6,8 +6,6 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import androidx.room.Transaction
-import com.m3u.core.util.belong
 import com.m3u.data.database.model.Stream
 import kotlinx.coroutines.flow.Flow
 
@@ -28,21 +26,14 @@ internal interface StreamDao {
     @Query("DELETE FROM streams WHERE playlistUrl = :playlistUrl")
     suspend fun deleteByPlaylistUrl(playlistUrl: String)
 
-    @Query("DELETE FROM streams WHERE favourite = 0 AND hidden = 0 AND playlistUrl = :playlistUrl")
-    suspend fun deleteUnfavouriteAndUnhiddenByPlaylistUrl(playlistUrl: String)
+    @Query("DELETE FROM streams WHERE playlistUrl = :playlistUrl AND (favourite = 0 AND hidden = 0)")
+    suspend fun deleteByPlaylistUrlIgnoreFavOrHidden(playlistUrl: String)
 
-    @Query("SELECT * FROM streams WHERE playlistUrl = :playlistUrl AND (favourite = 1 OR hidden = 1)")
-    suspend fun getFavouriteOrHiddenByPlaylistUrl(playlistUrl: String): List<Stream>
+    @Query("SELECT channel_id FROM streams WHERE channel_id IS NOT NULL AND playlistUrl IN (:playlistUrls) AND (favourite = 1 OR hidden = 1)")
+    suspend fun getFavOrHiddenChannelIdsByPlaylistUrl(vararg playlistUrls: String): List<String>
 
-    @Transaction
-    suspend fun mergeUnfavouriteOrUnhiddenIfNeededByPlaylistUrl(playlistUrl: String) {
-        val streams = getByPlaylistUrl(playlistUrl)
-        val rebased = getFavouriteOrHiddenByPlaylistUrl(playlistUrl)
-
-        streams
-            .filter { it belong rebased && !it.favourite && !it.hidden }
-            .forEach { stream -> delete(stream) }
-    }
+    @Query("SELECT url FROM streams WHERE channel_id IS NULL AND playlistUrl IN (:playlistUrls) AND (favourite = 1 OR hidden = 1)")
+    suspend fun getFavOrHiddenUrlsByPlaylistUrlNotContainsChannelId(vararg playlistUrls: String): List<String>
 
     @Query("SELECT * FROM streams WHERE seen != 0 ORDER BY seen DESC LIMIT 1")
     suspend fun getPlayedRecently(): Stream?

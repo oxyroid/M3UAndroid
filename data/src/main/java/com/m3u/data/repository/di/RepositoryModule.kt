@@ -2,16 +2,16 @@
 
 package com.m3u.data.repository.di
 
-import com.m3u.data.repository.MediaRepository
-import com.m3u.data.repository.PlaylistRepository
-import com.m3u.data.repository.ProgrammeRepository
-import com.m3u.data.repository.StreamRepository
-import com.m3u.data.repository.TelevisionRepository
-import com.m3u.data.repository.internal.MediaRepositoryImpl
-import com.m3u.data.repository.internal.PlaylistRepositoryImpl
-import com.m3u.data.repository.internal.ProgrammeRepositoryImpl
-import com.m3u.data.repository.internal.StreamRepositoryImpl
-import com.m3u.data.repository.internal.TelevisionRepositoryImpl
+import com.m3u.data.repository.media.MediaRepository
+import com.m3u.data.repository.playlist.PlaylistRepository
+import com.m3u.data.repository.programme.ProgrammeRepository
+import com.m3u.data.repository.stream.StreamRepository
+import com.m3u.data.repository.television.TelevisionRepository
+import com.m3u.data.repository.media.MediaRepositoryImpl
+import com.m3u.data.repository.playlist.PlaylistRepositoryImpl
+import com.m3u.data.repository.programme.ProgrammeRepositoryImpl
+import com.m3u.data.repository.stream.StreamRepositoryImpl
+import com.m3u.data.repository.television.TelevisionRepositoryImpl
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn

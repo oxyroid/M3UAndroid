@@ -5,7 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import com.m3u.core.architecture.FileProvider
-import com.m3u.data.repository.MediaRepository
+import com.m3u.data.repository.media.MediaRepository
 import com.m3u.features.crash.CrashActivity
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.io.File

@@ -16,8 +16,8 @@ import androidx.media3.exoplayer.offline.DownloadManager
 import androidx.work.WorkManager
 import com.m3u.core.architecture.FileProvider
 import com.m3u.core.architecture.logger.Logger
-import com.m3u.data.repository.logger.MessageLogger
-import com.m3u.data.repository.logger.StubLogger
+import com.m3u.data.logger.MessageLogger
+import com.m3u.data.logger.StubLogger
 import com.m3u.data.service.internal.MessagerImpl
 import com.m3u.data.service.internal.PlayerManagerImpl
 import com.m3u.data.service.internal.RemoteDirectionServiceImpl

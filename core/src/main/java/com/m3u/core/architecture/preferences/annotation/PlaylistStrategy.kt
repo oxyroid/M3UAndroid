@@ -10,6 +10,6 @@ package com.m3u.core.architecture.preferences.annotation
 annotation class PlaylistStrategy {
     companion object {
         const val ALL = 0
-        const val KEEP_FAVOURITE_AND_HIDDEN = 1
+        const val KEEP = 1
     }
 }

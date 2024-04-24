@@ -47,7 +47,5 @@ sealed class DataUnit {
         }
     }
 
-    object Unspecified : DataUnit() {
-        override fun toString(): String = "Unspecified"
-    }
+    data object Unspecified : DataUnit()
 }

@@ -60,14 +60,14 @@ internal fun RegularPreferences(
         TextPreference(
             title = stringResource(string.feat_setting_sync_mode).title(),
             icon = Icons.Rounded.Sync,
-            trailing = when (preferences.keepFavouriteAndHidden) {
+            trailing = when (preferences.playlistStrategy) {
                 PlaylistStrategy.ALL -> stringResource(string.feat_setting_sync_mode_all)
-                PlaylistStrategy.KEEP_FAVOURITE_AND_HIDDEN -> stringResource(string.feat_setting_sync_mode_skip_favourite_and_hidden)
+                PlaylistStrategy.KEEP -> stringResource(string.feat_setting_sync_mode_keep)
                 else -> ""
             }.title(),
             onClick = {
-                preferences.keepFavouriteAndHidden = when (preferences.keepFavouriteAndHidden) {
-                    PlaylistStrategy.ALL -> PlaylistStrategy.KEEP_FAVOURITE_AND_HIDDEN
+                preferences.playlistStrategy = when (preferences.playlistStrategy) {
+                    PlaylistStrategy.ALL -> PlaylistStrategy.KEEP
                     else -> PlaylistStrategy.ALL
                 }
             }

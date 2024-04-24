@@ -44,9 +44,9 @@ import com.m3u.core.wrapper.resource
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.Stream
 import com.m3u.data.parser.xtream.XtreamStreamInfo
-import com.m3u.data.repository.MediaRepository
-import com.m3u.data.repository.PlaylistRepository
-import com.m3u.data.repository.StreamRepository
+import com.m3u.data.repository.media.MediaRepository
+import com.m3u.data.repository.playlist.PlaylistRepository
+import com.m3u.data.repository.stream.StreamRepository
 import com.m3u.data.service.Messager
 import com.m3u.data.service.PlayerManager
 import com.m3u.data.worker.SubscriptionWorker
@@ -430,7 +430,7 @@ class PlaylistViewModel @Inject constructor(
 }
 
 @Immutable
-data class Category(
+internal data class Category(
     val name: String,
     val streams: List<Stream>
 )

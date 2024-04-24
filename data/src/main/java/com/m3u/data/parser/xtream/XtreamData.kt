@@ -109,7 +109,8 @@ fun XtreamLive.toStream(
     category = category,
     title = name.orEmpty(),
     cover = streamIcon,
-    playlistUrl = playlistUrl
+    playlistUrl = playlistUrl,
+    channelId = streamId?.toString()
 )
 
 fun XtreamVod.toStream(
@@ -123,7 +124,8 @@ fun XtreamVod.toStream(
     category = category,
     title = name.orEmpty(),
     cover = streamIcon,
-    playlistUrl = playlistUrl
+    playlistUrl = playlistUrl,
+    channelId = streamId?.toString()
 )
 
 fun XtreamSerial.asStream(
@@ -137,5 +139,6 @@ fun XtreamSerial.asStream(
     category = category,
     title = name.orEmpty(),
     cover = cover,
-    playlistUrl = playlistUrl
+    playlistUrl = playlistUrl,
+    channelId = seriesId?.toString()
 )

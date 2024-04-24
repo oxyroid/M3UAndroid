@@ -166,9 +166,18 @@ fun FavouriteRoute(
             )
             MediaSheet(
                 value = mediaSheetValue,
-                onFavouriteStream = { stream -> viewModel.favourite(stream.id) },
-                onCreateStreamShortcut = { stream -> viewModel.createShortcut(context, stream.id) },
-                onDismissRequest = { mediaSheetValue = MediaSheetValue.FavouriteScreen() }
+                onFavouriteStream = { stream ->
+                    viewModel.favourite(stream.id)
+                    mediaSheetValue = MediaSheetValue.FavouriteScreen()
+                },
+                onCreateStreamShortcut = { stream ->
+                    viewModel.createShortcut(context, stream.id)
+                    mediaSheetValue = MediaSheetValue.FavouriteScreen()
+                },
+                onDismissRequest = {
+                    mediaSheetValue = MediaSheetValue.FavouriteScreen()
+                    mediaSheetValue = MediaSheetValue.FavouriteScreen()
+                }
             )
         } else {
             TvSortFullScreenDialog(

@@ -1,6 +1,6 @@
-package com.m3u.data.repository.internal
+package com.m3u.data.repository
 
-object BackupOrRestoreContracts {
+internal object BackupOrRestoreContracts {
     fun wrapPlaylist(encoded: String): String = "P,${encoded.trim()}"
     fun wrapStream(encoded: String): String = "S,${encoded.trim()}"
     fun unwrapPlaylist(wrapped: String): String? {

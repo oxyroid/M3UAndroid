@@ -1,4 +1,4 @@
-package com.m3u.data.repository.internal
+package com.m3u.data.repository.television
 
 import android.net.nsd.NsdServiceInfo
 import androidx.compose.runtime.snapshotFlow
@@ -13,10 +13,6 @@ import com.m3u.core.util.coroutine.onTimeout
 import com.m3u.core.wrapper.Resource
 import com.m3u.core.wrapper.asResource
 import com.m3u.data.api.LocalPreparedService
-import com.m3u.data.repository.ConnectionToTelevisionValue
-import com.m3u.data.repository.TelevisionRepository
-import com.m3u.data.repository.UpdateKey
-import com.m3u.data.repository.UpdateState
 import com.m3u.data.television.Utils
 import com.m3u.data.television.http.HttpServer
 import com.m3u.data.television.model.Television

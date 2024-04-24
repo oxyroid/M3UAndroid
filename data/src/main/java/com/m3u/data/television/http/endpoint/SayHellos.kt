@@ -4,7 +4,7 @@ import com.m3u.core.architecture.Publisher
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.sandBox
 import com.m3u.core.wrapper.Message
-import com.m3u.data.repository.MediaRepository
+import com.m3u.data.repository.media.MediaRepository
 import com.m3u.data.television.model.Television
 import io.ktor.server.request.receiveChannel
 import io.ktor.server.response.respond

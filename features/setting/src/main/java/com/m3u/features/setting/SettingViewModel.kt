@@ -30,8 +30,8 @@ import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.Stream
 import com.m3u.data.parser.xtream.XtreamInput
-import com.m3u.data.repository.PlaylistRepository
-import com.m3u.data.repository.StreamRepository
+import com.m3u.data.repository.playlist.PlaylistRepository
+import com.m3u.data.repository.stream.StreamRepository
 import com.m3u.data.service.Messager
 import com.m3u.data.service.PlayerManager
 import com.m3u.data.worker.BackupWorker
@@ -151,33 +151,33 @@ class SettingViewModel @Inject constructor(
         val basicUrl = if (basicUrl.startWithHttpScheme()) basicUrl
         else "http://$basicUrl"
 
-        if (forTv) {
-            viewModelScope.launch {
-                localService.subscribe(
+        when {
+            forTv -> {
+                viewModelScope.launch {
+                    localService.subscribe(
+                        title,
+                        urlOrUri,
+                        basicUrl,
+                        username,
+                        password,
+                        epg.ifBlank { null },
+                        selected
+                    )
+                }
+            }
+
+            else -> when (selected) {
+                DataSource.M3U -> SubscriptionWorker.m3u(workManager, title, urlOrUri, epg)
+                DataSource.Xtream -> SubscriptionWorker.xtream(
+                    workManager,
                     title,
                     urlOrUri,
                     basicUrl,
                     username,
-                    password,
-                    epg.ifBlank { null },
-                    selected
+                    password
                 )
+                else -> return
             }
-            resetAllInputs()
-            return
-        }
-        when (selected) {
-            DataSource.M3U -> SubscriptionWorker.m3u(workManager, title, urlOrUri, epg)
-            DataSource.Xtream -> SubscriptionWorker.xtream(
-                workManager,
-                title,
-                urlOrUri,
-                basicUrl,
-                username,
-                password
-            )
-
-            else -> {}
         }
         messager.emit(SettingMessage.Enqueued)
         resetAllInputs()

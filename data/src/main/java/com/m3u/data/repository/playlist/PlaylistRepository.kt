@@ -1,4 +1,4 @@
-package com.m3u.data.repository
+package com.m3u.data.repository.playlist
 
 import android.net.Uri
 import com.m3u.data.parser.xtream.XtreamStreamInfo

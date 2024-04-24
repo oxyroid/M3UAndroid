@@ -1,4 +1,4 @@
-package com.m3u.data.repository
+package com.m3u.data.repository.media
 
 import android.graphics.drawable.Drawable
 import android.net.Uri

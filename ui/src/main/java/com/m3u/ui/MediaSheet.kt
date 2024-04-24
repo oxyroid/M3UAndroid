@@ -4,6 +4,7 @@ import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
@@ -26,6 +27,7 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import com.m3u.core.util.basic.title
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.Stream
@@ -223,29 +225,13 @@ private fun RowScope.ForyouScreenMediaSheetHeaderImpl(
     isInEditModeState: MutableState<Boolean>,
 ) {
     val spacing = LocalSpacing.current
+    val isInEditMode = isInEditModeState.value
     LaunchedEffect(titleState.value, userAgentState.value) {
         isInEditModeState.value = titleState.value != null && userAgentState.value != null
     }
     playlist?.let {
-        if (!isInEditModeState.value) {
-            Column(verticalArrangement = Arrangement.spacedBy(spacing.extraSmall)) {
-                Text(
-                    text = it.title,
-                    style = MaterialTheme.typography.titleLarge
-                )
-                it.userAgent?.ifEmpty { null }?.let { ua ->
-                    Text(
-                        text = ua,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = LocalContentColor.current.copy(0.38f),
-                        fontFamily = FontFamilies.LexendExa
-                    )
-                }
-            }
-        } else {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(spacing.small)
-            ) {
+        if (isInEditMode) {
+            Column(verticalArrangement = Arrangement.spacedBy(spacing.small)) {
                 PlaceholderField(
                     text = titleState.value.orEmpty(),
                     placeholder = stringResource(string.feat_foryou_title).title(),
@@ -257,17 +243,39 @@ private fun RowScope.ForyouScreenMediaSheetHeaderImpl(
                     onValueChange = { userAgentState.value = it }
                 )
             }
+        } else {
+            Row {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(spacing.extraSmall),
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text(
+                        text = it.title,
+                        style = MaterialTheme.typography.titleLarge
+                    )
+                    it.userAgent?.ifEmpty { null }?.let { ua ->
+                        Text(
+                            text = ua,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = LocalContentColor.current.copy(0.38f),
+                            maxLines = 1,
+                            fontFamily = FontFamilies.LexendExa,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                }
+
+                IconButton(
+                    icon = Icons.Rounded.Edit,
+                    contentDescription = null,
+                    onClick = {
+                        titleState.value = playlist.title
+                        userAgentState.value = playlist.userAgent.orEmpty()
+                    }
+                )
+            }
         }
     }
-    Spacer(modifier = Modifier.weight(1f))
-    IconButton(
-        icon = Icons.Rounded.Edit,
-        contentDescription = null,
-        onClick = {
-            titleState.value = playlist?.title.orEmpty()
-            userAgentState.value = playlist?.userAgent.orEmpty()
-        }
-    )
 }
 
 @Composable

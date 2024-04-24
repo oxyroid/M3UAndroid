@@ -13,8 +13,8 @@ import com.m3u.core.architecture.dispatcher.Dispatcher
 import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
 import com.m3u.core.architecture.preferences.Preferences
 import com.m3u.data.api.LocalPreparedService
-import com.m3u.data.repository.ConnectionToTelevisionValue
-import com.m3u.data.repository.TelevisionRepository
+import com.m3u.data.repository.television.ConnectionToTelevisionValue
+import com.m3u.data.repository.television.TelevisionRepository
 import com.m3u.data.service.Messager
 import com.m3u.data.television.model.RemoteDirection
 import com.m3u.ui.Destination

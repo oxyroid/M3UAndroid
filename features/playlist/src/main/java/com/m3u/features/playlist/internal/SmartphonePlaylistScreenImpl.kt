@@ -262,10 +262,22 @@ internal fun SmartphonePlaylistScreenImpl(
 
         MediaSheet(
             value = mediaSheetValue,
-            onFavouriteStream = { stream -> favourite(stream.id) },
-            onHideStream = { stream -> onHide(stream.id) },
-            onSaveStreamCover = { stream -> onSaveCover(stream.id) },
-            onCreateStreamShortcut = { stream -> onCreateShortcut(stream.id) },
+            onFavouriteStream = { stream ->
+                favourite(stream.id)
+                mediaSheetValue = MediaSheetValue.PlaylistScreen()
+            },
+            onHideStream = { stream ->
+                onHide(stream.id)
+                mediaSheetValue = MediaSheetValue.PlaylistScreen()
+            },
+            onSaveStreamCover = { stream ->
+                onSaveCover(stream.id)
+                mediaSheetValue = MediaSheetValue.PlaylistScreen()
+            },
+            onCreateStreamShortcut = { stream ->
+                onCreateShortcut(stream.id)
+                mediaSheetValue = MediaSheetValue.PlaylistScreen()
+            },
             onDismissRequest = { mediaSheetValue = MediaSheetValue.PlaylistScreen() }
         )
     }

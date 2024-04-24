@@ -26,8 +26,8 @@ class Preferences @Inject constructor(
         context.getSharedPreferences(SHARED_SETTINGS, Context.MODE_PRIVATE)
 
     @PlaylistStrategy
-    var keepFavouriteAndHidden: Int by
-    sharedPreferences.intAsState(DEFAULT_KEEP_FAVOURITE_AND_HIDDEN, KEEP_FAVOURITE_AND_HIDDEN)
+    var playlistStrategy: Int by
+    sharedPreferences.intAsState(DEFAULT_PLAYLIST_STRATEGY, PLAYLIST_STRATEGY)
 
     var rowCount: Int by
     sharedPreferences.intAsState(DEFAULT_ROW_COUNT, ROW_COUNT)
@@ -96,7 +96,7 @@ class Preferences @Inject constructor(
         private const val SHARED_SETTINGS = "shared_settings"
 
         @PlaylistStrategy
-        const val DEFAULT_KEEP_FAVOURITE_AND_HIDDEN = PlaylistStrategy.KEEP_FAVOURITE_AND_HIDDEN
+        const val DEFAULT_PLAYLIST_STRATEGY = PlaylistStrategy.KEEP
         const val DEFAULT_ROW_COUNT = 1
 
         @ConnectTimeout
@@ -133,7 +133,7 @@ class Preferences @Inject constructor(
         const val DEFAULT_PLAYER_PANEL = true
         const val DEFAULT_CACHE = false
 
-        const val KEEP_FAVOURITE_AND_HIDDEN = "playlist-strategy"
+        const val PLAYLIST_STRATEGY = "playlist-strategy"
         const val ROW_COUNT = "rowCount"
 
         const val CONNECT_TIMEOUT = "connect-timeout"

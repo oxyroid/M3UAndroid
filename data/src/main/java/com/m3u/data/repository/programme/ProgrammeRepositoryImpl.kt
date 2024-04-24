@@ -1,4 +1,4 @@
-package com.m3u.data.repository.internal
+package com.m3u.data.repository.programme
 
 import androidx.paging.PagingSource
 import com.m3u.core.architecture.dispatcher.Dispatcher
@@ -17,7 +17,6 @@ import com.m3u.data.parser.epg.EpgData
 import com.m3u.data.parser.epg.EpgParser
 import com.m3u.data.parser.epg.EpgProgramme
 import com.m3u.data.parser.epg.toProgramme
-import com.m3u.data.repository.ProgrammeRepository
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow

@@ -20,8 +20,8 @@ import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.PlaylistWithCount
 import com.m3u.data.database.model.Stream
 import com.m3u.data.parser.xtream.XtreamStreamInfo
-import com.m3u.data.repository.PlaylistRepository
-import com.m3u.data.repository.StreamRepository
+import com.m3u.data.repository.playlist.PlaylistRepository
+import com.m3u.data.repository.stream.StreamRepository
 import com.m3u.data.worker.SubscriptionWorker
 import com.m3u.features.foryou.components.recommend.Recommend
 import dagger.hilt.android.lifecycle.HiltViewModel

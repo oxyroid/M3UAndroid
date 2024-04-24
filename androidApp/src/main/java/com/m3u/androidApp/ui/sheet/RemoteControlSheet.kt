@@ -12,7 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.InternalComposeApi
 import androidx.compose.ui.Modifier
-import com.m3u.data.repository.UpdateState
+import com.m3u.data.repository.television.UpdateState
 import com.m3u.data.television.model.RemoteDirection
 import com.m3u.data.television.model.Television
 

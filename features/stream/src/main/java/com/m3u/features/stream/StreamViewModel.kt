@@ -18,8 +18,8 @@ import com.m3u.core.architecture.logger.post
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.Stream
-import com.m3u.data.repository.ProgrammeRepository
-import com.m3u.data.repository.StreamRepository
+import com.m3u.data.repository.programme.ProgrammeRepository
+import com.m3u.data.repository.stream.StreamRepository
 import com.m3u.data.service.Messager
 import com.m3u.data.service.PlayerManager
 import com.m3u.data.service.selectedFormats

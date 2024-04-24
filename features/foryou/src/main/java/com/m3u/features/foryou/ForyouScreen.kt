@@ -231,12 +231,17 @@ private fun ForyouScreen(
 
                     MediaSheet(
                         value = mediaSheetValue,
-                        onUnsubscribePlaylist = { onUnsubscribePlaylist(it.url) },
+                        onUnsubscribePlaylist = {
+                            onUnsubscribePlaylist(it.url)
+                            mediaSheetValue = MediaSheetValue.ForyouScreen()
+                        },
                         onEditPlaylistTitle = { playlist, title ->
                             onEditPlaylistTitle(playlist.url, title)
+                            mediaSheetValue = MediaSheetValue.ForyouScreen()
                         },
                         onEditPlaylistUserAgent = { playlist, userAgent ->
                             onEditPlaylistUserAgent(playlist.url, userAgent)
+                            mediaSheetValue = MediaSheetValue.ForyouScreen()
                         },
                         onDismissRequest = { mediaSheetValue = MediaSheetValue.ForyouScreen() }
                     )

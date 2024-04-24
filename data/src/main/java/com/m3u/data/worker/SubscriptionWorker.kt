@@ -25,7 +25,7 @@ import com.m3u.core.architecture.logger.post
 import com.m3u.data.R
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.parser.xtream.XtreamInput
-import com.m3u.data.repository.PlaylistRepository
+import com.m3u.data.repository.playlist.PlaylistRepository
 import com.m3u.i18n.R.string
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject

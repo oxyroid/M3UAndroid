@@ -13,8 +13,8 @@ import com.m3u.core.architecture.dispatcher.Dispatcher
 import com.m3u.core.architecture.dispatcher.M3uDispatchers.Main
 import com.m3u.core.architecture.preferences.Preferences
 import com.m3u.data.database.model.Playlist
-import com.m3u.data.repository.PlaylistRepository
-import com.m3u.data.repository.StreamRepository
+import com.m3u.data.repository.playlist.PlaylistRepository
+import com.m3u.data.repository.stream.StreamRepository
 import com.m3u.data.service.MediaCommand
 import com.m3u.data.service.Messager
 import com.m3u.data.service.PlayerManager

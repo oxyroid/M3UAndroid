@@ -1,4 +1,4 @@
-package com.m3u.data.repository
+package com.m3u.data.repository.stream
 
 import androidx.paging.PagingSource
 import com.m3u.data.database.model.Stream

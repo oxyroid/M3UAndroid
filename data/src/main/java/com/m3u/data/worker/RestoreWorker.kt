@@ -13,7 +13,7 @@ import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.Profiles
 import com.m3u.core.architecture.logger.install
 import com.m3u.data.R
-import com.m3u.data.repository.PlaylistRepository
+import com.m3u.data.repository.playlist.PlaylistRepository
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 
