@@ -11,7 +11,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.tv.foundation.lazy.list.TvLazyColumn
-import com.m3u.core.unspecified.DataUnit
+import com.m3u.core.unit.DataUnit
 import com.m3u.material.ktx.isTelevision
 import com.m3u.material.ktx.plus
 import com.m3u.material.model.LocalSpacing

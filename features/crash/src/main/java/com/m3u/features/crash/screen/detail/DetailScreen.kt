@@ -9,17 +9,15 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.FileDownload
 import androidx.compose.material3.ExtendedFloatingActionButton
-import com.m3u.material.components.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.material.components.Background
+import com.m3u.material.components.Icon
 import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.MonoText
 
@@ -31,9 +29,8 @@ internal fun DetailScreen(
 ) {
     val spacing = LocalSpacing.current
     LaunchedEffect(path) {
-        viewModel.onEvent(DetailEvent.Init(path))
+        viewModel.init(path)
     }
-    val state by viewModel.state.collectAsStateWithLifecycle()
     Background {
         Box {
             LazyColumn(
@@ -42,7 +39,7 @@ internal fun DetailScreen(
             ) {
                 item {
                     MonoText(
-                        text = state.text,
+                        text = viewModel.text,
                         color = LocalContentColor.current
                     )
                 }
@@ -61,9 +58,7 @@ internal fun DetailScreen(
                             contentDescription = null
                         )
                     },
-                    onClick = {
-                        viewModel.onEvent(DetailEvent.Save)
-                    }
+                    onClick = viewModel::save
                 )
             }
         }

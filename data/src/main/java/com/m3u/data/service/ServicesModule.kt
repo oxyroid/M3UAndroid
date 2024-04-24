@@ -14,14 +14,14 @@ import androidx.media3.datasource.cache.LeastRecentlyUsedCacheEvictor
 import androidx.media3.datasource.cache.SimpleCache
 import androidx.media3.exoplayer.offline.DownloadManager
 import androidx.work.WorkManager
-import com.m3u.core.architecture.TraceFileProvider
+import com.m3u.core.architecture.FileProvider
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.data.repository.logger.MessageLogger
 import com.m3u.data.repository.logger.StubLogger
 import com.m3u.data.service.internal.MessagerImpl
 import com.m3u.data.service.internal.PlayerManagerImpl
 import com.m3u.data.service.internal.RemoteDirectionServiceImpl
-import com.m3u.data.service.internal.TraceFileProviderImpl
+import com.m3u.data.service.internal.FileProviderImpl
 import com.m3u.data.television.http.HttpServer
 import com.m3u.data.television.http.internal.HttpServerImpl
 import com.m3u.data.television.nsd.NsdDeviceManager
@@ -49,7 +49,7 @@ internal interface BindServicesModule {
 
     @Binds
     @Singleton
-    fun bindTraceFileProvider(provider: TraceFileProviderImpl): TraceFileProvider
+    fun bindFileProvider(provider: FileProviderImpl): FileProvider
 
     @Binds
     @Singleton

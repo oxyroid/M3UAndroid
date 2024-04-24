@@ -43,7 +43,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.core.architecture.preferences.LocalPreferences
-import com.m3u.core.unspecified.DataUnit
+import com.m3u.core.unit.DataUnit
 import com.m3u.core.util.basic.title
 import com.m3u.data.database.model.ColorPack
 import com.m3u.data.database.model.DataSource
@@ -75,7 +75,6 @@ fun SettingRoute(
     val tv = isTelevision()
     val controller = LocalSoftwareKeyboardController.current
 
-    val state by viewModel.state.collectAsStateWithLifecycle()
     val colorPacks by viewModel.colorPacks.collectAsStateWithLifecycle()
     val hiddenStreams by viewModel.hiddenStreams.collectAsStateWithLifecycle()
     val hiddenCategoriesWithPlaylists by viewModel.hiddenCategoriesWithPlaylists.collectAsStateWithLifecycle()
@@ -109,29 +108,29 @@ fun SettingRoute(
     Box {
         SettingScreen(
             contentPadding = contentPadding,
-            versionName = state.versionName,
-            versionCode = state.versionCode,
-            title = state.title,
-            url = state.url,
-            uri = state.uri,
+            versionName = viewModel.versionName,
+            versionCode = viewModel.versionCode,
+            title = viewModel.title,
+            url = viewModel.url,
+            uri = viewModel.uri,
             backingUpOrRestoring = backingUpOrRestoring,
             hiddenStreams = hiddenStreams,
             hiddenCategoriesWithPlaylists = hiddenCategoriesWithPlaylists,
-            onTitle = { viewModel.onEvent(SettingEvent.OnTitle(it)) },
-            onUrl = { viewModel.onEvent(SettingEvent.OnUrl(it)) },
+            onTitle = { viewModel.title = Uri.encode(it) },
+            onUrl = { viewModel.url = Uri.encode(it) },
             onSubscribe = {
                 controller?.hide()
-                viewModel.onEvent(SettingEvent.Subscribe)
+                viewModel.subscribe()
             },
             onUnhideStream = { viewModel.onUnhideStream(it) },
             onUnhidePlaylistCategory = { playlistUrl, group ->
                 viewModel.onUnhidePlaylistCategory(playlistUrl, group)
             },
-            localStorage = state.localStorage,
-            onLocalStorage = { viewModel.onEvent(SettingEvent.OnLocalStorage) },
+            localStorage = viewModel.localStorage,
+            onLocalStorage = { viewModel.localStorage = it },
             subscribeForTv = viewModel.forTv,
             onSubscribeForTv = { viewModel.forTv = !viewModel.forTv },
-            openDocument = { viewModel.onEvent(SettingEvent.OpenDocument(it)) },
+            openDocument = { viewModel.uri = it },
             backup = backup,
             restore = restore,
             onClipboard = { viewModel.onClipboard(it) },
@@ -215,7 +214,7 @@ private fun SettingScreen(
     val playlistTitle = stringResource(string.feat_setting_playlist_management)
     val appearanceTitle = stringResource(string.feat_setting_appearance)
 
-    val colorArgb = preferences.colorArgb
+    val colorArgb = preferences.argb
 
     var fragment: SettingFragment by remember { mutableStateOf(SettingFragment.Default) }
 

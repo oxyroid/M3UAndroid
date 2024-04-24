@@ -77,7 +77,7 @@ internal fun AppearanceFragment(
                             selected = selected,
                             onClick = {
                                 preferences.useDynamicColors = false
-                                preferences.colorArgb = colorPack.argb
+                                preferences.argb = colorPack.argb
                                 preferences.darkMode = colorPack.isDark
                             },
                             onLongClick = { openColorCanvas(colorPack.argb, colorPack.isDark) },
@@ -110,7 +110,7 @@ internal fun AppearanceFragment(
                             selected = selected,
                             onClick = {
                                 preferences.useDynamicColors = false
-                                preferences.colorArgb = pack.argb
+                                preferences.argb = pack.argb
                                 preferences.darkMode = pack.isDark
                             },
                             onLongClick = { },

@@ -4,7 +4,7 @@ import android.content.Context
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.os.Build
-import com.m3u.core.architecture.TraceFileProvider
+import com.m3u.core.architecture.FileProvider
 import com.m3u.core.util.collections.forEachNotNull
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
@@ -12,9 +12,9 @@ import java.io.PrintWriter
 import java.io.StringWriter
 import javax.inject.Inject
 
-class TraceFileProviderImpl @Inject constructor(
+class FileProviderImpl @Inject constructor(
     @ApplicationContext private val context: Context
-) : TraceFileProvider {
+) : FileProvider {
     private val dir = context.cacheDir
     override fun readAll(): List<File> {
         if (!dir.exists() || dir.isFile) return emptyList()

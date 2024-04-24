@@ -75,7 +75,7 @@ class Preferences @Inject constructor(
     sharedPreferences.longAsState(DEFAULT_UNSEENS_MILLISECONDS, UNSEENS_MILLISECONDS)
     var reconnectMode: Int by
     sharedPreferences.intAsState(DEFAULT_RECONNECT_MODE, RECONNECT_MODE)
-    var colorArgb: Int by
+    var argb: Int by
     sharedPreferences.intAsState(DEFAULT_COLOR_ARGB, COLOR_ARGB)
     var tunneling: Boolean by
     sharedPreferences.booleanAsState(DEFAULT_TUNNELING, TUNNELING)

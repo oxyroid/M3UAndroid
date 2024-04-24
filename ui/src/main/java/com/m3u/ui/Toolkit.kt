@@ -12,7 +12,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalView
 import com.m3u.core.architecture.preferences.LocalPreferences
 import com.m3u.core.architecture.preferences.Preferences
-import com.m3u.core.unspecified.unspecifiable
 import com.m3u.data.service.RemoteDirectionService
 import com.m3u.material.LocalM3UHapticFeedback
 import com.m3u.material.createM3UHapticFeedback
@@ -21,14 +20,12 @@ import com.m3u.material.model.Theme
 import com.m3u.ui.helper.Helper
 import com.m3u.ui.helper.LocalHelper
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.SharedFlow
 import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
 fun Toolkit(
     helper: Helper,
     preferences: Preferences,
-    actions: SharedFlow<RemoteDirectionService.Action>,
     alwaysUseDarkTheme: Boolean = false,
     content: @Composable () -> Unit
 ) {
@@ -45,23 +42,22 @@ fun Toolkit(
         else -> preferences.darkMode
     }
 
-    LaunchedEffect(view, actions) {
-        val connection = BaseInputConnection(view, true)
-        actions.collect { action ->
-            when (action) {
-                RemoteDirectionService.Action.Back -> {
-                    onBackPressedDispatcher.onBackPressed()
-                }
+    val connection = remember(view) { BaseInputConnection(view, true) }
 
-                is RemoteDirectionService.Action.Common -> {
-                    connection.sendKeyEvent(
-                        KeyEvent(KeyEvent.ACTION_DOWN, action.keyCode)
-                    )
-                    delay(150.milliseconds)
-                    connection.sendKeyEvent(
-                        KeyEvent(KeyEvent.ACTION_UP, action.keyCode)
-                    )
-                }
+    EventHandler(EventBus.action) { action ->
+        when (action) {
+            RemoteDirectionService.Action.Back -> {
+                onBackPressedDispatcher.onBackPressed()
+            }
+
+            is RemoteDirectionService.Action.Common -> {
+                connection.sendKeyEvent(
+                    KeyEvent(KeyEvent.ACTION_DOWN, action.keyCode)
+                )
+                delay(150.milliseconds)
+                connection.sendKeyEvent(
+                    KeyEvent(KeyEvent.ACTION_UP, action.keyCode)
+                )
             }
         }
     }
@@ -69,17 +65,18 @@ fun Toolkit(
     CompositionLocalProvider(
         LocalHelper provides helper,
         LocalPreferences provides preferences,
+        // some components cannot use LocalPreferences
         LocalAlwaysTelevision provides preferences.alwaysTv,
         LocalM3UHapticFeedback provides createM3UHapticFeedback()
     ) {
         Theme(
-            argb = preferences.colorArgb,
+            argb = preferences.argb,
             useDarkTheme = useDarkTheme,
             useDynamicColors = preferences.useDynamicColors,
-            typography = smartphoneTypography,
+            typography = smartphoneTypography
         ) {
             LaunchedEffect(useDarkTheme) {
-                helper.isSystemBarUseDarkMode = useDarkTheme.unspecifiable
+                helper.isSystemBarUseDarkMode = useDarkTheme
             }
             content()
         }

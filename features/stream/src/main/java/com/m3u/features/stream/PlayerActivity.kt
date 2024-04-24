@@ -19,6 +19,7 @@ import com.m3u.data.service.MediaCommand
 import com.m3u.data.service.Messager
 import com.m3u.data.service.PlayerManager
 import com.m3u.data.service.RemoteDirectionService
+import com.m3u.ui.EventBus.registerActionEventCollector
 import com.m3u.ui.Toolkit
 import com.m3u.ui.helper.AbstractHelper
 import dagger.hilt.android.AndroidEntryPoint
@@ -74,8 +75,7 @@ class PlayerActivity : ComponentActivity() {
             Toolkit(
                 helper = helper,
                 preferences = preferences,
-                alwaysUseDarkTheme = true,
-                actions = remoteDirectionService.actions
+                alwaysUseDarkTheme = true
             ) {
                 StreamRoute(
                     onBackPressed = { finish() },
@@ -83,6 +83,7 @@ class PlayerActivity : ComponentActivity() {
                 )
             }
         }
+        registerActionEventCollector(remoteDirectionService.actions)
     }
 
     private fun playFromShortcuts(streamId: Int) {

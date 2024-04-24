@@ -13,7 +13,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import com.m3u.core.unspecified.DataUnit
+import com.m3u.core.unit.DataUnit
 import com.m3u.core.util.basic.title
 import com.m3u.i18n.R.string
 import com.m3u.material.components.Preference

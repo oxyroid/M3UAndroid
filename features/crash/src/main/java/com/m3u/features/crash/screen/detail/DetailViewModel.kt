@@ -1,40 +1,28 @@
 package com.m3u.features.crash.screen.detail
 
-import com.m3u.core.architecture.TraceFileProvider
-import com.m3u.core.architecture.viewmodel.BaseViewModel
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.lifecycle.ViewModel
+import com.m3u.core.architecture.FileProvider
 import com.m3u.data.repository.MediaRepository
 import com.m3u.features.crash.CrashActivity
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.update
 import java.io.File
 import javax.inject.Inject
 
 @HiltViewModel
 class DetailViewModel @Inject constructor(
-    private val provider: TraceFileProvider,
+    private val fileProvider: FileProvider,
     private val mediaRepository: MediaRepository
-) : BaseViewModel<DetailState, DetailEvent>(
-    emptyState = DetailState()
-) {
-    override fun onEvent(event: DetailEvent) {
-        when (event) {
-            is DetailEvent.Init -> init(event.path)
-            DetailEvent.Save -> save()
-        }
-    }
-
+) : ViewModel() {
     private var file: File? = null
-    private fun init(path: String) {
-        file = provider.read(path) ?: return
-        val text = file?.readText().orEmpty()
-        writable.update {
-            it.copy(
-                text = text
-            )
-        }
+    internal fun init(path: String) {
+        this.file = fileProvider.read(path) ?: return
+        this.text = file?.readText().orEmpty()
     }
 
-    private fun save() {
+    internal fun save() {
         val currentFile = file ?: return
         CrashActivity.createDocument(currentFile.nameWithoutExtension) { uri ->
             uri ?: return@createDocument
@@ -44,4 +32,6 @@ class DetailViewModel @Inject constructor(
             }
         }
     }
+
+    var text: String by mutableStateOf("")
 }

@@ -14,6 +14,7 @@ import com.m3u.core.architecture.preferences.Preferences
 import com.m3u.data.service.Messager
 import com.m3u.data.service.PlayerManager
 import com.m3u.data.service.RemoteDirectionService
+import com.m3u.ui.EventBus.registerActionEventCollector
 import com.m3u.ui.Toolkit
 import com.m3u.ui.helper.AbstractHelper
 import dagger.hilt.android.AndroidEntryPoint
@@ -65,12 +66,12 @@ class CrashActivity : ComponentActivity() {
         setContent {
             Toolkit(
                 preferences = preferences,
-                helper = helper,
-                actions = remoteDirectionService.actions
+                helper = helper
             ) {
                 CrashApp()
             }
         }
+        registerActionEventCollector(remoteDirectionService.actions)
     }
 
     private val callbacks = mutableListOf<CreateDocumentCallback>()

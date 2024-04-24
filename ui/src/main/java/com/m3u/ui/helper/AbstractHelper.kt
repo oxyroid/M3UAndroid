@@ -21,8 +21,6 @@ import androidx.compose.runtime.setValue
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.lifecycleScope
-import com.m3u.core.unspecified.UBoolean
-import com.m3u.core.unspecified.specified
 import com.m3u.core.util.basic.rational
 import com.m3u.core.util.context.isDarkMode
 import com.m3u.core.util.context.isPortraitMode
@@ -72,21 +70,21 @@ class AbstractHelper(
         }
     }
 
-    override var statusBarVisibility: UBoolean = UBoolean.Unspecified
+    override var statusBarVisibility: Boolean? = null
         set(value) {
             field = value
             applyConfiguration()
         }
-    override var navigationBarVisibility: UBoolean = UBoolean.Unspecified
+    override var navigationBarVisibility: Boolean? = null
         set(value) {
             field = value
             applyConfiguration()
         }
 
-    override var isSystemBarUseDarkMode: UBoolean = UBoolean.Unspecified
+    override var isSystemBarUseDarkMode: Boolean? = null
         set(value) {
             field = value
-            val isDark = value.specified ?: activity.resources.configuration.isDarkMode
+            val isDark = value ?: activity.resources.configuration.isDarkMode
             activity.enableEdgeToEdge(
                 if (isDark) SystemBarStyle.dark(Color.TRANSPARENT)
                 else SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT),
@@ -150,14 +148,14 @@ class AbstractHelper(
     fun applyConfiguration() {
         controller.apply {
             when (navigationBarVisibility) {
-                UBoolean.True -> show(WindowInsetsCompat.Type.navigationBars())
-                UBoolean.False -> hide(WindowInsetsCompat.Type.navigationBars())
-                UBoolean.Unspecified -> default(WindowInsetsCompat.Type.navigationBars())
+                true -> show(WindowInsetsCompat.Type.navigationBars())
+                false -> hide(WindowInsetsCompat.Type.navigationBars())
+                null -> default(WindowInsetsCompat.Type.navigationBars())
             }
             when (statusBarVisibility) {
-                UBoolean.True -> show(WindowInsetsCompat.Type.statusBars())
-                UBoolean.False -> hide(WindowInsetsCompat.Type.statusBars())
-                UBoolean.Unspecified -> default(WindowInsetsCompat.Type.statusBars())
+                true -> show(WindowInsetsCompat.Type.statusBars())
+                false -> hide(WindowInsetsCompat.Type.statusBars())
+                null -> default(WindowInsetsCompat.Type.statusBars())
             }
         }
     }

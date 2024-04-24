@@ -5,6 +5,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.OutOfQuotaPolicy
@@ -19,9 +20,8 @@ import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.Profiles
 import com.m3u.core.architecture.logger.install
 import com.m3u.core.architecture.preferences.Preferences
-import com.m3u.core.architecture.viewmodel.BaseViewModel
-import com.m3u.core.unspecified.DataUnit
-import com.m3u.core.unspecified.KB
+import com.m3u.core.unit.DataUnit
+import com.m3u.core.unit.KB
 import com.m3u.core.util.basic.startWithHttpScheme
 import com.m3u.data.api.LocalPreparedService
 import com.m3u.data.database.dao.ColorPackDao
@@ -47,7 +47,6 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import javax.inject.Inject
@@ -65,12 +64,7 @@ class SettingViewModel @Inject constructor(
     colorPackDao: ColorPackDao,
     @Dispatcher(IO) private val ioDispatcher: CoroutineDispatcher,
     delegate: Logger
-) : BaseViewModel<SettingState, SettingEvent>(
-    emptyState = SettingState(
-        versionName = publisher.versionName,
-        versionCode = publisher.versionCode,
-    )
-) {
+) : ViewModel() {
     private val logger = delegate.install(Profiles.VIEWMODEL_SETTING)
 
     internal val hiddenStreams: StateFlow<List<Stream>> = streamRepository
@@ -114,42 +108,24 @@ class SettingViewModel @Inject constructor(
             initialValue = emptyList()
         )
 
-    override fun onEvent(event: SettingEvent) {
-        when (event) {
-            SettingEvent.Subscribe -> subscribe()
-            is SettingEvent.OnTitle -> onTitle(event.title)
-            is SettingEvent.OnUrl -> onUrl(event.url)
-            SettingEvent.OnLocalStorage -> onLocalStorage()
-            is SettingEvent.OpenDocument -> openDocument(event.uri)
-        }
-    }
-
     internal fun onClipboard(url: String) {
         val title = run {
             val filePath = url.split("/")
             val fileSplit = filePath.lastOrNull()?.split(".") ?: emptyList()
             fileSplit.firstOrNull() ?: "Playlist_${System.currentTimeMillis()}"
         }
-        onTitle(title)
-        onUrl(url)
+        this.title = Uri.decode(title)
+        this.url = Uri.decode(url)
         when (selected) {
             is DataSource.Xtream -> {
                 val input = XtreamInput.decodeFromPlaylistUrlOrNull(url) ?: return
                 basicUrl = input.basicUrl
                 username = input.username
                 password = input.password
-                onTitle("Xtream_${Clock.System.now().toEpochMilliseconds()}")
+                this.title = Uri.decode("Xtream_${Clock.System.now().toEpochMilliseconds()}")
             }
 
             else -> {}
-        }
-    }
-
-    private fun openDocument(uri: Uri) {
-        writable.update {
-            it.copy(
-                uri = uri
-            )
         }
     }
 
@@ -162,29 +138,15 @@ class SettingViewModel @Inject constructor(
         }
     }
 
-    private fun onTitle(title: String) {
-        writable.update {
-            it.copy(
-                title = Uri.decode(title)
-            )
-        }
-    }
-
-    private fun onUrl(url: String) {
-        writable.update {
-            it.copy(
-                url = Uri.decode(url)
-            )
-        }
-    }
-
-    private fun subscribe() {
-        val title = writable.value.title
+    internal fun subscribe() {
         if (title.isEmpty()) {
             messager.emit(SettingMessage.EmptyTitle)
             return
         }
-        val url = readable.actualUrl
+        val urlOrUri = uri
+            .takeIf { uri != Uri.EMPTY }?.toString().orEmpty()
+            .takeIf { localStorage }
+            ?: url
 
         val basicUrl = if (basicUrl.startWithHttpScheme()) basicUrl
         else "http://$basicUrl"
@@ -193,7 +155,7 @@ class SettingViewModel @Inject constructor(
             viewModelScope.launch {
                 localService.subscribe(
                     title,
-                    url,
+                    urlOrUri,
                     basicUrl,
                     username,
                     password,
@@ -201,15 +163,15 @@ class SettingViewModel @Inject constructor(
                     selected
                 )
             }
-            clearAllInputs()
+            resetAllInputs()
             return
         }
         when (selected) {
-            DataSource.M3U -> SubscriptionWorker.m3u(workManager, title, url, epg)
+            DataSource.M3U -> SubscriptionWorker.m3u(workManager, title, urlOrUri, epg)
             DataSource.Xtream -> SubscriptionWorker.xtream(
                 workManager,
                 title,
-                url,
+                urlOrUri,
                 basicUrl,
                 username,
                 password
@@ -218,15 +180,7 @@ class SettingViewModel @Inject constructor(
             else -> {}
         }
         messager.emit(SettingMessage.Enqueued)
-        clearAllInputs()
-    }
-
-    private fun onLocalStorage() {
-        writable.update {
-            it.copy(
-                localStorage = !it.localStorage
-            )
-        }
+        resetAllInputs()
     }
 
     internal val backingUpOrRestoring: StateFlow<BackingUpAndRestoringState> = workManager
@@ -297,14 +251,10 @@ class SettingViewModel @Inject constructor(
             started = SharingStarted.Lazily
         )
 
-    private fun clearAllInputs() {
-        writable.update {
-            it.copy(
-                title = "",
-                url = "",
-                uri = Uri.EMPTY
-            )
-        }
+    private fun resetAllInputs() {
+        title = ""
+        url = ""
+        uri = Uri.EMPTY
         basicUrl = ""
         username = ""
         password = ""
@@ -321,4 +271,11 @@ class SettingViewModel @Inject constructor(
     internal var username by mutableStateOf("")
     internal var password by mutableStateOf("")
     internal var epg by mutableStateOf("")
+
+    val versionName: String = publisher.versionName
+    val versionCode: Int = publisher.versionCode
+    var title: String by mutableStateOf("")
+    var url: String by mutableStateOf("")
+    var uri: Uri by mutableStateOf(Uri.EMPTY)
+    var localStorage: Boolean by mutableStateOf(false)
 }

@@ -9,7 +9,6 @@ import androidx.compose.runtime.Stable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.core.app.PictureInPictureModeChangedInfo
 import androidx.core.util.Consumer
-import com.m3u.core.unspecified.UBoolean
 import com.m3u.core.wrapper.Message
 import com.m3u.data.service.MediaCommand
 import kotlinx.coroutines.flow.StateFlow
@@ -22,11 +21,11 @@ interface Helper {
     var title: String
     var actions: List<Action>
     var fob: Fob?
-    var statusBarVisibility: UBoolean
-    var navigationBarVisibility: UBoolean
+    var statusBarVisibility: Boolean?
+    var navigationBarVisibility: Boolean?
     var onUserLeaveHint: OnUserLeaveHint?
     var onPipModeChanged: OnPipModeChanged?
-    var isSystemBarUseDarkMode: UBoolean
+    var isSystemBarUseDarkMode: Boolean?
     var brightness: Float
     val isInPipMode: Boolean
     var screenOrientation: Int

@@ -39,7 +39,6 @@ import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.m3u.core.architecture.preferences.LocalPreferences
-import com.m3u.core.unspecified.unspecifiable
 import com.m3u.core.util.basic.isNotEmpty
 import com.m3u.core.util.basic.title
 import com.m3u.data.database.model.Playlist
@@ -113,9 +112,9 @@ fun StreamRoute(
 
     LifecycleResumeEffect(Unit) {
         with(helper) {
-            isSystemBarUseDarkMode = true.unspecifiable
-            statusBarVisibility = false.unspecifiable
-            navigationBarVisibility = false.unspecifiable
+            isSystemBarUseDarkMode = true
+            statusBarVisibility = false
+            navigationBarVisibility = false
             onPipModeChanged = OnPipModeChanged { info ->
                 isPipMode = info.isInPictureInPictureMode
                 if (!isPipMode) {
@@ -146,8 +145,8 @@ fun StreamRoute(
 
         snapshotFlow { maskState.visible }
             .onEach { visible ->
-                helper.statusBarVisibility = visible.unspecifiable
-                helper.navigationBarVisibility = false.unspecifiable
+                helper.statusBarVisibility = visible
+                helper.navigationBarVisibility = false
             }
             .launchIn(this)
     }

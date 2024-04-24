@@ -1,8 +1,5 @@
-@file:SuppressLint("UseHelperIssue")
-
 package com.m3u.androidApp
 
-import android.annotation.SuppressLint
 import android.content.res.Configuration
 import android.os.Bundle
 import androidx.activity.compose.setContent
@@ -18,6 +15,7 @@ import com.m3u.core.architecture.preferences.Preferences
 import com.m3u.data.service.Messager
 import com.m3u.data.service.PlayerManager
 import com.m3u.data.service.RemoteDirectionService
+import com.m3u.ui.EventBus.registerActionEventCollector
 import com.m3u.ui.Toolkit
 import com.m3u.ui.helper.AbstractHelper
 import dagger.hilt.android.AndroidEntryPoint
@@ -79,12 +77,12 @@ class MainActivity : AppCompatActivity() {
             Toolkit(
                 helper = helper,
                 preferences = preferences,
-                actions = remoteDirectionService.actions
             ) {
                 App(
                     viewModel = viewModel
                 )
             }
         }
+        registerActionEventCollector(remoteDirectionService.actions)
     }
 }

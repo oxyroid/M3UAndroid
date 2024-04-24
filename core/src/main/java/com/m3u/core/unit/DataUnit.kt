@@ -1,4 +1,4 @@
-package com.m3u.core.unspecified
+package com.m3u.core.unit
 
 import java.math.BigDecimal
 import java.math.RoundingMode

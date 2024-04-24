@@ -28,11 +28,7 @@ interface ProgrammeDao {
     """)
     suspend fun contains(playlistUrl: String, streamId: Int, start: Long, end: Long): Boolean
 
-    @Query(
-        """
-            SELECT playlist_url, MAX("end") AS "end" from programmes GROUP BY playlist_url
-        """
-    )
+    @Query("""SELECT playlist_url, MAX("end") AS "end" from programmes GROUP BY playlist_url""")
     fun observeSnapshotsGroupedByPlaylistUrl(): Flow<List<ProgrammeSnapshot>>
 
     @Query("SELECT * FROM programmes WHERE stream_id = :streamId ORDER BY start")
