@@ -124,8 +124,6 @@ sealed class DataSource(
 
     object Dropbox : DataSource(R.string.feat_setting_data_source_dropbox, "dropbox")
 
-    object Aliyun : DataSource(R.string.feat_setting_data_source_aliyun, "aliyun")
-
     override fun toString(): String = value
 
     companion object {
@@ -134,7 +132,6 @@ sealed class DataSource(
             "xtream" -> Xtream
             "emby" -> Emby
             "dropbox" -> Dropbox
-            "aliyun" -> Aliyun
             else -> throw UnsupportedOperationException()
         }
 
