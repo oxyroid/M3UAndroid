@@ -10,6 +10,13 @@
 /.idea/render.experimental.xml
 /.idea/kotlinc.xml
 /.idea/assetWizardSettings.xml
+/.idea/migrations.xml
+/.idea/misc.xml
+/.idea/gradle.xml
+/.idea/appInsightsSettings.xml
+/.idea/codeStyles/
+/.idea/compiler.xml
+/.idea/inspectionProfiles/
 .DS_Store
 /build
 /captures

@@ -61,7 +61,7 @@ internal fun TvStreamItem(
                 Modifier
                     .height(128.dp)
                     .aspectRatio(
-                        if (!isVodOrSeriesPlaylist) 4 / 3f else 2 / 3f
+                        if (isVodOrSeriesPlaylist) 4 / 3f else 4 / 4f
                     )
             }
             .then(modifier)
@@ -69,6 +69,7 @@ internal fun TvStreamItem(
         Box(
             contentAlignment = Alignment.Center,
             modifier = Modifier.fillMaxSize()
+                .padding(if (isVodOrSeriesPlaylist) 0.dp else 12.dp)
         ) {
 
             if (!isCoverExisted || noPictureMode) {
@@ -83,7 +84,7 @@ internal fun TvStreamItem(
             } else {
                 SubcomposeAsyncImage(
                     model = stream.cover,
-                    contentScale = ContentScale.FillWidth,
+                    contentScale = if (isVodOrSeriesPlaylist) ContentScale.Crop else ContentScale.Inside,
                     contentDescription = stream.title,
                     loading = {
                         Column(

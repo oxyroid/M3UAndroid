@@ -4,6 +4,7 @@ import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -26,7 +27,6 @@ import androidx.compose.material3.adaptive.separatingVerticalHingeBounds
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -76,7 +76,6 @@ fun SettingRoute(
     val controller = LocalSoftwareKeyboardController.current
 
     val colorPacks by viewModel.colorPacks.collectAsStateWithLifecycle()
-    val epgs by viewModel.epgs.collectAsStateWithLifecycle()
     val hiddenStreams by viewModel.hiddenStreams.collectAsStateWithLifecycle()
     val hiddenCategoriesWithPlaylists by viewModel.hiddenCategoriesWithPlaylists.collectAsStateWithLifecycle()
     val backingUpOrRestoring by viewModel.backingUpOrRestoring.collectAsStateWithLifecycle()
@@ -106,89 +105,107 @@ fun SettingRoute(
         openDocumentLauncher.launch(arrayOf("text/*"))
     }
 
-    SettingScreen(
-        versionName = viewModel.versionName,
-        versionCode = viewModel.versionCode,
-        titleState = viewModel.titleState,
-        urlState = viewModel.urlState,
-        uriState = viewModel.uriState,
-        basicUrlState = viewModel.basicUrlState,
-        usernameState = viewModel.usernameState,
-        passwordState = viewModel.passwordState,
-        epgState = viewModel.epgState,
-        localStorageState = viewModel.localStorageState,
-        selectedState = viewModel.selectedState,
-        forTvState = viewModel.forTvState,
-        backingUpOrRestoring = backingUpOrRestoring,
-        epgs = epgs,
-        hiddenStreams = hiddenStreams,
-        hiddenCategoriesWithPlaylists = hiddenCategoriesWithPlaylists,
-        cacheSpace = cacheSpace,
-        backup = backup,
-        restore = restore,
-        colorPacks = colorPacks,
-        openColorCanvas = { c, i ->
-            colorInt = c
-            isDark = i
-        },
-        onClipboard = { viewModel.onClipboard(it) },
-        onClearCache = { viewModel.clearCache() },
-        onSubscribe = {
-            controller?.hide()
-            viewModel.subscribe()
-        },
-        onUnhideStream = { viewModel.onUnhideStream(it) },
-        onUnhidePlaylistCategory = { playlistUrl, group ->
-            viewModel.onUnhidePlaylistCategory(playlistUrl, group)
-        },
-        onDeleteEpgPlaylist = { viewModel.deleteEpgPlaylist(it) },
-        modifier = modifier.fillMaxSize(),
-        contentPadding = contentPadding
-    )
-    if (!tv) {
-        CanvasBottomSheet(
-            sheetState = sheetState,
-            colorInt = colorInt,
-            isDark = isDark,
-            onDismissRequest = {
-                colorInt = null
-                isDark = null
-            }
+    Box {
+        SettingScreen(
+            contentPadding = contentPadding,
+            versionName = viewModel.versionName,
+            versionCode = viewModel.versionCode,
+            title = viewModel.title,
+            url = viewModel.url,
+            uri = viewModel.uri,
+            backingUpOrRestoring = backingUpOrRestoring,
+            hiddenStreams = hiddenStreams,
+            hiddenCategoriesWithPlaylists = hiddenCategoriesWithPlaylists,
+            onTitle = { viewModel.title = it },
+            onUrl = { viewModel.url = it },
+            onSubscribe = {
+                controller?.hide()
+                viewModel.subscribe()
+            },
+            onUnhideStream = { viewModel.onUnhideStream(it) },
+            onUnhidePlaylistCategory = { playlistUrl, group ->
+                viewModel.onUnhidePlaylistCategory(playlistUrl, group)
+            },
+            localStorage = viewModel.localStorage,
+            onLocalStorage = { viewModel.localStorage = it },
+            subscribeForTv = viewModel.forTv,
+            onSubscribeForTv = { viewModel.forTv = !viewModel.forTv },
+            openDocument = { viewModel.uri = it },
+            backup = backup,
+            restore = restore,
+            onClipboard = { viewModel.onClipboard(it) },
+            colorPacks = colorPacks,
+            openColorCanvas = { c, i ->
+                colorInt = c
+                isDark = i
+            },
+            selected = viewModel.selected,
+            onSelected = { viewModel.selected = it },
+            basicUrl = viewModel.basicUrl,
+            onBasicUrl = { viewModel.basicUrl = it },
+            username = viewModel.username,
+            onUsername = { viewModel.username = it },
+            password = viewModel.password,
+            onPassword = { viewModel.password = it },
+            epg = viewModel.epg,
+            onEpg = { viewModel.epg = it },
+            cacheSpace = cacheSpace,
+            onClearCache = { viewModel.clearCache() },
+            modifier = modifier.fillMaxSize()
         )
+        if (!tv) {
+            CanvasBottomSheet(
+                sheetState = sheetState,
+                colorInt = colorInt,
+                isDark = isDark,
+                onDismissRequest = {
+                    colorInt = null
+                    isDark = null
+                }
+            )
+        }
     }
 }
 
 @Composable
 private fun SettingScreen(
-    titleState: MutableState<String>,
-    urlState: MutableState<String>,
-    uriState: MutableState<Uri>,
-    selectedState: MutableState<DataSource>,
-    basicUrlState: MutableState<String>,
-    usernameState: MutableState<String>,
-    passwordState: MutableState<String>,
-    epgState: MutableState<String>,
-    localStorageState: MutableState<Boolean>,
-    forTvState: MutableState<Boolean>,
+    contentPadding: PaddingValues,
     versionName: String,
     versionCode: Int,
+    title: String,
+    url: String,
+    uri: Uri,
     backingUpOrRestoring: BackingUpAndRestoringState,
+    onTitle: (String) -> Unit,
+    onUrl: (String) -> Unit,
     onSubscribe: () -> Unit,
     hiddenStreams: List<Stream>,
     hiddenCategoriesWithPlaylists: List<Pair<Playlist, String>>,
     onUnhideStream: (Int) -> Unit,
     onUnhidePlaylistCategory: (playlistUrl: String, group: String) -> Unit,
+    localStorage: Boolean,
+    onLocalStorage: (Boolean) -> Unit,
+    subscribeForTv: Boolean,
+    onSubscribeForTv: () -> Unit,
+    openDocument: (Uri) -> Unit,
     backup: () -> Unit,
     restore: () -> Unit,
     onClipboard: (String) -> Unit,
     colorPacks: List<ColorPack>,
     openColorCanvas: (Int, Boolean) -> Unit,
+    selected: DataSource,
+    onSelected: (DataSource) -> Unit,
+    basicUrl: String,
+    onBasicUrl: (String) -> Unit,
+    username: String,
+    onUsername: (String) -> Unit,
+    password: String,
+    onPassword: (String) -> Unit,
+    epg: String,
+    onEpg: (String) -> Unit,
     cacheSpace: DataUnit,
     onClearCache: () -> Unit,
-    epgs: List<Playlist>,
-    onDeleteEpgPlaylist: (String) -> Unit,
-    modifier: Modifier = Modifier,
-    contentPadding: PaddingValues = PaddingValues()
+    modifier: Modifier = Modifier
 ) {
     val helper = LocalHelper.current
     val preferences = LocalPreferences.current
@@ -274,28 +291,36 @@ private fun SettingScreen(
                     when (fragment) {
                         SettingFragment.Playlists -> {
                             SubscriptionsFragment(
-                                titleState = titleState,
-                                urlState = urlState,
-                                uriState = uriState,
-                                selectedState = selectedState,
-                                basicUrlState = basicUrlState,
-                                usernameState = usernameState,
-                                passwordState = passwordState,
-                                epgState = epgState,
-                                localStorageState = localStorageState,
-                                forTvState = forTvState,
+                                contentPadding = contentPadding,
+                                title = title,
+                                url = url,
+                                uri = uri,
                                 backingUpOrRestoring = backingUpOrRestoring,
                                 hiddenStreams = hiddenStreams,
                                 hiddenCategoriesWithPlaylists = hiddenCategoriesWithPlaylists,
                                 onUnhideStream = onUnhideStream,
                                 onUnhidePlaylistCategory = onUnhidePlaylistCategory,
-                                onClipboard = onClipboard,
+                                onTitle = onTitle,
+                                onUrl = onUrl,
                                 onSubscribe = onSubscribe,
+                                localStorage = localStorage,
+                                onLocalStorage = onLocalStorage,
+                                subscribeForTv = subscribeForTv,
+                                onSubscribeForTv = onSubscribeForTv,
+                                openDocument = openDocument,
+                                onClipboard = onClipboard,
                                 backup = backup,
                                 restore = restore,
-                                epgs = epgs,
-                                onDeleteEpgPlaylist = onDeleteEpgPlaylist,
-                                contentPadding = contentPadding,
+                                selected = selected,
+                                onSelected = onSelected,
+                                basicUrl = basicUrl,
+                                onBasicUrl = onBasicUrl,
+                                username = username,
+                                onUsername = onUsername,
+                                password = password,
+                                onPassword = onPassword,
+                                epg = epg,
+                                onEpg = onEpg,
                                 modifier = Modifier.fillMaxSize()
                             )
                         }
