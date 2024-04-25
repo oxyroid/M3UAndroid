@@ -83,7 +83,7 @@ internal fun TvStreamItem(
             } else {
                 SubcomposeAsyncImage(
                     model = stream.cover,
-                    contentScale = ContentScale.Crop,
+                    contentScale = ContentScale.FillWidth,
                     contentDescription = stream.title,
                     loading = {
                         Column(
