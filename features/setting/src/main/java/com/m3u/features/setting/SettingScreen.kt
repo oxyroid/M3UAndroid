@@ -116,8 +116,8 @@ fun SettingRoute(
             backingUpOrRestoring = backingUpOrRestoring,
             hiddenStreams = hiddenStreams,
             hiddenCategoriesWithPlaylists = hiddenCategoriesWithPlaylists,
-            onTitle = { viewModel.title = Uri.encode(it) },
-            onUrl = { viewModel.url = Uri.encode(it) },
+            onTitle = { viewModel.title = it },
+            onUrl = { viewModel.url = it },
             onSubscribe = {
                 controller?.hide()
                 viewModel.subscribe()
