@@ -7,9 +7,14 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.AbsoluteRoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
@@ -22,15 +27,19 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import com.m3u.core.util.basic.title
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.Stream
+import com.m3u.data.repository.playlist.PlaylistRepository
 import com.m3u.i18n.R.string
 import com.m3u.material.components.BottomSheet
 import com.m3u.material.components.IconButton
@@ -55,14 +64,17 @@ sealed class MediaSheetValue {
     ) : MediaSheetValue()
 }
 
+
 @Composable
 fun MediaSheet(
     value: MediaSheetValue,
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier,
+    epgs: Map<Playlist, Boolean> = emptyMap(),
     onUnsubscribePlaylist: (Playlist) -> Unit = { noImpl() },
     onEditPlaylistTitle: (Playlist, String) -> Unit = { _, _ -> noImpl() },
     onEditPlaylistUserAgent: (Playlist, String) -> Unit = { _, _ -> noImpl() },
+    onUpdateEpgPlaylist: (PlaylistRepository.UpdateEpgPlaylistUseCase) -> Unit = { noImpl() },
     onFavouriteStream: (Stream) -> Unit = { noImpl() },
     onHideStream: (Stream) -> Unit = { noImpl() },
     onSaveStreamCover: (Stream) -> Unit = { noImpl() },
@@ -76,7 +88,8 @@ fun MediaSheet(
     val userAgentState = remember { mutableStateOf<String?>(null) }
 
     val sheetState = rememberModalBottomSheetState(
-        confirmValueChange = { !isInEditModeState.value }
+        confirmValueChange = { !isInEditModeState.value },
+        skipPartiallyExpanded = isInEditModeState.value
     )
     val visible = when (value) {
         is ForyouScreen -> value.playlist != null
@@ -112,12 +125,13 @@ fun MediaSheet(
             ) {
                 when (value) {
                     is ForyouScreen -> {
-                        value.playlist?.let {
+                        value.playlist?.let { playlist ->
+                            val playlistUrl = playlist.url
                             if (!isInEditModeState.value) {
                                 MediaSheetItem(
                                     stringRes = string.feat_foryou_unsubscribe_playlist,
                                     onClick = {
-                                        onUnsubscribePlaylist(it)
+                                        onUnsubscribePlaylist(playlist)
                                         onDismissRequest()
                                     }
                                 )
@@ -125,25 +139,65 @@ fun MediaSheet(
                                     stringRes = string.feat_foryou_copy_playlist_url,
                                     onClick = {
                                         clipboardManager.setText(
-                                            AnnotatedString(it.url)
+                                            AnnotatedString(playlistUrl)
                                         )
                                         onDismissRequest()
                                     }
                                 )
 
                             } else {
+                                LaunchedEffect(Unit) {
+                                    sheetState.expand()
+                                }
+                                LazyColumn(
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .weight(1f)
+                                ) {
+                                    items(epgs.entries.toList()) { (epg, associated) ->
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .clip(AbsoluteRoundedCornerShape(spacing.extraSmall))
+                                                .clickable(
+                                                    role = Role.Checkbox,
+                                                    onClick = {
+                                                        onUpdateEpgPlaylist(
+                                                            PlaylistRepository.UpdateEpgPlaylistUseCase(
+                                                                playlistUrl = playlistUrl,
+                                                                epgUrl = epg.url,
+                                                                action = !associated
+                                                            )
+                                                        )
+                                                    }
+                                                )
+                                                .padding(spacing.medium)
+                                        ) {
+                                            Text(
+                                                text = epg.title,
+                                                style = MaterialTheme.typography.bodyMedium
+                                            )
+                                            Checkbox(
+                                                checked = associated,
+                                                onCheckedChange = null
+                                            )
+                                        }
+                                    }
+                                }
                                 MediaSheetItem(
                                     stringRes = string.feat_foryou_apply_changes,
                                     onClick = {
-                                        if (titleState.value != it.title) {
+                                        if (titleState.value != playlist.title) {
                                             onEditPlaylistTitle(
-                                                it,
+                                                playlist,
                                                 titleState.value.orEmpty()
                                             )
                                         }
-                                        if (userAgentState.value != it.userAgent) {
+                                        if (userAgentState.value != playlist.userAgent) {
                                             onEditPlaylistUserAgent(
-                                                it,
+                                                playlist,
                                                 userAgentState.value.orEmpty()
                                             )
                                         }

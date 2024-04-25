@@ -1,6 +1,6 @@
 @file:Suppress("unused")
 
-package com.m3u.data.repository.di
+package com.m3u.data.repository
 
 import com.m3u.data.repository.media.MediaRepository
 import com.m3u.data.repository.playlist.PlaylistRepository

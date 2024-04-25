@@ -46,7 +46,6 @@
     <string name="feat_setting_dropbox">dropbox</string>
     <string name="feat_setting_project_about">acerca del proyecto</string>
     <string name="feat_setting_local_storage">almacenamiento local</string>
-    <string name="feat_setting_epg">EPG</string>
     <string name="feat_setting_error_unselected_file">aún no se seleccionó al archivo</string>
     <string name="feat_setting_error_blank_url">dirección en blanco</string>
     <string name="feat_setting_use_dynamic_colors">colores dinámicos</string>

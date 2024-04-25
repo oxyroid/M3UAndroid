@@ -61,7 +61,7 @@ internal fun AppearanceFragment(
                 Text(
                     text = stringResource(string.feat_setting_appearance_hint_edit_color).uppercase(),
                     color = MaterialTheme.colorScheme.onPrimary,
-                    style = MaterialTheme.typography.labelMedium,
+                    style = MaterialTheme.typography.labelLarge,
                     modifier = Modifier.textHorizontalLabel()
                 )
                 LazyRow(

@@ -25,10 +25,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.MutableState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboardManager
@@ -40,7 +37,7 @@ import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.Stream
 import com.m3u.features.setting.BackingUpAndRestoringState
 import com.m3u.features.setting.components.DataSourceSelection
-import com.m3u.features.setting.components.EPGSwitch
+import com.m3u.features.setting.components.EpgPlaylistItem
 import com.m3u.features.setting.components.HiddenPlaylistGroupItem
 import com.m3u.features.setting.components.HiddenStreamItem
 import com.m3u.features.setting.components.LocalStorageButton
@@ -59,42 +56,34 @@ import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.helper.LocalHelper
 
 private enum class SubscriptionsFragmentPage {
-    MAIN, HIDDEN_STREAMS, HIDDEN_PLAYLIST_CATEGORIES
+    MAIN, EPG_PLAYLISTS, HIDDEN_STREAMS, HIDDEN_PLAYLIST_CATEGORIES
 }
 
 @Composable
 internal fun SubscriptionsFragment(
-    contentPadding: PaddingValues,
-    title: String,
-    url: String,
-    uri: Uri,
-    selected: DataSource,
-    onSelected: (DataSource) -> Unit,
-    basicUrl: String,
-    onBasicUrl: (String) -> Unit,
-    username: String,
-    onUsername: (String) -> Unit,
-    password: String,
-    onPassword: (String) -> Unit,
-    localStorage: Boolean,
-    subscribeForTv: Boolean,
+    titleState: MutableState<String>,
+    urlState: MutableState<String>,
+    uriState: MutableState<Uri>,
+    selectedState: MutableState<DataSource>,
+    basicUrlState: MutableState<String>,
+    usernameState: MutableState<String>,
+    passwordState: MutableState<String>,
+    epgState: MutableState<String>,
+    localStorageState: MutableState<Boolean>,
+    forTvState: MutableState<Boolean>,
     backingUpOrRestoring: BackingUpAndRestoringState,
     hiddenStreams: List<Stream>,
     hiddenCategoriesWithPlaylists: List<Pair<Playlist, String>>,
     onUnhideStream: (Int) -> Unit,
     onUnhidePlaylistCategory: (playlistUrl: String, category: String) -> Unit,
-    onTitle: (String) -> Unit,
-    onUrl: (String) -> Unit,
-    epg: String,
-    onEpg: (String) -> Unit,
     onClipboard: (String) -> Unit,
     onSubscribe: () -> Unit,
-    onLocalStorage: (Boolean) -> Unit,
-    onSubscribeForTv: () -> Unit,
-    openDocument: (Uri) -> Unit,
     backup: () -> Unit,
     restore: () -> Unit,
-    modifier: Modifier = Modifier
+    epgs: List<Playlist>,
+    onDeleteEpgPlaylist: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues()
 ) {
     val spacing = LocalSpacing.current
     val pagerState = rememberPagerState { SubscriptionsFragmentPage.entries.size }
@@ -109,31 +98,28 @@ internal fun SubscriptionsFragment(
             when (SubscriptionsFragmentPage.entries[page]) {
                 SubscriptionsFragmentPage.MAIN -> {
                     MainContentImpl(
-                        title = title,
-                        url = url,
-                        uri = uri,
-                        selected = selected,
-                        onSelected = onSelected,
-                        basicUrl = basicUrl,
-                        onBasicUrl = onBasicUrl,
-                        username = username,
-                        onUsername = onUsername,
-                        password = password,
-                        onPassword = onPassword,
-                        localStorage = localStorage,
-                        subscribeForTv = subscribeForTv,
+                        titleState = titleState,
+                        urlState = urlState,
+                        uriState = uriState,
+                        selectedState = selectedState,
+                        basicUrlState = basicUrlState,
+                        usernameState = usernameState,
+                        passwordState = passwordState,
+                        localStorageState = localStorageState,
+                        forTvState = forTvState,
                         backingUpOrRestoring = backingUpOrRestoring,
-                        onTitle = onTitle,
-                        onUrl = onUrl,
+                        epgState = epgState,
                         onClipboard = onClipboard,
                         onSubscribe = onSubscribe,
-                        onLocalStorage = onLocalStorage,
-                        onSubscribeForTv = onSubscribeForTv,
-                        openDocument = openDocument,
                         backup = backup,
-                        restore = restore,
-                        epg = epg,
-                        onEpg = onEpg
+                        restore = restore
+                    )
+                }
+
+                SubscriptionsFragmentPage.EPG_PLAYLISTS -> {
+                    EpgsContentImpl(
+                        epgs = epgs,
+                        onDeleteEpgPlaylist = onDeleteEpgPlaylist
                     )
                 }
 
@@ -164,29 +150,19 @@ internal fun SubscriptionsFragment(
 
 @Composable
 private fun MainContentImpl(
-    title: String,
-    url: String,
-    uri: Uri,
-    selected: DataSource,
-    onSelected: (DataSource) -> Unit,
-    basicUrl: String,
-    onBasicUrl: (String) -> Unit,
-    username: String,
-    onUsername: (String) -> Unit,
-    password: String,
-    onPassword: (String) -> Unit,
-    localStorage: Boolean,
-    subscribeForTv: Boolean,
+    titleState: MutableState<String>,
+    urlState: MutableState<String>,
+    uriState: MutableState<Uri>,
+    selectedState: MutableState<DataSource>,
+    basicUrlState: MutableState<String>,
+    usernameState: MutableState<String>,
+    passwordState: MutableState<String>,
+    localStorageState: MutableState<Boolean>,
+    forTvState: MutableState<Boolean>,
     backingUpOrRestoring: BackingUpAndRestoringState,
-    onTitle: (String) -> Unit,
-    onUrl: (String) -> Unit,
-    epg: String,
-    onEpg: (String) -> Unit,
+    epgState: MutableState<String>,
     onClipboard: (String) -> Unit,
     onSubscribe: () -> Unit,
-    onLocalStorage: (Boolean) -> Unit,
-    onSubscribeForTv: () -> Unit,
-    openDocument: (Uri) -> Unit,
     backup: () -> Unit,
     restore: () -> Unit,
     modifier: Modifier = Modifier
@@ -199,8 +175,6 @@ private fun MainContentImpl(
     val tv = isTelevision()
     val remoteControl = preferences.remoteControl
 
-    var useEpg by remember { mutableStateOf(false) }
-
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(spacing.small),
         contentPadding = PaddingValues(spacing.medium),
@@ -208,79 +182,64 @@ private fun MainContentImpl(
     ) {
         item {
             DataSourceSelection(
-                selected = selected,
+                selectedState = selectedState,
                 supported = listOf(
                     DataSource.M3U,
+                    DataSource.EPG,
                     DataSource.Xtream,
                     DataSource.Emby,
-                    DataSource.Dropbox,
-                    DataSource.Aliyun
-                ),
-                onSelected = onSelected
+                    DataSource.Dropbox
+                )
             )
         }
 
         item {
-            when (selected) {
+            when (selectedState.value) {
                 DataSource.M3U -> {
                     M3UInputContent(
-                        title = title,
-                        onTitle = onTitle,
-                        url = url,
-                        onUrl = onUrl,
-                        uri = uri,
-                        useEpg = useEpg,
-                        epg = epg,
-                        onEpg = onEpg,
-                        openDocument = openDocument,
-                        localStorage = localStorage
+                        titleState = titleState,
+                        urlState = urlState,
+                        uriState = uriState,
+                        localStorageState = localStorageState
+                    )
+                }
+
+                DataSource.EPG -> {
+                    EPGInputContent(
+                        epgState = epgState
                     )
                 }
 
                 DataSource.Xtream -> {
                     XtreamInputContent(
-                        title = title,
-                        onTitle = onTitle,
-                        basicUrl = basicUrl,
-                        onBasicUrl = onBasicUrl,
-                        username = username,
-                        onUsername = onUsername,
-                        password = password,
-                        onPassword = onPassword
+                        titleState = titleState,
+                        basicUrlState = basicUrlState,
+                        usernameState = usernameState,
+                        passwordState = passwordState
                     )
                 }
 
                 DataSource.Emby -> {}
                 DataSource.Dropbox -> {}
-                DataSource.Aliyun -> {}
             }
         }
 
         item {
-            if (selected == DataSource.M3U) {
+            if (selectedState.value == DataSource.M3U) {
                 LocalStorageSwitch(
-                    checked = localStorage,
-                    onChanged = onLocalStorage,
-                    enabled = !subscribeForTv
+                    checked = localStorageState.value,
+                    onChanged = { localStorageState.value = it },
+                    enabled = !forTvState.value
                 )
             }
             if (!tv && remoteControl) {
                 RemoteControlSubscribeSwitch(
-                    checked = subscribeForTv,
-                    onChanged = onSubscribeForTv,
-                    enabled = !localStorage
+                    checked = forTvState.value,
+                    onChanged = { forTvState.value = !forTvState.value },
+                    enabled = !localStorageState.value
                 )
             }
         }
-        item {
-            if (selected == DataSource.M3U) {
-                EPGSwitch(
-                    checked = useEpg,
-                    onChanged = { useEpg = it }
-                )
-            }
-        }
-
         item {
             @SuppressLint("InlinedApi")
             val postNotificationPermission = rememberPermissionState(
@@ -307,26 +266,32 @@ private fun MainContentImpl(
                 },
                 modifier = Modifier.fillMaxWidth()
             )
-            TonalButton(
-                text = stringResource(string.feat_setting_label_parse_from_clipboard),
-                enabled = !localStorage,
-                onClick = {
-                    onClipboard(clipboardManager.getText()?.text.orEmpty())
-                },
-                modifier = Modifier.fillMaxWidth()
-            )
+            when (selectedState.value) {
+                DataSource.M3U, DataSource.Xtream -> {
+                    TonalButton(
+                        text = stringResource(string.feat_setting_label_parse_from_clipboard),
+                        enabled = !localStorageState.value,
+                        onClick = {
+                            onClipboard(clipboardManager.getText()?.text.orEmpty())
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+
+                else -> {}
+            }
         }
 
         item {
             TonalButton(
                 text = stringResource(string.feat_setting_label_backup),
-                enabled = !subscribeForTv && backingUpOrRestoring == BackingUpAndRestoringState.NONE,
+                enabled = !forTvState.value && backingUpOrRestoring == BackingUpAndRestoringState.NONE,
                 onClick = backup,
                 modifier = Modifier.fillMaxWidth()
             )
             TonalButton(
                 text = stringResource(string.feat_setting_label_restore),
-                enabled = !subscribeForTv && backingUpOrRestoring == BackingUpAndRestoringState.NONE,
+                enabled = !forTvState.value && backingUpOrRestoring == BackingUpAndRestoringState.NONE,
                 onClick = restore,
                 modifier = Modifier.fillMaxWidth()
             )
@@ -338,8 +303,33 @@ private fun MainContentImpl(
     }
 }
 
+
 @Composable
-fun HiddenStreamContentImpl(
+private fun EpgsContentImpl(
+    epgs: List<Playlist>,
+    onDeleteEpgPlaylist: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier.fillMaxWidth()
+    ) {
+        Text(
+            text = stringResource(string.feat_setting_label_epg_playlists),
+            color = MaterialTheme.colorScheme.onPrimary,
+            style = MaterialTheme.typography.labelLarge,
+            modifier = Modifier.textHorizontalLabel()
+        )
+        epgs.forEach { epgPlaylist ->
+            EpgPlaylistItem(
+                epgPlaylist = epgPlaylist,
+                onDeleteEpgPlaylist = { onDeleteEpgPlaylist(epgPlaylist.url) }
+            )
+        }
+    }
+}
+
+@Composable
+private fun HiddenStreamContentImpl(
     hiddenStreams: List<Stream>,
     onUnhideStream: (Int) -> Unit,
     modifier: Modifier = Modifier
@@ -350,7 +340,7 @@ fun HiddenStreamContentImpl(
         Text(
             text = stringResource(string.feat_setting_label_hidden_streams),
             color = MaterialTheme.colorScheme.onPrimary,
-            style = MaterialTheme.typography.labelMedium,
+            style = MaterialTheme.typography.labelLarge,
             modifier = Modifier.textHorizontalLabel()
         )
         hiddenStreams.forEach { stream ->
@@ -363,7 +353,7 @@ fun HiddenStreamContentImpl(
 }
 
 @Composable
-fun HiddenPlaylistCategoriesContentImpl(
+private fun HiddenPlaylistCategoriesContentImpl(
     hiddenCategoriesWithPlaylists: List<Pair<Playlist, String>>,
     onUnhidePlaylistCategory: (playlistUrl: String, category: String) -> Unit,
     modifier: Modifier = Modifier
@@ -372,7 +362,7 @@ fun HiddenPlaylistCategoriesContentImpl(
         Text(
             text = stringResource(string.feat_setting_label_hidden_playlist_groups),
             color = MaterialTheme.colorScheme.onPrimary,
-            style = MaterialTheme.typography.labelMedium,
+            style = MaterialTheme.typography.labelLarge,
             modifier = Modifier.textHorizontalLabel()
         )
         hiddenCategoriesWithPlaylists.forEach { (playlist, category) ->
@@ -387,16 +377,10 @@ fun HiddenPlaylistCategoriesContentImpl(
 
 @Composable
 private fun M3UInputContent(
-    title: String,
-    onTitle: (String) -> Unit,
-    url: String,
-    onUrl: (String) -> Unit,
-    uri: Uri,
-    useEpg: Boolean,
-    epg: String,
-    onEpg: (String) -> Unit,
-    openDocument: (Uri) -> Unit,
-    localStorage: Boolean,
+    titleState: MutableState<String>,
+    urlState: MutableState<String>,
+    uriState: MutableState<Uri>,
+    localStorageState: MutableState<Boolean>,
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
@@ -405,51 +389,35 @@ private fun M3UInputContent(
         verticalArrangement = Arrangement.spacedBy(spacing.small)
     ) {
         PlaceholderField(
-            text = title,
+            text = titleState.value,
             placeholder = stringResource(string.feat_setting_placeholder_title).uppercase(),
-            onValueChange = onTitle,
+            onValueChange = { titleState.value = Uri.decode(it) },
             modifier = Modifier.fillMaxWidth()
         )
         Crossfade(
-            targetState = localStorage,
+            targetState = localStorageState.value,
             label = "url"
         ) { localStorage ->
             if (!localStorage) {
                 PlaceholderField(
-                    text = url,
+                    text = urlState.value,
                     placeholder = stringResource(string.feat_setting_placeholder_url).uppercase(),
-                    onValueChange = onUrl,
+                    onValueChange = { urlState.value = Uri.decode(it) },
                     modifier = Modifier.fillMaxWidth()
                 )
             } else {
                 LocalStorageButton(
-                    uri = uri,
-                    onTitle = onTitle,
-                    openDocument = openDocument,
+                    titleState = titleState,
+                    uriState = uriState,
                 )
             }
-        }
-        if (useEpg) {
-            PlaceholderField(
-                text = epg,
-                placeholder = stringResource(string.feat_setting_placeholder_epg).uppercase(),
-                onValueChange = onEpg,
-                modifier = Modifier.fillMaxWidth()
-            )
         }
     }
 }
 
 @Composable
-private fun XtreamInputContent(
-    title: String,
-    onTitle: (String) -> Unit,
-    basicUrl: String,
-    onBasicUrl: (String) -> Unit,
-    username: String,
-    onUsername: (String) -> Unit,
-    password: String,
-    onPassword: (String) -> Unit,
+private fun EPGInputContent(
+    epgState: MutableState<String>,
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
@@ -458,27 +426,50 @@ private fun XtreamInputContent(
         verticalArrangement = Arrangement.spacedBy(spacing.small)
     ) {
         PlaceholderField(
-            text = title,
+            text = epgState.value,
+            placeholder = stringResource(string.feat_setting_placeholder_epg).uppercase(),
+            onValueChange = { epgState.value = Uri.decode(it) },
+            modifier = Modifier.fillMaxWidth()
+        )
+    }
+}
+
+@Composable
+private fun XtreamInputContent(
+    titleState: MutableState<String>,
+    basicUrlState: MutableState<String>,
+    usernameState: MutableState<String>,
+    passwordState: MutableState<String>,
+    modifier: Modifier = Modifier
+) {
+    val spacing = LocalSpacing.current
+
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(spacing.small)
+    ) {
+        PlaceholderField(
+            text = titleState.value,
             placeholder = stringResource(string.feat_setting_placeholder_title).uppercase(),
-            onValueChange = onTitle,
+            onValueChange = { titleState.value = Uri.encode(it) },
             modifier = Modifier.fillMaxWidth()
         )
         PlaceholderField(
-            text = basicUrl,
+            text = basicUrlState.value,
             placeholder = stringResource(string.feat_setting_placeholder_basic_url).uppercase(),
-            onValueChange = onBasicUrl,
+            onValueChange = { basicUrlState.value = it },
             modifier = Modifier.fillMaxWidth()
         )
         PlaceholderField(
-            text = username,
+            text = usernameState.value,
             placeholder = stringResource(string.feat_setting_placeholder_username).uppercase(),
-            onValueChange = onUsername,
+            onValueChange = { usernameState.value = it },
             modifier = Modifier.fillMaxWidth()
         )
         PlaceholderField(
-            text = password,
+            text = passwordState.value,
             placeholder = stringResource(string.feat_setting_placeholder_password).uppercase(),
-            onValueChange = onPassword,
+            onValueChange = { passwordState.value = it },
             modifier = Modifier.fillMaxWidth()
         )
         Warning(stringResource(string.feat_setting_warning_xtream_takes_much_more_time))

@@ -14,7 +14,6 @@ import androidx.paging.map
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.Profiles
 import com.m3u.core.architecture.logger.install
-import com.m3u.core.architecture.logger.post
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.Stream
@@ -38,13 +37,11 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import org.jupnp.model.meta.Device
 import javax.inject.Inject
@@ -287,10 +284,10 @@ class StreamViewModel @Inject constructor(
             .cachedIn(viewModelScope)
     }
 
-    internal val programme: Flow<PagingData<ProgrammeGuide.Programme>> =
+    internal val programmes: Flow<PagingData<ProgrammeGuide.Programme>> =
         stream.flatMapLatest { stream ->
-            Pager(PagingConfig(5)) {
-                programmeRepository.pagingAllByStreamId(stream?.id ?: -1)
+            Pager(PagingConfig(15)) {
+                programmeRepository.pagingByChannelId(stream?.channelId ?: "")
             }
                 .flow
                 .map {
@@ -310,11 +307,12 @@ class StreamViewModel @Inject constructor(
                 .cachedIn(viewModelScope)
         }
 
-    internal val isProgrammesRefreshing: StateFlow<Boolean> = combine(
+    internal val isEpgRefreshing: StateFlow<Boolean> = combine(
         playlist,
-        programmeRepository.refreshingPlaylistUrls
-    ) { playlist, urls ->
-        playlist?.url in urls
+        programmeRepository.refreshingEpgUrls
+    ) { playlist, refreshingEpgUrls ->
+        val epgUrls = playlist?.epgUrls ?: emptyList()
+        epgUrls.any { epgUrl -> epgUrl in refreshingEpgUrls }
     }
         .stateIn(
             scope = viewModelScope,
@@ -324,33 +322,19 @@ class StreamViewModel @Inject constructor(
         )
 
     internal fun checkOrRefreshProgrammes(ignoreCache: Boolean = false) {
-        val epochMilliseconds = Clock.System.now().toEpochMilliseconds()
-        logger.post { "Now: ${Instant.fromEpochMilliseconds(epochMilliseconds)}" }
         viewModelScope.launch {
-            val snapshots = programmeRepository
-                .observeSnapshotsGroupedByPlaylistUrl()
-                .first()
             val stream = stream.value ?: return@launch
-            val snapshot = snapshots.find { it.playlistUrl == stream.playlistUrl }
-            if (ignoreCache || snapshot == null || snapshot.end < epochMilliseconds) {
-                logger.post {
-                    if (snapshot == null) {
-                        "Cached programme is not existed, fetching..."
-                    } else {
-                        val expired = Instant.fromEpochMilliseconds(snapshot.end)
-                        "Cached programme is expired (in $expired), fetching..."
-                    }
-                }
-                val result = runCatching {
-                    programmeRepository.fetchProgrammesOrThrow(stream.playlistUrl)
-                }
-                if (result.isFailure) {
-                    messager.emit(result.exceptionOrNull()?.message.orEmpty())
-                    return@launch
-                }
-            } else {
-                val expired = Instant.fromEpochMilliseconds(snapshot.end)
-                logger.post { "Cached programme is validate. Expired: $expired" }
+            val result = runCatching {
+                // TODO: call it in worker.
+                programmeRepository.checkOrRefreshProgrammesByPlaylistUrlOrThrow(
+                    playlistUrl = stream.playlistUrl,
+                    ignoreCache = ignoreCache
+                )
+            }
+            if (result.isFailure) {
+                messager.emit(result.exceptionOrNull()?.message.orEmpty())
+                logger.log(result.exceptionOrNull()?.message.orEmpty())
+                return@launch
             }
         }
     }

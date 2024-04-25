@@ -5,33 +5,35 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.OpenInNew
-import com.m3u.material.components.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import com.m3u.core.util.readFileName
 import com.m3u.i18n.R.string
+import com.m3u.material.components.Icon
 import com.m3u.material.components.ToggleableSelection
 
 @Composable
 internal fun LocalStorageButton(
-    uri: Uri,
-    onTitle: (String) -> Unit,
-    openDocument: (Uri) -> Unit,
+    titleState: MutableState<String>,
+    uriState: MutableState<Uri>,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
+    val uri by uriState
     val selected = uri != Uri.EMPTY
     val launcher = rememberLauncherForActivityResult(
         ActivityResultContracts.GetContent()
     ) { result ->
         if (result == null) {
-            openDocument(Uri.EMPTY)
-            onTitle("")
+            titleState.value = ""
+            uriState.value = Uri.EMPTY
         } else {
             try {
                 val filename = result.readFileName(context.contentResolver)
@@ -40,12 +42,12 @@ internal fun LocalStorageButton(
                     .split(".")
                     .dropLast(1)
                     .joinToString(separator = "", prefix = "", postfix = "")
-                onTitle(title)
+                titleState.value = title
             } catch (ignored: Exception) {
             }
-            openDocument(result)
+            uriState.value = result
         }
-        openDocument(result ?: Uri.EMPTY)
+        uriState.value = result ?: Uri.EMPTY
     }
     val icon = Icons.AutoMirrored.Rounded.OpenInNew
     val text = if (selected) remember(uri) {

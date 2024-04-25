@@ -20,6 +20,7 @@ import com.m3u.core.util.readFileContent
 import com.m3u.core.util.readFileName
 import com.m3u.data.api.OkhttpClient
 import com.m3u.data.database.dao.PlaylistDao
+import com.m3u.data.database.dao.ProgrammeDao
 import com.m3u.data.database.dao.StreamDao
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
@@ -71,6 +72,7 @@ private const val BUFFER_RESTORE_CAPACITY = 400
 internal class PlaylistRepositoryImpl @Inject constructor(
     private val playlistDao: PlaylistDao,
     private val streamDao: StreamDao,
+    private val programmeDao: ProgrammeDao,
     delegate: Logger,
     @OkhttpClient(true) private val okHttpClient: OkHttpClient,
     private val m3uParser: M3UParser,
@@ -85,7 +87,6 @@ internal class PlaylistRepositoryImpl @Inject constructor(
     override suspend fun m3uOrThrow(
         title: String,
         url: String,
-        epgUrl: String?,
         callback: (count: Int) -> Unit
     ) {
         var currentCount = 0
@@ -122,8 +123,7 @@ internal class PlaylistRepositoryImpl @Inject constructor(
 
         val playlist = playlistDao.getByUrl(actualUrl)?.copy(
             title = title,
-            epgUrl = epgUrl
-        ) ?: Playlist(title, actualUrl, epgUrl = epgUrl, source = DataSource.M3U)
+        ) ?: Playlist(title, actualUrl, source = DataSource.M3U)
         playlistDao.insertOrReplace(playlist)
 
         val cache = createCoroutineCache<M3UData>(BUFFER_M3U_CAPACITY) { all ->
@@ -140,6 +140,7 @@ internal class PlaylistRepositoryImpl @Inject constructor(
             }?.use { input ->
                 m3uParser
                     .parse(input.buffered())
+                    .onEach { logger.post { it } }
                     .filterNot {
                         val channelId = it.id
                         when {
@@ -342,13 +343,29 @@ internal class PlaylistRepositoryImpl @Inject constructor(
             .collect()
     }
 
+    override suspend fun epgOrThrow(epg: String): Unit = withContext(ioDispatcher) {
+        // just save epg playlist to db
+        playlistDao.insertOrReplace(
+            Playlist(
+                // we call epg playlist title its url
+                title = epg,
+                url = epg,
+                source = DataSource.EPG
+            )
+        )
+    }
+
     override suspend fun refresh(url: String) = logger.sandBox {
         val playlist = checkNotNull(get(url)) { "Cannot find playlist: $url" }
         check(!playlist.fromLocal) { "refreshing is not needed for local storage playlist." }
 
         when (playlist.source) {
             DataSource.M3U -> {
-                SubscriptionWorker.m3u(workManager, playlist.title, url, playlist.epgUrl)
+                SubscriptionWorker.m3u(workManager, playlist.title, url)
+            }
+
+            DataSource.EPG -> {
+                SubscriptionWorker.epg(workManager, url)
             }
 
             DataSource.Xtream -> {
@@ -459,6 +476,13 @@ internal class PlaylistRepositoryImpl @Inject constructor(
             emit(emptyList())
         }
 
+    override fun observeAllEpgs(): Flow<List<Playlist>> = playlistDao
+        .observeAllEpgs()
+        .catch {
+            logger.log(it)
+            emit(emptyList())
+        }
+
     override fun observePlaylistUrls(): Flow<List<String>> = playlistDao
         .observePlaylistUrls()
         .catch {
@@ -516,6 +540,61 @@ internal class PlaylistRepositoryImpl @Inject constructor(
         )
         // fixme: do not flatmap
         return seriesInfo.episodes.flatMap { it.value }
+    }
+
+    override suspend fun addEpgToPlaylist(epgUrl: String, playlistUrl: String) = logger.sandBox {
+        val epgPlaylist = checkNotNull(playlistDao.getByUrl(epgUrl)) {
+            "EPG is not existed, Please subscribe before adding it."
+        }
+        check(epgPlaylist.source == DataSource.EPG) {
+            "EPG is not existed, Please subscribe before adding it."
+        }
+        val playlist = checkNotNull(playlistDao.getByUrl(playlistUrl)) {
+            "Playlist is not existed."
+        }
+
+        playlistDao.insertOrReplace(
+            playlist.copy(
+                epgUrls = playlist.epgUrls + epgPlaylist.url
+            )
+        )
+    }
+
+    override suspend fun removeEpgFromPlaylist(epgUrl: String, playlistUrl: String) {
+        val epgPlaylist = checkNotNull(playlistDao.getByUrl(epgUrl)) {
+            "EPG is not existed, Please subscribe before adding it."
+        }
+        check(epgPlaylist.source == DataSource.EPG) {
+            "EPG is not existed, Please subscribe before adding it."
+        }
+        val playlist = checkNotNull(playlistDao.getByUrl(playlistUrl)) {
+            "Playlist is not existed."
+        }
+
+        playlistDao.insertOrReplace(
+            playlist.copy(
+                epgUrls = playlist.epgUrls - epgPlaylist.url
+            )
+        )
+    }
+
+    override suspend fun deleteEpgPlaylistAndProgrammes(epgUrl: String) {
+        playlistDao.deleteByUrl(epgUrl)
+        programmeDao.deleteAllByEpgUrl(epgUrl)
+    }
+
+    override suspend fun onUpdateEpgPlaylist(useCase: PlaylistRepository.UpdateEpgPlaylistUseCase) {
+        val playlist = checkNotNull(playlistDao.getByUrl(useCase.playlistUrl)) {
+            "Cannot find playlist before update associated epg"
+        }
+        val epg = checkNotNull(playlistDao.getByUrl(useCase.epgUrl)) {
+            "Cannot find associated epg"
+        }
+
+        playlistDao.updateEpgUrls(playlist.url) { epgUrls ->
+            if (useCase.action) epgUrls + epg.url
+            else epgUrls - epg.url
+        }
     }
 
     private val filenameWithTimezone: String get() = "File_${System.currentTimeMillis()}"

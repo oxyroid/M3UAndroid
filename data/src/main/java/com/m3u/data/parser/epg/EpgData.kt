@@ -44,11 +44,9 @@ data class EpgProgramme(
 }
 
 fun EpgProgramme.toProgramme(
-    streamId: Int,
-    playlistUrl: String
+    epgUrl: String
 ): Programme = Programme(
-    streamId = streamId,
-    playlistUrl = playlistUrl,
+    epgUrl = epgUrl,
     start = start?.let {
         EpgProgramme.readEpochMilliseconds(it)
     } ?: 0L,
@@ -58,5 +56,6 @@ fun EpgProgramme.toProgramme(
     title = title.orEmpty(),
     description = desc.orEmpty(),
     icon = icon,
-    categories = categories
+    categories = categories,
+    channelId = channel
 )

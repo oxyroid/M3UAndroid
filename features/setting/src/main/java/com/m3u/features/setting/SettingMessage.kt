@@ -17,6 +17,11 @@ sealed class SettingMessage(
         type = TYPE_SNACK,
         resId = string.feat_setting_error_empty_title
     )
+    data object EmptyEpg : SettingMessage(
+        level = LEVEL_ERROR,
+        type = TYPE_SNACK,
+        resId = string.feat_setting_error_empty_epg
+    )
 
     data object EmptyUrl : SettingMessage(
         level = LEVEL_ERROR,
@@ -36,13 +41,19 @@ sealed class SettingMessage(
         resId = string.feat_setting_enqueue_subscribe
     )
 
-    data object BackingUp: SettingMessage(
+    data object EpgAdded : SettingMessage(
+        level = LEVEL_INFO,
+        type = TYPE_SNACK,
+        resId = string.feat_setting_epg_added
+    )
+
+    data object BackingUp : SettingMessage(
         level = LEVEL_INFO,
         type = TYPE_SNACK,
         resId = string.feat_setting_backing_up
     )
 
-    data object Restoring: SettingMessage(
+    data object Restoring : SettingMessage(
         level = LEVEL_INFO,
         type = TYPE_SNACK,
         resId = string.feat_setting_restoring

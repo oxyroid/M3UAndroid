@@ -31,8 +31,8 @@ internal interface PlaylistDao {
     @Query("SELECT * FROM playlists ORDER BY title")
     fun observeAll(): Flow<List<Playlist>>
 
-    @Query("SELECT * FROM playlists WHERE epg_url != NULL ORDER BY title")
-    fun observeAllContainsEpgUrl(): Flow<List<Playlist>>
+    @Query("""SELECT * FROM playlists WHERE source = "epg" ORDER BY title""")
+    fun observeAllEpgs(): Flow<List<Playlist>>
 
     @Query("SELECT url FROM playlists ORDER BY title")
     fun observePlaylistUrls(): Flow<List<String>>
@@ -53,7 +53,14 @@ internal interface PlaylistDao {
     fun observeByUrlWithStreams(url: String): Flow<PlaylistWithStreams?>
 
     @Transaction
-    @Query("SELECT playlists.*, COUNT(streams.id) AS count FROM playlists LEFT JOIN streams ON playlists.url = streams.playlistUrl GROUP BY playlists.url")
+    @Query(
+        """
+        SELECT playlists.*, COUNT(streams.id) AS count 
+        FROM playlists 
+        LEFT JOIN streams ON playlists.url = streams.playlistUrl 
+        WHERE source != "epg" GROUP BY playlists.url
+        """
+    )
     fun observeAllCounts(): Flow<List<PlaylistWithCount>>
 
     @Transaction
@@ -81,6 +88,15 @@ internal interface PlaylistDao {
         insertOrReplace(
             playlist.copy(
                 pinnedCategories = updater(playlist.pinnedCategories)
+            )
+        )
+    }
+    @Transaction
+    suspend fun updateEpgUrls(url: String, updater: (List<String>) -> List<String>) {
+        val playlist = getByUrl(url) ?: return
+        insertOrReplace(
+            playlist.copy(
+                epgUrls = updater(playlist.epgUrls)
             )
         )
     }

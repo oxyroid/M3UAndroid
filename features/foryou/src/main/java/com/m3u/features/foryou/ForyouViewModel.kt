@@ -11,6 +11,7 @@ import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.Profiles
 import com.m3u.core.architecture.logger.install
+import com.m3u.core.architecture.logger.post
 import com.m3u.core.architecture.preferences.Preferences
 import com.m3u.core.wrapper.Resource
 import com.m3u.core.wrapper.asResource
@@ -34,6 +35,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -118,6 +120,12 @@ class ForyouViewModel @Inject constructor(
         }
     }
 
+    internal fun onUpdateEpgPlaylist(usecase: PlaylistRepository.UpdateEpgPlaylistUseCase) {
+        viewModelScope.launch {
+            playlistRepository.onUpdateEpgPlaylist(usecase)
+        }
+    }
+
     internal val series = MutableStateFlow<Stream?>(null)
     internal val seriesReplay = MutableStateFlow(0)
     internal val episodes: StateFlow<Resource<List<XtreamStreamInfo.Episode>>> = series
@@ -136,4 +144,23 @@ class ForyouViewModel @Inject constructor(
 
     internal suspend fun getPlaylist(playlistUrl: String): Playlist? =
         playlistRepository.get(playlistUrl)
+
+    internal val focusPlaylist = MutableStateFlow<Playlist?>(null)
+    internal val epgs: StateFlow<Map<Playlist, Boolean>> = combine(
+        playlistRepository.observeAllEpgs(),
+        focusPlaylist.flatMapLatest { playlistRepository.observe(it?.url.orEmpty()) }
+    ) { epgs, playlist ->
+        val epgUrls = playlist?.epgUrls ?: return@combine emptyMap()
+        buildMap {
+            epgs.forEach { epg ->
+                put(epg, epg.url in epgUrls)
+            }
+        }
+    }
+        .onEach { logger.post { it } }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Lazily,
+            initialValue = emptyMap()
+        )
 }

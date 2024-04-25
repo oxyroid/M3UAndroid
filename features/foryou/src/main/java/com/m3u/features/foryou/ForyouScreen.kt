@@ -31,6 +31,7 @@ import com.m3u.core.wrapper.Resource
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.PlaylistWithCount
 import com.m3u.data.database.model.Stream
+import com.m3u.data.repository.playlist.PlaylistRepository
 import com.m3u.data.service.MediaCommand
 import com.m3u.features.foryou.components.PlaylistGallery
 import com.m3u.features.foryou.components.PlaylistGalleryPlaceholder
@@ -78,6 +79,7 @@ fun ForyouRoute(
     val playlistCountsResource by viewModel.playlistCountsResource.collectAsStateWithLifecycle()
     val recommend by viewModel.recommend.collectAsStateWithLifecycle()
     val episodes by viewModel.episodes.collectAsStateWithLifecycle()
+    val epgs by viewModel.epgs.collectAsStateWithLifecycle()
 
     val series: Stream? by viewModel.series.collectAsStateWithLifecycle()
 
@@ -97,65 +99,69 @@ fun ForyouRoute(
         }
     }
 
-    Background {
-        Box(modifier) {
-            ForyouScreen(
-                playlistCountsResource = playlistCountsResource,
-                recommend = recommend,
-                rowCount = preferences.rowCount,
-                contentPadding = contentPadding,
-                navigateToPlaylist = navigateToPlaylist,
-                onClickStream = { stream ->
-                    coroutineScope.launch {
-                        val playlist = viewModel.getPlaylist(stream.playlistUrl)
-                        when {
-                            playlist?.type in Playlist.SERIES_TYPES -> {
-                                viewModel.series.value = stream
-                            }
-
-                            else -> {
-                                helper.play(MediaCommand.Live(stream.id))
-                                navigateToStream()
-                            }
+    Background(modifier) {
+        ForyouScreen(
+            playlistCountsResource = playlistCountsResource,
+            epgs = epgs,
+            recommend = recommend,
+            rowCount = preferences.rowCount,
+            contentPadding = contentPadding,
+            navigateToPlaylist = navigateToPlaylist,
+            onClickStream = { stream ->
+                coroutineScope.launch {
+                    val playlist = viewModel.getPlaylist(stream.playlistUrl)
+                    when {
+                        playlist?.type in Playlist.SERIES_TYPES -> {
+                            viewModel.series.value = stream
                         }
-                    }
-                },
-                navigateToSettingPlaylistManagement = navigateToSettingPlaylistManagement,
-                onUnsubscribePlaylist = viewModel::onUnsubscribePlaylist,
-                onEditPlaylistTitle = viewModel::onEditPlaylistTitle,
-                onEditPlaylistUserAgent = viewModel::onEditPlaylistUserAgent,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .thenIf(!tv && preferences.godMode) {
-                        Modifier.interceptVolumeEvent { event ->
-                            preferences.rowCount = when (event) {
-                                KeyEvent.KEYCODE_VOLUME_UP -> (preferences.rowCount - 1).coerceAtLeast(1)
-                                KeyEvent.KEYCODE_VOLUME_DOWN -> (preferences.rowCount + 1).coerceAtMost(2)
-                                else -> return@interceptVolumeEvent
-                            }
-                        }
-                    }
-            )
 
-            EpisodesBottomSheet(
-                series = series,
-                episodes = episodes,
-                onEpisodeClick = { episode ->
-                    coroutineScope.launch {
-                        series?.let { stream ->
-                            val input = MediaCommand.XtreamEpisode(
-                                streamId = stream.id,
-                                episode = episode
-                            )
-                            helper.play(input)
+                        else -> {
+                            helper.play(MediaCommand.Live(stream.id))
                             navigateToStream()
                         }
                     }
-                },
-                onRefresh = { series?.let { viewModel.seriesReplay.value += 1 } },
-                onDismissRequest = { viewModel.series.value = null }
-            )
-        }
+                }
+            },
+            navigateToSettingPlaylistManagement = navigateToSettingPlaylistManagement,
+            onUnsubscribePlaylist = viewModel::onUnsubscribePlaylist,
+            onEditPlaylistTitle = viewModel::onEditPlaylistTitle,
+            onEditPlaylistUserAgent = viewModel::onEditPlaylistUserAgent,
+            onUpdateFocusPlaylist = { viewModel.focusPlaylist.value = it },
+            onUpdateEpgPlaylist = viewModel::onUpdateEpgPlaylist,
+            modifier = Modifier
+                .fillMaxSize()
+                .thenIf(!tv && preferences.godMode) {
+                    Modifier.interceptVolumeEvent { event ->
+                        preferences.rowCount = when (event) {
+                            KeyEvent.KEYCODE_VOLUME_UP -> (preferences.rowCount - 1).coerceAtLeast(1)
+                            KeyEvent.KEYCODE_VOLUME_DOWN -> (preferences.rowCount + 1).coerceAtMost(
+                                2
+                            )
+
+                            else -> return@interceptVolumeEvent
+                        }
+                    }
+                }
+        )
+
+        EpisodesBottomSheet(
+            series = series,
+            episodes = episodes,
+            onEpisodeClick = { episode ->
+                coroutineScope.launch {
+                    series?.let { stream ->
+                        val input = MediaCommand.XtreamEpisode(
+                            streamId = stream.id,
+                            episode = episode
+                        )
+                        helper.play(input)
+                        navigateToStream()
+                    }
+                }
+            },
+            onRefresh = { series?.let { viewModel.seriesReplay.value += 1 } },
+            onDismissRequest = { viewModel.series.value = null }
+        )
     }
 }
 
@@ -163,6 +169,7 @@ fun ForyouRoute(
 private fun ForyouScreen(
     rowCount: Int,
     playlistCountsResource: Resource<List<PlaylistWithCount>>,
+    epgs: Map<Playlist, Boolean>,
     recommend: Recommend,
     contentPadding: PaddingValues,
     navigateToPlaylist: (Playlist) -> Unit,
@@ -171,6 +178,8 @@ private fun ForyouScreen(
     onUnsubscribePlaylist: (playlistUrl: String) -> Unit,
     onEditPlaylistTitle: (playlistUrl: String, label: String) -> Unit,
     onEditPlaylistUserAgent: (playlistUrl: String, userAgent: String) -> Unit,
+    onUpdateFocusPlaylist: (Playlist?) -> Unit,
+    onUpdateEpgPlaylist: (PlaylistRepository.UpdateEpgPlaylistUseCase) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val configuration = LocalConfiguration.current
@@ -210,7 +219,10 @@ private fun ForyouScreen(
                             rowCount = actualRowCount,
                             playlistCounts = playlistCountsResource.data,
                             onClick = navigateToPlaylist,
-                            onLongClick = { mediaSheetValue = MediaSheetValue.ForyouScreen(it) },
+                            onLongClick = {
+                                onUpdateFocusPlaylist(it)
+                                mediaSheetValue = MediaSheetValue.ForyouScreen(it)
+                            },
                             header = header.takeIf { recommend.isNotEmpty() },
                             contentPadding = contentPadding,
                             modifier = Modifier
@@ -231,19 +243,27 @@ private fun ForyouScreen(
 
                     MediaSheet(
                         value = mediaSheetValue,
+                        epgs = epgs,
                         onUnsubscribePlaylist = {
                             onUnsubscribePlaylist(it.url)
                             mediaSheetValue = MediaSheetValue.ForyouScreen()
+                            onUpdateFocusPlaylist(null)
                         },
                         onEditPlaylistTitle = { playlist, title ->
                             onEditPlaylistTitle(playlist.url, title)
                             mediaSheetValue = MediaSheetValue.ForyouScreen()
+                            onUpdateFocusPlaylist(null)
                         },
                         onEditPlaylistUserAgent = { playlist, userAgent ->
                             onEditPlaylistUserAgent(playlist.url, userAgent)
                             mediaSheetValue = MediaSheetValue.ForyouScreen()
+                            onUpdateFocusPlaylist(null)
                         },
-                        onDismissRequest = { mediaSheetValue = MediaSheetValue.ForyouScreen() }
+                        onUpdateEpgPlaylist = onUpdateEpgPlaylist,
+                        onDismissRequest = {
+                            mediaSheetValue = MediaSheetValue.ForyouScreen()
+                            onUpdateFocusPlaylist(null)
+                        }
                     )
                 }
 

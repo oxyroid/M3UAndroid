@@ -1,9 +1,8 @@
 package com.m3u.features.setting
 
 import android.net.Uri
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -67,9 +66,16 @@ class SettingViewModel @Inject constructor(
 ) : ViewModel() {
     private val logger = delegate.install(Profiles.VIEWMODEL_SETTING)
 
+    internal val epgs: StateFlow<List<Playlist>> = playlistRepository
+        .observeAllEpgs()
+        .stateIn(
+            scope = viewModelScope,
+            initialValue = emptyList(),
+            started = SharingStarted.WhileSubscribed(5_000L)
+        )
+
     internal val hiddenStreams: StateFlow<List<Stream>> = streamRepository
         .observeAllHidden()
-        .flowOn(ioDispatcher)
         .stateIn(
             scope = viewModelScope,
             initialValue = emptyList(),
@@ -114,15 +120,15 @@ class SettingViewModel @Inject constructor(
             val fileSplit = filePath.lastOrNull()?.split(".") ?: emptyList()
             fileSplit.firstOrNull() ?: "Playlist_${System.currentTimeMillis()}"
         }
-        this.title = Uri.decode(title)
-        this.url = Uri.decode(url)
-        when (selected) {
+        titleState.value = Uri.decode(title)
+        urlState.value = Uri.decode(url)
+        when (selectedState.value) {
             is DataSource.Xtream -> {
                 val input = XtreamInput.decodeFromPlaylistUrlOrNull(url) ?: return
-                basicUrl = input.basicUrl
-                username = input.username
-                password = input.password
-                this.title = Uri.decode("Xtream_${Clock.System.now().toEpochMilliseconds()}")
+                basicUrlState.value = input.basicUrl
+                usernameState.value = input.username
+                passwordState.value = input.password
+                titleState.value = Uri.decode("Xtream_${Clock.System.now().toEpochMilliseconds()}")
             }
 
             else -> {}
@@ -139,20 +145,25 @@ class SettingViewModel @Inject constructor(
     }
 
     internal fun subscribe() {
-        if (title.isEmpty()) {
-            messager.emit(SettingMessage.EmptyTitle)
-            return
-        }
+        val title = titleState.value
+        val url = urlState.value
+        val uri = uriState.value
+        val inputBasicUrl = basicUrlState.value
+        val username = usernameState.value
+        val password = passwordState.value
+        val epg = epgState.value
+        val selected = selectedState.value
+        val localStorage = localStorageState.value
         val urlOrUri = uri
             .takeIf { uri != Uri.EMPTY }?.toString().orEmpty()
             .takeIf { localStorage }
             ?: url
 
-        val basicUrl = if (basicUrl.startWithHttpScheme()) basicUrl
-        else "http://$basicUrl"
+        val basicUrl = if (inputBasicUrl.startWithHttpScheme()) inputBasicUrl
+        else "http://$inputBasicUrl"
 
         when {
-            forTv -> {
+            forTvState.value -> {
                 viewModelScope.launch {
                     localService.subscribe(
                         title,
@@ -167,19 +178,50 @@ class SettingViewModel @Inject constructor(
             }
 
             else -> when (selected) {
-                DataSource.M3U -> SubscriptionWorker.m3u(workManager, title, urlOrUri, epg)
-                DataSource.Xtream -> SubscriptionWorker.xtream(
-                    workManager,
-                    title,
-                    urlOrUri,
-                    basicUrl,
-                    username,
-                    password
-                )
+                DataSource.M3U -> {
+                    if (title.isEmpty()) {
+                        messager.emit(SettingMessage.EmptyTitle)
+                        return
+                    }
+                    if (localStorage && uri == Uri.EMPTY) {
+                        messager.emit(SettingMessage.EmptyFile)
+                        return
+                    } else if (url.isBlank()) {
+                        messager.emit(SettingMessage.EmptyUrl)
+                        return
+                    }
+                    SubscriptionWorker.m3u(workManager, title, urlOrUri)
+                    messager.emit(SettingMessage.Enqueued)
+                }
+
+                DataSource.EPG -> {
+                    if (epg.isEmpty()) {
+                        messager.emit(SettingMessage.EmptyEpg)
+                        return
+                    }
+                    SubscriptionWorker.epg(workManager, epg)
+                    messager.emit(SettingMessage.EpgAdded)
+                }
+
+                DataSource.Xtream -> {
+                    if (title.isEmpty()) {
+                        messager.emit(SettingMessage.EmptyTitle)
+                        return
+                    }
+                    SubscriptionWorker.xtream(
+                        workManager,
+                        title,
+                        urlOrUri,
+                        basicUrl,
+                        username,
+                        password
+                    )
+                    messager.emit(SettingMessage.Enqueued)
+                }
+
                 else -> return
             }
         }
-        messager.emit(SettingMessage.Enqueued)
         resetAllInputs()
     }
 
@@ -212,7 +254,7 @@ class SettingViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5000)
         )
 
-    fun backup(uri: Uri) {
+    internal fun backup(uri: Uri) {
         workManager.cancelAllWorkByTag(BackupWorker.TAG)
         val request = OneTimeWorkRequestBuilder<BackupWorker>()
             .setInputData(
@@ -227,7 +269,7 @@ class SettingViewModel @Inject constructor(
         messager.emit(SettingMessage.BackingUp)
     }
 
-    fun restore(uri: Uri) {
+    internal fun restore(uri: Uri) {
         workManager.cancelAllWorkByTag(RestoreWorker.TAG)
         val request = OneTimeWorkRequestBuilder<RestoreWorker>()
             .setInputData(
@@ -252,30 +294,36 @@ class SettingViewModel @Inject constructor(
         )
 
     private fun resetAllInputs() {
-        title = ""
-        url = ""
-        uri = Uri.EMPTY
-        basicUrl = ""
-        username = ""
-        password = ""
-        epg = ""
+        titleState.value = ""
+        urlState.value = ""
+        uriState.value = Uri.EMPTY
+        basicUrlState.value = ""
+        usernameState.value = ""
+        passwordState.value = ""
+        epgState.value = ""
     }
 
     internal fun clearCache() {
         playerManager.clearCache()
     }
 
-    internal var forTv by mutableStateOf(false)
-    internal var selected: DataSource by mutableStateOf(DataSource.M3U)
-    internal var basicUrl by mutableStateOf("")
-    internal var username by mutableStateOf("")
-    internal var password by mutableStateOf("")
-    internal var epg by mutableStateOf("")
+    internal fun deleteEpgPlaylist(epgUrl: String) {
+        viewModelScope.launch {
+            playlistRepository.deleteEpgPlaylistAndProgrammes(epgUrl)
+        }
+    }
 
-    val versionName: String = publisher.versionName
-    val versionCode: Int = publisher.versionCode
-    var title: String by mutableStateOf("")
-    var url: String by mutableStateOf("")
-    var uri: Uri by mutableStateOf(Uri.EMPTY)
-    var localStorage: Boolean by mutableStateOf(false)
+    internal val versionName: String = publisher.versionName
+    internal val versionCode: Int = publisher.versionCode
+
+    internal val titleState = mutableStateOf("")
+    internal val urlState = mutableStateOf("")
+    internal val uriState = mutableStateOf(Uri.EMPTY)
+    internal val localStorageState = mutableStateOf(false)
+    internal val forTvState = mutableStateOf(false)
+    internal val basicUrlState = mutableStateOf("")
+    internal val usernameState = mutableStateOf("")
+    internal val passwordState = mutableStateOf("")
+    internal val epgState = mutableStateOf("")
+    internal val selectedState: MutableState<DataSource> = mutableStateOf(DataSource.M3U)
 }

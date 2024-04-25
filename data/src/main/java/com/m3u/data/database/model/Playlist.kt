@@ -47,8 +47,9 @@ data class Playlist(
     val source: DataSource = DataSource.M3U,
     @ColumnInfo(name = "user_agent", defaultValue = "NULL")
     val userAgent: String? = null,
-    @ColumnInfo(name = "epg_url", defaultValue = "NULL")
-    val epgUrl: String? = null
+    // epg playlist urls
+    @ColumnInfo(name = "epg_urls", defaultValue = "[]")
+    val epgUrls: List<String> = emptyList()
 ) : Likable<Playlist> {
     val fromLocal: Boolean
         get() {
@@ -73,8 +74,7 @@ data class Playlist(
         }
 
     override fun like(another: Playlist): Boolean {
-        return title == another.title && url == another.url
-                && epgUrl == another.epgUrl && source == another.source
+        return title == another.title && url == another.url && source == another.source
     }
 
     companion object {
@@ -114,6 +114,12 @@ sealed class DataSource(
 ) {
     object M3U : DataSource(R.string.feat_setting_data_source_m3u, "m3u", true)
 
+    // special playlist type.
+    // not like other playlist types, it maps to programmes but not streams.
+    // so epg playlists should not be displayed in foryou page.
+    // m3u playlist can refer epg playlist ids.
+    object EPG : DataSource(R.string.feat_setting_data_source_epg, "epg", true)
+
     object Xtream : DataSource(R.string.feat_setting_data_source_xtream, "xtream", true) {
         const val TYPE_LIVE = "live"
         const val TYPE_VOD = "vod"
@@ -129,6 +135,7 @@ sealed class DataSource(
     companion object {
         fun of(value: String): DataSource = when (value) {
             "m3u" -> M3U
+            "epg" -> EPG
             "xtream" -> Xtream
             "emby" -> Emby
             "dropbox" -> Dropbox

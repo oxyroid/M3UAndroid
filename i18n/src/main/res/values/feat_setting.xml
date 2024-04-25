@@ -7,7 +7,6 @@
     <string name="feat_setting_error_empty_title">playlist name is empty</string>
     <string name="feat_setting_placeholder_title">playlist name</string>
     <string name="feat_setting_placeholder_url">playlist link</string>
-    <string name="feat_setting_placeholder_epg">epg link</string>
     <string name="feat_setting_label_subscribing">subscribing</string>
     <string name="feat_setting_sync_mode_all">all</string>
     <string name="feat_setting_sync_mode_keep">keep</string>
@@ -18,6 +17,7 @@
     <string name="feat_setting_god_mode_description">adjust layouts by physical volume buttons</string>
     <string name="feat_setting_experimental_mode">experimental mode</string>
     <string name="feat_setting_experimental_mode_description">unstable features can throw fatal errors</string>
+    <string name="feat_setting_label_epg_playlists">EPG List</string>
     <string name="feat_setting_label_hidden_streams">hidden streams</string>
     <string name="feat_setting_label_hidden_playlist_groups">hidden playlist categories</string>
     <string name="feat_setting_label_add_playlist">add playlist</string>
@@ -46,7 +46,6 @@
     <string name="feat_setting_dropbox">dropbox</string>
     <string name="feat_setting_project_about">about project</string>
     <string name="feat_setting_local_storage">local storage</string>
-    <string name="feat_setting_epg">EPG</string>
     <string name="feat_setting_error_unselected_file">no file selected yet</string>
     <string name="feat_setting_error_blank_url">blank url</string>
     <string name="feat_setting_use_dynamic_colors">dynamic colors</string>
@@ -93,6 +92,7 @@
     <string name="feat_setting_follow_system_theme">follow system theme</string>
 
     <string name="feat_setting_data_source_m3u" translatable="false">M3U</string>
+    <string name="feat_setting_data_source_epg" translatable="false">EPG</string>
     <string name="feat_setting_data_source_xtream" translatable="false">Xtream</string>
     <string name="feat_setting_data_source_emby" translatable="false">Emby</string>
     <string name="feat_setting_data_source_dropbox" translatable="false">Dropbox</string>
@@ -119,4 +119,9 @@
         useful for large amounts of channels,
         but grouping will be disabled at the same time
     </string>
+
+    <!-- EPG -->
+    <string name="feat_setting_error_empty_epg">epg link is empty</string>
+    <string name="feat_setting_placeholder_epg">epg link</string>
+    <string name="feat_setting_epg_added">you can then associate the playlist with the EPG</string>
 </resources>

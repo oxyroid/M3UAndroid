@@ -41,25 +41,52 @@ data class Playlists @Inject constructor(
                 val username = call.queryParameters["username"]
                 val password = call.queryParameters["password"]
 
-                if (title == null || url == null) {
-                    call.respond(
-                        DefRep(
-                            result = false,
-                            reason = "Both title and url are required."
-                        )
-                    )
-                    return@post
-                }
                 when (dataSource) {
-                    DataSource.M3U -> SubscriptionWorker.m3u(workManager, title, url, epg)
-                    DataSource.Xtream -> SubscriptionWorker.xtream(
-                        workManager,
-                        title,
-                        url,
-                        basicUrl.orEmpty(),
-                        username.orEmpty(),
-                        password.orEmpty()
-                    )
+                    DataSource.M3U -> {
+                        if (title == null || url == null) {
+                            call.respond(
+                                DefRep(
+                                    result = false,
+                                    reason = "Both title and url are required."
+                                )
+                            )
+                            return@post
+                        }
+                        SubscriptionWorker.m3u(workManager, title, url)
+                    }
+
+                    DataSource.Xtream -> {
+                        if (title == null || url == null) {
+                            call.respond(
+                                DefRep(
+                                    result = false,
+                                    reason = "Both title and url are required."
+                                )
+                            )
+                            return@post
+                        }
+                        SubscriptionWorker.xtream(
+                            workManager,
+                            title,
+                            url,
+                            basicUrl.orEmpty(),
+                            username.orEmpty(),
+                            password.orEmpty()
+                        )
+                    }
+
+                    DataSource.EPG -> {
+                        if (epg == null) {
+                            call.respond(
+                                DefRep(
+                                    result = false,
+                                    reason = "Epg link is required."
+                                )
+                            )
+                            return@post
+                        }
+                        SubscriptionWorker.epg(workManager, epg)
+                    }
 
                     else -> {}
                 }

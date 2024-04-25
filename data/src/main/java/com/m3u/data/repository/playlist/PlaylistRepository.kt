@@ -1,6 +1,7 @@
 package com.m3u.data.repository.playlist
 
 import android.net.Uri
+import androidx.compose.runtime.Immutable
 import com.m3u.data.parser.xtream.XtreamStreamInfo
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.PlaylistWithCount
@@ -10,6 +11,7 @@ import kotlinx.coroutines.flow.Flow
 
 interface PlaylistRepository {
     fun observeAll(): Flow<List<Playlist>>
+    fun observeAllEpgs(): Flow<List<Playlist>>
     fun observePlaylistUrls(): Flow<List<String>>
     suspend fun get(url: String): Playlist?
     fun observe(url: String): Flow<Playlist?>
@@ -19,7 +21,6 @@ interface PlaylistRepository {
     suspend fun m3uOrThrow(
         title: String,
         url: String,
-        epgUrl: String?,
         callback: (count: Int) -> Unit = {}
     )
 
@@ -31,6 +32,8 @@ interface PlaylistRepository {
         type: String?,
         callback: (count: Int) -> Unit = {}
     )
+
+    suspend fun epgOrThrow(epg: String)
 
     suspend fun refresh(url: String)
 
@@ -51,4 +54,19 @@ interface PlaylistRepository {
     fun observeAllCounts(): Flow<List<PlaylistWithCount>>
 
     suspend fun readEpisodesOrThrow(series: Stream): List<XtreamStreamInfo.Episode>
+
+    suspend fun addEpgToPlaylist(epgUrl: String, playlistUrl: String)
+
+    suspend fun removeEpgFromPlaylist(epgUrl: String, playlistUrl: String)
+
+    suspend fun deleteEpgPlaylistAndProgrammes(epgUrl: String)
+
+    suspend fun onUpdateEpgPlaylist(useCase: UpdateEpgPlaylistUseCase)
+
+    @Immutable
+    data class UpdateEpgPlaylistUseCase(
+        val playlistUrl: String,
+        val epgUrl: String,
+        val action: Boolean
+    )
 }

@@ -14,6 +14,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -29,8 +30,7 @@ import com.m3u.material.components.SelectionsDefaults
 
 @Composable
 internal fun DataSourceSelection(
-    selected: DataSource,
-    onSelected: (DataSource) -> Unit,
+    selectedState: MutableState<DataSource>,
     supported: List<DataSource>,
     modifier: Modifier = Modifier
 ) {
@@ -46,7 +46,7 @@ internal fun DataSourceSelection(
             onClick = { expanded = true },
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
-            Text(stringResource(selected.resId))
+            Text(stringResource(selectedState.value.resId))
             Icon(
                 imageVector = if (expanded) {
                     Icons.Rounded.KeyboardArrowUp
@@ -64,7 +64,7 @@ internal fun DataSourceSelection(
                 DropdownMenuItem(
                     text = { Text(stringResource(current.resId)) },
                     trailingIcon = {
-                        if (selected == current) {
+                        if (selectedState == current) {
                             Icon(
                                 imageVector = Icons.Rounded.CheckCircle,
                                 contentDescription = null
@@ -73,7 +73,7 @@ internal fun DataSourceSelection(
                     },
                     enabled = current.supported,
                     onClick = {
-                        onSelected(current)
+                        selectedState.value = current
                         expanded = false
                     }
                 )

@@ -92,10 +92,10 @@ fun StreamRoute(
 
     val volume by viewModel.volume.collectAsStateWithLifecycle()
     val isSeriesPlaylist by viewModel.isSeriesPlaylist.collectAsStateWithLifecycle()
-    val isProgrammesRefreshing: Boolean by viewModel.isProgrammesRefreshing.collectAsStateWithLifecycle()
+    val isProgrammesRefreshing: Boolean by viewModel.isEpgRefreshing.collectAsStateWithLifecycle()
 
     val neighboring = viewModel.neighboring.collectAsLazyPagingItems()
-    val programmes = viewModel.programme.collectAsLazyPagingItems()
+    val programmes = viewModel.programmes.collectAsLazyPagingItems()
 
     var brightness by remember { mutableFloatStateOf(helper.brightness) }
     var isPipMode by remember { mutableStateOf(false) }

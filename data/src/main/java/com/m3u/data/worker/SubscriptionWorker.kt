@@ -79,7 +79,7 @@ class SubscriptionWorker @AssistedInject constructor(
                     Result.failure()
                 } else {
                     try {
-                        playlistRepository.m3uOrThrow(title, url, epg) { count ->
+                        playlistRepository.m3uOrThrow(title, url) { count ->
                             val notification = createN10nBuilder()
                                 .setContentText(findProgressContentText(count))
                                 .setActions(cancelAction)
@@ -103,6 +103,22 @@ class SubscriptionWorker @AssistedInject constructor(
                         e.printStackTrace()
                         Result.failure()
                     }
+                }
+            }
+
+            DataSource.EPG -> {
+                val epg = epg ?: return@coroutineScope Result.failure()
+                try {
+                    playlistRepository.epgOrThrow(epg)
+                    Result.success()
+                } catch (e: Exception) {
+                    createN10nBuilder()
+                        .setContentText(e.localizedMessage.orEmpty())
+                        .setActions(retryAction)
+                        .setColor(Color.RED)
+                        .buildThenNotify()
+                    e.printStackTrace()
+                    Result.failure()
                 }
             }
 
@@ -231,8 +247,7 @@ class SubscriptionWorker @AssistedInject constructor(
         fun m3u(
             workManager: WorkManager,
             title: String,
-            url: String,
-            epg: String? = null
+            url: String
         ) {
             workManager.cancelAllWorkByTag(url)
             val request = OneTimeWorkRequestBuilder<SubscriptionWorker>()
@@ -240,11 +255,34 @@ class SubscriptionWorker @AssistedInject constructor(
                     workDataOf(
                         INPUT_STRING_TITLE to title,
                         INPUT_STRING_URL to url,
-                        INPUT_STRING_EPG to epg,
                         INPUT_STRING_DATA_SOURCE_VALUE to DataSource.M3U.value
                     )
                 )
                 .addTag(url)
+                .addTag(TAG)
+                .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
+                .setConstraints(
+                    Constraints.Builder()
+                        .setRequiredNetworkType(NetworkType.CONNECTED)
+                        .build()
+                )
+                .build()
+            workManager.enqueue(request)
+        }
+
+        fun epg(
+            workManager: WorkManager,
+            epg: String
+        ) {
+            workManager.cancelAllWorkByTag(epg)
+            val request = OneTimeWorkRequestBuilder<SubscriptionWorker>()
+                .setInputData(
+                    workDataOf(
+                        INPUT_STRING_EPG to epg,
+                        INPUT_STRING_DATA_SOURCE_VALUE to DataSource.EPG.value
+                    )
+                )
+                .addTag(epg)
                 .addTag(TAG)
                 .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
                 .setConstraints(

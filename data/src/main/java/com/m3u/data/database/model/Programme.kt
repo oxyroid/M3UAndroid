@@ -9,13 +9,15 @@ import androidx.room.PrimaryKey
 @Entity(tableName = "programmes")
 @Immutable
 @Keep
-// for epg
-// dynamic only when it is from xtream live.
+// epg programme
 data class Programme(
-    @ColumnInfo(name = "stream_id")
-    val streamId: Int,
-    @ColumnInfo(name = "playlist_url")
-    val playlistUrl: String,
+    // m3u tvg-id
+    @ColumnInfo(name = "channel_id")
+    val channelId: String,
+    // playlistUrl in Playlist which source is epg
+    // for more details, see [DataSource.EPG].
+    @ColumnInfo(name = "epg_url", index = true)
+    val epgUrl: String,
     @ColumnInfo(name = "start")
     val start: Long,
     @ColumnInfo(name = "end")
@@ -31,12 +33,4 @@ data class Programme(
     @PrimaryKey(autoGenerate = true)
     @ColumnInfo(name = "id")
     val id: Int = 0
-)
-
-@Keep
-data class ProgrammeSnapshot(
-    @ColumnInfo(name = "playlist_url")
-    val playlistUrl: String,
-    @ColumnInfo(name = "end")
-    val end: Long,
 )
