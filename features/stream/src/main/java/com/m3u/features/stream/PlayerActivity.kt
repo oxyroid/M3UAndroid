@@ -7,6 +7,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import com.m3u.core.Contracts
 import com.m3u.core.architecture.dispatcher.Dispatcher
@@ -84,6 +85,15 @@ class PlayerActivity : ComponentActivity() {
             }
         }
         registerActionEventCollector(remoteDirectionService.actions)
+        addOnPictureInPictureModeChangedListener {
+            if (!it.isInPictureInPictureMode && lifecycle.currentState !in arrayOf(
+                    Lifecycle.State.RESUMED,
+                    Lifecycle.State.STARTED
+                )
+            ) {
+                viewModel.destroy()
+            }
+        }
     }
 
     private fun playFromShortcuts(streamId: Int) {
