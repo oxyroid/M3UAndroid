@@ -56,6 +56,7 @@ import com.m3u.material.components.mask.MaskInterceptor
 import com.m3u.material.components.mask.MaskState
 import com.m3u.material.components.mask.rememberMaskState
 import com.m3u.material.components.rememberPullPanelLayoutState
+import com.m3u.material.ktx.isTelevision
 import com.m3u.material.ktx.plus
 import com.m3u.ui.Player
 import com.m3u.ui.helper.LocalHelper
@@ -78,6 +79,8 @@ fun StreamRoute(
     val preferences = LocalPreferences.current
     val context = LocalContext.current
     val configuration = LocalConfiguration.current
+
+    val tv = isTelevision()
 
     val playerState: PlayerState by viewModel.playerState.collectAsStateWithLifecycle()
     val stream by viewModel.stream.collectAsStateWithLifecycle()
@@ -184,19 +187,24 @@ fun StreamRoute(
                 }
             },
             panel = {
-                PlayerPanel(
-                    title = stream?.title.orEmpty(),
-                    playlistTitle = playlist?.title.orEmpty(),
-                    streamId = stream?.id ?: -1,
-                    isPanelExpanded = isPanelExpanded,
-                    isSeriesPlaylist = isSeriesPlaylist,
-                    isProgrammesRefreshing = isProgrammesRefreshing,
-                    neighboring = neighboring,
-                    programmes = programmes,
-                    onRefreshProgrammesIgnoreCache = {
-                        viewModel.checkOrRefreshProgrammes(true)
-                    }
-                )
+                if (!tv) {
+                    PlayerPanel(
+                        title = stream?.title.orEmpty(),
+                        playlistTitle = playlist?.title.orEmpty(),
+                        streamId = stream?.id ?: -1,
+                        isPanelExpanded = isPanelExpanded,
+                        isSeriesPlaylist = isSeriesPlaylist,
+                        isProgrammesRefreshing = isProgrammesRefreshing,
+                        neighboring = neighboring,
+                        programmes = programmes,
+                        onRefreshProgrammesIgnoreCache = {
+                            viewModel.checkOrRefreshProgrammes(true)
+                        }
+                    )
+                } else {
+                    // todo: fix pull panel layout bug
+                    Box(modifier = Modifier.fillMaxSize())
+                }
             },
             content = {
                 StreamPlayer(
@@ -226,6 +234,7 @@ fun StreamRoute(
                         maskState.unlockAll()
                         pullPanelLayoutState.collapse()
                     },
+                    onKeyCode = viewModel::onKeyCode,
                     modifier = modifier
                 )
             }
@@ -288,6 +297,7 @@ private fun
     onVolume: (Float) -> Unit,
     onBrightness: (Float) -> Unit,
     onEnterPipMode: () -> Unit,
+    onKeyCode: (TelevisionKeyCode) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val title = stream?.title ?: "--"
@@ -345,7 +355,8 @@ private fun
                 openDlnaDevices = openDlnaDevices,
                 openChooseFormat = openChooseFormat,
                 onVolume = onVolume,
-                onEnterPipMode = onEnterPipMode
+                onEnterPipMode = onEnterPipMode,
+                onKeyCode = onKeyCode
             )
 
             Row(

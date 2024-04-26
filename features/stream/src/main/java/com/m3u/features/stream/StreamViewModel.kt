@@ -11,6 +11,8 @@ import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import androidx.paging.map
+import com.m3u.core.architecture.dispatcher.Dispatcher
+import com.m3u.core.architecture.dispatcher.M3uDispatchers.Main
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.Profiles
 import com.m3u.core.architecture.logger.install
@@ -30,6 +32,7 @@ import com.m3u.dlna.control.OnDeviceControlListener
 import com.m3u.dlna.control.ServiceActionCallback
 import com.m3u.features.stream.Utils.toEOrSh
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -68,7 +71,8 @@ class StreamViewModel @Inject constructor(
     private val audioManager: AudioManager,
     private val programmeRepository: ProgrammeRepository,
     delegate: Logger,
-    private val messager: Messager
+    private val messager: Messager,
+    @Dispatcher(Main) private val mainDispatcher: CoroutineDispatcher
 ) : ViewModel(), OnDeviceRegistryListener, OnDeviceControlListener {
     private val logger = delegate.install(Profiles.VIEWMODEL_STREAM)
     private val _devices = MutableStateFlow<List<Device<*, *, *>>>(emptyList())
@@ -340,6 +344,27 @@ class StreamViewModel @Inject constructor(
                 messager.emit(result.exceptionOrNull()?.message.orEmpty())
                 logger.log(result.exceptionOrNull()?.message.orEmpty())
                 return@launch
+            }
+        }
+    }
+
+    internal fun onKeyCode(code: TelevisionKeyCode) {
+        when (code) {
+            TelevisionKeyCode.UP -> {
+
+            }
+            TelevisionKeyCode.DOWN -> {}
+            TelevisionKeyCode.LEFT -> {
+                val player = playerState.value.player ?: return
+                viewModelScope.launch(mainDispatcher) {
+                    player.seekTo(player.currentPosition - 15000)
+                }
+            }
+            TelevisionKeyCode.RIGHT -> {
+                val player = playerState.value.player ?: return
+                viewModelScope.launch(mainDispatcher) {
+                    player.seekTo(player.currentPosition + 15000)
+                }
             }
         }
     }

@@ -3,6 +3,7 @@ package com.m3u.features.stream
 //import androidx.compose.animation.ExperimentalSharedTransitionApi
 //import androidx.compose.animation.SharedTransitionScope
 import android.content.pm.ActivityInfo
+import android.view.KeyEvent
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
@@ -54,6 +55,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -70,6 +72,7 @@ import com.m3u.material.components.mask.MaskCircleButton
 import com.m3u.material.components.mask.MaskPanel
 import com.m3u.material.components.mask.MaskState
 import com.m3u.material.ktx.isTelevision
+import com.m3u.material.ktx.thenIf
 import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.FontFamilies
 import com.m3u.ui.Image
@@ -82,6 +85,13 @@ import kotlin.math.roundToLong
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
+
+internal enum class TelevisionKeyCode(val nativeCode: Int) {
+    UP(KeyEvent.KEYCODE_DPAD_UP),
+    DOWN(KeyEvent.KEYCODE_DPAD_DOWN),
+    LEFT(KeyEvent.KEYCODE_DPAD_LEFT),
+    RIGHT(KeyEvent.KEYCODE_DPAD_RIGHT);
+}
 
 //@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -106,6 +116,7 @@ internal fun
     openChooseFormat: () -> Unit,
     onEnterPipMode: () -> Unit,
     onVolume: (Float) -> Unit,
+    onKeyCode: (TelevisionKeyCode) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val preferences = LocalPreferences.current
@@ -192,7 +203,22 @@ internal fun
 
     Box {
         MaskPanel(
-            state = maskState
+            state = maskState,
+            modifier = Modifier.thenIf(tv) {
+                Modifier.onKeyEvent { event ->
+                    when (event.nativeKeyEvent.keyCode) {
+                        KeyEvent.KEYCODE_DPAD_UP -> (!maskState.visible).also {
+                            if (it) onKeyCode(TelevisionKeyCode.UP)
+                        }
+
+                        KeyEvent.KEYCODE_DPAD_DOWN -> (!maskState.visible).also {
+                            if (it) onKeyCode(TelevisionKeyCode.DOWN)
+                        }
+
+                        else -> false
+                    }
+                }
+            }
         )
 
         PlayerMask(
@@ -327,10 +353,10 @@ internal fun
                             overflow = TextOverflow.Ellipsis,
                             modifier = Modifier
                                 .basicMarquee()
-    //                                .sharedElement(
-    //                                    state = rememberSharedContentState("playlist-title"),
-    //                                    this
-    //                                )
+                            //                                .sharedElement(
+                            //                                    state = rememberSharedContentState("playlist-title"),
+                            //                                    this
+                            //                                )
                         )
                     }
                     AnimatedVisibility(
@@ -346,10 +372,10 @@ internal fun
                             overflow = TextOverflow.Ellipsis,
                             modifier = Modifier
                                 .basicMarquee()
-    //                                .sharedElement(
-    //                                    state = rememberSharedContentState("stream-title"),
-    //                                    this
-    //                                )
+                            //                                .sharedElement(
+                            //                                    state = rememberSharedContentState("stream-title"),
+                            //                                    this
+                            //                                )
                         )
                     }
 
@@ -452,7 +478,25 @@ internal fun
                                 onValueChangeFinished = {
                                     bufferedPosition?.let { playerState.player?.seekTo(it) }
                                 },
-                                modifier = Modifier.weight(1f)
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .onKeyEvent { event ->
+                                        when (event.nativeKeyEvent.keyCode) {
+                                            KeyEvent.KEYCODE_DPAD_LEFT -> {
+                                                onKeyCode(TelevisionKeyCode.LEFT)
+                                                maskState.wake()
+                                                true
+                                            }
+
+                                            KeyEvent.KEYCODE_DPAD_RIGHT -> {
+                                                onKeyCode(TelevisionKeyCode.RIGHT)
+                                                maskState.wake()
+                                                true
+                                            }
+
+                                            else -> false
+                                        }
+                                    }
                             )
                         }
 
@@ -462,5 +506,4 @@ internal fun
             modifier = modifier
         )
     }
-
 }
