@@ -6,6 +6,7 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
 import kotlinx.datetime.toKotlinLocalDateTime
 import java.time.LocalDateTime
+import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
 @Immutable
@@ -36,10 +37,12 @@ data class EpgProgramme(
         fun readEpochMilliseconds(time: String): Long = LocalDateTime
             .parse(time, EPG_DATE_TIME_FORMATTER)
             .toKotlinLocalDateTime()
-            .toInstant(TimeZone.currentSystemDefault())
+            .toInstant(TimeZone.UTC)
             .toEpochMilliseconds()
 
-        private val EPG_DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMddHHmmss Z")
+        private val EPG_DATE_TIME_FORMATTER = DateTimeFormatter
+            .ofPattern("yyyyMMddHHmmss Z")
+            .withZone(ZoneId.of("GMT"))
     }
 }
 
