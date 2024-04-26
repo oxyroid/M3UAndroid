@@ -28,15 +28,17 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import coil.compose.SubcomposeAsyncImage
 import coil.request.ImageRequest
 import coil.size.Size
 import com.m3u.core.architecture.preferences.LocalPreferences
 import com.m3u.data.database.model.Stream
 import com.m3u.i18n.R.string
+import com.m3u.material.components.CircularProgressIndicator
 import com.m3u.material.components.Icon
-import com.m3u.ui.Image
 import com.m3u.material.model.LocalSpacing
 import com.m3u.material.shape.AbsoluteSmoothCornerShape
+import com.m3u.ui.Image
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlin.time.Duration.Companion.days
@@ -161,15 +163,25 @@ internal fun SmartphoneStreamItem(
                     )
                     .then(modifier)
             ) {
-                Image(
+                SubcomposeAsyncImage(
                     model = remember(stream.cover) {
                         ImageRequest.Builder(context)
                             .data(stream.cover)
                             .size(Size.ORIGINAL)
                             .build()
                     },
+                    contentDescription = stream.title,
                     contentScale = ContentScale.FillWidth,
-                    errorPlaceholder = stream.title,
+                    loading = {
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .aspectRatio(1f)
+                        ) {
+                            CircularProgressIndicator()
+                        }
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
 //                        .aspectRatio(

@@ -1,7 +1,9 @@
 package com.m3u.features.playlist.components
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.staggeredgrid.LazyStaggeredGridState
@@ -9,11 +11,13 @@ import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.paging.compose.LazyPagingItems
 import com.m3u.core.architecture.preferences.LocalPreferences
 import com.m3u.data.database.model.Stream
+import com.m3u.material.components.CircularProgressIndicator
 import com.m3u.material.ktx.plus
 import com.m3u.material.model.LocalSpacing
 
@@ -95,16 +99,26 @@ private fun SmartphoneStreamGalleryImpl(
             }
         } else {
             items(streamPaged.itemCount) {
-                streamPaged[it]?.let { stream ->
+                val currentStream = streamPaged[it]
+                if (currentStream != null) {
                     SmartphoneStreamItem(
-                        stream = stream,
+                        stream = currentStream,
                         recently = recently,
-                        zapping = zapping == stream,
+                        zapping = zapping == currentStream,
                         isVodOrSeriesPlaylist = isVodOrSeriesPlaylist,
-                        onClick = { onClick(stream) },
-                        onLongClick = { onLongClick(stream) },
+                        onClick = { onClick(currentStream) },
+                        onLongClick = { onLongClick(currentStream) },
                         modifier = Modifier.fillMaxWidth()
                     )
+                } else {
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .aspectRatio(1f)
+                    ) {
+                        CircularProgressIndicator()
+                    }
                 }
             }
         }

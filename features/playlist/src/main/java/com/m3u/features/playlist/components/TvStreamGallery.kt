@@ -1,11 +1,15 @@
 package com.m3u.features.playlist.components
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.unit.Dp
@@ -21,6 +25,7 @@ import androidx.tv.material3.Text
 import com.m3u.core.architecture.preferences.LocalPreferences
 import com.m3u.data.database.model.Stream
 import com.m3u.features.playlist.Category
+import com.m3u.material.components.CircularProgressIndicator
 import com.m3u.material.model.LocalSpacing
 
 @Composable
@@ -115,23 +120,29 @@ internal fun TvStreamGallery(
                 }
             } else {
                 items(streamPaged.itemCount) {
-                    streamPaged[it]?.let { stream ->
+                    val currentStream = streamPaged[it]
+                    if (currentStream != null) {
                         TvStreamItem(
-                            stream = stream,
+                            stream = currentStream,
                             isVodOrSeriesPlaylist = isVodOrSeriesPlaylist,
-                            onClick = {
-                                onClick(stream)
-                            },
-                            onLongClick = {
-                                onLongClick(stream)
-                            },
+                            onClick = { onClick(currentStream) },
+                            onLongClick = { onLongClick(currentStream) },
                             modifier = Modifier
                                 .onFocusChanged { focusState ->
                                     if (focusState.hasFocus) {
-                                        onFocus(stream)
+                                        onFocus(currentStream)
                                     }
                                 }
                         )
+                    } else {
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier
+                                .fillMaxHeight()
+                                .aspectRatio(1f)
+                        ) {
+                            CircularProgressIndicator()
+                        }
                     }
                 }
             }
