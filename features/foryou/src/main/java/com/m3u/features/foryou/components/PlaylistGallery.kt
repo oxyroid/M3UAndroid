@@ -28,6 +28,7 @@ import com.m3u.material.model.LocalSpacing
 internal fun PlaylistGallery(
     rowCount: Int,
     playlistCounts: List<PlaylistWithCount>,
+    subscribingPlaylistUrls: List<String>,
     onClick: (Playlist) -> Unit,
     onLongClick: (Playlist) -> Unit,
     modifier: Modifier = Modifier,
@@ -39,6 +40,7 @@ internal fun PlaylistGallery(
         SmartphonePlaylistGalleryImpl(
             rowCount = rowCount,
             playlistCounts = playlistCounts,
+            subscribingPlaylistUrls = subscribingPlaylistUrls,
             onClick = onClick,
             onLongClick = onLongClick,
             contentPadding = contentPadding,
@@ -49,6 +51,7 @@ internal fun PlaylistGallery(
         TvPlaylistGalleryImpl(
             rowCount = rowCount,
             playlistCounts = playlistCounts,
+            subscribingPlaylistUrls = subscribingPlaylistUrls,
             onClick = onClick,
             onLongClick = onLongClick,
             contentPadding = contentPadding,
@@ -62,6 +65,7 @@ internal fun PlaylistGallery(
 private fun SmartphonePlaylistGalleryImpl(
     rowCount: Int,
     playlistCounts: List<PlaylistWithCount>,
+    subscribingPlaylistUrls: List<String>,
     onClick: (Playlist) -> Unit,
     onLongClick: (Playlist) -> Unit,
     contentPadding: PaddingValues,
@@ -93,6 +97,7 @@ private fun SmartphonePlaylistGalleryImpl(
                 ),
                 type = playlistCount.playlist.typeWithSource,
                 count = playlistCount.count,
+                subscribing = playlistCount.playlist.url in subscribingPlaylistUrls,
                 local = playlistCount.playlist.fromLocal,
                 onClick = { onClick(playlistCount.playlist) },
                 onLongClick = { onLongClick(playlistCount.playlist) },
@@ -113,6 +118,7 @@ private fun SmartphonePlaylistGalleryImpl(
 private fun TvPlaylistGalleryImpl(
     rowCount: Int,
     playlistCounts: List<PlaylistWithCount>,
+    subscribingPlaylistUrls: List<String>,
     onClick: (Playlist) -> Unit,
     onLongClick: (Playlist) -> Unit,
     contentPadding: PaddingValues,
@@ -143,6 +149,7 @@ private fun TvPlaylistGalleryImpl(
                 ),
                 type = playlistCount.playlist.typeWithSource,
                 count = playlistCount.count,
+                subscribing = playlistCount.playlist.url in subscribingPlaylistUrls,
                 local = playlistCount.playlist.fromLocal,
                 onClick = { onClick(playlistCount.playlist) },
                 onLongClick = { onLongClick(playlistCount.playlist) },

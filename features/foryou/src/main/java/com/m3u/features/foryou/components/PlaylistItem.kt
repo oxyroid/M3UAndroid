@@ -3,7 +3,6 @@ package com.m3u.features.foryou.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.height
@@ -28,13 +27,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.m3u.material.components.CircularProgressIndicator
 import com.m3u.material.components.Icon
 import com.m3u.material.ktx.isTelevision
 import com.m3u.material.model.LocalSpacing
 import com.m3u.material.shape.AbsoluteSmoothCornerShape
 import com.m3u.ui.Badge
 import com.m3u.ui.FontFamilies
-import com.m3u.ui.TextBadge
 import androidx.tv.material3.ListItem as TvListItem
 import androidx.tv.material3.MaterialTheme as TvMaterialTheme
 import androidx.tv.material3.Text as TvText
@@ -45,6 +44,7 @@ internal fun PlaylistItem(
     type: String?,
     count: Int,
     local: Boolean,
+    subscribing: Boolean,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -56,6 +56,7 @@ internal fun PlaylistItem(
             type = type,
             count = count,
             local = local,
+            subscribing = subscribing,
             onClick = onClick,
             onLongClick = onLongClick,
             modifier = modifier
@@ -65,6 +66,7 @@ internal fun PlaylistItem(
             label = label,
             type = type,
             count = count,
+            subscribing = subscribing,
             onClick = onClick,
             onLongClick = onLongClick,
             modifier = modifier
@@ -78,6 +80,7 @@ private fun SmartphonePlaylistItemImpl(
     type: String?,
     count: Int,
     local: Boolean,
+    subscribing: Boolean,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -120,9 +123,33 @@ private fun SmartphonePlaylistItemImpl(
                     horizontalAlignment = Alignment.End,
                     verticalArrangement = Arrangement.spacedBy(spacing.extraSmall)
                 ) {
-                    TextBadge(
-                        text = count.toString()
-                    )
+                    Badge {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(spacing.extraSmall)
+                        ) {
+                            if (subscribing) {
+                                CircularProgressIndicator(
+                                    color = LocalContentColor.current,
+                                    size = 8.dp
+                                )
+                            }
+                            Text(
+                                text = count.toString(),
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    lineHeightStyle = LineHeightStyle(
+                                        alignment = LineHeightStyle.Alignment.Center,
+                                        trim = LineHeightStyle.Trim.None
+                                    )
+                                ),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                softWrap = false,
+                                textAlign = TextAlign.Center,
+                                fontFamily = FontFamilies.LexendExa
+                            )
+                        }
+                    }
                     Row(
                         Modifier.height(16.dp)
                     ) {
@@ -158,6 +185,7 @@ private fun TvPlaylistItemImpl(
     label: String,
     type: String?,
     count: Int,
+    subscribing: Boolean,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -186,12 +214,19 @@ private fun TvPlaylistItemImpl(
             }
         } else null,
         trailingContent = {
-            Box(
+            Row(
                 modifier = Modifier
                     .clip(AbsoluteSmoothCornerShape(spacing.small, 65))
-                    .background(theme.primary),
-                contentAlignment = Alignment.Center
+                    .background(theme.primary)
+                    .padding(horizontal = spacing.small),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(spacing.extraSmall)
             ) {
+                if (subscribing) {
+                    CircularProgressIndicator(
+                        color = theme.onPrimary
+                    )
+                }
                 TvText(
                     color = theme.onPrimary,
                     text = count.toString(),
@@ -204,8 +239,6 @@ private fun TvPlaylistItemImpl(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.padding(
-                        start = spacing.small,
-                        end = spacing.small,
                         bottom = 2.dp,
                     ),
                     softWrap = false,

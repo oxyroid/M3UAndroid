@@ -11,7 +11,6 @@ import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.Profiles
 import com.m3u.core.architecture.logger.install
-import com.m3u.core.architecture.logger.post
 import com.m3u.core.architecture.preferences.Preferences
 import com.m3u.core.wrapper.Resource
 import com.m3u.core.wrapper.asResource
@@ -35,7 +34,6 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -157,7 +155,6 @@ class ForyouViewModel @Inject constructor(
             }
         }
     }
-        .onEach { logger.post { it } }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.Lazily,

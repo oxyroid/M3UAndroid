@@ -9,6 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import kotlin.math.cos
@@ -19,6 +20,7 @@ import kotlin.time.Duration.Companion.milliseconds
 fun CircularProgressIndicator(
     modifier: Modifier = Modifier,
     color: Color = CircularProgressIndicatorDefaults.color,
+    size: Dp = 16.dp
 ) {
     val count = 8
     val currentCount by produceState(0) {
@@ -28,9 +30,9 @@ fun CircularProgressIndicator(
         }
     }
     Canvas(
-        modifier = modifier.size(16.dp)
+        modifier = modifier.size(size)
     ) {
-        val r = size.width / 2
+        val r = this.size.width / 2
         val drawWidth = 0.50 * r
         val strokeWidth = 0.32 * r
         val rotateAngle = (360 / count).toDouble()
