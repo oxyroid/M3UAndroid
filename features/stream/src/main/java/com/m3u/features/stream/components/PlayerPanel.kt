@@ -293,20 +293,26 @@ private fun PanelProgramGuide(
                 }
             ) {
                 val contentColor = LocalContentColor.current
-                val lineCount = 9
+                val lineCount = 12
                 Canvas(Modifier.fillMaxSize()) {
-                    drawLine(
-                        color = contentColor,
-                        start = Offset(size.width / 2f, 0f),
-                        end = Offset(size.width, 0f),
-                        strokeWidth = 2f
-                    )
-                    repeat(lineCount - 1) {
-                        drawLine(
-                            color = contentColor,
-                            start = Offset(size.width / 3f * 2, size.height / lineCount * (it + 1)),
-                            end = Offset(size.width, size.height / lineCount * (it + 1))
-                        )
+                    repeat(lineCount) {
+                        if (it == 0) {
+                            drawLine(
+                                color = contentColor,
+                                start = Offset(size.width / 2f, 0f),
+                                end = Offset(size.width, 0f),
+                                strokeWidth = 2f
+                            )
+                        } else {
+                            drawLine(
+                                color = contentColor,
+                                start = Offset(
+                                    size.width / 3f * 2,
+                                    size.height / lineCount * it
+                                ),
+                                end = Offset(size.width, size.height / lineCount * it)
+                            )
+                        }
                     }
                 }
             }
