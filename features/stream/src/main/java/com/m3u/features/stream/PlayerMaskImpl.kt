@@ -104,6 +104,7 @@ internal fun
     onBackPressed: () -> Unit,
     openDlnaDevices: () -> Unit,
     openChooseFormat: () -> Unit,
+    onEnterPipMode: () -> Unit,
     onVolume: (Float) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -267,10 +268,7 @@ internal fun
                     MaskButton(
                         state = maskState,
                         icon = Icons.Rounded.PictureInPicture,
-                        onClick = {
-                            helper.enterPipMode(playerState.videoSize)
-                            maskState.sleep()
-                        },
+                        onClick = onEnterPipMode,
                         contentDescription = stringResource(string.feat_stream_tooltip_enter_pip_mode)
                     )
                 }

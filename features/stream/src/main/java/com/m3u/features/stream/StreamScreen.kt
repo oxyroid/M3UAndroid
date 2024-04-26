@@ -221,6 +221,11 @@ fun StreamRoute(
                     onVolume = viewModel::onVolume,
                     brightness = brightness,
                     onBrightness = { brightness = it },
+                    onEnterPipMode = {
+                        helper.enterPipMode(playerState.videoSize)
+                        maskState.unlockAll()
+                        pullPanelLayoutState.collapse()
+                    },
                     modifier = modifier
                 )
             }
@@ -282,6 +287,7 @@ private fun
     openChooseFormat: () -> Unit,
     onVolume: (Float) -> Unit,
     onBrightness: (Float) -> Unit,
+    onEnterPipMode: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val title = stream?.title ?: "--"
@@ -338,7 +344,8 @@ private fun
                 onBackPressed = onBackPressed,
                 openDlnaDevices = openDlnaDevices,
                 openChooseFormat = openChooseFormat,
-                onVolume = onVolume
+                onVolume = onVolume,
+                onEnterPipMode = onEnterPipMode
             )
 
             Row(

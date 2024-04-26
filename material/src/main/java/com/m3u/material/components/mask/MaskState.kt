@@ -23,6 +23,7 @@ interface MaskState {
     fun sleep()
     fun lock(key: Any)
     fun unlock(key: Any, delay: Duration = Duration.ZERO)
+    fun unlockAll(delay: Duration = Duration.ZERO)
     fun intercept(interceptor: MaskInterceptor?)
 }
 
@@ -87,6 +88,18 @@ private class MaskStateCoroutineImpl(
                 unlockImpl(key)
             }
             unlockedJobs.remove(key)
+        }
+    }
+
+    override fun unlockAll(delay: Duration) {
+        keys.map { key ->
+            unlockedJobs[key] = launch {
+                delay(delay)
+                if (key in unlockedJobs) {
+                    unlockImpl(key)
+                }
+                unlockedJobs.remove(key)
+            }
         }
     }
 
