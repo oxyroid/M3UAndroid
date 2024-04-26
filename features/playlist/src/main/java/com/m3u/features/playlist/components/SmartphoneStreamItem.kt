@@ -22,11 +22,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import coil.request.ImageRequest
+import coil.size.Size
 import com.m3u.core.architecture.preferences.LocalPreferences
 import com.m3u.data.database.model.Stream
 import com.m3u.i18n.R.string
@@ -51,6 +54,7 @@ internal fun SmartphoneStreamItem(
     modifier: Modifier = Modifier,
     isVodOrSeriesPlaylist: Boolean = true
 ) {
+    val context = LocalContext.current
     val spacing = LocalSpacing.current
     val preferences = LocalPreferences.current
 
@@ -158,14 +162,19 @@ internal fun SmartphoneStreamItem(
                     .then(modifier)
             ) {
                 Image(
-                    model = stream.cover,
+                    model = remember(stream.cover) {
+                        ImageRequest.Builder(context)
+                            .data(stream.cover)
+                            .size(Size.ORIGINAL)
+                            .build()
+                    },
+                    contentScale = ContentScale.FillWidth,
                     errorPlaceholder = stream.title,
-                    contentScale = ContentScale.Fit,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .aspectRatio(
-                            if (!isVodOrSeriesPlaylist) 4 / 3f else 2 / 3f
-                        )
+//                        .aspectRatio(
+//                            if (!isVodOrSeriesPlaylist) 4 / 3f else 2 / 3f
+//                        )
                 )
                 if (favourite) {
                     Box(
