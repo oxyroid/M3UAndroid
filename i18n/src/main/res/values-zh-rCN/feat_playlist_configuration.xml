@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="feat_playlist_configuration_title">标题</string>
+    <string name="feat_playlist_configuration_user_agent">用户代理（UA）</string>
+</resources>

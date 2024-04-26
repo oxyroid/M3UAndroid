@@ -206,6 +206,7 @@ private fun MainContentImpl(
 
                 DataSource.EPG -> {
                     EPGInputContent(
+                        titleState = titleState,
                         epgState = epgState
                     )
                 }
@@ -417,6 +418,7 @@ private fun M3UInputContent(
 
 @Composable
 private fun EPGInputContent(
+    titleState: MutableState<String>,
     epgState: MutableState<String>,
     modifier: Modifier = Modifier
 ) {
@@ -425,6 +427,12 @@ private fun EPGInputContent(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(spacing.small)
     ) {
+        PlaceholderField(
+            text = titleState.value,
+            placeholder = stringResource(string.feat_setting_placeholder_epg_title).uppercase(),
+            onValueChange = { titleState.value = Uri.decode(it) },
+            modifier = Modifier.fillMaxWidth()
+        )
         PlaceholderField(
             text = epgState.value,
             placeholder = stringResource(string.feat_setting_placeholder_epg).uppercase(),

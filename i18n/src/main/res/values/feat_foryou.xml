@@ -12,7 +12,4 @@
     <string name="feat_foryou_recommend_unseen_hours">%d hours</string>
     <string name="feat_foryou_connect_title">enter code from television</string>
     <string name="feat_foryou_connect_subtitle">Make sure to connect to the same Wi-Fi</string>
-    <string name="feat_foryou_title">title</string>
-    <string name="feat_foryou_user_agent">user agent</string>
-    <string name="feat_foryou_apply_changes">apply changes</string>
 </resources>

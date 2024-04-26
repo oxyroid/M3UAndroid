@@ -2,11 +2,11 @@ package com.m3u.data.repository.playlist
 
 import android.net.Uri
 import androidx.compose.runtime.Immutable
-import com.m3u.data.parser.xtream.XtreamStreamInfo
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.PlaylistWithCount
 import com.m3u.data.database.model.PlaylistWithStreams
 import com.m3u.data.database.model.Stream
+import com.m3u.data.parser.xtream.XtreamStreamInfo
 import kotlinx.coroutines.flow.Flow
 
 interface PlaylistRepository {
@@ -33,13 +33,13 @@ interface PlaylistRepository {
         callback: (count: Int) -> Unit = {}
     )
 
-    suspend fun epgOrThrow(epg: String)
+    suspend fun epgOrThrow(title: String, epg: String)
 
     suspend fun refresh(url: String)
 
     suspend fun unsubscribe(url: String): Playlist?
 
-    suspend fun onEditPlaylistTitle(url: String, title: String)
+    suspend fun onUpdatePlaylistTitle(url: String, title: String)
 
     suspend fun backupOrThrow(uri: Uri)
 
@@ -49,15 +49,11 @@ interface PlaylistRepository {
 
     suspend fun hideOrUnhideCategory(url: String, category: String)
 
-    suspend fun onEditPlaylistUserAgent(url: String, userAgent: String)
+    suspend fun onUpdatePlaylistUserAgent(url: String, userAgent: String?)
 
     fun observeAllCounts(): Flow<List<PlaylistWithCount>>
 
     suspend fun readEpisodesOrThrow(series: Stream): List<XtreamStreamInfo.Episode>
-
-    suspend fun addEpgToPlaylist(epgUrl: String, playlistUrl: String)
-
-    suspend fun removeEpgFromPlaylist(epgUrl: String, playlistUrl: String)
 
     suspend fun deleteEpgPlaylistAndProgrammes(epgUrl: String)
 

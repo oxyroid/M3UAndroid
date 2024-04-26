@@ -32,6 +32,7 @@ fun NavGraphBuilder.rootGraph(
     navigateToPlaylist: (Playlist) -> Unit,
     navigateToStream: () -> Unit,
     navigateToSettingPlaylistManagement: () -> Unit,
+    navigateToPlaylistConfiguration: (Playlist) -> Unit,
 ) {
     composable(ROOT_ROUTE) {
         RootGraph(
@@ -39,7 +40,8 @@ fun NavGraphBuilder.rootGraph(
             contentPadding = contentPadding,
             navigateToPlaylist = navigateToPlaylist,
             navigateToStream = navigateToStream,
-            navigateToSettingPlaylistManagement = navigateToSettingPlaylistManagement
+            navigateToSettingPlaylistManagement = navigateToSettingPlaylistManagement,
+            navigateToPlaylistConfiguration = navigateToPlaylistConfiguration
         )
     }
 }
@@ -51,6 +53,7 @@ private fun RootGraph(
     navigateToPlaylist: (Playlist) -> Unit,
     navigateToStream: () -> Unit,
     navigateToSettingPlaylistManagement: () -> Unit,
+    navigateToPlaylistConfiguration: (Playlist) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val rootDestination = currentDestination()
@@ -78,6 +81,7 @@ private fun RootGraph(
                     navigateToPlaylist = navigateToPlaylist,
                     navigateToStream = navigateToStream,
                     navigateToSettingPlaylistManagement = navigateToSettingPlaylistManagement,
+                    navigateToPlaylistConfiguration = navigateToPlaylistConfiguration,
                     contentPadding = contentPadding,
                     modifier = Modifier.fillMaxSize()
                 )

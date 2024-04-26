@@ -31,7 +31,6 @@ import com.m3u.core.wrapper.Resource
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.PlaylistWithCount
 import com.m3u.data.database.model.Stream
-import com.m3u.data.repository.playlist.PlaylistRepository
 import com.m3u.data.service.MediaCommand
 import com.m3u.features.foryou.components.PlaylistGallery
 import com.m3u.features.foryou.components.PlaylistGalleryPlaceholder
@@ -58,6 +57,7 @@ import kotlinx.coroutines.launch
 fun ForyouRoute(
     navigateToPlaylist: (Playlist) -> Unit,
     navigateToStream: () -> Unit,
+    navigateToPlaylistConfiguration: (Playlist) -> Unit,
     navigateToSettingPlaylistManagement: () -> Unit,
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
@@ -79,11 +79,10 @@ fun ForyouRoute(
     val playlistCountsResource by viewModel.playlistCountsResource.collectAsStateWithLifecycle()
     val recommend by viewModel.recommend.collectAsStateWithLifecycle()
     val episodes by viewModel.episodes.collectAsStateWithLifecycle()
-    val epgs by viewModel.epgs.collectAsStateWithLifecycle()
 
     val series: Stream? by viewModel.series.collectAsStateWithLifecycle()
     val subscribingPlaylistUrls by
-        viewModel.subscribingPlaylistUrls.collectAsStateWithLifecycle()
+    viewModel.subscribingPlaylistUrls.collectAsStateWithLifecycle()
 
     if (isPageInfoVisible) {
         LifecycleResumeEffect(title) {
@@ -105,7 +104,6 @@ fun ForyouRoute(
         ForyouScreen(
             playlistCountsResource = playlistCountsResource,
             subscribingPlaylistUrls = subscribingPlaylistUrls,
-            epgs = epgs,
             recommend = recommend,
             rowCount = preferences.rowCount,
             contentPadding = contentPadding,
@@ -126,11 +124,8 @@ fun ForyouRoute(
                 }
             },
             navigateToSettingPlaylistManagement = navigateToSettingPlaylistManagement,
+            navigateToPlaylistConfiguration = navigateToPlaylistConfiguration,
             onUnsubscribePlaylist = viewModel::onUnsubscribePlaylist,
-            onEditPlaylistTitle = viewModel::onEditPlaylistTitle,
-            onEditPlaylistUserAgent = viewModel::onEditPlaylistUserAgent,
-            onUpdateFocusPlaylist = { viewModel.focusPlaylist.value = it },
-            onUpdateEpgPlaylist = viewModel::onUpdateEpgPlaylist,
             modifier = Modifier
                 .fillMaxSize()
                 .thenIf(!tv && preferences.godMode) {
@@ -173,17 +168,13 @@ private fun ForyouScreen(
     rowCount: Int,
     playlistCountsResource: Resource<List<PlaylistWithCount>>,
     subscribingPlaylistUrls: List<String>,
-    epgs: Map<Playlist, Boolean>,
     recommend: Recommend,
     contentPadding: PaddingValues,
     navigateToPlaylist: (Playlist) -> Unit,
     onClickStream: (Stream) -> Unit,
     navigateToSettingPlaylistManagement: () -> Unit,
+    navigateToPlaylistConfiguration: (Playlist) -> Unit,
     onUnsubscribePlaylist: (playlistUrl: String) -> Unit,
-    onEditPlaylistTitle: (playlistUrl: String, label: String) -> Unit,
-    onEditPlaylistUserAgent: (playlistUrl: String, userAgent: String) -> Unit,
-    onUpdateFocusPlaylist: (Playlist?) -> Unit,
-    onUpdateEpgPlaylist: (PlaylistRepository.UpdateEpgPlaylistUseCase) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val configuration = LocalConfiguration.current
@@ -224,10 +215,7 @@ private fun ForyouScreen(
                             playlistCounts = playlistCountsResource.data,
                             subscribingPlaylistUrls = subscribingPlaylistUrls,
                             onClick = navigateToPlaylist,
-                            onLongClick = {
-                                onUpdateFocusPlaylist(it)
-                                mediaSheetValue = MediaSheetValue.ForyouScreen(it)
-                            },
+                            onLongClick = { mediaSheetValue = MediaSheetValue.ForyouScreen(it) },
                             header = header.takeIf { recommend.isNotEmpty() },
                             contentPadding = contentPadding,
                             modifier = Modifier
@@ -248,26 +236,13 @@ private fun ForyouScreen(
 
                     MediaSheet(
                         value = mediaSheetValue,
-                        epgs = epgs,
                         onUnsubscribePlaylist = {
                             onUnsubscribePlaylist(it.url)
                             mediaSheetValue = MediaSheetValue.ForyouScreen()
-                            onUpdateFocusPlaylist(null)
                         },
-                        onEditPlaylistTitle = { playlist, title ->
-                            onEditPlaylistTitle(playlist.url, title)
-                            mediaSheetValue = MediaSheetValue.ForyouScreen()
-                            onUpdateFocusPlaylist(null)
-                        },
-                        onEditPlaylistUserAgent = { playlist, userAgent ->
-                            onEditPlaylistUserAgent(playlist.url, userAgent)
-                            mediaSheetValue = MediaSheetValue.ForyouScreen()
-                            onUpdateFocusPlaylist(null)
-                        },
-                        onUpdateEpgPlaylist = onUpdateEpgPlaylist,
+                        onPlaylistConfiguration = navigateToPlaylistConfiguration,
                         onDismissRequest = {
                             mediaSheetValue = MediaSheetValue.ForyouScreen()
-                            onUpdateFocusPlaylist(null)
                         }
                     )
                 }

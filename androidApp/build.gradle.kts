@@ -130,6 +130,7 @@ dependencies {
     implementation(project(":features:setting"))
     implementation(project(":features:playlist"))
     implementation(project(":features:stream"))
+    implementation(project(":features:playlist-configuration"))
     implementation(project(":features:crash"))
 
     implementation(libs.androidx.core.core.ktx)

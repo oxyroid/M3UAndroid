@@ -195,11 +195,15 @@ class SettingViewModel @Inject constructor(
                 }
 
                 DataSource.EPG -> {
+                    if (title.isEmpty()) {
+                        messager.emit(SettingMessage.EmptyEpgTitle)
+                        return
+                    }
                     if (epg.isEmpty()) {
                         messager.emit(SettingMessage.EmptyEpg)
                         return
                     }
-                    SubscriptionWorker.epg(workManager, epg)
+                    SubscriptionWorker.epg(workManager, title, epg)
                     messager.emit(SettingMessage.EpgAdded)
                 }
 

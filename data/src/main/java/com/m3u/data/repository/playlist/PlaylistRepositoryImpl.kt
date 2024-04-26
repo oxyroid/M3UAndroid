@@ -343,12 +343,11 @@ internal class PlaylistRepositoryImpl @Inject constructor(
             .collect()
     }
 
-    override suspend fun epgOrThrow(epg: String): Unit = withContext(ioDispatcher) {
+    override suspend fun epgOrThrow(title: String, epg: String): Unit = withContext(ioDispatcher) {
         // just save epg playlist to db
         playlistDao.insertOrReplace(
             Playlist(
-                // we call epg playlist title its url
-                title = epg,
+                title = title,
                 url = epg,
                 source = DataSource.EPG
             )
@@ -365,7 +364,7 @@ internal class PlaylistRepositoryImpl @Inject constructor(
             }
 
             DataSource.EPG -> {
-                SubscriptionWorker.epg(workManager, url)
+                SubscriptionWorker.epg(workManager, playlist.title, url)
             }
 
             DataSource.Xtream -> {
@@ -520,13 +519,14 @@ internal class PlaylistRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun onEditPlaylistTitle(url: String, title: String) = logger.sandBox {
-        playlistDao.rename(url, title)
+    override suspend fun onUpdatePlaylistTitle(url: String, title: String) = logger.sandBox {
+        playlistDao.updateTitle(url, title)
     }
 
-    override suspend fun onEditPlaylistUserAgent(url: String, userAgent: String) = logger.sandBox {
-        playlistDao.updateUserAgent(url, userAgent)
-    }
+    override suspend fun onUpdatePlaylistUserAgent(url: String, userAgent: String?) =
+        logger.sandBox {
+            playlistDao.updateUserAgent(url, userAgent)
+        }
 
     override fun observeAllCounts(): Flow<List<PlaylistWithCount>> =
         playlistDao.observeAllCounts()
@@ -540,42 +540,6 @@ internal class PlaylistRepositoryImpl @Inject constructor(
         )
         // fixme: do not flatmap
         return seriesInfo.episodes.flatMap { it.value }
-    }
-
-    override suspend fun addEpgToPlaylist(epgUrl: String, playlistUrl: String) = logger.sandBox {
-        val epgPlaylist = checkNotNull(playlistDao.getByUrl(epgUrl)) {
-            "EPG is not existed, Please subscribe before adding it."
-        }
-        check(epgPlaylist.source == DataSource.EPG) {
-            "EPG is not existed, Please subscribe before adding it."
-        }
-        val playlist = checkNotNull(playlistDao.getByUrl(playlistUrl)) {
-            "Playlist is not existed."
-        }
-
-        playlistDao.insertOrReplace(
-            playlist.copy(
-                epgUrls = playlist.epgUrls + epgPlaylist.url
-            )
-        )
-    }
-
-    override suspend fun removeEpgFromPlaylist(epgUrl: String, playlistUrl: String) {
-        val epgPlaylist = checkNotNull(playlistDao.getByUrl(epgUrl)) {
-            "EPG is not existed, Please subscribe before adding it."
-        }
-        check(epgPlaylist.source == DataSource.EPG) {
-            "EPG is not existed, Please subscribe before adding it."
-        }
-        val playlist = checkNotNull(playlistDao.getByUrl(playlistUrl)) {
-            "Playlist is not existed."
-        }
-
-        playlistDao.insertOrReplace(
-            playlist.copy(
-                epgUrls = playlist.epgUrls - epgPlaylist.url
-            )
-        )
     }
 
     override suspend fun deleteEpgPlaylistAndProgrammes(epgUrl: String) {

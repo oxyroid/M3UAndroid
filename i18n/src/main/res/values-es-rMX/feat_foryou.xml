@@ -12,7 +12,6 @@
     <string name="feat_foryou_recommend_unseen_hours">%d horas</string>
     <string name="feat_foryou_connect_title">ingresar el código de la televisión</string>
     <string name="feat_foryou_connect_subtitle">Asegura de estar en la misma red Wi-Fi</string>
-    <string name="feat_foryou_title">título</string>
-    <string name="feat_foryou_user_agent">agente de usuario</string>
-    <string name="feat_foryou_apply_changes">aplicar cambios</string>
+    <string name="feat_playlist_configuration_title">título</string>
+    <string name="feat_playlist_configuration_user_agent">agente de usuario</string>
 </resources>

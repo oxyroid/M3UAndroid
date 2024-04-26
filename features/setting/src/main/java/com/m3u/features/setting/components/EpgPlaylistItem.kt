@@ -7,7 +7,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import com.m3u.data.database.model.Playlist
 import com.m3u.material.components.IconButton
@@ -20,13 +19,17 @@ internal fun EpgPlaylistItem(
 ) {
     ListItem(
         headlineContent = {
-            val text = epgPlaylist.title
             Text(
-                text = text,
+                text = epgPlaylist.title,
                 style = MaterialTheme.typography.titleSmall,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                fontWeight = FontWeight.SemiBold
+            )
+        },
+        supportingContent = {
+            Text(
+                text = epgPlaylist.url,
+                style = MaterialTheme.typography.bodySmall,
             )
         },
         trailingContent = {

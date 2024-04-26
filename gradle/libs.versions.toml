@@ -56,6 +56,7 @@ jetty = "9.3.14.v20161028"
 jupnp = "2.7.1"
 minabox = "1.7.1"
 ktor-server = "3.0.0-beta-1"
+junit = "4.13.2"
 
 [libraries]
 androidx-core-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "androidx-core" }
@@ -166,6 +167,7 @@ jupnp = { group = "org.jupnp", name = "org.jupnp", version.ref = "jupnp" }
 jupnp-support = { group = "org.jupnp", name = "org.jupnp.support", version.ref = "jupnp" }
 minabox = { group = "io.github.oleksandrbalan", name = "minabox", version.ref = "minabox" }
 androidx-media3-exoplayer-workmanager = { group = "androidx.media3", name = "media3-exoplayer-workmanager", version.ref = "androidx-media3" }
+junit = { group = "junit", name = "junit", version.ref = "junit" }
 
 [plugins]
 com-android-application = { id = "com.android.application", version.ref = "android-gradle-plugin" }

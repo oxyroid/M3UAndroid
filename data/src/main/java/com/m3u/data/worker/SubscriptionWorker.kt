@@ -107,9 +107,10 @@ class SubscriptionWorker @AssistedInject constructor(
             }
 
             DataSource.EPG -> {
+                val title = title ?: return@coroutineScope Result.failure()
                 val epg = epg ?: return@coroutineScope Result.failure()
                 try {
-                    playlistRepository.epgOrThrow(epg)
+                    playlistRepository.epgOrThrow(title, epg)
                     Result.success()
                 } catch (e: Exception) {
                     createN10nBuilder()
@@ -272,12 +273,14 @@ class SubscriptionWorker @AssistedInject constructor(
 
         fun epg(
             workManager: WorkManager,
+            title: String,
             epg: String
         ) {
             workManager.cancelAllWorkByTag(epg)
             val request = OneTimeWorkRequestBuilder<SubscriptionWorker>()
                 .setInputData(
                     workDataOf(
+                        INPUT_STRING_TITLE to title,
                         INPUT_STRING_EPG to epg,
                         INPUT_STRING_DATA_SOURCE_VALUE to DataSource.EPG.value
                     )

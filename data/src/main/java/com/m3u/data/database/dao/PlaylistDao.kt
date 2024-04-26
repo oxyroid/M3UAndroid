@@ -68,7 +68,7 @@ internal interface PlaylistDao {
     suspend fun getByUrlWithStreams(url: String): PlaylistWithStreams?
 
     @Query("UPDATE playlists SET title = :target WHERE url = :url")
-    suspend fun rename(url: String, target: String)
+    suspend fun updateTitle(url: String, target: String)
 
     @Transaction
     suspend fun updateUrl(oldUrl: String, newUrl: String) {

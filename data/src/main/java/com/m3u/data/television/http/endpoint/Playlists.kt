@@ -76,16 +76,16 @@ data class Playlists @Inject constructor(
                     }
 
                     DataSource.EPG -> {
-                        if (epg == null) {
+                        if (title == null || epg == null) {
                             call.respond(
                                 DefRep(
                                     result = false,
-                                    reason = "Epg link is required."
+                                    reason = "Both title and epg link are required."
                                 )
                             )
                             return@post
                         }
-                        SubscriptionWorker.epg(workManager, epg)
+                        SubscriptionWorker.epg(workManager, title, epg)
                     }
 
                     else -> {}

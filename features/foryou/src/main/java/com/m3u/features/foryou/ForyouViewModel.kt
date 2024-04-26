@@ -106,24 +106,6 @@ class ForyouViewModel @Inject constructor(
         }
     }
 
-    internal fun onEditPlaylistTitle(playlistUrl: String, title: String) {
-        viewModelScope.launch {
-            playlistRepository.onEditPlaylistTitle(playlistUrl, title)
-        }
-    }
-
-    internal fun onEditPlaylistUserAgent(playlistUrl: String, userAgent: String) {
-        viewModelScope.launch {
-            playlistRepository.onEditPlaylistUserAgent(playlistUrl, userAgent)
-        }
-    }
-
-    internal fun onUpdateEpgPlaylist(usecase: PlaylistRepository.UpdateEpgPlaylistUseCase) {
-        viewModelScope.launch {
-            playlistRepository.onUpdateEpgPlaylist(usecase)
-        }
-    }
-
     internal val series = MutableStateFlow<Stream?>(null)
     internal val seriesReplay = MutableStateFlow(0)
     internal val episodes: StateFlow<Resource<List<XtreamStreamInfo.Episode>>> = series
@@ -142,22 +124,4 @@ class ForyouViewModel @Inject constructor(
 
     internal suspend fun getPlaylist(playlistUrl: String): Playlist? =
         playlistRepository.get(playlistUrl)
-
-    internal val focusPlaylist = MutableStateFlow<Playlist?>(null)
-    internal val epgs: StateFlow<Map<Playlist, Boolean>> = combine(
-        playlistRepository.observeAllEpgs(),
-        focusPlaylist.flatMapLatest { playlistRepository.observe(it?.url.orEmpty()) }
-    ) { epgs, playlist ->
-        val epgUrls = playlist?.epgUrls ?: return@combine emptyMap()
-        buildMap {
-            epgs.forEach { epg ->
-                put(epg, epg.url in epgUrls)
-            }
-        }
-    }
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.Lazily,
-            initialValue = emptyMap()
-        )
 }

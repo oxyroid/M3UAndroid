@@ -118,6 +118,8 @@
     </string>
 
     <!-- EPG -->
+    <string name="feat_setting_placeholder_epg_title">EPG名称</string>
+    <string name="feat_setting_error_empty_epg_title">EPG名称为空</string>
     <string name="feat_setting_placeholder_epg">EPG链接</string>
     <string name="feat_setting_epg_added">您可以随后将播放列表与 EPG 相关联</string>
     <string name="feat_setting_error_empty_epg">EPG链接为空</string>

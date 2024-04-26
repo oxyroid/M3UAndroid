@@ -17,6 +17,11 @@ sealed class SettingMessage(
         type = TYPE_SNACK,
         resId = string.feat_setting_error_empty_title
     )
+    data object EmptyEpgTitle : SettingMessage(
+        level = LEVEL_ERROR,
+        type = TYPE_SNACK,
+        resId = string.feat_setting_error_empty_epg_title
+    )
     data object EmptyEpg : SettingMessage(
         level = LEVEL_ERROR,
         type = TYPE_SNACK,
