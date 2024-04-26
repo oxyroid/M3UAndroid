@@ -8,7 +8,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import com.m3u.core.architecture.preferences.LocalPreferences
-import com.m3u.features.stream.PlayerMaskImplDefaults.detectVerticalGesture
+import com.m3u.features.stream.PlayerMaskDefaults.detectVerticalGesture
 import com.m3u.material.ktx.isTelevision
 import com.m3u.material.ktx.thenIf
 

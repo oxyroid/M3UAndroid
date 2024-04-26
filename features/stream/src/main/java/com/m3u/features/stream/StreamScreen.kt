@@ -327,7 +327,7 @@ private fun
                 modifier = Modifier.align(Alignment.Center)
             )
 
-            PlayerMaskImpl(
+            StreamMask(
                 cover = cover,
                 title = title,
                 playlistTitle = playlistTitle,

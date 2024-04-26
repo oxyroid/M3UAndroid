@@ -18,7 +18,7 @@ import com.m3u.i18n.R.string
 import kotlin.math.absoluteValue
 import kotlin.time.Duration
 
-internal object PlayerMaskImplDefaults {
+internal object PlayerMaskDefaults {
     fun Modifier.detectVerticalGesture(
         threshold: Float = 0.15f,
         time: Float = 1f,

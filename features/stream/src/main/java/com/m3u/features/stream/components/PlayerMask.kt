@@ -9,9 +9,7 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
-import androidx.compose.material3.LocalContentColor
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -31,55 +29,51 @@ internal fun PlayerMask(
 ) {
     val spacing = LocalSpacing.current
     val tv = isTelevision()
-    CompositionLocalProvider(
-        LocalContentColor provides Color.White,
-        androidx.tv.material3.LocalContentColor provides Color.White
+    Mask(
+        state = state,
+        color = Color.Black.copy(alpha = 0.54f),
+        contentColor = Color.White,
+        modifier = modifier
+            .then(
+                Modifier.padding(
+                    top = if (tv) spacing.medium else spacing.small,
+                    bottom = if (!tv) spacing.medium else spacing.small
+                )
+            )
+            .padding(WindowInsets.statusBars.asPaddingValues())
     ) {
-        Mask(
-            state = state,
-            color = Color.Black.copy(alpha = 0.54f),
-            modifier = modifier
-                .then(
-                    Modifier.padding(
-                        top = if (tv) spacing.medium else spacing.small,
-                        bottom = if (!tv) spacing.medium else spacing.small
-                    )
-                )
-                .padding(WindowInsets.statusBars.asPaddingValues())
-        ) {
-            Column {
+        Column {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = spacing.medium),
+                horizontalArrangement = Arrangement.spacedBy(
+                    if (!tv) spacing.none else spacing.medium,
+                    Alignment.End
+                ),
+                verticalAlignment = Alignment.Top,
+                content = header
+            )
+            Row(
+                modifier = Modifier
+                    .padding(horizontal = spacing.medium)
+                    .fillMaxWidth()
+                    .weight(1f),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically,
+                content = body
+            )
+            Column(
+                modifier = Modifier.padding(horizontal = spacing.medium)
+            ) {
                 Row(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = spacing.medium),
-                    horizontalArrangement = Arrangement.spacedBy(
-                        if (!tv) spacing.none else spacing.medium,
-                        Alignment.End
-                    ),
-                    verticalAlignment = Alignment.Top,
-                    content = header
+                        .fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(spacing.medium),
+                    verticalAlignment = Alignment.Bottom,
+                    content = footer
                 )
-                Row(
-                    modifier = Modifier
-                        .padding(horizontal = spacing.medium)
-                        .fillMaxWidth()
-                        .weight(1f),
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically,
-                    content = body
-                )
-                Column(
-                    modifier = Modifier.padding(horizontal = spacing.medium)
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(spacing.medium),
-                        verticalAlignment = Alignment.Bottom,
-                        content = footer
-                    )
-                    slider?.invoke()
-                }
+                slider?.invoke()
             }
         }
     }

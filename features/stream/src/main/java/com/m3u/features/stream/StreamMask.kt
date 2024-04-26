@@ -87,7 +87,7 @@ import kotlin.time.toDuration
 @Composable
 internal fun
 //        SharedTransitionScope.
-        PlayerMaskImpl(
+        StreamMask(
     cover: String,
     title: String,
     playlistTitle: String,
@@ -327,10 +327,10 @@ internal fun
                             overflow = TextOverflow.Ellipsis,
                             modifier = Modifier
                                 .basicMarquee()
-//                                .sharedElement(
-//                                    state = rememberSharedContentState("playlist-title"),
-//                                    this
-//                                )
+    //                                .sharedElement(
+    //                                    state = rememberSharedContentState("playlist-title"),
+    //                                    this
+    //                                )
                         )
                     }
                     AnimatedVisibility(
@@ -346,17 +346,17 @@ internal fun
                             overflow = TextOverflow.Ellipsis,
                             modifier = Modifier
                                 .basicMarquee()
-//                                .sharedElement(
-//                                    state = rememberSharedContentState("stream-title"),
-//                                    this
-//                                )
+    //                                .sharedElement(
+    //                                    state = rememberSharedContentState("stream-title"),
+    //                                    this
+    //                                )
                         )
                     }
 
                     val playStateDisplayText =
-                        PlayerMaskImplDefaults.playStateDisplayText(playerState.playState)
+                        PlayerMaskDefaults.playStateDisplayText(playerState.playState)
                     val exceptionDisplayText =
-                        PlayerMaskImplDefaults.playbackExceptionDisplayText(playerState.playerError)
+                        PlayerMaskDefaults.playbackExceptionDisplayText(playerState.playerError)
 
                     if (playStateDisplayText.isNotEmpty()
                         || exceptionDisplayText.isNotEmpty()
@@ -389,7 +389,7 @@ internal fun
 
                 }
                 if (!tv) {
-                    val autoRotating by PlayerMaskImplDefaults.IsAutoRotatingEnabled
+                    val autoRotating by PlayerMaskDefaults.IsAutoRotatingEnabled
                     LaunchedEffect(autoRotating) {
                         if (autoRotating) {
                             helper.screenOrientation =
@@ -429,7 +429,7 @@ internal fun
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = PlayerMaskImplDefaults.timeunitDisplayTest(
+                                text = PlayerMaskDefaults.timeunitDisplayTest(
                                     (bufferedPosition ?: contentPosition)
                                         .toDuration(DurationUnit.MILLISECONDS)
                                 ),
