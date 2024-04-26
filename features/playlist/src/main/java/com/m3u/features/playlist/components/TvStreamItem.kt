@@ -32,6 +32,7 @@ import com.m3u.core.architecture.preferences.LocalPreferences
 import com.m3u.data.database.model.Stream
 import com.m3u.material.components.CircularProgressIndicator
 import com.m3u.material.components.Icon
+import com.m3u.material.ktx.ScaleIfHasAlphaTransformation
 import com.m3u.material.ktx.thenIf
 import com.m3u.material.model.LocalSpacing
 import coil.size.Size as CoilSize
@@ -95,6 +96,7 @@ internal fun TvStreamItem(
                         ImageRequest.Builder(context)
                             .data(stream.cover)
                             .size(CoilSize.ORIGINAL)
+                            .transformations(ScaleIfHasAlphaTransformation(0.85f))
                             .build()
                     },
                     contentScale = ContentScale.FillHeight,

@@ -2,12 +2,15 @@ package com.m3u.features.playlist.components
 
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.BrokenImage
 import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ListItem
@@ -28,6 +31,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
 import coil.compose.SubcomposeAsyncImage
 import coil.request.ImageRequest
 import coil.size.Size
@@ -38,7 +42,6 @@ import com.m3u.material.components.CircularProgressIndicator
 import com.m3u.material.components.Icon
 import com.m3u.material.model.LocalSpacing
 import com.m3u.material.shape.AbsoluteSmoothCornerShape
-import com.m3u.ui.Image
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlin.time.Duration.Companion.days
@@ -67,13 +70,6 @@ internal fun SmartphoneStreamItem(
 
     val noPictureMode = preferences.noPictureMode
 
-    val onlyPictureMode = remember(stream.cover, isVodOrSeriesPlaylist, noPictureMode) {
-        when {
-            noPictureMode -> false
-            else -> isVodOrSeriesPlaylist
-        }
-    }
-
     val star = remember(favourite) {
         movableContentOf {
             Crossfade(
@@ -96,7 +92,7 @@ internal fun SmartphoneStreamItem(
         border = CardDefaults.outlinedCardBorder(zapping),
         shape = AbsoluteSmoothCornerShape(spacing.medium, 65),
     ) {
-        if (!onlyPictureMode) {
+        if (noPictureMode || !isVodOrSeriesPlaylist) {
             ListItem(
                 headlineContent = {
                     Text(
@@ -109,15 +105,11 @@ internal fun SmartphoneStreamItem(
                 },
                 leadingContent = if (!noPictureMode) {
                     {
-                        Image(
+                        AsyncImage(
                             model = stream.cover,
-                            transparentPlaceholder = true,
-                            contentScale = ContentScale.Fit,
-                            modifier = Modifier
-                                .height(56.dp)
-                                .aspectRatio(
-                                    if (!isVodOrSeriesPlaylist) 1f else 2 / 3f
-                                )
+                            contentDescription = null,
+                            contentScale = ContentScale.FillWidth,
+                            modifier = Modifier.width(56.dp)
                         )
                     }
                 } else null,
@@ -182,11 +174,27 @@ internal fun SmartphoneStreamItem(
                             CircularProgressIndicator()
                         }
                     },
-                    modifier = Modifier
-                        .fillMaxWidth()
-//                        .aspectRatio(
-//                            if (!isVodOrSeriesPlaylist) 4 / 3f else 2 / 3f
-//                        )
+                    error = {
+                        Column(
+                            verticalArrangement = Arrangement.SpaceAround,
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .aspectRatio(3 / 4f)
+                                .padding(spacing.medium)
+                        ) {
+                            Text(
+                                text = stream.title,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                            Icon(
+                                imageVector = Icons.Rounded.BrokenImage,
+                                contentDescription = null
+                            )
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth()
                 )
                 if (favourite) {
                     Box(
