@@ -284,28 +284,33 @@ class StreamViewModel @Inject constructor(
             .cachedIn(viewModelScope)
     }
 
-    internal val programmes: Flow<PagingData<ProgrammeGuide.Programme>> =
-        stream.flatMapLatest { stream ->
-            Pager(PagingConfig(15)) {
-                programmeRepository.pagingByChannelId(stream?.channelId ?: "")
-            }
-                .flow
-                .map {
-                    it.map { prev ->
-                        val sh = Instant.fromEpochMilliseconds(prev.start).toEOrSh()
-                        val eh = Instant.fromEpochMilliseconds(prev.end).toEOrSh()
-                        ProgrammeGuide.Programme(
-                            sh = sh,
-                            eh = eh,
-                            programmeId = prev.id,
-                            title = prev.title,
-                            desc = prev.description,
-                            icon = prev.icon
-                        )
-                    }
-                }
-                .cachedIn(viewModelScope)
+    internal val programmes: Flow<PagingData<ProgrammeGuide.Programme>> = combine(
+        playlist,
+        stream
+    ) { playlist, stream -> playlist to stream }.flatMapLatest { (playlist, stream) ->
+        Pager(PagingConfig(15)) {
+            programmeRepository.pagingByEpgUrlsAndChannelId(
+                epgUrls = playlist?.epgUrls ?: emptyList(),
+                channelId = stream?.channelId ?: ""
+            )
         }
+            .flow
+            .map {
+                it.map { prev ->
+                    val sh = Instant.fromEpochMilliseconds(prev.start).toEOrSh()
+                    val eh = Instant.fromEpochMilliseconds(prev.end).toEOrSh()
+                    ProgrammeGuide.Programme(
+                        sh = sh,
+                        eh = eh,
+                        programmeId = prev.id,
+                        title = prev.title,
+                        desc = prev.description,
+                        icon = prev.icon
+                    )
+                }
+            }
+            .cachedIn(viewModelScope)
+    }
 
     internal val isEpgRefreshing: StateFlow<Boolean> = combine(
         playlist,

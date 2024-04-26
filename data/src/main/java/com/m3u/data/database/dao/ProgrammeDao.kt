@@ -33,8 +33,19 @@ interface ProgrammeDao {
     @Query("""SELECT MAX("end") from programmes WHERE epg_url = :epgUrl""")
     suspend fun getMaxEndByEpgUrl(epgUrl: String): Long?
 
-    @Query("SELECT * FROM programmes WHERE channel_id = :channelId ORDER BY start")
-    fun pagingAllByChannelId(channelId: String): PagingSource<Int, Programme>
+    @Query(
+        """
+        SELECT * FROM programmes 
+        WHERE epg_url in (:epgUrls) 
+        AND 
+        channel_id = :channelId 
+        ORDER BY start
+        """
+    )
+    fun pagingByEpgUrlsAndChannelId(
+        epgUrls: List<String>,
+        channelId: String
+    ): PagingSource<Int, Programme>
 
     @Query("DELETE FROM programmes WHERE epg_url = :epgUrl AND `end` < :startEdge")
     suspend fun cleanByEpgUrlAndStartEdge(epgUrl: String, startEdge: Long)
