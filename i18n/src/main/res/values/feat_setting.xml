@@ -119,6 +119,7 @@
         useful for large amounts of channels,
         but grouping will be disabled at the same time
     </string>
+    <string name="feat_setting_source_code">source code</string>
 
     <!-- EPG -->
     <string name="feat_setting_placeholder_epg_title">epg name</string>

@@ -6,12 +6,14 @@ import android.provider.Settings
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.OpenInNew
+import androidx.compose.material.icons.rounded.Book
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.PermDeviceInformation
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
 import com.m3u.core.unit.DataUnit
 import com.m3u.core.util.basic.title
@@ -28,6 +30,7 @@ internal fun OtherPreferences(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
+    val uriHandler = LocalUriHandler.current
     Column(modifier) {
         TrailingIconPreference(
             title = stringResource(string.feat_setting_system_setting).title(),
@@ -50,6 +53,14 @@ internal fun OtherPreferences(
             title = stringResource(string.feat_setting_app_version).title(),
             content = "$versionName ($versionCode)",
             icon = Icons.Rounded.Info,
+        )
+        Preference(
+            title = stringResource(string.feat_setting_source_code).title(),
+            content = "@oxyroid/M3UAndroid",
+            icon = Icons.Rounded.Book,
+            onClick = {
+                uriHandler.openUri("https://github.com/oxyroid/M3UAndroid")
+            }
         )
     }
 }
