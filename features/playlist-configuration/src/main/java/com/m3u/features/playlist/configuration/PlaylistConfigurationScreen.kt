@@ -7,6 +7,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -36,6 +37,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -50,10 +52,10 @@ import com.m3u.material.components.Background
 import com.m3u.material.components.Icon
 import com.m3u.material.components.PlaceholderField
 import com.m3u.material.components.SelectionsDefaults
-import com.m3u.material.components.ToggleableSelection
 import com.m3u.material.ktx.split
 import com.m3u.material.model.LocalHazeState
 import com.m3u.material.model.LocalSpacing
+import com.m3u.material.shape.AbsoluteSmoothCornerShape
 import com.m3u.ui.helper.LocalHelper
 import dev.chrisbanes.haze.HazeDefaults
 import dev.chrisbanes.haze.haze
@@ -146,49 +148,47 @@ private fun PlaylistConfigurationScreen(
                         )
                     }
                     items(manifest.entries.toList()) { (epg, associated) ->
-                        ToggleableSelection(
-                            checked = associated,
-                            onChanged = {
-                                onUpdateEpgPlaylist(
-                                    PlaylistRepository.UpdateEpgPlaylistUseCase(
-                                        playlistUrl = playlist.url,
-                                        epgUrl = epg.url,
-                                        action = !associated
-                                    )
+                        ListItem(
+                            headlineContent = {
+                                Text(
+                                    text = epg.title,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
                                 )
                             },
-                            modifier = Modifier.border(
-                                1.dp,
-                                LocalContentColor.current.copy(0.38f),
-                                SelectionsDefaults.Shape
-                            )
-                        ) {
-                            ListItem(
-                                headlineContent = {
-                                    Text(
-                                        text = epg.title,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis,
-                                    )
-                                },
-                                supportingContent = {
-                                    Text(
-                                        text = epg.url
-                                    )
-                                },
-                                trailingContent = {
-                                    Switch(
-                                        checked = associated,
-                                        onCheckedChange = null
-                                    )
-                                },
-                                colors = ListItemDefaults.colors(
-                                    supportingColor = MaterialTheme
-                                        .colorScheme
-                                        .onSurfaceVariant.copy(0.38f)
+                            supportingContent = {
+                                Text(
+                                    text = epg.url
                                 )
-                            )
-                        }
+                            },
+                            trailingContent = {
+                                Switch(
+                                    checked = associated,
+                                    onCheckedChange = null
+                                )
+                            },
+                            colors = ListItemDefaults.colors(
+                                supportingColor = MaterialTheme
+                                    .colorScheme
+                                    .onSurfaceVariant.copy(0.38f)
+                            ),
+                            modifier = Modifier
+                                .border(
+                                    1.dp,
+                                    LocalContentColor.current.copy(0.38f),
+                                    SelectionsDefaults.Shape
+                                )
+                                .clip(AbsoluteSmoothCornerShape(spacing.medium, 65))
+                                .clickable {
+                                    onUpdateEpgPlaylist(
+                                        PlaylistRepository.UpdateEpgPlaylistUseCase(
+                                            playlistUrl = playlist.url,
+                                            epgUrl = epg.url,
+                                            action = !associated
+                                        )
+                                    )
+                                }
+                        )
                     }
                 }
             }
