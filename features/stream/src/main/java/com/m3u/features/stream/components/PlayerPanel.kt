@@ -260,7 +260,12 @@ private fun PanelProgramGuide(
 
     val currentHeight: Float by animateFloatAsState(
         targetValue = height * zoom.time,
-        label = "minabox-cell-height"
+        label = "minabox-cell-height",
+        finishedListener = {
+            coroutineScope.launch {
+                minaBoxState.animateTo(0f, eOrSh * it + scrollOffset)
+            }
+        }
     )
 
     val animateToCurrentEOrSh: suspend () -> Unit by rememberUpdatedState {
