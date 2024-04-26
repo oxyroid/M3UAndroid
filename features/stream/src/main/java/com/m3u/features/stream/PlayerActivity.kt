@@ -110,11 +110,9 @@ class PlayerActivity : ComponentActivity() {
         }
     }
 
-    override fun onNewIntent(intent: Intent?) {
+    override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        if (intent != null) {
-            handleIntent(intent)
-        }
+        handleIntent(intent)
     }
 
     private fun handleIntent(intent: Intent) {

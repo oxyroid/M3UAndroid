@@ -41,7 +41,9 @@ internal interface PlaylistDao {
     @Query("SELECT * FROM playlists ORDER BY title")
     fun observeAllWithStreams(): Flow<List<PlaylistWithStreams>>
 
-    @Transaction
+    @Query("SELECT * FROM playlists ORDER BY title")
+    suspend fun getAll(): List<Playlist>
+
     @Query("SELECT * FROM playlists ORDER BY title")
     suspend fun getAllWithStreams(): List<PlaylistWithStreams>
 
@@ -91,6 +93,7 @@ internal interface PlaylistDao {
             )
         )
     }
+
     @Transaction
     suspend fun updateEpgUrls(url: String, updater: (List<String>) -> List<String>) {
         val playlist = getByUrl(url) ?: return
@@ -121,5 +124,16 @@ internal interface PlaylistDao {
                 userAgent = userAgent
             )
         )
+    }
+
+    @Transaction
+    suspend fun removeEpgUrlForAllPlaylists(epgUrl: String) {
+        getAll().forEach { playlist ->
+            if (epgUrl in playlist.epgUrls) {
+                updateEpgUrls(playlist.url) { prev ->
+                    prev - epgUrl
+                }
+            }
+        }
     }
 }

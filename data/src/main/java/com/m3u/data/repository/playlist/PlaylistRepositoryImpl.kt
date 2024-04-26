@@ -545,6 +545,7 @@ internal class PlaylistRepositoryImpl @Inject constructor(
     override suspend fun deleteEpgPlaylistAndProgrammes(epgUrl: String) {
         playlistDao.deleteByUrl(epgUrl)
         programmeDao.deleteAllByEpgUrl(epgUrl)
+        playlistDao.removeEpgUrlForAllPlaylists(epgUrl)
     }
 
     override suspend fun onUpdateEpgPlaylist(useCase: PlaylistRepository.UpdateEpgPlaylistUseCase) {
