@@ -45,7 +45,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.core.util.basic.title
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.repository.playlist.PlaylistRepository
-import com.m3u.i18n.R
+import com.m3u.i18n.R.string
 import com.m3u.material.components.Background
 import com.m3u.material.components.Icon
 import com.m3u.material.components.PlaceholderField
@@ -116,12 +116,12 @@ private fun PlaylistConfigurationScreen(
             ) {
                 PlaceholderField(
                     text = title,
-                    placeholder = stringResource(R.string.feat_playlist_configuration_title).title(),
+                    placeholder = stringResource(string.feat_playlist_configuration_title).title(),
                     onValueChange = { title = it },
                 )
                 PlaceholderField(
                     text = userAgent,
-                    placeholder = stringResource(R.string.feat_playlist_configuration_user_agent).title(),
+                    placeholder = stringResource(string.feat_playlist_configuration_user_agent).title(),
                     onValueChange = { userAgent = it }
                 )
                 LazyColumn(
@@ -137,7 +137,7 @@ private fun PlaylistConfigurationScreen(
                 ) {
                     stickyHeader {
                         Text(
-                            text = "Enabled EPGs",
+                            text = stringResource(string.feat_playlist_configuration_enabled_epgs).title(),
                             style = MaterialTheme.typography.titleMedium,
                             modifier = Modifier.padding(
                                 horizontal = spacing.medium,

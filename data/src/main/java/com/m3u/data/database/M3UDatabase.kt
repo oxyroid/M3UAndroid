@@ -37,7 +37,12 @@ import com.m3u.data.database.model.Stream
         AutoMigration(from = 11, to = 12),
         AutoMigration(from = 12, to = 13),
         AutoMigration(from = 13, to = 14),
-        AutoMigration(from = 14, to = 15)
+        // ver.15 is only used in a public beta deletion test package.
+        AutoMigration(
+            from = 14,
+            to = 16,
+            spec = DatabaseMigrations.AutoMigrate14To16::class
+        )
     ]
 )
 @TypeConverters(Converters::class)

@@ -1,5 +1,6 @@
 package com.m3u.data.database
 
+import androidx.room.DeleteColumn
 import androidx.room.RenameColumn
 import androidx.room.RenameTable
 import androidx.room.migration.AutoMigrationSpec
@@ -45,4 +46,11 @@ internal object DatabaseMigrations {
             db.execSQL("ALTER TABLE playlists ADD COLUMN hidden_groups TEXT NOT NULL DEFAULT '[]'")
         }
     }
+
+
+    @DeleteColumn(
+        tableName = "playlists",
+        columnName = "epg_url"
+    )
+    class AutoMigrate14To16 : AutoMigrationSpec
 }

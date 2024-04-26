@@ -2,4 +2,5 @@
 <resources>
     <string name="feat_playlist_configuration_title">title</string>
     <string name="feat_playlist_configuration_user_agent">user agent</string>
+    <string name="feat_playlist_configuration_enabled_epgs">enabled EPGs</string>
 </resources>
