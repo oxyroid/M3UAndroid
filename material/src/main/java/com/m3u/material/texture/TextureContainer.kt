@@ -20,10 +20,10 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun MeshTextureContainer(
     modifier: Modifier = Modifier,
-    color1: Color = MaterialTheme.colorScheme.surfaceColorAtElevation(0.dp),
-    color2: Color = MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp),
-    animationSpec: InfiniteRepeatableSpec<Color> = infiniteRepeatable(
-        animation = tween(5000),
+    color1: Color = MaterialTheme.colorScheme.surfaceColorAtElevation(4.dp),
+    color2: Color = MaterialTheme.colorScheme.background,
+    colorAnimationSpec: InfiniteRepeatableSpec<Color> = infiniteRepeatable(
+        animation = tween(4000),
         repeatMode = RepeatMode.Reverse
     ),
     content: @Composable () -> Unit
@@ -32,12 +32,16 @@ fun MeshTextureContainer(
     val color by transition.animateColor(
         initialValue = color1,
         targetValue = color2,
-        animationSpec = animationSpec,
+        animationSpec = colorAnimationSpec,
         label = "mesh-textures-container-color"
     )
     Box(
         modifier = modifier
-            .background(Brush.radialGradient(listOf(color1, color2)))
+            .background(
+                Brush.verticalGradient(
+                    colors = listOf(color2, color1, color2)
+                )
+            )
             .texture(
                 texture = Texture.Mesh(
                     color = color,
