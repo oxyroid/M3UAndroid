@@ -8,7 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.BrokenImage
 import androidx.compose.material.icons.rounded.Star
@@ -108,8 +108,8 @@ internal fun SmartphoneStreamItem(
                         AsyncImage(
                             model = stream.cover,
                             contentDescription = null,
-                            contentScale = ContentScale.FillWidth,
-                            modifier = Modifier.width(56.dp)
+                            contentScale = ContentScale.Fit,
+                            modifier = Modifier.size(56.dp)
                         )
                     }
                 } else null,
