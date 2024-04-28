@@ -183,12 +183,16 @@ class SettingViewModel @Inject constructor(
                         messager.emit(SettingMessage.EmptyTitle)
                         return
                     }
-                    if (localStorage && uri == Uri.EMPTY) {
-                        messager.emit(SettingMessage.EmptyFile)
-                        return
-                    } else if (url.isBlank()) {
-                        messager.emit(SettingMessage.EmptyUrl)
-                        return
+                    if (localStorage) {
+                        if (uri == Uri.EMPTY) {
+                            messager.emit(SettingMessage.EmptyFile)
+                            return
+                        }
+                    } else {
+                        if (url.isBlank()) {
+                            messager.emit(SettingMessage.EmptyUrl)
+                            return
+                        }
                     }
                     SubscriptionWorker.m3u(workManager, title, urlOrUri)
                     messager.emit(SettingMessage.Enqueued)

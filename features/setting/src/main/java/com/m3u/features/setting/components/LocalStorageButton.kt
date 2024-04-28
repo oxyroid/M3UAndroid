@@ -29,7 +29,7 @@ internal fun LocalStorageButton(
     val uri by uriState
     val selected = uri != Uri.EMPTY
     val launcher = rememberLauncherForActivityResult(
-        ActivityResultContracts.GetContent()
+        ActivityResultContracts.OpenDocument()
     ) { result ->
         if (result == null) {
             titleState.value = ""
@@ -57,7 +57,16 @@ internal fun LocalStorageButton(
     ToggleableSelection(
         checked = false,
         color = MaterialTheme.colorScheme.surfaceVariant,
-        onChanged = { launcher.launch("audio/*") },
+        onChanged = {
+            launcher.launch(
+                arrayOf(
+                    "text/*",
+                    "video/*",
+                    "audio/*",
+                    "application/*",
+                )
+            )
+        },
         modifier = modifier
     ) {
         Text(text.uppercase())
