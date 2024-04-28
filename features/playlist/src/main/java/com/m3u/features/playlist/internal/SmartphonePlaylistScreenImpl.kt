@@ -54,12 +54,12 @@ import com.m3u.features.playlist.Category
 import com.m3u.features.playlist.components.PlaylistTabRow
 import com.m3u.features.playlist.components.SmartphoneStreamGallery
 import com.m3u.i18n.R.string
-import com.m3u.material.components.Background
 import com.m3u.material.components.TextField
 import com.m3u.material.ktx.isAtTop
 import com.m3u.material.ktx.split
 import com.m3u.material.model.LocalHazeState
 import com.m3u.material.model.LocalSpacing
+import com.m3u.material.texture.MeshTextureContainer
 import com.m3u.ui.EventHandler
 import com.m3u.ui.MediaSheet
 import com.m3u.ui.MediaSheetValue
@@ -150,135 +150,131 @@ internal fun SmartphonePlaylistScreenImpl(
 
     val (inner, outer) = contentPadding split WindowInsetsSides.Bottom
 
-    Box {
-        BackdropScaffold(
-            scaffoldState = scaffoldState,
-            appBar = {},
-            frontLayerShape = RectangleShape,
-            peekHeight = 0.dp,
-            backLayerContent = {
-                val coroutineScope = rememberCoroutineScope()
-                LaunchedEffect(scaffoldState.currentValue) {
-                    if (scaffoldState.isConcealed) {
-                        focusManager.clearFocus()
+    BackdropScaffold(
+        scaffoldState = scaffoldState,
+        appBar = {},
+        frontLayerShape = RectangleShape,
+        peekHeight = 0.dp,
+        backLayerContent = {
+            val coroutineScope = rememberCoroutineScope()
+            LaunchedEffect(scaffoldState.currentValue) {
+                if (scaffoldState.isConcealed) {
+                    focusManager.clearFocus()
+                }
+            }
+            BackHandler(scaffoldState.isRevealed || query.isNotEmpty()) {
+                if (scaffoldState.isRevealed) {
+                    coroutineScope.launch {
+                        scaffoldState.conceal()
                     }
                 }
-                BackHandler(scaffoldState.isRevealed || query.isNotEmpty()) {
-                    if (scaffoldState.isRevealed) {
-                        coroutineScope.launch {
-                            scaffoldState.conceal()
-                        }
-                    }
-                    if (query.isNotEmpty()) {
-                        onQuery("")
-                    }
+                if (query.isNotEmpty()) {
+                    onQuery("")
                 }
-                Box(
-                    modifier = Modifier
-                        .padding(spacing.medium)
-                        .fillMaxWidth()
-                ) {
-                    TextField(
-                        text = query,
-                        onValueChange = onQuery,
-                        fontWeight = FontWeight.Bold,
-                        placeholder = stringResource(string.feat_playlist_query_placeholder).uppercase()
-                    )
-                }
-            },
-            frontLayerContent = {
-                Background(
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    val state = rememberLazyStaggeredGridState()
-                    LaunchedEffect(Unit) {
-                        snapshotFlow { state.isAtTop }
-                            .onEach { isAtTopState.value = it }
-                            .launchIn(this)
-                    }
-                    EventHandler(scrollUp) {
-                        state.scrollToItem(0)
-                    }
-                    val orientation = configuration.orientation
-                    val actualRowCount = remember(orientation, rowCount) {
-                        when (orientation) {
-                            ORIENTATION_LANDSCAPE -> rowCount + 2
-                            ORIENTATION_PORTRAIT -> rowCount
-                            else -> rowCount
-                        }
-                    }
-                    Column {
-                        PlaylistTabRow(
-                            page = currentPage,
-                            onPageChanged = { currentPage = it },
-                            categories = categories,
-                            pinnedCategories = pinnedCategories,
-                            onPinOrUnpinCategory = onPinOrUnpinCategory,
-                            onHideCategory = onHideCategory
-                        )
-                        if (preferences.paging || currentPage != -1) {
-                            SmartphoneStreamGallery(
-                                state = state,
-                                rowCount = actualRowCount,
-                                streams = if (preferences.paging) emptyList()
-                                else categories[currentPage].streams,
-                                streamPaged = streamPaged,
-                                zapping = zapping,
-                                recently = sort == Sort.RECENTLY,
-                                isVodOrSeriesPlaylist = isVodOrSeriesPlaylist,
-                                onClick = onStream,
-                                contentPadding = inner,
-                                onLongClick = {
-                                    mediaSheetValue = MediaSheetValue.PlaylistScreen(it)
-                                },
-                                modifier = modifier.haze(
-                                    LocalHazeState.current,
-                                    HazeDefaults.style(MaterialTheme.colorScheme.surface)
-                                )
-                            )
-                        }
-                    }
-                }
-            },
-            backLayerBackgroundColor = Color.Transparent,
-            backLayerContentColor = currentContentColor,
-            frontLayerScrimColor = currentColor.copy(alpha = 0.45f),
-            frontLayerBackgroundColor = Color.Transparent,
-            modifier = Modifier
-                .padding(outer)
-                .nestedScroll(
-                    connection = connection,
+            }
+            Box(
+                modifier = Modifier
+                    .padding(spacing.medium)
+                    .fillMaxWidth()
+            ) {
+                TextField(
+                    text = query,
+                    onValueChange = onQuery,
+                    fontWeight = FontWeight.Bold,
+                    placeholder = stringResource(string.feat_playlist_query_placeholder).uppercase()
                 )
-        )
+            }
+        },
+        frontLayerContent = {
+            MeshTextureContainer(Modifier.fillMaxSize()) {
+                val state = rememberLazyStaggeredGridState()
+                LaunchedEffect(Unit) {
+                    snapshotFlow { state.isAtTop }
+                        .onEach { isAtTopState.value = it }
+                        .launchIn(this)
+                }
+                EventHandler(scrollUp) {
+                    state.scrollToItem(0)
+                }
+                val orientation = configuration.orientation
+                val actualRowCount = remember(orientation, rowCount) {
+                    when (orientation) {
+                        ORIENTATION_LANDSCAPE -> rowCount + 2
+                        ORIENTATION_PORTRAIT -> rowCount
+                        else -> rowCount
+                    }
+                }
+                Column {
+                    PlaylistTabRow(
+                        page = currentPage,
+                        onPageChanged = { currentPage = it },
+                        categories = categories,
+                        pinnedCategories = pinnedCategories,
+                        onPinOrUnpinCategory = onPinOrUnpinCategory,
+                        onHideCategory = onHideCategory
+                    )
+                    if (preferences.paging || currentPage != -1) {
+                        SmartphoneStreamGallery(
+                            state = state,
+                            rowCount = actualRowCount,
+                            streams = if (preferences.paging) emptyList()
+                            else categories[currentPage].streams,
+                            streamPaged = streamPaged,
+                            zapping = zapping,
+                            recently = sort == Sort.RECENTLY,
+                            isVodOrSeriesPlaylist = isVodOrSeriesPlaylist,
+                            onClick = onStream,
+                            contentPadding = inner,
+                            onLongClick = {
+                                mediaSheetValue = MediaSheetValue.PlaylistScreen(it)
+                            },
+                            modifier = modifier.haze(
+                                LocalHazeState.current,
+                                HazeDefaults.style(MaterialTheme.colorScheme.surface)
+                            )
+                        )
+                    }
+                }
+            }
+        },
+        backLayerBackgroundColor = Color.Transparent,
+        backLayerContentColor = currentContentColor,
+        frontLayerScrimColor = currentColor.copy(alpha = 0.45f),
+        frontLayerBackgroundColor = Color.Transparent,
+        modifier = Modifier
+            .padding(outer)
+            .nestedScroll(
+                connection = connection,
+            )
+    )
 
-        SortBottomSheet(
-            visible = isSortSheetVisible,
-            sort = sort,
-            sorts = sorts,
-            sheetState = sheetState,
-            onChanged = onSort,
-            onDismissRequest = { isSortSheetVisible = false }
-        )
+    SortBottomSheet(
+        visible = isSortSheetVisible,
+        sort = sort,
+        sorts = sorts,
+        sheetState = sheetState,
+        onChanged = onSort,
+        onDismissRequest = { isSortSheetVisible = false }
+    )
 
-        MediaSheet(
-            value = mediaSheetValue,
-            onFavouriteStream = { stream ->
-                favourite(stream.id)
-                mediaSheetValue = MediaSheetValue.PlaylistScreen()
-            },
-            onHideStream = { stream ->
-                onHide(stream.id)
-                mediaSheetValue = MediaSheetValue.PlaylistScreen()
-            },
-            onSaveStreamCover = { stream ->
-                onSaveCover(stream.id)
-                mediaSheetValue = MediaSheetValue.PlaylistScreen()
-            },
-            onCreateStreamShortcut = { stream ->
-                onCreateShortcut(stream.id)
-                mediaSheetValue = MediaSheetValue.PlaylistScreen()
-            },
-            onDismissRequest = { mediaSheetValue = MediaSheetValue.PlaylistScreen() }
-        )
-    }
+    MediaSheet(
+        value = mediaSheetValue,
+        onFavouriteStream = { stream ->
+            favourite(stream.id)
+            mediaSheetValue = MediaSheetValue.PlaylistScreen()
+        },
+        onHideStream = { stream ->
+            onHide(stream.id)
+            mediaSheetValue = MediaSheetValue.PlaylistScreen()
+        },
+        onSaveStreamCover = { stream ->
+            onSaveCover(stream.id)
+            mediaSheetValue = MediaSheetValue.PlaylistScreen()
+        },
+        onCreateStreamShortcut = { stream ->
+            onCreateShortcut(stream.id)
+            mediaSheetValue = MediaSheetValue.PlaylistScreen()
+        },
+        onDismissRequest = { mediaSheetValue = MediaSheetValue.PlaylistScreen() }
+    )
 }

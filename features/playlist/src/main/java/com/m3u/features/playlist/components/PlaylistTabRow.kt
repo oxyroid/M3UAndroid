@@ -2,7 +2,6 @@ package com.m3u.features.playlist.components
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -74,10 +73,7 @@ internal fun PlaylistTabRow(
                     stickyHeader {
                         AnimatedContent(
                             targetState = focusCategory,
-                            label = "playlist-tab-row-action-buttons",
-                            modifier = Modifier.background(
-                                MaterialTheme.colorScheme.background
-                            )
+                            label = "playlist-tab-row-action-buttons"
                         ) { name ->
                             if (name != null) {
                                 Row(

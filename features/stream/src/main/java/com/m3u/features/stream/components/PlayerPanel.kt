@@ -69,6 +69,7 @@ import com.m3u.material.components.Icon
 import com.m3u.material.ktx.Edge
 import com.m3u.material.ktx.blurEdges
 import com.m3u.material.model.LocalSpacing
+import com.m3u.material.texture.MeshTextureContainer
 import com.m3u.ui.FontFamilies
 import com.m3u.ui.helper.LocalHelper
 import eu.wewox.minabox.MinaBox
@@ -277,142 +278,144 @@ private fun PanelProgramGuide(
             animateToCurrentEOrSh()
         }
     }
-    BoxWithConstraints(zoomModifier.then(modifier), Alignment.Center) {
-        MinaBox(
-            state = minaBoxState,
-            modifier = Modifier.blurEdges(
-                MaterialTheme.colorScheme.surface,
-                listOf(Edge.Top, Edge.Bottom)
-            )
-        ) {
-            // timelines
-            items(
-                count = 24,
-                layoutInfo = { index ->
-                    MinaBoxItem(
-                        x = 0f,
-                        y = index * currentHeight + padding * 2,
-                        width = timelineWidth,
-                        height = currentHeight
-                    )
-                }
+    MeshTextureContainer {
+        BoxWithConstraints(zoomModifier.then(modifier), Alignment.Center) {
+            MinaBox(
+                state = minaBoxState,
+                modifier = Modifier.blurEdges(
+                    MaterialTheme.colorScheme.surface,
+                    listOf(Edge.Top, Edge.Bottom)
+                )
             ) {
-                val contentColor = LocalContentColor.current
-                val lineCount = 12
-                Canvas(Modifier.fillMaxSize()) {
-                    repeat(lineCount) {
-                        if (it == 0) {
-                            drawLine(
-                                color = contentColor,
-                                start = Offset(size.width / 2f, 0f),
-                                end = Offset(size.width, 0f),
-                                strokeWidth = 2f
-                            )
-                        } else {
-                            drawLine(
-                                color = contentColor,
-                                start = Offset(
-                                    size.width / 3f * 2,
-                                    size.height / lineCount * it
-                                ),
-                                end = Offset(size.width, size.height / lineCount * it)
-                            )
+                // timelines
+                items(
+                    count = 24,
+                    layoutInfo = { index ->
+                        MinaBoxItem(
+                            x = 0f,
+                            y = index * currentHeight + padding * 2,
+                            width = timelineWidth,
+                            height = currentHeight
+                        )
+                    }
+                ) {
+                    val contentColor = LocalContentColor.current
+                    val lineCount = 12
+                    Canvas(Modifier.fillMaxSize()) {
+                        repeat(lineCount) {
+                            if (it == 0) {
+                                drawLine(
+                                    color = contentColor,
+                                    start = Offset(size.width / 2f, 0f),
+                                    end = Offset(size.width, 0f),
+                                    strokeWidth = 2f
+                                )
+                            } else {
+                                drawLine(
+                                    color = contentColor,
+                                    start = Offset(
+                                        size.width / 3f * 2,
+                                        size.height / lineCount * it
+                                    ),
+                                    end = Offset(size.width, size.height / lineCount * it)
+                                )
+                            }
                         }
                     }
                 }
-            }
 
-            items(
-                count = 24,
-                layoutInfo = { index ->
-                    MinaBoxItem(
-                        x = -timelineWidth / 5,
-                        y = index * currentHeight - currentHeight / 2 + padding * 2,
-                        width = timelineWidth,
-                        height = currentHeight
-                    )
-                }
-            ) {
-                Box(Modifier.fillMaxSize(), Alignment.Center) {
-                    Text(text = "$it")
-                }
-            }
-
-            // programmes
-            items(
-                count = programmes.itemCount,
-                layoutInfo = { index ->
-                    val programme = programmes[index]
-                    if (programme != null) {
-                        val start = programme.sh
-                        val end = programme.eh
+                items(
+                    count = 24,
+                    layoutInfo = { index ->
                         MinaBoxItem(
-                            x = timelineWidth + padding,
-                            y = currentHeight * start + padding * 3,
-                            width = (constraints.maxWidth - timelineWidth - padding)
-                                .coerceAtLeast(0f),
-                            height = (currentHeight * (end - start) - padding)
-                                .coerceAtLeast(0f)
+                            x = -timelineWidth / 5,
+                            y = index * currentHeight - currentHeight / 2 + padding * 2,
+                            width = timelineWidth,
+                            height = currentHeight
                         )
-                    } else {
-                        MinaBoxItem(0f, 0f, 0f, 0f)
+                    }
+                ) {
+                    Box(Modifier.fillMaxSize(), Alignment.Center) {
+                        Text(text = "$it")
                     }
                 }
-            ) { index ->
-                val programme = programmes[index]
-                if (programme != null) {
-                    ProgrammeCell(programme)
-                }
-            }
 
-            items(
-                count = 1,
-                layoutInfo = {
-                    MinaBoxItem(
-                        x = timelineWidth / 2f,
-                        y = eOrSh * currentHeight + padding * 2,
-                        width = constraints.maxWidth - timelineWidth / 2f,
-                        height = eOrShSize,
-                    )
+                // programmes
+                items(
+                    count = programmes.itemCount,
+                    layoutInfo = { index ->
+                        val programme = programmes[index]
+                        if (programme != null) {
+                            val start = programme.sh
+                            val end = programme.eh
+                            MinaBoxItem(
+                                x = timelineWidth + padding,
+                                y = currentHeight * start + padding * 3,
+                                width = (constraints.maxWidth - timelineWidth - padding)
+                                    .coerceAtLeast(0f),
+                                height = (currentHeight * (end - start) - padding)
+                                    .coerceAtLeast(0f)
+                            )
+                        } else {
+                            MinaBoxItem(0f, 0f, 0f, 0f)
+                        }
+                    }
+                ) { index ->
+                    val programme = programmes[index]
+                    if (programme != null) {
+                        ProgrammeCell(programme)
+                    }
                 }
-            ) {
-                CurrentTimeLine()
-            }
-        }
-        ConstraintLayout(
-            modifier = Modifier
-                .padding(spacing.medium)
-                .align(Alignment.BottomEnd)
-        ) {
-            val (refresh, scroll) = createRefs()
-            SmallFloatingActionButton(
-                onClick = { coroutineScope.launch { animateToCurrentEOrSh() } },
-                modifier = Modifier.constrainAs(scroll) {
-                    this.end.linkTo(parent.end)
-                    this.bottom.linkTo(parent.bottom)
-                }
-            ) {
-                Icon(
-                    imageVector = Icons.Rounded.KeyboardDoubleArrowUp,
-                    contentDescription = "scroll to current timeline"
-                )
-            }
 
-            AnimatedVisibility(
-                visible = !isProgrammesRefreshing,
-                enter = fadeIn() + scaleIn(),
-                exit = fadeOut() + scaleOut(),
-                modifier = Modifier.constrainAs(refresh) {
-                    this.end.linkTo(scroll.start)
-                    this.top.linkTo(scroll.top)
-                    this.bottom.linkTo(scroll.bottom)
+                items(
+                    count = 1,
+                    layoutInfo = {
+                        MinaBoxItem(
+                            x = timelineWidth / 2f,
+                            y = eOrSh * currentHeight + padding * 2,
+                            width = constraints.maxWidth - timelineWidth / 2f,
+                            height = eOrShSize,
+                        )
+                    }
+                ) {
+                    CurrentTimeLine()
                 }
+            }
+            ConstraintLayout(
+                modifier = Modifier
+                    .padding(spacing.medium)
+                    .align(Alignment.BottomEnd)
             ) {
-                SmallFloatingActionButton(onRefreshProgrammesIgnoreCache) {
+                val (refresh, scroll) = createRefs()
+                SmallFloatingActionButton(
+                    onClick = { coroutineScope.launch { animateToCurrentEOrSh() } },
+                    modifier = Modifier.constrainAs(scroll) {
+                        this.end.linkTo(parent.end)
+                        this.bottom.linkTo(parent.bottom)
+                    }
+                ) {
                     Icon(
-                        imageVector = Icons.Rounded.Refresh,
-                        contentDescription = "refresh playlist programmes"
+                        imageVector = Icons.Rounded.KeyboardDoubleArrowUp,
+                        contentDescription = "scroll to current timeline"
                     )
+                }
+
+                AnimatedVisibility(
+                    visible = !isProgrammesRefreshing,
+                    enter = fadeIn() + scaleIn(),
+                    exit = fadeOut() + scaleOut(),
+                    modifier = Modifier.constrainAs(refresh) {
+                        this.end.linkTo(scroll.start)
+                        this.top.linkTo(scroll.top)
+                        this.bottom.linkTo(scroll.bottom)
+                    }
+                ) {
+                    SmallFloatingActionButton(onRefreshProgrammesIgnoreCache) {
+                        Icon(
+                            imageVector = Icons.Rounded.Refresh,
+                            contentDescription = "refresh playlist programmes"
+                        )
+                    }
                 }
             }
         }
