@@ -45,32 +45,6 @@ From PRs:
 - DLNA screencast.
 - i18n (Internationalization).
 
-### Roadmap
-
-The higher the ranking, the higher the priority.
-
-1. Video Caching.
-2. Xtream Episodes Testing.
-3. Remove "about project" only for f-droid.
-4. Player volume gesture to override the system volume.
-5. Player brightness and volume percentages when using gestures.
-6. Global player manager floating window.
-7. God Mode for different screens.
-8. EPG supports.
-9. Android TV favorite.
-10. Improve cast screen.
-11. Improve Compact UI Mode.
-12. Replace all dialogs with bottom-sheet.
-13. Improve theme editor.
-14. Playlist category menu.
-15. Player NEXT/PREV.
-16. APTV supports.
-17. Emby supports.
-18. DRM supports.
-19. Split android smartphones and televisions package.
-20. Kotlin Multiplatform.
-
-
 ### Android Development
 
 M3U is an app that attempts to use the latest libraries and tools. As a summary:
