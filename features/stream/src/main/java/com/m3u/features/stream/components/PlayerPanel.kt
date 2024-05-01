@@ -69,7 +69,7 @@ import com.m3u.material.components.Icon
 import com.m3u.material.ktx.Edge
 import com.m3u.material.ktx.blurEdges
 import com.m3u.material.model.LocalSpacing
-import com.m3u.material.texture.MeshTextureContainer
+import com.m3u.material.texture.MeshContainer
 import com.m3u.ui.FontFamilies
 import com.m3u.ui.helper.LocalHelper
 import eu.wewox.minabox.MinaBox
@@ -278,7 +278,7 @@ private fun PanelProgramGuide(
             animateToCurrentEOrSh()
         }
     }
-    MeshTextureContainer {
+    MeshContainer {
         BoxWithConstraints(zoomModifier.then(modifier), Alignment.Center) {
             MinaBox(
                 state = minaBoxState,

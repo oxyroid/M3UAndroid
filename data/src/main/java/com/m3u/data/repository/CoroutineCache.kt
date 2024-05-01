@@ -1,6 +1,5 @@
 package com.m3u.data.repository
 
-import android.util.Log
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -20,7 +19,6 @@ internal abstract class CoroutineCache<E>(
     private val mutex = Mutex()
     abstract suspend fun onReceived(cache: List<E>)
     suspend fun push(element: E) {
-        Log.e("TAG", "repos: $element", )
         cache += element
         if (cache.size >= limit) {
             mutex.withLock {

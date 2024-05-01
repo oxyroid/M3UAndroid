@@ -122,12 +122,12 @@ internal class PlaylistRepositoryImpl @Inject constructor(
         }
 
         val playlist = playlistDao.getByUrl(actualUrl)?.copy(
-            title = title,
+            title = title
         ) ?: Playlist(title, actualUrl, source = DataSource.M3U)
         playlistDao.insertOrReplace(playlist)
 
         val cache = createCoroutineCache<M3UData>(BUFFER_M3U_CAPACITY) { all ->
-            streamDao.insertOrReplaceAll(*all.map { it.toStream(url) }.toTypedArray())
+            streamDao.insertOrReplaceAll(*all.map { it.toStream(actualUrl) }.toTypedArray())
             currentCount += all.size
             callback(currentCount)
         }
@@ -140,7 +140,6 @@ internal class PlaylistRepositoryImpl @Inject constructor(
             }?.use { input ->
                 m3uParser
                     .parse(input.buffered())
-                    .onEach { logger.post { it } }
                     .filterNot {
                         val channelId = it.id
                         when {

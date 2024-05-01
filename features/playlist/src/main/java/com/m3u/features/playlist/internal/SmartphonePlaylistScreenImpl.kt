@@ -59,7 +59,7 @@ import com.m3u.material.ktx.isAtTop
 import com.m3u.material.ktx.split
 import com.m3u.material.model.LocalHazeState
 import com.m3u.material.model.LocalSpacing
-import com.m3u.material.texture.MeshTextureContainer
+import com.m3u.material.texture.MeshContainer
 import com.m3u.ui.EventHandler
 import com.m3u.ui.MediaSheet
 import com.m3u.ui.MediaSheetValue
@@ -186,7 +186,7 @@ internal fun SmartphonePlaylistScreenImpl(
             }
         },
         frontLayerContent = {
-            MeshTextureContainer(Modifier.fillMaxSize()) {
+            MeshContainer(Modifier.fillMaxSize()) {
                 val state = rememberLazyStaggeredGridState()
                 LaunchedEffect(Unit) {
                     snapshotFlow { state.isAtTop }

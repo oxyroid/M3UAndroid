@@ -18,7 +18,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun MeshTextureContainer(
+fun MeshContainer(
     modifier: Modifier = Modifier,
     color1: Color = MaterialTheme.colorScheme.surfaceColorAtElevation(4.dp),
     color2: Color = MaterialTheme.colorScheme.background,
