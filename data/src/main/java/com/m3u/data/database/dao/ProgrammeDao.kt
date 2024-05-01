@@ -38,7 +38,7 @@ interface ProgrammeDao {
         SELECT * FROM programmes 
         WHERE epg_url in (:epgUrls) 
         AND 
-        channel_id = :channelId 
+        channel_id = :channelId
         ORDER BY start
         """
     )

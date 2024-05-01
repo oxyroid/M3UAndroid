@@ -63,8 +63,19 @@ class SubscriptionWorker @AssistedInject constructor(
         dataSource ?: return@coroutineScope Result.failure()
         createChannel()
         coroutineContext[Job]?.invokeOnCompletion { cause ->
-            if (cause is CancellationException) {
-                notificationManager.cancel(notificationId)
+            when (cause) {
+                null -> {}
+                is CancellationException -> {
+                    notificationManager.cancel(notificationId)
+                }
+
+                else -> {
+                    createN10nBuilder()
+                        .setContentText(cause.localizedMessage.orEmpty())
+                        .setActions(retryAction)
+                        .setColor(Color.RED)
+                        .buildThenNotify()
+                }
             }
         }
         when (dataSource) {
@@ -78,31 +89,21 @@ class SubscriptionWorker @AssistedInject constructor(
                         .buildThenNotify()
                     Result.failure()
                 } else {
-                    try {
-                        playlistRepository.m3uOrThrow(title, url) { count ->
-                            val notification = createN10nBuilder()
-                                .setContentText(findProgressContentText(count))
-                                .setActions(cancelAction)
-                                .setOngoing(true)
-                                .build()
-                            notificationManager.notify(notificationId, notification)
-                            logger.post { "m3u callback" }
-                        }
-
-                        logger.post { "m3u suspend resumed" }
-                        createN10nBuilder()
-                            .setContentText(findCompleteContentText())
-                            .buildThenNotify()
-                        Result.success()
-                    } catch (e: Exception) {
-                        createN10nBuilder()
-                            .setContentText(e.localizedMessage.orEmpty())
-                            .setActions(retryAction)
-                            .setColor(Color.RED)
-                            .buildThenNotify()
-                        e.printStackTrace()
-                        Result.failure()
+                    var total = 0
+                    playlistRepository.m3uOrThrow(title, url) { count ->
+                        total = count
+                        val notification = createN10nBuilder()
+                            .setContentText(findProgressContentText(count))
+                            .setActions(cancelAction)
+                            .setOngoing(true)
+                            .build()
+                        notificationManager.notify(notificationId, notification)
                     }
+
+                    createN10nBuilder()
+                        .setContentText(findCompleteContentText(total))
+                        .buildThenNotify()
+                    Result.success()
                 }
             }
 
@@ -138,9 +139,11 @@ class SubscriptionWorker @AssistedInject constructor(
                 } else {
                     try {
                         val type = url?.let { XtreamInput.decodeFromPlaylistUrlOrNull(it)?.type }
+                        var total = 0
                         playlistRepository.xtreamOrThrow(
                             title, basicUrl, username, password, type
                         ) { count ->
+                            total = count
                             val notification = createN10nBuilder()
                                 .setContentText(findProgressContentText(count))
                                 .setActions(cancelAction)
@@ -150,7 +153,7 @@ class SubscriptionWorker @AssistedInject constructor(
                         }
                         logger.post { "xtream suspend resumed" }
                         createN10nBuilder()
-                            .setContentText(findCompleteContentText())
+                            .setContentText(findCompleteContentText(total))
                             .buildThenNotify()
                         Result.success()
                     } catch (e: Exception) {
@@ -199,8 +202,8 @@ class SubscriptionWorker @AssistedInject constructor(
     private fun findRetryActionTitle() =
         context.getString(string.data_worker_subscription_action_retry)
 
-    private fun findCompleteContentText() =
-        context.getString(string.data_worker_subscription_content_completed)
+    private fun findCompleteContentText(total: Int) =
+        context.getString(string.data_worker_subscription_content_completed, total)
 
     private fun findProgressContentText(count: Int) =
         context.getString(string.data_worker_subscription_content_progress, count)

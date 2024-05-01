@@ -12,17 +12,21 @@ import com.m3u.data.database.dao.PlaylistDao
 import com.m3u.data.database.dao.ProgrammeDao
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Programme
-import com.m3u.data.parser.epg.EpgData
 import com.m3u.data.parser.epg.EpgParser
 import com.m3u.data.parser.epg.EpgProgramme
 import com.m3u.data.parser.epg.toProgramme
+import com.m3u.data.parser.xtream.XtreamInput
+import com.m3u.data.parser.xtream.XtreamParser
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.supervisorScope
-import kotlinx.coroutines.withContext
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
@@ -30,6 +34,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.util.zip.GZIPInputStream
 import javax.inject.Inject
+import kotlin.math.min
 
 internal class ProgrammeRepositoryImpl @Inject constructor(
     private val playlistDao: PlaylistDao,
@@ -47,14 +52,37 @@ internal class ProgrammeRepositoryImpl @Inject constructor(
         channelId: String
     ): PagingSource<Int, Programme> = programmeDao.pagingByEpgUrlsAndChannelId(epgUrls, channelId)
 
-    override suspend fun checkOrRefreshProgrammesByPlaylistUrlOrThrow(
+    override suspend fun checkOrRefreshProgrammesOrThrow(
         playlistUrl: String,
         ignoreCache: Boolean
-    ): Unit = coroutineScope {
-        val playlist = playlistDao.getByUrl(playlistUrl) ?: return@coroutineScope
+    ) {
+        val playlist = playlistDao.getByUrl(playlistUrl) ?: return
+        when (playlist.source) {
+            DataSource.M3U -> checkOrRefreshProgrammesOrThrowImpl(playlist.epgUrls, ignoreCache)
+            DataSource.Xtream -> {
+                val input = XtreamInput.decodeFromPlaylistUrl(playlistUrl)
+                val epgUrl = XtreamParser.createXmlUrl(
+                    basicUrl = input.basicUrl,
+                    username = input.username,
+                    password = input.password
+                )
+                checkOrRefreshProgrammesOrThrowXtreamImpl(
+                    epgUrl = epgUrl,
+                    ignoreCache = ignoreCache
+                )
+            }
+
+            else -> {}
+        }
+    }
+
+    private suspend fun checkOrRefreshProgrammesOrThrowImpl(
+        epgUrls: List<String>,
+        ignoreCache: Boolean
+    ) = coroutineScope {
         val now = Clock.System.now().toEpochMilliseconds()
         // we call it job -s because we think deferred -s is sick.
-        val jobs = playlist.epgUrls.map { epgUrl ->
+        val jobs = epgUrls.map { epgUrl ->
             async {
                 if (epgUrl in refreshingEpgUrls.value) return@async
                 supervisorScope {
@@ -67,19 +95,11 @@ internal class ProgrammeRepositoryImpl @Inject constructor(
                         check(epgPlaylist.source == DataSource.EPG) {
                             "Playlist which be queried by epgUrl is not epg source but ${epgPlaylist.source}"
                         }
-                        val epgData = downloadEpgOrThrow(epgUrl)
-                        val programmes = epgData.programmes
-                        val startEdge = programmes.minOfOrNull { programme ->
-                            programme.start?.let { EpgProgramme.readEpochMilliseconds(it) }
-                                ?: Long.MAX_VALUE
-                        } ?: 0L
-                        logger.post { "start-edge: ${Instant.fromEpochMilliseconds(startEdge)}" }
-                        programmeDao.cleanByEpgUrlAndStartEdge(epgUrl, startEdge)
-
-                        programmes
-                            .asSequence()
+                        var startEdge: Long = Long.MAX_VALUE
+                        downloadProgrammes(epgUrl)
                             .map { it.toProgramme(epgUrl) }
-                            .forEach { programme ->
+                            .collect { programme ->
+                                startEdge = min(startEdge, programme.start)
                                 val contains = programmeDao.contains(
                                     programme.epgUrl,
                                     programme.channelId,
@@ -90,41 +110,76 @@ internal class ProgrammeRepositoryImpl @Inject constructor(
                                     programmeDao.insertOrReplace(programme)
                                 }
                             }
+                        logger.post { "start-edge: ${Instant.fromEpochMilliseconds(startEdge)}" }
+                        programmeDao.cleanByEpgUrlAndStartEdge(epgUrl, startEdge)
                     } finally {
                         refreshingEpgUrls.value -= epgUrl
                     }
                 }
-
             }
         }
         jobs.awaitAll()
     }
 
-    private suspend fun downloadEpgOrThrow(epgUrl: String): EpgData {
+    private suspend fun checkOrRefreshProgrammesOrThrowXtreamImpl(
+        epgUrl: String,
+        ignoreCache: Boolean
+    ): Unit = coroutineScope {
+        val now = Clock.System.now().toEpochMilliseconds()
+        try {
+            if (epgUrl in refreshingEpgUrls.value) return@coroutineScope
+            refreshingEpgUrls.value += epgUrl
+            val cacheMaxEnd = programmeDao.getMaxEndByEpgUrl(epgUrl)
+            if (!ignoreCache && cacheMaxEnd != null && cacheMaxEnd > now) return@coroutineScope
+
+            var startEdge: Long = Long.MAX_VALUE
+            downloadProgrammes(epgUrl)
+                .map { it.toProgramme(epgUrl) }
+                .collect { programme ->
+                    startEdge = min(startEdge, programme.start)
+                    val contains = programmeDao.contains(
+                        programme.epgUrl,
+                        programme.channelId,
+                        programme.start,
+                        programme.end
+                    )
+                    if (!contains) {
+                        programmeDao.insertOrReplace(programme)
+                    }
+                }
+            logger.post { "start-edge: ${Instant.fromEpochMilliseconds(startEdge)}" }
+            programmeDao.cleanByEpgUrlAndStartEdge(epgUrl, startEdge)
+        } finally {
+            refreshingEpgUrls.value -= epgUrl
+        }
+    }
+
+    private fun downloadProgrammes(epgUrl: String): Flow<EpgProgramme> = channelFlow {
         val isGzip = epgUrl
             .toHttpUrlOrNull()
             ?.pathSegments
             ?.lastOrNull()
             ?.endsWith(".gz", true)
             ?: false
-        return withContext(ioDispatcher) {
-            okHttpClient.newCall(
-                Request.Builder()
-                    .url(epgUrl)
-                    .build()
-            )
-                .execute()
-                .body
-                ?.byteStream()
-                ?.let {
-                    if (isGzip) {
-                        GZIPInputStream(it).buffered()
-                    } else it
-                }
-                ?.use { input ->
-                    epgParser.execute(input) { _, _ -> }
-                }
-                .let { checkNotNull(it) }
-        }
+
+        okHttpClient.newCall(
+            Request.Builder()
+                .url(epgUrl)
+                .build()
+        )
+            .execute()
+            .body
+            ?.byteStream()
+            ?.let {
+                if (isGzip) {
+                    GZIPInputStream(it).buffered()
+                } else it
+            }
+            ?.use { input ->
+                epgParser
+                    .readProgrammes(input)
+                    .collect { send(it) }
+            }
     }
+        .flowOn(ioDispatcher)
 }

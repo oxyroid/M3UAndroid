@@ -122,7 +122,9 @@ internal class PlaylistRepositoryImpl @Inject constructor(
         }
 
         val playlist = playlistDao.getByUrl(actualUrl)?.copy(
-            title = title
+            title = title,
+            // maybe be saved as epg or any other sources.
+            source = DataSource.M3U
         ) ?: Playlist(title, actualUrl, source = DataSource.M3U)
         playlistDao.insertOrReplace(playlist)
 

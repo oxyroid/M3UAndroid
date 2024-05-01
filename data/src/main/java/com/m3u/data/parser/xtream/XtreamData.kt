@@ -31,7 +31,7 @@ data class XtreamLive(
 //    @SerialName("tv_archive")
 //    val tvArchive: Int?,
 //    @SerialName("tv_archive_duration")
-//    val tvArchiveDuration: Int?
+//    val tvArchiveDuration: Int?,
 ) : XtreamData
 
 @Serializable
@@ -110,7 +110,7 @@ fun XtreamLive.toStream(
     title = name.orEmpty(),
     cover = streamIcon,
     playlistUrl = playlistUrl,
-    channelId = streamId?.toString()
+    channelId = epgChannelId
 )
 
 fun XtreamVod.toStream(

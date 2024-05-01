@@ -11,7 +11,7 @@ interface ProgrammeRepository {
     ): PagingSource<Int, Programme>
 
     val refreshingEpgUrls: StateFlow<List<String>>
-    suspend fun checkOrRefreshProgrammesByPlaylistUrlOrThrow(
+    suspend fun checkOrRefreshProgrammesOrThrow(
         playlistUrl: String,
         ignoreCache: Boolean
     )

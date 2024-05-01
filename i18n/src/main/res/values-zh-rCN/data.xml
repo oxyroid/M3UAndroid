@@ -5,6 +5,6 @@
 
     <string name="data_worker_subscription_action_cancel">取消</string>
     <string name="data_worker_subscription_action_retry">重试</string>
-    <string name="data_worker_subscription_content_completed">完成</string>
+    <string name="data_worker_subscription_content_completed">完成（+%d）</string>
     <string name="data_worker_subscription_content_progress">已下载 %d 个频道</string>
 </resources>

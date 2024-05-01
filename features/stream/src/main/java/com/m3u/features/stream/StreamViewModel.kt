@@ -19,6 +19,8 @@ import com.m3u.core.architecture.logger.install
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.Stream
+import com.m3u.data.parser.xtream.XtreamInput
+import com.m3u.data.parser.xtream.XtreamParser
 import com.m3u.data.repository.programme.ProgrammeRepository
 import com.m3u.data.repository.stream.StreamRepository
 import com.m3u.data.service.Messager
@@ -292,9 +294,21 @@ class StreamViewModel @Inject constructor(
         playlist,
         stream
     ) { playlist, stream -> playlist to stream }.flatMapLatest { (playlist, stream) ->
+        val epgUrls = when (playlist?.source) {
+            DataSource.Xtream -> {
+                val input = XtreamInput.decodeFromPlaylistUrl(playlist.url)
+                val epgUrl = XtreamParser.createXmlUrl(
+                    basicUrl = input.basicUrl,
+                    username = input.username,
+                    password = input.password
+                )
+                listOf(epgUrl)
+            }
+            else -> playlist?.epgUrls ?: emptyList()
+        }
         Pager(PagingConfig(15)) {
             programmeRepository.pagingByEpgUrlsAndChannelId(
-                epgUrls = playlist?.epgUrls ?: emptyList(),
+                epgUrls = epgUrls,
                 channelId = stream?.channelId ?: ""
             )
         }
@@ -320,7 +334,19 @@ class StreamViewModel @Inject constructor(
         playlist,
         programmeRepository.refreshingEpgUrls
     ) { playlist, refreshingEpgUrls ->
-        val epgUrls = playlist?.epgUrls ?: emptyList()
+        val epgUrls = when (playlist?.source) {
+            DataSource.Xtream -> {
+                val input = XtreamInput.decodeFromPlaylistUrl(playlist.url)
+                val epgUrl = XtreamParser.createXmlUrl(
+                    basicUrl = input.basicUrl,
+                    username = input.username,
+                    password = input.password
+                )
+                listOf(epgUrl)
+            }
+
+            else -> playlist?.epgUrls ?: emptyList()
+        }
         epgUrls.any { epgUrl -> epgUrl in refreshingEpgUrls }
     }
         .stateIn(
@@ -335,7 +361,7 @@ class StreamViewModel @Inject constructor(
             val stream = stream.value ?: return@launch
             val result = runCatching {
                 // TODO: call it in worker.
-                programmeRepository.checkOrRefreshProgrammesByPlaylistUrlOrThrow(
+                programmeRepository.checkOrRefreshProgrammesOrThrow(
                     playlistUrl = stream.playlistUrl,
                     ignoreCache = ignoreCache
                 )
@@ -350,9 +376,7 @@ class StreamViewModel @Inject constructor(
 
     internal fun onKeyCode(code: TelevisionKeyCode) {
         when (code) {
-            TelevisionKeyCode.UP -> {
-
-            }
+            TelevisionKeyCode.UP -> {}
             TelevisionKeyCode.DOWN -> {}
             TelevisionKeyCode.LEFT -> {
                 val player = playerState.value.player ?: return
@@ -360,6 +384,7 @@ class StreamViewModel @Inject constructor(
                     player.seekTo(player.currentPosition - 15000)
                 }
             }
+
             TelevisionKeyCode.RIGHT -> {
                 val player = playerState.value.player ?: return
                 viewModelScope.launch(mainDispatcher) {

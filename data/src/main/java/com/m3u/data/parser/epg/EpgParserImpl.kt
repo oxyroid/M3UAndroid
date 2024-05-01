@@ -1,26 +1,45 @@
 package com.m3u.data.parser.epg
 
 import android.util.Xml
+import com.m3u.core.architecture.dispatcher.Dispatcher
+import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.Profiles
 import com.m3u.core.architecture.logger.install
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.flowOn
 import org.xmlpull.v1.XmlPullParser
 import java.io.InputStream
 import javax.inject.Inject
 
 class EpgParserImpl @Inject constructor(
+    @Dispatcher(IO) private val ioDispatcher: CoroutineDispatcher,
     delegate: Logger
 ) : EpgParser {
     private val logger = delegate.install(Profiles.PARSER_EPG)
-    override suspend fun execute(
-        input: InputStream,
-        callback: (count: Int, total: Int) -> Unit
-    ): EpgData {
+
+    override fun readProgrammes(input: InputStream): Flow<EpgProgramme> = channelFlow {
         val parser = Xml.newPullParser()
         parser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, false)
         parser.setInput(input, null)
-        return parser.readEpg()
+        with(parser) {
+            while (name != "tv") next()
+            while (next() != XmlPullParser.END_TAG) {
+                if (eventType != XmlPullParser.START_TAG) continue
+                when (name) {
+                    "programme" -> {
+                        val programme = readProgramme()
+                        send(programme)
+                    }
+
+                    else -> skip()
+                }
+            }
+        }
     }
+        .flowOn(ioDispatcher)
 
     private val ns: String? = null
     private fun XmlPullParser.readEpg(): EpgData {

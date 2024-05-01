@@ -45,6 +45,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.core.util.basic.title
+import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.repository.playlist.PlaylistRepository
 import com.m3u.i18n.R.string
@@ -126,69 +127,71 @@ private fun PlaylistConfigurationScreen(
                     placeholder = stringResource(string.feat_playlist_configuration_user_agent).title(),
                     onValueChange = { userAgent = it }
                 )
-                LazyColumn(
-                    contentPadding = inner,
-                    verticalArrangement = Arrangement.spacedBy(spacing.medium),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f)
-                        .haze(
-                            LocalHazeState.current,
-                            HazeDefaults.style(MaterialTheme.colorScheme.surface)
-                        )
-                ) {
-                    stickyHeader {
-                        Text(
-                            text = stringResource(string.feat_playlist_configuration_enabled_epgs).title(),
-                            style = MaterialTheme.typography.titleMedium,
-                            modifier = Modifier.padding(
-                                horizontal = spacing.medium,
-                                vertical = spacing.small
+                if (playlist.source == DataSource.M3U) {
+                    LazyColumn(
+                        contentPadding = inner,
+                        verticalArrangement = Arrangement.spacedBy(spacing.medium),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f)
+                            .haze(
+                                LocalHazeState.current,
+                                HazeDefaults.style(MaterialTheme.colorScheme.surface)
                             )
-                        )
-                    }
-                    items(manifest.entries.toList()) { (epg, associated) ->
-                        ListItem(
-                            headlineContent = {
-                                Text(
-                                    text = epg.title,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
+                    ) {
+                        stickyHeader {
+                            Text(
+                                text = stringResource(string.feat_playlist_configuration_enabled_epgs).title(),
+                                style = MaterialTheme.typography.titleMedium,
+                                modifier = Modifier.padding(
+                                    horizontal = spacing.medium,
+                                    vertical = spacing.small
                                 )
-                            },
-                            supportingContent = {
-                                Text(
-                                    text = epg.url
-                                )
-                            },
-                            trailingContent = {
-                                Switch(
-                                    checked = associated,
-                                    onCheckedChange = null
-                                )
-                            },
-                            colors = ListItemDefaults.colors(
-                                supportingColor = MaterialTheme
-                                    .colorScheme
-                                    .onSurfaceVariant.copy(0.38f)
-                            ),
-                            modifier = Modifier
-                                .border(
-                                    1.dp,
-                                    LocalContentColor.current.copy(0.38f),
-                                    SelectionsDefaults.Shape
-                                )
-                                .clip(AbsoluteSmoothCornerShape(spacing.medium, 65))
-                                .clickable {
-                                    onUpdateEpgPlaylist(
-                                        PlaylistRepository.UpdateEpgPlaylistUseCase(
-                                            playlistUrl = playlist.url,
-                                            epgUrl = epg.url,
-                                            action = !associated
-                                        )
+                            )
+                        }
+                        items(manifest.entries.toList()) { (epg, associated) ->
+                            ListItem(
+                                headlineContent = {
+                                    Text(
+                                        text = epg.title,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
                                     )
-                                }
-                        )
+                                },
+                                supportingContent = {
+                                    Text(
+                                        text = epg.url
+                                    )
+                                },
+                                trailingContent = {
+                                    Switch(
+                                        checked = associated,
+                                        onCheckedChange = null
+                                    )
+                                },
+                                colors = ListItemDefaults.colors(
+                                    supportingColor = MaterialTheme
+                                        .colorScheme
+                                        .onSurfaceVariant.copy(0.38f)
+                                ),
+                                modifier = Modifier
+                                    .border(
+                                        1.dp,
+                                        LocalContentColor.current.copy(0.38f),
+                                        SelectionsDefaults.Shape
+                                    )
+                                    .clip(AbsoluteSmoothCornerShape(spacing.medium, 65))
+                                    .clickable {
+                                        onUpdateEpgPlaylist(
+                                            PlaylistRepository.UpdateEpgPlaylistUseCase(
+                                                playlistUrl = playlist.url,
+                                                epgUrl = epg.url,
+                                                action = !associated
+                                            )
+                                        )
+                                    }
+                            )
+                        }
                     }
                 }
             }

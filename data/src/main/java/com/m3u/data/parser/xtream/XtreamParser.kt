@@ -47,6 +47,22 @@ interface XtreamParser {
             vararg params: Pair<String, Any>
         ): String = createInfoUrl(basicUrl, username, password, *params) + "&action=$action"
 
+        fun createXmlUrl(
+            basicUrl: String,
+            username: String,
+            password: String,
+        ): String {
+            val url = basicUrl.toHttpUrl()
+            val builder = HttpUrl.Builder()
+                .scheme(url.scheme)
+                .host(url.host)
+                .port(url.port)
+                .addPathSegment("xmltv.php")
+                .addQueryParameter("username", username)
+                .addQueryParameter("password", password)
+            return builder.toString()
+        }
+
         const val GET_SERIES_INFO_PARAM_ID = "series_id"
     }
 
