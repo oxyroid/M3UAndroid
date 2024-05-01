@@ -129,7 +129,7 @@ class Preferences @Inject constructor(
         const val DEFAULT_REMOTE_CONTROL = false
         const val DEFAULT_PROGRESS = true
         const val DEFAULT_ALWAYS_SHOW_REFRESH = false
-        const val DEFAULT_PAGING = false
+        const val DEFAULT_PAGING = true
         const val DEFAULT_PLAYER_PANEL = true
         const val DEFAULT_CACHE = false
 
