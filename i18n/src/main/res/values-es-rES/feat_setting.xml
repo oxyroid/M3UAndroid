@@ -111,4 +111,12 @@
         útil para demasiados canales,
         pero dejarán de ser agrupadas al mismo tiempo
     </string>
+    <string name="feat_setting_source_code">código fuente</string>
+
+    <!-- EPG -->
+    <string name="feat_setting_placeholder_epg_title">nombre epg</string>
+    <string name="feat_setting_error_empty_epg_title">el nombre de epg name está vacío</string>
+    <string name="feat_setting_error_empty_epg">el enlace epg está vacío</string>
+    <string name="feat_setting_placeholder_epg">enlace epg</string>
+    <string name="feat_setting_epg_added">puede asociar la lista con su(s) EPG</string>
 </resources>

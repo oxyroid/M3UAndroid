@@ -111,4 +111,12 @@
         útil para muchísimos canales,
         pero dejarán de agruparse a la vez
     </string>
+    <string name="feat_setting_source_code">código fuente</string>
+
+    <!-- EPG -->
+    <string name="feat_setting_placeholder_epg_title">nombre epg</string>
+    <string name="feat_setting_error_empty_epg_title">el nombre de epg name está vacío</string>
+    <string name="feat_setting_error_empty_epg">el enlace epg está vacío</string>
+    <string name="feat_setting_placeholder_epg">enlace epg</string>
+    <string name="feat_setting_epg_added">puedes vincular la playlist con su(s) EPG</string>
 </resources>

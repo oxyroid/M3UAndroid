@@ -7,5 +7,6 @@
 
     <string name="data_worker_subscription_action_cancel">Cancelar</string>
     <string name="data_worker_subscription_action_retry">Reintentar</string>
+    <string name="data_worker_subscription_content_completed">Completado （+%d）</string>
     <string name="data_worker_subscription_content_progress">%d canales fueron descargados</string>
 </resources>
