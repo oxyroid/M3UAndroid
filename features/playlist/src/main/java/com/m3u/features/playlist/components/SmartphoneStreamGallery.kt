@@ -36,8 +36,8 @@ import androidx.paging.compose.LazyPagingItems
 import androidx.tv.material3.Text
 import com.m3u.core.architecture.preferences.LocalPreferences
 import com.m3u.core.util.basic.title
+import com.m3u.data.database.model.Programme
 import com.m3u.data.database.model.Stream
-import com.m3u.data.database.model.StreamWithProgramme
 import com.m3u.i18n.R.string
 import com.m3u.material.components.CircularProgressIndicator
 import com.m3u.material.components.Icon
@@ -50,13 +50,14 @@ import kotlin.time.Duration.Companion.seconds
 internal fun SmartphoneStreamGallery(
     state: LazyStaggeredGridState,
     rowCount: Int,
-    withProgrammes: List<StreamWithProgramme>,
-    streamPaged: LazyPagingItems<StreamWithProgramme>,
+    streams: List<Stream>,
+    streamPaged: LazyPagingItems<Stream>,
     zapping: Stream?,
     recently: Boolean,
     isVodOrSeriesPlaylist: Boolean,
     onClick: (Stream) -> Unit,
     onLongClick: (Stream) -> Unit,
+    getProgrammeCurrently: suspend (channelId: String) -> Programme?,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(0.dp),
 ) {
@@ -69,7 +70,7 @@ internal fun SmartphoneStreamGallery(
         else -> rowCount
     }
 
-    val currentWithProgrammes by rememberUpdatedState(withProgrammes)
+    val currentWithProgrammes by rememberUpdatedState(streams)
     val isPagingTipShowing by produceState(false) {
         value = if (!preferences.paging) {
             delay(4.seconds)
@@ -91,29 +92,31 @@ internal fun SmartphoneStreamGallery(
         if (!preferences.paging) {
             items(
                 items = currentWithProgrammes,
-                key = { withProgramme -> withProgramme.stream.id }
-            ) { withProgramme ->
+                key = { stream -> stream.id }
+            ) { stream ->
                 SmartphoneStreamItem(
-                    withProgramme = withProgramme,
+                    stream = stream,
+                    getProgrammeCurrently = { getProgrammeCurrently(stream.channelId.orEmpty()) },
                     recently = recently,
-                    zapping = zapping?.id == withProgramme.stream.id,
+                    zapping = zapping?.id == stream.id,
                     isVodOrSeriesPlaylist = isVodOrSeriesPlaylist,
-                    onClick = { onClick(withProgramme.stream) },
-                    onLongClick = { onLongClick(withProgramme.stream) },
+                    onClick = { onClick(stream) },
+                    onLongClick = { onLongClick(stream) },
                     modifier = Modifier.fillMaxWidth()
                 )
             }
         } else {
             items(streamPaged.itemCount) {
-                val withProgramme = streamPaged[it]
-                if (withProgramme != null) {
+                val stream = streamPaged[it]
+                if (stream != null) {
                     SmartphoneStreamItem(
-                        withProgramme = withProgramme,
+                        stream = stream,
+                        getProgrammeCurrently = { getProgrammeCurrently(stream.channelId.orEmpty()) },
                         recently = recently,
-                        zapping = zapping == withProgramme.stream,
+                        zapping = zapping == stream,
                         isVodOrSeriesPlaylist = isVodOrSeriesPlaylist,
-                        onClick = { onClick(withProgramme.stream) },
-                        onLongClick = { onLongClick(withProgramme.stream) },
+                        onClick = { onClick(stream) },
+                        onLongClick = { onLongClick(stream) },
                         modifier = Modifier.fillMaxWidth()
                     )
                 } else {

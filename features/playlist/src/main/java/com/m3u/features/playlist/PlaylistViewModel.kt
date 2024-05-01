@@ -22,7 +22,6 @@ import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import androidx.paging.filter
-import androidx.paging.map
 import androidx.tvprovider.media.tv.Channel
 import androidx.tvprovider.media.tv.PreviewProgram
 import androidx.tvprovider.media.tv.TvContractCompat
@@ -45,8 +44,8 @@ import com.m3u.core.wrapper.resource
 import com.m3u.data.database.dao.ProgrammeDao
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
+import com.m3u.data.database.model.Programme
 import com.m3u.data.database.model.Stream
-import com.m3u.data.database.model.StreamWithProgramme
 import com.m3u.data.parser.xtream.XtreamInput
 import com.m3u.data.parser.xtream.XtreamParser
 import com.m3u.data.parser.xtream.XtreamStreamInfo
@@ -278,26 +277,17 @@ class PlaylistViewModel @Inject constructor(
 
     internal var query: String by mutableStateOf("")
 
-    private fun List<StreamWithProgramme>.toCategories(): List<Category> =
-        groupBy { it.stream.category }
+    private fun List<Stream>.toCategories(): List<Category> =
+        groupBy { it.category }
             .toList()
             .map { (name, streams) -> Category(name, streams) }
 
-    private fun List<StreamWithProgramme>.toSingleCategory(): List<Category> = listOf(
+    private fun List<Stream>.toSingleCategory(): List<Category> = listOf(
         Category("", toList())
     )
 
-    private val unsorted: StateFlow<List<StreamWithProgramme>> = combine(
-        playlistUrl.flatMapLatest { url ->
-            snapshotFlow { preferences.paging }.flatMapLatest { paging ->
-                if (paging) flow { }
-                else playlistRepository.observeWithStreams(url)
-            }
-        },
-        snapshotFlow { query },
-    ) { current, query ->
-        val playlist = current?.playlist
-        val time = Clock.System.now().toEpochMilliseconds()
+    internal suspend fun getProgrammeCurrently(channelId: String): Programme? {
+        val playlist = playlist.value
         val epgUrls = when (playlist?.source) {
             DataSource.Xtream -> {
                 val input = XtreamInput.decodeFromPlaylistUrl(playlist.url)
@@ -311,23 +301,29 @@ class PlaylistViewModel @Inject constructor(
 
             else -> playlist?.epgUrls ?: emptyList()
         }
+        if (epgUrls.isEmpty()) return null
+        val time = Clock.System.now().toEpochMilliseconds()
+        return programmeDao.getCurrentByEpgUrlsAndChannelId(
+            epgUrls = epgUrls,
+            channelId = channelId,
+            time = time
+        )
+    }
+
+    private val unsorted: StateFlow<List<Stream>> = combine(
+        playlistUrl.flatMapLatest { url ->
+            snapshotFlow { preferences.paging }.flatMapLatest { paging ->
+                if (paging) flow { }
+                else playlistRepository.observeWithStreams(url)
+            }
+        },
+        snapshotFlow { query },
+    ) { current, query ->
         val hiddenCategories = current?.playlist?.hiddenCategories ?: emptyList()
         current
             ?.streams
             ?.filter {
                 !it.hidden && it.category !in hiddenCategories && it.title.contains(query, true)
-            }
-            ?.map { stream ->
-                if (epgUrls.isEmpty()) return@map StreamWithProgramme(stream)
-                val programme = programmeDao.getCurrentByEpgUrlsAndChannelId(
-                    epgUrls = epgUrls,
-                    channelId = stream.channelId.orEmpty(),
-                    time = time
-                )
-                StreamWithProgramme(
-                    stream = stream,
-                    programmeTitle = programme?.title
-                )
             }
             ?: emptyList()
     }
@@ -354,27 +350,13 @@ class PlaylistViewModel @Inject constructor(
         sortIndex.update { sorts.indexOf(sort).coerceAtLeast(0) }
     }
 
-    internal val streamPaged: Flow<PagingData<StreamWithProgramme>> = combine(
+    internal val streamPaged: Flow<PagingData<Stream>> = combine(
         playlist,
         snapshotFlow { query },
         sort
     ) { playlist, query, sort -> Triple(playlist, query, sort) }
         .flatMapLatest { (playlist, query, sort) ->
-            val time = Clock.System.now().toEpochMilliseconds()
-            val epgUrls = when (playlist?.source) {
-                DataSource.Xtream -> {
-                    val input = XtreamInput.decodeFromPlaylistUrl(playlist.url)
-                    val epgUrl = XtreamParser.createXmlUrl(
-                        basicUrl = input.basicUrl,
-                        username = input.username,
-                        password = input.password
-                    )
-                    listOf(epgUrl)
-                }
-
-                else -> playlist?.epgUrls ?: emptyList()
-            }
-            Pager(PagingConfig(5)) {
+            Pager(PagingConfig(15)) {
                 // streamDao.pagingAllByPlaylistUrl
                 // streamDao.pagingAllByPlaylistUrlAsc
                 // streamDao.pagingAllByPlaylistUrlDesc
@@ -391,19 +373,6 @@ class PlaylistViewModel @Inject constructor(
                 )
             }
                 .flow
-                .map { pagingData ->
-                    pagingData.map { stream ->
-                        val programme = programmeDao.getCurrentByEpgUrlsAndChannelId(
-                            epgUrls = epgUrls,
-                            channelId = stream.channelId.orEmpty(),
-                            time = time
-                        )
-                        StreamWithProgramme(
-                            stream = stream,
-                            programmeTitle = programme?.title
-                        )
-                    }
-                }
                 .cachedIn(viewModelScope)
         }
         .let { flow ->
@@ -414,7 +383,7 @@ class PlaylistViewModel @Inject constructor(
             ) { pagingData, playlist, paging ->
                 if (!paging) return@combine PagingData.empty()
                 val hiddenCategories = playlist?.hiddenCategories ?: emptyList()
-                pagingData.filter { (stream, programme) ->
+                pagingData.filter { stream ->
                     !stream.hidden && stream.category !in hiddenCategories
                 }
             }
@@ -438,14 +407,14 @@ class PlaylistViewModel @Inject constructor(
     ) { all, sort, pinnedCategories ->
         when (sort) {
             Sort.ASC -> all.sortedWith(
-                compareBy(String.CASE_INSENSITIVE_ORDER) { it.stream.title }
+                compareBy(String.CASE_INSENSITIVE_ORDER) { it.title }
             ).toSingleCategory()
 
             Sort.DESC -> all.sortedWith(
-                compareByDescending(String.CASE_INSENSITIVE_ORDER) { it.stream.title }
+                compareByDescending(String.CASE_INSENSITIVE_ORDER) { it.title }
             ).toSingleCategory()
 
-            Sort.RECENTLY -> all.sortedByDescending { it.stream.seen }.toSingleCategory()
+            Sort.RECENTLY -> all.sortedByDescending { it.seen }.toSingleCategory()
             Sort.UNSPECIFIED -> all.toCategories()
         }
             .sortedByDescending { it.name in pinnedCategories }
@@ -493,5 +462,5 @@ class PlaylistViewModel @Inject constructor(
 @Immutable
 internal data class Category(
     val name: String = "",
-    val withProgrammes: List<StreamWithProgramme> = emptyList()
+    val streams: List<Stream> = emptyList()
 )

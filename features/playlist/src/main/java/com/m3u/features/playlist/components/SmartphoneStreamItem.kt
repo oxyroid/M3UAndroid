@@ -19,8 +19,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.movableContentOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -36,7 +39,8 @@ import coil.compose.SubcomposeAsyncImage
 import coil.request.ImageRequest
 import coil.size.Size
 import com.m3u.core.architecture.preferences.LocalPreferences
-import com.m3u.data.database.model.StreamWithProgramme
+import com.m3u.data.database.model.Programme
+import com.m3u.data.database.model.Stream
 import com.m3u.i18n.R.string
 import com.m3u.material.components.CircularProgressIndicator
 import com.m3u.material.components.Icon
@@ -51,11 +55,12 @@ import kotlin.time.Duration.Companion.seconds
 
 @Composable
 internal fun SmartphoneStreamItem(
-    withProgramme: StreamWithProgramme,
+    stream: Stream,
     recently: Boolean,
     zapping: Boolean,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
+    getProgrammeCurrently: suspend () -> Programme?,
     modifier: Modifier = Modifier,
     isVodOrSeriesPlaylist: Boolean = true
 ) {
@@ -63,8 +68,11 @@ internal fun SmartphoneStreamItem(
     val spacing = LocalSpacing.current
     val preferences = LocalPreferences.current
 
-    val stream = withProgramme.stream
-    val programmeTitle = withProgramme.programmeTitle
+    val currentGetProgrammeCurrently by rememberUpdatedState(getProgrammeCurrently)
+    val programme: Programme? by produceState<Programme?>(null) {
+        value = currentGetProgrammeCurrently.invoke()
+    }
+
     val favourite = stream.favourite
 
     val recentlyString = stringResource(string.ui_sort_recently)
@@ -200,9 +208,9 @@ internal fun SmartphoneStreamItem(
                                 )
                             }
 
-                            programmeTitle != null -> {
+                            programme != null -> {
                                 Text(
-                                    text = programmeTitle,
+                                    text = programme!!.title,
                                     style = MaterialTheme.typography.bodySmall,
                                     color = LocalContentColor.current.copy(0.56f),
                                     maxLines = 1,

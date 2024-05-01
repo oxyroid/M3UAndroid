@@ -48,8 +48,8 @@ import com.m3u.core.util.basic.title
 import com.m3u.core.wrapper.Event
 import com.m3u.core.wrapper.eventOf
 import com.m3u.data.database.model.Playlist
+import com.m3u.data.database.model.Programme
 import com.m3u.data.database.model.Stream
-import com.m3u.data.database.model.StreamWithProgramme
 import com.m3u.data.service.MediaCommand
 import com.m3u.features.playlist.internal.SmartphonePlaylistScreenImpl
 import com.m3u.features.playlist.internal.TvPlaylistScreenImpl
@@ -191,13 +191,20 @@ internal fun PlaylistRoute(
                 createTvRecommend = { id -> viewModel.createTvRecommend(context, id) },
                 isVodPlaylist = isVodPlaylist,
                 isSeriesPlaylist = isSeriesPlaylist,
+                getProgrammeCurrently = { channelId -> viewModel.getProgrammeCurrently(channelId) },
                 modifier = Modifier
                     .fillMaxSize()
                     .thenIf(!tv && preferences.godMode) {
                         Modifier.interceptVolumeEvent { event ->
                             preferences.rowCount = when (event) {
-                                KeyEvent.KEYCODE_VOLUME_UP -> (preferences.rowCount - 1).coerceAtLeast(1)
-                                KeyEvent.KEYCODE_VOLUME_DOWN -> (preferences.rowCount + 1).coerceAtMost(2)
+                                KeyEvent.KEYCODE_VOLUME_UP -> (preferences.rowCount - 1).coerceAtLeast(
+                                    1
+                                )
+
+                                KeyEvent.KEYCODE_VOLUME_DOWN -> (preferences.rowCount + 1).coerceAtMost(
+                                    2
+                                )
+
                                 else -> return@interceptVolumeEvent
                             }
                         }
@@ -240,7 +247,7 @@ private fun PlaylistScreen(
     rowCount: Int,
     zapping: Stream?,
     categories: List<Category>,
-    streamPaged: LazyPagingItems<StreamWithProgramme>,
+    streamPaged: LazyPagingItems<Stream>,
     pinnedCategories: List<String>,
     onPinOrUnpinCategory: (String) -> Unit,
     onHideCategory: (String) -> Unit,
@@ -260,6 +267,7 @@ private fun PlaylistScreen(
     contentPadding: PaddingValues,
     isVodPlaylist: Boolean,
     isSeriesPlaylist: Boolean,
+    getProgrammeCurrently: suspend (channelId: String) -> Programme?,
     modifier: Modifier = Modifier
 ) {
     val helper = LocalHelper.current
@@ -314,6 +322,7 @@ private fun PlaylistScreen(
             onSaveCover = savePicture,
             onCreateShortcut = createShortcut,
             isVodOrSeriesPlaylist = isVodPlaylist || isSeriesPlaylist,
+            getProgrammeCurrently = getProgrammeCurrently,
             modifier = modifier
         )
     } else {

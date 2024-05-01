@@ -37,7 +37,6 @@ import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.m3u.core.architecture.preferences.LocalPreferences
 import com.m3u.data.database.model.Stream
-import com.m3u.data.database.model.StreamWithProgramme
 import com.m3u.features.playlist.Category
 import com.m3u.features.playlist.components.ImmersiveBackground
 import com.m3u.features.playlist.components.TvStreamGallery
@@ -60,7 +59,7 @@ import dev.chrisbanes.haze.hazeChild
 internal fun TvPlaylistScreenImpl(
     title: String,
     categories: List<Category>,
-    streamPaged: LazyPagingItems<StreamWithProgramme>,
+    streamPaged: LazyPagingItems<Stream>,
     query: String,
     onQuery: (String) -> Unit,
     sorts: List<Sort>,

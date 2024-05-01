@@ -24,7 +24,6 @@ import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.m3u.core.architecture.preferences.LocalPreferences
 import com.m3u.data.database.model.Stream
-import com.m3u.data.database.model.StreamWithProgramme
 import com.m3u.features.playlist.Category
 import com.m3u.material.components.CircularProgressIndicator
 import com.m3u.material.model.LocalSpacing
@@ -32,7 +31,7 @@ import com.m3u.material.model.LocalSpacing
 @Composable
 internal fun TvStreamGallery(
     categories: List<Category>,
-    streamPaged: LazyPagingItems<StreamWithProgramme>,
+    streamPaged: LazyPagingItems<Stream>,
     maxBrowserHeight: Dp,
     useGridLayout: Boolean,
     isVodOrSeriesPlaylist: Boolean,
@@ -64,17 +63,16 @@ internal fun TvStreamGallery(
                         modifier = Modifier.padding(spacing.medium)
                     )
                 }
-                val withProgrammes = channel.withProgrammes
+                val streams = channel.streams
                 TvLazyRow(
                     horizontalArrangement = Arrangement.spacedBy(spacing.medium),
                     contentPadding = PaddingValues(horizontal = spacing.medium),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     items(
-                        items = withProgrammes,
-                        key = { withProgramme -> withProgramme.stream.id },
-                    ) { withProgramme ->
-                        val stream = withProgramme.stream
+                        items = streams,
+                        key = { stream -> stream.id },
+                    ) { stream ->
                         TvStreamItem(
                             stream = stream,
                             isVodOrSeriesPlaylist = isVodOrSeriesPlaylist,
@@ -104,8 +102,7 @@ internal fun TvStreamGallery(
         ) {
             if (!paging) {
                 categories.forEach { category ->
-                    items(category.withProgrammes) { withProgramme ->
-                        val stream = withProgramme.stream
+                    items(category.streams) { stream ->
                         TvStreamItem(
                             stream = stream,
                             isVodOrSeriesPlaylist = isVodOrSeriesPlaylist,
@@ -122,17 +119,17 @@ internal fun TvStreamGallery(
                 }
             } else {
                 items(streamPaged.itemCount) {
-                    val withProgramme = streamPaged[it]
-                    if (withProgramme != null) {
+                    val stream = streamPaged[it]
+                    if (stream != null) {
                         TvStreamItem(
-                            stream = withProgramme.stream,
+                            stream = stream,
                             isVodOrSeriesPlaylist = isVodOrSeriesPlaylist,
-                            onClick = { onClick(withProgramme.stream) },
-                            onLongClick = { onLongClick(withProgramme.stream) },
+                            onClick = { onClick(stream) },
+                            onLongClick = { onLongClick(stream) },
                             modifier = Modifier
                                 .onFocusChanged { focusState ->
                                     if (focusState.hasFocus) {
-                                        onFocus(withProgramme.stream)
+                                        onFocus(stream)
                                     }
                                 }
                         )

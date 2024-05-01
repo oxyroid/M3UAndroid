@@ -51,8 +51,8 @@ import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.paging.compose.LazyPagingItems
 import com.m3u.core.architecture.preferences.LocalPreferences
 import com.m3u.core.wrapper.Event
+import com.m3u.data.database.model.Programme
 import com.m3u.data.database.model.Stream
-import com.m3u.data.database.model.StreamWithProgramme
 import com.m3u.features.playlist.Category
 import com.m3u.features.playlist.components.PlaylistTabRow
 import com.m3u.features.playlist.components.SmartphoneStreamGallery
@@ -80,7 +80,7 @@ import kotlinx.coroutines.launch
 @InternalComposeApi
 internal fun SmartphonePlaylistScreenImpl(
     categories: List<Category>,
-    streamPaged: LazyPagingItems<StreamWithProgramme>,
+    streamPaged: LazyPagingItems<Stream>,
     pinnedCategories: List<String>,
     onPinOrUnpinCategory: (String) -> Unit,
     onHideCategory: (String) -> Unit,
@@ -101,6 +101,7 @@ internal fun SmartphonePlaylistScreenImpl(
     onCreateShortcut: (streamId: Int) -> Unit,
     isAtTopState: MutableState<Boolean>,
     isVodOrSeriesPlaylist: Boolean,
+    getProgrammeCurrently: suspend (channelId: String) -> Programme?,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues()
 ) {
@@ -227,8 +228,8 @@ internal fun SmartphonePlaylistScreenImpl(
                     SmartphoneStreamGallery(
                         state = state,
                         rowCount = actualRowCount,
-                        withProgrammes = if (preferences.paging) emptyList()
-                        else categories.getOrElse(currentPage) { Category() }.withProgrammes,
+                        streams = if (preferences.paging) emptyList()
+                        else categories.getOrElse(currentPage) { Category() }.streams,
                         streamPaged = streamPaged,
                         zapping = zapping,
                         recently = sort == Sort.RECENTLY,
@@ -238,6 +239,7 @@ internal fun SmartphonePlaylistScreenImpl(
                         onLongClick = {
                             mediaSheetValue = MediaSheetValue.PlaylistScreen(it)
                         },
+                        getProgrammeCurrently = getProgrammeCurrently,
                         modifier = modifier.haze(
                             LocalHazeState.current,
                             HazeDefaults.style(MaterialTheme.colorScheme.surface)
