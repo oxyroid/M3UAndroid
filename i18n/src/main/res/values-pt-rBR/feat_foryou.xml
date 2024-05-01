@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="feat_foryou_hidden_streams_playlist">Streams ocultas</string>
+    <string name="feat_foryou_unsubscribe_playlist">Cancelar inscrição</string>
+    <string name="feat_foryou_copy_playlist_url">Copiar url</string>
+    <string name="feat_foryou_rename_playlist">Renomear</string>
+    <string name="feat_foryou_imported_playlist_title">Importada</string>
+    <string name="feat_foryou_prompt_add_playlist">Adicione uma playlist</string>
+    <string name="feat_foryou_recommend_unseen_label">Favoritos que você veria novamente</string>
+    <string name="feat_foryou_recommend_unseen_more_than_days">mais de %d dias</string>
+    <string name="feat_foryou_recommend_unseen_days">%d dias</string>
+    <string name="feat_foryou_recommend_unseen_hours">%d horas</string>
+    <string name="feat_foryou_connect_title">Digite o código da TV</string>
+    <string name="feat_foryou_connect_subtitle">Certifique-se de está conectado ao mesmo Wi-Fi</string>
+</resources>

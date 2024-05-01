@@ -36,6 +36,9 @@ From PRs:
   thanks [@sguinetti](https://github.com/sguinetti/M3UAndroid)
 - [Romanian](i18n/src/main/res/values-ro-rRO),
   thanks [@iboboc](https://github.com/iboboc/M3UAndroid)
+- [Brazilian Portuguese](i18n/src/main/res/values-pt-rBR),
+  thanks [@Suburbanno](https://github.com/Suburbanno)
+  
 
 ### Features
 
