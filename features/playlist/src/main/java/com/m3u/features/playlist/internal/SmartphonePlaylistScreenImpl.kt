@@ -214,35 +214,35 @@ internal fun SmartphonePlaylistScreenImpl(
                     }
                 }
                 Column {
-                    PlaylistTabRow(
-                        page = currentPage,
-                        onPageChanged = { currentPage = it },
-                        categories = categories,
-                        pinnedCategories = pinnedCategories,
-                        onPinOrUnpinCategory = onPinOrUnpinCategory,
-                        onHideCategory = onHideCategory
-                    )
-                    if (preferences.paging || currentPage != -1) {
-                        SmartphoneStreamGallery(
-                            state = state,
-                            rowCount = actualRowCount,
-                            streams = if (preferences.paging) emptyList()
-                            else categories[currentPage].streams,
-                            streamPaged = streamPaged,
-                            zapping = zapping,
-                            recently = sort == Sort.RECENTLY,
-                            isVodOrSeriesPlaylist = isVodOrSeriesPlaylist,
-                            onClick = onStream,
-                            contentPadding = inner,
-                            onLongClick = {
-                                mediaSheetValue = MediaSheetValue.PlaylistScreen(it)
-                            },
-                            modifier = modifier.haze(
-                                LocalHazeState.current,
-                                HazeDefaults.style(MaterialTheme.colorScheme.surface)
-                            )
+                    if (!preferences.paging) {
+                        PlaylistTabRow(
+                            page = currentPage,
+                            onPageChanged = { currentPage = it },
+                            categories = categories,
+                            pinnedCategories = pinnedCategories,
+                            onPinOrUnpinCategory = onPinOrUnpinCategory,
+                            onHideCategory = onHideCategory
                         )
                     }
+                    SmartphoneStreamGallery(
+                        state = state,
+                        rowCount = actualRowCount,
+                        withProgrammes = if (preferences.paging) emptyList()
+                        else categories.getOrElse(currentPage) { Category() }.withProgrammes,
+                        streamPaged = streamPaged,
+                        zapping = zapping,
+                        recently = sort == Sort.RECENTLY,
+                        isVodOrSeriesPlaylist = isVodOrSeriesPlaylist,
+                        onClick = onStream,
+                        contentPadding = inner,
+                        onLongClick = {
+                            mediaSheetValue = MediaSheetValue.PlaylistScreen(it)
+                        },
+                        modifier = modifier.haze(
+                            LocalHazeState.current,
+                            HazeDefaults.style(MaterialTheme.colorScheme.surface)
+                        )
+                    )
                 }
             }
         },

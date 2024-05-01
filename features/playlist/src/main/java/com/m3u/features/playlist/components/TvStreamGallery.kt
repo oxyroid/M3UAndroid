@@ -64,17 +64,17 @@ internal fun TvStreamGallery(
                         modifier = Modifier.padding(spacing.medium)
                     )
                 }
-                val streams = channel.streams
+                val withProgrammes = channel.withProgrammes
                 TvLazyRow(
                     horizontalArrangement = Arrangement.spacedBy(spacing.medium),
                     contentPadding = PaddingValues(horizontal = spacing.medium),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     items(
-                        items = streams,
-                        key = { stream -> stream.id },
-                        contentType = { stream -> stream.cover.isNullOrEmpty() }
-                    ) { stream ->
+                        items = withProgrammes,
+                        key = { withProgramme -> withProgramme.stream.id },
+                    ) { withProgramme ->
+                        val stream = withProgramme.stream
                         TvStreamItem(
                             stream = stream,
                             isVodOrSeriesPlaylist = isVodOrSeriesPlaylist,
@@ -103,8 +103,9 @@ internal fun TvStreamGallery(
                 .fillMaxWidth()
         ) {
             if (!paging) {
-                categories.forEach { channel ->
-                    items(channel.streams) { stream ->
+                categories.forEach { category ->
+                    items(category.withProgrammes) { withProgramme ->
+                        val stream = withProgramme.stream
                         TvStreamItem(
                             stream = stream,
                             isVodOrSeriesPlaylist = isVodOrSeriesPlaylist,

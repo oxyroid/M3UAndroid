@@ -278,15 +278,16 @@ class PlaylistViewModel @Inject constructor(
 
     internal var query: String by mutableStateOf("")
 
-    private fun List<Stream>.toCategories(): List<Category> = groupBy { it.category }
-        .toList()
-        .map { (name, streams) -> Category(name, streams) }
+    private fun List<StreamWithProgramme>.toCategories(): List<Category> =
+        groupBy { it.stream.category }
+            .toList()
+            .map { (name, streams) -> Category(name, streams) }
 
-    private fun List<Stream>.toSingleCategory(): List<Category> = listOf(
+    private fun List<StreamWithProgramme>.toSingleCategory(): List<Category> = listOf(
         Category("", toList())
     )
 
-    private val unsorted: StateFlow<List<Stream>> = combine(
+    private val unsorted: StateFlow<List<StreamWithProgramme>> = combine(
         playlistUrl.flatMapLatest { url ->
             snapshotFlow { preferences.paging }.flatMapLatest { paging ->
                 if (paging) flow { }
@@ -295,10 +296,40 @@ class PlaylistViewModel @Inject constructor(
         },
         snapshotFlow { query },
     ) { current, query ->
+        val playlist = current?.playlist
+        val time = Clock.System.now().toEpochMilliseconds()
+        val epgUrls = when (playlist?.source) {
+            DataSource.Xtream -> {
+                val input = XtreamInput.decodeFromPlaylistUrl(playlist.url)
+                val epgUrl = XtreamParser.createXmlUrl(
+                    basicUrl = input.basicUrl,
+                    username = input.username,
+                    password = input.password
+                )
+                listOf(epgUrl)
+            }
+
+            else -> playlist?.epgUrls ?: emptyList()
+        }
         val hiddenCategories = current?.playlist?.hiddenCategories ?: emptyList()
-        current?.streams?.filter {
-            !it.hidden && it.category !in hiddenCategories && it.title.contains(query, true)
-        } ?: emptyList()
+        current
+            ?.streams
+            ?.filter {
+                !it.hidden && it.category !in hiddenCategories && it.title.contains(query, true)
+            }
+            ?.map { stream ->
+                if (epgUrls.isEmpty()) return@map StreamWithProgramme(stream)
+                val programme = programmeDao.getCurrentByEpgUrlsAndChannelId(
+                    epgUrls = epgUrls,
+                    channelId = stream.channelId.orEmpty(),
+                    time = time
+                )
+                StreamWithProgramme(
+                    stream = stream,
+                    programmeTitle = programme?.title
+                )
+            }
+            ?: emptyList()
     }
         .flowOn(ioDispatcher)
         .stateIn(
@@ -407,14 +438,14 @@ class PlaylistViewModel @Inject constructor(
     ) { all, sort, pinnedCategories ->
         when (sort) {
             Sort.ASC -> all.sortedWith(
-                compareBy(String.CASE_INSENSITIVE_ORDER) { it.title }
+                compareBy(String.CASE_INSENSITIVE_ORDER) { it.stream.title }
             ).toSingleCategory()
 
             Sort.DESC -> all.sortedWith(
-                compareByDescending(String.CASE_INSENSITIVE_ORDER) { it.title }
+                compareByDescending(String.CASE_INSENSITIVE_ORDER) { it.stream.title }
             ).toSingleCategory()
 
-            Sort.RECENTLY -> all.sortedByDescending { it.seen }.toSingleCategory()
+            Sort.RECENTLY -> all.sortedByDescending { it.stream.seen }.toSingleCategory()
             Sort.UNSPECIFIED -> all.toCategories()
         }
             .sortedByDescending { it.name in pinnedCategories }
@@ -461,6 +492,6 @@ class PlaylistViewModel @Inject constructor(
 
 @Immutable
 internal data class Category(
-    val name: String,
-    val streams: List<Stream>
+    val name: String = "",
+    val withProgrammes: List<StreamWithProgramme> = emptyList()
 )
