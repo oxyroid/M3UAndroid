@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="ui_title_foryou">M3U</string>
+    <string name="ui_title_favourite">Favoritos</string>
+    <string name="ui_title_setting">Configurações</string>
+
+    <string name="ui_destination_foryou">Para Você</string>
+    <string name="ui_destination_favourite">Favoritos</string>
+    <string name="ui_destination_setting">Configurações</string>
+
+    <string name="ui_error_unknown">Erro Desconhecido</string>
+    <string name="ui_cd_top_bar_on_back_pressed">Voltar</string>
+
+    <string name="ui_theme_card_left">ho</string>
+    <string name="ui_theme_card_right">la</string>
+
+    <string name="ui_sort">Reordenar</string>
+    <string name="ui_sort_asc">A-Z</string>
+    <string name="ui_sort_desc">Z-A</string>
+    <string name="ui_sort_recently">Recentes</string>
+    <string name="ui_sort_never_played">Não assistiu ainda</string>
+    <string name="ui_sort_unspecified">Não especificado</string>
+
+    <string name="ui_connect">Conectar</string>
+</resources>

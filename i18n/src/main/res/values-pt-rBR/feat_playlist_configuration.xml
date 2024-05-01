@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="feat_playlist_configuration_title">Nome</string>
+    <string name="feat_playlist_configuration_user_agent">Agente de usuário</string>
+    <string name="feat_playlist_configuration_enabled_epgs">EPGs habilitados</string>
+</resources>
