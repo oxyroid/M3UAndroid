@@ -34,6 +34,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
@@ -157,9 +159,12 @@ internal fun SmartphonePlaylistScreenImpl(
         peekHeight = 0.dp,
         backLayerContent = {
             val coroutineScope = rememberCoroutineScope()
+            val focusRequester = remember { FocusRequester() }
             LaunchedEffect(scaffoldState.currentValue) {
                 if (scaffoldState.isConcealed) {
                     focusManager.clearFocus()
+                } else {
+                    focusRequester.requestFocus()
                 }
             }
             BackHandler(scaffoldState.isRevealed || query.isNotEmpty()) {
@@ -181,7 +186,8 @@ internal fun SmartphonePlaylistScreenImpl(
                     text = query,
                     onValueChange = onQuery,
                     fontWeight = FontWeight.Bold,
-                    placeholder = stringResource(string.feat_playlist_query_placeholder).uppercase()
+                    placeholder = stringResource(string.feat_playlist_query_placeholder).uppercase(),
+                    modifier = Modifier.focusRequester(focusRequester)
                 )
             }
         },
