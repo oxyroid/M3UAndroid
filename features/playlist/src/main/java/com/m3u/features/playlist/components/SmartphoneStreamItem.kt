@@ -92,117 +92,121 @@ internal fun SmartphoneStreamItem(
         border = CardDefaults.outlinedCardBorder(zapping),
         shape = AbsoluteSmoothCornerShape(spacing.medium, 65),
     ) {
-        if (noPictureMode || !isVodOrSeriesPlaylist) {
-            ListItem(
-                headlineContent = {
-                    Text(
-                        text = stream.title.trim(),
-                        style = MaterialTheme.typography.titleSmall,
-                        overflow = TextOverflow.Ellipsis,
-                        maxLines = 1,
-                        fontWeight = FontWeight.Bold,
-                    )
-                },
-                leadingContent = if (!noPictureMode) {
-                    {
-                        AsyncImage(
-                            model = stream.cover,
-                            contentDescription = null,
-                            contentScale = ContentScale.Fit,
-                            modifier = Modifier.size(56.dp)
+        when {
+            !noPictureMode && isVodOrSeriesPlaylist -> {
+                Box(
+                    modifier = Modifier
+                        .combinedClickable(
+                            onClick = onClick,
+                            onLongClick = onLongClick
                         )
-                    }
-                } else null,
-                supportingContent = {
-                    if (recently) {
-                        Text(
-                            text = remember(stream.seen) {
-                                val now = Clock.System.now()
-                                val instant = Instant.fromEpochMilliseconds(stream.seen)
-                                val duration = now - instant
-                                duration.toComponents { days, hours, minutes, seconds, _ ->
-                                    when {
-                                        stream.seen == 0L -> neverPlayedString
-                                        days > 0 -> days.days.toString()
-                                        hours > 0 -> hours.hours.toString()
-                                        minutes > 0 -> minutes.minutes.toString()
-                                        seconds > 0 -> seconds.seconds.toString()
-                                        else -> recentlyString
-                                    }
-                                }
-                            },
-                            style = MaterialTheme.typography.bodySmall,
-                            color = LocalContentColor.current.copy(0.56f)
-                        )
-                    }
-                },
-                trailingContent = {
-                    star()
-                },
-                modifier = Modifier
-                    .combinedClickable(
-                        onClick = onClick,
-                        onLongClick = onLongClick
+                        .then(modifier)
+                ) {
+                    SubcomposeAsyncImage(
+                        model = remember(stream.cover) {
+                            ImageRequest.Builder(context)
+                                .data(stream.cover)
+                                .size(Size.ORIGINAL)
+                                .build()
+                        },
+                        contentDescription = stream.title,
+                        contentScale = ContentScale.FillWidth,
+                        loading = {
+                            Box(
+                                contentAlignment = Alignment.Center,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .aspectRatio(1f)
+                            ) {
+                                CircularProgressIndicator()
+                            }
+                        },
+                        error = {
+                            Column(
+                                verticalArrangement = Arrangement.SpaceAround,
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .aspectRatio(3 / 4f)
+                                    .padding(spacing.medium)
+                            ) {
+                                Text(
+                                    text = stream.title,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                                Icon(
+                                    imageVector = Icons.Rounded.BrokenImage,
+                                    contentDescription = null
+                                )
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth()
                     )
-                    .then(modifier)
-            )
-        } else {
-            Box(
-                modifier = Modifier
-                    .combinedClickable(
-                        onClick = onClick,
-                        onLongClick = onLongClick
-                    )
-                    .then(modifier)
-            ) {
-                SubcomposeAsyncImage(
-                    model = remember(stream.cover) {
-                        ImageRequest.Builder(context)
-                            .data(stream.cover)
-                            .size(Size.ORIGINAL)
-                            .build()
-                    },
-                    contentDescription = stream.title,
-                    contentScale = ContentScale.FillWidth,
-                    loading = {
+                    if (favourite) {
                         Box(
-                            contentAlignment = Alignment.Center,
                             modifier = Modifier
-                                .fillMaxWidth()
-                                .aspectRatio(1f)
-                        ) {
-                            CircularProgressIndicator()
-                        }
-                    },
-                    error = {
-                        Column(
-                            verticalArrangement = Arrangement.SpaceAround,
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .aspectRatio(3 / 4f)
-                                .padding(spacing.medium)
-                        ) {
-                            Text(
-                                text = stream.title,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                            Icon(
-                                imageVector = Icons.Rounded.BrokenImage,
-                                contentDescription = null
-                            )
-                        }
-                    },
-                    modifier = Modifier.fillMaxWidth()
-                )
-                if (favourite) {
-                    Box(
-                        modifier = Modifier
-                            .padding(spacing.small)
-                            .align(Alignment.BottomEnd)
-                    ) { star() }
+                                .padding(spacing.small)
+                                .align(Alignment.BottomEnd)
+                        ) { star() }
+                    }
                 }
+            }
+
+            else -> {
+                ListItem(
+                    headlineContent = {
+                        Text(
+                            text = stream.title.trim(),
+                            style = MaterialTheme.typography.titleSmall,
+                            overflow = TextOverflow.Ellipsis,
+                            maxLines = 1,
+                            fontWeight = FontWeight.Bold,
+                        )
+                    },
+                    leadingContent = if (!noPictureMode) {
+                        {
+                            AsyncImage(
+                                model = stream.cover,
+                                contentDescription = null,
+                                contentScale = ContentScale.Fit,
+                                modifier = Modifier.size(56.dp)
+                            )
+                        }
+                    } else null,
+                    supportingContent = {
+                        if (recently) {
+                            Text(
+                                text = remember(stream.seen) {
+                                    val now = Clock.System.now()
+                                    val instant = Instant.fromEpochMilliseconds(stream.seen)
+                                    val duration = now - instant
+                                    duration.toComponents { days, hours, minutes, seconds, _ ->
+                                        when {
+                                            stream.seen == 0L -> neverPlayedString
+                                            days > 0 -> days.days.toString()
+                                            hours > 0 -> hours.hours.toString()
+                                            minutes > 0 -> minutes.minutes.toString()
+                                            seconds > 0 -> seconds.seconds.toString()
+                                            else -> recentlyString
+                                        }
+                                    }
+                                },
+                                style = MaterialTheme.typography.bodySmall,
+                                color = LocalContentColor.current.copy(0.56f)
+                            )
+                        }
+                    },
+                    trailingContent = {
+                        star()
+                    },
+                    modifier = Modifier
+                        .combinedClickable(
+                            onClick = onClick,
+                            onLongClick = onLongClick
+                        )
+                        .then(modifier)
+                )
             }
         }
     }
