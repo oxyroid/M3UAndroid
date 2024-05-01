@@ -9,6 +9,7 @@ import com.m3u.ui.Destination
 data class Action(
     val icon: ImageVector,
     val contentDescription: String?,
+    val enabled: Boolean = true,
     val onClick: () -> Unit
 )
 

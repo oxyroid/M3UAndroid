@@ -160,6 +160,7 @@ internal fun PlaylistRoute(
                     }
                 },
                 onScrollUp = { viewModel.scrollUp = eventOf(Unit) },
+                refreshing = refreshing,
                 onRefresh = {
                     postNotificationPermission.checkPermissionOrRationale(
                         showRationale = {
@@ -246,6 +247,7 @@ private fun PlaylistScreen(
     sort: Sort,
     onSort: (Sort) -> Unit,
     scrollUp: Event<Unit>,
+    refreshing: Boolean,
     onRefresh: () -> Unit,
     onStream: (Stream) -> Unit,
     onScrollUp: () -> Unit,
@@ -301,6 +303,7 @@ private fun PlaylistScreen(
             contentPadding = contentPadding,
             onStream = onStream,
             isAtTopState = isAtTopState,
+            refreshing = refreshing,
             onRefresh = onRefresh,
             sorts = sorts,
             sort = sort,

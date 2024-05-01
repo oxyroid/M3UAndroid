@@ -176,7 +176,8 @@ internal fun TopBarWithContent(
                                     IconButton(
                                         icon = action.icon,
                                         contentDescription = action.contentDescription,
-                                        onClick = action.onClick
+                                        onClick = action.onClick,
+                                        enabled = action.enabled
                                     )
                                 }
                             }

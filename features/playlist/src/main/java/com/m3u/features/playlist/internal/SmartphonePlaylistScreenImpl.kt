@@ -92,6 +92,7 @@ internal fun SmartphonePlaylistScreenImpl(
     sort: Sort,
     onSort: (Sort) -> Unit,
     onStream: (Stream) -> Unit,
+    refreshing: Boolean,
     onRefresh: () -> Unit,
     favourite: (streamId: Int) -> Unit,
     onHide: (streamId: Int) -> Unit,
@@ -125,7 +126,7 @@ internal fun SmartphonePlaylistScreenImpl(
     var mediaSheetValue: MediaSheetValue.PlaylistScreen by remember { mutableStateOf(MediaSheetValue.PlaylistScreen()) }
     var isSortSheetVisible by rememberSaveable { mutableStateOf(false) }
 
-    LifecycleResumeEffect(Unit) {
+    LifecycleResumeEffect(refreshing) {
         helper.actions = buildList {
             Action(
                 icon = Icons.AutoMirrored.Rounded.Sort,
@@ -134,6 +135,7 @@ internal fun SmartphonePlaylistScreenImpl(
             ).also { add(it) }
             Action(
                 icon = Icons.Rounded.Refresh,
+                enabled = !refreshing,
                 contentDescription = "refresh",
                 onClick = onRefresh
             ).also { add(it) }

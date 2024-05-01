@@ -12,6 +12,5 @@
     <string name="feat_playlist_error_stream_cover_not_found">cover is not existed</string>
     <string name="feat_playlist_error_stream_not_found">stream is not existed</string>
     <string name="feat_playlist_success_save_cover">saved to (%s)</string>
-    <string name="feat_playlist_refreshing">refreshing</string>
     <string name="feat_playlist_scroll_up">scroll up</string>
 </resources>

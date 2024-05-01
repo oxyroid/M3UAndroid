@@ -31,11 +31,4 @@ sealed class PlaylistMessage(
         resId = string.feat_playlist_success_save_cover,
         formatArgs = arrayOf(path)
     )
-
-    data object Refreshing : PlaylistMessage(
-        level = LEVEL_INFO,
-        type = TYPE_SNACK,
-        duration = Duration.INFINITE,
-        resId = string.feat_playlist_refreshing
-    )
 }

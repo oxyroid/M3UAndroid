@@ -125,11 +125,6 @@ class PlaylistViewModel @Inject constructor(
         }
         .onCompletion { messager.emit(Message.Dynamic.EMPTY) }
         .flowOn(ioDispatcher)
-        .onEach { refreshing ->
-            messager.emit(
-                if (refreshing) PlaylistMessage.Refreshing else Message.Dynamic.EMPTY
-            )
-        }
         .stateIn(
             scope = viewModelScope,
             initialValue = false,

@@ -12,6 +12,5 @@
     <string name="feat_playlist_error_stream_cover_not_found">la portada no existe</string>
     <string name="feat_playlist_error_stream_not_found">la transmisión no existe</string>
     <string name="feat_playlist_success_save_cover">se ha guardado a (%s)</string>
-    <string name="feat_playlist_refreshing">actualizando</string>
     <string name="feat_playlist_scroll_up">subir</string>
 </resources>
