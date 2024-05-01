@@ -24,6 +24,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -68,10 +69,11 @@ internal fun SmartphoneStreamGallery(
         else -> rowCount
     }
 
+    val currentWithProgrammes by rememberUpdatedState(withProgrammes)
     val isPagingTipShowing by produceState(false) {
         value = if (!preferences.paging) {
             delay(4.seconds)
-            withProgrammes.isEmpty()
+            currentWithProgrammes.isEmpty()
         } else false
     }
 
@@ -88,7 +90,7 @@ internal fun SmartphoneStreamGallery(
         }
         if (!preferences.paging) {
             items(
-                items = withProgrammes,
+                items = currentWithProgrammes,
                 key = { withProgramme -> withProgramme.stream.id }
             ) { withProgramme ->
                 SmartphoneStreamItem(
