@@ -49,6 +49,7 @@ import com.m3u.core.wrapper.Event
 import com.m3u.core.wrapper.eventOf
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.Stream
+import com.m3u.data.database.model.StreamWithProgramme
 import com.m3u.data.service.MediaCommand
 import com.m3u.features.playlist.internal.SmartphonePlaylistScreenImpl
 import com.m3u.features.playlist.internal.TvPlaylistScreenImpl
@@ -239,7 +240,7 @@ private fun PlaylistScreen(
     rowCount: Int,
     zapping: Stream?,
     categories: List<Category>,
-    streamPaged: LazyPagingItems<Stream>,
+    streamPaged: LazyPagingItems<StreamWithProgramme>,
     pinnedCategories: List<String>,
     onPinOrUnpinCategory: (String) -> Unit,
     onHideCategory: (String) -> Unit,

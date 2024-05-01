@@ -8,6 +8,7 @@ import com.m3u.core.architecture.logger.install
 import com.m3u.core.architecture.logger.sandBox
 import com.m3u.data.database.dao.StreamDao
 import com.m3u.data.database.model.Stream
+import com.m3u.data.repository.stream.StreamRepository.Sort
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.datetime.Clock
@@ -30,12 +31,12 @@ internal class StreamRepositoryImpl @Inject constructor(
     override fun pagingAllByPlaylistUrl(
         url: String,
         query: String,
-        sort: StreamRepository.Sort
+        sort: Sort
     ): PagingSource<Int, Stream> = when (sort) {
-        StreamRepository.Sort.UNSPECIFIED -> streamDao.pagingAllByPlaylistUrl(url, query)
-        StreamRepository.Sort.ASC -> streamDao.pagingAllByPlaylistUrlAsc(url, query)
-        StreamRepository.Sort.DESC -> streamDao.pagingAllByPlaylistUrlDesc(url, query)
-        StreamRepository.Sort.RECENTLY -> streamDao.pagingAllByPlaylistUrlRecently(url, query)
+        Sort.UNSPECIFIED -> streamDao.pagingAllByPlaylistUrl(url, query)
+        Sort.ASC -> streamDao.pagingAllByPlaylistUrlAsc(url, query)
+        Sort.DESC -> streamDao.pagingAllByPlaylistUrlDesc(url, query)
+        Sort.RECENTLY -> streamDao.pagingAllByPlaylistUrlRecently(url, query)
     }
 
     override suspend fun get(id: Int): Stream? = logger.execute {

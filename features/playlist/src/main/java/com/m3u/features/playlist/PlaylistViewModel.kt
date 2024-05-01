@@ -22,6 +22,7 @@ import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import androidx.paging.filter
+import androidx.paging.map
 import androidx.tvprovider.media.tv.Channel
 import androidx.tvprovider.media.tv.PreviewProgram
 import androidx.tvprovider.media.tv.TvContractCompat
@@ -41,8 +42,13 @@ import com.m3u.core.wrapper.Resource
 import com.m3u.core.wrapper.handledEvent
 import com.m3u.core.wrapper.mapResource
 import com.m3u.core.wrapper.resource
+import com.m3u.data.database.dao.ProgrammeDao
+import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.Stream
+import com.m3u.data.database.model.StreamWithProgramme
+import com.m3u.data.parser.xtream.XtreamInput
+import com.m3u.data.parser.xtream.XtreamParser
 import com.m3u.data.parser.xtream.XtreamStreamInfo
 import com.m3u.data.repository.media.MediaRepository
 import com.m3u.data.repository.playlist.PlaylistRepository
@@ -70,6 +76,7 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.datetime.Clock
 import javax.inject.Inject
 
 @HiltViewModel
@@ -78,6 +85,7 @@ class PlaylistViewModel @Inject constructor(
     private val streamRepository: StreamRepository,
     private val playlistRepository: PlaylistRepository,
     private val mediaRepository: MediaRepository,
+    private val programmeDao: ProgrammeDao,
     private val messager: Messager,
     playerManager: PlayerManager,
     preferences: Preferences,
@@ -89,6 +97,15 @@ class PlaylistViewModel @Inject constructor(
 
     internal val playlistUrl: StateFlow<String> = savedStateHandle
         .getStateFlow(PlaylistNavigation.TYPE_URL, "")
+
+    internal val playlist: StateFlow<Playlist?> = playlistUrl.flatMapLatest {
+        playlistRepository.observe(it)
+    }
+        .stateIn(
+            scope = viewModelScope,
+            initialValue = null,
+            started = SharingStarted.WhileSubscribed(5_000L)
+        )
 
     internal val zapping: StateFlow<Stream?> = combine(
         snapshotFlow { preferences.zappingMode },
@@ -269,15 +286,6 @@ class PlaylistViewModel @Inject constructor(
         Category("", toList())
     )
 
-    internal val playlist: StateFlow<Playlist?> = playlistUrl.flatMapLatest { url ->
-        playlistRepository.observe(url)
-    }
-        .stateIn(
-            scope = viewModelScope,
-            initialValue = null,
-            started = SharingStarted.WhileSubscribed(5_000L)
-        )
-
     private val unsorted: StateFlow<List<Stream>> = combine(
         playlistUrl.flatMapLatest { url ->
             snapshotFlow { preferences.paging }.flatMapLatest { paging ->
@@ -315,19 +323,33 @@ class PlaylistViewModel @Inject constructor(
         sortIndex.update { sorts.indexOf(sort).coerceAtLeast(0) }
     }
 
-    internal val streamPaged: Flow<PagingData<Stream>> = combine(
-        playlistUrl,
+    internal val streamPaged: Flow<PagingData<StreamWithProgramme>> = combine(
+        playlist,
         snapshotFlow { query },
         sort
-    ) { playlistUrl, query, sort -> Triple(playlistUrl, query, sort) }
-        .flatMapLatest { (playlistUrl, query, sort) ->
-            Pager(PagingConfig(20)) {
+    ) { playlist, query, sort -> Triple(playlist, query, sort) }
+        .flatMapLatest { (playlist, query, sort) ->
+            val time = Clock.System.now().toEpochMilliseconds()
+            val epgUrls = when (playlist?.source) {
+                DataSource.Xtream -> {
+                    val input = XtreamInput.decodeFromPlaylistUrl(playlist.url)
+                    val epgUrl = XtreamParser.createXmlUrl(
+                        basicUrl = input.basicUrl,
+                        username = input.username,
+                        password = input.password
+                    )
+                    listOf(epgUrl)
+                }
+
+                else -> playlist?.epgUrls ?: emptyList()
+            }
+            Pager(PagingConfig(5)) {
                 // streamDao.pagingAllByPlaylistUrl
                 // streamDao.pagingAllByPlaylistUrlAsc
                 // streamDao.pagingAllByPlaylistUrlDesc
                 // streamDao.pagingAllByPlaylistUrlRecently
                 streamRepository.pagingAllByPlaylistUrl(
-                    playlistUrl,
+                    playlist?.url.orEmpty(),
                     query,
                     when (sort) {
                         Sort.UNSPECIFIED -> StreamRepository.Sort.UNSPECIFIED
@@ -338,6 +360,19 @@ class PlaylistViewModel @Inject constructor(
                 )
             }
                 .flow
+                .map { pagingData ->
+                    pagingData.map { stream ->
+                        val programme = programmeDao.getCurrentByEpgUrlsAndChannelId(
+                            epgUrls = epgUrls,
+                            channelId = stream.channelId.orEmpty(),
+                            time = time
+                        )
+                        StreamWithProgramme(
+                            stream = stream,
+                            programmeTitle = programme?.title
+                        )
+                    }
+                }
                 .cachedIn(viewModelScope)
         }
         .let { flow ->
@@ -345,10 +380,10 @@ class PlaylistViewModel @Inject constructor(
                 flow,
                 playlist,
                 snapshotFlow { preferences.paging }
-            ) { streams, playlist, paging ->
+            ) { pagingData, playlist, paging ->
                 if (!paging) return@combine PagingData.empty()
                 val hiddenCategories = playlist?.hiddenCategories ?: emptyList()
-                streams.filter { stream ->
+                pagingData.filter { (stream, programme) ->
                     !stream.hidden && stream.category !in hiddenCategories
                 }
             }

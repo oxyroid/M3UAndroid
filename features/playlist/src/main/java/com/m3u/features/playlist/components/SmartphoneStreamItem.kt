@@ -36,7 +36,7 @@ import coil.compose.SubcomposeAsyncImage
 import coil.request.ImageRequest
 import coil.size.Size
 import com.m3u.core.architecture.preferences.LocalPreferences
-import com.m3u.data.database.model.Stream
+import com.m3u.data.database.model.StreamWithProgramme
 import com.m3u.i18n.R.string
 import com.m3u.material.components.CircularProgressIndicator
 import com.m3u.material.components.Icon
@@ -51,7 +51,7 @@ import kotlin.time.Duration.Companion.seconds
 
 @Composable
 internal fun SmartphoneStreamItem(
-    stream: Stream,
+    withProgramme: StreamWithProgramme,
     recently: Boolean,
     zapping: Boolean,
     onClick: () -> Unit,
@@ -63,6 +63,8 @@ internal fun SmartphoneStreamItem(
     val spacing = LocalSpacing.current
     val preferences = LocalPreferences.current
 
+    val stream = withProgramme.stream
+    val programmeTitle = withProgramme.programmeTitle
     val favourite = stream.favourite
 
     val recentlyString = stringResource(string.ui_sort_recently)
@@ -175,26 +177,38 @@ internal fun SmartphoneStreamItem(
                         }
                     } else null,
                     supportingContent = {
-                        if (recently) {
-                            Text(
-                                text = remember(stream.seen) {
-                                    val now = Clock.System.now()
-                                    val instant = Instant.fromEpochMilliseconds(stream.seen)
-                                    val duration = now - instant
-                                    duration.toComponents { days, hours, minutes, seconds, _ ->
-                                        when {
-                                            stream.seen == 0L -> neverPlayedString
-                                            days > 0 -> days.days.toString()
-                                            hours > 0 -> hours.hours.toString()
-                                            minutes > 0 -> minutes.minutes.toString()
-                                            seconds > 0 -> seconds.seconds.toString()
-                                            else -> recentlyString
+                        when {
+                            recently -> {
+                                Text(
+                                    text = remember(stream.seen) {
+                                        val now = Clock.System.now()
+                                        val instant = Instant.fromEpochMilliseconds(stream.seen)
+                                        val duration = now - instant
+                                        duration.toComponents { days, hours, minutes, seconds, _ ->
+                                            when {
+                                                stream.seen == 0L -> neverPlayedString
+                                                days > 0 -> days.days.toString()
+                                                hours > 0 -> hours.hours.toString()
+                                                minutes > 0 -> minutes.minutes.toString()
+                                                seconds > 0 -> seconds.seconds.toString()
+                                                else -> recentlyString
+                                            }
                                         }
-                                    }
-                                },
-                                style = MaterialTheme.typography.bodySmall,
-                                color = LocalContentColor.current.copy(0.56f)
-                            )
+                                    },
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = LocalContentColor.current.copy(0.56f)
+                                )
+                            }
+
+                            programmeTitle != null -> {
+                                Text(
+                                    text = programmeTitle,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = LocalContentColor.current.copy(0.56f),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
                         }
                     },
                     trailingContent = {

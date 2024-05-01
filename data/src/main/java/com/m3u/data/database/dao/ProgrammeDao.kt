@@ -55,4 +55,33 @@ interface ProgrammeDao {
 
     @Query("DELETE FROM programmes WHERE epg_url = :epgUrl")
     suspend fun deleteAllByEpgUrl(epgUrl: String)
+
+    @Query(
+        """
+        SELECT * FROM programmes 
+        WHERE epg_url in (:epgUrls) 
+        AND 
+        channel_id = :channelId
+        ORDER BY start
+        """
+    )
+    suspend fun getAllByEpgUrlsAndChannelId(
+        epgUrls: List<String>,
+        channelId: String
+    ): List<Programme>
+
+    @Query(
+        """
+        SELECT * FROM programmes 
+        WHERE epg_url in (:epgUrls) 
+        AND channel_id = :channelId
+        AND start <= :time
+        AND `end` >= :time
+        """
+    )
+    suspend fun getCurrentByEpgUrlsAndChannelId(
+        epgUrls: List<String>,
+        channelId: String,
+        time: Long
+    ): Programme?
 }

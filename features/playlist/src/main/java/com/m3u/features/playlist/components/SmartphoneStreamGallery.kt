@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.dp
 import androidx.paging.compose.LazyPagingItems
 import com.m3u.core.architecture.preferences.LocalPreferences
 import com.m3u.data.database.model.Stream
+import com.m3u.data.database.model.StreamWithProgramme
 import com.m3u.material.components.CircularProgressIndicator
 import com.m3u.material.ktx.plus
 import com.m3u.material.model.LocalSpacing
@@ -26,7 +27,7 @@ internal fun SmartphoneStreamGallery(
     state: LazyStaggeredGridState,
     rowCount: Int,
     streams: List<Stream>,
-    streamPaged: LazyPagingItems<Stream>,
+    streamPaged: LazyPagingItems<StreamWithProgramme>,
     zapping: Stream?,
     recently: Boolean,
     isVodOrSeriesPlaylist: Boolean,
@@ -55,7 +56,7 @@ private fun SmartphoneStreamGalleryImpl(
     state: LazyStaggeredGridState,
     rowCount: Int,
     streams: List<Stream>,
-    streamPaged: LazyPagingItems<Stream>,
+    streamPaged: LazyPagingItems<StreamWithProgramme>,
     zapping: Stream?,
     recently: Boolean,
     isVodOrSeriesPlaylist: Boolean,
@@ -88,7 +89,8 @@ private fun SmartphoneStreamGalleryImpl(
                 contentType = { it.cover.isNullOrEmpty() }
             ) { stream ->
                 SmartphoneStreamItem(
-                    stream = stream,
+                    // todo
+                    withProgramme = StreamWithProgramme(stream),
                     recently = recently,
                     zapping = zapping == stream,
                     isVodOrSeriesPlaylist = isVodOrSeriesPlaylist,
@@ -99,15 +101,15 @@ private fun SmartphoneStreamGalleryImpl(
             }
         } else {
             items(streamPaged.itemCount) {
-                val currentStream = streamPaged[it]
-                if (currentStream != null) {
+                val withProgramme = streamPaged[it]
+                if (withProgramme != null) {
                     SmartphoneStreamItem(
-                        stream = currentStream,
+                        withProgramme = withProgramme,
                         recently = recently,
-                        zapping = zapping == currentStream,
+                        zapping = zapping == withProgramme.stream,
                         isVodOrSeriesPlaylist = isVodOrSeriesPlaylist,
-                        onClick = { onClick(currentStream) },
-                        onLongClick = { onLongClick(currentStream) },
+                        onClick = { onClick(withProgramme.stream) },
+                        onLongClick = { onLongClick(withProgramme.stream) },
                         modifier = Modifier.fillMaxWidth()
                     )
                 } else {

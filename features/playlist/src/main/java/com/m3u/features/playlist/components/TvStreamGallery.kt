@@ -24,6 +24,7 @@ import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.m3u.core.architecture.preferences.LocalPreferences
 import com.m3u.data.database.model.Stream
+import com.m3u.data.database.model.StreamWithProgramme
 import com.m3u.features.playlist.Category
 import com.m3u.material.components.CircularProgressIndicator
 import com.m3u.material.model.LocalSpacing
@@ -31,7 +32,7 @@ import com.m3u.material.model.LocalSpacing
 @Composable
 internal fun TvStreamGallery(
     categories: List<Category>,
-    streamPaged: LazyPagingItems<Stream>,
+    streamPaged: LazyPagingItems<StreamWithProgramme>,
     maxBrowserHeight: Dp,
     useGridLayout: Boolean,
     isVodOrSeriesPlaylist: Boolean,
@@ -120,17 +121,17 @@ internal fun TvStreamGallery(
                 }
             } else {
                 items(streamPaged.itemCount) {
-                    val currentStream = streamPaged[it]
-                    if (currentStream != null) {
+                    val withProgramme = streamPaged[it]
+                    if (withProgramme != null) {
                         TvStreamItem(
-                            stream = currentStream,
+                            stream = withProgramme.stream,
                             isVodOrSeriesPlaylist = isVodOrSeriesPlaylist,
-                            onClick = { onClick(currentStream) },
-                            onLongClick = { onLongClick(currentStream) },
+                            onClick = { onClick(withProgramme.stream) },
+                            onLongClick = { onLongClick(withProgramme.stream) },
                             modifier = Modifier
                                 .onFocusChanged { focusState ->
                                     if (focusState.hasFocus) {
-                                        onFocus(currentStream)
+                                        onFocus(withProgramme.stream)
                                     }
                                 }
                         )

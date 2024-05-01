@@ -52,6 +52,7 @@ import androidx.paging.compose.LazyPagingItems
 import com.m3u.core.architecture.preferences.LocalPreferences
 import com.m3u.core.wrapper.Event
 import com.m3u.data.database.model.Stream
+import com.m3u.data.database.model.StreamWithProgramme
 import com.m3u.features.playlist.Category
 import com.m3u.features.playlist.components.PlaylistTabRow
 import com.m3u.features.playlist.components.SmartphoneStreamGallery
@@ -79,7 +80,7 @@ import kotlinx.coroutines.launch
 @InternalComposeApi
 internal fun SmartphonePlaylistScreenImpl(
     categories: List<Category>,
-    streamPaged: LazyPagingItems<Stream>,
+    streamPaged: LazyPagingItems<StreamWithProgramme>,
     pinnedCategories: List<String>,
     onPinOrUnpinCategory: (String) -> Unit,
     onHideCategory: (String) -> Unit,

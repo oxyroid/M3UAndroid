@@ -3,6 +3,7 @@ package com.m3u.data.database.model
 import androidx.annotation.Keep
 import androidx.compose.runtime.Immutable
 import androidx.room.ColumnInfo
+import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.m3u.core.util.Likable
@@ -75,3 +76,11 @@ fun Stream.copyXtreamEpisode(episode: XtreamStreamInfo.Episode): Stream {
         title = episode.title.orEmpty()
     )
 }
+
+@Keep
+data class StreamWithProgramme(
+    @Embedded
+    val stream: Stream,
+    @ColumnInfo("programme_title")
+    val programmeTitle: String? = null
+)

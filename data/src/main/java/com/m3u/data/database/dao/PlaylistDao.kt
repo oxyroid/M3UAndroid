@@ -59,7 +59,8 @@ internal interface PlaylistDao {
         """
         SELECT playlists.*, COUNT(streams.id) AS count 
         FROM playlists 
-        LEFT JOIN streams ON playlists.url = streams.playlistUrl 
+        LEFT JOIN streams 
+        ON playlists.url = streams.playlistUrl 
         WHERE source != "epg" GROUP BY playlists.url
         """
     )
