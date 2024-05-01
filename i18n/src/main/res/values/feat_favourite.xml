@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="feat_favorite_scheme_unknown">unknown</string>
+    <string name="feat_favorite_play_randomly">play randomly</string>
 </resources>

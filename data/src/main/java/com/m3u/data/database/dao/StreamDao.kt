@@ -41,6 +41,9 @@ internal interface StreamDao {
     @Query("SELECT * FROM streams WHERE id = :id")
     suspend fun get(id: Int): Stream?
 
+    @Query("SELECT * FROM streams ORDER BY RANDOM() LIMIT 1")
+    suspend fun random(): Stream?
+
     @Query("SELECT * FROM streams WHERE url = :url")
     suspend fun getByUrl(url: String): Stream?
 

@@ -43,6 +43,10 @@ internal class StreamRepositoryImpl @Inject constructor(
         streamDao.get(id)
     }
 
+    override suspend fun random(): Stream? = logger.execute {
+        streamDao.random()
+    }
+
     override suspend fun getByPlaylistUrl(playlistUrl: String): List<Stream> = logger.execute {
         streamDao.getByPlaylistUrl(playlistUrl)
     } ?: emptyList()

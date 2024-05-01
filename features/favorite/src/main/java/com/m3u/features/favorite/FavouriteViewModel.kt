@@ -27,6 +27,7 @@ import com.m3u.data.parser.xtream.XtreamStreamInfo
 import com.m3u.data.repository.media.MediaRepository
 import com.m3u.data.repository.playlist.PlaylistRepository
 import com.m3u.data.repository.stream.StreamRepository
+import com.m3u.data.service.MediaCommand
 import com.m3u.data.service.PlayerManager
 import com.m3u.ui.Sort
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -49,8 +50,8 @@ class FavouriteViewModel @Inject constructor(
     private val playlistRepository: PlaylistRepository,
     private val streamRepository: StreamRepository,
     private val mediaRepository: MediaRepository,
+    private val playerManager: PlayerManager,
     preferences: Preferences,
-    playerManager: PlayerManager,
     @Dispatcher(IO) ioDispatcher: CoroutineDispatcher,
     delegate: Logger
 ) : ViewModel() {
@@ -170,4 +171,13 @@ class FavouriteViewModel @Inject constructor(
 
     internal suspend fun getPlaylist(playlistUrl: String): Playlist? =
         playlistRepository.get(playlistUrl)
+
+    internal fun playRandomly() {
+        viewModelScope.launch {
+            val stream = streamRepository.random() ?: return@launch
+            playerManager.play(
+                MediaCommand.Live(stream.id)
+            )
+        }
+    }
 }

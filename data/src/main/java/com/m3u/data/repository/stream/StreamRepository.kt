@@ -17,6 +17,8 @@ interface StreamRepository {
 
     suspend fun get(id: Int): Stream?
 
+    suspend fun random(): Stream?
+
     @Deprecated("stream url is not unique")
     suspend fun getByUrl(url: String): Stream?
     suspend fun getByPlaylistUrl(playlistUrl: String): List<Stream>

@@ -59,9 +59,11 @@ fun FavouriteRoute(
     val tv = isTelevision()
 
     val title = stringResource(R.string.ui_title_favourite)
+
     val helper = LocalHelper.current
     val preferences = LocalPreferences.current
     val context = LocalContext.current
+
     val coroutineScope = rememberCoroutineScope()
 
     val streamsResource by viewModel.streamsResource.collectAsStateWithLifecycle()
@@ -124,19 +126,28 @@ fun FavouriteRoute(
                 }
             },
             onLongClickStream = { mediaSheetValue = MediaSheetValue.FavouriteScreen(it) },
+            onClickRandomTips = {
+                viewModel.playRandomly()
+                navigateToStream()
+            },
             modifier = Modifier
                 .fillMaxSize()
                 .thenIf(!tv && preferences.godMode) {
                     Modifier.interceptVolumeEvent { event ->
                         preferences.rowCount = when (event) {
-                            KeyEvent.KEYCODE_VOLUME_UP -> (preferences.rowCount - 1).coerceAtLeast(1)
-                            KeyEvent.KEYCODE_VOLUME_DOWN -> (preferences.rowCount + 1).coerceAtMost(2)
+                            KeyEvent.KEYCODE_VOLUME_UP ->
+                                (preferences.rowCount - 1).coerceAtLeast(1)
+
+                            KeyEvent.KEYCODE_VOLUME_DOWN ->
+                                (preferences.rowCount + 1).coerceAtMost(2)
+
                             else -> return@interceptVolumeEvent
                         }
                     }
                 }
                 .then(modifier)
         )
+
         EpisodesBottomSheet(
             series = series,
             episodes = episodes,
@@ -200,6 +211,7 @@ private fun FavoriteScreen(
     recently: Boolean,
     onClickStream: (Stream) -> Unit,
     onLongClickStream: (Stream) -> Unit,
+    onClickRandomTips: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val configuration = LocalConfiguration.current
@@ -216,6 +228,7 @@ private fun FavoriteScreen(
         rowCount = actualRowCount,
         onClick = onClickStream,
         onLongClick = onLongClickStream,
+        onClickRandomTips = onClickRandomTips,
         modifier = modifier.haze(
             LocalHazeState.current,
             HazeDefaults.style(MaterialTheme.colorScheme.surface)
