@@ -197,13 +197,11 @@ internal fun PlaylistRoute(
                     .thenIf(!tv && preferences.godMode) {
                         Modifier.interceptVolumeEvent { event ->
                             preferences.rowCount = when (event) {
-                                KeyEvent.KEYCODE_VOLUME_UP -> (preferences.rowCount - 1).coerceAtLeast(
-                                    1
-                                )
+                                KeyEvent.KEYCODE_VOLUME_UP ->
+                                    (preferences.rowCount - 1).coerceAtLeast(1)
 
-                                KeyEvent.KEYCODE_VOLUME_DOWN -> (preferences.rowCount + 1).coerceAtMost(
-                                    2
-                                )
+                                KeyEvent.KEYCODE_VOLUME_DOWN ->
+                                    (preferences.rowCount + 1).coerceAtMost(2)
 
                                 else -> return@interceptVolumeEvent
                             }
