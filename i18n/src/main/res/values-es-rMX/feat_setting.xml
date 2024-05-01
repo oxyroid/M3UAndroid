@@ -17,6 +17,7 @@
     <string name="feat_setting_god_mode_description">ajusta la distribución con los botones del volumen</string>
     <string name="feat_setting_experimental_mode">modo experimental</string>
     <string name="feat_setting_experimental_mode_description">funciones inestables con efectos inesperados</string>
+    <string name="feat_setting_label_epg_playlists">Lista de EPG</string>
     <string name="feat_setting_label_hidden_streams">emisiones ocultas</string>
     <string name="feat_setting_label_hidden_playlist_groups">categorías de playlist ocultas</string>
     <string name="feat_setting_label_add_playlist">añadir playlist</string>
@@ -56,7 +57,7 @@
     <string name="feat_setting_gesture_volume">gestos de volumen</string>
     <string name="feat_setting_screencast">screencast</string>
     <string name="feat_setting_screen_rotating">rotación de pantalla</string>
-    <string name="feat_setting_screen_rotating_description">disponible cuando el mecanismo de rotación no está bloqueado</string>
+    <string name="feat_setting_screen_rotating_description">disponible cuando el modo de giro no está bloqueado</string>
     <string name="feat_setting_optional_player_features">funciones opcionales de reproducción</string>
     <string name="feat_setting_unseen_limit">recomendaciones de emisiones favortias vistas hace tiempo</string>
     <string name="feat_setting_reconnect_mode">autoreconectar</string>
