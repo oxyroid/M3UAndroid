@@ -13,6 +13,7 @@ import androidx.compose.material.icons.rounded.Recommend
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.SettingsRemote
 import androidx.compose.material.icons.rounded.Sync
+import androidx.compose.material.icons.rounded.Terrain
 import androidx.compose.material.icons.rounded.Timer
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -155,6 +156,13 @@ internal fun RegularPreferences(
             icon = Icons.Rounded.FlashOn,
             checked = preferences.paging,
             onChanged = { preferences.paging = !preferences.paging }
+        )
+
+        CheckBoxSharedPreference(
+            title = string.feat_setting_randomly_in_favourite,
+            icon = Icons.Rounded.Terrain,
+            checked = preferences.randomlyInFavourite,
+            onChanged = { preferences.randomlyInFavourite = !preferences.randomlyInFavourite }
         )
 
         CheckBoxSharedPreference(

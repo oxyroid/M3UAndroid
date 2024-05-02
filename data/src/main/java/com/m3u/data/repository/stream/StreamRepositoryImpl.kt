@@ -6,6 +6,7 @@ import com.m3u.core.architecture.logger.Profiles
 import com.m3u.core.architecture.logger.execute
 import com.m3u.core.architecture.logger.install
 import com.m3u.core.architecture.logger.sandBox
+import com.m3u.core.architecture.preferences.Preferences
 import com.m3u.data.database.dao.StreamDao
 import com.m3u.data.database.model.Stream
 import com.m3u.data.repository.stream.StreamRepository.Sort
@@ -17,6 +18,7 @@ import kotlin.time.Duration
 
 internal class StreamRepositoryImpl @Inject constructor(
     private val streamDao: StreamDao,
+    private val preferences: Preferences,
     logger: Logger,
 ) : StreamRepository {
     private val logger = logger.install(Profiles.REPOS_STREAM)
@@ -44,7 +46,8 @@ internal class StreamRepositoryImpl @Inject constructor(
     }
 
     override suspend fun random(): Stream? = logger.execute {
-        streamDao.random()
+        if (!preferences.randomlyInFavourite) streamDao.random()
+        else streamDao.randomInFavourite()
     }
 
     override suspend fun getByPlaylistUrl(playlistUrl: String): List<Stream> = logger.execute {
