@@ -502,7 +502,7 @@ private fun ProgrammeCell(
             val start = Instant.fromEpochMilliseconds(programme.start).toEOrSh()
             val end = Instant.fromEpochMilliseconds(programme.end).toEOrSh()
             Text(
-                text = "${programme.channelId}_${start.formatEOrSh()} - ${end.formatEOrSh()}",
+                text = "${start.formatEOrSh()} - ${end.formatEOrSh()}",
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 style = MaterialTheme.typography.bodyMedium,
