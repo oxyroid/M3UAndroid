@@ -42,12 +42,10 @@ import com.m3u.core.wrapper.handledEvent
 import com.m3u.core.wrapper.mapResource
 import com.m3u.core.wrapper.resource
 import com.m3u.data.database.dao.ProgrammeDao
-import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.Programme
 import com.m3u.data.database.model.Stream
-import com.m3u.data.parser.xtream.XtreamInput
-import com.m3u.data.parser.xtream.XtreamParser
+import com.m3u.data.database.model.epgUrlsOrXtreamXmlUrl
 import com.m3u.data.parser.xtream.XtreamStreamInfo
 import com.m3u.data.repository.media.MediaRepository
 import com.m3u.data.repository.playlist.PlaylistRepository
@@ -287,20 +285,8 @@ class PlaylistViewModel @Inject constructor(
     )
 
     internal suspend fun getProgrammeCurrently(channelId: String): Programme? {
-        val playlist = playlist.value
-        val epgUrls = when (playlist?.source) {
-            DataSource.Xtream -> {
-                val input = XtreamInput.decodeFromPlaylistUrl(playlist.url)
-                val epgUrl = XtreamParser.createXmlUrl(
-                    basicUrl = input.basicUrl,
-                    username = input.username,
-                    password = input.password
-                )
-                listOf(epgUrl)
-            }
-
-            else -> playlist?.epgUrls ?: emptyList()
-        }
+        val playlist = playlist.value ?: return null
+        val epgUrls = playlist.epgUrlsOrXtreamXmlUrl()
         if (epgUrls.isEmpty()) return null
         val time = Clock.System.now().toEpochMilliseconds()
         return programmeDao.getCurrentByEpgUrlsAndChannelId(

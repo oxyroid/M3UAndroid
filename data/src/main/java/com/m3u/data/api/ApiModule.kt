@@ -6,7 +6,6 @@ import android.content.Context
 import com.chuckerteam.chucker.api.ChuckerInterceptor
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import com.m3u.core.architecture.logger.Logger
-import com.m3u.core.architecture.logger.post
 import com.m3u.data.Certs
 import com.m3u.data.SSLs
 import dagger.Module
@@ -23,8 +22,6 @@ import okhttp3.Response
 import okhttp3.ResponseBody.Companion.toResponseBody
 import retrofit2.Retrofit
 import retrofit2.create
-import java.net.SocketException
-import java.net.SocketTimeoutException
 import javax.inject.Qualifier
 import javax.inject.Singleton
 
@@ -67,12 +64,6 @@ internal object ApiModule {
                 val request = chain.request()
                 try {
                     chain.proceed(request)
-                } catch (e: SocketException) {
-                    messager.post { e.localizedMessage }
-                    throw e
-                } catch (e: SocketTimeoutException) {
-                    messager.post { e.localizedMessage }
-                    throw e
                 } catch (e: Exception) {
                     logger.log(e)
                     Response.Builder()

@@ -316,7 +316,8 @@ class StreamViewModel @Inject constructor(
         playlist,
         programmeRepository.refreshingEpgUrls
     ) { playlist, refreshingEpgUrls ->
-        val epgUrls = playlist?.epgUrlsOrXtreamXmlUrl() ?: emptyList()
+        playlist ?: return@combine false
+        val epgUrls = playlist.epgUrlsOrXtreamXmlUrl()
         epgUrls.any { epgUrl -> epgUrl in refreshingEpgUrls }
     }
         .stateIn(
