@@ -486,7 +486,7 @@ private fun ProgrammeCell(
     val spacing = LocalSpacing.current
     val colorScheme = MaterialTheme.colorScheme
     Surface(
-        color = colorScheme.tertiaryContainer.copy(0.12f),
+        color = colorScheme.tertiaryContainer,
         border = BorderStroke(1.dp, colorScheme.outline),
         shape = AbsoluteRoundedCornerShape(4.dp),
         modifier = modifier
