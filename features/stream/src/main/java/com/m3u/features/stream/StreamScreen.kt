@@ -99,6 +99,7 @@ fun StreamRoute(
 
     val neighboring = viewModel.neighboring.collectAsLazyPagingItems()
     val programmes = viewModel.programmes.collectAsLazyPagingItems()
+    val timelineHourRange by viewModel.timelineHourRange.collectAsStateWithLifecycle()
 
     var brightness by remember { mutableFloatStateOf(helper.brightness) }
     var isPipMode by remember { mutableStateOf(false) }
@@ -197,6 +198,7 @@ fun StreamRoute(
                         isProgrammesRefreshing = isProgrammesRefreshing,
                         neighboring = neighboring,
                         programmes = programmes,
+                        timelineHourRange = timelineHourRange,
                         onRefreshProgrammesIgnoreCache = {
                             viewModel.checkOrRefreshProgrammes(true)
                         }

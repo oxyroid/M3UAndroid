@@ -6,29 +6,13 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import com.m3u.data.database.model.Programme
+import com.m3u.data.database.model.ProgrammeRange
 import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface ProgrammeDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertOrReplace(programme: Programme)
-
-    @Query(
-        """
-        SELECT id 
-        FROM programmes 
-        WHERE 
-            epg_url = :epgUrl
-            AND 
-            channel_id = :channelId 
-            AND 
-            start = :start
-            AND
-            `end` = :end
-        IS NOT NULL
-    """
-    )
-    suspend fun contains(epgUrl: String, channelId: String, start: Long, end: Long): Boolean
 
     @Query("""SELECT MAX("end") from programmes WHERE epg_url = :epgUrl""")
     suspend fun getMaxEndByEpgUrl(epgUrl: String): Long?
@@ -47,28 +31,14 @@ interface ProgrammeDao {
         channelId: String
     ): PagingSource<Int, Programme>
 
-    @Query("DELETE FROM programmes WHERE epg_url = :epgUrl AND `end` < :startEdge")
-    suspend fun cleanByEpgUrlAndStartEdge(epgUrl: String, startEdge: Long)
+    @Query("DELETE FROM programmes WHERE epg_url = :epgUrl")
+    suspend fun cleanByEpgUrl(epgUrl: String)
 
     @Query("SELECT * FROM programmes ORDER BY start")
     fun observeAll(): Flow<List<Programme>>
 
     @Query("DELETE FROM programmes WHERE epg_url = :epgUrl")
     suspend fun deleteAllByEpgUrl(epgUrl: String)
-
-    @Query(
-        """
-        SELECT * FROM programmes 
-        WHERE epg_url in (:epgUrls) 
-        AND 
-        channel_id = :channelId
-        ORDER BY start
-        """
-    )
-    suspend fun getAllByEpgUrlsAndChannelId(
-        epgUrls: List<String>,
-        channelId: String
-    ): List<Programme>
 
     @Query(
         """
@@ -84,4 +54,17 @@ interface ProgrammeDao {
         channelId: String,
         time: Long
     ): Programme?
+
+    @Query(
+        """
+        SELECT MIN(start) AS startEdge, MAX(`end`) AS endEdge
+        FROM programmes
+        WHERE epg_url in (:epgUrls)
+        AND channel_id = :channelId
+        """
+    )
+    fun observeProgrammeRange(
+        epgUrls: List<String>,
+        channelId: String
+    ): Flow<ProgrammeRange>
 }

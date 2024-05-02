@@ -6,7 +6,6 @@ import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.Profiles
 import com.m3u.core.architecture.logger.install
-import com.m3u.core.architecture.logger.post
 import com.m3u.data.api.OkhttpClient
 import com.m3u.data.database.dao.PlaylistDao
 import com.m3u.data.database.dao.ProgrammeDao
@@ -29,12 +28,15 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.supervisorScope
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.util.zip.GZIPInputStream
 import javax.inject.Inject
-import kotlin.math.min
+import kotlin.time.DurationUnit
+import kotlin.time.toDuration
 
 internal class ProgrammeRepositoryImpl @Inject constructor(
     private val playlistDao: PlaylistDao,
@@ -51,6 +53,15 @@ internal class ProgrammeRepositoryImpl @Inject constructor(
         epgUrls: List<String>,
         channelId: String
     ): PagingSource<Int, Programme> = programmeDao.pagingByEpgUrlsAndChannelId(epgUrls, channelId)
+
+    override fun observeTimeHourRange(epgUrls: List<String>, channelId: String): Flow<IntRange> {
+        return programmeDao
+            .observeProgrammeRange(epgUrls, channelId)
+            .map { (start, end) ->
+                val sh = Instant.fromEpochMilliseconds(start).toEOrSh().toInt()
+                sh..sh + (end - start).toDuration(DurationUnit.MILLISECONDS).inWholeHours.toInt()
+            }
+    }
 
     override suspend fun checkOrRefreshProgrammesOrThrow(
         playlistUrl: String,
@@ -95,23 +106,16 @@ internal class ProgrammeRepositoryImpl @Inject constructor(
                         check(epgPlaylist.source == DataSource.EPG) {
                             "Playlist which be queried by epgUrl is not epg source but ${epgPlaylist.source}"
                         }
-                        var startEdge: Long = Long.MAX_VALUE
+                        programmeDao.cleanByEpgUrl(epgUrl)
+//                        var startEdge: Long = Long.MAX_VALUE
+//                        var endEdge: Long = 0L
                         downloadProgrammes(epgUrl)
                             .map { it.toProgramme(epgUrl) }
                             .collect { programme ->
-                                startEdge = min(startEdge, programme.start)
-                                val contains = programmeDao.contains(
-                                    programme.epgUrl,
-                                    programme.channelId,
-                                    programme.start,
-                                    programme.end
-                                )
-                                if (!contains) {
-                                    programmeDao.insertOrReplace(programme)
-                                }
+                                programmeDao.insertOrReplace(programme)
                             }
-                        logger.post { "start-edge: ${Instant.fromEpochMilliseconds(startEdge)}" }
-                        programmeDao.cleanByEpgUrlAndStartEdge(epgUrl, startEdge)
+//                        logger.post { "start-edge: ${Instant.fromEpochMilliseconds(startEdge)}" }
+//                        programmeDao.cleanByEpgUrlAndStartEdge(epgUrl, startEdge)
                     } finally {
                         refreshingEpgUrls.value -= epgUrl
                     }
@@ -132,23 +136,13 @@ internal class ProgrammeRepositoryImpl @Inject constructor(
             val cacheMaxEnd = programmeDao.getMaxEndByEpgUrl(epgUrl)
             if (!ignoreCache && cacheMaxEnd != null && cacheMaxEnd > now) return@coroutineScope
 
-            var startEdge: Long = Long.MAX_VALUE
+            programmeDao.cleanByEpgUrl(epgUrl)
+
             downloadProgrammes(epgUrl)
                 .map { it.toProgramme(epgUrl) }
                 .collect { programme ->
-                    startEdge = min(startEdge, programme.start)
-                    val contains = programmeDao.contains(
-                        programme.epgUrl,
-                        programme.channelId,
-                        programme.start,
-                        programme.end
-                    )
-                    if (!contains) {
-                        programmeDao.insertOrReplace(programme)
-                    }
+                    programmeDao.insertOrReplace(programme)
                 }
-            logger.post { "start-edge: ${Instant.fromEpochMilliseconds(startEdge)}" }
-            programmeDao.cleanByEpgUrlAndStartEdge(epgUrl, startEdge)
         } finally {
             refreshingEpgUrls.value -= epgUrl
         }
@@ -182,4 +176,7 @@ internal class ProgrammeRepositoryImpl @Inject constructor(
             }
     }
         .flowOn(ioDispatcher)
+
+    private fun Instant.toEOrSh(): Float = toLocalDateTime(TimeZone.currentSystemDefault())
+        .run { hour + minute / 60f + second / 3600f }
 }

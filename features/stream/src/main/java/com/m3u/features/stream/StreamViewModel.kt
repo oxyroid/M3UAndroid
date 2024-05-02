@@ -1,7 +1,6 @@
 package com.m3u.features.stream
 
 import android.media.AudioManager
-import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.C
@@ -10,7 +9,6 @@ import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
-import androidx.paging.map
 import com.m3u.core.architecture.dispatcher.Dispatcher
 import com.m3u.core.architecture.dispatcher.M3uDispatchers.Main
 import com.m3u.core.architecture.logger.Logger
@@ -18,9 +16,11 @@ import com.m3u.core.architecture.logger.Profiles
 import com.m3u.core.architecture.logger.install
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
+import com.m3u.data.database.model.Programme
 import com.m3u.data.database.model.Stream
-import com.m3u.data.parser.xtream.XtreamInput
-import com.m3u.data.parser.xtream.XtreamParser
+import com.m3u.data.database.model.epgUrlsOrXtreamXmlUrl
+import com.m3u.data.database.model.type
+import com.m3u.data.repository.playlist.PlaylistRepository
 import com.m3u.data.repository.programme.ProgrammeRepository
 import com.m3u.data.repository.stream.StreamRepository
 import com.m3u.data.service.Messager
@@ -32,7 +32,6 @@ import com.m3u.dlna.OnDeviceRegistryListener
 import com.m3u.dlna.control.DeviceControl
 import com.m3u.dlna.control.OnDeviceControlListener
 import com.m3u.dlna.control.ServiceActionCallback
-import com.m3u.features.stream.Utils.toEOrSh
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.delay
@@ -43,31 +42,19 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.datetime.Instant
 import org.jupnp.model.meta.Device
 import javax.inject.Inject
 import kotlin.math.roundToInt
 import kotlin.time.Duration.Companion.milliseconds
 
-class ProgrammeGuide {
-    @Immutable
-    // sh: start hour, eh: end hour
-    data class Programme(
-        val sh: Float,
-        val eh: Float,
-        val programmeId: Int,
-        val title: String,
-        val desc: String,
-        val icon: String?
-    )
-}
-
 @HiltViewModel
 class StreamViewModel @Inject constructor(
+    private val playlistRepository: PlaylistRepository,
     private val streamRepository: StreamRepository,
     private val playerManager: PlayerManager,
     private val audioManager: AudioManager,
@@ -290,63 +277,46 @@ class StreamViewModel @Inject constructor(
             .cachedIn(viewModelScope)
     }
 
-    internal val programmes: Flow<PagingData<ProgrammeGuide.Programme>> = combine(
-        playlist,
-        stream
-    ) { playlist, stream -> playlist to stream }.flatMapLatest { (playlist, stream) ->
-        val epgUrls = when (playlist?.source) {
-            DataSource.Xtream -> {
-                val input = XtreamInput.decodeFromPlaylistUrl(playlist.url)
-                val epgUrl = XtreamParser.createXmlUrl(
-                    basicUrl = input.basicUrl,
-                    username = input.username,
-                    password = input.password
-                )
-                listOf(epgUrl)
-            }
-            else -> playlist?.epgUrls ?: emptyList()
-        }
+    internal val programmes: Flow<PagingData<Programme>> = stream.flatMapLatest { stream ->
+        stream ?: return@flatMapLatest flowOf()
+        val channelId = stream.channelId ?: return@flatMapLatest flowOf()
+        val playlist = stream.playlistUrl.let { playlistRepository.get(it) }
+        playlist ?: return@flatMapLatest flowOf()
+        val epgUrls = playlist.epgUrlsOrXtreamXmlUrl()
         Pager(PagingConfig(15)) {
             programmeRepository.pagingByEpgUrlsAndChannelId(
                 epgUrls = epgUrls,
-                channelId = stream?.channelId ?: ""
+                channelId = channelId
             )
         }
             .flow
-            .map {
-                it.map { prev ->
-                    val sh = Instant.fromEpochMilliseconds(prev.start).toEOrSh()
-                    val eh = Instant.fromEpochMilliseconds(prev.end).toEOrSh()
-                    ProgrammeGuide.Programme(
-                        sh = sh,
-                        eh = eh,
-                        programmeId = prev.id,
-                        title = prev.title,
-                        desc = prev.description,
-                        icon = prev.icon
-                    )
-                }
-            }
             .cachedIn(viewModelScope)
     }
+
+    internal val timelineHourRange: StateFlow<IntRange> = stream.flatMapLatest { stream ->
+        stream ?: return@flatMapLatest flowOf()
+        val channelId = stream.channelId ?: return@flatMapLatest flowOf()
+        val playlist = stream.playlistUrl.let { playlistRepository.get(it) }
+        playlist ?: return@flatMapLatest flowOf()
+        val epgUrls = playlist.epgUrlsOrXtreamXmlUrl()
+        programmeRepository
+            .observeTimeHourRange(epgUrls, channelId)
+            .map {
+                if (it.isEmpty()) 0..24
+                else it
+            }
+    }
+        .stateIn(
+            scope = viewModelScope,
+            initialValue = 0..24,
+            started = SharingStarted.WhileSubscribed(5_000L)
+        )
 
     internal val isEpgRefreshing: StateFlow<Boolean> = combine(
         playlist,
         programmeRepository.refreshingEpgUrls
     ) { playlist, refreshingEpgUrls ->
-        val epgUrls = when (playlist?.source) {
-            DataSource.Xtream -> {
-                val input = XtreamInput.decodeFromPlaylistUrl(playlist.url)
-                val epgUrl = XtreamParser.createXmlUrl(
-                    basicUrl = input.basicUrl,
-                    username = input.username,
-                    password = input.password
-                )
-                listOf(epgUrl)
-            }
-
-            else -> playlist?.epgUrls ?: emptyList()
-        }
+        val epgUrls = playlist?.epgUrlsOrXtreamXmlUrl() ?: emptyList()
         epgUrls.any { epgUrl -> epgUrl in refreshingEpgUrls }
     }
         .stateIn(

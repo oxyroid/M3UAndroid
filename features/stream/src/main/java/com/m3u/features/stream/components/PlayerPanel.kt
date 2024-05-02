@@ -13,7 +13,6 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
@@ -59,9 +58,9 @@ import androidx.compose.ui.zIndex
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.paging.compose.LazyPagingItems
 import coil.compose.AsyncImage
+import com.m3u.data.database.model.Programme
 import com.m3u.data.database.model.Stream
 import com.m3u.data.service.MediaCommand
-import com.m3u.features.stream.ProgrammeGuide
 import com.m3u.features.stream.Utils.formatEOrSh
 import com.m3u.features.stream.Utils.toEOrSh
 import com.m3u.material.components.Background
@@ -78,6 +77,7 @@ import eu.wewox.minabox.rememberMinaBoxState
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
 import kotlin.time.Duration.Companion.seconds
 
 
@@ -93,7 +93,8 @@ internal fun
     isPanelExpanded: Boolean,
     isProgrammesRefreshing: Boolean,
     neighboring: LazyPagingItems<Stream>,
-    programmes: LazyPagingItems<ProgrammeGuide.Programme>,
+    programmes: LazyPagingItems<Programme>,
+    timelineHourRange: IntRange,
     onRefreshProgrammesIgnoreCache: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -157,7 +158,10 @@ internal fun
                 isProgrammesRefreshing = isProgrammesRefreshing,
                 programmes = programmes,
                 onRefreshProgrammesIgnoreCache = onRefreshProgrammesIgnoreCache,
-                modifier = Modifier.fillMaxWidth()
+                timelineHourRange = timelineHourRange,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
             )
         }
     }
@@ -232,7 +236,8 @@ private enum class PanelZoom(val time: Float) {
 private fun PanelProgramGuide(
     isPanelExpanded: Boolean,
     isProgrammesRefreshing: Boolean,
-    programmes: LazyPagingItems<ProgrammeGuide.Programme>,
+    programmes: LazyPagingItems<Programme>,
+    timelineHourRange: IntRange,
     modifier: Modifier = Modifier,
     timelineWidth: Float = 128f,
     height: Float = 256f,
@@ -242,9 +247,12 @@ private fun PanelProgramGuide(
     onRefreshProgrammesIgnoreCache: () -> Unit
 ) {
     val spacing = LocalSpacing.current
+    val contentColor = LocalContentColor.current
+
     val minaBoxState = rememberMinaBoxState()
     val eOrSh by produceCurrentEOrShState()
     val coroutineScope = rememberCoroutineScope()
+
     var zoom: PanelZoom by remember { mutableStateOf(PanelZoom.DEFAULT) }
     val zoomModifier = Modifier.pointerInput(Unit) {
         detectTapGestures(
@@ -275,34 +283,59 @@ private fun PanelProgramGuide(
     }
     MeshContainer {
         BoxWithConstraints(zoomModifier.then(modifier), Alignment.Center) {
+            val current = run {
+                if (programmes.itemCount == 0) Clock.System.now().toEpochMilliseconds()
+                else programmes[0]?.start ?: Clock.System.now().toEpochMilliseconds()
+            }
             MinaBox(
                 state = minaBoxState,
-                modifier = Modifier.blurEdges(
-                    MaterialTheme.colorScheme.surface,
-                    listOf(Edge.Top, Edge.Bottom)
-                )
+                modifier = Modifier
+                    .fillMaxSize()
+                    .blurEdges(
+                        MaterialTheme.colorScheme.surface,
+                        listOf(Edge.Top, Edge.Bottom)
+                    )
             ) {
                 // timelines
+                val duration = timelineHourRange.count()
                 items(
-                    count = 24,
+                    count = duration,
                     layoutInfo = { index ->
                         MinaBoxItem(
                             x = 0f,
-                            y = index * currentHeight + padding * 2,
+                            y = currentHeight * index + padding * 2.5f,
                             width = timelineWidth,
                             height = currentHeight
                         )
                     }
-                ) {
-                    val contentColor = LocalContentColor.current
-                    val lineCount = 12
+                ) { index ->
+                    val start = remember(timelineHourRange.first) {
+                        Instant.fromEpochMilliseconds(
+                            timelineHourRange.first + index * (1000 * 3600L)
+                        ).toEOrSh()
+                    }
+                    val end = remember(timelineHourRange.first) {
+                        Instant.fromEpochMilliseconds(
+                            timelineHourRange.first + (index + 1) * (1000 * 3600L)
+                        )
+                            .toEOrSh()
+                            // cross midnight
+                            .let { if (it < start) it + 24 else it }
+                    }
                     Canvas(Modifier.fillMaxSize()) {
-                        repeat(lineCount) {
-                            if (it == 0) {
+                        var currentTimeline = start
+                        while (currentTimeline <= end) {
+                            if (currentTimeline.toInt().toFloat() == currentTimeline) {
                                 drawLine(
                                     color = contentColor,
-                                    start = Offset(size.width / 2f, 0f),
-                                    end = Offset(size.width, 0f),
+                                    start = Offset(
+                                        size.width / 2f,
+                                        currentHeight * (currentTimeline - start)
+                                    ),
+                                    end = Offset(
+                                        size.width,
+                                        currentHeight * (currentTimeline - start)
+                                    ),
                                     strokeWidth = 2f
                                 )
                             } else {
@@ -310,30 +343,34 @@ private fun PanelProgramGuide(
                                     color = contentColor,
                                     start = Offset(
                                         size.width / 3f * 2,
-                                        size.height / lineCount * it
+                                        currentHeight * (currentTimeline - start)
                                     ),
-                                    end = Offset(size.width, size.height / lineCount * it)
+                                    end = Offset(
+                                        size.width,
+                                        currentHeight * (currentTimeline - start)
+                                    )
                                 )
                             }
+                            currentTimeline += 1 / 12f
                         }
                     }
                 }
 
-                items(
-                    count = 24,
-                    layoutInfo = { index ->
-                        MinaBoxItem(
-                            x = -timelineWidth / 5,
-                            y = index * currentHeight - currentHeight / 2 + padding * 2,
-                            width = timelineWidth,
-                            height = currentHeight
-                        )
-                    }
-                ) {
-                    Box(Modifier.fillMaxSize(), Alignment.Center) {
-                        Text(text = "$it")
-                    }
-                }
+//                items(
+//                    count = programmes.itemCount,
+//                    layoutInfo = { index ->
+//                        MinaBoxItem(
+//                            x = -timelineWidth / 5,
+//                            y = index * currentHeight - currentHeight / 2 + padding * 2,
+//                            width = timelineWidth,
+//                            height = currentHeight
+//                        )
+//                    }
+//                ) {
+//                    Box(Modifier.fillMaxSize(), Alignment.Center) {
+//                        Text(text = "$it")
+//                    }
+//                }
 
                 // programmes
                 items(
@@ -341,14 +378,14 @@ private fun PanelProgramGuide(
                     layoutInfo = { index ->
                         val programme = programmes[index]
                         if (programme != null) {
-                            val start = programme.sh
-                            val end = programme.eh
+                            val start = programme.start
+                            val end = programme.end
                             MinaBoxItem(
                                 x = timelineWidth + padding,
-                                y = currentHeight * start + padding * 3,
+                                y = currentHeight * (start - current) / 3600000 + padding * 3, // todo
                                 width = (constraints.maxWidth - timelineWidth - padding)
                                     .coerceAtLeast(0f),
-                                height = (currentHeight * (end - start) - padding)
+                                height = (currentHeight * (end - start) / 3600000 - padding) // todo
                                     .coerceAtLeast(0f)
                             )
                         } else {
@@ -443,13 +480,13 @@ private fun AnimateScrollToStreamEffect(
 
 @Composable
 private fun ProgrammeCell(
-    programme: ProgrammeGuide.Programme,
+    programme: Programme,
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
     val colorScheme = MaterialTheme.colorScheme
     Surface(
-        color = colorScheme.tertiaryContainer,
+        color = colorScheme.tertiaryContainer.copy(0.12f),
         border = BorderStroke(1.dp, colorScheme.outline),
         shape = AbsoluteRoundedCornerShape(4.dp),
         modifier = modifier
@@ -462,10 +499,10 @@ private fun ProgrammeCell(
             verticalArrangement = Arrangement.spacedBy(spacing.small),
             maxItemsInEachRow = 2
         ) {
-            val start = programme.sh
-            val end = programme.eh
+            val start = Instant.fromEpochMilliseconds(programme.start).toEOrSh()
+            val end = Instant.fromEpochMilliseconds(programme.end).toEOrSh()
             Text(
-                text = "${start.formatEOrSh()} - ${end.formatEOrSh()}",
+                text = "${programme.channelId}_${start.formatEOrSh()} - ${end.formatEOrSh()}",
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 style = MaterialTheme.typography.bodyMedium,
@@ -497,7 +534,7 @@ private fun ProgrammeCell(
                 )
             }
             Text(
-                text = programme.desc,
+                text = programme.description,
                 overflow = TextOverflow.Ellipsis,
                 style = MaterialTheme.typography.bodyMedium,
                 fontFamily = FontFamilies.LexendExa

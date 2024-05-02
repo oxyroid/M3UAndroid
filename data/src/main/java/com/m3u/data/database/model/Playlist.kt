@@ -11,6 +11,7 @@ import androidx.room.Relation
 import com.m3u.core.util.Likable
 import com.m3u.core.util.basic.startsWithAny
 import com.m3u.data.parser.xtream.XtreamInput
+import com.m3u.data.parser.xtream.XtreamParser
 import com.m3u.i18n.R
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
@@ -51,28 +52,6 @@ data class Playlist(
     @ColumnInfo(name = "epg_urls", defaultValue = "[]")
     val epgUrls: List<String> = emptyList()
 ) : Likable<Playlist> {
-    val fromLocal: Boolean
-        get() {
-            if (source != DataSource.M3U) return false
-            return url == URL_IMPORTED || url.startsWithAny(
-                "file://",
-                "content://",
-                ignoreCase = true
-            )
-        }
-
-    val type: String?
-        get() = when (source) {
-            DataSource.Xtream -> XtreamInput.decodeFromPlaylistUrl(url).type
-            else -> null
-        }
-
-    val typeWithSource: String?
-        get() {
-            if (type == null) return null
-            return "$source $type"
-        }
-
     override fun like(another: Playlist): Boolean {
         return title == another.title && url == another.url && source == another.source
     }
@@ -87,6 +66,42 @@ data class Playlist(
             DataSource.Xtream.TYPE_VOD
         )
     }
+}
+
+val Playlist.fromLocal: Boolean
+    get() {
+        if (source != DataSource.M3U) return false
+        return url == Playlist.URL_IMPORTED || url.startsWithAny(
+            "file://",
+            "content://",
+            ignoreCase = true
+        )
+    }
+
+val Playlist.type: String?
+    get() = when (source) {
+        DataSource.Xtream -> XtreamInput.decodeFromPlaylistUrl(url).type
+        else -> null
+    }
+
+val Playlist.typeWithSource: String?
+    get() {
+        if (type == null) return null
+        return "$source $type"
+    }
+
+fun Playlist.epgUrlsOrXtreamXmlUrl(): List<String> = when (source) {
+    DataSource.Xtream -> {
+        val input = XtreamInput.decodeFromPlaylistUrl(url)
+        val epgUrl = XtreamParser.createXmlUrl(
+            basicUrl = input.basicUrl,
+            username = input.username,
+            password = input.password
+        )
+        listOf(epgUrl)
+    }
+
+    else -> epgUrls
 }
 
 data class PlaylistWithStreams(

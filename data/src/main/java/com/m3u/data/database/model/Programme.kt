@@ -34,3 +34,9 @@ data class Programme(
     @ColumnInfo(name = "id")
     val id: Int = 0
 )
+
+@Keep
+data class ProgrammeRange(
+    val startEdge: Long,
+    val endEdge: Long
+)

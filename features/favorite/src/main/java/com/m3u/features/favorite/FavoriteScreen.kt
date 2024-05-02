@@ -27,6 +27,7 @@ import com.m3u.core.util.basic.title
 import com.m3u.core.wrapper.Resource
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.Stream
+import com.m3u.data.database.model.type
 import com.m3u.data.service.MediaCommand
 import com.m3u.features.favorite.components.FavouriteGallery
 import com.m3u.i18n.R
