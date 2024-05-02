@@ -302,7 +302,7 @@ class StreamViewModel @Inject constructor(
         programmeRepository
             .observeTimeHourRange(epgUrls, channelId)
             .map {
-                if (it.isEmpty()) 0..24
+                if (it.count() < 24) it.first until (it.first + 24)
                 else it
             }
     }
