@@ -11,10 +11,10 @@ interface ProgrammeRepository {
         channelId: String
     ): PagingSource<Int, Programme>
 
-    fun observeTimeHourRange(
+    fun observeTimelineRange(
         epgUrls: List<String>,
         channelId: String
-    ): Flow<IntRange>
+    ): Flow<LongRange>
 
     val refreshingEpgUrls: StateFlow<List<String>>
     suspend fun checkOrRefreshProgrammesOrThrow(

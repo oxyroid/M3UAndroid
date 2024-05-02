@@ -94,7 +94,7 @@ internal fun
     isProgrammesRefreshing: Boolean,
     neighboring: LazyPagingItems<Stream>,
     programmes: LazyPagingItems<Programme>,
-    timelineHourRange: IntRange,
+    timelineRange: LongRange,
     onRefreshProgrammesIgnoreCache: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -158,7 +158,7 @@ internal fun
                 isProgrammesRefreshing = isProgrammesRefreshing,
                 programmes = programmes,
                 onRefreshProgrammesIgnoreCache = onRefreshProgrammesIgnoreCache,
-                timelineHourRange = timelineHourRange,
+                timelineRange = timelineRange,
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
@@ -237,7 +237,7 @@ private fun PanelProgramGuide(
     isPanelExpanded: Boolean,
     isProgrammesRefreshing: Boolean,
     programmes: LazyPagingItems<Programme>,
-    timelineHourRange: IntRange,
+    timelineRange: LongRange,
     modifier: Modifier = Modifier,
     timelineWidth: Float = 128f,
     height: Float = 256f,
@@ -250,7 +250,7 @@ private fun PanelProgramGuide(
     val contentColor = LocalContentColor.current
 
     val minaBoxState = rememberMinaBoxState()
-    val eOrSh by produceCurrentEOrShState()
+    val currentMilliseconds by produceCurrentMillisecondState()
     val coroutineScope = rememberCoroutineScope()
 
     var zoom: PanelZoom by remember { mutableStateOf(PanelZoom.DEFAULT) }
@@ -272,21 +272,20 @@ private fun PanelProgramGuide(
         label = "minabox-cell-height"
     )
 
-    val animateToCurrentEOrSh: suspend () -> Unit by rememberUpdatedState {
-        minaBoxState.animateTo(0f, eOrSh * currentHeight + scrollOffset)
+    val animateToCurrentTimeline: suspend () -> Unit by rememberUpdatedState {
+        minaBoxState.animateTo(
+            0f,
+            (currentMilliseconds - timelineRange.first) / 3600000f * currentHeight + scrollOffset
+        )
     }
 
     if (isPanelExpanded) {
         LaunchedEffect(Unit) {
-            animateToCurrentEOrSh()
+            animateToCurrentTimeline()
         }
     }
     MeshContainer {
         BoxWithConstraints(zoomModifier.then(modifier), Alignment.Center) {
-            val current = run {
-                if (programmes.itemCount == 0) Clock.System.now().toEpochMilliseconds()
-                else programmes[0]?.start ?: Clock.System.now().toEpochMilliseconds()
-            }
             MinaBox(
                 state = minaBoxState,
                 modifier = Modifier
@@ -297,9 +296,8 @@ private fun PanelProgramGuide(
                     )
             ) {
                 // timelines
-                val duration = timelineHourRange.count()
                 items(
-                    count = duration,
+                    count = (timelineRange.last - timelineRange.first).floorDiv(3600000).toInt(),
                     layoutInfo = { index ->
                         MinaBoxItem(
                             x = 0f,
@@ -309,20 +307,22 @@ private fun PanelProgramGuide(
                         )
                     }
                 ) { index ->
-                    val start = remember(timelineHourRange.first) {
+                    val start = remember(timelineRange.first) {
                         Instant.fromEpochMilliseconds(
-                            timelineHourRange.first + index * (1000 * 3600L)
+                            timelineRange.first + index * 3600000
                         ).toEOrSh()
                     }
-                    val end = remember(timelineHourRange.first) {
+                    val end = remember(timelineRange.first) {
                         Instant.fromEpochMilliseconds(
-                            timelineHourRange.first + (index + 1) * (1000 * 3600L)
+                            timelineRange.first + (index + 1) * 3600000
                         )
                             .toEOrSh()
                             // cross midnight
                             .let { if (it < start) it + 24 else it }
                     }
-                    Canvas(Modifier.fillMaxSize()) {
+                    Canvas(
+                        Modifier.fillMaxSize()
+                    ) {
                         var currentTimeline = start
                         while (currentTimeline <= end) {
                             if (currentTimeline.toInt().toFloat() == currentTimeline) {
@@ -356,22 +356,6 @@ private fun PanelProgramGuide(
                     }
                 }
 
-//                items(
-//                    count = programmes.itemCount,
-//                    layoutInfo = { index ->
-//                        MinaBoxItem(
-//                            x = -timelineWidth / 5,
-//                            y = index * currentHeight - currentHeight / 2 + padding * 2,
-//                            width = timelineWidth,
-//                            height = currentHeight
-//                        )
-//                    }
-//                ) {
-//                    Box(Modifier.fillMaxSize(), Alignment.Center) {
-//                        Text(text = "$it")
-//                    }
-//                }
-
                 // programmes
                 items(
                     count = programmes.itemCount,
@@ -382,7 +366,7 @@ private fun PanelProgramGuide(
                             val end = programme.end
                             MinaBoxItem(
                                 x = timelineWidth + padding,
-                                y = currentHeight * (start - current) / 3600000 + padding * 3, // todo
+                                y = currentHeight * (start - timelineRange.first) / 3600000 + padding * 3, // todo
                                 width = (constraints.maxWidth - timelineWidth - padding)
                                     .coerceAtLeast(0f),
                                 height = (currentHeight * (end - start) / 3600000 - padding) // todo
@@ -404,9 +388,9 @@ private fun PanelProgramGuide(
                     layoutInfo = {
                         MinaBoxItem(
                             x = timelineWidth / 2f,
-                            y = eOrSh * currentHeight + padding * 2,
+                            y = (currentMilliseconds - timelineRange.first) / 3600000f * currentHeight + padding * 2,
                             width = constraints.maxWidth - timelineWidth / 2f,
-                            height = eOrShSize,
+                            height = eOrShSize
                         )
                     }
                 ) {
@@ -420,7 +404,7 @@ private fun PanelProgramGuide(
             ) {
                 val (refresh, scroll) = createRefs()
                 SmallFloatingActionButton(
-                    onClick = { coroutineScope.launch { animateToCurrentEOrSh() } },
+                    onClick = { coroutineScope.launch { animateToCurrentTimeline() } },
                     modifier = Modifier.constrainAs(scroll) {
                         this.end.linkTo(parent.end)
                         this.bottom.linkTo(parent.bottom)
@@ -576,13 +560,13 @@ private fun CurrentTimeLine(modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun produceCurrentEOrShState(): State<Float> = produceState(
-    initialValue = Clock.System.now().toEOrSh()
+private fun produceCurrentMillisecondState(): State<Long> = produceState(
+    initialValue = Clock.System.now().toEpochMilliseconds()
 ) {
     launch {
         while (true) {
             delay(1.seconds)
-            value = Clock.System.now().toEOrSh()
+            value = Clock.System.now().toEpochMilliseconds()
         }
     }
 }

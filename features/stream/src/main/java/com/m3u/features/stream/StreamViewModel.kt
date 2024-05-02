@@ -47,9 +47,11 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.datetime.Clock
 import org.jupnp.model.meta.Device
 import javax.inject.Inject
 import kotlin.math.roundToInt
+import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.milliseconds
 
 @HiltViewModel
@@ -293,22 +295,27 @@ class StreamViewModel @Inject constructor(
             .cachedIn(viewModelScope)
     }
 
-    internal val timelineHourRange: StateFlow<IntRange> = stream.flatMapLatest { stream ->
+    internal val timelineRange: StateFlow<LongRange> = stream.flatMapLatest { stream ->
         stream ?: return@flatMapLatest flowOf()
         val channelId = stream.channelId ?: return@flatMapLatest flowOf()
         val playlist = stream.playlistUrl.let { playlistRepository.get(it) }
         playlist ?: return@flatMapLatest flowOf()
         val epgUrls = playlist.epgUrlsOrXtreamXmlUrl()
         programmeRepository
-            .observeTimeHourRange(epgUrls, channelId)
+            .observeTimelineRange(epgUrls, channelId)
             .map {
-                if (it.count() < 24) it.first until (it.first + 24)
-                else it
+                if (it.isEmpty()) {
+                    with(Clock.System.now()) {
+                        this.toEpochMilliseconds()..this.plus(24.hours).toEpochMilliseconds()
+                    }
+                } else it
             }
     }
         .stateIn(
             scope = viewModelScope,
-            initialValue = 0..24,
+            initialValue = with(Clock.System.now()) {
+                this.toEpochMilliseconds()..this.plus(24.hours).toEpochMilliseconds()
+            },
             started = SharingStarted.WhileSubscribed(5_000L)
         )
 

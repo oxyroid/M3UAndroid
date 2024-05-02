@@ -27,16 +27,11 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.supervisorScope
 import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.util.zip.GZIPInputStream
 import javax.inject.Inject
-import kotlin.time.DurationUnit
-import kotlin.time.toDuration
 
 internal class ProgrammeRepositoryImpl @Inject constructor(
     private val playlistDao: PlaylistDao,
@@ -54,12 +49,13 @@ internal class ProgrammeRepositoryImpl @Inject constructor(
         channelId: String
     ): PagingSource<Int, Programme> = programmeDao.pagingByEpgUrlsAndChannelId(epgUrls, channelId)
 
-    override fun observeTimeHourRange(epgUrls: List<String>, channelId: String): Flow<IntRange> {
+    override fun observeTimelineRange(epgUrls: List<String>, channelId: String): Flow<LongRange> {
         return programmeDao
             .observeProgrammeRange(epgUrls, channelId)
             .map { (start, end) ->
-                val sh = Instant.fromEpochMilliseconds(start).toEOrSh().toInt()
-                sh..sh + (end - start).toDuration(DurationUnit.MILLISECONDS).inWholeHours.toInt()
+//                val sh = Instant.fromEpochMilliseconds(start).toEOrSh().toInt()
+//                sh..sh + (end - start).toDuration(DurationUnit.MILLISECONDS).inWholeHours.toInt()
+                start .. end
             }
     }
 
@@ -176,7 +172,4 @@ internal class ProgrammeRepositoryImpl @Inject constructor(
             }
     }
         .flowOn(ioDispatcher)
-
-    private fun Instant.toEOrSh(): Float = toLocalDateTime(TimeZone.currentSystemDefault())
-        .run { hour + minute / 60f + second / 3600f }
 }
