@@ -14,6 +14,7 @@ import com.m3u.core.architecture.dispatcher.M3uDispatchers.Main
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.Profiles
 import com.m3u.core.architecture.logger.install
+import com.m3u.core.architecture.logger.post
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.Programme
@@ -42,12 +43,15 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
 import org.jupnp.model.meta.Device
 import javax.inject.Inject
 import kotlin.math.roundToInt
@@ -280,10 +284,10 @@ class StreamViewModel @Inject constructor(
     }
 
     internal val programmes: Flow<PagingData<Programme>> = stream.flatMapLatest { stream ->
-        stream ?: return@flatMapLatest flowOf()
-        val channelId = stream.channelId ?: return@flatMapLatest flowOf()
+        stream ?: return@flatMapLatest flow { }
+        val channelId = stream.channelId ?: return@flatMapLatest flow { }
         val playlist = stream.playlistUrl.let { playlistRepository.get(it) }
-        playlist ?: return@flatMapLatest flowOf()
+        playlist ?: return@flatMapLatest flow { }
         val epgUrls = playlist.epgUrlsOrXtreamXmlUrl()
         Pager(PagingConfig(15)) {
             programmeRepository.pagingByEpgUrlsAndChannelId(
@@ -304,12 +308,21 @@ class StreamViewModel @Inject constructor(
         programmeRepository
             .observeTimelineRange(epgUrls, channelId)
             .map {
-                if (it.isEmpty()) {
-                    with(Clock.System.now()) {
+                when {
+                    it.isEmpty() -> with(Clock.System.now()) {
                         this.toEpochMilliseconds()..this.plus(24.hours).toEpochMilliseconds()
                     }
-                } else it
+
+                    it.count() < 12 * 3600000L -> {
+                        with(Instant.fromEpochMilliseconds(it.first)) {
+                            this.toEpochMilliseconds()..this.plus(24.hours).toEpochMilliseconds()
+                        }
+                    }
+
+                    else -> it
+                }
             }
+            .onEach { logger.post { it } }
     }
         .stateIn(
             scope = viewModelScope,

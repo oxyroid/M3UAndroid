@@ -1,11 +1,13 @@
 package com.m3u.core.architecture.logger
 
+import com.m3u.core.wrapper.Message
+
 object Profiles {
     val VIEWMODEL_FAVOURITE = Profile("viewmodel-favourite")
     val VIEWMODEL_FORYOU = Profile("viewmodel-foryou")
     val VIEWMODEL_PLAYLIST = Profile("viewmodel-playlist")
     val VIEWMODEL_SETTING = Profile("viewmodel-setting")
-    val VIEWMODEL_STREAM = Profile("viewmodel-stream")
+    val VIEWMODEL_STREAM = Profile("viewmodel-stream", Message.LEVEL_INFO)
 
     val REPOS_PLAYLIST = Profile("repos-playlist")
     val REPOS_STREAM = Profile("repos-stream")

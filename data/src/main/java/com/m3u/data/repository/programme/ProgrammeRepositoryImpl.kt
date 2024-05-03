@@ -23,6 +23,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.filterNot
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.supervisorScope
@@ -52,10 +53,11 @@ internal class ProgrammeRepositoryImpl @Inject constructor(
     override fun observeTimelineRange(epgUrls: List<String>, channelId: String): Flow<LongRange> {
         return programmeDao
             .observeProgrammeRange(epgUrls, channelId)
+            .filterNot { (start, _) -> start == 0L }
             .map { (start, end) ->
 //                val sh = Instant.fromEpochMilliseconds(start).toEOrSh().toInt()
 //                sh..sh + (end - start).toDuration(DurationUnit.MILLISECONDS).inWholeHours.toInt()
-                start .. end
+                start..end
             }
     }
 
@@ -103,15 +105,11 @@ internal class ProgrammeRepositoryImpl @Inject constructor(
                             "Playlist which be queried by epgUrl is not epg source but ${epgPlaylist.source}"
                         }
                         programmeDao.cleanByEpgUrl(epgUrl)
-//                        var startEdge: Long = Long.MAX_VALUE
-//                        var endEdge: Long = 0L
                         downloadProgrammes(epgUrl)
                             .map { it.toProgramme(epgUrl) }
                             .collect { programme ->
                                 programmeDao.insertOrReplace(programme)
                             }
-//                        logger.post { "start-edge: ${Instant.fromEpochMilliseconds(startEdge)}" }
-//                        programmeDao.cleanByEpgUrlAndStartEdge(epgUrl, startEdge)
                     } finally {
                         refreshingEpgUrls.value -= epgUrl
                     }
