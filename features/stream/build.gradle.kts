@@ -56,6 +56,10 @@ dependencies {
     implementation(libs.com.google.dagger.hilt.android)
     implementation(libs.androidx.hilt.hilt.navigation.compose)
     ksp(libs.com.google.dagger.hilt.compiler)
+    
+    implementation(libs.androidx.work.work.runtime.ktx)
+    ksp(libs.androidx.hilt.hilt.compiler)
+    implementation(libs.androidx.hilt.hilt.work)
 
     implementation(libs.jupnp)
     implementation(libs.minabox)

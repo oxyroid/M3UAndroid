@@ -26,6 +26,7 @@ import com.m3u.data.R
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.parser.xtream.XtreamInput
 import com.m3u.data.repository.playlist.PlaylistRepository
+import com.m3u.data.repository.programme.ProgrammeRepository
 import com.m3u.i18n.R.string
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
@@ -39,6 +40,7 @@ class SubscriptionWorker @AssistedInject constructor(
     @Assisted private val context: Context,
     @Assisted params: WorkerParameters,
     private val playlistRepository: PlaylistRepository,
+    private val programmeRepository: ProgrammeRepository,
     private val notificationManager: NotificationManager,
     private val workManager: WorkManager,
     delegate: Logger
@@ -54,7 +56,8 @@ class SubscriptionWorker @AssistedInject constructor(
     private val username = inputData.getString(INPUT_STRING_USERNAME)
     private val password = inputData.getString(INPUT_STRING_PASSWORD)
     private val url = inputData.getString(INPUT_STRING_URL)
-    private val epg = inputData.getString(INPUT_STRING_EPG)
+    private val epgPlaylistUrl = inputData.getString(INPUT_STRING_EPG_PLAYLIST_URL)
+    private val epgIgnoreCache = inputData.getBoolean(INPUT_BOOLEAN_EPG_IGNORE_CACHE, false)
     private val notificationId: Int by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
         ATOMIC_NOTIFICATION_ID.incrementAndGet()
     }
@@ -108,10 +111,13 @@ class SubscriptionWorker @AssistedInject constructor(
             }
 
             DataSource.EPG -> {
-                val title = title ?: return@coroutineScope Result.failure()
-                val epg = epg ?: return@coroutineScope Result.failure()
+                val playlistUrl = epgPlaylistUrl ?: return@coroutineScope Result.failure()
+                val ignoreCache = epgIgnoreCache
                 try {
-                    playlistRepository.epgOrThrow(title, epg)
+                    programmeRepository.checkOrRefreshProgrammesOrThrow(
+                        playlistUrl = playlistUrl,
+                        ignoreCache = ignoreCache
+                    )
                     Result.success()
                 } catch (e: Exception) {
                     createN10nBuilder()
@@ -241,7 +247,8 @@ class SubscriptionWorker @AssistedInject constructor(
         private const val NOTIFICATION_NAME = "subscribe task"
         private const val INPUT_STRING_TITLE = "title"
         private const val INPUT_STRING_URL = "url"
-        private const val INPUT_STRING_EPG = "epg"
+        private const val INPUT_STRING_EPG_PLAYLIST_URL = "epg"
+        private const val INPUT_BOOLEAN_EPG_IGNORE_CACHE = "ignore_cache"
         private const val INPUT_STRING_BASIC_URL = "basic_url"
         private const val INPUT_STRING_USERNAME = "username"
         private const val INPUT_STRING_PASSWORD = "password"
@@ -276,19 +283,19 @@ class SubscriptionWorker @AssistedInject constructor(
 
         fun epg(
             workManager: WorkManager,
-            title: String,
-            epg: String
+            playlistUrl: String,
+            ignoreCache: Boolean
         ) {
-            workManager.cancelAllWorkByTag(epg)
+            workManager.cancelAllWorkByTag(playlistUrl)
             val request = OneTimeWorkRequestBuilder<SubscriptionWorker>()
                 .setInputData(
                     workDataOf(
-                        INPUT_STRING_TITLE to title,
-                        INPUT_STRING_EPG to epg,
-                        INPUT_STRING_DATA_SOURCE_VALUE to DataSource.EPG.value
+                        INPUT_STRING_EPG_PLAYLIST_URL to playlistUrl,
+                        INPUT_BOOLEAN_EPG_IGNORE_CACHE to ignoreCache,
+                        INPUT_STRING_DATA_SOURCE_VALUE to DataSource.EPG.value,
                     )
                 )
-                .addTag(epg)
+                .addTag(playlistUrl)
                 .addTag(TAG)
                 .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
                 .setConstraints(

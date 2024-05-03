@@ -207,7 +207,9 @@ class SettingViewModel @Inject constructor(
                         messager.emit(SettingMessage.EmptyEpg)
                         return
                     }
-                    SubscriptionWorker.epg(workManager, title, epg)
+                    viewModelScope.launch {
+                        playlistRepository.insertEpgAsPlaylist(title, epg)
+                    }
                     messager.emit(SettingMessage.EpgAdded)
                 }
 

@@ -345,16 +345,17 @@ internal class PlaylistRepositoryImpl @Inject constructor(
             .collect()
     }
 
-    override suspend fun epgOrThrow(title: String, epg: String): Unit = withContext(ioDispatcher) {
-        // just save epg playlist to db
-        playlistDao.insertOrReplace(
-            Playlist(
-                title = title,
-                url = epg,
-                source = DataSource.EPG
+    override suspend fun insertEpgAsPlaylist(title: String, epg: String): Unit =
+        withContext(ioDispatcher) {
+            // just save epg playlist to db
+            playlistDao.insertOrReplace(
+                Playlist(
+                    title = title,
+                    url = epg,
+                    source = DataSource.EPG
+                )
             )
-        )
-    }
+        }
 
     override suspend fun refresh(url: String) = logger.sandBox {
         val playlist = checkNotNull(get(url)) { "Cannot find playlist: $url" }
@@ -366,7 +367,7 @@ internal class PlaylistRepositoryImpl @Inject constructor(
             }
 
             DataSource.EPG -> {
-                SubscriptionWorker.epg(workManager, playlist.title, url)
+                SubscriptionWorker.epg(workManager, url, false)
             }
 
             DataSource.Xtream -> {

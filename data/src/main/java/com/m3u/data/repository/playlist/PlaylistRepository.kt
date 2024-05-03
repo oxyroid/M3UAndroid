@@ -33,7 +33,7 @@ interface PlaylistRepository {
         callback: (count: Int) -> Unit = {}
     )
 
-    suspend fun epgOrThrow(title: String, epg: String)
+    suspend fun insertEpgAsPlaylist(title: String, epg: String)
 
     suspend fun refresh(url: String)
 

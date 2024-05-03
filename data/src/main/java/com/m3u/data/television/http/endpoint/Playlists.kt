@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.work.WorkManager
 import com.m3u.core.architecture.preferences.Preferences
 import com.m3u.data.database.model.DataSource
+import com.m3u.data.repository.playlist.PlaylistRepository
 import com.m3u.data.worker.SubscriptionWorker
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.ktor.server.response.respond
@@ -17,6 +18,7 @@ import javax.inject.Singleton
 data class Playlists @Inject constructor(
     private val workManager: WorkManager,
     private val preferences: Preferences,
+    private val playlistRepository: PlaylistRepository,
     @ApplicationContext private val context: Context
 ) : Endpoint {
     override fun apply(route: Route) {
@@ -85,7 +87,7 @@ data class Playlists @Inject constructor(
                             )
                             return@post
                         }
-                        SubscriptionWorker.epg(workManager, title, epg)
+                        playlistRepository.insertEpgAsPlaylist(title, epg)
                     }
 
                     else -> {}

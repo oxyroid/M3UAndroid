@@ -9,6 +9,7 @@ import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
+import androidx.work.WorkManager
 import com.m3u.core.architecture.dispatcher.Dispatcher
 import com.m3u.core.architecture.dispatcher.M3uDispatchers.Main
 import com.m3u.core.architecture.logger.Logger
@@ -29,6 +30,7 @@ import com.m3u.data.service.Messager
 import com.m3u.data.service.PlayerManager
 import com.m3u.data.service.selectedFormats
 import com.m3u.data.service.trackFormats
+import com.m3u.data.worker.SubscriptionWorker
 import com.m3u.dlna.DLNACastManager
 import com.m3u.dlna.OnDeviceRegistryListener
 import com.m3u.dlna.control.DeviceControl
@@ -66,6 +68,7 @@ class StreamViewModel @Inject constructor(
     private val playerManager: PlayerManager,
     private val audioManager: AudioManager,
     private val programmeRepository: ProgrammeRepository,
+    private val workManager: WorkManager,
     delegate: Logger,
     private val messager: Messager,
     @Dispatcher(Main) private val mainDispatcher: CoroutineDispatcher
@@ -360,18 +363,7 @@ class StreamViewModel @Inject constructor(
     internal fun checkOrRefreshProgrammes(ignoreCache: Boolean = false) {
         viewModelScope.launch {
             val stream = stream.value ?: return@launch
-            val result = runCatching {
-                // TODO: call it in worker.
-                programmeRepository.checkOrRefreshProgrammesOrThrow(
-                    playlistUrl = stream.playlistUrl,
-                    ignoreCache = ignoreCache
-                )
-            }
-            if (result.isFailure) {
-                messager.emit(result.exceptionOrNull()?.message.orEmpty())
-                logger.log(result.exceptionOrNull()?.message.orEmpty())
-                return@launch
-            }
+            SubscriptionWorker.epg(workManager, stream.playlistUrl, ignoreCache)
         }
     }
 
