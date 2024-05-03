@@ -18,6 +18,7 @@ import com.m3u.core.architecture.logger.post
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.Programme
+import com.m3u.data.database.model.ProgrammeRange
 import com.m3u.data.database.model.Stream
 import com.m3u.data.database.model.epgUrlsOrXtreamXmlUrl
 import com.m3u.data.database.model.type
@@ -299,7 +300,7 @@ class StreamViewModel @Inject constructor(
             .cachedIn(viewModelScope)
     }
 
-    internal val timelineRange: StateFlow<LongRange> = stream.flatMapLatest { stream ->
+    internal val timelineRange: StateFlow<ProgrammeRange> = stream.flatMapLatest { stream ->
         stream ?: return@flatMapLatest flowOf()
         val channelId = stream.channelId ?: return@flatMapLatest flowOf()
         val playlist = stream.playlistUrl.let { playlistRepository.get(it) }
@@ -310,12 +311,18 @@ class StreamViewModel @Inject constructor(
             .map {
                 when {
                     it.isEmpty() -> with(Clock.System.now()) {
-                        this.toEpochMilliseconds()..this.plus(24.hours).toEpochMilliseconds()
+                        ProgrammeRange(
+                            this.toEpochMilliseconds(),
+                            this.plus(24.hours).toEpochMilliseconds()
+                        )
                     }
 
-                    it.count() < 12 * 3600000L -> {
-                        with(Instant.fromEpochMilliseconds(it.first)) {
-                            this.toEpochMilliseconds()..this.plus(24.hours).toEpochMilliseconds()
+                    it.length() < 12 * 3600000L -> {
+                        with(Instant.fromEpochMilliseconds(it.startEdge)) {
+                            ProgrammeRange(
+                                this.toEpochMilliseconds(),
+                                this.plus(24.hours).toEpochMilliseconds()
+                            )
                         }
                     }
 
@@ -327,7 +334,10 @@ class StreamViewModel @Inject constructor(
         .stateIn(
             scope = viewModelScope,
             initialValue = with(Clock.System.now()) {
-                this.toEpochMilliseconds()..this.plus(24.hours).toEpochMilliseconds()
+                ProgrammeRange(
+                    this.toEpochMilliseconds(),
+                    this.plus(24.hours).toEpochMilliseconds()
+                )
             },
             started = SharingStarted.WhileSubscribed(5_000L)
         )

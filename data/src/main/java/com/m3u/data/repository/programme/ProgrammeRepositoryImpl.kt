@@ -11,6 +11,7 @@ import com.m3u.data.database.dao.PlaylistDao
 import com.m3u.data.database.dao.ProgrammeDao
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Programme
+import com.m3u.data.database.model.ProgrammeRange
 import com.m3u.data.parser.epg.EpgParser
 import com.m3u.data.parser.epg.EpgProgramme
 import com.m3u.data.parser.epg.toProgramme
@@ -50,16 +51,12 @@ internal class ProgrammeRepositoryImpl @Inject constructor(
         channelId: String
     ): PagingSource<Int, Programme> = programmeDao.pagingByEpgUrlsAndChannelId(epgUrls, channelId)
 
-    override fun observeTimelineRange(epgUrls: List<String>, channelId: String): Flow<LongRange> {
-        return programmeDao
-            .observeProgrammeRange(epgUrls, channelId)
-            .filterNot { (start, _) -> start == 0L }
-            .map { (start, end) ->
-//                val sh = Instant.fromEpochMilliseconds(start).toEOrSh().toInt()
-//                sh..sh + (end - start).toDuration(DurationUnit.MILLISECONDS).inWholeHours.toInt()
-                start..end
-            }
-    }
+    override fun observeTimelineRange(
+        epgUrls: List<String>,
+        channelId: String
+    ): Flow<ProgrammeRange> = programmeDao
+        .observeProgrammeRange(epgUrls, channelId)
+        .filterNot { (start, _) -> start == 0L }
 
     override suspend fun checkOrRefreshProgrammesOrThrow(
         playlistUrl: String,

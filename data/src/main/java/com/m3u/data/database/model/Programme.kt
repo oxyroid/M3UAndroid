@@ -39,4 +39,7 @@ data class Programme(
 data class ProgrammeRange(
     val startEdge: Long,
     val endEdge: Long
-)
+) {
+    fun isEmpty(): Boolean = length() <= 0
+    fun length(): Long = endEdge - startEdge
+}

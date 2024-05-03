@@ -59,6 +59,7 @@ import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.paging.compose.LazyPagingItems
 import coil.compose.AsyncImage
 import com.m3u.data.database.model.Programme
+import com.m3u.data.database.model.ProgrammeRange
 import com.m3u.data.database.model.Stream
 import com.m3u.data.service.MediaCommand
 import com.m3u.features.stream.Utils.formatEOrSh
@@ -94,7 +95,7 @@ internal fun
     isProgrammesRefreshing: Boolean,
     neighboring: LazyPagingItems<Stream>,
     programmes: LazyPagingItems<Programme>,
-    timelineRange: LongRange,
+    timelineRange: ProgrammeRange,
     onRefreshProgrammesIgnoreCache: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -237,7 +238,7 @@ private fun PanelProgramGuide(
     isPanelExpanded: Boolean,
     isProgrammesRefreshing: Boolean,
     programmes: LazyPagingItems<Programme>,
-    timelineRange: LongRange,
+    timelineRange: ProgrammeRange,
     modifier: Modifier = Modifier,
     timelineWidth: Float = 128f,
     height: Float = 256f,
@@ -275,7 +276,7 @@ private fun PanelProgramGuide(
     val animateToCurrentTimeline: suspend () -> Unit by rememberUpdatedState {
         minaBoxState.animateTo(
             0f,
-            (currentMilliseconds - timelineRange.first) / 3600000f * currentHeight + scrollOffset
+            (currentMilliseconds - timelineRange.startEdge) / 3600000f * currentHeight + scrollOffset
         )
     }
 
@@ -297,7 +298,7 @@ private fun PanelProgramGuide(
             ) {
                 // timelines
                 items(
-                    count = (timelineRange.last - timelineRange.first).floorDiv(3600000).toInt(),
+                    count = timelineRange.length().floorDiv(3600000).toInt(),
                     layoutInfo = { index ->
                         MinaBoxItem(
                             x = 0f,
@@ -307,14 +308,14 @@ private fun PanelProgramGuide(
                         )
                     }
                 ) { index ->
-                    val start = remember(timelineRange.first) {
+                    val start = remember(timelineRange.startEdge) {
                         Instant.fromEpochMilliseconds(
-                            timelineRange.first + index * 3600000
+                            timelineRange.startEdge + index * 3600000
                         ).toEOrSh()
                     }
-                    val end = remember(timelineRange.first) {
+                    val end = remember(timelineRange.startEdge) {
                         Instant.fromEpochMilliseconds(
-                            timelineRange.first + (index + 1) * 3600000
+                            timelineRange.startEdge + (index + 1) * 3600000
                         )
                             .toEOrSh()
                             // cross midnight
@@ -366,7 +367,7 @@ private fun PanelProgramGuide(
                             val end = programme.end
                             MinaBoxItem(
                                 x = timelineWidth + padding,
-                                y = currentHeight * (start - timelineRange.first) / 3600000 + padding * 3, // todo
+                                y = currentHeight * (start - timelineRange.startEdge) / 3600000 + padding * 3, // todo
                                 width = (constraints.maxWidth - timelineWidth - padding)
                                     .coerceAtLeast(0f),
                                 height = (currentHeight * (end - start) / 3600000 - padding) // todo
@@ -388,7 +389,7 @@ private fun PanelProgramGuide(
                     layoutInfo = {
                         MinaBoxItem(
                             x = timelineWidth / 2f,
-                            y = (currentMilliseconds - timelineRange.first) / 3600000f * currentHeight + padding * 2,
+                            y = (currentMilliseconds - timelineRange.startEdge) / 3600000f * currentHeight + padding * 2,
                             width = constraints.maxWidth - timelineWidth / 2f,
                             height = eOrShSize
                         )
