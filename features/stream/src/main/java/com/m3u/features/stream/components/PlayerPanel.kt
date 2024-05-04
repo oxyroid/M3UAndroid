@@ -10,9 +10,11 @@ import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
@@ -31,6 +33,7 @@ import androidx.compose.material.icons.rounded.KeyboardDoubleArrowUp
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SmallFloatingActionButton
@@ -48,6 +51,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
@@ -240,10 +244,10 @@ private fun PanelProgramGuide(
     programmes: LazyPagingItems<Programme>,
     timelineRange: ProgrammeRange,
     modifier: Modifier = Modifier,
-    timelineWidth: Float = 128f,
+    timelineWidth: Float = 64f,
     height: Float = 256f,
     padding: Float = 16f,
-    eOrShSize: Float = 32f,
+    eOrShSize: Float = 48f,
     scrollOffset: Int = -120,
     onRefreshProgrammesIgnoreCache: () -> Unit
 ) {
@@ -321,16 +325,14 @@ private fun PanelProgramGuide(
                             // cross midnight
                             .let { if (it < start) it + 24 else it }
                     }
-                    Canvas(
-                        Modifier.fillMaxSize()
-                    ) {
+                    Canvas(Modifier.fillMaxSize()) {
                         var currentTimeline = start
                         while (currentTimeline <= end) {
                             if (currentTimeline.toInt().toFloat() == currentTimeline) {
                                 drawLine(
                                     color = contentColor,
                                     start = Offset(
-                                        size.width / 2f,
+                                        0f,
                                         currentHeight * (currentTimeline - start)
                                     ),
                                     end = Offset(
@@ -343,7 +345,7 @@ private fun PanelProgramGuide(
                                 drawLine(
                                     color = contentColor,
                                     start = Offset(
-                                        size.width / 3f * 2,
+                                        size.width / 3f,
                                         currentHeight * (currentTimeline - start)
                                     ),
                                     end = Offset(
@@ -395,7 +397,9 @@ private fun PanelProgramGuide(
                         )
                     }
                 ) {
-                    CurrentTimeLine()
+                    CurrentTimeLine(
+                        milliseconds = currentMilliseconds
+                    )
                 }
             }
             ConstraintLayout(
@@ -405,6 +409,7 @@ private fun PanelProgramGuide(
             ) {
                 val (refresh, scroll) = createRefs()
                 SmallFloatingActionButton(
+                    elevation = FloatingActionButtonDefaults.elevation(0.dp),
                     onClick = { coroutineScope.launch { animateToCurrentTimeline() } },
                     modifier = Modifier.constrainAs(scroll) {
                         this.end.linkTo(parent.end)
@@ -427,7 +432,10 @@ private fun PanelProgramGuide(
                         this.bottom.linkTo(scroll.bottom)
                     }
                 ) {
-                    SmallFloatingActionButton(onRefreshProgrammesIgnoreCache) {
+                    SmallFloatingActionButton(
+                        elevation = FloatingActionButtonDefaults.elevation(0.dp),
+                        onClick = onRefreshProgrammesIgnoreCache
+                    ) {
                         Icon(
                             imageVector = Icons.Rounded.Refresh,
                             contentDescription = "refresh playlist programmes"
@@ -529,33 +537,59 @@ private fun ProgrammeCell(
 }
 
 @Composable
-private fun CurrentTimeLine(modifier: Modifier = Modifier) {
+private fun CurrentTimeLine(
+    milliseconds: Long,
+    modifier: Modifier = Modifier
+) {
+    val spacing = LocalSpacing.current
     val color = MaterialTheme.colorScheme.error
-    Canvas(
-        modifier
-            .requiredHeight(24.dp)
-            .fillMaxWidth()
-            .zIndex(2f)
-    ) {
-        drawCircle(
-            color = color,
-            center = Offset(
-                x = size.minDimension / 2,
-                y = size.minDimension / 2
+    val contentColor = MaterialTheme.colorScheme.onError
+    val currentMilliseconds by rememberUpdatedState(milliseconds)
+    val time = remember(currentMilliseconds) {
+        Instant.fromEpochMilliseconds(currentMilliseconds)
+            .toEOrSh()
+            .formatEOrSh()
+    }
+    Box(contentAlignment = Alignment.CenterEnd) {
+        Canvas(
+            modifier
+                .requiredHeight(24.dp)
+                .fillMaxWidth()
+                .zIndex(2f)
+        ) {
+            drawCircle(
+                color = color,
+                center = Offset(
+                    x = size.minDimension / 2,
+                    y = size.minDimension / 2
+                ),
+                radius = size.minDimension / 3
+            )
+            drawLine(
+                color = color,
+                start = Offset(
+                    x = size.minDimension / 2,
+                    y = size.minDimension / 2
+                ),
+                end = Offset(
+                    x = size.maxDimension,
+                    y = size.minDimension / 2
+                ),
+                strokeWidth = Stroke.DefaultMiter
+            )
+        }
+        Text(
+            text = time,
+            color = contentColor,
+            style = MaterialTheme.typography.labelMedium.copy(
+                fontFamily = FontFamilies.LexendExa,
             ),
-            radius = size.minDimension / 3
-        )
-        drawLine(
-            color = color,
-            start = Offset(
-                x = size.minDimension / 2,
-                y = size.minDimension / 2
-            ),
-            end = Offset(
-                x = size.maxDimension,
-                y = size.minDimension / 2
-            ),
-            strokeWidth = Stroke.DefaultMiter
+            modifier = Modifier
+                .padding(horizontal = spacing.medium)
+                .clip(AbsoluteRoundedCornerShape(spacing.small))
+                .zIndex(4f)
+                .background(color)
+                .padding(horizontal = spacing.extraSmall)
         )
     }
 }

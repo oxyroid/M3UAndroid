@@ -31,8 +31,12 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.compose.SubcomposeAsyncImage
@@ -48,6 +52,8 @@ import com.m3u.material.model.LocalSpacing
 import com.m3u.material.shape.AbsoluteSmoothCornerShape
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
@@ -70,7 +76,7 @@ internal fun SmartphoneStreamItem(
 
     val currentGetProgrammeCurrently by rememberUpdatedState(getProgrammeCurrently)
     val programme: Programme? by produceState<Programme?>(null) {
-        value = currentGetProgrammeCurrently.invoke()
+        value = currentGetProgrammeCurrently()
     }
 
     val favourite = stream.favourite
@@ -210,7 +216,7 @@ internal fun SmartphoneStreamItem(
 
                             programme != null -> {
                                 Text(
-                                    text = programme!!.title,
+                                    text = programme?.readText() ?: AnnotatedString(""),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = LocalContentColor.current.copy(0.56f),
                                     maxLines = 1,
@@ -232,4 +238,21 @@ internal fun SmartphoneStreamItem(
             }
         }
     }
+}
+
+@Composable
+private fun Programme.readText(
+    timeColor: Color = MaterialTheme.colorScheme.secondary
+): AnnotatedString = buildAnnotatedString {
+    val start = Instant.fromEpochMilliseconds(start)
+        .toLocalDateTime(TimeZone.currentSystemDefault())
+        .run {
+            "${if (hour < 10) "0$hour" else hour}:${if (minute < 10) "0$minute" else minute}"
+        }
+    withStyle(
+        SpanStyle(color = timeColor, fontWeight = FontWeight.SemiBold)
+    ) {
+        append("[$start] ")
+    }
+    append(title)
 }

@@ -8,5 +8,6 @@
     <string name="data_worker_subscription_action_cancel">Cancel</string>
     <string name="data_worker_subscription_action_retry">Retry</string>
     <string name="data_worker_subscription_content_completed">Completed (+%d)</string>
-    <string name="data_worker_subscription_content_progress">%d channels have been downloaded</string>
+    <string name="data_worker_subscription_content_channel_progress">%d channels have been downloaded</string>
+    <string name="data_worker_subscription_content_programme_progress">%d programmes have been downloaded</string>
 </resources>

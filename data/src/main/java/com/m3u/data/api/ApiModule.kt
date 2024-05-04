@@ -63,7 +63,18 @@ internal object ApiModule {
             .addInterceptor { chain ->
                 val request = chain.request()
                 try {
-                    chain.proceed(request)
+                    chain.proceed(request).apply {
+                        val body = body
+                        if (body != null) {
+                            val contentType = body.contentType()
+                            val isWebPage = contentType != null &&
+                                    contentType.type == "text" &&
+                                    contentType.subtype == "html"
+                            if (isWebPage) {
+                                WebPageManager.push(body)
+                            }
+                        }
+                    }
                 } catch (e: Exception) {
                     logger.log(e)
                     Response.Builder()

@@ -26,12 +26,19 @@ class M3UApplication : Application(), Configuration.Provider {
     @Inject
     lateinit var preferences: Preferences
 
+//    private val coroutineScope = CoroutineScope(SupervisorJob())
+
     override fun onCreate() {
         super.onCreate()
         Thread.setDefaultUncaughtExceptionHandler(handler)
         if (!resources.configuration.isTelevision() && !preferences.alwaysTv) {
             DLNACastManager.bindCastService(this@M3UApplication)
         }
+
+//        ResponseBodies.WebPage
+//            .onEach {
+//            }
+//            .launchIn(coroutineScope)
     }
 
     override val workManagerConfiguration: Configuration by lazy {

@@ -18,8 +18,8 @@ interface ProgrammeRepository {
     ): Flow<ProgrammeRange>
 
     val refreshingEpgUrls: StateFlow<List<String>>
-    suspend fun checkOrRefreshProgrammesOrThrow(
+    fun checkOrRefreshProgrammesOrThrow(
         playlistUrl: String,
         ignoreCache: Boolean
-    )
+    ): Flow<Int>
 }

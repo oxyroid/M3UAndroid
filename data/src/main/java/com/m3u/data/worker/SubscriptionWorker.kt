@@ -21,7 +21,6 @@ import androidx.work.workDataOf
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.Profiles
 import com.m3u.core.architecture.logger.install
-import com.m3u.core.architecture.logger.post
 import com.m3u.data.R
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.parser.xtream.XtreamInput
@@ -33,6 +32,8 @@ import dagger.assisted.AssistedInject
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import java.util.concurrent.atomic.AtomicInteger
 
 @HiltWorker
@@ -96,7 +97,7 @@ class SubscriptionWorker @AssistedInject constructor(
                     playlistRepository.m3uOrThrow(title, url) { count ->
                         total = count
                         val notification = createN10nBuilder()
-                            .setContentText(findProgressContentText(count))
+                            .setContentText(findChannelProgressContentText(count))
                             .setActions(cancelAction)
                             .setOngoing(true)
                             .build()
@@ -118,6 +119,14 @@ class SubscriptionWorker @AssistedInject constructor(
                         playlistUrl = playlistUrl,
                         ignoreCache = ignoreCache
                     )
+                        .onEach { count ->
+                            val notification = createN10nBuilder()
+                                .setContentText(findProgrammeProgressContentText(count))
+                                .setActions(cancelAction)
+                                .build()
+                            notificationManager.notify(notificationId, notification)
+                        }
+                        .launchIn(this)
                     Result.success()
                 } catch (e: Exception) {
                     createN10nBuilder()
@@ -151,13 +160,11 @@ class SubscriptionWorker @AssistedInject constructor(
                         ) { count ->
                             total = count
                             val notification = createN10nBuilder()
-                                .setContentText(findProgressContentText(count))
+                                .setContentText(findChannelProgressContentText(count))
                                 .setActions(cancelAction)
                                 .build()
                             notificationManager.notify(notificationId, notification)
-                            logger.post { "xtream callback" }
                         }
-                        logger.post { "xtream suspend resumed" }
                         createN10nBuilder()
                             .setContentText(findCompleteContentText(total))
                             .buildThenNotify()
@@ -200,7 +207,12 @@ class SubscriptionWorker @AssistedInject constructor(
     private fun createN10nBuilder(): Notification.Builder =
         Notification.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.round_file_download_24)
-            .setContentTitle(title)
+            .setContentTitle(
+                when (dataSource) {
+                    DataSource.EPG -> epgPlaylistUrl
+                    else -> title
+                }
+            )
 
     private fun findCancelActionTitle() =
         context.getString(string.data_worker_subscription_action_cancel)
@@ -211,8 +223,11 @@ class SubscriptionWorker @AssistedInject constructor(
     private fun findCompleteContentText(total: Int) =
         context.getString(string.data_worker_subscription_content_completed, total)
 
-    private fun findProgressContentText(count: Int) =
-        context.getString(string.data_worker_subscription_content_progress, count)
+    private fun findChannelProgressContentText(count: Int) =
+        context.getString(string.data_worker_subscription_content_channel_progress, count)
+
+    private fun findProgrammeProgressContentText(count: Int) =
+        context.getString(string.data_worker_subscription_content_programme_progress, count)
 
     private val cancelAction: Notification.Action by lazy {
         Notification.Action.Builder(
