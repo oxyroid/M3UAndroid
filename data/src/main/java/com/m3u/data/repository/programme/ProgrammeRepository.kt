@@ -12,7 +12,7 @@ interface ProgrammeRepository {
         channelId: String
     ): PagingSource<Int, Programme>
 
-    fun observeTimelineRange(
+    fun observeProgrammeRange(
         epgUrls: List<String>,
         channelId: String
     ): Flow<ProgrammeRange>

@@ -46,7 +46,7 @@ internal fun PlayerPanel(
     isProgrammesRefreshing: Boolean,
     neighboring: LazyPagingItems<Stream>,
     programmes: LazyPagingItems<Programme>,
-    timelineRange: ProgrammeRange,
+    programmeRange: ProgrammeRange,
     onRefreshProgrammesIgnoreCache: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -100,7 +100,7 @@ internal fun PlayerPanel(
                 isProgrammesRefreshing = isProgrammesRefreshing,
                 programmes = programmes,
                 onRefreshProgrammesIgnoreCache = onRefreshProgrammesIgnoreCache,
-                range = timelineRange,
+                range = programmeRange,
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)

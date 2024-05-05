@@ -44,19 +44,18 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
 import org.jupnp.model.meta.Device
 import javax.inject.Inject
 import kotlin.math.roundToInt
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.minutes
 
 @HiltViewModel
 class StreamViewModel @Inject constructor(
@@ -272,22 +271,23 @@ class StreamViewModel @Inject constructor(
     }
 
     internal val neighboring: Flow<PagingData<Stream>> = playlist.flatMapLatest { playlist ->
+        playlist ?: return@flatMapLatest flowOf(PagingData.empty())
         Pager(PagingConfig(10)) {
             streamRepository.pagingAllByPlaylistUrl(
-                playlist?.url.orEmpty(),
+                playlist.url,
                 "",
                 StreamRepository.Sort.UNSPECIFIED
             )
         }
             .flow
-            .cachedIn(viewModelScope)
     }
+        .cachedIn(viewModelScope)
 
     internal val programmes: Flow<PagingData<Programme>> = stream.flatMapLatest { stream ->
-        stream ?: return@flatMapLatest flow { }
-        val channelId = stream.channelId ?: return@flatMapLatest flow { }
+        stream ?: return@flatMapLatest flowOf(PagingData.empty())
+        val channelId = stream.channelId ?: return@flatMapLatest flowOf(PagingData.empty())
         val playlist = stream.playlistUrl.let { playlistRepository.get(it) }
-        playlist ?: return@flatMapLatest flow { }
+        playlist ?: return@flatMapLatest flowOf(PagingData.empty())
         val epgUrls = playlist.epgUrlsOrXtreamXmlUrl()
         Pager(PagingConfig(15)) {
             programmeRepository.pagingByEpgUrlsAndChannelId(
@@ -296,41 +296,34 @@ class StreamViewModel @Inject constructor(
             )
         }
             .flow
-            .cachedIn(viewModelScope)
     }
+        .cachedIn(viewModelScope)
 
-    private val defaultTimelineRange: ProgrammeRange
+    private val defaultProgrammeRange: ProgrammeRange
         get() = with(Clock.System.now()) {
             ProgrammeRange(
-                this.toEpochMilliseconds(),
-                this.plus(24.hours).toEpochMilliseconds()
+                this.minus(2.hours).toEpochMilliseconds(),
+                this.plus(6.hours).toEpochMilliseconds()
             )
         }
 
-    internal val timelineRange: StateFlow<ProgrammeRange> = stream.flatMapLatest { stream ->
-        stream ?: return@flatMapLatest flowOf(defaultTimelineRange)
-        val channelId = stream.channelId ?: return@flatMapLatest flowOf(defaultTimelineRange)
+    internal val programmeRange: StateFlow<ProgrammeRange> = stream.flatMapLatest { stream ->
+        stream ?: return@flatMapLatest flowOf(defaultProgrammeRange)
+        val channelId = stream.channelId ?: return@flatMapLatest flowOf(defaultProgrammeRange)
         val playlist = stream.playlistUrl.let { playlistRepository.get(it) }
-        playlist ?: return@flatMapLatest flowOf(defaultTimelineRange)
+        playlist ?: return@flatMapLatest flowOf(defaultProgrammeRange)
         val epgUrls = playlist.epgUrlsOrXtreamXmlUrl()
         programmeRepository
-            .observeTimelineRange(epgUrls, channelId)
+            .observeProgrammeRange(epgUrls, channelId)
             .map {
-                if (it.isEmpty()) return@map defaultTimelineRange
-                if (it.count(ProgrammeRange.HOUR_LENGTH) < 12) return@map with(
-                    Instant.fromEpochMilliseconds(it.start)
-                ) {
-                    ProgrammeRange(
-                        this.toEpochMilliseconds(),
-                        this.plus(24.hours).toEpochMilliseconds()
-                    )
-                }
                 it
+                    .spread(ProgrammeRange.Spread.Increase(5.minutes, 1.hours + 5.minutes))
+                    .spread(ProgrammeRange.Spread.Absolute(8.hours))
             }
     }
         .stateIn(
             scope = viewModelScope,
-            initialValue = defaultTimelineRange,
+            initialValue = defaultProgrammeRange,
             started = SharingStarted.WhileSubscribed(5_000L)
         )
 

@@ -49,7 +49,7 @@ internal class ProgrammeRepositoryImpl @Inject constructor(
         channelId: String
     ): PagingSource<Int, Programme> = programmeDao.pagingByEpgUrlsAndChannelId(epgUrls, channelId)
 
-    override fun observeTimelineRange(
+    override fun observeProgrammeRange(
         epgUrls: List<String>,
         channelId: String
     ): Flow<ProgrammeRange> = programmeDao

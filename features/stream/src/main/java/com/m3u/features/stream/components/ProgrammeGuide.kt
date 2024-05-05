@@ -32,6 +32,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
@@ -119,10 +120,16 @@ internal fun ProgramGuide(
         label = "minabox-cell-height"
     )
 
+    val currentTimelineOffset by remember(range.start) {
+        derivedStateOf {
+            (currentMilliseconds - range.start).toFloat() / HOUR_LENGTH * currentHeight
+        }
+    }
+
     val animateToCurrentTimeline: suspend () -> Unit by rememberUpdatedState {
         minaBoxState.animateTo(
             0f,
-            (currentMilliseconds - range.start) / HOUR_LENGTH.toFloat() * currentHeight + scrollOffset
+            currentTimelineOffset + scrollOffset
         )
     }
 
@@ -145,25 +152,6 @@ internal fun ProgramGuide(
                     .then(zoomGestureModifier)
                     .then(modifier)
             ) {
-                // timelines
-//                items(
-//                    count = range.count(HOUR_LENGTH),
-//                    layoutInfo = { index ->
-//                        MinaBoxItem(
-//                            x = 0f,
-//                            y = currentHeight * index + padding * 2.5f,
-//                            width = timelineWidth,
-//                            height = currentHeight
-//                        )
-//                    }
-//                ) { index ->
-//                    TimelineCell(
-//                        tickMilliseconds = tickMilliseconds,
-//                        startEdge = range.start,
-//                        index = index
-//                    )
-//                }
-
                 // programmes
                 items(
                     count = programmes.itemCount,
@@ -173,13 +161,9 @@ internal fun ProgramGuide(
                             val start = programme.start
                             val end = programme.end
                             MinaBoxItem(
-                                x = padding
-//                                timelineWidth
-                                ,
+                                x = padding,
                                 y = currentHeight * (start - range.start) / HOUR_LENGTH + padding * 3,
-                                width = (constraints.maxWidth - padding * 2
-//                                        timelineWidth
-                                        )
+                                width = (constraints.maxWidth - padding * 2)
                                     .coerceAtLeast(0f),
                                 height = (currentHeight * (end - start) / HOUR_LENGTH - padding)
                                     .coerceAtLeast(0f)
@@ -203,7 +187,7 @@ internal fun ProgramGuide(
                     layoutInfo = {
                         MinaBoxItem(
                             x = 0f,
-                            y = (currentMilliseconds - range.start) / HOUR_LENGTH.toFloat() * currentHeight + padding * 2,
+                            y = currentTimelineOffset + padding * 2,
                             width = constraints.maxWidth.toFloat(),
                             height = currentTimelineHeight
                         )
@@ -212,6 +196,23 @@ internal fun ProgramGuide(
                     CurrentTimelineCell(
                         milliseconds = currentMilliseconds
                     )
+                }
+
+                // range
+                items(
+                    count = 1,
+                    layoutInfo = {
+                        MinaBoxItem(
+                            x = 0f,
+                            y = 0f,
+                            width = 0f,
+                            height = with(range) {
+                                (currentHeight * (end - start) / HOUR_LENGTH - padding)
+                            }
+                        )
+                    }
+                ) {
+
                 }
             }
 
