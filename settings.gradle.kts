@@ -25,12 +25,12 @@ include(
     ":features:setting",
     ":features:stream",
     ":features:playlist",
+    ":features:playlist-configuration",
     ":features:favorite",
     ":features:crash"
 )
 include(":benchmark")
 include(":i18n")
 include(":ui")
-include(":dlna")
 include(":codec:lite", ":codec:rich")
 include(":features:playlist-configuration")

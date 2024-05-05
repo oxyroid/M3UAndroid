@@ -44,6 +44,7 @@ internal interface PlaylistDao {
     @Query("SELECT * FROM playlists ORDER BY title")
     suspend fun getAll(): List<Playlist>
 
+    @Transaction
     @Query("SELECT * FROM playlists ORDER BY title")
     suspend fun getAllWithStreams(): List<PlaylistWithStreams>
 

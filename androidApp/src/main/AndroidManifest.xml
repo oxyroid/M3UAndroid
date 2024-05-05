@@ -80,8 +80,6 @@
             android:launchMode="singleInstance"
             android:theme="@style/Theme.M3U" />
 
-        <service android:name="com.m3u.dlna.DLNACastService" />
-
         <service
             android:name="com.m3u.data.service.StreamDownloadService"
             android:exported="false"

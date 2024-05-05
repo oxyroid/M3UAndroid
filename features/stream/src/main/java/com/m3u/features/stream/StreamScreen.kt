@@ -85,13 +85,12 @@ fun StreamRoute(
     val playerState: PlayerState by viewModel.playerState.collectAsStateWithLifecycle()
     val stream by viewModel.stream.collectAsStateWithLifecycle()
     val playlist by viewModel.playlist.collectAsStateWithLifecycle()
-    val devices by viewModel.devices.collectAsStateWithLifecycle()
-    val connected by viewModel.connected.collectAsStateWithLifecycle()
+    val devices = viewModel.devices
     val isDevicesVisible by viewModel.isDevicesVisible.collectAsStateWithLifecycle()
     val searching by viewModel.searching.collectAsStateWithLifecycle()
 
-    val formats by viewModel.formats.collectAsStateWithLifecycle()
-    val selectedFormats by viewModel.selectedFormats.collectAsStateWithLifecycle()
+    val formats by viewModel.tracks.collectAsStateWithLifecycle()
+    val selectedFormats by viewModel.currentTracks.collectAsStateWithLifecycle()
 
     val volume by viewModel.volume.collectAsStateWithLifecycle()
     val isSeriesPlaylist by viewModel.isSeriesPlaylist.collectAsStateWithLifecycle()
@@ -248,9 +247,7 @@ fun StreamRoute(
         searching = searching,
         isDevicesVisible = isDevicesVisible,
         devices = devices,
-        connected = connected,
         connectDlnaDevice = { viewModel.connectDlnaDevice(it) },
-        disconnectDlnaDevice = { viewModel.disconnectDlnaDevice(it) },
         openInExternalPlayer = {
             val streamUrl = stream?.url ?: return@DlnaDevicesBottomSheet
             context.startActivity(

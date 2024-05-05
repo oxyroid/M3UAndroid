@@ -1,6 +1,9 @@
 package com.m3u.features.stream
 
 import android.media.AudioManager
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.C
@@ -26,14 +29,9 @@ import com.m3u.data.repository.playlist.PlaylistRepository
 import com.m3u.data.repository.programme.ProgrammeRepository
 import com.m3u.data.repository.stream.StreamRepository
 import com.m3u.data.service.PlayerManager
-import com.m3u.data.service.selectedFormats
-import com.m3u.data.service.trackFormats
+import com.m3u.data.service.currentTracks
+import com.m3u.data.service.tracks
 import com.m3u.data.worker.SubscriptionWorker
-import com.m3u.dlna.DLNACastManager
-import com.m3u.dlna.OnDeviceRegistryListener
-import com.m3u.dlna.control.DeviceControl
-import com.m3u.dlna.control.OnDeviceControlListener
-import com.m3u.dlna.control.ServiceActionCallback
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.delay
@@ -50,7 +48,9 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
-import org.jupnp.model.meta.Device
+import net.mm2d.upnp.ControlPoint
+import net.mm2d.upnp.ControlPointFactory
+import net.mm2d.upnp.Device
 import javax.inject.Inject
 import kotlin.math.roundToInt
 import kotlin.time.Duration.Companion.hours
@@ -67,12 +67,11 @@ class StreamViewModel @Inject constructor(
     private val workManager: WorkManager,
     delegate: Logger,
     @Dispatcher(Main) private val mainDispatcher: CoroutineDispatcher
-) : ViewModel(), OnDeviceRegistryListener, OnDeviceControlListener {
+) : ViewModel(), ControlPoint.DiscoveryListener {
     private val logger = delegate.install(Profiles.VIEWMODEL_STREAM)
-    private val _devices = MutableStateFlow<List<Device<*, *, *>>>(emptyList())
 
     // searched screencast devices
-    internal val devices = _devices.asStateFlow()
+    internal var devices by mutableStateOf(emptyList<Device>())
 
     private val _volume: MutableStateFlow<Float> by lazy {
         MutableStateFlow(audioManager.getStreamVolume(AudioManager.STREAM_MUSIC) / 100f)
@@ -91,28 +90,26 @@ class StreamViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5_000L)
         )
 
-    internal val formats: StateFlow<Map<Int, List<Format>>> =
-        playerManager
-            .trackFormats
-            .map { all ->
-                all
-                    .mapValues { (_, formats) -> formats }
-                    .toMap()
-            }
-            .stateIn(
-                scope = viewModelScope,
-                initialValue = emptyMap(),
-                started = SharingStarted.WhileSubscribed(5_000L)
-            )
+    internal val tracks: StateFlow<Map<Int, List<Format>>> = playerManager
+        .tracks
+        .map { all ->
+            all
+                .mapValues { (_, formats) -> formats }
+                .toMap()
+        }
+        .stateIn(
+            scope = viewModelScope,
+            initialValue = emptyMap(),
+            started = SharingStarted.WhileSubscribed(5_000L)
+        )
 
-    internal val selectedFormats: StateFlow<Map<@C.TrackType Int, Format?>> =
-        playerManager
-            .selectedFormats
-            .stateIn(
-                scope = viewModelScope,
-                initialValue = emptyMap(),
-                started = SharingStarted.WhileSubscribed(5_000L)
-            )
+    internal val currentTracks: StateFlow<Map<@C.TrackType Int, Format?>> = playerManager
+        .currentTracks
+        .stateIn(
+            scope = viewModelScope,
+            initialValue = emptyMap(),
+            started = SharingStarted.WhileSubscribed(5_000L)
+        )
 
     internal fun chooseTrack(type: @C.TrackType Int, format: Format) {
         val groups = playerManager.tracksGroups.value
@@ -163,43 +160,51 @@ class StreamViewModel @Inject constructor(
     // searching or not
     internal val searching = _searching.asStateFlow()
 
-    private val _connected = MutableStateFlow<Device<*, *, *>?>(null)
-    internal val connected = _connected.asStateFlow()
-
     internal fun openDlnaDevices() {
-        try {
-            DLNACastManager.registerDeviceListener(this)
-        } catch (ignore: Exception) {
-
-        }
         viewModelScope.launch {
             delay(800.milliseconds)
             _searching.value = true
+            controlPoint = ControlPointFactory.create().apply {
+                addDiscoveryListener(this@StreamViewModel)
+                initialize()
+                start()
+                search()
+            }
         }
         _isDevicesVisible.value = true
     }
 
     internal fun closeDlnaDevices() {
-        try {
+        runCatching {
             _searching.value = false
             _isDevicesVisible.value = false
-            _devices.value = emptyList()
-            DLNACastManager.unregisterListener(this)
-        } catch (ignore: Exception) {
-
+            controlPoint?.removeDiscoveryListener(this)
+            devices = emptyList()
         }
     }
 
-    private var controlPoint: DeviceControl? = null
-
-    internal fun connectDlnaDevice(device: Device<*, *, *>) {
-        controlPoint = DLNACastManager.connectDevice(device, this)
+    override fun onDiscover(device: Device) {
+        devices = devices + device
     }
 
-    internal fun disconnectDlnaDevice(device: Device<*, *, *>) {
-        controlPoint?.stop()
-        controlPoint = null
-        DLNACastManager.disconnectDevice(device)
+    override fun onLost(device: Device) {
+        devices = devices - device
+    }
+
+    private var controlPoint: ControlPoint? = null
+
+    internal fun connectDlnaDevice(device: Device) {
+        val url = stream.value?.url ?: return
+        device.findAction(ACTION_SET_AV_TRANSPORT_URI)?.invoke(
+            argumentValues = mapOf(
+                INSTANCE_ID to "0",
+                CURRENT_URI to url
+            )
+        )
+    }
+
+    internal fun disconnectDlnaDevice(device: Device) {
+
     }
 
     internal fun onFavourite() {
@@ -218,51 +223,17 @@ class StreamViewModel @Inject constructor(
             AudioManager.FLAG_VIBRATE
         )
 
-        controlPoint?.setVolume((target * 100).roundToInt(), null)
-    }
-
-    override fun onDeviceAdded(device: Device<*, *, *>) {
-        _devices.update { (it + device) }
-    }
-
-    override fun onDeviceRemoved(device: Device<*, *, *>) {
-        _devices.update { (it - device) }
-    }
-
-    override fun onConnected(device: Device<*, *, *>) {
-        _connected.value = device
-        val url = stream.value?.url ?: return
-        val title = stream.value?.title.orEmpty()
-
-        controlPoint?.setAVTransportURI(
-            uri = url,
-            title = title,
-            callback = object : ServiceActionCallback<Unit> {
-                override fun onSuccess(result: Unit) {
-                    controlPoint?.play()
-                }
-
-                override fun onFailure(msg: String) {
-                    logger.log(msg)
-                }
-            }
-        )
-    }
-
-    override fun onDisconnected(device: Device<*, *, *>) {
-        _connected.value = null
-        controlPoint?.stop()
-        controlPoint = null
+//        controlPoint?.setVolume((target * 100).roundToInt(), null)
     }
 
     fun destroy() {
-        try {
+        runCatching {
+            controlPoint?.removeDiscoveryListener(this)
             controlPoint?.stop()
+            controlPoint?.terminate()
             controlPoint = null
-            playerManager.release()
-            DLNACastManager.unregisterListener(this)
-        } catch (ignored: Exception) {
 
+            playerManager.release()
         }
     }
 
@@ -367,5 +338,16 @@ class StreamViewModel @Inject constructor(
                 }
             }
         }
+    }
+
+    companion object {
+        private const val ACTION_SET_AV_TRANSPORT_URI = "SetAVTransportURI"
+        private const val ACTION_PLAY = "Play"
+        private const val ACTION_PAUSE = "Pause"
+        private const val ACTION_STOP = "Stop"
+
+        private const val INSTANCE_ID = "InstanceID"
+        private const val CURRENT_URI = "CurrentURI"
+        private const val CURRENT_URI_META_DATA = "CurrentURIMetaData"
     }
 }

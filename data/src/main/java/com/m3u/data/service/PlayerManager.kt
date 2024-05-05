@@ -46,7 +46,7 @@ sealed class MediaCommand(open val streamId: Int) {
     ) : MediaCommand(streamId)
 }
 
-val PlayerManager.trackFormats: Flow<Map<@C.TrackType Int, List<Format>>>
+val PlayerManager.tracks: Flow<Map<@C.TrackType Int, List<Format>>>
     get() = tracksGroups.map { all ->
         all.groupBy { it.type }
             .mapValues { (_, innerGroups) ->
@@ -57,7 +57,7 @@ val PlayerManager.trackFormats: Flow<Map<@C.TrackType Int, List<Format>>>
     }
         .flowOn(Dispatchers.IO)
 
-val PlayerManager.selectedFormats: Flow<Map<@C.TrackType Int, Format?>>
+val PlayerManager.currentTracks: Flow<Map<@C.TrackType Int, Format?>>
     get() = tracksGroups.map { all ->
         all.groupBy { it.type }
             .mapValues { (_, groups) ->

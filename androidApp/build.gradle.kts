@@ -123,7 +123,6 @@ hilt {
 
 dependencies {
     implementation(project(":core"))
-    implementation(project(":dlna"))
     implementation(project(":ui"))
     implementation(project(":features:foryou"))
     implementation(project(":features:favorite"))

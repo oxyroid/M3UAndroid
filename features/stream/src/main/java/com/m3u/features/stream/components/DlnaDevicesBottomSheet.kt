@@ -16,7 +16,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.OpenInNew
-import com.m3u.material.components.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -32,23 +31,22 @@ import androidx.compose.ui.unit.dp
 import com.m3u.core.util.basic.title
 import com.m3u.i18n.R.string
 import com.m3u.material.components.CircularProgressIndicator
+import com.m3u.material.components.Icon
 import com.m3u.material.components.OnDismiss
-import com.m3u.ui.UnstableBadge
-import com.m3u.ui.UnstableValue
 import com.m3u.material.components.mask.MaskState
 import com.m3u.material.model.LocalSpacing
-import org.jupnp.model.meta.Device
+import com.m3u.ui.UnstableBadge
+import com.m3u.ui.UnstableValue
+import net.mm2d.upnp.Device
 
 @Composable
 internal fun DlnaDevicesBottomSheet(
     isDevicesVisible: Boolean,
-    devices: List<Device<*, *, *>>,
-    connected: Device<*, *, *>?,
+    devices: List<Device>,
     searching: Boolean,
     maskState: MaskState,
     onDismiss: OnDismiss,
-    connectDlnaDevice: (device: Device<*, *, *>) -> Unit,
-    disconnectDlnaDevice: (device: Device<*, *, *>) -> Unit,
+    connectDlnaDevice: (device: Device) -> Unit,
     openInExternalPlayer: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -126,9 +124,7 @@ internal fun DlnaDevicesBottomSheet(
                     items(devices) { device ->
                         DlnaDeviceItem(
                             device = device,
-                            connected = device == connected,
-                            requestConnection = { connectDlnaDevice(device) },
-                            loseConnection = { disconnectDlnaDevice(device) }
+                            onClick = { connectDlnaDevice(device) },
                         )
                     }
                     item {

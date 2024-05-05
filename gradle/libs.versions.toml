@@ -50,13 +50,9 @@ com-google-android-material = "1.11.0"
 androidx-test-uiautomator = "2.3.0"
 androidx-benchmark = "1.2.4"
 
-servlet = "3.1.0"
-jetty = "9.3.14.v20161028"
-
-jupnp = "2.7.1"
 minabox = "1.7.1"
 ktor-server = "3.0.0-beta-1"
-junit = "4.13.2"
+mmupnp = "3.1.6"
 
 [libraries]
 androidx-core-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "androidx-core" }
@@ -155,19 +151,12 @@ chucker = { module = "com.github.chuckerteam.chucker:library", version.ref = "ch
 chucker-no-op = { module = "com.github.chuckerteam.chucker:library-no-op", version.ref = "chucker" }
 logback-android = { module = "com.github.tony19:logback-android", version.ref = "logbackAndroid" }
 nextlib-media3ext = { module = "com.github.anilbeesetti.nextlib:nextlib-media3ext", version.ref = "nextLib" }
-servlet-api = { group = "javax.servlet", name = "javax.servlet-api", version.ref = "servlet" }
-
-jetty-server = { group = "org.eclipse.jetty", name = "jetty-server", version.ref = "jetty" }
-jetty-servlet = { group = "org.eclipse.jetty", name = "jetty-servlet", version.ref = "jetty" }
-jetty-client = { group = "org.eclipse.jetty", name = "jetty-client", version.ref = "jetty" }
 
 slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j-api" }
 
-jupnp = { group = "org.jupnp", name = "org.jupnp", version.ref = "jupnp" }
-jupnp-support = { group = "org.jupnp", name = "org.jupnp.support", version.ref = "jupnp" }
 minabox = { group = "io.github.oleksandrbalan", name = "minabox", version.ref = "minabox" }
 androidx-media3-exoplayer-workmanager = { group = "androidx.media3", name = "media3-exoplayer-workmanager", version.ref = "androidx-media3" }
-junit = { group = "junit", name = "junit", version.ref = "junit" }
+net-mm2d-mmupnp-mmupnp = { group = "net.mm2d.mmupnp", name = "mmupnp", version.ref = "mmupnp" }
 
 [plugins]
 com-android-application = { id = "com.android.application", version.ref = "android-gradle-plugin" }
