@@ -50,6 +50,7 @@ import com.m3u.material.components.CircularProgressIndicator
 import com.m3u.material.components.Icon
 import com.m3u.material.model.LocalSpacing
 import com.m3u.material.shape.AbsoluteSmoothCornerShape
+import com.m3u.ui.util.TimeUtils.formatEOrSh
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
@@ -246,9 +247,7 @@ private fun Programme.readText(
 ): AnnotatedString = buildAnnotatedString {
     val start = Instant.fromEpochMilliseconds(start)
         .toLocalDateTime(TimeZone.currentSystemDefault())
-        .run {
-            "${if (hour < 10) "0$hour" else hour}:${if (minute < 10) "0$minute" else minute}"
-        }
+        .formatEOrSh()
     withStyle(
         SpanStyle(color = timeColor, fontWeight = FontWeight.SemiBold)
     ) {

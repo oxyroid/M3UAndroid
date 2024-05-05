@@ -56,14 +56,14 @@ import coil.compose.AsyncImage
 import com.m3u.data.database.model.Programme
 import com.m3u.data.database.model.ProgrammeRange
 import com.m3u.data.database.model.ProgrammeRange.Companion.HOUR_LENGTH
-import com.m3u.features.stream.Utils.formatEOrSh
-import com.m3u.features.stream.Utils.toEOrSh
 import com.m3u.material.components.Icon
 import com.m3u.material.ktx.Edge
 import com.m3u.material.ktx.blurEdges
 import com.m3u.material.model.LocalSpacing
 import com.m3u.material.texture.MeshContainer
 import com.m3u.ui.FontFamilies
+import com.m3u.ui.util.TimeUtils.formatEOrSh
+import com.m3u.ui.util.TimeUtils.toEOrSh
 import eu.wewox.minabox.MinaBox
 import eu.wewox.minabox.MinaBoxItem
 import eu.wewox.minabox.rememberMinaBoxState
@@ -243,10 +243,12 @@ private fun TimelineCell(
         val start = Instant.fromEpochMilliseconds(
             startEdge + index * HOUR_LENGTH
         )
+            .toLocalDateTime(TimeZone.currentSystemDefault())
             .toEOrSh()
         val end = Instant.fromEpochMilliseconds(
             startEdge + (index + 1) * HOUR_LENGTH
         )
+            .toLocalDateTime(TimeZone.currentSystemDefault())
             .toEOrSh()
             // cross midnight
             .let { if (it < start) it + 24 else it }
@@ -304,8 +306,12 @@ private fun ProgrammeCell(
             verticalArrangement = Arrangement.spacedBy(spacing.small),
             maxItemsInEachRow = 2
         ) {
-            val start = Instant.fromEpochMilliseconds(programme.start).toEOrSh()
-            val end = Instant.fromEpochMilliseconds(programme.end).toEOrSh()
+            val start = Instant.fromEpochMilliseconds(programme.start)
+                .toLocalDateTime(TimeZone.currentSystemDefault())
+                .toEOrSh()
+            val end = Instant.fromEpochMilliseconds(programme.end)
+                .toLocalDateTime(TimeZone.currentSystemDefault())
+                .toEOrSh()
             Text(
                 text = "${start.formatEOrSh()} - ${end.formatEOrSh()}",
                 maxLines = 1,
@@ -358,12 +364,10 @@ private fun CurrentTimelineCell(
     val contentColor = MaterialTheme.colorScheme.onError
     val currentMilliseconds by rememberUpdatedState(milliseconds)
     val time = remember(currentMilliseconds) {
-        with(
-            Instant.fromEpochMilliseconds(currentMilliseconds)
-                .toLocalDateTime(TimeZone.currentSystemDefault())
-        ) {
-            "${if (hour < 10) "0$hour" else hour}:${if (minute < 10) "0$minute" else minute}:${if (second < 10) "0$second" else second}"
-        }
+        Instant
+            .fromEpochMilliseconds(currentMilliseconds)
+            .toLocalDateTime(TimeZone.currentSystemDefault())
+            .formatEOrSh()
     }
     Box(contentAlignment = Alignment.CenterEnd) {
         Canvas(

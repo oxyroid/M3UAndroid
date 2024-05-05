@@ -15,7 +15,6 @@ import com.m3u.core.architecture.dispatcher.M3uDispatchers.Main
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.Profiles
 import com.m3u.core.architecture.logger.install
-import com.m3u.core.architecture.logger.post
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.Programme
@@ -26,7 +25,6 @@ import com.m3u.data.database.model.type
 import com.m3u.data.repository.playlist.PlaylistRepository
 import com.m3u.data.repository.programme.ProgrammeRepository
 import com.m3u.data.repository.stream.StreamRepository
-import com.m3u.data.service.Messager
 import com.m3u.data.service.PlayerManager
 import com.m3u.data.service.selectedFormats
 import com.m3u.data.service.trackFormats
@@ -49,7 +47,6 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -70,7 +67,6 @@ class StreamViewModel @Inject constructor(
     private val programmeRepository: ProgrammeRepository,
     private val workManager: WorkManager,
     delegate: Logger,
-    private val messager: Messager,
     @Dispatcher(Main) private val mainDispatcher: CoroutineDispatcher
 ) : ViewModel(), OnDeviceRegistryListener, OnDeviceControlListener {
     private val logger = delegate.install(Profiles.VIEWMODEL_STREAM)
@@ -303,45 +299,38 @@ class StreamViewModel @Inject constructor(
             .cachedIn(viewModelScope)
     }
 
+    private val defaultTimelineRange: ProgrammeRange
+        get() = with(Clock.System.now()) {
+            ProgrammeRange(
+                this.toEpochMilliseconds(),
+                this.plus(24.hours).toEpochMilliseconds()
+            )
+        }
+
     internal val timelineRange: StateFlow<ProgrammeRange> = stream.flatMapLatest { stream ->
-        stream ?: return@flatMapLatest flowOf()
-        val channelId = stream.channelId ?: return@flatMapLatest flowOf()
+        stream ?: return@flatMapLatest flowOf(defaultTimelineRange)
+        val channelId = stream.channelId ?: return@flatMapLatest flowOf(defaultTimelineRange)
         val playlist = stream.playlistUrl.let { playlistRepository.get(it) }
-        playlist ?: return@flatMapLatest flowOf()
+        playlist ?: return@flatMapLatest flowOf(defaultTimelineRange)
         val epgUrls = playlist.epgUrlsOrXtreamXmlUrl()
         programmeRepository
             .observeTimelineRange(epgUrls, channelId)
             .map {
-                when {
-                    it.isEmpty() -> with(Clock.System.now()) {
-                        ProgrammeRange(
-                            this.toEpochMilliseconds(),
-                            this.plus(24.hours).toEpochMilliseconds()
-                        )
-                    }
-
-                    it.count(ProgrammeRange.HOUR_LENGTH) < 12 -> {
-                        with(Instant.fromEpochMilliseconds(it.start)) {
-                            ProgrammeRange(
-                                this.toEpochMilliseconds(),
-                                this.plus(24.hours).toEpochMilliseconds()
-                            )
-                        }
-                    }
-
-                    else -> it
+                if (it.isEmpty()) return@map defaultTimelineRange
+                if (it.count(ProgrammeRange.HOUR_LENGTH) < 12) return@map with(
+                    Instant.fromEpochMilliseconds(it.start)
+                ) {
+                    ProgrammeRange(
+                        this.toEpochMilliseconds(),
+                        this.plus(24.hours).toEpochMilliseconds()
+                    )
                 }
+                it
             }
-            .onEach { logger.post { it } }
     }
         .stateIn(
             scope = viewModelScope,
-            initialValue = with(Clock.System.now()) {
-                ProgrammeRange(
-                    this.toEpochMilliseconds(),
-                    this.plus(24.hours).toEpochMilliseconds()
-                )
-            },
+            initialValue = defaultTimelineRange,
             started = SharingStarted.WhileSubscribed(5_000L)
         )
 
