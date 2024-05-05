@@ -178,7 +178,13 @@ class StreamViewModel @Inject constructor(
         runCatching {
             _searching.value = false
             _isDevicesVisible.value = false
+
             controlPoint?.removeDiscoveryListener(this)
+            controlPoint?.stop()
+            controlPoint?.search()
+            controlPoint?.terminate()
+            controlPoint = null
+
             devices = emptyList()
         }
     }
