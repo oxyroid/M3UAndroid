@@ -320,8 +320,8 @@ class StreamViewModel @Inject constructor(
                         )
                     }
 
-                    it.length() < 12 * 3600000L -> {
-                        with(Instant.fromEpochMilliseconds(it.startEdge)) {
+                    it.count(ProgrammeRange.HOUR_LENGTH) < 12 -> {
+                        with(Instant.fromEpochMilliseconds(it.start)) {
                             ProgrammeRange(
                                 this.toEpochMilliseconds(),
                                 this.plus(24.hours).toEpochMilliseconds()

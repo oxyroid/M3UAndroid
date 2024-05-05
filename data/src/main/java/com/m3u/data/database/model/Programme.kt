@@ -35,11 +35,16 @@ data class Programme(
     val id: Int = 0
 )
 
-@Keep
 data class ProgrammeRange(
-    val startEdge: Long,
-    val endEdge: Long
+    @ColumnInfo("start_edge")
+    val start: Long,
+    @ColumnInfo("end_edge")
+    val end: Long
 ) {
-    fun isEmpty(): Boolean = length() <= 0
-    fun length(): Long = endEdge - startEdge
+    fun isEmpty(): Boolean = end - start <= 0
+    fun count(unit: Long = 1L): Int = (end - start).floorDiv(unit).toInt()
+
+    companion object {
+        const val HOUR_LENGTH = 3600000L
+    }
 }
