@@ -245,9 +245,11 @@ internal fun SmartphoneStreamItem(
 private fun Programme.readText(
     timeColor: Color = MaterialTheme.colorScheme.secondary
 ): AnnotatedString = buildAnnotatedString {
+    val preferences = LocalPreferences.current
+    val clockMode = preferences.twelveHourClock
     val start = Instant.fromEpochMilliseconds(start)
         .toLocalDateTime(TimeZone.currentSystemDefault())
-        .formatEOrSh()
+        .formatEOrSh(clockMode)
     withStyle(
         SpanStyle(color = timeColor, fontWeight = FontWeight.SemiBold)
     ) {

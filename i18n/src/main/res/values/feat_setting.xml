@@ -78,6 +78,8 @@
     <string name="feat_setting_canvas_apply">apply</string>
     <string name="feat_setting_canvas_reset">reset</string>
 
+    <string name="feat_setting_epg_clock_mode">epg 12h clock mode</string>
+
     <string name="feat_setting_remote_control">remote control</string>
     <string name="feat_setting_remote_control_description">turn on the ability to remotely control your TV</string>
 

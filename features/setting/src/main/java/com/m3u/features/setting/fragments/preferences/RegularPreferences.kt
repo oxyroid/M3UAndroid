@@ -2,6 +2,7 @@ package com.m3u.features.setting.fragments.preferences
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.AccessTime
 import androidx.compose.material.icons.rounded.ColorLens
 import androidx.compose.material.icons.rounded.DeviceHub
 import androidx.compose.material.icons.rounded.FitScreen
@@ -163,6 +164,13 @@ internal fun RegularPreferences(
             icon = Icons.Rounded.Terrain,
             checked = preferences.randomlyInFavourite,
             onChanged = { preferences.randomlyInFavourite = !preferences.randomlyInFavourite }
+        )
+
+        CheckBoxSharedPreference(
+            title =  string.feat_setting_epg_clock_mode,
+            icon = Icons.Rounded.AccessTime,
+            checked = preferences.twelveHourClock,
+            onChanged = { preferences.twelveHourClock = !preferences.twelveHourClock }
         )
 
         CheckBoxSharedPreference(

@@ -83,6 +83,8 @@ class Preferences @Inject constructor(
     sharedPreferences.booleanAsState(DEFAULT_ALWAYS_TV, ALWAYS_TV)
     var remoteControl: Boolean by
     sharedPreferences.booleanAsState(DEFAULT_REMOTE_CONTROL, REMOTE_CONTROL)
+    var twelveHourClock: Boolean by
+    sharedPreferences.booleanAsState(DEFAULT_12_H_CLOCK_MODE, CLOCK_MODE)
     var progress: Boolean by
     sharedPreferences.booleanAsState(DEFAULT_PROGRESS, PROGRESS)
     var alwaysShowReplay: Boolean by
@@ -138,6 +140,8 @@ class Preferences @Inject constructor(
         const val DEFAULT_CACHE = false
         const val DEFAULT_RANDOMLY_IN_FAVOURITE = false
 
+        const val DEFAULT_12_H_CLOCK_MODE = false
+
         const val PLAYLIST_STRATEGY = "playlist-strategy"
         const val ROW_COUNT = "rowCount"
 
@@ -162,7 +166,9 @@ class Preferences @Inject constructor(
         const val COLOR_ARGB = "color-argb"
         const val TUNNELING = "tunneling"
         const val ALWAYS_TV = "always-tv"
+        const val CLOCK_MODE = "12h-clock-mode"
         const val REMOTE_CONTROL = "remote-control"
+
         const val PROGRESS = "progress"
         const val ALWAYS_SHOW_REFRESH = "always-show-refresh"
         const val PAGING = "paging"
