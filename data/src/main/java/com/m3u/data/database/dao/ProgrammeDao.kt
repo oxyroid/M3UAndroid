@@ -67,4 +67,15 @@ interface ProgrammeDao {
         epgUrls: List<String>,
         channelId: String
     ): Flow<ProgrammeRange>
+
+    @Query(
+        """
+        SELECT MIN(start) AS start_edge, MAX(`end`) AS end_edge
+        FROM programmes
+        WHERE epg_url in (:epgUrls)
+        """
+    )
+    fun observeProgrammeRange(
+        epgUrls: List<String>
+    ): Flow<ProgrammeRange>
 }

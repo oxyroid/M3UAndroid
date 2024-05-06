@@ -44,11 +44,9 @@ internal fun PlayerPanel(
     streamId: Int,
     isSeriesPlaylist: Boolean,
     isPanelExpanded: Boolean,
-    isProgrammesRefreshing: Boolean,
     neighboring: LazyPagingItems<Stream>,
     programmes: LazyPagingItems<Programme>,
     programmeRange: ProgrammeRange,
-    onRefreshProgrammesIgnoreCache: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
@@ -98,9 +96,7 @@ internal fun PlayerPanel(
 
             ProgramGuide(
                 isPanelExpanded = isPanelExpanded,
-                isProgrammesRefreshing = isProgrammesRefreshing,
                 programmes = programmes,
-                onRefreshProgrammesIgnoreCache = onRefreshProgrammesIgnoreCache,
                 range = programmeRange,
                 modifier = Modifier
                     .fillMaxWidth()

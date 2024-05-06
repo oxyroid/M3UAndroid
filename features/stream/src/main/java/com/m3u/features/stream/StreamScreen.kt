@@ -94,7 +94,6 @@ fun StreamRoute(
 
     val volume by viewModel.volume.collectAsStateWithLifecycle()
     val isSeriesPlaylist by viewModel.isSeriesPlaylist.collectAsStateWithLifecycle()
-    val isProgrammesRefreshing: Boolean by viewModel.isEpgRefreshing.collectAsStateWithLifecycle()
 
     val neighboring = viewModel.neighboring.collectAsLazyPagingItems()
     val programmes = viewModel.programmes.collectAsLazyPagingItems()
@@ -170,7 +169,6 @@ fun StreamRoute(
         color = Color.Black,
         contentColor = Color.White
     ) {
-//        SharedTransitionLayout {
         PullPanelLayout(
             state = pullPanelLayoutState,
             enabled = isPanelSupported && isPanelEnabled,
@@ -178,7 +176,6 @@ fun StreamRoute(
                 when (state) {
                     PullPanelLayoutValue.EXPANDED -> {
                         maskState.lock(PullPanelLayoutValue.EXPANDED)
-                        viewModel.checkOrRefreshProgrammes()
                     }
 
                     PullPanelLayoutValue.COLLAPSED -> {
@@ -194,13 +191,9 @@ fun StreamRoute(
                         streamId = stream?.id ?: -1,
                         isPanelExpanded = isPanelExpanded,
                         isSeriesPlaylist = isSeriesPlaylist,
-                        isProgrammesRefreshing = isProgrammesRefreshing,
                         neighboring = neighboring,
                         programmes = programmes,
-                        programmeRange = programmeRange,
-                        onRefreshProgrammesIgnoreCache = {
-                            viewModel.checkOrRefreshProgrammes(true)
-                        }
+                        programmeRange = programmeRange
                     )
                 } else {
                     // todo: fix pull panel layout bug
@@ -272,14 +265,10 @@ fun StreamRoute(
             viewModel.clearTrack(type)
         }
     )
-//    }
 }
 
-//@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
-private fun
-//        SharedTransitionScope.
-        StreamPlayer(
+private fun StreamPlayer(
     maskState: MaskState,
     playerState: PlayerState,
     playlist: Playlist?,

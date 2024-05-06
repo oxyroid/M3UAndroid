@@ -31,7 +31,6 @@ import com.m3u.data.repository.stream.StreamRepository
 import com.m3u.data.service.PlayerManager
 import com.m3u.data.service.currentTracks
 import com.m3u.data.service.tracks
-import com.m3u.data.worker.SubscriptionWorker
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.delay
@@ -287,11 +286,8 @@ class StreamViewModel @Inject constructor(
     internal val programmeRange: StateFlow<ProgrammeRange> = stream.flatMapLatest { stream ->
         stream ?: return@flatMapLatest flowOf(defaultProgrammeRange)
         val channelId = stream.channelId ?: return@flatMapLatest flowOf(defaultProgrammeRange)
-        val playlist = stream.playlistUrl.let { playlistRepository.get(it) }
-        playlist ?: return@flatMapLatest flowOf(defaultProgrammeRange)
-        val epgUrls = playlist.epgUrlsOrXtreamXmlUrl()
         programmeRepository
-            .observeProgrammeRange(epgUrls, channelId)
+            .observeProgrammeRange(stream.playlistUrl, channelId)
             .map {
                 it
                     .spread(ProgrammeRange.Spread.Increase(5.minutes, 1.hours + 5.minutes))
@@ -303,28 +299,6 @@ class StreamViewModel @Inject constructor(
             initialValue = defaultProgrammeRange,
             started = SharingStarted.WhileSubscribed(5_000L)
         )
-
-    internal val isEpgRefreshing: StateFlow<Boolean> = combine(
-        playlist,
-        programmeRepository.refreshingEpgUrls
-    ) { playlist, refreshingEpgUrls ->
-        playlist ?: return@combine false
-        val epgUrls = playlist.epgUrlsOrXtreamXmlUrl()
-        epgUrls.any { epgUrl -> epgUrl in refreshingEpgUrls }
-    }
-        .stateIn(
-            scope = viewModelScope,
-            // disable refresh button by default
-            initialValue = true,
-            started = SharingStarted.WhileSubscribed(5_000L)
-        )
-
-    internal fun checkOrRefreshProgrammes(ignoreCache: Boolean = false) {
-        viewModelScope.launch {
-            val stream = stream.value ?: return@launch
-            SubscriptionWorker.epg(workManager, stream.playlistUrl, ignoreCache)
-        }
-    }
 
     internal fun onKeyCode(code: TelevisionKeyCode) {
         when (code) {
