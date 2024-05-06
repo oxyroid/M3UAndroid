@@ -19,6 +19,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
@@ -137,31 +138,30 @@ private fun NeighboredChannelGallery(
         modifier = modifier
     ) {
         items(neighboring.itemCount) { i ->
-            neighboring[i]?.let { currentStream ->
-                val playing = currentStream.id == streamId
+            neighboring[i]?.let { stream ->
+                val isPlaying = stream.id == streamId
                 Card(
                     colors = CardDefaults.cardColors(
-                        containerColor = if (!playing) MaterialTheme.colorScheme.surface
+                        containerColor = if (!isPlaying)
+                            MaterialTheme.colorScheme.surfaceColorAtElevation(spacing.medium)
                         else MaterialTheme.colorScheme.onSurface,
-                        contentColor = if (!playing) MaterialTheme.colorScheme.onSurface
-                        else MaterialTheme.colorScheme.surface
+                        contentColor = if (!isPlaying) MaterialTheme.colorScheme.onSurface
+                        else MaterialTheme.colorScheme.surfaceColorAtElevation(spacing.small)
                     ),
                     shape = AbsoluteRoundedCornerShape(spacing.medium),
-                    elevation = CardDefaults.cardElevation(
-                        if (playing) spacing.none else spacing.small
-                    ),
+                    elevation = CardDefaults.cardElevation(spacing.none),
                     onClick = {
                         coroutineScope.launch {
                             helper.play(
-                                MediaCommand.Live(currentStream.id)
+                                MediaCommand.Live(stream.id)
                             )
                         }
                     }
                 ) {
                     Text(
-                        text = currentStream.title,
+                        text = stream.title,
                         style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.SemiBold.takeIf { playing },
+                        fontWeight = FontWeight.SemiBold.takeIf { isPlaying },
                         modifier = Modifier.padding(spacing.medium)
                     )
                 }
