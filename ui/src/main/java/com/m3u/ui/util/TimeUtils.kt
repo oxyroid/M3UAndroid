@@ -13,11 +13,11 @@ object TimeUtils {
             val formattedMinute = if (minute < 10) "0$minute" else minute.toString()
             val formattedSecond = if (second < 10) "0$second" else second.toString()
 //        return "$formattedHour:$formattedMinute:$formattedSecond $amPm"
-            return "$formattedHour:$formattedMinute"
+            return "$formattedHour:$formattedMinute:$formattedSecond"
         } else {
             "${if (hour < 10) "0$hour" else hour}:" +
-            "${if (minute < 10) "0$minute" else minute}"// +
-//            ":${if (second < 10) "0$second" else second}"
+            "${if (minute < 10) "0$minute" else minute}" +
+            ":${if (second < 10) "0$second" else second}"
         }
     }
     fun Float.formatEOrSh(use12HourFormat: Boolean): String {
