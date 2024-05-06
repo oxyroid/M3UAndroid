@@ -168,7 +168,6 @@ internal fun RegularPreferences(
 
         CheckBoxSharedPreference(
             title =  string.feat_setting_epg_clock_mode,
-            content = string.feat_setting_epg_clock_mode,
             icon = Icons.Rounded.AccessTime,
             checked = preferences.twelveHourClock,
             onChanged = { preferences.twelveHourClock = !preferences.twelveHourClock }
@@ -193,6 +192,5 @@ internal fun RegularPreferences(
                 onChanged = { preferences.godMode = !preferences.godMode }
             )
         }
-
     }
 }
