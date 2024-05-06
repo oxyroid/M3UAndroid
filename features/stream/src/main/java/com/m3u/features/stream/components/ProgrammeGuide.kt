@@ -54,6 +54,7 @@ import androidx.compose.ui.zIndex
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.paging.compose.LazyPagingItems
 import coil.compose.AsyncImage
+import com.m3u.core.architecture.preferences.LocalPreferences
 import com.m3u.data.database.model.Programme
 import com.m3u.data.database.model.ProgrammeRange
 import com.m3u.data.database.model.ProgrammeRange.Companion.HOUR_LENGTH
@@ -292,7 +293,9 @@ private fun ProgrammeCell(
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
+    val preferences = LocalPreferences.current
     val colorScheme = MaterialTheme.colorScheme
+    val clockMode = preferences.twelveHourClock
     Surface(
         color = colorScheme.tertiaryContainer,
         border = BorderStroke(1.dp, colorScheme.outline),
@@ -314,7 +317,7 @@ private fun ProgrammeCell(
                 .toLocalDateTime(TimeZone.currentSystemDefault())
                 .toEOrSh()
             Text(
-                text = "${start.formatEOrSh()} - ${end.formatEOrSh()}",
+                text = "${start.formatEOrSh(clockMode)} - ${end.formatEOrSh(clockMode)}",
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 style = MaterialTheme.typography.bodyMedium,
@@ -361,6 +364,8 @@ private fun CurrentTimelineCell(
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
+    val preferences = LocalPreferences.current
+    val clockMode = preferences.twelveHourClock
     val color = MaterialTheme.colorScheme.error
     val contentColor = MaterialTheme.colorScheme.onError
     val currentMilliseconds by rememberUpdatedState(milliseconds)
@@ -368,7 +373,7 @@ private fun CurrentTimelineCell(
         Instant
             .fromEpochMilliseconds(currentMilliseconds)
             .toLocalDateTime(TimeZone.currentSystemDefault())
-            .formatEOrSh()
+            .formatEOrSh(clockMode)
     }
     Box(contentAlignment = Alignment.CenterEnd) {
         Canvas(
