@@ -45,15 +45,14 @@ dependencies {
 
     implementation(libs.androidx.core.core.ktx)
     implementation(libs.androidx.appcompat.appcompat)
-    implementation(libs.androidx.compose.ui.ui)
-    api(libs.androidx.compose.runtime.runtime)
+    api(libs.androidx.compose.runtime)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.com.squareup.retrofit2.retrofit)
     implementation(libs.androidx.media3.media3.exoplayer)
     implementation(libs.androidx.media3.media3.session)
     implementation(libs.com.google.dagger.hilt.android)
     ksp(libs.com.google.dagger.hilt.compiler)
-    
+
     implementation(libs.kotlinx.serialization.json)
 
     api(libs.kotlinx.datetime)

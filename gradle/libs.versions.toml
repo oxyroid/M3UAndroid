@@ -5,7 +5,7 @@ androidx-appcompat = "1.6.1"
 androidx-activity = "1.9.0"
 androidx-lifecycle = "2.7.0"
 androidx-compose = "1.6.7"
-androidx-compose-material3 = "1.2.1"
+androidx-compose-bom = "2024.05.00"
 androidx-compose-material3-adaptive = "1.0.0-alpha06"
 androidx-constraintlayout-compose = "1.0.1"
 androidx-navigation = "2.7.7"
@@ -62,20 +62,22 @@ androidx-lifecycle-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name 
 androidx-lifecycle-lifecycle-runtime-compose = { group = "androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "androidx-lifecycle" }
 androidx-lifecycle-lifecycle-process = { group = "androidx.lifecycle", name = "lifecycle-process", version.ref = "androidx-lifecycle" }
 
-androidx-compose-ui-ui = { group = "androidx.compose.ui", name = "ui", version.ref = "androidx-compose" }
-androidx-compose-ui-ui-util = { group = "androidx.compose.ui", name = "ui-util", version.ref = "androidx-compose" }
-androidx-compose-ui-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling", version.ref = "androidx-compose" }
-androidx-compose-ui-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview", version.ref = "androidx-compose" }
-androidx-compose-runtime-runtime = { group = "androidx.compose.runtime", name = "runtime", version.ref = "androidx-compose" }
-androidx-compose-foundation-foundation = { group = "androidx.compose.foundation", name = "foundation", version.ref = "androidx-compose" }
-androidx-compose-animation-animation = { group = "androidx.compose.animation", name = "animation", version.ref = "androidx-compose" }
-androidx-compose-material-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended", version.ref = "androidx-compose" }
+androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "androidx-compose-bom" }
+androidx-compose-foundation = { group = "androidx.compose.foundation", name = "foundation" }
+androidx-compose-foundation-layout = { group = "androidx.compose.foundation", name = "foundation-layout" }
+androidx-compose-material-iconsExtended = { group = "androidx.compose.material", name = "material-icons-extended" }
+androidx-compose-material3 = { group = "androidx.compose.material3", name = "material3" }
+androidx-compose-runtime = { group = "androidx.compose.runtime", name = "runtime" }
+androidx-compose-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
+androidx-compose-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
+androidx-compose-ui-util = { group = "androidx.compose.ui", name = "ui-util" }
+
+androidx-compose-material3-material3-window-size-clazz = { group = "androidx.compose.material3", name = "material3-window-size-class" }
+
+androidx-compose-material3-material3-adaptive = { group = "androidx.compose.material3", name = "material3-adaptive", version.ref = "androidx-compose-material3-adaptive" }
+
 androidx-navigation-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "androidx-navigation" }
 androidx-constraintlayout-constraintlayout-compose = { group = "androidx.constraintlayout", name = "constraintlayout-compose", version.ref = "androidx-constraintlayout-compose" }
-
-androidx-compose-material3-material3 = { group = "androidx.compose.material3", name = "material3", version.ref = "androidx-compose-material3" }
-androidx-compose-material3-material3-window-size-clazz = { group = "androidx.compose.material3", name = "material3-window-size-class", version.ref = "androidx-compose-material3" }
-androidx-compose-material3-material3-adaptive = { group = "androidx.compose.material3", name = "material3-adaptive", version.ref = "androidx-compose-material3-adaptive" }
 
 androidx-paging-compose = { module = "androidx.paging:paging-compose", version.ref = "androidx-paging-compose" }
 androidx-paging-runtime-ktx = { module = "androidx.paging:paging-runtime-ktx", version.ref = "androidx-paging-runtime-ktx" }
@@ -165,6 +167,3 @@ com-google-devtools-ksp = { id = "com.google.devtools.ksp", version.ref = "ksp-p
 com-android-test = { id = "com.android.test", version.ref = "android-gradle-plugin" }
 androidx-baselineprofile = { id = "androidx.baselineprofile", version.ref = "androidx-benchmark" }
 org-jetbrains-kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
-
-[bundles]
-androidx-compose = ["androidx-compose-ui-ui", "androidx-compose-ui-ui-util", "androidx-compose-runtime-runtime", "androidx-compose-foundation-foundation", "androidx-compose-animation-animation"]
