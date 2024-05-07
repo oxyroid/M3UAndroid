@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.org.jetbrains.kotlin.android)
     alias(libs.plugins.com.google.devtools.ksp)
     alias(libs.plugins.com.google.dagger.hilt.android)
+    alias(libs.plugins.compose.compiler)
     id("kotlin-parcelize")
 }
 
@@ -33,11 +34,12 @@ android {
     buildFeatures {
         compose = true
     }
-    composeOptions {
-        kotlinCompilerExtensionVersion = libs.versions.compose.compiler.get()
-    }
     packaging {
         resources.excludes += "META-INF/**"
+    }
+    composeCompiler {
+        enableStrongSkippingMode = true
+        includeSourceInformation = true
     }
 }
 
@@ -55,7 +57,7 @@ dependencies {
     implementation(libs.com.google.dagger.hilt.android)
     implementation(libs.androidx.hilt.hilt.navigation.compose)
     ksp(libs.com.google.dagger.hilt.compiler)
-    
+
     implementation(libs.androidx.work.work.runtime.ktx)
     ksp(libs.androidx.hilt.hilt.compiler)
     implementation(libs.androidx.hilt.hilt.work)

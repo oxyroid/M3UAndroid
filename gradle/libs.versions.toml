@@ -27,7 +27,6 @@ io-coil = "2.5.0"
 kotlinx-serialization-json = "1.6.3"
 kotlinx-serialization-converter-retrofit = "1.0.0"
 kotlinx-datetime = "0.5.0"
-kotlinx-coroutine = "1.8.0"
 
 chucker = "4.0.0"
 logbackAndroid = "3.0.0"
@@ -38,12 +37,11 @@ slf4j-api = "2.0.11"
 squareup-retrofit2 = "2.11.0"
 squareup-leakcanary = "2.13"
 
-kotlin = "1.9.23"
+kotlin = "2.0.0-RC2"
 android-gradle-plugin = "8.2.2"
 dagger-plugin = "2.50"
-ksp-plugin = "1.9.23-1.0.20"
+ksp-plugin = "2.0.0-RC2-1.0.20"
 
-compose_compiler = "1.5.11"
 androidx-test-ext-junit = "1.1.5"
 espresso-core = "3.5.1"
 com-google-android-material = "1.11.0"
@@ -138,8 +136,6 @@ kotlinx-serialization-coverter-retrofit = { group = "com.jakewharton.retrofit", 
 
 kotlinx-datetime = { group = "org.jetbrains.kotlinx", name = "kotlinx-datetime", version.ref = "kotlinx-datetime" }
 
-kotlinx-coroutines-core-jvm = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm", version.ref = "kotlinx-coroutine" }
-
 com-google-android-material-material = { group = "com.google.android.material", name = "material", version.ref = "com-google-android-material" }
 
 androidx-test-ext-junit = { group = "androidx.test.ext", name = "junit", version.ref = "androidx-test-ext-junit" }
@@ -163,6 +159,7 @@ com-android-application = { id = "com.android.application", version.ref = "andro
 com-android-library = { id = "com.android.library", version.ref = "android-gradle-plugin" }
 org-jetbrains-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 org-jetbrains-kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 com-google-dagger-hilt-android = { id = "com.google.dagger.hilt.android", version.ref = "dagger-plugin" }
 com-google-devtools-ksp = { id = "com.google.devtools.ksp", version.ref = "ksp-plugin" }
 com-android-test = { id = "com.android.test", version.ref = "android-gradle-plugin" }

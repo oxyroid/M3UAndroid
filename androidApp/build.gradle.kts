@@ -4,12 +4,12 @@ import java.time.format.DateTimeFormatter
 plugins {
     alias(libs.plugins.com.android.application)
     alias(libs.plugins.org.jetbrains.kotlin.android)
+    alias(libs.plugins.compose.compiler)
     alias(libs.plugins.com.google.dagger.hilt.android)
     alias(libs.plugins.com.google.devtools.ksp)
     alias(libs.plugins.androidx.baselineprofile)
     id("kotlin-parcelize")
 }
-
 android {
     namespace = "com.m3u.androidApp"
     compileSdk = 34
@@ -33,7 +33,8 @@ android {
         // Github Workflow
         create("snapshotChannel") {
             dimension = "channel"
-            versionNameSuffix = "-snapshot[${LocalDateTime.now().format(DateTimeFormatter.ofPattern("MMddHHmm"))}]"
+            versionNameSuffix =
+                "-snapshot[${LocalDateTime.now().format(DateTimeFormatter.ofPattern("MMddHHmm"))}]"
             applicationIdSuffix = ".snapshot"
         }
         create("richCodec") {
@@ -100,11 +101,12 @@ android {
         compose = true
         buildConfig = true
     }
-    composeOptions {
-        kotlinCompilerExtensionVersion = libs.versions.compose.compiler.get()
-    }
     packaging {
         resources.excludes += "META-INF/**"
+    }
+    composeCompiler {
+        enableStrongSkippingMode = true
+        includeSourceInformation = true
     }
     applicationVariants.all {
         outputs
