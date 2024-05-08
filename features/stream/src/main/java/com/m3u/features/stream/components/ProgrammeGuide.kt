@@ -48,7 +48,7 @@ import androidx.compose.ui.zIndex
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.paging.compose.LazyPagingItems
 import coil.compose.AsyncImage
-import com.m3u.core.architecture.preferences.LocalPreferences
+import com.m3u.core.architecture.preferences.hiltPreferences
 import com.m3u.data.database.model.Programme
 import com.m3u.data.database.model.ProgrammeRange
 import com.m3u.data.database.model.ProgrammeRange.Companion.HOUR_LENGTH
@@ -283,7 +283,7 @@ private fun ProgrammeCell(
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
-    val preferences = LocalPreferences.current
+    val preferences = hiltPreferences()
     val colorScheme = MaterialTheme.colorScheme
     val clockMode = preferences.twelveHourClock
     Surface(
@@ -354,7 +354,7 @@ private fun CurrentTimelineCell(
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
-    val preferences = LocalPreferences.current
+    val preferences = hiltPreferences()
     val clockMode = preferences.twelveHourClock
     val color = MaterialTheme.colorScheme.error
     val contentColor = MaterialTheme.colorScheme.onError

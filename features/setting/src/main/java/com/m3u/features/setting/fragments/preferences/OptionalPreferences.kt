@@ -26,7 +26,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import com.m3u.core.architecture.preferences.LocalPreferences
+import com.m3u.core.architecture.preferences.hiltPreferences
 import com.m3u.core.architecture.preferences.annotation.ReconnectMode
 import com.m3u.core.util.basic.title
 import com.m3u.features.setting.components.CheckBoxSharedPreference
@@ -37,7 +37,7 @@ import com.m3u.material.ktx.isTelevision
 
 @Composable
 fun OptionalPreferences(modifier: Modifier = Modifier) {
-    val preferences = LocalPreferences.current
+    val preferences = hiltPreferences()
     val tv = isTelevision()
 
     var expended by rememberSaveable { mutableStateOf(false) }

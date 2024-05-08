@@ -10,36 +10,24 @@ import androidx.activity.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import com.m3u.core.Contracts
-import com.m3u.core.architecture.dispatcher.Dispatcher
-import com.m3u.core.architecture.dispatcher.M3uDispatchers.Main
-import com.m3u.core.architecture.preferences.Preferences
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.type
 import com.m3u.data.repository.playlist.PlaylistRepository
 import com.m3u.data.repository.stream.StreamRepository
 import com.m3u.data.service.MediaCommand
-import com.m3u.data.service.Messager
-import com.m3u.data.service.PlayerManager
 import com.m3u.data.service.RemoteDirectionService
-import com.m3u.ui.EventBus.registerActionEventCollector
+import com.m3u.ui.Events.connectDPadIntent
 import com.m3u.ui.Toolkit
-import com.m3u.ui.helper.AbstractHelper
+import com.m3u.ui.helper.Helper
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @AndroidEntryPoint
 class PlayerActivity : ComponentActivity() {
     private val viewModel: StreamViewModel by viewModels()
-    private val helper by lazy {
-        AbstractHelper(
-            activity = this,
-            mainDispatcher = mainDispatcher,
-            messager = messager,
-            playerManager = playerManager
-        )
-    }
+
+    private val helper: Helper = Helper(this)
 
     companion object {
         // FIXME: the property is worked only when activity has one instance at most.
@@ -48,35 +36,22 @@ class PlayerActivity : ComponentActivity() {
     }
 
     @Inject
-    lateinit var preferences: Preferences
-
-    @Inject
-    lateinit var playerManager: PlayerManager
-
-    @Inject
     lateinit var streamRepository: StreamRepository
 
     @Inject
     lateinit var playlistRepository: PlaylistRepository
 
     @Inject
-    @Dispatcher(Main)
-    lateinit var mainDispatcher: CoroutineDispatcher
-
-    @Inject
-    lateinit var messager: Messager
-
-    @Inject
     lateinit var remoteDirectionService: RemoteDirectionService
 
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
+        connectDPadIntent()
         super.onCreate(savedInstanceState)
         handleIntent(intent)
         setContent {
             Toolkit(
                 helper = helper,
-                preferences = preferences,
                 alwaysUseDarkTheme = true
             ) {
                 StreamRoute(
@@ -85,7 +60,6 @@ class PlayerActivity : ComponentActivity() {
                 )
             }
         }
-        registerActionEventCollector(remoteDirectionService.actions)
         addOnPictureInPictureModeChangedListener {
             if (!it.isInPictureInPictureMode && lifecycle.currentState !in arrayOf(
                     Lifecycle.State.RESUMED,
@@ -130,11 +104,6 @@ class PlayerActivity : ComponentActivity() {
                 playFromShortcuts(stream.id)
             }
         }
-    }
-
-    override fun onUserLeaveHint() {
-        super.onUserLeaveHint()
-        helper.onUserLeaveHint?.invoke()
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {

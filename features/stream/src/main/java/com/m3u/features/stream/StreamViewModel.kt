@@ -31,6 +31,7 @@ import com.m3u.data.repository.stream.StreamRepository
 import com.m3u.data.service.PlayerManager
 import com.m3u.data.service.currentTracks
 import com.m3u.data.service.tracks
+import com.m3u.data.television.model.RemoteDirection
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.delay
@@ -63,7 +64,6 @@ class StreamViewModel @Inject constructor(
     private val playerManager: PlayerManager,
     private val audioManager: AudioManager,
     private val programmeRepository: ProgrammeRepository,
-    private val workManager: WorkManager,
     delegate: Logger,
     @Dispatcher(Main) private val mainDispatcher: CoroutineDispatcher
 ) : ViewModel(), ControlPoint.DiscoveryListener {
@@ -300,23 +300,25 @@ class StreamViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5_000L)
         )
 
-    internal fun onKeyCode(code: TelevisionKeyCode) {
+    internal fun onKeyCode(code: RemoteDirection) {
         when (code) {
-            TelevisionKeyCode.UP -> {}
-            TelevisionKeyCode.DOWN -> {}
-            TelevisionKeyCode.LEFT -> {
+            RemoteDirection.UP -> {}
+            RemoteDirection.DOWN -> {}
+            RemoteDirection.LEFT -> {
                 val player = playerState.value.player ?: return
                 viewModelScope.launch(mainDispatcher) {
                     player.seekTo(player.currentPosition - 15000)
                 }
             }
 
-            TelevisionKeyCode.RIGHT -> {
+            RemoteDirection.RIGHT -> {
                 val player = playerState.value.player ?: return
                 viewModelScope.launch(mainDispatcher) {
                     player.seekTo(player.currentPosition + 15000)
                 }
             }
+
+            else -> {}
         }
     }
 

@@ -62,8 +62,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.media3.common.Player
-import com.m3u.core.architecture.preferences.LocalPreferences
+import com.m3u.core.architecture.preferences.hiltPreferences
 import com.m3u.core.util.basic.isNotEmpty
+import com.m3u.data.television.model.RemoteDirection
 import com.m3u.features.stream.components.MaskTextButton
 import com.m3u.features.stream.components.PlayerMask
 import com.m3u.i18n.R.string
@@ -85,13 +86,6 @@ import kotlin.math.roundToLong
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
-
-internal enum class TelevisionKeyCode(val nativeCode: Int) {
-    UP(KeyEvent.KEYCODE_DPAD_UP),
-    DOWN(KeyEvent.KEYCODE_DPAD_DOWN),
-    LEFT(KeyEvent.KEYCODE_DPAD_LEFT),
-    RIGHT(KeyEvent.KEYCODE_DPAD_RIGHT);
-}
 
 //@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -116,10 +110,10 @@ internal fun
     openChooseFormat: () -> Unit,
     onEnterPipMode: () -> Unit,
     onVolume: (Float) -> Unit,
-    onKeyCode: (TelevisionKeyCode) -> Unit,
+    onKeyCode: (RemoteDirection) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val preferences = LocalPreferences.current
+    val preferences = hiltPreferences()
     val helper = LocalHelper.current
     val spacing = LocalSpacing.current
     val tv = isTelevision()
@@ -208,11 +202,11 @@ internal fun
                 Modifier.onKeyEvent { event ->
                     when (event.nativeKeyEvent.keyCode) {
                         KeyEvent.KEYCODE_DPAD_UP -> (!maskState.visible).also {
-                            if (it) onKeyCode(TelevisionKeyCode.UP)
+                            if (it) onKeyCode(RemoteDirection.UP)
                         }
 
                         KeyEvent.KEYCODE_DPAD_DOWN -> (!maskState.visible).also {
-                            if (it) onKeyCode(TelevisionKeyCode.DOWN)
+                            if (it) onKeyCode(RemoteDirection.DOWN)
                         }
 
                         else -> false
@@ -483,13 +477,13 @@ internal fun
                                     .onKeyEvent { event ->
                                         when (event.nativeKeyEvent.keyCode) {
                                             KeyEvent.KEYCODE_DPAD_LEFT -> {
-                                                onKeyCode(TelevisionKeyCode.LEFT)
+                                                onKeyCode(RemoteDirection.LEFT)
                                                 maskState.wake()
                                                 true
                                             }
 
                                             KeyEvent.KEYCODE_DPAD_RIGHT -> {
-                                                onKeyCode(TelevisionKeyCode.RIGHT)
+                                                onKeyCode(RemoteDirection.RIGHT)
                                                 maskState.wake()
                                                 true
                                             }

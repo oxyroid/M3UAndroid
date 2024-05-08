@@ -43,7 +43,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.google.accompanist.permissions.rememberPermissionState
-import com.m3u.core.architecture.preferences.LocalPreferences
+import com.m3u.core.architecture.preferences.hiltPreferences
 import com.m3u.core.util.basic.title
 import com.m3u.core.wrapper.Event
 import com.m3u.core.wrapper.eventOf
@@ -66,6 +66,7 @@ import com.m3u.ui.EpisodesBottomSheet
 import com.m3u.ui.Sort
 import com.m3u.ui.helper.Fob
 import com.m3u.ui.helper.LocalHelper
+import com.m3u.ui.helper.Metadata
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -79,7 +80,7 @@ internal fun PlaylistRoute(
     contentPadding: PaddingValues = PaddingValues()
 ) {
     val context = LocalContext.current
-    val preferences = LocalPreferences.current
+    val preferences = hiltPreferences()
     val helper = LocalHelper.current
     val coroutineScope = rememberCoroutineScope()
 
@@ -119,7 +120,7 @@ internal fun PlaylistRoute(
     )
 
     LifecycleResumeEffect(playlist) {
-        helper.title = playlist?.title?.title().orEmpty()
+        Metadata.title = playlist?.title?.title().orEmpty()
         onPauseOrDispose {
         }
     }
@@ -269,7 +270,6 @@ private fun PlaylistScreen(
     getProgrammeCurrently: suspend (channelId: String) -> Programme?,
     modifier: Modifier = Modifier
 ) {
-    val helper = LocalHelper.current
     val currentOnScrollUp by rememberUpdatedState(onScrollUp)
 
     val isAtTopState = remember { mutableStateOf(true) }
@@ -278,7 +278,7 @@ private fun PlaylistScreen(
         snapshotFlow { isAtTopState.value }
             .distinctUntilChanged()
             .onEach { newValue ->
-                helper.fob = if (newValue) null
+                Metadata.fob = if (newValue) null
                 else {
                     Fob(
                         icon = Icons.Rounded.KeyboardDoubleArrowUp,
@@ -292,7 +292,7 @@ private fun PlaylistScreen(
     }
 
     DisposableEffect(Unit) {
-        onDispose { helper.fob = null }
+        onDispose { Metadata.fob = null }
     }
 
     val tv = isTelevision()

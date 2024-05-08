@@ -47,19 +47,16 @@ sealed interface Destination {
         val url: String,
         val recommend: String? = null
     ) : Destination
-
-    @Immutable
-    data object About : Destination
 }
 
 @Immutable
-sealed interface SettingFragment {
+sealed interface SettingDestination {
     @Immutable
-    data object Default : SettingFragment
+    data object Default : SettingDestination
 
     @Immutable
-    data object Playlists : SettingFragment
+    data object Playlists : SettingDestination
 
     @Immutable
-    data object Appearance : SettingFragment
+    data object Appearance : SettingDestination
 }

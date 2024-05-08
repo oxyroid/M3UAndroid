@@ -15,12 +15,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.m3u.data.service.collectMessageAsState
 import com.m3u.data.television.model.RemoteDirection
 import com.m3u.data.television.model.Television
 import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.FontFamilies
-import com.m3u.ui.helper.LocalHelper
 
 @Composable
 @InternalComposeApi
@@ -31,8 +30,7 @@ internal fun DPadContent(
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
-    val helper = LocalHelper.current
-    val message by helper.message.collectAsStateWithLifecycle()
+    val message by collectMessageAsState()
     Column(
         modifier = modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,

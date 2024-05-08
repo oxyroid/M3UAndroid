@@ -49,7 +49,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.paging.compose.LazyPagingItems
-import com.m3u.core.architecture.preferences.LocalPreferences
+import com.m3u.core.architecture.preferences.hiltPreferences
 import com.m3u.core.wrapper.Event
 import com.m3u.data.database.model.Programme
 import com.m3u.data.database.model.Stream
@@ -69,7 +69,7 @@ import com.m3u.ui.MediaSheetValue
 import com.m3u.ui.Sort
 import com.m3u.ui.SortBottomSheet
 import com.m3u.ui.helper.Action
-import com.m3u.ui.helper.LocalHelper
+import com.m3u.ui.helper.Metadata
 import dev.chrisbanes.haze.HazeDefaults
 import dev.chrisbanes.haze.haze
 import kotlinx.coroutines.flow.launchIn
@@ -105,10 +105,9 @@ internal fun SmartphonePlaylistScreenImpl(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues()
 ) {
-    val helper = LocalHelper.current
     val spacing = LocalSpacing.current
     val configuration = LocalConfiguration.current
-    val preferences = LocalPreferences.current
+    val preferences = hiltPreferences()
     val focusManager = LocalFocusManager.current
 
     val scaffoldState = rememberBackdropScaffoldState(BackdropValue.Concealed)
@@ -129,7 +128,7 @@ internal fun SmartphonePlaylistScreenImpl(
     var isSortSheetVisible by rememberSaveable { mutableStateOf(false) }
 
     LifecycleResumeEffect(refreshing) {
-        helper.actions = buildList {
+        Metadata.actions = buildList {
             Action(
                 icon = Icons.AutoMirrored.Rounded.Sort,
                 contentDescription = "sort",
@@ -143,7 +142,7 @@ internal fun SmartphonePlaylistScreenImpl(
             ).also { add(it) }
         }
         onPauseOrDispose {
-            helper.actions = emptyList()
+            Metadata.actions = emptyList()
         }
     }
 

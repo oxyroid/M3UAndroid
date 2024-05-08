@@ -51,6 +51,7 @@ import com.m3u.ui.FontFamilies
 import com.m3u.ui.helper.Action
 import com.m3u.ui.helper.Fob
 import com.m3u.ui.helper.LocalHelper
+import com.m3u.ui.helper.Metadata
 import com.m3u.ui.helper.useRailNav
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.HazeStyle
@@ -59,10 +60,7 @@ import dev.chrisbanes.haze.hazeChild
 @Composable
 @OptIn(InternalComposeApi::class)
 internal fun AppScaffold(
-    title: String,
-    actions: List<Action>,
     rootDestination: Destination.Root?,
-    fob: Fob?,
     navigateToRoot: (Destination.Root) -> Unit,
     modifier: Modifier = Modifier,
     onBackPressed: (() -> Unit)? = null,
@@ -71,6 +69,10 @@ internal fun AppScaffold(
 ) {
     val useRailNav = LocalHelper.current.useRailNav
     val tv = isTelevision()
+
+    val title = Metadata.title
+    val fob = Metadata.fob
+    val actions = Metadata.actions
 
     val hazeState = remember { HazeState() }
 

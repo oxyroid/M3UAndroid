@@ -19,7 +19,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Tv
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import com.m3u.material.components.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -35,11 +34,11 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.core.wrapper.Message
+import com.m3u.data.service.collectMessageAsState
+import com.m3u.material.components.Icon
 import com.m3u.material.model.LocalDuration
 import com.m3u.material.model.LocalSpacing
-import com.m3u.ui.helper.LocalHelper
 import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -51,9 +50,8 @@ fun SnackHost(
     val spacing = LocalSpacing.current
     val duration = LocalDuration.current
     val feedback = LocalHapticFeedback.current
-    val helper = LocalHelper.current
 
-    val message by helper.message.collectAsStateWithLifecycle()
+    val message by collectMessageAsState()
 
     val television by remember {
         derivedStateOf { message.type == Message.TYPE_TELEVISION }

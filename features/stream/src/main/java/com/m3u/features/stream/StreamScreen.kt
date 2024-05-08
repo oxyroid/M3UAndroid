@@ -38,11 +38,12 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.compose.collectAsLazyPagingItems
-import com.m3u.core.architecture.preferences.LocalPreferences
+import com.m3u.core.architecture.preferences.hiltPreferences
 import com.m3u.core.util.basic.isNotEmpty
 import com.m3u.core.util.basic.title
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.Stream
+import com.m3u.data.television.model.RemoteDirection
 import com.m3u.features.stream.components.CoverPlaceholder
 import com.m3u.features.stream.components.DlnaDevicesBottomSheet
 import com.m3u.features.stream.components.FormatsBottomSheet
@@ -76,7 +77,7 @@ fun StreamRoute(
     val openInExternalPlayerString = stringResource(string.feat_stream_open_in_external_app)
 
     val helper = LocalHelper.current
-    val preferences = LocalPreferences.current
+    val preferences = hiltPreferences()
     val context = LocalContext.current
     val configuration = LocalConfiguration.current
 
@@ -285,7 +286,7 @@ private fun StreamPlayer(
     onVolume: (Float) -> Unit,
     onBrightness: (Float) -> Unit,
     onEnterPipMode: () -> Unit,
-    onKeyCode: (TelevisionKeyCode) -> Unit,
+    onKeyCode: (RemoteDirection) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val title = stream?.title ?: "--"
@@ -293,7 +294,7 @@ private fun StreamPlayer(
     val playlistTitle = playlist?.title ?: "--"
     val favourite = stream?.favourite ?: false
 
-    val preferences = LocalPreferences.current
+    val preferences = hiltPreferences()
     var gesture: MaskGesture? by remember { mutableStateOf(null) }
 
     // because they will be updated frequently,

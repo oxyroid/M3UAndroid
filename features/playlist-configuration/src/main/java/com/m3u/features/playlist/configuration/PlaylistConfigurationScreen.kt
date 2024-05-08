@@ -66,6 +66,7 @@ import com.m3u.material.model.LocalHazeState
 import com.m3u.material.model.LocalSpacing
 import com.m3u.material.shape.AbsoluteSmoothCornerShape
 import com.m3u.ui.helper.LocalHelper
+import com.m3u.ui.helper.Metadata
 import dev.chrisbanes.haze.HazeDefaults
 import dev.chrisbanes.haze.haze
 import kotlinx.datetime.LocalDateTime
@@ -87,7 +88,7 @@ internal fun PlaylistConfigurationRoute(
     val expired by viewModel.expired.collectAsStateWithLifecycle()
 
     LifecycleResumeEffect(playlist?.title) {
-        helper.title = playlist?.title?.title().orEmpty()
+        Metadata.title = playlist?.title?.title().orEmpty()
         onPauseOrDispose {
         }
     }

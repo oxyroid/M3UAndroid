@@ -10,9 +10,9 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalView
-import com.m3u.core.architecture.preferences.LocalPreferences
-import com.m3u.core.architecture.preferences.Preferences
-import com.m3u.data.service.RemoteDirectionService
+import com.m3u.core.architecture.preferences.hiltPreferences
+import com.m3u.data.television.model.RemoteDirection
+import com.m3u.data.television.model.keyCode
 import com.m3u.material.LocalM3UHapticFeedback
 import com.m3u.material.createM3UHapticFeedback
 import com.m3u.material.ktx.LocalAlwaysTelevision
@@ -25,11 +25,12 @@ import kotlin.time.Duration.Companion.milliseconds
 @Composable
 fun Toolkit(
     helper: Helper,
-    preferences: Preferences,
     alwaysUseDarkTheme: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val view = LocalView.current
+    val preferences = hiltPreferences()
+
     val onBackPressedDispatcher =
         checkNotNull(LocalOnBackPressedDispatcherOwner.current).onBackPressedDispatcher
     val prevTypography = MaterialTheme.typography
@@ -44,19 +45,20 @@ fun Toolkit(
 
     val connection = remember(view) { BaseInputConnection(view, true) }
 
-    EventHandler(EventBus.action) { action ->
-        when (action) {
-            RemoteDirectionService.Action.Back -> {
+    EventHandler(Events.remoteDirection) { remoteDirection ->
+        when (remoteDirection) {
+            RemoteDirection.EXIT -> {
                 onBackPressedDispatcher.onBackPressed()
             }
 
-            is RemoteDirectionService.Action.Common -> {
+            else -> {
                 connection.sendKeyEvent(
-                    KeyEvent(KeyEvent.ACTION_DOWN, action.keyCode)
+                    KeyEvent(KeyEvent.ACTION_DOWN, remoteDirection.keyCode)
                 )
+                // TODO
                 delay(150.milliseconds)
                 connection.sendKeyEvent(
-                    KeyEvent(KeyEvent.ACTION_UP, action.keyCode)
+                    KeyEvent(KeyEvent.ACTION_UP, remoteDirection.keyCode)
                 )
             }
         }
@@ -64,7 +66,6 @@ fun Toolkit(
 
     CompositionLocalProvider(
         LocalHelper provides helper,
-        LocalPreferences provides preferences,
         // some components cannot use LocalPreferences
         LocalAlwaysTelevision provides preferences.alwaysTv,
         LocalM3UHapticFeedback provides createM3UHapticFeedback()

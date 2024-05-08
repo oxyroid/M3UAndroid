@@ -1,5 +1,7 @@
 package com.m3u.features.crash.screen.detail
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -28,6 +30,13 @@ internal fun DetailScreen(
     viewModel: DetailViewModel = hiltViewModel()
 ) {
     val spacing = LocalSpacing.current
+
+    val createDocumentLauncher =
+        rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/*")) { uri ->
+            uri ?: return@rememberLauncherForActivityResult
+            viewModel.save(uri)
+        }
+
     LaunchedEffect(path) {
         viewModel.init(path)
     }
@@ -58,7 +67,10 @@ internal fun DetailScreen(
                             contentDescription = null
                         )
                     },
-                    onClick = viewModel::save
+                    onClick = {
+                        val filename = "Crash_${System.currentTimeMillis()}.txt"
+                        createDocumentLauncher.launch(filename)
+                    }
                 )
             }
         }

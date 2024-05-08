@@ -7,7 +7,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
-import com.m3u.core.architecture.preferences.LocalPreferences
+import com.m3u.core.architecture.preferences.hiltPreferences
 import com.m3u.features.stream.PlayerMaskDefaults.detectVerticalGesture
 import com.m3u.material.ktx.isTelevision
 import com.m3u.material.ktx.thenIf
@@ -20,7 +20,7 @@ internal fun VerticalGestureArea(
     onDrag: (percent: Float) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val preferences = LocalPreferences.current
+    val preferences = hiltPreferences()
     val tv = isTelevision()
     val currentPercent by rememberUpdatedState(percent)
     BoxWithConstraints(modifier) {

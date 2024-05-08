@@ -15,11 +15,11 @@ import com.m3u.core.unit.DataUnit
 import com.m3u.material.ktx.isTelevision
 import com.m3u.material.ktx.plus
 import com.m3u.material.model.LocalSpacing
-import com.m3u.ui.SettingFragment
+import com.m3u.ui.SettingDestination
 
 @Composable
 internal fun PreferencesFragment(
-    fragment: SettingFragment,
+    fragment: SettingDestination,
     contentPadding: PaddingValues,
     versionName: String,
     versionCode: Int,

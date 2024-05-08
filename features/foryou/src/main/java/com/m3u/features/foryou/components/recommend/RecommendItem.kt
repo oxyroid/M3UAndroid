@@ -29,7 +29,7 @@ import androidx.tv.material3.CardScale
 import androidx.tv.material3.Glow
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import com.m3u.core.architecture.preferences.LocalPreferences
+import com.m3u.core.architecture.preferences.hiltPreferences
 import com.m3u.core.util.basic.title
 import com.m3u.features.foryou.R
 import com.m3u.i18n.R.string
@@ -100,7 +100,7 @@ private fun RecommendItemLayout(
 private fun UnseenContent(spec: Recommend.UnseenSpec) {
     val context = LocalContext.current
     val spacing = LocalSpacing.current
-    val preferences = LocalPreferences.current
+    val preferences = hiltPreferences()
 
     val stream = spec.stream
     val duration = remember(stream.seen) {
