@@ -18,7 +18,6 @@ import androidx.compose.material.icons.rounded.Audiotrack
 import androidx.compose.material.icons.rounded.ClosedCaption
 import androidx.compose.material.icons.rounded.DeviceUnknown
 import androidx.compose.material.icons.rounded.VideoLibrary
-import com.m3u.material.components.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -39,7 +38,7 @@ import androidx.compose.ui.unit.dp
 import androidx.media3.common.C
 import androidx.media3.common.Format
 import com.m3u.i18n.R.string
-import com.m3u.material.components.dialog.OnDismiss
+import com.m3u.material.components.Icon
 import com.m3u.material.components.mask.MaskState
 import com.m3u.material.model.LocalSpacing
 import kotlinx.coroutines.launch

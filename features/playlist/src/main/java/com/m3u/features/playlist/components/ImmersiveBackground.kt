@@ -18,10 +18,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.tv.material3.MaterialTheme
@@ -30,8 +29,7 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.m3u.core.architecture.preferences.hiltPreferences
 import com.m3u.data.database.model.Stream
-import com.m3u.features.playlist.R
-import com.m3u.material.components.Icon
+import com.m3u.material.brush.ImmersiveBackgroundBrush
 import com.m3u.material.components.IconButton
 import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.SnackHost
@@ -72,15 +70,12 @@ internal fun ImmersiveBackground(
                         modifier = Modifier
                             .fillMaxWidth(0.78f)
                             .aspectRatio(16 / 9f)
-                    )
-
-                    Icon(
-                        imageVector = ImageVector.vectorResource(R.drawable.scrim),
-                        tint = MaterialTheme.colorScheme.background,
-                        contentDescription = null,
-                        modifier = Modifier
-                            .fillMaxWidth(0.78f)
-                            .aspectRatio(16 / 9f)
+                            .drawWithCache {
+                                onDrawWithContent {
+                                    drawContent()
+                                    drawRect(brush = ImmersiveBackgroundBrush(size))
+                                }
+                            }
                     )
                 }
 

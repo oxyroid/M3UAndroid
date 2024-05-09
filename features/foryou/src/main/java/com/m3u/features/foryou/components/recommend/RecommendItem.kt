@@ -1,6 +1,5 @@
 package com.m3u.features.foryou.components.recommend
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -15,13 +14,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.util.lerp
 import androidx.tv.material3.CardDefaults
@@ -31,8 +29,8 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.m3u.core.architecture.preferences.hiltPreferences
 import com.m3u.core.util.basic.title
-import com.m3u.features.foryou.R
 import com.m3u.i18n.R.string
+import com.m3u.material.brush.RecommendCardContainerBrush
 import com.m3u.material.ktx.isTelevision
 import com.m3u.material.model.LocalSpacing
 import kotlinx.datetime.Clock
@@ -156,13 +154,14 @@ private fun UnseenContent(spec: Recommend.UnseenSpec) {
                 model = request,
                 contentScale = ContentScale.Crop,
                 contentDescription = stream.title,
-                modifier = Modifier.matchParentSize()
-            )
-            Image(
-                imageVector = ImageVector.vectorResource(R.drawable.scrim),
-                contentScale = ContentScale.Crop,
-                contentDescription = null,
-                modifier = Modifier.matchParentSize()
+                modifier = Modifier
+                    .matchParentSize()
+                    .drawWithCache {
+                        onDrawWithContent {
+                            drawContent()
+                            drawRect(brush = RecommendCardContainerBrush(size))
+                        }
+                    }
             )
             CompositionLocalProvider(
                 LocalContentColor provides Color.White,
