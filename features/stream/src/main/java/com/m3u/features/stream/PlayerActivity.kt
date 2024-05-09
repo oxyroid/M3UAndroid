@@ -57,6 +57,7 @@ class PlayerActivity : ComponentActivity() {
             }
         }
         addOnPictureInPictureModeChangedListener {
+            isInPipMode = it.isInPictureInPictureMode
             if (!it.isInPictureInPictureMode && lifecycle.currentState !in arrayOf(
                     Lifecycle.State.RESUMED,
                     Lifecycle.State.STARTED
