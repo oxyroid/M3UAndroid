@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 16,
-    "identityHash": "5ef08bb6389682643fa285d418ec2958",
+    "identityHash": "6c929023e487d71831acf3de62d3389b",
     "entities": [
       {
         "tableName": "streams",
@@ -227,7 +227,7 @@
       },
       {
         "tableName": "programmes",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`channel_id` TEXT NOT NULL, `epg_url` TEXT NOT NULL, `start` INTEGER NOT NULL, `end` INTEGER NOT NULL, `title` TEXT NOT NULL, `description` TEXT NOT NULL, `icon` TEXT, `categories` TEXT NOT NULL, `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`channel_id` TEXT NOT NULL, `epg_url` TEXT NOT NULL, `start` INTEGER NOT NULL, `end` INTEGER NOT NULL, `title` TEXT NOT NULL, `description` TEXT NOT NULL, `new` INTEGER NOT NULL, `new-tag` INTEGER NOT NULL, `live` INTEGER NOT NULL, `live-tag` INTEGER NOT NULL, `previous-start` TEXT, `icon` TEXT, `categories` TEXT NOT NULL, `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL)",
         "fields": [
           {
             "fieldPath": "channelId",
@@ -264,6 +264,36 @@
             "columnName": "description",
             "affinity": "TEXT",
             "notNull": true
+          },
+          {
+            "fieldPath": "isNew",
+            "columnName": "new",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isNewTag",
+            "columnName": "new-tag",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isLive",
+            "columnName": "live",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isLiveTag",
+            "columnName": "live-tag",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "previouslyShownStart",
+            "columnName": "previous-start",
+            "affinity": "TEXT",
+            "notNull": false
           },
           {
             "fieldPath": "icon",
@@ -340,7 +370,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '5ef08bb6389682643fa285d418ec2958')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '6c929023e487d71831acf3de62d3389b')"
     ]
   }
 }

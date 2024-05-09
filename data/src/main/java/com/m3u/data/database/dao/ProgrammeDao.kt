@@ -42,12 +42,12 @@ interface ProgrammeDao {
 
     @Query(
         """
-        SELECT * FROM programmes 
-        WHERE epg_url in (:epgUrls) 
-        AND channel_id = :channelId
-        AND start <= :time
-        AND `end` >= :time
-        """
+    SELECT *, new AS isNew, live AS isLive FROM programmes
+    WHERE epg_url IN (:epgUrls) 
+    AND channel_id = :channelId
+    AND start <= :time
+    AND `end` >= :time
+    """
     )
     suspend fun getCurrentByEpgUrlsAndChannelId(
         epgUrls: List<String>,

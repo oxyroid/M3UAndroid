@@ -30,6 +30,11 @@ data class EpgProgramme(
     val title: String? = null,
     val desc: String? = null,
     val icon: String? = null,
+    val isNew: Boolean,
+    val isNewTag: Boolean,
+    val isLive: Boolean,
+    val isLiveTag: Boolean,
+    val previouslyShownStart: String? = null,
     val categories: List<String>
 ) {
     companion object {
@@ -59,5 +64,10 @@ fun EpgProgramme.toProgramme(
     description = desc.orEmpty(),
     icon = icon,
     categories = categories,
+    isNew = isNew,
+    isNewTag = isNewTag,
+    isLive = isLive,
+    isLiveTag = isLiveTag,
+    previouslyShownStart = previouslyShownStart,
     channelId = channel
 )

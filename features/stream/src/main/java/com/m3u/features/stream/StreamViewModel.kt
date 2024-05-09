@@ -18,6 +18,7 @@ import com.m3u.core.architecture.dispatcher.M3uDispatchers.Main
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.Profiles
 import com.m3u.core.architecture.logger.install
+import com.m3u.data.database.dao.ProgrammeDao
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.Programme
@@ -61,6 +62,7 @@ import kotlin.time.Duration.Companion.minutes
 class StreamViewModel @Inject constructor(
     private val playlistRepository: PlaylistRepository,
     private val streamRepository: StreamRepository,
+    private val programmeDao: ProgrammeDao,
     private val playerManager: PlayerManager,
     private val audioManager: AudioManager,
     private val programmeRepository: ProgrammeRepository,
@@ -345,6 +347,19 @@ class StreamViewModel @Inject constructor(
             }
         }
     }
+
+    internal suspend fun getProgrammeCurrently(channelId: String): Programme? {
+        val playlist = playlist.value ?: return null
+        val epgUrls = playlist.epgUrlsOrXtreamXmlUrl()
+        if (epgUrls.isEmpty()) return null
+        val time = Clock.System.now().toEpochMilliseconds()
+        return programmeDao.getCurrentByEpgUrlsAndChannelId(
+            epgUrls = epgUrls,
+            channelId = channelId,
+            time = time
+        )
+    }
+
 
     companion object {
         private const val ACTION_SET_AV_TRANSPORT_URI = "SetAVTransportURI"

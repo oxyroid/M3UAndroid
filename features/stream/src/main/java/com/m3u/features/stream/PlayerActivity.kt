@@ -14,6 +14,7 @@ import com.m3u.core.architecture.dispatcher.Dispatcher
 import com.m3u.core.architecture.dispatcher.M3uDispatchers.Main
 import com.m3u.core.architecture.preferences.Preferences
 import com.m3u.data.database.model.Playlist
+
 import com.m3u.data.database.model.type
 import com.m3u.data.repository.playlist.PlaylistRepository
 import com.m3u.data.repository.stream.StreamRepository
@@ -81,7 +82,8 @@ class PlayerActivity : ComponentActivity() {
             ) {
                 StreamRoute(
                     onBackPressed = { finish() },
-                    viewModel = viewModel
+                    viewModel = viewModel,
+                    getProgrammeCurrently = { channelId -> viewModel.getProgrammeCurrently(channelId) },
                 )
             }
         }
