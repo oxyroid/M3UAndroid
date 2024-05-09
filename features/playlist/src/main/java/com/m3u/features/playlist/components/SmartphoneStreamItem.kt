@@ -42,7 +42,7 @@ import coil.compose.AsyncImage
 import coil.compose.SubcomposeAsyncImage
 import coil.request.ImageRequest
 import coil.size.Size
-import com.m3u.core.architecture.preferences.LocalPreferences
+import com.m3u.core.architecture.preferences.hiltPreferences
 import com.m3u.data.database.model.Programme
 import com.m3u.data.database.model.Stream
 import com.m3u.i18n.R.string
@@ -73,8 +73,7 @@ internal fun SmartphoneStreamItem(
 ) {
     val context = LocalContext.current
     val spacing = LocalSpacing.current
-    val preferences = LocalPreferences.current
-//Get current program
+    val preferences = hiltPreferences()
 
     val currentGetProgrammeCurrently by rememberUpdatedState(getProgrammeCurrently)
     val programme: Programme? by produceState<Programme?>(null) {
@@ -247,7 +246,7 @@ internal fun SmartphoneStreamItem(
 private fun Programme.readText(
     timeColor: Color = MaterialTheme.colorScheme.secondary
 ): AnnotatedString = buildAnnotatedString {
-    val preferences = LocalPreferences.current
+    val preferences = hiltPreferences()
     val clockMode = preferences.twelveHourClock
     val start = Instant.fromEpochMilliseconds(start)
         .toLocalDateTime(TimeZone.currentSystemDefault())

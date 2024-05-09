@@ -1,5 +1,8 @@
 package com.m3u.features.stream
 
+//import androidx.compose.animation.ExperimentalSharedTransitionApi
+//import androidx.compose.animation.SharedTransitionLayout
+//import androidx.compose.animation.SharedTransitionScope
 import android.content.Intent
 import android.graphics.Rect
 import android.net.Uri
@@ -35,11 +38,12 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.compose.collectAsLazyPagingItems
-import com.m3u.core.architecture.preferences.LocalPreferences
+import com.m3u.core.architecture.preferences.hiltPreferences
 import com.m3u.core.util.basic.isNotEmpty
 import com.m3u.core.util.basic.title
 import com.m3u.data.database.model.Programme
 import com.m3u.data.database.model.Stream
+import com.m3u.data.television.model.RemoteDirection
 import com.m3u.features.stream.components.CoverPlaceholder
 import com.m3u.features.stream.components.DlnaDevicesBottomSheet
 import com.m3u.features.stream.components.FormatsBottomSheet
@@ -70,12 +74,11 @@ fun StreamRoute(
     onBackPressed: () -> Unit,
     viewModel: StreamViewModel = hiltViewModel(),
     getProgrammeCurrently: suspend (channelId: String) -> Programme?,
-
 ) {
     val openInExternalPlayerString = stringResource(string.feat_stream_open_in_external_app)
 
     val helper = LocalHelper.current
-    val preferences = LocalPreferences.current
+    val preferences = hiltPreferences()
     val context = LocalContext.current
     val configuration = LocalConfiguration.current
 
@@ -93,7 +96,6 @@ fun StreamRoute(
 
     val volume by viewModel.volume.collectAsStateWithLifecycle()
     val isSeriesPlaylist by viewModel.isSeriesPlaylist.collectAsStateWithLifecycle()
-    val isProgrammesRefreshing: Boolean by viewModel.isEpgRefreshing.collectAsStateWithLifecycle()
 
     val neighboring = viewModel.neighboring.collectAsLazyPagingItems()
     val programmes = viewModel.programmes.collectAsLazyPagingItems()
@@ -177,7 +179,6 @@ fun StreamRoute(
                 when (state) {
                     PullPanelLayoutValue.EXPANDED -> {
                         maskState.lock(PullPanelLayoutValue.EXPANDED)
-                        viewModel.checkOrRefreshProgrammes()
                     }
 
                     PullPanelLayoutValue.COLLAPSED -> {
@@ -193,13 +194,9 @@ fun StreamRoute(
                         streamId = stream?.id ?: -1,
                         isPanelExpanded = isPanelExpanded,
                         isSeriesPlaylist = isSeriesPlaylist,
-                        isProgrammesRefreshing = isProgrammesRefreshing,
-                        neighboring = neighboring,
+                        channels = neighboring,
                         programmes = programmes,
                         programmeRange = programmeRange,
-                        onRefreshProgrammesIgnoreCache = {
-                            viewModel.checkOrRefreshProgrammes(true)
-                        }
                     )
                 } else {
                     // todo: fix pull panel layout bug
@@ -294,7 +291,7 @@ private fun
     onVolume: (Float) -> Unit,
     onBrightness: (Float) -> Unit,
     onEnterPipMode: () -> Unit,
-    onKeyCode: (TelevisionKeyCode) -> Unit,
+    onKeyCode: (RemoteDirection) -> Unit,
     getProgrammeCurrently: suspend (channelId: String) -> Programme?,
     modifier: Modifier = Modifier,
 ) {
@@ -302,7 +299,7 @@ private fun
     val cover = stream?.cover.orEmpty()
     val favourite = stream?.favourite ?: false
 
-    val preferences = LocalPreferences.current
+    val preferences = hiltPreferences()
     var gesture: MaskGesture? by remember { mutableStateOf(null) }
 
     // because they will be updated frequently,

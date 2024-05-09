@@ -68,9 +68,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.media3.common.Player
-import com.m3u.core.architecture.preferences.LocalPreferences
+import com.m3u.core.architecture.preferences.hiltPreferences
 import com.m3u.core.util.basic.isNotEmpty
 import com.m3u.data.database.model.Programme
+import com.m3u.data.television.model.RemoteDirection
 import com.m3u.features.stream.components.CustomTextIcon
 import com.m3u.features.stream.components.MaskTextButton
 import com.m3u.features.stream.components.PlayerMask
@@ -126,10 +127,10 @@ internal fun
     openChooseFormat: () -> Unit,
     onEnterPipMode: () -> Unit,
     onVolume: (Float) -> Unit,
-    onKeyCode: (TelevisionKeyCode) -> Unit,
+    onKeyCode: (RemoteDirection) -> Unit,
     getProgrammeCurrently: suspend () -> Programme?,
 ) {
-    val preferences = LocalPreferences.current
+    val preferences = hiltPreferences()
     val helper = LocalHelper.current
     val spacing = LocalSpacing.current
     val isLandscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
@@ -230,11 +231,11 @@ internal fun
                 Modifier.onKeyEvent { event ->
                     when (event.nativeKeyEvent.keyCode) {
                         KeyEvent.KEYCODE_DPAD_UP -> (!maskState.visible).also {
-                            if (it) onKeyCode(TelevisionKeyCode.UP)
+                            if (it) onKeyCode(RemoteDirection.UP)
                         }
 
                         KeyEvent.KEYCODE_DPAD_DOWN -> (!maskState.visible).also {
-                            if (it) onKeyCode(TelevisionKeyCode.DOWN)
+                            if (it) onKeyCode(RemoteDirection.DOWN)
                         }
 
                         else -> false
@@ -547,13 +548,13 @@ internal fun
                                     .onKeyEvent { event ->
                                         when (event.nativeKeyEvent.keyCode) {
                                             KeyEvent.KEYCODE_DPAD_LEFT -> {
-                                                onKeyCode(TelevisionKeyCode.LEFT)
+                                                onKeyCode(RemoteDirection.LEFT)
                                                 maskState.wake()
                                                 true
                                             }
 
                                             KeyEvent.KEYCODE_DPAD_RIGHT -> {
-                                                onKeyCode(TelevisionKeyCode.RIGHT)
+                                                onKeyCode(RemoteDirection.RIGHT)
                                                 maskState.wake()
                                                 true
                                             }
@@ -573,7 +574,7 @@ internal fun
 
 @Composable
 private fun Programme.readText(): AnnotatedString {
-    val preferences = LocalPreferences.current
+    val preferences = hiltPreferences()
     val clockMode = preferences.twelveHourClock
     val title = title
 
