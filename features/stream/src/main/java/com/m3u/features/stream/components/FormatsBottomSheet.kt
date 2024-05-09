@@ -50,7 +50,7 @@ internal fun FormatsBottomSheet(
     formats: Map<Int, List<Format>>,
     selectedFormats: Map<Int, Format?>,
     maskState: MaskState,
-    onDismiss: OnDismiss,
+    onDismiss: () -> Unit,
     onChooseTrack: (@C.TrackType Int, Format) -> Unit,
     onClearTrack: (@C.TrackType Int) -> Unit,
     modifier: Modifier = Modifier
