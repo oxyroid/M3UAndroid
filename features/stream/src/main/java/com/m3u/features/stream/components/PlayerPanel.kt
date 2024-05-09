@@ -44,7 +44,7 @@ internal fun PlayerPanel(
     streamId: Int,
     isSeriesPlaylist: Boolean,
     isPanelExpanded: Boolean,
-    neighboring: LazyPagingItems<Stream>,
+    channels: LazyPagingItems<Stream>,
     programmes: LazyPagingItems<Programme>,
     programmeRange: ProgrammeRange,
     modifier: Modifier = Modifier
@@ -87,8 +87,8 @@ internal fun PlayerPanel(
             }
 
             if (!isSeriesPlaylist) {
-                NeighboredChannelGallery(
-                    neighboring = neighboring,
+                ChannelGallery(
+                    channels = channels,
                     streamId = streamId,
                     isPanelExpanded = isPanelExpanded
                 )
@@ -108,8 +108,8 @@ internal fun PlayerPanel(
 
 @Composable
 // TODO: Support Xtream Series Episodes.
-private fun NeighboredChannelGallery(
-    neighboring: LazyPagingItems<Stream>,
+private fun ChannelGallery(
+    channels: LazyPagingItems<Stream>,
     streamId: Int,
     isPanelExpanded: Boolean,
     modifier: Modifier = Modifier
@@ -121,7 +121,7 @@ private fun NeighboredChannelGallery(
     val coroutineScope = rememberCoroutineScope()
 
     ScrollToCurrentEffect(
-        neighboring = neighboring,
+        neighboring = channels,
         streamId = streamId,
         isPanelExpanded = isPanelExpanded,
         lazyListState = lazyListState
@@ -133,8 +133,8 @@ private fun NeighboredChannelGallery(
         contentPadding = PaddingValues(spacing.medium),
         modifier = modifier
     ) {
-        items(neighboring.itemCount) { i ->
-            neighboring[i]?.let { stream ->
+        items(channels.itemCount) { i ->
+            channels[i]?.let { stream ->
                 val isPlaying = stream.id == streamId
                 Card(
                     colors = CardDefaults.cardColors(
@@ -147,6 +147,7 @@ private fun NeighboredChannelGallery(
                     shape = AbsoluteRoundedCornerShape(spacing.medium),
                     elevation = CardDefaults.cardElevation(spacing.none),
                     onClick = {
+                        if (isPlaying) return@Card
                         coroutineScope.launch {
                             helper.play(
                                 MediaCommand.Live(stream.id)

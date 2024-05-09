@@ -62,6 +62,7 @@ import com.m3u.ui.util.TimeUtils.formatEOrSh
 import com.m3u.ui.util.TimeUtils.toEOrSh
 import eu.wewox.minabox.MinaBox
 import eu.wewox.minabox.MinaBoxItem
+import eu.wewox.minabox.MinaBoxScrollDirection
 import eu.wewox.minabox.rememberMinaBoxState
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -136,6 +137,7 @@ internal fun ProgramGuide(
         BoxWithConstraints {
             MinaBox(
                 state = minaBoxState,
+                scrollDirection = MinaBoxScrollDirection.VERTICAL,
                 modifier = Modifier
                     .fillMaxSize()
                     .blurEdges(

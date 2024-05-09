@@ -192,7 +192,7 @@ fun StreamRoute(
                         streamId = stream?.id ?: -1,
                         isPanelExpanded = isPanelExpanded,
                         isSeriesPlaylist = isSeriesPlaylist,
-                        neighboring = neighboring,
+                        channels = neighboring,
                         programmes = programmes,
                         programmeRange = programmeRange
                     )
