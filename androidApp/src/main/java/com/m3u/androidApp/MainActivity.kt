@@ -9,7 +9,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.m3u.androidApp.ui.App
 import com.m3u.androidApp.ui.AppViewModel
-import com.m3u.ui.Events.connectDPadIntent
+import com.m3u.ui.Events.enableDPadReaction
 import com.m3u.ui.Toolkit
 import com.m3u.ui.helper.Helper
 import dagger.hilt.android.AndroidEntryPoint
@@ -33,7 +33,7 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         enableEdgeToEdge()
-        connectDPadIntent()
+        enableDPadReaction()
         super.onCreate(savedInstanceState)
         setContent {
             Toolkit(helper) {

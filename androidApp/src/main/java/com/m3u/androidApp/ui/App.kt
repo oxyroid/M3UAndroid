@@ -123,7 +123,7 @@ private fun AppImpl(
 
     val tv = isTelevision()
 
-    AppScaffold(
+    Scaffold(
         rootDestination = rootDestination,
         onBackPressed = onBackPressed,
         navigateToRoot = navigateToRoot,

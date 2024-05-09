@@ -5,7 +5,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import com.m3u.ui.Events.connectDPadIntent
+import com.m3u.ui.Events.enableDPadReaction
 import com.m3u.ui.Toolkit
 import com.m3u.ui.helper.Helper
 import dagger.hilt.android.AndroidEntryPoint
@@ -16,7 +16,7 @@ class CrashActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
-        connectDPadIntent()
+        enableDPadReaction()
         super.onCreate(savedInstanceState)
         setContent {
             Toolkit(helper) {

@@ -2,7 +2,7 @@ package com.m3u.data.television.http.endpoint
 
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.sandBox
-import com.m3u.data.service.RemoteDirectionService
+import com.m3u.data.service.DPadReactionService
 import com.m3u.data.television.model.RemoteDirection
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
@@ -14,7 +14,7 @@ import javax.inject.Singleton
 @Singleton
 data class Remotes @Inject constructor(
     private val logger: Logger,
-    private val remoteDirectionService: RemoteDirectionService
+    private val dPadReactionService: DPadReactionService
 ) : Endpoint {
     override fun apply(route: Route) {
         route.route("/remotes") {
@@ -33,7 +33,7 @@ data class Remotes @Inject constructor(
                         )
                         return@post
                     }
-                    remoteDirectionService.emit(remoteDirection)
+                    dPadReactionService.emit(remoteDirection)
                     call.respond(
                         DefRep(result = true)
                     )

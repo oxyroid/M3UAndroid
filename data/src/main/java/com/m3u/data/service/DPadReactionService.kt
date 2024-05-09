@@ -5,7 +5,7 @@ import com.m3u.data.television.model.RemoteDirection
 import kotlinx.coroutines.flow.SharedFlow
 
 @Immutable
-interface RemoteDirectionService {
+interface DPadReactionService {
     val incoming: SharedFlow<RemoteDirection>
-    fun emit(remoteDirection: RemoteDirection)
+    suspend fun emit(remoteDirection: RemoteDirection)
 }

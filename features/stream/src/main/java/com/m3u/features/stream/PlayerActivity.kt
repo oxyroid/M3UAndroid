@@ -15,8 +15,7 @@ import com.m3u.data.database.model.type
 import com.m3u.data.repository.playlist.PlaylistRepository
 import com.m3u.data.repository.stream.StreamRepository
 import com.m3u.data.service.MediaCommand
-import com.m3u.data.service.RemoteDirectionService
-import com.m3u.ui.Events.connectDPadIntent
+import com.m3u.ui.Events.enableDPadReaction
 import com.m3u.ui.Toolkit
 import com.m3u.ui.helper.Helper
 import dagger.hilt.android.AndroidEntryPoint
@@ -41,12 +40,9 @@ class PlayerActivity : ComponentActivity() {
     @Inject
     lateinit var playlistRepository: PlaylistRepository
 
-    @Inject
-    lateinit var remoteDirectionService: RemoteDirectionService
-
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
-        connectDPadIntent()
+        enableDPadReaction()
         super.onCreate(savedInstanceState)
         handleIntent(intent)
         setContent {
