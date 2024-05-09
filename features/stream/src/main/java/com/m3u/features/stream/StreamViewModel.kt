@@ -12,7 +12,6 @@ import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
-import androidx.work.WorkManager
 import com.m3u.core.architecture.dispatcher.Dispatcher
 import com.m3u.core.architecture.dispatcher.M3uDispatchers.Main
 import com.m3u.core.architecture.logger.Logger
@@ -32,7 +31,7 @@ import com.m3u.data.repository.stream.StreamRepository
 import com.m3u.data.service.PlayerManager
 import com.m3u.data.service.currentTracks
 import com.m3u.data.service.tracks
-import com.m3u.data.worker.SubscriptionWorker
+import com.m3u.data.television.model.RemoteDirection
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.delay
@@ -66,7 +65,6 @@ class StreamViewModel @Inject constructor(
     private val playerManager: PlayerManager,
     private val audioManager: AudioManager,
     private val programmeRepository: ProgrammeRepository,
-    private val workManager: WorkManager,
     delegate: Logger,
     @Dispatcher(Main) private val mainDispatcher: CoroutineDispatcher
 ) : ViewModel(), ControlPoint.DiscoveryListener {
@@ -183,7 +181,6 @@ class StreamViewModel @Inject constructor(
 
             controlPoint?.removeDiscoveryListener(this)
             controlPoint?.stop()
-            controlPoint?.search()
             controlPoint?.terminate()
             controlPoint = null
 
@@ -289,11 +286,8 @@ class StreamViewModel @Inject constructor(
     internal val programmeRange: StateFlow<ProgrammeRange> = stream.flatMapLatest { stream ->
         stream ?: return@flatMapLatest flowOf(defaultProgrammeRange)
         val channelId = stream.channelId ?: return@flatMapLatest flowOf(defaultProgrammeRange)
-        val playlist = stream.playlistUrl.let { playlistRepository.get(it) }
-        playlist ?: return@flatMapLatest flowOf(defaultProgrammeRange)
-        val epgUrls = playlist.epgUrlsOrXtreamXmlUrl()
         programmeRepository
-            .observeProgrammeRange(epgUrls, channelId)
+            .observeProgrammeRange(stream.playlistUrl, channelId)
             .map {
                 it
                     .spread(ProgrammeRange.Spread.Increase(5.minutes, 1.hours + 5.minutes))
@@ -306,45 +300,25 @@ class StreamViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5_000L)
         )
 
-    internal val isEpgRefreshing: StateFlow<Boolean> = combine(
-        playlist,
-        programmeRepository.refreshingEpgUrls
-    ) { playlist, refreshingEpgUrls ->
-        playlist ?: return@combine false
-        val epgUrls = playlist.epgUrlsOrXtreamXmlUrl()
-        epgUrls.any { epgUrl -> epgUrl in refreshingEpgUrls }
-    }
-        .stateIn(
-            scope = viewModelScope,
-            // disable refresh button by default
-            initialValue = true,
-            started = SharingStarted.WhileSubscribed(5_000L)
-        )
-
-    internal fun checkOrRefreshProgrammes(ignoreCache: Boolean = false) {
-        viewModelScope.launch {
-            val stream = stream.value ?: return@launch
-            SubscriptionWorker.epg(workManager, stream.playlistUrl, ignoreCache)
-        }
-    }
-
-    internal fun onKeyCode(code: TelevisionKeyCode) {
+    internal fun onKeyCode(code: RemoteDirection) {
         when (code) {
-            TelevisionKeyCode.UP -> {}
-            TelevisionKeyCode.DOWN -> {}
-            TelevisionKeyCode.LEFT -> {
+            RemoteDirection.UP -> {}
+            RemoteDirection.DOWN -> {}
+            RemoteDirection.LEFT -> {
                 val player = playerState.value.player ?: return
                 viewModelScope.launch(mainDispatcher) {
                     player.seekTo(player.currentPosition - 15000)
                 }
             }
 
-            TelevisionKeyCode.RIGHT -> {
+            RemoteDirection.RIGHT -> {
                 val player = playerState.value.player ?: return
                 viewModelScope.launch(mainDispatcher) {
                     player.seekTo(player.currentPosition + 15000)
                 }
             }
+
+            else -> {}
         }
     }
 

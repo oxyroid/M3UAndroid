@@ -13,8 +13,12 @@ interface ProgrammeRepository {
     ): PagingSource<Int, Programme>
 
     fun observeProgrammeRange(
-        epgUrls: List<String>,
+        playlistUrl: String,
         channelId: String
+    ): Flow<ProgrammeRange>
+
+    fun observeProgrammeRange(
+        playlistUrl: String
     ): Flow<ProgrammeRange>
 
     val refreshingEpgUrls: StateFlow<List<String>>

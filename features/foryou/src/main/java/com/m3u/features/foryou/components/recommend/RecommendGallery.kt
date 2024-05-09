@@ -25,7 +25,7 @@ import com.m3u.data.database.model.Stream
 import com.m3u.material.components.HorizontalPagerIndicator
 import com.m3u.material.ktx.isTelevision
 import com.m3u.material.model.LocalSpacing
-import com.m3u.ui.EventBus
+import com.m3u.ui.Events
 import kotlinx.coroutines.launch
 import kotlin.math.absoluteValue
 
@@ -63,7 +63,7 @@ internal fun RecommendGallery(
                         when (spec) {
                             is Recommend.UnseenSpec -> onClickStream(spec.stream)
                             is Recommend.DiscoverSpec -> {
-                                EventBus.discoverCategory = eventOf(spec.category)
+                                Events.discoverCategory = eventOf(spec.category)
                                 navigateToPlaylist(spec.playlist)
                             }
                         }

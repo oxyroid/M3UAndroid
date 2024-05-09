@@ -25,7 +25,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.m3u.core.architecture.preferences.LocalPreferences
+import com.m3u.core.architecture.preferences.hiltPreferences
 import com.m3u.core.util.basic.title
 import com.m3u.core.wrapper.Resource
 import com.m3u.data.database.model.Playlist
@@ -49,6 +49,7 @@ import com.m3u.ui.LocalVisiblePageInfos
 import com.m3u.ui.MediaSheet
 import com.m3u.ui.MediaSheetValue
 import com.m3u.ui.helper.Action
+import com.m3u.ui.helper.Metadata
 import com.m3u.ui.helper.LocalHelper
 import dev.chrisbanes.haze.HazeDefaults
 import dev.chrisbanes.haze.haze
@@ -65,7 +66,7 @@ fun ForyouRoute(
     viewModel: ForyouViewModel = hiltViewModel()
 ) {
     val helper = LocalHelper.current
-    val preferences = LocalPreferences.current
+    val preferences = hiltPreferences()
     val visiblePageInfos = LocalVisiblePageInfos.current
     val coroutineScope = rememberCoroutineScope()
 
@@ -87,8 +88,8 @@ fun ForyouRoute(
 
     if (isPageInfoVisible) {
         LifecycleResumeEffect(title) {
-            helper.title = title.title()
-            helper.actions = listOf(
+            Metadata.title = title.title()
+            Metadata.actions = listOf(
                 Action(
                     icon = Icons.Rounded.Add,
                     contentDescription = "add",
@@ -96,7 +97,7 @@ fun ForyouRoute(
                 )
             )
             onPauseOrDispose {
-                helper.actions = emptyList()
+                Metadata.actions = emptyList()
             }
         }
     }

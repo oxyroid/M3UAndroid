@@ -34,7 +34,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.paging.compose.LazyPagingItems
 import androidx.tv.material3.Text
-import com.m3u.core.architecture.preferences.LocalPreferences
+import com.m3u.core.architecture.preferences.hiltPreferences
 import com.m3u.core.util.basic.title
 import com.m3u.data.database.model.Programme
 import com.m3u.data.database.model.Stream
@@ -62,7 +62,7 @@ internal fun SmartphoneStreamGallery(
     contentPadding: PaddingValues = PaddingValues(0.dp),
 ) {
     val spacing = LocalSpacing.current
-    val preferences = LocalPreferences.current
+    val preferences = hiltPreferences()
 
     val actualRowCount = when {
         preferences.noPictureMode -> rowCount
@@ -139,7 +139,7 @@ private fun PagingTips(
     isPagingTipShowing: Boolean,
     modifier: Modifier = Modifier
 ) {
-    val preferences = LocalPreferences.current
+    val preferences = hiltPreferences()
     val spacing = LocalSpacing.current
     AnimatedVisibility(
         visible = isPagingTipShowing,

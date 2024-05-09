@@ -7,8 +7,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.padding
@@ -25,17 +25,20 @@ import androidx.tv.material3.Card
 import androidx.tv.material3.CardDefaults
 import androidx.tv.material3.MaterialTheme
 import com.m3u.androidApp.ui.Items
+import com.m3u.androidApp.ui.MainContent
 import com.m3u.androidApp.ui.NavigationItemLayout
-import com.m3u.androidApp.ui.TopBarWithContent
+import com.m3u.androidApp.ui.ScaffoldLayout
+import com.m3u.androidApp.ui.ScaffoldRole
+import com.m3u.material.components.Background
+import com.m3u.material.ktx.plus
 import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.Destination
 import com.m3u.ui.helper.Action
 import com.m3u.ui.helper.Fob
 
-
 @Composable
 @InternalComposeApi
-fun AppScaffoldTvImpl(
+fun TelevisionScaffoldImpl(
     rootDestination: Destination.Root?,
     fob: Fob?,
     title: String,
@@ -46,16 +49,9 @@ fun AppScaffoldTvImpl(
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
-    Row(modifier) {
-        Column(
-            verticalArrangement = Arrangement.spacedBy(
-                spacing.medium,
-                Alignment.CenterVertically
-            ),
-            modifier = Modifier
-                .fillMaxHeight()
-                .padding(spacing.medium)
-        ) {
+
+    val navigation = @Composable {
+        TelevisionNavigation {
             Items { currentRootDestination ->
                 NavigationItemLayout(
                     rootDestination = rootDestination,
@@ -108,18 +104,41 @@ fun AppScaffoldTvImpl(
                 }
             }
         }
-        Box(
-            Modifier
-                .fillMaxHeight()
-                .weight(1f)
-        ) {
-            TopBarWithContent(
-                windowInsets = WindowInsets.systemBars,
-                title = title,
-                onBackPressed = onBackPressed,
-                actions = actions,
-                content = content
-            )
-        }
+    }
+    val mainContent = @Composable { contentPadding: PaddingValues ->
+        MainContent(
+            windowInsets = WindowInsets.systemBars,
+            title = title,
+            onBackPressed = onBackPressed,
+            actions = actions,
+            content = { content(it + contentPadding) }
+        )
+    }
+
+    Background(modifier) {
+        ScaffoldLayout(
+            role = ScaffoldRole.Television,
+            navigation = navigation,
+            mainContent = mainContent
+        )
+    }
+}
+
+@Composable
+private fun TelevisionNavigation(
+    modifier: Modifier = Modifier,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    val spacing = LocalSpacing.current
+    Column(
+        verticalArrangement = Arrangement.spacedBy(
+            spacing.medium,
+            Alignment.CenterVertically
+        ),
+        modifier = modifier
+            .fillMaxHeight()
+            .padding(spacing.medium)
+    ) {
+        content()
     }
 }

@@ -36,7 +36,6 @@ import com.m3u.core.architecture.logger.Profiles
 import com.m3u.core.architecture.logger.install
 import com.m3u.core.architecture.preferences.Preferences
 import com.m3u.core.wrapper.Event
-import com.m3u.core.wrapper.Message
 import com.m3u.core.wrapper.Resource
 import com.m3u.core.wrapper.handledEvent
 import com.m3u.core.wrapper.mapResource
@@ -68,7 +67,6 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -137,7 +135,6 @@ class PlaylistViewModel @Inject constructor(
                 false
             }
         }
-        .onCompletion { messager.emit(Message.Dynamic.EMPTY) }
         .flowOn(ioDispatcher)
         .stateIn(
             scope = viewModelScope,

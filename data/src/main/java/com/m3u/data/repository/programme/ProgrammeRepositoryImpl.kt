@@ -23,6 +23,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.filterNot
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.supervisorScope
@@ -50,11 +52,23 @@ internal class ProgrammeRepositoryImpl @Inject constructor(
     ): PagingSource<Int, Programme> = programmeDao.pagingByEpgUrlsAndChannelId(epgUrls, channelId)
 
     override fun observeProgrammeRange(
-        epgUrls: List<String>,
+        playlistUrl: String,
         channelId: String
-    ): Flow<ProgrammeRange> = programmeDao
-        .observeProgrammeRange(epgUrls, channelId)
-        .filterNot { (start, _) -> start == 0L }
+    ): Flow<ProgrammeRange> = playlistDao.observeByUrl(playlistUrl).flatMapLatest { playlist ->
+        playlist ?: return@flatMapLatest flowOf()
+        programmeDao
+            .observeProgrammeRange(playlist.epgUrlsOrXtreamXmlUrl(), channelId)
+            .filterNot { (start, end) -> start == 0L || end == 0L }
+    }
+
+    override fun observeProgrammeRange(playlistUrl: String): Flow<ProgrammeRange> =
+        playlistDao.observeByUrl(playlistUrl)
+            .map { playlist ->
+                playlist?.epgUrlsOrXtreamXmlUrl() ?: emptyList()
+            }
+            .flatMapLatest { epgUrls ->
+                programmeDao.observeProgrammeRange(epgUrls)
+            }
 
     override fun checkOrRefreshProgrammesOrThrow(
         playlistUrl: String,

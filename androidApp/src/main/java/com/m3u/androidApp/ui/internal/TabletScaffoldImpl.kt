@@ -1,28 +1,34 @@
 package com.m3u.androidApp.ui.internal
 
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.exclude
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationRail
+import androidx.compose.material3.NavigationRailDefaults
 import androidx.compose.material3.NavigationRailItem
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.InternalComposeApi
 import androidx.compose.ui.Modifier
 import com.m3u.androidApp.ui.Items
+import com.m3u.androidApp.ui.MainContent
 import com.m3u.androidApp.ui.NavigationItemLayout
-import com.m3u.androidApp.ui.TopBarWithContent
+import com.m3u.androidApp.ui.ScaffoldLayout
+import com.m3u.androidApp.ui.ScaffoldRole
+import com.m3u.material.components.Background
+import com.m3u.material.ktx.plus
 import com.m3u.ui.Destination
 import com.m3u.ui.helper.Action
 import com.m3u.ui.helper.Fob
 
 @Composable
 @InternalComposeApi
-internal fun AppScaffoldRailImpl(
+internal fun TabletScaffoldImpl(
     rootDestination: Destination.Root?,
     alwaysShowLabel: Boolean,
     fob: Fob?,
@@ -33,11 +39,14 @@ internal fun AppScaffoldRailImpl(
     content: @Composable BoxScope.(PaddingValues) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Row(modifier) {
+    val navigationWindowInsets = NavigationRailDefaults.windowInsets
+
+    val navigation = @Composable {
         NavigationRail(
             modifier = Modifier.fillMaxHeight(),
             containerColor = MaterialTheme.colorScheme.background,
             contentColor = MaterialTheme.colorScheme.onBackground,
+            windowInsets = navigationWindowInsets,
             // keep header not null
             header = {}
         ) {
@@ -61,18 +70,24 @@ internal fun AppScaffoldRailImpl(
                 }
             }
         }
-        Box(
-            Modifier
-                .fillMaxHeight()
-                .weight(1f)
-        ) {
-            TopBarWithContent(
-                windowInsets = WindowInsets.systemBars,
-                title = title,
-                onBackPressed = onBackPressed,
-                actions = actions,
-                content = content
-            )
-        }
+    }
+    val mainContent = @Composable { contentPadding: PaddingValues ->
+        MainContent(
+            windowInsets = WindowInsets.systemBars.exclude(
+                navigationWindowInsets.only(WindowInsetsSides.Start)
+            ),
+            title = title,
+            onBackPressed = onBackPressed,
+            actions = actions,
+            content = { content(it + contentPadding) }
+        )
+    }
+
+    Background(modifier) {
+        ScaffoldLayout(
+            role = ScaffoldRole.Tablet,
+            navigation = navigation,
+            mainContent = mainContent
+        )
     }
 }

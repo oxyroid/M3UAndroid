@@ -31,7 +31,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.m3u.androidApp.ui.sheet.RemoteControlSheet
 import com.m3u.androidApp.ui.sheet.RemoteControlSheetValue
-import com.m3u.core.architecture.preferences.LocalPreferences
+import com.m3u.core.architecture.preferences.hiltPreferences
 import com.m3u.data.television.model.RemoteDirection
 import com.m3u.material.components.Icon
 import com.m3u.material.ktx.isTelevision
@@ -40,9 +40,6 @@ import com.m3u.ui.Destination
 import com.m3u.ui.FontFamilies
 import com.m3u.ui.LocalNavController
 import com.m3u.ui.SnackHost
-import com.m3u.ui.helper.Action
-import com.m3u.ui.helper.Fob
-
 
 @Composable
 fun App(
@@ -52,10 +49,6 @@ fun App(
     val onBackPressedDispatcher = checkNotNull(
         LocalOnBackPressedDispatcherOwner.current
     ).onBackPressedDispatcher
-
-    val title: String by viewModel.title
-    val actions by viewModel.actions
-    val fob by viewModel.fob
 
     val navController = rememberNavController()
     val entry by navController.currentBackStackEntryAsState()
@@ -89,9 +82,6 @@ fun App(
         LocalNavController provides navController
     ) {
         AppImpl(
-            title = title,
-            actions = actions,
-            fob = fob,
             rootDestination = viewModel.rootDestination,
             onBackPressed = onBackPressed.takeUnless { shouldDispatchBackStack },
             navigateToRoot = navigateToRootDestination,
@@ -114,9 +104,6 @@ fun App(
 
 @Composable
 private fun AppImpl(
-    title: String,
-    actions: List<Action>,
-    fob: Fob?,
     rootDestination: Destination.Root,
     isRemoteControlSheetVisible: Boolean,
     remoteControlSheetValue: RemoteControlSheetValue,
@@ -132,14 +119,11 @@ private fun AppImpl(
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
-    val preferences = LocalPreferences.current
+    val preferences = hiltPreferences()
 
     val tv = isTelevision()
 
-    AppScaffold(
-        title = title,
-        actions = actions,
-        fob = fob,
+    Scaffold(
         rootDestination = rootDestination,
         onBackPressed = onBackPressed,
         navigateToRoot = navigateToRoot,

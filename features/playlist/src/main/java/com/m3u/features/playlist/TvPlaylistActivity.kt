@@ -9,61 +9,26 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import com.m3u.core.Contracts
-import com.m3u.core.architecture.dispatcher.Dispatcher
-import com.m3u.core.architecture.dispatcher.M3uDispatchers.Main
-import com.m3u.core.architecture.preferences.Preferences
-import com.m3u.data.service.Messager
-import com.m3u.data.service.PlayerManager
-import com.m3u.data.service.RemoteDirectionService
-import com.m3u.ui.EventBus.registerActionEventCollector
+import com.m3u.ui.Events.enableDPadReaction
 import com.m3u.ui.Toolkit
-import com.m3u.ui.helper.AbstractHelper
+import com.m3u.ui.helper.Helper
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.CoroutineDispatcher
-import javax.inject.Inject
 
 @AndroidEntryPoint
 class TvPlaylistActivity : AppCompatActivity() {
-    private val helper by lazy {
-        AbstractHelper(
-            activity = this,
-            mainDispatcher = mainDispatcher,
-            messager = messager,
-            playerManager = playerManager,
-            message = messager.message,
-        )
-    }
-
-    @Inject
-    lateinit var messager: Messager
-
-    @Inject
-    lateinit var preferences: Preferences
-
-    @Inject
-    lateinit var playerManager: PlayerManager
-
-    @Inject
-    @Dispatcher(Main)
-    lateinit var mainDispatcher: CoroutineDispatcher
-
-    @Inject
-    lateinit var remoteDirectionService: RemoteDirectionService
+    private val helper: Helper = Helper(this)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
+        enableDPadReaction()
         super.onCreate(savedInstanceState)
         setContent {
-            Toolkit(
-                helper = helper,
-                preferences = preferences
-            ) {
+            Toolkit(helper) {
                 PlaylistRoute(
                     navigateToStream = ::navigateToStream
                 )
             }
         }
-        registerActionEventCollector(remoteDirectionService.actions)
     }
 
     private fun navigateToStream() {
@@ -81,11 +46,6 @@ class TvPlaylistActivity : AppCompatActivity() {
             },
             options.toBundle()
         )
-    }
-
-    override fun onUserLeaveHint() {
-        super.onUserLeaveHint()
-        helper.onUserLeaveHint?.invoke()
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {

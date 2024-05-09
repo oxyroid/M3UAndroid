@@ -1,6 +1,9 @@
 plugins {
     alias(libs.plugins.com.android.library)
     alias(libs.plugins.org.jetbrains.kotlin.android)
+    alias(libs.plugins.compose.compiler)
+    alias(libs.plugins.com.google.devtools.ksp)
+    alias(libs.plugins.com.google.dagger.hilt.android)
     id("kotlin-parcelize")
 }
 
@@ -31,11 +34,12 @@ android {
     buildFeatures {
         compose = true
     }
-    composeOptions {
-        kotlinCompilerExtensionVersion = libs.versions.compose.compiler.get()
-    }
     packaging {
         resources.excludes += "META-INF/**"
+    }
+    composeCompiler {
+        enableStrongSkippingMode = true
+        includeSourceInformation = true
     }
 }
 
@@ -51,4 +55,8 @@ dependencies {
     implementation(libs.com.google.android.material.material)
     implementation(libs.androidx.media3.media3.ui)
     implementation(libs.androidx.media3.media3.exoplayer)
+
+    implementation(libs.com.google.dagger.hilt.android)
+    implementation(libs.androidx.hilt.hilt.navigation.compose)
+    ksp(libs.com.google.dagger.hilt.compiler)
 }

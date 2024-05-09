@@ -26,12 +26,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.androidApp.ui.CodeRow
 import com.m3u.core.util.basic.title
 import com.m3u.core.wrapper.Message
+import com.m3u.data.service.collectMessageAsState
 import com.m3u.i18n.R
-import com.m3u.ui.helper.LocalHelper
 
 @Composable
 @InternalComposeApi
@@ -42,8 +41,7 @@ internal fun PrepareContent(
     onCode: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val helper = LocalHelper.current
-    val message by helper.message.collectAsStateWithLifecycle()
+    val message by collectMessageAsState()
 
     val title = stringResource(R.string.feat_foryou_connect_title).title()
     val subtitle = if (message.level == Message.LEVEL_EMPTY) {

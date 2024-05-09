@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.defaultMinSize
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -32,14 +31,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.layout.SubcomposeLayout
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastForEach
-import com.m3u.androidApp.ui.internal.AppScaffoldImpl
-import com.m3u.androidApp.ui.internal.AppScaffoldRailImpl
-import com.m3u.androidApp.ui.internal.AppScaffoldTvImpl
+import androidx.compose.ui.util.fastMap
+import androidx.compose.ui.util.fastMaxOfOrNull
+import com.m3u.androidApp.ui.internal.SmartphoneScaffoldImpl
+import com.m3u.androidApp.ui.internal.TabletScaffoldImpl
+import com.m3u.androidApp.ui.internal.TelevisionScaffoldImpl
 import com.m3u.material.components.Background
 import com.m3u.material.components.Icon
 import com.m3u.material.components.IconButton
@@ -51,6 +53,7 @@ import com.m3u.ui.FontFamilies
 import com.m3u.ui.helper.Action
 import com.m3u.ui.helper.Fob
 import com.m3u.ui.helper.LocalHelper
+import com.m3u.ui.helper.Metadata
 import com.m3u.ui.helper.useRailNav
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.HazeStyle
@@ -58,11 +61,8 @@ import dev.chrisbanes.haze.hazeChild
 
 @Composable
 @OptIn(InternalComposeApi::class)
-internal fun AppScaffold(
-    title: String,
-    actions: List<Action>,
+internal fun Scaffold(
     rootDestination: Destination.Root?,
-    fob: Fob?,
     navigateToRoot: (Destination.Root) -> Unit,
     modifier: Modifier = Modifier,
     onBackPressed: (() -> Unit)? = null,
@@ -72,13 +72,17 @@ internal fun AppScaffold(
     val useRailNav = LocalHelper.current.useRailNav
     val tv = isTelevision()
 
+    val title = Metadata.title
+    val fob = Metadata.fob
+    val actions = Metadata.actions
+
     val hazeState = remember { HazeState() }
 
     CompositionLocalProvider(LocalHazeState provides hazeState) {
         Background {
             when {
                 tv -> {
-                    AppScaffoldTvImpl(
+                    TelevisionScaffoldImpl(
                         rootDestination = rootDestination,
                         fob = fob,
                         title = title,
@@ -91,7 +95,7 @@ internal fun AppScaffold(
                 }
 
                 !useRailNav -> {
-                    AppScaffoldImpl(
+                    SmartphoneScaffoldImpl(
                         rootDestination = rootDestination,
                         alwaysShowLabel = alwaysShowLabel,
                         fob = fob,
@@ -105,7 +109,7 @@ internal fun AppScaffold(
                 }
 
                 else -> {
-                    AppScaffoldRailImpl(
+                    TabletScaffoldImpl(
                         rootDestination = rootDestination,
                         alwaysShowLabel = alwaysShowLabel,
                         fob = fob,
@@ -133,7 +137,7 @@ internal fun Items(
 }
 
 @Composable
-internal fun TopBarWithContent(
+internal fun MainContent(
     windowInsets: WindowInsets,
     title: String,
     onBackPressed: (() -> Unit)?,
@@ -149,6 +153,7 @@ internal fun TopBarWithContent(
             if (!tv) {
                 TopAppBar(
                     colors = TopAppBarDefaults.topAppBarColors(Color.Transparent),
+                    windowInsets = windowInsets,
                     title = {
                         Row(
                             horizontalArrangement = Arrangement.SpaceBetween,
@@ -207,9 +212,7 @@ internal fun TopBarWithContent(
             }
         },
         contentWindowInsets = windowInsets,
-        containerColor = MaterialTheme.colorScheme.background,
-        contentColor = MaterialTheme.colorScheme.onBackground,
-        modifier = Modifier.fillMaxSize()
+        containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         Background {
             Box {
@@ -286,4 +289,69 @@ internal fun NavigationItemLayout(
         }
     }
     block(selected, actualOnClick, icon, label)
+}
+
+internal enum class ScaffoldContent { Navigation, MainContent }
+internal enum class ScaffoldRole { SmartPhone, Tablet, Television }
+
+@Composable
+internal fun ScaffoldLayout(
+    role: ScaffoldRole,
+    navigation: @Composable () -> Unit,
+    mainContent: @Composable (PaddingValues) -> Unit
+) {
+    SubcomposeLayout { constraints ->
+        val layoutWidth = constraints.maxWidth
+        val layoutHeight = constraints.maxHeight
+        val looseConstraints = constraints.copy(minWidth = 0, minHeight = 0)
+        val navigationPlaceables = subcompose(
+            slotId = ScaffoldContent.Navigation,
+            content = navigation
+        )
+            .fastMap { it.measure(looseConstraints) }
+        val navigationWidth = navigationPlaceables.fastMaxOfOrNull { it.width } ?: 0
+        val navigationHeight = navigationPlaceables.fastMaxOfOrNull { it.height } ?: 0
+        val mainContentPadding = when (role) {
+            ScaffoldRole.SmartPhone -> PaddingValues(
+                bottom = navigationHeight.toDp()
+            )
+
+            else -> PaddingValues()
+        }
+        val mainContentPlaceables = subcompose(ScaffoldContent.MainContent) {
+            mainContent(mainContentPadding)
+        }
+            .fastMap {
+                when (role) {
+                    ScaffoldRole.SmartPhone -> it.measure(looseConstraints)
+                    else -> it.measure(
+                        constraints.copy(
+                            maxWidth = layoutWidth - navigationWidth
+                        )
+                    )
+                }
+            }
+        layout(layoutWidth, layoutHeight) {
+            when (role) {
+                ScaffoldRole.SmartPhone -> {
+                    mainContentPlaceables.fastForEach {
+                        it.place(0, 0)
+                    }
+                    navigationPlaceables.fastForEach {
+                        it.place(0, layoutHeight - navigationHeight)
+                    }
+                }
+
+                else -> {
+                    // rtl
+                    navigationPlaceables.fastForEach {
+                        it.placeRelative(0, 0)
+                    }
+                    mainContentPlaceables.fastForEach {
+                        it.placeRelative(navigationWidth, 0)
+                    }
+                }
+            }
+        }
+    }
 }

@@ -42,7 +42,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.m3u.core.architecture.preferences.LocalPreferences
+import com.m3u.core.architecture.preferences.hiltPreferences
 import com.m3u.core.unit.DataUnit
 import com.m3u.core.util.basic.title
 import com.m3u.data.database.model.ColorPack
@@ -57,12 +57,12 @@ import com.m3u.i18n.R.string
 import com.m3u.material.ktx.isTelevision
 import com.m3u.material.model.LocalHazeState
 import com.m3u.ui.Destination
-import com.m3u.ui.EventBus
 import com.m3u.ui.EventHandler
+import com.m3u.ui.Events
 import com.m3u.ui.LocalVisiblePageInfos
-import com.m3u.ui.SettingFragment
+import com.m3u.ui.SettingDestination
 import com.m3u.ui.helper.Fob
-import com.m3u.ui.helper.LocalHelper
+import com.m3u.ui.helper.Metadata
 import dev.chrisbanes.haze.HazeDefaults
 import dev.chrisbanes.haze.haze
 
@@ -190,8 +190,7 @@ private fun SettingScreen(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues()
 ) {
-    val helper = LocalHelper.current
-    val preferences = LocalPreferences.current
+    val preferences = hiltPreferences()
 
     val defaultTitle = stringResource(string.ui_title_setting)
     val playlistTitle = stringResource(string.feat_setting_playlist_management)
@@ -199,9 +198,9 @@ private fun SettingScreen(
 
     val colorArgb = preferences.argb
 
-    var fragment: SettingFragment by remember { mutableStateOf(SettingFragment.Default) }
+    var fragment: SettingDestination by remember { mutableStateOf(SettingDestination.Default) }
 
-    EventHandler(EventBus.settingFragment) {
+    EventHandler(Events.settingDestination) {
         fragment = it
     }
 
@@ -213,23 +212,23 @@ private fun SettingScreen(
 
     if (isPageInfoVisible) {
         LifecycleResumeEffect(fragment, defaultTitle, playlistTitle, appearanceTitle, fragment) {
-            helper.title = when (fragment) {
-                SettingFragment.Default -> defaultTitle
-                SettingFragment.Playlists -> playlistTitle
-                SettingFragment.Appearance -> appearanceTitle
+            Metadata.title = when (fragment) {
+                SettingDestination.Default -> defaultTitle
+                SettingDestination.Playlists -> playlistTitle
+                SettingDestination.Appearance -> appearanceTitle
             }.title()
-            if (fragment != SettingFragment.Default) {
-                helper.fob = Fob(
+            if (fragment != SettingDestination.Default) {
+                Metadata.fob = Fob(
                     rootDestination = Destination.Root.Setting,
                     icon = Icons.Rounded.ChangeCircle,
                     iconTextId = string.feat_setting_back_home
                 ) {
-                    fragment = SettingFragment.Default
+                    fragment = SettingDestination.Default
                 }
             }
-            helper.actions = emptyList()
+            Metadata.actions = emptyList()
             onPauseOrDispose {
-                helper.fob = null
+                Metadata.fob = null
             }
         }
     }
@@ -237,7 +236,7 @@ private fun SettingScreen(
     val currentPaneScaffoldRole by remember {
         derivedStateOf {
             when (fragment) {
-                SettingFragment.Default -> ListDetailPaneScaffoldRole.List
+                SettingDestination.Default -> ListDetailPaneScaffoldRole.List
                 else -> ListDetailPaneScaffoldRole.Detail
             }
         }
@@ -258,10 +257,10 @@ private fun SettingScreen(
                 versionName = versionName,
                 versionCode = versionCode,
                 navigateToPlaylistManagement = {
-                    fragment = SettingFragment.Playlists
+                    fragment = SettingDestination.Playlists
                 },
                 navigateToThemeSelector = {
-                    fragment = SettingFragment.Appearance
+                    fragment = SettingDestination.Appearance
                 },
                 cacheSpace = cacheSpace,
                 onClearCache = onClearCache,
@@ -269,10 +268,10 @@ private fun SettingScreen(
             )
         },
         detailPane = {
-            if (fragment != SettingFragment.Default) {
+            if (fragment != SettingDestination.Default) {
                 AnimatedPane(Modifier) {
                     when (fragment) {
-                        SettingFragment.Playlists -> {
+                        SettingDestination.Playlists -> {
                             SubscriptionsFragment(
                                 titleState = titleState,
                                 urlState = urlState,
@@ -300,7 +299,7 @@ private fun SettingScreen(
                             )
                         }
 
-                        SettingFragment.Appearance -> {
+                        SettingDestination.Appearance -> {
                             AppearanceFragment(
                                 colorPacks = colorPacks,
                                 colorArgb = colorArgb,
@@ -322,8 +321,8 @@ private fun SettingScreen(
             )
             .testTag("feature:setting")
     )
-    BackHandler(fragment != SettingFragment.Default) {
-        fragment = SettingFragment.Default
+    BackHandler(fragment != SettingDestination.Default) {
+        fragment = SettingDestination.Default
     }
 }
 

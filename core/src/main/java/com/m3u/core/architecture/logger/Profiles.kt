@@ -11,7 +11,7 @@ object Profiles {
 
     val REPOS_PLAYLIST = Profile("repos-playlist")
     val REPOS_STREAM = Profile("repos-stream")
-    val REPOS_PROGRAMME = Profile("repos-programme")
+    val REPOS_PROGRAMME = Profile("repos-programme", Message.LEVEL_INFO)
     val REPOS_TELEVISION = Profile("repos-television")
     val REPOS_MEDIA = Profile("repos-media")
 

@@ -9,59 +9,20 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.m3u.androidApp.ui.App
 import com.m3u.androidApp.ui.AppViewModel
-import com.m3u.core.architecture.dispatcher.Dispatcher
-import com.m3u.core.architecture.dispatcher.M3uDispatchers.Main
-import com.m3u.core.architecture.preferences.Preferences
-import com.m3u.data.service.Messager
-import com.m3u.data.service.PlayerManager
-import com.m3u.data.service.RemoteDirectionService
-import com.m3u.ui.EventBus.registerActionEventCollector
+import com.m3u.ui.Events.enableDPadReaction
 import com.m3u.ui.Toolkit
-import com.m3u.ui.helper.AbstractHelper
+import com.m3u.ui.helper.Helper
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.CoroutineDispatcher
-import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
     private val viewModel: AppViewModel by viewModels()
-    private val helper by lazy {
-        AbstractHelper(
-            activity = this,
-            mainDispatcher = mainDispatcher,
-            playerManager = playerManager,
-            messager = messager,
-            title = viewModel.title,
-            message = viewModel.message,
-            actions = viewModel.actions,
-            fob = viewModel.fob
-        )
-    }
 
-    @Inject
-    lateinit var preferences: Preferences
-
-    @Inject
-    lateinit var playerManager: PlayerManager
-
-    @Inject
-    @Dispatcher(Main)
-    lateinit var mainDispatcher: CoroutineDispatcher
-
-    @Inject
-    lateinit var remoteDirectionService: RemoteDirectionService
-
-    @Inject
-    lateinit var messager: Messager
+    private val helper: Helper = Helper(this)
 
     override fun onResume() {
         super.onResume()
         helper.applyConfiguration()
-    }
-
-    override fun onUserLeaveHint() {
-        super.onUserLeaveHint()
-        helper.onUserLeaveHint?.invoke()
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {
@@ -72,17 +33,14 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         enableEdgeToEdge()
+        enableDPadReaction()
         super.onCreate(savedInstanceState)
         setContent {
-            Toolkit(
-                helper = helper,
-                preferences = preferences,
-            ) {
+            Toolkit(helper) {
                 App(
                     viewModel = viewModel
                 )
             }
         }
-        registerActionEventCollector(remoteDirectionService.actions)
     }
 }

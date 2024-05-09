@@ -20,7 +20,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import com.m3u.core.architecture.preferences.LocalPreferences
+import com.m3u.core.architecture.preferences.hiltPreferences
 import com.m3u.core.architecture.preferences.annotation.ClipMode
 import com.m3u.core.architecture.preferences.annotation.ConnectTimeout
 import com.m3u.core.architecture.preferences.annotation.PlaylistStrategy
@@ -32,31 +32,31 @@ import com.m3u.material.components.Preference
 import com.m3u.material.components.TextPreference
 import com.m3u.material.ktx.isTelevision
 import com.m3u.ui.Destination
-import com.m3u.ui.SettingFragment
+import com.m3u.ui.SettingDestination
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 
 @Composable
 internal fun RegularPreferences(
-    fragment: SettingFragment,
+    fragment: SettingDestination,
     navigateToPlaylistManagement: () -> Unit,
     navigateToThemeSelector: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val preferences = LocalPreferences.current
+    val preferences = hiltPreferences()
     val tv = isTelevision()
 
     Column(modifier) {
         Preference(
             title = stringResource(string.feat_setting_playlist_management).title(),
             icon = Icons.Rounded.MusicNote,
-            enabled = fragment != SettingFragment.Playlists,
+            enabled = fragment != SettingDestination.Playlists,
             onClick = navigateToPlaylistManagement
         )
         Preference(
             title = stringResource(string.feat_setting_appearance).title(),
             icon = Icons.Rounded.ColorLens,
-            enabled = fragment != SettingFragment.Appearance,
+            enabled = fragment != SettingDestination.Appearance,
             onClick = navigateToThemeSelector
         )
         TextPreference(

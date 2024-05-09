@@ -32,7 +32,6 @@ import com.m3u.core.util.basic.title
 import com.m3u.i18n.R.string
 import com.m3u.material.components.CircularProgressIndicator
 import com.m3u.material.components.Icon
-import com.m3u.material.components.OnDismiss
 import com.m3u.material.components.mask.MaskState
 import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.UnstableBadge
@@ -45,7 +44,7 @@ internal fun DlnaDevicesBottomSheet(
     devices: List<Device>,
     searching: Boolean,
     maskState: MaskState,
-    onDismiss: OnDismiss,
+    onDismiss: () -> Unit,
     connectDlnaDevice: (device: Device) -> Unit,
     openInExternalPlayer: () -> Unit,
     modifier: Modifier = Modifier

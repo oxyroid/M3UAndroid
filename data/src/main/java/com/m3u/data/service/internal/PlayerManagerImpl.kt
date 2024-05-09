@@ -65,6 +65,7 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
@@ -105,7 +106,7 @@ class PlayerManagerImpl @Inject constructor(
                     .observe(command.streamId)
                     .map { it?.copyXtreamEpisode(command.episode) }
 
-                else -> flow { }
+                else -> flowOf(null)
             }
         }
         .stateIn(
@@ -127,10 +128,10 @@ class PlayerManagerImpl @Inject constructor(
                     playlistRepository
                         .observe(it.playlistUrl)
                         .map { prev -> prev?.copyXtreamSeries(stream) }
-                } ?: flow { }
+                } ?: flowOf(null)
             }
 
-            null -> flow { }
+            null -> flowOf(null)
         }
     }
         .stateIn(

@@ -28,7 +28,7 @@ import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import coil.compose.SubcomposeAsyncImage
 import coil.request.ImageRequest
-import com.m3u.core.architecture.preferences.LocalPreferences
+import com.m3u.core.architecture.preferences.hiltPreferences
 import com.m3u.data.database.model.Stream
 import com.m3u.material.components.CircularProgressIndicator
 import com.m3u.material.components.Icon
@@ -46,7 +46,7 @@ internal fun TvStreamItem(
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
-    val preferences = LocalPreferences.current
+    val preferences = hiltPreferences()
     val spacing = LocalSpacing.current
 
     val noPictureMode = preferences.noPictureMode

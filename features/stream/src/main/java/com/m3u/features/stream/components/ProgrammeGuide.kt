@@ -1,11 +1,6 @@
 package com.m3u.features.stream.components
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -22,7 +17,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.AbsoluteRoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.KeyboardDoubleArrowUp
-import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
@@ -54,7 +48,7 @@ import androidx.compose.ui.zIndex
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.paging.compose.LazyPagingItems
 import coil.compose.AsyncImage
-import com.m3u.core.architecture.preferences.LocalPreferences
+import com.m3u.core.architecture.preferences.hiltPreferences
 import com.m3u.data.database.model.Programme
 import com.m3u.data.database.model.ProgrammeRange
 import com.m3u.data.database.model.ProgrammeRange.Companion.HOUR_LENGTH
@@ -68,6 +62,7 @@ import com.m3u.ui.util.TimeUtils.formatEOrSh
 import com.m3u.ui.util.TimeUtils.toEOrSh
 import eu.wewox.minabox.MinaBox
 import eu.wewox.minabox.MinaBoxItem
+import eu.wewox.minabox.MinaBoxScrollDirection
 import eu.wewox.minabox.rememberMinaBoxState
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -86,15 +81,13 @@ private enum class Zoom(val time: Float) {
 @Composable
 internal fun ProgramGuide(
     isPanelExpanded: Boolean,
-    isProgrammesRefreshing: Boolean,
     programmes: LazyPagingItems<Programme>,
     range: ProgrammeRange,
     modifier: Modifier = Modifier,
     height: Float = 256f,
     padding: Float = 16f,
     currentTimelineHeight: Float = 48f,
-    scrollOffset: Int = -120,
-    onRefreshProgrammesIgnoreCache: () -> Unit
+    scrollOffset: Int = -120
 ) {
     val spacing = LocalSpacing.current
 
@@ -144,6 +137,7 @@ internal fun ProgramGuide(
         BoxWithConstraints {
             MinaBox(
                 state = minaBoxState,
+                scrollDirection = MinaBoxScrollDirection.VERTICAL,
                 modifier = Modifier
                     .fillMaxSize()
                     .blurEdges(
@@ -218,8 +212,6 @@ internal fun ProgramGuide(
             }
 
             Controls(
-                isProgrammesRefreshing = isProgrammesRefreshing,
-                onRefreshProgrammesIgnoreCache = onRefreshProgrammesIgnoreCache,
                 animateToCurrentTimeline = {
                     coroutineScope.launch { animateToCurrentTimeline() }
                 },
@@ -293,7 +285,7 @@ private fun ProgrammeCell(
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
-    val preferences = LocalPreferences.current
+    val preferences = hiltPreferences()
     val colorScheme = MaterialTheme.colorScheme
     val clockMode = preferences.twelveHourClock
     Surface(
@@ -364,7 +356,7 @@ private fun CurrentTimelineCell(
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
-    val preferences = LocalPreferences.current
+    val preferences = hiltPreferences()
     val clockMode = preferences.twelveHourClock
     val color = MaterialTheme.colorScheme.error
     val contentColor = MaterialTheme.colorScheme.onError
@@ -422,15 +414,13 @@ private fun CurrentTimelineCell(
 
 @Composable
 private fun Controls(
-    isProgrammesRefreshing: Boolean,
-    onRefreshProgrammesIgnoreCache: () -> Unit,
     animateToCurrentTimeline: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     ConstraintLayout(
         modifier = modifier
     ) {
-        val (refresh, scroll) = createRefs()
+        val (scroll) = createRefs()
         SmallFloatingActionButton(
             elevation = FloatingActionButtonDefaults.elevation(0.dp),
             onClick = animateToCurrentTimeline,
@@ -443,27 +433,6 @@ private fun Controls(
                 imageVector = Icons.Rounded.KeyboardDoubleArrowUp,
                 contentDescription = "scroll to current timeline"
             )
-        }
-
-        AnimatedVisibility(
-            visible = !isProgrammesRefreshing,
-            enter = fadeIn() + scaleIn(),
-            exit = fadeOut() + scaleOut(),
-            modifier = Modifier.constrainAs(refresh) {
-                this.end.linkTo(scroll.start)
-                this.top.linkTo(scroll.top)
-                this.bottom.linkTo(scroll.bottom)
-            }
-        ) {
-            SmallFloatingActionButton(
-                elevation = FloatingActionButtonDefaults.elevation(0.dp),
-                onClick = onRefreshProgrammesIgnoreCache
-            ) {
-                Icon(
-                    imageVector = Icons.Rounded.Refresh,
-                    contentDescription = "refresh playlist programmes"
-                )
-            }
         }
     }
 }

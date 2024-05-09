@@ -35,7 +35,7 @@ import androidx.tv.material3.ImmersiveList
 import androidx.tv.material3.ListItemDefaults
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
-import com.m3u.core.architecture.preferences.LocalPreferences
+import com.m3u.core.architecture.preferences.hiltPreferences
 import com.m3u.data.database.model.Stream
 import com.m3u.features.playlist.Category
 import com.m3u.features.playlist.components.ImmersiveBackground
@@ -74,7 +74,7 @@ internal fun TvPlaylistScreenImpl(
     isVodOrSeriesPlaylist: Boolean,
     modifier: Modifier = Modifier
 ) {
-    val preferences = LocalPreferences.current
+    val preferences = hiltPreferences()
 
     val paging = preferences.paging
     val multiCategories = categories.size > 1

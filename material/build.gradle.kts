@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.com.android.library)
     alias(libs.plugins.org.jetbrains.kotlin.android)
+    alias(libs.plugins.compose.compiler)
 }
 
 android {
@@ -30,8 +31,9 @@ android {
     buildFeatures {
         compose = true
     }
-    composeOptions {
-        kotlinCompilerExtensionVersion = libs.versions.compose.compiler.get()
+    composeCompiler {
+        enableStrongSkippingMode = true
+        includeSourceInformation = true
     }
 }
 
@@ -41,13 +43,20 @@ dependencies {
 
     implementation(libs.androidx.lifecycle.lifecycle.runtime.ktx)
 
-    api(libs.bundles.androidx.compose)
-    api(libs.androidx.compose.material.material.icons.extended)
-    api(libs.androidx.compose.material3.material3)
+    api(platform(libs.androidx.compose.bom))
+    api(libs.androidx.compose.foundation)
+    api(libs.androidx.compose.foundation.layout)
+    api(libs.androidx.compose.material.iconsExtended)
+    api(libs.androidx.compose.material3)
+    api(libs.androidx.compose.runtime)
+    api(libs.androidx.compose.ui.util)
+
+    androidTestImplementation(platform(libs.androidx.compose.bom))
+    api(libs.androidx.compose.ui.tooling.preview)
+    debugApi(libs.androidx.compose.ui.tooling)
+
     api(libs.androidx.compose.material3.material3.window.size.clazz)
     api(libs.androidx.constraintlayout.constraintlayout.compose)
-    debugApi(libs.androidx.compose.ui.ui.tooling)
-    debugApi(libs.androidx.compose.ui.ui.tooling.preview)
 
     api(libs.androidx.navigation.navigation.compose)
 

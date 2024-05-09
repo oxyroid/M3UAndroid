@@ -20,7 +20,7 @@ import com.m3u.data.logger.MessageLogger
 import com.m3u.data.logger.StubLogger
 import com.m3u.data.service.internal.MessagerImpl
 import com.m3u.data.service.internal.PlayerManagerImpl
-import com.m3u.data.service.internal.RemoteDirectionServiceImpl
+import com.m3u.data.service.internal.DPadReactionServiceImpl
 import com.m3u.data.service.internal.FileProviderImpl
 import com.m3u.data.television.http.HttpServer
 import com.m3u.data.television.http.internal.HttpServerImpl
@@ -70,7 +70,7 @@ internal interface BindServicesModule {
 
     @Binds
     @Singleton
-    fun bindRemoteDirectionService(service: RemoteDirectionServiceImpl): RemoteDirectionService
+    fun bindDPadReactionService(service: DPadReactionServiceImpl): DPadReactionService
 }
 
 @Module

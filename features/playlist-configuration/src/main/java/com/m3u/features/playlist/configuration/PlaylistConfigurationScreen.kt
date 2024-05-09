@@ -1,11 +1,17 @@
 package com.m3u.features.playlist.configuration
 
+import android.Manifest
+import android.annotation.SuppressLint
+import android.content.Intent
+import android.provider.Settings
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -44,6 +50,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.google.accompanist.permissions.rememberPermissionState
 import com.m3u.core.util.basic.title
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
@@ -53,13 +60,16 @@ import com.m3u.material.components.Background
 import com.m3u.material.components.Icon
 import com.m3u.material.components.PlaceholderField
 import com.m3u.material.components.SelectionsDefaults
+import com.m3u.material.ktx.checkPermissionOrRationale
 import com.m3u.material.ktx.split
 import com.m3u.material.model.LocalHazeState
 import com.m3u.material.model.LocalSpacing
 import com.m3u.material.shape.AbsoluteSmoothCornerShape
 import com.m3u.ui.helper.LocalHelper
+import com.m3u.ui.helper.Metadata
 import dev.chrisbanes.haze.HazeDefaults
 import dev.chrisbanes.haze.haze
+import kotlinx.datetime.LocalDateTime
 
 @Composable
 internal fun PlaylistConfigurationRoute(
@@ -68,11 +78,17 @@ internal fun PlaylistConfigurationRoute(
     contentPadding: PaddingValues = PaddingValues()
 ) {
     val helper = LocalHelper.current
+
+    @SuppressLint("InlinedApi")
+    val permissionState = rememberPermissionState(Manifest.permission.POST_NOTIFICATIONS)
+
     val playlist by viewModel.playlist.collectAsStateWithLifecycle()
     val manifest by viewModel.manifest.collectAsStateWithLifecycle()
+    val subscribingOrRefreshing by viewModel.subscribingOrRefreshing.collectAsStateWithLifecycle()
+    val expired by viewModel.expired.collectAsStateWithLifecycle()
 
     LifecycleResumeEffect(playlist?.title) {
-        helper.title = playlist?.title?.title().orEmpty()
+        Metadata.title = playlist?.title?.title().orEmpty()
         onPauseOrDispose {
         }
     }
@@ -81,9 +97,28 @@ internal fun PlaylistConfigurationRoute(
         PlaylistConfigurationScreen(
             playlist = it,
             manifest = manifest,
+            subscribingOrRefreshing = subscribingOrRefreshing,
+            expired = expired,
             onUpdatePlaylistTitle = viewModel::onUpdatePlaylistTitle,
             onUpdatePlaylistUserAgent = viewModel::onUpdatePlaylistUserAgent,
             onUpdateEpgPlaylist = viewModel::onUpdateEpgPlaylist,
+            onSyncProgrammes = {
+                permissionState.checkPermissionOrRationale(
+                    showRationale = {
+                        val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                            .apply {
+                                putExtra(
+                                    Settings.EXTRA_APP_PACKAGE,
+                                    helper.activityContext.packageName
+                                )
+                            }
+                        helper.activityContext.startActivity(intent)
+                    },
+                    block = {
+                        viewModel.onSyncProgrammes()
+                    }
+                )
+            },
             modifier = modifier,
             contentPadding = contentPadding
         )
@@ -94,9 +129,12 @@ internal fun PlaylistConfigurationRoute(
 private fun PlaylistConfigurationScreen(
     playlist: Playlist,
     manifest: EpgManifest,
+    subscribingOrRefreshing: Boolean,
+    expired: LocalDateTime?,
     onUpdatePlaylistTitle: (String) -> Unit,
     onUpdatePlaylistUserAgent: (String?) -> Unit,
     onUpdateEpgPlaylist: (PlaylistRepository.UpdateEpgPlaylistUseCase) -> Unit,
+    onSyncProgrammes: () -> Unit,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues()
 ) {
@@ -127,80 +165,31 @@ private fun PlaylistConfigurationScreen(
                     placeholder = stringResource(string.feat_playlist_configuration_user_agent).title(),
                     onValueChange = { userAgent = it }
                 )
+                SyncProgrammesButton(
+                    subscribingOrRefreshing = subscribingOrRefreshing,
+                    expired = expired,
+                    onSyncProgrammes = onSyncProgrammes
+                )
+
                 if (playlist.source == DataSource.M3U) {
-                    LazyColumn(
+                    EpgManifestGallery(
+                        playlistUrl = playlist.url,
+                        manifest = manifest,
                         contentPadding = inner,
-                        verticalArrangement = Arrangement.spacedBy(spacing.medium),
+                        onUpdateEpgPlaylist = onUpdateEpgPlaylist,
                         modifier = Modifier
                             .fillMaxWidth()
                             .weight(1f)
-                            .haze(
-                                LocalHazeState.current,
-                                HazeDefaults.style(MaterialTheme.colorScheme.surface)
-                            )
-                    ) {
-                        stickyHeader {
-                            Text(
-                                text = stringResource(string.feat_playlist_configuration_enabled_epgs).title(),
-                                style = MaterialTheme.typography.titleMedium,
-                                modifier = Modifier.padding(
-                                    horizontal = spacing.medium,
-                                    vertical = spacing.small
-                                )
-                            )
-                        }
-                        items(manifest.entries.toList()) { (epg, associated) ->
-                            ListItem(
-                                headlineContent = {
-                                    Text(
-                                        text = epg.title,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis,
-                                    )
-                                },
-                                supportingContent = {
-                                    Text(
-                                        text = epg.url
-                                    )
-                                },
-                                trailingContent = {
-                                    Switch(
-                                        checked = associated,
-                                        onCheckedChange = null
-                                    )
-                                },
-                                colors = ListItemDefaults.colors(
-                                    supportingColor = MaterialTheme
-                                        .colorScheme
-                                        .onSurfaceVariant.copy(0.38f)
-                                ),
-                                modifier = Modifier
-                                    .border(
-                                        1.dp,
-                                        LocalContentColor.current.copy(0.38f),
-                                        SelectionsDefaults.Shape
-                                    )
-                                    .clip(AbsoluteSmoothCornerShape(spacing.medium, 65))
-                                    .clickable {
-                                        onUpdateEpgPlaylist(
-                                            PlaylistRepository.UpdateEpgPlaylistUseCase(
-                                                playlistUrl = playlist.url,
-                                                epgUrl = epg.url,
-                                                action = !associated
-                                            )
-                                        )
-                                    }
-                            )
-                        }
-                    }
+                    )
                 }
             }
 
             val fabBottomPadding by animateDpAsState(
-                maxOf(
+                targetValue = maxOf(
                     WindowInsets.ime.asPaddingValues().calculateBottomPadding(),
                     inner.calculateBottomPadding()
-                )
+                ),
+                label = "apply changes bottom padding"
             )
             AnimatedVisibility(
                 visible = hasChanged,
@@ -225,4 +214,154 @@ private fun PlaylistConfigurationScreen(
             }
         }
     }
+}
+
+@Composable
+private fun SyncProgrammesButton(
+    subscribingOrRefreshing: Boolean,
+    expired: LocalDateTime?,
+    onSyncProgrammes: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val spacing = LocalSpacing.current
+    ListItem(
+        headlineContent = {
+            Text(
+                text = stringResource(string.feat_playlist_configuration_sync_programmes).title(),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        },
+        supportingContent = {
+            AnimatedContent(
+                targetState = subscribingOrRefreshing,
+                transitionSpec = {
+                    fadeIn() + slideInVertically { it } togetherWith fadeOut() + slideOutVertically { it }
+                },
+                label = "sync programmes state"
+            ) { subscribingOrRefreshing ->
+                if (!subscribingOrRefreshing) {
+                    Text(
+                        text = when (expired) {
+                            null -> stringResource(string.feat_playlist_configuration_programmes_expired)
+                            else -> stringResource(
+                                string.feat_playlist_configuration_programmes_expired_time,
+                                expired.toString()
+                            )
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            }
+        },
+        colors = ListItemDefaults.colors(
+            headlineColor = LocalContentColor.current.copy(
+                if (subscribingOrRefreshing) 0.38f else 1f
+            ),
+            supportingColor = LocalContentColor.current.copy(0.38f)
+        ),
+        modifier = Modifier
+            .border(
+                1.dp,
+                LocalContentColor.current.copy(0.38f),
+                SelectionsDefaults.Shape
+            )
+            .clip(AbsoluteSmoothCornerShape(spacing.medium, 65))
+            .clickable(
+                onClick = onSyncProgrammes,
+                enabled = !subscribingOrRefreshing
+            )
+            .then(modifier)
+    )
+}
+
+@Composable
+private fun EpgManifestGallery(
+    playlistUrl: String,
+    manifest: EpgManifest,
+    contentPadding: PaddingValues,
+    onUpdateEpgPlaylist: (PlaylistRepository.UpdateEpgPlaylistUseCase) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val spacing = LocalSpacing.current
+    LazyColumn(
+        contentPadding = contentPadding,
+        verticalArrangement = Arrangement.spacedBy(spacing.medium),
+        modifier = modifier.haze(
+            LocalHazeState.current,
+            HazeDefaults.style(MaterialTheme.colorScheme.surface)
+        )
+    ) {
+        stickyHeader {
+            Text(
+                text = stringResource(string.feat_playlist_configuration_enabled_epgs).title(),
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(
+                    horizontal = spacing.medium,
+                    vertical = spacing.small
+                )
+            )
+        }
+        items(manifest.entries.toList()) { (epg, associated) ->
+            EpgManifestGalleryItem(
+                playlistUrl = playlistUrl,
+                epg = epg,
+                associated = associated,
+                onUpdateEpgPlaylist = onUpdateEpgPlaylist,
+            )
+        }
+    }
+}
+
+@Composable
+private fun EpgManifestGalleryItem(
+    playlistUrl: String,
+    epg: Playlist,
+    associated: Boolean,
+    onUpdateEpgPlaylist: (PlaylistRepository.UpdateEpgPlaylistUseCase) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val spacing = LocalSpacing.current
+    ListItem(
+        headlineContent = {
+            Text(
+                text = epg.title,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        },
+        supportingContent = {
+            Text(
+                text = epg.url
+            )
+        },
+        trailingContent = {
+            Switch(
+                checked = associated,
+                onCheckedChange = null
+            )
+        },
+        colors = ListItemDefaults.colors(
+            supportingColor = MaterialTheme
+                .colorScheme
+                .onSurfaceVariant.copy(0.38f)
+        ),
+        modifier = Modifier
+            .border(
+                1.dp,
+                LocalContentColor.current.copy(0.38f),
+                SelectionsDefaults.Shape
+            )
+            .clip(AbsoluteSmoothCornerShape(spacing.medium, 65))
+            .clickable {
+                onUpdateEpgPlaylist(
+                    PlaylistRepository.UpdateEpgPlaylistUseCase(
+                        playlistUrl = playlistUrl,
+                        epgUrl = epg.url,
+                        action = !associated
+                    )
+                )
+            }
+            .then(modifier)
+    )
 }

@@ -21,7 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.tv.foundation.lazy.list.TvLazyRow
 import androidx.tv.foundation.lazy.list.items
-import com.m3u.core.architecture.preferences.LocalPreferences
+import com.m3u.core.architecture.preferences.hiltPreferences
 import com.m3u.data.database.model.ColorPack
 import com.m3u.features.setting.components.CheckBoxSharedPreference
 import com.m3u.i18n.R.string
@@ -42,7 +42,7 @@ internal fun AppearanceFragment(
     contentPadding: PaddingValues = PaddingValues()
 ) {
     val spacing = LocalSpacing.current
-    val preferences = LocalPreferences.current
+    val preferences = hiltPreferences()
 
     val isDarkMode = preferences.darkMode
     val useDynamicColors = preferences.useDynamicColors

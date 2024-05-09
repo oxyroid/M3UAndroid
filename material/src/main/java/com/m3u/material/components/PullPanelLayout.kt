@@ -101,7 +101,6 @@ fun PullPanelLayout(
                     },
                     onDragStopped = {
                         offset = if (offset <= constraints.maxWidth * aspectRatio / 2) {
-
                             if (state.value != PullPanelLayoutValue.COLLAPSED) {
                                 onValueChanged(PullPanelLayoutValue.COLLAPSED)
                             }
@@ -167,4 +166,3 @@ private class PullPanelLayoutStateImpl(
 
     override var intention: PullPanelLayoutValue by mutableStateOf(initialValue)
 }
-
