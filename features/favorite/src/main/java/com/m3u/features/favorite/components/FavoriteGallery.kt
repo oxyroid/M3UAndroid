@@ -48,7 +48,6 @@ import com.m3u.material.ktx.isTelevision
 import com.m3u.material.ktx.plus
 import com.m3u.material.model.LocalSpacing
 
-
 @Composable
 internal fun FavouriteGallery(
     contentPadding: PaddingValues,
