@@ -180,7 +180,6 @@ class StreamViewModel @Inject constructor(
 
             controlPoint?.removeDiscoveryListener(this)
             controlPoint?.stop()
-            controlPoint?.search()
             controlPoint?.terminate()
             controlPoint = null
 
