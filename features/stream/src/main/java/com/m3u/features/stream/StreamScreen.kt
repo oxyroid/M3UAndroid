@@ -41,6 +41,7 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import com.m3u.core.architecture.preferences.hiltPreferences
 import com.m3u.core.util.basic.isNotEmpty
 import com.m3u.core.util.basic.title
+import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.Programme
 import com.m3u.data.database.model.Stream
 import com.m3u.data.television.model.RemoteDirection
@@ -95,6 +96,7 @@ fun StreamRoute(
 
     val volume by viewModel.volume.collectAsStateWithLifecycle()
     val isSeriesPlaylist by viewModel.isSeriesPlaylist.collectAsStateWithLifecycle()
+    val isVodPlaylist by viewModel.isVodPlaylist.collectAsStateWithLifecycle()
 
     val neighboring = viewModel.neighboring.collectAsLazyPagingItems()
     val programmes = viewModel.programmes.collectAsLazyPagingItems()
@@ -205,6 +207,7 @@ fun StreamRoute(
             content = {
                 StreamPlayer(
                     isSeriesPlaylist = isSeriesPlaylist,
+                    isVodPlaylist = isVodPlaylist,
                     openDlnaDevices = {
                         viewModel.openDlnaDevices()
                         pullPanelLayoutState.collapse()
@@ -217,6 +220,7 @@ fun StreamRoute(
                     onBackPressed = onBackPressed,
                     maskState = maskState,
                     playerState = playerState,
+                    playlist = playlist,
                     stream = stream,
                     formatsIsNotEmpty = formats.isNotEmpty(),
                     isPanelExpanded = isPanelExpanded,
@@ -277,8 +281,10 @@ private fun
 StreamPlayer(
     maskState: MaskState,
     playerState: PlayerState,
+    playlist: Playlist?,
     stream: Stream?,
     isSeriesPlaylist: Boolean,
+    isVodPlaylist: Boolean,
     formatsIsNotEmpty: Boolean,
     isPanelExpanded: Boolean,
     volume: Float,
@@ -296,6 +302,7 @@ StreamPlayer(
 ) {
     val title = stream?.title ?: "--"
     val cover = stream?.cover.orEmpty()
+    val playlistTitle = playlist?.title ?: "--"
     val favourite = stream?.favourite ?: false
 
     val preferences = hiltPreferences()
@@ -334,6 +341,7 @@ StreamPlayer(
             StreamMask(
                 cover = cover,
                 title = title,
+                playlistTitle = playlistTitle,
                 playerState = playerState,
                 volume = volume,
                 brightness = brightness,
@@ -341,6 +349,7 @@ StreamPlayer(
                 maskState = maskState,
                 favourite = favourite,
                 isSeriesPlaylist = isSeriesPlaylist,
+                isVodPlaylist = isVodPlaylist,
                 formatsIsNotEmpty = formatsIsNotEmpty,
                 isPanelExpanded = isPanelExpanded,
                 onFavourite = onFavourite,

@@ -61,8 +61,6 @@ import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -112,6 +110,7 @@ internal fun
 StreamMask(
     cover: String,
     title: String,
+    playlistTitle: String,
     playerState: PlayerState,
     volume: Float,
     brightness: Float,
@@ -119,6 +118,7 @@ StreamMask(
     maskState: MaskState,
     favourite: Boolean,
     isSeriesPlaylist: Boolean,
+    isVodPlaylist: Boolean,
     isPanelExpanded: Boolean,
     formatsIsNotEmpty: Boolean,
     onFavourite: () -> Unit,
@@ -346,45 +346,43 @@ StreamMask(
                     }
                 }
             },
-
             footer = {
-                Column(
-                    modifier = Modifier
-                    .semantics(mergeDescendants = true) { }
-                    .animateContentSize()
-                    .weight(1f)
-                    .height(90.dp)
+                AnimatedVisibility(
+                visible = !isPanelExpanded,
+                enter = fadeIn(),
+                exit = fadeOut()
                 ) {
-                    AnimatedVisibility(
-                        visible = !isPanelExpanded,
-                        enter = fadeIn(),
-                        exit = fadeOut()
-                    ) {
-                    Row(
+                    Column(
                         modifier = Modifier
-                        .fillMaxWidth()
+                            .semantics(mergeDescendants = true) { }
+                            .animateContentSize()
+                            .weight(1f)
+                            .height(90.dp)
                     ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
+                        Row(
                             modifier = Modifier
-                                .weight(0.5f)
+                                .fillMaxWidth()
                         ) {
-                            if (preferences.fullInfoPlayer && cover.isNotEmpty()) {
-                                Image(
-                                    model = cover,
-                                    modifier = Modifier
-                                        .size(60.dp)
-                                        .align(Alignment.CenterHorizontally)
-                                        .clip(RoundedCornerShape(spacing.small))
-                                )
-                            }
-                        }
-                        Column(
-                            verticalArrangement = Arrangement.Center,
-                            modifier = Modifier
-                                .weight(3f),
-
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                modifier = Modifier
+                                    .weight(0.5f)
                             ) {
+                                if (preferences.fullInfoPlayer && cover.isNotEmpty()) {
+                                    Image(
+                                        model = cover,
+                                        modifier = Modifier
+                                            .size(60.dp)
+                                            .align(Alignment.CenterHorizontally)
+                                            .clip(RoundedCornerShape(spacing.small))
+                                    )
+                                }
+                            }
+                            Column(
+                                verticalArrangement = Arrangement.Center,
+                                modifier = Modifier
+                                    .weight(3f),
+                                ) {
                                 Text(
                                     text = title.trim(),
                                     style = MaterialTheme.typography.headlineMedium,
@@ -400,38 +398,38 @@ StreamMask(
                                 )
                             }
                         }
-                    }
-                    Row(modifier = Modifier
-                        .fillMaxWidth()
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
+                        Row(
                             modifier = Modifier
-                                .weight(0.5f)
-                                .padding(4.dp)
-
+                                .fillMaxWidth()
                         ) {
-                            if (preferences.fullInfoPlayer && (isNew == true || isNew2 == true)) {
-                                CustomTextIcon(
-                                    text = "NEW",
-                                    textColor = Color.White,
-                                    backgroundColor = Color.Blue,
-                                    modifier = Modifier
-                                )
-                            } else if (preferences.fullInfoPlayer && isLive == true || isLive2 == true) {
-                                CustomTextIcon(
-                                    text = "LIVE",
-                                    textColor = Color.White,
-                                    backgroundColor = Color.Red,
-                                    modifier = Modifier
-                                )
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                modifier = Modifier
+                                    .weight(0.5f)
+                                    .padding(4.dp)
+                            ) {
+                                if (preferences.fullInfoPlayer && (isNew == true || isNew2 == true)) {
+                                    CustomTextIcon(
+                                        text = "NEW",
+                                        textColor = Color.White,
+                                        backgroundColor = Color.Blue,
+                                        modifier = Modifier
+                                    )
+                                } else if (preferences.fullInfoPlayer && isLive == true || isLive2 == true) {
+                                    CustomTextIcon(
+                                        text = "LIVE",
+                                        textColor = Color.White,
+                                        backgroundColor = Color.Red,
+                                        modifier = Modifier
+                                    )
+                                }
                             }
-                        }
-                        Column(
-                            modifier = Modifier.weight(3f)
-                        ) {
+                            Column(
+                                modifier = Modifier.weight(3f)
+                            ) {
                                 Text(
-                                    text = programme?.readText() ?: AnnotatedString(""),
+                                    text = if (isSeriesPlaylist || isVodPlaylist) playlistTitle.trim()
+                                        .uppercase() else programme?.readText() ?: "",
                                     style = MaterialTheme.typography.titleSmall,
                                     maxLines = 1,
                                     color = LocalContentColor.current.copy(0.54f),
@@ -439,12 +437,13 @@ StreamMask(
                                     modifier = Modifier
                                         .height(30.dp)
                                         .basicMarquee()
-                                        .wrapContentHeight(align = Alignment.CenterVertically) // Align text vertically
+                                        .wrapContentHeight(align = Alignment.CenterVertically)
                                         .padding(start = if (isLandscape) 0.dp else 16.dp) // Add left padding only in landscape mode
                                 )
                             }
                         }
-
+                    }
+                }
                     val playStateDisplayText =
                         PlayerMaskDefaults.playStateDisplayText(playerState.playState)
                     val exceptionDisplayText =
@@ -478,7 +477,7 @@ StreamMask(
                             modifier = Modifier.basicMarquee()
                         )
                     }
-                }
+
                 if (!tv) {
                     val autoRotating by PlayerMaskDefaults.IsAutoRotatingEnabled
                     LaunchedEffect(autoRotating) {
@@ -575,16 +574,15 @@ StreamMask(
 
 
 @Composable
-private fun Programme.readText(): AnnotatedString {
+private fun Programme.readText(): String {
     val preferences = hiltPreferences()
     val clockMode = preferences.twelveHourClock
     val title = title
 
-    return buildAnnotatedString {
+    return buildString {
         val start = Instant.fromEpochMilliseconds(start)
             .toLocalDateTime(TimeZone.currentSystemDefault())
             .formatEOrSh(clockMode)
-
 
         if (isNew) {
             val indexOfSubstring = title.indexOf("ᴺᵉʷ")

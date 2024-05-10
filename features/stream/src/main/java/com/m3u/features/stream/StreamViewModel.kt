@@ -90,6 +90,15 @@ class StreamViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5_000L)
         )
 
+    internal val isVodPlaylist: StateFlow<Boolean> = playerManager
+        .playlist
+        .map { it?.type == DataSource.Xtream.TYPE_VOD }
+        .stateIn(
+            scope = viewModelScope,
+            initialValue = false,
+            started = SharingStarted.WhileSubscribed(5_000L)
+        )
+
     internal val tracks: StateFlow<Map<Int, List<Format>>> = playerManager
         .tracks
         .map { all ->
