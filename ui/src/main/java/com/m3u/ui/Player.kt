@@ -51,7 +51,7 @@ fun Player(
     AndroidView(
         modifier = modifier,
         factory = { context ->
-                PlayerView(context).apply {
+            PlayerView(context).apply {
                 useController = false
             }
         },

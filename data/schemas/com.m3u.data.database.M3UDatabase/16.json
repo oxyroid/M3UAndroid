@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 16,
-    "identityHash": "6c929023e487d71831acf3de62d3389b",
+    "identityHash": "5ef08bb6389682643fa285d418ec2958",
     "entities": [
       {
         "tableName": "streams",
@@ -370,7 +370,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '6c929023e487d71831acf3de62d3389b')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '5ef08bb6389682643fa285d418ec2958')"
     ]
   }
 }

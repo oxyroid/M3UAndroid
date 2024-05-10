@@ -11,7 +11,6 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import com.m3u.core.Contracts
 import com.m3u.data.database.model.Playlist
-
 import com.m3u.data.database.model.type
 import com.m3u.data.repository.playlist.PlaylistRepository
 import com.m3u.data.repository.stream.StreamRepository
@@ -54,7 +53,6 @@ class PlayerActivity : ComponentActivity() {
                 StreamRoute(
                     onBackPressed = { finish() },
                     viewModel = viewModel,
-                    getProgrammeCurrently = { channelId -> viewModel.getProgrammeCurrently(channelId) },
                 )
             }
         }

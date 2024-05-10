@@ -12,6 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.compose.NavHost
 import com.m3u.core.architecture.preferences.hiltPreferences
+import com.m3u.core.wrapper.eventOf
 import com.m3u.features.playlist.configuration.playlistConfigurationScreen
 import com.m3u.features.playlist.configuration.navigateToPlaylistConfiguration
 import com.m3u.features.playlist.navigation.navigateToPlaylist
@@ -20,7 +21,9 @@ import com.m3u.features.playlist.navigation.playlistTvScreen
 import com.m3u.features.stream.PlayerActivity
 import com.m3u.material.ktx.isTelevision
 import com.m3u.ui.Destination
+import com.m3u.ui.Events
 import com.m3u.ui.LocalNavController
+import com.m3u.ui.SettingDestination
 
 @Composable
 fun AppNavHost(
@@ -83,6 +86,7 @@ fun AppNavHost(
             },
             navigateToPlaylistConfiguration = {
                 navController.navigateToPlaylistConfiguration(it.url)
+                Events.settingDestination = eventOf(SettingDestination.Playlists)
             }
         )
 

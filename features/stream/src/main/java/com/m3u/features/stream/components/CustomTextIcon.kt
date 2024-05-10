@@ -14,17 +14,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun CustomTextIcon(
+internal fun CustomTextIcon(
     text: String,
     textColor: Color,
     backgroundColor: Color,
+    modifier: Modifier,
 ){
     Box(
         modifier = Modifier
             .size(width = 50.dp, height = 24.dp)
             .background(
                 color = backgroundColor,
-                shape = RoundedCornerShape(8.dp, 8.dp, 8.dp, 8.dp)
+                shape = RoundedCornerShape(6.dp)
             ),
         contentAlignment = Alignment.Center
     ) {

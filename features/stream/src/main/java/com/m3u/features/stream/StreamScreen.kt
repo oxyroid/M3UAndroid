@@ -73,7 +73,6 @@ fun StreamRoute(
     modifier: Modifier = Modifier,
     onBackPressed: () -> Unit,
     viewModel: StreamViewModel = hiltViewModel(),
-    getProgrammeCurrently: suspend (channelId: String) -> Programme?,
 ) {
     val openInExternalPlayerString = stringResource(string.feat_stream_open_in_external_app)
 
@@ -231,7 +230,7 @@ fun StreamRoute(
                         pullPanelLayoutState.collapse()
                     },
                     onKeyCode = viewModel::onKeyCode,
-                    getProgrammeCurrently = getProgrammeCurrently,
+                    getProgrammeCurrently = { channelId -> viewModel.getProgrammeCurrently(channelId) },
                     modifier = modifier
                 )
             }
@@ -275,7 +274,7 @@ fun StreamRoute(
 @Composable
 private fun
 //        SharedTransitionScope.
-        StreamPlayer(
+StreamPlayer(
     maskState: MaskState,
     playerState: PlayerState,
     stream: Stream?,

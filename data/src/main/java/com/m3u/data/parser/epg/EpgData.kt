@@ -30,10 +30,10 @@ data class EpgProgramme(
     val title: String? = null,
     val desc: String? = null,
     val icon: String? = null,
-    val isNew: Boolean,
-    val isNewTag: Boolean,
-    val isLive: Boolean,
-    val isLiveTag: Boolean,
+    val isNew: Boolean = false,
+    val isNewTag: Boolean = false,
+    val isLive: Boolean = false,
+    val isLiveTag: Boolean = false,
     val previouslyShownStart: String? = null,
     val categories: List<String>
 ) {

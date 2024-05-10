@@ -67,7 +67,7 @@ internal fun SmartphoneStreamItem(
     zapping: Boolean,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
-    getProgrammeCurrently: suspend () -> Programme?,  //
+    getProgrammeCurrently: suspend () -> Programme?,
     modifier: Modifier = Modifier,
     isVodOrSeriesPlaylist: Boolean = true
 ) {
@@ -80,7 +80,6 @@ internal fun SmartphoneStreamItem(
         value = currentGetProgrammeCurrently()
     }
 
-//Get current program
     val favourite = stream.favourite
 
     val recentlyString = stringResource(string.ui_sort_recently)

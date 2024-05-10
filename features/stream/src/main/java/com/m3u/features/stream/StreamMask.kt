@@ -109,7 +109,7 @@ internal enum class TelevisionKeyCode(val nativeCode: Int) {
 //@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 internal fun
-        StreamMask(
+StreamMask(
     cover: String,
     title: String,
     playerState: PlayerState,
@@ -128,6 +128,7 @@ internal fun
     onEnterPipMode: () -> Unit,
     onVolume: (Float) -> Unit,
     onKeyCode: (RemoteDirection) -> Unit,
+    modifier: Modifier = Modifier,
     getProgrammeCurrently: suspend () -> Programme?,
 ) {
     val preferences = hiltPreferences()
@@ -135,8 +136,9 @@ internal fun
     val spacing = LocalSpacing.current
     val isLandscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
 
+    val currentGetProgrammeCurrently by rememberUpdatedState(getProgrammeCurrently)
     val programme: Programme? by produceState<Programme?>(null) {
-        value = getProgrammeCurrently()
+        value = currentGetProgrammeCurrently()
     }
 
     val isNew = programme?.isNew
@@ -210,7 +212,6 @@ internal fun
 
     var bufferedPosition: Long? by remember { mutableStateOf(null) }
     var volumeBeforeMuted: Float by remember { mutableFloatStateOf(1f) }
-
 
     LaunchedEffect(playerState.playState) {
         if (playerState.playState == Player.STATE_READY) {
@@ -325,8 +326,7 @@ internal fun
             body = {
                 Box(
                     contentAlignment = Alignment.Center,
-                    modifier = Modifier
-                        .fillMaxSize()
+                    modifier = Modifier.fillMaxSize()
                 ) {
                     androidx.compose.animation.AnimatedVisibility(
                         visible = (!isPanelExpanded && preferences.alwaysShowReplay) || playerState.playState in arrayOf(
@@ -348,7 +348,8 @@ internal fun
             },
 
             footer = {
-                Column(modifier = Modifier
+                Column(
+                    modifier = Modifier
                     .semantics(mergeDescendants = true) { }
                     .animateContentSize()
                     .weight(1f)
@@ -359,7 +360,8 @@ internal fun
                         enter = fadeIn(),
                         exit = fadeOut()
                     ) {
-                    Row(modifier = Modifier
+                    Row(
+                        modifier = Modifier
                         .fillMaxWidth()
                     ) {
                         Column(
@@ -413,19 +415,20 @@ internal fun
                                 CustomTextIcon(
                                     text = "NEW",
                                     textColor = Color.White,
-                                    backgroundColor = Color.Blue
+                                    backgroundColor = Color.Blue,
+                                    modifier = Modifier
                                 )
                             } else if (preferences.fullInfoPlayer && isLive == true || isLive2 == true) {
                                 CustomTextIcon(
                                     text = "LIVE",
                                     textColor = Color.White,
-                                    backgroundColor = Color.Red
+                                    backgroundColor = Color.Red,
+                                    modifier = Modifier
                                 )
                             }
                         }
                         Column(
-                            modifier = Modifier
-                                .weight(3f)
+                            modifier = Modifier.weight(3f)
                         ) {
                                 Text(
                                     text = programme?.readText() ?: AnnotatedString(""),
@@ -497,8 +500,6 @@ internal fun
                             contentDescription = stringResource(string.feat_stream_tooltip_screen_rotating)
                         )
                     }
-
-
                 }
             },
 
@@ -567,6 +568,7 @@ internal fun
                     }
                 }
             },
+            modifier = modifier
         )
     }
 }
