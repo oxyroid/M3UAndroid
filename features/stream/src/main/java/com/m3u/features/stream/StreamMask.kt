@@ -415,7 +415,7 @@ StreamMask(
                                         backgroundColor = Color.Blue,
                                         modifier = Modifier
                                     )
-                                } else if (preferences.fullInfoPlayer && isLive == true || isLive2 == true) {
+                                } else if (preferences.fullInfoPlayer && (isLive == true || isLive2 == true)) {
                                     CustomTextIcon(
                                         text = "LIVE",
                                         textColor = Color.White,
