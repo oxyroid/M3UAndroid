@@ -42,7 +42,7 @@ interface ProgrammeDao {
 
     @Query(
         """
-    SELECT *, new AS isNew, live AS isLive FROM programmes
+    SELECT *, new, live FROM programmes
     WHERE epg_url IN (:epgUrls) 
     AND channel_id = :channelId
     AND start <= :time

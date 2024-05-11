@@ -41,7 +41,7 @@ android {
 }
 
 dependencies {
-    api(project(":i18n"))
+        api(project(":i18n"))
 
     implementation(libs.androidx.core.core.ktx)
     implementation(libs.androidx.appcompat.appcompat)

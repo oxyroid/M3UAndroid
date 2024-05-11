@@ -13,6 +13,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.basicMarquee
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -356,17 +357,16 @@ StreamMask(
                         modifier = Modifier
                             .semantics(mergeDescendants = true) { }
                             .animateContentSize()
-                            .weight(1f)
-                            .height(90.dp)
+                            .height(80.dp)
                     ) {
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
+                                .weight(2f)
                         ) {
                             Column(
                                 horizontalAlignment = Alignment.CenterHorizontally,
-                                modifier = Modifier
-                                    .weight(0.5f)
+                                modifier = Modifier.weight(0.5f)
                             ) {
                                 if (preferences.fullInfoPlayer && cover.isNotEmpty()) {
                                     Image(
@@ -380,8 +380,7 @@ StreamMask(
                             }
                             Column(
                                 verticalArrangement = Arrangement.Center,
-                                modifier = Modifier
-                                    .weight(3f),
+                                modifier = Modifier.weight(3f)
                                 ) {
                                 Text(
                                     text = title.trim(),
@@ -401,6 +400,7 @@ StreamMask(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
+                                .weight(1f)
                         ) {
                             Column(
                                 horizontalAlignment = Alignment.CenterHorizontally,
