@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsetsSides
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
@@ -26,7 +25,6 @@ import androidx.compose.runtime.InternalComposeApi
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -48,12 +46,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
-import androidx.paging.compose.LazyPagingItems
-import com.m3u.core.architecture.preferences.hiltPreferences
 import com.m3u.core.wrapper.Event
 import com.m3u.data.database.model.Programme
 import com.m3u.data.database.model.Stream
-import com.m3u.features.playlist.Category
+import com.m3u.features.playlist.PlaylistViewModel
 import com.m3u.features.playlist.components.PlaylistTabRow
 import com.m3u.features.playlist.components.SmartphoneStreamGallery
 import com.m3u.i18n.R.string
@@ -79,8 +75,7 @@ import kotlinx.coroutines.launch
 @Composable
 @InternalComposeApi
 internal fun SmartphonePlaylistScreenImpl(
-    categories: List<Category>,
-    streamPaged: LazyPagingItems<Stream>,
+    channels: List<PlaylistViewModel.Channel>,
     pinnedCategories: List<String>,
     onPinOrUnpinCategory: (String) -> Unit,
     onHideCategory: (String) -> Unit,
@@ -107,7 +102,6 @@ internal fun SmartphonePlaylistScreenImpl(
 ) {
     val spacing = LocalSpacing.current
     val configuration = LocalConfiguration.current
-    val preferences = hiltPreferences()
     val focusManager = LocalFocusManager.current
 
     val scaffoldState = rememberBackdropScaffoldState(BackdropValue.Concealed)
@@ -146,12 +140,8 @@ internal fun SmartphonePlaylistScreenImpl(
         }
     }
 
-    var currentPage by remember(categories.size) {
-        mutableIntStateOf(
-            if (categories.isEmpty()) -1
-            else 0
-        )
-    }
+    val categories = remember(channels) { channels.map { it.category } }
+    var category by remember(categories) { mutableStateOf(categories.firstOrNull().orEmpty()) }
 
     val (inner, outer) = contentPadding split WindowInsetsSides.Bottom
 
@@ -195,7 +185,7 @@ internal fun SmartphonePlaylistScreenImpl(
             }
         },
         frontLayerContent = {
-            MeshContainer(Modifier.fillMaxSize()) {
+            MeshContainer {
                 val state = rememberLazyStaggeredGridState()
                 LaunchedEffect(Unit) {
                     snapshotFlow { state.isAtTop }
@@ -214,22 +204,19 @@ internal fun SmartphonePlaylistScreenImpl(
                     }
                 }
                 Column {
-                    if (!preferences.paging) {
-                        PlaylistTabRow(
-                            page = currentPage,
-                            onPageChanged = { currentPage = it },
-                            categories = categories,
-                            pinnedCategories = pinnedCategories,
-                            onPinOrUnpinCategory = onPinOrUnpinCategory,
-                            onHideCategory = onHideCategory
-                        )
-                    }
+                    PlaylistTabRow(
+                        selectedCategory = category,
+                        categories = categories,
+                        onCategoryChanged = { category = it },
+                        pinnedCategories = pinnedCategories,
+                        onPinOrUnpinCategory = onPinOrUnpinCategory,
+                        onHideCategory = onHideCategory
+                    )
+                    val channel = channels.find { it.category == category }
                     SmartphoneStreamGallery(
                         state = state,
                         rowCount = actualRowCount,
-                        streams = if (preferences.paging) emptyList()
-                        else categories.getOrElse(currentPage) { Category() }.streams,
-                        streamPaged = streamPaged,
+                        channel = channel,
                         zapping = zapping,
                         recently = sort == Sort.RECENTLY,
                         isVodOrSeriesPlaylist = isVodOrSeriesPlaylist,

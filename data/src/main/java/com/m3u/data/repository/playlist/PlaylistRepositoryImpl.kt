@@ -514,6 +514,15 @@ internal class PlaylistRepositoryImpl @Inject constructor(
         playlistDao.getByUrl(url)
     }
 
+    override suspend fun getCategoriesByPlaylistUrlIgnoreHidden(url: String): List<String> =
+        logger.execute {
+            val playlist = playlistDao.getByUrl(url)
+            val hiddenCategories = playlist?.hiddenCategories ?: emptyList()
+            streamDao
+                .getCategoriesByPlaylistUrl(url)
+                .filterNot { it in hiddenCategories }
+        } ?: emptyList()
+
     override suspend fun unsubscribe(url: String): Playlist? = logger.execute {
         val playlist = playlistDao.getByUrl(url)
         streamDao.deleteByPlaylistUrl(url)

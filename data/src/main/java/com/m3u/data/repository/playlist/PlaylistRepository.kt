@@ -14,6 +14,7 @@ interface PlaylistRepository {
     fun observeAllEpgs(): Flow<List<Playlist>>
     fun observePlaylistUrls(): Flow<List<String>>
     suspend fun get(url: String): Playlist?
+    suspend fun getCategoriesByPlaylistUrlIgnoreHidden(url: String): List<String>
     fun observe(url: String): Flow<Playlist?>
     fun observeWithStreams(url: String): Flow<PlaylistWithStreams?>
     suspend fun getWithStreams(url: String): PlaylistWithStreams?

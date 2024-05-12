@@ -28,7 +28,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.paging.compose.LazyPagingItems
 import androidx.tv.foundation.lazy.list.TvLazyColumn
 import androidx.tv.material3.DenseListItem
 import androidx.tv.material3.ImmersiveList
@@ -37,7 +36,7 @@ import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.m3u.core.architecture.preferences.hiltPreferences
 import com.m3u.data.database.model.Stream
-import com.m3u.features.playlist.Category
+import com.m3u.features.playlist.PlaylistViewModel
 import com.m3u.features.playlist.components.ImmersiveBackground
 import com.m3u.features.playlist.components.TvStreamGallery
 import com.m3u.i18n.R
@@ -58,8 +57,7 @@ import dev.chrisbanes.haze.hazeChild
 @InternalComposeApi
 internal fun TvPlaylistScreenImpl(
     title: String,
-    categories: List<Category>,
-    streamPaged: LazyPagingItems<Stream>,
+    channels: List<PlaylistViewModel.Channel>,
     query: String,
     onQuery: (String) -> Unit,
     sorts: List<Sort>,
@@ -76,12 +74,11 @@ internal fun TvPlaylistScreenImpl(
 ) {
     val preferences = hiltPreferences()
 
-    val paging = preferences.paging
-    val multiCategories = categories.size > 1
+    val multiCategories = channels.size > 1
     val noPictureMode = preferences.noPictureMode
     val darkMode = if (preferences.followSystemTheme) isSystemInDarkTheme()
     else preferences.darkMode
-    val useGridLayout = sort != Sort.UNSPECIFIED || paging
+    val useGridLayout = sort != Sort.UNSPECIFIED
 
     val maxBrowserHeight by animateDpAsState(
         targetValue = when {
@@ -117,10 +114,9 @@ internal fun TvPlaylistScreenImpl(
             },
             list = {
                 TvStreamGallery(
-                    categories = categories,
-                    streamPaged = streamPaged,
+                    channels = channels,
                     maxBrowserHeight = maxBrowserHeight,
-                    useGridLayout = useGridLayout,
+                    isSpecifiedSort = useGridLayout,
                     isVodOrSeriesPlaylist = isVodOrSeriesPlaylist,
                     onClick = onStream,
                     onLongClick = { stream -> press = stream },

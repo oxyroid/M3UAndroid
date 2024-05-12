@@ -12,7 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -43,15 +43,14 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
-import com.m3u.features.playlist.Category
 import com.m3u.material.components.IconButton
 import com.m3u.material.model.LocalSpacing
 
 @Composable
 internal fun PlaylistTabRow(
-    page: Int,
-    onPageChanged: (Int) -> Unit,
-    categories: List<Category>,
+    selectedCategory: String,
+    categories: List<String>,
+    onCategoryChanged: (String) -> Unit,
     pinnedCategories: List<String>,
     onPinOrUnpinCategory: (String) -> Unit,
     onHideCategory: (String) -> Unit,
@@ -107,21 +106,21 @@ internal fun PlaylistTabRow(
                             }
                         }
                     }
-                    itemsIndexed(categories) { index, channel ->
+                    items(categories) { category ->
                         PlaylistTabRowItem(
-                            name = channel.name,
-                            selected = page == index,
-                            pinned = channel.name in pinnedCategories,
-                            focused = focusCategory == channel.name,
-                            hasOtherFocused = focusCategory != null && focusCategory != channel.name,
+                            name = category,
+                            selected = category == selectedCategory,
+                            pinned = category in pinnedCategories,
+                            focused = category == focusCategory,
+                            hasOtherFocused = focusCategory != null && focusCategory != category,
                             onClick = {
                                 if (focusCategory == null) {
-                                    onPageChanged(index)
+                                    onCategoryChanged(category)
                                 }
                             },
                             onLongClick = {
-                                focusCategory = channel.name
-                                onPageChanged(index)
+                                focusCategory = category
+                                onCategoryChanged(category)
                                 hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
                             }
                         )

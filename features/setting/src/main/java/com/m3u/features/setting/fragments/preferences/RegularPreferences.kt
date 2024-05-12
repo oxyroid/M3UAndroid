@@ -6,7 +6,6 @@ import androidx.compose.material.icons.rounded.AccessTime
 import androidx.compose.material.icons.rounded.ColorLens
 import androidx.compose.material.icons.rounded.DeviceHub
 import androidx.compose.material.icons.rounded.FitScreen
-import androidx.compose.material.icons.rounded.FlashOn
 import androidx.compose.material.icons.rounded.HideImage
 import androidx.compose.material.icons.rounded.MusicNote
 import androidx.compose.material.icons.rounded.Pages
@@ -20,11 +19,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import com.m3u.core.architecture.preferences.hiltPreferences
 import com.m3u.core.architecture.preferences.annotation.ClipMode
 import com.m3u.core.architecture.preferences.annotation.ConnectTimeout
 import com.m3u.core.architecture.preferences.annotation.PlaylistStrategy
 import com.m3u.core.architecture.preferences.annotation.UnseensMilliseconds
+import com.m3u.core.architecture.preferences.hiltPreferences
 import com.m3u.core.util.basic.title
 import com.m3u.features.setting.components.CheckBoxSharedPreference
 import com.m3u.i18n.R.string
@@ -152,14 +151,6 @@ internal fun RegularPreferences(
         )
 
         CheckBoxSharedPreference(
-            title = string.feat_setting_paging,
-            content = string.feat_setting_paging_description,
-            icon = Icons.Rounded.FlashOn,
-            checked = preferences.paging,
-            onChanged = { preferences.paging = !preferences.paging }
-        )
-
-        CheckBoxSharedPreference(
             title = string.feat_setting_randomly_in_favourite,
             icon = Icons.Rounded.Terrain,
             checked = preferences.randomlyInFavourite,
@@ -167,7 +158,7 @@ internal fun RegularPreferences(
         )
 
         CheckBoxSharedPreference(
-            title =  string.feat_setting_epg_clock_mode,
+            title = string.feat_setting_epg_clock_mode,
             icon = Icons.Rounded.AccessTime,
             checked = preferences.twelveHourClock,
             onChanged = { preferences.twelveHourClock = !preferences.twelveHourClock }

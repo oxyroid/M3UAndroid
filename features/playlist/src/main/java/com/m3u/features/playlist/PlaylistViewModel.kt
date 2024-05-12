@@ -1,14 +1,8 @@
 package com.m3u.features.playlist
 
-import android.annotation.SuppressLint
 import android.content.ComponentName
-import android.content.ContentUris
 import android.content.Context
 import android.content.Intent
-import androidx.compose.runtime.Immutable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
@@ -22,9 +16,6 @@ import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import androidx.paging.filter
-import androidx.tvprovider.media.tv.Channel
-import androidx.tvprovider.media.tv.PreviewProgram
-import androidx.tvprovider.media.tv.TvContractCompat
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import androidx.work.WorkQuery
@@ -69,7 +60,6 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import javax.inject.Inject
@@ -155,8 +145,6 @@ class PlaylistViewModel @Inject constructor(
         }
     }
 
-    internal var scrollUp: Event<Unit> by mutableStateOf(handledEvent())
-
     internal fun savePicture(id: Int) {
         viewModelScope.launch {
             val stream = streamRepository.get(id)
@@ -224,62 +212,8 @@ class PlaylistViewModel @Inject constructor(
         }
     }
 
-    @SuppressLint("RestrictedApi")
-    internal fun createTvRecommend(
-        context: Context,
-        id: Int
-    ) {
-        viewModelScope.launch(ioDispatcher) {
-            val stream = streamRepository.get(id) ?: return@launch
-            val logo = stream.cover?.let { mediaRepository.loadDrawable(it)?.toBitmap() }
-            val channel = Channel.Builder()
-                .setType(TvContractCompat.Channels.TYPE_PREVIEW)
-                .setDisplayName("M3U")
-                .setAppLinkIntent(
-                    Intent(Intent.ACTION_VIEW).apply {
-                        component = ComponentName.createRelative(
-                            context,
-                            Contracts.PLAYER_ACTIVITY
-                        )
-                        putExtra(Contracts.PLAYER_SHORTCUT_STREAM_ID, stream.id)
-                    }
-                )
-                .build()
-            val channelUri = checkNotNull(
-                context.contentResolver.insert(
-                    TvContractCompat.Channels.CONTENT_URI,
-                    channel.toContentValues()
-                )
-            )
-            val channelId = ContentUris.parseId(channelUri)
-            val program = PreviewProgram.Builder()
-                .setChannelId(channelId)
-                .setType(TvContractCompat.PreviewPrograms.TYPE_CLIP)
-                .setTitle("Title")
-                .setDescription("Program description")
-//                .setPosterArtUri(uri)
-//                .setIntentUri(uri)
-                .setInternalProviderId(stream.id.toString())
-                .build()
-            val programUri = checkNotNull(
-                context.contentResolver.insert(
-                    TvContractCompat.PreviewPrograms.CONTENT_URI,
-                    program.toContentValues()
-                )
-            )
-        }
+    internal fun createTvRecommend(context: Context, id: Int) {
     }
-
-    internal var query: String by mutableStateOf("")
-
-    private fun List<Stream>.toCategories(): List<Category> =
-        groupBy { it.category }
-            .toList()
-            .map { (name, streams) -> Category(name, streams) }
-
-    private fun List<Stream>.toSingleCategory(): List<Category> = listOf(
-        Category("", toList())
-    )
 
     internal suspend fun getProgrammeCurrently(channelId: String): Programme? {
         val playlist = playlist.value ?: return null
@@ -293,36 +227,10 @@ class PlaylistViewModel @Inject constructor(
         )
     }
 
-    private val unsorted: StateFlow<List<Stream>> = combine(
-        playlistUrl.flatMapLatest { url ->
-            snapshotFlow { preferences.paging }.flatMapLatest { paging ->
-                if (paging) flow { }
-                else playlistRepository.observeWithStreams(url)
-            }
-        },
-        snapshotFlow { query },
-    ) { current, query ->
-        val hiddenCategories = current?.playlist?.hiddenCategories ?: emptyList()
-        current
-            ?.streams
-            ?.filter {
-                !it.hidden && it.category !in hiddenCategories && it.title.contains(query, true)
-            }
-            ?: emptyList()
-    }
-        .flowOn(ioDispatcher)
-        .stateIn(
-            scope = viewModelScope,
-            initialValue = emptyList(),
-            started = SharingStarted.WhileSubscribed(5_000L)
-        )
-
-    internal val sorts: List<Sort> = Sort.entries
-
     private val sortIndex: MutableStateFlow<Int> = MutableStateFlow(0)
 
     internal val sort: StateFlow<Sort> = sortIndex
-        .map { sorts[it] }
+        .map { Sort.entries[it] }
         .stateIn(
             scope = viewModelScope,
             initialValue = Sort.UNSPECIFIED,
@@ -330,79 +238,70 @@ class PlaylistViewModel @Inject constructor(
         )
 
     internal fun sort(sort: Sort) {
-        sortIndex.update { sorts.indexOf(sort).coerceAtLeast(0) }
+        sortIndex.value = Sort.entries.indexOf(sort).coerceAtLeast(0)
     }
 
-    internal val streamPaged: Flow<PagingData<Stream>> = combine(
-        playlist,
-        snapshotFlow { query },
+    internal val query = MutableStateFlow("")
+    internal val scrollUp: MutableStateFlow<Event<Unit>> = MutableStateFlow(handledEvent())
+
+    data class PagingStreamParameters(
+        val playlistUrl: String,
+        val query: String,
+        val sort: Sort,
+        val categories: List<String>
+    )
+
+    data class Channel(
+        val category: String,
+        val streams: Flow<PagingData<Stream>>
+    )
+
+    internal val channels: StateFlow<List<Channel>> = combine(
+        playlistUrl,
+        query,
         sort
-    ) { playlist, query, sort -> Triple(playlist, query, sort) }
-        .flatMapLatest { (playlist, query, sort) ->
-            Pager(PagingConfig(15)) {
-                // streamDao.pagingAllByPlaylistUrl
-                // streamDao.pagingAllByPlaylistUrlAsc
-                // streamDao.pagingAllByPlaylistUrlDesc
-                // streamDao.pagingAllByPlaylistUrlRecently
-                streamRepository.pagingAllByPlaylistUrl(
-                    playlist?.url.orEmpty(),
-                    query,
-                    when (sort) {
-                        Sort.UNSPECIFIED -> StreamRepository.Sort.UNSPECIFIED
-                        Sort.ASC -> StreamRepository.Sort.ASC
-                        Sort.DESC -> StreamRepository.Sort.DESC
-                        Sort.RECENTLY -> StreamRepository.Sort.RECENTLY
+    ) { playlistUrl, query, sort ->
+        val categories = playlistRepository.getCategoriesByPlaylistUrlIgnoreHidden(playlistUrl)
+        PagingStreamParameters(
+            playlistUrl = playlistUrl,
+            query = query,
+            sort = sort,
+            categories = categories
+        )
+    }
+        .map { (playlistUrl, query, sort, categories) ->
+            categories.map { category ->
+                Channel(
+                    category = category,
+                    streams = Pager(PagingConfig(15)) {
+                        streamRepository.pagingAllByPlaylistUrl(
+                            playlistUrl,
+                            category,
+                            query,
+                            when (sort) {
+                                Sort.UNSPECIFIED -> StreamRepository.Sort.UNSPECIFIED
+                                Sort.ASC -> StreamRepository.Sort.ASC
+                                Sort.DESC -> StreamRepository.Sort.DESC
+                                Sort.RECENTLY -> StreamRepository.Sort.RECENTLY
+                            }
+                        )
                     }
+                        .flow
+                        .map { data -> data.filter { !it.hidden } }
+                        .flowOn(ioDispatcher)
+                        .cachedIn(viewModelScope)
                 )
             }
-                .flow
-                .cachedIn(viewModelScope)
         }
-        .let { flow ->
-            combine(
-                flow,
-                playlist,
-                snapshotFlow { preferences.paging }
-            ) { pagingData, playlist, paging ->
-                if (!paging) return@combine PagingData.empty()
-                val hiddenCategories = playlist?.hiddenCategories ?: emptyList()
-                pagingData.filter { stream ->
-                    !stream.hidden && stream.category !in hiddenCategories
-                }
-            }
-        }
-        .flowOn(ioDispatcher)
-
-    internal val pinnedCategories: StateFlow<List<String>> = playlist
-        .map { it?.pinnedCategories ?: emptyList() }
-
-        .flowOn(ioDispatcher)
         .stateIn(
             scope = viewModelScope,
             initialValue = emptyList(),
             started = SharingStarted.WhileSubscribed(5_000L)
         )
 
-    internal val categories: StateFlow<List<Category>> = combine(
-        unsorted,
-        sort,
-        pinnedCategories
-    ) { all, sort, pinnedCategories ->
-        when (sort) {
-            Sort.ASC -> all.sortedWith(
-                compareBy(String.CASE_INSENSITIVE_ORDER) { it.title }
-            ).toSingleCategory()
+    internal val pinnedCategories: StateFlow<List<String>> = playlist
+        .map { it?.pinnedCategories ?: emptyList() }
 
-            Sort.DESC -> all.sortedWith(
-                compareByDescending(String.CASE_INSENSITIVE_ORDER) { it.title }
-            ).toSingleCategory()
-
-            Sort.RECENTLY -> all.sortedByDescending { it.seen }.toSingleCategory()
-            Sort.UNSPECIFIED -> all.toCategories()
-        }
-            .sortedByDescending { it.name in pinnedCategories }
-
-    }
         .flowOn(ioDispatcher)
         .stateIn(
             scope = viewModelScope,
@@ -441,9 +340,3 @@ class PlaylistViewModel @Inject constructor(
             started = SharingStarted.Lazily
         )
 }
-
-@Immutable
-internal data class Category(
-    val name: String = "",
-    val streams: List<Stream> = emptyList()
-)

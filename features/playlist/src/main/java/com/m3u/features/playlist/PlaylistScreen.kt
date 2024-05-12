@@ -16,7 +16,6 @@ import android.provider.Settings
 import android.view.KeyEvent
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -40,8 +39,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.paging.compose.LazyPagingItems
-import androidx.paging.compose.collectAsLazyPagingItems
 import com.google.accompanist.permissions.rememberPermissionState
 import com.m3u.core.architecture.preferences.hiltPreferences
 import com.m3u.core.util.basic.title
@@ -89,26 +86,26 @@ internal fun PlaylistRoute(
     val zapping by viewModel.zapping.collectAsStateWithLifecycle()
     val playlistUrl by viewModel.playlistUrl.collectAsStateWithLifecycle()
     val playlist by viewModel.playlist.collectAsStateWithLifecycle()
-    val categories by viewModel.categories.collectAsStateWithLifecycle()
-    val streamPaged = viewModel.streamPaged.collectAsLazyPagingItems()
+
+    val channels by viewModel.channels.collectAsStateWithLifecycle()
+
     val episodes by viewModel.episodes.collectAsStateWithLifecycle()
     val pinnedCategories by viewModel.pinnedCategories.collectAsStateWithLifecycle()
     val refreshing by viewModel.subscribingOrRefreshing.collectAsStateWithLifecycle()
     val series by viewModel.series.collectAsStateWithLifecycle()
 
     val isSeriesPlaylist by remember {
-        derivedStateOf {
-            playlist?.type in Playlist.SERIES_TYPES
-        }
+        derivedStateOf { playlist?.type in Playlist.SERIES_TYPES }
     }
     val isVodPlaylist by remember {
-        derivedStateOf {
-            playlist?.type in Playlist.VOD_TYPES
-        }
+        derivedStateOf { playlist?.type in Playlist.VOD_TYPES }
     }
 
-    val sorts = viewModel.sorts
+    val sorts = Sort.entries
     val sort by viewModel.sort.collectAsStateWithLifecycle()
+
+    val query by viewModel.query.collectAsStateWithLifecycle()
+    val scrollUp by viewModel.scrollUp.collectAsStateWithLifecycle()
 
     val writeExternalPermission = rememberPermissionState(
         Manifest.permission.WRITE_EXTERNAL_STORAGE
@@ -131,109 +128,106 @@ internal fun PlaylistRoute(
         }
     }
 
-    BackHandler(viewModel.query.isNotEmpty()) {
-        viewModel.query = ""
+    BackHandler(query.isNotEmpty()) {
+        viewModel.query.value = ""
     }
 
     Background {
-        Box {
-            PlaylistScreen(
-                title = playlist?.title.orEmpty(),
-                query = viewModel.query,
-                onQuery = { viewModel.query = it },
-                rowCount = preferences.rowCount,
-                zapping = zapping,
-                categories = categories,
-                streamPaged = streamPaged,
-                pinnedCategories = pinnedCategories,
-                onPinOrUnpinCategory = { viewModel.pinOrUnpinCategory(it) },
-                onHideCategory = { viewModel.hideCategory(it) },
-                scrollUp = viewModel.scrollUp,
-                sorts = sorts,
-                sort = sort,
-                onSort = { viewModel.sort(it) },
-                onStream = { stream ->
-                    if (!isSeriesPlaylist) {
-                        coroutineScope.launch {
-                            helper.play(MediaCommand.Live(stream.id))
-                            navigateToStream()
-                        }
-                    } else {
-                        viewModel.series.value = stream
+        PlaylistScreen(
+            title = playlist?.title.orEmpty(),
+            query = query,
+            onQuery = { viewModel.query.value = it },
+            rowCount = preferences.rowCount,
+            zapping = zapping,
+            channels = channels,
+            pinnedCategories = pinnedCategories,
+            onPinOrUnpinCategory = { viewModel.pinOrUnpinCategory(it) },
+            onHideCategory = { viewModel.hideCategory(it) },
+            scrollUp = scrollUp,
+            sorts = sorts,
+            sort = sort,
+            onSort = { viewModel.sort(it) },
+            onStream = { stream ->
+                if (!isSeriesPlaylist) {
+                    coroutineScope.launch {
+                        helper.play(MediaCommand.Live(stream.id))
+                        navigateToStream()
                     }
-                },
-                onScrollUp = { viewModel.scrollUp = eventOf(Unit) },
-                refreshing = refreshing,
-                onRefresh = {
-                    postNotificationPermission.checkPermissionOrRationale(
-                        showRationale = {
-                            val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
-                                .apply {
-                                    putExtra(
-                                        Settings.EXTRA_APP_PACKAGE,
-                                        helper.activityContext.packageName
-                                    )
-                                }
-                            helper.activityContext.startActivity(intent)
-                        },
-                        block = {
-                            viewModel.refresh()
-                        }
-                    )
-                },
-                contentPadding = contentPadding,
-                favourite = viewModel::favourite,
-                hide = viewModel::hide,
-                savePicture = { id ->
-                    writeExternalPermission.checkPermissionOrRationale {
-                        viewModel.savePicture(id)
-                    }
-                },
-                createShortcut = { id -> viewModel.createShortcut(context, id) },
-                createTvRecommend = { id -> viewModel.createTvRecommend(context, id) },
-                isVodPlaylist = isVodPlaylist,
-                isSeriesPlaylist = isSeriesPlaylist,
-                getProgrammeCurrently = { channelId -> viewModel.getProgrammeCurrently(channelId) },
-                modifier = Modifier
-                    .fillMaxSize()
-                    .thenIf(!tv && preferences.godMode) {
-                        Modifier.interceptVolumeEvent { event ->
-                            preferences.rowCount = when (event) {
-                                KeyEvent.KEYCODE_VOLUME_UP ->
-                                    (preferences.rowCount - 1).coerceAtLeast(1)
-
-                                KeyEvent.KEYCODE_VOLUME_DOWN ->
-                                    (preferences.rowCount + 1).coerceAtMost(2)
-
-                                else -> return@interceptVolumeEvent
-                            }
-                        }
-                    }
-                    .then(modifier)
-            )
-
-            if (isSeriesPlaylist) {
-                EpisodesBottomSheet(
-                    series = series,
-                    episodes = episodes,
-                    onEpisodeClick = { episode ->
-                        coroutineScope.launch {
-                            series?.let {
-                                val input = MediaCommand.XtreamEpisode(
-                                    streamId = it.id,
-                                    episode = episode
+                } else {
+                    viewModel.series.value = stream
+                }
+            },
+            onScrollUp = { viewModel.scrollUp.value = eventOf(Unit) },
+            refreshing = refreshing,
+            onRefresh = {
+                postNotificationPermission.checkPermissionOrRationale(
+                    showRationale = {
+                        val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                            .apply {
+                                putExtra(
+                                    Settings.EXTRA_APP_PACKAGE,
+                                    helper.activityContext.packageName
                                 )
-                                helper.play(input)
-                                navigateToStream()
                             }
-                        }
+                        helper.activityContext.startActivity(intent)
                     },
-                    onRefresh = { viewModel.seriesReplay.value += 1 },
-                    onDismissRequest = {
-                        viewModel.series.value = null
+                    block = {
+                        viewModel.refresh()
                     }
                 )
-            }
+            },
+            contentPadding = contentPadding,
+            favourite = viewModel::favourite,
+            hide = viewModel::hide,
+            savePicture = { id ->
+                writeExternalPermission.checkPermissionOrRationale {
+                    viewModel.savePicture(id)
+                }
+            },
+            createShortcut = { id -> viewModel.createShortcut(context, id) },
+            createTvRecommend = { id -> viewModel.createTvRecommend(context, id) },
+            isVodPlaylist = isVodPlaylist,
+            isSeriesPlaylist = isSeriesPlaylist,
+            getProgrammeCurrently = { channelId -> viewModel.getProgrammeCurrently(channelId) },
+            modifier = Modifier
+                .fillMaxSize()
+                .thenIf(!tv && preferences.godMode) {
+                    Modifier.interceptVolumeEvent { event ->
+                        preferences.rowCount = when (event) {
+                            KeyEvent.KEYCODE_VOLUME_UP ->
+                                (preferences.rowCount - 1).coerceAtLeast(1)
+
+                            KeyEvent.KEYCODE_VOLUME_DOWN ->
+                                (preferences.rowCount + 1).coerceAtMost(2)
+
+                            else -> return@interceptVolumeEvent
+                        }
+                    }
+                }
+                .then(modifier)
+        )
+
+        if (isSeriesPlaylist) {
+            EpisodesBottomSheet(
+                series = series,
+                episodes = episodes,
+                onEpisodeClick = { episode ->
+                    coroutineScope.launch {
+                        series?.let {
+                            val input = MediaCommand.XtreamEpisode(
+                                streamId = it.id,
+                                episode = episode
+                            )
+                            helper.play(input)
+                            navigateToStream()
+                        }
+                    }
+                },
+                onRefresh = { viewModel.seriesReplay.value += 1 },
+                onDismissRequest = {
+                    viewModel.series.value = null
+                }
+            )
         }
     }
 }
@@ -246,8 +240,7 @@ private fun PlaylistScreen(
     onQuery: (String) -> Unit,
     rowCount: Int,
     zapping: Stream?,
-    categories: List<Category>,
-    streamPaged: LazyPagingItems<Stream>,
+    channels: List<PlaylistViewModel.Channel>,
     pinnedCategories: List<String>,
     onPinOrUnpinCategory: (String) -> Unit,
     onHideCategory: (String) -> Unit,
@@ -298,8 +291,7 @@ private fun PlaylistScreen(
     val tv = isTelevision()
     if (!tv) {
         SmartphonePlaylistScreenImpl(
-            categories = categories,
-            streamPaged = streamPaged,
+            channels = channels,
             pinnedCategories = pinnedCategories,
             onPinOrUnpinCategory = onPinOrUnpinCategory,
             onHideCategory = onHideCategory,
@@ -327,8 +319,7 @@ private fun PlaylistScreen(
     } else {
         TvPlaylistScreenImpl(
             title = title,
-            categories = categories,
-            streamPaged = streamPaged,
+            channels = channels,
             query = query,
             onQuery = onQuery,
             onStream = onStream,

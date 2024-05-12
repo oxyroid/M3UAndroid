@@ -32,13 +32,14 @@ internal class StreamRepositoryImpl @Inject constructor(
 
     override fun pagingAllByPlaylistUrl(
         url: String,
+        category: String,
         query: String,
         sort: Sort
     ): PagingSource<Int, Stream> = when (sort) {
-        Sort.UNSPECIFIED -> streamDao.pagingAllByPlaylistUrl(url, query)
-        Sort.ASC -> streamDao.pagingAllByPlaylistUrlAsc(url, query)
-        Sort.DESC -> streamDao.pagingAllByPlaylistUrlDesc(url, query)
-        Sort.RECENTLY -> streamDao.pagingAllByPlaylistUrlRecently(url, query)
+        Sort.UNSPECIFIED -> streamDao.pagingAllByPlaylistUrl(url, category, query)
+        Sort.ASC -> streamDao.pagingAllByPlaylistUrlAsc(url, category, query)
+        Sort.DESC -> streamDao.pagingAllByPlaylistUrlDesc(url, category, query)
+        Sort.RECENTLY -> streamDao.pagingAllByPlaylistUrlRecently(url, category, query)
     }
 
     override suspend fun get(id: Int): Stream? = logger.execute {

@@ -11,6 +11,7 @@ interface StreamRepository {
     fun observeAllByPlaylistUrl(playlistUrl: String): Flow<List<Stream>>
     fun pagingAllByPlaylistUrl(
         url: String,
+        category: String,
         query: String,
         sort: Sort
     ): PagingSource<Int, Stream>

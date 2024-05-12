@@ -6,8 +6,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.BrokenImage
@@ -32,7 +34,6 @@ import com.m3u.core.architecture.preferences.hiltPreferences
 import com.m3u.data.database.model.Stream
 import com.m3u.material.components.CircularProgressIndicator
 import com.m3u.material.components.Icon
-import com.m3u.material.ktx.ScaleIfHasAlphaTransformation
 import com.m3u.material.ktx.thenIf
 import com.m3u.material.model.LocalSpacing
 import coil.size.Size as CoilSize
@@ -41,6 +42,7 @@ import coil.size.Size as CoilSize
 internal fun TvStreamItem(
     stream: Stream,
     isVodOrSeriesPlaylist: Boolean,
+    isGridLayout: Boolean,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -73,7 +75,8 @@ internal fun TvStreamItem(
         ),
         modifier = Modifier
             .thenIf(!noPictureMode) {
-                Modifier.height(128.dp)
+                if (isGridLayout) Modifier.width(128.dp)
+                else Modifier.height(128.dp)
             }
             .then(modifier)
     ) {
@@ -96,10 +99,10 @@ internal fun TvStreamItem(
                         ImageRequest.Builder(context)
                             .data(stream.cover)
                             .size(CoilSize.ORIGINAL)
-                            .transformations(ScaleIfHasAlphaTransformation(0.85f))
                             .build()
                     },
-                    contentScale = ContentScale.FillHeight,
+                    contentScale = if (isGridLayout) ContentScale.FillWidth
+                    else ContentScale.FillHeight,
                     contentDescription = stream.title,
                     loading = {
                         Column(
@@ -134,7 +137,10 @@ internal fun TvStreamItem(
                             )
                         }
                     },
-                    modifier = Modifier.fillMaxHeight()
+                    modifier = Modifier.then(
+                        if (isGridLayout) Modifier.fillMaxWidth()
+                        else Modifier.fillMaxHeight()
+                    )
                 )
             }
         }

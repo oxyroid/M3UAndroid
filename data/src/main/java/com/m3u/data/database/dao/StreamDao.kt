@@ -17,6 +17,9 @@ internal interface StreamDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertOrReplaceAll(vararg streams: Stream)
 
+    @Query("SELECT DISTINCT `group` FROM streams WHERE playlistUrl = :playlistUrl")
+    suspend fun getCategoriesByPlaylistUrl(playlistUrl: String): List<String>
+
     @Delete
     suspend fun delete(stream: Stream)
 
@@ -77,27 +80,38 @@ internal interface StreamDao {
     @Query("SELECT * FROM streams WHERE hidden = 1")
     fun observeAllHidden(): Flow<List<Stream>>
 
-    @Query("SELECT * FROM streams WHERE playlistUrl = :url AND title LIKE '%'||:query||'%'")
+    @Query(
+        """
+            SELECT * FROM streams 
+            WHERE playlistUrl = :url
+            AND title LIKE '%'||:query||'%'
+            AND `group` = :category
+        """
+    )
     fun pagingAllByPlaylistUrl(
         url: String,
+        category: String,
         query: String
     ): PagingSource<Int, Stream>
 
-    @Query("SELECT * FROM streams WHERE playlistUrl = :url AND title LIKE '%'||:query||'%' ORDER BY title ASC")
+    @Query("SELECT * FROM streams WHERE playlistUrl = :url AND title LIKE '%'||:query||'%' AND `group` = :category ORDER BY title ASC")
     fun pagingAllByPlaylistUrlAsc(
         url: String,
+        category: String,
         query: String
     ): PagingSource<Int, Stream>
 
-    @Query("SELECT * FROM streams WHERE playlistUrl = :url AND title LIKE '%'||:query||'%' ORDER BY title DESC")
+    @Query("SELECT * FROM streams WHERE playlistUrl = :url AND title LIKE '%'||:query||'%' AND `group` = :category ORDER BY title DESC")
     fun pagingAllByPlaylistUrlDesc(
         url: String,
+        category: String,
         query: String
     ): PagingSource<Int, Stream>
 
-    @Query("SELECT * FROM streams WHERE playlistUrl = :url AND title LIKE '%'||:query||'%' ORDER BY seen DESC")
+    @Query("SELECT * FROM streams WHERE playlistUrl = :url AND title LIKE '%'||:query||'%' AND `group` = :category ORDER BY seen DESC")
     fun pagingAllByPlaylistUrlRecently(
         url: String,
+        category: String,
         query: String
     ): PagingSource<Int, Stream>
 

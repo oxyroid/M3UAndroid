@@ -249,6 +249,7 @@ class StreamViewModel @Inject constructor(
         Pager(PagingConfig(10)) {
             streamRepository.pagingAllByPlaylistUrl(
                 playlist.url,
+                stream.value?.category.orEmpty(),
                 "",
                 StreamRepository.Sort.UNSPECIFIED
             )
