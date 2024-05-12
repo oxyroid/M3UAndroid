@@ -6,19 +6,23 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import kotlin.math.sqrt
 
+object ScrimDefaults {
+    val color1 = Color(0x19131314)
+    val color2 = Color(0xFF131314)
+}
+
 fun RecommendCardContainerBrush(size: Size): Brush = Brush.radialGradient(
     colors = listOf(
-        Color(red = 28, green = 27, blue = 31, alpha = 0),
-        Color(red = 28, green = 27, blue = 31, alpha = 162),
-        Color(red = 28, green = 27, blue = 31, alpha = 204),
-        Color(red = 28, green = 27, blue = 31, alpha = 224),
+        ScrimDefaults.color1,
+        ScrimDefaults.color2,
     ),
     center = Offset(
-        x = size.width / 3 * 2,
-        y = size.height / 3
+        x = size.width / 192 * 128,
+        y = size.height / 108 * 24
     ),
-    radius = (size.minDimension * sqrt(2.0)).toFloat()
+    radius = size.minDimension
 )
+
 fun ImmersiveBackgroundBrush(size: Size): Brush = Brush.radialGradient(
     colors = listOf(
         Color(red = 28, green = 27, blue = 31, alpha = 0),

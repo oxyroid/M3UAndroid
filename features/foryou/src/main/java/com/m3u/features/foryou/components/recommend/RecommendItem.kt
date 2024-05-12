@@ -13,6 +13,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.graphics.Color
@@ -99,6 +100,7 @@ private fun UnseenContent(spec: Recommend.UnseenSpec) {
     val context = LocalContext.current
     val spacing = LocalSpacing.current
     val preferences = hiltPreferences()
+    val colorScheme = MaterialTheme.colorScheme
 
     val stream = spec.stream
     val duration = remember(stream.seen) {
@@ -155,7 +157,9 @@ private fun UnseenContent(spec: Recommend.UnseenSpec) {
                 contentScale = ContentScale.Crop,
                 contentDescription = stream.title,
                 modifier = Modifier
+                    .fillMaxWidth(0.78f)
                     .matchParentSize()
+                    .align(Alignment.TopEnd)
                     .drawWithCache {
                         onDrawWithContent {
                             drawContent()
