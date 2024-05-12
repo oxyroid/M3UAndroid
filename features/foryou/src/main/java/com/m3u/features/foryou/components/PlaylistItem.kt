@@ -203,16 +203,15 @@ private fun TvPlaylistItemImpl(
                 overflow = TextOverflow.Ellipsis,
             )
         },
-        supportingContent = if (type != null) {
-            {
-                TvText(
-                    text = type,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    style = TvMaterialTheme.typography.bodyMedium
-                )
-            }
-        } else null,
+        supportingContent = {
+            TvText(
+                text = type?.uppercase().orEmpty(),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                style = TvMaterialTheme.typography.bodyMedium,
+                fontFamily = FontFamilies.LexendExa
+            )
+        },
         trailingContent = {
             Row(
                 modifier = Modifier
