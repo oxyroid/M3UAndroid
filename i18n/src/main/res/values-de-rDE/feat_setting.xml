@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="feat_setting_app_version">App Version</string>
+    <string name="feat_setting_label_subscribe">abonnieren</string>
+    <string name="feat_setting_success_subscribe">abonnieren erfolgreich</string>
+    <string name="feat_setting_failed_malformed_url">missgebildete URL (%s)</string>
+    <string name="feat_setting_error_empty_title">Playlist-Name ist leer</string>
+    <string name="feat_setting_placeholder_title">Playlist-Name</string>
+    <string name="feat_setting_placeholder_url">Playlist-Link</string>
+    <string name="feat_setting_label_subscribing">abonnieren</string>
+    <string name="feat_setting_sync_mode_all">alle</string>
+    <string name="feat_setting_sync_mode_keep">halten</string>
+    <string name="feat_setting_sync_mode">Synchronisationsstrategie</string>
+    <string name="feat_setting_playlist_management">Playlist-Management</string>
+    <string name="feat_setting_connect_timeout">Verbindung abgelaufen</string>
+    <string name="feat_setting_god_mode">Gott-Modus</string>
+    <string name="feat_setting_god_mode_description">Layouts mit Lautstärketasten ändern</string>
+    <string name="feat_setting_experimental_mode">Experimenteller Modus</string>
+    <string name="feat_setting_experimental_mode_description">Funktionen können Fehler verursachen</string>
+    <string name="feat_setting_label_epg_playlists">EPG Liste</string>
+    <string name="feat_setting_label_hidden_streams">versteckte Streams</string>
+    <string name="feat_setting_label_hidden_playlist_groups">versteckte Playlist-Kategorien</string>
+    <string name="feat_setting_label_add_playlist">Playlist hinzufügen</string>
+    <string name="feat_setting_label_parse_from_clipboard">Zwischenablage analysieren</string>
+    <string name="feat_setting_label_select_from_local_storage">Datei aussuchen</string>
+    <string name="feat_setting_label_parse_from_disk">Datei analysieren</string>
+    <string name="feat_setting_clip_mode">Video-Clip Modus</string>
+    <string name="feat_setting_clip_mode_adaptive">adaptiv</string>
+    <string name="feat_setting_clip_mode_clip">Clip</string>
+    <string name="feat_setting_clip_mode_stretched">gestreckt</string>
+    <string name="feat_setting_auto_refresh">autom. Aktualisierung</string>
+    <string name="feat_setting_auto_refresh_description">autom. aktualisiert, wenn die Playlist aufgerufen wird</string>
+
+    <string name="feat_setting_always_television">immer TV Modus</string>
+    <string name="feat_setting_always_television_description">wird zurückgesetzt, wenn die App neu gestartet wird</string>
+
+    <string name="feat_setting_full_info_player">Player-Info</string>
+    <string name="feat_setting_full_info_player_description">weitere Infos im Player anzeigen</string>
+    <string name="feat_setting_progress">Suchleiste</string>
+    <string name="feat_setting_initial_screen">Start-Screen</string>
+    <string name="feat_setting_no_picture_mode">kein Bildmodus</string>
+    <string name="feat_setting_no_picture_mode_description">kann die Leistung verbessern</string>
+    <string name="feat_setting_system_setting">Systemeinstellung</string>
+    <string name="feat_setting_script_management_import_js">importiere Javascript</string>
+    <string name="feat_setting_enqueue_subscribe">Der Warteschlange wurde eine Aboaufgabe hinzugefügt</string>
+    <string name="feat_setting_dropbox">Dropbox</string>
+    <string name="feat_setting_project_about">Projekt abbrechen</string>
+    <string name="feat_setting_local_storage">Lokaler Speicher</string>
+    <string name="feat_setting_error_unselected_file">keine Datei ausgewählt</string>
+    <string name="feat_setting_error_blank_url">leere URL</string>
+    <string name="feat_setting_use_dynamic_colors">dynamische Farben</string>
+    <string name="feat_setting_use_dynamic_colors_unavailable">Ab Android 12 verfügbar</string>
+    <string name="feat_setting_not_implementation">Funktion ist für die aktuelle Version nicht verfügbar</string>
+    <string name="feat_setting_zapping_mode">Zapping-Modus</string>
+    <string name="feat_setting_zapping_mode_description">Schnelle Vorschau vor der Wiedergabe des Streams</string>
+    <string name="feat_setting_gesture_brightness">Helligkeitsgeste</string>
+    <string name="feat_setting_gesture_volume">Lautstärkegeste</string>
+    <string name="feat_setting_screencast">Screencast</string>
+    <string name="feat_setting_screen_rotating">Screen rotiert</string>
+    <string name="feat_setting_screen_rotating_description">verfügbar, wenn die Systemrotation entsperrt ist</string>
+    <string name="feat_setting_optional_player_features">optionale Player-Funktionen</string>
+    <string name="feat_setting_unseen_limit">ungesehene Lieblingsstreams anzeigen</string>
+    <string name="feat_setting_reconnect_mode">autom. neuverbindung</string>
+    <string name="feat_setting_reconnect_mode_no">nie</string>
+    <string name="feat_setting_reconnect_mode_retry">erst wenn es fehlschlägt</string>
+    <string name="feat_setting_reconnect_mode_reconnect">immer</string>
+
+    <string name="feat_setting_appearance">Aussehen</string>
+    <string name="feat_setting_appearance_hint_edit_color">gedrückt halten, um die Farbe zu bearbeiten</string>
+
+    <string name="feat_setting_tunneling">Tunnel-Modus</string>
+    <string name="feat_setting_tunneling_description">Verbessere Wiedergabe von 4K/HDR-Inhalten</string>
+    <string name="feat_setting_label_backup">Backup</string>
+    <string name="feat_setting_label_restore">wiederherstellen</string>
+
+    <string name="feat_setting_canvas_dark">dunkel</string>
+    <string name="feat_setting_canvas_light">hell</string>
+    <string name="feat_setting_canvas_apply">anwenden</string>
+    <string name="feat_setting_canvas_reset">zurücksetzen</string>
+
+    <string name="feat_setting_epg_clock_mode">EPG 12h Modus</string>
+
+    <string name="feat_setting_remote_control">Fernbedienung</string>
+    <string name="feat_setting_remote_control_description">den Fernseher fernzusteuern</string>
+
+    <string name="feat_setting_remote_control_tv_side">Fernbedienung</string>
+    <string name="feat_setting_remote_control_tv_side_description">Mit Smartphone den TV steuern</string>
+
+    <string name="feat_setting_subscribe_for_tv">für TV</string>
+
+    <string name="feat_setting_backing_up">Sichere Playlisten und Kanäle</string>
+    <string name="feat_setting_restoring">Wiederherstellen von Playlisten und Kanäle</string>
+
+    <string name="feat_setting_follow_system_theme">Benutze System-Theme</string>
+
+    <string name="feat_setting_data_source_m3u" translatable="false">M3U</string>
+    <string name="feat_setting_data_source_epg" translatable="false">EPG</string>
+    <string name="feat_setting_data_source_xtream" translatable="false">Xtream</string>
+    <string name="feat_setting_data_source_emby" translatable="false">Emby</string>
+    <string name="feat_setting_data_source_dropbox" translatable="false">Dropbox</string>
+
+    <string name="feat_setting_placeholder_basic_url">Adresse</string>
+    <string name="feat_setting_placeholder_username">Benutzer</string>
+    <string name="feat_setting_placeholder_password">Passwort</string>
+
+    <string name="feat_setting_warning_xtream_takes_much_more_time">es kann viel länger dauern</string>
+
+    <string name="feat_setting_back_home">zurück nach home</string>
+
+    <string name="feat_setting_always_replay">Wiedergabeschaltfläche immer anzeigen</string>
+
+    <string name="feat_setting_player_panel">Player-Panel</string>
+    <string name="feat_setting_player_panel_description">Wische über den Player, um ihn im Hochformat zu ändern</string>
+
+    <string name="feat_setting_cache">Cache während der Wiedergabe</string>
+    <string name="feat_setting_cache_description">Diese Option verhindert möglicherweise die normale Wiedergabe</string>
+    <string name="feat_setting_clear_cache">leere Cache (%s)</string>
+
+    <string name="feat_setting_paging">Kanäle analysieren</string>
+    <string name="feat_setting_paging_description">
+        nützlich für große Mengen an Kanälen,
+        aber gleichzeitig wird die Gruppierung deaktiviert
+    </string>
+    <string name="feat_setting_source_code">Quellcode</string>
+
+    <!-- EPG -->
+    <string name="feat_setting_placeholder_epg_title">EPG-Name</string>
+    <string name="feat_setting_error_empty_epg_title">EPG-Name ist leer</string>
+    <string name="feat_setting_error_empty_epg">EPG-Link ist leer</string>
+    <string name="feat_setting_placeholder_epg">EPG-Link</string>
+    <string name="feat_setting_epg_added">Anschließend kannst Du die Playlist mit dem EPG verknüpfen</string>
+
+    <string name="feat_setting_randomly_in_favourite">Zufällige Wiedergabe von Favoriten</string>
+</resources>
