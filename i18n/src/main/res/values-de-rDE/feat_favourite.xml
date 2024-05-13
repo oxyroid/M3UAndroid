@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="feat_favorite_scheme_unknown">unbekannt</string>
+    <string name="feat_favorite_play_randomly">Zufällige Wiedergabe</string>
+</resources>

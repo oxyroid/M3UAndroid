@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="data_error_file_not_found">Datei nicht gefunden</string>
+    <string name="data_error_empty_title">Playlist-Name ist leer</string>
+    <string name="data_channel_name_stream_download_service">Stream Download Service</string>
+    <string name="data_channel_description_stream_download_service">Stream Download Beschreibung</string>
+
+    <string name="data_worker_subscription_action_cancel">Abbrechen</string>
+    <string name="data_worker_subscription_action_retry">Wiederholen</string>
+    <string name="data_worker_subscription_content_completed">Komplett (+%d)</string>
+    <string name="data_worker_subscription_content_channel_progress">%d Kanäle wurden heruntergeladen</string>
+    <string name="data_worker_subscription_content_programme_progress">%d Programme wurden heruntergeladen</string>
+</resources>
