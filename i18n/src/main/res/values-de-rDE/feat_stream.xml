@@ -8,8 +8,8 @@
     <string name="feat_stream_tooltip_on_back_pressed">zurück</string>
     <string name="feat_stream_tooltip_mute">mute</string>
     <string name="feat_stream_tooltip_unmute">unmute</string>
-    <string name="feat_stream_tooltip_favourite">favourite</string>
-    <string name="feat_stream_tooltip_unfavourite">unfavourite</string>
+    <string name="feat_stream_tooltip_favourite">Favoriten</string>
+    <string name="feat_stream_tooltip_unfavourite">deak. Favoriten</string>
     <string name="feat_stream_tooltip_download">download</string>
     <string name="feat_stream_tooltip_stop_download">stoppe download</string>
     <string name="feat_stream_tooltip_cast">Cast Screen</string>
@@ -18,7 +18,7 @@
     <string name="feat_stream_tooltip_choose_format">Format Auswahl</string>
 
     <string name="feat_stream_dialog_dlna_devices">DLNA Geräte</string>
-    <string name="feat_stream_dialog_choose_tracks">Wähle Tracks</string>
+    <string name="feat_stream_dialog_choose_tracks">Bild-Auswahl</string>
 
-    <string name="feat_stream_open_in_external_app">öffne in externer App</string>
+    <string name="feat_stream_open_in_external_app">Öffne in externer App</string>
 </resources>

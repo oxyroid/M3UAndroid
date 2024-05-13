@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="feat_foryou_hidden_streams_playlist">versteckte Streams</string>
-    <string name="feat_foryou_unsubscribe_playlist">uabbestellen</string>
+    <string name="feat_foryou_unsubscribe_playlist">löschen</string>
     <string name="feat_foryou_copy_playlist_url">URL kopieren</string>
     <string name="feat_foryou_rename_playlist">umbenennen</string>
     <string name="feat_foryou_imported_playlist_title">importiert</string>
     <string name="feat_foryou_prompt_add_playlist">Playlist hinzufügen</string>
-    <string name="feat_foryou_recommend_unseen_label">Favorit, den Du wiedersehen würden</string>
+    <string name="feat_foryou_recommend_unseen_label">Favorit, den Du wiedersehen möchtest</string>
     <string name="feat_foryou_recommend_unseen_more_than_days">mehr als %d Tage</string>
     <string name="feat_foryou_recommend_unseen_days">%d Tage</string>
     <string name="feat_foryou_recommend_unseen_hours">%d Stunden</string>

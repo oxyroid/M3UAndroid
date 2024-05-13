@@ -3,7 +3,7 @@
     <string name="feat_playlist_configuration_title">Titel</string>
     <string name="feat_playlist_configuration_user_agent">User-Agent</string>
     <string name="feat_playlist_configuration_enabled_epgs">aktiviere EPGs</string>
-    <string name="feat_playlist_configuration_sync_programmes">Programme sync.</string>
+    <string name="feat_playlist_configuration_sync_programmes">EPG Kanäle sync.</string>
     <string name="feat_playlist_configuration_programmes_expired_time">Abgelaufen: %s</string>
-    <string name="feat_playlist_configuration_programmes_expired">Zwischengespeicherte Programme sind veraltet</string>
+    <string name="feat_playlist_configuration_programmes_expired">EPG ist veraltet, bitte neu sync.</string>
 </resources>

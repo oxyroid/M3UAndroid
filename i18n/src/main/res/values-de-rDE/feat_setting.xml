@@ -9,10 +9,10 @@
     <string name="feat_setting_placeholder_url">Playlist-Link</string>
     <string name="feat_setting_label_subscribing">abonnieren</string>
     <string name="feat_setting_sync_mode_all">alle</string>
-    <string name="feat_setting_sync_mode_keep">halten</string>
-    <string name="feat_setting_sync_mode">Synchronisationsstrategie</string>
+    <string name="feat_setting_sync_mode_keep">beibehalten</string>
+    <string name="feat_setting_sync_mode">Synchronisation</string>
     <string name="feat_setting_playlist_management">Playlist-Management</string>
-    <string name="feat_setting_connect_timeout">Verbindung abgelaufen</string>
+    <string name="feat_setting_connect_timeout">Verbindung beendet</string>
     <string name="feat_setting_god_mode">Gott-Modus</string>
     <string name="feat_setting_god_mode_description">Layouts mit Lautstärketasten ändern</string>
     <string name="feat_setting_experimental_mode">Experimenteller Modus</string>
@@ -21,15 +21,15 @@
     <string name="feat_setting_label_hidden_streams">versteckte Streams</string>
     <string name="feat_setting_label_hidden_playlist_groups">versteckte Playlist-Kategorien</string>
     <string name="feat_setting_label_add_playlist">Playlist hinzufügen</string>
-    <string name="feat_setting_label_parse_from_clipboard">Zwischenablage analysieren</string>
+    <string name="feat_setting_label_parse_from_clipboard">Zwischenablage abrufen</string>
     <string name="feat_setting_label_select_from_local_storage">Datei aussuchen</string>
-    <string name="feat_setting_label_parse_from_disk">Datei analysieren</string>
+    <string name="feat_setting_label_parse_from_disk">Datei abrufen</string>
     <string name="feat_setting_clip_mode">Video-Clip Modus</string>
     <string name="feat_setting_clip_mode_adaptive">adaptiv</string>
     <string name="feat_setting_clip_mode_clip">Clip</string>
     <string name="feat_setting_clip_mode_stretched">gestreckt</string>
     <string name="feat_setting_auto_refresh">autom. Aktualisierung</string>
-    <string name="feat_setting_auto_refresh_description">autom. aktualisiert, wenn die Playlist aufgerufen wird</string>
+    <string name="feat_setting_auto_refresh_description">autom. aktualisierung, wenn die Playlist aufgerufen wird</string>
 
     <string name="feat_setting_always_television">immer TV Modus</string>
     <string name="feat_setting_always_television_description">wird zurückgesetzt, wenn die App neu gestartet wird</string>
@@ -42,7 +42,7 @@
     <string name="feat_setting_no_picture_mode_description">kann die Leistung verbessern</string>
     <string name="feat_setting_system_setting">Systemeinstellung</string>
     <string name="feat_setting_script_management_import_js">importiere Javascript</string>
-    <string name="feat_setting_enqueue_subscribe">Der Warteschlange wurde eine Aboaufgabe hinzugefügt</string>
+    <string name="feat_setting_enqueue_subscribe">Der Warteschlange wurde ein Abo hinzugefügt</string>
     <string name="feat_setting_dropbox">Dropbox</string>
     <string name="feat_setting_project_about">Projekt abbrechen</string>
     <string name="feat_setting_local_storage">Lokaler Speicher</string>
@@ -66,7 +66,7 @@
     <string name="feat_setting_reconnect_mode_reconnect">immer</string>
 
     <string name="feat_setting_appearance">Aussehen</string>
-    <string name="feat_setting_appearance_hint_edit_color">gedrückt halten, um die Farbe zu bearbeiten</string>
+    <string name="feat_setting_appearance_hint_edit_color">gedrückt halten, um die Farbe zu ändern</string>
 
     <string name="feat_setting_tunneling">Tunnel-Modus</string>
     <string name="feat_setting_tunneling_description">Verbessere Wiedergabe von 4K/HDR-Inhalten</string>
@@ -81,7 +81,7 @@
     <string name="feat_setting_epg_clock_mode">EPG 12h Modus</string>
 
     <string name="feat_setting_remote_control">Fernbedienung</string>
-    <string name="feat_setting_remote_control_description">den Fernseher fernzusteuern</string>
+    <string name="feat_setting_remote_control_description">TV fernsteuern</string>
 
     <string name="feat_setting_remote_control_tv_side">Fernbedienung</string>
     <string name="feat_setting_remote_control_tv_side_description">Mit Smartphone den TV steuern</string>
@@ -103,16 +103,16 @@
     <string name="feat_setting_placeholder_username">Benutzer</string>
     <string name="feat_setting_placeholder_password">Passwort</string>
 
-    <string name="feat_setting_warning_xtream_takes_much_more_time">es kann viel länger dauern</string>
+    <string name="feat_setting_warning_xtream_takes_much_more_time">Xtream kann länger dauern</string>
 
-    <string name="feat_setting_back_home">zurück nach home</string>
+    <string name="feat_setting_back_home">zurück</string>
 
     <string name="feat_setting_always_replay">Wiedergabeschaltfläche immer anzeigen</string>
 
     <string name="feat_setting_player_panel">Player-Panel</string>
-    <string name="feat_setting_player_panel_description">Wische über den Player, um ihn im Hochformat zu ändern</string>
+    <string name="feat_setting_player_panel_description">Wische über den Player, um ins Hochformat zu ändern</string>
 
-    <string name="feat_setting_cache">Cache während der Wiedergabe</string>
+    <string name="feat_setting_cache">Cache bei Wiedergabe</string>
     <string name="feat_setting_cache_description">Diese Option verhindert möglicherweise die normale Wiedergabe</string>
     <string name="feat_setting_clear_cache">leere Cache (%s)</string>
 
