@@ -8,10 +8,8 @@ assignees: ''
 ---
 
 **Check before feedback**
-[ ] I checked the other issues to ensure no one has mentioned it yet.
-[ ] I made sure the bug can be reproduced in the
-[SNAPSHOT](https://nightly.link/oxyroid/M3UAndroid/workflows/android/master/artifact.zip)
-application package.
+- [ ] I checked the other issues to ensure no one has mentioned it yet.
+- [ ] I made sure the bug can be reproduced in the [SNAPSHOT](https://nightly.link/oxyroid/M3UAndroid/workflows/android/master/artifact.zip) application package.
 
 **Describe the bug**
 A clear and concise description of what the bug is.
