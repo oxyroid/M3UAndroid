@@ -44,11 +44,23 @@ internal interface StreamDao {
     @Query("SELECT * FROM streams WHERE id = :id")
     suspend fun get(id: Int): Stream?
 
-    @Query("SELECT * FROM streams ORDER BY RANDOM() LIMIT 1")
-    suspend fun random(): Stream?
+    @Query("""
+        SELECT * FROM streams
+        WHERE hidden = 0
+        AND playlistUrl NOT IN (:seriesPlaylistUrls)
+        ORDER BY RANDOM()
+        LIMIT 1
+    """)
+    suspend fun randomIgnoreSeriesAndHidden(vararg seriesPlaylistUrls: String): Stream?
 
-    @Query("SELECT * FROM streams WHERE favourite = 1 ORDER BY RANDOM() LIMIT 1")
-    suspend fun randomInFavourite(): Stream?
+    @Query("""
+        SELECT * FROM streams
+        WHERE favourite = 1
+        AND playlistUrl NOT IN (:seriesPlaylistUrls)
+        ORDER BY RANDOM()
+        LIMIT 1
+    """)
+    suspend fun randomIgnoreSeriesInFavourite(vararg seriesPlaylistUrls: String): Stream?
 
     @Query("SELECT * FROM streams WHERE url = :url")
     suspend fun getByUrl(url: String): Stream?

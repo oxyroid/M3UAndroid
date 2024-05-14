@@ -23,7 +23,6 @@ import com.m3u.core.wrapper.mapResource
 import com.m3u.core.wrapper.resource
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.Stream
-import com.m3u.data.database.model.type
 import com.m3u.data.parser.xtream.XtreamStreamInfo
 import com.m3u.data.repository.media.MediaRepository
 import com.m3u.data.repository.playlist.PlaylistRepository
@@ -175,12 +174,9 @@ class FavouriteViewModel @Inject constructor(
 
     internal fun playRandomly() {
         viewModelScope.launch {
-            val stream = streamRepository.random() ?: return@launch
-            val playlist = playlistRepository.get(stream.playlistUrl)
-            // FIXME: random should not return the series
-            if (playlist?.type in Playlist.SERIES_TYPES) return@launch
+            val stream = streamRepository.getRandomIgnoreSeriesAndHidden() ?: return@launch
             playerManager.play(
-                MediaCommand.Live(stream.id)
+                MediaCommand.Common(stream.id)
             )
         }
     }

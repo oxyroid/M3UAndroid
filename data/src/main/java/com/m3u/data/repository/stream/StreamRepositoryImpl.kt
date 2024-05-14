@@ -7,8 +7,10 @@ import com.m3u.core.architecture.logger.execute
 import com.m3u.core.architecture.logger.install
 import com.m3u.core.architecture.logger.sandBox
 import com.m3u.core.architecture.preferences.Preferences
+import com.m3u.data.database.dao.PlaylistDao
 import com.m3u.data.database.dao.StreamDao
 import com.m3u.data.database.model.Stream
+import com.m3u.data.database.model.isSeries
 import com.m3u.data.repository.stream.StreamRepository.Sort
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
@@ -18,6 +20,7 @@ import kotlin.time.Duration
 
 internal class StreamRepositoryImpl @Inject constructor(
     private val streamDao: StreamDao,
+    private val playlistDao: PlaylistDao,
     private val preferences: Preferences,
     logger: Logger,
 ) : StreamRepository {
@@ -46,9 +49,14 @@ internal class StreamRepositoryImpl @Inject constructor(
         streamDao.get(id)
     }
 
-    override suspend fun random(): Stream? = logger.execute {
-        if (!preferences.randomlyInFavourite) streamDao.random()
-        else streamDao.randomInFavourite()
+    override suspend fun getRandomIgnoreSeriesAndHidden(): Stream? = logger.execute {
+        val playlists = playlistDao.getAll()
+        val seriesPlaylistUrls = playlists
+            .filter { it.isSeries }
+            .map { it.url }
+            .toTypedArray()
+        if (!preferences.randomlyInFavourite) streamDao.randomIgnoreSeriesAndHidden(*seriesPlaylistUrls)
+        else streamDao.randomIgnoreSeriesInFavourite(*seriesPlaylistUrls)
     }
 
     override suspend fun getByPlaylistUrl(playlistUrl: String): List<Stream> = logger.execute {
