@@ -94,6 +94,9 @@ class EpgParserImpl @Inject constructor(
         var desc: String? = null
         val categories = mutableListOf<String>()
         var icon: String? = null
+        var isNewTag = false // Initialize isNew flag
+        var isLiveTag = false
+        var previouslyShownStart: String? = null // Initialize previouslyShown variable
         while (next() != XmlPullParser.END_TAG) {
             if (eventType != XmlPullParser.START_TAG) continue
             when (name) {
@@ -101,10 +104,16 @@ class EpgParserImpl @Inject constructor(
                 "desc" -> desc = readDesc()
                 "category" -> categories += readCategory()
                 "icon" -> icon = readIcon()
+                "new" -> isNewTag = readNew() // Update isNewTag flag
+                "live" -> isLiveTag = readLive() // Update isNewTag flag
+                "previously-shown" -> previouslyShownStart = readPreviouslyShown()
                 else -> skip()
             }
         }
         require(XmlPullParser.END_TAG, ns, "programme")
+        // Add logic to determine whether the program is new based on title
+        val isNew = title?.contains("ᴺᵉʷ") ?: false
+        val isLive = title?.contains("ᴸᶦᵛᵉ") ?: false
         return EpgProgramme(
             start = start,
             stop = stop,
@@ -112,7 +121,12 @@ class EpgParserImpl @Inject constructor(
             title = title,
             desc = desc,
             icon = icon,
-            categories = categories
+            categories = categories,
+            isNew = isNew,
+            isNewTag = isNewTag,
+            isLive = isLive,
+            isLiveTag = isLiveTag,
+            previouslyShownStart = previouslyShownStart
         )
     }
 
@@ -168,6 +182,24 @@ class EpgParserImpl @Inject constructor(
         val category = readText()
         require(XmlPullParser.END_TAG, ns, "category")
         return category
+    }
+
+    private fun XmlPullParser.readNew(): Boolean {
+        require(XmlPullParser.END_TAG, ns, "new")
+        return true
+    }
+
+    private fun XmlPullParser.readLive(): Boolean {
+        require(XmlPullParser.END_TAG, ns, "live")
+        return true
+    }
+
+    private fun XmlPullParser.readPreviouslyShown(): String? {
+        require(XmlPullParser.START_TAG, ns, "previously-shown")
+        val start = getAttributeValue(null, "start")
+        nextTag()
+        require(XmlPullParser.END_TAG, ns, "previously-shown")
+        return start
     }
 
     private fun XmlPullParser.readText(): String {
