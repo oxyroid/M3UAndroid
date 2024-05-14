@@ -25,9 +25,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.core.architecture.preferences.hiltPreferences
 import com.m3u.core.util.basic.title
 import com.m3u.core.wrapper.Resource
-import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.Stream
-import com.m3u.data.database.model.type
+import com.m3u.data.database.model.isSeries
 import com.m3u.data.service.MediaCommand
 import com.m3u.features.favorite.components.FavouriteGallery
 import com.m3u.i18n.R
@@ -45,8 +44,8 @@ import com.m3u.ui.Sort
 import com.m3u.ui.SortBottomSheet
 import com.m3u.ui.TvSortFullScreenDialog
 import com.m3u.ui.helper.Action
-import com.m3u.ui.helper.Metadata
 import com.m3u.ui.helper.LocalHelper
+import com.m3u.ui.helper.Metadata
 import dev.chrisbanes.haze.HazeDefaults
 import dev.chrisbanes.haze.haze
 import kotlinx.coroutines.launch
@@ -116,12 +115,12 @@ fun FavouriteRoute(
                 coroutineScope.launch {
                     val playlist = viewModel.getPlaylist(stream.playlistUrl)
                     when {
-                        playlist?.type in Playlist.SERIES_TYPES -> {
+                        playlist?.isSeries ?: false -> {
                             viewModel.series.value = stream
                         }
 
                         else -> {
-                            helper.play(MediaCommand.Live(stream.id))
+                            helper.play(MediaCommand.Common(stream.id))
                             navigateToStream()
                         }
                     }

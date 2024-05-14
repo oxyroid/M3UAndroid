@@ -45,7 +45,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.core.architecture.preferences.hiltPreferences
 import com.m3u.core.unit.DataUnit
 import com.m3u.core.util.basic.title
-import com.m3u.data.database.model.ColorPack
+import com.m3u.data.database.model.ColorScheme
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.Stream
@@ -75,7 +75,7 @@ fun SettingRoute(
     val tv = isTelevision()
     val controller = LocalSoftwareKeyboardController.current
 
-    val colorPacks by viewModel.colorPacks.collectAsStateWithLifecycle()
+    val colorSchemes by viewModel.colorSchemes.collectAsStateWithLifecycle()
     val epgs by viewModel.epgs.collectAsStateWithLifecycle()
     val hiddenStreams by viewModel.hiddenStreams.collectAsStateWithLifecycle()
     val hiddenCategoriesWithPlaylists by viewModel.hiddenCategoriesWithPlaylists.collectAsStateWithLifecycle()
@@ -126,7 +126,7 @@ fun SettingRoute(
         cacheSpace = cacheSpace,
         backup = backup,
         restore = restore,
-        colorPacks = colorPacks,
+        colorSchemes = colorSchemes,
         openColorCanvas = { c, i ->
             colorInt = c
             isDark = i
@@ -181,7 +181,7 @@ private fun SettingScreen(
     backup: () -> Unit,
     restore: () -> Unit,
     onClipboard: (String) -> Unit,
-    colorPacks: List<ColorPack>,
+    colorSchemes: List<ColorScheme>,
     openColorCanvas: (Int, Boolean) -> Unit,
     cacheSpace: DataUnit,
     onClearCache: () -> Unit,
@@ -301,7 +301,7 @@ private fun SettingScreen(
 
                         SettingDestination.Appearance -> {
                             AppearanceFragment(
-                                colorPacks = colorPacks,
+                                colorSchemes = colorSchemes,
                                 colorArgb = colorArgb,
                                 openColorCanvas = openColorCanvas,
                                 contentPadding = contentPadding

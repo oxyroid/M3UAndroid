@@ -1,6 +1,5 @@
 package com.m3u.data.database.model
 
-import androidx.annotation.Keep
 import androidx.compose.runtime.Immutable
 import androidx.room.ColumnInfo
 import androidx.room.Entity
@@ -13,7 +12,6 @@ import kotlin.time.toDuration
 
 @Entity(tableName = "programmes")
 @Immutable
-@Keep
 // epg programme
 data class Programme(
     // m3u tvg-id

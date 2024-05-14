@@ -150,7 +150,7 @@ private fun ChannelGallery(
                         if (isPlaying) return@Card
                         coroutineScope.launch {
                             helper.play(
-                                MediaCommand.Live(stream.id)
+                                MediaCommand.Common(stream.id)
                             )
                         }
                     }

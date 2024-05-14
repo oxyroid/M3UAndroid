@@ -10,8 +10,7 @@ import androidx.activity.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import com.m3u.core.Contracts
-import com.m3u.data.database.model.Playlist
-import com.m3u.data.database.model.type
+import com.m3u.data.database.model.isSeries
 import com.m3u.data.repository.playlist.PlaylistRepository
 import com.m3u.data.repository.stream.StreamRepository
 import com.m3u.data.service.MediaCommand
@@ -74,9 +73,9 @@ class PlayerActivity : ComponentActivity() {
             val playlist = playlistRepository.get(stream.playlistUrl)
             when {
                 // series can not be played from shortcuts
-                playlist?.type in Playlist.SERIES_TYPES -> {}
+                playlist?.isSeries ?: false -> {}
                 else -> {
-                    helper.play(MediaCommand.Live(stream.id))
+                    helper.play(MediaCommand.Common(stream.id))
                 }
             }
         }

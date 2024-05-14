@@ -20,7 +20,7 @@ import androidx.tv.foundation.lazy.grid.itemsIndexed
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.PlaylistWithCount
 import com.m3u.data.database.model.fromLocal
-import com.m3u.data.database.model.typeWithSource
+import com.m3u.data.database.model.type
 import com.m3u.i18n.R.string
 import com.m3u.material.ktx.isTelevision
 import com.m3u.material.ktx.plus
@@ -97,7 +97,7 @@ private fun SmartphonePlaylistGalleryImpl(
                     title = playlistCount.playlist.title,
                     fromLocal = playlistCount.playlist.fromLocal
                 ),
-                type = playlistCount.playlist.typeWithSource,
+                type = with(playlistCount.playlist) { "$source $type" },
                 count = playlistCount.count,
                 subscribing = playlistCount.playlist.url in subscribingPlaylistUrls,
                 local = playlistCount.playlist.fromLocal,
@@ -149,7 +149,7 @@ private fun TvPlaylistGalleryImpl(
                     title = playlistCount.playlist.title,
                     fromLocal = playlistCount.playlist.fromLocal
                 ),
-                type = playlistCount.playlist.typeWithSource,
+                type = with(playlistCount.playlist) { "$source $type" },
                 count = playlistCount.count,
                 subscribing = playlistCount.playlist.url in subscribingPlaylistUrls,
                 local = playlistCount.playlist.fromLocal,

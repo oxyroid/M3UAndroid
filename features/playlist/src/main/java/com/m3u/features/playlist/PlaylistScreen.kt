@@ -44,10 +44,10 @@ import com.m3u.core.architecture.preferences.hiltPreferences
 import com.m3u.core.util.basic.title
 import com.m3u.core.wrapper.Event
 import com.m3u.core.wrapper.eventOf
-import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.Programme
 import com.m3u.data.database.model.Stream
-import com.m3u.data.database.model.type
+import com.m3u.data.database.model.isSeries
+import com.m3u.data.database.model.isVod
 import com.m3u.data.service.MediaCommand
 import com.m3u.features.playlist.internal.SmartphonePlaylistScreenImpl
 import com.m3u.features.playlist.internal.TvPlaylistScreenImpl
@@ -94,12 +94,8 @@ internal fun PlaylistRoute(
     val refreshing by viewModel.subscribingOrRefreshing.collectAsStateWithLifecycle()
     val series by viewModel.series.collectAsStateWithLifecycle()
 
-    val isSeriesPlaylist by remember {
-        derivedStateOf { playlist?.type in Playlist.SERIES_TYPES }
-    }
-    val isVodPlaylist by remember {
-        derivedStateOf { playlist?.type in Playlist.VOD_TYPES }
-    }
+    val isSeriesPlaylist by remember { derivedStateOf { playlist?.isSeries ?: false } }
+    val isVodPlaylist by remember { derivedStateOf { playlist?.isVod ?: false } }
 
     val sorts = Sort.entries
     val sort by viewModel.sort.collectAsStateWithLifecycle()
@@ -150,7 +146,7 @@ internal fun PlaylistRoute(
             onStream = { stream ->
                 if (!isSeriesPlaylist) {
                     coroutineScope.launch {
-                        helper.play(MediaCommand.Live(stream.id))
+                        helper.play(MediaCommand.Common(stream.id))
                         navigateToStream()
                     }
                 } else {

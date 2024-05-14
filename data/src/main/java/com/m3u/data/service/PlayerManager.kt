@@ -39,7 +39,7 @@ interface PlayerManager {
 }
 
 sealed class MediaCommand(open val streamId: Int) {
-    data class Live(override val streamId: Int) : MediaCommand(streamId)
+    data class Common(override val streamId: Int) : MediaCommand(streamId)
     data class XtreamEpisode(
         override val streamId: Int,
         val episode: XtreamStreamInfo.Episode

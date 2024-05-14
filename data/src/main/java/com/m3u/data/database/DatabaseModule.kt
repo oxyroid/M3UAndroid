@@ -11,7 +11,7 @@ import com.m3u.data.database.dao.EpisodeDao
 import com.m3u.data.database.dao.PlaylistDao
 import com.m3u.data.database.dao.ProgrammeDao
 import com.m3u.data.database.dao.StreamDao
-import com.m3u.data.database.example.ColorPackExample
+import com.m3u.data.database.example.ColorSchemeExample
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -36,7 +36,7 @@ internal object DatabaseModule {
             object : RoomDatabase.Callback() {
                 override fun onCreate(db: SupportSQLiteDatabase) {
                     super.onCreate(db)
-                    ColorPackExample.invoke(db)
+                    ColorSchemeExample.invoke(db)
                 }
             }
         )

@@ -101,7 +101,7 @@ class PlayerManagerImpl @Inject constructor(
         .onEach { logger.post { "receive media command: $it" } }
         .flatMapLatest { command ->
             when (command) {
-                is MediaCommand.Live -> streamRepository.observe(command.streamId)
+                is MediaCommand.Common -> streamRepository.observe(command.streamId)
                 is MediaCommand.XtreamEpisode -> streamRepository
                     .observe(command.streamId)
                     .map { it?.copyXtreamEpisode(command.episode) }
@@ -117,7 +117,7 @@ class PlayerManagerImpl @Inject constructor(
 
     override val playlist: StateFlow<Playlist?> = mediaCommand.flatMapLatest { command ->
         when (command) {
-            is MediaCommand.Live -> {
+            is MediaCommand.Common -> {
                 val stream = streamRepository.get(command.streamId)
                 stream?.let { playlistRepository.observe(it.playlistUrl) } ?: flow { }
             }
@@ -153,7 +153,7 @@ class PlayerManagerImpl @Inject constructor(
         release()
         mediaCommand.value = command
         val stream = when (command) {
-            is MediaCommand.Live -> streamRepository.get(command.streamId)
+            is MediaCommand.Common -> streamRepository.get(command.streamId)
             is MediaCommand.XtreamEpisode -> streamRepository
                 .get(command.streamId)
                 ?.copyXtreamEpisode(command.episode)

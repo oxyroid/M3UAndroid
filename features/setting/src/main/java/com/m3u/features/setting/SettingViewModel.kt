@@ -24,7 +24,7 @@ import com.m3u.core.unit.KB
 import com.m3u.core.util.basic.startWithHttpScheme
 import com.m3u.data.api.LocalPreparedService
 import com.m3u.data.database.dao.ColorPackDao
-import com.m3u.data.database.model.ColorPack
+import com.m3u.data.database.model.ColorScheme
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.Stream
@@ -103,7 +103,7 @@ class SettingViewModel @Inject constructor(
         }
     }
 
-    internal val colorPacks: StateFlow<List<ColorPack>> = combine(
+    internal val colorSchemes: StateFlow<List<ColorScheme>> = combine(
         colorPackDao.observeAllColorPacks().catch { emit(emptyList()) },
         snapshotFlow { preferences.followSystemTheme }
     ) { all, followSystemTheme -> if (followSystemTheme) all.filter { !it.isDark } else all }

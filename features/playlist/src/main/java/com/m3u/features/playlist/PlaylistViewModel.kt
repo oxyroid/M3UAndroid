@@ -288,7 +288,6 @@ class PlaylistViewModel @Inject constructor(
                     }
                         .flow
                         .map { data -> data.filter { !it.hidden } }
-                        .flowOn(ioDispatcher)
                         .cachedIn(viewModelScope)
                 )
             }

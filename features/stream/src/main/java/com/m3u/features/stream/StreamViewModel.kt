@@ -17,13 +17,12 @@ import com.m3u.core.architecture.dispatcher.M3uDispatchers.Main
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.Profiles
 import com.m3u.core.architecture.logger.install
-import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.Programme
 import com.m3u.data.database.model.ProgrammeRange
 import com.m3u.data.database.model.Stream
 import com.m3u.data.database.model.epgUrlsOrXtreamXmlUrl
-import com.m3u.data.database.model.type
+import com.m3u.data.database.model.isSeries
 import com.m3u.data.repository.playlist.PlaylistRepository
 import com.m3u.data.repository.programme.ProgrammeRepository
 import com.m3u.data.repository.stream.StreamRepository
@@ -81,7 +80,7 @@ class StreamViewModel @Inject constructor(
 
     internal val isSeriesPlaylist: StateFlow<Boolean> = playerManager
         .playlist
-        .map { it?.type == DataSource.Xtream.TYPE_SERIES }
+        .map { it?.isSeries ?: false }
         .stateIn(
             scope = viewModelScope,
             initialValue = false,
