@@ -94,8 +94,8 @@ class EpgParserImpl @Inject constructor(
         var desc: String? = null
         val categories = mutableListOf<String>()
         var icon: String? = null
-        var isNewTag = false // Initialize isNew flag
-        var isLiveTag = false
+        var isNew = false
+        var isLive = false
         var previouslyShownStart: String? = null // Initialize previouslyShown variable
         while (next() != XmlPullParser.END_TAG) {
             if (eventType != XmlPullParser.START_TAG) continue
@@ -104,16 +104,14 @@ class EpgParserImpl @Inject constructor(
                 "desc" -> desc = readDesc()
                 "category" -> categories += readCategory()
                 "icon" -> icon = readIcon()
-                "new" -> isNewTag = readNew() // Update isNewTag flag
-                "live" -> isLiveTag = readLive() // Update isNewTag flag
+                "new" -> isNew = readNew() // Update isNewTag flag
+                "live" -> isLive = readLive() // Update isNewTag flag
                 "previously-shown" -> previouslyShownStart = readPreviouslyShown()
                 else -> skip()
             }
         }
         require(XmlPullParser.END_TAG, ns, "programme")
-        // Add logic to determine whether the program is new based on title
-        val isNew = title?.contains("ᴺᵉʷ") ?: false
-        val isLive = title?.contains("ᴸᶦᵛᵉ") ?: false
+//
         return EpgProgramme(
             start = start,
             stop = stop,
@@ -123,9 +121,7 @@ class EpgParserImpl @Inject constructor(
             icon = icon,
             categories = categories,
             isNew = isNew,
-            isNewTag = isNewTag,
             isLive = isLive,
-            isLiveTag = isLiveTag,
             previouslyShownStart = previouslyShownStart
         )
     }

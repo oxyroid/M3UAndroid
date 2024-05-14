@@ -31,15 +31,11 @@ data class Programme(
     val title: String,
     @ColumnInfo(name = "description")
     val description: String,
-    @ColumnInfo(name = "new", defaultValue = "0")
-    val isNew: Boolean,
     @ColumnInfo(name = "new_tag", defaultValue = "0")
-    val isNewTag: Boolean,
-    @ColumnInfo(name = "live", defaultValue = "0")
-    val isLive: Boolean,
+    val isNew: Boolean,
     @ColumnInfo(name = "live_tag", defaultValue = "0")
-    val isLiveTag: Boolean,
-    @ColumnInfo(name = "previous_start")
+    val isLive: Boolean,
+    @ColumnInfo(name = "previous_start", defaultValue = "NULL")
     val previouslyShownStart: String? = null,
     @ColumnInfo(name = "icon")
     val icon: String? = null,
