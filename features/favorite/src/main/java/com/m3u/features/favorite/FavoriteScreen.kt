@@ -30,7 +30,6 @@ import com.m3u.data.database.model.isSeries
 import com.m3u.data.service.MediaCommand
 import com.m3u.features.favorite.components.FavouriteGallery
 import com.m3u.i18n.R
-import com.m3u.material.components.Background
 import com.m3u.material.ktx.interceptVolumeEvent
 import com.m3u.material.ktx.isTelevision
 import com.m3u.material.ktx.thenIf
@@ -104,102 +103,100 @@ fun FavouriteRoute(
         }
     }
 
-    Background {
-        FavoriteScreen(
-            contentPadding = contentPadding,
-            rowCount = preferences.rowCount,
-            streamsResource = streamsResource,
-            zapping = zapping,
-            recently = sort == Sort.RECENTLY,
-            onClickStream = { stream ->
-                coroutineScope.launch {
-                    val playlist = viewModel.getPlaylist(stream.playlistUrl)
-                    when {
-                        playlist?.isSeries ?: false -> {
-                            viewModel.series.value = stream
-                        }
-
-                        else -> {
-                            helper.play(MediaCommand.Common(stream.id))
-                            navigateToStream()
-                        }
+    FavoriteScreen(
+        contentPadding = contentPadding,
+        rowCount = preferences.rowCount,
+        streamsResource = streamsResource,
+        zapping = zapping,
+        recently = sort == Sort.RECENTLY,
+        onClickStream = { stream ->
+            coroutineScope.launch {
+                val playlist = viewModel.getPlaylist(stream.playlistUrl)
+                when {
+                    playlist?.isSeries ?: false -> {
+                        viewModel.series.value = stream
                     }
-                }
-            },
-            onLongClickStream = { mediaSheetValue = MediaSheetValue.FavouriteScreen(it) },
-            onClickRandomTips = {
-                viewModel.playRandomly()
-                navigateToStream()
-            },
-            modifier = Modifier
-                .fillMaxSize()
-                .thenIf(!tv && preferences.godMode) {
-                    Modifier.interceptVolumeEvent { event ->
-                        preferences.rowCount = when (event) {
-                            KeyEvent.KEYCODE_VOLUME_UP ->
-                                (preferences.rowCount - 1).coerceAtLeast(1)
 
-                            KeyEvent.KEYCODE_VOLUME_DOWN ->
-                                (preferences.rowCount + 1).coerceAtMost(2)
-
-                            else -> return@interceptVolumeEvent
-                        }
-                    }
-                }
-                .then(modifier)
-        )
-
-        EpisodesBottomSheet(
-            series = series,
-            episodes = episodes,
-            onEpisodeClick = { episode ->
-                coroutineScope.launch {
-                    series?.let {
-                        val input = MediaCommand.XtreamEpisode(
-                            streamId = it.id,
-                            episode = episode
-                        )
-                        helper.play(input)
+                    else -> {
+                        helper.play(MediaCommand.Common(stream.id))
                         navigateToStream()
                     }
                 }
-            },
-            onRefresh = { series?.let { viewModel.seriesReplay.value += 1 } },
-            onDismissRequest = { viewModel.series.value = null }
-        )
-        if (!tv) {
-            SortBottomSheet(
-                visible = isSortSheetVisible,
-                sort = sort,
-                sorts = sorts,
-                sheetState = sheetState,
-                onChanged = { viewModel.sort(it) },
-                onDismissRequest = { isSortSheetVisible = false }
-            )
-            MediaSheet(
-                value = mediaSheetValue,
-                onFavouriteStream = { stream ->
-                    viewModel.favourite(stream.id)
-                    mediaSheetValue = MediaSheetValue.FavouriteScreen()
-                },
-                onCreateStreamShortcut = { stream ->
-                    viewModel.createShortcut(context, stream.id)
-                    mediaSheetValue = MediaSheetValue.FavouriteScreen()
-                },
-                onDismissRequest = {
-                    mediaSheetValue = MediaSheetValue.FavouriteScreen()
-                    mediaSheetValue = MediaSheetValue.FavouriteScreen()
+            }
+        },
+        onLongClickStream = { mediaSheetValue = MediaSheetValue.FavouriteScreen(it) },
+        onClickRandomTips = {
+            viewModel.playRandomly()
+            navigateToStream()
+        },
+        modifier = Modifier
+            .fillMaxSize()
+            .thenIf(!tv && preferences.godMode) {
+                Modifier.interceptVolumeEvent { event ->
+                    preferences.rowCount = when (event) {
+                        KeyEvent.KEYCODE_VOLUME_UP ->
+                            (preferences.rowCount - 1).coerceAtLeast(1)
+
+                        KeyEvent.KEYCODE_VOLUME_DOWN ->
+                            (preferences.rowCount + 1).coerceAtMost(2)
+
+                        else -> return@interceptVolumeEvent
+                    }
                 }
-            )
-        } else {
-            TvSortFullScreenDialog(
-                visible = (mediaSheetValue as? MediaSheetValue.FavouriteScreen)?.stream != null,
-                sort = sort,
-                sorts = sorts,
-                onChanged = { viewModel.sort(it) },
-                onDismissRequest = { mediaSheetValue = MediaSheetValue.FavouriteScreen() }
-            )
-        }
+            }
+            .then(modifier)
+    )
+
+    EpisodesBottomSheet(
+        series = series,
+        episodes = episodes,
+        onEpisodeClick = { episode ->
+            coroutineScope.launch {
+                series?.let {
+                    val input = MediaCommand.XtreamEpisode(
+                        streamId = it.id,
+                        episode = episode
+                    )
+                    helper.play(input)
+                    navigateToStream()
+                }
+            }
+        },
+        onRefresh = { series?.let { viewModel.seriesReplay.value += 1 } },
+        onDismissRequest = { viewModel.series.value = null }
+    )
+    if (!tv) {
+        SortBottomSheet(
+            visible = isSortSheetVisible,
+            sort = sort,
+            sorts = sorts,
+            sheetState = sheetState,
+            onChanged = { viewModel.sort(it) },
+            onDismissRequest = { isSortSheetVisible = false }
+        )
+        MediaSheet(
+            value = mediaSheetValue,
+            onFavouriteStream = { stream ->
+                viewModel.favourite(stream.id)
+                mediaSheetValue = MediaSheetValue.FavouriteScreen()
+            },
+            onCreateStreamShortcut = { stream ->
+                viewModel.createShortcut(context, stream.id)
+                mediaSheetValue = MediaSheetValue.FavouriteScreen()
+            },
+            onDismissRequest = {
+                mediaSheetValue = MediaSheetValue.FavouriteScreen()
+                mediaSheetValue = MediaSheetValue.FavouriteScreen()
+            }
+        )
+    } else {
+        TvSortFullScreenDialog(
+            visible = (mediaSheetValue as? MediaSheetValue.FavouriteScreen)?.stream != null,
+            sort = sort,
+            sorts = sorts,
+            onChanged = { viewModel.sort(it) },
+            onDismissRequest = { mediaSheetValue = MediaSheetValue.FavouriteScreen() }
+        )
     }
 }
 

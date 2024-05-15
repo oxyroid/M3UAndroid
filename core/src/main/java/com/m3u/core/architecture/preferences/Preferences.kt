@@ -93,10 +93,11 @@ class Preferences @Inject constructor(
     sharedPreferences.booleanAsState(DEFAULT_PAGING, PAGING)
     var panel: Boolean by sharedPreferences.booleanAsState(DEFAULT_PLAYER_PANEL, PLAYER_PANEL)
     var cache: Boolean by sharedPreferences.booleanAsState(DEFAULT_CACHE, CACHE)
-    var randomlyInFavourite: Boolean by sharedPreferences.booleanAsState(
-        DEFAULT_RANDOMLY_IN_FAVOURITE,
-        RANDOMLY_IN_FAVOURITE
-    )
+    var randomlyInFavourite: Boolean by
+    sharedPreferences.booleanAsState(DEFAULT_RANDOMLY_IN_FAVOURITE, RANDOMLY_IN_FAVOURITE)
+    var colorfulBackground by
+    sharedPreferences.booleanAsState(DEFAULT_COLORFUL_BACKGROUND, COLORFUL_BACKGROUND)
+
 
     companion object {
         private const val SHARED_SETTINGS = "shared_settings"
@@ -141,6 +142,7 @@ class Preferences @Inject constructor(
         const val DEFAULT_RANDOMLY_IN_FAVOURITE = false
 
         const val DEFAULT_12_H_CLOCK_MODE = false
+        const val DEFAULT_COLORFUL_BACKGROUND = true
 
         const val PLAYLIST_STRATEGY = "playlist-strategy"
         const val ROW_COUNT = "rowCount"
@@ -175,6 +177,8 @@ class Preferences @Inject constructor(
         const val PLAYER_PANEL = "player_panel"
         const val CACHE = "cache"
         const val RANDOMLY_IN_FAVOURITE = "randomly-in-favourite"
+
+        const val COLORFUL_BACKGROUND = "colorful-background"
     }
 
     init {

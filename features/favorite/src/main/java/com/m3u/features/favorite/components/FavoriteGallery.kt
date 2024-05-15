@@ -47,6 +47,8 @@ import com.m3u.i18n.R.string
 import com.m3u.material.ktx.isTelevision
 import com.m3u.material.ktx.plus
 import com.m3u.material.model.LocalSpacing
+import androidx.tv.material3.MaterialTheme as TvMaterialTheme
+import androidx.tv.material3.Text as TvText
 
 @Composable
 internal fun FavouriteGallery(
@@ -181,14 +183,19 @@ private fun RandomTips(
                     overflow = TextOverflow.Ellipsis,
                     maxLines = 1,
                     fontWeight = FontWeight.Bold,
-                    color = Color.White
+                    color = MaterialTheme.colorScheme.onPrimary
                 )
             },
             colors = ListItemDefaults.colors(Color.Transparent),
             modifier = Modifier
                 .clip(AbsoluteRoundedCornerShape(spacing.medium))
                 .clickable(onClick = onClick)
-                .background(createPremiumBrush())
+                .background(
+                    createPremiumBrush(
+                        MaterialTheme.colorScheme.primary,
+                        MaterialTheme.colorScheme.tertiary
+                    )
+                )
                 .then(modifier)
         )
     } else {
@@ -208,15 +215,21 @@ private fun RandomTips(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(createPremiumBrush())
+                    .background(
+                        createPremiumBrush(
+                            TvMaterialTheme.colorScheme.primary,
+                            TvMaterialTheme.colorScheme.tertiary
+                        )
+                    )
                     .padding(spacing.medium)
                     .then(modifier)
             ) {
-                androidx.tv.material3.Text(
+                TvText(
                     text = title.title(),
                     style = MaterialTheme.typography.titleMedium,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
+                    color = TvMaterialTheme.colorScheme.onPrimary
                 )
             }
         }
@@ -225,8 +238,8 @@ private fun RandomTips(
 
 @Composable
 private fun createPremiumBrush(
-    color1: Color = Color(0xff897fee),
-    color2: Color = Color(0xffd859a9)
+    color1: Color = MaterialTheme.colorScheme.primaryContainer,
+    color2: Color = MaterialTheme.colorScheme.secondaryContainer
 ): Brush {
     val transition = rememberInfiniteTransition("premium-brush")
 

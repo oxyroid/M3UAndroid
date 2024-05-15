@@ -104,19 +104,17 @@ private fun SmartphonePlaylistItemImpl(
                 )
             },
             supportingContent = {
-                if (type != null) {
-                    Text(
-                        text = type.uppercase(),
-                        style = MaterialTheme.typography.bodySmall.copy(
-                            letterSpacing = 1.sp,
-                            baselineShift = BaselineShift.Subscript,
-                            fontFamily = FontFamilies.LexendExa,
-                            fontWeight = FontWeight.SemiBold,
-                            fontSize = 10.sp
-                        ),
-                        color = LocalContentColor.current.copy(0.45f)
-                    )
-                }
+                Text(
+                    text = type?.uppercase().orEmpty(),
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        letterSpacing = 1.sp,
+                        baselineShift = BaselineShift.Subscript,
+                        fontFamily = FontFamilies.LexendExa,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 10.sp
+                    ),
+                    color = LocalContentColor.current.copy(0.45f)
+                )
             },
             trailingContent = {
                 Column(

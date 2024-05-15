@@ -131,6 +131,7 @@ fun SettingRoute(
             colorInt = c
             isDark = i
         },
+        restoreSchemes = viewModel::restoreSchemes,
         onClipboard = { viewModel.onClipboard(it) },
         onClearCache = { viewModel.clearCache() },
         onSubscribe = {
@@ -183,6 +184,7 @@ private fun SettingScreen(
     onClipboard: (String) -> Unit,
     colorSchemes: List<ColorScheme>,
     openColorCanvas: (Int, Boolean) -> Unit,
+    restoreSchemes: () -> Unit,
     cacheSpace: DataUnit,
     onClearCache: () -> Unit,
     epgs: List<Playlist>,
@@ -304,6 +306,7 @@ private fun SettingScreen(
                                 colorSchemes = colorSchemes,
                                 colorArgb = colorArgb,
                                 openColorCanvas = openColorCanvas,
+                                restoreSchemes = restoreSchemes,
                                 contentPadding = contentPadding
                             )
                         }

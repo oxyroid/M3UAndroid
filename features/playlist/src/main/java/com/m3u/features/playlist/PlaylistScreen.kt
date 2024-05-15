@@ -52,7 +52,6 @@ import com.m3u.data.service.MediaCommand
 import com.m3u.features.playlist.internal.SmartphonePlaylistScreenImpl
 import com.m3u.features.playlist.internal.TvPlaylistScreenImpl
 import com.m3u.i18n.R.string
-import com.m3u.material.components.Background
 import com.m3u.material.ktx.checkPermissionOrRationale
 import com.m3u.material.ktx.interceptVolumeEvent
 import com.m3u.material.ktx.isTelevision
@@ -128,103 +127,101 @@ internal fun PlaylistRoute(
         viewModel.query.value = ""
     }
 
-    Background {
-        PlaylistScreen(
-            title = playlist?.title.orEmpty(),
-            query = query,
-            onQuery = { viewModel.query.value = it },
-            rowCount = preferences.rowCount,
-            zapping = zapping,
-            channels = channels,
-            pinnedCategories = pinnedCategories,
-            onPinOrUnpinCategory = { viewModel.pinOrUnpinCategory(it) },
-            onHideCategory = { viewModel.hideCategory(it) },
-            scrollUp = scrollUp,
-            sorts = sorts,
-            sort = sort,
-            onSort = { viewModel.sort(it) },
-            onStream = { stream ->
-                if (!isSeriesPlaylist) {
-                    coroutineScope.launch {
-                        helper.play(MediaCommand.Common(stream.id))
-                        navigateToStream()
-                    }
-                } else {
-                    viewModel.series.value = stream
+    PlaylistScreen(
+        title = playlist?.title.orEmpty(),
+        query = query,
+        onQuery = { viewModel.query.value = it },
+        rowCount = preferences.rowCount,
+        zapping = zapping,
+        channels = channels,
+        pinnedCategories = pinnedCategories,
+        onPinOrUnpinCategory = { viewModel.pinOrUnpinCategory(it) },
+        onHideCategory = { viewModel.hideCategory(it) },
+        scrollUp = scrollUp,
+        sorts = sorts,
+        sort = sort,
+        onSort = { viewModel.sort(it) },
+        onStream = { stream ->
+            if (!isSeriesPlaylist) {
+                coroutineScope.launch {
+                    helper.play(MediaCommand.Common(stream.id))
+                    navigateToStream()
                 }
-            },
-            onScrollUp = { viewModel.scrollUp.value = eventOf(Unit) },
-            refreshing = refreshing,
-            onRefresh = {
-                postNotificationPermission.checkPermissionOrRationale(
-                    showRationale = {
-                        val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
-                            .apply {
-                                putExtra(
-                                    Settings.EXTRA_APP_PACKAGE,
-                                    helper.activityContext.packageName
-                                )
-                            }
-                        helper.activityContext.startActivity(intent)
-                    },
-                    block = {
-                        viewModel.refresh()
-                    }
-                )
-            },
-            contentPadding = contentPadding,
-            favourite = viewModel::favourite,
-            hide = viewModel::hide,
-            savePicture = { id ->
-                writeExternalPermission.checkPermissionOrRationale {
-                    viewModel.savePicture(id)
-                }
-            },
-            createShortcut = { id -> viewModel.createShortcut(context, id) },
-            createTvRecommend = { id -> viewModel.createTvRecommend(context, id) },
-            isVodPlaylist = isVodPlaylist,
-            isSeriesPlaylist = isSeriesPlaylist,
-            getProgrammeCurrently = { channelId -> viewModel.getProgrammeCurrently(channelId) },
-            modifier = Modifier
-                .fillMaxSize()
-                .thenIf(!tv && preferences.godMode) {
-                    Modifier.interceptVolumeEvent { event ->
-                        preferences.rowCount = when (event) {
-                            KeyEvent.KEYCODE_VOLUME_UP ->
-                                (preferences.rowCount - 1).coerceAtLeast(1)
-
-                            KeyEvent.KEYCODE_VOLUME_DOWN ->
-                                (preferences.rowCount + 1).coerceAtMost(2)
-
-                            else -> return@interceptVolumeEvent
-                        }
-                    }
-                }
-                .then(modifier)
-        )
-
-        if (isSeriesPlaylist) {
-            EpisodesBottomSheet(
-                series = series,
-                episodes = episodes,
-                onEpisodeClick = { episode ->
-                    coroutineScope.launch {
-                        series?.let {
-                            val input = MediaCommand.XtreamEpisode(
-                                streamId = it.id,
-                                episode = episode
+            } else {
+                viewModel.series.value = stream
+            }
+        },
+        onScrollUp = { viewModel.scrollUp.value = eventOf(Unit) },
+        refreshing = refreshing,
+        onRefresh = {
+            postNotificationPermission.checkPermissionOrRationale(
+                showRationale = {
+                    val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                        .apply {
+                            putExtra(
+                                Settings.EXTRA_APP_PACKAGE,
+                                helper.activityContext.packageName
                             )
-                            helper.play(input)
-                            navigateToStream()
                         }
-                    }
+                    helper.activityContext.startActivity(intent)
                 },
-                onRefresh = { viewModel.seriesReplay.value += 1 },
-                onDismissRequest = {
-                    viewModel.series.value = null
+                block = {
+                    viewModel.refresh()
                 }
             )
-        }
+        },
+        contentPadding = contentPadding,
+        favourite = viewModel::favourite,
+        hide = viewModel::hide,
+        savePicture = { id ->
+            writeExternalPermission.checkPermissionOrRationale {
+                viewModel.savePicture(id)
+            }
+        },
+        createShortcut = { id -> viewModel.createShortcut(context, id) },
+        createTvRecommend = { id -> viewModel.createTvRecommend(context, id) },
+        isVodPlaylist = isVodPlaylist,
+        isSeriesPlaylist = isSeriesPlaylist,
+        getProgrammeCurrently = { channelId -> viewModel.getProgrammeCurrently(channelId) },
+        modifier = Modifier
+            .fillMaxSize()
+            .thenIf(!tv && preferences.godMode) {
+                Modifier.interceptVolumeEvent { event ->
+                    preferences.rowCount = when (event) {
+                        KeyEvent.KEYCODE_VOLUME_UP ->
+                            (preferences.rowCount - 1).coerceAtLeast(1)
+
+                        KeyEvent.KEYCODE_VOLUME_DOWN ->
+                            (preferences.rowCount + 1).coerceAtMost(2)
+
+                        else -> return@interceptVolumeEvent
+                    }
+                }
+            }
+            .then(modifier)
+    )
+
+    if (isSeriesPlaylist) {
+        EpisodesBottomSheet(
+            series = series,
+            episodes = episodes,
+            onEpisodeClick = { episode ->
+                coroutineScope.launch {
+                    series?.let {
+                        val input = MediaCommand.XtreamEpisode(
+                            streamId = it.id,
+                            episode = episode
+                        )
+                        helper.play(input)
+                        navigateToStream()
+                    }
+                }
+            },
+            onRefresh = { viewModel.seriesReplay.value += 1 },
+            onDismissRequest = {
+                viewModel.series.value = null
+            }
+        )
     }
 }
 

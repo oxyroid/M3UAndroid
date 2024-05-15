@@ -13,8 +13,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.compose.NavHost
 import com.m3u.core.architecture.preferences.hiltPreferences
 import com.m3u.core.wrapper.eventOf
-import com.m3u.features.playlist.configuration.playlistConfigurationScreen
 import com.m3u.features.playlist.configuration.navigateToPlaylistConfiguration
+import com.m3u.features.playlist.configuration.playlistConfigurationScreen
 import com.m3u.features.playlist.navigation.navigateToPlaylist
 import com.m3u.features.playlist.navigation.playlistScreen
 import com.m3u.features.playlist.navigation.playlistTvScreen
@@ -39,6 +39,7 @@ fun AppNavHost(
 
     val tv = isTelevision()
 
+    StarBackground()
     NavHost(
         navController = navController,
         startDestination = startDestination,

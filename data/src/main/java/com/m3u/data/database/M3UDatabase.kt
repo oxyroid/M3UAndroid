@@ -4,7 +4,7 @@ import androidx.room.AutoMigration
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
-import com.m3u.data.database.dao.ColorPackDao
+import com.m3u.data.database.dao.ColorSchemeDao
 import com.m3u.data.database.dao.EpisodeDao
 import com.m3u.data.database.dao.PlaylistDao
 import com.m3u.data.database.dao.ProgrammeDao
@@ -51,5 +51,5 @@ internal abstract class M3UDatabase : RoomDatabase() {
     abstract fun playlistDao(): PlaylistDao
     abstract fun episodeDao(): EpisodeDao
     abstract fun programmeDao(): ProgrammeDao
-    abstract fun colorPackDao(): ColorPackDao
+    abstract fun colorPackDao(): ColorSchemeDao
 }

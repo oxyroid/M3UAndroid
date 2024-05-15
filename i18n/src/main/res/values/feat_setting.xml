@@ -49,6 +49,8 @@
     <string name="feat_setting_error_unselected_file">no file selected yet</string>
     <string name="feat_setting_error_blank_url">blank url</string>
     <string name="feat_setting_use_dynamic_colors">dynamic colors</string>
+    <string name="feat_setting_colorful_background">colorful background</string>
+    <string name="feat_setting_restore_schemes">restore schemes</string>
     <string name="feat_setting_use_dynamic_colors_unavailable">it is available on Android 12 and above</string>
     <string name="feat_setting_not_implementation">this feature is not available for current version</string>
     <string name="feat_setting_zapping_mode">zapping mode</string>

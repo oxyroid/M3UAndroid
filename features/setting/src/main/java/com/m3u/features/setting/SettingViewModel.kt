@@ -23,7 +23,8 @@ import com.m3u.core.unit.DataUnit
 import com.m3u.core.unit.KB
 import com.m3u.core.util.basic.startWithHttpScheme
 import com.m3u.data.api.LocalPreparedService
-import com.m3u.data.database.dao.ColorPackDao
+import com.m3u.data.database.dao.ColorSchemeDao
+import com.m3u.data.database.example.ColorSchemeExample
 import com.m3u.data.database.model.ColorScheme
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
@@ -60,7 +61,8 @@ class SettingViewModel @Inject constructor(
     private val localService: LocalPreparedService,
     private val playerManager: PlayerManager,
     publisher: Publisher,
-    colorPackDao: ColorPackDao,
+    // FIXME: do not use dao in viewmodel
+    private val colorSchemeDao: ColorSchemeDao,
     @Dispatcher(IO) private val ioDispatcher: CoroutineDispatcher,
     delegate: Logger
 ) : ViewModel() {
@@ -104,7 +106,7 @@ class SettingViewModel @Inject constructor(
     }
 
     internal val colorSchemes: StateFlow<List<ColorScheme>> = combine(
-        colorPackDao.observeAllColorPacks().catch { emit(emptyList()) },
+        colorSchemeDao.observeAll().catch { emit(emptyList()) },
         snapshotFlow { preferences.followSystemTheme }
     ) { all, followSystemTheme -> if (followSystemTheme) all.filter { !it.isDark } else all }
         .flowOn(ioDispatcher)
@@ -320,6 +322,13 @@ class SettingViewModel @Inject constructor(
     internal fun deleteEpgPlaylist(epgUrl: String) {
         viewModelScope.launch {
             playlistRepository.deleteEpgPlaylistAndProgrammes(epgUrl)
+        }
+    }
+
+    internal fun restoreSchemes() {
+        val schemes = ColorSchemeExample.schemes
+        viewModelScope.launch {
+            colorSchemeDao.insertAll(*schemes.toTypedArray())
         }
     }
 

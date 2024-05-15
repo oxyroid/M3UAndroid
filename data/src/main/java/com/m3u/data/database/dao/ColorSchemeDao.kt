@@ -9,13 +9,16 @@ import com.m3u.data.database.model.ColorScheme
 import kotlinx.coroutines.flow.Flow
 
 @Dao
-interface ColorPackDao {
+interface ColorSchemeDao {
     @Query("SELECT * FROM color_pack")
-    fun observeAllColorPacks(): Flow<List<ColorScheme>>
+    fun observeAll(): Flow<List<ColorScheme>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertColorPack(colorScheme: ColorScheme)
+    suspend fun insert(colorScheme: ColorScheme)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAll(vararg colorScheme: ColorScheme)
 
     @Delete
-    suspend fun deleteColorPack(colorScheme: ColorScheme)
+    suspend fun delete(colorScheme: ColorScheme)
 }

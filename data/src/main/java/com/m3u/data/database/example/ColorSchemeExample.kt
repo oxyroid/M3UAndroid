@@ -4,7 +4,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import com.m3u.data.database.model.ColorScheme
 
 object ColorSchemeExample {
-    private val schemes = listOf(
+    val schemes = listOf(
         ColorScheme(0x5E6738, false, "avocado"),
         ColorScheme(0x5E6738, true, "mint"),
         ColorScheme(0xe69e71, false, "orange"),

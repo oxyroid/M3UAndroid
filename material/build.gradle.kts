@@ -68,6 +68,7 @@ dependencies {
     api(libs.androidx.tv.tv.foundation)
     api(libs.androidx.tv.tv.material)
 
+    api(libs.androidx.graphics.shapes.android)
     api(libs.com.google.android.material.material)
     api(libs.haze)
 

@@ -12,6 +12,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ColorLens
 import androidx.compose.material.icons.rounded.DarkMode
+import androidx.compose.material.icons.rounded.Restore
+import androidx.compose.material.icons.rounded.Stars
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -22,10 +24,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.tv.foundation.lazy.list.TvLazyRow
 import androidx.tv.foundation.lazy.list.items
 import com.m3u.core.architecture.preferences.hiltPreferences
+import com.m3u.core.util.basic.title
 import com.m3u.data.database.model.ColorScheme
 import com.m3u.features.setting.components.CheckBoxSharedPreference
 import com.m3u.i18n.R.string
-import com.m3u.material.components.Background
+import com.m3u.material.components.Preference
 import com.m3u.material.components.ThemeAddSelection
 import com.m3u.material.components.ThemeSelection
 import com.m3u.material.ktx.isTelevision
@@ -38,6 +41,7 @@ internal fun AppearanceFragment(
     colorSchemes: List<ColorScheme>,
     colorArgb: Int,
     openColorCanvas: (Int, Boolean) -> Unit,
+    restoreSchemes: () -> Unit,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues()
 ) {
@@ -48,101 +52,112 @@ internal fun AppearanceFragment(
     val useDynamicColors = preferences.useDynamicColors
     val tv = isTelevision()
 
-    Background {
-        Column(
-            modifier
-                .fillMaxSize()
-                .padding(contentPadding)
-                .thenIf(tv) {
-                    Modifier.padding(spacing.medium)
+    Column(
+        modifier
+            .fillMaxSize()
+            .padding(contentPadding)
+            .thenIf(tv) {
+                Modifier.padding(spacing.medium)
+            }
+    ) {
+        if (!tv) {
+            Text(
+                text = stringResource(string.feat_setting_appearance_hint_edit_color).uppercase(),
+                color = MaterialTheme.colorScheme.onPrimary,
+                style = MaterialTheme.typography.labelLarge,
+                modifier = Modifier.textHorizontalLabel()
+            )
+            LazyRow(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                items(
+                    items = colorSchemes,
+                    key = { "${it.argb}_${it.isDark}" }
+                ) { colorPack ->
+                    val selected =
+                        !useDynamicColors && colorArgb == colorPack.argb && isDarkMode == colorPack.isDark
+                    ThemeSelection(
+                        argb = colorPack.argb,
+                        isDark = colorPack.isDark,
+                        selected = selected,
+                        onClick = {
+                            preferences.useDynamicColors = false
+                            preferences.argb = colorPack.argb
+                            preferences.darkMode = colorPack.isDark
+                        },
+                        onLongClick = { openColorCanvas(colorPack.argb, colorPack.isDark) },
+                        name = colorPack.name,
+                        leftContentDescription = stringResource(string.ui_theme_card_left),
+                        rightContentDescription = stringResource(string.ui_theme_card_right)
+                    )
                 }
-        ) {
-            if (!tv) {
-                Text(
-                    text = stringResource(string.feat_setting_appearance_hint_edit_color).uppercase(),
-                    color = MaterialTheme.colorScheme.onPrimary,
-                    style = MaterialTheme.typography.labelLarge,
-                    modifier = Modifier.textHorizontalLabel()
-                )
-                LazyRow(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    items(
-                        items = colorSchemes,
-                        key = { "${it.argb}_${it.isDark}" }
-                    ) { colorPack ->
-                        val selected =
-                            !useDynamicColors && colorArgb == colorPack.argb && isDarkMode == colorPack.isDark
-                        ThemeSelection(
-                            argb = colorPack.argb,
-                            isDark = colorPack.isDark,
-                            selected = selected,
-                            onClick = {
-                                preferences.useDynamicColors = false
-                                preferences.argb = colorPack.argb
-                                preferences.darkMode = colorPack.isDark
-                            },
-                            onLongClick = { openColorCanvas(colorPack.argb, colorPack.isDark) },
-                            name = colorPack.name,
-                            leftContentDescription = stringResource(string.ui_theme_card_left),
-                            rightContentDescription = stringResource(string.ui_theme_card_right)
-                        )
-                    }
-                    item {
-                        ThemeAddSelection {
+                item {
+                    ThemeAddSelection {
 
-                        }
-                    }
-                }
-            } else {
-                TvLazyRow(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(spacing.medium),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    items(colorSchemes, key = { "${it.argb}_${it.isDark}" }) { pack ->
-
-                        val selected =
-                            !useDynamicColors && colorArgb == pack.argb && isDarkMode == pack.isDark
-
-                        ThemeSelection(
-                            argb = pack.argb,
-                            isDark = pack.isDark,
-                            selected = selected,
-                            onClick = {
-                                preferences.useDynamicColors = false
-                                preferences.argb = pack.argb
-                                preferences.darkMode = pack.isDark
-                            },
-                            onLongClick = { },
-                            name = pack.name,
-                            leftContentDescription = stringResource(string.ui_theme_card_left),
-                            rightContentDescription = stringResource(string.ui_theme_card_right),
-                            modifier = Modifier.animateItemPlacement()
-                        )
                     }
                 }
             }
-            HorizontalDivider()
+        } else {
+            TvLazyRow(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(spacing.medium),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                items(colorSchemes, key = { "${it.argb}_${it.isDark}" }) { pack ->
 
+                    val selected =
+                        !useDynamicColors && colorArgb == pack.argb && isDarkMode == pack.isDark
+
+                    ThemeSelection(
+                        argb = pack.argb,
+                        isDark = pack.isDark,
+                        selected = selected,
+                        onClick = {
+                            preferences.useDynamicColors = false
+                            preferences.argb = pack.argb
+                            preferences.darkMode = pack.isDark
+                        },
+                        onLongClick = { },
+                        name = pack.name,
+                        leftContentDescription = stringResource(string.ui_theme_card_left),
+                        rightContentDescription = stringResource(string.ui_theme_card_right),
+                        modifier = Modifier.animateItemPlacement()
+                    )
+                }
+            }
+        }
+        HorizontalDivider()
+
+        CheckBoxSharedPreference(
+            title = string.feat_setting_follow_system_theme,
+            icon = Icons.Rounded.DarkMode,
+            checked = preferences.followSystemTheme,
+            onChanged = { preferences.followSystemTheme = !preferences.followSystemTheme },
+        )
+
+        val useDynamicColorsAvailable = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+
+        CheckBoxSharedPreference(
+            title = string.feat_setting_use_dynamic_colors,
+            content = string.feat_setting_use_dynamic_colors_unavailable.takeUnless { useDynamicColorsAvailable },
+            icon = Icons.Rounded.ColorLens,
+            checked = useDynamicColors,
+            onChanged = { preferences.useDynamicColors = !useDynamicColors },
+            enabled = useDynamicColorsAvailable
+        )
+        if (!tv) {
             CheckBoxSharedPreference(
-                title = string.feat_setting_follow_system_theme,
-                icon = Icons.Rounded.DarkMode,
-                checked = preferences.followSystemTheme,
-                onChanged = { preferences.followSystemTheme = !preferences.followSystemTheme },
-            )
-
-            val useDynamicColorsAvailable = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
-
-            CheckBoxSharedPreference(
-                title = string.feat_setting_use_dynamic_colors,
-                content = string.feat_setting_use_dynamic_colors_unavailable.takeUnless { useDynamicColorsAvailable },
-                icon = Icons.Rounded.ColorLens,
-                checked = useDynamicColors,
-                onChanged = { preferences.useDynamicColors = !useDynamicColors },
-                enabled = useDynamicColorsAvailable
+                title = string.feat_setting_colorful_background,
+                icon = Icons.Rounded.Stars,
+                checked = preferences.colorfulBackground,
+                onChanged = { preferences.colorfulBackground = !preferences.colorfulBackground }
             )
         }
+        Preference(
+            title = stringResource(string.feat_setting_restore_schemes).title(),
+            icon = Icons.Rounded.Restore,
+            onClick = restoreSchemes
+        )
     }
 }

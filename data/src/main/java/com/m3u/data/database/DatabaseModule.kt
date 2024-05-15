@@ -6,7 +6,7 @@ import android.content.Context
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
-import com.m3u.data.database.dao.ColorPackDao
+import com.m3u.data.database.dao.ColorSchemeDao
 import com.m3u.data.database.dao.EpisodeDao
 import com.m3u.data.database.dao.PlaylistDao
 import com.m3u.data.database.dao.ProgrammeDao
@@ -74,5 +74,5 @@ internal object DatabaseModule {
     @Singleton
     fun provideColorPackDao(
         database: M3UDatabase
-    ): ColorPackDao = database.colorPackDao()
+    ): ColorSchemeDao = database.colorPackDao()
 }

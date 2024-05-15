@@ -38,7 +38,6 @@ import com.m3u.features.foryou.components.PlaylistGalleryPlaceholder
 import com.m3u.features.foryou.components.recommend.Recommend
 import com.m3u.features.foryou.components.recommend.RecommendGallery
 import com.m3u.i18n.R.string
-import com.m3u.material.components.Background
 import com.m3u.material.ktx.interceptVolumeEvent
 import com.m3u.material.ktx.isTelevision
 import com.m3u.material.ktx.thenIf
@@ -102,67 +101,66 @@ fun ForyouRoute(
         }
     }
 
-    Background(modifier) {
-        ForyouScreen(
-            playlistCountsResource = playlistCountsResource,
-            subscribingPlaylistUrls = subscribingPlaylistUrls,
-            recommend = recommend,
-            rowCount = preferences.rowCount,
-            contentPadding = contentPadding,
-            navigateToPlaylist = navigateToPlaylist,
-            onClickStream = { stream ->
-                coroutineScope.launch {
-                    val playlist = viewModel.getPlaylist(stream.playlistUrl)
-                    when {
-                        playlist?.isSeries ?: false -> {
-                            viewModel.series.value = stream
-                        }
-
-                        else -> {
-                            helper.play(MediaCommand.Common(stream.id))
-                            navigateToStream()
-                        }
+    ForyouScreen(
+        playlistCountsResource = playlistCountsResource,
+        subscribingPlaylistUrls = subscribingPlaylistUrls,
+        recommend = recommend,
+        rowCount = preferences.rowCount,
+        contentPadding = contentPadding,
+        navigateToPlaylist = navigateToPlaylist,
+        onClickStream = { stream ->
+            coroutineScope.launch {
+                val playlist = viewModel.getPlaylist(stream.playlistUrl)
+                when {
+                    playlist?.isSeries ?: false -> {
+                        viewModel.series.value = stream
                     }
-                }
-            },
-            navigateToSettingPlaylistManagement = navigateToSettingPlaylistManagement,
-            navigateToPlaylistConfiguration = navigateToPlaylistConfiguration,
-            onUnsubscribePlaylist = viewModel::onUnsubscribePlaylist,
-            modifier = Modifier
-                .fillMaxSize()
-                .thenIf(!tv && preferences.godMode) {
-                    Modifier.interceptVolumeEvent { event ->
-                        preferences.rowCount = when (event) {
-                            KeyEvent.KEYCODE_VOLUME_UP -> (preferences.rowCount - 1).coerceAtLeast(1)
-                            KeyEvent.KEYCODE_VOLUME_DOWN -> (preferences.rowCount + 1).coerceAtMost(
-                                2
-                            )
 
-                            else -> return@interceptVolumeEvent
-                        }
-                    }
-                }
-        )
-
-        EpisodesBottomSheet(
-            series = series,
-            episodes = episodes,
-            onEpisodeClick = { episode ->
-                coroutineScope.launch {
-                    series?.let { stream ->
-                        val input = MediaCommand.XtreamEpisode(
-                            streamId = stream.id,
-                            episode = episode
-                        )
-                        helper.play(input)
+                    else -> {
+                        helper.play(MediaCommand.Common(stream.id))
                         navigateToStream()
                     }
                 }
-            },
-            onRefresh = { series?.let { viewModel.seriesReplay.value += 1 } },
-            onDismissRequest = { viewModel.series.value = null }
-        )
-    }
+            }
+        },
+        navigateToSettingPlaylistManagement = navigateToSettingPlaylistManagement,
+        navigateToPlaylistConfiguration = navigateToPlaylistConfiguration,
+        onUnsubscribePlaylist = viewModel::onUnsubscribePlaylist,
+        modifier = Modifier
+            .fillMaxSize()
+            .thenIf(!tv && preferences.godMode) {
+                Modifier.interceptVolumeEvent { event ->
+                    preferences.rowCount = when (event) {
+                        KeyEvent.KEYCODE_VOLUME_UP -> (preferences.rowCount - 1).coerceAtLeast(1)
+                        KeyEvent.KEYCODE_VOLUME_DOWN -> (preferences.rowCount + 1).coerceAtMost(
+                            2
+                        )
+
+                        else -> return@interceptVolumeEvent
+                    }
+                }
+            }
+            .then(modifier)
+    )
+
+    EpisodesBottomSheet(
+        series = series,
+        episodes = episodes,
+        onEpisodeClick = { episode ->
+            coroutineScope.launch {
+                series?.let { stream ->
+                    val input = MediaCommand.XtreamEpisode(
+                        streamId = stream.id,
+                        episode = episode
+                    )
+                    helper.play(input)
+                    navigateToStream()
+                }
+            }
+        },
+        onRefresh = { series?.let { viewModel.seriesReplay.value += 1 } },
+        onDismissRequest = { viewModel.series.value = null }
+    )
 }
 
 @Composable
@@ -190,72 +188,70 @@ private fun ForyouScreen(
     var mediaSheetValue: MediaSheetValue.ForyouScreen by remember {
         mutableStateOf(MediaSheetValue.ForyouScreen())
     }
-    Background(modifier) {
-        Box {
-            when (playlistCountsResource) {
-                Resource.Loading -> {
-                    LinearProgressIndicator(
+    Box(modifier) {
+        when (playlistCountsResource) {
+            Resource.Loading -> {
+                LinearProgressIndicator(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(contentPadding)
+                )
+            }
+
+            is Resource.Success -> {
+                val showPlaylist = playlistCountsResource.data.isNotEmpty()
+                val header = @Composable {
+                    RecommendGallery(
+                        recommend = recommend,
+                        navigateToPlaylist = navigateToPlaylist,
+                        onClickStream = onClickStream,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+                if (showPlaylist) {
+                    PlaylistGallery(
+                        rowCount = actualRowCount,
+                        playlistCounts = playlistCountsResource.data,
+                        subscribingPlaylistUrls = subscribingPlaylistUrls,
+                        onClick = navigateToPlaylist,
+                        onLongClick = { mediaSheetValue = MediaSheetValue.ForyouScreen(it) },
+                        header = header.takeIf { recommend.isNotEmpty() },
+                        contentPadding = contentPadding,
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(contentPadding)
-                    )
-                }
-
-                is Resource.Success -> {
-                    val showPlaylist = playlistCountsResource.data.isNotEmpty()
-                    val header = @Composable {
-                        RecommendGallery(
-                            recommend = recommend,
-                            navigateToPlaylist = navigateToPlaylist,
-                            onClickStream = onClickStream,
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    }
-                    if (showPlaylist) {
-                        PlaylistGallery(
-                            rowCount = actualRowCount,
-                            playlistCounts = playlistCountsResource.data,
-                            subscribingPlaylistUrls = subscribingPlaylistUrls,
-                            onClick = navigateToPlaylist,
-                            onLongClick = { mediaSheetValue = MediaSheetValue.ForyouScreen(it) },
-                            header = header.takeIf { recommend.isNotEmpty() },
-                            contentPadding = contentPadding,
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .haze(
-                                    LocalHazeState.current,
-                                    HazeDefaults.style(MaterialTheme.colorScheme.surface)
-                                )
-                        )
-                    } else {
-                        Box(Modifier.fillMaxSize()) {
-                            PlaylistGalleryPlaceholder(
-                                navigateToSettingPlaylistManagement = navigateToSettingPlaylistManagement,
-                                modifier = Modifier.align(Alignment.Center)
+                            .fillMaxSize()
+                            .haze(
+                                LocalHazeState.current,
+                                HazeDefaults.style(MaterialTheme.colorScheme.surface)
                             )
-                        }
+                    )
+                } else {
+                    Box(Modifier.fillMaxSize()) {
+                        PlaylistGalleryPlaceholder(
+                            navigateToSettingPlaylistManagement = navigateToSettingPlaylistManagement,
+                            modifier = Modifier.align(Alignment.Center)
+                        )
                     }
-
-                    MediaSheet(
-                        value = mediaSheetValue,
-                        onUnsubscribePlaylist = {
-                            onUnsubscribePlaylist(it.url)
-                            mediaSheetValue = MediaSheetValue.ForyouScreen()
-                        },
-                        onPlaylistConfiguration = navigateToPlaylistConfiguration,
-                        onDismissRequest = {
-                            mediaSheetValue = MediaSheetValue.ForyouScreen()
-                        }
-                    )
                 }
 
-                is Resource.Failure -> {
-                    Text(
-                        text = playlistCountsResource.message.orEmpty(),
-                        color = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.align(Alignment.Center)
-                    )
-                }
+                MediaSheet(
+                    value = mediaSheetValue,
+                    onUnsubscribePlaylist = {
+                        onUnsubscribePlaylist(it.url)
+                        mediaSheetValue = MediaSheetValue.ForyouScreen()
+                    },
+                    onPlaylistConfiguration = navigateToPlaylistConfiguration,
+                    onDismissRequest = {
+                        mediaSheetValue = MediaSheetValue.ForyouScreen()
+                    }
+                )
+            }
+
+            is Resource.Failure -> {
+                Text(
+                    text = playlistCountsResource.message.orEmpty(),
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.align(Alignment.Center)
+                )
             }
         }
     }
