@@ -11,6 +11,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.DriveFileMove
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
@@ -19,6 +20,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.BaselineShift
@@ -89,6 +91,7 @@ private fun SmartphonePlaylistItemImpl(
     OutlinedCard(
         shape = AbsoluteSmoothCornerShape(spacing.medium, 65),
         border = CardDefaults.outlinedCardBorder(local),
+        colors = CardDefaults.cardColors(Color.Transparent),
         modifier = modifier.semantics(mergeDescendants = true) { }
     ) {
         ListItem(
@@ -170,6 +173,7 @@ private fun SmartphonePlaylistItemImpl(
                     }
                 }
             },
+            colors = ListItemDefaults.colors(Color.Transparent),
             modifier = Modifier.combinedClickable(
                 onClick = onClick,
                 onLongClick = onLongClick

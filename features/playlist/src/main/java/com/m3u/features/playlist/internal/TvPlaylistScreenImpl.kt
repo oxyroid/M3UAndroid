@@ -4,7 +4,6 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.background
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -40,11 +39,11 @@ import com.m3u.features.playlist.PlaylistViewModel
 import com.m3u.features.playlist.components.ImmersiveBackground
 import com.m3u.features.playlist.components.TvStreamGallery
 import com.m3u.i18n.R
+import com.m3u.material.components.Background
 import com.m3u.material.components.Icon
 import com.m3u.material.components.television.dialogFocusable
 import com.m3u.material.ktx.Edge
 import com.m3u.material.ktx.blurEdge
-import com.m3u.material.ktx.thenIf
 import com.m3u.material.model.LocalHazeState
 import com.m3u.ui.Sort
 import com.m3u.ui.TvSortFullScreenDialog
@@ -76,8 +75,6 @@ internal fun TvPlaylistScreenImpl(
 
     val multiCategories = channels.size > 1
     val noPictureMode = preferences.noPictureMode
-    val darkMode = if (preferences.followSystemTheme) isSystemInDarkTheme()
-    else preferences.darkMode
     val useGridLayout = sort != Sort.UNSPECIFIED
 
     val maxBrowserHeight by animateDpAsState(
@@ -121,23 +118,21 @@ internal fun TvPlaylistScreenImpl(
                     onClick = onStream,
                     onLongClick = { stream -> press = stream },
                     onFocus = { stream -> focus = stream },
-                    modifier = Modifier.thenIf(darkMode) {
-                        Modifier
-                            .hazeChild(
-                                LocalHazeState.current,
-                                style = HazeStyle(blurRadius = 4.dp)
-                            )
-                            .blurEdge(
-                                color = MaterialTheme.colorScheme.background,
-                                edge = Edge.Top
-                            )
-                    }
+                    modifier = Modifier
+                        .hazeChild(
+                            LocalHazeState.current,
+                            style = HazeStyle(blurRadius = 4.dp)
+                        )
+                        .blurEdge(
+                            color = MaterialTheme.colorScheme.background,
+                            edge = Edge.Top
+                        )
                 )
             }
         )
     }
 
-    Box {
+    Background {
         content()
         MenuFullScreenDialog(
             stream = press,

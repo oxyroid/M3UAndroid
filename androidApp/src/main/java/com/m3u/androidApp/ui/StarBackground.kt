@@ -121,7 +121,7 @@ private fun Star(
 ) {
     Box(
         modifier = modifier
-            .blur(spec.blurRadius)
+//            .blur(spec.blurRadius)
             .drawWithCache {
                 val width = size.width
                 val star = RoundedPolygon.star(

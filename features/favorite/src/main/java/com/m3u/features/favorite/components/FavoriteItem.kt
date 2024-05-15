@@ -3,6 +3,7 @@ package com.m3u.features.favorite.components
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
@@ -10,6 +11,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -73,6 +75,7 @@ private fun SmartphoneFavoriteItemImpl(
     OutlinedCard(
         modifier = Modifier.semantics(mergeDescendants = true) { },
         border = CardDefaults.outlinedCardBorder(zapping),
+        colors = CardDefaults.cardColors(Color.Transparent),
         shape = AbsoluteSmoothCornerShape(spacing.medium, 65),
     ) {
         ListItem(
@@ -108,6 +111,7 @@ private fun SmartphoneFavoriteItemImpl(
                     )
                 }
             },
+            colors = ListItemDefaults.colors(Color.Transparent),
             modifier = Modifier
                 .combinedClickable(
                     onClick = onClick,

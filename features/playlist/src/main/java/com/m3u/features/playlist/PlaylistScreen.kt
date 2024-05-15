@@ -39,7 +39,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.tv.material3.MaterialTheme
 import com.google.accompanist.permissions.rememberPermissionState
 import com.m3u.core.architecture.preferences.hiltPreferences
 import com.m3u.core.util.basic.title
@@ -53,11 +52,14 @@ import com.m3u.data.service.MediaCommand
 import com.m3u.features.playlist.internal.SmartphonePlaylistScreenImpl
 import com.m3u.features.playlist.internal.TvPlaylistScreenImpl
 import com.m3u.i18n.R.string
+import com.m3u.material.ktx.asColorScheme
 import com.m3u.material.ktx.checkPermissionOrRationale
+import com.m3u.material.ktx.createScheme
 import com.m3u.material.ktx.interceptVolumeEvent
 import com.m3u.material.ktx.isTelevision
 import com.m3u.material.ktx.thenIf
 import com.m3u.material.model.LocalSpacing
+import com.m3u.material.model.asTvScheme
 import com.m3u.ui.Destination
 import com.m3u.ui.EpisodesBottomSheet
 import com.m3u.ui.Sort
@@ -68,6 +70,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
+import androidx.tv.material3.MaterialTheme as TvMaterialTheme
 
 @Composable
 internal fun PlaylistRoute(
@@ -80,7 +83,7 @@ internal fun PlaylistRoute(
     val preferences = hiltPreferences()
     val helper = LocalHelper.current
     val coroutineScope = rememberCoroutineScope()
-    val colorScheme = MaterialTheme.colorScheme
+    val colorScheme = TvMaterialTheme.colorScheme
 
     val tv = isTelevision()
 
@@ -314,23 +317,30 @@ private fun PlaylistScreen(
             modifier = modifier
         )
     } else {
-        TvPlaylistScreenImpl(
-            title = title,
-            channels = channels,
-            query = query,
-            onQuery = onQuery,
-            onStream = onStream,
-            onRefresh = onRefresh,
-            sorts = sorts,
-            sort = sort,
-            onSort = onSort,
-            favorite = favourite,
-            hide = hide,
-            savePicture = savePicture,
-            createTvRecommend = createTvRecommend,
-            isVodOrSeriesPlaylist = isVodPlaylist || isSeriesPlaylist,
-            modifier = modifier
-        )
+        val preferences = hiltPreferences()
+        TvMaterialTheme(
+            colorScheme = remember(preferences.argb) {
+                createScheme(preferences.argb, true).asColorScheme().asTvScheme()
+            }
+        ) {
+            TvPlaylistScreenImpl(
+                title = title,
+                channels = channels,
+                query = query,
+                onQuery = onQuery,
+                onStream = onStream,
+                onRefresh = onRefresh,
+                sorts = sorts,
+                sort = sort,
+                onSort = onSort,
+                favorite = favourite,
+                hide = hide,
+                savePicture = savePicture,
+                createTvRecommend = createTvRecommend,
+                isVodOrSeriesPlaylist = isVodPlaylist || isSeriesPlaylist,
+                modifier = modifier
+            )
+        }
     }
 }
 
