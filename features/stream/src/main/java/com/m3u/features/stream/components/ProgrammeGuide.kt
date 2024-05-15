@@ -56,7 +56,6 @@ import com.m3u.material.components.Icon
 import com.m3u.material.ktx.Edge
 import com.m3u.material.ktx.blurEdges
 import com.m3u.material.model.LocalSpacing
-import com.m3u.material.texture.MeshContainer
 import com.m3u.ui.FontFamilies
 import com.m3u.ui.util.TimeUtils.formatEOrSh
 import com.m3u.ui.util.TimeUtils.toEOrSh
@@ -133,93 +132,90 @@ internal fun ProgramGuide(
         }
     }
 
-    MeshContainer {
-        BoxWithConstraints {
-            MinaBox(
-                state = minaBoxState,
-                scrollDirection = MinaBoxScrollDirection.VERTICAL,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .blurEdges(
-                        MaterialTheme.colorScheme.surface,
-                        listOf(Edge.Top, Edge.Bottom)
-                    )
-                    .then(zoomGestureModifier)
-                    .then(modifier)
-            ) {
-                // programmes
-                items(
-                    count = programmes.itemCount,
-                    layoutInfo = { index ->
-                        val programme = programmes[index]
-                        if (programme != null) {
-                            val start = programme.start
-                            val end = programme.end
-                            MinaBoxItem(
-                                x = padding,
-                                y = currentHeight * (start - range.start) / HOUR_LENGTH + padding * 3,
-                                width = (constraints.maxWidth - padding * 2)
-                                    .coerceAtLeast(0f),
-                                height = (currentHeight * (end - start) / HOUR_LENGTH - padding)
-                                    .coerceAtLeast(0f)
-                            )
-                        } else {
-                            MinaBoxItem(0f, 0f, 0f, 0f)
-                        }
-                    }
-                ) { index ->
+    BoxWithConstraints {
+        MinaBox(
+            state = minaBoxState,
+            scrollDirection = MinaBoxScrollDirection.VERTICAL,
+            modifier = Modifier
+                .fillMaxSize()
+                .blurEdges(
+                    MaterialTheme.colorScheme.surface,
+                    listOf(Edge.Top, Edge.Bottom)
+                )
+                .then(zoomGestureModifier)
+                .then(modifier)
+        ) {
+            // programmes
+            items(
+                count = programmes.itemCount,
+                layoutInfo = { index ->
                     val programme = programmes[index]
                     if (programme != null) {
-                        ProgrammeCell(programme)
+                        val start = programme.start
+                        val end = programme.end
+                        MinaBoxItem(
+                            x = padding,
+                            y = currentHeight * (start - range.start) / HOUR_LENGTH + padding * 3,
+                            width = (constraints.maxWidth - padding * 2)
+                                .coerceAtLeast(0f),
+                            height = (currentHeight * (end - start) / HOUR_LENGTH - padding)
+                                .coerceAtLeast(0f)
+                        )
                     } else {
-                        // Placeholder
+                        MinaBoxItem(0f, 0f, 0f, 0f)
                     }
                 }
-
-                // current timeline
-                items(
-                    count = 1,
-                    layoutInfo = {
-                        MinaBoxItem(
-                            x = 0f,
-                            y = currentTimelineOffset + padding * 2,
-                            width = constraints.maxWidth.toFloat(),
-                            height = currentTimelineHeight
-                        )
-                    }
-                ) {
-                    CurrentTimelineCell(
-                        milliseconds = currentMilliseconds
-                    )
-                }
-
-                // range
-                items(
-                    count = 1,
-                    layoutInfo = {
-                        MinaBoxItem(
-                            x = 0f,
-                            y = 0f,
-                            width = 0f,
-                            height = with(range) {
-                                (currentHeight * (end - start) / HOUR_LENGTH - padding)
-                            }
-                        )
-                    }
-                ) {
-
+            ) { index ->
+                val programme = programmes[index]
+                if (programme != null) {
+                    ProgrammeCell(programme)
+                } else {
+                    // Placeholder
                 }
             }
 
-            Controls(
-                animateToCurrentTimeline = {
-                    coroutineScope.launch { animateToCurrentTimeline() }
-                },
-                modifier = Modifier
-                    .padding(spacing.medium)
-                    .align(Alignment.BottomEnd)
-            )
+            // current timeline
+            items(
+                count = 1,
+                layoutInfo = {
+                    MinaBoxItem(
+                        x = 0f,
+                        y = currentTimelineOffset + padding * 2,
+                        width = constraints.maxWidth.toFloat(),
+                        height = currentTimelineHeight
+                    )
+                }
+            ) {
+                CurrentTimelineCell(
+                    milliseconds = currentMilliseconds
+                )
+            }
+
+            // background
+            items(
+                count = 1,
+                layoutInfo = {
+                    MinaBoxItem(
+                        x = 0f,
+                        y = 0f,
+                        width = constraints.maxWidth.toFloat(),
+                        height = with(range) {
+                            (currentHeight * (end - start) / HOUR_LENGTH - padding)
+                        }
+                    )
+                }
+            ) {
+            }
         }
+
+        Controls(
+            animateToCurrentTimeline = {
+                coroutineScope.launch { animateToCurrentTimeline() }
+            },
+            modifier = Modifier
+                .padding(spacing.medium)
+                .align(Alignment.BottomEnd)
+        )
     }
 }
 
@@ -374,14 +370,6 @@ private fun CurrentTimelineCell(
                 .fillMaxWidth()
                 .zIndex(2f)
         ) {
-//            drawCircle(
-//                color = color,
-//                center = Offset(
-//                    x = size.minDimension / 2,
-//                    y = size.minDimension / 2
-//                ),
-//                radius = size.minDimension / 3
-//            )
             drawLine(
                 color = color,
                 start = Offset(
@@ -415,7 +403,7 @@ private fun CurrentTimelineCell(
 @Composable
 private fun Controls(
     animateToCurrentTimeline: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     ConstraintLayout(
         modifier = modifier

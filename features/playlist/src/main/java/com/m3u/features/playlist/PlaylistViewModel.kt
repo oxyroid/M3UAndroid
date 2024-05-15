@@ -15,7 +15,6 @@ import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
-import androidx.paging.filter
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import androidx.work.WorkQuery
@@ -248,20 +247,23 @@ class PlaylistViewModel @Inject constructor(
         val playlistUrl: String,
         val query: String,
         val sort: Sort,
-        val categories: List<String>
+        val categories: List<String>,
     )
 
     data class Channel(
         val category: String,
-        val streams: Flow<PagingData<Stream>>
+        val streams: Flow<PagingData<Stream>>,
     )
 
     internal val channels: StateFlow<List<Channel>> = combine(
-        playlistUrl,
+        playlistUrl.flatMapLatest { playlistRepository.observe(it) },
         query,
         sort
-    ) { playlistUrl, query, sort ->
-        val categories = playlistRepository.getCategoriesByPlaylistUrlIgnoreHidden(playlistUrl)
+    ) { playlist, query, sort ->
+        val playlistUrl = playlist?.url ?: return@combine null
+        val categories = playlistUrl.let {
+            playlistRepository.getCategoriesByPlaylistUrlIgnoreHidden(it, query)
+        }
         PagingStreamParameters(
             playlistUrl = playlistUrl,
             query = query,
@@ -269,7 +271,9 @@ class PlaylistViewModel @Inject constructor(
             categories = categories
         )
     }
-        .map { (playlistUrl, query, sort, categories) ->
+        .map { params ->
+            params ?: return@map emptyList()
+            val (playlistUrl, query, sort, categories) = params
             categories.map { category ->
                 Channel(
                     category = category,
@@ -287,7 +291,6 @@ class PlaylistViewModel @Inject constructor(
                         )
                     }
                         .flow
-                        .map { data -> data.filter { !it.hidden } }
                         .cachedIn(viewModelScope)
                 )
             }

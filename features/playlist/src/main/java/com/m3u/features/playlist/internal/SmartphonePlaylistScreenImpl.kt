@@ -5,11 +5,13 @@ package com.m3u.features.playlist.internal
 import android.content.res.Configuration.ORIENTATION_LANDSCAPE
 import android.content.res.Configuration.ORIENTATION_PORTRAIT
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import androidx.compose.material.BackdropScaffold
@@ -58,7 +60,6 @@ import com.m3u.material.ktx.isAtTop
 import com.m3u.material.ktx.split
 import com.m3u.material.model.LocalHazeState
 import com.m3u.material.model.LocalSpacing
-import com.m3u.material.texture.MeshContainer
 import com.m3u.ui.EventHandler
 import com.m3u.ui.MediaSheet
 import com.m3u.ui.MediaSheetValue
@@ -180,58 +181,60 @@ internal fun SmartphonePlaylistScreenImpl(
                     onValueChange = onQuery,
                     fontWeight = FontWeight.Bold,
                     placeholder = stringResource(string.feat_playlist_query_placeholder).uppercase(),
-                    modifier = Modifier.focusRequester(focusRequester)
+                    modifier = Modifier
+                        .focusRequester(focusRequester)
+                        .heightIn(max = 48.dp)
                 )
             }
         },
         frontLayerContent = {
-            MeshContainer {
-                val state = rememberLazyStaggeredGridState()
-                LaunchedEffect(Unit) {
-                    snapshotFlow { state.isAtTop }
-                        .onEach { isAtTopState.value = it }
-                        .launchIn(this)
+            val state = rememberLazyStaggeredGridState()
+            LaunchedEffect(Unit) {
+                snapshotFlow { state.isAtTop }
+                    .onEach { isAtTopState.value = it }
+                    .launchIn(this)
+            }
+            EventHandler(scrollUp) {
+                state.scrollToItem(0)
+            }
+            val orientation = configuration.orientation
+            val actualRowCount = remember(orientation, rowCount) {
+                when (orientation) {
+                    ORIENTATION_LANDSCAPE -> rowCount + 2
+                    ORIENTATION_PORTRAIT -> rowCount
+                    else -> rowCount
                 }
-                EventHandler(scrollUp) {
-                    state.scrollToItem(0)
-                }
-                val orientation = configuration.orientation
-                val actualRowCount = remember(orientation, rowCount) {
-                    when (orientation) {
-                        ORIENTATION_LANDSCAPE -> rowCount + 2
-                        ORIENTATION_PORTRAIT -> rowCount
-                        else -> rowCount
-                    }
-                }
-                Column {
-                    PlaylistTabRow(
-                        selectedCategory = category,
-                        categories = categories,
-                        onCategoryChanged = { category = it },
-                        pinnedCategories = pinnedCategories,
-                        onPinOrUnpinCategory = onPinOrUnpinCategory,
-                        onHideCategory = onHideCategory
+            }
+            Column(
+                Modifier.background(MaterialTheme.colorScheme.background)
+            ) {
+                PlaylistTabRow(
+                    selectedCategory = category,
+                    categories = categories,
+                    onCategoryChanged = { category = it },
+                    pinnedCategories = pinnedCategories,
+                    onPinOrUnpinCategory = onPinOrUnpinCategory,
+                    onHideCategory = onHideCategory
+                )
+                val channel = channels.find { it.category == category }
+                SmartphoneStreamGallery(
+                    state = state,
+                    rowCount = actualRowCount,
+                    channel = channel,
+                    zapping = zapping,
+                    recently = sort == Sort.RECENTLY,
+                    isVodOrSeriesPlaylist = isVodOrSeriesPlaylist,
+                    onClick = onStream,
+                    contentPadding = inner,
+                    onLongClick = {
+                        mediaSheetValue = MediaSheetValue.PlaylistScreen(it)
+                    },
+                    getProgrammeCurrently = getProgrammeCurrently,
+                    modifier = modifier.haze(
+                        LocalHazeState.current,
+                        HazeDefaults.style(MaterialTheme.colorScheme.surface)
                     )
-                    val channel = channels.find { it.category == category }
-                    SmartphoneStreamGallery(
-                        state = state,
-                        rowCount = actualRowCount,
-                        channel = channel,
-                        zapping = zapping,
-                        recently = sort == Sort.RECENTLY,
-                        isVodOrSeriesPlaylist = isVodOrSeriesPlaylist,
-                        onClick = onStream,
-                        contentPadding = inner,
-                        onLongClick = {
-                            mediaSheetValue = MediaSheetValue.PlaylistScreen(it)
-                        },
-                        getProgrammeCurrently = getProgrammeCurrently,
-                        modifier = modifier.haze(
-                            LocalHazeState.current,
-                            HazeDefaults.style(MaterialTheme.colorScheme.surface)
-                        )
-                    )
-                }
+                )
             }
         },
         backLayerBackgroundColor = Color.Transparent,

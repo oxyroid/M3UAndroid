@@ -17,8 +17,18 @@ internal interface StreamDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertOrReplaceAll(vararg streams: Stream)
 
-    @Query("SELECT DISTINCT `group` FROM streams WHERE playlistUrl = :playlistUrl")
-    suspend fun getCategoriesByPlaylistUrl(playlistUrl: String): List<String>
+    @Query(
+        """
+            SELECT DISTINCT `group`
+            FROM streams
+            WHERE playlistUrl = :playlistUrl
+            AND title LIKE '%'||:query||'%'
+        """
+    )
+    suspend fun getCategoriesByPlaylistUrl(
+        playlistUrl: String,
+        query: String
+    ): List<String>
 
     @Delete
     suspend fun delete(stream: Stream)
@@ -44,22 +54,26 @@ internal interface StreamDao {
     @Query("SELECT * FROM streams WHERE id = :id")
     suspend fun get(id: Int): Stream?
 
-    @Query("""
+    @Query(
+        """
         SELECT * FROM streams
         WHERE hidden = 0
         AND playlistUrl NOT IN (:seriesPlaylistUrls)
         ORDER BY RANDOM()
         LIMIT 1
-    """)
+    """
+    )
     suspend fun randomIgnoreSeriesAndHidden(vararg seriesPlaylistUrls: String): Stream?
 
-    @Query("""
+    @Query(
+        """
         SELECT * FROM streams
         WHERE favourite = 1
         AND playlistUrl NOT IN (:seriesPlaylistUrls)
         ORDER BY RANDOM()
         LIMIT 1
-    """)
+    """
+    )
     suspend fun randomIgnoreSeriesInFavourite(vararg seriesPlaylistUrls: String): Stream?
 
     @Query("SELECT * FROM streams WHERE url = :url")
@@ -106,21 +120,45 @@ internal interface StreamDao {
         query: String
     ): PagingSource<Int, Stream>
 
-    @Query("SELECT * FROM streams WHERE playlistUrl = :url AND title LIKE '%'||:query||'%' AND `group` = :category ORDER BY title ASC")
+    @Query(
+        """
+            SELECT * FROM streams 
+            WHERE playlistUrl = :url
+            AND title LIKE '%'||:query||'%'
+            AND `group` = :category
+            ORDER BY title ASC
+        """
+    )
     fun pagingAllByPlaylistUrlAsc(
         url: String,
         category: String,
         query: String
     ): PagingSource<Int, Stream>
 
-    @Query("SELECT * FROM streams WHERE playlistUrl = :url AND title LIKE '%'||:query||'%' AND `group` = :category ORDER BY title DESC")
+    @Query(
+        """
+            SELECT * FROM streams 
+            WHERE playlistUrl = :url
+            AND title LIKE '%'||:query||'%'
+            AND `group` = :category
+            ORDER BY title DESC
+        """
+    )
     fun pagingAllByPlaylistUrlDesc(
         url: String,
         category: String,
         query: String
     ): PagingSource<Int, Stream>
 
-    @Query("SELECT * FROM streams WHERE playlistUrl = :url AND title LIKE '%'||:query||'%' AND `group` = :category ORDER BY seen DESC")
+    @Query(
+        """
+            SELECT * FROM streams 
+            WHERE playlistUrl = :url
+            AND title LIKE '%'||:query||'%'
+            AND `group` = :category
+            ORDER BY seen DESC
+        """
+    )
     fun pagingAllByPlaylistUrlRecently(
         url: String,
         category: String,

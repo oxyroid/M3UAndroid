@@ -14,6 +14,7 @@ import androidx.compose.material.icons.rounded.BrokenImage
 import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
@@ -107,7 +108,8 @@ internal fun SmartphoneStreamItem(
     OutlinedCard(
         modifier = Modifier.semantics(mergeDescendants = true) { },
         border = CardDefaults.outlinedCardBorder(zapping),
-        shape = AbsoluteSmoothCornerShape(spacing.medium, 65),
+        colors = CardDefaults.cardColors(Color.Transparent),
+        shape = AbsoluteSmoothCornerShape(spacing.medium, 65)
     ) {
         when {
             !noPictureMode && isVodOrSeriesPlaylist -> {
@@ -229,6 +231,7 @@ internal fun SmartphoneStreamItem(
                     trailingContent = {
                         star()
                     },
+                    colors = ListItemDefaults.colors(Color.Transparent),
                     modifier = Modifier
                         .combinedClickable(
                             onClick = onClick,

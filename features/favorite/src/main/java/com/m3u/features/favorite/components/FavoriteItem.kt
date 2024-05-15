@@ -27,6 +27,7 @@ import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
+import androidx.tv.material3.ListItem as TvListItem
 
 @Composable
 internal fun FavoriteItem(
@@ -37,7 +38,6 @@ internal fun FavoriteItem(
     onLongClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    // TODO: split smartphone and television impl.
     val tv = isTelevision()
     if (!tv) {
         SmartphoneFavoriteItemImpl(
@@ -49,7 +49,7 @@ internal fun FavoriteItem(
             modifier = modifier
         )
     } else {
-        TelevisionFavouriteItemImpl(
+        TvFavouriteItemImpl(
             stream = stream,
             onClick = onClick,
             onLongClick = onLongClick,
@@ -123,13 +123,13 @@ private fun SmartphoneFavoriteItemImpl(
 }
 
 @Composable
-private fun TelevisionFavouriteItemImpl(
+private fun TvFavouriteItemImpl(
     stream: Stream,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    androidx.tv.material3.ListItem(
+    TvListItem(
         selected = false,
         onClick = onClick,
         onLongClick = onLongClick,

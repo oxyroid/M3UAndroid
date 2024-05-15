@@ -17,6 +17,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.SubcomposeLayout
 import androidx.compose.ui.unit.offset
+import androidx.compose.ui.util.fastForEach
+import androidx.compose.ui.util.fastMap
 import kotlin.math.roundToInt
 
 enum class PullPanelLayoutValue {
@@ -118,33 +120,40 @@ fun PullPanelLayout(
         ) { constraints ->
             val maxHeight = constraints.maxHeight
             val maxWidth = constraints.maxWidth
-            val panelLayerPlaceable = subcompose(PullPanelLayoutValue.EXPANDED, panel)
-                .first()
-                .measure(
-                    constraints
-                        .copy(
-                            maxHeight = currentOffset
-                                .roundToInt()
-                                .coerceAtMost(
-                                    (maxWidth * aspectRatio).roundToInt()
-                                )
-                        )
-                )
+            val panelLayerPlaceables = subcompose(PullPanelLayoutValue.EXPANDED, panel)
+                .fastMap {
+                    it.measure(
+                        constraints
+                            .copy(
+                                maxHeight = currentOffset
+                                    .roundToInt()
+                                    .coerceAtMost(
+                                        (maxWidth * aspectRatio).roundToInt()
+                                    )
+                            )
+                    )
+                }
 
-            val contentPlaceable = subcompose(PullPanelLayoutValue.COLLAPSED, content)
-                .first()
-                .measure(
-                    constraints
-                        .offset(
-                            vertical = -currentOffset
-                                .roundToInt()
-                                .coerceAtMost((maxWidth * aspectRatio).roundToInt())
-                        )
-                )
+            val contentPlaceables = subcompose(PullPanelLayoutValue.COLLAPSED, content)
+                .fastMap {
+                    it.measure(
+                        constraints
+                            .offset(
+                                vertical = -currentOffset
+                                    .roundToInt()
+                                    .coerceAtMost((maxWidth * aspectRatio).roundToInt())
+                            )
+                    )
+                }
 
             layout(maxWidth, maxHeight) {
-                contentPlaceable.placeRelative(0, 0)
-                panelLayerPlaceable.placeRelative(0, contentPlaceable.height)
+                contentPlaceables.fastForEach { it.placeRelative(0, 0) }
+                panelLayerPlaceables.fastForEach {
+                    it.placeRelative(
+                        0,
+                        contentPlaceables.maxOfOrNull { it.height } ?: 0
+                    )
+                }
             }
         }
     }

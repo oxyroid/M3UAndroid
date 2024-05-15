@@ -1,8 +1,5 @@
 package com.m3u.features.stream
 
-//import androidx.compose.animation.ExperimentalSharedTransitionApi
-//import androidx.compose.animation.SharedTransitionLayout
-//import androidx.compose.animation.SharedTransitionScope
 import android.content.Intent
 import android.graphics.Rect
 import android.net.Uri
@@ -67,7 +64,6 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlin.time.Duration.Companion.milliseconds
 
-//@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun StreamRoute(
     modifier: Modifier = Modifier,
