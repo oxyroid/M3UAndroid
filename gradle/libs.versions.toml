@@ -3,10 +3,10 @@ androidx-core = "1.13.1"
 androidx-core-splashscreen = "1.0.1"
 androidx-appcompat = "1.6.1"
 androidx-activity = "1.9.0"
-androidx-lifecycle = "2.7.0"
-androidx-compose = "1.6.7"
+androidx-lifecycle = "2.8.0"
 androidx-compose-bom = "2024.05.00"
-androidx-compose-material3-adaptive = "1.0.0-alpha06"
+androidx-compose-bom-alpha = "2024.05.00-alpha02"
+androidx-compose-material3-adaptive = "1.0.0-beta01"
 androidx-constraintlayout-compose = "1.0.1"
 androidx-navigation = "2.7.7"
 androidx-hilt = "1.2.0"
@@ -63,7 +63,8 @@ androidx-lifecycle-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name 
 androidx-lifecycle-lifecycle-runtime-compose = { group = "androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "androidx-lifecycle" }
 androidx-lifecycle-lifecycle-process = { group = "androidx.lifecycle", name = "lifecycle-process", version.ref = "androidx-lifecycle" }
 
-androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "androidx-compose-bom" }
+#androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "androidx-compose-bom" }
+androidx-compose-bom = { group = "dev.chrisbanes.compose", name = "compose-bom", version.ref = "androidx-compose-bom-alpha" }
 androidx-compose-foundation = { group = "androidx.compose.foundation", name = "foundation" }
 androidx-compose-foundation-layout = { group = "androidx.compose.foundation", name = "foundation-layout" }
 androidx-compose-material-iconsExtended = { group = "androidx.compose.material", name = "material-icons-extended" }
@@ -75,7 +76,9 @@ androidx-compose-ui-util = { group = "androidx.compose.ui", name = "ui-util" }
 
 androidx-compose-material3-material3-window-size-clazz = { group = "androidx.compose.material3", name = "material3-window-size-class" }
 
-androidx-compose-material3-material3-adaptive = { group = "androidx.compose.material3", name = "material3-adaptive", version.ref = "androidx-compose-material3-adaptive" }
+androidx-compose-material3-adaptive = { group = "androidx.compose.material3.adaptive", name = "adaptive", version.ref = "androidx-compose-material3-adaptive" }
+androidx-compose-material3-adaptive-layout = { group = "androidx.compose.material3.adaptive", name = "adaptive-layout", version.ref = "androidx-compose-material3-adaptive" }
+androidx-compose-material3-adaptive-navigation = { group = "androidx.compose.material3.adaptive", name = "adaptive-navigation", version.ref = "androidx-compose-material3-adaptive" }
 
 androidx-navigation-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "androidx-navigation" }
 androidx-constraintlayout-constraintlayout-compose = { group = "androidx.constraintlayout", name = "constraintlayout-compose", version.ref = "androidx-constraintlayout-compose" }
@@ -84,8 +87,6 @@ androidx-paging-compose = { module = "androidx.paging:paging-compose", version.r
 androidx-paging-runtime-ktx = { module = "androidx.paging:paging-runtime-ktx", version.ref = "androidx-paging-runtime-ktx" }
 androidx-tv-tv-foundation = { group = "androidx.tv", name = "tv-foundation", version.ref = "androidx-tv" }
 androidx-tv-tv-material = { group = "androidx.tv", name = "tv-material", version.ref = "androidx-tv" }
-
-androidx-compose-ui-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4", version.ref = "androidx-compose" }
 
 androidx-startup-startup-runtime = { group = "androidx.startup", name = "startup-runtime", version.ref = "androidx-startup" }
 

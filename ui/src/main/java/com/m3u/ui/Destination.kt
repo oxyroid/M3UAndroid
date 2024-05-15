@@ -1,5 +1,6 @@
 package com.m3u.ui
 
+import android.os.Parcelable
 import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Collections
@@ -13,6 +14,7 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation.NavHostController
 import com.m3u.i18n.R.string
+import kotlinx.parcelize.Parcelize
 
 val LocalNavController =
     staticCompositionLocalOf<NavHostController> { error("Please provide NavHostController") }
@@ -49,14 +51,14 @@ sealed interface Destination {
     ) : Destination
 }
 
-@Immutable
-sealed interface SettingDestination {
-    @Immutable
+@Parcelize
+sealed interface SettingDestination : Parcelable {
+    @Parcelize
     data object Default : SettingDestination
 
-    @Immutable
+    @Parcelize
     data object Playlists : SettingDestination
 
-    @Immutable
+    @Parcelize
     data object Appearance : SettingDestination
 }

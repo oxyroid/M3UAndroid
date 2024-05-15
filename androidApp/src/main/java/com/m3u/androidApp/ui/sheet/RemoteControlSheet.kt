@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.navigationBarsIgnoringVisibility
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.ModalBottomSheetDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
@@ -63,13 +62,9 @@ internal fun RemoteControlSheet(
     if (visible) {
         ModalBottomSheet(
             sheetState = sheetState,
-            windowInsets = WindowInsets(0),
             onDismissRequest = {
                 if (!searchingOrConnecting) onDismissRequest()
-            },
-            properties = ModalBottomSheetDefaults.properties(
-                shouldDismissOnBackPress = false
-            )
+            }
         ) {
             Column(
                 modifier.padding(WindowInsets.navigationBarsIgnoringVisibility.asPaddingValues())

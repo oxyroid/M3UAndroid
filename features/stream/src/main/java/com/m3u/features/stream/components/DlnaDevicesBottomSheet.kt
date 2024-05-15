@@ -62,8 +62,7 @@ internal fun DlnaDevicesBottomSheet(
         ModalBottomSheet(
             sheetState = state,
             onDismissRequest = onDismiss,
-            modifier = modifier,
-            windowInsets = WindowInsets(0)
+            modifier = modifier
         ) {
             LaunchedEffect(devices, state.isVisible) {
                 if (state.isVisible) state.expand()

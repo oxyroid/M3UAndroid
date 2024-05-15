@@ -37,7 +37,7 @@ import kotlin.time.toDuration
 
 @Composable
 internal fun RegularPreferences(
-    fragment: SettingDestination,
+    destination: SettingDestination,
     navigateToPlaylistManagement: () -> Unit,
     navigateToThemeSelector: () -> Unit,
     modifier: Modifier = Modifier
@@ -49,13 +49,13 @@ internal fun RegularPreferences(
         Preference(
             title = stringResource(string.feat_setting_playlist_management).title(),
             icon = Icons.Rounded.MusicNote,
-            enabled = fragment != SettingDestination.Playlists,
+            enabled = destination != SettingDestination.Playlists,
             onClick = navigateToPlaylistManagement
         )
         Preference(
             title = stringResource(string.feat_setting_appearance).title(),
             icon = Icons.Rounded.ColorLens,
-            enabled = fragment != SettingDestination.Appearance,
+            enabled = destination != SettingDestination.Appearance,
             onClick = navigateToThemeSelector
         )
         TextPreference(
