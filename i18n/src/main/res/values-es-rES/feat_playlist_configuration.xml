@@ -3,4 +3,7 @@
     <string name="feat_playlist_configuration_title">título</string>
     <string name="feat_playlist_configuration_user_agent">agente de usuario</string>
     <string name="feat_playlist_configuration_enabled_epgs">EPGs habilitadas</string>
+    <string name="feat_playlist_configuration_sync_programmes">sinc. programación</string>
+    <string name="feat_playlist_configuration_programmes_expired_time">Expira: %s</string>
+    <string name="feat_playlist_configuration_programmes_expired">la programación está desactualizada</string>
 </resources>
