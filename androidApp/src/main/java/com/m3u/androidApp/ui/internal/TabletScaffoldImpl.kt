@@ -25,21 +25,20 @@ import com.m3u.material.ktx.plus
 import com.m3u.ui.Destination
 import com.m3u.ui.helper.Action
 import com.m3u.ui.helper.Fob
+import com.m3u.ui.helper.Metadata
 
 @Composable
 @InternalComposeApi
 internal fun TabletScaffoldImpl(
     rootDestination: Destination.Root?,
     alwaysShowLabel: Boolean,
-    fob: Fob?,
-    title: String,
     navigateToRoot: (Destination.Root) -> Unit,
     onBackPressed: (() -> Unit)?,
-    actions: List<Action>,
     content: @Composable BoxScope.(PaddingValues) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val navigationWindowInsets = NavigationRailDefaults.windowInsets
+    val fob = Metadata.fob
 
     val navigation = @Composable {
         NavigationRail(
@@ -76,9 +75,7 @@ internal fun TabletScaffoldImpl(
             windowInsets = WindowInsets.systemBars.exclude(
                 navigationWindowInsets.only(WindowInsetsSides.Start)
             ),
-            title = title,
             onBackPressed = onBackPressed,
-            actions = actions,
             content = { content(it + contentPadding) }
         )
     }

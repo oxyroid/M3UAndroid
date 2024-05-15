@@ -49,9 +49,9 @@
     <string name="feat_setting_error_unselected_file">no file selected yet</string>
     <string name="feat_setting_error_blank_url">blank url</string>
     <string name="feat_setting_use_dynamic_colors">dynamic colors</string>
+    <string name="feat_setting_use_dynamic_colors_unavailable">it is available on Android 12 and above</string>
     <string name="feat_setting_colorful_background">colorful background</string>
     <string name="feat_setting_restore_schemes">restore schemes</string>
-    <string name="feat_setting_use_dynamic_colors_unavailable">it is available on Android 12 and above</string>
     <string name="feat_setting_not_implementation">this feature is not available for current version</string>
     <string name="feat_setting_zapping_mode">zapping mode</string>
     <string name="feat_setting_zapping_mode_description">quick preview before playing stream</string>
@@ -80,7 +80,7 @@
     <string name="feat_setting_canvas_apply">apply</string>
     <string name="feat_setting_canvas_reset">reset</string>
 
-    <string name="feat_setting_epg_clock_mode">epg 12h clock mode</string>
+    <string name="feat_setting_epg_clock_mode">programme 12h clock mode</string>
 
     <string name="feat_setting_remote_control">remote control</string>
     <string name="feat_setting_remote_control_description">turn on the ability to remotely control your TV</string>

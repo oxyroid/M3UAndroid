@@ -20,6 +20,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -88,6 +89,8 @@ fun ForyouRoute(
     if (isPageInfoVisible) {
         LifecycleResumeEffect(title) {
             Metadata.title = title.title()
+            Metadata.color = Color.Unspecified
+            Metadata.contentColor = Color.Unspecified
             Metadata.actions = listOf(
                 Action(
                     icon = Icons.Rounded.Add,

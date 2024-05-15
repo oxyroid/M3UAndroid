@@ -39,6 +39,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.tv.material3.MaterialTheme
 import com.google.accompanist.permissions.rememberPermissionState
 import com.m3u.core.architecture.preferences.hiltPreferences
 import com.m3u.core.util.basic.title
@@ -79,6 +80,7 @@ internal fun PlaylistRoute(
     val preferences = hiltPreferences()
     val helper = LocalHelper.current
     val coroutineScope = rememberCoroutineScope()
+    val colorScheme = MaterialTheme.colorScheme
 
     val tv = isTelevision()
 
@@ -111,8 +113,10 @@ internal fun PlaylistRoute(
         Manifest.permission.POST_NOTIFICATIONS
     )
 
-    LifecycleResumeEffect(playlist) {
+    LifecycleResumeEffect(playlist, colorScheme) {
         Metadata.title = playlist?.title?.title().orEmpty()
+        Metadata.color = colorScheme.secondaryContainer
+        Metadata.contentColor = colorScheme.onSecondaryContainer
         onPauseOrDispose {
         }
     }

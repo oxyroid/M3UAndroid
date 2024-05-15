@@ -24,8 +24,7 @@ import com.m3u.material.components.Background
 import com.m3u.material.ktx.plus
 import com.m3u.material.model.LocalHazeState
 import com.m3u.ui.Destination
-import com.m3u.ui.helper.Action
-import com.m3u.ui.helper.Fob
+import com.m3u.ui.helper.Metadata
 import dev.chrisbanes.haze.HazeStyle
 import dev.chrisbanes.haze.hazeChild
 
@@ -34,15 +33,13 @@ import dev.chrisbanes.haze.hazeChild
 fun SmartphoneScaffoldImpl(
     rootDestination: Destination.Root?,
     alwaysShowLabel: Boolean,
-    fob: Fob?,
-    title: String,
     navigateToRoot: (Destination.Root) -> Unit,
     onBackPressed: (() -> Unit)?,
-    actions: List<Action>,
     content: @Composable BoxScope.(PaddingValues) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val hazeState = LocalHazeState.current
+    val fob = Metadata.fob
 
     val navigation = @Composable {
         NavigationBar(
@@ -76,9 +73,7 @@ fun SmartphoneScaffoldImpl(
     val mainContent = @Composable { contentPadding: PaddingValues ->
         MainContent(
             windowInsets = WindowInsets.systemBars.exclude(WindowInsets.navigationBars),
-            title = title,
             onBackPressed = onBackPressed,
-            actions = actions,
             content = { content(it + contentPadding) }
         )
     }

@@ -50,7 +50,6 @@ import com.m3u.material.model.LocalHazeState
 import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.Destination
 import com.m3u.ui.FontFamilies
-import com.m3u.ui.helper.Action
 import com.m3u.ui.helper.Fob
 import com.m3u.ui.helper.LocalHelper
 import com.m3u.ui.helper.Metadata
@@ -72,10 +71,6 @@ internal fun Scaffold(
     val useRailNav = LocalHelper.current.useRailNav
     val tv = isTelevision()
 
-    val title = Metadata.title
-    val fob = Metadata.fob
-    val actions = Metadata.actions
-
     val hazeState = remember { HazeState() }
 
     CompositionLocalProvider(LocalHazeState provides hazeState) {
@@ -84,11 +79,8 @@ internal fun Scaffold(
                 tv -> {
                     TelevisionScaffoldImpl(
                         rootDestination = rootDestination,
-                        fob = fob,
-                        title = title,
                         navigateToRoot = navigateToRoot,
                         onBackPressed = onBackPressed,
-                        actions = actions,
                         content = content,
                         modifier = modifier
                     )
@@ -98,11 +90,8 @@ internal fun Scaffold(
                     SmartphoneScaffoldImpl(
                         rootDestination = rootDestination,
                         alwaysShowLabel = alwaysShowLabel,
-                        fob = fob,
-                        title = title,
                         navigateToRoot = navigateToRoot,
                         onBackPressed = onBackPressed,
-                        actions = actions,
                         content = content,
                         modifier = modifier
                     )
@@ -112,11 +101,8 @@ internal fun Scaffold(
                     TabletScaffoldImpl(
                         rootDestination = rootDestination,
                         alwaysShowLabel = alwaysShowLabel,
-                        fob = fob,
-                        title = title,
                         navigateToRoot = navigateToRoot,
                         onBackPressed = onBackPressed,
-                        actions = actions,
                         content = content,
                         modifier = modifier
                     )
@@ -139,15 +125,15 @@ internal fun Items(
 @Composable
 internal fun MainContent(
     windowInsets: WindowInsets,
-    title: String,
     onBackPressed: (() -> Unit)?,
-    actions: List<Action>,
     content: @Composable BoxScope.(PaddingValues) -> Unit
 ) {
     val tv = isTelevision()
     val spacing = LocalSpacing.current
     val hazeState = LocalHazeState.current
 
+    val title = Metadata.title
+    val actions = Metadata.actions
     Scaffold(
         topBar = {
             if (!tv) {
