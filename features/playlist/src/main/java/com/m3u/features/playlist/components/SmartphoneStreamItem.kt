@@ -108,7 +108,7 @@ internal fun SmartphoneStreamItem(
     OutlinedCard(
         modifier = Modifier.semantics(mergeDescendants = true) { },
         border = CardDefaults.outlinedCardBorder(zapping),
-        colors = CardDefaults.cardColors(Color.Transparent),
+        colors = CardDefaults.cardColors(MaterialTheme.colorScheme.surfaceContainer),
         shape = AbsoluteSmoothCornerShape(spacing.medium, 65)
     ) {
         when {
