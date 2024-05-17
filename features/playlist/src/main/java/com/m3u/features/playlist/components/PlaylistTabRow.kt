@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -41,16 +42,19 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import com.m3u.material.components.IconButton
+import com.m3u.material.ktx.Edge
+import com.m3u.material.ktx.blurEdge
 import com.m3u.material.ktx.thenIf
 import com.m3u.material.model.LocalHazeState
 import com.m3u.material.model.LocalSpacing
+import com.m3u.material.shape.AbsoluteSmoothCornerShape
 import dev.chrisbanes.haze.HazeDefaults
 import dev.chrisbanes.haze.haze
 
@@ -170,6 +174,7 @@ internal fun PlaylistTabRow(
                     horizontalArrangement = Arrangement.spacedBy(spacing.extraSmall),
                     modifier = Modifier
                         .background(MaterialTheme.colorScheme.surface)
+                        .blurEdge(MaterialTheme.colorScheme.surface, Edge.End)
                         .fillMaxWidth()
                 ) {
                     stickyHeader { header() }
@@ -250,24 +255,43 @@ private fun PlaylistTabRowItem(
             Box(
                 modifier = Modifier
                     .padding(
-                        horizontal = spacing.medium,
-                        vertical = spacing.small
+                        start = spacing.medium,
+                        end = spacing.medium,
+                        top = spacing.small
                     )
                     .heightIn(32.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = name,
-                    style = MaterialTheme.typography.titleSmall.copy(
-                        textDecoration = if (pinned) TextDecoration.Underline else TextDecoration.None
-                    ),
+                    text = when {
+                        pinned -> "[$name]"
+                        else -> name
+                    },
+                    style = MaterialTheme.typography.titleSmall,
                     fontWeight = when {
-                        focused -> FontWeight.Black
+                        pinned -> FontWeight.Black
                         selected && !hasOtherFocused -> FontWeight.Bold
                         else -> null
                     }
                 )
             }
+            Box(
+                Modifier
+                    .requiredSize(48.dp, spacing.small)
+                    .background(
+                        when {
+                            focused -> LocalContentColor.current
+                            selected -> MaterialTheme.colorScheme.primary
+                            else -> Color.Transparent
+                        },
+                        shape = AbsoluteSmoothCornerShape(
+                            cornerRadiusTL = 4.dp,
+                            cornerRadiusTR = 4.dp,
+                            smoothnessAsPercentBL = 60
+                        )
+                    )
+                    .align(Alignment.CenterHorizontally)
+            )
         }
     }
 }
