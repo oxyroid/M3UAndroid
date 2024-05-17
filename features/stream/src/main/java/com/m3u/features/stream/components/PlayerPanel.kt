@@ -29,16 +29,22 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.paging.compose.LazyPagingItems
+import androidx.tv.material3.surfaceColorAtElevation
 import com.m3u.data.database.model.Programme
 import com.m3u.data.database.model.ProgrammeRange
 import com.m3u.data.database.model.Stream
 import com.m3u.data.service.MediaCommand
 import com.m3u.material.components.Background
+import com.m3u.material.ktx.isTelevision
 import com.m3u.material.model.LocalSpacing
 import com.m3u.material.shape.AbsoluteSmoothCornerShape
 import com.m3u.ui.FontFamilies
 import com.m3u.ui.helper.LocalHelper
 import kotlinx.coroutines.launch
+import androidx.tv.material3.Card as TvCard
+import androidx.tv.material3.CardDefaults as TvCardDefaults
+import androidx.tv.material3.MaterialTheme as TvMaterialTheme
+import androidx.tv.material3.Text as TvText
 
 @Composable
 internal fun PlayerPanel(
@@ -146,33 +152,79 @@ private fun ChannelGallery(
         items(channels.itemCount) { i ->
             channels[i]?.let { stream ->
                 val isPlaying = stream.id == streamId
-                Card(
-                    colors = CardDefaults.cardColors(
-                        containerColor = if (!isPlaying)
-                            MaterialTheme.colorScheme.surfaceColorAtElevation(spacing.medium)
-                        else MaterialTheme.colorScheme.onSurface,
-                        contentColor = if (!isPlaying) MaterialTheme.colorScheme.onSurface
-                        else MaterialTheme.colorScheme.surfaceColorAtElevation(spacing.small)
-                    ),
-                    shape = AbsoluteRoundedCornerShape(spacing.medium),
-                    elevation = CardDefaults.cardElevation(spacing.none),
-                    onClick = {
-                        if (isPlaying) return@Card
-                        coroutineScope.launch {
-                            helper.play(
-                                MediaCommand.Common(stream.id)
-                            )
-                        }
-                    }
-                ) {
-                    Text(
-                        text = stream.title,
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.SemiBold.takeIf { isPlaying },
-                        modifier = Modifier.padding(spacing.medium)
+                ChannelGalleryItem(
+                    stream = stream,
+                    isPlaying = isPlaying
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ChannelGalleryItem(
+    stream: Stream,
+    isPlaying: Boolean,
+    modifier: Modifier = Modifier
+) {
+    val spacing = LocalSpacing.current
+    val helper = LocalHelper.current
+    val coroutineScope = rememberCoroutineScope()
+    val tv = isTelevision()
+
+    if (!tv) {
+        Card(
+            colors = CardDefaults.cardColors(
+                containerColor = if (!isPlaying)
+                    MaterialTheme.colorScheme.surfaceColorAtElevation(spacing.medium)
+                else MaterialTheme.colorScheme.onSurface,
+                contentColor = if (!isPlaying) MaterialTheme.colorScheme.onSurface
+                else MaterialTheme.colorScheme.surfaceColorAtElevation(spacing.small)
+            ),
+            shape = AbsoluteRoundedCornerShape(spacing.medium),
+            elevation = CardDefaults.cardElevation(spacing.none),
+            onClick = {
+                if (isPlaying) return@Card
+                coroutineScope.launch {
+                    helper.play(
+                        MediaCommand.Common(stream.id)
                     )
                 }
-            }
+            },
+            modifier = modifier
+        ) {
+            Text(
+                text = stream.title,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.SemiBold.takeIf { isPlaying },
+                modifier = Modifier.padding(spacing.medium)
+            )
+        }
+    } else {
+        TvCard(
+            colors = TvCardDefaults.colors(
+                containerColor = if (!isPlaying)
+                    TvMaterialTheme.colorScheme.surfaceColorAtElevation(spacing.medium)
+                else TvMaterialTheme.colorScheme.onSurface,
+                contentColor = if (!isPlaying) TvMaterialTheme.colorScheme.onSurface
+                else TvMaterialTheme.colorScheme.surfaceColorAtElevation(spacing.small)
+            ),
+            onClick = {
+                if (isPlaying) return@TvCard
+                coroutineScope.launch {
+                    helper.play(
+                        MediaCommand.Common(stream.id)
+                    )
+                }
+            },
+            modifier = modifier
+        ) {
+            TvText(
+                text = stream.title,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.SemiBold.takeIf { isPlaying },
+                modifier = Modifier.padding(spacing.medium)
+            )
         }
     }
 }

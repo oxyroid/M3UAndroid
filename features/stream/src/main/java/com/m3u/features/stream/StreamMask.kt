@@ -192,7 +192,7 @@ internal fun StreamMask(
     }
 
     if (tv) {
-        BackHandler(maskState.visible) {
+        BackHandler(maskState.visible && !maskState.locked) {
             maskState.sleep()
         }
     }

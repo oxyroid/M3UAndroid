@@ -19,6 +19,7 @@ import kotlin.time.Duration
 @Stable
 interface MaskState {
     val visible: Boolean
+    val locked: Boolean
     fun wake()
     fun sleep()
     fun lock(key: Any)
@@ -38,9 +39,7 @@ private class MaskStateCoroutineImpl(
     private var currentTime: Long by mutableLongStateOf(systemClock)
     private var lastTime: Long by mutableLongStateOf(0L)
     private var keys by mutableStateOf<Set<Any>>(emptySet())
-    private val locked: Boolean by derivedStateOf {
-        keys.isNotEmpty()
-    }
+    override val locked: Boolean by derivedStateOf { keys.isNotEmpty() }
 
     override val visible: Boolean by derivedStateOf {
         val before = (locked || (currentTime - lastTime <= minDuration))

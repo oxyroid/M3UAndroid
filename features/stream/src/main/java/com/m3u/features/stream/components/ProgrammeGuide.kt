@@ -47,6 +47,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.paging.compose.LazyPagingItems
+import androidx.tv.material3.NonInteractiveSurfaceDefaults
 import coil.compose.AsyncImage
 import com.m3u.core.architecture.preferences.hiltPreferences
 import com.m3u.data.database.model.Programme
@@ -55,6 +56,7 @@ import com.m3u.data.database.model.ProgrammeRange.Companion.HOUR_LENGTH
 import com.m3u.material.components.Icon
 import com.m3u.material.ktx.Edge
 import com.m3u.material.ktx.blurEdges
+import com.m3u.material.ktx.isTelevision
 import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.FontFamilies
 import com.m3u.ui.util.TimeUtils.formatEOrSh
@@ -72,6 +74,8 @@ import kotlinx.datetime.toLocalDateTime
 import kotlin.math.absoluteValue
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
+import androidx.tv.material3.MaterialTheme as TvMaterialTheme
+import androidx.tv.material3.Surface as TvSurface
 
 private enum class Zoom(val time: Float) {
     DEFAULT(1f), ZOOM_1_5(1.5f), ZOOM_2(2f), ZOOM_5(5f)
@@ -282,14 +286,10 @@ private fun ProgrammeCell(
 ) {
     val spacing = LocalSpacing.current
     val preferences = hiltPreferences()
-    val colorScheme = MaterialTheme.colorScheme
+    val coroutineScope = rememberCoroutineScope()
+    val tv = isTelevision()
     val clockMode = preferences.twelveHourClock
-    Surface(
-        color = colorScheme.tertiaryContainer,
-        border = BorderStroke(1.dp, colorScheme.outline),
-        shape = AbsoluteRoundedCornerShape(4.dp),
-        modifier = modifier
-    ) {
+    val content = @Composable {
         FlowRow(
             modifier = Modifier
                 .fillMaxSize()
@@ -343,6 +343,22 @@ private fun ProgrammeCell(
                 fontFamily = FontFamilies.LexendExa
             )
         }
+    }
+    if (!tv) {
+        Surface(
+            color = MaterialTheme.colorScheme.tertiaryContainer,
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+            shape = AbsoluteRoundedCornerShape(4.dp),
+            modifier = modifier,
+            content = content
+        )
+    } else {
+        TvSurface(
+            colors = NonInteractiveSurfaceDefaults.colors(TvMaterialTheme.colorScheme.tertiaryContainer),
+            shape = AbsoluteRoundedCornerShape(4.dp),
+            modifier = modifier,
+            content = { content() }
+        )
     }
 }
 
