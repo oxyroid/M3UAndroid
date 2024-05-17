@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.AbsoluteRoundedCornerShape
 import androidx.compose.material3.Card
@@ -30,6 +31,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.paging.compose.LazyPagingItems
 import androidx.tv.material3.surfaceColorAtElevation
+import com.m3u.core.util.collections.indexOf
+import com.m3u.data.database.model.Episode
 import com.m3u.data.database.model.Programme
 import com.m3u.data.database.model.ProgrammeRange
 import com.m3u.data.database.model.Stream
@@ -104,8 +107,8 @@ internal fun PlayerPanel(
 
             if (!isSeriesPlaylist) {
                 ChannelGallery(
-                    channels = channels,
-                    streamId = streamId,
+                    // TODO
+                    value = ChannelGalleryValue.PagingChannel(channels, streamId),
                     isPanelExpanded = isPanelExpanded
                 )
             }
@@ -123,22 +126,16 @@ internal fun PlayerPanel(
 }
 
 @Composable
-// TODO: Support Xtream Series Episodes.
 private fun ChannelGallery(
-    channels: LazyPagingItems<Stream>,
-    streamId: Int,
+    value: ChannelGalleryValue,
     isPanelExpanded: Boolean,
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
-    val helper = LocalHelper.current
-
     val lazyListState = rememberLazyListState()
-    val coroutineScope = rememberCoroutineScope()
 
     ScrollToCurrentEffect(
-        neighboring = channels,
-        streamId = streamId,
+        value = value,
         isPanelExpanded = isPanelExpanded,
         lazyListState = lazyListState
     )
@@ -149,16 +146,40 @@ private fun ChannelGallery(
         contentPadding = PaddingValues(spacing.medium),
         modifier = modifier
     ) {
-        items(channels.itemCount) { i ->
-            channels[i]?.let { stream ->
-                val isPlaying = stream.id == streamId
-                ChannelGalleryItem(
-                    stream = stream,
-                    isPlaying = isPlaying
-                )
+        when (value) {
+            is ChannelGalleryValue.PagingChannel -> {
+                val channels = value.channels
+                val streamId = value.streamId
+                items(channels.itemCount) { i ->
+                    channels[i]?.let { stream ->
+                        val isPlaying = stream.id == streamId
+                        ChannelGalleryItem(
+                            stream = stream,
+                            isPlaying = isPlaying
+                        )
+                    }
+                }
+            }
+
+            is ChannelGalleryValue.XtreamEpisode -> {
+                items(value.episodes) { series ->
+                    // TODO
+                }
             }
         }
     }
+}
+
+private sealed class ChannelGalleryValue {
+    data class PagingChannel(
+        val channels: LazyPagingItems<Stream>,
+        val streamId: Int
+    ) : ChannelGalleryValue()
+
+    data class XtreamEpisode(
+        val episodes: List<Episode>,
+        val seriesId: Int
+    ) : ChannelGalleryValue()
 }
 
 @Composable
@@ -231,23 +252,39 @@ private fun ChannelGalleryItem(
 
 @Composable
 private fun ScrollToCurrentEffect(
-    neighboring: LazyPagingItems<Stream>,
-    streamId: Int,
+    value: ChannelGalleryValue,
     isPanelExpanded: Boolean,
     lazyListState: LazyListState,
     scrollOffset: Int = -120
 ) {
     if (isPanelExpanded) {
-        LaunchedEffect(neighboring.itemCount) {
-            var index = -1
-            for (i in 0 until neighboring.itemCount) {
-                if (neighboring[i]?.id == streamId) {
-                    index = i
-                    break
+        when (value) {
+            is ChannelGalleryValue.PagingChannel -> {
+                val channels = value.channels
+                val streamId = value.streamId
+                LaunchedEffect(channels.itemCount) {
+                    var index = -1
+                    for (i in 0 until channels.itemCount) {
+                        if (channels[i]?.id == streamId) {
+                            index = i
+                            break
+                        }
+                    }
+                    if (index != -1) {
+                        lazyListState.animateScrollToItem(index, scrollOffset)
+                    }
                 }
             }
-            if (index != -1) {
-                lazyListState.animateScrollToItem(index, scrollOffset)
+
+            is ChannelGalleryValue.XtreamEpisode -> {
+                val episodes = value.episodes
+                val seriesId = value.seriesId
+                LaunchedEffect(episodes.size) {
+                    val index = episodes.indexOf { it.id == seriesId }
+                    if (index != -1) {
+                        lazyListState.animateScrollToItem(index, scrollOffset)
+                    }
+                }
             }
         }
     }

@@ -286,7 +286,6 @@ private fun ProgrammeCell(
 ) {
     val spacing = LocalSpacing.current
     val preferences = hiltPreferences()
-    val coroutineScope = rememberCoroutineScope()
     val tv = isTelevision()
     val clockMode = preferences.twelveHourClock
     val content = @Composable {
