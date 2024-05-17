@@ -48,15 +48,15 @@ dependencies {
     api(project(":material"))
     api(project(":data"))
 
-    implementation(libs.androidx.core.core.ktx)
-    implementation(libs.androidx.appcompat.appcompat)
-    implementation(libs.androidx.lifecycle.lifecycle.runtime.compose)
+    implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.appcompat)
+    implementation(libs.androidx.lifecycle.runtime.compose)
 
-    implementation(libs.com.google.android.material.material)
-    implementation(libs.androidx.media3.media3.ui)
-    implementation(libs.androidx.media3.media3.exoplayer)
+    implementation(libs.google.material)
+    implementation(libs.androidx.media3.ui)
+    implementation(libs.androidx.media3.exoplayer)
 
-    implementation(libs.com.google.dagger.hilt.android)
-    implementation(libs.androidx.hilt.hilt.navigation.compose)
-    ksp(libs.com.google.dagger.hilt.compiler)
+    implementation(libs.google.dagger.hilt)
+    implementation(libs.androidx.hilt.navigation.compose)
+    ksp(libs.google.dagger.hilt.compiler)
 }

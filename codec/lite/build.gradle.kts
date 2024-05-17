@@ -33,9 +33,9 @@ android {
 }
 
 dependencies {
-    implementation(libs.androidx.core.core.ktx)
-    implementation(libs.androidx.appcompat.appcompat)
-    implementation(libs.com.google.android.material.material)
+    implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.appcompat)
+    implementation(libs.google.material)
 
-    implementation(libs.androidx.media3.media3.exoplayer)
+    implementation(libs.androidx.media3.exoplayer)
 }

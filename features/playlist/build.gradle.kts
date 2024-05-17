@@ -48,27 +48,27 @@ dependencies {
     implementation(project(":core"))
     implementation(project(":ui"))
 
-    implementation(libs.androidx.core.core.ktx)
+    implementation(libs.androidx.core.ktx)
 
     // for m2 BackdropScaffold only
     implementation("androidx.compose.material:material:${libs.versions.androidx.compose}")
 
-    implementation(libs.androidx.lifecycle.lifecycle.runtime.ktx)
-    implementation(libs.androidx.lifecycle.lifecycle.runtime.compose)
+    implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.lifecycle.runtime.compose)
 
-    implementation(libs.androidx.tv.tv.foundation)
-    implementation(libs.androidx.tv.tv.material)
+    implementation(libs.androidx.tv.foundation)
+    implementation(libs.androidx.tv.material)
 
-    implementation(libs.com.google.dagger.hilt.android)
-    implementation(libs.androidx.hilt.hilt.navigation.compose)
-    implementation(libs.androidx.hilt.hilt.work)
+    implementation(libs.google.dagger.hilt)
+    implementation(libs.androidx.hilt.navigation.compose)
+    implementation(libs.androidx.hilt.work)
 
-    ksp(libs.com.google.dagger.hilt.compiler)
-    ksp(libs.androidx.hilt.hilt.compiler)
+    ksp(libs.google.dagger.hilt.compiler)
+    ksp(libs.androidx.hilt.compiler)
 
-    implementation(libs.androidx.work.work.runtime.ktx)
+    implementation(libs.androidx.work.runtime.ktx)
 
-    implementation(libs.androidx.tvprovider.tvprovider)
+    implementation(libs.androidx.tvprovider)
 }
 
 tasks.withType<KotlinCompile>().configureEach {

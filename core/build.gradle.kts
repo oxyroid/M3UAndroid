@@ -43,15 +43,15 @@ android {
 dependencies {
     api(project(":i18n"))
 
-    implementation(libs.androidx.core.core.ktx)
-    implementation(libs.androidx.appcompat.appcompat)
+    implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.appcompat)
     api(libs.androidx.compose.runtime)
     implementation(libs.kotlinx.serialization.json)
-    implementation(libs.com.squareup.retrofit2.retrofit)
-    implementation(libs.androidx.media3.media3.exoplayer)
-    implementation(libs.androidx.media3.media3.session)
-    implementation(libs.com.google.dagger.hilt.android)
-    ksp(libs.com.google.dagger.hilt.compiler)
+    implementation(libs.squareup.retrofit2)
+    implementation(libs.androidx.media3.exoplayer)
+    implementation(libs.androidx.media3.session)
+    implementation(libs.google.dagger.hilt)
+    ksp(libs.google.dagger.hilt.compiler)
 
     implementation(libs.kotlinx.serialization.json)
 

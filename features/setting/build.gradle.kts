@@ -46,18 +46,18 @@ dependencies {
     implementation(project(":core"))
     implementation(project(":ui"))
 
-    implementation(libs.androidx.core.core.ktx)
+    implementation(libs.androidx.core.ktx)
 
-    implementation(libs.androidx.lifecycle.lifecycle.runtime.ktx)
-    implementation(libs.androidx.lifecycle.lifecycle.runtime.compose)
+    implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.lifecycle.runtime.compose)
 
-    implementation(libs.com.google.dagger.hilt.android)
-    ksp(libs.com.google.dagger.hilt.compiler)
-    implementation(libs.androidx.hilt.hilt.navigation.compose)
+    implementation(libs.google.dagger.hilt)
+    ksp(libs.google.dagger.hilt.compiler)
+    implementation(libs.androidx.hilt.navigation.compose)
 
-    implementation(libs.androidx.work.work.runtime.ktx)
-    ksp(libs.androidx.hilt.hilt.compiler)
-    implementation(libs.androidx.hilt.hilt.work)
+    implementation(libs.androidx.work.runtime.ktx)
+    ksp(libs.androidx.hilt.compiler)
+    implementation(libs.androidx.hilt.work)
 
-    implementation(libs.androidx.compose.material3.material3.adaptive)
+    implementation(libs.androidx.compose.material3.adaptive)
 }

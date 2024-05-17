@@ -46,16 +46,16 @@ dependencies {
     implementation(project(":core"))
     implementation(project(":ui"))
 
-    implementation(libs.androidx.core.core.ktx)
+    implementation(libs.androidx.core.ktx)
 
-    implementation(libs.androidx.lifecycle.lifecycle.runtime.ktx)
-    implementation(libs.androidx.lifecycle.lifecycle.runtime.compose)
+    implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.lifecycle.runtime.compose)
 
-    implementation(libs.com.airbnb.android.lottie.compose)
+    implementation(libs.airbnb.lottie.compose)
 
-    implementation(libs.com.google.dagger.hilt.android)
-    implementation(libs.androidx.hilt.hilt.navigation.compose)
-    ksp(libs.com.google.dagger.hilt.compiler)
+    implementation(libs.google.dagger.hilt)
+    implementation(libs.androidx.hilt.navigation.compose)
+    ksp(libs.google.dagger.hilt.compiler)
 
-    implementation(libs.androidx.work.work.runtime.ktx)
+    implementation(libs.androidx.work.runtime.ktx)
 }
