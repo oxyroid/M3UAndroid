@@ -45,7 +45,6 @@ import androidx.tv.material3.Border
 import androidx.tv.material3.Card
 import com.m3u.material.LocalM3UHapticFeedback
 import com.m3u.material.ktx.InteractionType
-import com.m3u.material.ktx.asColorScheme
 import com.m3u.material.ktx.createScheme
 import com.m3u.material.ktx.interactionBorder
 import com.m3u.material.ktx.isTelevision
@@ -68,7 +67,7 @@ fun ThemeSelection(
     val tv = isTelevision()
 
     val colorScheme = remember(argb, isDark) {
-        createScheme(argb, isDark).asColorScheme()
+        createScheme(argb, isDark)
     }
 
     val alpha by animateFloatAsState(

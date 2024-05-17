@@ -52,7 +52,6 @@ import com.m3u.data.service.MediaCommand
 import com.m3u.features.playlist.internal.SmartphonePlaylistScreenImpl
 import com.m3u.features.playlist.internal.TvPlaylistScreenImpl
 import com.m3u.i18n.R.string
-import com.m3u.material.ktx.asColorScheme
 import com.m3u.material.ktx.checkPermissionOrRationale
 import com.m3u.material.ktx.createScheme
 import com.m3u.material.ktx.interceptVolumeEvent
@@ -320,7 +319,7 @@ private fun PlaylistScreen(
         val preferences = hiltPreferences()
         TvMaterialTheme(
             colorScheme = remember(preferences.argb) {
-                createScheme(preferences.argb, true).asColorScheme().asTvScheme()
+                createScheme(preferences.argb, true).asTvScheme()
             }
         ) {
             TvPlaylistScreenImpl(
