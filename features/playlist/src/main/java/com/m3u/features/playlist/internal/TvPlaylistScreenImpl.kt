@@ -34,6 +34,7 @@ import androidx.tv.material3.ListItemDefaults
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.m3u.core.architecture.preferences.hiltPreferences
+import com.m3u.data.database.model.Programme
 import com.m3u.data.database.model.Stream
 import com.m3u.features.playlist.PlaylistViewModel
 import com.m3u.features.playlist.components.ImmersiveBackground
@@ -68,6 +69,7 @@ internal fun TvPlaylistScreenImpl(
     createTvRecommend: (streamId: Int) -> Unit,
     onStream: (Stream) -> Unit,
     onRefresh: () -> Unit,
+    getProgrammeCurrently: suspend (channelId: String) -> Programme?,
     isVodOrSeriesPlaylist: Boolean,
     modifier: Modifier = Modifier
 ) {
@@ -103,6 +105,7 @@ internal fun TvPlaylistScreenImpl(
                     onRefresh = onRefresh,
                     openSearchDrawer = {},
                     openSortDrawer = { isSortSheetVisible = true },
+                    getProgrammeCurrently = getProgrammeCurrently,
                     modifier = Modifier.haze(
                         LocalHazeState.current,
                         HazeDefaults.style(MaterialTheme.colorScheme.background)

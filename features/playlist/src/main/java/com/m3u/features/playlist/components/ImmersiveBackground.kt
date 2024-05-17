@@ -15,7 +15,10 @@ import androidx.compose.material.icons.automirrored.rounded.Sort
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithCache
@@ -28,6 +31,7 @@ import androidx.tv.material3.Text
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.m3u.core.architecture.preferences.hiltPreferences
+import com.m3u.data.database.model.Programme
 import com.m3u.data.database.model.Stream
 import com.m3u.material.brush.ImmersiveBackgroundBrush
 import com.m3u.material.components.IconButton
@@ -42,6 +46,7 @@ internal fun ImmersiveBackground(
     onRefresh: () -> Unit,
     openSearchDrawer: () -> Unit,
     openSortDrawer: () -> Unit,
+    getProgrammeCurrently: suspend (channelId: String) -> Programme?,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -49,6 +54,8 @@ internal fun ImmersiveBackground(
     val preferences = hiltPreferences()
 
     val noPictureMode = preferences.noPictureMode
+
+    val currentGetProgrammeCurrently by rememberUpdatedState(getProgrammeCurrently)
 
     Box(modifier) {
         if (stream != null) {
@@ -91,6 +98,22 @@ internal fun ImmersiveBackground(
                         fontWeight = FontWeight.ExtraBold,
                         maxLines = 1
                     )
+
+                    val programme: Programme? by produceState<Programme?>(
+                        initialValue = null,
+                        key1 = stream.channelId
+                    ) {
+                        value = currentGetProgrammeCurrently(stream.channelId.orEmpty())
+                    }
+
+                    programme?.let {
+                        Text(
+                            text = it.readText(),
+                            style = MaterialTheme.typography.headlineMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            maxLines = 1
+                        )
+                    }
                     Spacer(
                         modifier = Modifier.heightIn(min = maxBrowserHeight)
                     )

@@ -337,6 +337,7 @@ private fun PlaylistScreen(
                 savePicture = savePicture,
                 createTvRecommend = createTvRecommend,
                 isVodOrSeriesPlaylist = isVodPlaylist || isSeriesPlaylist,
+                getProgrammeCurrently = getProgrammeCurrently,
                 modifier = modifier
             )
         }

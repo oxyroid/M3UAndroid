@@ -245,7 +245,7 @@ internal fun SmartphoneStreamItem(
 }
 
 @Composable
-private fun Programme.readText(
+internal fun Programme.readText(
     timeColor: Color = MaterialTheme.colorScheme.secondary
 ): AnnotatedString = buildAnnotatedString {
     val preferences = hiltPreferences()
