@@ -13,6 +13,7 @@
     <string name="feat_stream_tooltip_download">download</string>
     <string name="feat_stream_tooltip_stop_download">stop download</string>
     <string name="feat_stream_tooltip_cast">cast screen</string>
+    <string name="feat_stream_tooltip_open_panel">open panel</string>
     <string name="feat_stream_tooltip_enter_pip_mode">PIP mode</string>
     <string name="feat_stream_tooltip_screen_rotating">screen rotating</string>
     <string name="feat_stream_tooltip_choose_format">choose format</string>

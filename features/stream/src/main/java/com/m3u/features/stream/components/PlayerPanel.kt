@@ -24,6 +24,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.paging.compose.LazyPagingItems
@@ -33,6 +35,7 @@ import com.m3u.data.database.model.Stream
 import com.m3u.data.service.MediaCommand
 import com.m3u.material.components.Background
 import com.m3u.material.model.LocalSpacing
+import com.m3u.material.shape.AbsoluteSmoothCornerShape
 import com.m3u.ui.FontFamilies
 import com.m3u.ui.helper.LocalHelper
 import kotlinx.coroutines.launch
@@ -49,15 +52,22 @@ internal fun PlayerPanel(
     programmeRange: ProgrammeRange,
     modifier: Modifier = Modifier
 ) {
+    val configuration = LocalConfiguration.current
+    val useVertical = configuration.screenWidthDp < configuration.screenHeightDp
     val spacing = LocalSpacing.current
-    Background {
+    Background(
+        shape = if (useVertical) RectangleShape else AbsoluteSmoothCornerShape(
+            cornerRadiusTL = spacing.medium,
+            cornerRadiusBL = spacing.medium
+        )
+    ) {
         Column(
             modifier = modifier
                 .fillMaxSize()
                 .padding(vertical = spacing.medium)
         ) {
             AnimatedVisibility(
-                visible = isPanelExpanded,
+                visible = isPanelExpanded && useVertical,
                 modifier = Modifier.padding(horizontal = spacing.medium)
             ) {
                 Text(
@@ -70,7 +80,7 @@ internal fun PlayerPanel(
                 )
             }
             AnimatedVisibility(
-                visible = isPanelExpanded,
+                visible = isPanelExpanded && useVertical,
                 enter = fadeIn(),
                 exit = fadeOut(),
                 modifier = Modifier.padding(horizontal = spacing.medium)

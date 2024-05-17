@@ -60,6 +60,7 @@ import com.m3u.ui.Player
 import com.m3u.ui.helper.LocalHelper
 import com.m3u.ui.helper.OnPipModeChanged
 import com.m3u.ui.rememberPlayerState
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlin.time.Duration.Companion.milliseconds
@@ -101,7 +102,7 @@ fun StreamRoute(
     var isAutoZappingMode by remember { mutableStateOf(true) }
     var choosing by remember { mutableStateOf(false) }
 
-    val isPanelSupported = configuration.screenWidthDp < configuration.screenHeightDp
+    val isPanelGestureSupported = configuration.screenWidthDp < configuration.screenHeightDp
     val isPanelEnabled = preferences.panel
 
     val maskState = rememberMaskState()
@@ -139,6 +140,7 @@ fun StreamRoute(
 
     LaunchedEffect(Unit) {
         snapshotFlow { brightness }
+            .drop(1)
             .onEach { helper.brightness = it }
             .launchIn(this)
 
@@ -168,7 +170,7 @@ fun StreamRoute(
     ) {
         PullPanelLayout(
             state = pullPanelLayoutState,
-            enabled = isPanelSupported && isPanelEnabled,
+            enabled = isPanelGestureSupported && isPanelEnabled,
             onValueChanged = { state ->
                 when (state) {
                     PullPanelLayoutValue.EXPANDED -> {
@@ -181,21 +183,16 @@ fun StreamRoute(
                 }
             },
             panel = {
-                if (!tv) {
-                    PlayerPanel(
-                        title = stream?.title.orEmpty(),
-                        playlistTitle = playlist?.title.orEmpty(),
-                        streamId = stream?.id ?: -1,
-                        isPanelExpanded = isPanelExpanded,
-                        isSeriesPlaylist = isSeriesPlaylist,
-                        channels = neighboring,
-                        programmes = programmes,
-                        programmeRange = programmeRange
-                    )
-                } else {
-                    // todo: fix pull panel layout bug
-                    Box(modifier = Modifier.fillMaxSize())
-                }
+                PlayerPanel(
+                    title = stream?.title.orEmpty(),
+                    playlistTitle = playlist?.title.orEmpty(),
+                    streamId = stream?.id ?: -1,
+                    isPanelExpanded = isPanelExpanded,
+                    isSeriesPlaylist = isSeriesPlaylist,
+                    channels = neighboring,
+                    programmes = programmes,
+                    programmeRange = programmeRange
+                )
             },
             content = {
                 StreamPlayer(
@@ -207,6 +204,13 @@ fun StreamRoute(
                     openChooseFormat = {
                         choosing = true
                         pullPanelLayoutState.collapse()
+                    },
+                    openOrClosePanel = {
+                        if (isPanelExpanded) {
+                            pullPanelLayoutState.collapse()
+                        } else {
+                            pullPanelLayoutState.expand()
+                        }
                     },
                     onFavourite = viewModel::onFavourite,
                     onBackPressed = onBackPressed,
@@ -279,6 +283,7 @@ private fun StreamPlayer(
     onBackPressed: () -> Unit,
     openDlnaDevices: () -> Unit,
     openChooseFormat: () -> Unit,
+    openOrClosePanel: () -> Unit,
     onVolume: (Float) -> Unit,
     onBrightness: (Float) -> Unit,
     onEnterPipMode: () -> Unit,
@@ -339,6 +344,7 @@ private fun StreamPlayer(
                 onBackPressed = onBackPressed,
                 openDlnaDevices = openDlnaDevices,
                 openChooseFormat = openChooseFormat,
+                openOrClosePanel = openOrClosePanel,
                 onVolume = onVolume,
                 onEnterPipMode = onEnterPipMode,
                 onKeyCode = onKeyCode

@@ -1,7 +1,5 @@
 package com.m3u.features.stream
 
-//import androidx.compose.animation.ExperimentalSharedTransitionApi
-//import androidx.compose.animation.SharedTransitionScope
 import android.content.pm.ActivityInfo
 import android.view.KeyEvent
 import androidx.activity.compose.BackHandler
@@ -28,6 +26,7 @@ import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.VolumeDown
 import androidx.compose.material.icons.automirrored.rounded.VolumeOff
 import androidx.compose.material.icons.automirrored.rounded.VolumeUp
+import androidx.compose.material.icons.rounded.Archive
 import androidx.compose.material.icons.rounded.Cast
 import androidx.compose.material.icons.rounded.DarkMode
 import androidx.compose.material.icons.rounded.HighQuality
@@ -36,6 +35,7 @@ import androidx.compose.material.icons.rounded.PictureInPicture
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.ScreenRotationAlt
 import androidx.compose.material.icons.rounded.Star
+import androidx.compose.material.icons.rounded.Unarchive
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
@@ -56,6 +56,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -87,11 +88,8 @@ import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 
-//@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
-internal fun
-//        SharedTransitionScope.
-        StreamMask(
+internal fun StreamMask(
     cover: String,
     title: String,
     playlistTitle: String,
@@ -108,6 +106,7 @@ internal fun
     onBackPressed: () -> Unit,
     openDlnaDevices: () -> Unit,
     openChooseFormat: () -> Unit,
+    openOrClosePanel: () -> Unit,
     onEnterPipMode: () -> Unit,
     onVolume: (Float) -> Unit,
     onKeyCode: (RemoteDirection) -> Unit,
@@ -116,6 +115,7 @@ internal fun
     val preferences = hiltPreferences()
     val helper = LocalHelper.current
     val spacing = LocalSpacing.current
+    val configuration = LocalConfiguration.current
     val tv = isTelevision()
     val coroutineScope = rememberCoroutineScope()
 
@@ -182,6 +182,8 @@ internal fun
 
     var bufferedPosition: Long? by remember { mutableStateOf(null) }
     var volumeBeforeMuted: Float by remember { mutableFloatStateOf(1f) }
+
+    val isPanelGestureSupported = configuration.screenWidthDp < configuration.screenHeightDp
 
     LaunchedEffect(playerState.playState) {
         if (playerState.playState == Player.STATE_READY) {
@@ -276,6 +278,16 @@ internal fun
                     )
                 }
 
+                if (!isPanelGestureSupported) {
+                    MaskButton(
+                        state = maskState,
+                        icon = if (isPanelExpanded) Icons.Rounded.Archive
+                        else Icons.Rounded.Unarchive,
+                        onClick = openOrClosePanel,
+                        contentDescription = stringResource(string.feat_stream_tooltip_open_panel)
+                    )
+                }
+
                 if (!tv && preferences.screencast) {
                     MaskButton(
                         state = maskState,
@@ -334,7 +346,7 @@ internal fun
                         .weight(1f)
                 ) {
                     AnimatedVisibility(
-                        visible = !isPanelExpanded,
+                        visible = !isPanelExpanded || !isPanelGestureSupported,
                         enter = fadeIn(),
                         exit = fadeOut()
                     ) {
@@ -345,16 +357,11 @@ internal fun
                             color = LocalContentColor.current.copy(0.54f),
                             fontFamily = FontFamilies.LexendExa,
                             overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier
-                                .basicMarquee()
-                            //                                .sharedElement(
-                            //                                    state = rememberSharedContentState("playlist-title"),
-                            //                                    this
-                            //                                )
+                            modifier = Modifier.basicMarquee()
                         )
                     }
                     AnimatedVisibility(
-                        visible = !isPanelExpanded,
+                        visible = !isPanelExpanded || !isPanelGestureSupported,
                         enter = fadeIn(),
                         exit = fadeOut()
                     ) {
@@ -364,12 +371,7 @@ internal fun
                             fontWeight = FontWeight.ExtraBold,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier
-                                .basicMarquee()
-                            //                                .sharedElement(
-                            //                                    state = rememberSharedContentState("stream-title"),
-                            //                                    this
-                            //                                )
+                            modifier = Modifier.basicMarquee()
                         )
                     }
 
