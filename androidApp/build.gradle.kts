@@ -155,7 +155,7 @@ dependencies {
 
     debugImplementation(libs.com.squareup.leakcanary.leakcanary.android)
 
-    implementation(libs.androidx.compose.material3.adaptive)
-    implementation(libs.androidx.compose.material3.adaptive.layout)
-    implementation(libs.androidx.compose.material3.adaptive.navigation)
+    androidTestImplementation(libs.androidx.compose.ui.ui.test.junit4)
+
+    implementation(libs.androidx.compose.material3.material3.adaptive)
 }

@@ -4,28 +4,42 @@ import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ChangeCircle
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.adaptive.layout.AnimatedPane
-import androidx.compose.material3.adaptive.layout.ListDetailPaneScaffold
-import androidx.compose.material3.adaptive.layout.ListDetailPaneScaffoldRole
-import androidx.compose.material3.adaptive.navigation.rememberListDetailPaneScaffoldNavigator
+import androidx.compose.material3.adaptive.AnimatedPane
+import androidx.compose.material3.adaptive.HingePolicy
+import androidx.compose.material3.adaptive.ListDetailPaneScaffold
+import androidx.compose.material3.adaptive.ListDetailPaneScaffoldRole
+import androidx.compose.material3.adaptive.PaneScaffoldDirective
+import androidx.compose.material3.adaptive.Posture
+import androidx.compose.material3.adaptive.ThreePaneScaffoldDestinationItem
+import androidx.compose.material3.adaptive.WindowAdaptiveInfo
+import androidx.compose.material3.adaptive.allVerticalHingeBounds
+import androidx.compose.material3.adaptive.calculateListDetailPaneScaffoldState
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
+import androidx.compose.material3.adaptive.occludingVerticalHingeBounds
+import androidx.compose.material3.adaptive.separatingVerticalHingeBounds
 import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -187,30 +201,34 @@ private fun SettingScreen(
 
     val colorArgb = preferences.argb
 
+    var fragment: SettingDestination by remember { mutableStateOf(SettingDestination.Default) }
+
+    EventHandler(Events.settingDestination) {
+        fragment = it
+    }
+
     val visiblePageInfos = LocalVisiblePageInfos.current
     val pageIndex = remember { Destination.Root.entries.indexOf(Destination.Root.Setting) }
     val isPageInfoVisible = remember(pageIndex, visiblePageInfos) {
         visiblePageInfos.find { it.index == pageIndex } != null
     }
-    val scaffoldNavigator = rememberListDetailPaneScaffoldNavigator<SettingDestination>()
-    val destination = scaffoldNavigator.currentDestination?.content ?: SettingDestination.Default
 
     if (isPageInfoVisible) {
-        LifecycleResumeEffect(destination, defaultTitle, playlistTitle, appearanceTitle) {
-            Metadata.title = when (destination) {
+        LifecycleResumeEffect(fragment, defaultTitle, playlistTitle, appearanceTitle, fragment) {
+            Metadata.title = when (fragment) {
                 SettingDestination.Default -> defaultTitle
                 SettingDestination.Playlists -> playlistTitle
                 SettingDestination.Appearance -> appearanceTitle
             }.title()
             Metadata.color = Color.Unspecified
             Metadata.contentColor = Color.Unspecified
-            if (destination != SettingDestination.Default) {
+            if (fragment != SettingDestination.Default) {
                 Metadata.fob = Fob(
                     rootDestination = Destination.Root.Setting,
                     icon = Icons.Rounded.ChangeCircle,
                     iconTextId = string.feat_setting_back_home
                 ) {
-                    scaffoldNavigator.navigateBack()
+                    fragment = SettingDestination.Default
                 }
             }
             Metadata.actions = emptyList()
@@ -220,82 +238,84 @@ private fun SettingScreen(
         }
     }
 
-    EventHandler(Events.settingDestination) {
-        scaffoldNavigator.navigateTo(ListDetailPaneScaffoldRole.Detail, it)
+    val currentPaneScaffoldRole by remember {
+        derivedStateOf {
+            when (fragment) {
+                SettingDestination.Default -> ListDetailPaneScaffoldRole.List
+                else -> ListDetailPaneScaffoldRole.Detail
+            }
+        }
     }
+    val scaffoldState = calculateListDetailPaneScaffoldState(
+        currentDestination = ThreePaneScaffoldDestinationItem(currentPaneScaffoldRole, null),
+        scaffoldDirective = calculateStandardPaneScaffoldDirective(currentWindowAdaptiveInfo())
+    )
 
     ListDetailPaneScaffold(
-        directive = scaffoldNavigator.scaffoldDirective,
-        value = scaffoldNavigator.scaffoldValue,
+        scaffoldState = scaffoldState,
+        // we handle the window insets in app scaffold
+        windowInsets = WindowInsets(0),
         listPane = {
-            AnimatedPane {
-                Crossfade(destination) { destination ->
-                    PreferencesFragment(
-                        destination = destination,
-                        contentPadding = contentPadding,
-                        versionName = versionName,
-                        versionCode = versionCode,
-                        navigateToPlaylistManagement = {
-                            scaffoldNavigator.navigateTo(
-                                pane = ListDetailPaneScaffoldRole.Detail,
-                                content = SettingDestination.Playlists
-                            )
-                        },
-                        navigateToThemeSelector = {
-                            scaffoldNavigator.navigateTo(
-                                pane = ListDetailPaneScaffoldRole.Detail,
-                                content = SettingDestination.Appearance
-                            )
-                        },
-                        cacheSpace = cacheSpace,
-                        onClearCache = onClearCache,
-                        modifier = Modifier.fillMaxSize()
-                    )
-                }
-            }
+            PreferencesFragment(
+                fragment = fragment,
+                contentPadding = contentPadding,
+                versionName = versionName,
+                versionCode = versionCode,
+                navigateToPlaylistManagement = {
+                    fragment = SettingDestination.Playlists
+                },
+                navigateToThemeSelector = {
+                    fragment = SettingDestination.Appearance
+                },
+                cacheSpace = cacheSpace,
+                onClearCache = onClearCache,
+                modifier = Modifier.fillMaxSize()
+            )
         },
         detailPane = {
-            AnimatedPane(Modifier.fillMaxSize()) {
-                when (destination) {
-                    SettingDestination.Playlists -> {
-                        SubscriptionsFragment(
-                            titleState = titleState,
-                            urlState = urlState,
-                            uriState = uriState,
-                            selectedState = selectedState,
-                            basicUrlState = basicUrlState,
-                            usernameState = usernameState,
-                            passwordState = passwordState,
-                            epgState = epgState,
-                            localStorageState = localStorageState,
-                            forTvState = forTvState,
-                            backingUpOrRestoring = backingUpOrRestoring,
-                            hiddenStreams = hiddenStreams,
-                            hiddenCategoriesWithPlaylists = hiddenCategoriesWithPlaylists,
-                            onUnhideStream = onUnhideStream,
-                            onUnhidePlaylistCategory = onUnhidePlaylistCategory,
-                            onClipboard = onClipboard,
-                            onSubscribe = onSubscribe,
-                            backup = backup,
-                            restore = restore,
-                            epgs = epgs,
-                            onDeleteEpgPlaylist = onDeleteEpgPlaylist,
-                            contentPadding = contentPadding,
-                            modifier = Modifier.fillMaxSize()
-                        )
-                    }
+            if (fragment != SettingDestination.Default) {
+                AnimatedPane(Modifier) {
+                    when (fragment) {
+                        SettingDestination.Playlists -> {
+                            SubscriptionsFragment(
+                                titleState = titleState,
+                                urlState = urlState,
+                                uriState = uriState,
+                                selectedState = selectedState,
+                                basicUrlState = basicUrlState,
+                                usernameState = usernameState,
+                                passwordState = passwordState,
+                                epgState = epgState,
+                                localStorageState = localStorageState,
+                                forTvState = forTvState,
+                                backingUpOrRestoring = backingUpOrRestoring,
+                                hiddenStreams = hiddenStreams,
+                                hiddenCategoriesWithPlaylists = hiddenCategoriesWithPlaylists,
+                                onUnhideStream = onUnhideStream,
+                                onUnhidePlaylistCategory = onUnhidePlaylistCategory,
+                                onClipboard = onClipboard,
+                                onSubscribe = onSubscribe,
+                                backup = backup,
+                                restore = restore,
+                                epgs = epgs,
+                                onDeleteEpgPlaylist = onDeleteEpgPlaylist,
+                                contentPadding = contentPadding,
+                                modifier = Modifier.fillMaxSize()
+                            )
+                        }
 
-                    SettingDestination.Appearance -> {
-                        AppearanceFragment(
-                            colorSchemes = colorSchemes,
-                            colorArgb = colorArgb,
-                            openColorCanvas = openColorCanvas,
-                            restoreSchemes = restoreSchemes,
-                            contentPadding = contentPadding
-                        )
-                    }
+                        SettingDestination.Appearance -> {
+                            AppearanceFragment(
+                                colorSchemes = colorSchemes,
+                                colorArgb = colorArgb,
+                                openColorCanvas = openColorCanvas,
+                                restoreSchemes = restoreSchemes,
+                                contentPadding = contentPadding
+                            )
+                        }
 
-                    else -> {}
+                        else -> {}
+                    }
                 }
             }
         },
@@ -307,7 +327,60 @@ private fun SettingScreen(
             )
             .testTag("feature:setting")
     )
-    BackHandler(scaffoldNavigator.canNavigateBack()) {
-        scaffoldNavigator.navigateBack()
+    BackHandler(fragment != SettingDestination.Default) {
+        fragment = SettingDestination.Default
+    }
+}
+
+private fun calculateStandardPaneScaffoldDirective(
+    windowAdaptiveInfo: WindowAdaptiveInfo,
+    verticalHingePolicy: HingePolicy = HingePolicy.AvoidSeparating
+): PaneScaffoldDirective {
+    val maxHorizontalPartitions: Int
+    val verticalSpacerSize: Dp
+    when (windowAdaptiveInfo.windowSizeClass.widthSizeClass) {
+        WindowWidthSizeClass.Compact -> {
+            maxHorizontalPartitions = 1
+            verticalSpacerSize = 0.dp
+        }
+
+        WindowWidthSizeClass.Medium -> {
+            maxHorizontalPartitions = 1
+            verticalSpacerSize = 0.dp
+        }
+
+        else -> {
+            maxHorizontalPartitions = 2
+            verticalSpacerSize = 24.dp
+        }
+    }
+    val maxVerticalPartitions: Int
+    val horizontalSpacerSize: Dp
+
+    if (windowAdaptiveInfo.windowPosture.isTabletop) {
+        maxVerticalPartitions = 2
+        horizontalSpacerSize = 24.dp
+    } else {
+        maxVerticalPartitions = 1
+        horizontalSpacerSize = 0.dp
+    }
+
+    return PaneScaffoldDirective(
+        // keep no paddings
+        PaddingValues(),
+        maxHorizontalPartitions,
+        verticalSpacerSize,
+        maxVerticalPartitions,
+        horizontalSpacerSize,
+        getExcludedVerticalBounds(windowAdaptiveInfo.windowPosture, verticalHingePolicy)
+    )
+}
+
+private fun getExcludedVerticalBounds(posture: Posture, hingePolicy: HingePolicy): List<Rect> {
+    return when (hingePolicy) {
+        HingePolicy.AvoidSeparating -> posture.separatingVerticalHingeBounds
+        HingePolicy.AvoidOccluding -> posture.occludingVerticalHingeBounds
+        HingePolicy.AlwaysAvoid -> posture.allVerticalHingeBounds
+        else -> emptyList()
     }
 }

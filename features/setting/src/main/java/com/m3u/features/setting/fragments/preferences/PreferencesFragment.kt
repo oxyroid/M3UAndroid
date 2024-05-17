@@ -19,7 +19,7 @@ import com.m3u.ui.SettingDestination
 
 @Composable
 internal fun PreferencesFragment(
-    destination: SettingDestination,
+    fragment: SettingDestination,
     contentPadding: PaddingValues,
     versionName: String,
     versionCode: Int,
@@ -40,7 +40,7 @@ internal fun PreferencesFragment(
         ) {
             item {
                 RegularPreferences(
-                    destination = destination,
+                    fragment = fragment,
                     navigateToPlaylistManagement = navigateToPlaylistManagement,
                     navigateToThemeSelector = navigateToThemeSelector
                 )
@@ -72,7 +72,7 @@ internal fun PreferencesFragment(
         ) {
             item {
                 RegularPreferences(
-                    destination = destination,
+                    fragment = fragment,
                     navigateToPlaylistManagement = navigateToPlaylistManagement,
                     navigateToThemeSelector = navigateToThemeSelector
                 )

@@ -1,7 +1,7 @@
 package com.m3u.ui
 
 import androidx.compose.foundation.gestures.Orientation
-import androidx.compose.foundation.gestures.TargetedFlingBehavior
+import androidx.compose.foundation.gestures.snapping.SnapFlingBehavior
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PageInfo
@@ -13,6 +13,7 @@ import androidx.compose.foundation.pager.VerticalPager
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
@@ -27,17 +28,16 @@ fun ExtendedHorizontalPager(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(0.dp),
     pageSize: PageSize = PageSize.Fill,
-    beyondViewportPageCount: Int = PagerDefaults.BeyondViewportPageCount,
+    beyondBoundsPageCount: Int = PagerDefaults.BeyondBoundsPageCount,
     pageSpacing: Dp = 0.dp,
     verticalAlignment: Alignment.Vertical = Alignment.CenterVertically,
-    flingBehavior: TargetedFlingBehavior = PagerDefaults.flingBehavior(state = state),
+    flingBehavior: SnapFlingBehavior = PagerDefaults.flingBehavior(state = state),
     userScrollEnabled: Boolean = true,
     reverseLayout: Boolean = false,
     key: ((index: Int) -> Any)? = null,
-    pageNestedScrollConnection: NestedScrollConnection = PagerDefaults.pageNestedScrollConnection(
-        state,
-        Orientation.Horizontal
-    ),
+    pageNestedScrollConnection: NestedScrollConnection = remember(state) {
+        PagerDefaults.pageNestedScrollConnection(state, Orientation.Horizontal)
+    },
     pageContent: @Composable PagerScope.(page: Int) -> Unit
 ) {
     CompositionLocalProvider(
@@ -48,7 +48,7 @@ fun ExtendedHorizontalPager(
             modifier = modifier,
             contentPadding = contentPadding,
             pageSize = pageSize,
-            beyondViewportPageCount = beyondViewportPageCount,
+            beyondBoundsPageCount = beyondBoundsPageCount,
             pageSpacing = pageSpacing,
             verticalAlignment = verticalAlignment,
             flingBehavior = flingBehavior,
@@ -67,17 +67,16 @@ fun ExtendedVerticalPager(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(0.dp),
     pageSize: PageSize = PageSize.Fill,
-    beyondViewportPageCount: Int = PagerDefaults.BeyondViewportPageCount,
+    beyondBoundsPageCount: Int = PagerDefaults.BeyondBoundsPageCount,
     pageSpacing: Dp = 0.dp,
     horizontalAlignment: Alignment.Horizontal = Alignment.CenterHorizontally,
-    flingBehavior: TargetedFlingBehavior = PagerDefaults.flingBehavior(state = state),
+    flingBehavior: SnapFlingBehavior = PagerDefaults.flingBehavior(state = state),
     userScrollEnabled: Boolean = true,
     reverseLayout: Boolean = false,
     key: ((index: Int) -> Any)? = null,
-    pageNestedScrollConnection: NestedScrollConnection = PagerDefaults.pageNestedScrollConnection(
-        state,
-        Orientation.Vertical
-    ),
+    pageNestedScrollConnection: NestedScrollConnection = remember(state) {
+        PagerDefaults.pageNestedScrollConnection(state, Orientation.Horizontal)
+    },
     pageContent: @Composable PagerScope.(page: Int) -> Unit
 ) {
     CompositionLocalProvider(
@@ -88,7 +87,7 @@ fun ExtendedVerticalPager(
             modifier = modifier,
             contentPadding = contentPadding,
             pageSize = pageSize,
-            beyondViewportPageCount = beyondViewportPageCount,
+            beyondBoundsPageCount = beyondBoundsPageCount,
             pageSpacing = pageSpacing,
             horizontalAlignment = horizontalAlignment,
             flingBehavior = flingBehavior,

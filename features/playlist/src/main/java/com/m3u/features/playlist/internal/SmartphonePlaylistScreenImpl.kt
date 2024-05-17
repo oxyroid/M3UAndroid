@@ -57,7 +57,6 @@ import com.m3u.features.playlist.components.SmartphoneStreamGallery
 import com.m3u.i18n.R.string
 import com.m3u.material.components.TextField
 import com.m3u.material.ktx.isAtTop
-import com.m3u.material.ktx.only
 import com.m3u.material.ktx.split
 import com.m3u.material.model.LocalHazeState
 import com.m3u.material.model.LocalSpacing
@@ -206,24 +205,17 @@ internal fun SmartphonePlaylistScreenImpl(
                     else -> rowCount
                 }
             }
-            var isExpanded by remember { mutableStateOf(false) }
-            BackHandler(isExpanded) { isExpanded = false }
-
-            val tabs = @Composable {
+            Column(
+                Modifier.background(MaterialTheme.colorScheme.background)
+            ) {
                 PlaylistTabRow(
                     selectedCategory = category,
                     categories = categories,
-                    isExpanded = isExpanded,
-                    bottomContentPadding = contentPadding only WindowInsetsSides.Bottom,
-                    onExpanded = { isExpanded = !isExpanded },
                     onCategoryChanged = { category = it },
                     pinnedCategories = pinnedCategories,
                     onPinOrUnpinCategory = onPinOrUnpinCategory,
                     onHideCategory = onHideCategory
                 )
-            }
-
-            val gallery = @Composable {
                 val channel = channels.find { it.category == category }
                 SmartphoneStreamGallery(
                     state = state,
@@ -238,35 +230,21 @@ internal fun SmartphonePlaylistScreenImpl(
                         mediaSheetValue = MediaSheetValue.PlaylistScreen(it)
                     },
                     getProgrammeCurrently = getProgrammeCurrently,
-                    modifier = Modifier.haze(
+                    modifier = modifier.haze(
                         LocalHazeState.current,
                         HazeDefaults.style(MaterialTheme.colorScheme.surface)
                     )
                 )
-            }
-            Column(
-                Modifier.background(MaterialTheme.colorScheme.surfaceContainerHighest)
-            ) {
-                if (!isExpanded) {
-                    if (categories.size > 1) {
-                        tabs()
-                    }
-                    gallery()
-                } else {
-                    if (categories.size > 1) {
-                        tabs()
-                    }
-                }
             }
         },
         backLayerBackgroundColor = Color.Transparent,
         backLayerContentColor = currentContentColor,
         frontLayerScrimColor = currentColor.copy(alpha = 0.45f),
         frontLayerBackgroundColor = Color.Transparent,
-        modifier = modifier
+        modifier = Modifier
             .padding(outer)
             .nestedScroll(
-                connection = connection
+                connection = connection,
             )
     )
 

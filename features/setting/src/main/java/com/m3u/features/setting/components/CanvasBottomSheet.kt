@@ -17,6 +17,7 @@ import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Save
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import com.m3u.material.components.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -40,7 +41,7 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.m3u.i18n.R.string
-import com.m3u.material.components.Icon
+import com.m3u.material.ktx.asColorScheme
 import com.m3u.material.ktx.createScheme
 import com.m3u.material.model.LocalSpacing
 import com.m3u.material.model.SugarColors
@@ -62,7 +63,7 @@ internal fun CanvasBottomSheet(
 
         val scheme by remember {
             derivedStateOf {
-                createScheme(currentColorInt, currentIsDark)
+                createScheme(currentColorInt, currentIsDark).asColorScheme()
             }
         }
 
@@ -71,6 +72,7 @@ internal fun CanvasBottomSheet(
         ) {
             ModalBottomSheet(
                 sheetState = sheetState,
+                windowInsets = WindowInsets(0),
                 onDismissRequest = onDismissRequest,
             ) {
                 Column(

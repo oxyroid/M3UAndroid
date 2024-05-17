@@ -22,12 +22,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.DarkMode
 import androidx.compose.material.icons.rounded.LightMode
+import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
-import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -45,6 +45,7 @@ import androidx.tv.material3.Border
 import androidx.tv.material3.Card
 import com.m3u.material.LocalM3UHapticFeedback
 import com.m3u.material.ktx.InteractionType
+import com.m3u.material.ktx.asColorScheme
 import com.m3u.material.ktx.createScheme
 import com.m3u.material.ktx.interactionBorder
 import com.m3u.material.ktx.isTelevision
@@ -67,7 +68,7 @@ fun ThemeSelection(
     val tv = isTelevision()
 
     val colorScheme = remember(argb, isDark) {
-        createScheme(argb, isDark)
+        createScheme(argb, isDark).asColorScheme()
     }
 
     val alpha by animateFloatAsState(
@@ -168,7 +169,7 @@ fun ThemeSelection(
                 Box(
                     modifier = Modifier.combinedClickable(
                         interactionSource = interactionSource,
-                        indication = ripple(),
+                        indication = rememberRipple(),
                         onClick = {
                             if (selected) return@combinedClickable
                             feedback.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)

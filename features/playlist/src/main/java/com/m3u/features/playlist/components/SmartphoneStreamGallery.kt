@@ -55,10 +55,7 @@ internal fun SmartphoneStreamGallery(
         contentPadding = PaddingValues(spacing.medium) + contentPadding,
         modifier = modifier.fillMaxSize()
     ) {
-        items(
-            count = streams?.itemCount ?: 0,
-            key = { it }
-        ) { index ->
+        items(streams?.itemCount ?: 0) { index ->
             val stream = streams?.get(index)
             if (stream != null) {
                 SmartphoneStreamItem(

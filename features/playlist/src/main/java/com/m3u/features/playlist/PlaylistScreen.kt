@@ -37,7 +37,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.google.accompanist.permissions.rememberPermissionState
@@ -53,6 +52,7 @@ import com.m3u.data.service.MediaCommand
 import com.m3u.features.playlist.internal.SmartphonePlaylistScreenImpl
 import com.m3u.features.playlist.internal.TvPlaylistScreenImpl
 import com.m3u.i18n.R.string
+import com.m3u.material.ktx.asColorScheme
 import com.m3u.material.ktx.checkPermissionOrRationale
 import com.m3u.material.ktx.createScheme
 import com.m3u.material.ktx.interceptVolumeEvent
@@ -91,9 +91,7 @@ internal fun PlaylistRoute(
     val playlistUrl by viewModel.playlistUrl.collectAsStateWithLifecycle()
     val playlist by viewModel.playlist.collectAsStateWithLifecycle()
 
-    val channels by viewModel.channels.collectAsStateWithLifecycle(
-        minActiveState = Lifecycle.State.RESUMED
-    )
+    val channels by viewModel.channels.collectAsStateWithLifecycle()
 
     val episodes by viewModel.episodes.collectAsStateWithLifecycle()
     val pinnedCategories by viewModel.pinnedCategories.collectAsStateWithLifecycle()
@@ -322,7 +320,7 @@ private fun PlaylistScreen(
         val preferences = hiltPreferences()
         TvMaterialTheme(
             colorScheme = remember(preferences.argb) {
-                createScheme(preferences.argb, true).asTvScheme()
+                createScheme(preferences.argb, true).asColorScheme().asTvScheme()
             }
         ) {
             TvPlaylistScreenImpl(
