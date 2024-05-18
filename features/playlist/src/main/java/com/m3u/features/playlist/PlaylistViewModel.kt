@@ -395,7 +395,7 @@ class PlaylistViewModel @Inject constructor(
         .stateIn(
             scope = viewModelScope,
             initialValue = emptyList(),
-            started = SharingStarted.WhileSubscribed(5_000L)
+            started = SharingStarted.Lazily
         )
 
     internal val pinnedCategories: StateFlow<List<String>> = playlist
