@@ -42,7 +42,6 @@ import com.m3u.material.shape.AbsoluteSmoothCornerShape
 @Composable
 fun EpisodesBottomSheet(
     series: Stream?,
-    // FIXME: Use shared Episode Class
     episodes: Resource<List<XtreamStreamInfo.Episode>>,
     onRefresh: () -> Unit,
     onEpisodeClick: (XtreamStreamInfo.Episode) -> Unit,
