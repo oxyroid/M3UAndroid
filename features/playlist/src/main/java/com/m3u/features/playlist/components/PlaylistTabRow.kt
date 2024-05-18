@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -43,6 +44,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.semantics.Role
@@ -127,47 +129,46 @@ internal fun PlaylistTabRow(
                 state.scrollToItem(index)
             }
         }
-        if (isExpanded) {
-            LazyColumn(
-                state = state,
-                horizontalAlignment = Alignment.Start,
-                verticalArrangement = Arrangement.spacedBy(spacing.extraSmall),
-                contentPadding = bottomContentPadding,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.surface)
-                    .haze(
-                        LocalHazeState.current,
-                        HazeDefaults.style(MaterialTheme.colorScheme.surface)
-                    )
-            ) {
-                stickyHeader {
-                    header()
-                    HorizontalDivider()
-                }
-                items(categories) { category ->
-                    PlaylistTabRowItem(
-                        name = category,
-                        selected = category == selectedCategory,
-                        pinned = category in pinnedCategories,
-                        focused = category == focusCategory,
-                        hasOtherFocused = focusCategory != null && focusCategory != category,
-                        onClick = {
-                            if (focusCategory == null) {
-                                onCategoryChanged(category)
-                            }
-                        },
-                        onLongClick = {
-                            focusCategory = category
+        val categoriesContent: LazyListScope.() -> Unit = {
+            stickyHeader { header() }
+            items(categories) { category ->
+                PlaylistTabRowItem(
+                    name = category,
+                    selected = category == selectedCategory,
+                    pinned = category in pinnedCategories,
+                    focused = category == focusCategory,
+                    hasOtherFocused = focusCategory != null && focusCategory != category,
+                    isExpanded = isExpanded,
+                    onClick = {
+                        if (focusCategory == null) {
                             onCategoryChanged(category)
-                            hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
-                        },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
+                        }
+                    },
+                    onLongClick = {
+                        focusCategory = category
+                        onCategoryChanged(category)
+                        hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                    }
+                )
             }
-        } else {
-            Column {
+        }
+        Column {
+            if (isExpanded) {
+                LazyColumn(
+                    state = state,
+                    horizontalAlignment = Alignment.Start,
+                    verticalArrangement = Arrangement.spacedBy(spacing.extraSmall),
+                    contentPadding = bottomContentPadding,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(MaterialTheme.colorScheme.surface)
+                        .haze(
+                            LocalHazeState.current,
+                            HazeDefaults.style(MaterialTheme.colorScheme.surface)
+                        ),
+                    content = categoriesContent
+                )
+            } else {
                 LazyRow(
                     state = state,
                     verticalAlignment = Alignment.CenterVertically,
@@ -175,31 +176,11 @@ internal fun PlaylistTabRow(
                     modifier = Modifier
                         .background(MaterialTheme.colorScheme.surface)
                         .blurEdge(MaterialTheme.colorScheme.surface, Edge.End)
-                        .fillMaxWidth()
-                ) {
-                    stickyHeader { header() }
-                    items(categories) { category ->
-                        PlaylistTabRowItem(
-                            name = category,
-                            selected = category == selectedCategory,
-                            pinned = category in pinnedCategories,
-                            focused = category == focusCategory,
-                            hasOtherFocused = focusCategory != null && focusCategory != category,
-                            onClick = {
-                                if (focusCategory == null) {
-                                    onCategoryChanged(category)
-                                }
-                            },
-                            onLongClick = {
-                                focusCategory = category
-                                onCategoryChanged(category)
-                                hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
-                            }
-                        )
-                    }
-                }
-                HorizontalDivider()
+                        .fillMaxWidth(),
+                    content = categoriesContent
+                )
             }
+            HorizontalDivider()
         }
         BackHandler(focusCategory != null) {
             focusCategory = null
@@ -214,6 +195,7 @@ private fun PlaylistTabRowItem(
     pinned: Boolean,
     focused: Boolean,
     hasOtherFocused: Boolean,
+    isExpanded: Boolean,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -232,7 +214,8 @@ private fun PlaylistTabRowItem(
         )
     ) {
         val indication = if (hasOtherFocused) null else rememberRipple()
-        val shape = RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp)
+        val shape = if (isExpanded) RectangleShape
+        else RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp)
         Card(
             colors = CardDefaults.cardColors(
                 containerColor = if (focused) LocalContentColor.current
@@ -250,48 +233,94 @@ private fun PlaylistTabRowItem(
                     onLongClick = onLongClick,
                     role = Role.Tab
                 )
+                .thenIf(isExpanded) { Modifier.fillMaxWidth() }
                 .then(modifier)
         ) {
-            Box(
-                modifier = Modifier
-                    .padding(
-                        start = spacing.medium,
-                        end = spacing.medium,
-                        top = spacing.small
-                    )
-                    .heightIn(32.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = when {
-                        pinned -> "[$name]"
-                        else -> name
-                    },
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = when {
-                        pinned -> FontWeight.Black
-                        selected && !hasOtherFocused -> FontWeight.Bold
-                        else -> null
-                    }
-                )
-            }
-            Box(
-                Modifier
-                    .requiredSize(48.dp, spacing.small)
-                    .background(
-                        when {
-                            focused -> LocalContentColor.current
-                            selected -> MaterialTheme.colorScheme.primary
-                            else -> Color.Transparent
-                        },
-                        shape = AbsoluteSmoothCornerShape(
-                            cornerRadiusTL = 4.dp,
-                            cornerRadiusTR = 4.dp,
-                            smoothnessAsPercentBL = 60
+            val text = @Composable {
+                Box(
+                    modifier = Modifier
+                        .padding(
+                            start = spacing.medium,
+                            end = spacing.medium,
+                            top = spacing.small,
+                            bottom = if (isExpanded) spacing.small else spacing.none
                         )
+                        .heightIn(32.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = when {
+                            pinned -> "[$name]"
+                            else -> name
+                        },
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = when {
+                            pinned -> FontWeight.Black
+                            selected && !hasOtherFocused -> FontWeight.Bold
+                            else -> null
+                        }
                     )
-                    .align(Alignment.CenterHorizontally)
-            )
+                }
+            }
+            val indicator = @Composable {
+                if (isExpanded) {
+                    Box(
+                        Modifier
+                            .requiredSize(spacing.small)
+                            .background(
+                                when {
+                                    focused -> LocalContentColor.current
+                                    selected -> MaterialTheme.colorScheme.primary
+                                    else -> Color.Transparent
+                                },
+                                shape = AbsoluteSmoothCornerShape(
+                                    cornerRadiusTL = 4.dp,
+                                    cornerRadiusTR = 4.dp,
+                                    cornerRadiusBL = 4.dp,
+                                    cornerRadiusBR = 4.dp,
+                                    smoothnessAsPercentBL = 60
+                                )
+                            )
+                    )
+                } else {
+                    Box(
+                        Modifier
+                            .requiredSize(48.dp, spacing.small)
+                            .background(
+                                when {
+                                    focused -> LocalContentColor.current
+                                    selected -> MaterialTheme.colorScheme.primary
+                                    else -> Color.Transparent
+                                },
+                                shape = AbsoluteSmoothCornerShape(
+                                    cornerRadiusTL = 4.dp,
+                                    cornerRadiusTR = 4.dp,
+                                    smoothnessAsPercentBL = 60
+                                )
+                            )
+                    )
+                }
+            }
+
+            if (isExpanded) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(end = spacing.medium)
+                ) {
+                    text()
+                    indicator()
+                }
+            } else {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    text()
+                    indicator()
+                }
+            }
         }
     }
 }
