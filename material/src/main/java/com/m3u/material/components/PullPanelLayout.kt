@@ -86,11 +86,6 @@ fun PullPanelLayout(
             targetValue = offset,
             label = "offset"
         )
-        LaunchedEffect(enabled) {
-            if (!enabled) {
-                state.collapse()
-            }
-        }
         SubcomposeLayout(
             modifier
                 .draggable(

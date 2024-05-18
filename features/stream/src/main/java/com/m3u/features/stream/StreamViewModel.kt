@@ -17,12 +17,14 @@ import com.m3u.core.architecture.dispatcher.M3uDispatchers.Main
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.Profiles
 import com.m3u.core.architecture.logger.install
+import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.Programme
 import com.m3u.data.database.model.ProgrammeRange
 import com.m3u.data.database.model.Stream
 import com.m3u.data.database.model.epgUrlsOrXtreamXmlUrl
 import com.m3u.data.database.model.isSeries
+import com.m3u.data.database.model.isVod
 import com.m3u.data.repository.playlist.PlaylistRepository
 import com.m3u.data.repository.programme.ProgrammeRepository
 import com.m3u.data.repository.stream.StreamRepository
@@ -78,14 +80,23 @@ class StreamViewModel @Inject constructor(
     internal val stream: StateFlow<Stream?> = playerManager.stream
     internal val playlist: StateFlow<Playlist?> = playerManager.playlist
 
-    internal val isSeriesPlaylist: StateFlow<Boolean> = playerManager
-        .playlist
+    internal val isSeriesPlaylist: StateFlow<Boolean> = playlist
         .map { it?.isSeries ?: false }
         .stateIn(
             scope = viewModelScope,
             initialValue = false,
             started = SharingStarted.WhileSubscribed(5_000L)
         )
+
+    internal val isProgrammeSupported: Flow<Boolean> = playlist.map {
+        it ?: return@map false
+        if (it.isSeries || it.isVod) return@map false
+        when (it.source) {
+            DataSource.Xtream -> true
+            DataSource.M3U -> it.epgUrls.isNotEmpty()
+            else -> false
+        }
+    }
 
     internal val tracks: StateFlow<Map<Int, List<Format>>> = playerManager
         .tracks

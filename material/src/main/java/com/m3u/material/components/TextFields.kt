@@ -63,6 +63,7 @@ import com.m3u.material.ktx.InteractionType
 import com.m3u.material.ktx.interactionBorder
 import com.m3u.material.ktx.isTelevision
 import androidx.tv.material3.MaterialTheme as TvMaterialTheme
+import androidx.tv.material3.Text as TvText
 
 @Composable
 fun TextField(
@@ -376,7 +377,7 @@ private fun TvTextFieldImpl(
                     ) {
                         innerTextField()
                         if (value.isEmpty()) {
-                            androidx.tv.material3.Text(
+                            TvText(
                                 modifier = Modifier.graphicsLayer { alpha = 0.6f },
                                 text = placeholder,
                                 style = TvMaterialTheme.typography.titleSmall

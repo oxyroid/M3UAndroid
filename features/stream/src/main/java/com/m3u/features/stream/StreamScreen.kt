@@ -54,7 +54,6 @@ import com.m3u.material.components.mask.MaskInterceptor
 import com.m3u.material.components.mask.MaskState
 import com.m3u.material.components.mask.rememberMaskState
 import com.m3u.material.components.rememberPullPanelLayoutState
-import com.m3u.material.ktx.isTelevision
 import com.m3u.material.ktx.plus
 import com.m3u.ui.Player
 import com.m3u.ui.helper.LocalHelper
@@ -78,8 +77,6 @@ fun StreamRoute(
     val context = LocalContext.current
     val configuration = LocalConfiguration.current
 
-    val tv = isTelevision()
-
     val playerState: PlayerState by viewModel.playerState.collectAsStateWithLifecycle()
     val stream by viewModel.stream.collectAsStateWithLifecycle()
     val playlist by viewModel.playlist.collectAsStateWithLifecycle()
@@ -92,6 +89,9 @@ fun StreamRoute(
 
     val volume by viewModel.volume.collectAsStateWithLifecycle()
     val isSeriesPlaylist by viewModel.isSeriesPlaylist.collectAsStateWithLifecycle()
+    val isProgrammeSupported by viewModel.isProgrammeSupported.collectAsStateWithLifecycle(
+        initialValue = false
+    )
 
     val neighboring = viewModel.neighboring.collectAsLazyPagingItems()
     val programmes = viewModel.programmes.collectAsLazyPagingItems()
@@ -188,7 +188,8 @@ fun StreamRoute(
                     playlistTitle = playlist?.title.orEmpty(),
                     streamId = stream?.id ?: -1,
                     isPanelExpanded = isPanelExpanded,
-                    isSeriesPlaylist = isSeriesPlaylist,
+                    isChannelsSupported = !isSeriesPlaylist,
+                    isProgrammeSupported = isProgrammeSupported,
                     channels = neighboring,
                     programmes = programmes,
                     programmeRange = programmeRange

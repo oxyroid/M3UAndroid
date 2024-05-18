@@ -1,8 +1,7 @@
 package com.m3u.features.stream.components
 
+import android.view.KeyEvent
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -10,6 +9,9 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -24,9 +26,13 @@ import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.paging.compose.LazyPagingItems
@@ -39,6 +45,7 @@ import com.m3u.data.database.model.Stream
 import com.m3u.data.service.MediaCommand
 import com.m3u.material.components.Background
 import com.m3u.material.ktx.isTelevision
+import com.m3u.material.ktx.thenIf
 import com.m3u.material.model.LocalSpacing
 import com.m3u.material.shape.AbsoluteSmoothCornerShape
 import com.m3u.ui.FontFamilies
@@ -54,7 +61,8 @@ internal fun PlayerPanel(
     title: String,
     playlistTitle: String,
     streamId: Int,
-    isSeriesPlaylist: Boolean,
+    isChannelsSupported: Boolean,
+    isProgrammeSupported: Boolean,
     isPanelExpanded: Boolean,
     channels: LazyPagingItems<Stream>,
     programmes: LazyPagingItems<Programme>,
@@ -62,8 +70,9 @@ internal fun PlayerPanel(
     modifier: Modifier = Modifier
 ) {
     val configuration = LocalConfiguration.current
-    val useVertical = configuration.screenWidthDp < configuration.screenHeightDp
     val spacing = LocalSpacing.current
+
+    val useVertical = configuration.screenWidthDp < configuration.screenHeightDp
     Background(
         shape = if (useVertical) RectangleShape else AbsoluteSmoothCornerShape(
             cornerRadiusTL = spacing.medium,
@@ -71,68 +80,73 @@ internal fun PlayerPanel(
         )
     ) {
         Column(
+            verticalArrangement = Arrangement.spacedBy(spacing.small),
             modifier = modifier
                 .fillMaxSize()
+                .thenIf(!useVertical) {
+                    Modifier.statusBarsPadding()
+                }
                 .padding(vertical = spacing.medium)
         ) {
             AnimatedVisibility(
                 visible = isPanelExpanded && useVertical,
                 modifier = Modifier.padding(horizontal = spacing.medium)
             ) {
-                Text(
-                    text = title.trim(),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.ExtraBold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.basicMarquee()
-                )
-            }
-            AnimatedVisibility(
-                visible = isPanelExpanded && useVertical,
-                enter = fadeIn(),
-                exit = fadeOut(),
-                modifier = Modifier.padding(horizontal = spacing.medium)
-            ) {
-                Text(
-                    text = playlistTitle.trim().uppercase(),
-                    style = MaterialTheme.typography.labelMedium,
-                    maxLines = 1,
-                    color = LocalContentColor.current.copy(0.54f),
-                    fontFamily = FontFamilies.LexendExa,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.basicMarquee()
-                )
+                Column {
+                    Text(
+                        text = title.trim(),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.ExtraBold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.basicMarquee()
+                    )
+                    Text(
+                        text = playlistTitle.trim().uppercase(),
+                        style = MaterialTheme.typography.labelMedium,
+                        maxLines = 1,
+                        color = LocalContentColor.current.copy(0.54f),
+                        fontFamily = FontFamilies.LexendExa,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.basicMarquee()
+                    )
+                }
             }
 
-            if (!isSeriesPlaylist) {
+            if (isChannelsSupported) {
                 ChannelGallery(
                     // TODO
                     value = ChannelGalleryValue.PagingChannel(channels, streamId),
-                    isPanelExpanded = isPanelExpanded
+                    isPanelExpanded = isPanelExpanded,
+                    vertical = !isProgrammeSupported
                 )
             }
 
-            ProgramGuide(
-                isPanelExpanded = isPanelExpanded,
-                programmes = programmes,
-                range = programmeRange,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f)
-            )
+            if (isProgrammeSupported) {
+                ProgramGuide(
+                    isPanelExpanded = isPanelExpanded,
+                    programmes = programmes,
+                    range = programmeRange,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+                )
+            }
         }
     }
 }
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 private fun ChannelGallery(
     value: ChannelGalleryValue,
     isPanelExpanded: Boolean,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    vertical: Boolean = false
 ) {
     val spacing = LocalSpacing.current
     val lazyListState = rememberLazyListState()
+    val tv = isTelevision()
 
     ScrollToCurrentEffect(
         value = value,
@@ -140,12 +154,7 @@ private fun ChannelGallery(
         lazyListState = lazyListState
     )
 
-    LazyRow(
-        state = lazyListState,
-        horizontalArrangement = Arrangement.spacedBy(spacing.medium),
-        contentPadding = PaddingValues(spacing.medium),
-        modifier = modifier
-    ) {
+    val content: LazyListScope.() -> Unit = {
         when (value) {
             is ChannelGalleryValue.PagingChannel -> {
                 val channels = value.channels
@@ -167,6 +176,37 @@ private fun ChannelGallery(
                 }
             }
         }
+    }
+    if (!vertical) {
+        LazyRow(
+            state = lazyListState,
+            horizontalArrangement = Arrangement.spacedBy(spacing.medium),
+            contentPadding = PaddingValues(spacing.medium),
+            modifier = modifier,
+            content = content
+        )
+    } else {
+        val focusManager = LocalFocusManager.current
+        LazyColumn(
+            state = lazyListState,
+            verticalArrangement = Arrangement.spacedBy(spacing.medium),
+            contentPadding = PaddingValues(spacing.medium),
+            modifier = modifier
+                .fillMaxWidth()
+                .thenIf(tv) {
+                    Modifier.onKeyEvent {
+                        when (it.nativeKeyEvent.keyCode) {
+                            KeyEvent.KEYCODE_DPAD_LEFT, KeyEvent.KEYCODE_DPAD_RIGHT -> {
+                                focusManager.moveFocus(FocusDirection.Exit)
+                                true
+                            }
+
+                            else -> false
+                        }
+                    }
+                },
+            content = content
+        )
     }
 }
 
