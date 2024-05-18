@@ -509,32 +509,20 @@ private fun MaskCenterButton(
     onRetry: () -> Unit
 ) {
     Box(modifier) {
-        when (maskCenterState) {
-            Replay -> {
-                MaskCircleButton(
-                    state = maskState,
-                    icon = Icons.Rounded.Refresh,
-                    onClick = onRetry
-                )
-            }
-
-            Play -> {
-                MaskCircleButton(
-                    state = maskState,
-                    icon = Icons.Rounded.PlayArrow,
-                    onClick = onPlay
-                )
-            }
-
-            Pause -> {
-                MaskCircleButton(
-                    state = maskState,
-                    icon = Icons.Rounded.Pause,
-                    onClick = onPause
-                )
-            }
-
-            else -> {}
+        if (maskCenterState != null) {
+            MaskCircleButton(
+                state = maskState,
+                icon = when (maskCenterState) {
+                    Replay -> Icons.Rounded.Refresh
+                    Play -> Icons.Rounded.PlayArrow
+                    Pause -> Icons.Rounded.Pause
+                },
+                onClick = when (maskCenterState) {
+                    Replay -> onRetry
+                    Play -> onPlay
+                    Pause -> onPause
+                }
+            )
         }
     }
 }
