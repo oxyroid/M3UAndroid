@@ -224,7 +224,9 @@ internal fun SmartphonePlaylistScreenImpl(
             }
 
             val gallery = @Composable {
-                val channel = channels.find { it.category == category }
+                val channel = remember(channels, category) {
+                    channels.find { it.category == category }
+                }
                 SmartphoneStreamGallery(
                     state = state,
                     rowCount = actualRowCount,

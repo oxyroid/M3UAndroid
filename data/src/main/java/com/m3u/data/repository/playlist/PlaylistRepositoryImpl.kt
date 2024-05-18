@@ -50,7 +50,10 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.filterNot
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onEach
@@ -524,6 +527,22 @@ internal class PlaylistRepositoryImpl @Inject constructor(
             .getCategoriesByPlaylistUrl(url, query)
             .filterNot { it in hiddenCategories }
             .sortedByDescending { it in pinnedCategories }
+    }
+
+    override fun observeCategoriesByPlaylistUrlIgnoreHidden(
+        url: String,
+        query: String
+    ): Flow<List<String>> = playlistDao.observeByUrl(url).flatMapLatest { playlist ->
+        playlist ?: return@flatMapLatest flowOf()
+        val pinnedCategories = playlist.pinnedCategories
+        val hiddenCategories = playlist.hiddenCategories
+        streamDao
+            .observeCategoriesByPlaylistUrl(playlist.url, query)
+            .map { categories ->
+                categories
+                    .filterNot { it in hiddenCategories }
+                    .sortedByDescending { it in pinnedCategories }
+            }
     }
 
     override suspend fun unsubscribe(url: String): Playlist? = logger.execute {

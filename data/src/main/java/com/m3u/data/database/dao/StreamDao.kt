@@ -30,6 +30,19 @@ internal interface StreamDao {
         query: String
     ): List<String>
 
+    @Query(
+        """
+            SELECT DISTINCT `group`
+            FROM streams
+            WHERE playlistUrl = :playlistUrl
+            AND title LIKE '%'||:query||'%'
+        """
+    )
+    fun observeCategoriesByPlaylistUrl(
+        playlistUrl: String,
+        query: String
+    ): Flow<List<String>>
+
     @Delete
     suspend fun delete(stream: Stream)
 

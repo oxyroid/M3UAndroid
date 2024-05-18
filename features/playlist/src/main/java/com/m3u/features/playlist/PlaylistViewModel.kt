@@ -30,6 +30,7 @@ import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.Profiles
 import com.m3u.core.architecture.logger.install
 import com.m3u.core.architecture.preferences.Preferences
+import com.m3u.core.util.coroutine.flatmapCombined
 import com.m3u.core.wrapper.Event
 import com.m3u.core.wrapper.Resource
 import com.m3u.core.wrapper.handledEvent
@@ -55,21 +56,28 @@ import com.m3u.features.playlist.navigation.PlaylistNavigation
 import com.m3u.ui.Sort
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapLatest
+import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import javax.inject.Inject
+import kotlin.time.Duration.Companion.seconds
 import androidx.tvprovider.media.tv.Channel as TvProviderChannel
 
 const val REQUEST_CHANNEL_BROWSABLE = 4001
@@ -326,7 +334,7 @@ class PlaylistViewModel @Inject constructor(
     internal val query = MutableStateFlow("")
     internal val scrollUp: MutableStateFlow<Event<Unit>> = MutableStateFlow(handledEvent())
 
-    data class PagingStreamParameters(
+    data class ChannelParameters(
         val playlistUrl: String,
         val query: String,
         val sort: Sort,
@@ -338,25 +346,31 @@ class PlaylistViewModel @Inject constructor(
         val streams: Flow<PagingData<Stream>>,
     )
 
+    @OptIn(FlowPreview::class)
+    private val categories = flatmapCombined(playlistUrl, query) { playlistUrl, query ->
+        playlistRepository.observeCategoriesByPlaylistUrlIgnoreHidden(playlistUrl, query)
+    }
+        .let { flow ->
+            merge(
+                flow.take(1),
+                flow.drop(1).debounce(1.seconds)
+            )
+        }
+
     internal val channels: StateFlow<List<Channel>> = combine(
-        playlistUrl.flatMapLatest { playlistRepository.observe(it) },
+        playlistUrl,
+        categories,
         query,
         sort
-    ) { playlist, query, sort ->
-        val playlistUrl = playlist?.url ?: return@combine null
-        val categories = playlistUrl.let {
-            playlistRepository.getCategoriesByPlaylistUrlIgnoreHidden(it, query)
-        }
-        PagingStreamParameters(
+    ) { playlistUrl, categories, query, sort ->
+        ChannelParameters(
             playlistUrl = playlistUrl,
             query = query,
             sort = sort,
             categories = categories
         )
     }
-        .map { params ->
-            params ?: return@map emptyList()
-            val (playlistUrl, query, sort, categories) = params
+        .mapLatest { (playlistUrl, query, sort, categories) ->
             categories.map { category ->
                 Channel(
                     category = category,
