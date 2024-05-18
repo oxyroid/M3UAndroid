@@ -132,13 +132,15 @@ class StreamViewModel @Inject constructor(
         playerManager.player,
         playerManager.playbackState,
         playerManager.size,
-        playerManager.playbackException
-    ) { player, playState, videoSize, playbackException ->
+        playerManager.playbackException,
+        playerManager.isPlaying
+    ) { player, playState, videoSize, playbackException, isPlaying ->
         PlayerState(
             playState = playState,
             videoSize = videoSize,
             playerError = playbackException,
-            player = player
+            player = player,
+            isPlaying = isPlaying
         )
     }
         .stateIn(

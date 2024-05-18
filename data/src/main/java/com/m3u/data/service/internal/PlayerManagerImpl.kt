@@ -142,6 +142,7 @@ class PlayerManagerImpl @Inject constructor(
 
     override val playbackState = MutableStateFlow<@Player.State Int>(Player.STATE_IDLE)
     override val playbackException = MutableStateFlow<PlaybackException?>(null)
+    override val isPlaying = MutableStateFlow(false)
     override val tracksGroups = MutableStateFlow<List<Tracks.Group>>(emptyList())
 
     private var currentConnectTimeout = preferences.connectTimeout
@@ -434,7 +435,12 @@ class PlayerManagerImpl @Inject constructor(
 
     override fun onTracksChanged(tracks: Tracks) {
         super.onTracksChanged(tracks)
+        player.value?.isPlaying
         tracksGroups.value = tracks.groups
+    }
+
+    override fun onIsPlayingChanged(isPlaying: Boolean) {
+        this.isPlaying.value = isPlaying
     }
 
     override fun pauseOrContinue(value: Boolean) {

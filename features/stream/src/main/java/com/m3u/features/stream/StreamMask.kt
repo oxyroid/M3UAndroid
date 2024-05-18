@@ -9,8 +9,6 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -30,7 +28,9 @@ import androidx.compose.material.icons.rounded.Cast
 import androidx.compose.material.icons.rounded.DarkMode
 import androidx.compose.material.icons.rounded.HighQuality
 import androidx.compose.material.icons.rounded.LightMode
+import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PictureInPicture
+import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.ScreenRotationAlt
 import androidx.compose.material.icons.rounded.Star
@@ -65,6 +65,9 @@ import androidx.media3.common.Player
 import com.m3u.core.architecture.preferences.hiltPreferences
 import com.m3u.core.util.basic.isNotEmpty
 import com.m3u.data.television.model.RemoteDirection
+import com.m3u.features.stream.MaskCenterState.Pause
+import com.m3u.features.stream.MaskCenterState.Play
+import com.m3u.features.stream.MaskCenterState.Replay
 import com.m3u.features.stream.components.MaskTextButton
 import com.m3u.features.stream.components.PlayerMask
 import com.m3u.i18n.R.string
@@ -305,22 +308,20 @@ internal fun StreamMask(
                 }
             },
             body = {
-                AnimatedVisibility(
-                    visible = (!isPanelExpanded && preferences.alwaysShowReplay) || playerState.playState in arrayOf(
-                        Player.STATE_IDLE,
-                        Player.STATE_ENDED
-                    ) || playerState.playerError != null,
-                    enter = fadeIn() + scaleIn(initialScale = 0.85f),
-                    exit = fadeOut() + scaleOut(targetScale = 0.85f)
-                ) {
-                    MaskCircleButton(
-                        state = maskState,
-                        icon = Icons.Rounded.Refresh,
-                        onClick = {
-                            coroutineScope.launch { helper.replay() }
-                        }
-                    )
-                }
+                val maskCenterState = MaskCenterState.of(
+                    playerState.playState,
+                    playerState.isPlaying,
+                    preferences.alwaysShowReplay,
+                    isPanelExpanded,
+                    playerState.playerError
+                )
+                MaskCenterButton(
+                    maskCenterState = maskCenterState,
+                    maskState = maskState,
+                    onPlay = { playerState.player?.play() },
+                    onPause = { playerState.player?.pause() },
+                    onRetry = { coroutineScope.launch { helper.replay() } }
+                )
             },
             footer = {
                 if (preferences.fullInfoPlayer && cover.isNotEmpty()) {
@@ -495,5 +496,67 @@ internal fun StreamMask(
             },
             modifier = modifier
         )
+    }
+}
+
+@Composable
+private fun MaskCenterButton(
+    maskCenterState: MaskCenterState?,
+    maskState: MaskState,
+    modifier: Modifier = Modifier,
+    onPlay: () -> Unit,
+    onPause: () -> Unit,
+    onRetry: () -> Unit
+) {
+    Box(modifier) {
+        when (maskCenterState) {
+            Replay -> {
+                MaskCircleButton(
+                    state = maskState,
+                    icon = Icons.Rounded.Refresh,
+                    onClick = onRetry
+                )
+            }
+
+            Play -> {
+                MaskCircleButton(
+                    state = maskState,
+                    icon = Icons.Rounded.PlayArrow,
+                    onClick = onPlay
+                )
+            }
+
+            Pause -> {
+                MaskCircleButton(
+                    state = maskState,
+                    icon = Icons.Rounded.Pause,
+                    onClick = onPause
+                )
+            }
+
+            else -> {}
+        }
+    }
+}
+
+private enum class MaskCenterState {
+    Replay, Play, Pause;
+
+    companion object {
+        fun of(
+            @Player.State playState: Int,
+            isPlaying: Boolean,
+            alwaysShowReplay: Boolean,
+            isPanelExpanded: Boolean,
+            playerError: Exception?
+        ): MaskCenterState? = when {
+            isPanelExpanded || playState == Player.STATE_BUFFERING -> null
+            alwaysShowReplay || playState in arrayOf(
+                Player.STATE_IDLE,
+                Player.STATE_ENDED
+            ) || playerError != null -> Replay
+
+            else -> if (!isPlaying) Play else Pause
+        }
     }
 }

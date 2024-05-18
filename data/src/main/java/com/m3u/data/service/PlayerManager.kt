@@ -25,6 +25,7 @@ interface PlayerManager {
 
     val playbackState: StateFlow<@Player.State Int>
     val playbackException: StateFlow<PlaybackException?>
+    val isPlaying: StateFlow<Boolean>
 
     val tracksGroups: StateFlow<List<Tracks.Group>>
     val cacheSpace: Flow<Long>
