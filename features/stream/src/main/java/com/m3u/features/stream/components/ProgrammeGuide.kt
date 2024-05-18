@@ -57,6 +57,7 @@ import com.m3u.material.components.Icon
 import com.m3u.material.ktx.Edge
 import com.m3u.material.ktx.blurEdges
 import com.m3u.material.ktx.isTelevision
+import com.m3u.material.ktx.thenIf
 import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.FontFamilies
 import com.m3u.ui.util.TimeUtils.formatEOrSh
@@ -64,6 +65,7 @@ import com.m3u.ui.util.TimeUtils.toEOrSh
 import eu.wewox.minabox.MinaBox
 import eu.wewox.minabox.MinaBoxItem
 import eu.wewox.minabox.MinaBoxScrollDirection
+import eu.wewox.minabox.MinaBoxState
 import eu.wewox.minabox.rememberMinaBoxState
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -87,14 +89,15 @@ internal fun ProgramGuide(
     programmes: LazyPagingItems<Programme>,
     range: ProgrammeRange,
     modifier: Modifier = Modifier,
+    minaBoxState: MinaBoxState = rememberMinaBoxState(),
     height: Float = 256f,
     padding: Float = 16f,
     currentTimelineHeight: Float = 48f,
     scrollOffset: Int = -120
 ) {
     val spacing = LocalSpacing.current
+    val tv = isTelevision()
 
-    val minaBoxState = rememberMinaBoxState()
     val currentMilliseconds by produceCurrentMillisecondState()
     val coroutineScope = rememberCoroutineScope()
 
@@ -111,7 +114,6 @@ internal fun ProgramGuide(
             }
         )
     }
-
     val currentHeight: Float by animateFloatAsState(
         targetValue = height * zoom.time,
         label = "minabox-cell-height"
@@ -146,7 +148,7 @@ internal fun ProgramGuide(
                     MaterialTheme.colorScheme.surface,
                     listOf(Edge.Top, Edge.Bottom)
                 )
-                .then(zoomGestureModifier)
+                .thenIf(!tv) { zoomGestureModifier }
                 .then(modifier)
         ) {
             // programmes
@@ -212,14 +214,16 @@ internal fun ProgramGuide(
             }
         }
 
-        Controls(
-            animateToCurrentTimeline = {
-                coroutineScope.launch { animateToCurrentTimeline() }
-            },
-            modifier = Modifier
-                .padding(spacing.medium)
-                .align(Alignment.BottomEnd)
-        )
+        if (!tv) {
+            Controls(
+                animateToCurrentTimeline = {
+                    coroutineScope.launch { animateToCurrentTimeline() }
+                },
+                modifier = Modifier
+                    .padding(spacing.medium)
+                    .align(Alignment.BottomEnd)
+            )
+        }
     }
 }
 
