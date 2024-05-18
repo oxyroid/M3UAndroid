@@ -94,6 +94,9 @@ class EpgParserImpl @Inject constructor(
         var desc: String? = null
         val categories = mutableListOf<String>()
         var icon: String? = null
+        var isNew = false // Initialize isNew flag
+        var isLive = false
+        var previouslyShownStart: String? = null // Initialize previouslyShown variable
         while (next() != XmlPullParser.END_TAG) {
             if (eventType != XmlPullParser.START_TAG) continue
             when (name) {
@@ -101,6 +104,9 @@ class EpgParserImpl @Inject constructor(
                 "desc" -> desc = readDesc()
                 "category" -> categories += readCategory()
                 "icon" -> icon = readIcon()
+                "new" -> isNew = readNew() // Update isNewTag flag
+                "live" -> isLive = readLive() // Update isNewTag flag
+                "previously-shown" -> previouslyShownStart = readPreviouslyShown()
                 else -> skip()
             }
         }
@@ -112,7 +118,10 @@ class EpgParserImpl @Inject constructor(
             title = title,
             desc = desc,
             icon = icon,
-            categories = categories
+            categories = categories,
+            isNew = isNew,
+            isLive = isLive,
+            previouslyShownStart = previouslyShownStart
         )
     }
 
@@ -168,6 +177,24 @@ class EpgParserImpl @Inject constructor(
         val category = readText()
         require(XmlPullParser.END_TAG, ns, "category")
         return category
+    }
+
+    private fun XmlPullParser.readNew(): Boolean {
+        require(XmlPullParser.END_TAG, ns, "new")
+        return true
+    }
+
+    private fun XmlPullParser.readLive(): Boolean {
+        require(XmlPullParser.END_TAG, ns, "live")
+        return true
+    }
+
+    private fun XmlPullParser.readPreviouslyShown(): String? {
+        require(XmlPullParser.START_TAG, ns, "previously-shown")
+        val start = getAttributeValue(null, "start")
+        nextTag()
+        require(XmlPullParser.END_TAG, ns, "previously-shown")
+        return start
     }
 
     private fun XmlPullParser.readText(): String {
