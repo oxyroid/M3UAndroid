@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -306,26 +305,21 @@ internal fun StreamMask(
                 }
             },
             body = {
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier = Modifier.fillMaxSize()
+                AnimatedVisibility(
+                    visible = (!isPanelExpanded && preferences.alwaysShowReplay) || playerState.playState in arrayOf(
+                        Player.STATE_IDLE,
+                        Player.STATE_ENDED
+                    ) || playerState.playerError != null,
+                    enter = fadeIn() + scaleIn(initialScale = 0.85f),
+                    exit = fadeOut() + scaleOut(targetScale = 0.85f)
                 ) {
-                    androidx.compose.animation.AnimatedVisibility(
-                        visible = (!isPanelExpanded && preferences.alwaysShowReplay) || playerState.playState in arrayOf(
-                            Player.STATE_IDLE,
-                            Player.STATE_ENDED
-                        ) || playerState.playerError != null,
-                        enter = fadeIn() + scaleIn(initialScale = 0.85f),
-                        exit = fadeOut() + scaleOut(targetScale = 0.85f)
-                    ) {
-                        MaskCircleButton(
-                            state = maskState,
-                            icon = Icons.Rounded.Refresh,
-                            onClick = {
-                                coroutineScope.launch { helper.replay() }
-                            }
-                        )
-                    }
+                    MaskCircleButton(
+                        state = maskState,
+                        icon = Icons.Rounded.Refresh,
+                        onClick = {
+                            coroutineScope.launch { helper.replay() }
+                        }
+                    )
                 }
             },
             footer = {

@@ -57,10 +57,10 @@ data class Playlist(
     companion object {
         const val URL_IMPORTED = "imported"
 
-        internal val SERIES_TYPES = arrayOf(
+        val SERIES_TYPES = arrayOf(
             DataSource.Xtream.TYPE_SERIES
         )
-        internal val VOD_TYPES = arrayOf(
+        val VOD_TYPES = arrayOf(
             DataSource.Xtream.TYPE_VOD
         )
     }

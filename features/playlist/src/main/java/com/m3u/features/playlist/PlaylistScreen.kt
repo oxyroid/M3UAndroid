@@ -37,6 +37,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.google.accompanist.permissions.rememberPermissionState
@@ -90,7 +91,9 @@ internal fun PlaylistRoute(
     val playlistUrl by viewModel.playlistUrl.collectAsStateWithLifecycle()
     val playlist by viewModel.playlist.collectAsStateWithLifecycle()
 
-    val channels by viewModel.channels.collectAsStateWithLifecycle()
+    val channels by viewModel.channels.collectAsStateWithLifecycle(
+        minActiveState = Lifecycle.State.RESUMED
+    )
 
     val episodes by viewModel.episodes.collectAsStateWithLifecycle()
     val pinnedCategories by viewModel.pinnedCategories.collectAsStateWithLifecycle()
@@ -185,7 +188,7 @@ internal fun PlaylistRoute(
             }
         },
         createShortcut = { id -> viewModel.createShortcut(context, id) },
-        createTvRecommend = { id -> viewModel.createTvRecommend(context, id) },
+        createTvRecommend = { id -> viewModel.createTvRecommend(helper.activityContext, id) },
         isVodPlaylist = isVodPlaylist,
         isSeriesPlaylist = isSeriesPlaylist,
         getProgrammeCurrently = { channelId -> viewModel.getProgrammeCurrently(channelId) },

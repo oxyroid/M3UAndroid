@@ -351,7 +351,8 @@ class SubscriptionWorker @AssistedInject constructor(
                         username = username,
                         password = password
                     )
-                    if (xtreamInput.type == null) {
+                    val type = xtreamInput.type
+                    if (type == null) {
                         addTag(
                             XtreamInput.encodeToPlaylistUrl(
                                 xtreamInput.copy(
@@ -370,6 +371,14 @@ class SubscriptionWorker @AssistedInject constructor(
                             XtreamInput.encodeToPlaylistUrl(
                                 xtreamInput.copy(
                                     type = DataSource.Xtream.TYPE_VOD
+                                )
+                            )
+                        )
+                    } else {
+                        addTag(
+                            XtreamInput.encodeToPlaylistUrl(
+                                xtreamInput.copy(
+                                    type = type
                                 )
                             )
                         )

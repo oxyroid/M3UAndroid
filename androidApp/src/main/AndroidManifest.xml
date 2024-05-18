@@ -62,18 +62,27 @@
             android:exported="true"
             android:launchMode="singleTop"
             android:supportsPictureInPicture="true"
-            android:theme="@style/Theme.M3U">
-
-            <!--            <intent-filter>-->
-            <!--                <category android:name="android.intent.category.SECONDARY_HOME" />-->
-            <!--            </intent-filter>-->
-        </activity>
+            android:theme="@style/Theme.M3U" />
 
         <activity
             android:name="com.m3u.features.playlist.TvPlaylistActivity"
             android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation|locale|layoutDirection"
+            android:exported="true"
             android:launchMode="singleTop"
-            android:theme="@style/Theme.M3U" />
+            android:theme="@style/Theme.M3U">
+
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data android:scheme="content" />
+
+                <data android:host="m3u.com" />
+                <data android:pathPrefix="/discover" />
+            </intent-filter>
+        </activity>
         <activity
             android:name="com.m3u.features.crash.CrashActivity"
             android:label="@string/app_label_crash"
