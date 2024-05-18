@@ -56,7 +56,6 @@ fun MaskTextButton(
                         }
                     }
                 }
-                .minimumInteractiveComponentSize()
         ) {
             if (text != null) {
                 Text(
