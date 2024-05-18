@@ -5,6 +5,9 @@ package com.m3u.features.playlist.internal
 import android.content.res.Configuration.ORIENTATION_LANDSCAPE
 import android.content.res.Configuration.ORIENTATION_PORTRAIT
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -250,12 +253,18 @@ internal fun SmartphonePlaylistScreenImpl(
                 Modifier.background(MaterialTheme.colorScheme.surfaceContainerHighest)
             ) {
                 if (!isExpanded) {
-                    if (categories.size > 1) {
+                    AnimatedVisibility(
+                        visible = categories.size > 1,
+                        enter = fadeIn(animationSpec = tween(400))
+                    ) {
                         tabs()
                     }
                     gallery()
                 } else {
-                    if (categories.size > 1) {
+                    AnimatedVisibility(
+                        visible = categories.size > 1,
+                        enter = fadeIn(animationSpec = tween(400))
+                    ) {
                         tabs()
                     }
                 }
