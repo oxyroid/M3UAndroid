@@ -38,7 +38,10 @@ From PRs:
   thanks [@iboboc](https://github.com/iboboc/M3UAndroid)
 - [Brazilian Portuguese](i18n/src/main/res/values-pt-rBR),
   thanks [@Suburbanno](https://github.com/Suburbanno)
-  
+
+### Introduce
+
+- [Basic](https://t.me/m3u_android/176)
 
 ### Features
 
@@ -73,7 +76,8 @@ height="80">](https://f-droid.org/packages/com.m3u.androidApp)
 [<img src="https://github.com/oxyroid/M3UAndroid/assets/5572928/4ba5a44a-c5e4-4634-a7aa-b8dda0992ba2"
 alt="Get it on IzzyOnDroid"
 height="80">](https://apt.izzysoft.de/fdroid/index/apk/com.m3u.androidApp)
-> Get the SNAPSHOT package [here](https://nightly.link/oxyroid/M3UAndroid/workflows/android/master/artifact.zip)
+> Get the SNAPSHOT
+> package [here](https://nightly.link/oxyroid/M3UAndroid/workflows/android/master/artifact.zip)
 
 ### Community
 
