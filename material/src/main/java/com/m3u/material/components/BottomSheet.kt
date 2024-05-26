@@ -6,10 +6,7 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsIgnoringVisibility
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -31,7 +28,6 @@ fun BottomSheet(
     body: @Composable ColumnScope.() -> Unit,
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier,
-    windowInsets: WindowInsets = WindowInsets.navigationBarsIgnoringVisibility,
     blurBody: Boolean = false,
     shouldDismissOnBackPress: Boolean = true
 ) {
@@ -45,9 +41,7 @@ fun BottomSheet(
                 shouldDismissOnBackPress = shouldDismissOnBackPress
             )
         ) {
-            Column(
-                modifier = Modifier.padding(windowInsets.asPaddingValues())
-            ) {
+            Column {
                 Row(
                     content = header,
                     verticalAlignment = Alignment.CenterVertically,

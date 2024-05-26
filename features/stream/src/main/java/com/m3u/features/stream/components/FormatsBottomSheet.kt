@@ -1,12 +1,9 @@
 package com.m3u.features.stream.components
 
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.navigationBarsIgnoringVisibility
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -123,7 +120,6 @@ internal fun FormatsBottomSheet(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = spacing.medium)
-                    .padding(WindowInsets.navigationBarsIgnoringVisibility.asPaddingValues())
             ) {
                 formats.entries.forEachIndexed { index, (type, _) ->
                     val icon = when (type) {

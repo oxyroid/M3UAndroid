@@ -3,11 +3,8 @@ package com.m3u.features.setting.components
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsIgnoringVisibility
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -17,7 +14,6 @@ import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Save
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import com.m3u.material.components.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -41,6 +37,7 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.m3u.i18n.R.string
+import com.m3u.material.components.Icon
 import com.m3u.material.ktx.createScheme
 import com.m3u.material.model.LocalSpacing
 import com.m3u.material.model.SugarColors
@@ -76,7 +73,6 @@ internal fun CanvasBottomSheet(
             ) {
                 Column(
                     modifier = Modifier
-                        .padding(WindowInsets.navigationBarsIgnoringVisibility.asPaddingValues())
                         .padding(horizontal = spacing.medium)
                         .then(modifier)
                 ) {
