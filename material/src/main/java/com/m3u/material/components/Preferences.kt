@@ -6,7 +6,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.selection.toggleable
-import androidx.compose.material.ripple.rememberRipple
+import androidx.compose.material3.ripple
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
@@ -107,7 +107,7 @@ fun Preference(
                         enabled = enabled,
                         onClick = onClick,
                         interactionSource = interactionSource,
-                        indication = rememberRipple()
+                        indication = ripple()
                     )
                     .fillMaxWidth()
             )

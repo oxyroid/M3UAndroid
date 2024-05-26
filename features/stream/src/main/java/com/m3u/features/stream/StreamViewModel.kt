@@ -80,13 +80,7 @@ class StreamViewModel @Inject constructor(
     internal val stream: StateFlow<Stream?> = playerManager.stream
     internal val playlist: StateFlow<Playlist?> = playerManager.playlist
 
-    internal val isSeriesPlaylist: StateFlow<Boolean> = playlist
-        .map { it?.isSeries ?: false }
-        .stateIn(
-            scope = viewModelScope,
-            initialValue = false,
-            started = SharingStarted.WhileSubscribed(5_000L)
-        )
+    internal val isSeriesPlaylist: Flow<Boolean> = playlist.map { it?.isSeries ?: false }
 
     internal val isProgrammeSupported: Flow<Boolean> = playlist.map {
         it ?: return@map false
@@ -98,26 +92,14 @@ class StreamViewModel @Inject constructor(
         }
     }
 
-    internal val tracks: StateFlow<Map<Int, List<Format>>> = playerManager
-        .tracks
+    internal val tracks: Flow<Map<Int, List<Format>>> = playerManager.tracks
         .map { all ->
             all
                 .mapValues { (_, formats) -> formats }
                 .toMap()
         }
-        .stateIn(
-            scope = viewModelScope,
-            initialValue = emptyMap(),
-            started = SharingStarted.WhileSubscribed(5_000L)
-        )
 
-    internal val currentTracks: StateFlow<Map<@C.TrackType Int, Format?>> = playerManager
-        .currentTracks
-        .stateIn(
-            scope = viewModelScope,
-            initialValue = emptyMap(),
-            started = SharingStarted.WhileSubscribed(5_000L)
-        )
+    internal val currentTracks: Flow<Map<@C.TrackType Int, Format?>> = playerManager.currentTracks
 
     internal fun chooseTrack(type: @C.TrackType Int, format: Format) {
         val groups = playerManager.tracksGroups.value
@@ -256,7 +238,9 @@ class StreamViewModel @Inject constructor(
         playerManager.pauseOrContinue(isContinued)
     }
 
-    internal val neighboring: Flow<PagingData<Stream>> = playlist.flatMapLatest { playlist ->
+    // the channels which is in the same category with the current channel
+    // or the episodes which is in the same series.
+    internal val channels: Flow<PagingData<Stream>> = playlist.flatMapLatest { playlist ->
         playlist ?: return@flatMapLatest flowOf(PagingData.empty())
         Pager(PagingConfig(10)) {
             streamRepository.pagingAllByPlaylistUrl(

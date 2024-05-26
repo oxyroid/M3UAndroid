@@ -78,6 +78,7 @@ import com.m3u.material.components.mask.MaskState
 import com.m3u.material.ktx.isTelevision
 import com.m3u.material.ktx.thenIf
 import com.m3u.material.model.LocalSpacing
+import com.m3u.material.recomposeHighlighter
 import com.m3u.ui.FontFamilies
 import com.m3u.ui.Image
 import com.m3u.ui.helper.LocalHelper
@@ -103,7 +104,7 @@ internal fun StreamMask(
     favourite: Boolean,
     isSeriesPlaylist: Boolean,
     isPanelExpanded: Boolean,
-    formatsIsNotEmpty: Boolean,
+    hasTrack: Boolean,
     onFavourite: () -> Unit,
     onBackPressed: () -> Unit,
     openDlnaDevices: () -> Unit,
@@ -258,7 +259,8 @@ internal fun StreamMask(
                             } else volumeBeforeMuted
                         )
                     },
-                    contentDescription = defaultBrightnessOrVolumeContentDescription
+                    contentDescription = defaultBrightnessOrVolumeContentDescription,
+                    modifier = Modifier.recomposeHighlighter()
                 )
                 if (!isSeriesPlaylist) {
                     MaskButton(
@@ -271,7 +273,7 @@ internal fun StreamMask(
                     )
                 }
 
-                if (formatsIsNotEmpty) {
+                if (hasTrack) {
                     MaskButton(
                         state = maskState,
                         icon = Icons.Rounded.HighQuality,

@@ -68,7 +68,7 @@ internal fun FormatsBottomSheet(
             sheetState = state,
             onDismissRequest = onDismiss,
             modifier = modifier,
-            windowInsets = WindowInsets(0)
+//            windowInsets = WindowInsets(0)
         ) {
             LaunchedEffect(Unit) {
                 maskState.sleep()

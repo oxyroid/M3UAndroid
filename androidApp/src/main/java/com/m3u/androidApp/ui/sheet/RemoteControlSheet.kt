@@ -63,7 +63,7 @@ internal fun RemoteControlSheet(
     if (visible) {
         ModalBottomSheet(
             sheetState = sheetState,
-            windowInsets = WindowInsets(0),
+//            windowInsets = WindowInsets(0),
             onDismissRequest = {
                 if (!searchingOrConnecting) onDismissRequest()
             },

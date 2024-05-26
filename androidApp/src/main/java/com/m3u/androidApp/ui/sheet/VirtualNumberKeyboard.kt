@@ -14,7 +14,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ArrowBackIosNew
 import androidx.compose.material.icons.rounded.Delete
-import androidx.compose.material.ripple.rememberRipple
+import androidx.compose.material3.ripple
 import com.m3u.material.components.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -111,7 +111,7 @@ internal fun VirtualNumberKeyboard(
                                 )
                             }
                         },
-                        indication = rememberRipple(color = MaterialTheme.colorScheme.primary),
+                        indication = ripple(color = MaterialTheme.colorScheme.primary),
                         interactionSource = remember { MutableInteractionSource() }
                     ),
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -139,7 +139,7 @@ internal fun VirtualNumberKeyboard(
                                 onCode("")
                             }
                         },
-                        indication = rememberRipple(color = MaterialTheme.colorScheme.primary),
+                        indication = ripple(color = MaterialTheme.colorScheme.primary),
                         interactionSource = remember { MutableInteractionSource() }
                     ),
                 horizontalAlignment = Alignment.CenterHorizontally,

@@ -19,3 +19,4 @@ local.properties
 jks.txt
 *.jks
 /sample/
+/.kotlin

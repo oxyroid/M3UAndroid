@@ -3,9 +3,9 @@ androidx-core = "1.13.1"
 androidx-core-splashscreen = "1.0.1"
 androidx-appcompat = "1.6.1"
 androidx-activity = "1.9.0"
-androidx-lifecycle = "2.7.0"
-androidx-compose-bom = "2024.05.00"
-androidx-compose-material3-adaptive = "1.0.0-alpha06"
+androidx-lifecycle = "2.8.0"
+androidx-compose-bom = "2024.05.00-alpha02"
+androidx-compose-material3-adaptive = "1.0.0-beta01"
 androidx-constraintlayout-compose = "1.0.1"
 androidx-navigation = "2.7.7"
 androidx-hilt = "1.2.0"
@@ -18,7 +18,7 @@ androidx-startup = "1.1.1"
 androidx-paging-compose = "3.3.0"
 androidx-paging-runtime-ktx = "3.3.0"
 
-google-accompanist = "0.34.0"
+google-accompanist = "0.35.1-alpha"
 google-dagger = "2.50"
 
 haze = "0.7.1"
@@ -36,10 +36,10 @@ slf4j-api = "2.0.11"
 squareup-retrofit2 = "2.11.0"
 squareup-leakcanary = "2.13"
 
-kotlin = "2.0.0-RC2"
+kotlin = "2.0.0"
 android-gradle-plugin = "8.2.2"
 dagger-plugin = "2.50"
-ksp-plugin = "2.0.0-RC2-1.0.20"
+ksp-plugin = "2.0.0-1.0.21"
 
 androidx-test-ext-junit = "1.1.5"
 espresso-core = "3.5.1"
@@ -62,7 +62,7 @@ androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecyc
 androidx-lifecycle-runtime-compose = { group = "androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "androidx-lifecycle" }
 androidx-lifecycle-process = { group = "androidx.lifecycle", name = "lifecycle-process", version.ref = "androidx-lifecycle" }
 
-androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "androidx-compose-bom" }
+androidx-compose-bom = { group = "dev.chrisbanes.compose", name = "compose-bom", version.ref = "androidx-compose-bom" }
 androidx-compose-foundation = { group = "androidx.compose.foundation", name = "foundation" }
 androidx-compose-foundation-layout = { group = "androidx.compose.foundation", name = "foundation-layout" }
 androidx-compose-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended" }
@@ -73,7 +73,9 @@ androidx-compose-ui-tooling-preview = { group = "androidx.compose.ui", name = "u
 androidx-compose-ui-util = { group = "androidx.compose.ui", name = "ui-util" }
 
 androidx-compose-material3-window-size-clazz = { group = "androidx.compose.material3", name = "material3-window-size-class" }
-androidx-compose-material3-adaptive = { group = "androidx.compose.material3", name = "material3-adaptive", version.ref = "androidx-compose-material3-adaptive" }
+androidx-compose-material3-adaptive = { group = "androidx.compose.material3.adaptive", name = "adaptive", version.ref = "androidx-compose-material3-adaptive" }
+androidx-compose-material3-adaptive-layout = { group = "androidx.compose.material3.adaptive", name = "adaptive-layout", version.ref = "androidx-compose-material3-adaptive" }
+androidx-compose-material3-adaptive-navigation = { group = "androidx.compose.material3.adaptive", name = "adaptive-navigation", version.ref = "androidx-compose-material3-adaptive" }
 
 androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "androidx-navigation" }
 androidx-constraintlayout-compose = { group = "androidx.constraintlayout", name = "constraintlayout-compose", version.ref = "androidx-constraintlayout-compose" }

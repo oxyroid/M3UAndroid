@@ -13,7 +13,7 @@ import androidx.compose.foundation.layout.navigationBarsIgnoringVisibility
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.ModalBottomSheetDefaults
+import androidx.compose.material3.ModalBottomSheetProperties
 import androidx.compose.material3.SheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -41,8 +41,7 @@ fun BottomSheet(
             sheetState = sheetState,
             onDismissRequest = onDismissRequest,
             modifier = modifier,
-            windowInsets = WindowInsets(0),
-            properties = ModalBottomSheetDefaults.properties(
+            properties = ModalBottomSheetProperties(
                 shouldDismissOnBackPress = shouldDismissOnBackPress
             )
         ) {

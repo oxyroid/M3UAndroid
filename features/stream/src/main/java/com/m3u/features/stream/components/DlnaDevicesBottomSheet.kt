@@ -63,7 +63,7 @@ internal fun DlnaDevicesBottomSheet(
             sheetState = state,
             onDismissRequest = onDismiss,
             modifier = modifier,
-            windowInsets = WindowInsets(0)
+//            windowInsets = WindowInsets(0)
         ) {
             LaunchedEffect(devices, state.isVisible) {
                 if (state.isVisible) state.expand()

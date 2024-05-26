@@ -84,16 +84,16 @@ fun StreamRoute(
     val isDevicesVisible by viewModel.isDevicesVisible.collectAsStateWithLifecycle()
     val searching by viewModel.searching.collectAsStateWithLifecycle()
 
-    val formats by viewModel.tracks.collectAsStateWithLifecycle()
-    val selectedFormats by viewModel.currentTracks.collectAsStateWithLifecycle()
+    val tracks by viewModel.tracks.collectAsStateWithLifecycle(emptyMap())
+    val selectedFormats by viewModel.currentTracks.collectAsStateWithLifecycle(emptyMap())
 
     val volume by viewModel.volume.collectAsStateWithLifecycle()
-    val isSeriesPlaylist by viewModel.isSeriesPlaylist.collectAsStateWithLifecycle()
+    val isSeriesPlaylist by viewModel.isSeriesPlaylist.collectAsStateWithLifecycle(false)
     val isProgrammeSupported by viewModel.isProgrammeSupported.collectAsStateWithLifecycle(
         initialValue = false
     )
 
-    val neighboring = viewModel.neighboring.collectAsLazyPagingItems()
+    val channels = viewModel.channels.collectAsLazyPagingItems()
     val programmes = viewModel.programmes.collectAsLazyPagingItems()
     val programmeRange by viewModel.programmeRange.collectAsStateWithLifecycle()
 
@@ -190,7 +190,7 @@ fun StreamRoute(
                     isPanelExpanded = isPanelExpanded,
                     isChannelsSupported = !isSeriesPlaylist,
                     isProgrammeSupported = isProgrammeSupported,
-                    channels = neighboring,
+                    channels = channels,
                     programmes = programmes,
                     programmeRange = programmeRange
                 )
@@ -219,7 +219,7 @@ fun StreamRoute(
                     playerState = playerState,
                     playlist = playlist,
                     stream = stream,
-                    formatsIsNotEmpty = formats.isNotEmpty(),
+                    hasTrack = tracks.isNotEmpty(),
                     isPanelExpanded = isPanelExpanded,
                     volume = volume,
                     onVolume = viewModel::onVolume,
@@ -256,7 +256,7 @@ fun StreamRoute(
 
     FormatsBottomSheet(
         visible = choosing,
-        formats = formats,
+        formats = tracks,
         selectedFormats = selectedFormats,
         maskState = maskState,
         onDismiss = { choosing = false },
@@ -276,7 +276,7 @@ private fun StreamPlayer(
     playlist: Playlist?,
     stream: Stream?,
     isSeriesPlaylist: Boolean,
-    formatsIsNotEmpty: Boolean,
+    hasTrack: Boolean,
     isPanelExpanded: Boolean,
     volume: Float,
     brightness: Float,
@@ -339,7 +339,7 @@ private fun StreamPlayer(
                 maskState = maskState,
                 favourite = favourite,
                 isSeriesPlaylist = isSeriesPlaylist,
-                formatsIsNotEmpty = formatsIsNotEmpty,
+                hasTrack = hasTrack,
                 isPanelExpanded = isPanelExpanded,
                 onFavourite = onFavourite,
                 onBackPressed = onBackPressed,

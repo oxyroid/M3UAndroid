@@ -71,7 +71,7 @@ internal fun CanvasBottomSheet(
         ) {
             ModalBottomSheet(
                 sheetState = sheetState,
-                windowInsets = WindowInsets(0),
+//                windowInsets = WindowInsets(0),
                 onDismissRequest = onDismissRequest,
             ) {
                 Column(

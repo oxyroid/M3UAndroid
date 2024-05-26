@@ -25,13 +25,13 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Menu
 import androidx.compose.material.icons.rounded.PushPin
 import androidx.compose.material.icons.rounded.VisibilityOff
-import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -213,7 +213,7 @@ private fun PlaylistTabRowItem(
             }
         )
     ) {
-        val indication = if (hasOtherFocused) null else rememberRipple()
+        val indication = if (hasOtherFocused) null else ripple()
         val shape = if (isExpanded) RectangleShape
         else RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp)
         Card(

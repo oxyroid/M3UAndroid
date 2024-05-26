@@ -154,6 +154,4 @@ dependencies {
     implementation(libs.androidx.hilt.work)
 
     debugImplementation(libs.squareup.leakcanary)
-
-    implementation(libs.androidx.compose.material3.adaptive)
 }

@@ -22,12 +22,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.DarkMode
 import androidx.compose.material.icons.rounded.LightMode
-import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -168,7 +168,7 @@ fun ThemeSelection(
                 Box(
                     modifier = Modifier.combinedClickable(
                         interactionSource = interactionSource,
-                        indication = rememberRipple(),
+                        indication = ripple(),
                         onClick = {
                             if (selected) return@combinedClickable
                             feedback.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
