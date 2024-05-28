@@ -6,7 +6,7 @@
     <string name="feat_foryou_rename_playlist">umbenennen</string>
     <string name="feat_foryou_imported_playlist_title">importiert</string>
     <string name="feat_foryou_prompt_add_playlist">Playlist hinzufügen</string>
-    <string name="feat_foryou_recommend_unseen_label">Favorit, den Du wiedersehen möchtest</string>
+    <string name="feat_foryou_recommend_unseen_label">Favorit, den Du erneut sehen möchtest</string>
     <string name="feat_foryou_recommend_unseen_more_than_days">mehr als %d Tage</string>
     <string name="feat_foryou_recommend_unseen_days">%d Tage</string>
     <string name="feat_foryou_recommend_unseen_hours">%d Stunden</string>
