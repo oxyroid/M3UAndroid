@@ -26,6 +26,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -206,7 +207,9 @@ private fun SettingScreen(
                 SettingDestination.Default -> defaultTitle
                 SettingDestination.Playlists -> playlistTitle
                 SettingDestination.Appearance -> appearanceTitle
-            }.title()
+            }
+                .title()
+                .let(::AnnotatedString)
             Metadata.color = Color.Unspecified
             Metadata.contentColor = Color.Unspecified
             if (destination != SettingDestination.Default) {

@@ -46,6 +46,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -89,7 +90,7 @@ internal fun PlaylistConfigurationRoute(
     val expired by viewModel.expired.collectAsStateWithLifecycle()
 
     LifecycleResumeEffect(playlist?.title) {
-        Metadata.title = playlist?.title?.title().orEmpty()
+        Metadata.title = AnnotatedString(playlist?.title?.title().orEmpty())
         Metadata.color = Color.Unspecified
         Metadata.contentColor = Color.Unspecified
         onPauseOrDispose {

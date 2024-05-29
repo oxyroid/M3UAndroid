@@ -36,6 +36,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.AnnotatedString
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleResumeEffect
@@ -119,7 +120,7 @@ internal fun PlaylistRoute(
     )
 
     LifecycleResumeEffect(playlist, colorScheme) {
-        Metadata.title = playlist?.title?.title().orEmpty()
+        Metadata.title = AnnotatedString(playlist?.title?.title().orEmpty())
         Metadata.color = colorScheme.secondaryContainer
         Metadata.contentColor = colorScheme.onSecondaryContainer
         onPauseOrDispose {
