@@ -4,14 +4,13 @@ import android.annotation.SuppressLint
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.ColorScheme
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Typography
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
-import com.m3u.material.ktx.TelevisionChain
+import com.m3u.material.ktx.PlatformTheme
 import com.m3u.material.ktx.createScheme
 import androidx.tv.material3.ColorScheme as TvColorScheme
 import androidx.tv.material3.Typography as TvTypography
@@ -35,13 +34,11 @@ fun Theme(
         }
     }
 
-    MaterialTheme(
+    PlatformTheme(
         colorScheme = colorScheme,
         typography = typography
     ) {
-        TelevisionChain {
-            content()
-        }
+        content()
     }
 }
 
