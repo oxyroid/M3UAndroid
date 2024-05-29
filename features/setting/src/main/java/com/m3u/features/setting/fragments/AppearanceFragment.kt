@@ -33,7 +33,7 @@ import com.m3u.material.components.ThemeAddSelection
 import com.m3u.material.components.ThemeSelection
 import com.m3u.material.ktx.isTelevision
 import com.m3u.material.ktx.textHorizontalLabel
-import com.m3u.material.ktx.thenIf
+import com.m3u.material.ktx.includeChildGlowPadding
 import com.m3u.material.model.LocalSpacing
 
 @Composable
@@ -56,9 +56,7 @@ internal fun AppearanceFragment(
         modifier
             .fillMaxSize()
             .padding(contentPadding)
-            .thenIf(tv) {
-                Modifier.padding(spacing.medium)
-            }
+            .includeChildGlowPadding()
     ) {
         if (!tv) {
             Text(
