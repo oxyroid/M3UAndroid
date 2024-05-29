@@ -8,6 +8,7 @@ import androidx.compose.ui.text.AnnotatedString
 
 object Metadata {
     var title: AnnotatedString by mutableStateOf(AnnotatedString(""))
+    var subtitle: AnnotatedString by mutableStateOf(AnnotatedString(""))
     var actions: List<Action> by mutableStateOf(emptyList())
     var fob: Fob? by mutableStateOf(null)
     var color: Color by mutableStateOf(Color.Unspecified)

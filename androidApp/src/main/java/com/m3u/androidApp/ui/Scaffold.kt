@@ -1,12 +1,14 @@
 package com.m3u.androidApp.ui
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -135,6 +137,7 @@ internal fun MainContent(
     val hazeState = LocalHazeState.current
 
     val title = Metadata.title
+    val subtitle = Metadata.subtitle
     val actions = Metadata.actions
     Scaffold(
         topBar = {
@@ -148,22 +151,37 @@ internal fun MainContent(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier.defaultMinSize(minHeight = 56.dp)
                         ) {
-                            AnimatedContent(
-                                targetState = title,
-                                label = "app-scaffold-title",
-                                transitionSpec = {
-                                    fadeIn() togetherWith fadeOut()
-                                },
-                                modifier = Modifier.weight(1f)
-                            ) { title ->
-                                Text(
-                                    text = title,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                    fontFamily = FontFamilies.LexendExa,
-                                    modifier = Modifier.padding(horizontal = spacing.medium)
-                                )
+                            Column(
+                                modifier = Modifier
+                                    .padding(horizontal = spacing.medium)
+                                    .weight(1f)
+                            ) {
+                                AnimatedContent(
+                                    targetState = title,
+                                    label = "app-scaffold-title",
+                                    transitionSpec = {
+                                        fadeIn() togetherWith fadeOut()
+                                    }
+                                ) { title ->
+                                    Text(
+                                        text = title,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                        fontFamily = FontFamilies.LexendExa
+                                    )
+                                }
+                                AnimatedVisibility(
+                                    visible = subtitle.text.isNotEmpty()
+                                ) {
+                                    Text(
+                                        text = subtitle,
+                                        style = MaterialTheme.typography.titleMedium,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
                             }
+
                             Row {
                                 actions.forEach { action ->
                                     IconButton(
