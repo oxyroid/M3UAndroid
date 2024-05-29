@@ -159,9 +159,7 @@ internal fun MainContent(
                                 AnimatedContent(
                                     targetState = title,
                                     label = "app-scaffold-title",
-                                    transitionSpec = {
-                                        fadeIn() togetherWith fadeOut()
-                                    }
+                                    transitionSpec = { fadeIn() togetherWith fadeOut() }
                                 ) { title ->
                                     Text(
                                         text = title,
@@ -170,9 +168,7 @@ internal fun MainContent(
                                         fontFamily = FontFamilies.LexendExa
                                     )
                                 }
-                                AnimatedVisibility(
-                                    visible = subtitle.text.isNotEmpty()
-                                ) {
+                                AnimatedVisibility(subtitle.text.isNotEmpty()) {
                                     Text(
                                         text = subtitle,
                                         style = MaterialTheme.typography.titleMedium,

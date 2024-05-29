@@ -43,16 +43,20 @@ import androidx.compose.ui.text.withStyle
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleResumeEffect
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.repeatOnLifecycle
 import com.google.accompanist.permissions.rememberPermissionState
 import com.m3u.core.architecture.preferences.hiltPreferences
 import com.m3u.core.util.basic.title
 import com.m3u.core.wrapper.Event
 import com.m3u.core.wrapper.eventOf
+import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Programme
 import com.m3u.data.database.model.Stream
 import com.m3u.data.database.model.isSeries
 import com.m3u.data.database.model.isVod
+import com.m3u.data.database.model.type
 import com.m3u.data.service.MediaCommand
 import com.m3u.features.playlist.internal.SmartphonePlaylistScreenImpl
 import com.m3u.features.playlist.internal.TvPlaylistScreenImpl
@@ -70,10 +74,12 @@ import com.m3u.ui.Sort
 import com.m3u.ui.helper.Fob
 import com.m3u.ui.helper.LocalHelper
 import com.m3u.ui.helper.Metadata
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.milliseconds
 import androidx.tv.material3.MaterialTheme as TvMaterialTheme
 
 @Composable
@@ -88,6 +94,7 @@ internal fun PlaylistRoute(
     val helper = LocalHelper.current
     val coroutineScope = rememberCoroutineScope()
     val colorScheme = TvMaterialTheme.colorScheme
+    val lifecycleOwner = LocalLifecycleOwner.current
 
     val tv = isTelevision()
 
@@ -122,34 +129,53 @@ internal fun PlaylistRoute(
         Manifest.permission.POST_NOTIFICATIONS
     )
 
-    val title by remember {
-        derivedStateOf { playlist?.title?.title().orEmpty() }
-    }
+    val title by remember { derivedStateOf { playlist?.title?.title().orEmpty() } }
     val subtitle by remember {
         derivedStateOf {
-            buildAnnotatedString {
+            val spans = buildMap {
+                val typeWithSource = playlist.run {
+                    when {
+                        this == null || query.isNotEmpty() -> null
+                        source == DataSource.Xtream -> "$source $type".uppercase()
+                        else -> null
+                    }
+                }
+                if (typeWithSource != null) {
+                    put(typeWithSource, SpanStyle(color = colorScheme.secondary))
+                }
                 if (query.isNotEmpty()) {
-                    withStyle(
-                        SpanStyle(
-                            color = colorScheme.primary
-                        )
-                    ) {
-                        append("\"$query\"")
+                    put("\"$query\"", SpanStyle(color = colorScheme.primary))
+                }
+            }
+
+            buildAnnotatedString {
+                spans.entries.forEachIndexed { index, (text, span) ->
+                    withStyle(span) { append(text) }
+                    if (index != spans.entries.size - 1) {
+                        append(" ")
                     }
                 }
             }
         }
     }
+
     LifecycleResumeEffect(
         title,
         subtitle,
         colorScheme
     ) {
         Metadata.title = AnnotatedString(title)
-        Metadata.subtitle = subtitle
+        coroutineScope.launch {
+            lifecycleOwner.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+                delay(400.milliseconds)
+                Metadata.subtitle = subtitle
+            }
+        }
+
         Metadata.color = colorScheme.secondaryContainer
         Metadata.contentColor = colorScheme.onSecondaryContainer
         onPauseOrDispose {
+            Metadata.subtitle = AnnotatedString("")
         }
     }
 
