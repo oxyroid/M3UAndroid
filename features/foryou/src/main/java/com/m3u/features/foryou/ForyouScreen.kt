@@ -46,7 +46,7 @@ import com.m3u.material.ktx.thenIf
 import com.m3u.material.model.LocalHazeState
 import com.m3u.ui.Destination
 import com.m3u.ui.EpisodesBottomSheet
-import com.m3u.ui.LocalVisiblePageInfos
+import com.m3u.ui.LocalRootDestination
 import com.m3u.ui.MediaSheet
 import com.m3u.ui.MediaSheetValue
 import com.m3u.ui.helper.Action
@@ -67,17 +67,14 @@ fun ForyouRoute(
     viewModel: ForyouViewModel = hiltViewModel()
 ) {
     val helper = LocalHelper.current
+    val root = LocalRootDestination.current
     val preferences = hiltPreferences()
-    val visiblePageInfos = LocalVisiblePageInfos.current
     val coroutineScope = rememberCoroutineScope()
 
     val tv = isTelevision()
     val title = stringResource(string.ui_title_foryou)
 
-    val pageIndex = remember { Destination.Root.entries.indexOf(Destination.Root.Foryou) }
-    val isPageInfoVisible = remember(pageIndex, visiblePageInfos) {
-        visiblePageInfos.find { it.index == pageIndex } != null
-    }
+    val isPageInfoVisible = root == Destination.Root.Foryou
 
     val playlistCountsResource by viewModel.playlistCountsResource.collectAsStateWithLifecycle()
     val recommend by viewModel.recommend.collectAsStateWithLifecycle()

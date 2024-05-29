@@ -52,6 +52,7 @@ import com.m3u.material.model.LocalHazeState
 import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.Destination
 import com.m3u.ui.FontFamilies
+import com.m3u.ui.LocalRootDestination
 import com.m3u.ui.helper.Fob
 import com.m3u.ui.helper.LocalHelper
 import com.m3u.ui.helper.Metadata
@@ -77,7 +78,10 @@ internal fun Scaffold(
 
     val hazeState = remember { HazeState() }
 
-    CompositionLocalProvider(LocalHazeState provides hazeState) {
+    CompositionLocalProvider(
+        LocalHazeState provides hazeState,
+        LocalRootDestination provides rootDestination
+    ) {
         Background {
             when {
                 tv -> {

@@ -132,7 +132,6 @@ private fun AppImpl(
             .then(modifier),
     ) { contentPadding ->
         AppNavHost(
-            currentDestination = { rootDestination },
             navigateToRoot = navigateToRoot,
             contentPadding = contentPadding,
             modifier = Modifier.fillMaxSize()

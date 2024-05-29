@@ -4,13 +4,11 @@ import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ChangeCircle
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.adaptive.layout.AnimatedPane
 import androidx.compose.material3.adaptive.layout.ListDetailPaneScaffold
 import androidx.compose.material3.adaptive.layout.ListDetailPaneScaffoldRole
 import androidx.compose.material3.adaptive.navigation.rememberListDetailPaneScaffoldNavigator
@@ -47,7 +45,7 @@ import com.m3u.material.model.LocalHazeState
 import com.m3u.ui.Destination
 import com.m3u.ui.EventHandler
 import com.m3u.ui.Events
-import com.m3u.ui.LocalVisiblePageInfos
+import com.m3u.ui.LocalRootDestination
 import com.m3u.ui.SettingDestination
 import com.m3u.ui.helper.Fob
 import com.m3u.ui.helper.Metadata
@@ -181,6 +179,7 @@ private fun SettingScreen(
     contentPadding: PaddingValues = PaddingValues()
 ) {
     val preferences = hiltPreferences()
+    val root = LocalRootDestination.current
 
     val defaultTitle = stringResource(string.ui_title_setting)
     val playlistTitle = stringResource(string.feat_setting_playlist_management)
@@ -188,17 +187,13 @@ private fun SettingScreen(
 
     val colorArgb = preferences.argb
 
-    val visiblePageInfos = LocalVisiblePageInfos.current
-    val pageIndex = remember { Destination.Root.entries.indexOf(Destination.Root.Setting) }
-    val isPageInfoVisible = remember(pageIndex, visiblePageInfos) {
-        visiblePageInfos.find { it.index == pageIndex } != null
-    }
+    val isPageInfoVisible = root == Destination.Root.Setting
 
-    val scaffoldNavigator = rememberListDetailPaneScaffoldNavigator<SettingDestination>()
-    val destination = scaffoldNavigator.currentDestination?.content ?: SettingDestination.Default
+    val navigator = rememberListDetailPaneScaffoldNavigator<SettingDestination>()
+    val destination = navigator.currentDestination?.content ?: SettingDestination.Default
 
     EventHandler(Events.settingDestination) {
-        scaffoldNavigator.navigateTo(ListDetailPaneScaffoldRole.Detail, it)
+        navigator.navigateTo(ListDetailPaneScaffoldRole.Detail, it)
     }
 
     if (isPageInfoVisible) {
@@ -218,7 +213,7 @@ private fun SettingScreen(
                     icon = Icons.Rounded.ChangeCircle,
                     iconTextId = string.feat_setting_back_home
                 ) {
-                    scaffoldNavigator.navigateBack()
+                    navigator.navigateBack()
                 }
             }
             Metadata.actions = emptyList()
@@ -229,78 +224,73 @@ private fun SettingScreen(
     }
 
     ListDetailPaneScaffold(
-        directive = scaffoldNavigator.scaffoldDirective,
-        value = scaffoldNavigator.scaffoldValue,
+        directive = navigator.scaffoldDirective,
+        value = navigator.scaffoldValue,
         listPane = {
-            AnimatedPane {
-                Crossfade(destination) { destination ->
-                    PreferencesFragment(
-                        fragment = destination,
+            PreferencesFragment(
+                fragment = destination,
+                contentPadding = contentPadding,
+                versionName = versionName,
+                versionCode = versionCode,
+                navigateToPlaylistManagement = {
+                    navigator.navigateTo(
+                        pane = ListDetailPaneScaffoldRole.Detail,
+                        content = SettingDestination.Playlists
+                    )
+                },
+                navigateToThemeSelector = {
+                    navigator.navigateTo(
+                        pane = ListDetailPaneScaffoldRole.Detail,
+                        content = SettingDestination.Appearance
+                    )
+                },
+                cacheSpace = cacheSpace,
+                onClearCache = onClearCache,
+                modifier = Modifier.fillMaxSize()
+            )
+        },
+        detailPane = {
+            when (destination) {
+                SettingDestination.Playlists -> {
+                    SubscriptionsFragment(
+                        titleState = titleState,
+                        urlState = urlState,
+                        uriState = uriState,
+                        selectedState = selectedState,
+                        basicUrlState = basicUrlState,
+                        usernameState = usernameState,
+                        passwordState = passwordState,
+                        epgState = epgState,
+                        localStorageState = localStorageState,
+                        forTvState = forTvState,
+                        backingUpOrRestoring = backingUpOrRestoring,
+                        hiddenStreams = hiddenStreams,
+                        hiddenCategoriesWithPlaylists = hiddenCategoriesWithPlaylists,
+                        onUnhideStream = onUnhideStream,
+                        onUnhidePlaylistCategory = onUnhidePlaylistCategory,
+                        onClipboard = onClipboard,
+                        onSubscribe = onSubscribe,
+                        backup = backup,
+                        restore = restore,
+                        epgs = epgs,
+                        onDeleteEpgPlaylist = onDeleteEpgPlaylist,
                         contentPadding = contentPadding,
-                        versionName = versionName,
-                        versionCode = versionCode,
-                        navigateToPlaylistManagement = {
-                            scaffoldNavigator.navigateTo(
-                                pane = ListDetailPaneScaffoldRole.Detail,
-                                content = SettingDestination.Playlists
-                            )
-                        },
-                        navigateToThemeSelector = {
-                            scaffoldNavigator.navigateTo(
-                                pane = ListDetailPaneScaffoldRole.Detail,
-                                content = SettingDestination.Appearance
-                            )
-                        },
-                        cacheSpace = cacheSpace,
-                        onClearCache = onClearCache,
                         modifier = Modifier.fillMaxSize()
                     )
                 }
-            }
-        },
-        detailPane = {
-            AnimatedPane(Modifier.fillMaxSize()) {
-                when (destination) {
-                    SettingDestination.Playlists -> {
-                        SubscriptionsFragment(
-                            titleState = titleState,
-                            urlState = urlState,
-                            uriState = uriState,
-                            selectedState = selectedState,
-                            basicUrlState = basicUrlState,
-                            usernameState = usernameState,
-                            passwordState = passwordState,
-                            epgState = epgState,
-                            localStorageState = localStorageState,
-                            forTvState = forTvState,
-                            backingUpOrRestoring = backingUpOrRestoring,
-                            hiddenStreams = hiddenStreams,
-                            hiddenCategoriesWithPlaylists = hiddenCategoriesWithPlaylists,
-                            onUnhideStream = onUnhideStream,
-                            onUnhidePlaylistCategory = onUnhidePlaylistCategory,
-                            onClipboard = onClipboard,
-                            onSubscribe = onSubscribe,
-                            backup = backup,
-                            restore = restore,
-                            epgs = epgs,
-                            onDeleteEpgPlaylist = onDeleteEpgPlaylist,
-                            contentPadding = contentPadding,
-                            modifier = Modifier.fillMaxSize()
-                        )
-                    }
 
-                    SettingDestination.Appearance -> {
-                        AppearanceFragment(
-                            colorSchemes = colorSchemes,
-                            colorArgb = colorArgb,
-                            openColorCanvas = openColorCanvas,
-                            restoreSchemes = restoreSchemes,
-                            contentPadding = contentPadding
-                        )
-                    }
-
-                    else -> {}
+                SettingDestination.Appearance -> {
+                    AppearanceFragment(
+                        colorSchemes = colorSchemes,
+                        colorArgb = colorArgb,
+                        openColorCanvas = openColorCanvas,
+                        restoreSchemes = restoreSchemes,
+                        contentPadding = contentPadding,
+                        modifier = Modifier.fillMaxSize()
+                    )
                 }
+
+                else -> {}
             }
         },
         modifier = modifier
@@ -311,7 +301,7 @@ private fun SettingScreen(
             )
             .testTag("feature:setting")
     )
-    BackHandler(scaffoldNavigator.canNavigateBack()) {
-        scaffoldNavigator.navigateBack()
+    BackHandler(navigator.canNavigateBack()) {
+        navigator.navigateBack()
     }
 }

@@ -38,7 +38,7 @@ import com.m3u.material.ktx.thenIf
 import com.m3u.material.model.LocalHazeState
 import com.m3u.ui.Destination
 import com.m3u.ui.EpisodesBottomSheet
-import com.m3u.ui.LocalVisiblePageInfos
+import com.m3u.ui.LocalRootDestination
 import com.m3u.ui.MediaSheet
 import com.m3u.ui.MediaSheetValue
 import com.m3u.ui.Sort
@@ -65,6 +65,7 @@ fun FavouriteRoute(
     val helper = LocalHelper.current
     val preferences = hiltPreferences()
     val context = LocalContext.current
+    val root = LocalRootDestination.current
 
     val coroutineScope = rememberCoroutineScope()
 
@@ -81,11 +82,7 @@ fun FavouriteRoute(
         mutableStateOf(MediaSheetValue.FavouriteScreen())
     }
 
-    val visiblePageInfos = LocalVisiblePageInfos.current
-    val pageIndex = remember { Destination.Root.entries.indexOf(Destination.Root.Favourite) }
-    val isPageInfoVisible = remember(pageIndex, visiblePageInfos) {
-        visiblePageInfos.find { it.index == pageIndex } != null
-    }
+    val isPageInfoVisible = root == Destination.Root.Favourite
 
     val series: Stream? by viewModel.series.collectAsStateWithLifecycle()
 

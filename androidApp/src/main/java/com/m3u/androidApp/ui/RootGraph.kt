@@ -1,11 +1,12 @@
 package com.m3u.androidApp.ui
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavController
@@ -18,7 +19,7 @@ import com.m3u.features.setting.SettingRoute
 import com.m3u.material.ktx.Edge
 import com.m3u.material.ktx.blurEdge
 import com.m3u.ui.Destination
-import com.m3u.ui.ExtendedHorizontalPager
+import com.m3u.ui.LocalRootDestination
 
 const val ROOT_ROUTE = "root_route"
 
@@ -27,7 +28,6 @@ fun NavController.restoreBackStack() {
 }
 
 fun NavGraphBuilder.rootGraph(
-    currentDestination: () -> Destination.Root,
     contentPadding: PaddingValues,
     navigateToPlaylist: (Playlist) -> Unit,
     navigateToStream: () -> Unit,
@@ -36,7 +36,6 @@ fun NavGraphBuilder.rootGraph(
 ) {
     composable(ROOT_ROUTE) {
         RootGraph(
-            currentDestination = currentDestination,
             contentPadding = contentPadding,
             navigateToPlaylist = navigateToPlaylist,
             navigateToStream = navigateToStream,
@@ -48,7 +47,6 @@ fun NavGraphBuilder.rootGraph(
 
 @Composable
 private fun RootGraph(
-    currentDestination: () -> Destination.Root,
     contentPadding: PaddingValues,
     navigateToPlaylist: (Playlist) -> Unit,
     navigateToStream: () -> Unit,
@@ -56,25 +54,18 @@ private fun RootGraph(
     navigateToPlaylistConfiguration: (Playlist) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val rootDestination = currentDestination()
-    val initialPage = remember {
-        Destination.Root.entries.indexOf(rootDestination)
+    val rootDestination = LocalRootDestination.current
+    val page by remember(rootDestination) {
+        derivedStateOf { Destination.Root.entries.indexOf(rootDestination) }
     }
-    val pagerState = rememberPagerState(initialPage) { Destination.Root.entries.size }
-    LaunchedEffect(rootDestination) {
-        val page = Destination.Root.entries.indexOf(rootDestination)
-        pagerState.scrollToPage(page)
-    }
-    ExtendedHorizontalPager(
-        state = pagerState,
-        userScrollEnabled = false,
+    Box(
         modifier = modifier
             .fillMaxSize()
             .blurEdge(
                 edge = Edge.Bottom,
                 color = MaterialTheme.colorScheme.background
             )
-    ) { page ->
+    ) {
         when (Destination.Root.entries[page]) {
             Destination.Root.Foryou -> {
                 ForyouRoute(

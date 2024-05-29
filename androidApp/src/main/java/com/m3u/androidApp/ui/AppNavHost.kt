@@ -27,7 +27,6 @@ import com.m3u.ui.SettingDestination
 
 @Composable
 fun AppNavHost(
-    currentDestination: () -> Destination.Root,
     navigateToRoot: (Destination.Root) -> Unit,
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
@@ -65,7 +64,6 @@ fun AppNavHost(
             contentPadding = contentPadding
         )
         rootGraph(
-            currentDestination = currentDestination,
             contentPadding = contentPadding,
             navigateToPlaylist = { playlist ->
                 navController.navigateToPlaylist(playlist.url, tv)
