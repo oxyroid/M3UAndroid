@@ -36,7 +36,9 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleResumeEffect
@@ -119,8 +121,28 @@ internal fun PlaylistRoute(
         Manifest.permission.POST_NOTIFICATIONS
     )
 
-    LifecycleResumeEffect(playlist, colorScheme) {
-        Metadata.title = AnnotatedString(playlist?.title?.title().orEmpty())
+    val playlistTitleIncludeParams by remember {
+        derivedStateOf {
+            val origin = playlist?.title?.title().orEmpty()
+            buildAnnotatedString {
+                append(origin)
+                if (query.isNotEmpty()) {
+                    withStyle(
+                        SpanStyle(
+                            color = colorScheme.inversePrimary
+                        )
+                    ) {
+                        append(" ($query)")
+                    }
+                }
+            }
+        }
+    }
+    LifecycleResumeEffect(
+        playlistTitleIncludeParams,
+        colorScheme
+    ) {
+        Metadata.title = playlistTitleIncludeParams
         Metadata.color = colorScheme.secondaryContainer
         Metadata.contentColor = colorScheme.onSecondaryContainer
         onPauseOrDispose {
