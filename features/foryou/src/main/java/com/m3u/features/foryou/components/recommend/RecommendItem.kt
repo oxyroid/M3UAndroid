@@ -23,9 +23,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.util.lerp
-import androidx.tv.material3.CardDefaults
-import androidx.tv.material3.CardScale
-import androidx.tv.material3.Glow
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.m3u.core.architecture.preferences.hiltPreferences
@@ -37,6 +34,11 @@ import com.m3u.material.model.LocalSpacing
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlin.time.Duration.Companion.days
+import androidx.tv.material3.Card as TvCard
+import androidx.tv.material3.CardDefaults as TvCardDefaults
+import androidx.tv.material3.CardScale as TvCardScale
+import androidx.tv.material3.Glow as TvGlow
+import androidx.tv.material3.LocalContentColor as TvLocalContentColor
 
 @Composable
 internal fun RecommendItem(
@@ -84,9 +86,9 @@ private fun RecommendItemLayout(
             content = { content() }
         )
     } else {
-        androidx.tv.material3.Card(
-            scale = CardScale.None,
-            glow = CardDefaults.glow(Glow.None, Glow.None, Glow.None),
+        TvCard(
+            scale = TvCardScale.None,
+            glow = TvCardDefaults.glow(TvGlow.None, TvGlow.None, TvGlow.None),
             onClick = onClick,
             modifier = modifier,
             content = { content() }
@@ -169,7 +171,7 @@ private fun UnseenContent(spec: Recommend.UnseenSpec) {
             )
             CompositionLocalProvider(
                 LocalContentColor provides Color.White,
-                androidx.tv.material3.LocalContentColor provides Color.White,
+                TvLocalContentColor provides Color.White,
             ) {
                 info()
             }

@@ -30,9 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.tv.foundation.lazy.list.TvLazyColumn
 import androidx.tv.material3.DenseListItem
 import androidx.tv.material3.ImmersiveList
-import androidx.tv.material3.ListItemDefaults
-import androidx.tv.material3.MaterialTheme
-import androidx.tv.material3.Text
+import androidx.tv.material3.ListItemDefaults as TvListItemDefaults
 import com.m3u.core.architecture.preferences.hiltPreferences
 import com.m3u.data.database.model.Programme
 import com.m3u.data.database.model.Stream
@@ -52,6 +50,8 @@ import dev.chrisbanes.haze.HazeDefaults
 import dev.chrisbanes.haze.HazeStyle
 import dev.chrisbanes.haze.haze
 import dev.chrisbanes.haze.hazeChild
+import androidx.tv.material3.MaterialTheme as TvMaterialTheme
+import androidx.tv.material3.Text as TvText
 
 @Composable
 @InternalComposeApi
@@ -108,7 +108,7 @@ internal fun TvPlaylistScreenImpl(
                     getProgrammeCurrently = getProgrammeCurrently,
                     modifier = Modifier.haze(
                         LocalHazeState.current,
-                        HazeDefaults.style(MaterialTheme.colorScheme.background)
+                        HazeDefaults.style(TvMaterialTheme.colorScheme.background)
                     )
                 )
             },
@@ -127,7 +127,7 @@ internal fun TvPlaylistScreenImpl(
                             style = HazeStyle(blurRadius = 4.dp)
                         )
                         .blurEdge(
-                            color = MaterialTheme.colorScheme.background,
+                            color = TvMaterialTheme.colorScheme.background,
                             edge = Edge.Top
                         )
                 )
@@ -189,7 +189,7 @@ private fun MenuFullScreenDialog(
             TvLazyColumn(
                 Modifier
                     .fillMaxHeight()
-                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                    .background(TvMaterialTheme.colorScheme.surfaceVariant)
                     .padding(12.dp)
                     .selectableGroup()
                     .dialogFocusable(),
@@ -201,10 +201,10 @@ private fun MenuFullScreenDialog(
                         selected = false,
                         onClick = {}
                     ) {
-                        Text(
+                        TvText(
                             text = stream?.title.orEmpty(),
                             maxLines = 1,
-                            style = MaterialTheme.typography.titleLarge
+                            style = TvMaterialTheme.typography.titleLarge
                         )
                     }
                 }
@@ -223,9 +223,9 @@ private fun MenuFullScreenDialog(
                                 contentDescription = null
                             )
                         },
-                        scale = ListItemDefaults.scale(0.95f, 1f)
+                        scale = TvListItemDefaults.scale(0.95f, 1f)
                     ) {
-                        Text(
+                        TvText(
                             text = favouriteTitle
                         )
                     }
@@ -245,9 +245,9 @@ private fun MenuFullScreenDialog(
                                 contentDescription = null
                             )
                         },
-                        scale = ListItemDefaults.scale(0.95f, 1f)
+                        scale = TvListItemDefaults.scale(0.95f, 1f)
                     ) {
-                        Text(
+                        TvText(
                             text = hideTitle
                         )
                     }
@@ -267,9 +267,9 @@ private fun MenuFullScreenDialog(
                                 contentDescription = null
                             )
                         },
-                        scale = ListItemDefaults.scale(0.95f, 1f)
+                        scale = TvListItemDefaults.scale(0.95f, 1f)
                     ) {
-                        Text(
+                        TvText(
                             text = createShortcutTitle
                         )
                     }
@@ -289,9 +289,9 @@ private fun MenuFullScreenDialog(
                                 contentDescription = null
                             )
                         },
-                        scale = ListItemDefaults.scale(0.95f, 1f)
+                        scale = TvListItemDefaults.scale(0.95f, 1f)
                     ) {
-                        Text(
+                        TvText(
                             text = savePictureTitle
                         )
                     }

@@ -37,9 +37,9 @@ import androidx.tv.foundation.lazy.grid.TvGridCells
 import androidx.tv.foundation.lazy.grid.TvGridItemSpan
 import androidx.tv.foundation.lazy.grid.TvLazyVerticalGrid
 import androidx.tv.foundation.lazy.grid.items
-import androidx.tv.material3.Card
-import androidx.tv.material3.CardDefaults
-import androidx.tv.material3.Glow
+import androidx.tv.material3.Card as TvCard
+import androidx.tv.material3.CardDefaults as TvCardDefaults
+import androidx.tv.material3.Glow as TvGlow
 import com.m3u.core.util.basic.title
 import com.m3u.core.wrapper.Resource
 import com.m3u.data.database.model.Stream
@@ -199,15 +199,15 @@ private fun RandomTips(
                 .then(modifier)
         )
     } else {
-        Card(
+        TvCard(
             onClick = onClick,
-            glow = CardDefaults.glow(
-                Glow(
+            glow = TvCardDefaults.glow(
+                TvGlow(
                     elevationColor = Color.Transparent,
                     elevation = spacing.small
                 )
             ),
-            scale = CardDefaults.scale(
+            scale = TvCardDefaults.scale(
                 scale = 0.95f,
                 focusedScale = 1f
             ),

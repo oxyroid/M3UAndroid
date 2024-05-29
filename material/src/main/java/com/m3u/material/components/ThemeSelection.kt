@@ -42,7 +42,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.tv.material3.Border
-import androidx.tv.material3.Card
 import com.m3u.material.LocalM3UHapticFeedback
 import com.m3u.material.ktx.InteractionType
 import com.m3u.material.ktx.createScheme
@@ -50,6 +49,9 @@ import com.m3u.material.ktx.interactionBorder
 import com.m3u.material.ktx.isTelevision
 import com.m3u.material.model.LocalSpacing
 import com.m3u.material.model.SugarColors
+import androidx.tv.material3.Card as TvCard
+import androidx.tv.material3.CardDefaults as TvCardDefaults
+import androidx.tv.material3.Icon as TvIcon
 
 @Composable
 fun ThemeSelection(
@@ -199,22 +201,22 @@ fun ThemeSelection(
                 }
             }
         } else {
-            Card(
-                colors = androidx.tv.material3.CardDefaults.colors(
+            TvCard(
+                colors = TvCardDefaults.colors(
                     containerColor = colorScheme.background,
                     contentColor = colorScheme.onBackground
                 ),
-                shape = androidx.tv.material3.CardDefaults.shape(
+                shape = TvCardDefaults.shape(
                     RoundedCornerShape(spacing.large)
                 ),
-                border = androidx.tv.material3.CardDefaults.border(focusedBorder = Border.None),
-                scale = androidx.tv.material3.CardDefaults.scale(
+                border = TvCardDefaults.border(focusedBorder = Border.None),
+                scale = TvCardDefaults.scale(
                     scale = 0.8f,
                     focusedScale = 0.95f,
                     pressedScale = 0.85f
                 ),
                 onClick = {
-                    if (selected) return@Card
+                    if (selected) return@TvCard
                     onClick()
                 },
                 onLongClick = {
@@ -226,7 +228,7 @@ fun ThemeSelection(
                         content()
                         Crossfade(selected, label = "icon") { selected ->
                             if (!selected) {
-                                androidx.tv.material3.Icon(
+                                TvIcon(
                                     imageVector = when (isDark) {
                                         true -> Icons.Rounded.DarkMode
                                         false -> Icons.Rounded.LightMode

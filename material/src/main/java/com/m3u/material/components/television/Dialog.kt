@@ -51,14 +51,15 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import androidx.tv.material3.ColorScheme
 import androidx.tv.material3.ExperimentalTvMaterial3Api
-import androidx.tv.material3.LocalContentColor
-import androidx.tv.material3.MaterialTheme
-import androidx.tv.material3.ProvideTextStyle
 import androidx.tv.material3.surfaceColorAtElevation
 import kotlin.math.max
+import androidx.tv.material3.ColorScheme as TvColorScheme
+import androidx.tv.material3.LocalContentColor as TvLocalContentColor
+import androidx.tv.material3.MaterialTheme as TvMaterialTheme
+import androidx.tv.material3.ProvideTextStyle as TvProvideTextStyle
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
@@ -79,7 +80,7 @@ fun StandardDialog(
     properties: DialogProperties = DialogProperties(),
     confirmButton: @Composable () -> Unit
 ) {
-    val elevatedContainerColor = MaterialTheme.colorScheme.applyTonalElevation(
+    val elevatedContainerColor = TvMaterialTheme.colorScheme.applyTonalElevation(
         backgroundColor = containerColor,
         elevation = tonalElevation
     )
@@ -106,7 +107,7 @@ fun StandardDialog(
         ) {
             icon?.let { nnIcon ->
                 CompositionLocalProvider(
-                    LocalContentColor provides iconContentColor,
+                    TvLocalContentColor provides iconContentColor,
                     content = {
                         nnIcon()
                         Spacer(
@@ -116,8 +117,8 @@ fun StandardDialog(
                 )
             }
             title?.let { nnTitle ->
-                CompositionLocalProvider(LocalContentColor provides titleContentColor) {
-                    ProvideTextStyle(
+                CompositionLocalProvider(TvLocalContentColor provides titleContentColor) {
+                    TvProvideTextStyle(
                         value = StandardDialogDefaults.titleTextStyle,
                         content = {
                             Box(
@@ -130,8 +131,8 @@ fun StandardDialog(
                 }
             }
             text?.let { nnText ->
-                CompositionLocalProvider(LocalContentColor provides textContentColor) {
-                    ProvideTextStyle(
+                CompositionLocalProvider(TvLocalContentColor provides textContentColor) {
+                    TvProvideTextStyle(
                         value = StandardDialogDefaults.textStyle,
                         content = {
                             Spacer(modifier = Modifier.padding(StandardDialogDefaults.TextPadding))
@@ -143,7 +144,7 @@ fun StandardDialog(
                 }
             }
             Spacer(modifier = Modifier.padding(StandardDialogDefaults.ButtonsFlowRowPadding))
-            ProvideTextStyle(
+            TvProvideTextStyle(
                 value = StandardDialogDefaults.buttonsTextStyle,
                 content = {
                     DialogFlowRow(
@@ -196,7 +197,7 @@ fun FullScreenDialog(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 CompositionLocalProvider(
-                    LocalContentColor provides iconContentColor,
+                    TvLocalContentColor provides iconContentColor,
                     content = {
                         icon?.let { nnIcon ->
                             nnIcon()
@@ -208,10 +209,10 @@ fun FullScreenDialog(
                 )
 
                 CompositionLocalProvider(
-                    LocalContentColor provides titleContentColor,
+                    TvLocalContentColor provides titleContentColor,
                     content = {
                         title?.let { nnTitle ->
-                            ProvideTextStyle(
+                            TvProvideTextStyle(
                                 value = FullScreenDialogDefaults.titleTextStyle
                             ) {
                                 nnTitle()
@@ -226,10 +227,10 @@ fun FullScreenDialog(
                 )
 
                 CompositionLocalProvider(
-                    LocalContentColor provides textContentColor,
+                    TvLocalContentColor provides textContentColor,
                     content = {
                         text?.let { nnText ->
-                            ProvideTextStyle(FullScreenDialogDefaults.descriptionTextStyle) {
+                            TvProvideTextStyle(FullScreenDialogDefaults.descriptionTextStyle) {
                                 Box(
                                     modifier = Modifier.weight(weight = 1f, fill = false)
                                 ) { nnText() }
@@ -250,7 +251,7 @@ fun FullScreenDialog(
                         alignment = Alignment.CenterHorizontally
                     )
                 ) {
-                    ProvideTextStyle(value = FullScreenDialogDefaults.buttonsTextStyle) {
+                    TvProvideTextStyle(value = FullScreenDialogDefaults.buttonsTextStyle) {
                         confirmButton()
                         dismissButton?.invoke()
                     }
@@ -318,7 +319,7 @@ fun Dialog(
     if (showDialog || alphaTransitionState.targetState != AnimationStage.Intro ||
         scaleTransitionState.targetState != AnimationStage.Intro
     ) {
-        androidx.compose.ui.window.Dialog(
+        Dialog(
             onDismissRequest = onDismissRequest,
             properties = properties,
         ) {
@@ -513,42 +514,42 @@ object StandardDialogDefaults {
     /** The default container color for StandardDialogs */
     val containerColor: Color
         @ReadOnlyComposable
-        @Composable get() = MaterialTheme.colorScheme.inverseOnSurface
+        @Composable get() = TvMaterialTheme.colorScheme.inverseOnSurface
 
     /** The default icon color for StandardDialogs */
     val iconContentColor: Color
         @ReadOnlyComposable
-        @Composable get() = MaterialTheme.colorScheme.secondary
+        @Composable get() = TvMaterialTheme.colorScheme.secondary
 
     /** The default title color for StandardDialogs */
     val titleContentColor: Color
         @ReadOnlyComposable
-        @Composable get() = MaterialTheme.colorScheme.onSurface
+        @Composable get() = TvMaterialTheme.colorScheme.onSurface
 
     /** The default [TextStyle] for StandardDialogs' title */
     val titleTextStyle: TextStyle
         @ReadOnlyComposable
-        @Composable get() = MaterialTheme.typography.headlineMedium
+        @Composable get() = TvMaterialTheme.typography.headlineMedium
 
     /** The default [TextStyle] for StandardDialogs' buttons */
     val buttonsTextStyle
         @ReadOnlyComposable
-        @Composable get() = MaterialTheme.typography.labelLarge
+        @Composable get() = TvMaterialTheme.typography.labelLarge
 
     /** The default text color for StandardDialogs */
     val textContentColor: Color
         @ReadOnlyComposable
 
-        @Composable get() = MaterialTheme.colorScheme.onSurfaceVariant
+        @Composable get() = TvMaterialTheme.colorScheme.onSurfaceVariant
 
     /** The default text style for StandardDialogs */
     val textStyle
         @ReadOnlyComposable
-        @Composable get() = MaterialTheme.typography.bodyLarge
-            .copy(color = LocalContentColor.current.copy(alpha = TextColorOpacity))
+        @Composable get() = TvMaterialTheme.typography.bodyLarge
+            .copy(color = TvLocalContentColor.current.copy(alpha = TextColorOpacity))
 
     /** The default tonal elevation for StandardDialogs */
-    val TonalElevation: Dp = Elevation.Level2
+    val TonalElevation: Dp = 6.dp
 }
 
 @ExperimentalTvMaterial3Api
@@ -563,40 +564,40 @@ object FullScreenDialogDefaults {
     /** The default background color for FullScreenDialogs */
     val backgroundColor: Color
         @ReadOnlyComposable
-        @Composable get() = MaterialTheme.colorScheme.background
+        @Composable get() = TvMaterialTheme.colorScheme.background
 
     /** The default icon color for FullScreenDialogs */
     val iconContentColor: Color
         @ReadOnlyComposable
-        @Composable get() = MaterialTheme.colorScheme.onSurface
+        @Composable get() = TvMaterialTheme.colorScheme.onSurface
 
     /** The default title color for FullScreenDialogs */
     val titleContentColor: Color
         @ReadOnlyComposable
-        @Composable get() = MaterialTheme.colorScheme.onSurface
+        @Composable get() = TvMaterialTheme.colorScheme.onSurface
 
     /** The default title text style for FullScreenDialogs */
     val titleTextStyle: TextStyle
         @ReadOnlyComposable
-        @Composable get() = MaterialTheme.typography.headlineMedium
+        @Composable get() = TvMaterialTheme.typography.headlineMedium
             .copy(textAlign = TextAlign.Center)
 
     /** The default buttons text style for FullScreenDialogs */
     val buttonsTextStyle: TextStyle
         @ReadOnlyComposable
-        @Composable get() = MaterialTheme.typography.labelLarge
+        @Composable get() = TvMaterialTheme.typography.labelLarge
 
     /** The default description text color for FullScreenDialogs */
     val descriptionContentColor: Color
         @ReadOnlyComposable
-        @Composable get() = MaterialTheme.colorScheme.onSurfaceVariant
+        @Composable get() = TvMaterialTheme.colorScheme.onSurfaceVariant
 
     /** The default description text style for FullScreenDialogs */
     val descriptionTextStyle: TextStyle
         @ReadOnlyComposable
-        @Composable get() = MaterialTheme.typography.bodyLarge.copy(
+        @Composable get() = TvMaterialTheme.typography.bodyLarge.copy(
             textAlign = TextAlign.Center,
-            color = LocalContentColor.current.copy(alpha = DescriptionColorOpacity)
+            color = TvLocalContentColor.current.copy(alpha = DescriptionColorOpacity)
         )
 }
 
@@ -674,17 +675,8 @@ object MotionTokens {
     val ExitEasing = CubicBezierEasing(0.4f, 1f, 0.12f, 1f)
 }
 
-private object Elevation {
-    val Level0 = 0.0.dp
-    val Level1 = 1.0.dp
-    val Level2 = 3.0.dp
-    val Level3 = 6.0.dp
-    val Level4 = 8.0.dp
-    val Level5 = 12.0.dp
-}
-
 @OptIn(ExperimentalTvMaterial3Api::class)
-private fun ColorScheme.applyTonalElevation(backgroundColor: Color, elevation: Dp): Color {
+private fun TvColorScheme.applyTonalElevation(backgroundColor: Color, elevation: Dp): Color {
     return if (backgroundColor == surface) {
         surfaceColorAtElevation(elevation)
     } else {

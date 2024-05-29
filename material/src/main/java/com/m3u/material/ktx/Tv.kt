@@ -8,6 +8,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalConfiguration
 import com.m3u.material.model.asTvScheme
 import com.m3u.material.model.asTvTypography
+import androidx.tv.material3.MaterialTheme as TvMaterialTheme
 
 val LocalAlwaysTelevision = compositionLocalOf { false }
 
@@ -31,7 +32,7 @@ fun TelevisionChain(block: @Composable () -> Unit) {
     }
     val scheme = MaterialTheme.colorScheme
     val typography = MaterialTheme.typography
-    androidx.tv.material3.MaterialTheme(
+    TvMaterialTheme(
         colorScheme = remember(scheme) { scheme.asTvScheme() },
         typography = remember(typography) { typography.asTvTypography() }
     ) {

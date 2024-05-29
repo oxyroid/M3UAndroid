@@ -22,12 +22,12 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.tv.material3.Border
-import androidx.tv.material3.Card
-import androidx.tv.material3.CardDefaults
-import androidx.tv.material3.Glow
-import androidx.tv.material3.MaterialTheme
-import androidx.tv.material3.Text
+import androidx.tv.material3.Border as TvBorder
+import androidx.tv.material3.Card as TvCard
+import androidx.tv.material3.CardDefaults as TvCardDefaults
+import androidx.tv.material3.Glow as TvGlow
+import androidx.tv.material3.MaterialTheme as TvMaterialTheme
+import androidx.tv.material3.Text as TvText
 import coil.compose.SubcomposeAsyncImage
 import coil.request.ImageRequest
 import com.m3u.core.architecture.preferences.hiltPreferences
@@ -54,24 +54,24 @@ internal fun TvStreamItem(
     val noPictureMode = preferences.noPictureMode
     val isCoverExisted = !stream.cover.isNullOrEmpty()
 
-    Card(
+    TvCard(
         onClick = onClick,
         onLongClick = onLongClick,
-        glow = CardDefaults.glow(
-            Glow(
+        glow = TvCardDefaults.glow(
+            TvGlow(
                 elevationColor = Color.Transparent,
                 elevation = spacing.small
             )
         ),
-        scale = CardDefaults.scale(
+        scale = TvCardDefaults.scale(
             scale = 0.95f,
             focusedScale = 1.1f
         ),
-        border = CardDefaults.border(
-            if (stream.favourite) Border(
-                BorderStroke(3.dp, MaterialTheme.colorScheme.border),
+        border = TvCardDefaults.border(
+            if (stream.favourite) TvBorder(
+                BorderStroke(3.dp, TvMaterialTheme.colorScheme.border),
             )
-            else Border.None
+            else TvBorder.None
         ),
         modifier = Modifier
             .thenIf(!noPictureMode) {
@@ -85,7 +85,7 @@ internal fun TvStreamItem(
             modifier = Modifier.fillMaxSize()
         ) {
             if (!isCoverExisted || noPictureMode) {
-                Text(
+                TvText(
                     text = stream.title,
                     textAlign = TextAlign.Center,
                     modifier = Modifier
@@ -112,7 +112,7 @@ internal fun TvStreamItem(
                                 .fillMaxSize()
                                 .padding(spacing.medium)
                         ) {
-                            Text(
+                            TvText(
                                 text = stream.title,
                                 maxLines = 1
                             )
@@ -127,7 +127,7 @@ internal fun TvStreamItem(
                                 .fillMaxSize()
                                 .padding(spacing.medium)
                         ) {
-                            Text(
+                            TvText(
                                 text = stream.title,
                                 maxLines = 1
                             )

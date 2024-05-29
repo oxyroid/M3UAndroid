@@ -28,6 +28,8 @@ import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 import androidx.tv.material3.ListItem as TvListItem
+import androidx.tv.material3.MaterialTheme as TvMaterialTheme
+import androidx.tv.material3.Text as TvText
 
 @Composable
 internal fun FavoriteItem(
@@ -134,9 +136,9 @@ private fun TvFavouriteItemImpl(
         onClick = onClick,
         onLongClick = onLongClick,
         headlineContent = {
-            androidx.tv.material3.Text(
+            TvText(
                 text = stream.title,
-                style = androidx.tv.material3.MaterialTheme.typography.bodyMedium,
+                style = TvMaterialTheme.typography.bodyMedium,
                 maxLines = 1
             )
         },

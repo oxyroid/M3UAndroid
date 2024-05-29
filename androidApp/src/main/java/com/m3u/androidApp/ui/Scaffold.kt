@@ -57,6 +57,8 @@ import com.m3u.ui.helper.useRailNav
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.HazeStyle
 import dev.chrisbanes.haze.hazeChild
+import androidx.tv.material3.Icon as TvIcon
+import androidx.tv.material3.Text as TvText
 
 @Composable
 @OptIn(InternalComposeApi::class)
@@ -237,7 +239,7 @@ internal fun NavigationItemLayout(
                 contentDescription = null
             )
         } else {
-            androidx.tv.material3.Icon(
+            TvIcon(
                 imageVector = when {
                     fob != null && usefob -> fob.icon
                     selected -> currentRootDestination.selectedIcon
@@ -257,7 +259,7 @@ internal fun NavigationItemLayout(
                     ).uppercase()
                 )
             } else {
-                androidx.tv.material3.Text(
+                TvText(
                     text = stringResource(
                         if (usefob && fob != null) fob.iconTextId
                         else currentRootDestination.iconTextId

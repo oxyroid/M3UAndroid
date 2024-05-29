@@ -20,10 +20,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.tv.material3.Border
-import androidx.tv.material3.Card
-import androidx.tv.material3.CardDefaults
-import androidx.tv.material3.MaterialTheme
 import com.m3u.androidApp.ui.Items
 import com.m3u.androidApp.ui.MainContent
 import com.m3u.androidApp.ui.NavigationItemLayout
@@ -34,6 +30,10 @@ import com.m3u.material.ktx.plus
 import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.Destination
 import com.m3u.ui.helper.Metadata
+import androidx.tv.material3.Border as TvBorder
+import androidx.tv.material3.Card as TvCard
+import androidx.tv.material3.CardDefaults as TvCardDefaults
+import androidx.tv.material3.MaterialTheme as TvMaterialTheme
 
 @Composable
 @InternalComposeApi
@@ -61,7 +61,7 @@ fun TelevisionScaffoldImpl(
                     _: @Composable () -> Unit ->
                     val source = remember { MutableInteractionSource() }
                     val focused by source.collectIsFocusedAsState()
-                    val currentContainerColor by with(MaterialTheme.colorScheme) {
+                    val currentContainerColor by with(TvMaterialTheme.colorScheme) {
                         animateColorAsState(
                             targetValue = when {
                                 selected -> inverseSurface
@@ -71,7 +71,7 @@ fun TelevisionScaffoldImpl(
                             label = "scaffold-navigation-container"
                         )
                     }
-                    val currentContentColor by with(MaterialTheme.colorScheme) {
+                    val currentContentColor by with(TvMaterialTheme.colorScheme) {
                         animateColorAsState(
                             targetValue = when {
                                 selected -> inverseOnSurface
@@ -81,16 +81,16 @@ fun TelevisionScaffoldImpl(
                             label = "scaffold-navigation-content"
                         )
                     }
-                    Card(
+                    TvCard(
                         onClick = onClick,
-                        colors = CardDefaults.colors(
+                        colors = TvCardDefaults.colors(
                             containerColor = currentContainerColor,
                             contentColor = currentContentColor
                         ),
                         interactionSource = source,
-                        shape = CardDefaults.shape(CircleShape),
-                        border = CardDefaults.border(focusedBorder = Border.None),
-                        scale = CardDefaults.scale(
+                        shape = TvCardDefaults.shape(CircleShape),
+                        border = TvCardDefaults.border(focusedBorder = TvBorder.None),
+                        scale = TvCardDefaults.scale(
                             scale = if (selected) 1.1f else 1f,
                             focusedScale = if (selected) 1.2f else 1.1f
                         ),

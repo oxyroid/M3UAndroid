@@ -18,7 +18,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.tv.material3.Carousel
+import androidx.tv.material3.Carousel as TvCarousel
 import com.m3u.core.wrapper.eventOf
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.Stream
@@ -78,7 +78,7 @@ internal fun RecommendGallery(
             )
         }
     } else {
-        Carousel(
+        TvCarousel(
             itemCount = recommend.size,
             contentTransformEndToStart =
             fadeIn(tween(1000)) togetherWith fadeOut(tween(1000)),

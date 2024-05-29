@@ -32,13 +32,12 @@ import androidx.compose.ui.unit.dp
 import androidx.tv.foundation.lazy.list.TvLazyColumn
 import androidx.tv.foundation.lazy.list.items
 import androidx.tv.material3.DenseListItem
-import androidx.tv.material3.ListItemDefaults
 import com.m3u.i18n.R.string
 import com.m3u.material.components.BottomSheet
 import com.m3u.material.components.Icon
 import com.m3u.material.components.television.dialogFocusable
 import com.m3u.material.model.LocalSpacing
-
+import androidx.tv.material3.ListItemDefaults as TvListItemDefaults
 import androidx.tv.material3.MaterialTheme as TvMaterialTheme
 import androidx.tv.material3.Text as TvText
 
@@ -170,7 +169,7 @@ fun TvSortFullScreenDialog(
                                 )
                             }
                         },
-                        scale = ListItemDefaults.scale(0.95f, 1f)
+                        scale = TvListItemDefaults.scale(0.95f, 1f)
                     ) {
                         TvText(currentSort.name)
                     }

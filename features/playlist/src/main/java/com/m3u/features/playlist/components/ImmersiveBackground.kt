@@ -26,9 +26,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
-import androidx.tv.material3.LocalContentColor
-import androidx.tv.material3.MaterialTheme
-import androidx.tv.material3.Text
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.m3u.core.architecture.preferences.hiltPreferences
@@ -38,6 +35,9 @@ import com.m3u.material.brush.ImmersiveBackgroundBrush
 import com.m3u.material.components.IconButton
 import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.SnackHost
+import androidx.tv.material3.LocalContentColor as TvLocalContentColor
+import androidx.tv.material3.MaterialTheme as TvMaterialTheme
+import androidx.tv.material3.Text as TvText
 
 @Composable
 internal fun ImmersiveBackground(
@@ -93,9 +93,9 @@ internal fun ImmersiveBackground(
                         .padding(spacing.medium)
                         .fillMaxWidth()
                 ) {
-                    Text(
+                    TvText(
                         text = stream.title,
-                        style = MaterialTheme.typography.headlineLarge,
+                        style = TvMaterialTheme.typography.headlineLarge,
                         fontWeight = FontWeight.ExtraBold,
                         maxLines = 1
                     )
@@ -108,11 +108,11 @@ internal fun ImmersiveBackground(
                     }
 
                     programme?.let {
-                        Text(
+                        TvText(
                             text = it.readText(),
-                            style = MaterialTheme.typography.headlineMedium,
+                            style = TvMaterialTheme.typography.headlineMedium,
                             fontWeight = FontWeight.SemiBold,
-                            color = LocalContentColor.current.copy(0.67f),
+                            color = TvLocalContentColor.current.copy(0.67f),
                             maxLines = 1
                         )
                     }
@@ -130,9 +130,9 @@ internal fun ImmersiveBackground(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(spacing.small),
             ) {
-                Text(
+                TvText(
                     text = title,
-                    style = MaterialTheme.typography.headlineLarge,
+                    style = TvMaterialTheme.typography.headlineLarge,
                     fontWeight = FontWeight.ExtraBold,
                     maxLines = 1
                 )
