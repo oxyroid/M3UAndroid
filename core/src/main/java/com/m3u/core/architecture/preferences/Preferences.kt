@@ -2,20 +2,39 @@ package com.m3u.core.architecture.preferences
 
 import android.content.Context
 import android.content.SharedPreferences
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import com.m3u.core.architecture.preferences.annotation.ClipMode
-import com.m3u.core.architecture.preferences.annotation.ConnectTimeout
-import com.m3u.core.architecture.preferences.annotation.PlaylistStrategy
-import com.m3u.core.architecture.preferences.annotation.ReconnectMode
-import com.m3u.core.architecture.preferences.annotation.UnseensMilliseconds
+import androidx.compose.ui.platform.LocalContext
 import com.m3u.core.util.context.booleanAsState
 import com.m3u.core.util.context.intAsState
 import com.m3u.core.util.context.longAsState
+import dagger.hilt.EntryPoint
+import dagger.hilt.InstallIn
+import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.android.qualifiers.ApplicationContext
+import dagger.hilt.components.SingletonComponent
 import javax.inject.Inject
 import javax.inject.Singleton
+
+@Composable
+fun hiltPreferences(): Preferences {
+    val context = LocalContext.current
+    return remember {
+        val applicationContext = context.applicationContext ?: throw IllegalStateException()
+        EntryPointAccessors
+            .fromApplication<PreferencesEntryPoint>(applicationContext)
+            .preferences
+    }
+}
+
+@EntryPoint
+@InstallIn(SingletonComponent::class)
+private interface PreferencesEntryPoint {
+    val preferences: Preferences
+}
 
 @Stable
 @Singleton

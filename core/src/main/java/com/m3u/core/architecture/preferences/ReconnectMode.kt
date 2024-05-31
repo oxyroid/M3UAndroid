@@ -1,4 +1,4 @@
-package com.m3u.core.architecture.preferences.annotation
+package com.m3u.core.architecture.preferences
 
 @Target(
     AnnotationTarget.CLASS,
@@ -7,9 +7,10 @@ package com.m3u.core.architecture.preferences.annotation
     AnnotationTarget.TYPE
 )
 @Retention(AnnotationRetention.SOURCE)
-annotation class ConnectTimeout {
+annotation class ReconnectMode {
     companion object {
-        const val SHORT = 8000L
-        const val LONG = 20000L
+        const val NO = 0
+        const val RETRY = 1
+        const val RECONNECT = 2
     }
 }

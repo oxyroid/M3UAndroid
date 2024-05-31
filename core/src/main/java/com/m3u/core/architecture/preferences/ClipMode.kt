@@ -1,4 +1,4 @@
-package com.m3u.core.architecture.preferences.annotation
+package com.m3u.core.architecture.preferences
 
 @Target(
     AnnotationTarget.CLASS,
@@ -7,10 +7,10 @@ package com.m3u.core.architecture.preferences.annotation
     AnnotationTarget.TYPE
 )
 @Retention(AnnotationRetention.SOURCE)
-annotation class ReconnectMode {
+annotation class ClipMode {
     companion object {
-        const val NO = 0
-        const val RETRY = 1
-        const val RECONNECT = 2
+        const val ADAPTIVE = 0
+        const val CLIP = 1
+        const val STRETCHED = 2
     }
 }

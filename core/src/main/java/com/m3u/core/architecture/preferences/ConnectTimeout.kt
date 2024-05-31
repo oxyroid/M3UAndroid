@@ -1,4 +1,4 @@
-package com.m3u.core.architecture.preferences.annotation
+package com.m3u.core.architecture.preferences
 
 @Target(
     AnnotationTarget.CLASS,
@@ -7,10 +7,9 @@ package com.m3u.core.architecture.preferences.annotation
     AnnotationTarget.TYPE
 )
 @Retention(AnnotationRetention.SOURCE)
-annotation class ClipMode {
+annotation class ConnectTimeout {
     companion object {
-        const val ADAPTIVE = 0
-        const val CLIP = 1
-        const val STRETCHED = 2
+        const val SHORT = 8000L
+        const val LONG = 20000L
     }
 }

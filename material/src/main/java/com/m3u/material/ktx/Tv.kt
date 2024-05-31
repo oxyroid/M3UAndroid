@@ -21,12 +21,12 @@ val LocalAlwaysTelevision = compositionLocalOf { false }
 fun isTelevision(): Boolean {
     val alwaysTelevision = LocalAlwaysTelevision.current
     return if (alwaysTelevision) true
-    else LocalConfiguration.current.isTelevision()
-}
-
-fun Configuration.isTelevision(): Boolean {
-    val type = uiMode and Configuration.UI_MODE_TYPE_MASK
-    return type == Configuration.UI_MODE_TYPE_TELEVISION
+    else {
+        LocalConfiguration.current.run {
+            val type = uiMode and Configuration.UI_MODE_TYPE_MASK
+            return type == Configuration.UI_MODE_TYPE_TELEVISION
+        }
+    }
 }
 
 /**

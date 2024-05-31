@@ -11,8 +11,8 @@ import kotlinx.coroutines.flow.timeout
 import kotlin.time.Duration
 
 @OptIn(FlowPreview::class)
-fun <T> Flow<T>.onTimeout(duration: Duration, block: FlowCollector<T>.() -> Unit) =
-    timeout(duration).catch {
+fun <T> Flow<T>.timeout(duration: Duration, block: FlowCollector<T>.() -> Unit) =
+    this@timeout.timeout(duration).catch {
         if (it is TimeoutCancellationException) {
             block()
         }

@@ -7,3 +7,9 @@ val Configuration.isPortraitMode: Boolean
 
 val Configuration.isDarkMode: Boolean
     get() = uiMode == Configuration.UI_MODE_NIGHT_YES
+
+val Configuration.isTv: Boolean
+    get() {
+        val type = uiMode and Configuration.UI_MODE_TYPE_MASK
+        return type == Configuration.UI_MODE_TYPE_TELEVISION
+    }

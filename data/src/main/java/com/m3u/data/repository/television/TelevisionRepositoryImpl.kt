@@ -9,7 +9,7 @@ import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.Profiles
 import com.m3u.core.architecture.logger.install
 import com.m3u.core.architecture.preferences.Preferences
-import com.m3u.core.util.coroutine.onTimeout
+import com.m3u.core.util.coroutine.timeout
 import com.m3u.core.wrapper.Resource
 import com.m3u.core.wrapper.asResource
 import com.m3u.data.api.LocalPreparedService
@@ -127,7 +127,7 @@ class TelevisionRepositoryImpl @Inject constructor(
         val completed = nsdDeviceManager
             .search()
             .onStart { trySendBlocking(ConnectionToTelevisionValue.Searching) }
-            .onTimeout(timeout) {
+            .timeout(timeout) {
                 logger.log("pair: timeout")
                 trySendBlocking(ConnectionToTelevisionValue.Timeout)
             }

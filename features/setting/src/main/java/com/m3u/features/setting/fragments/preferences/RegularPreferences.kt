@@ -19,10 +19,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import com.m3u.core.architecture.preferences.annotation.ClipMode
-import com.m3u.core.architecture.preferences.annotation.ConnectTimeout
-import com.m3u.core.architecture.preferences.annotation.PlaylistStrategy
-import com.m3u.core.architecture.preferences.annotation.UnseensMilliseconds
+import com.m3u.core.architecture.preferences.ClipMode
+import com.m3u.core.architecture.preferences.ConnectTimeout
+import com.m3u.core.architecture.preferences.PlaylistStrategy
+import com.m3u.core.architecture.preferences.UnseensMilliseconds
 import com.m3u.core.architecture.preferences.hiltPreferences
 import com.m3u.core.util.basic.title
 import com.m3u.features.setting.components.CheckBoxSharedPreference

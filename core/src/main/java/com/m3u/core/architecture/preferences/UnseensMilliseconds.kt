@@ -1,4 +1,4 @@
-package com.m3u.core.architecture.preferences.annotation
+package com.m3u.core.architecture.preferences
 
 @Target(
     AnnotationTarget.CLASS,

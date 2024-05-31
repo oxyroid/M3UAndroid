@@ -39,7 +39,7 @@ import com.m3u.core.architecture.logger.Profiles
 import com.m3u.core.architecture.logger.install
 import com.m3u.core.architecture.logger.post
 import com.m3u.core.architecture.preferences.Preferences
-import com.m3u.core.architecture.preferences.annotation.ReconnectMode
+import com.m3u.core.architecture.preferences.ReconnectMode
 import com.m3u.data.SSLs
 import com.m3u.data.api.OkhttpClient
 import com.m3u.data.database.model.Playlist

@@ -14,7 +14,7 @@ import com.m3u.core.architecture.logger.install
 import com.m3u.core.architecture.logger.post
 import com.m3u.core.architecture.logger.sandBox
 import com.m3u.core.architecture.preferences.Preferences
-import com.m3u.core.architecture.preferences.annotation.PlaylistStrategy
+import com.m3u.core.architecture.preferences.PlaylistStrategy
 import com.m3u.core.util.basic.startsWithAny
 import com.m3u.core.util.readFileContent
 import com.m3u.core.util.readFileName

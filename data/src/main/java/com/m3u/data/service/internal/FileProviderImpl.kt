@@ -36,7 +36,7 @@ class FileProviderImpl @Inject constructor(
         infoMap["name"] = packageInfo.versionName
         infoMap["code"] = packageInfo.code
 
-        readconfiguration().forEach(infoMap::put)
+        readConfiguration().forEach(infoMap::put)
 
         val info = infoMap.joinToString()
         val trace = getStackTraceMessage(value)
@@ -69,7 +69,7 @@ class FileProviderImpl @Inject constructor(
             versionCode.toString()
         }
 
-    private fun readconfiguration(): Map<String, String> = buildMap {
+    private fun readConfiguration(): Map<String, String> = buildMap {
         Build::class.java.declaredFields.forEachNotNull { field ->
             try {
                 field.isAccessible = true
