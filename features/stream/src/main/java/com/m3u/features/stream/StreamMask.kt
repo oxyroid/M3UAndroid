@@ -78,7 +78,6 @@ import com.m3u.material.components.mask.MaskState
 import com.m3u.material.ktx.isTelevision
 import com.m3u.material.ktx.thenIf
 import com.m3u.material.model.LocalSpacing
-import com.m3u.material.recomposeHighlighter
 import com.m3u.ui.FontFamilies
 import com.m3u.ui.Image
 import com.m3u.ui.helper.LocalHelper
@@ -259,8 +258,7 @@ internal fun StreamMask(
                             } else volumeBeforeMuted
                         )
                     },
-                    contentDescription = defaultBrightnessOrVolumeContentDescription,
-                    modifier = Modifier.recomposeHighlighter()
+                    contentDescription = defaultBrightnessOrVolumeContentDescription
                 )
                 if (!isSeriesPlaylist) {
                     MaskButton(

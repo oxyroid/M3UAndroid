@@ -103,6 +103,7 @@ fun Playlist.copyXtreamSeries(series: Stream): Playlist = copy(
     title = series.title
 )
 
+@Immutable
 sealed class DataSource(
     @StringRes val resId: Int,
     val value: String,
@@ -153,6 +154,7 @@ data class PlaylistWithStreams(
     val streams: List<Stream>
 )
 
+@Immutable
 data class PlaylistWithCount(
     @Embedded
     val playlist: Playlist,

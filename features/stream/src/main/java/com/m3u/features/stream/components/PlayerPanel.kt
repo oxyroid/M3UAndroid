@@ -24,6 +24,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.ExperimentalComposeUiApi
@@ -210,6 +211,7 @@ private fun ChannelGallery(
     }
 }
 
+@Immutable
 private sealed class ChannelGalleryValue {
     data class PagingChannel(
         val channels: LazyPagingItems<Stream>,

@@ -1,9 +1,11 @@
 package com.m3u.core.wrapper
 
+import androidx.compose.runtime.Immutable
 import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.flow
 import kotlin.experimental.ExperimentalTypeInference
 
+@Immutable
 sealed class Process<out T> {
     data class Loading(val value: Percent) : Process<Nothing>()
     data class Success<out T>(val data: T) : Process<T>()

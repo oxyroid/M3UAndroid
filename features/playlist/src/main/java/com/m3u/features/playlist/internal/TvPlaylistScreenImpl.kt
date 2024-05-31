@@ -73,7 +73,6 @@ internal fun TvPlaylistScreenImpl(
     modifier: Modifier = Modifier
 ) {
     val preferences = hiltPreferences()
-
     val multiCategories = channels.size > 1
     val noPictureMode = preferences.noPictureMode
     val useGridLayout = sort != Sort.UNSPECIFIED

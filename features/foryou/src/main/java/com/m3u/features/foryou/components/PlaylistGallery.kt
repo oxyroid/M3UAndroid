@@ -90,26 +90,28 @@ private fun SmartphonePlaylistGalleryImpl(
         }
         itemsIndexed(
             items = playlistCounts,
-            key = { _, playlistCount -> playlistCount.playlist.url },
-            contentType = { _, _ -> }
+            key = { _, playlistCount -> playlistCount.playlist.url }
         ) { index, playlistCount ->
+            val playlist = playlistCount.playlist
+            val count = playlistCount.count
+            val subscribing = playlist.url in subscribingPlaylistUrls
             PlaylistItem(
                 label = PlaylistGalleryDefaults.calculateUiTitle(
-                    title = playlistCount.playlist.title,
-                    fromLocal = playlistCount.playlist.fromLocal
+                    title = playlist.title,
+                    fromLocal = playlist.fromLocal
                 ),
-                type = with(playlistCount.playlist) {
+                type = with(playlist) {
                     when (source) {
                         DataSource.M3U -> "$source"
                         DataSource.Xtream -> "$source $type"
                         else -> null
                     }
                 },
-                count = playlistCount.count,
-                subscribing = playlistCount.playlist.url in subscribingPlaylistUrls,
-                local = playlistCount.playlist.fromLocal,
-                onClick = { onClick(playlistCount.playlist) },
-                onLongClick = { onLongClick(playlistCount.playlist) },
+                count = count,
+                subscribing = subscribing,
+                local = playlist.fromLocal,
+                onClick = { onClick(playlist) },
+                onLongClick = { onLongClick(playlist) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(

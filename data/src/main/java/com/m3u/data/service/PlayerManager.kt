@@ -1,6 +1,7 @@
 package com.m3u.data.service
 
 import android.graphics.Rect
+import androidx.compose.runtime.Immutable
 import androidx.media3.common.C
 import androidx.media3.common.Format
 import androidx.media3.common.PlaybackException
@@ -39,6 +40,7 @@ interface PlayerManager {
     fun pauseOrContinue(value: Boolean)
 }
 
+@Immutable
 sealed class MediaCommand(open val streamId: Int) {
     data class Common(override val streamId: Int) : MediaCommand(streamId)
     data class XtreamEpisode(
