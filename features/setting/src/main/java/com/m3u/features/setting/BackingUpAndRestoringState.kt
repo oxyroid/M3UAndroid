@@ -1,6 +1,6 @@
 package com.m3u.features.setting
 
-enum class BackingUpAndRestoringState {
+internal enum class BackingUpAndRestoringState {
     NONE, BACKING_UP, RESTORING, BOTH;
 
     companion object {

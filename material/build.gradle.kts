@@ -65,7 +65,6 @@ dependencies {
 
     implementation(libs.airbnb.lottie.compose)
 
-    api(libs.androidx.tv.foundation)
     api(libs.androidx.tv.material)
 
     api(libs.androidx.graphics.shapes.android)

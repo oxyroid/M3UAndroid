@@ -33,13 +33,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.tv.foundation.lazy.grid.TvGridCells
-import androidx.tv.foundation.lazy.grid.TvGridItemSpan
-import androidx.tv.foundation.lazy.grid.TvLazyVerticalGrid
-import androidx.tv.foundation.lazy.grid.items
-import androidx.tv.material3.Card as TvCard
-import androidx.tv.material3.CardDefaults as TvCardDefaults
-import androidx.tv.material3.Glow as TvGlow
 import com.m3u.core.util.basic.title
 import com.m3u.core.wrapper.Resource
 import com.m3u.data.database.model.Stream
@@ -47,6 +40,9 @@ import com.m3u.i18n.R.string
 import com.m3u.material.ktx.isTelevision
 import com.m3u.material.ktx.plus
 import com.m3u.material.model.LocalSpacing
+import androidx.tv.material3.Card as TvCard
+import androidx.tv.material3.CardDefaults as TvCardDefaults
+import androidx.tv.material3.Glow as TvGlow
 import androidx.tv.material3.MaterialTheme as TvMaterialTheme
 import androidx.tv.material3.Text as TvText
 
@@ -62,6 +58,7 @@ internal fun FavouriteGallery(
     onClickRandomTips: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val spacing = LocalSpacing.current
     Box(modifier) {
         when (streamsResource) {
             Resource.Loading -> {
@@ -73,95 +70,37 @@ internal fun FavouriteGallery(
             }
 
             is Resource.Success -> {
-                FavouriteGalleryImpl(
-                    contentPadding = contentPadding,
-                    streams = streamsResource.data,
-                    zapping = zapping,
-                    recently = recently,
-                    rowCount = rowCount,
-                    onClick = onClick,
-                    onLongClick = onLongClick,
-                    onClickRandomTips = onClickRandomTips
-                )
+                val streams = streamsResource.data
+                LazyVerticalStaggeredGrid(
+                    columns = StaggeredGridCells.Fixed(rowCount),
+                    verticalItemSpacing = spacing.medium,
+                    horizontalArrangement = Arrangement.spacedBy(spacing.large),
+                    contentPadding = PaddingValues(spacing.medium) + contentPadding,
+                    modifier = modifier.fillMaxSize(),
+                ) {
+                    item(span = StaggeredGridItemSpan.FullLine) {
+                        RandomTips(
+                            onClick = onClickRandomTips
+                        )
+                    }
+                    items(
+                        items = streams,
+                        key = { it.id },
+                        contentType = { it.cover.isNullOrEmpty() }
+                    ) { stream ->
+                        FavoriteItem(
+                            stream = stream,
+                            zapping = zapping == stream,
+                            onClick = { onClick(stream) },
+                            onLongClick = { onLongClick(stream) },
+                            recently = recently,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
             }
 
             is Resource.Failure -> {}
-        }
-    }
-}
-
-@Composable
-private fun FavouriteGalleryImpl(
-    contentPadding: PaddingValues,
-    streams: List<Stream>,
-    zapping: Stream?,
-    recently: Boolean,
-    rowCount: Int,
-    onClick: (Stream) -> Unit,
-    onLongClick: (Stream) -> Unit,
-    onClickRandomTips: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val spacing = LocalSpacing.current
-    val tv = isTelevision()
-    if (!tv) {
-        LazyVerticalStaggeredGrid(
-            columns = StaggeredGridCells.Fixed(rowCount),
-            verticalItemSpacing = spacing.medium,
-            horizontalArrangement = Arrangement.spacedBy(spacing.large),
-            contentPadding = PaddingValues(spacing.medium) + contentPadding,
-            modifier = modifier.fillMaxSize(),
-        ) {
-            item(span = StaggeredGridItemSpan.FullLine) {
-                RandomTips(
-                    onClick = onClickRandomTips
-                )
-            }
-            items(
-                items = streams,
-                key = { it.id },
-                contentType = { it.cover.isNullOrEmpty() }
-            ) { stream ->
-                FavoriteItem(
-                    stream = stream,
-                    zapping = zapping == stream,
-                    onClick = { onClick(stream) },
-                    onLongClick = { onLongClick(stream) },
-                    recently = recently,
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-        }
-    } else {
-        TvLazyVerticalGrid(
-            columns = TvGridCells.Fixed(rowCount),
-            verticalArrangement = Arrangement.spacedBy(spacing.large),
-            horizontalArrangement = Arrangement.spacedBy(spacing.large),
-            contentPadding = PaddingValues(
-                vertical = spacing.medium,
-                horizontal = spacing.large
-            ) + contentPadding,
-            modifier = modifier.fillMaxSize(),
-        ) {
-            item(span = { TvGridItemSpan(rowCount) }) {
-                RandomTips(
-                    onClick = onClickRandomTips
-                )
-            }
-            items(
-                items = streams,
-                key = { it.id },
-                contentType = { it.cover.isNullOrEmpty() }
-            ) { stream ->
-                FavoriteItem(
-                    stream = stream,
-                    zapping = zapping == stream,
-                    recently = recently,
-                    onClick = { onClick(stream) },
-                    onLongClick = { onLongClick(stream) },
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
         }
     }
 }

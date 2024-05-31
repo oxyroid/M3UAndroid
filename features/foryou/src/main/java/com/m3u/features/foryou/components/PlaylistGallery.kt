@@ -13,17 +13,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.tv.foundation.lazy.grid.TvGridCells
-import androidx.tv.foundation.lazy.grid.TvGridItemSpan
-import androidx.tv.foundation.lazy.grid.TvLazyVerticalGrid
-import androidx.tv.foundation.lazy.grid.itemsIndexed
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.PlaylistWithCount
 import com.m3u.data.database.model.fromLocal
 import com.m3u.data.database.model.type
 import com.m3u.i18n.R.string
-import com.m3u.material.ktx.isTelevision
 import com.m3u.material.ktx.plus
 import com.m3u.material.model.LocalSpacing
 
@@ -36,43 +31,6 @@ internal fun PlaylistGallery(
     onLongClick: (Playlist) -> Unit,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
-    header: (@Composable () -> Unit)? = null
-) {
-    val tv = isTelevision()
-    if (!tv) {
-        SmartphonePlaylistGalleryImpl(
-            rowCount = rowCount,
-            playlistCounts = playlistCounts,
-            subscribingPlaylistUrls = subscribingPlaylistUrls,
-            onClick = onClick,
-            onLongClick = onLongClick,
-            contentPadding = contentPadding,
-            modifier = modifier,
-            header = header
-        )
-    } else {
-        TvPlaylistGalleryImpl(
-            rowCount = rowCount,
-            playlistCounts = playlistCounts,
-            subscribingPlaylistUrls = subscribingPlaylistUrls,
-            onClick = onClick,
-            onLongClick = onLongClick,
-            contentPadding = contentPadding,
-            modifier = modifier,
-            header = header
-        )
-    }
-}
-
-@Composable
-private fun SmartphonePlaylistGalleryImpl(
-    rowCount: Int,
-    playlistCounts: List<PlaylistWithCount>,
-    subscribingPlaylistUrls: List<String>,
-    onClick: (Playlist) -> Unit,
-    onLongClick: (Playlist) -> Unit,
-    contentPadding: PaddingValues,
-    modifier: Modifier = Modifier,
     header: (@Composable () -> Unit)? = null
 ) {
     val spacing = LocalSpacing.current
@@ -118,65 +76,6 @@ private fun SmartphonePlaylistGalleryImpl(
                         PlaylistGalleryDefaults.calculateItemHorizontalPadding(
                             rowCount = rowCount,
                             index = index
-                        )
-                    )
-            )
-        }
-    }
-}
-
-@Composable
-private fun TvPlaylistGalleryImpl(
-    rowCount: Int,
-    playlistCounts: List<PlaylistWithCount>,
-    subscribingPlaylistUrls: List<String>,
-    onClick: (Playlist) -> Unit,
-    onLongClick: (Playlist) -> Unit,
-    contentPadding: PaddingValues,
-    modifier: Modifier = Modifier,
-    header: (@Composable () -> Unit)? = null
-) {
-    val spacing = LocalSpacing.current
-    TvLazyVerticalGrid(
-        columns = TvGridCells.Fixed(rowCount),
-        contentPadding = PaddingValues(vertical = spacing.medium) + contentPadding,
-        verticalArrangement = Arrangement.spacedBy(spacing.large),
-        horizontalArrangement = Arrangement.spacedBy(spacing.large),
-        modifier = modifier
-    ) {
-        if (header != null) {
-            item(span = { TvGridItemSpan(rowCount) }) {
-                header()
-            }
-        }
-        itemsIndexed(
-            items = playlistCounts,
-            key = { _, it -> it.playlist.url }
-        ) { index, playlistCount ->
-            PlaylistItem(
-                label = PlaylistGalleryDefaults.calculateUiTitle(
-                    title = playlistCount.playlist.title,
-                    fromLocal = playlistCount.playlist.fromLocal
-                ),
-                type = with(playlistCount.playlist) {
-                    when (source) {
-                        DataSource.M3U -> "$source"
-                        DataSource.Xtream -> "$source $type"
-                        else -> null
-                    }
-                },
-                count = playlistCount.count,
-                subscribing = playlistCount.playlist.url in subscribingPlaylistUrls,
-                local = playlistCount.playlist.fromLocal,
-                onClick = { onClick(playlistCount.playlist) },
-                onLongClick = { onLongClick(playlistCount.playlist) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(
-                        PlaylistGalleryDefaults.calculateItemHorizontalPadding(
-                            rowCount = rowCount,
-                            index = index,
-                            padding = spacing.large
                         )
                     )
             )

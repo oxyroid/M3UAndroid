@@ -11,6 +11,8 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material.icons.Icons
@@ -29,8 +31,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.tv.foundation.lazy.list.TvLazyColumn
-import androidx.tv.foundation.lazy.list.items
 import androidx.tv.material3.DenseListItem
 import com.m3u.i18n.R.string
 import com.m3u.material.components.BottomSheet
@@ -146,7 +146,7 @@ fun TvSortFullScreenDialog(
                 .fillMaxWidth(0.4f)
                 .align(Alignment.CenterEnd)
         ) {
-            TvLazyColumn(
+            LazyColumn(
                 Modifier
                     .fillMaxHeight()
                     .background(TvMaterialTheme.colorScheme.surfaceVariant)

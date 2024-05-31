@@ -5,14 +5,14 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.unit.Dp
 import androidx.paging.compose.collectAsLazyPagingItems
-import androidx.tv.foundation.lazy.list.TvLazyColumn
-import androidx.tv.foundation.lazy.list.TvLazyRow
-import androidx.tv.foundation.lazy.list.items
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.m3u.data.database.model.Stream
@@ -33,7 +33,7 @@ internal fun TvStreamGallery(
     val spacing = LocalSpacing.current
     val multiCategories = channels.size > 1
 
-    TvLazyColumn(
+    LazyColumn(
         verticalArrangement = Arrangement.spacedBy(spacing.medium),
         contentPadding = PaddingValues(vertical = spacing.medium),
         modifier = Modifier
@@ -50,7 +50,7 @@ internal fun TvStreamGallery(
                     modifier = Modifier.padding(spacing.medium)
                 )
             }
-            TvLazyRow(
+            LazyRow(
                 horizontalArrangement = Arrangement.spacedBy(spacing.medium),
                 contentPadding = PaddingValues(horizontal = spacing.medium),
                 modifier = Modifier.fillMaxWidth()

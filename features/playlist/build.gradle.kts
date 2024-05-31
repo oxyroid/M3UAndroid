@@ -56,9 +56,6 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.runtime.compose)
 
-    implementation(libs.androidx.tv.foundation)
-    implementation(libs.androidx.tv.material)
-
     implementation(libs.google.dagger.hilt)
     implementation(libs.androidx.hilt.navigation.compose)
     implementation(libs.androidx.hilt.work)

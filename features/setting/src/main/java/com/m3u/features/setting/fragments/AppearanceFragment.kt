@@ -1,7 +1,6 @@
 package com.m3u.features.setting.fragments
 
 import android.os.Build
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -21,8 +20,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.tv.foundation.lazy.list.TvLazyRow
-import androidx.tv.foundation.lazy.list.items
 import com.m3u.core.architecture.preferences.hiltPreferences
 import com.m3u.core.util.basic.title
 import com.m3u.data.database.model.ColorScheme
@@ -31,9 +28,9 @@ import com.m3u.i18n.R.string
 import com.m3u.material.components.Preference
 import com.m3u.material.components.ThemeAddSelection
 import com.m3u.material.components.ThemeSelection
+import com.m3u.material.ktx.includeChildGlowPadding
 import com.m3u.material.ktx.isTelevision
 import com.m3u.material.ktx.textHorizontalLabel
-import com.m3u.material.ktx.includeChildGlowPadding
 import com.m3u.material.model.LocalSpacing
 
 @Composable
@@ -58,73 +55,44 @@ internal fun AppearanceFragment(
             .padding(contentPadding)
             .includeChildGlowPadding()
     ) {
-        if (!tv) {
-            Text(
-                text = stringResource(string.feat_setting_appearance_hint_edit_color).uppercase(),
-                color = MaterialTheme.colorScheme.onPrimary,
-                style = MaterialTheme.typography.labelLarge,
-                modifier = Modifier.textHorizontalLabel()
-            )
-            LazyRow(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                items(
-                    items = colorSchemes,
-                    key = { "${it.argb}_${it.isDark}" }
-                ) { colorPack ->
-                    val selected =
-                        !useDynamicColors && colorArgb == colorPack.argb && isDarkMode == colorPack.isDark
-                    ThemeSelection(
-                        argb = colorPack.argb,
-                        isDark = colorPack.isDark,
-                        selected = selected,
-                        onClick = {
-                            preferences.useDynamicColors = false
-                            preferences.argb = colorPack.argb
-                            preferences.darkMode = colorPack.isDark
-                        },
-                        onLongClick = { openColorCanvas(colorPack.argb, colorPack.isDark) },
-                        name = colorPack.name,
-                        leftContentDescription = stringResource(string.ui_theme_card_left),
-                        rightContentDescription = stringResource(string.ui_theme_card_right)
-                    )
-                }
-                item {
-                    ThemeAddSelection {
-
-                    }
-                }
+        Text(
+            text = stringResource(string.feat_setting_appearance_hint_edit_color).uppercase(),
+            color = MaterialTheme.colorScheme.onPrimary,
+            style = MaterialTheme.typography.labelLarge,
+            modifier = Modifier.textHorizontalLabel()
+        )
+        LazyRow(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            items(
+                items = colorSchemes,
+                key = { "${it.argb}_${it.isDark}" }
+            ) { colorPack ->
+                val selected =
+                    !useDynamicColors && colorArgb == colorPack.argb && isDarkMode == colorPack.isDark
+                ThemeSelection(
+                    argb = colorPack.argb,
+                    isDark = colorPack.isDark,
+                    selected = selected,
+                    onClick = {
+                        preferences.useDynamicColors = false
+                        preferences.argb = colorPack.argb
+                        preferences.darkMode = colorPack.isDark
+                    },
+                    onLongClick = { openColorCanvas(colorPack.argb, colorPack.isDark) },
+                    name = colorPack.name,
+                    leftContentDescription = stringResource(string.ui_theme_card_left),
+                    rightContentDescription = stringResource(string.ui_theme_card_right)
+                )
             }
-        } else {
-            TvLazyRow(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(spacing.medium),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                items(colorSchemes, key = { "${it.argb}_${it.isDark}" }) { pack ->
+            item {
+                ThemeAddSelection {
 
-                    val selected =
-                        !useDynamicColors && colorArgb == pack.argb && isDarkMode == pack.isDark
-
-                    ThemeSelection(
-                        argb = pack.argb,
-                        isDark = pack.isDark,
-                        selected = selected,
-                        onClick = {
-                            preferences.useDynamicColors = false
-                            preferences.argb = pack.argb
-                            preferences.darkMode = pack.isDark
-                        },
-                        onLongClick = { },
-                        name = pack.name,
-                        leftContentDescription = stringResource(string.ui_theme_card_left),
-                        rightContentDescription = stringResource(string.ui_theme_card_right),
-                        modifier = Modifier.animateItemPlacement()
-                    )
                 }
             }
         }
+
         HorizontalDivider()
 
         CheckBoxSharedPreference(
