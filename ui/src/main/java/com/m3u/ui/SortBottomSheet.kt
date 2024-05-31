@@ -161,6 +161,9 @@ fun TvSortFullScreenDialog(
                         selected = currentSort == sort,
                         onClick = { onChanged(currentSort) },
                         leadingContent = {},
+                        headlineContent = {
+                            TvText(currentSort.name)
+                        },
                         trailingContent = {
                             if (currentSort == sort) {
                                 Icon(
@@ -170,9 +173,7 @@ fun TvSortFullScreenDialog(
                             }
                         },
                         scale = TvListItemDefaults.scale(0.95f, 1f)
-                    ) {
-                        TvText(currentSort.name)
-                    }
+                    )
                 }
             }
             BackHandler {

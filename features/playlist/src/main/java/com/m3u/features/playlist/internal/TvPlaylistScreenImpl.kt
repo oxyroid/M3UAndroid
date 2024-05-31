@@ -29,8 +29,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.tv.foundation.lazy.list.TvLazyColumn
 import androidx.tv.material3.DenseListItem
-import androidx.tv.material3.ImmersiveList
-import androidx.tv.material3.ListItemDefaults as TvListItemDefaults
 import com.m3u.core.architecture.preferences.hiltPreferences
 import com.m3u.data.database.model.Programme
 import com.m3u.data.database.model.Stream
@@ -50,6 +48,7 @@ import dev.chrisbanes.haze.HazeDefaults
 import dev.chrisbanes.haze.HazeStyle
 import dev.chrisbanes.haze.haze
 import dev.chrisbanes.haze.hazeChild
+import androidx.tv.material3.ListItemDefaults as TvListItemDefaults
 import androidx.tv.material3.MaterialTheme as TvMaterialTheme
 import androidx.tv.material3.Text as TvText
 
@@ -95,44 +94,42 @@ internal fun TvPlaylistScreenImpl(
     var focus: Stream? by remember { mutableStateOf(null) }
 
     val content = @Composable {
-        ImmersiveList(
-            modifier = modifier.fillMaxWidth(),
-            background = { _, _ ->
-                ImmersiveBackground(
-                    title = title,
-                    stream = focus,
-                    maxBrowserHeight = maxBrowserHeight,
-                    onRefresh = onRefresh,
-                    openSearchDrawer = {},
-                    openSortDrawer = { isSortSheetVisible = true },
-                    getProgrammeCurrently = getProgrammeCurrently,
-                    modifier = Modifier.haze(
+        Box(
+            modifier = modifier.fillMaxWidth()
+        ) {
+            ImmersiveBackground(
+                title = title,
+                stream = focus,
+                maxBrowserHeight = maxBrowserHeight,
+                onRefresh = onRefresh,
+                openSearchDrawer = {},
+                openSortDrawer = { isSortSheetVisible = true },
+                getProgrammeCurrently = getProgrammeCurrently,
+                modifier = Modifier.haze(
+                    LocalHazeState.current,
+                    HazeDefaults.style(TvMaterialTheme.colorScheme.background)
+                )
+            )
+            TvStreamGallery(
+                channels = channels,
+                maxBrowserHeight = maxBrowserHeight,
+                isSpecifiedSort = useGridLayout,
+                isVodOrSeriesPlaylist = isVodOrSeriesPlaylist,
+                onClick = onStream,
+                onLongClick = { stream -> press = stream },
+                onFocus = { stream -> focus = stream },
+                modifier = Modifier
+                    .hazeChild(
                         LocalHazeState.current,
-                        HazeDefaults.style(TvMaterialTheme.colorScheme.background)
+                        style = HazeStyle(blurRadius = 4.dp)
                     )
-                )
-            },
-            list = {
-                TvStreamGallery(
-                    channels = channels,
-                    maxBrowserHeight = maxBrowserHeight,
-                    isSpecifiedSort = useGridLayout,
-                    isVodOrSeriesPlaylist = isVodOrSeriesPlaylist,
-                    onClick = onStream,
-                    onLongClick = { stream -> press = stream },
-                    onFocus = { stream -> focus = stream },
-                    modifier = Modifier
-                        .hazeChild(
-                            LocalHazeState.current,
-                            style = HazeStyle(blurRadius = 4.dp)
-                        )
-                        .blurEdge(
-                            color = TvMaterialTheme.colorScheme.background,
-                            edge = Edge.Top
-                        )
-                )
-            }
-        )
+                    .blurEdge(
+                        color = TvMaterialTheme.colorScheme.background,
+                        edge = Edge.Top
+                    )
+                    .align(Alignment.BottomCenter)
+            )
+        }
     }
 
     Background {
@@ -199,18 +196,24 @@ private fun MenuFullScreenDialog(
                 item {
                     DenseListItem(
                         selected = false,
+                        headlineContent = {
+                            TvText(
+                                text = stream?.title.orEmpty(),
+                                maxLines = 1,
+                                style = TvMaterialTheme.typography.titleLarge
+                            )
+                        },
                         onClick = {}
-                    ) {
-                        TvText(
-                            text = stream?.title.orEmpty(),
-                            maxLines = 1,
-                            style = TvMaterialTheme.typography.titleLarge
-                        )
-                    }
+                    )
                 }
                 item {
                     DenseListItem(
                         selected = false,
+                        headlineContent = {
+                            TvText(
+                                text = favouriteTitle
+                            )
+                        },
                         onClick = {
                             stream?.let { stream ->
                                 favorite(stream.id)
@@ -224,11 +227,7 @@ private fun MenuFullScreenDialog(
                             )
                         },
                         scale = TvListItemDefaults.scale(0.95f, 1f)
-                    ) {
-                        TvText(
-                            text = favouriteTitle
-                        )
-                    }
+                    )
                 }
                 item {
                     DenseListItem(
@@ -239,6 +238,11 @@ private fun MenuFullScreenDialog(
                                 onDismissRequest()
                             }
                         },
+                        headlineContent = {
+                            TvText(
+                                text = hideTitle
+                            )
+                        },
                         leadingContent = {
                             Icon(
                                 imageVector = Icons.Rounded.Delete,
@@ -246,11 +250,7 @@ private fun MenuFullScreenDialog(
                             )
                         },
                         scale = TvListItemDefaults.scale(0.95f, 1f)
-                    ) {
-                        TvText(
-                            text = hideTitle
-                        )
-                    }
+                    )
                 }
                 item {
                     DenseListItem(
@@ -261,6 +261,11 @@ private fun MenuFullScreenDialog(
                                 onDismissRequest()
                             }
                         },
+                        headlineContent = {
+                            TvText(
+                                text = createShortcutTitle
+                            )
+                        },
                         leadingContent = {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Rounded.Shortcut,
@@ -268,11 +273,7 @@ private fun MenuFullScreenDialog(
                             )
                         },
                         scale = TvListItemDefaults.scale(0.95f, 1f)
-                    ) {
-                        TvText(
-                            text = createShortcutTitle
-                        )
-                    }
+                    )
                 }
                 item {
                     DenseListItem(
@@ -283,6 +284,11 @@ private fun MenuFullScreenDialog(
                                 onDismissRequest()
                             }
                         },
+                        headlineContent = {
+                            TvText(
+                                text = savePictureTitle
+                            )
+                        },
                         leadingContent = {
                             Icon(
                                 imageVector = Icons.Rounded.Image,
@@ -290,11 +296,7 @@ private fun MenuFullScreenDialog(
                             )
                         },
                         scale = TvListItemDefaults.scale(0.95f, 1f)
-                    ) {
-                        TvText(
-                            text = savePictureTitle
-                        )
-                    }
+                    )
                 }
             }
             BackHandler {

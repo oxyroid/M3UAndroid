@@ -47,7 +47,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.paging.compose.LazyPagingItems
-import androidx.tv.material3.NonInteractiveSurfaceDefaults
 import coil.compose.AsyncImage
 import com.m3u.core.architecture.preferences.hiltPreferences
 import com.m3u.data.database.model.Programme
@@ -78,6 +77,7 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 import androidx.tv.material3.MaterialTheme as TvMaterialTheme
 import androidx.tv.material3.Surface as TvSurface
+import androidx.tv.material3.SurfaceDefaults as TvSurfaceDefaults
 
 private enum class Zoom(val time: Float) {
     DEFAULT(1f), ZOOM_1_5(1.5f), ZOOM_2(2f), ZOOM_5(5f)
@@ -357,7 +357,7 @@ private fun ProgrammeCell(
         )
     } else {
         TvSurface(
-            colors = NonInteractiveSurfaceDefaults.colors(TvMaterialTheme.colorScheme.tertiaryContainer),
+            colors = TvSurfaceDefaults.colors(TvMaterialTheme.colorScheme.tertiaryContainer),
             shape = AbsoluteRoundedCornerShape(4.dp),
             modifier = modifier,
             content = { content() }
