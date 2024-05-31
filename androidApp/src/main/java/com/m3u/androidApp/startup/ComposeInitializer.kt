@@ -5,6 +5,7 @@ import androidx.compose.ui.platform.ComposeView
 import androidx.lifecycle.ProcessLifecycleInitializer
 import androidx.startup.Initializer
 
+@Suppress("Unused")
 class ComposeInitializer: Initializer<Unit> {
     override fun create(context: Context) {
         ComposeView(context)
