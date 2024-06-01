@@ -21,11 +21,13 @@ import com.m3u.data.database.model.PlaylistWithCount
 import com.m3u.data.database.model.Stream
 import com.m3u.data.parser.xtream.XtreamStreamInfo
 import com.m3u.data.repository.playlist.PlaylistRepository
+import com.m3u.data.repository.programme.ProgrammeRepository
 import com.m3u.data.repository.stream.StreamRepository
 import com.m3u.data.worker.SubscriptionWorker
 import com.m3u.features.foryou.components.recommend.Recommend
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -45,6 +47,7 @@ import kotlin.time.toDuration
 class ForyouViewModel @Inject constructor(
     private val playlistRepository: PlaylistRepository,
     streamRepository: StreamRepository,
+    programmeRepository: ProgrammeRepository,
     preferences: Preferences,
     @Dispatcher(IO) ioDispatcher: CoroutineDispatcher,
     workManager: WorkManager,
@@ -80,6 +83,8 @@ class ForyouViewModel @Inject constructor(
                 initialValue = emptyList(),
                 started = SharingStarted.WhileSubscribed(5_000L)
             )
+
+    internal val refreshingEpgUrls: Flow<List<String>> = programmeRepository.refreshingEpgUrls
 
     private val unseensDuration = snapshotFlow { preferences.unseensMilliseconds }
         .map { it.toDuration(DurationUnit.MILLISECONDS) }

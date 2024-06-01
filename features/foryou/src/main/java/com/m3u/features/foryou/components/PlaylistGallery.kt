@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.dp
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.PlaylistWithCount
+import com.m3u.data.database.model.epgUrlsOrXtreamXmlUrl
 import com.m3u.data.database.model.fromLocal
 import com.m3u.data.database.model.type
 import com.m3u.i18n.R.string
@@ -27,6 +28,7 @@ internal fun PlaylistGallery(
     rowCount: Int,
     playlistCounts: List<PlaylistWithCount>,
     subscribingPlaylistUrls: List<String>,
+    refreshingEpgUrls: List<String>,
     onClick: (Playlist) -> Unit,
     onLongClick: (Playlist) -> Unit,
     modifier: Modifier = Modifier,
@@ -53,6 +55,9 @@ internal fun PlaylistGallery(
             val playlist = playlistCount.playlist
             val count = playlistCount.count
             val subscribing = playlist.url in subscribingPlaylistUrls
+            val refreshing = playlist
+                .epgUrlsOrXtreamXmlUrl()
+                .any { it in refreshingEpgUrls }
             PlaylistItem(
                 label = PlaylistGalleryDefaults.calculateUiTitle(
                     title = playlist.title,
@@ -66,7 +71,7 @@ internal fun PlaylistGallery(
                     }
                 },
                 count = count,
-                subscribing = subscribing,
+                subscribingOrRefreshing = subscribing || refreshing,
                 local = playlist.fromLocal,
                 onClick = { onClick(playlist) },
                 onLongClick = { onLongClick(playlist) },

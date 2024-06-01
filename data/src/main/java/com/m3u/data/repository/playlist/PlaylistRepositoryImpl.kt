@@ -13,8 +13,8 @@ import com.m3u.core.architecture.logger.execute
 import com.m3u.core.architecture.logger.install
 import com.m3u.core.architecture.logger.post
 import com.m3u.core.architecture.logger.sandBox
-import com.m3u.core.architecture.preferences.Preferences
 import com.m3u.core.architecture.preferences.PlaylistStrategy
+import com.m3u.core.architecture.preferences.Preferences
 import com.m3u.core.util.basic.startsWithAny
 import com.m3u.core.util.readFileContent
 import com.m3u.core.util.readFileName
@@ -516,6 +516,14 @@ internal class PlaylistRepositoryImpl @Inject constructor(
     override suspend fun get(url: String): Playlist? = logger.execute {
         playlistDao.getByUrl(url)
     }
+
+    override suspend fun getAll(): List<Playlist> = logger.execute {
+        playlistDao.getAll()
+    } ?: emptyList()
+
+    override suspend fun getBySource(source: DataSource): List<Playlist> = logger.execute {
+        playlistDao.getBySource(source)
+    } ?: emptyList()
 
     override suspend fun getCategoriesByPlaylistUrlIgnoreHidden(
         url: String,

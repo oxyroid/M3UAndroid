@@ -10,6 +10,11 @@ import androidx.compose.foundation.lazy.staggeredgrid.LazyStaggeredGridState
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -58,9 +63,13 @@ internal fun SmartphoneStreamGallery(
         items(streams?.itemCount ?: 0) { index ->
             val stream = streams?.get(index)
             if (stream != null) {
+                var programme: Programme? by remember { mutableStateOf(null) }
+                LaunchedEffect(stream.channelId) {
+                    programme = getProgrammeCurrently(stream.channelId.orEmpty())
+                }
                 SmartphoneStreamItem(
                     stream = stream,
-                    getProgrammeCurrently = { getProgrammeCurrently(stream.channelId.orEmpty()) },
+                    programme = programme,
                     recently = recently,
                     zapping = zapping == stream,
                     isVodOrSeriesPlaylist = isVodOrSeriesPlaylist,

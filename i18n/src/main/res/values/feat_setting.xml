@@ -28,8 +28,10 @@
     <string name="feat_setting_clip_mode_adaptive">adaptive</string>
     <string name="feat_setting_clip_mode_clip">clip</string>
     <string name="feat_setting_clip_mode_stretched">stretched</string>
-    <string name="feat_setting_auto_refresh">auto refresh</string>
-    <string name="feat_setting_auto_refresh_description">automatically refreshed when enter the playlist</string>
+    <string name="feat_setting_auto_refresh_channels">auto refresh channels</string>
+    <string name="feat_setting_auto_refresh_channels_description">automatically refreshed when enter the channel</string>
+    <string name="feat_setting_auto_refresh_programmes">auto refresh programmes</string>
+    <string name="feat_setting_auto_refresh_programmes_description">automatically refresh programmes when startup</string>
 
     <string name="feat_setting_always_television">always television</string>
     <string name="feat_setting_always_television_description">will be restored when the app is restarted</string>

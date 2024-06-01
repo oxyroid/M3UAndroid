@@ -143,11 +143,19 @@ internal fun RegularPreferences(
             onChanged = { preferences.noPictureMode = !preferences.noPictureMode }
         )
         CheckBoxSharedPreference(
-            title = string.feat_setting_auto_refresh,
-            content = string.feat_setting_auto_refresh_description,
+            title = string.feat_setting_auto_refresh_channels,
+            content = string.feat_setting_auto_refresh_channels_description,
             icon = Icons.Rounded.Refresh,
-            checked = preferences.autoRefresh,
-            onChanged = { preferences.autoRefresh = !preferences.autoRefresh }
+            checked = preferences.autoRefreshChannels,
+            onChanged = { preferences.autoRefreshChannels = !preferences.autoRefreshChannels }
+        )
+
+        CheckBoxSharedPreference(
+            title = string.feat_setting_auto_refresh_programmes,
+            content = string.feat_setting_auto_refresh_programmes_description,
+            icon = Icons.Rounded.Refresh,
+            checked = preferences.autoRefreshProgrammes,
+            onChanged = { preferences.autoRefreshProgrammes = !preferences.autoRefreshProgrammes }
         )
 
         CheckBoxSharedPreference(

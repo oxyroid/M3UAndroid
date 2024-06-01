@@ -26,8 +26,8 @@
     <string name="feat_setting_clip_mode_adaptive">adaptiv</string>
     <string name="feat_setting_clip_mode_clip">incadrare</string>
     <string name="feat_setting_clip_mode_stretched">tot ecranul</string>
-    <string name="feat_setting_auto_refresh">actualizare automata</string>
-    <string name="feat_setting_auto_refresh_description">actualizare automata la deschidere lista</string>
+    <string name="feat_setting_auto_refresh_channels">actualizare automata</string>
+    <string name="feat_setting_auto_refresh_channels_description">actualizare automata la deschidere lista</string>
 
     <string name="feat_setting_always_television">mod permanent televizor</string>
     <string name="feat_setting_always_television_description">se va restaura la repornirea aplicatiei</string>

@@ -1,21 +1,26 @@
 package com.m3u.androidApp.ui
 
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.work.WorkManager
 import com.m3u.androidApp.ui.sheet.RemoteControlSheetValue
 import com.m3u.core.architecture.Publisher
 import com.m3u.core.architecture.dispatcher.Dispatcher
 import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
 import com.m3u.core.architecture.preferences.Preferences
 import com.m3u.data.api.LocalPreparedService
+import com.m3u.data.repository.playlist.PlaylistRepository
+import com.m3u.data.repository.programme.ProgrammeRepository
 import com.m3u.data.repository.television.ConnectionToTelevisionValue
 import com.m3u.data.repository.television.TelevisionRepository
 import com.m3u.data.service.Messager
 import com.m3u.data.television.model.RemoteDirection
+import com.m3u.data.worker.SubscriptionWorker
 import com.m3u.ui.Destination
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
@@ -37,12 +42,21 @@ import javax.inject.Inject
 @HiltViewModel
 class AppViewModel @Inject constructor(
     messager: Messager,
+    private val playlistRepository: PlaylistRepository,
+    private val programmeRepository: ProgrammeRepository,
     private val televisionRepository: TelevisionRepository,
     private val localService: LocalPreparedService,
+    private val workManager: WorkManager,
     private val preferences: Preferences,
     private val publisher: Publisher,
     @Dispatcher(IO) private val ioDispatcher: CoroutineDispatcher,
 ) : ViewModel() {
+    init {
+        if (preferences.autoRefreshProgrammes) {
+            refreshAllProgrammes()
+        }
+    }
+
     val broadcastCodeOnTelevision: StateFlow<String?> = televisionRepository
         .broadcastCodeOnTelevision
         .map { code -> code?.let { convertToPaddedString(it) } }
@@ -142,6 +156,19 @@ class AppViewModel @Inject constructor(
     internal fun onRemoteDirection(remoteDirection: RemoteDirection) {
         viewModelScope.launch {
             localService.remoteDirection(remoteDirection.value)
+        }
+    }
+
+    private fun refreshAllProgrammes() {
+        viewModelScope.launch {
+            val playlists = playlistRepository.getAll()
+            playlists.forEach { playlist ->
+                SubscriptionWorker.epg(
+                    workManager = workManager,
+                    playlistUrl = playlist.url,
+                    ignoreCache = true
+                )
+            }
         }
     }
 

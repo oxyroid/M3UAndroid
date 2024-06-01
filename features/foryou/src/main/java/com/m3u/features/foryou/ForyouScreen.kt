@@ -83,6 +83,7 @@ fun ForyouRoute(
     val series: Stream? by viewModel.series.collectAsStateWithLifecycle()
     val subscribingPlaylistUrls by
     viewModel.subscribingPlaylistUrls.collectAsStateWithLifecycle()
+    val refreshingEpgUrls by viewModel.refreshingEpgUrls.collectAsStateWithLifecycle(emptyList())
 
     if (isPageInfoVisible) {
         LifecycleResumeEffect(title) {
@@ -105,6 +106,7 @@ fun ForyouRoute(
     ForyouScreen(
         playlistCountsResource = playlistCountsResource,
         subscribingPlaylistUrls = subscribingPlaylistUrls,
+        refreshingEpgUrls = refreshingEpgUrls,
         recommend = recommend,
         rowCount = preferences.rowCount,
         contentPadding = contentPadding,
@@ -169,6 +171,7 @@ private fun ForyouScreen(
     rowCount: Int,
     playlistCountsResource: Resource<List<PlaylistWithCount>>,
     subscribingPlaylistUrls: List<String>,
+    refreshingEpgUrls: List<String>,
     recommend: Recommend,
     contentPadding: PaddingValues,
     navigateToPlaylist: (Playlist) -> Unit,
@@ -214,6 +217,7 @@ private fun ForyouScreen(
                         rowCount = actualRowCount,
                         playlistCounts = playlistCountsResource.data,
                         subscribingPlaylistUrls = subscribingPlaylistUrls,
+                        refreshingEpgUrls = refreshingEpgUrls,
                         onClick = navigateToPlaylist,
                         onLongClick = { mediaSheetValue = MediaSheetValue.ForyouScreen(it) },
                         header = header.takeIf { recommend.isNotEmpty() },

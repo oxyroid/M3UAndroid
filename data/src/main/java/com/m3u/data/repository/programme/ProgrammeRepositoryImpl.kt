@@ -71,11 +71,15 @@ internal class ProgrammeRepositoryImpl @Inject constructor(
             }
 
     override fun checkOrRefreshProgrammesOrThrow(
-        playlistUrl: String,
+        vararg playlistUrls: String,
         ignoreCache: Boolean
     ): Flow<Int> = channelFlow {
-        val playlist = playlistDao.getByUrl(playlistUrl) ?: return@channelFlow
-        val epgUrls = playlist.epgUrlsOrXtreamXmlUrl()
+        val epgUrls = playlistUrls.flatMap { playlistUrl ->
+            val playlist = playlistDao.getByUrl(playlistUrl) ?: return@flatMap emptyList()
+            playlist.epgUrlsOrXtreamXmlUrl()
+        }
+            .toSet()
+            .toList()
         val producer = checkOrRefreshProgrammesOrThrowImpl(
             epgUrls = epgUrls,
             ignoreCache = ignoreCache

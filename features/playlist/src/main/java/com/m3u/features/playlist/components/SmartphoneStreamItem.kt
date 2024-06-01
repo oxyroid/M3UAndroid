@@ -20,11 +20,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.movableContentOf
-import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -68,18 +65,13 @@ internal fun SmartphoneStreamItem(
     zapping: Boolean,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
-    getProgrammeCurrently: suspend () -> Programme?,
+    programme: Programme?,
     modifier: Modifier = Modifier,
     isVodOrSeriesPlaylist: Boolean = true
 ) {
     val context = LocalContext.current
     val spacing = LocalSpacing.current
     val preferences = hiltPreferences()
-
-    val currentGetProgrammeCurrently by rememberUpdatedState(getProgrammeCurrently)
-    val programme: Programme? by produceState<Programme?>(null) {
-        value = currentGetProgrammeCurrently()
-    }
 
     val favourite = stream.favourite
 
@@ -219,7 +211,7 @@ internal fun SmartphoneStreamItem(
 
                             programme != null -> {
                                 Text(
-                                    text = programme?.readText() ?: AnnotatedString(""),
+                                    text = programme.readText(),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = LocalContentColor.current.copy(0.56f),
                                     maxLines = 1,

@@ -23,7 +23,7 @@ interface ProgrammeRepository {
 
     val refreshingEpgUrls: StateFlow<List<String>>
     fun checkOrRefreshProgrammesOrThrow(
-        playlistUrl: String,
+        vararg playlistUrls: String,
         ignoreCache: Boolean
     ): Flow<Int>
 }

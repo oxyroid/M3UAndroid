@@ -6,6 +6,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
+import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.PlaylistWithCount
 import com.m3u.data.database.model.PlaylistWithStreams
@@ -27,6 +28,9 @@ internal interface PlaylistDao {
 
     @Query("SELECT * FROM playlists WHERE url = :url")
     suspend fun getByUrl(url: String): Playlist?
+
+    @Query("SELECT * FROM playlists WHERE source = :source")
+    suspend fun getBySource(source: DataSource): List<Playlist>
 
     @Query("SELECT * FROM playlists ORDER BY title")
     fun observeAll(): Flow<List<Playlist>>

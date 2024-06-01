@@ -61,8 +61,11 @@ class Preferences @Inject constructor(
     var clipMode: Int by
     sharedPreferences.intAsState(DEFAULT_CLIP_MODE, CLIP_MODE)
 
-    var autoRefresh: Boolean by
-    sharedPreferences.booleanAsState(DEFAULT_AUTO_REFRESH, AUTO_REFRESH)
+    var autoRefreshChannels: Boolean by
+    sharedPreferences.booleanAsState(DEFAULT_AUTO_REFRESH_CHANNELS, AUTO_REFRESH_CHANNELS)
+
+    var autoRefreshProgrammes: Boolean by
+    sharedPreferences.booleanAsState(DEFAULT_AUTO_REFRESH_PROGRAMMES, AUTO_REFRESH_PROGRAMMES)
 
     var fullInfoPlayer: Boolean by
     sharedPreferences.booleanAsState(DEFAULT_FULL_INFO_PLAYER, FULL_INFO_PLAYER)
@@ -131,7 +134,8 @@ class Preferences @Inject constructor(
 
         @ClipMode
         const val DEFAULT_CLIP_MODE = ClipMode.ADAPTIVE
-        const val DEFAULT_AUTO_REFRESH = false
+        const val DEFAULT_AUTO_REFRESH_CHANNELS = false
+        const val DEFAULT_AUTO_REFRESH_PROGRAMMES = false
         const val DEFAULT_FULL_INFO_PLAYER = false
         const val DEFAULT_ROOT_DESTINATION = 0
         const val DEFAULT_NO_PICTURE_MODE = false
@@ -170,7 +174,8 @@ class Preferences @Inject constructor(
         const val GOD_MODE = "god-mode"
 
         const val CLIP_MODE = "clip-mode"
-        const val AUTO_REFRESH = "auto-refresh"
+        const val AUTO_REFRESH_CHANNELS = "auto-refresh-channels"
+        const val AUTO_REFRESH_PROGRAMMES = "auto-refresh-programmes"
         const val FULL_INFO_PLAYER = "full-info-player"
         const val ROOT_DESTINATION = "root-destination"
         const val NO_PICTURE_MODE = "no-picture-mode"

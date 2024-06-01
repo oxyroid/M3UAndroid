@@ -28,8 +28,8 @@
     <string name="feat_setting_clip_mode_adaptive">adaptativo</string>
     <string name="feat_setting_clip_mode_clip">centrado</string>
     <string name="feat_setting_clip_mode_stretched">estirado</string>
-    <string name="feat_setting_auto_refresh">autorefrescar</string>
-    <string name="feat_setting_auto_refresh_description">se actualiza automáticamente cuando se ingresa la lista</string>
+    <string name="feat_setting_auto_refresh_channels">autorefrescar</string>
+    <string name="feat_setting_auto_refresh_channels_description">se actualiza automáticamente cuando se ingresa la lista</string>
 
     <string name="feat_setting_always_television">siempre en televisión</string>
     <string name="feat_setting_always_television_description">será revertido cuando se reinicia la app</string>

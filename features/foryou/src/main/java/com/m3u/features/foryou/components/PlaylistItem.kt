@@ -46,7 +46,7 @@ internal fun PlaylistItem(
     type: String?,
     count: Int,
     local: Boolean,
-    subscribing: Boolean,
+    subscribingOrRefreshing: Boolean,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -58,7 +58,7 @@ internal fun PlaylistItem(
             type = type,
             count = count,
             local = local,
-            subscribing = subscribing,
+            subscribing = subscribingOrRefreshing,
             onClick = onClick,
             onLongClick = onLongClick,
             modifier = modifier
@@ -68,7 +68,7 @@ internal fun PlaylistItem(
             label = label,
             type = type,
             count = count,
-            subscribing = subscribing,
+            subscribing = subscribingOrRefreshing,
             onClick = onClick,
             onLongClick = onLongClick,
             modifier = modifier

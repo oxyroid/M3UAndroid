@@ -2,6 +2,7 @@ package com.m3u.data.repository.playlist
 
 import android.net.Uri
 import androidx.compose.runtime.Immutable
+import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.PlaylistWithCount
 import com.m3u.data.database.model.PlaylistWithStreams
@@ -14,6 +15,8 @@ interface PlaylistRepository {
     fun observeAllEpgs(): Flow<List<Playlist>>
     fun observePlaylistUrls(): Flow<List<String>>
     suspend fun get(url: String): Playlist?
+    suspend fun getAll(): List<Playlist>
+    suspend fun getBySource(source: DataSource): List<Playlist>
     suspend fun getCategoriesByPlaylistUrlIgnoreHidden(url: String, query: String): List<String>
     fun observeCategoriesByPlaylistUrlIgnoreHidden(url: String, query: String): Flow<List<String>>
     fun observe(url: String): Flow<Playlist?>

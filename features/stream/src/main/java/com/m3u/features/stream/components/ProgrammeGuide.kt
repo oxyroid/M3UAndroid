@@ -372,7 +372,7 @@ private fun CurrentTimelineCell(
 ) {
     val spacing = LocalSpacing.current
     val preferences = hiltPreferences()
-    val clockMode = preferences.twelveHourClock
+    val twelveHourClock = preferences.twelveHourClock
     val color = MaterialTheme.colorScheme.error
     val contentColor = MaterialTheme.colorScheme.onError
     val currentMilliseconds by rememberUpdatedState(milliseconds)
@@ -380,7 +380,7 @@ private fun CurrentTimelineCell(
         Instant
             .fromEpochMilliseconds(currentMilliseconds)
             .toLocalDateTime(TimeZone.currentSystemDefault())
-            .formatEOrSh(clockMode)
+            .formatEOrSh(twelveHourClock, ignoreSeconds = false)
     }
     Box(contentAlignment = Alignment.CenterEnd) {
         Canvas(

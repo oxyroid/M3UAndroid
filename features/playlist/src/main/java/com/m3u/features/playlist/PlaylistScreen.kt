@@ -179,8 +179,8 @@ internal fun PlaylistRoute(
         }
     }
 
-    LaunchedEffect(preferences.autoRefresh, playlistUrl) {
-        if (playlistUrl.isNotEmpty() && preferences.autoRefresh) {
+    LaunchedEffect(preferences.autoRefreshChannels, playlistUrl) {
+        if (playlistUrl.isNotEmpty() && preferences.autoRefreshChannels) {
             viewModel.refresh()
         }
     }

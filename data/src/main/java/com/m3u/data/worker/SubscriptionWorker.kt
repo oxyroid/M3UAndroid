@@ -116,7 +116,7 @@ class SubscriptionWorker @AssistedInject constructor(
                 val ignoreCache = epgIgnoreCache
                 try {
                     programmeRepository.checkOrRefreshProgrammesOrThrow(
-                        playlistUrl = playlistUrl,
+                        playlistUrl,
                         ignoreCache = ignoreCache
                     )
                         .onEach { count ->
