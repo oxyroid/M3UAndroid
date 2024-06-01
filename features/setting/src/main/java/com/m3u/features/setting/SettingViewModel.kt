@@ -56,7 +56,7 @@ class SettingViewModel @Inject constructor(
     private val playlistRepository: PlaylistRepository,
     private val streamRepository: StreamRepository,
     private val workManager: WorkManager,
-    preferences: Preferences,
+    private val preferences: Preferences,
     private val messager: Messager,
     private val localService: LocalPreparedService,
     private val playerManager: PlayerManager,
@@ -322,6 +322,28 @@ class SettingViewModel @Inject constructor(
     internal fun deleteEpgPlaylist(epgUrl: String) {
         viewModelScope.launch {
             playlistRepository.deleteEpgPlaylistAndProgrammes(epgUrl)
+        }
+    }
+
+    @OptIn(ExperimentalStdlibApi::class)
+    internal fun applyColor(
+        prev: ColorScheme?,
+        argb: Int,
+        isDark: Boolean
+    ) {
+        preferences.argb = argb
+        preferences.darkMode = isDark
+        viewModelScope.launch {
+            if (prev != null) {
+                colorSchemeDao.delete(prev)
+            }
+            colorSchemeDao.insert(
+                ColorScheme(
+                    argb = argb,
+                    isDark = isDark,
+                    name = "#${argb.toHexString(HexFormat.UpperCase)}"
+                )
+            )
         }
     }
 

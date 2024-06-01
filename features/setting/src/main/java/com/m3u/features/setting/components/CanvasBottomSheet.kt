@@ -36,6 +36,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.m3u.data.database.model.ColorScheme
 import com.m3u.i18n.R.string
 import com.m3u.material.components.Icon
 import com.m3u.material.ktx.createScheme
@@ -47,14 +48,17 @@ import com.m3u.ui.FontFamilies
 @Composable
 internal fun CanvasBottomSheet(
     sheetState: SheetState,
-    colorInt: Int?,
-    isDark: Boolean?,
+    colorScheme: ColorScheme?,
+    onApplyColor: (Int, Boolean) -> Unit,
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
-    if (colorInt != null && isDark != null) {
-        var currentColorInt: Int by remember(colorInt) { mutableIntStateOf(colorInt) }
+    val argb = colorScheme?.argb
+    val isDark = colorScheme?.isDark
+    val isTemp = colorScheme?.name == ColorScheme.NAME_TEMP
+    if (argb != null && isDark != null) {
+        var currentColorInt: Int by remember(argb) { mutableIntStateOf(argb) }
         var currentIsDark: Boolean by remember(isDark) { mutableStateOf(isDark) }
 
         val scheme by remember {
@@ -68,7 +72,6 @@ internal fun CanvasBottomSheet(
         ) {
             ModalBottomSheet(
                 sheetState = sheetState,
-//                windowInsets = WindowInsets(0),
                 onDismissRequest = onDismissRequest,
             ) {
                 Column(
@@ -120,7 +123,7 @@ internal fun CanvasBottomSheet(
                     )
 
                     val hasChanged by remember {
-                        derivedStateOf { currentColorInt != colorInt || currentIsDark != isDark }
+                        derivedStateOf { isTemp || currentColorInt != argb || currentIsDark != isDark }
                     }
                     SingleChoiceSegmentedButtonRow(
                         modifier = Modifier.fillMaxWidth()
@@ -128,7 +131,10 @@ internal fun CanvasBottomSheet(
                         SegmentedButton(
                             selected = false,
                             enabled = hasChanged,
-                            onClick = { /*TODO*/ },
+                            onClick = {
+                                onApplyColor(currentColorInt, currentIsDark)
+                                onDismissRequest()
+                            },
                             shape = SegmentedButtonDefaults.itemShape(
                                 baseShape = RoundedCornerShape(8.dp),
                                 index = 0,
@@ -155,7 +161,7 @@ internal fun CanvasBottomSheet(
                                 disabledInactiveContentColor = LocalContentColor.current.copy(0.38f)
                             ),
                             onClick = {
-                                currentColorInt = colorInt
+                                currentColorInt = argb
                                 currentIsDark = isDark
                             },
                             shape = SegmentedButtonDefaults.itemShape(

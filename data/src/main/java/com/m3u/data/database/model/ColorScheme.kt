@@ -16,4 +16,8 @@ data class ColorScheme(
     val isDark: Boolean,
     @ColumnInfo("name")
     val name: String,
-)
+) {
+    companion object {
+        const val NAME_TEMP = "temp"
+    }
+}

@@ -70,8 +70,7 @@ fun SettingRoute(
     val cacheSpace by viewModel.cacheSpace.collectAsStateWithLifecycle()
 
     val sheetState = rememberModalBottomSheetState()
-    var colorInt: Int? by remember { mutableStateOf(null) }
-    var isDark: Boolean? by remember { mutableStateOf(null) }
+    var colorScheme: ColorScheme? by remember { mutableStateOf(null) }
 
     val createDocumentLauncher =
         rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/*")) { uri ->
@@ -113,10 +112,7 @@ fun SettingRoute(
         backup = backup,
         restore = restore,
         colorSchemes = colorSchemes,
-        openColorCanvas = { c, i ->
-            colorInt = c
-            isDark = i
-        },
+        openColorCanvas = { colorScheme = it },
         restoreSchemes = viewModel::restoreSchemes,
         onClipboard = { viewModel.onClipboard(it) },
         onClearCache = { viewModel.clearCache() },
@@ -135,11 +131,12 @@ fun SettingRoute(
     if (!tv) {
         CanvasBottomSheet(
             sheetState = sheetState,
-            colorInt = colorInt,
-            isDark = isDark,
+            colorScheme = colorScheme,
+            onApplyColor = { argb, isDark ->
+                viewModel.applyColor(colorScheme, argb, isDark)
+            },
             onDismissRequest = {
-                colorInt = null
-                isDark = null
+                colorScheme = null
             }
         )
     }
@@ -169,7 +166,7 @@ private fun SettingScreen(
     restore: () -> Unit,
     onClipboard: (String) -> Unit,
     colorSchemes: List<ColorScheme>,
-    openColorCanvas: (Int, Boolean) -> Unit,
+    openColorCanvas: (ColorScheme) -> Unit,
     restoreSchemes: () -> Unit,
     cacheSpace: DataUnit,
     onClearCache: () -> Unit,

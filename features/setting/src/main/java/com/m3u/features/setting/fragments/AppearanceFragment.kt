@@ -1,6 +1,7 @@
 package com.m3u.features.setting.fragments
 
 import android.os.Build
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -19,6 +20,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.stringResource
 import com.m3u.core.architecture.preferences.hiltPreferences
 import com.m3u.core.util.basic.title
@@ -31,18 +34,16 @@ import com.m3u.material.components.ThemeSelection
 import com.m3u.material.ktx.includeChildGlowPadding
 import com.m3u.material.ktx.isTelevision
 import com.m3u.material.ktx.textHorizontalLabel
-import com.m3u.material.model.LocalSpacing
 
 @Composable
 internal fun AppearanceFragment(
     colorSchemes: List<ColorScheme>,
     colorArgb: Int,
-    openColorCanvas: (Int, Boolean) -> Unit,
+    openColorCanvas: (ColorScheme) -> Unit,
     restoreSchemes: () -> Unit,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues()
 ) {
-    val spacing = LocalSpacing.current
     val preferences = hiltPreferences()
 
     val isDarkMode = preferences.darkMode
@@ -68,27 +69,38 @@ internal fun AppearanceFragment(
             items(
                 items = colorSchemes,
                 key = { "${it.argb}_${it.isDark}" }
-            ) { colorPack ->
+            ) { colorScheme ->
                 val selected =
-                    !useDynamicColors && colorArgb == colorPack.argb && isDarkMode == colorPack.isDark
+                    !useDynamicColors && colorArgb == colorScheme.argb && isDarkMode == colorScheme.isDark
                 ThemeSelection(
-                    argb = colorPack.argb,
-                    isDark = colorPack.isDark,
+                    argb = colorScheme.argb,
+                    isDark = colorScheme.isDark,
                     selected = selected,
                     onClick = {
                         preferences.useDynamicColors = false
-                        preferences.argb = colorPack.argb
-                        preferences.darkMode = colorPack.isDark
+                        preferences.argb = colorScheme.argb
+                        preferences.darkMode = colorScheme.isDark
                     },
-                    onLongClick = { openColorCanvas(colorPack.argb, colorPack.isDark) },
-                    name = colorPack.name,
+                    onLongClick = { openColorCanvas(colorScheme) },
+                    name = colorScheme.name,
                     leftContentDescription = stringResource(string.ui_theme_card_left),
                     rightContentDescription = stringResource(string.ui_theme_card_right)
                 )
             }
             item {
+                val inDarkTheme = isSystemInDarkTheme()
                 ThemeAddSelection {
-
+                    openColorCanvas(
+                        ColorScheme(
+                            argb = Color(
+                                red = (0..0xFF).random(),
+                                green = (0..0xFF).random(),
+                                blue = (0..0xFF).random()
+                            ).toArgb(),
+                            isDark = inDarkTheme,
+                            name = ColorScheme.NAME_TEMP
+                        )
+                    )
                 }
             }
         }
