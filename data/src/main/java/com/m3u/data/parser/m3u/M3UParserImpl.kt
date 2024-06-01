@@ -5,6 +5,7 @@ import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.Profiles
 import com.m3u.core.architecture.logger.install
+import com.m3u.core.architecture.logger.post
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
@@ -23,8 +24,8 @@ internal class M3UParserImpl @Inject constructor(
         private const val M3U_INFO_MARK = "#EXTINF:"
         private const val KODI_MARK = "#KODIPROP:"
 
-        private val infoRegex = """$M3U_INFO_MARK(-?\d+)(.*),(.+)""".toRegex()
-        private val kodiPropRegex = """$KODI_MARK(.+)=(.+)""".toRegex()
+        private val infoRegex = """(-?\d+)(.*),(.+)""".toRegex()
+        private val kodiPropRegex = """(.+)=(.+)""".toRegex()
         private val metadataRegex = """([\w-_.]+)=\s*(?:"([^"]*)"|(\S+))""".toRegex()
 
         private const val M3U_TVG_LOGO_MARK = "tvg-logo"
@@ -42,7 +43,7 @@ internal class M3UParserImpl @Inject constructor(
             .lineSequence()
             .filter { it.isNotEmpty() }
             .map { it.trimEnd() }
-            .dropWhile { it == M3U_HEADER_MARK }
+            .dropWhile { it.startsWith(M3U_HEADER_MARK) }
             .iterator()
 
         var currentLine: String
@@ -52,11 +53,15 @@ internal class M3UParserImpl @Inject constructor(
         while (lines.hasNext()) {
             currentLine = lines.next()
             while (currentLine.startsWith("#")) {
+                logger.post { currentLine }
                 if (currentLine.startsWith(M3U_INFO_MARK)) {
-                    infoMatch = infoRegex.matchEntire(currentLine)
+                    infoMatch = infoRegex
+                        .matchEntire(currentLine.drop(M3U_INFO_MARK.length).trim())
                 }
                 if (currentLine.startsWith(KODI_MARK)) {
-                    kodiPropRegex.matchEntire(currentLine)?.also { kodiMatches += it }
+                    kodiPropRegex
+                        .matchEntire(currentLine.drop(KODI_MARK.length).trim())
+                        ?.also { kodiMatches += it }
                 }
                 if (lines.hasNext()) {
                     currentLine = lines.next()
