@@ -347,7 +347,7 @@ class PlaylistViewModel @Inject constructor(
     )
 
     @OptIn(FlowPreview::class)
-    private val categories: Flow<List<String>> = flatmapCombined(playlistUrl, query) { playlistUrl, query ->
+    private val categories: StateFlow<List<String>> = flatmapCombined(playlistUrl, query) { playlistUrl, query ->
         playlistRepository.observeCategoriesByPlaylistUrlIgnoreHidden(playlistUrl, query)
     }
         .let { flow ->
@@ -356,6 +356,11 @@ class PlaylistViewModel @Inject constructor(
                 flow.drop(1).debounce(1.seconds)
             )
         }
+        .stateIn(
+            scope = viewModelScope,
+            initialValue = emptyList(),
+            started = SharingStarted.Lazily
+        )
 
     internal val channels: StateFlow<List<Channel>> = combine(
         playlistUrl,
