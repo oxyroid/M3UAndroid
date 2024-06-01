@@ -17,5 +17,6 @@ object Metadata {
     var color: Color by mutableStateOf(Color.Unspecified)
     var contentColor: Color by mutableStateOf(Color.Unspecified)
 
-    const val HEADLINE_ASPECT_RATIO = 7 / 3f
+    fun headlineAspectRatio(rail: Boolean): Float = if (rail) 14 / 3f
+    else 7 / 3f
 }

@@ -1,17 +1,13 @@
 package com.m3u.androidApp.ui.internal
 
-import android.util.Log
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Color
@@ -25,26 +21,26 @@ import coil.request.CachePolicy
 import coil.request.ImageRequest
 import com.m3u.core.architecture.preferences.hiltPreferences
 import com.m3u.material.ktx.BlurTransformation
-import com.m3u.material.ktx.Edge
-import com.m3u.material.ktx.blurEdge
+import com.m3u.ui.helper.LocalHelper
 import com.m3u.ui.helper.Metadata
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
+import com.m3u.ui.helper.useRailNav
 import kotlin.math.roundToInt
 
 @Composable
 fun HeadlineBackground(modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val configuration = LocalConfiguration.current
+    val helper = LocalHelper.current
 
     val preferences = hiltPreferences()
 
     val useDarkTheme =
         preferences.darkMode || (preferences.followSystemTheme && isSystemInDarkTheme())
 
-    val colorScheme = MaterialTheme.colorScheme
     val url = Metadata.headlineUrl
     val fraction = Metadata.headlineFraction
+
+    val headlineAspectRatio = Metadata.headlineAspectRatio(helper.useRailNav)
 
     val currentMaskColor by animateColorAsState(
         targetValue = lerp(
@@ -57,11 +53,6 @@ fun HeadlineBackground(modifier: Modifier = Modifier) {
     )
 
     if (!preferences.noPictureMode) {
-        LaunchedEffect(Unit) {
-            snapshotFlow { Metadata.headlineFraction }
-                .onEach { Log.e("TAG", "$it") }
-                .launchIn(this)
-        }
         AsyncImage(
             model = remember(url) {
                 ImageRequest.Builder(context)
@@ -80,21 +71,16 @@ fun HeadlineBackground(modifier: Modifier = Modifier) {
                 .offset {
                     IntOffset(
                         x = 0,
-                        y = ((configuration.screenWidthDp * Metadata.HEADLINE_ASPECT_RATIO) * -fraction).roundToInt()
+                        y = ((configuration.screenWidthDp * headlineAspectRatio) * -fraction).roundToInt()
                     )
                 }
-                .aspectRatio(Metadata.HEADLINE_ASPECT_RATIO)
+                .aspectRatio(headlineAspectRatio)
                 .drawWithContent {
                     drawContent()
                     if (url.isNotEmpty()) {
                         drawRect(color = currentMaskColor, size = size)
                     }
                 }
-                .blurEdge(
-                    color = colorScheme.background,
-                    edge = Edge.Bottom,
-                    dimen = 256f
-                )
         )
     }
 }

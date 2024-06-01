@@ -34,7 +34,9 @@ import com.m3u.i18n.R.string
 import com.m3u.material.ktx.plus
 import com.m3u.material.model.LocalHazeState
 import com.m3u.material.model.LocalSpacing
+import com.m3u.ui.helper.LocalHelper
 import com.m3u.ui.helper.Metadata
+import com.m3u.ui.helper.useRailNav
 import dev.chrisbanes.haze.HazeDefaults
 import dev.chrisbanes.haze.haze
 import kotlinx.coroutines.flow.launchIn
@@ -55,7 +57,11 @@ internal fun PlaylistGallery(
 ) {
     val spacing = LocalSpacing.current
     val configuration = LocalConfiguration.current
+    val helper = LocalHelper.current
+
     val colorScheme = MaterialTheme.colorScheme
+
+    val headlineAspectRatio = Metadata.headlineAspectRatio(helper.useRailNav)
 
     val state = rememberLazyGridState()
     val viewportStartOffset by remember {
@@ -73,7 +79,7 @@ internal fun PlaylistGallery(
         snapshotFlow { viewportStartOffset }
             .onEach {
                 val fraction = (it.absoluteValue /
-                        (configuration.screenWidthDp * Metadata.HEADLINE_ASPECT_RATIO))
+                        (configuration.screenWidthDp * headlineAspectRatio))
                     .coerceIn(0f, 1f)
                 Metadata.headlineFraction = fraction
             }

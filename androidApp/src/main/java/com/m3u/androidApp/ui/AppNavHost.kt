@@ -38,7 +38,6 @@ fun AppNavHost(
 
     val tv = isTelevision()
 
-    StarBackground()
     NavHost(
         navController = navController,
         startDestination = startDestination,

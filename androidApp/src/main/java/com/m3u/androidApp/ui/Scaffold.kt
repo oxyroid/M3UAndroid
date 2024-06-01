@@ -224,6 +224,7 @@ internal fun MainContent(
     ) { padding ->
         Background {
             Box {
+                StarBackground()
                 HeadlineBackground()
                 content(padding)
             }
