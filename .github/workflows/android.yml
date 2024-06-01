@@ -3,6 +3,13 @@ name: Android CI
 on:
   push:
     branches: [ "master" ]
+    paths-ignore:
+      - '**.md'
+      - '**.txt'
+      - '.github/**'
+      - '.idea/**'
+      - 'fastlane/**'
+      - '!.github/workflows/**'
   pull_request:
     branches: [ "master" ]
   workflow_dispatch:
