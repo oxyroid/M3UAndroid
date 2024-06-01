@@ -31,7 +31,6 @@ import com.m3u.data.repository.stream.StreamRepository
 import com.m3u.data.service.PlayerManager
 import com.m3u.data.service.currentTracks
 import com.m3u.data.service.tracks
-import com.m3u.data.television.model.RemoteDirection
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.delay
@@ -294,28 +293,6 @@ class StreamViewModel @Inject constructor(
             initialValue = defaultProgrammeRange,
             started = SharingStarted.WhileSubscribed(5_000L)
         )
-
-    internal fun onKeyCode(code: RemoteDirection) {
-        when (code) {
-            RemoteDirection.UP -> {}
-            RemoteDirection.DOWN -> {}
-            RemoteDirection.LEFT -> {
-                val player = playerState.value.player ?: return
-                viewModelScope.launch(mainDispatcher) {
-                    player.seekTo(player.currentPosition - 15000)
-                }
-            }
-
-            RemoteDirection.RIGHT -> {
-                val player = playerState.value.player ?: return
-                viewModelScope.launch(mainDispatcher) {
-                    player.seekTo(player.currentPosition + 15000)
-                }
-            }
-
-            else -> {}
-        }
-    }
 
     companion object {
         private const val ACTION_SET_AV_TRANSPORT_URI = "SetAVTransportURI"

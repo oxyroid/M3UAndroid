@@ -64,7 +64,6 @@ import androidx.compose.ui.unit.dp
 import androidx.media3.common.Player
 import com.m3u.core.architecture.preferences.hiltPreferences
 import com.m3u.core.util.basic.isNotEmpty
-import com.m3u.data.television.model.RemoteDirection
 import com.m3u.features.stream.MaskCenterState.Pause
 import com.m3u.features.stream.MaskCenterState.Play
 import com.m3u.features.stream.MaskCenterState.Replay
@@ -111,7 +110,6 @@ internal fun StreamMask(
     openOrClosePanel: () -> Unit,
     onEnterPipMode: () -> Unit,
     onVolume: (Float) -> Unit,
-    onKeyCode: (RemoteDirection) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val preferences = hiltPreferences()
@@ -187,6 +185,13 @@ internal fun StreamMask(
 
     val isPanelGestureSupported = configuration.screenWidthDp < configuration.screenHeightDp
 
+    LaunchedEffect(bufferedPosition) {
+        bufferedPosition?.let {
+            delay(800.milliseconds)
+            playerState.player?.seekTo(it)
+        }
+    }
+
     LaunchedEffect(playerState.playState) {
         if (playerState.playState == Player.STATE_READY) {
             bufferedPosition = null
@@ -206,11 +211,15 @@ internal fun StreamMask(
                 Modifier.onKeyEvent { event ->
                     when (event.nativeKeyEvent.keyCode) {
                         KeyEvent.KEYCODE_DPAD_UP -> (!maskState.visible).also {
-                            if (it) onKeyCode(RemoteDirection.UP)
+                            if (it) {
+
+                            }
                         }
 
                         KeyEvent.KEYCODE_DPAD_DOWN -> (!maskState.visible).also {
-                            if (it) onKeyCode(RemoteDirection.DOWN)
+                            if (it) {
+
+                            }
                         }
 
                         else -> false
@@ -453,6 +462,7 @@ internal fun StreamMask(
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = LocalContentColor.current.copy(alpha = 0.75f),
                                 maxLines = 1,
+                                fontFamily = FontFamilies.JetbrainsMono,
                                 fontWeight = FontWeight(fontWeight),
                                 overflow = TextOverflow.Ellipsis,
                                 modifier = Modifier.basicMarquee()
@@ -466,21 +476,22 @@ internal fun StreamMask(
                                     bufferedPosition = it.roundToLong()
                                     maskState.wake()
                                 },
-                                onValueChangeFinished = {
-                                    bufferedPosition?.let { playerState.player?.seekTo(it) }
-                                },
                                 modifier = Modifier
                                     .weight(1f)
                                     .onKeyEvent { event ->
                                         when (event.nativeKeyEvent.keyCode) {
                                             KeyEvent.KEYCODE_DPAD_LEFT -> {
-                                                onKeyCode(RemoteDirection.LEFT)
+                                                bufferedPosition = (bufferedPosition
+                                                    ?: contentPosition
+                                                        .coerceAtLeast(0L)) - 15000L
                                                 maskState.wake()
                                                 true
                                             }
 
                                             KeyEvent.KEYCODE_DPAD_RIGHT -> {
-                                                onKeyCode(RemoteDirection.RIGHT)
+                                                bufferedPosition = (bufferedPosition
+                                                    ?: contentPosition
+                                                        .coerceAtLeast(0L)) + 15000L
                                                 maskState.wake()
                                                 true
                                             }

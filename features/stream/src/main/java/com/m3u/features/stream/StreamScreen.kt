@@ -40,7 +40,6 @@ import com.m3u.core.util.basic.isNotEmpty
 import com.m3u.core.util.basic.title
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.Stream
-import com.m3u.data.television.model.RemoteDirection
 import com.m3u.features.stream.components.CoverPlaceholder
 import com.m3u.features.stream.components.DlnaDevicesBottomSheet
 import com.m3u.features.stream.components.FormatsBottomSheet
@@ -230,7 +229,6 @@ fun StreamRoute(
                         maskState.unlockAll()
                         pullPanelLayoutState.collapse()
                     },
-                    onKeyCode = viewModel::onKeyCode,
                     modifier = modifier
                 )
             }
@@ -288,7 +286,6 @@ private fun StreamPlayer(
     onVolume: (Float) -> Unit,
     onBrightness: (Float) -> Unit,
     onEnterPipMode: () -> Unit,
-    onKeyCode: (RemoteDirection) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val title = stream?.title ?: "--"
@@ -348,7 +345,6 @@ private fun StreamPlayer(
                 openOrClosePanel = openOrClosePanel,
                 onVolume = onVolume,
                 onEnterPipMode = onEnterPipMode,
-                onKeyCode = onKeyCode
             )
 
             Row(
