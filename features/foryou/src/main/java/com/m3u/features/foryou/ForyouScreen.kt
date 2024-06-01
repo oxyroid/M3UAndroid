@@ -13,6 +13,7 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -25,8 +26,11 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleResumeEffect
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.repeatOnLifecycle
 import com.m3u.core.architecture.preferences.hiltPreferences
 import com.m3u.core.util.basic.title
 import com.m3u.core.wrapper.Resource
@@ -43,7 +47,6 @@ import com.m3u.i18n.R.string
 import com.m3u.material.ktx.interceptVolumeEvent
 import com.m3u.material.ktx.isTelevision
 import com.m3u.material.ktx.thenIf
-import com.m3u.material.model.LocalHazeState
 import com.m3u.ui.Destination
 import com.m3u.ui.EpisodesBottomSheet
 import com.m3u.ui.LocalRootDestination
@@ -52,9 +55,9 @@ import com.m3u.ui.MediaSheetValue
 import com.m3u.ui.helper.Action
 import com.m3u.ui.helper.LocalHelper
 import com.m3u.ui.helper.Metadata
-import dev.chrisbanes.haze.HazeDefaults
-import dev.chrisbanes.haze.haze
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
 fun ForyouRoute(
@@ -99,6 +102,7 @@ fun ForyouRoute(
             )
             onPauseOrDispose {
                 Metadata.actions = emptyList()
+                Metadata.headlineUrl = ""
             }
         }
     }
@@ -182,6 +186,9 @@ private fun ForyouScreen(
     modifier: Modifier = Modifier
 ) {
     val configuration = LocalConfiguration.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+    var headlineSpec: Recommend.Spec? by remember { mutableStateOf(null) }
 
     val actualRowCount = remember(rowCount, configuration.orientation) {
         when (configuration.orientation) {
@@ -192,6 +199,19 @@ private fun ForyouScreen(
     var mediaSheetValue: MediaSheetValue.ForyouScreen by remember {
         mutableStateOf(MediaSheetValue.ForyouScreen())
     }
+
+    LaunchedEffect(headlineSpec) {
+        val currentHeadlineSpec = headlineSpec
+        lifecycleOwner.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+            delay(400.milliseconds)
+            Metadata.headlineUrl = when (currentHeadlineSpec) {
+                is Recommend.UnseenSpec -> currentHeadlineSpec.stream.cover.orEmpty()
+                is Recommend.DiscoverSpec -> ""
+                else -> ""
+            }
+        }
+    }
+
     Box(modifier) {
         when (playlistCountsResource) {
             Resource.Loading -> {
@@ -209,6 +229,7 @@ private fun ForyouScreen(
                         recommend = recommend,
                         navigateToPlaylist = navigateToPlaylist,
                         onClickStream = onClickStream,
+                        onSpecChanged = { spec -> headlineSpec = spec },
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
@@ -222,12 +243,7 @@ private fun ForyouScreen(
                         onLongClick = { mediaSheetValue = MediaSheetValue.ForyouScreen(it) },
                         header = header.takeIf { recommend.isNotEmpty() },
                         contentPadding = contentPadding,
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .haze(
-                                LocalHazeState.current,
-                                HazeDefaults.style(MaterialTheme.colorScheme.surface)
-                            )
+                        modifier = Modifier.fillMaxSize()
                     )
                 } else {
                     Box(Modifier.fillMaxSize()) {

@@ -13,7 +13,7 @@ internal class Recommend(
     override fun get(index: Int): Spec = specs[index]
 
     @Immutable
-    interface Spec
+    sealed interface Spec
 
     @Immutable
     data class DiscoverSpec(

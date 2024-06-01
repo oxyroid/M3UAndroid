@@ -1,6 +1,5 @@
 package com.m3u.features.foryou.components.recommend
 
-import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -15,10 +14,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.tv.material3.Carousel as TvCarousel
 import com.m3u.core.wrapper.eventOf
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.Stream
@@ -28,13 +28,14 @@ import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.Events
 import kotlinx.coroutines.launch
 import kotlin.math.absoluteValue
+import androidx.tv.material3.Carousel as TvCarousel
 
-@OptIn(ExperimentalAnimationApi::class)
 @Composable
 internal fun RecommendGallery(
     recommend: Recommend,
     onClickStream: (Stream) -> Unit,
     navigateToPlaylist: (Playlist) -> Unit,
+    onSpecChanged: (Recommend.Spec?) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
@@ -42,12 +43,21 @@ internal fun RecommendGallery(
 
     val tv = isTelevision()
 
+    DisposableEffect(Unit) {
+        onDispose {
+            onSpecChanged(null)
+        }
+    }
+
     if (!tv) {
         val state = rememberPagerState { recommend.size }
         Column(
             modifier = modifier,
             verticalArrangement = Arrangement.spacedBy(spacing.medium)
         ) {
+            LaunchedEffect(state.currentPage) {
+                onSpecChanged(recommend[state.currentPage])
+            }
             HorizontalPager(
                 state = state,
                 contentPadding = PaddingValues(horizontal = spacing.medium),

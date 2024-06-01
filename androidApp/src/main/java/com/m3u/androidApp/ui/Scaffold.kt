@@ -41,6 +41,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastForEach
 import androidx.compose.ui.util.fastMap
 import androidx.compose.ui.util.fastMaxOfOrNull
+import com.m3u.androidApp.ui.internal.HeadlineBackground
 import com.m3u.androidApp.ui.internal.SmartphoneScaffoldImpl
 import com.m3u.androidApp.ui.internal.TabletScaffoldImpl
 import com.m3u.androidApp.ui.internal.TelevisionScaffoldImpl
@@ -143,6 +144,7 @@ internal fun MainContent(
     val title = Metadata.title
     val subtitle = Metadata.subtitle
     val actions = Metadata.actions
+
     Scaffold(
         topBar = {
             if (!tv) {
@@ -218,10 +220,11 @@ internal fun MainContent(
             }
         },
         contentWindowInsets = windowInsets,
-        containerColor = MaterialTheme.colorScheme.background
+        containerColor = Color.Transparent
     ) { padding ->
         Background {
             Box {
+                HeadlineBackground()
                 content(padding)
             }
         }
