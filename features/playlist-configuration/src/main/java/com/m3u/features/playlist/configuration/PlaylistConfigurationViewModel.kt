@@ -11,6 +11,7 @@ import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.Profiles
 import com.m3u.core.architecture.logger.install
+import com.m3u.core.architecture.logger.post
 import com.m3u.core.wrapper.Resource
 import com.m3u.core.wrapper.asResource
 import com.m3u.data.database.model.DataSource
@@ -30,6 +31,7 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Instant
@@ -37,6 +39,7 @@ import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import javax.inject.Inject
+import kotlin.math.log
 
 internal typealias EpgManifest = Map<Playlist, Boolean>
 
@@ -82,7 +85,7 @@ class PlaylistConfigurationViewModel @Inject constructor(
             )
 
     internal val manifest: StateFlow<EpgManifest> = combine(
-        playlistRepository.observeAllEpgs(),
+        playlistRepository.observeAllEpgs().onEach { logger.post { it.size } },
         playlist
     ) { epgs, playlist ->
         val epgUrls = playlist?.epgUrls ?: return@combine emptyMap()

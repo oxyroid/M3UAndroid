@@ -10,6 +10,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,7 +21,6 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Save
 import androidx.compose.material3.FloatingActionButton
@@ -35,6 +35,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -146,62 +147,54 @@ private fun PlaylistConfigurationScreen(
     Background(modifier) {
         Box {
             val (outer, inner) = contentPadding split WindowInsetsSides.Top
-            LazyColumn(
+            Column(
                 verticalArrangement = Arrangement.spacedBy(spacing.small),
                 modifier = Modifier
                     .padding(outer)
                     .padding(spacing.medium)
             ) {
-                item {
-                    PlaceholderField(
-                        text = title,
-                        placeholder = stringResource(string.feat_playlist_configuration_title).title(),
-                        onValueChange = { title = it },
-                    )
-                }
-                item {
-                    PlaceholderField(
-                        text = userAgent,
-                        placeholder = stringResource(string.feat_playlist_configuration_user_agent).title(),
-                        onValueChange = { userAgent = it }
-                    )
-                }
-                item {
-                    AnimatedVisibility(playlist.epgUrlsOrXtreamXmlUrl().isNotEmpty()) {
-                        Column(
-                            verticalArrangement = Arrangement.spacedBy(spacing.small)
-                        ) {
-                            SyncProgrammesButton(
-                                subscribingOrRefreshing = subscribingOrRefreshing,
-                                expired = expired,
-                                onSyncProgrammes = onSyncProgrammes
-                            )
-                            AutoSyncProgrammesButton(
-                                checked = playlist.autoRefreshProgrammes,
-                                onCheckedChange = onUpdatePlaylistAutoRefreshProgrammes
-                            )
-                        }
-                    }
-                }
-                item {
-                    if (playlist.source == DataSource.M3U) {
-                        EpgManifestGallery(
-                            playlistUrl = playlist.url,
-                            manifest = manifest,
-                            contentPadding = inner,
-                            onUpdateEpgPlaylist = onUpdateEpgPlaylist,
-                            modifier = Modifier.fillMaxWidth()
+                PlaceholderField(
+                    text = title,
+                    placeholder = stringResource(string.feat_playlist_configuration_title).title(),
+                    onValueChange = { title = it },
+                )
+                PlaceholderField(
+                    text = userAgent,
+                    placeholder = stringResource(string.feat_playlist_configuration_user_agent).title(),
+                    onValueChange = { userAgent = it }
+                )
+                AnimatedVisibility(playlist.epgUrlsOrXtreamXmlUrl().isNotEmpty()) {
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(spacing.small)
+                    ) {
+                        SyncProgrammesButton(
+                            subscribingOrRefreshing = subscribingOrRefreshing,
+                            expired = expired,
+                            onSyncProgrammes = onSyncProgrammes
+                        )
+                        AutoSyncProgrammesButton(
+                            checked = playlist.autoRefreshProgrammes,
+                            onCheckedChange = onUpdatePlaylistAutoRefreshProgrammes
                         )
                     }
+                }
+                if (playlist.source == DataSource.M3U) {
+                    EpgManifestGallery(
+                        playlistUrl = playlist.url,
+                        manifest = manifest,
+                        contentPadding = inner,
+                        onUpdateEpgPlaylist = onUpdateEpgPlaylist,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .border(2.dp, Color.Red)
+                    )
                 }
 
-                item {
-                    if (playlist.source == DataSource.Xtream) {
-                        XtreamPanel(
-                            info = xtreamUserInfo,
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    }
+                if (playlist.source == DataSource.Xtream) {
+                    XtreamPanel(
+                        info = xtreamUserInfo,
+                        modifier = Modifier.fillMaxWidth()
+                    )
                 }
             }
 

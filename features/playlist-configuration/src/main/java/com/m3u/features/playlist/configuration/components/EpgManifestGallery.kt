@@ -67,7 +67,6 @@ internal fun EpgManifestGallery(
                     HazeDefaults.style(MaterialTheme.colorScheme.surface)
                 )
                 .fillMaxWidth()
-                .weight(1f)
         ) {
             items(manifest.entries.toList()) { (epg, associated) ->
                 EpgManifestGalleryItem(
