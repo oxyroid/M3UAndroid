@@ -34,8 +34,13 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.m3u.material.ktx.isTelevision
+import androidx.tv.material3.Checkbox as TvCheckbox
+import androidx.tv.material3.Icon as TvIcon
 import androidx.tv.material3.ListItem as TvListItem
 import androidx.tv.material3.ListItemDefaults as TvListItemDefaults
+import androidx.tv.material3.MaterialTheme as TvMaterialTheme
+import androidx.tv.material3.Switch as TvSwitch
+import androidx.tv.material3.Text as TvText
 
 @Composable
 fun Preference(
@@ -116,7 +121,7 @@ fun Preference(
                 selected = focus,
                 interactionSource = interactionSource,
                 headlineContent = {
-                    androidx.tv.material3.Text(
+                    TvText(
                         text = title,
                         style = MaterialTheme.typography.titleMedium,
                         maxLines = 1,
@@ -124,7 +129,7 @@ fun Preference(
                 },
                 supportingContent = {
                     if (content != null) {
-                        androidx.tv.material3.Text(
+                        TvText(
                             text = content.capitalize(Locale.current),
                             style = MaterialTheme.typography.bodyMedium,
                             maxLines = 1,
@@ -135,7 +140,7 @@ fun Preference(
                 trailingContent = trailing,
                 leadingContent = icon?.let {
                     @Composable {
-                        androidx.tv.material3.Icon(imageVector = it, contentDescription = null)
+                        TvIcon(imageVector = it, contentDescription = null)
                     }
                 },
                 scale = TvListItemDefaults.scale(
@@ -183,7 +188,7 @@ fun CheckBoxPreference(
                     onCheckedChange = null
                 )
             } else {
-                androidx.tv.material3.Checkbox(
+                TvCheckbox(
                     enabled = enabled,
                     checked = checked,
                     onCheckedChange = null
@@ -231,7 +236,7 @@ fun SwitchPreference(
                     onCheckedChange = null
                 )
             } else {
-                androidx.tv.material3.Switch(
+                TvSwitch(
                     enabled = enabled,
                     checked = checked,
                     onCheckedChange = null
@@ -268,7 +273,7 @@ fun TrailingIconPreference(
                     tint = LocalContentColor.current.copy(alpha = 0.65f)
                 )
             } else {
-                androidx.tv.material3.Icon(
+                TvIcon(
                     imageVector = trailingIcon,
                     contentDescription = null,
                 )
@@ -309,10 +314,9 @@ fun TextPreference(
                     overflow = TextOverflow.Ellipsis
                 )
             } else {
-                androidx.tv.material3.Text(
+                TvText(
                     text = trailing.uppercase(),
-                    color = androidx.tv.material3.MaterialTheme.colorScheme.primary,
-                    style = androidx.tv.material3.MaterialTheme.typography.bodyMedium,
+                    style = TvMaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Bold,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
