@@ -104,8 +104,8 @@ class Preferences @Inject constructor(
     sharedPreferences.booleanAsState(DEFAULT_REMOTE_CONTROL, REMOTE_CONTROL)
     var twelveHourClock: Boolean by
     sharedPreferences.booleanAsState(DEFAULT_12_H_CLOCK_MODE, CLOCK_MODE)
-    var progress: Boolean by
-    sharedPreferences.booleanAsState(DEFAULT_PROGRESS, PROGRESS)
+    var slider: Boolean by
+    sharedPreferences.booleanAsState(DEFAULT_SLIDER, SLIDER)
     var alwaysShowReplay: Boolean by
     sharedPreferences.booleanAsState(DEFAULT_ALWAYS_SHOW_REFRESH, ALWAYS_SHOW_REFRESH)
     var paging: Boolean by
@@ -153,7 +153,7 @@ class Preferences @Inject constructor(
         const val DEFAULT_TUNNELING = false
         const val DEFAULT_ALWAYS_TV = false
         const val DEFAULT_REMOTE_CONTROL = false
-        const val DEFAULT_PROGRESS = true
+        const val DEFAULT_SLIDER = true
         const val DEFAULT_ALWAYS_SHOW_REFRESH = false
         const val DEFAULT_PAGING = true
         const val DEFAULT_PLAYER_PANEL = true
@@ -190,7 +190,7 @@ class Preferences @Inject constructor(
         const val CLOCK_MODE = "12h-clock-mode"
         const val REMOTE_CONTROL = "remote-control"
 
-        const val PROGRESS = "progress"
+        const val SLIDER = "slider"
         const val ALWAYS_SHOW_REFRESH = "always-show-refresh"
         const val PAGING = "paging"
         const val PLAYER_PANEL = "player_panel"

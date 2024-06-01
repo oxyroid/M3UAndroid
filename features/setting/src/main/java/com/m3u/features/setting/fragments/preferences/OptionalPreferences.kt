@@ -73,10 +73,10 @@ fun OptionalPreferences(modifier: Modifier = Modifier) {
                     onChanged = { preferences.fullInfoPlayer = !preferences.fullInfoPlayer }
                 )
                 CheckBoxSharedPreference(
-                    title = string.feat_setting_progress,
+                    title = string.feat_setting_slider,
                     icon = Icons.Rounded.SettingsEthernet,
-                    checked = preferences.progress,
-                    onChanged = { preferences.progress = !preferences.progress }
+                    checked = preferences.slider,
+                    onChanged = { preferences.slider = !preferences.slider }
                 )
                 if (!tv) {
                     CheckBoxSharedPreference(

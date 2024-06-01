@@ -147,7 +147,7 @@ internal fun StreamMask(
         }
     }
 
-    val isProgressEnabled = preferences.progress
+    val isProgressEnabled = preferences.slider
     val isStaticAndSeekable by remember(
         playerState.player,
         playerState.playState
