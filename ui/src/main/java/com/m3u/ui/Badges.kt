@@ -75,9 +75,17 @@ fun Badge(
 @Composable
 fun TextBadge(
     text: String,
+    shape: Shape = AbsoluteSmoothCornerShape(LocalSpacing.current.small, 65),
+    color: Color = MaterialTheme.colorScheme.primary,
+    contentColor: Color = MaterialTheme.colorScheme.contentColorFor(color),
     modifier: Modifier = Modifier
 ) {
-    Badge(modifier) {
+    Badge(
+        shape = shape,
+        color = color,
+        contentColor = contentColor,
+        modifier = modifier
+    ) {
         Text(
             text = text,
             style = MaterialTheme.typography.bodyMedium.copy(

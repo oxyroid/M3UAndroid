@@ -8,6 +8,7 @@ object Profiles {
     val VIEWMODEL_PLAYLIST = Profile("viewmodel-playlist", Message.LEVEL_INFO)
     val VIEWMODEL_SETTING = Profile("viewmodel-setting")
     val VIEWMODEL_STREAM = Profile("viewmodel-stream")
+    val VIEWMODEL_PLAYLIST_CONFIGURATION = Profile("viewmodel-playlist-configuration")
 
     val REPOS_PLAYLIST = Profile("repos-playlist")
     val REPOS_STREAM = Profile("repos-stream")

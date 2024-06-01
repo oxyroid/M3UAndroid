@@ -4,22 +4,18 @@ import com.m3u.core.architecture.dispatcher.Dispatcher
 import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.Profiles
-import com.m3u.core.architecture.logger.execute
 import com.m3u.core.architecture.logger.install
 import com.m3u.data.api.OkhttpClient
 import com.m3u.data.database.model.DataSource
+import com.m3u.data.parser.ParserUtils
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.decodeFromStream
-import kotlinx.serialization.json.decodeToSequence
 import okhttp3.OkHttpClient
-import okhttp3.Request
 import java.time.Duration
 import javax.inject.Inject
 
@@ -43,6 +39,21 @@ internal class XtreamParserImpl @Inject constructor(
         .connectTimeout(Duration.ofMillis(Int.MAX_VALUE.toLong()))
         .readTimeout(Duration.ofMillis(Int.MAX_VALUE.toLong()))
         .build()
+
+    private val utils by lazy {
+        ParserUtils(
+            json = json,
+            okHttpClient = okHttpClient,
+            logger = logger,
+            ioDispatcher = ioDispatcher
+        )
+    }
+
+    override suspend fun getInfo(input: XtreamInput): XtreamInfo {
+        val (basicUrl, username, password, _) = input
+        val infoUrl = XtreamParser.createInfoUrl(basicUrl, username, password)
+        return checkNotNull(utils.newCall<XtreamInfo>(infoUrl))
+    }
 
     override fun parse(input: XtreamInput): Flow<XtreamData> = channelFlow {
         val (basicUrl, username, password, type) = input
@@ -68,17 +79,17 @@ internal class XtreamParserImpl @Inject constructor(
             XtreamParser.Action.GET_SERIES_STREAMS
         )
         if (requiredLives) launch {
-            newSequenceCall<XtreamLive>(liveStreamsUrl)
+            utils.newSequenceCall<XtreamLive>(liveStreamsUrl)
                 .asFlow()
                 .collect { live -> send(live) }
         }
         if (requiredVods) launch {
-            newSequenceCall<XtreamVod>(vodStreamsUrl)
+            utils.newSequenceCall<XtreamVod>(vodStreamsUrl)
                 .asFlow()
                 .collect { vod -> send(vod) }
         }
         if (requiredSeries) launch {
-            newSequenceCall<XtreamSerial>(seriesStreamsUrl)
+            utils.newSequenceCall<XtreamSerial>(seriesStreamsUrl)
                 .asFlow()
                 .collect { serial -> send(serial) }
         }
@@ -108,18 +119,18 @@ internal class XtreamParserImpl @Inject constructor(
             password,
             XtreamParser.Action.GET_SERIES_CATEGORIES
         )
-        val info: XtreamInfo = newCall(infoUrl) ?: return XtreamOutput()
+        val info: XtreamInfo = utils.newCall(infoUrl) ?: return XtreamOutput()
         val allowedOutputFormats = info.userInfo.allowedOutputFormats
         val serverProtocol = info.serverInfo.serverProtocol ?: "http"
         val port = info.serverInfo.port?.toIntOrNull()
         val httpsPort = info.serverInfo.httpsPort?.toIntOrNull()
 
         val liveCategories: List<XtreamCategory> =
-            if (requiredLives) newCall(liveCategoriesUrl) ?: emptyList() else emptyList()
+            if (requiredLives) utils.newCall(liveCategoriesUrl) ?: emptyList() else emptyList()
         val vodCategories: List<XtreamCategory> =
-            if (requiredVods) newCall(vodCategoriesUrl) ?: emptyList() else emptyList()
+            if (requiredVods) utils.newCall(vodCategoriesUrl) ?: emptyList() else emptyList()
         val serialCategories: List<XtreamCategory> =
-            if (requiredSeries) newCall(serialCategoriesUrl) ?: emptyList() else emptyList()
+            if (requiredSeries) utils.newCall(serialCategoriesUrl) ?: emptyList() else emptyList()
 
         return XtreamOutput(
             liveCategories = liveCategories,
@@ -134,7 +145,7 @@ internal class XtreamParserImpl @Inject constructor(
     override suspend fun getSeriesInfoOrThrow(input: XtreamInput, seriesId: Int): XtreamStreamInfo {
         val (basicUrl, username, password, type) = input
         check(type == DataSource.Xtream.TYPE_SERIES) { "xtream input type must be `series`" }
-        return newCallOrThrow(
+        return utils.newCallOrThrow(
             XtreamParser.createActionUrl(
                 basicUrl,
                 username,
@@ -144,44 +155,4 @@ internal class XtreamParserImpl @Inject constructor(
             )
         )
     }
-
-    @OptIn(ExperimentalSerializationApi::class)
-    private suspend inline fun <reified T> newCall(url: String): T? = withContext(ioDispatcher) {
-        logger.execute {
-            okHttpClient.newCall(
-                Request.Builder().url(url).build()
-            )
-                .execute()
-                .takeIf { it.isSuccessful }
-                ?.body
-                ?.byteStream()
-                ?.let { json.decodeFromStream(it) }
-        }
-    }
-
-    @OptIn(ExperimentalSerializationApi::class)
-    private suspend inline fun <reified T> newCallOrThrow(url: String): T =
-        withContext(ioDispatcher) {
-            okHttpClient.newCall(
-                Request.Builder().url(url).build()
-            )
-                .execute()
-                .takeIf { it.isSuccessful }!!
-                .body!!
-                .byteStream()
-                .let { json.decodeFromStream(it) }
-        }
-
-    @OptIn(ExperimentalSerializationApi::class)
-    private inline fun <reified T> newSequenceCall(url: String): Sequence<T> =
-        logger.execute {
-            okHttpClient.newCall(
-                Request.Builder().url(url).build()
-            )
-                .execute()
-                .takeIf { it.isSuccessful }
-                ?.body
-                ?.byteStream()
-                ?.let { json.decodeToSequence(it) }
-        } ?: sequence { }
 }

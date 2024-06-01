@@ -15,6 +15,8 @@ interface XtreamParser {
 
     fun parse(input: XtreamInput): Flow<XtreamData>
 
+    suspend fun getInfo(input: XtreamInput): XtreamInfo
+
     suspend fun getXtreamOutput(input: XtreamInput): XtreamOutput
 
     companion object {

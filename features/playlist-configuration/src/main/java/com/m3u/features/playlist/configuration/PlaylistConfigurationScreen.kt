@@ -10,9 +10,6 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,16 +21,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Save
 import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.ListItem
-import androidx.compose.material3.ListItemDefaults
-import androidx.compose.material3.LocalContentColor
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Switch
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -42,37 +32,33 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.google.accompanist.permissions.rememberPermissionState
 import com.m3u.core.util.basic.title
+import com.m3u.core.wrapper.Resource
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.epgUrlsOrXtreamXmlUrl
+import com.m3u.data.parser.xtream.XtreamInfo
 import com.m3u.data.repository.playlist.PlaylistRepository
 import com.m3u.features.playlist.configuration.components.AutoSyncProgrammesButton
+import com.m3u.features.playlist.configuration.components.EpgManifestGallery
 import com.m3u.features.playlist.configuration.components.SyncProgrammesButton
+import com.m3u.features.playlist.configuration.components.XtreamPanel
 import com.m3u.i18n.R.string
 import com.m3u.material.components.Background
 import com.m3u.material.components.Icon
 import com.m3u.material.components.PlaceholderField
-import com.m3u.material.components.SelectionsDefaults
 import com.m3u.material.ktx.checkPermissionOrRationale
 import com.m3u.material.ktx.split
-import com.m3u.material.model.LocalHazeState
 import com.m3u.material.model.LocalSpacing
-import com.m3u.material.shape.AbsoluteSmoothCornerShape
 import com.m3u.ui.helper.LocalHelper
 import com.m3u.ui.helper.Metadata
-import dev.chrisbanes.haze.HazeDefaults
-import dev.chrisbanes.haze.haze
 import kotlinx.datetime.LocalDateTime
 
 @Composable
@@ -90,6 +76,7 @@ internal fun PlaylistConfigurationRoute(
     val manifest by viewModel.manifest.collectAsStateWithLifecycle()
     val subscribingOrRefreshing by viewModel.subscribingOrRefreshing.collectAsStateWithLifecycle()
     val expired by viewModel.expired.collectAsStateWithLifecycle()
+    val xtreamUserInfo by viewModel.xtreamUserInfo.collectAsStateWithLifecycle()
 
     LifecycleResumeEffect(playlist?.title) {
         Metadata.title = AnnotatedString(playlist?.title?.title().orEmpty())
@@ -105,6 +92,7 @@ internal fun PlaylistConfigurationRoute(
             manifest = manifest,
             subscribingOrRefreshing = subscribingOrRefreshing,
             expired = expired,
+            xtreamUserInfo = xtreamUserInfo,
             onUpdatePlaylistTitle = viewModel::onUpdatePlaylistTitle,
             onUpdatePlaylistUserAgent = viewModel::onUpdatePlaylistUserAgent,
             onUpdateEpgPlaylist = viewModel::onUpdateEpgPlaylist,
@@ -138,6 +126,7 @@ private fun PlaylistConfigurationScreen(
     manifest: EpgManifest,
     subscribingOrRefreshing: Boolean,
     expired: LocalDateTime?,
+    xtreamUserInfo: Resource<XtreamInfo.UserInfo>,
     onUpdatePlaylistTitle: (String) -> Unit,
     onUpdatePlaylistUserAgent: (String?) -> Unit,
     onUpdateEpgPlaylist: (PlaylistRepository.UpdateEpgPlaylistUseCase) -> Unit,
@@ -157,48 +146,62 @@ private fun PlaylistConfigurationScreen(
     Background(modifier) {
         Box {
             val (outer, inner) = contentPadding split WindowInsetsSides.Top
-            Column(
+            LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(spacing.small),
                 modifier = Modifier
                     .padding(outer)
                     .padding(spacing.medium)
             ) {
-                PlaceholderField(
-                    text = title,
-                    placeholder = stringResource(string.feat_playlist_configuration_title).title(),
-                    onValueChange = { title = it },
-                )
-                PlaceholderField(
-                    text = userAgent,
-                    placeholder = stringResource(string.feat_playlist_configuration_user_agent).title(),
-                    onValueChange = { userAgent = it }
-                )
-                AnimatedVisibility(playlist.epgUrlsOrXtreamXmlUrl().isNotEmpty()) {
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(spacing.small)
-                    ) {
-                        SyncProgrammesButton(
-                            subscribingOrRefreshing = subscribingOrRefreshing,
-                            expired = expired,
-                            onSyncProgrammes = onSyncProgrammes
-                        )
-                        AutoSyncProgrammesButton(
-                            checked = playlist.autoRefreshProgrammes,
-                            onCheckedChange = onUpdatePlaylistAutoRefreshProgrammes
+                item {
+                    PlaceholderField(
+                        text = title,
+                        placeholder = stringResource(string.feat_playlist_configuration_title).title(),
+                        onValueChange = { title = it },
+                    )
+                }
+                item {
+                    PlaceholderField(
+                        text = userAgent,
+                        placeholder = stringResource(string.feat_playlist_configuration_user_agent).title(),
+                        onValueChange = { userAgent = it }
+                    )
+                }
+                item {
+                    AnimatedVisibility(playlist.epgUrlsOrXtreamXmlUrl().isNotEmpty()) {
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(spacing.small)
+                        ) {
+                            SyncProgrammesButton(
+                                subscribingOrRefreshing = subscribingOrRefreshing,
+                                expired = expired,
+                                onSyncProgrammes = onSyncProgrammes
+                            )
+                            AutoSyncProgrammesButton(
+                                checked = playlist.autoRefreshProgrammes,
+                                onCheckedChange = onUpdatePlaylistAutoRefreshProgrammes
+                            )
+                        }
+                    }
+                }
+                item {
+                    if (playlist.source == DataSource.M3U) {
+                        EpgManifestGallery(
+                            playlistUrl = playlist.url,
+                            manifest = manifest,
+                            contentPadding = inner,
+                            onUpdateEpgPlaylist = onUpdateEpgPlaylist,
+                            modifier = Modifier.fillMaxWidth()
                         )
                     }
                 }
 
-                if (playlist.source == DataSource.M3U) {
-                    EpgManifestGallery(
-                        playlistUrl = playlist.url,
-                        manifest = manifest,
-                        contentPadding = inner,
-                        onUpdateEpgPlaylist = onUpdateEpgPlaylist,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .weight(1f)
-                    )
+                item {
+                    if (playlist.source == DataSource.Xtream) {
+                        XtreamPanel(
+                            info = xtreamUserInfo,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
                 }
             }
 
@@ -232,104 +235,4 @@ private fun PlaylistConfigurationScreen(
             }
         }
     }
-}
-
-@Composable
-private fun EpgManifestGallery(
-    playlistUrl: String,
-    manifest: EpgManifest,
-    contentPadding: PaddingValues,
-    onUpdateEpgPlaylist: (PlaylistRepository.UpdateEpgPlaylistUseCase) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val spacing = LocalSpacing.current
-    Column(
-        verticalArrangement = Arrangement.spacedBy(spacing.medium),
-        modifier = modifier
-    ) {
-        Text(
-            text = stringResource(string.feat_playlist_configuration_enabled_epgs).title(),
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier
-                .background(MaterialTheme.colorScheme.surface)
-                .fillMaxWidth()
-                .padding(
-                    horizontal = spacing.medium,
-                    vertical = spacing.small
-                )
-        )
-        LazyColumn(
-            contentPadding = contentPadding,
-            verticalArrangement = Arrangement.spacedBy(spacing.medium),
-            modifier = Modifier
-                .haze(
-                    LocalHazeState.current,
-                    HazeDefaults.style(MaterialTheme.colorScheme.surface)
-                )
-                .fillMaxWidth()
-                .weight(1f)
-        ) {
-            items(manifest.entries.toList()) { (epg, associated) ->
-                EpgManifestGalleryItem(
-                    playlistUrl = playlistUrl,
-                    epg = epg,
-                    associated = associated,
-                    onUpdateEpgPlaylist = onUpdateEpgPlaylist,
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun EpgManifestGalleryItem(
-    playlistUrl: String,
-    epg: Playlist,
-    associated: Boolean,
-    onUpdateEpgPlaylist: (PlaylistRepository.UpdateEpgPlaylistUseCase) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val spacing = LocalSpacing.current
-    ListItem(
-        headlineContent = {
-            Text(
-                text = epg.title,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-        },
-        supportingContent = {
-            Text(
-                text = epg.url
-            )
-        },
-        trailingContent = {
-            Switch(
-                checked = associated,
-                onCheckedChange = null
-            )
-        },
-        colors = ListItemDefaults.colors(
-            supportingColor = MaterialTheme
-                .colorScheme
-                .onSurfaceVariant.copy(0.38f)
-        ),
-        modifier = Modifier
-            .border(
-                1.dp,
-                LocalContentColor.current.copy(0.38f),
-                SelectionsDefaults.Shape
-            )
-            .clip(AbsoluteSmoothCornerShape(spacing.medium, 65))
-            .clickable {
-                onUpdateEpgPlaylist(
-                    PlaylistRepository.UpdateEpgPlaylistUseCase(
-                        playlistUrl = playlistUrl,
-                        epgUrl = epg.url,
-                        action = !associated
-                    )
-                )
-            }
-            .then(modifier)
-    )
 }
