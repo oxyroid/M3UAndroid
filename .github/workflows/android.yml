@@ -36,7 +36,7 @@ jobs:
         with:
           bot_token: ${{ secrets.BOT_TOKEN }}
           chat_id: ${{ secrets.CHAT_ID }}
-          large_file: true
+#          large_file: true
           method: sendFile
           path: "androidApp/build/outputs/apk/"
 #          parse_mode: Markdown
