@@ -5,6 +5,7 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -20,7 +21,7 @@ import coil.compose.AsyncImage
 import coil.request.CachePolicy
 import coil.request.ImageRequest
 import com.m3u.core.architecture.preferences.hiltPreferences
-import com.m3u.material.ktx.BlurTransformation
+import com.m3u.material.transformation.BlurTransformation
 import com.m3u.ui.helper.LocalHelper
 import com.m3u.ui.helper.Metadata
 import com.m3u.ui.helper.useRailNav
@@ -31,6 +32,7 @@ fun HeadlineBackground(modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val configuration = LocalConfiguration.current
     val helper = LocalHelper.current
+    val colorScheme = MaterialTheme.colorScheme
 
     val preferences = hiltPreferences()
 
@@ -46,7 +48,7 @@ fun HeadlineBackground(modifier: Modifier = Modifier) {
         targetValue = lerp(
             start = if (useDarkTheme) Color.Black.copy(0.56f)
             else Color.White.copy(0.56f),
-            stop = Color.Transparent,
+            stop = colorScheme.surface,
             fraction = fraction
         ),
         label = "scaffold-main-content-mask-color"
@@ -54,7 +56,7 @@ fun HeadlineBackground(modifier: Modifier = Modifier) {
 
     if (!preferences.noPictureMode) {
         AsyncImage(
-            model = remember(url) {
+            model = remember(url, colorScheme.background) {
                 ImageRequest.Builder(context)
                     .data(url)
                     .crossfade(800)
@@ -78,7 +80,12 @@ fun HeadlineBackground(modifier: Modifier = Modifier) {
                 .drawWithContent {
                     drawContent()
                     if (url.isNotEmpty()) {
-                        drawRect(color = currentMaskColor, size = size)
+                        drawRect(
+                            color = currentMaskColor,
+//                            size = size.copy(
+//                                height = size.height * 0.95f
+//                            )
+                        )
                     }
                 }
         )

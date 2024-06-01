@@ -65,7 +65,10 @@ internal fun PlaylistGallery(
 
     val state = rememberLazyGridState()
     val viewportStartOffset by remember {
-        derivedStateOf { state.layoutInfo.visibleItemsInfo.firstOrNull()?.offset?.y ?: 0 }
+        derivedStateOf {
+            if (state.firstVisibleItemIndex == 0) state.firstVisibleItemScrollOffset
+            else -Int.MAX_VALUE
+        }
     }
     val currentHazeColor by animateColorAsState(
         targetValue = lerp(
