@@ -5,11 +5,14 @@ import android.view.KeyEvent
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.basicMarquee
+import androidx.compose.foundation.focusable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -38,6 +41,7 @@ import androidx.compose.material.icons.rounded.Unarchive
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -53,6 +57,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.platform.LocalConfiguration
@@ -60,6 +65,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.media3.common.Player
 import com.m3u.core.architecture.preferences.hiltPreferences
@@ -206,26 +212,7 @@ internal fun StreamMask(
 
     Box {
         MaskPanel(
-            state = maskState,
-            modifier = Modifier.thenIf(tv) {
-                Modifier.onKeyEvent { event ->
-                    when (event.nativeKeyEvent.keyCode) {
-                        KeyEvent.KEYCODE_DPAD_UP -> (!maskState.visible).also {
-                            if (it) {
-
-                            }
-                        }
-
-                        KeyEvent.KEYCODE_DPAD_DOWN -> (!maskState.visible).also {
-                            if (it) {
-
-                            }
-                        }
-
-                        else -> false
-                    }
-                }
-            }
+            state = maskState
         )
 
         PlayerMask(
@@ -467,6 +454,46 @@ internal fun StreamMask(
                                 overflow = TextOverflow.Ellipsis,
                                 modifier = Modifier.basicMarquee()
                             )
+                            var isSliderHasFocus by remember { mutableStateOf(false) }
+                            val tvSliderModifier = Modifier
+                                .onFocusChanged {
+                                    isSliderHasFocus = it.hasFocus
+                                    if (it.hasFocus) {
+                                        maskState.wake()
+                                    }
+                                }
+                                .focusable()
+                                .onKeyEvent { event ->
+                                    when (event.nativeKeyEvent.keyCode) {
+                                        KeyEvent.KEYCODE_DPAD_LEFT -> {
+                                            bufferedPosition = (bufferedPosition
+                                                ?: contentPosition
+                                                    .coerceAtLeast(0L)) - 15000L
+                                            maskState.wake()
+                                            true
+                                        }
+
+                                        KeyEvent.KEYCODE_DPAD_RIGHT -> {
+                                            bufferedPosition = (bufferedPosition
+                                                ?: contentPosition
+                                                    .coerceAtLeast(0L)) + 15000L
+                                            maskState.wake()
+                                            true
+                                        }
+
+                                        else -> false
+                                    }
+                                }
+                            val sliderThumbWidthDp by animateDpAsState(
+                                targetValue = if (isSliderHasFocus) 8.dp
+                                else 4.dp,
+                                label = "slider-thumb-width-dp"
+                            )
+                            val sliderColors = SliderDefaults.colors(
+                                thumbColor = if (!isSliderHasFocus) MaterialTheme.colorScheme.primary
+                                else MaterialTheme.colorScheme.primary.copy(0.56f)
+                            )
+                            val sliderInteractionSource = remember { MutableInteractionSource() }
                             Slider(
                                 value = animContentPosition,
                                 valueRange = 0f..contentDuration
@@ -476,29 +503,17 @@ internal fun StreamMask(
                                     bufferedPosition = it.roundToLong()
                                     maskState.wake()
                                 },
+                                colors = sliderColors,
+                                thumb = {
+                                    SliderDefaults.Thumb(
+                                        interactionSource = sliderInteractionSource,
+                                        colors = sliderColors,
+                                        thumbSize = DpSize(sliderThumbWidthDp, 44.dp)
+                                    )
+                                },
                                 modifier = Modifier
                                     .weight(1f)
-                                    .onKeyEvent { event ->
-                                        when (event.nativeKeyEvent.keyCode) {
-                                            KeyEvent.KEYCODE_DPAD_LEFT -> {
-                                                bufferedPosition = (bufferedPosition
-                                                    ?: contentPosition
-                                                        .coerceAtLeast(0L)) - 15000L
-                                                maskState.wake()
-                                                true
-                                            }
-
-                                            KeyEvent.KEYCODE_DPAD_RIGHT -> {
-                                                bufferedPosition = (bufferedPosition
-                                                    ?: contentPosition
-                                                        .coerceAtLeast(0L)) + 15000L
-                                                maskState.wake()
-                                                true
-                                            }
-
-                                            else -> false
-                                        }
-                                    }
+                                    .thenIf(tv) { tvSliderModifier }
                             )
                         }
 
