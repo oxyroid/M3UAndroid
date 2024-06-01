@@ -56,6 +56,7 @@ import com.google.accompanist.permissions.rememberPermissionState
 import com.m3u.core.util.basic.title
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
+import com.m3u.data.database.model.epgUrlsOrXtreamXmlUrl
 import com.m3u.data.repository.playlist.PlaylistRepository
 import com.m3u.i18n.R.string
 import com.m3u.material.components.Background
@@ -169,11 +170,13 @@ private fun PlaylistConfigurationScreen(
                     placeholder = stringResource(string.feat_playlist_configuration_user_agent).title(),
                     onValueChange = { userAgent = it }
                 )
-                SyncProgrammesButton(
-                    subscribingOrRefreshing = subscribingOrRefreshing,
-                    expired = expired,
-                    onSyncProgrammes = onSyncProgrammes
-                )
+                if (playlist.epgUrlsOrXtreamXmlUrl().isNotEmpty()) {
+                    SyncProgrammesButton(
+                        subscribingOrRefreshing = subscribingOrRefreshing,
+                        expired = expired,
+                        onSyncProgrammes = onSyncProgrammes
+                    )
+                }
 
                 if (playlist.source == DataSource.M3U) {
                     EpgManifestGallery(

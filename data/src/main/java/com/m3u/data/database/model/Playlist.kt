@@ -87,13 +87,18 @@ val Playlist.type: String?
 
 fun Playlist.epgUrlsOrXtreamXmlUrl(): List<String> = when (source) {
     DataSource.Xtream -> {
-        val input = XtreamInput.decodeFromPlaylistUrl(url)
-        val epgUrl = XtreamParser.createXmlUrl(
-            basicUrl = input.basicUrl,
-            username = input.username,
-            password = input.password
-        )
-        listOf(epgUrl)
+        when (type) {
+            DataSource.Xtream.TYPE_LIVE -> {
+                val input = XtreamInput.decodeFromPlaylistUrl(url)
+                val epgUrl = XtreamParser.createXmlUrl(
+                    basicUrl = input.basicUrl,
+                    username = input.username,
+                    password = input.password
+                )
+                listOf(epgUrl)
+            }
+            else -> emptyList()
+        }
     }
 
     else -> epgUrls
