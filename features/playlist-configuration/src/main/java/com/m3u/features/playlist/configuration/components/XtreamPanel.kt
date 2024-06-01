@@ -84,7 +84,7 @@ internal fun XtreamPanel(
                             TextBadge(
                                 text = userInfo.status.orEmpty()
                             )
-                            if (userInfo.isTrial == "0") {
+                            if (userInfo.isTrial == "1") {
                                 TextBadge(
                                     text = "Trial",
                                     color = MaterialTheme.colorScheme.tertiary
