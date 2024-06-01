@@ -33,8 +33,6 @@
     <string name="feat_setting_clip_mode_stretched">拉伸</string>
     <string name="feat_setting_auto_refresh_channels">自动刷新频道</string>
     <string name="feat_setting_auto_refresh_channels_description">进入播放列表自动刷新</string>
-    <string name="feat_setting_auto_refresh_programmes">自动刷新节目</string>
-    <string name="feat_setting_auto_refresh_programmes_description">启动时自动刷新所有节目</string>
 
     <string name="feat_setting_always_television">电视模式</string>
     <string name="feat_setting_always_television_description">会在应用重启时恢复</string>

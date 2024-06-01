@@ -27,7 +27,7 @@ internal interface PlaylistDao {
     suspend fun deleteByUrl(url: String)
 
     @Query("SELECT * FROM playlists WHERE url = :url")
-    suspend fun getByUrl(url: String): Playlist?
+    suspend fun get(url: String): Playlist?
 
     @Query("SELECT * FROM playlists WHERE source = :source")
     suspend fun getBySource(source: DataSource): List<Playlist>
@@ -47,6 +47,9 @@ internal interface PlaylistDao {
 
     @Query("SELECT * FROM playlists ORDER BY title")
     suspend fun getAll(): List<Playlist>
+
+    @Query("SELECT * FROM playlists WHERE auto_refresh_programmes = 1 ORDER BY title")
+    suspend fun getAllAutoRefresh(): List<Playlist>
 
     @Transaction
     @Query("SELECT * FROM playlists ORDER BY title")
@@ -80,7 +83,7 @@ internal interface PlaylistDao {
 
     @Transaction
     suspend fun updateUrl(oldUrl: String, newUrl: String) {
-        val playlist = getByUrl(oldUrl) ?: return
+        val playlist = get(oldUrl) ?: return
         insertOrReplace(
             playlist.copy(
                 url = newUrl
@@ -92,7 +95,7 @@ internal interface PlaylistDao {
 
     @Transaction
     suspend fun updatePinnedCategories(url: String, updater: (List<String>) -> List<String>) {
-        val playlist = getByUrl(url) ?: return
+        val playlist = get(url) ?: return
         insertOrReplace(
             playlist.copy(
                 pinnedCategories = updater(playlist.pinnedCategories)
@@ -102,7 +105,7 @@ internal interface PlaylistDao {
 
     @Transaction
     suspend fun updateEpgUrls(url: String, updater: (List<String>) -> List<String>) {
-        val playlist = getByUrl(url) ?: return
+        val playlist = get(url) ?: return
         insertOrReplace(
             playlist.copy(
                 epgUrls = updater(playlist.epgUrls)
@@ -112,7 +115,7 @@ internal interface PlaylistDao {
 
     @Transaction
     suspend fun hideOrUnhideCategory(url: String, category: String) {
-        val playlist = getByUrl(url) ?: return
+        val playlist = get(url) ?: return
         val prev = playlist.hiddenCategories
         insertOrReplace(
             playlist.copy(
@@ -124,7 +127,7 @@ internal interface PlaylistDao {
 
     @Transaction
     suspend fun updateUserAgent(url: String, userAgent: String?) {
-        val playlist = getByUrl(url) ?: return
+        val playlist = get(url) ?: return
         insertOrReplace(
             playlist.copy(
                 userAgent = userAgent
@@ -142,4 +145,10 @@ internal interface PlaylistDao {
             }
         }
     }
+
+    @Query("UPDATE playlists SET auto_refresh_programmes = :autoRefreshProgrammes WHERE url = :playlistUrl")
+    suspend fun updatePlaylistAutoRefreshProgrammes(
+        playlistUrl: String,
+        autoRefreshProgrammes: Boolean
+    )
 }

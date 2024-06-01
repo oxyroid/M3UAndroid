@@ -128,6 +128,13 @@ class PlaylistConfigurationViewModel @Inject constructor(
         }
     }
 
+    internal fun onUpdatePlaylistAutoRefreshProgrammes() {
+        val playlistUrl = playlistUrl.value
+        viewModelScope.launch {
+            playlistRepository.onUpdatePlaylistAutoRefreshProgrammes(playlistUrl)
+        }
+    }
+
     internal fun onSyncProgrammes() {
         val playlistUrl = playlistUrl.value
         SubscriptionWorker.epg(workManager, playlistUrl, true)

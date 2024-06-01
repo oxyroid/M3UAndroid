@@ -4,14 +4,13 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.provider.Settings
-import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
-import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -58,6 +57,8 @@ import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.epgUrlsOrXtreamXmlUrl
 import com.m3u.data.repository.playlist.PlaylistRepository
+import com.m3u.features.playlist.configuration.components.AutoSyncProgrammesButton
+import com.m3u.features.playlist.configuration.components.SyncProgrammesButton
 import com.m3u.i18n.R.string
 import com.m3u.material.components.Background
 import com.m3u.material.components.Icon
@@ -107,6 +108,7 @@ internal fun PlaylistConfigurationRoute(
             onUpdatePlaylistTitle = viewModel::onUpdatePlaylistTitle,
             onUpdatePlaylistUserAgent = viewModel::onUpdatePlaylistUserAgent,
             onUpdateEpgPlaylist = viewModel::onUpdateEpgPlaylist,
+            onUpdatePlaylistAutoRefreshProgrammes = viewModel::onUpdatePlaylistAutoRefreshProgrammes,
             onSyncProgrammes = {
                 permissionState.checkPermissionOrRationale(
                     showRationale = {
@@ -139,6 +141,7 @@ private fun PlaylistConfigurationScreen(
     onUpdatePlaylistTitle: (String) -> Unit,
     onUpdatePlaylistUserAgent: (String?) -> Unit,
     onUpdateEpgPlaylist: (PlaylistRepository.UpdateEpgPlaylistUseCase) -> Unit,
+    onUpdatePlaylistAutoRefreshProgrammes: () -> Unit,
     onSyncProgrammes: () -> Unit,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues()
@@ -170,12 +173,20 @@ private fun PlaylistConfigurationScreen(
                     placeholder = stringResource(string.feat_playlist_configuration_user_agent).title(),
                     onValueChange = { userAgent = it }
                 )
-                if (playlist.epgUrlsOrXtreamXmlUrl().isNotEmpty()) {
-                    SyncProgrammesButton(
-                        subscribingOrRefreshing = subscribingOrRefreshing,
-                        expired = expired,
-                        onSyncProgrammes = onSyncProgrammes
-                    )
+                AnimatedVisibility(playlist.epgUrlsOrXtreamXmlUrl().isNotEmpty()) {
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(spacing.small)
+                    ) {
+                        SyncProgrammesButton(
+                            subscribingOrRefreshing = subscribingOrRefreshing,
+                            expired = expired,
+                            onSyncProgrammes = onSyncProgrammes
+                        )
+                        AutoSyncProgrammesButton(
+                            checked = playlist.autoRefreshProgrammes,
+                            onCheckedChange = onUpdatePlaylistAutoRefreshProgrammes
+                        )
+                    }
                 }
 
                 if (playlist.source == DataSource.M3U) {
@@ -224,65 +235,6 @@ private fun PlaylistConfigurationScreen(
 }
 
 @Composable
-private fun SyncProgrammesButton(
-    subscribingOrRefreshing: Boolean,
-    expired: LocalDateTime?,
-    onSyncProgrammes: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val spacing = LocalSpacing.current
-    ListItem(
-        headlineContent = {
-            Text(
-                text = stringResource(string.feat_playlist_configuration_sync_programmes).title(),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-        },
-        supportingContent = {
-            AnimatedContent(
-                targetState = subscribingOrRefreshing,
-                transitionSpec = {
-                    fadeIn() + slideInVertically { it } togetherWith fadeOut() + slideOutVertically { it }
-                },
-                label = "sync programmes state"
-            ) { subscribingOrRefreshing ->
-                if (!subscribingOrRefreshing) {
-                    Text(
-                        text = when (expired) {
-                            null -> stringResource(string.feat_playlist_configuration_programmes_expired)
-                            else -> stringResource(
-                                string.feat_playlist_configuration_programmes_expired_time,
-                                expired.toString()
-                            )
-                        },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-            }
-        },
-        colors = ListItemDefaults.colors(
-            headlineColor = LocalContentColor.current.copy(
-                if (subscribingOrRefreshing) 0.38f else 1f
-            ),
-            supportingColor = LocalContentColor.current.copy(0.38f)
-        ),
-        modifier = Modifier
-            .border(
-                1.dp,
-                LocalContentColor.current.copy(0.38f),
-                SelectionsDefaults.Shape
-            )
-            .clip(AbsoluteSmoothCornerShape(spacing.medium, 65))
-            .clickable(
-                onClick = onSyncProgrammes,
-                enabled = !subscribingOrRefreshing
-            )
-            .then(modifier)
-    )
-}
-
-@Composable
 private fun EpgManifestGallery(
     playlistUrl: String,
     manifest: EpgManifest,
@@ -291,31 +243,40 @@ private fun EpgManifestGallery(
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
-    LazyColumn(
-        contentPadding = contentPadding,
+    Column(
         verticalArrangement = Arrangement.spacedBy(spacing.medium),
-        modifier = modifier.haze(
-            LocalHazeState.current,
-            HazeDefaults.style(MaterialTheme.colorScheme.surface)
-        )
+        modifier = modifier
     ) {
-        stickyHeader {
-            Text(
-                text = stringResource(string.feat_playlist_configuration_enabled_epgs).title(),
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(
+        Text(
+            text = stringResource(string.feat_playlist_configuration_enabled_epgs).title(),
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier
+                .background(MaterialTheme.colorScheme.surface)
+                .fillMaxWidth()
+                .padding(
                     horizontal = spacing.medium,
                     vertical = spacing.small
                 )
-            )
-        }
-        items(manifest.entries.toList()) { (epg, associated) ->
-            EpgManifestGalleryItem(
-                playlistUrl = playlistUrl,
-                epg = epg,
-                associated = associated,
-                onUpdateEpgPlaylist = onUpdateEpgPlaylist,
-            )
+        )
+        LazyColumn(
+            contentPadding = contentPadding,
+            verticalArrangement = Arrangement.spacedBy(spacing.medium),
+            modifier = Modifier
+                .haze(
+                    LocalHazeState.current,
+                    HazeDefaults.style(MaterialTheme.colorScheme.surface)
+                )
+                .fillMaxWidth()
+                .weight(1f)
+        ) {
+            items(manifest.entries.toList()) { (epg, associated) ->
+                EpgManifestGalleryItem(
+                    playlistUrl = playlistUrl,
+                    epg = epg,
+                    associated = associated,
+                    onUpdateEpgPlaylist = onUpdateEpgPlaylist,
+                )
+            }
         }
     }
 }

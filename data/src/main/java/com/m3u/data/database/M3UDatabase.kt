@@ -17,7 +17,7 @@ import com.m3u.data.database.model.Stream
 
 @Database(
     entities = [Stream::class, Playlist::class, Episode::class, Programme::class, ColorScheme::class],
-    version = 17,
+    version = 18,
     exportSchema = true,
     autoMigrations = [
         AutoMigration(
@@ -44,6 +44,7 @@ import com.m3u.data.database.model.Stream
             spec = DatabaseMigrations.AutoMigrate14To16::class
         ),
         AutoMigration(from = 16, to = 17),
+        AutoMigration(from = 17, to = 18)
     ]
 )
 @TypeConverters(Converters::class)

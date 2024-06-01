@@ -16,6 +16,7 @@ interface PlaylistRepository {
     fun observePlaylistUrls(): Flow<List<String>>
     suspend fun get(url: String): Playlist?
     suspend fun getAll(): List<Playlist>
+    suspend fun getAllAutoRefresh(): List<Playlist>
     suspend fun getBySource(source: DataSource): List<Playlist>
     suspend fun getCategoriesByPlaylistUrlIgnoreHidden(url: String, query: String): List<String>
     fun observeCategoriesByPlaylistUrlIgnoreHidden(url: String, query: String): Flow<List<String>>
@@ -63,6 +64,7 @@ interface PlaylistRepository {
     suspend fun deleteEpgPlaylistAndProgrammes(epgUrl: String)
 
     suspend fun onUpdateEpgPlaylist(useCase: UpdateEpgPlaylistUseCase)
+    suspend fun onUpdatePlaylistAutoRefreshProgrammes(playlistUrl: String)
 
     @Immutable
     data class UpdateEpgPlaylistUseCase(

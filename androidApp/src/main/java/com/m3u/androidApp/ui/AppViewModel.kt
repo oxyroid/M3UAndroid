@@ -1,6 +1,5 @@
 package com.m3u.androidApp.ui
 
-import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -52,9 +51,7 @@ class AppViewModel @Inject constructor(
     @Dispatcher(IO) private val ioDispatcher: CoroutineDispatcher,
 ) : ViewModel() {
     init {
-        if (preferences.autoRefreshProgrammes) {
-            refreshAllProgrammes()
-        }
+        refreshProgrammes()
     }
 
     val broadcastCodeOnTelevision: StateFlow<String?> = televisionRepository
@@ -159,9 +156,9 @@ class AppViewModel @Inject constructor(
         }
     }
 
-    private fun refreshAllProgrammes() {
+    private fun refreshProgrammes() {
         viewModelScope.launch {
-            val playlists = playlistRepository.getAll()
+            val playlists = playlistRepository.getAllAutoRefresh()
             playlists.forEach { playlist ->
                 SubscriptionWorker.epg(
                     workManager = workManager,

@@ -125,7 +125,7 @@ internal class PlaylistRepositoryImpl @Inject constructor(
             }
         }
 
-        val playlist = playlistDao.getByUrl(actualUrl)?.copy(
+        val playlist = playlistDao.get(actualUrl)?.copy(
             title = title,
             // maybe be saved as epg or any other sources.
             source = DataSource.M3U
@@ -190,7 +190,7 @@ internal class PlaylistRepositoryImpl @Inject constructor(
             serverProtocol = serverProtocol,
             port = port
         ).let { url ->
-            playlistDao.getByUrl(url)
+            playlistDao.get(url)
                 ?.takeIf { it.source == DataSource.Xtream }
                 ?.copy(
                     title = title
@@ -206,7 +206,7 @@ internal class PlaylistRepositoryImpl @Inject constructor(
             serverProtocol = serverProtocol,
             port = port
         ).let { url ->
-            playlistDao.getByUrl(url)
+            playlistDao.get(url)
                 ?.takeIf { it.source == DataSource.Xtream }
                 ?.copy(
                     title = title
@@ -222,7 +222,7 @@ internal class PlaylistRepositoryImpl @Inject constructor(
             serverProtocol = serverProtocol,
             port = port
         ).let { url ->
-            playlistDao.getByUrl(url)
+            playlistDao.get(url)
                 ?.takeIf { it.source == DataSource.Xtream }
                 ?.copy(
                     title = title
@@ -514,11 +514,15 @@ internal class PlaylistRepositoryImpl @Inject constructor(
     }
 
     override suspend fun get(url: String): Playlist? = logger.execute {
-        playlistDao.getByUrl(url)
+        playlistDao.get(url)
     }
 
     override suspend fun getAll(): List<Playlist> = logger.execute {
         playlistDao.getAll()
+    } ?: emptyList()
+
+    override suspend fun getAllAutoRefresh(): List<Playlist> = logger.execute {
+        playlistDao.getAllAutoRefresh()
     } ?: emptyList()
 
     override suspend fun getBySource(source: DataSource): List<Playlist> = logger.execute {
@@ -528,7 +532,7 @@ internal class PlaylistRepositoryImpl @Inject constructor(
     override suspend fun getCategoriesByPlaylistUrlIgnoreHidden(
         url: String,
         query: String
-    ): List<String> = playlistDao.getByUrl(url).let { playlist ->
+    ): List<String> = playlistDao.get(url).let { playlist ->
         val pinnedCategories = playlist?.pinnedCategories ?: emptyList()
         val hiddenCategories = playlist?.hiddenCategories ?: emptyList()
         streamDao
@@ -554,7 +558,7 @@ internal class PlaylistRepositoryImpl @Inject constructor(
     }
 
     override suspend fun unsubscribe(url: String): Playlist? = logger.execute {
-        val playlist = playlistDao.getByUrl(url)
+        val playlist = playlistDao.get(url)
         streamDao.deleteByPlaylistUrl(url)
         playlist?.also {
             playlistDao.delete(it)
@@ -591,10 +595,10 @@ internal class PlaylistRepositoryImpl @Inject constructor(
     }
 
     override suspend fun onUpdateEpgPlaylist(useCase: PlaylistRepository.UpdateEpgPlaylistUseCase) {
-        val playlist = checkNotNull(playlistDao.getByUrl(useCase.playlistUrl)) {
+        val playlist = checkNotNull(playlistDao.get(useCase.playlistUrl)) {
             "Cannot find playlist before update associated epg"
         }
-        val epg = checkNotNull(playlistDao.getByUrl(useCase.epgUrl)) {
+        val epg = checkNotNull(playlistDao.get(useCase.epgUrl)) {
             "Cannot find associated epg"
         }
 
@@ -602,6 +606,14 @@ internal class PlaylistRepositoryImpl @Inject constructor(
             if (useCase.action) epgUrls + epg.url
             else epgUrls - epg.url
         }
+    }
+
+    override suspend fun onUpdatePlaylistAutoRefreshProgrammes(playlistUrl: String) {
+        val playlist = playlistDao.get(playlistUrl) ?: return
+        playlistDao.updatePlaylistAutoRefreshProgrammes(
+            playlistUrl,
+            !playlist.autoRefreshProgrammes
+        )
     }
 
     private val filenameWithTimezone: String get() = "File_${System.currentTimeMillis()}"

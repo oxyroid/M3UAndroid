@@ -75,7 +75,7 @@ internal class ProgrammeRepositoryImpl @Inject constructor(
         ignoreCache: Boolean
     ): Flow<Int> = channelFlow {
         val epgUrls = playlistUrls.flatMap { playlistUrl ->
-            val playlist = playlistDao.getByUrl(playlistUrl) ?: return@flatMap emptyList()
+            val playlist = playlistDao.get(playlistUrl) ?: return@flatMap emptyList()
             playlist.epgUrlsOrXtreamXmlUrl()
         }
             .toSet()

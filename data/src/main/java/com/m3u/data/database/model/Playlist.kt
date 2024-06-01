@@ -48,7 +48,9 @@ data class Playlist(
     val userAgent: String? = null,
     // epg playlist urls
     @ColumnInfo(name = "epg_urls", defaultValue = "[]")
-    val epgUrls: List<String> = emptyList()
+    val epgUrls: List<String> = emptyList(),
+    @ColumnInfo(name = "auto_refresh_programmes", defaultValue = "0")
+    val autoRefreshProgrammes: Boolean = false
 ) : Likable<Playlist> {
     override fun like(another: Playlist): Boolean {
         return title == another.title && url == another.url && source == another.source

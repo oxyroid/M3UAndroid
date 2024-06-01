@@ -151,14 +151,6 @@ internal fun RegularPreferences(
         )
 
         CheckBoxSharedPreference(
-            title = string.feat_setting_auto_refresh_programmes,
-            content = string.feat_setting_auto_refresh_programmes_description,
-            icon = Icons.Rounded.Refresh,
-            checked = preferences.autoRefreshProgrammes,
-            onChanged = { preferences.autoRefreshProgrammes = !preferences.autoRefreshProgrammes }
-        )
-
-        CheckBoxSharedPreference(
             title = string.feat_setting_randomly_in_favourite,
             icon = Icons.Rounded.Terrain,
             checked = preferences.randomlyInFavourite,
