@@ -53,6 +53,7 @@ fun Player(
         factory = { context ->
             PlayerView(context).apply {
                 useController = false
+                setShowBuffering(PlayerView.SHOW_BUFFERING_ALWAYS)
             }
         },
         update = { view ->
