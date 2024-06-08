@@ -1,6 +1,7 @@
-package com.m3u.androidApp.ui.internal
+package com.m3u.features.foryou.components
 
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -21,14 +22,15 @@ import coil.compose.AsyncImage
 import coil.request.CachePolicy
 import coil.request.ImageRequest
 import com.m3u.core.architecture.preferences.hiltPreferences
-import com.m3u.material.transformation.BlurTransformation
+import com.m3u.material.ktx.Edge
+import com.m3u.material.transformation.EdgeTransparentTransformation
 import com.m3u.ui.helper.LocalHelper
 import com.m3u.ui.helper.Metadata
 import com.m3u.ui.helper.useRailNav
 import kotlin.math.roundToInt
 
 @Composable
-fun HeadlineBackground(modifier: Modifier = Modifier) {
+internal fun HeadlineBackground(modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val configuration = LocalConfiguration.current
     val helper = LocalHelper.current
@@ -51,18 +53,19 @@ fun HeadlineBackground(modifier: Modifier = Modifier) {
             stop = colorScheme.surface,
             fraction = fraction
         ),
-        label = "scaffold-main-content-mask-color"
+        label = "headline-background-mask-color"
     )
 
     if (!preferences.noPictureMode) {
         AsyncImage(
-            model = remember(url, colorScheme.background) {
+            model = remember(url) {
                 ImageRequest.Builder(context)
                     .data(url)
                     .crossfade(800)
                     .memoryCachePolicy(CachePolicy.DISABLED)
                     .transformations(
-                        BlurTransformation(context)
+                        EdgeTransparentTransformation(Edge.Bottom),
+//                        BlurTransformation(context)
                     )
                     .build()
             },
@@ -70,6 +73,7 @@ fun HeadlineBackground(modifier: Modifier = Modifier) {
             contentScale = ContentScale.Crop,
             modifier = modifier
                 .fillMaxWidth()
+                .background(MaterialTheme.colorScheme.background)
                 .offset {
                     IntOffset(
                         x = 0,
@@ -79,14 +83,14 @@ fun HeadlineBackground(modifier: Modifier = Modifier) {
                 .aspectRatio(headlineAspectRatio)
                 .drawWithContent {
                     drawContent()
-                    if (url.isNotEmpty()) {
-                        drawRect(
-                            color = currentMaskColor,
-//                            size = size.copy(
-//                                height = size.height * 0.95f
-//                            )
-                        )
-                    }
+//                    if (url.isNotEmpty()) {
+//                        drawRect(
+//                            color = currentMaskColor,
+////                            size = size.copy(
+////                                height = size.height * 0.95f
+////                            )
+//                        )
+//                    }
                 }
         )
     }
