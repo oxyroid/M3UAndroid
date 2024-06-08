@@ -18,7 +18,7 @@ import com.m3u.features.playlist.configuration.playlistConfigurationScreen
 import com.m3u.features.playlist.navigation.navigateToPlaylist
 import com.m3u.features.playlist.navigation.playlistScreen
 import com.m3u.features.playlist.navigation.playlistTvScreen
-import com.m3u.features.stream.PlayerActivity
+import com.m3u.features.channel.PlayerActivity
 import com.m3u.material.ktx.isTelevision
 import com.m3u.ui.Destination
 import com.m3u.ui.Events
@@ -46,7 +46,7 @@ fun AppNavHost(
         modifier = modifier
     ) {
         playlistScreen(
-            navigateToStream = {
+            navigateToChannel = {
                 if (preferences.zappingMode && PlayerActivity.isInPipMode) return@playlistScreen
                 val options = ActivityOptions.makeCustomAnimation(
                     context,
@@ -67,7 +67,7 @@ fun AppNavHost(
             navigateToPlaylist = { playlist ->
                 navController.navigateToPlaylist(playlist.url, tv)
             },
-            navigateToStream = {
+            navigateToChannel = {
                 if (preferences.zappingMode && PlayerActivity.isInPipMode) return@rootGraph
                 val options = ActivityOptions.makeCustomAnimation(
                     context,

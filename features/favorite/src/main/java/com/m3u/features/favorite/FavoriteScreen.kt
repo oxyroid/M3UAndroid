@@ -27,7 +27,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.core.architecture.preferences.hiltPreferences
 import com.m3u.core.util.basic.title
 import com.m3u.core.wrapper.Resource
-import com.m3u.data.database.model.Stream
+import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.isSeries
 import com.m3u.data.service.MediaCommand
 import com.m3u.features.favorite.components.FavouriteGallery
@@ -53,7 +53,7 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun FavouriteRoute(
-    navigateToStream: () -> Unit,
+    navigateToChannel: () -> Unit,
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
     viewModel: FavouriteViewModel = hiltViewModel()
@@ -69,7 +69,7 @@ fun FavouriteRoute(
 
     val coroutineScope = rememberCoroutineScope()
 
-    val streamsResource by viewModel.streamsResource.collectAsStateWithLifecycle()
+    val channels by viewModel.channels.collectAsStateWithLifecycle()
     val episodes by viewModel.episodes.collectAsStateWithLifecycle()
     val zapping by viewModel.zapping.collectAsStateWithLifecycle()
     val sorts = viewModel.sorts
@@ -84,7 +84,7 @@ fun FavouriteRoute(
 
     val isPageInfoVisible = root == Destination.Root.Favourite
 
-    val series: Stream? by viewModel.series.collectAsStateWithLifecycle()
+    val series: Channel? by viewModel.series.collectAsStateWithLifecycle()
 
     if (isPageInfoVisible) {
         LifecycleResumeEffect(title) {
@@ -107,28 +107,28 @@ fun FavouriteRoute(
     FavoriteScreen(
         contentPadding = contentPadding,
         rowCount = preferences.rowCount,
-        streamsResource = streamsResource,
+        channels = channels,
         zapping = zapping,
         recently = sort == Sort.RECENTLY,
-        onClickStream = { stream ->
+        onClickChannel = { channel ->
             coroutineScope.launch {
-                val playlist = viewModel.getPlaylist(stream.playlistUrl)
+                val playlist = viewModel.getPlaylist(channel.playlistUrl)
                 when {
                     playlist?.isSeries ?: false -> {
-                        viewModel.series.value = stream
+                        viewModel.series.value = channel
                     }
 
                     else -> {
-                        helper.play(MediaCommand.Common(stream.id))
-                        navigateToStream()
+                        helper.play(MediaCommand.Common(channel.id))
+                        navigateToChannel()
                     }
                 }
             }
         },
-        onLongClickStream = { mediaSheetValue = MediaSheetValue.FavouriteScreen(it) },
+        onLongClickChannel = { mediaSheetValue = MediaSheetValue.FavouriteScreen(it) },
         onClickRandomTips = {
             viewModel.playRandomly()
-            navigateToStream()
+            navigateToChannel()
         },
         modifier = Modifier
             .fillMaxSize()
@@ -155,11 +155,11 @@ fun FavouriteRoute(
             coroutineScope.launch {
                 series?.let {
                     val input = MediaCommand.XtreamEpisode(
-                        streamId = it.id,
+                        channelId = it.id,
                         episode = episode
                     )
                     helper.play(input)
-                    navigateToStream()
+                    navigateToChannel()
                 }
             }
         },
@@ -177,12 +177,12 @@ fun FavouriteRoute(
         )
         MediaSheet(
             value = mediaSheetValue,
-            onFavouriteStream = { stream ->
-                viewModel.favourite(stream.id)
+            onFavouriteChannel = { channel ->
+                viewModel.favourite(channel.id)
                 mediaSheetValue = MediaSheetValue.FavouriteScreen()
             },
-            onCreateStreamShortcut = { stream ->
-                viewModel.createShortcut(context, stream.id)
+            onCreateShortcut = { channel ->
+                viewModel.createShortcut(context, channel.id)
                 mediaSheetValue = MediaSheetValue.FavouriteScreen()
             },
             onDismissRequest = {
@@ -192,7 +192,7 @@ fun FavouriteRoute(
         )
     } else {
         TvSortFullScreenDialog(
-            visible = (mediaSheetValue as? MediaSheetValue.FavouriteScreen)?.stream != null,
+            visible = (mediaSheetValue as? MediaSheetValue.FavouriteScreen)?.channel != null,
             sort = sort,
             sorts = sorts,
             onChanged = { viewModel.sort(it) },
@@ -205,11 +205,11 @@ fun FavouriteRoute(
 private fun FavoriteScreen(
     contentPadding: PaddingValues,
     rowCount: Int,
-    streamsResource: Resource<List<Stream>>,
-    zapping: Stream?,
+    channels: Resource<List<Channel>>,
+    zapping: Channel?,
     recently: Boolean,
-    onClickStream: (Stream) -> Unit,
-    onLongClickStream: (Stream) -> Unit,
+    onClickChannel: (Channel) -> Unit,
+    onLongClickChannel: (Channel) -> Unit,
     onClickRandomTips: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -221,12 +221,12 @@ private fun FavoriteScreen(
     }
     FavouriteGallery(
         contentPadding = contentPadding,
-        streamsResource = streamsResource,
+        channels = channels,
         zapping = zapping,
         recently = recently,
         rowCount = actualRowCount,
-        onClick = onClickStream,
-        onLongClick = onLongClickStream,
+        onClick = onClickChannel,
+        onLongClick = onLongClickChannel,
         onClickRandomTips = onClickRandomTips,
         modifier = modifier.haze(
             LocalHazeState.current,

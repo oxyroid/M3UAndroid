@@ -9,7 +9,7 @@ import androidx.room.Transaction
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.PlaylistWithCount
-import com.m3u.data.database.model.PlaylistWithStreams
+import com.m3u.data.database.model.PlaylistWithChannels
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -43,7 +43,7 @@ internal interface PlaylistDao {
 
     @Transaction
     @Query("SELECT * FROM playlists ORDER BY title")
-    fun observeAllWithStreams(): Flow<List<PlaylistWithStreams>>
+    fun observeAllWithChannels(): Flow<List<PlaylistWithChannels>>
 
     @Query("SELECT * FROM playlists ORDER BY title")
     suspend fun getAll(): List<Playlist>
@@ -53,14 +53,14 @@ internal interface PlaylistDao {
 
     @Transaction
     @Query("SELECT * FROM playlists ORDER BY title")
-    suspend fun getAllWithStreams(): List<PlaylistWithStreams>
+    suspend fun getAllWithChannels(): List<PlaylistWithChannels>
 
     @Query("SELECT * FROM playlists WHERE url = :url ORDER BY title")
     fun observeByUrl(url: String): Flow<Playlist?>
 
     @Transaction
     @Query("SELECT * FROM playlists WHERE url = :url ORDER BY title")
-    fun observeByUrlWithStreams(url: String): Flow<PlaylistWithStreams?>
+    fun observeByUrlWithChannels(url: String): Flow<PlaylistWithChannels?>
 
     @Transaction
     @Query(
@@ -76,7 +76,7 @@ internal interface PlaylistDao {
 
     @Transaction
     @Query("SELECT * FROM playlists WHERE url = :url ORDER BY title")
-    suspend fun getByUrlWithStreams(url: String): PlaylistWithStreams?
+    suspend fun getByUrlWithChannels(url: String): PlaylistWithChannels?
 
     @Query("UPDATE playlists SET title = :target WHERE url = :url")
     suspend fun updateTitle(url: String, target: String)

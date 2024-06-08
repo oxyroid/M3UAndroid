@@ -34,7 +34,7 @@ import com.m3u.core.util.basic.title
 import com.m3u.data.database.model.ColorScheme
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
-import com.m3u.data.database.model.Stream
+import com.m3u.data.database.model.Channel
 import com.m3u.features.setting.components.CanvasBottomSheet
 import com.m3u.features.setting.fragments.AppearanceFragment
 import com.m3u.features.setting.fragments.SubscriptionsFragment
@@ -63,7 +63,7 @@ fun SettingRoute(
 
     val colorSchemes by viewModel.colorSchemes.collectAsStateWithLifecycle()
     val epgs by viewModel.epgs.collectAsStateWithLifecycle()
-    val hiddenStreams by viewModel.hiddenStreams.collectAsStateWithLifecycle()
+    val hiddenChannels by viewModel.hiddenChannels.collectAsStateWithLifecycle()
     val hiddenCategoriesWithPlaylists by viewModel.hiddenCategoriesWithPlaylists.collectAsStateWithLifecycle()
     val backingUpOrRestoring by viewModel.backingUpOrRestoring.collectAsStateWithLifecycle()
 
@@ -106,7 +106,7 @@ fun SettingRoute(
         forTvState = viewModel.forTvState,
         backingUpOrRestoring = backingUpOrRestoring,
         epgs = epgs,
-        hiddenStreams = hiddenStreams,
+        hiddenChannels = hiddenChannels,
         hiddenCategoriesWithPlaylists = hiddenCategoriesWithPlaylists,
         cacheSpace = cacheSpace,
         backup = backup,
@@ -120,7 +120,7 @@ fun SettingRoute(
             controller?.hide()
             viewModel.subscribe()
         },
-        onUnhideStream = { viewModel.onUnhideStream(it) },
+        onUnhideChannel = { viewModel.onUnhideChannel(it) },
         onUnhidePlaylistCategory = { playlistUrl, group ->
             viewModel.onUnhidePlaylistCategory(playlistUrl, group)
         },
@@ -158,9 +158,9 @@ private fun SettingScreen(
     versionCode: Int,
     backingUpOrRestoring: BackingUpAndRestoringState,
     onSubscribe: () -> Unit,
-    hiddenStreams: List<Stream>,
+    hiddenChannels: List<Channel>,
     hiddenCategoriesWithPlaylists: List<Pair<Playlist, String>>,
-    onUnhideStream: (Int) -> Unit,
+    onUnhideChannel: (Int) -> Unit,
     onUnhidePlaylistCategory: (playlistUrl: String, group: String) -> Unit,
     backup: () -> Unit,
     restore: () -> Unit,
@@ -261,9 +261,9 @@ private fun SettingScreen(
                         localStorageState = localStorageState,
                         forTvState = forTvState,
                         backingUpOrRestoring = backingUpOrRestoring,
-                        hiddenStreams = hiddenStreams,
+                        hiddenChannels = hiddenChannels,
                         hiddenCategoriesWithPlaylists = hiddenCategoriesWithPlaylists,
-                        onUnhideStream = onUnhideStream,
+                        onUnhideChannel = onUnhideChannel,
                         onUnhidePlaylistCategory = onUnhidePlaylistCategory,
                         onClipboard = onClipboard,
                         onSubscribe = onSubscribe,

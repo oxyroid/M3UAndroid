@@ -18,7 +18,7 @@
     <string name="feat_setting_experimental_mode">Modo experimental</string>
     <string name="feat_setting_experimental_mode_description">Recursos instáveis podem gerar erros fatais</string>
     <string name="feat_setting_label_epg_playlists">Lista EPG</string>
-    <string name="feat_setting_label_hidden_streams">Streams ocultas</string>
+    <string name="feat_setting_label_hidden_channels">Streams ocultas</string>
     <string name="feat_setting_label_hidden_playlist_groups">Categorias de playlists ocultas</string>
     <string name="feat_setting_label_add_playlist">Adicionar uma playlist</string>
     <string name="feat_setting_label_parse_from_clipboard">Colar da área de transferência</string>

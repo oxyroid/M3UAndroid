@@ -34,12 +34,12 @@ import com.google.accompanist.permissions.rememberPermissionState
 import com.m3u.core.architecture.preferences.hiltPreferences
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
-import com.m3u.data.database.model.Stream
+import com.m3u.data.database.model.Channel
 import com.m3u.features.setting.BackingUpAndRestoringState
 import com.m3u.features.setting.components.DataSourceSelection
 import com.m3u.features.setting.components.EpgPlaylistItem
 import com.m3u.features.setting.components.HiddenPlaylistGroupItem
-import com.m3u.features.setting.components.HiddenStreamItem
+import com.m3u.features.setting.components.HiddenChannelItem
 import com.m3u.features.setting.components.LocalStorageButton
 import com.m3u.features.setting.components.LocalStorageSwitch
 import com.m3u.features.setting.components.RemoteControlSubscribeSwitch
@@ -72,9 +72,9 @@ internal fun SubscriptionsFragment(
     localStorageState: MutableState<Boolean>,
     forTvState: MutableState<Boolean>,
     backingUpOrRestoring: BackingUpAndRestoringState,
-    hiddenStreams: List<Stream>,
+    hiddenChannels: List<Channel>,
     hiddenCategoriesWithPlaylists: List<Pair<Playlist, String>>,
-    onUnhideStream: (Int) -> Unit,
+    onUnhideChannel: (Int) -> Unit,
     onUnhidePlaylistCategory: (playlistUrl: String, category: String) -> Unit,
     onClipboard: (String) -> Unit,
     onSubscribe: () -> Unit,
@@ -125,8 +125,8 @@ internal fun SubscriptionsFragment(
 
                 SubscriptionsFragmentPage.HIDDEN_STREAMS -> {
                     HiddenStreamContentImpl(
-                        hiddenStreams = hiddenStreams,
-                        onUnhideStream = onUnhideStream
+                        hiddenChannels = hiddenChannels,
+                        onUnhideChannel = onUnhideChannel
                     )
                 }
 
@@ -331,23 +331,23 @@ private fun EpgsContentImpl(
 
 @Composable
 private fun HiddenStreamContentImpl(
-    hiddenStreams: List<Stream>,
-    onUnhideStream: (Int) -> Unit,
+    hiddenChannels: List<Channel>,
+    onUnhideChannel: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
         modifier = modifier.fillMaxWidth()
     ) {
         Text(
-            text = stringResource(string.feat_setting_label_hidden_streams),
+            text = stringResource(string.feat_setting_label_hidden_channels),
             color = MaterialTheme.colorScheme.onPrimary,
             style = MaterialTheme.typography.labelLarge,
             modifier = Modifier.textHorizontalLabel()
         )
-        hiddenStreams.forEach { stream ->
-            HiddenStreamItem(
-                stream = stream,
-                onHidden = { onUnhideStream(stream.id) }
+        hiddenChannels.forEach { channel ->
+            HiddenChannelItem(
+                channel = channel,
+                onHidden = { onUnhideChannel(channel.id) }
             )
         }
     }

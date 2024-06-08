@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="feat_foryou_hidden_streams_playlist">versteckte Streams</string>
+    <string name="feat_foryou_hidden_channels_playlist">versteckte Streams</string>
     <string name="feat_foryou_unsubscribe_playlist">löschen</string>
     <string name="feat_foryou_copy_playlist_url">URL kopieren</string>
     <string name="feat_foryou_rename_playlist">umbenennen</string>

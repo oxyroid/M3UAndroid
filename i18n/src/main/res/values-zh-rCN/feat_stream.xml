@@ -1,21 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="feat_stream_playback_state_idle">空闲</string>
-    <string name="feat_stream_playback_state_buffering">缓冲中</string>
-    <string name="feat_stream_playback_state_ready">就绪</string>
-    <string name="feat_stream_playback_state_ended">结束</string>
-    <string name="feat_stream_tooltip_on_back_pressed">返回</string>
-    <string name="feat_stream_tooltip_mute">静音</string>
-    <string name="feat_stream_tooltip_unmute">取消静音</string>
-    <string name="feat_stream_tooltip_favourite">收藏</string>
-    <string name="feat_stream_tooltip_unfavourite">取消收藏</string>
-    <string name="feat_stream_tooltip_download">下载</string>
-    <string name="feat_stream_tooltip_stop_download">停止下载</string>
-    <string name="feat_stream_tooltip_cast">投屏</string>
-    <string name="feat_stream_tooltip_enter_pip_mode">画中画模式</string>
-    <string name="feat_stream_tooltip_choose_format">选择格式</string>
-    <string name="feat_stream_tooltip_screen_rotating">屏幕旋转</string>
+    <string name="feat_channel_playback_state_idle">空闲</string>
+    <string name="feat_channel_playback_state_buffering">缓冲中</string>
+    <string name="feat_channel_playback_state_ready">就绪</string>
+    <string name="feat_channel_playback_state_ended">结束</string>
+    <string name="feat_channel_tooltip_on_back_pressed">返回</string>
+    <string name="feat_channel_tooltip_mute">静音</string>
+    <string name="feat_channel_tooltip_unmute">取消静音</string>
+    <string name="feat_channel_tooltip_favourite">收藏</string>
+    <string name="feat_channel_tooltip_unfavourite">取消收藏</string>
+    <string name="feat_channel_tooltip_download">下载</string>
+    <string name="feat_channel_tooltip_stop_download">停止下载</string>
+    <string name="feat_channel_tooltip_cast">投屏</string>
+    <string name="feat_channel_tooltip_enter_pip_mode">画中画模式</string>
+    <string name="feat_channel_tooltip_choose_format">选择格式</string>
+    <string name="feat_channel_tooltip_screen_rotating">屏幕旋转</string>
 
-    <string name="feat_stream_dialog_dlna_devices">DLNA 设备</string>
-    <string name="feat_stream_dialog_choose_tracks">选择格式</string>
+    <string name="feat_channel_dialog_dlna_devices">DLNA 设备</string>
+    <string name="feat_channel_dialog_choose_tracks">选择格式</string>
 </resources>

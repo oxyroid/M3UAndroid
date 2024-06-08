@@ -13,19 +13,19 @@ sealed class PlaylistMessage(
     vararg formatArgs: Any
 ) : Message.Static(level, "playlist", type, duration, resId, formatArgs) {
 
-    data object StreamNotFound : PlaylistMessage(
+    data object ChannelNotFound : PlaylistMessage(
         level = LEVEL_ERROR,
         type = TYPE_SNACK,
-        resId = string.feat_playlist_error_stream_not_found
+        resId = string.feat_playlist_error_channel_not_found
     )
 
-    data object StreamCoverNotFound : PlaylistMessage(
+    data object ChannelCoverNotFound : PlaylistMessage(
         level = LEVEL_ERROR,
         type = TYPE_SNACK,
-        resId = string.feat_playlist_error_stream_cover_not_found
+        resId = string.feat_playlist_error_channel_cover_not_found
     )
 
-    data class StreamCoverSaved(val path: String) : PlaylistMessage(
+    data class ChannelCoverSaved(val path: String) : PlaylistMessage(
         level = LEVEL_INFO,
         type = TYPE_SNACK,
         resId = string.feat_playlist_success_save_cover,

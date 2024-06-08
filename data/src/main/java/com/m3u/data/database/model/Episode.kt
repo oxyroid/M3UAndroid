@@ -9,13 +9,13 @@ import androidx.room.PrimaryKey
 @Entity(tableName = "episodes")
 @Immutable
 @Keep
-// for series type streams
+// for series type channels
 data class Episode(
     @ColumnInfo(name = "title")
     val title: String,
-    // series is a special stream
+    // series is a special channel
     // if a playlist type is one of [Playlist.SERIES_TYPES]
-    // then its all streams are series.
+    // then its all channels are series.
     @ColumnInfo(name = "series_id")
     val seriesId: Int,
     @ColumnInfo(name = "season")

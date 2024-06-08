@@ -22,7 +22,7 @@ include(":material")
 include(
     ":features:foryou",
     ":features:setting",
-    ":features:stream",
+    ":features:channel",
     ":features:playlist",
     ":features:playlist-configuration",
     ":features:favorite",

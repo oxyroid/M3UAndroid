@@ -4,16 +4,16 @@
     <!-- Learn more at https://developer.android.com/guide/topics/ui/shortcuts/creating-shortcuts -->
     <shortcut
         android:icon="@drawable/baseline_history_toggle_off_24"
-        android:shortcutDisabledMessage="@string/app_shortcut_stream_recently_disabled"
-        android:shortcutId="stream_recently"
-        android:shortcutLongLabel="@string/app_shortcut_stream_recently_long_label"
-        android:shortcutShortLabel="@string/app_shortcut_stream_recently_short_label">
+        android:shortcutDisabledMessage="@string/app_shortcut_channel_recently_disabled"
+        android:shortcutId="channel_recently"
+        android:shortcutLongLabel="@string/app_shortcut_channel_recently_long_label"
+        android:shortcutShortLabel="@string/app_shortcut_channel_recently_short_label">
         <intent
             android:action="android.intent.action.VIEW"
-            android:targetClass="com.m3u.features.stream.PlayerActivity"
+            android:targetClass="com.m3u.features.channel.PlayerActivity"
             android:targetPackage="com.m3u.androidApp" >
             <extra
-                android:name="shortcut:stream-recently"
+                android:name="shortcut:channel-recently"
                 android:value="true"/>
         </intent>
     </shortcut>

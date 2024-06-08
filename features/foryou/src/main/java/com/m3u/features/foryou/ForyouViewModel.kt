@@ -18,11 +18,11 @@ import com.m3u.core.wrapper.mapResource
 import com.m3u.core.wrapper.resource
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.PlaylistWithCount
-import com.m3u.data.database.model.Stream
-import com.m3u.data.parser.xtream.XtreamStreamInfo
+import com.m3u.data.database.model.Channel
+import com.m3u.data.parser.xtream.XtreamChannelInfo
 import com.m3u.data.repository.playlist.PlaylistRepository
 import com.m3u.data.repository.programme.ProgrammeRepository
-import com.m3u.data.repository.stream.StreamRepository
+import com.m3u.data.repository.channel.ChannelRepository
 import com.m3u.data.worker.SubscriptionWorker
 import com.m3u.features.foryou.components.recommend.Recommend
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -46,7 +46,7 @@ import kotlin.time.toDuration
 @HiltViewModel
 class ForyouViewModel @Inject constructor(
     private val playlistRepository: PlaylistRepository,
-    streamRepository: StreamRepository,
+    channelRepository: ChannelRepository,
     programmeRepository: ProgrammeRepository,
     preferences: Preferences,
     @Dispatcher(IO) ioDispatcher: CoroutineDispatcher,
@@ -96,7 +96,7 @@ class ForyouViewModel @Inject constructor(
         )
 
     internal val recommend: StateFlow<Recommend> = unseensDuration
-        .flatMapLatest { streamRepository.observeAllUnseenFavourites(it) }
+        .flatMapLatest { channelRepository.observeAllUnseenFavourites(it) }
         .map { prev -> Recommend(prev.map { Recommend.UnseenSpec(it) }) }
         .flowOn(ioDispatcher)
         .stateIn(
@@ -111,9 +111,9 @@ class ForyouViewModel @Inject constructor(
         }
     }
 
-    internal val series = MutableStateFlow<Stream?>(null)
+    internal val series = MutableStateFlow<Channel?>(null)
     internal val seriesReplay = MutableStateFlow(0)
-    internal val episodes: StateFlow<Resource<List<XtreamStreamInfo.Episode>>> = series
+    internal val episodes: StateFlow<Resource<List<XtreamChannelInfo.Episode>>> = series
         .combine(seriesReplay) { series, _ -> series }
         .flatMapLatest { series ->
             if (series == null) flow { }

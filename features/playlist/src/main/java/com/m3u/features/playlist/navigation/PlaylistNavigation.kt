@@ -49,7 +49,7 @@ fun NavController.navigateToPlaylist(
 }
 
 fun NavGraphBuilder.playlistScreen(
-    navigateToStream: () -> Unit,
+    navigateToChannel: () -> Unit,
     contentPadding: PaddingValues = PaddingValues(),
 ) {
     composable(
@@ -65,7 +65,7 @@ fun NavGraphBuilder.playlistScreen(
         popExitTransition = { slideOutVertically { it } }
     ) {
         PlaylistRoute(
-            navigateToStream = navigateToStream,
+            navigateToChannel = navigateToChannel,
             contentPadding = contentPadding
         )
     }

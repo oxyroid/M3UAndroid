@@ -21,7 +21,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.m3u.core.wrapper.eventOf
 import com.m3u.data.database.model.Playlist
-import com.m3u.data.database.model.Stream
+import com.m3u.data.database.model.Channel
 import com.m3u.material.components.HorizontalPagerIndicator
 import com.m3u.material.ktx.isTelevision
 import com.m3u.material.model.LocalSpacing
@@ -33,7 +33,7 @@ import androidx.tv.material3.Carousel as TvCarousel
 @Composable
 internal fun RecommendGallery(
     recommend: Recommend,
-    onClickStream: (Stream) -> Unit,
+    onClickChannel: (Channel) -> Unit,
     navigateToPlaylist: (Playlist) -> Unit,
     onSpecChanged: (Recommend.Spec?) -> Unit,
     modifier: Modifier = Modifier
@@ -71,7 +71,7 @@ internal fun RecommendGallery(
                     pageOffset = pageOffset,
                     onClick = {
                         when (spec) {
-                            is Recommend.UnseenSpec -> onClickStream(spec.stream)
+                            is Recommend.UnseenSpec -> onClickChannel(spec.channel)
                             is Recommend.DiscoverSpec -> {
                                 Events.discoverCategory = eventOf(spec.category)
                                 navigateToPlaylist(spec.playlist)
@@ -107,8 +107,8 @@ internal fun RecommendGallery(
                         is Recommend.UnseenSpec -> {
                             coroutineScope.launch {
                                 // TODO
-//                                helper.play(spec.stream.id)
-//                                navigateToStream()
+//                                helper.play(spec.channel.id)
+//                                navigateToChannel()
                             }
                         }
 

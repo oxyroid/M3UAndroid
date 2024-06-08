@@ -35,7 +35,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import com.m3u.core.util.basic.title
 import com.m3u.core.wrapper.Resource
-import com.m3u.data.database.model.Stream
+import com.m3u.data.database.model.Channel
 import com.m3u.i18n.R.string
 import com.m3u.material.ktx.isTelevision
 import com.m3u.material.ktx.plus
@@ -49,18 +49,18 @@ import androidx.tv.material3.Text as TvText
 @Composable
 internal fun FavouriteGallery(
     contentPadding: PaddingValues,
-    streamsResource: Resource<List<Stream>>,
-    zapping: Stream?,
+    channels: Resource<List<Channel>>,
+    zapping: Channel?,
     recently: Boolean,
     rowCount: Int,
-    onClick: (Stream) -> Unit,
-    onLongClick: (Stream) -> Unit,
+    onClick: (Channel) -> Unit,
+    onLongClick: (Channel) -> Unit,
     onClickRandomTips: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
     Box(modifier) {
-        when (streamsResource) {
+        when (channels) {
             Resource.Loading -> {
                 LinearProgressIndicator(
                     modifier = Modifier
@@ -70,7 +70,8 @@ internal fun FavouriteGallery(
             }
 
             is Resource.Success -> {
-                val streams = streamsResource.data
+                @Suppress("NAME_SHADOWING")
+                val channels = channels.data
                 LazyVerticalStaggeredGrid(
                     columns = StaggeredGridCells.Fixed(rowCount),
                     verticalItemSpacing = spacing.medium,
@@ -84,15 +85,15 @@ internal fun FavouriteGallery(
                         )
                     }
                     items(
-                        items = streams,
+                        items = channels,
                         key = { it.id },
                         contentType = { it.cover.isNullOrEmpty() }
-                    ) { stream ->
+                    ) { channel ->
                         FavoriteItem(
-                            stream = stream,
-                            zapping = zapping == stream,
-                            onClick = { onClick(stream) },
-                            onLongClick = { onLongClick(stream) },
+                            channel = channel,
+                            zapping = zapping == channel,
+                            onClick = { onClick(channel) },
+                            onLongClick = { onLongClick(channel) },
                             recently = recently,
                             modifier = Modifier.fillMaxWidth()
                         )

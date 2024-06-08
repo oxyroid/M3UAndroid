@@ -31,10 +31,10 @@ import androidx.compose.ui.unit.dp
 import androidx.tv.material3.DenseListItem
 import com.m3u.core.architecture.preferences.hiltPreferences
 import com.m3u.data.database.model.Programme
-import com.m3u.data.database.model.Stream
+import com.m3u.data.database.model.Channel
 import com.m3u.features.playlist.PlaylistViewModel
 import com.m3u.features.playlist.components.ImmersiveBackground
-import com.m3u.features.playlist.components.TvStreamGallery
+import com.m3u.features.playlist.components.TvChannelGallery
 import com.m3u.i18n.R
 import com.m3u.material.components.Background
 import com.m3u.material.components.Icon
@@ -56,24 +56,24 @@ import androidx.tv.material3.Text as TvText
 @InternalComposeApi
 internal fun TvPlaylistScreenImpl(
     title: String,
-    channels: List<PlaylistViewModel.Channel>,
+    categoryWithChannels: List<PlaylistViewModel.CategoryWithChannels>,
     query: String,
     onQuery: (String) -> Unit,
     sorts: List<Sort>,
     sort: Sort,
     onSort: (Sort) -> Unit,
-    favorite: (streamId: Int) -> Unit,
-    hide: (streamId: Int) -> Unit,
-    savePicture: (streamId: Int) -> Unit,
-    createTvRecommend: (streamId: Int) -> Unit,
-    onStream: (Stream) -> Unit,
+    favorite: (channelId: Int) -> Unit,
+    hide: (channelId: Int) -> Unit,
+    savePicture: (channelId: Int) -> Unit,
+    createTvRecommend: (channelId: Int) -> Unit,
+    onPlayChannel: (Channel) -> Unit,
     onRefresh: () -> Unit,
     getProgrammeCurrently: suspend (channelId: String) -> Programme?,
     isVodOrSeriesPlaylist: Boolean,
     modifier: Modifier = Modifier
 ) {
     val preferences = hiltPreferences()
-    val multiCategories = channels.size > 1
+    val multiCategories = categoryWithChannels.size > 1
     val noPictureMode = preferences.noPictureMode
     val useGridLayout = sort != Sort.UNSPECIFIED
 
@@ -89,8 +89,8 @@ internal fun TvPlaylistScreenImpl(
 
     var isSortSheetVisible by rememberSaveable { mutableStateOf(false) }
 
-    var press: Stream? by remember { mutableStateOf(null) }
-    var focus: Stream? by remember { mutableStateOf(null) }
+    var press: Channel? by remember { mutableStateOf(null) }
+    var focus: Channel? by remember { mutableStateOf(null) }
 
     val content = @Composable {
         Box(
@@ -98,7 +98,7 @@ internal fun TvPlaylistScreenImpl(
         ) {
             ImmersiveBackground(
                 title = title,
-                stream = focus,
+                channel = focus,
                 maxBrowserHeight = maxBrowserHeight,
                 onRefresh = onRefresh,
                 openSearchDrawer = {},
@@ -109,14 +109,14 @@ internal fun TvPlaylistScreenImpl(
                     HazeDefaults.style(TvMaterialTheme.colorScheme.background)
                 )
             )
-            TvStreamGallery(
-                channels = channels,
+            TvChannelGallery(
+                categoryWithChannels = categoryWithChannels,
                 maxBrowserHeight = maxBrowserHeight,
                 isSpecifiedSort = useGridLayout,
                 isVodOrSeriesPlaylist = isVodOrSeriesPlaylist,
-                onClick = onStream,
-                onLongClick = { stream -> press = stream },
-                onFocus = { stream -> focus = stream },
+                onClick = onPlayChannel,
+                onLongClick = { channel -> press = channel },
+                onFocus = { channel -> focus = channel },
                 modifier = Modifier
                     .hazeChild(
                         LocalHazeState.current,
@@ -134,7 +134,7 @@ internal fun TvPlaylistScreenImpl(
     Background {
         content()
         MenuFullScreenDialog(
-            stream = press,
+            channel = press,
             favorite = favorite,
             hide = hide,
             savePicture = savePicture,
@@ -153,16 +153,16 @@ internal fun TvPlaylistScreenImpl(
 
 @Composable
 private fun MenuFullScreenDialog(
-    stream: Stream?,
-    favorite: (streamId: Int) -> Unit,
-    hide: (streamId: Int) -> Unit,
-    savePicture: (streamId: Int) -> Unit,
-    createShortcutOrTvRecommend: (streamId: Int) -> Unit,
+    channel: Channel?,
+    favorite: (channelId: Int) -> Unit,
+    hide: (channelId: Int) -> Unit,
+    savePicture: (channelId: Int) -> Unit,
+    createShortcutOrTvRecommend: (channelId: Int) -> Unit,
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val favouriteTitle = stringResource(
-        if (stream?.favourite == true) R.string.feat_playlist_dialog_favourite_cancel_title
+        if (channel?.favourite == true) R.string.feat_playlist_dialog_favourite_cancel_title
         else R.string.feat_playlist_dialog_favourite_title
     ).uppercase()
     val hideTitle = stringResource(R.string.feat_playlist_dialog_hide_title).uppercase()
@@ -176,7 +176,7 @@ private fun MenuFullScreenDialog(
             .then(modifier)
     ) {
         AnimatedVisibility(
-            visible = stream != null,
+            visible = channel != null,
             modifier = Modifier
                 .fillMaxHeight()
                 .fillMaxWidth(0.4f)
@@ -197,7 +197,7 @@ private fun MenuFullScreenDialog(
                         selected = false,
                         headlineContent = {
                             TvText(
-                                text = stream?.title.orEmpty(),
+                                text = channel?.title.orEmpty(),
                                 maxLines = 1,
                                 style = TvMaterialTheme.typography.titleLarge
                             )
@@ -214,8 +214,8 @@ private fun MenuFullScreenDialog(
                             )
                         },
                         onClick = {
-                            stream?.let { stream ->
-                                favorite(stream.id)
+                            channel?.let { channel ->
+                                favorite(channel.id)
                                 onDismissRequest()
                             }
                         },
@@ -232,7 +232,7 @@ private fun MenuFullScreenDialog(
                     DenseListItem(
                         selected = false,
                         onClick = {
-                            stream?.let {
+                            channel?.let {
                                 hide(it.id)
                                 onDismissRequest()
                             }
@@ -255,7 +255,7 @@ private fun MenuFullScreenDialog(
                     DenseListItem(
                         selected = false,
                         onClick = {
-                            stream?.let {
+                            channel?.let {
                                 createShortcutOrTvRecommend(it.id)
                                 onDismissRequest()
                             }
@@ -278,7 +278,7 @@ private fun MenuFullScreenDialog(
                     DenseListItem(
                         selected = false,
                         onClick = {
-                            stream?.let {
+                            channel?.let {
                                 savePicture(it.id)
                                 onDismissRequest()
                             }

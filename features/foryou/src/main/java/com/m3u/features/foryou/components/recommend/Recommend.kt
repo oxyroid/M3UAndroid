@@ -2,7 +2,7 @@ package com.m3u.features.foryou.components.recommend
 
 import androidx.compose.runtime.Immutable
 import com.m3u.data.database.model.Playlist
-import com.m3u.data.database.model.Stream
+import com.m3u.data.database.model.Channel
 
 @Immutable
 internal class Recommend(
@@ -23,6 +23,6 @@ internal class Recommend(
 
     @Immutable
     data class UnseenSpec(
-        val stream: Stream
+        val channel: Channel
     ) : Spec
 }

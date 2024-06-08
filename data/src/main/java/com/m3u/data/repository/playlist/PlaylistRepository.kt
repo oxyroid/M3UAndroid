@@ -5,9 +5,9 @@ import androidx.compose.runtime.Immutable
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.PlaylistWithCount
-import com.m3u.data.database.model.PlaylistWithStreams
-import com.m3u.data.database.model.Stream
-import com.m3u.data.parser.xtream.XtreamStreamInfo
+import com.m3u.data.database.model.PlaylistWithChannels
+import com.m3u.data.database.model.Channel
+import com.m3u.data.parser.xtream.XtreamChannelInfo
 import kotlinx.coroutines.flow.Flow
 
 interface PlaylistRepository {
@@ -21,8 +21,8 @@ interface PlaylistRepository {
     suspend fun getCategoriesByPlaylistUrlIgnoreHidden(url: String, query: String): List<String>
     fun observeCategoriesByPlaylistUrlIgnoreHidden(url: String, query: String): Flow<List<String>>
     fun observe(url: String): Flow<Playlist?>
-    fun observeWithStreams(url: String): Flow<PlaylistWithStreams?>
-    suspend fun getWithStreams(url: String): PlaylistWithStreams?
+    fun observePlaylistWithChannels(url: String): Flow<PlaylistWithChannels?>
+    suspend fun getPlaylistWithChannels(url: String): PlaylistWithChannels?
 
     suspend fun m3uOrThrow(
         title: String,
@@ -59,7 +59,7 @@ interface PlaylistRepository {
 
     fun observeAllCounts(): Flow<List<PlaylistWithCount>>
 
-    suspend fun readEpisodesOrThrow(series: Stream): List<XtreamStreamInfo.Episode>
+    suspend fun readEpisodesOrThrow(series: Channel): List<XtreamChannelInfo.Episode>
 
     suspend fun deleteEpgPlaylistAndProgrammes(epgUrl: String)
 

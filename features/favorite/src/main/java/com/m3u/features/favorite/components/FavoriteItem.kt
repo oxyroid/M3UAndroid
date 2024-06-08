@@ -16,7 +16,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import com.m3u.data.database.model.Stream
+import com.m3u.data.database.model.Channel
 import com.m3u.i18n.R.string
 import com.m3u.material.ktx.isTelevision
 import com.m3u.material.model.LocalSpacing
@@ -33,7 +33,7 @@ import androidx.tv.material3.Text as TvText
 
 @Composable
 internal fun FavoriteItem(
-    stream: Stream,
+    channel: Channel,
     recently: Boolean,
     zapping: Boolean,
     onClick: () -> Unit,
@@ -43,7 +43,7 @@ internal fun FavoriteItem(
     val tv = isTelevision()
     if (!tv) {
         SmartphoneFavoriteItemImpl(
-            stream = stream,
+            channel = channel,
             recently = recently,
             zapping = zapping,
             onClick = onClick,
@@ -52,7 +52,7 @@ internal fun FavoriteItem(
         )
     } else {
         TvFavouriteItemImpl(
-            stream = stream,
+            channel = channel,
             onClick = onClick,
             onLongClick = onLongClick,
             modifier = modifier
@@ -62,7 +62,7 @@ internal fun FavoriteItem(
 
 @Composable
 private fun SmartphoneFavoriteItemImpl(
-    stream: Stream,
+    channel: Channel,
     recently: Boolean,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
@@ -83,7 +83,7 @@ private fun SmartphoneFavoriteItemImpl(
         ListItem(
             headlineContent = {
                 Text(
-                    text = stream.title.trim(),
+                    text = channel.title.trim(),
                     style = MaterialTheme.typography.titleSmall,
                     overflow = TextOverflow.Ellipsis,
                     maxLines = 1,
@@ -93,13 +93,13 @@ private fun SmartphoneFavoriteItemImpl(
             supportingContent = {
                 if (recently) {
                     Text(
-                        text = remember(stream.seen) {
+                        text = remember(channel.seen) {
                             val now = Clock.System.now()
-                            val instant = Instant.fromEpochMilliseconds(stream.seen)
+                            val instant = Instant.fromEpochMilliseconds(channel.seen)
                             val duration = now - instant
                             duration.toComponents { days, hours, minutes, seconds, _ ->
                                 when {
-                                    stream.seen == 0L -> neverPlayedString
+                                    channel.seen == 0L -> neverPlayedString
                                     days > 0 -> days.days.toString()
                                     hours > 0 -> hours.hours.toString()
                                     minutes > 0 -> minutes.minutes.toString()
@@ -126,7 +126,7 @@ private fun SmartphoneFavoriteItemImpl(
 
 @Composable
 private fun TvFavouriteItemImpl(
-    stream: Stream,
+    channel: Channel,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -137,7 +137,7 @@ private fun TvFavouriteItemImpl(
         onLongClick = onLongClick,
         headlineContent = {
             TvText(
-                text = stream.title,
+                text = channel.title,
                 style = TvMaterialTheme.typography.bodyMedium,
                 maxLines = 1
             )

@@ -51,9 +51,9 @@ import com.m3u.core.architecture.preferences.hiltPreferences
 import com.m3u.core.util.basic.title
 import com.m3u.core.wrapper.Event
 import com.m3u.core.wrapper.eventOf
+import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Programme
-import com.m3u.data.database.model.Stream
 import com.m3u.data.database.model.isSeries
 import com.m3u.data.database.model.isVod
 import com.m3u.data.database.model.type
@@ -84,7 +84,7 @@ import androidx.tv.material3.MaterialTheme as TvMaterialTheme
 
 @Composable
 internal fun PlaylistRoute(
-    navigateToStream: () -> Unit,
+    navigateToChannel: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: PlaylistViewModel = hiltViewModel(),
     contentPadding: PaddingValues = PaddingValues()
@@ -195,7 +195,7 @@ internal fun PlaylistRoute(
         onQuery = { viewModel.query.value = it },
         rowCount = preferences.rowCount,
         zapping = zapping,
-        channels = channels,
+        categoryWithChannels = channels,
         pinnedCategories = pinnedCategories,
         onPinOrUnpinCategory = { viewModel.pinOrUnpinCategory(it) },
         onHideCategory = { viewModel.hideCategory(it) },
@@ -203,14 +203,14 @@ internal fun PlaylistRoute(
         sorts = sorts,
         sort = sort,
         onSort = { viewModel.sort(it) },
-        onStream = { stream ->
+        onPlayChannel = { channel ->
             if (!isSeriesPlaylist) {
                 coroutineScope.launch {
-                    helper.play(MediaCommand.Common(stream.id))
-                    navigateToStream()
+                    helper.play(MediaCommand.Common(channel.id))
+                    navigateToChannel()
                 }
             } else {
-                viewModel.series.value = stream
+                viewModel.series.value = channel
             }
         },
         onScrollUp = { viewModel.scrollUp.value = eventOf(Unit) },
@@ -271,11 +271,11 @@ internal fun PlaylistRoute(
                 coroutineScope.launch {
                     series?.let {
                         val input = MediaCommand.XtreamEpisode(
-                            streamId = it.id,
+                            channelId = it.id,
                             episode = episode
                         )
                         helper.play(input)
-                        navigateToStream()
+                        navigateToChannel()
                     }
                 }
             },
@@ -294,8 +294,8 @@ private fun PlaylistScreen(
     query: String,
     onQuery: (String) -> Unit,
     rowCount: Int,
-    zapping: Stream?,
-    channels: List<PlaylistViewModel.Channel>,
+    zapping: Channel?,
+    categoryWithChannels: List<PlaylistViewModel.CategoryWithChannels>,
     pinnedCategories: List<String>,
     onPinOrUnpinCategory: (String) -> Unit,
     onHideCategory: (String) -> Unit,
@@ -305,13 +305,13 @@ private fun PlaylistScreen(
     scrollUp: Event<Unit>,
     refreshing: Boolean,
     onRefresh: () -> Unit,
-    onStream: (Stream) -> Unit,
+    onPlayChannel: (Channel) -> Unit,
     onScrollUp: () -> Unit,
-    favourite: (streamId: Int) -> Unit,
-    hide: (streamId: Int) -> Unit,
-    savePicture: (streamId: Int) -> Unit,
-    createShortcut: (streamId: Int) -> Unit,
-    createTvRecommend: (streamId: Int) -> Unit,
+    favourite: (channelId: Int) -> Unit,
+    hide: (channelId: Int) -> Unit,
+    savePicture: (channelId: Int) -> Unit,
+    createShortcut: (channelId: Int) -> Unit,
+    createTvRecommend: (channelId: Int) -> Unit,
     contentPadding: PaddingValues,
     isVodPlaylist: Boolean,
     isSeriesPlaylist: Boolean,
@@ -346,7 +346,7 @@ private fun PlaylistScreen(
     val tv = isTelevision()
     if (!tv) {
         SmartphonePlaylistScreenImpl(
-            channels = channels,
+            categoryWithChannels = categoryWithChannels,
             pinnedCategories = pinnedCategories,
             onPinOrUnpinCategory = onPinOrUnpinCategory,
             onHideCategory = onHideCategory,
@@ -356,7 +356,7 @@ private fun PlaylistScreen(
             rowCount = rowCount,
             scrollUp = scrollUp,
             contentPadding = contentPadding,
-            onStream = onStream,
+            onPlayChannel = onPlayChannel,
             isAtTopState = isAtTopState,
             refreshing = refreshing,
             onRefresh = onRefresh,
@@ -380,10 +380,10 @@ private fun PlaylistScreen(
         ) {
             TvPlaylistScreenImpl(
                 title = title,
-                channels = channels,
+                categoryWithChannels = categoryWithChannels,
                 query = query,
                 onQuery = onQuery,
-                onStream = onStream,
+                onPlayChannel = onPlayChannel,
                 onRefresh = onRefresh,
                 sorts = sorts,
                 sort = sort,

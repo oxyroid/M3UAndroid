@@ -26,7 +26,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import com.m3u.core.util.basic.title
 import com.m3u.data.database.model.Playlist
-import com.m3u.data.database.model.Stream
+import com.m3u.data.database.model.Channel
 import com.m3u.i18n.R.string
 import com.m3u.material.components.BottomSheet
 import com.m3u.material.components.IconButton
@@ -42,11 +42,11 @@ sealed class MediaSheetValue {
     ) : MediaSheetValue()
 
     data class PlaylistScreen(
-        val stream: Stream? = null
+        val channel: Channel? = null
     ) : MediaSheetValue()
 
     data class FavouriteScreen(
-        val stream: Stream? = null
+        val channel: Channel? = null
     ) : MediaSheetValue()
 }
 
@@ -58,10 +58,10 @@ fun MediaSheet(
     modifier: Modifier = Modifier,
     onUnsubscribePlaylist: (Playlist) -> Unit = { noImpl() },
     onPlaylistConfiguration: (Playlist) -> Unit = { noImpl() },
-    onFavouriteStream: (Stream) -> Unit = { noImpl() },
-    onHideStream: (Stream) -> Unit = { noImpl() },
-    onSaveStreamCover: (Stream) -> Unit = { noImpl() },
-    onCreateStreamShortcut: (Stream) -> Unit = { noImpl() }
+    onFavouriteChannel: (Channel) -> Unit = { noImpl() },
+    onHideChannel: (Channel) -> Unit = { noImpl() },
+    onSaveChannelCover: (Channel) -> Unit = { noImpl() },
+    onCreateShortcut: (Channel) -> Unit = { noImpl() }
 ) {
     val spacing = LocalSpacing.current
     val clipboardManager = LocalClipboardManager.current
@@ -69,8 +69,8 @@ fun MediaSheet(
     val sheetState = rememberModalBottomSheetState()
     val visible = when (value) {
         is ForyouScreen -> value.playlist != null
-        is PlaylistScreen -> value.stream != null
-        is FavouriteScreen -> value.stream != null
+        is PlaylistScreen -> value.channel != null
+        is FavouriteScreen -> value.channel != null
     }
     BottomSheet(
         sheetState = sheetState,
@@ -84,11 +84,11 @@ fun MediaSheet(
                 )
 
                 is PlaylistScreen -> PlaylistScreenMediaSheetHeaderImpl(
-                    stream = value.stream
+                    channel = value.channel
                 )
 
                 is FavouriteScreen -> FavouriteScreenMediaSheetHeaderImpl(
-                    stream = value.stream
+                    channel = value.channel
                 )
             }
         },
@@ -121,33 +121,33 @@ fun MediaSheet(
                     }
 
                     is PlaylistScreen -> {
-                        value.stream?.let {
+                        value.channel?.let {
                             MediaSheetItem(
                                 stringRes = if (!it.favourite) string.feat_playlist_dialog_favourite_title
                                 else string.feat_playlist_dialog_favourite_cancel_title,
                                 onClick = {
-                                    onFavouriteStream(it)
+                                    onFavouriteChannel(it)
                                     onDismissRequest()
                                 }
                             )
                             MediaSheetItem(
                                 stringRes = string.feat_playlist_dialog_hide_title,
                                 onClick = {
-                                    onHideStream(it)
+                                    onHideChannel(it)
                                     onDismissRequest()
                                 }
                             )
                             MediaSheetItem(
                                 stringRes = string.feat_playlist_dialog_create_shortcut_title,
                                 onClick = {
-                                    onCreateStreamShortcut(it)
+                                    onCreateShortcut(it)
                                     onDismissRequest()
                                 }
                             )
                             MediaSheetItem(
                                 stringRes = string.feat_playlist_dialog_save_picture_title,
                                 onClick = {
-                                    onSaveStreamCover(it)
+                                    onSaveChannelCover(it)
                                     onDismissRequest()
                                 }
                             )
@@ -155,19 +155,19 @@ fun MediaSheet(
                     }
 
                     is FavouriteScreen -> {
-                        value.stream?.let {
+                        value.channel?.let {
                             MediaSheetItem(
                                 stringRes = if (!it.favourite) string.feat_playlist_dialog_favourite_title
                                 else string.feat_playlist_dialog_favourite_cancel_title,
                                 onClick = {
-                                    onFavouriteStream(it)
+                                    onFavouriteChannel(it)
                                     onDismissRequest()
                                 }
                             )
                             MediaSheetItem(
                                 stringRes = string.feat_playlist_dialog_create_shortcut_title,
                                 onClick = {
-                                    onCreateStreamShortcut(it)
+                                    onCreateShortcut(it)
                                     onDismissRequest()
                                 }
                             )
@@ -220,9 +220,9 @@ private fun RowScope.ForyouScreenMediaSheetHeaderImpl(
 
 @Composable
 private fun RowScope.PlaylistScreenMediaSheetHeaderImpl(
-    stream: Stream?
+    channel: Channel?
 ) {
-    stream?.let {
+    channel?.let {
         Text(
             text = it.title,
             style = MaterialTheme.typography.titleLarge
@@ -233,9 +233,9 @@ private fun RowScope.PlaylistScreenMediaSheetHeaderImpl(
 
 @Composable
 private fun RowScope.FavouriteScreenMediaSheetHeaderImpl(
-    stream: Stream?
+    channel: Channel?
 ) {
-    stream?.let {
+    channel?.let {
         Text(
             text = it.title,
             style = MaterialTheme.typography.titleLarge

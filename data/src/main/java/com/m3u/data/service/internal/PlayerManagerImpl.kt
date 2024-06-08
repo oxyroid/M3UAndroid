@@ -43,11 +43,11 @@ import com.m3u.core.architecture.preferences.ReconnectMode
 import com.m3u.data.SSLs
 import com.m3u.data.api.OkhttpClient
 import com.m3u.data.database.model.Playlist
-import com.m3u.data.database.model.Stream
+import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.copyXtreamEpisode
 import com.m3u.data.database.model.copyXtreamSeries
 import com.m3u.data.repository.playlist.PlaylistRepository
-import com.m3u.data.repository.stream.StreamRepository
+import com.m3u.data.repository.channel.ChannelRepository
 import com.m3u.data.service.MediaCommand
 import com.m3u.data.service.PlayerManager
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -84,7 +84,7 @@ class PlayerManagerImpl @Inject constructor(
     @OkhttpClient(false) private val okHttpClient: OkHttpClient,
     private val preferences: Preferences,
     private val playlistRepository: PlaylistRepository,
-    private val streamRepository: StreamRepository,
+    private val channelRepository: ChannelRepository,
     private val cache: Cache,
     downloadManager: DownloadManager,
     delegate: Logger
@@ -97,13 +97,13 @@ class PlayerManagerImpl @Inject constructor(
 
     private val mediaCommand = MutableStateFlow<MediaCommand?>(null)
 
-    override val stream: StateFlow<Stream?> = mediaCommand
+    override val channel: StateFlow<Channel?> = mediaCommand
         .onEach { logger.post { "receive media command: $it" } }
         .flatMapLatest { command ->
             when (command) {
-                is MediaCommand.Common -> streamRepository.observe(command.streamId)
-                is MediaCommand.XtreamEpisode -> streamRepository
-                    .observe(command.streamId)
+                is MediaCommand.Common -> channelRepository.observe(command.channelId)
+                is MediaCommand.XtreamEpisode -> channelRepository
+                    .observe(command.channelId)
                     .map { it?.copyXtreamEpisode(command.episode) }
 
                 else -> flowOf(null)
@@ -118,16 +118,16 @@ class PlayerManagerImpl @Inject constructor(
     override val playlist: StateFlow<Playlist?> = mediaCommand.flatMapLatest { command ->
         when (command) {
             is MediaCommand.Common -> {
-                val stream = streamRepository.get(command.streamId)
-                stream?.let { playlistRepository.observe(it.playlistUrl) } ?: flow { }
+                val channel = channelRepository.get(command.channelId)
+                channel?.let { playlistRepository.observe(it.playlistUrl) } ?: flow { }
             }
 
             is MediaCommand.XtreamEpisode -> {
-                val stream = streamRepository.get(command.streamId)
-                stream?.let {
+                val channel = channelRepository.get(command.channelId)
+                channel?.let {
                     playlistRepository
                         .observe(it.playlistUrl)
-                        .map { prev -> prev?.copyXtreamSeries(stream) }
+                        .map { prev -> prev?.copyXtreamSeries(channel) }
                 } ?: flowOf(null)
             }
 
@@ -153,23 +153,23 @@ class PlayerManagerImpl @Inject constructor(
     override suspend fun play(command: MediaCommand) {
         release()
         mediaCommand.value = command
-        val stream = when (command) {
-            is MediaCommand.Common -> streamRepository.get(command.streamId)
-            is MediaCommand.XtreamEpisode -> streamRepository
-                .get(command.streamId)
+        val channel = when (command) {
+            is MediaCommand.Common -> channelRepository.get(command.channelId)
+            is MediaCommand.XtreamEpisode -> channelRepository
+                .get(command.channelId)
                 ?.copyXtreamEpisode(command.episode)
         }
-        if (stream != null) {
-            val streamUrl = stream.url
-            streamRepository.reportPlayed(stream.id)
-            val playlist = playlistRepository.get(stream.playlistUrl)
+        if (channel != null) {
+            val channelUrl = channel.url
+            channelRepository.reportPlayed(channel.id)
+            val playlist = playlistRepository.get(channel.playlistUrl)
 
-            val iterator = MimetypeIterator.Unspecified(streamUrl)
+            val iterator = MimetypeIterator.Unspecified(channelUrl)
             this.iterator = iterator
             logger.post { "init mimetype: $iterator" }
             tryPlay(
                 mimeType = null,
-                url = streamUrl,
+                url = channelUrl,
                 userAgent = playlist?.userAgent,
             )
 
@@ -199,7 +199,7 @@ class PlayerManagerImpl @Inject constructor(
 
     private fun tryPlay(
         mimeType: String?,
-        url: String = stream.value?.url.orEmpty(),
+        url: String = channel.value?.url.orEmpty(),
         userAgent: String? = playlist.value?.userAgent
     ) {
         val rtmp: Boolean = Url(url).protocol.name == "rtmp"
@@ -337,9 +337,7 @@ class PlayerManagerImpl @Inject constructor(
             .setUserAgent(userAgent)
         return if (preferences.cache) {
             CacheDataSource.Factory()
-                .setUpstreamDataSourceFactory(
-                    upstream
-                )
+                .setUpstreamDataSourceFactory(upstream)
                 .setCache(cache)
                 .setFlags(CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR)
         } else upstream

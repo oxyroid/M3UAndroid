@@ -17,7 +17,7 @@
     <string name="feat_setting_god_mode_description">aranjare ecran cu tastele fizice de volum</string>
     <string name="feat_setting_experimental_mode">mod experimental</string>
     <string name="feat_setting_experimental_mode_description">functionalitati instabile care pot genera erori fatale</string>
-    <string name="feat_setting_label_hidden_streams">canale ascunse</string>
+    <string name="feat_setting_label_hidden_channels">canale ascunse</string>
     <string name="feat_setting_label_add_playlist">adauga lista</string>
     <string name="feat_setting_label_parse_from_clipboard">incarca din clipboard</string>
     <string name="feat_setting_label_select_from_local_storage">selectie fisier</string>

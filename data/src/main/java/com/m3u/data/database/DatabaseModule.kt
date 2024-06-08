@@ -10,7 +10,7 @@ import com.m3u.data.database.dao.ColorSchemeDao
 import com.m3u.data.database.dao.EpisodeDao
 import com.m3u.data.database.dao.PlaylistDao
 import com.m3u.data.database.dao.ProgrammeDao
-import com.m3u.data.database.dao.StreamDao
+import com.m3u.data.database.dao.ChannelDao
 import com.m3u.data.database.example.ColorSchemeExample
 import dagger.Module
 import dagger.Provides
@@ -48,9 +48,9 @@ internal object DatabaseModule {
 
     @Provides
     @Singleton
-    fun provideStreamDao(
+    fun provideChannelDao(
         database: M3UDatabase
-    ): StreamDao = database.streamDao()
+    ): ChannelDao = database.channelDao()
 
     @Provides
     @Singleton
@@ -72,7 +72,7 @@ internal object DatabaseModule {
 
     @Provides
     @Singleton
-    fun provideColorPackDao(
+    fun provideColorSchemeDao(
         database: M3UDatabase
-    ): ColorSchemeDao = database.colorPackDao()
+    ): ColorSchemeDao = database.colorSchemeDao()
 }

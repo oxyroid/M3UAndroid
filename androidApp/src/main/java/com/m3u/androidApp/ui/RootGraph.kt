@@ -30,7 +30,7 @@ fun NavController.restoreBackStack() {
 fun NavGraphBuilder.rootGraph(
     contentPadding: PaddingValues,
     navigateToPlaylist: (Playlist) -> Unit,
-    navigateToStream: () -> Unit,
+    navigateToChannel: () -> Unit,
     navigateToSettingPlaylistManagement: () -> Unit,
     navigateToPlaylistConfiguration: (Playlist) -> Unit,
 ) {
@@ -38,7 +38,7 @@ fun NavGraphBuilder.rootGraph(
         RootGraph(
             contentPadding = contentPadding,
             navigateToPlaylist = navigateToPlaylist,
-            navigateToStream = navigateToStream,
+            navigateToChannel = navigateToChannel,
             navigateToSettingPlaylistManagement = navigateToSettingPlaylistManagement,
             navigateToPlaylistConfiguration = navigateToPlaylistConfiguration
         )
@@ -49,7 +49,7 @@ fun NavGraphBuilder.rootGraph(
 private fun RootGraph(
     contentPadding: PaddingValues,
     navigateToPlaylist: (Playlist) -> Unit,
-    navigateToStream: () -> Unit,
+    navigateToChannel: () -> Unit,
     navigateToSettingPlaylistManagement: () -> Unit,
     navigateToPlaylistConfiguration: (Playlist) -> Unit,
     modifier: Modifier = Modifier
@@ -70,7 +70,7 @@ private fun RootGraph(
             Destination.Root.Foryou -> {
                 ForyouRoute(
                     navigateToPlaylist = navigateToPlaylist,
-                    navigateToStream = navigateToStream,
+                    navigateToChannel = navigateToChannel,
                     navigateToSettingPlaylistManagement = navigateToSettingPlaylistManagement,
                     navigateToPlaylistConfiguration = navigateToPlaylistConfiguration,
                     contentPadding = contentPadding,
@@ -80,7 +80,7 @@ private fun RootGraph(
 
             Destination.Root.Favourite -> {
                 FavouriteRoute(
-                    navigateToStream = navigateToStream,
+                    navigateToChannel = navigateToChannel,
                     contentPadding = contentPadding,
                     modifier = Modifier.fillMaxSize()
                 )

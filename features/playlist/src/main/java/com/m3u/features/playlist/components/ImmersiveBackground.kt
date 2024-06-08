@@ -30,7 +30,7 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.m3u.core.architecture.preferences.hiltPreferences
 import com.m3u.data.database.model.Programme
-import com.m3u.data.database.model.Stream
+import com.m3u.data.database.model.Channel
 import com.m3u.material.brush.ImmersiveBackgroundBrush
 import com.m3u.material.components.IconButton
 import com.m3u.material.model.LocalSpacing
@@ -42,12 +42,12 @@ import androidx.tv.material3.Text as TvText
 @Composable
 internal fun ImmersiveBackground(
     title: String,
-    stream: Stream?,
+    channel: Channel?,
     maxBrowserHeight: Dp,
     onRefresh: () -> Unit,
     openSearchDrawer: () -> Unit,
     openSortDrawer: () -> Unit,
-    getProgrammeCurrently: suspend (channelId: String) -> Programme?,
+    getProgrammeCurrently: suspend (originalId: String) -> Programme?,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -59,22 +59,22 @@ internal fun ImmersiveBackground(
     val currentGetProgrammeCurrently by rememberUpdatedState(getProgrammeCurrently)
 
     Box(modifier) {
-        if (stream != null) {
+        if (channel != null) {
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.TopEnd
             ) {
                 if (!noPictureMode) {
-                    val request = remember(stream.cover) {
+                    val request = remember(channel.cover) {
                         ImageRequest.Builder(context)
-                            .data(stream.cover.orEmpty())
+                            .data(channel.cover.orEmpty())
                             .crossfade(1600)
                             .build()
                     }
                     AsyncImage(
                         model = request,
                         contentScale = ContentScale.Crop,
-                        contentDescription = stream.title,
+                        contentDescription = channel.title,
                         modifier = Modifier
                             .fillMaxWidth(0.78f)
                             .aspectRatio(16 / 9f)
@@ -94,7 +94,7 @@ internal fun ImmersiveBackground(
                         .fillMaxWidth()
                 ) {
                     TvText(
-                        text = stream.title,
+                        text = channel.title,
                         style = TvMaterialTheme.typography.headlineLarge,
                         fontWeight = FontWeight.ExtraBold,
                         maxLines = 1
@@ -102,9 +102,9 @@ internal fun ImmersiveBackground(
 
                     val programme: Programme? by produceState<Programme?>(
                         initialValue = null,
-                        key1 = stream.channelId
+                        key1 = channel.originalId
                     ) {
-                        value = currentGetProgrammeCurrently(stream.channelId.orEmpty())
+                        value = currentGetProgrammeCurrently(channel.originalId.orEmpty())
                     }
 
                     programme?.let {

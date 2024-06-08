@@ -7,11 +7,11 @@ object Profiles {
     val VIEWMODEL_FORYOU = Profile("viewmodel-foryou")
     val VIEWMODEL_PLAYLIST = Profile("viewmodel-playlist")
     val VIEWMODEL_SETTING = Profile("viewmodel-setting")
-    val VIEWMODEL_STREAM = Profile("viewmodel-stream")
+    val VIEWMODEL_CHANNEL = Profile("viewmodel-channel")
     val VIEWMODEL_PLAYLIST_CONFIGURATION = Profile("viewmodel-playlist-configuration", Message.LEVEL_INFO)
 
     val REPOS_PLAYLIST = Profile("repos-playlist")
-    val REPOS_STREAM = Profile("repos-stream")
+    val REPOS_CHANNEL = Profile("repos-channel")
     val REPOS_PROGRAMME = Profile("repos-programme")
     val REPOS_TELEVISION = Profile("repos-television")
     val REPOS_MEDIA = Profile("repos-media")

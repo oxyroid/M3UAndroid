@@ -37,21 +37,21 @@ import com.m3u.core.wrapper.handledEvent
 import com.m3u.core.wrapper.mapResource
 import com.m3u.core.wrapper.resource
 import com.m3u.data.database.dao.ProgrammeDao
+import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.Programme
-import com.m3u.data.database.model.Stream
 import com.m3u.data.database.model.epgUrlsOrXtreamXmlUrl
 import com.m3u.data.database.model.isSeries
 import com.m3u.data.database.model.type
-import com.m3u.data.parser.xtream.XtreamStreamInfo
+import com.m3u.data.parser.xtream.XtreamChannelInfo
 import com.m3u.data.repository.media.MediaRepository
 import com.m3u.data.repository.playlist.PlaylistRepository
-import com.m3u.data.repository.stream.StreamRepository
+import com.m3u.data.repository.channel.ChannelRepository
 import com.m3u.data.service.MediaCommand
 import com.m3u.data.service.Messager
 import com.m3u.data.service.PlayerManager
 import com.m3u.data.worker.SubscriptionWorker
-import com.m3u.features.playlist.PlaylistMessage.StreamCoverSaved
+import com.m3u.features.playlist.PlaylistMessage.ChannelCoverSaved
 import com.m3u.features.playlist.navigation.PlaylistNavigation
 import com.m3u.ui.Sort
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -85,7 +85,7 @@ const val REQUEST_CHANNEL_BROWSABLE = 4001
 @HiltViewModel
 class PlaylistViewModel @Inject constructor(
     private val savedStateHandle: SavedStateHandle,
-    private val streamRepository: StreamRepository,
+    private val channelRepository: ChannelRepository,
     private val playlistRepository: PlaylistRepository,
     private val mediaRepository: MediaRepository,
     private val programmeDao: ProgrammeDao,
@@ -110,13 +110,13 @@ class PlaylistViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5_000L)
         )
 
-    internal val zapping: StateFlow<Stream?> = combine(
+    internal val zapping: StateFlow<Channel?> = combine(
         snapshotFlow { preferences.zappingMode },
-        playerManager.stream,
-        playlistUrl.flatMapLatest { streamRepository.observeAllByPlaylistUrl(it) }
-    ) { zappingMode, stream, streams ->
+        playerManager.channel,
+        playlistUrl.flatMapLatest { channelRepository.observeAllByPlaylistUrl(it) }
+    ) { zappingMode, channel, channels ->
         if (!zappingMode) null
-        else streams.find { it.url == stream?.url }
+        else channels.find { it.url == channel?.url }
     }
         .stateIn(
             scope = viewModelScope,
@@ -159,20 +159,20 @@ class PlaylistViewModel @Inject constructor(
 
     internal fun favourite(id: Int) {
         viewModelScope.launch {
-            streamRepository.favouriteOrUnfavourite(id)
+            channelRepository.favouriteOrUnfavourite(id)
         }
     }
 
     internal fun savePicture(id: Int) {
         viewModelScope.launch {
-            val stream = streamRepository.get(id)
-            if (stream == null) {
-                messager.emit(PlaylistMessage.StreamNotFound)
+            val channel = channelRepository.get(id)
+            if (channel == null) {
+                messager.emit(PlaylistMessage.ChannelNotFound)
                 return@launch
             }
-            val cover = stream.cover
+            val cover = channel.cover
             if (cover.isNullOrEmpty()) {
-                messager.emit(PlaylistMessage.StreamCoverNotFound)
+                messager.emit(PlaylistMessage.ChannelCoverNotFound)
                 return@launch
             }
             resource { mediaRepository.savePicture(cover) }
@@ -180,7 +180,7 @@ class PlaylistViewModel @Inject constructor(
                     when (resource) {
                         Resource.Loading -> {}
                         is Resource.Success -> {
-                            messager.emit(StreamCoverSaved(resource.data.absolutePath))
+                            messager.emit(ChannelCoverSaved(resource.data.absolutePath))
                         }
 
                         is Resource.Failure -> {
@@ -194,23 +194,23 @@ class PlaylistViewModel @Inject constructor(
 
     internal fun hide(id: Int) {
         viewModelScope.launch {
-            val stream = streamRepository.get(id)
-            if (stream == null) {
-                messager.emit(PlaylistMessage.StreamNotFound)
+            val channel = channelRepository.get(id)
+            if (channel == null) {
+                messager.emit(PlaylistMessage.ChannelNotFound)
             } else {
-                streamRepository.hide(stream.id, true)
+                channelRepository.hide(channel.id, true)
             }
         }
     }
 
     internal fun createShortcut(context: Context, id: Int) {
-        val shortcutId = "stream_$id"
+        val shortcutId = "channel_$id"
         viewModelScope.launch {
-            val stream = streamRepository.get(id) ?: return@launch
-            val bitmap = stream.cover?.let { mediaRepository.loadDrawable(it)?.toBitmap() }
+            val channel = channelRepository.get(id) ?: return@launch
+            val bitmap = channel.cover?.let { mediaRepository.loadDrawable(it)?.toBitmap() }
             val shortcutInfo = ShortcutInfoCompat.Builder(context, shortcutId)
-                .setShortLabel(stream.title)
-                .setLongLabel(stream.url)
+                .setShortLabel(channel.title)
+                .setLongLabel(channel.url)
                 .setIcon(
                     bitmap
                         ?.let { IconCompat.createWithBitmap(it) }
@@ -222,7 +222,7 @@ class PlaylistViewModel @Inject constructor(
                             context,
                             Contracts.PLAYER_ACTIVITY
                         )
-                        putExtra(Contracts.PLAYER_SHORTCUT_STREAM_ID, stream.id)
+                        putExtra(Contracts.PLAYER_SHORTCUT_CHANNEL_ID, channel.id)
                     }
                 )
                 .build()
@@ -251,8 +251,8 @@ class PlaylistViewModel @Inject constructor(
             null
         }
         viewModelScope.launch {
-            val stream = streamRepository.get(id) ?: return@launch
-            val type = when (playlistRepository.get(stream.playlistUrl)?.type) {
+            val channel = channelRepository.get(id) ?: return@launch
+            val type = when (playlistRepository.get(channel.playlistUrl)?.type) {
                 in Playlist.VOD_TYPES -> TvContractCompat.PreviewPrograms.TYPE_MOVIE
                 in Playlist.SERIES_TYPES -> TvContractCompat.PreviewPrograms.TYPE_TV_EPISODE
                 else -> TvContractCompat.PreviewPrograms.TYPE_CHANNEL
@@ -261,14 +261,14 @@ class PlaylistViewModel @Inject constructor(
                 null -> TvProviderChannel.Builder()
                 else -> TvProviderChannel.Builder(existingChannel)
             }
-            val channel = channelBuilder
+            val tvChannel = channelBuilder
                 .setType(TvContractCompat.Channels.TYPE_PREVIEW)
                 .setDisplayName("M3U")
                 .setInternalProviderId(channelInternalProviderId)
                 .setAppLinkIntentUri("content://m3u.com/discover".toUri())
                 .build()
 
-            val channelId = channel.id
+            val channelId = tvChannel.id
 
             if (existingChannel == null) {
                 try {
@@ -284,16 +284,16 @@ class PlaylistViewModel @Inject constructor(
                 }
                 contentResolver.insert(
                     TvContractCompat.Channels.CONTENT_URI,
-                    channel.toContentValues()
+                    tvChannel.toContentValues()
                 )
             }
 
             val program = PreviewProgram.Builder()
                 .setChannelId(channelId)
                 .setType(type)
-                .setTitle(stream.title)
-                .setPreviewVideoUri(stream.url.toUri())
-                .setPosterArtUri(stream.cover?.toUri())
+                .setTitle(channel.title)
+                .setPreviewVideoUri(channel.url.toUri())
+                .setPosterArtUri(channel.cover?.toUri())
                 .setIntentUri("content://m3u.com/discover/$id".toUri())
                 .setInternalProviderId(programInternalProviderId)
                 .build()
@@ -310,9 +310,9 @@ class PlaylistViewModel @Inject constructor(
         val epgUrls = playlist.epgUrlsOrXtreamXmlUrl()
         if (epgUrls.isEmpty()) return null
         val time = Clock.System.now().toEpochMilliseconds()
-        return programmeDao.getCurrentByEpgUrlsAndChannelId(
+        return programmeDao.getCurrentByEpgUrlsAndOriginalId(
             epgUrls = epgUrls,
-            channelId = channelId,
+            originalId = channelId,
             time = time
         )
     }
@@ -341,28 +341,29 @@ class PlaylistViewModel @Inject constructor(
         val categories: List<String>,
     )
 
-    data class Channel(
+    data class CategoryWithChannels(
         val category: String,
-        val streams: Flow<PagingData<Stream>>,
+        val channels: Flow<PagingData<Channel>>,
     )
 
     @OptIn(FlowPreview::class)
-    private val categories: StateFlow<List<String>> = flatmapCombined(playlistUrl, query) { playlistUrl, query ->
-        playlistRepository.observeCategoriesByPlaylistUrlIgnoreHidden(playlistUrl, query)
-    }
-        .let { flow ->
-            merge(
-                flow.take(1),
-                flow.drop(1).debounce(1.seconds)
-            )
+    private val categories: StateFlow<List<String>> =
+        flatmapCombined(playlistUrl, query) { playlistUrl, query ->
+            playlistRepository.observeCategoriesByPlaylistUrlIgnoreHidden(playlistUrl, query)
         }
-        .stateIn(
-            scope = viewModelScope,
-            initialValue = emptyList(),
-            started = SharingStarted.Lazily
-        )
+            .let { flow ->
+                merge(
+                    flow.take(1),
+                    flow.drop(1).debounce(1.seconds)
+                )
+            }
+            .stateIn(
+                scope = viewModelScope,
+                initialValue = emptyList(),
+                started = SharingStarted.Lazily
+            )
 
-    internal val channels: StateFlow<List<Channel>> = combine(
+    internal val channels: StateFlow<List<CategoryWithChannels>> = combine(
         playlistUrl,
         categories,
         query, sort
@@ -376,18 +377,18 @@ class PlaylistViewModel @Inject constructor(
     }
         .mapLatest { (playlistUrl, query, sort, categories) ->
             categories.map { category ->
-                Channel(
+                CategoryWithChannels(
                     category = category,
-                    streams = Pager(PagingConfig(15)) {
-                        streamRepository.pagingAllByPlaylistUrl(
+                    channels = Pager(PagingConfig(15)) {
+                        channelRepository.pagingAllByPlaylistUrl(
                             playlistUrl,
                             category,
                             query,
                             when (sort) {
-                                Sort.UNSPECIFIED -> StreamRepository.Sort.UNSPECIFIED
-                                Sort.ASC -> StreamRepository.Sort.ASC
-                                Sort.DESC -> StreamRepository.Sort.DESC
-                                Sort.RECENTLY -> StreamRepository.Sort.RECENTLY
+                                Sort.UNSPECIFIED -> ChannelRepository.Sort.UNSPECIFIED
+                                Sort.ASC -> ChannelRepository.Sort.ASC
+                                Sort.DESC -> ChannelRepository.Sort.DESC
+                                Sort.RECENTLY -> ChannelRepository.Sort.RECENTLY
                             }
                         )
                     }
@@ -427,26 +428,26 @@ class PlaylistViewModel @Inject constructor(
     }
 
     internal fun setup(
-        streamId: Int,
+        channelId: Int,
         onPlayMediaCommand: (MediaCommand) -> Unit
     ) {
         viewModelScope.launch {
-            val stream = streamRepository.get(streamId) ?: return@launch
-            val playlist = playlistRepository.get(stream.playlistUrl)
-            savedStateHandle[PlaylistNavigation.TYPE_URL] = stream.playlistUrl
+            val channel = channelRepository.get(channelId) ?: return@launch
+            val playlist = playlistRepository.get(channel.playlistUrl)
+            savedStateHandle[PlaylistNavigation.TYPE_URL] = channel.playlistUrl
 
             if (playlist?.isSeries == false) {
-                onPlayMediaCommand(MediaCommand.Common(stream.id))
+                onPlayMediaCommand(MediaCommand.Common(channel.id))
             } else {
-                series.value = stream
+                series.value = channel
             }
         }
     }
 
-    internal val series = MutableStateFlow<Stream?>(null)
+    internal val series = MutableStateFlow<Channel?>(null)
     internal val seriesReplay = MutableStateFlow(0)
 
-    internal val episodes: StateFlow<Resource<List<XtreamStreamInfo.Episode>>> = series
+    internal val episodes: StateFlow<Resource<List<XtreamChannelInfo.Episode>>> = series
         .combine(seriesReplay) { series, _ -> series }
         .flatMapLatest { series ->
             if (series == null) flow {}

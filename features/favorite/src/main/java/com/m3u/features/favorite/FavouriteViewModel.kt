@@ -22,11 +22,11 @@ import com.m3u.core.wrapper.asResource
 import com.m3u.core.wrapper.mapResource
 import com.m3u.core.wrapper.resource
 import com.m3u.data.database.model.Playlist
-import com.m3u.data.database.model.Stream
-import com.m3u.data.parser.xtream.XtreamStreamInfo
+import com.m3u.data.database.model.Channel
+import com.m3u.data.parser.xtream.XtreamChannelInfo
 import com.m3u.data.repository.media.MediaRepository
 import com.m3u.data.repository.playlist.PlaylistRepository
-import com.m3u.data.repository.stream.StreamRepository
+import com.m3u.data.repository.channel.ChannelRepository
 import com.m3u.data.service.MediaCommand
 import com.m3u.data.service.PlayerManager
 import com.m3u.ui.Sort
@@ -48,7 +48,7 @@ import javax.inject.Inject
 @HiltViewModel
 class FavouriteViewModel @Inject constructor(
     private val playlistRepository: PlaylistRepository,
-    private val streamRepository: StreamRepository,
+    private val channelRepository: ChannelRepository,
     private val mediaRepository: MediaRepository,
     private val playerManager: PlayerManager,
     preferences: Preferences,
@@ -65,11 +65,11 @@ class FavouriteViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5_000)
         )
 
-    val zapping: StateFlow<Stream?> = combine(
+    val zapping: StateFlow<Channel?> = combine(
         zappingMode,
-        playerManager.stream
-    ) { zappingMode, stream ->
-        stream.takeIf { zappingMode }
+        playerManager.channel
+    ) { zappingMode, channel ->
+        channel.takeIf { zappingMode }
     }
         .flowOn(ioDispatcher)
         .stateIn(
@@ -95,7 +95,7 @@ class FavouriteViewModel @Inject constructor(
         sortIndex.update { sorts.indexOf(sort).coerceAtLeast(0) }
     }
 
-    val streamsResource: StateFlow<Resource<List<Stream>>> = streamRepository
+    val channels: StateFlow<Resource<List<Channel>>> = channelRepository
         .observeAllFavourite()
         .combine(sort) { all, sort ->
             when (sort) {
@@ -122,18 +122,18 @@ class FavouriteViewModel @Inject constructor(
 
     fun favourite(id: Int) {
         viewModelScope.launch {
-            streamRepository.favouriteOrUnfavourite(id)
+            channelRepository.favouriteOrUnfavourite(id)
         }
     }
 
     fun createShortcut(context: Context, id: Int) {
-        val shortcutId = "stream_$id"
+        val shortcutId = "channel_$id"
         viewModelScope.launch {
-            val stream = streamRepository.get(id) ?: return@launch
-            val bitmap = stream.cover?.let { mediaRepository.loadDrawable(it)?.toBitmap() }
+            val channel = channelRepository.get(id) ?: return@launch
+            val bitmap = channel.cover?.let { mediaRepository.loadDrawable(it)?.toBitmap() }
             val shortcutInfo = ShortcutInfoCompat.Builder(context, shortcutId)
-                .setShortLabel(stream.title)
-                .setLongLabel(stream.url)
+                .setShortLabel(channel.title)
+                .setLongLabel(channel.url)
                 .setIcon(
                     bitmap
                         ?.let { IconCompat.createWithBitmap(it) }
@@ -145,7 +145,7 @@ class FavouriteViewModel @Inject constructor(
                             context,
                             Contracts.PLAYER_ACTIVITY
                         )
-                        putExtra(Contracts.PLAYER_SHORTCUT_STREAM_ID, stream.id)
+                        putExtra(Contracts.PLAYER_SHORTCUT_CHANNEL_ID, channel.id)
                     }
                 )
                 .build()
@@ -153,9 +153,9 @@ class FavouriteViewModel @Inject constructor(
         }
     }
 
-    internal val series = MutableStateFlow<Stream?>(null)
+    internal val series = MutableStateFlow<Channel?>(null)
     internal val seriesReplay = MutableStateFlow(0)
-    internal val episodes: StateFlow<Resource<List<XtreamStreamInfo.Episode>>> = series
+    internal val episodes: StateFlow<Resource<List<XtreamChannelInfo.Episode>>> = series
         .combine(seriesReplay) { series, _ -> series }
         .flatMapLatest { series ->
             if (series == null) flow { }
@@ -174,9 +174,9 @@ class FavouriteViewModel @Inject constructor(
 
     internal fun playRandomly() {
         viewModelScope.launch {
-            val stream = streamRepository.getRandomIgnoreSeriesAndHidden() ?: return@launch
+            val channel = channelRepository.getRandomIgnoreSeriesAndHidden() ?: return@launch
             playerManager.play(
-                MediaCommand.Common(stream.id)
+                MediaCommand.Common(channel.id)
             )
         }
     }

@@ -41,7 +41,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastForEach
 import androidx.compose.ui.util.fastMap
 import androidx.compose.ui.util.fastMaxOfOrNull
-import com.m3u.androidApp.ui.internal.HeadlineBackground
 import com.m3u.androidApp.ui.internal.SmartphoneScaffoldImpl
 import com.m3u.androidApp.ui.internal.TabletScaffoldImpl
 import com.m3u.androidApp.ui.internal.TelevisionScaffoldImpl
@@ -225,7 +224,6 @@ internal fun MainContent(
         Background {
             Box {
                 StarBackground()
-                HeadlineBackground()
                 content(padding)
             }
         }

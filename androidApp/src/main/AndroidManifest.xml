@@ -57,7 +57,7 @@
                 android:resource="@xml/shortcuts" />
         </activity>
         <activity
-            android:name="com.m3u.features.stream.PlayerActivity"
+            android:name="com.m3u.features.channel.PlayerActivity"
             android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation|locale|layoutDirection"
             android:exported="true"
             android:launchMode="singleTop"

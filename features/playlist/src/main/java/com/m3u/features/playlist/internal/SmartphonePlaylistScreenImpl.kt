@@ -53,10 +53,10 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import com.m3u.core.wrapper.Event
 import com.m3u.data.database.model.Programme
-import com.m3u.data.database.model.Stream
+import com.m3u.data.database.model.Channel
 import com.m3u.features.playlist.PlaylistViewModel
 import com.m3u.features.playlist.components.PlaylistTabRow
-import com.m3u.features.playlist.components.SmartphoneStreamGallery
+import com.m3u.features.playlist.components.SmartphoneChannelGallery
 import com.m3u.i18n.R.string
 import com.m3u.material.components.TextField
 import com.m3u.material.ktx.isAtTop
@@ -80,11 +80,11 @@ import kotlinx.coroutines.launch
 @Composable
 @InternalComposeApi
 internal fun SmartphonePlaylistScreenImpl(
-    channels: List<PlaylistViewModel.Channel>,
+    categoryWithChannels: List<PlaylistViewModel.CategoryWithChannels>,
     pinnedCategories: List<String>,
     onPinOrUnpinCategory: (String) -> Unit,
     onHideCategory: (String) -> Unit,
-    zapping: Stream?,
+    zapping: Channel?,
     query: String,
     onQuery: (String) -> Unit,
     rowCount: Int,
@@ -92,13 +92,13 @@ internal fun SmartphonePlaylistScreenImpl(
     sorts: List<Sort>,
     sort: Sort,
     onSort: (Sort) -> Unit,
-    onStream: (Stream) -> Unit,
+    onPlayChannel: (Channel) -> Unit,
     refreshing: Boolean,
     onRefresh: () -> Unit,
-    favourite: (streamId: Int) -> Unit,
-    onHide: (streamId: Int) -> Unit,
-    onSaveCover: (streamId: Int) -> Unit,
-    onCreateShortcut: (streamId: Int) -> Unit,
+    favourite: (channelId: Int) -> Unit,
+    onHide: (channelId: Int) -> Unit,
+    onSaveCover: (channelId: Int) -> Unit,
+    onCreateShortcut: (channelId: Int) -> Unit,
     isAtTopState: MutableState<Boolean>,
     isVodOrSeriesPlaylist: Boolean,
     getProgrammeCurrently: suspend (channelId: String) -> Programme?,
@@ -145,7 +145,7 @@ internal fun SmartphonePlaylistScreenImpl(
         }
     }
 
-    val categories = remember(channels) { channels.map { it.category } }
+    val categories = remember(categoryWithChannels) { categoryWithChannels.map { it.category } }
     var category by remember(categories) { mutableStateOf(categories.firstOrNull().orEmpty()) }
 
     val (inner, outer) = contentPadding split WindowInsetsSides.Bottom
@@ -227,17 +227,17 @@ internal fun SmartphonePlaylistScreenImpl(
             }
 
             val gallery = @Composable {
-                val channel = remember(channels, category) {
-                    channels.find { it.category == category }
+                val channel = remember(categoryWithChannels, category) {
+                    categoryWithChannels.find { it.category == category }
                 }
-                SmartphoneStreamGallery(
+                SmartphoneChannelGallery(
                     state = state,
                     rowCount = actualRowCount,
-                    channel = channel,
+                    categoryWithChannels = channel,
                     zapping = zapping,
                     recently = sort == Sort.RECENTLY,
                     isVodOrSeriesPlaylist = isVodOrSeriesPlaylist,
-                    onClick = onStream,
+                    onClick = onPlayChannel,
                     contentPadding = inner,
                     onLongClick = {
                         mediaSheetValue = MediaSheetValue.PlaylistScreen(it)
@@ -292,20 +292,20 @@ internal fun SmartphonePlaylistScreenImpl(
 
     MediaSheet(
         value = mediaSheetValue,
-        onFavouriteStream = { stream ->
-            favourite(stream.id)
+        onFavouriteChannel = { channel ->
+            favourite(channel.id)
             mediaSheetValue = MediaSheetValue.PlaylistScreen()
         },
-        onHideStream = { stream ->
-            onHide(stream.id)
+        onHideChannel = { channel ->
+            onHide(channel.id)
             mediaSheetValue = MediaSheetValue.PlaylistScreen()
         },
-        onSaveStreamCover = { stream ->
-            onSaveCover(stream.id)
+        onSaveChannelCover = { channel ->
+            onSaveCover(channel.id)
             mediaSheetValue = MediaSheetValue.PlaylistScreen()
         },
-        onCreateStreamShortcut = { stream ->
-            onCreateShortcut(stream.id)
+        onCreateShortcut = { channel ->
+            onCreateShortcut(channel.id)
             mediaSheetValue = MediaSheetValue.PlaylistScreen()
         },
         onDismissRequest = { mediaSheetValue = MediaSheetValue.PlaylistScreen() }

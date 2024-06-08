@@ -31,7 +31,7 @@ class TvPlaylistActivity : AppCompatActivity() {
             Toolkit(helper) {
                 PlaylistRoute(
                     viewModel = viewModel,
-                    navigateToStream = ::navigateToStream
+                    navigateToChannel = ::navigateToChannel
                 )
             }
         }
@@ -44,11 +44,11 @@ class TvPlaylistActivity : AppCompatActivity() {
             val pathSegments = intentData?.pathSegments ?: emptyList()
             when (pathSegments.firstOrNull()) {
                 "discover" -> {
-                    val streamId = pathSegments[1].toIntOrNull() ?: return
-                    viewModel.setup(streamId) {
+                    val channelId = pathSegments[1].toIntOrNull() ?: return
+                    viewModel.setup(channelId) {
                         lifecycleScope.launch {
                             helper.play(it)
-                            navigateToStream()
+                            navigateToChannel()
                         }
                     }
                 }
@@ -56,7 +56,7 @@ class TvPlaylistActivity : AppCompatActivity() {
         }
     }
 
-    private fun navigateToStream() {
+    private fun navigateToChannel() {
         val options = ActivityOptions.makeCustomAnimation(
             this,
             0,

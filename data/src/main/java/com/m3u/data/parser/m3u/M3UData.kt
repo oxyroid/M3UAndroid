@@ -2,7 +2,7 @@ package com.m3u.data.parser.m3u
 
 import android.net.Uri
 import android.util.Log
-import com.m3u.data.database.model.Stream
+import com.m3u.data.database.model.Channel
 
 internal data class M3UData(
     val id: String = "",
@@ -16,14 +16,13 @@ internal data class M3UData(
     val licenseKey: String? = null,
 )
 
-internal fun M3UData.toStream(
+internal fun M3UData.toChannel(
     playlistUrl: String,
     seen: Long = 0L
-): Stream {
+): Channel {
     val fileScheme = "file:///"
     val actualUrl = run {
         if (url.startsWith(fileScheme)) {
-            Log.e("TAG", "url: $url")
             val paths = Uri.parse(playlistUrl)
                 .pathSegments
                 .dropLast(1) + url.drop(fileScheme.length)
@@ -40,7 +39,7 @@ internal fun M3UData.toStream(
                 .toString()
         } else url
     }
-    return Stream(
+    return Channel(
         url = actualUrl,
         category = group,
         title = title,
@@ -49,6 +48,6 @@ internal fun M3UData.toStream(
         seen = seen,
         licenseType = licenseType,
         licenseKey = licenseKey,
-        channelId = id
+        originalId = id
     )
 }

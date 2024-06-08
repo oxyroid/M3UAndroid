@@ -28,10 +28,10 @@ import com.m3u.data.database.example.ColorSchemeExample
 import com.m3u.data.database.model.ColorScheme
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
-import com.m3u.data.database.model.Stream
+import com.m3u.data.database.model.Channel
 import com.m3u.data.parser.xtream.XtreamInput
 import com.m3u.data.repository.playlist.PlaylistRepository
-import com.m3u.data.repository.stream.StreamRepository
+import com.m3u.data.repository.channel.ChannelRepository
 import com.m3u.data.service.Messager
 import com.m3u.data.service.PlayerManager
 import com.m3u.data.worker.BackupWorker
@@ -54,7 +54,7 @@ import javax.inject.Inject
 @HiltViewModel
 class SettingViewModel @Inject constructor(
     private val playlistRepository: PlaylistRepository,
-    private val streamRepository: StreamRepository,
+    private val channelRepository: ChannelRepository,
     private val workManager: WorkManager,
     private val preferences: Preferences,
     private val messager: Messager,
@@ -76,7 +76,7 @@ class SettingViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5_000L)
         )
 
-    internal val hiddenStreams: StateFlow<List<Stream>> = streamRepository
+    internal val hiddenChannels: StateFlow<List<Channel>> = channelRepository
         .observeAllHidden()
         .stateIn(
             scope = viewModelScope,
@@ -137,11 +137,11 @@ class SettingViewModel @Inject constructor(
         }
     }
 
-    internal fun onUnhideStream(streamId: Int) {
-        val hidden = hiddenStreams.value.find { it.id == streamId }
+    internal fun onUnhideChannel(channelId: Int) {
+        val hidden = hiddenChannels.value.find { it.id == channelId }
         if (hidden != null) {
             viewModelScope.launch {
-                streamRepository.hide(streamId, false)
+                channelRepository.hide(channelId, false)
             }
         }
     }

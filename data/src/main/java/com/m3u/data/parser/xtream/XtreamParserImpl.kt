@@ -142,7 +142,7 @@ internal class XtreamParserImpl @Inject constructor(
         )
     }
 
-    override suspend fun getSeriesInfoOrThrow(input: XtreamInput, seriesId: Int): XtreamStreamInfo {
+    override suspend fun getSeriesInfoOrThrow(input: XtreamInput, seriesId: Int): XtreamChannelInfo {
         val (basicUrl, username, password, type) = input
         check(type == DataSource.Xtream.TYPE_SERIES) { "xtream input type must be `series`" }
         return utils.newCallOrThrow(

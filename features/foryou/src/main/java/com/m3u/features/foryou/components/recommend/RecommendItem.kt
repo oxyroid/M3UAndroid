@@ -104,7 +104,7 @@ private fun UnseenContent(spec: Recommend.UnseenSpec) {
     val preferences = hiltPreferences()
     val colorScheme = MaterialTheme.colorScheme
 
-    val stream = spec.stream
+    val stream = spec.channel
     val duration = remember(stream.seen) {
         Clock.System.now() - Instant.fromEpochMilliseconds(stream.seen)
     }

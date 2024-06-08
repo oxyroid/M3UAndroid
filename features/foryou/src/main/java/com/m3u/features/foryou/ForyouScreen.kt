@@ -36,9 +36,10 @@ import com.m3u.core.util.basic.title
 import com.m3u.core.wrapper.Resource
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.PlaylistWithCount
-import com.m3u.data.database.model.Stream
+import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.isSeries
 import com.m3u.data.service.MediaCommand
+import com.m3u.features.foryou.components.HeadlineBackground
 import com.m3u.features.foryou.components.PlaylistGallery
 import com.m3u.features.foryou.components.PlaylistGalleryPlaceholder
 import com.m3u.features.foryou.components.recommend.Recommend
@@ -62,7 +63,7 @@ import kotlin.time.Duration.Companion.milliseconds
 @Composable
 fun ForyouRoute(
     navigateToPlaylist: (Playlist) -> Unit,
-    navigateToStream: () -> Unit,
+    navigateToChannel: () -> Unit,
     navigateToPlaylistConfiguration: (Playlist) -> Unit,
     navigateToSettingPlaylistManagement: () -> Unit,
     contentPadding: PaddingValues,
@@ -83,7 +84,7 @@ fun ForyouRoute(
     val recommend by viewModel.recommend.collectAsStateWithLifecycle()
     val episodes by viewModel.episodes.collectAsStateWithLifecycle()
 
-    val series: Stream? by viewModel.series.collectAsStateWithLifecycle()
+    val series: Channel? by viewModel.series.collectAsStateWithLifecycle()
     val subscribingPlaylistUrls by
     viewModel.subscribingPlaylistUrls.collectAsStateWithLifecycle()
     val refreshingEpgUrls by viewModel.refreshingEpgUrls.collectAsStateWithLifecycle(emptyList())
@@ -115,17 +116,17 @@ fun ForyouRoute(
         rowCount = preferences.rowCount,
         contentPadding = contentPadding,
         navigateToPlaylist = navigateToPlaylist,
-        onClickStream = { stream ->
+        onClickChannel = { channel ->
             coroutineScope.launch {
-                val playlist = viewModel.getPlaylist(stream.playlistUrl)
+                val playlist = viewModel.getPlaylist(channel.playlistUrl)
                 when {
                     playlist?.isSeries ?: false -> {
-                        viewModel.series.value = stream
+                        viewModel.series.value = channel
                     }
 
                     else -> {
-                        helper.play(MediaCommand.Common(stream.id))
-                        navigateToStream()
+                        helper.play(MediaCommand.Common(channel.id))
+                        navigateToChannel()
                     }
                 }
             }
@@ -155,13 +156,13 @@ fun ForyouRoute(
         episodes = episodes,
         onEpisodeClick = { episode ->
             coroutineScope.launch {
-                series?.let { stream ->
+                series?.let { channel ->
                     val input = MediaCommand.XtreamEpisode(
-                        streamId = stream.id,
+                        channelId = channel.id,
                         episode = episode
                     )
                     helper.play(input)
-                    navigateToStream()
+                    navigateToChannel()
                 }
             }
         },
@@ -179,7 +180,7 @@ private fun ForyouScreen(
     recommend: Recommend,
     contentPadding: PaddingValues,
     navigateToPlaylist: (Playlist) -> Unit,
-    onClickStream: (Stream) -> Unit,
+    onClickChannel: (Channel) -> Unit,
     navigateToSettingPlaylistManagement: () -> Unit,
     navigateToPlaylistConfiguration: (Playlist) -> Unit,
     onUnsubscribePlaylist: (playlistUrl: String) -> Unit,
@@ -205,7 +206,7 @@ private fun ForyouScreen(
         lifecycleOwner.repeatOnLifecycle(Lifecycle.State.RESUMED) {
             delay(400.milliseconds)
             Metadata.headlineUrl = when (currentHeadlineSpec) {
-                is Recommend.UnseenSpec -> currentHeadlineSpec.stream.cover.orEmpty()
+                is Recommend.UnseenSpec -> currentHeadlineSpec.channel.cover.orEmpty()
                 is Recommend.DiscoverSpec -> ""
                 else -> ""
             }
@@ -213,6 +214,7 @@ private fun ForyouScreen(
     }
 
     Box(modifier) {
+        HeadlineBackground()
         when (playlistCountsResource) {
             Resource.Loading -> {
                 LinearProgressIndicator(
@@ -228,7 +230,7 @@ private fun ForyouScreen(
                     RecommendGallery(
                         recommend = recommend,
                         navigateToPlaylist = navigateToPlaylist,
-                        onClickStream = onClickStream,
+                        onClickChannel = onClickChannel,
                         onSpecChanged = { spec -> headlineSpec = spec },
                         modifier = Modifier.fillMaxWidth()
                     )

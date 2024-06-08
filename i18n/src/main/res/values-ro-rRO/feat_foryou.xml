@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="feat_foryou_hidden_streams_playlist">streamuri ascunse</string>
+    <string name="feat_foryou_hidden_channels_playlist">streamuri ascunse</string>
     <string name="feat_foryou_unsubscribe_playlist">dezabonare</string>
     <string name="feat_foryou_copy_playlist_url">copie adresa lista</string>
     <string name="feat_foryou_rename_playlist">redenumire</string>

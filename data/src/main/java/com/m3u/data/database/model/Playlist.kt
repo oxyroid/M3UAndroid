@@ -34,7 +34,7 @@ data class Playlist(
     // for example, if the source is [DataSource.Xtream],
     // you can use [XtreamInput.decodeFromPlaylistUrl] get its real information include
     // basicUrl, username, password, type(the special query param) and etc.
-    // and then in the xtream-parser we can parse the data only for special type streams.
+    // and then in the xtream-parser we can parse the data only for special type channels.
     val url: String,
     // extra fields
     @ColumnInfo(name = "pinned_groups", defaultValue = "[]")
@@ -106,7 +106,7 @@ fun Playlist.epgUrlsOrXtreamXmlUrl(): List<String> = when (source) {
     else -> epgUrls
 }
 
-fun Playlist.copyXtreamSeries(series: Stream): Playlist = copy(
+fun Playlist.copyXtreamSeries(series: Channel): Playlist = copy(
     title = series.title
 )
 
@@ -119,7 +119,7 @@ sealed class DataSource(
     object M3U : DataSource(R.string.feat_setting_data_source_m3u, "m3u", true)
 
     // special playlist type.
-    // not like other playlist types, it maps to programmes but not streams.
+    // not like other playlist types, it maps to programmes but not channels.
     // so epg playlists should not be displayed in foryou page.
     // m3u playlist can refer epg playlist ids.
     // xtream playlist need not save or refer epg playlists.
@@ -151,14 +151,14 @@ sealed class DataSource(
     }
 }
 
-data class PlaylistWithStreams(
+data class PlaylistWithChannels(
     @Embedded
     val playlist: Playlist,
     @Relation(
         parentColumn = "url",
         entityColumn = "playlistUrl"
     )
-    val streams: List<Stream>
+    val channels: List<Channel>
 )
 
 @Immutable

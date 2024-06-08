@@ -1,6 +1,6 @@
 package com.m3u.data.parser.xtream
 
-import com.m3u.data.database.model.Stream
+import com.m3u.data.database.model.Channel
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -96,7 +96,7 @@ data class XtreamSerial(
 //    val youtubeTrailer: String? = null
 ) : XtreamData
 
-fun XtreamLive.toStream(
+fun XtreamLive.toChannel(
     basicUrl: String,
     username: String,
     password: String,
@@ -104,41 +104,41 @@ fun XtreamLive.toStream(
     category: String,
     // one of "allowed_output_formats"
     containerExtension: String
-): Stream = Stream(
+): Channel = Channel(
     url = "$basicUrl/live/$username/$password/$streamId.$containerExtension",
     category = category,
     title = name.orEmpty(),
     cover = streamIcon,
     playlistUrl = playlistUrl,
-    channelId = epgChannelId
+    originalId = epgChannelId
 )
 
-fun XtreamVod.toStream(
+fun XtreamVod.toChannel(
     basicUrl: String,
     username: String,
     password: String,
     playlistUrl: String,
     category: String
-): Stream = Stream(
+): Channel = Channel(
     url = "$basicUrl/movie/$username/$password/$streamId.${containerExtension}",
     category = category,
     title = name.orEmpty(),
     cover = streamIcon,
     playlistUrl = playlistUrl,
-    channelId = streamId?.toString()
+    originalId = streamId?.toString()
 )
 
-fun XtreamSerial.asStream(
+fun XtreamSerial.asChannel(
     basicUrl: String,
     username: String,
     password: String,
     playlistUrl: String,
     category: String
-): Stream = Stream(
+): Channel = Channel(
     url = "$basicUrl/series/$username/$password/$seriesId",
     category = category,
     title = name.orEmpty(),
     cover = cover,
     playlistUrl = playlistUrl,
-    channelId = seriesId?.toString()
+    originalId = seriesId?.toString()
 )

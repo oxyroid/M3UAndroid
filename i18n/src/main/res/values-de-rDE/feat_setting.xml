@@ -18,7 +18,7 @@
     <string name="feat_setting_experimental_mode">Experimenteller Modus</string>
     <string name="feat_setting_experimental_mode_description">Funktionen können Fehler verursachen</string>
     <string name="feat_setting_label_epg_playlists">EPG Liste</string>
-    <string name="feat_setting_label_hidden_streams">versteckte Streams</string>
+    <string name="feat_setting_label_hidden_channels">versteckte Streams</string>
     <string name="feat_setting_label_hidden_playlist_groups">versteckte Playlist-Kategorien</string>
     <string name="feat_setting_label_add_playlist">Playlist hinzufügen</string>
     <string name="feat_setting_label_parse_from_clipboard">Zwischenablage abrufen</string>
