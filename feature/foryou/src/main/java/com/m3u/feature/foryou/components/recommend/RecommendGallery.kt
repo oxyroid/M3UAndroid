@@ -17,6 +17,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalUriHandler
 import com.m3u.core.wrapper.eventOf
 import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.Playlist
@@ -29,45 +30,55 @@ import androidx.tv.material3.Carousel as TvCarousel
 
 @Composable
 internal fun RecommendGallery(
-    recommend: Recommend,
+    specs: List<Recommend.Spec>,
     onClickChannel: (Channel) -> Unit,
     navigateToPlaylist: (Playlist) -> Unit,
     onSpecChanged: (Recommend.Spec) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
+    val uriHandler = LocalUriHandler.current
 
     val tv = isTelevision()
 
+    val onClick = { spec: Recommend.Spec ->
+        when (spec) {
+            is Recommend.UnseenSpec -> {
+                onClickChannel(spec.channel)
+            }
+
+            is Recommend.DiscoverSpec -> {
+                Events.discoverCategory = eventOf(spec.category)
+                navigateToPlaylist(spec.playlist)
+            }
+
+            is Recommend.NewRelease -> {
+                uriHandler.openUri(spec.url)
+            }
+        }
+    }
+
     if (!tv) {
-        val state = rememberPagerState { recommend.size }
+        val state = rememberPagerState { specs.size }
         Column(
             modifier = modifier,
             verticalArrangement = Arrangement.spacedBy(spacing.medium)
         ) {
             LaunchedEffect(state.currentPage) {
-                onSpecChanged(recommend[state.currentPage])
+                onSpecChanged(specs[state.currentPage])
             }
             HorizontalPager(
                 state = state,
                 contentPadding = PaddingValues(horizontal = spacing.medium),
                 modifier = Modifier.animateContentSize()
             ) { page ->
-                val spec = recommend[page]
+                val spec = specs[page]
                 val pageOffset =
                     ((state.currentPage - page) + state.currentPageOffsetFraction).absoluteValue
                 RecommendItem(
                     spec = spec,
                     pageOffset = pageOffset,
-                    onClick = {
-                        when (spec) {
-                            is Recommend.UnseenSpec -> onClickChannel(spec.channel)
-                            is Recommend.DiscoverSpec -> {
-                                Events.discoverCategory = eventOf(spec.category)
-                                navigateToPlaylist(spec.playlist)
-                            }
-                        }
-                    }
+                    onClick = { onClick(spec) }
                 )
             }
             HorizontalPagerIndicator(
@@ -79,7 +90,7 @@ internal fun RecommendGallery(
         }
     } else {
         TvCarousel(
-            itemCount = recommend.size,
+            itemCount = specs.size,
             contentTransformEndToStart =
             fadeIn(tween(1000)) togetherWith fadeOut(tween(1000)),
             contentTransformStartToEnd =
@@ -88,19 +99,11 @@ internal fun RecommendGallery(
                 .padding(spacing.medium)
                 .then(modifier)
         ) { index ->
-            val spec = recommend[index]
+            val spec = specs[index]
             RecommendItem(
                 spec = spec,
                 pageOffset = 0f,
-                onClick = {
-                    when (spec) {
-                        is Recommend.UnseenSpec -> onClickChannel(spec.channel)
-                        is Recommend.DiscoverSpec -> {
-                            Events.discoverCategory = eventOf(spec.category)
-                            navigateToPlaylist(spec.playlist)
-                        }
-                    }
-                },
+                onClick = { onClick(spec) },
                 modifier = Modifier.animateEnterExit(
                     enter = slideInHorizontally(animationSpec = tween(1000)) { it / 2 },
                     exit = slideOutHorizontally(animationSpec = tween(1000))

@@ -34,9 +34,9 @@ import androidx.lifecycle.repeatOnLifecycle
 import com.m3u.core.architecture.preferences.hiltPreferences
 import com.m3u.core.util.basic.title
 import com.m3u.core.wrapper.Resource
+import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.PlaylistWithCount
-import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.isSeries
 import com.m3u.data.service.MediaCommand
 import com.m3u.feature.foryou.components.HeadlineBackground
@@ -81,7 +81,7 @@ fun ForyouRoute(
     val isPageInfoVisible = root == Destination.Root.Foryou
 
     val playlistCountsResource by viewModel.playlistCountsResource.collectAsStateWithLifecycle()
-    val recommend by viewModel.recommend.collectAsStateWithLifecycle()
+    val specs by viewModel.specs.collectAsStateWithLifecycle()
     val episodes by viewModel.episodes.collectAsStateWithLifecycle()
 
     val series: Channel? by viewModel.series.collectAsStateWithLifecycle()
@@ -112,7 +112,7 @@ fun ForyouRoute(
         playlistCountsResource = playlistCountsResource,
         subscribingPlaylistUrls = subscribingPlaylistUrls,
         refreshingEpgUrls = refreshingEpgUrls,
-        recommend = recommend,
+        specs = specs,
         rowCount = preferences.rowCount,
         contentPadding = contentPadding,
         navigateToPlaylist = navigateToPlaylist,
@@ -177,7 +177,7 @@ private fun ForyouScreen(
     playlistCountsResource: Resource<List<PlaylistWithCount>>,
     subscribingPlaylistUrls: List<String>,
     refreshingEpgUrls: List<String>,
-    recommend: Recommend,
+    specs: List<Recommend.Spec>,
     contentPadding: PaddingValues,
     navigateToPlaylist: (Playlist) -> Unit,
     onClickChannel: (Channel) -> Unit,
@@ -202,12 +202,13 @@ private fun ForyouScreen(
     }
 
     LaunchedEffect(headlineSpec) {
-        val currentHeadlineSpec = headlineSpec
+        val spec = headlineSpec
         lifecycleOwner.repeatOnLifecycle(Lifecycle.State.RESUMED) {
             delay(400.milliseconds)
-            Metadata.headlineUrl = when (currentHeadlineSpec) {
-                is Recommend.UnseenSpec -> currentHeadlineSpec.channel.cover.orEmpty()
+            Metadata.headlineUrl = when (spec) {
+                is Recommend.UnseenSpec -> spec.channel.cover.orEmpty()
                 is Recommend.DiscoverSpec -> ""
+                is Recommend.NewRelease -> ""
                 else -> ""
             }
         }
@@ -228,7 +229,7 @@ private fun ForyouScreen(
                 val showPlaylist = playlistCountsResource.data.isNotEmpty()
                 val header = @Composable {
                     RecommendGallery(
-                        recommend = recommend,
+                        specs = specs,
                         navigateToPlaylist = navigateToPlaylist,
                         onClickChannel = onClickChannel,
                         onSpecChanged = { spec -> headlineSpec = spec },
@@ -243,7 +244,7 @@ private fun ForyouScreen(
                         refreshingEpgUrls = refreshingEpgUrls,
                         onClick = navigateToPlaylist,
                         onLongClick = { mediaSheetValue = MediaSheetValue.ForyouScreen(it) },
-                        header = header.takeIf { recommend.isNotEmpty() },
+                        header = header.takeIf { specs.isNotEmpty() },
                         contentPadding = contentPadding,
                         modifier = Modifier.fillMaxSize()
                     )

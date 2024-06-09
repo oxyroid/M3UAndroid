@@ -15,6 +15,7 @@ object Profiles {
     val REPOS_PROGRAMME = Profile("repos-programme")
     val REPOS_TELEVISION = Profile("repos-television")
     val REPOS_MEDIA = Profile("repos-media")
+    val REPOS_OTHER = Profile("repos-other")
 
     val PARSER_M3U = Profile("parser-m3u")
     val PARSER_XTREAM = Profile("parser-xtream")

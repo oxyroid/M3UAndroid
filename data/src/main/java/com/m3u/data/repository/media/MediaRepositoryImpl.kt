@@ -32,7 +32,7 @@ import javax.inject.Inject
 
 private const val BITMAP_QUALITY = 100
 
-class MediaRepositoryImpl @Inject constructor(
+internal class MediaRepositoryImpl @Inject constructor(
     @ApplicationContext private val context: Context,
     delegate: Logger,
     @Dispatcher(IO) private val ioDispatcher: CoroutineDispatcher

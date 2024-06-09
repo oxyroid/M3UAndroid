@@ -1,11 +1,5 @@
 package com.m3u.feature.favorite.components
 
-import androidx.compose.animation.animateColor
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -25,7 +19,6 @@ import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
@@ -40,6 +33,7 @@ import com.m3u.i18n.R.string
 import com.m3u.material.ktx.isTelevision
 import com.m3u.material.ktx.plus
 import com.m3u.material.model.LocalSpacing
+import com.m3u.ui.createPremiumBrush
 import androidx.tv.material3.Card as TvCard
 import androidx.tv.material3.CardDefaults as TvCardDefaults
 import androidx.tv.material3.Glow as TvGlow
@@ -131,7 +125,7 @@ private fun RandomTips(
                 .clip(AbsoluteRoundedCornerShape(spacing.medium))
                 .clickable(onClick = onClick)
                 .background(
-                    createPremiumBrush(
+                    Brush.createPremiumBrush(
                         MaterialTheme.colorScheme.primary,
                         MaterialTheme.colorScheme.tertiary
                     )
@@ -156,7 +150,7 @@ private fun RandomTips(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(
-                        createPremiumBrush(
+                        Brush.createPremiumBrush(
                             TvMaterialTheme.colorScheme.primary,
                             TvMaterialTheme.colorScheme.tertiary
                         )
@@ -174,34 +168,4 @@ private fun RandomTips(
             }
         }
     }
-}
-
-@Composable
-private fun createPremiumBrush(
-    color1: Color = MaterialTheme.colorScheme.primaryContainer,
-    color2: Color = MaterialTheme.colorScheme.secondaryContainer
-): Brush {
-    val transition = rememberInfiniteTransition("premium-brush")
-
-    val leftColor by transition.animateColor(
-        initialValue = color1,
-        targetValue = color2,
-        animationSpec = infiniteRepeatable(
-            animation = tween(1600, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "left"
-    )
-    val rightColor by transition.animateColor(
-        initialValue = color2,
-        targetValue = color1,
-        animationSpec = infiniteRepeatable(
-            animation = tween(1600, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "right"
-    )
-    return Brush.linearGradient(
-        colors = listOf(leftColor, rightColor)
-    )
 }

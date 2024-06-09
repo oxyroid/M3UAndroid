@@ -1,12 +1,20 @@
 package com.m3u.feature.foryou.components.recommend
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Download
+import androidx.compose.material.icons.rounded.NewReleases
 import androidx.compose.material3.Card
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -16,12 +24,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.lerp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
@@ -31,6 +42,8 @@ import com.m3u.i18n.R.string
 import com.m3u.material.brush.RecommendCardContainerBrush
 import com.m3u.material.ktx.isTelevision
 import com.m3u.material.model.LocalSpacing
+import com.m3u.ui.FontFamilies
+import com.m3u.ui.createPremiumBrush
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlin.time.Duration.Companion.days
@@ -51,6 +64,7 @@ internal fun RecommendItem(
         when (spec) {
             is Recommend.UnseenSpec -> UnseenContent(spec)
             is Recommend.DiscoverSpec -> DiscoverContent(spec)
+            is Recommend.NewRelease -> NewReleaseContent(spec)
         }
     }
 }
@@ -201,4 +215,78 @@ private fun DiscoverContent(spec: Recommend.DiscoverSpec) {
         fontWeight = FontWeight.Black,
         maxLines = 1
     )
+}
+
+@Composable
+private fun NewReleaseContent(spec: Recommend.NewRelease) {
+    val spacing = LocalSpacing.current
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .background(
+                Brush.createPremiumBrush(
+                    MaterialTheme.colorScheme.primary,
+                    MaterialTheme.colorScheme.tertiary
+                )
+            )
+            .padding(spacing.medium)
+    ) {
+        CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onPrimary) {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(2.dp)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = stringResource(string.feat_foryou_new_release).title(),
+                        style = MaterialTheme.typography.titleMedium,
+                        maxLines = 1
+                    )
+                    Icon(imageVector = Icons.Rounded.NewReleases, contentDescription = null)
+                }
+                Text(
+                    text = spec.name,
+                    style = MaterialTheme.typography.labelLarge,
+                    color = LocalContentColor.current.copy(0.56f),
+                )
+                Text(
+                    text = spec.description,
+                    maxLines = 5,
+                    overflow = TextOverflow.Ellipsis,
+                    style = MaterialTheme.typography.bodySmall,
+                    fontFamily = FontFamilies.LexendExa
+                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = spec.size.toString(),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = LocalContentColor.current.copy(0.56f)
+                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.Download,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp),
+                            tint = LocalContentColor.current.copy(0.56f)
+                        )
+                        Text(
+                            text = spec.downloadCount.toString(),
+                            style = MaterialTheme.typography.labelMedium,
+                            color = LocalContentColor.current.copy(0.56f)
+                        )
+                    }
+                }
+            }
+        }
+    }
 }

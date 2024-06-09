@@ -1,6 +1,7 @@
 package com.m3u.feature.foryou.components.recommend
 
 import androidx.compose.runtime.Immutable
+import com.m3u.core.unit.DataUnit
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.Channel
 
@@ -25,4 +26,13 @@ internal class Recommend(
     data class UnseenSpec(
         val channel: Channel
     ) : Spec
+
+    @Immutable
+    data class NewRelease(
+        val name: String,
+        val description: String,
+        val downloadCount: Int,
+        val size: ClosedRange<DataUnit>,
+        val url: String,
+    ): Spec
 }

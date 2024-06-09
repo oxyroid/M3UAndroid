@@ -11,6 +11,8 @@ import com.m3u.data.repository.media.MediaRepositoryImpl
 import com.m3u.data.repository.playlist.PlaylistRepositoryImpl
 import com.m3u.data.repository.programme.ProgrammeRepositoryImpl
 import com.m3u.data.repository.channel.ChannelRepositoryImpl
+import com.m3u.data.repository.other.OtherRepository
+import com.m3u.data.repository.other.OtherRepositoryImpl
 import com.m3u.data.repository.television.TelevisionRepositoryImpl
 import dagger.Binds
 import dagger.Module
@@ -50,4 +52,10 @@ internal interface RepositoryModule {
     fun bindTelevisionRepository(
         repository: TelevisionRepositoryImpl
     ): TelevisionRepository
+
+    @Binds
+    @Singleton
+    fun bindOtherRepository(
+        repositoryImpl: OtherRepositoryImpl
+    ): OtherRepository
 }

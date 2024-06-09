@@ -9,7 +9,7 @@ val Double.MB: DataUnit.MB get() = DataUnit.MB(this)
 val Double.KB: DataUnit.KB get() = DataUnit.KB(this)
 
 @Immutable
-sealed class DataUnit {
+sealed class DataUnit : Comparable<DataUnit> {
     data class GB(val value: Double) : DataUnit() {
         override fun toString(): String = "${value.toInt()} GB"
     }
@@ -20,6 +20,18 @@ sealed class DataUnit {
 
     data class KB(val value: Double) : DataUnit() {
         override fun toString(): String = "${value.toInt()} KB"
+    }
+
+    val length: Double
+        get() = when (this) {
+            is GB -> 1024 * 1024 * 1024 * value
+            is MB -> 1024 * 1024 * value
+            is KB -> 1024 * value
+            Unspecified -> 0.0
+        }
+
+    override fun compareTo(other: DataUnit): Int {
+        return this.length.compareTo(other.length)
     }
 
     companion object {
