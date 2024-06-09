@@ -13,9 +13,9 @@ import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import com.m3u.data.database.model.Playlist
-import com.m3u.features.favorite.FavouriteRoute
-import com.m3u.features.foryou.ForyouRoute
-import com.m3u.features.setting.SettingRoute
+import com.m3u.feature.favorite.FavouriteRoute
+import com.m3u.feature.foryou.ForyouRoute
+import com.m3u.feature.setting.SettingRoute
 import com.m3u.material.ktx.Edge
 import com.m3u.material.ktx.blurEdge
 import com.m3u.ui.Destination

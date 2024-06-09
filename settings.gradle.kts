@@ -19,16 +19,16 @@ include(":androidApp")
 include(":core")
 include(":data")
 include(":material")
+include(":ui")
 include(
-    ":features:foryou",
-    ":features:setting",
-    ":features:channel",
-    ":features:playlist",
-    ":features:playlist-configuration",
-    ":features:favorite",
-    ":features:crash"
+    ":feature:foryou",
+    ":feature:favorite",
+    ":feature:setting",
+    ":feature:playlist",
+    ":feature:playlist-configuration",
+    ":feature:channel",
+    ":feature:crash"
 )
 include(":benchmark")
 include(":i18n")
-include(":ui")
 include(":codec:lite", ":codec:rich")
