@@ -12,7 +12,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
@@ -22,8 +25,7 @@ import coil.compose.AsyncImage
 import coil.request.CachePolicy
 import coil.request.ImageRequest
 import com.m3u.core.architecture.preferences.hiltPreferences
-import com.m3u.material.ktx.Edge
-import com.m3u.material.transformation.EdgeTransparentTransformation
+import com.m3u.material.transformation.BlurTransformation
 import com.m3u.ui.helper.LocalHelper
 import com.m3u.ui.helper.Metadata
 import com.m3u.ui.helper.useRailNav
@@ -64,8 +66,7 @@ internal fun HeadlineBackground(modifier: Modifier = Modifier) {
                     .crossfade(800)
                     .memoryCachePolicy(CachePolicy.DISABLED)
                     .transformations(
-                        EdgeTransparentTransformation(Edge.Bottom),
-//                        BlurTransformation(context)
+                        BlurTransformation(context)
                     )
                     .build()
             },
@@ -81,16 +82,23 @@ internal fun HeadlineBackground(modifier: Modifier = Modifier) {
                     )
                 }
                 .aspectRatio(headlineAspectRatio)
+                .graphicsLayer { alpha = 0.99f }
                 .drawWithContent {
                     drawContent()
-//                    if (url.isNotEmpty()) {
-//                        drawRect(
-//                            color = currentMaskColor,
-////                            size = size.copy(
-////                                height = size.height * 0.95f
-////                            )
-//                        )
-//                    }
+                    if (url.isNotEmpty()) {
+                        drawRect(
+                            color = currentMaskColor
+                        )
+                        drawRect(
+                            brush = Brush.verticalGradient(
+                                colors = listOf(
+                                    Color.Black,
+                                    Color.Transparent
+                                )
+                            ),
+                            blendMode = BlendMode.DstIn
+                        )
+                    }
                 }
         )
     }
