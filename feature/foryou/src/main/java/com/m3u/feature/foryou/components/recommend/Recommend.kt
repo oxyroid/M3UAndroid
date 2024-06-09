@@ -6,7 +6,7 @@ import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.Channel
 
 @Immutable
-internal class Recommend(
+class Recommend(
     private val specs: List<Spec> = emptyList()
 ) : AbstractList<Recommend.Spec>() {
     override val size: Int get() = specs.size

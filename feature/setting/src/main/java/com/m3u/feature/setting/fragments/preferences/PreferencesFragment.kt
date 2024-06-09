@@ -19,6 +19,7 @@ internal fun PreferencesFragment(
     versionCode: Int,
     navigateToPlaylistManagement: () -> Unit,
     navigateToThemeSelector: () -> Unit,
+    navigateToOptional: () -> Unit,
     cacheSpace: DataUnit,
     onClearCache: () -> Unit,
     modifier: Modifier = Modifier
@@ -33,12 +34,9 @@ internal fun PreferencesFragment(
             RegularPreferences(
                 fragment = fragment,
                 navigateToPlaylistManagement = navigateToPlaylistManagement,
-                navigateToThemeSelector = navigateToThemeSelector
+                navigateToThemeSelector = navigateToThemeSelector,
+                navigateToOptional = navigateToOptional
             )
-            HorizontalDivider()
-        }
-        item {
-            OptionalPreferences()
             HorizontalDivider()
         }
         item {

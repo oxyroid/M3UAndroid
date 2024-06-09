@@ -42,6 +42,7 @@ import com.m3u.i18n.R.string
 import com.m3u.material.brush.RecommendCardContainerBrush
 import com.m3u.material.ktx.isTelevision
 import com.m3u.material.model.LocalSpacing
+import com.m3u.material.shape.AbsoluteSmoothCornerShape
 import com.m3u.ui.FontFamilies
 import com.m3u.ui.createPremiumBrush
 import kotlinx.datetime.Clock
@@ -50,7 +51,6 @@ import kotlin.time.Duration.Companion.days
 import androidx.tv.material3.Card as TvCard
 import androidx.tv.material3.CardDefaults as TvCardDefaults
 import androidx.tv.material3.CardScale as TvCardScale
-import androidx.tv.material3.Glow as TvGlow
 import androidx.tv.material3.LocalContentColor as TvLocalContentColor
 
 @Composable
@@ -76,9 +76,11 @@ private fun RecommendItemLayout(
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit
 ) {
+    val spacing = LocalSpacing.current
     val tv = isTelevision()
     if (!tv) {
         Card(
+            shape = AbsoluteSmoothCornerShape(spacing.medium, 65),
             onClick = onClick,
             modifier = Modifier
                 .graphicsLayer {
@@ -102,7 +104,7 @@ private fun RecommendItemLayout(
     } else {
         TvCard(
             scale = TvCardScale.None,
-            glow = TvCardDefaults.glow(TvGlow.None, TvGlow.None, TvGlow.None),
+            shape = TvCardDefaults.shape(AbsoluteSmoothCornerShape(spacing.medium, 65)),
             onClick = onClick,
             modifier = modifier,
             content = { content() }
@@ -112,7 +114,7 @@ private fun RecommendItemLayout(
 }
 
 @Composable
-private fun UnseenContent(spec: Recommend.UnseenSpec) {
+fun UnseenContent(spec: Recommend.UnseenSpec) {
     val context = LocalContext.current
     val spacing = LocalSpacing.current
     val preferences = hiltPreferences()

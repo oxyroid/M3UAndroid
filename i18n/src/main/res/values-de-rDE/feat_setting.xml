@@ -58,7 +58,7 @@
     <string name="feat_setting_screencast">Screencast</string>
     <string name="feat_setting_screen_rotating">Screen rotiert</string>
     <string name="feat_setting_screen_rotating_description">verfügbar, wenn die Systemrotation entsperrt ist</string>
-    <string name="feat_setting_optional_player_features">optionale Player-Funktionen</string>
+    <string name="feat_setting_optional_features">optionale Player-Funktionen</string>
     <string name="feat_setting_unseen_limit">ungesehene Lieblingsstreams anzeigen</string>
     <string name="feat_setting_reconnect_mode">autom. neuverbindung</string>
     <string name="feat_setting_reconnect_mode_no">nie</string>

@@ -12,6 +12,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ColorLens
 import androidx.compose.material.icons.rounded.DarkMode
+import androidx.compose.material.icons.rounded.DeviceHub
+import androidx.compose.material.icons.rounded.FitScreen
+import androidx.compose.material.icons.rounded.HideImage
 import androidx.compose.material.icons.rounded.Restore
 import androidx.compose.material.icons.rounded.Stars
 import androidx.compose.material3.HorizontalDivider
@@ -23,12 +26,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.stringResource
+import com.m3u.core.architecture.preferences.ClipMode
 import com.m3u.core.architecture.preferences.hiltPreferences
 import com.m3u.core.util.basic.title
 import com.m3u.data.database.model.ColorScheme
 import com.m3u.feature.setting.components.CheckBoxSharedPreference
 import com.m3u.i18n.R.string
 import com.m3u.material.components.Preference
+import com.m3u.material.components.TextPreference
 import com.m3u.material.components.ThemeAddSelection
 import com.m3u.material.components.ThemeSelection
 import com.m3u.material.ktx.includeChildGlowPadding
@@ -107,6 +112,31 @@ internal fun AppearanceFragment(
 
         HorizontalDivider()
 
+        TextPreference(
+            title = stringResource(string.feat_setting_clip_mode).title(),
+            icon = Icons.Rounded.FitScreen,
+            trailing = when (preferences.clipMode) {
+                ClipMode.ADAPTIVE -> stringResource(string.feat_setting_clip_mode_adaptive)
+                ClipMode.CLIP -> stringResource(string.feat_setting_clip_mode_clip)
+                ClipMode.STRETCHED -> stringResource(string.feat_setting_clip_mode_stretched)
+                else -> ""
+            }.title(),
+            onClick = {
+                preferences.clipMode = when (preferences.clipMode) {
+                    ClipMode.ADAPTIVE -> ClipMode.CLIP
+                    ClipMode.CLIP -> ClipMode.STRETCHED
+                    ClipMode.STRETCHED -> ClipMode.ADAPTIVE
+                    else -> ClipMode.ADAPTIVE
+                }
+            }
+        )
+        CheckBoxSharedPreference(
+            title = string.feat_setting_no_picture_mode,
+            content = string.feat_setting_no_picture_mode_description,
+            icon = Icons.Rounded.HideImage,
+            checked = preferences.noPictureMode,
+            onChanged = { preferences.noPictureMode = !preferences.noPictureMode }
+        )
         CheckBoxSharedPreference(
             title = string.feat_setting_follow_system_theme,
             icon = Icons.Rounded.DarkMode,
@@ -137,5 +167,15 @@ internal fun AppearanceFragment(
             icon = Icons.Rounded.Restore,
             onClick = restoreSchemes
         )
+
+        if (!tv) {
+            CheckBoxSharedPreference(
+                title = string.feat_setting_god_mode,
+                content = string.feat_setting_god_mode_description,
+                icon = Icons.Rounded.DeviceHub,
+                checked = preferences.godMode,
+                onChanged = { preferences.godMode = !preferences.godMode }
+            )
+        }
     }
 }

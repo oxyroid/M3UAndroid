@@ -76,6 +76,7 @@ import com.m3u.feature.channel.MaskCenterState.Replay
 import com.m3u.feature.channel.components.MaskTextButton
 import com.m3u.feature.channel.components.PlayerMask
 import com.m3u.i18n.R.string
+import com.m3u.material.components.CircularProgressIndicator
 import com.m3u.material.components.mask.MaskButton
 import com.m3u.material.components.mask.MaskCircleButton
 import com.m3u.material.components.mask.MaskPanel
@@ -534,7 +535,7 @@ private fun MaskCenterButton(
     onPause: () -> Unit,
     onRetry: () -> Unit
 ) {
-    Box(modifier) {
+    Box(modifier, contentAlignment = Alignment.Center) {
         if (maskCenterState != null) {
             MaskCircleButton(
                 state = maskState,
@@ -549,6 +550,8 @@ private fun MaskCenterButton(
                     Pause -> onPause
                 }
             )
+        } else {
+            CircularProgressIndicator()
         }
     }
 }

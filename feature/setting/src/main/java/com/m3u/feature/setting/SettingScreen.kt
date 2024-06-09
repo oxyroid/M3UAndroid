@@ -31,12 +31,13 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.core.architecture.preferences.hiltPreferences
 import com.m3u.core.unit.DataUnit
 import com.m3u.core.util.basic.title
+import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.ColorScheme
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
-import com.m3u.data.database.model.Channel
 import com.m3u.feature.setting.components.CanvasBottomSheet
 import com.m3u.feature.setting.fragments.AppearanceFragment
+import com.m3u.feature.setting.fragments.OptionalFragment
 import com.m3u.feature.setting.fragments.SubscriptionsFragment
 import com.m3u.feature.setting.fragments.preferences.PreferencesFragment
 import com.m3u.i18n.R.string
@@ -181,6 +182,7 @@ private fun SettingScreen(
     val defaultTitle = stringResource(string.ui_title_setting)
     val playlistTitle = stringResource(string.feat_setting_playlist_management)
     val appearanceTitle = stringResource(string.feat_setting_appearance)
+    val optionalTitle = stringResource(string.feat_setting_optional_features)
 
     val colorArgb = preferences.argb
 
@@ -199,6 +201,7 @@ private fun SettingScreen(
                 SettingDestination.Default -> defaultTitle
                 SettingDestination.Playlists -> playlistTitle
                 SettingDestination.Appearance -> appearanceTitle
+                SettingDestination.Optional -> optionalTitle
             }
                 .title()
                 .let(::AnnotatedString)
@@ -239,6 +242,12 @@ private fun SettingScreen(
                     navigator.navigateTo(
                         pane = ListDetailPaneScaffoldRole.Detail,
                         content = SettingDestination.Appearance
+                    )
+                },
+                navigateToOptional = {
+                    navigator.navigateTo(
+                        pane = ListDetailPaneScaffoldRole.Detail,
+                        content = SettingDestination.Optional
                     )
                 },
                 cacheSpace = cacheSpace,
@@ -282,6 +291,13 @@ private fun SettingScreen(
                         colorArgb = colorArgb,
                         openColorCanvas = openColorCanvas,
                         restoreSchemes = restoreSchemes,
+                        contentPadding = contentPadding,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
+
+                SettingDestination.Optional -> {
+                    OptionalFragment(
                         contentPadding = contentPadding,
                         modifier = Modifier.fillMaxSize()
                     )

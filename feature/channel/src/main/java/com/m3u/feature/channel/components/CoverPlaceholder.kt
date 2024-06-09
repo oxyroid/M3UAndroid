@@ -13,9 +13,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
-import com.m3u.ui.Image
 import com.m3u.material.model.LocalDuration
 import com.m3u.material.model.LocalSpacing
+import com.m3u.ui.Image
 
 @Composable
 internal fun CoverPlaceholder(
@@ -45,7 +45,6 @@ internal fun CoverPlaceholder(
         ),
         modifier = modifier.padding(spacing.medium)
     ) {
-
         Image(
             model = cover,
             modifier = Modifier.size(size),

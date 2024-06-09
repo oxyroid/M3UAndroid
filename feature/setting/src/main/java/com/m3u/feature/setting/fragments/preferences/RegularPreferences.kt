@@ -4,9 +4,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.AccessTime
 import androidx.compose.material.icons.rounded.ColorLens
-import androidx.compose.material.icons.rounded.DeviceHub
-import androidx.compose.material.icons.rounded.FitScreen
-import androidx.compose.material.icons.rounded.HideImage
+import androidx.compose.material.icons.rounded.Extension
 import androidx.compose.material.icons.rounded.MusicNote
 import androidx.compose.material.icons.rounded.Pages
 import androidx.compose.material.icons.rounded.Recommend
@@ -19,7 +17,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import com.m3u.core.architecture.preferences.ClipMode
 import com.m3u.core.architecture.preferences.ConnectTimeout
 import com.m3u.core.architecture.preferences.PlaylistStrategy
 import com.m3u.core.architecture.preferences.UnseensMilliseconds
@@ -40,6 +37,7 @@ internal fun RegularPreferences(
     fragment: SettingDestination,
     navigateToPlaylistManagement: () -> Unit,
     navigateToThemeSelector: () -> Unit,
+    navigateToOptional: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val preferences = hiltPreferences()
@@ -58,6 +56,12 @@ internal fun RegularPreferences(
             enabled = fragment != SettingDestination.Appearance,
             onClick = navigateToThemeSelector
         )
+        Preference(
+            title = stringResource(string.feat_setting_optional_features).title(),
+            icon = Icons.Rounded.Extension,
+            enabled = fragment != SettingDestination.Optional,
+            onClick = navigateToOptional
+        )
         TextPreference(
             title = stringResource(string.feat_setting_sync_mode).title(),
             icon = Icons.Rounded.Sync,
@@ -70,24 +74,6 @@ internal fun RegularPreferences(
                 preferences.playlistStrategy = when (preferences.playlistStrategy) {
                     PlaylistStrategy.ALL -> PlaylistStrategy.KEEP
                     else -> PlaylistStrategy.ALL
-                }
-            }
-        )
-        TextPreference(
-            title = stringResource(string.feat_setting_clip_mode).title(),
-            icon = Icons.Rounded.FitScreen,
-            trailing = when (preferences.clipMode) {
-                ClipMode.ADAPTIVE -> stringResource(string.feat_setting_clip_mode_adaptive)
-                ClipMode.CLIP -> stringResource(string.feat_setting_clip_mode_clip)
-                ClipMode.STRETCHED -> stringResource(string.feat_setting_clip_mode_stretched)
-                else -> ""
-            }.title(),
-            onClick = {
-                preferences.clipMode = when (preferences.clipMode) {
-                    ClipMode.ADAPTIVE -> ClipMode.CLIP
-                    ClipMode.CLIP -> ClipMode.STRETCHED
-                    ClipMode.STRETCHED -> ClipMode.ADAPTIVE
-                    else -> ClipMode.ADAPTIVE
                 }
             }
         )
@@ -136,13 +122,6 @@ internal fun RegularPreferences(
             }
         )
         CheckBoxSharedPreference(
-            title = string.feat_setting_no_picture_mode,
-            content = string.feat_setting_no_picture_mode_description,
-            icon = Icons.Rounded.HideImage,
-            checked = preferences.noPictureMode,
-            onChanged = { preferences.noPictureMode = !preferences.noPictureMode }
-        )
-        CheckBoxSharedPreference(
             title = string.feat_setting_auto_refresh_channels,
             content = string.feat_setting_auto_refresh_channels_description,
             icon = Icons.Rounded.Refresh,
@@ -173,15 +152,5 @@ internal fun RegularPreferences(
             checked = preferences.remoteControl,
             onChanged = { preferences.remoteControl = !preferences.remoteControl }
         )
-
-        if (!tv) {
-            CheckBoxSharedPreference(
-                title = string.feat_setting_god_mode,
-                content = string.feat_setting_god_mode_description,
-                icon = Icons.Rounded.DeviceHub,
-                checked = preferences.godMode,
-                onChanged = { preferences.godMode = !preferences.godMode }
-            )
-        }
     }
 }

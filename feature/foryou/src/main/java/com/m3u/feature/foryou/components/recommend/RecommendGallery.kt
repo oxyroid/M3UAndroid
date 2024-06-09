@@ -31,7 +31,7 @@ import androidx.tv.material3.Carousel as TvCarousel
 @Composable
 internal fun RecommendGallery(
     specs: List<Recommend.Spec>,
-    onClickChannel: (Channel) -> Unit,
+    onPlayChannel: (Channel) -> Unit,
     navigateToPlaylist: (Playlist) -> Unit,
     onSpecChanged: (Recommend.Spec) -> Unit,
     modifier: Modifier = Modifier
@@ -44,7 +44,7 @@ internal fun RecommendGallery(
     val onClick = { spec: Recommend.Spec ->
         when (spec) {
             is Recommend.UnseenSpec -> {
-                onClickChannel(spec.channel)
+                onPlayChannel(spec.channel)
             }
 
             is Recommend.DiscoverSpec -> {

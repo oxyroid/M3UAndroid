@@ -116,7 +116,7 @@ fun ForyouRoute(
         rowCount = preferences.rowCount,
         contentPadding = contentPadding,
         navigateToPlaylist = navigateToPlaylist,
-        onClickChannel = { channel ->
+        onPlayChannel = { channel ->
             coroutineScope.launch {
                 val playlist = viewModel.getPlaylist(channel.playlistUrl)
                 when {
@@ -140,9 +140,7 @@ fun ForyouRoute(
                 Modifier.interceptVolumeEvent { event ->
                     preferences.rowCount = when (event) {
                         KeyEvent.KEYCODE_VOLUME_UP -> (preferences.rowCount - 1).coerceAtLeast(1)
-                        KeyEvent.KEYCODE_VOLUME_DOWN -> (preferences.rowCount + 1).coerceAtMost(
-                            2
-                        )
+                        KeyEvent.KEYCODE_VOLUME_DOWN -> (preferences.rowCount + 1).coerceAtMost(2)
 
                         else -> return@interceptVolumeEvent
                     }
@@ -180,7 +178,7 @@ private fun ForyouScreen(
     specs: List<Recommend.Spec>,
     contentPadding: PaddingValues,
     navigateToPlaylist: (Playlist) -> Unit,
-    onClickChannel: (Channel) -> Unit,
+    onPlayChannel: (Channel) -> Unit,
     navigateToSettingPlaylistManagement: () -> Unit,
     navigateToPlaylistConfiguration: (Playlist) -> Unit,
     onUnsubscribePlaylist: (playlistUrl: String) -> Unit,
@@ -231,7 +229,7 @@ private fun ForyouScreen(
                     RecommendGallery(
                         specs = specs,
                         navigateToPlaylist = navigateToPlaylist,
-                        onClickChannel = onClickChannel,
+                        onPlayChannel = onPlayChannel,
                         onSpecChanged = { spec -> headlineSpec = spec },
                         modifier = Modifier.fillMaxWidth()
                     )

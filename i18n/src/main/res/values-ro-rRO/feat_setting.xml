@@ -56,7 +56,7 @@
     <string name="feat_setting_screencast">proiectare</string>
     <string name="feat_setting_screen_rotating">rotire ecran</string>
     <string name="feat_setting_screen_rotating_description">disponibil cand optiunea de rotire ecran nu este blocata in sistem</string>
-    <string name="feat_setting_optional_player_features">functionalitati optionale player</string>
+    <string name="feat_setting_optional_features">functionalitati optionale player</string>
     <string name="feat_setting_unseen_limit">recomandare canale favorite nevizualizate in ultima perioada</string>
     <string name="feat_setting_reconnect_mode">auto reconectare</string>
     <string name="feat_setting_reconnect_mode_no">niciodata</string>

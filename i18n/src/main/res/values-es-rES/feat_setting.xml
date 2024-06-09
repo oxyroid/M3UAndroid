@@ -60,7 +60,7 @@
     <string name="feat_setting_screencast">compartir pantalla</string>
     <string name="feat_setting_screen_rotating">rotación de pantalla</string>
     <string name="feat_setting_screen_rotating_description">disponible cuando el modo de rotación está desbloqueado</string>
-    <string name="feat_setting_optional_player_features">características opcionales de reproducción</string>
+    <string name="feat_setting_optional_features">características opcionales de reproducción</string>
     <string name="feat_setting_unseen_limit">recomendaciones de emisiones favortias vistas hace tiempo</string>
     <string name="feat_setting_reconnect_mode">volver a reconectar</string>
     <string name="feat_setting_reconnect_mode_no">nunca</string>

@@ -67,4 +67,8 @@ sealed interface SettingDestination : Parcelable {
     @Immutable
     @Parcelize
     data object Appearance : SettingDestination
+
+    @Immutable
+    @Parcelize
+    data object Optional : SettingDestination
 }
