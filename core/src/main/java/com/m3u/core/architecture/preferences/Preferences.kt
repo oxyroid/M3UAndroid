@@ -161,7 +161,7 @@ class Preferences @Inject constructor(
         const val DEFAULT_RANDOMLY_IN_FAVOURITE = false
 
         const val DEFAULT_12_H_CLOCK_MODE = false
-        const val DEFAULT_COLORFUL_BACKGROUND = true
+        const val DEFAULT_COLORFUL_BACKGROUND = false
 
         const val PLAYLIST_STRATEGY = "playlist-strategy"
         const val ROW_COUNT = "rowCount"
