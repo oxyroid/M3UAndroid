@@ -11,7 +11,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
@@ -103,47 +102,34 @@ fun StarBackground(
         exit = fadeOut() + scaleOut(targetScale = 2.3f),
         modifier = modifier
     ) {
-        Box {
-            for (spec in specs) {
-                Star(
-                    spec = spec,
-                    modifier = Modifier.fillMaxSize(),
-                )
-            }
-        }
-    }
-}
+        Box(
+            Modifier
+                .fillMaxSize()
+                .drawWithCache {
+                    onDrawBehind {
+                        val width = size.width
+                        for (spec in specs) {
+                            val star = RoundedPolygon.star(
+                                numVerticesPerRadius = spec.numVertices,
+                                radius = width * spec.size / 2,
+                                innerRadius = width * spec.size * 0.7f / 2,
+                                rounding = CornerRounding(width * 0.05f),
+                                centerX = width / 2,
+                                centerY = width / 2,
+                            )
+                            val path = star
+                                .toPath()
+                                .asComposePath()
 
-@Composable
-private fun Star(
-    spec: StarSpec,
-    modifier: Modifier = Modifier,
-) {
-    Box(
-        modifier = modifier
-//            .blur(spec.blurRadius)
-            .drawWithCache {
-                val width = size.width
-                val star = RoundedPolygon.star(
-                    numVerticesPerRadius = spec.numVertices,
-                    radius = width * spec.size / 2,
-                    innerRadius = width * spec.size * 0.7f / 2,
-                    rounding = CornerRounding(width * 0.05f),
-                    centerX = width / 2,
-                    centerY = width / 2,
-                )
-                val path = star
-                    .toPath()
-                    .asComposePath()
-
-                onDrawBehind {
-                    translate(
-                        width * spec.offset.x,
-                        width * spec.offset.y,
-                    ) {
-                        drawPath(path, color = spec.color)
+                            translate(
+                                width * spec.offset.x,
+                                width * spec.offset.y,
+                            ) {
+                                drawPath(path, color = spec.color)
+                            }
+                        }
                     }
                 }
-            },
-    )
+        )
+    }
 }

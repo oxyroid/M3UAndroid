@@ -58,7 +58,7 @@ internal fun HeadlineBackground(modifier: Modifier = Modifier) {
         label = "headline-background-mask-color"
     )
 
-    if (!preferences.noPictureMode) {
+    if (!preferences.noPictureMode && !preferences.colorfulBackground) {
         AsyncImage(
             model = remember(url) {
                 ImageRequest.Builder(context)

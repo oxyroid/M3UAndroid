@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -33,18 +32,12 @@ internal fun RecommendGallery(
     recommend: Recommend,
     onClickChannel: (Channel) -> Unit,
     navigateToPlaylist: (Playlist) -> Unit,
-    onSpecChanged: (Recommend.Spec?) -> Unit,
+    onSpecChanged: (Recommend.Spec) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
 
     val tv = isTelevision()
-
-    DisposableEffect(Unit) {
-        onDispose {
-            onSpecChanged(null)
-        }
-    }
 
     if (!tv) {
         val state = rememberPagerState { recommend.size }
