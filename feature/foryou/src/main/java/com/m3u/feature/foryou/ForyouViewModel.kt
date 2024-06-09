@@ -100,7 +100,7 @@ class ForyouViewModel @Inject constructor(
         )
 
     private val newRelease: StateFlow<Release?> = flow {
-        emit(otherRepository.getRelease())
+        emit(otherRepository.release())
     }
         .stateIn(
             scope = viewModelScope,

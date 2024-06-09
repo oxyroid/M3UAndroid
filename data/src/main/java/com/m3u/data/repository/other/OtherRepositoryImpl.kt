@@ -16,15 +16,17 @@ internal class OtherRepositoryImpl @Inject constructor(
     delegate: Logger
 ) : OtherRepository {
     private val logger = delegate.install(Profiles.REPOS_OTHER)
-    override suspend fun getRelease(): Release? {
-        if (publisher.snapshot) return null
+    private var releases: List<Release>? = null
+    override suspend fun release(): Release? {
+        if (releases == null) {
+            // cannot use lazy because the suspension
+            releases = logger.execute { githubApi.releases("oxyroid", "M3UAndroid") } ?: emptyList()
+        }
         val versionName = publisher.versionName
-        val releases = logger
-            .execute { githubApi.releases("oxyroid", "M3UAndroid") }
-            ?: emptyList()
-        if (releases.isEmpty()) return null
-        val i = releases.indexOf { it.name == versionName }
-//        if (i <= 0) return null
-        return releases.first()
+        val currentReleases = releases ?: emptyList()
+        if (currentReleases.isEmpty()) return null
+        val i = currentReleases.indexOf { it.name == versionName }
+        if (i <= 0 && !publisher.snapshot) return null
+        return currentReleases.first()
     }
 }
