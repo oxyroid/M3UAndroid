@@ -102,7 +102,6 @@ private fun UnseenContent(spec: Recommend.UnseenSpec) {
     val context = LocalContext.current
     val spacing = LocalSpacing.current
     val preferences = hiltPreferences()
-    val colorScheme = MaterialTheme.colorScheme
 
     val stream = spec.channel
     val duration = remember(stream.seen) {

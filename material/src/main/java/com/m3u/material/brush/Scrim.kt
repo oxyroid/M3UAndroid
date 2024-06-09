@@ -11,16 +11,11 @@ object ScrimDefaults {
     val color2 = Color(0xFF131314)
 }
 
-fun RecommendCardContainerBrush(size: Size): Brush = Brush.radialGradient(
+fun RecommendCardContainerBrush(size: Size): Brush = Brush.verticalGradient(
     colors = listOf(
         ScrimDefaults.color1,
         ScrimDefaults.color2,
-    ),
-    center = Offset(
-        x = size.width / 192 * 128,
-        y = size.height / 108 * 24
-    ),
-    radius = size.minDimension
+    )
 )
 
 fun ImmersiveBackgroundBrush(size: Size): Brush = Brush.radialGradient(
