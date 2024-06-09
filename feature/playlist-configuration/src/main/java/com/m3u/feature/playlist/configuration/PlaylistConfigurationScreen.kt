@@ -15,14 +15,15 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Save
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -54,10 +55,12 @@ import com.m3u.material.components.Background
 import com.m3u.material.components.Icon
 import com.m3u.material.components.PlaceholderField
 import com.m3u.material.ktx.checkPermissionOrRationale
-import com.m3u.material.ktx.split
+import com.m3u.material.model.LocalHazeState
 import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.helper.LocalHelper
 import com.m3u.ui.helper.Metadata
+import dev.chrisbanes.haze.HazeStyle
+import dev.chrisbanes.haze.haze
 import kotlinx.datetime.LocalDateTime
 
 @Composable
@@ -144,60 +147,72 @@ private fun PlaylistConfigurationScreen(
     }
     Background(modifier) {
         Box {
-            val (outer, inner) = contentPadding split WindowInsetsSides.Top
-            Column(
+            LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(spacing.small),
+                contentPadding = contentPadding,
                 modifier = Modifier
-                    .padding(outer)
+                    .haze(
+                        LocalHazeState.current,
+                        HazeStyle(MaterialTheme.colorScheme.surface)
+                    )
                     .padding(spacing.medium)
             ) {
-                PlaceholderField(
-                    text = title,
-                    placeholder = stringResource(string.feat_playlist_configuration_title).title(),
-                    onValueChange = { title = it },
-                )
-                PlaceholderField(
-                    text = userAgent,
-                    placeholder = stringResource(string.feat_playlist_configuration_user_agent).title(),
-                    onValueChange = { userAgent = it }
-                )
-                AnimatedVisibility(playlist.epgUrlsOrXtreamXmlUrl().isNotEmpty()) {
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(spacing.small)
-                    ) {
-                        SyncProgrammesButton(
-                            subscribingOrRefreshing = subscribingOrRefreshing,
-                            expired = expired,
-                            onSyncProgrammes = onSyncProgrammes
-                        )
-                        AutoSyncProgrammesButton(
-                            checked = playlist.autoRefreshProgrammes,
-                            onCheckedChange = onUpdatePlaylistAutoRefreshProgrammes
-                        )
+                item {
+                    PlaceholderField(
+                        text = title,
+                        placeholder = stringResource(string.feat_playlist_configuration_title).title(),
+                        onValueChange = { title = it },
+                    )
+                }
+
+                item {
+                    PlaceholderField(
+                        text = userAgent,
+                        placeholder = stringResource(string.feat_playlist_configuration_user_agent).title(),
+                        onValueChange = { userAgent = it }
+                    )
+                }
+
+                item {
+                    AnimatedVisibility(playlist.epgUrlsOrXtreamXmlUrl().isNotEmpty()) {
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(spacing.small)
+                        ) {
+                            SyncProgrammesButton(
+                                subscribingOrRefreshing = subscribingOrRefreshing,
+                                expired = expired,
+                                onSyncProgrammes = onSyncProgrammes
+                            )
+                            AutoSyncProgrammesButton(
+                                checked = playlist.autoRefreshProgrammes,
+                                onCheckedChange = onUpdatePlaylistAutoRefreshProgrammes
+                            )
+                        }
                     }
                 }
+
                 if (playlist.source == DataSource.M3U) {
                     EpgManifestGallery(
                         playlistUrl = playlist.url,
                         manifest = manifest,
-                        contentPadding = inner,
-                        onUpdateEpgPlaylist = onUpdateEpgPlaylist,
-                        modifier = Modifier.fillMaxWidth()
+                        onUpdateEpgPlaylist = onUpdateEpgPlaylist
                     )
                 }
 
                 if (playlist.source == DataSource.Xtream) {
-                    XtreamPanel(
-                        info = xtreamUserInfo,
-                        modifier = Modifier.fillMaxWidth()
-                    )
+                    item {
+                        XtreamPanel(
+                            info = xtreamUserInfo,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
                 }
             }
 
             val fabBottomPadding by animateDpAsState(
                 targetValue = maxOf(
                     WindowInsets.ime.asPaddingValues().calculateBottomPadding(),
-                    inner.calculateBottomPadding()
+                    contentPadding.calculateBottomPadding()
                 ),
                 label = "apply changes bottom padding"
             )

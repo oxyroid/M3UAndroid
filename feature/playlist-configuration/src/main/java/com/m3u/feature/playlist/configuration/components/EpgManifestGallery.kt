@@ -3,12 +3,9 @@ package com.m3u.feature.playlist.configuration.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
@@ -28,25 +25,16 @@ import com.m3u.data.repository.playlist.PlaylistRepository
 import com.m3u.feature.playlist.configuration.EpgManifest
 import com.m3u.i18n.R.string
 import com.m3u.material.components.SelectionsDefaults
-import com.m3u.material.model.LocalHazeState
 import com.m3u.material.model.LocalSpacing
 import com.m3u.material.shape.AbsoluteSmoothCornerShape
-import dev.chrisbanes.haze.HazeDefaults
-import dev.chrisbanes.haze.haze
 
-@Composable
-internal fun EpgManifestGallery(
+internal fun LazyListScope.EpgManifestGallery(
     playlistUrl: String,
     manifest: EpgManifest,
-    contentPadding: PaddingValues,
-    onUpdateEpgPlaylist: (PlaylistRepository.UpdateEpgPlaylistUseCase) -> Unit,
-    modifier: Modifier = Modifier
+    onUpdateEpgPlaylist: (PlaylistRepository.UpdateEpgPlaylistUseCase) -> Unit
 ) {
-    val spacing = LocalSpacing.current
-    Column(
-        verticalArrangement = Arrangement.spacedBy(spacing.medium),
-        modifier = modifier
-    ) {
+    stickyHeader {
+        val spacing = LocalSpacing.current
         Text(
             text = stringResource(string.feat_playlist_configuration_enabled_epgs).title(),
             style = MaterialTheme.typography.titleMedium,
@@ -58,25 +46,14 @@ internal fun EpgManifestGallery(
                     vertical = spacing.small
                 )
         )
-        LazyColumn(
-            contentPadding = contentPadding,
-            verticalArrangement = Arrangement.spacedBy(spacing.medium),
-            modifier = Modifier
-                .haze(
-                    LocalHazeState.current,
-                    HazeDefaults.style(MaterialTheme.colorScheme.surface)
-                )
-                .fillMaxWidth()
-        ) {
-            items(manifest.entries.toList()) { (epg, associated) ->
-                EpgManifestGalleryItem(
-                    playlistUrl = playlistUrl,
-                    epg = epg,
-                    associated = associated,
-                    onUpdateEpgPlaylist = onUpdateEpgPlaylist,
-                )
-            }
-        }
+    }
+    items(manifest.entries.toList()) { (epg, associated) ->
+        EpgManifestGalleryItem(
+            playlistUrl = playlistUrl,
+            epg = epg,
+            associated = associated,
+            onUpdateEpgPlaylist = onUpdateEpgPlaylist,
+        )
     }
 }
 
