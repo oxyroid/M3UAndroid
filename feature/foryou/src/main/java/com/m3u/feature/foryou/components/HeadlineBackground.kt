@@ -1,6 +1,7 @@
 package com.m3u.feature.foryou.components
 
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.aspectRatio
@@ -55,7 +56,8 @@ internal fun HeadlineBackground(modifier: Modifier = Modifier) {
             stop = colorScheme.surface,
             fraction = fraction
         ),
-        label = "headline-background-mask-color"
+        label = "headline-background-mask-color",
+        animationSpec = tween(800)
     )
 
     if (!preferences.noPictureMode && !preferences.colorfulBackground) {
