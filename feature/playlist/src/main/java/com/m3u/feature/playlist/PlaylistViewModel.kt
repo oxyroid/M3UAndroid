@@ -5,6 +5,7 @@ import android.app.Activity
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.snapshotFlow
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
@@ -334,6 +335,7 @@ class PlaylistViewModel @Inject constructor(
     internal val query = MutableStateFlow("")
     internal val scrollUp: MutableStateFlow<Event<Unit>> = MutableStateFlow(handledEvent())
 
+    @Immutable
     data class ChannelParameters(
         val playlistUrl: String,
         val query: String,
@@ -341,6 +343,7 @@ class PlaylistViewModel @Inject constructor(
         val categories: List<String>,
     )
 
+    @Immutable
     data class CategoryWithChannels(
         val category: String,
         val channels: Flow<PagingData<Channel>>,

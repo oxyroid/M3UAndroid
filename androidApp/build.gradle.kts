@@ -104,10 +104,6 @@ android {
     packaging {
         resources.excludes += "META-INF/**"
     }
-    composeCompiler {
-        enableStrongSkippingMode = true
-        includeSourceInformation = true
-    }
     applicationVariants.all {
         outputs
             .map { it as com.android.build.gradle.internal.api.ApkVariantOutputImpl }

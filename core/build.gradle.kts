@@ -34,10 +34,6 @@ android {
     buildFeatures {
         compose = true
     }
-    composeCompiler {
-        enableStrongSkippingMode = true
-        includeSourceInformation = true
-    }
 }
 
 dependencies {

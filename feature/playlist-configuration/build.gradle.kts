@@ -39,10 +39,6 @@ android {
     packaging {
         resources.excludes += "META-INF/**"
     }
-    composeCompiler {
-        enableStrongSkippingMode = true
-        includeSourceInformation = true
-    }
 }
 
 dependencies {

@@ -119,7 +119,7 @@ fun TextField(
             ),
             keyboardOptions = KeyboardOptions(
                 keyboardType = keyboardType,
-                autoCorrect = false,
+                autoCorrectEnabled = false,
                 imeAction = imeAction ?: if (singleLine) ImeAction.Done else ImeAction.Default
             ),
             interactionSource = interactionSource,
@@ -223,7 +223,7 @@ fun PlaceholderField(
                 ),
                 keyboardOptions = KeyboardOptions(
                     keyboardType = keyboardType,
-                    autoCorrect = false,
+                    autoCorrectEnabled = false,
                     imeAction = imeAction
                 ),
                 interactionSource = interactionSource,
@@ -413,7 +413,7 @@ private fun TvTextFieldImpl(
                     )
                 ),
                 keyboardOptions = KeyboardOptions(
-                    autoCorrect = false,
+                    autoCorrectEnabled = false,
                     imeAction = ImeAction.Search
                 ),
                 keyboardActions = keyboardActions,

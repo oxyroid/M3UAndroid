@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.compose.compiler.gradle.ComposeCompilerGradlePluginExtension
+import org.jetbrains.kotlin.gradle.dsl.kotlinExtension
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
@@ -14,29 +16,33 @@ plugins {
 
 subprojects {
     tasks.withType<KotlinCompile>().configureEach {
-        val composeMetricsPath =
-            project.layout.buildDirectory.dir("compose_metrics").get().asFile.path
-        val composeStabilityConfigurationPath =
-            "${project.rootDir.path}/compose_compiler_config.conf"
-        compilerOptions {
-            freeCompilerArgs.addAll(
-                "-Xcontext-receivers",
-                "-opt-in=androidx.compose.foundation.ExperimentalFoundationApi",
-                "-opt-in=androidx.compose.foundation.layout.ExperimentalLayoutApi",
-                "-opt-in=androidx.compose.material3.ExperimentalMaterial3Api",
-                "-opt-in=com.google.accompanist.permissions.ExperimentalPermissionsApi",
-                "-opt-in=androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi",
-                "-opt-in=androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi",
-                "-opt-in=androidx.compose.material3.adaptive.navigation.suite.ExperimentalMaterial3AdaptiveNavigationSuiteApi",
-                "-opt-in=androidx.tv.material3.ExperimentalTvMaterial3Api",
-                "-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi",
-                "-P",
-                "plugin:androidx.compose.compiler.plugins.kotlin:metricsDestination=$composeMetricsPath",
-                "-P",
-                "plugin:androidx.compose.compiler.plugins.kotlin:reportsDestination=$composeMetricsPath",
-                "-P",
-                "plugin:androidx.compose.compiler.plugins.kotlin:stabilityConfigurationPath=$composeStabilityConfigurationPath"
-            )
+        kotlinExtension.sourceSets {
+            all {
+                languageSettings {
+                    optIn("kotlinx.coroutines.ExperimentalCoroutinesApi")
+                    optIn("androidx.compose.foundation.ExperimentalFoundationApi")
+                    optIn("androidx.compose.foundation.layout.ExperimentalLayoutApi")
+                    optIn("androidx.compose.material3.ExperimentalMaterial3Api")
+                    optIn("androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi")
+                    optIn("androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi")
+                    optIn("androidx.tv.material3.ExperimentalTvMaterial3Api")
+                    optIn("com.google.accompanist.permissions.ExperimentalPermissionsApi")
+                }
+            }
+        }
+    }
+    plugins.withId("org.jetbrains.kotlin.plugin.compose") {
+        configure<ComposeCompilerGradlePluginExtension> {
+            enableStrongSkippingMode = true
+            enableNonSkippingGroupOptimization = true
+            enableIntrinsicRemember = true
+            includeSourceInformation = true
+            val file = rootProject.layout.projectDirectory.file("compose_compiler_config.conf")
+            if (file.asFile.exists()) {
+                stabilityConfigurationFile.set(file)
+            }
+            metricsDestination.set(layout.buildDirectory.dir("compose_metrics"))
+            reportsDestination.set(layout.buildDirectory.dir("compose_metrics"))
         }
     }
 }

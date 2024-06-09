@@ -1,3 +1,5 @@
+@file: Suppress("DEPRECATION")
+
 package com.m3u.material.transformation
 
 import android.content.Context
@@ -12,7 +14,6 @@ import androidx.core.graphics.createBitmap
 import coil.size.Size
 import coil.transform.Transformation
 
-@Suppress("DEPRECATION")
 class BlurTransformation @JvmOverloads constructor(
     private val context: Context,
     private val radius: Float = DEFAULT_RADIUS,
