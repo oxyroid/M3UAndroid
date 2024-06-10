@@ -5,27 +5,26 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.selection.toggleable
-import androidx.compose.material3.ripple
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.LocalAbsoluteTonalElevation
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TooltipBox
 import androidx.compose.material3.TooltipDefaults
 import androidx.compose.material3.rememberTooltipState
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.capitalize
 import androidx.compose.ui.text.font.FontWeight
@@ -34,6 +33,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.m3u.material.ktx.isTelevision
+import com.m3u.material.model.LocalSpacing
+import com.m3u.material.shape.AbsoluteSmoothCornerShape
 import androidx.tv.material3.Checkbox as TvCheckbox
 import androidx.tv.material3.Icon as TvIcon
 import androidx.tv.material3.ListItem as TvListItem
@@ -53,6 +54,7 @@ fun Preference(
     icon: ImageVector? = null,
     trailing: @Composable (() -> Unit)? = null
 ) {
+    val spacing = LocalSpacing.current
     val interactionSource = remember { MutableInteractionSource() }
     val focus by interactionSource.collectIsFocusedAsState()
 
@@ -71,51 +73,55 @@ fun Preference(
     ) {
         val alpha = if (enabled) 1f else 0.38f
         if (!isTelevision()) {
-            ListItem(
-                headlineContent = {
-                    Text(
-                        text = title,
-                        style = MaterialTheme.typography.titleMedium,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                },
-                supportingContent = {
-                    if (content != null) {
+            OutlinedCard(
+                shape = AbsoluteSmoothCornerShape(spacing.medium, 65)
+            ) {
+                ListItem(
+                    headlineContent = {
                         Text(
-                            text = content.capitalize(Locale.current),
-                            style = MaterialTheme.typography.bodyMedium,
+                            text = title,
+                            style = MaterialTheme.typography.titleMedium,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier then if (focus) Modifier.basicMarquee()
-                            else Modifier
                         )
-                    }
-                },
-                trailingContent = trailing,
-                leadingContent = icon?.let {
-                    @Composable {
-                        Icon(imageVector = it, contentDescription = null)
-                    }
-                },
-                tonalElevation = LocalAbsoluteTonalElevation.current,
-                shadowElevation = elevation,
-                colors = ListItemDefaults.colors(
-                    containerColor = Color.Transparent,
-                    overlineColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha),
-                    supportingColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha),
-                    headlineColor = MaterialTheme.colorScheme.onSurface.copy(alpha)
-                ),
-                modifier = modifier
-                    .semantics(mergeDescendants = true) {}
-                    .clickable(
-                        enabled = enabled,
-                        onClick = onClick,
-                        interactionSource = interactionSource,
-                        indication = ripple()
-                    )
-                    .fillMaxWidth()
-            )
+                    },
+                    supportingContent = {
+                        if (content != null) {
+                            Text(
+                                text = content.capitalize(Locale.current),
+                                style = MaterialTheme.typography.bodyMedium,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier then if (focus) Modifier.basicMarquee()
+                                else Modifier
+                            )
+                        }
+                    },
+                    trailingContent = trailing,
+                    leadingContent = icon?.let {
+                        @Composable {
+                            Icon(imageVector = it, contentDescription = null)
+                        }
+                    },
+                    tonalElevation = LocalAbsoluteTonalElevation.current,
+                    shadowElevation = elevation,
+                    colors = ListItemDefaults.colors(
+                        containerColor = Color.Transparent,
+                        overlineColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha),
+                        supportingColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha),
+                        headlineColor = MaterialTheme.colorScheme.onSurface.copy(alpha)
+                    ),
+                    modifier = modifier
+                        .semantics(mergeDescendants = true) {}
+                        .clickable(
+                            enabled = enabled,
+                            onClick = onClick,
+                            interactionSource = interactionSource,
+                            indication = ripple()
+                        )
+                        .fillMaxWidth()
+                )
+            }
         } else {
             TvListItem(
                 selected = focus,
@@ -210,13 +216,6 @@ fun SwitchPreference(
     enabled: Boolean = true,
     icon: ImageVector? = null,
 ) {
-    val combined = Modifier
-        .toggleable(
-            value = checked,
-            onValueChange = { onChanged(it) },
-            role = Role.Checkbox
-        )
-        .then(modifier)
     Preference(
         title = title,
         content = content,
@@ -227,7 +226,7 @@ fun SwitchPreference(
                 onChanged(!checked)
             }
         },
-        modifier = combined,
+        modifier = modifier,
         trailing = {
             if (!isTelevision()) {
                 Switch(

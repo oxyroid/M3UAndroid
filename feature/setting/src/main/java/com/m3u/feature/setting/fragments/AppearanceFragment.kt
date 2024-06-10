@@ -2,11 +2,14 @@ package com.m3u.feature.setting.fragments
 
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -17,7 +20,6 @@ import androidx.compose.material.icons.rounded.FitScreen
 import androidx.compose.material.icons.rounded.HideImage
 import androidx.compose.material.icons.rounded.Restore
 import androidx.compose.material.icons.rounded.Stars
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -30,15 +32,18 @@ import com.m3u.core.architecture.preferences.ClipMode
 import com.m3u.core.architecture.preferences.hiltPreferences
 import com.m3u.core.util.basic.title
 import com.m3u.data.database.model.ColorScheme
-import com.m3u.feature.setting.components.CheckBoxSharedPreference
+import com.m3u.feature.setting.components.SwitchSharedPreference
 import com.m3u.i18n.R.string
 import com.m3u.material.components.Preference
 import com.m3u.material.components.TextPreference
 import com.m3u.material.components.ThemeAddSelection
 import com.m3u.material.components.ThemeSelection
-import com.m3u.material.ktx.includeChildGlowPadding
 import com.m3u.material.ktx.isTelevision
+import com.m3u.material.ktx.minus
+import com.m3u.material.ktx.only
+import com.m3u.material.ktx.plus
 import com.m3u.material.ktx.textHorizontalLabel
+import com.m3u.material.model.LocalSpacing
 
 @Composable
 internal fun AppearanceFragment(
@@ -49,6 +54,7 @@ internal fun AppearanceFragment(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues()
 ) {
+    val spacing = LocalSpacing.current
     val preferences = hiltPreferences()
 
     val isDarkMode = preferences.darkMode
@@ -56,10 +62,9 @@ internal fun AppearanceFragment(
     val tv = isTelevision()
 
     Column(
-        modifier
+        modifier = modifier
             .fillMaxSize()
-            .padding(contentPadding)
-            .includeChildGlowPadding()
+            .padding(contentPadding - contentPadding.only(WindowInsetsSides.Bottom))
     ) {
         Text(
             text = stringResource(string.feat_setting_appearance_hint_edit_color).uppercase(),
@@ -110,72 +115,93 @@ internal fun AppearanceFragment(
             }
         }
 
-        HorizontalDivider()
+        LazyColumn(
+            verticalArrangement = Arrangement.spacedBy(spacing.small),
+            contentPadding = contentPadding - contentPadding.only(WindowInsetsSides.Top) +
+                    PaddingValues(horizontal = spacing.medium),
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+        ) {
+            item {
+                TextPreference(
+                    title = stringResource(string.feat_setting_clip_mode).title(),
+                    icon = Icons.Rounded.FitScreen,
+                    trailing = when (preferences.clipMode) {
+                        ClipMode.ADAPTIVE -> stringResource(string.feat_setting_clip_mode_adaptive)
+                        ClipMode.CLIP -> stringResource(string.feat_setting_clip_mode_clip)
+                        ClipMode.STRETCHED -> stringResource(string.feat_setting_clip_mode_stretched)
+                        else -> ""
+                    }.title(),
+                    onClick = {
+                        preferences.clipMode = when (preferences.clipMode) {
+                            ClipMode.ADAPTIVE -> ClipMode.CLIP
+                            ClipMode.CLIP -> ClipMode.STRETCHED
+                            ClipMode.STRETCHED -> ClipMode.ADAPTIVE
+                            else -> ClipMode.ADAPTIVE
+                        }
+                    }
+                )
+            }
+            item {
+                SwitchSharedPreference(
+                    title = string.feat_setting_no_picture_mode,
+                    content = string.feat_setting_no_picture_mode_description,
+                    icon = Icons.Rounded.HideImage,
+                    checked = preferences.noPictureMode,
+                    onChanged = { preferences.noPictureMode = !preferences.noPictureMode }
+                )
+            }
+            item {
+                SwitchSharedPreference(
+                    title = string.feat_setting_follow_system_theme,
+                    icon = Icons.Rounded.DarkMode,
+                    checked = preferences.followSystemTheme,
+                    onChanged = { preferences.followSystemTheme = !preferences.followSystemTheme },
+                )
+            }
+            item {
+                val useDynamicColorsAvailable = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
 
-        TextPreference(
-            title = stringResource(string.feat_setting_clip_mode).title(),
-            icon = Icons.Rounded.FitScreen,
-            trailing = when (preferences.clipMode) {
-                ClipMode.ADAPTIVE -> stringResource(string.feat_setting_clip_mode_adaptive)
-                ClipMode.CLIP -> stringResource(string.feat_setting_clip_mode_clip)
-                ClipMode.STRETCHED -> stringResource(string.feat_setting_clip_mode_stretched)
-                else -> ""
-            }.title(),
-            onClick = {
-                preferences.clipMode = when (preferences.clipMode) {
-                    ClipMode.ADAPTIVE -> ClipMode.CLIP
-                    ClipMode.CLIP -> ClipMode.STRETCHED
-                    ClipMode.STRETCHED -> ClipMode.ADAPTIVE
-                    else -> ClipMode.ADAPTIVE
+                SwitchSharedPreference(
+                    title = string.feat_setting_use_dynamic_colors,
+                    content = string.feat_setting_use_dynamic_colors_unavailable.takeUnless { useDynamicColorsAvailable },
+                    icon = Icons.Rounded.ColorLens,
+                    checked = useDynamicColors,
+                    onChanged = { preferences.useDynamicColors = !useDynamicColors },
+                    enabled = useDynamicColorsAvailable
+                )
+            }
+            if (!tv) {
+                item {
+                    SwitchSharedPreference(
+                        title = string.feat_setting_colorful_background,
+                        icon = Icons.Rounded.Stars,
+                        checked = preferences.colorfulBackground,
+                        onChanged = {
+                            preferences.colorfulBackground = !preferences.colorfulBackground
+                        }
+                    )
                 }
             }
-        )
-        CheckBoxSharedPreference(
-            title = string.feat_setting_no_picture_mode,
-            content = string.feat_setting_no_picture_mode_description,
-            icon = Icons.Rounded.HideImage,
-            checked = preferences.noPictureMode,
-            onChanged = { preferences.noPictureMode = !preferences.noPictureMode }
-        )
-        CheckBoxSharedPreference(
-            title = string.feat_setting_follow_system_theme,
-            icon = Icons.Rounded.DarkMode,
-            checked = preferences.followSystemTheme,
-            onChanged = { preferences.followSystemTheme = !preferences.followSystemTheme },
-        )
-
-        val useDynamicColorsAvailable = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
-
-        CheckBoxSharedPreference(
-            title = string.feat_setting_use_dynamic_colors,
-            content = string.feat_setting_use_dynamic_colors_unavailable.takeUnless { useDynamicColorsAvailable },
-            icon = Icons.Rounded.ColorLens,
-            checked = useDynamicColors,
-            onChanged = { preferences.useDynamicColors = !useDynamicColors },
-            enabled = useDynamicColorsAvailable
-        )
-        if (!tv) {
-            CheckBoxSharedPreference(
-                title = string.feat_setting_colorful_background,
-                icon = Icons.Rounded.Stars,
-                checked = preferences.colorfulBackground,
-                onChanged = { preferences.colorfulBackground = !preferences.colorfulBackground }
-            )
-        }
-        Preference(
-            title = stringResource(string.feat_setting_restore_schemes).title(),
-            icon = Icons.Rounded.Restore,
-            onClick = restoreSchemes
-        )
-
-        if (!tv) {
-            CheckBoxSharedPreference(
-                title = string.feat_setting_god_mode,
-                content = string.feat_setting_god_mode_description,
-                icon = Icons.Rounded.DeviceHub,
-                checked = preferences.godMode,
-                onChanged = { preferences.godMode = !preferences.godMode }
-            )
+            item {
+                Preference(
+                    title = stringResource(string.feat_setting_restore_schemes).title(),
+                    icon = Icons.Rounded.Restore,
+                    onClick = restoreSchemes
+                )
+            }
+            item {
+                if (!tv) {
+                    SwitchSharedPreference(
+                        title = string.feat_setting_god_mode,
+                        content = string.feat_setting_god_mode_description,
+                        icon = Icons.Rounded.DeviceHub,
+                        checked = preferences.godMode,
+                        onChanged = { preferences.godMode = !preferences.godMode }
+                    )
+                }
+            }
         }
     }
 }

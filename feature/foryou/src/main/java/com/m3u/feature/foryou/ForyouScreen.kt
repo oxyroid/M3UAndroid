@@ -41,7 +41,6 @@ import com.m3u.data.database.model.isSeries
 import com.m3u.data.service.MediaCommand
 import com.m3u.feature.foryou.components.HeadlineBackground
 import com.m3u.feature.foryou.components.PlaylistGallery
-import com.m3u.feature.foryou.components.PlaylistGalleryPlaceholder
 import com.m3u.feature.foryou.components.recommend.Recommend
 import com.m3u.feature.foryou.components.recommend.RecommendGallery
 import com.m3u.i18n.R.string
@@ -224,7 +223,6 @@ private fun ForyouScreen(
             }
 
             is Resource.Success -> {
-                val showPlaylist = playlistCountsResource.data.isNotEmpty()
                 val header = @Composable {
                     RecommendGallery(
                         specs = specs,
@@ -234,27 +232,17 @@ private fun ForyouScreen(
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
-                if (showPlaylist) {
-                    PlaylistGallery(
-                        rowCount = actualRowCount,
-                        playlistCounts = playlistCountsResource.data,
-                        subscribingPlaylistUrls = subscribingPlaylistUrls,
-                        refreshingEpgUrls = refreshingEpgUrls,
-                        onClick = navigateToPlaylist,
-                        onLongClick = { mediaSheetValue = MediaSheetValue.ForyouScreen(it) },
-                        header = header.takeIf { specs.isNotEmpty() },
-                        contentPadding = contentPadding,
-                        modifier = Modifier.fillMaxSize()
-                    )
-                } else {
-                    Box(Modifier.fillMaxSize()) {
-                        PlaylistGalleryPlaceholder(
-                            navigateToSettingPlaylistManagement = navigateToSettingPlaylistManagement,
-                            modifier = Modifier.align(Alignment.Center)
-                        )
-                    }
-                }
-
+                PlaylistGallery(
+                    rowCount = actualRowCount,
+                    playlistCounts = playlistCountsResource.data,
+                    subscribingPlaylistUrls = subscribingPlaylistUrls,
+                    refreshingEpgUrls = refreshingEpgUrls,
+                    onClick = navigateToPlaylist,
+                    onLongClick = { mediaSheetValue = MediaSheetValue.ForyouScreen(it) },
+                    header = header.takeIf { specs.isNotEmpty() },
+                    contentPadding = contentPadding,
+                    modifier = Modifier.fillMaxSize()
+                )
                 MediaSheet(
                     value = mediaSheetValue,
                     onUnsubscribePlaylist = {

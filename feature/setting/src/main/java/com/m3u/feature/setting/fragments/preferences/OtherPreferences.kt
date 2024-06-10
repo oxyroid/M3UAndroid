@@ -3,6 +3,7 @@ package com.m3u.feature.setting.fragments.preferences
 import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.OpenInNew
@@ -20,6 +21,7 @@ import com.m3u.core.util.basic.title
 import com.m3u.i18n.R.string
 import com.m3u.material.components.Preference
 import com.m3u.material.components.TrailingIconPreference
+import com.m3u.material.model.LocalSpacing
 
 @Composable
 internal fun OtherPreferences(
@@ -29,9 +31,13 @@ internal fun OtherPreferences(
     onClearCache: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val spacing = LocalSpacing.current
     val context = LocalContext.current
     val uriHandler = LocalUriHandler.current
-    Column(modifier) {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(spacing.small),
+        modifier = modifier
+    ) {
         TrailingIconPreference(
             title = stringResource(string.feat_setting_system_setting).title(),
             icon = Icons.Rounded.PermDeviceInformation,

@@ -41,6 +41,7 @@ import com.m3u.feature.setting.fragments.OptionalFragment
 import com.m3u.feature.setting.fragments.SubscriptionsFragment
 import com.m3u.feature.setting.fragments.preferences.PreferencesFragment
 import com.m3u.i18n.R.string
+import com.m3u.material.ktx.includeChildGlowPadding
 import com.m3u.material.ktx.isTelevision
 import com.m3u.material.model.LocalHazeState
 import com.m3u.ui.Destination
@@ -252,7 +253,9 @@ private fun SettingScreen(
                 },
                 cacheSpace = cacheSpace,
                 onClearCache = onClearCache,
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier
+                    .fillMaxSize()
+                    .includeChildGlowPadding()
             )
         },
         detailPane = {
