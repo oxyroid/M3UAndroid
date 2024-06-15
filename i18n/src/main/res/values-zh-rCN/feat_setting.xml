@@ -110,7 +110,7 @@
 
     <string name="feat_setting_cache">边播边存</string>
     <string name="feat_setting_cache_description">此选项可能导致无法正常播放</string>
-    <string name="feat_setting_clear_cache">清空缓存（%s）</string>
+    <string name="feat_setting_clear_cache">清空缓存</string>
 
     <string name="feat_setting_paging">分页加载频道</string>
     <string name="feat_setting_paging_description">

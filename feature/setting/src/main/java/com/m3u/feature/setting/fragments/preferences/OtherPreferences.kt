@@ -51,7 +51,8 @@ internal fun OtherPreferences(
             }
         )
         Preference(
-            title = stringResource(string.feat_setting_clear_cache, cacheSpace.toString()).title(),
+            title = stringResource(string.feat_setting_clear_cache).title(),
+            content = cacheSpace.toString(),
             icon = Icons.Rounded.Delete,
             onClick = onClearCache
         )

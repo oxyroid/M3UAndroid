@@ -2,9 +2,6 @@ package com.m3u.androidApp.ui
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -41,9 +38,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastForEach
 import androidx.compose.ui.util.fastMap
 import androidx.compose.ui.util.fastMaxOfOrNull
+import com.m3u.androidApp.ui.internal.LeanbackScaffoldImpl
 import com.m3u.androidApp.ui.internal.SmartphoneScaffoldImpl
 import com.m3u.androidApp.ui.internal.TabletScaffoldImpl
-import com.m3u.androidApp.ui.internal.LeanbackScaffoldImpl
 import com.m3u.material.components.Background
 import com.m3u.material.components.Icon
 import com.m3u.material.components.IconButton
@@ -157,18 +154,12 @@ internal fun MainContent(
                                     .padding(horizontal = spacing.medium)
                                     .weight(1f)
                             ) {
-                                AnimatedContent(
-                                    targetState = title,
-                                    label = "app-scaffold-title",
-                                    transitionSpec = { fadeIn() togetherWith fadeOut() }
-                                ) { title ->
-                                    Text(
-                                        text = title,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis,
-                                        fontFamily = FontFamilies.LexendExa
-                                    )
-                                }
+                                Text(
+                                    text = title,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    fontFamily = FontFamilies.LexendExa
+                                )
                                 AnimatedVisibility(subtitle.text.isNotEmpty()) {
                                     Text(
                                         text = subtitle,

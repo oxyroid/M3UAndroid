@@ -104,7 +104,7 @@
     <string name="feat_setting_cache">usar caché cuando reproduce</string>
     <string name="feat_setting_cache_description">esta opción puede interferir la reproducción normal</string>
 
-    <string name="feat_setting_clear_cache">limpiar caché (%s)</string>
+    <string name="feat_setting_clear_cache">limpiar caché</string>
 
     <string name="feat_setting_paging">numerado de canales</string>
     <string name="feat_setting_paging_description">

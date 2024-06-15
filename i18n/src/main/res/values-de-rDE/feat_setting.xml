@@ -110,7 +110,7 @@
 
     <string name="feat_setting_cache">Cache bei Wiedergabe</string>
     <string name="feat_setting_cache_description">Diese Option verhindert möglicherweise die normale Wiedergabe</string>
-    <string name="feat_setting_clear_cache">leere Cache (%s)</string>
+    <string name="feat_setting_clear_cache">leere Cache</string>
 
     <string name="feat_setting_paging">Kanäle analysieren</string>
     <string name="feat_setting_paging_description">

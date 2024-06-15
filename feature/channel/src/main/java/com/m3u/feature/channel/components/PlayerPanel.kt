@@ -1,7 +1,6 @@
 package com.m3u.feature.channel.components
 
 import android.view.KeyEvent
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -39,10 +38,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.paging.compose.LazyPagingItems
 import androidx.tv.material3.surfaceColorAtElevation
 import com.m3u.core.util.collections.indexOf
+import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.Episode
 import com.m3u.data.database.model.Programme
 import com.m3u.data.database.model.ProgrammeRange
-import com.m3u.data.database.model.Channel
 import com.m3u.data.service.MediaCommand
 import com.m3u.material.components.Background
 import com.m3u.material.ktx.leanback
@@ -89,11 +88,10 @@ internal fun PlayerPanel(
                 }
                 .padding(vertical = spacing.medium)
         ) {
-            AnimatedVisibility(
-                visible = isPanelExpanded && useVertical,
-                modifier = Modifier.padding(horizontal = spacing.medium)
-            ) {
-                Column {
+            if (isPanelExpanded && useVertical) {
+                Column(
+                    modifier = Modifier.padding(horizontal = spacing.medium)
+                ) {
                     Text(
                         text = title.trim(),
                         style = MaterialTheme.typography.titleMedium,

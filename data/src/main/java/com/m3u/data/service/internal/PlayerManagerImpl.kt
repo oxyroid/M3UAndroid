@@ -42,12 +42,12 @@ import com.m3u.core.architecture.preferences.Preferences
 import com.m3u.core.architecture.preferences.ReconnectMode
 import com.m3u.data.SSLs
 import com.m3u.data.api.OkhttpClient
-import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.Channel
+import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.copyXtreamEpisode
 import com.m3u.data.database.model.copyXtreamSeries
-import com.m3u.data.repository.playlist.PlaylistRepository
 import com.m3u.data.repository.channel.ChannelRepository
+import com.m3u.data.repository.playlist.PlaylistRepository
 import com.m3u.data.service.MediaCommand
 import com.m3u.data.service.PlayerManager
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -291,7 +291,7 @@ class PlayerManagerImpl @Inject constructor(
             .build()
     }
 
-    override val cacheSpace: Flow<Long> = flow<Long> {
+    override val cacheSpace: Flow<Long> = flow {
         while (true) {
             emit(cache.cacheSpace)
             delay(1.seconds)

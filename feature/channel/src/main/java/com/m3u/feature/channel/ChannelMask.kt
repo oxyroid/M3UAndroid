@@ -3,13 +3,10 @@ package com.m3u.feature.channel
 import android.content.pm.ActivityInfo
 import android.view.KeyEvent
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.animateIntAsState
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -31,6 +28,7 @@ import androidx.compose.material.icons.rounded.Cast
 import androidx.compose.material.icons.rounded.DarkMode
 import androidx.compose.material.icons.rounded.HighQuality
 import androidx.compose.material.icons.rounded.LightMode
+import androidx.compose.material.icons.rounded.NewReleases
 import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PictureInPicture
 import androidx.compose.material.icons.rounded.PlayArrow
@@ -76,7 +74,6 @@ import com.m3u.feature.channel.MaskCenterState.Replay
 import com.m3u.feature.channel.components.MaskTextButton
 import com.m3u.feature.channel.components.PlayerMask
 import com.m3u.i18n.R.string
-import com.m3u.material.components.CircularProgressIndicator
 import com.m3u.material.components.mask.MaskButton
 import com.m3u.material.components.mask.MaskCircleButton
 import com.m3u.material.components.mask.MaskPanel
@@ -334,14 +331,9 @@ internal fun ChannelMask(
                     verticalArrangement = Arrangement.Bottom,
                     modifier = Modifier
                         .semantics(mergeDescendants = true) { }
-                        .animateContentSize()
                         .weight(1f)
                 ) {
-                    AnimatedVisibility(
-                        visible = !isPanelExpanded || !isPanelGestureSupported,
-                        enter = fadeIn(),
-                        exit = fadeOut()
-                    ) {
+                    if (!isPanelExpanded || !isPanelGestureSupported) {
                         Text(
                             text = playlistTitle.trim().uppercase(),
                             style = MaterialTheme.typography.labelMedium,
@@ -351,12 +343,6 @@ internal fun ChannelMask(
                             overflow = TextOverflow.Ellipsis,
                             modifier = Modifier.basicMarquee()
                         )
-                    }
-                    AnimatedVisibility(
-                        visible = !isPanelExpanded || !isPanelGestureSupported,
-                        enter = fadeIn(),
-                        exit = fadeOut()
-                    ) {
                         Text(
                             text = title.trim(),
                             style = MaterialTheme.typography.titleMedium,
@@ -366,7 +352,6 @@ internal fun ChannelMask(
                             modifier = Modifier.basicMarquee()
                         )
                     }
-
                     val playStateDisplayText =
                         ChannelMaskUtils.playStateDisplayText(playerState.playState)
                     val exceptionDisplayText =
@@ -400,7 +385,6 @@ internal fun ChannelMask(
                             modifier = Modifier.basicMarquee()
                         )
                     }
-
                 }
                 if (!leanback) {
                     val autoRotating by ChannelMaskUtils.IsAutoRotatingEnabled
@@ -536,28 +520,34 @@ private fun MaskCenterButton(
     onRetry: () -> Unit
 ) {
     Box(modifier, contentAlignment = Alignment.Center) {
-        if (maskCenterState != null) {
-            MaskCircleButton(
-                state = maskState,
-                icon = when (maskCenterState) {
-                    Replay -> Icons.Rounded.Refresh
-                    Play -> Icons.Rounded.PlayArrow
-                    Pause -> Icons.Rounded.Pause
-                },
-                onClick = when (maskCenterState) {
-                    Replay -> onRetry
-                    Play -> onPlay
-                    Pause -> onPause
-                }
-            )
-        } else {
-            CircularProgressIndicator()
+        when (maskCenterState) {
+            Replay, Play, Pause -> {
+                MaskCircleButton(
+                    state = maskState,
+                    icon = when (maskCenterState) {
+                        Replay -> Icons.Rounded.Refresh
+                        Play -> Icons.Rounded.PlayArrow
+                        Pause -> Icons.Rounded.Pause
+                        else -> Icons.Rounded.NewReleases // never reached
+                    },
+                    onClick = when (maskCenterState) {
+                        Replay -> onRetry
+                        Play -> onPlay
+                        Pause -> onPause
+                        else -> {
+                            {}
+                        } // never reached
+                    }
+                )
+            }
+
+            else -> {}
         }
     }
 }
 
 private enum class MaskCenterState {
-    Replay, Play, Pause;
+    Replay, Play, Pause, Loading;
 
     companion object {
         fun of(
@@ -567,7 +557,8 @@ private enum class MaskCenterState {
             isPanelExpanded: Boolean,
             playerError: Exception?
         ): MaskCenterState? = when {
-            isPanelExpanded || playState == Player.STATE_BUFFERING -> null
+            isPanelExpanded -> null
+            playState == Player.STATE_BUFFERING -> Loading
             alwaysShowReplay || playState in arrayOf(
                 Player.STATE_IDLE,
                 Player.STATE_ENDED

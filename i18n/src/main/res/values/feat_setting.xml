@@ -112,7 +112,7 @@
 
     <string name="feat_setting_cache">cache while playing</string>
     <string name="feat_setting_cache_description">this option may prevent normal playback</string>
-    <string name="feat_setting_clear_cache">clear cache (%s)</string>
+    <string name="feat_setting_clear_cache">clear cache</string>
 
     <string name="feat_setting_paging">paging channels</string>
     <string name="feat_setting_paging_description">

@@ -108,7 +108,7 @@
 
     <string name="feat_setting_cache">Cache enquanto reproduz</string>
     <string name="feat_setting_cache_description">Esta opção pode impedir a reprodução normal</string>
-    <string name="feat_setting_clear_cache">Limpar cache (%s)</string>
+    <string name="feat_setting_clear_cache">Limpar cache</string>
 
     <string name="feat_setting_paging">Paginação em canais</string>
     <string name="feat_setting_paging_description">útil para grandes quantidades de canais, mas o agrupamento será desativado ao mesmo tempo</string>

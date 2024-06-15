@@ -15,8 +15,7 @@ androidx-work = "2.9.0"
 androidx-room = "2.6.1"
 androidx-tvprovider = "1.0.0"
 androidx-startup = "1.1.1"
-androidx-paging-compose = "3.3.0"
-androidx-paging-runtime-ktx = "3.3.0"
+androidx-paging = "3.3.0"
 
 google-accompanist = "0.35.1-alpha"
 google-dagger = "2.51.1"
@@ -79,8 +78,8 @@ androidx-compose-material3-adaptive-navigation = { group = "androidx.compose.mat
 androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "androidx-navigation" }
 androidx-constraintlayout-compose = { group = "androidx.constraintlayout", name = "constraintlayout-compose", version.ref = "androidx-constraintlayout-compose" }
 
-androidx-paging-compose = { module = "androidx.paging:paging-compose", version.ref = "androidx-paging-compose" }
-androidx-paging-runtime-ktx = { module = "androidx.paging:paging-runtime-ktx", version.ref = "androidx-paging-runtime-ktx" }
+androidx-paging-compose = { module = "androidx.paging:paging-compose", version.ref = "androidx-paging" }
+androidx-paging-runtime-ktx = { module = "androidx.paging:paging-runtime-ktx", version.ref = "androidx-paging" }
 
 androidx-tv-material = { group = "androidx.tv", name = "tv-material", version.ref = "androidx-tv" }
 
