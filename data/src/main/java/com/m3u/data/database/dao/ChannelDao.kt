@@ -64,6 +64,9 @@ internal interface ChannelDao {
     @Query("SELECT * FROM streams WHERE seen != 0 ORDER BY seen DESC LIMIT 1")
     suspend fun getPlayedRecently(): Channel?
 
+    @Query("SELECT * FROM streams WHERE seen != 0 ORDER BY seen DESC LIMIT 1")
+    fun observePlayedRecently(): Flow<Channel?>
+
     @Query("SELECT * FROM streams WHERE id = :id")
     suspend fun get(id: Int): Channel?
 

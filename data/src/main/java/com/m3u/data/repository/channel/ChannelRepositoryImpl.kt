@@ -81,6 +81,8 @@ internal class ChannelRepositoryImpl @Inject constructor(
         channelDao.getPlayedRecently()
     }
 
+    override fun observePlayedRecently(): Flow<Channel?> = channelDao.observePlayedRecently()
+
     override fun observeAllUnseenFavourites(limit: Duration): Flow<List<Channel>> =
         channelDao.observeAllUnseenFavourites(
             limit = limit.inWholeMilliseconds,

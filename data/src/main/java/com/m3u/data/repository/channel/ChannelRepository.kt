@@ -25,6 +25,7 @@ interface ChannelRepository {
     suspend fun hide(id: Int, target: Boolean)
     suspend fun reportPlayed(id: Int)
     suspend fun getPlayedRecently(): Channel?
+    fun observePlayedRecently(): Flow<Channel?>
     fun observeAllUnseenFavourites(limit: Duration): Flow<List<Channel>>
     fun observeAllFavourite(): Flow<List<Channel>>
     fun observeAllHidden(): Flow<List<Channel>>
