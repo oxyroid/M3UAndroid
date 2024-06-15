@@ -21,7 +21,6 @@ sealed interface Edge {
     val isHorizontal: Boolean get() = this is Start || this is End
 }
 
-@Composable
 fun Modifier.blurEdge(
     color: Color,
     edge: Edge,
@@ -46,7 +45,6 @@ fun Modifier.blurEdge(
     } else this
 }
 
-@Composable
 fun Modifier.blurEdges(
     color: Color,
     edges: List<Edge>,

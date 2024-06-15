@@ -2,7 +2,7 @@ package com.m3u.ui
 
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.focus.FocusDirection
-import com.m3u.data.television.model.RemoteDirection
+import com.m3u.data.leanback.model.RemoteDirection
 
 @OptIn(ExperimentalComposeUiApi::class)
 fun RemoteDirection.asFocusDirection(): FocusDirection {

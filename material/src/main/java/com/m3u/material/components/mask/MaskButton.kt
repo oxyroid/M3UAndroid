@@ -12,7 +12,7 @@ import androidx.compose.ui.focus.onFocusEvent
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.m3u.material.components.IconButton
-import com.m3u.material.ktx.isTelevision
+import com.m3u.material.ktx.leanback
 import com.m3u.material.ktx.thenIf
 
 @Composable
@@ -26,7 +26,7 @@ fun MaskButton(
     tint: Color = Color.Unspecified,
     enabled: Boolean = true
 ) {
-    val tv = isTelevision()
+    val leanback = leanback()
 
     TooltipBox(
         state = tooltipState,
@@ -45,7 +45,7 @@ fun MaskButton(
                 state.wake()
                 onClick()
             },
-            modifier = modifier.thenIf(tv) {
+            modifier = modifier.thenIf(leanback) {
                 Modifier.onFocusEvent {
                     if (it.isFocused) {
                         state.wake()

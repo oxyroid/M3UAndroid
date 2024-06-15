@@ -12,7 +12,6 @@ import androidx.compose.material.icons.rounded.Cast
 import androidx.compose.material.icons.rounded.Details
 import androidx.compose.material.icons.rounded.FlashOn
 import androidx.compose.material.icons.rounded.Loop
-import androidx.compose.material.icons.rounded.Pages
 import androidx.compose.material.icons.rounded.PictureInPicture
 import androidx.compose.material.icons.rounded.Recommend
 import androidx.compose.material.icons.rounded.Refresh
@@ -39,10 +38,9 @@ import com.m3u.feature.setting.components.SwitchSharedPreference
 import com.m3u.i18n.R.string
 import com.m3u.material.components.TextPreference
 import com.m3u.material.ktx.includeChildGlowPadding
-import com.m3u.material.ktx.isTelevision
+import com.m3u.material.ktx.leanback
 import com.m3u.material.ktx.plus
 import com.m3u.material.model.LocalSpacing
-import com.m3u.ui.Destination
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 
@@ -53,7 +51,7 @@ internal fun OptionalFragment(
 ) {
     val spacing = LocalSpacing.current
     val preferences = hiltPreferences()
-    val tv = isTelevision()
+    val leanback = leanback()
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(spacing.small),
         contentPadding = contentPadding + PaddingValues(horizontal = spacing.medium),
@@ -88,7 +86,7 @@ internal fun OptionalFragment(
             )
         }
 
-        if (!tv) {
+        if (!leanback) {
             item {
                 SwitchSharedPreference(
                     title = string.feat_setting_zapping_mode,
@@ -142,7 +140,7 @@ internal fun OptionalFragment(
                 onChanged = { preferences.cache = !preferences.cache }
             )
         }
-        if (!tv) {
+        if (!leanback) {
             item {
                 SwitchSharedPreference(
                     title = string.feat_setting_screen_rotating,
@@ -211,18 +209,6 @@ internal fun OptionalFragment(
             )
         }
         item {
-            TextPreference(
-                title = stringResource(string.feat_setting_initial_screen).title(),
-                icon = Icons.Rounded.Pages,
-                trailing = stringResource(Destination.Root.entries[preferences.rootDestination].iconTextId).title(),
-                onClick = {
-                    val total = Destination.Root.entries.size
-                    val prev = preferences.rootDestination
-                    preferences.rootDestination = (prev + 1).takeIf { it < total } ?: 0
-                }
-            )
-        }
-        item {
             val unseensMilliseconds = preferences.unseensMilliseconds
             val unseensMillisecondsText = remember(unseensMilliseconds) {
                 val duration = unseensMilliseconds
@@ -275,9 +261,9 @@ internal fun OptionalFragment(
         }
         item {
             SwitchSharedPreference(
-                title = if (!tv) string.feat_setting_remote_control
+                title = if (!leanback) string.feat_setting_remote_control
                 else string.feat_setting_remote_control_tv_side,
-                content = if (!tv) string.feat_setting_remote_control_description
+                content = if (!leanback) string.feat_setting_remote_control_description
                 else string.feat_setting_remote_control_tv_side_description,
                 icon = Icons.Rounded.SettingsRemote,
                 checked = preferences.remoteControl,

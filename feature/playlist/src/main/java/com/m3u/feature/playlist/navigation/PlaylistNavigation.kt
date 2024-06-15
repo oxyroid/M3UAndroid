@@ -39,11 +39,11 @@ object PlaylistNavigation {
 
 fun NavController.navigateToPlaylist(
     playlistUrl: String,
-    tv: Boolean = false,
+    leanback: Boolean = false,
     navOptions: NavOptions? = null,
 ) {
     val encodedUrl = Uri.encode(playlistUrl)
-    val route = if (tv) PlaylistNavigation.createPlaylistTvRoute(encodedUrl)
+    val route = if (leanback) PlaylistNavigation.createPlaylistTvRoute(encodedUrl)
     else PlaylistNavigation.createPlaylistRoute(encodedUrl)
     this.navigate(route, navOptions)
 }

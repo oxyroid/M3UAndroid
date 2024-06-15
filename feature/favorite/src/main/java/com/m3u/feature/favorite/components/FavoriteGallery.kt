@@ -30,7 +30,7 @@ import com.m3u.core.util.basic.title
 import com.m3u.core.wrapper.Resource
 import com.m3u.data.database.model.Channel
 import com.m3u.i18n.R.string
-import com.m3u.material.ktx.isTelevision
+import com.m3u.material.ktx.leanback
 import com.m3u.material.ktx.plus
 import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.createPremiumBrush
@@ -106,9 +106,9 @@ private fun RandomTips(
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
-    val tv = isTelevision()
+    val leanback = leanback()
     val title = stringResource(string.feat_favorite_play_randomly)
-    if (!tv) {
+    if (!leanback) {
         ListItem(
             headlineContent = {
                 Text(

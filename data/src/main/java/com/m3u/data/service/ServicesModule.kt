@@ -22,10 +22,10 @@ import com.m3u.data.service.internal.MessagerImpl
 import com.m3u.data.service.internal.PlayerManagerImpl
 import com.m3u.data.service.internal.DPadReactionServiceImpl
 import com.m3u.data.service.internal.FileProviderImpl
-import com.m3u.data.television.http.HttpServer
-import com.m3u.data.television.http.internal.HttpServerImpl
-import com.m3u.data.television.nsd.NsdDeviceManager
-import com.m3u.data.television.nsd.internal.NsdDeviceManagerImpl
+import com.m3u.data.leanback.http.HttpServer
+import com.m3u.data.leanback.http.HttpServerImpl
+import com.m3u.data.leanback.nsd.NsdDeviceManager
+import com.m3u.data.leanback.nsd.NsdDeviceManagerImpl
 import dagger.Binds
 import dagger.Module
 import dagger.Provides

@@ -4,7 +4,7 @@ import androidx.compose.runtime.Immutable
 import com.m3u.core.architecture.dispatcher.Dispatcher
 import com.m3u.core.architecture.dispatcher.M3uDispatchers.Main
 import com.m3u.data.service.DPadReactionService
-import com.m3u.data.television.model.RemoteDirection
+import com.m3u.data.leanback.model.RemoteDirection
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.withContext

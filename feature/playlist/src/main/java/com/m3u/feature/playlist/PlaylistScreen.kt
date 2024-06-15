@@ -3,7 +3,6 @@
 package com.m3u.feature.playlist
 
 import android.Manifest
-import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.res.Configuration.UI_MODE_TYPE_APPLIANCE
 import android.content.res.Configuration.UI_MODE_TYPE_CAR
@@ -12,6 +11,7 @@ import android.content.res.Configuration.UI_MODE_TYPE_NORMAL
 import android.content.res.Configuration.UI_MODE_TYPE_TELEVISION
 import android.content.res.Configuration.UI_MODE_TYPE_VR_HEADSET
 import android.content.res.Configuration.UI_MODE_TYPE_WATCH
+import android.os.Build
 import android.provider.Settings
 import android.view.KeyEvent
 import androidx.activity.compose.BackHandler
@@ -64,7 +64,7 @@ import com.m3u.i18n.R.string
 import com.m3u.material.ktx.checkPermissionOrRationale
 import com.m3u.material.ktx.createScheme
 import com.m3u.material.ktx.interceptVolumeEvent
-import com.m3u.material.ktx.isTelevision
+import com.m3u.material.ktx.leanback
 import com.m3u.material.ktx.thenIf
 import com.m3u.material.model.LocalSpacing
 import com.m3u.material.model.asTvScheme
@@ -96,7 +96,7 @@ internal fun PlaylistRoute(
     val colorScheme = TvMaterialTheme.colorScheme
     val lifecycleOwner = LocalLifecycleOwner.current
 
-    val tv = isTelevision()
+    val leanback = leanback()
 
     val zapping by viewModel.zapping.collectAsStateWithLifecycle()
     val playlistUrl by viewModel.playlistUrl.collectAsStateWithLifecycle()
@@ -120,14 +120,10 @@ internal fun PlaylistRoute(
     val query by viewModel.query.collectAsStateWithLifecycle()
     val scrollUp by viewModel.scrollUp.collectAsStateWithLifecycle()
 
-    val writeExternalPermission = rememberPermissionState(
-        Manifest.permission.WRITE_EXTERNAL_STORAGE
-    )
+    val writeExternalPermission = rememberPermissionState(Manifest.permission.WRITE_EXTERNAL_STORAGE)
 
-    @SuppressLint("InlinedApi")
-    val postNotificationPermission = rememberPermissionState(
-        Manifest.permission.POST_NOTIFICATIONS
-    )
+    val postNotificationPermission = if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) null
+    else rememberPermissionState(Manifest.permission.POST_NOTIFICATIONS)
 
     val title by remember { derivedStateOf { playlist?.title?.title().orEmpty() } }
     val subtitle by remember {
@@ -216,6 +212,10 @@ internal fun PlaylistRoute(
         onScrollUp = { viewModel.scrollUp.value = eventOf(Unit) },
         refreshing = refreshing,
         onRefresh = {
+            if (postNotificationPermission == null) {
+                viewModel.refresh()
+                return@PlaylistScreen
+            }
             postNotificationPermission.checkPermissionOrRationale(
                 showRationale = {
                     val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
@@ -247,7 +247,7 @@ internal fun PlaylistRoute(
         getProgrammeCurrently = { channelId -> viewModel.getProgrammeCurrently(channelId) },
         modifier = Modifier
             .fillMaxSize()
-            .thenIf(!tv && preferences.godMode) {
+            .thenIf(!leanback && preferences.godMode) {
                 Modifier.interceptVolumeEvent { event ->
                     preferences.rowCount = when (event) {
                         KeyEvent.KEYCODE_VOLUME_UP ->
@@ -343,8 +343,8 @@ private fun PlaylistScreen(
         onDispose { Metadata.fob = null }
     }
 
-    val tv = isTelevision()
-    if (!tv) {
+    val leanback = leanback()
+    if (!leanback) {
         SmartphonePlaylistScreenImpl(
             categoryWithChannels = categoryWithChannels,
             pinnedCategories = pinnedCategories,
@@ -414,7 +414,7 @@ private fun UnsupportedUIModeContent(
             UI_MODE_TYPE_NORMAL -> "Normal"
             UI_MODE_TYPE_DESK -> "Desktop"
             UI_MODE_TYPE_CAR -> "Car"
-            UI_MODE_TYPE_TELEVISION -> "Television"
+            UI_MODE_TYPE_TELEVISION -> "Leanback"
             UI_MODE_TYPE_APPLIANCE -> "Appliance"
             UI_MODE_TYPE_WATCH -> "Watch"
             UI_MODE_TYPE_VR_HEADSET -> "VR-Headset"

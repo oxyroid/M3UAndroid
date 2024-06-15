@@ -1,8 +1,8 @@
 package com.m3u.feature.playlist.configuration
 
 import android.Manifest
-import android.annotation.SuppressLint
 import android.content.Intent
+import android.os.Build
 import android.provider.Settings
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateDpAsState
@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.padding
@@ -71,8 +72,11 @@ internal fun PlaylistConfigurationRoute(
 ) {
     val helper = LocalHelper.current
 
-    @SuppressLint("InlinedApi")
-    val permissionState = rememberPermissionState(Manifest.permission.POST_NOTIFICATIONS)
+    val permissionState = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        rememberPermissionState(Manifest.permission.POST_NOTIFICATIONS)
+    } else {
+        null
+    }
 
     val playlist by viewModel.playlist.collectAsStateWithLifecycle()
     val manifest by viewModel.manifest.collectAsStateWithLifecycle()
@@ -100,6 +104,10 @@ internal fun PlaylistConfigurationRoute(
             onUpdateEpgPlaylist = viewModel::onUpdateEpgPlaylist,
             onUpdatePlaylistAutoRefreshProgrammes = viewModel::onUpdatePlaylistAutoRefreshProgrammes,
             onSyncProgrammes = {
+                if (permissionState == null) {
+                    viewModel.onSyncProgrammes()
+                    return@PlaylistConfigurationScreen
+                }
                 permissionState.checkPermissionOrRationale(
                     showRationale = {
                         val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
@@ -155,6 +163,7 @@ private fun PlaylistConfigurationScreen(
                         LocalHazeState.current,
                         HazeStyle(MaterialTheme.colorScheme.surface)
                     )
+                    .fillMaxSize()
                     .padding(spacing.medium)
             ) {
                 item {

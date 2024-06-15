@@ -6,7 +6,6 @@ import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Typography
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
@@ -15,18 +14,10 @@ import com.m3u.material.model.asTvScheme
 import com.m3u.material.model.asTvTypography
 import androidx.tv.material3.MaterialTheme as TvMaterialTheme
 
-val LocalAlwaysTelevision = compositionLocalOf { false }
-
 @Composable
-fun isTelevision(): Boolean {
-    val alwaysTelevision = LocalAlwaysTelevision.current
-    return if (alwaysTelevision) true
-    else {
-        LocalConfiguration.current.run {
-            val type = uiMode and Configuration.UI_MODE_TYPE_MASK
-            return type == Configuration.UI_MODE_TYPE_TELEVISION
-        }
-    }
+fun leanback(): Boolean = LocalConfiguration.current.run {
+    val type = uiMode and Configuration.UI_MODE_TYPE_MASK
+    type == Configuration.UI_MODE_TYPE_TELEVISION
 }
 
 /**
@@ -40,11 +31,11 @@ internal fun PlatformTheme(
     fallback: Boolean = true,
     block: @Composable () -> Unit
 ) {
-    val tv = isTelevision()
+    val leanback = leanback()
     val car = false
     val content = @Composable {
         when {
-            tv -> {
+            leanback -> {
                 TvMaterialTheme(
                     colorScheme = remember(colorScheme) { colorScheme.asTvScheme() },
                     typography = remember(typography) { typography.asTvTypography() }
@@ -57,7 +48,7 @@ internal fun PlatformTheme(
             else -> block()
         }
     }
-    val commonPlatform = !tv && !car
+    val commonPlatform = !leanback && !car
     if (commonPlatform || fallback) {
         MaterialTheme(
             colorScheme = colorScheme,
@@ -71,6 +62,6 @@ internal fun PlatformTheme(
 }
 
 @Composable
-fun Modifier.includeChildGlowPadding(): Modifier = thenIf(isTelevision()) {
+fun Modifier.includeChildGlowPadding(): Modifier = thenIf(leanback()) {
     Modifier.padding(LocalSpacing.current.medium)
 }

@@ -32,7 +32,7 @@ import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.m3u.material.ktx.isTelevision
+import com.m3u.material.ktx.leanback
 import com.m3u.material.model.LocalSpacing
 import com.m3u.material.shape.AbsoluteSmoothCornerShape
 import androidx.tv.material3.Checkbox as TvCheckbox
@@ -72,7 +72,7 @@ fun Preference(
         }
     ) {
         val alpha = if (enabled) 1f else 0.38f
-        if (!isTelevision()) {
+        if (!leanback()) {
             OutlinedCard(
                 shape = AbsoluteSmoothCornerShape(spacing.medium, 65)
             ) {
@@ -187,7 +187,7 @@ fun CheckBoxPreference(
         },
         modifier = modifier,
         trailing = {
-            if (!isTelevision()) {
+            if (!leanback()) {
                 Checkbox(
                     enabled = enabled,
                     checked = checked,
@@ -228,7 +228,7 @@ fun SwitchPreference(
         },
         modifier = modifier,
         trailing = {
-            if (!isTelevision()) {
+            if (!leanback()) {
                 Switch(
                     enabled = enabled,
                     checked = checked,
@@ -265,7 +265,7 @@ fun TrailingIconPreference(
         elevation = elevation,
         modifier = modifier,
         trailing = {
-            if (!isTelevision()) {
+            if (!leanback()) {
                 Icon(
                     imageVector = trailingIcon,
                     contentDescription = null,
@@ -303,7 +303,7 @@ fun TextPreference(
         },
         modifier = modifier,
         trailing = {
-            if (!isTelevision()) {
+            if (!leanback()) {
                 Text(
                     text = trailing.uppercase(),
                     color = MaterialTheme.colorScheme.primary,

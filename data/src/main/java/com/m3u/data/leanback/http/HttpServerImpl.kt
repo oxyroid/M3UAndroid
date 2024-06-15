@@ -1,9 +1,8 @@
-package com.m3u.data.television.http.internal
+package com.m3u.data.leanback.http
 
-import com.m3u.data.television.http.HttpServer
-import com.m3u.data.television.http.endpoint.Remotes
-import com.m3u.data.television.http.endpoint.Playlists
-import com.m3u.data.television.http.endpoint.SayHellos
+import com.m3u.data.leanback.http.endpoint.Remotes
+import com.m3u.data.leanback.http.endpoint.Playlists
+import com.m3u.data.leanback.http.endpoint.SayHellos
 import io.ktor.serialization.kotlinx.KotlinxWebsocketSerializationConverter
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application

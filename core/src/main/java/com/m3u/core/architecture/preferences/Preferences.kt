@@ -66,8 +66,6 @@ class Preferences @Inject constructor(
 
     var fullInfoPlayer: Boolean by
     sharedPreferences.booleanAsState(DEFAULT_FULL_INFO_PLAYER, FULL_INFO_PLAYER)
-    var rootDestination: Int by
-    sharedPreferences.intAsState(DEFAULT_ROOT_DESTINATION, ROOT_DESTINATION)
     var noPictureMode: Boolean by
     sharedPreferences.booleanAsState(DEFAULT_NO_PICTURE_MODE, NO_PICTURE_MODE)
 
@@ -98,8 +96,6 @@ class Preferences @Inject constructor(
     sharedPreferences.intAsState(DEFAULT_COLOR_ARGB, COLOR_ARGB)
     var tunneling: Boolean by
     sharedPreferences.booleanAsState(DEFAULT_TUNNELING, TUNNELING)
-    var alwaysTv: Boolean by
-    sharedPreferences.booleanAsState(DEFAULT_ALWAYS_TV, ALWAYS_TV)
     var remoteControl: Boolean by
     sharedPreferences.booleanAsState(DEFAULT_REMOTE_CONTROL, REMOTE_CONTROL)
     var twelveHourClock: Boolean by
@@ -133,7 +129,6 @@ class Preferences @Inject constructor(
         const val DEFAULT_CLIP_MODE = ClipMode.ADAPTIVE
         const val DEFAULT_AUTO_REFRESH_CHANNELS = false
         const val DEFAULT_FULL_INFO_PLAYER = false
-        const val DEFAULT_ROOT_DESTINATION = 0
         const val DEFAULT_NO_PICTURE_MODE = false
         const val DEFAULT_DARK_MODE = true
 
@@ -151,7 +146,6 @@ class Preferences @Inject constructor(
         const val DEFAULT_RECONNECT_MODE = ReconnectMode.NO
         const val DEFAULT_COLOR_ARGB = 0x5E6738
         const val DEFAULT_TUNNELING = false
-        const val DEFAULT_ALWAYS_TV = false
         const val DEFAULT_REMOTE_CONTROL = false
         const val DEFAULT_SLIDER = true
         const val DEFAULT_ALWAYS_SHOW_REFRESH = false
@@ -172,7 +166,6 @@ class Preferences @Inject constructor(
         const val CLIP_MODE = "clip-mode"
         const val AUTO_REFRESH_CHANNELS = "auto-refresh-channels"
         const val FULL_INFO_PLAYER = "full-info-player"
-        const val ROOT_DESTINATION = "root-destination"
         const val NO_PICTURE_MODE = "no-picture-mode"
         const val DARK_MODE = "dark-mode"
         const val USE_DYNAMIC_COLORS = "use-dynamic-colors"
@@ -186,7 +179,6 @@ class Preferences @Inject constructor(
         const val RECONNECT_MODE = "reconnect-mode"
         const val COLOR_ARGB = "color-argb"
         const val TUNNELING = "tunneling"
-        const val ALWAYS_TV = "always-tv"
         const val CLOCK_MODE = "12h-clock-mode"
         const val REMOTE_CONTROL = "remote-control"
 
@@ -198,9 +190,5 @@ class Preferences @Inject constructor(
         const val RANDOMLY_IN_FAVOURITE = "randomly-in-favourite"
 
         const val COLORFUL_BACKGROUND = "colorful-background"
-    }
-
-    init {
-        alwaysTv = false
     }
 }

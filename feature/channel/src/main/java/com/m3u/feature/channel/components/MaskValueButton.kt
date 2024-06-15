@@ -17,7 +17,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.m3u.material.components.IconButton
 import com.m3u.material.components.mask.MaskState
-import com.m3u.material.ktx.isTelevision
+import com.m3u.material.ktx.leanback
 import com.m3u.material.ktx.thenIf
 import com.m3u.ui.FontFamilies
 
@@ -33,7 +33,7 @@ fun MaskTextButton(
     tint: Color = Color.Unspecified,
     enabled: Boolean = true
 ) {
-    val tv = isTelevision()
+    val leanback = leanback()
 
     TooltipBox(
         state = tooltipState,
@@ -48,7 +48,7 @@ fun MaskTextButton(
             horizontalArrangement = Arrangement.End,
             verticalAlignment = Alignment.CenterVertically,
             modifier = modifier
-                .thenIf(tv) {
+                .thenIf(leanback) {
                     Modifier.onFocusEvent {
                         if (it.isFocused) {
                             state.wake()

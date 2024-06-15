@@ -40,9 +40,6 @@ internal fun PreferencesFragment(
             )
         }
         item {
-            ExperimentalPreference()
-        }
-        item {
             OtherPreferences(
                 versionName = versionName,
                 versionCode = versionCode,

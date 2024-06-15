@@ -12,15 +12,14 @@ import com.m3u.core.architecture.Publisher
 import com.m3u.core.architecture.dispatcher.Dispatcher
 import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
 import com.m3u.core.architecture.preferences.Preferences
-import com.m3u.data.api.LocalPreparedService
+import com.m3u.data.api.LeanbackApiDelegate
+import com.m3u.data.leanback.model.RemoteDirection
+import com.m3u.data.repository.leanback.ConnectionToLeanbackValue
+import com.m3u.data.repository.leanback.LeanbackRepository
 import com.m3u.data.repository.playlist.PlaylistRepository
 import com.m3u.data.repository.programme.ProgrammeRepository
-import com.m3u.data.repository.television.ConnectionToTelevisionValue
-import com.m3u.data.repository.television.TelevisionRepository
 import com.m3u.data.service.Messager
-import com.m3u.data.television.model.RemoteDirection
 import com.m3u.data.worker.SubscriptionWorker
-import com.m3u.ui.Destination
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Job
@@ -43,8 +42,8 @@ class AppViewModel @Inject constructor(
     messager: Messager,
     private val playlistRepository: PlaylistRepository,
     private val programmeRepository: ProgrammeRepository,
-    private val televisionRepository: TelevisionRepository,
-    private val localService: LocalPreparedService,
+    private val leanbackRepository: LeanbackRepository,
+    private val leanbackApi: LeanbackApiDelegate,
     private val workManager: WorkManager,
     private val preferences: Preferences,
     private val publisher: Publisher,
@@ -54,8 +53,8 @@ class AppViewModel @Inject constructor(
         refreshProgrammes()
     }
 
-    val broadcastCodeOnTelevision: StateFlow<String?> = televisionRepository
-        .broadcastCodeOnTelevision
+    val broadcastCodeOnLeanback: StateFlow<String?> = leanbackRepository
+        .broadcastCodeOnLeanback
         .map { code -> code?.let { convertToPaddedString(it) } }
         .stateIn(
             scope = viewModelScope,
@@ -63,53 +62,52 @@ class AppViewModel @Inject constructor(
             initialValue = null
         )
 
-    private val televisionCodeOnSmartphone = MutableSharedFlow<String>()
+    private val leanbackCodeOnSmartphone = MutableSharedFlow<String>()
 
-    private val connectionToTelevisionValue: StateFlow<ConnectionToTelevisionValue> =
-        televisionCodeOnSmartphone.flatMapLatest { code ->
-            if (code.isNotEmpty()) televisionRepository.connectToTelevision(code.toInt())
+    private val connectionToLeanbackValue: StateFlow<ConnectionToLeanbackValue> =
+        leanbackCodeOnSmartphone.flatMapLatest { code ->
+            if (code.isNotEmpty()) leanbackRepository.connectToLeanback(code.toInt())
             else {
-                televisionRepository.disconnectToTelevision()
-                flowOf(ConnectionToTelevisionValue.Idle())
+                leanbackRepository.disconnectToLeanback()
+                flowOf(ConnectionToLeanbackValue.Idle())
             }
         }
             .flowOn(ioDispatcher)
             .stateIn(
                 scope = viewModelScope,
-                initialValue = ConnectionToTelevisionValue.Idle(),
+                initialValue = ConnectionToLeanbackValue.Idle(),
                 started = SharingStarted.WhileSubscribed(5_000)
             )
 
     internal val remoteControlSheetValue: StateFlow<RemoteControlSheetValue> = combine(
-        televisionRepository.connected,
+        leanbackRepository.connected,
         snapshotFlow { code },
-        connectionToTelevisionValue,
-        televisionRepository.allUpdateStates
-    ) { television, code, connection, states ->
+        connectionToLeanbackValue
+    ) { leanback, code, connection ->
         when {
-            television == null -> {
+            leanback == null -> {
                 RemoteControlSheetValue.Prepare(
                     code = code,
                     searchingOrConnecting = with(connection) {
-                        this is ConnectionToTelevisionValue.Searching ||
-                                this is ConnectionToTelevisionValue.Connecting
+                        this is ConnectionToLeanbackValue.Searching ||
+                                this is ConnectionToLeanbackValue.Connecting
                     }
                 )
             }
 
-            television.version != publisher.versionCode -> {
+            leanback.version != publisher.versionCode -> {
                 this.code = ""
-//                val query = UpdateKey(television.version, television.abi)
+//                val query = UpdateKey(leanback.version, leanback.abi)
 //                val state = states[query] ?: UpdateState.Idle
 //                RemoteControlSheetValue.Update(
-//                    television = television,
+//                    leanback = leanback,
 //                    state = state
 //                )
                 RemoteControlSheetValue.Prepare(
                     code = code,
                     searchingOrConnecting = with(connection) {
-                        this is ConnectionToTelevisionValue.Searching ||
-                                this is ConnectionToTelevisionValue.Connecting
+                        this is ConnectionToLeanbackValue.Searching ||
+                                this is ConnectionToLeanbackValue.Connecting
                     }
                 )
             }
@@ -117,7 +115,7 @@ class AppViewModel @Inject constructor(
             else -> {
                 this.code = ""
                 RemoteControlSheetValue.DPad(
-                    television = television,
+                    leanback = leanback,
                 )
             }
         }
@@ -128,31 +126,31 @@ class AppViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5_000L)
         )
 
-    private var checkTelevisionCodeOnSmartphoneJob: Job? = null
+    private var checkLeanbackCodeOnSmartphoneJob: Job? = null
 
-    internal fun checkTelevisionCodeOnSmartphone() {
+    internal fun checkLeanbackCodeOnSmartphone() {
         viewModelScope.launch {
-            televisionCodeOnSmartphone.emit(code)
+            leanbackCodeOnSmartphone.emit(code)
         }
-        checkTelevisionCodeOnSmartphoneJob?.cancel()
-        checkTelevisionCodeOnSmartphoneJob = snapshotFlow { preferences.remoteControl }
+        checkLeanbackCodeOnSmartphoneJob?.cancel()
+        checkLeanbackCodeOnSmartphoneJob = snapshotFlow { preferences.remoteControl }
             .onEach { remoteControl ->
                 if (!remoteControl) {
-                    forgetTelevisionCodeOnSmartphone()
+                    forgetLeanbackCodeOnSmartphone()
                 }
             }
             .launchIn(viewModelScope)
     }
 
-    internal fun forgetTelevisionCodeOnSmartphone() {
+    internal fun forgetLeanbackCodeOnSmartphone() {
         viewModelScope.launch {
-            televisionCodeOnSmartphone.emit("")
+            leanbackCodeOnSmartphone.emit("")
         }
     }
 
     internal fun onRemoteDirection(remoteDirection: RemoteDirection) {
         viewModelScope.launch {
-            localService.remoteDirection(remoteDirection.value)
+            leanbackApi.remoteDirection(remoteDirection.value)
         }
     }
 
@@ -168,15 +166,6 @@ class AppViewModel @Inject constructor(
             }
         }
     }
-
-    var rootDestination: Destination.Root by mutableStateOf(
-        when (preferences.rootDestination) {
-            0 -> Destination.Root.Foryou
-            1 -> Destination.Root.Favourite
-            2 -> Destination.Root.Setting
-            else -> Destination.Root.Foryou
-        }
-    )
 
     var code by mutableStateOf("")
     var isConnectSheetVisible by mutableStateOf(false)

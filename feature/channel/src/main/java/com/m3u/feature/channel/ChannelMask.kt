@@ -81,7 +81,7 @@ import com.m3u.material.components.mask.MaskButton
 import com.m3u.material.components.mask.MaskCircleButton
 import com.m3u.material.components.mask.MaskPanel
 import com.m3u.material.components.mask.MaskState
-import com.m3u.material.ktx.isTelevision
+import com.m3u.material.ktx.leanback
 import com.m3u.material.ktx.thenIf
 import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.FontFamilies
@@ -123,7 +123,7 @@ internal fun ChannelMask(
     val helper = LocalHelper.current
     val spacing = LocalSpacing.current
     val configuration = LocalConfiguration.current
-    val tv = isTelevision()
+    val leanback = leanback()
     val coroutineScope = rememberCoroutineScope()
 
     // because they will be updated frequently,
@@ -205,7 +205,7 @@ internal fun ChannelMask(
         }
     }
 
-    if (tv) {
+    if (leanback) {
         BackHandler(maskState.visible && !maskState.locked) {
             maskState.sleep()
         }
@@ -287,7 +287,7 @@ internal fun ChannelMask(
                     )
                 }
 
-                if (!tv && preferences.screencast) {
+                if (!leanback && preferences.screencast) {
                     MaskButton(
                         state = maskState,
                         icon = Icons.Rounded.Cast,
@@ -295,7 +295,7 @@ internal fun ChannelMask(
                         contentDescription = stringResource(string.feat_channel_tooltip_cast)
                     )
                 }
-                if (!tv && playerState.videoSize.isNotEmpty) {
+                if (!leanback && playerState.videoSize.isNotEmpty) {
                     MaskButton(
                         state = maskState,
                         icon = Icons.Rounded.PictureInPicture,
@@ -402,7 +402,7 @@ internal fun ChannelMask(
                     }
 
                 }
-                if (!tv) {
+                if (!leanback) {
                     val autoRotating by ChannelMaskUtils.IsAutoRotatingEnabled
                     LaunchedEffect(autoRotating) {
                         if (autoRotating) {
@@ -514,7 +514,7 @@ internal fun ChannelMask(
                                 },
                                 modifier = Modifier
                                     .weight(1f)
-                                    .thenIf(tv) { tvSliderModifier }
+                                    .thenIf(leanback) { tvSliderModifier }
                             )
                         }
 

@@ -1,4 +1,4 @@
-package com.m3u.data.television.http
+package com.m3u.data.leanback.http
 
 interface HttpServer {
     fun start(port: Int)

@@ -53,7 +53,7 @@ fun SnackHost(
 
     val message by collectMessageAsState()
 
-    val television by remember {
+    val leanback by remember {
         derivedStateOf { message.type == Message.TYPE_TELEVISION }
     }
 
@@ -131,7 +131,7 @@ fun SnackHost(
                 )
             ) {
                 when {
-                    television -> {
+                    leanback -> {
                         Icon(
                             imageVector = Icons.Rounded.Tv,
                             contentDescription = null

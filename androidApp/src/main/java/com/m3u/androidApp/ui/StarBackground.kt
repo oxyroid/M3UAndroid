@@ -23,7 +23,7 @@ import androidx.graphics.shapes.RoundedPolygon
 import androidx.graphics.shapes.star
 import androidx.graphics.shapes.toPath
 import com.m3u.core.architecture.preferences.hiltPreferences
-import com.m3u.material.ktx.isTelevision
+import com.m3u.material.ktx.leanback
 
 data class StarSpec(
     val numVertices: Int,
@@ -93,11 +93,11 @@ fun StarBackground(
     modifier: Modifier = Modifier,
     colors: StarColors = StarColors.defaults(),
 ) {
-    val tv = isTelevision()
+    val leanback = leanback()
     val preferences = hiltPreferences()
     val specs = remember(colors) { createStarSpecs(colors) }
     AnimatedVisibility(
-        visible = !preferences.alwaysTv && !tv && preferences.colorfulBackground,
+        visible = !leanback && preferences.colorfulBackground,
         enter = fadeIn() + scaleIn(initialScale = 2.3f),
         exit = fadeOut() + scaleOut(targetScale = 2.3f),
         modifier = modifier

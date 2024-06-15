@@ -11,11 +11,10 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalView
 import com.m3u.core.architecture.preferences.hiltPreferences
-import com.m3u.data.television.model.RemoteDirection
-import com.m3u.data.television.model.keyCode
+import com.m3u.data.leanback.model.RemoteDirection
+import com.m3u.data.leanback.model.keyCode
 import com.m3u.material.LocalM3UHapticFeedback
 import com.m3u.material.createM3UHapticFeedback
-import com.m3u.material.ktx.LocalAlwaysTelevision
 import com.m3u.material.model.Theme
 import com.m3u.ui.helper.Helper
 import com.m3u.ui.helper.LocalHelper
@@ -66,8 +65,6 @@ fun Toolkit(
 
     CompositionLocalProvider(
         LocalHelper provides helper,
-        // some components cannot use LocalPreferences
-        LocalAlwaysTelevision provides preferences.alwaysTv,
         LocalM3UHapticFeedback provides createM3UHapticFeedback()
     ) {
         Theme(

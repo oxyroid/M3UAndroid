@@ -31,13 +31,9 @@
     <string name="feat_setting_auto_refresh_channels">autom. Aktualisierung</string>
     <string name="feat_setting_auto_refresh_channels_description">autom. aktualisierung, wenn die Playlist aufgerufen wird</string>
 
-    <string name="feat_setting_always_television">immer TV Modus</string>
-    <string name="feat_setting_always_television_description">wird zurückgesetzt, wenn die App neu gestartet wird</string>
-
     <string name="feat_setting_full_info_player">Player-Info</string>
     <string name="feat_setting_full_info_player_description">weitere Infos im Player anzeigen</string>
     <string name="feat_setting_slider">Suchleiste</string>
-    <string name="feat_setting_initial_screen">Start-Screen</string>
     <string name="feat_setting_no_picture_mode">keine Sendericons anzeigen</string>
     <string name="feat_setting_no_picture_mode_description">kann die Leistung verbessern</string>
     <string name="feat_setting_system_setting">Systemeinstellung</string>

@@ -11,7 +11,7 @@ import com.m3u.core.wrapper.Event
 import com.m3u.core.wrapper.eventOf
 import com.m3u.core.wrapper.handledEvent
 import com.m3u.data.service.DPadReactionService
-import com.m3u.data.television.model.RemoteDirection
+import com.m3u.data.leanback.model.RemoteDirection
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors

@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import com.m3u.core.architecture.preferences.hiltPreferences
 import com.m3u.core.wrapper.eventOf
@@ -19,24 +20,23 @@ import com.m3u.feature.playlist.navigation.navigateToPlaylist
 import com.m3u.feature.playlist.navigation.playlistScreen
 import com.m3u.feature.playlist.navigation.playlistTvScreen
 import com.m3u.feature.channel.PlayerActivity
-import com.m3u.material.ktx.isTelevision
+import com.m3u.material.ktx.leanback
 import com.m3u.ui.Destination
 import com.m3u.ui.Events
-import com.m3u.ui.LocalNavController
 import com.m3u.ui.SettingDestination
 
 @Composable
 fun AppNavHost(
-    navigateToRoot: (Destination.Root) -> Unit,
+    navController: NavHostController,
+    navigateToRootDestination: (Destination.Root) -> Unit,
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
-    startDestination: String = ROOT_ROUTE
+    startDestination: String = Destination.Root.Foryou.name
 ) {
     val context = LocalContext.current
     val preferences = hiltPreferences()
-    val navController = LocalNavController.current
 
-    val tv = isTelevision()
+    val leanback = leanback()
 
     NavHost(
         navController = navController,
@@ -45,6 +45,31 @@ fun AppNavHost(
         popEnterTransition = { slideInVertically { -it / 5 } + fadeIn() },
         modifier = modifier
     ) {
+        rootGraph(
+            contentPadding = contentPadding,
+            navigateToPlaylist = { playlist ->
+                navController.navigateToPlaylist(playlist.url, leanback)
+            },
+            navigateToChannel = {
+                if (preferences.zappingMode && PlayerActivity.isInPipMode) return@rootGraph
+                val options = ActivityOptions.makeCustomAnimation(
+                    context,
+                    0,
+                    0
+                )
+                context.startActivity(
+                    Intent(context, PlayerActivity::class.java),
+                    options.toBundle()
+                )
+            },
+            navigateToSettingPlaylistManagement = {
+                navigateToRootDestination(Destination.Root.Setting)
+                Events.settingDestination = eventOf(SettingDestination.Playlists)
+            },
+            navigateToPlaylistConfiguration = {
+                navController.navigateToPlaylistConfiguration(it.url)
+            }
+        )
         playlistScreen(
             navigateToChannel = {
                 if (preferences.zappingMode && PlayerActivity.isInPipMode) return@playlistScreen
@@ -62,32 +87,6 @@ fun AppNavHost(
             },
             contentPadding = contentPadding
         )
-        rootGraph(
-            contentPadding = contentPadding,
-            navigateToPlaylist = { playlist ->
-                navController.navigateToPlaylist(playlist.url, tv)
-            },
-            navigateToChannel = {
-                if (preferences.zappingMode && PlayerActivity.isInPipMode) return@rootGraph
-                val options = ActivityOptions.makeCustomAnimation(
-                    context,
-                    0,
-                    0
-                )
-                context.startActivity(
-                    Intent(context, PlayerActivity::class.java),
-                    options.toBundle()
-                )
-            },
-            navigateToSettingPlaylistManagement = {
-                navigateToRoot(Destination.Root.Setting)
-                Events.settingDestination = eventOf(SettingDestination.Playlists)
-            },
-            navigateToPlaylistConfiguration = {
-                navController.navigateToPlaylistConfiguration(it.url)
-            }
-        )
-
         playlistTvScreen()
         playlistConfigurationScreen(contentPadding)
     }

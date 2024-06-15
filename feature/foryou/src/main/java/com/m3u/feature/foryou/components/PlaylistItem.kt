@@ -31,7 +31,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.m3u.material.components.CircularProgressIndicator
 import com.m3u.material.components.Icon
-import com.m3u.material.ktx.isTelevision
+import com.m3u.material.ktx.leanback
 import com.m3u.material.model.LocalSpacing
 import com.m3u.material.shape.AbsoluteSmoothCornerShape
 import com.m3u.ui.Badge
@@ -51,8 +51,8 @@ internal fun PlaylistItem(
     onLongClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val tv = isTelevision()
-    if (!tv) {
+    val leanback = leanback()
+    if (!leanback) {
         SmartphonePlaylistItemImpl(
             label = label,
             type = type,

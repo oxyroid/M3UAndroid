@@ -45,7 +45,7 @@ import com.m3u.data.database.model.ProgrammeRange
 import com.m3u.data.database.model.Channel
 import com.m3u.data.service.MediaCommand
 import com.m3u.material.components.Background
-import com.m3u.material.ktx.isTelevision
+import com.m3u.material.ktx.leanback
 import com.m3u.material.ktx.thenIf
 import com.m3u.material.model.LocalSpacing
 import com.m3u.material.shape.AbsoluteSmoothCornerShape
@@ -147,7 +147,7 @@ private fun ChannelGallery(
 ) {
     val spacing = LocalSpacing.current
     val lazyListState = rememberLazyListState()
-    val tv = isTelevision()
+    val leanback = leanback()
 
     ScrollToCurrentEffect(
         value = value,
@@ -194,7 +194,7 @@ private fun ChannelGallery(
             contentPadding = PaddingValues(spacing.medium),
             modifier = modifier
                 .fillMaxWidth()
-                .thenIf(tv) {
+                .thenIf(leanback) {
                     Modifier.onKeyEvent {
                         when (it.nativeKeyEvent.keyCode) {
                             KeyEvent.KEYCODE_DPAD_LEFT, KeyEvent.KEYCODE_DPAD_RIGHT -> {
@@ -233,9 +233,9 @@ private fun ChannelGalleryItem(
     val spacing = LocalSpacing.current
     val helper = LocalHelper.current
     val coroutineScope = rememberCoroutineScope()
-    val tv = isTelevision()
+    val leanback = leanback()
 
-    if (!tv) {
+    if (!leanback) {
         Card(
             colors = CardDefaults.cardColors(
                 containerColor = if (!isPlaying)

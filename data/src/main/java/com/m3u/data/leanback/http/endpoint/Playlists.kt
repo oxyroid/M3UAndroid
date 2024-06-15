@@ -1,4 +1,4 @@
-package com.m3u.data.television.http.endpoint
+package com.m3u.data.leanback.http.endpoint
 
 import android.content.Context
 import androidx.work.WorkManager

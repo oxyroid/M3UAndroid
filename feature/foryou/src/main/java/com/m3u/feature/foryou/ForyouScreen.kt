@@ -45,11 +45,9 @@ import com.m3u.feature.foryou.components.recommend.Recommend
 import com.m3u.feature.foryou.components.recommend.RecommendGallery
 import com.m3u.i18n.R.string
 import com.m3u.material.ktx.interceptVolumeEvent
-import com.m3u.material.ktx.isTelevision
+import com.m3u.material.ktx.leanback
 import com.m3u.material.ktx.thenIf
-import com.m3u.ui.Destination
 import com.m3u.ui.EpisodesBottomSheet
-import com.m3u.ui.LocalRootDestination
 import com.m3u.ui.MediaSheet
 import com.m3u.ui.MediaSheetValue
 import com.m3u.ui.helper.Action
@@ -70,14 +68,11 @@ fun ForyouRoute(
     viewModel: ForyouViewModel = hiltViewModel()
 ) {
     val helper = LocalHelper.current
-    val root = LocalRootDestination.current
     val preferences = hiltPreferences()
     val coroutineScope = rememberCoroutineScope()
 
-    val tv = isTelevision()
+    val leanback = leanback()
     val title = stringResource(string.ui_title_foryou)
-
-    val isPageInfoVisible = root == Destination.Root.Foryou
 
     val playlistCountsResource by viewModel.playlistCountsResource.collectAsStateWithLifecycle()
     val specs by viewModel.specs.collectAsStateWithLifecycle()
@@ -88,22 +83,20 @@ fun ForyouRoute(
     viewModel.subscribingPlaylistUrls.collectAsStateWithLifecycle()
     val refreshingEpgUrls by viewModel.refreshingEpgUrls.collectAsStateWithLifecycle(emptyList())
 
-    if (isPageInfoVisible) {
-        LifecycleResumeEffect(title) {
-            Metadata.title = AnnotatedString(title.title())
-            Metadata.color = Color.Unspecified
-            Metadata.contentColor = Color.Unspecified
-            Metadata.actions = listOf(
-                Action(
-                    icon = Icons.Rounded.Add,
-                    contentDescription = "add",
-                    onClick = navigateToSettingPlaylistManagement
-                )
+    LifecycleResumeEffect(title) {
+        Metadata.title = AnnotatedString(title.title())
+        Metadata.color = Color.Unspecified
+        Metadata.contentColor = Color.Unspecified
+        Metadata.actions = listOf(
+            Action(
+                icon = Icons.Rounded.Add,
+                contentDescription = "add",
+                onClick = navigateToSettingPlaylistManagement
             )
-            onPauseOrDispose {
-                Metadata.actions = emptyList()
-                Metadata.headlineUrl = ""
-            }
+        )
+        onPauseOrDispose {
+            Metadata.actions = emptyList()
+            Metadata.headlineUrl = ""
         }
     }
 
@@ -135,7 +128,7 @@ fun ForyouRoute(
         onUnsubscribePlaylist = viewModel::onUnsubscribePlaylist,
         modifier = Modifier
             .fillMaxSize()
-            .thenIf(!tv && preferences.godMode) {
+            .thenIf(!leanback && preferences.godMode) {
                 Modifier.interceptVolumeEvent { event ->
                     preferences.rowCount = when (event) {
                         KeyEvent.KEYCODE_VOLUME_UP -> (preferences.rowCount - 1).coerceAtLeast(1)

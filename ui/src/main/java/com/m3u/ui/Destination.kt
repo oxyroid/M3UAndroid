@@ -10,16 +10,9 @@ import androidx.compose.material.icons.rounded.Collections
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.runtime.Immutable
-import androidx.compose.runtime.compositionLocalOf
-import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.navigation.NavHostController
 import com.m3u.i18n.R.string
 import kotlinx.parcelize.Parcelize
-
-val LocalNavController =
-    staticCompositionLocalOf<NavHostController> { error("Please provide NavHostController") }
-val LocalRootDestination = compositionLocalOf<Destination.Root?> { null }
 
 @Immutable
 sealed interface Destination {
@@ -43,7 +36,14 @@ sealed interface Destination {
             selectedIcon = Icons.Rounded.Settings,
             unselectedIcon = Icons.Outlined.Settings,
             iconTextId = string.ui_destination_setting
-        )
+        );
+        companion object {
+            fun of(route: String?): Root? = try {
+                route?.let { valueOf(it) }
+            } catch (ignored: Exception) {
+                null
+            }
+        }
     }
 
     @Immutable

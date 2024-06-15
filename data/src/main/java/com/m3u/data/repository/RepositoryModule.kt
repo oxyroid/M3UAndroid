@@ -6,14 +6,14 @@ import com.m3u.data.repository.media.MediaRepository
 import com.m3u.data.repository.playlist.PlaylistRepository
 import com.m3u.data.repository.programme.ProgrammeRepository
 import com.m3u.data.repository.channel.ChannelRepository
-import com.m3u.data.repository.television.TelevisionRepository
+import com.m3u.data.repository.leanback.LeanbackRepository
 import com.m3u.data.repository.media.MediaRepositoryImpl
 import com.m3u.data.repository.playlist.PlaylistRepositoryImpl
 import com.m3u.data.repository.programme.ProgrammeRepositoryImpl
 import com.m3u.data.repository.channel.ChannelRepositoryImpl
 import com.m3u.data.repository.other.OtherRepository
 import com.m3u.data.repository.other.OtherRepositoryImpl
-import com.m3u.data.repository.television.TelevisionRepositoryImpl
+import com.m3u.data.repository.leanback.LeanbackRepositoryImpl
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -49,9 +49,9 @@ internal interface RepositoryModule {
 
     @Binds
     @Singleton
-    fun bindTelevisionRepository(
-        repository: TelevisionRepositoryImpl
-    ): TelevisionRepository
+    fun bindLeanbackRepository(
+        repository: LeanbackRepositoryImpl
+    ): LeanbackRepository
 
     @Binds
     @Singleton

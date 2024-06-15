@@ -35,7 +35,7 @@ import androidx.tv.material3.DenseListItem
 import com.m3u.i18n.R.string
 import com.m3u.material.components.BottomSheet
 import com.m3u.material.components.Icon
-import com.m3u.material.components.television.dialogFocusable
+import com.m3u.material.components.leanback.dialogFocusable
 import com.m3u.material.model.LocalSpacing
 import androidx.tv.material3.ListItemDefaults as TvListItemDefaults
 import androidx.tv.material3.MaterialTheme as TvMaterialTheme

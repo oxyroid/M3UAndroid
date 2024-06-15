@@ -37,7 +37,7 @@ import androidx.tv.material3.MaterialTheme as TvMaterialTheme
 
 @Composable
 @InternalComposeApi
-fun TelevisionScaffoldImpl(
+fun LeanbackScaffoldImpl(
     rootDestination: Destination.Root?,
     navigateToRoot: (Destination.Root) -> Unit,
     onBackPressed: (() -> Unit)?,
@@ -48,7 +48,7 @@ fun TelevisionScaffoldImpl(
     val fob = Metadata.fob
 
     val navigation = @Composable {
-        TelevisionNavigation {
+        LeanbackNavigation {
             Items { currentRootDestination ->
                 NavigationItemLayout(
                     rootDestination = rootDestination,
@@ -112,7 +112,7 @@ fun TelevisionScaffoldImpl(
 
     Background(modifier) {
         ScaffoldLayout(
-            role = ScaffoldRole.Television,
+            role = ScaffoldRole.Leanback,
             navigation = navigation,
             mainContent = mainContent
         )
@@ -120,7 +120,7 @@ fun TelevisionScaffoldImpl(
 }
 
 @Composable
-private fun TelevisionNavigation(
+private fun LeanbackNavigation(
     modifier: Modifier = Modifier,
     content: @Composable ColumnScope.() -> Unit
 ) {

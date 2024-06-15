@@ -43,16 +43,15 @@ import androidx.compose.ui.util.fastMap
 import androidx.compose.ui.util.fastMaxOfOrNull
 import com.m3u.androidApp.ui.internal.SmartphoneScaffoldImpl
 import com.m3u.androidApp.ui.internal.TabletScaffoldImpl
-import com.m3u.androidApp.ui.internal.TelevisionScaffoldImpl
+import com.m3u.androidApp.ui.internal.LeanbackScaffoldImpl
 import com.m3u.material.components.Background
 import com.m3u.material.components.Icon
 import com.m3u.material.components.IconButton
-import com.m3u.material.ktx.isTelevision
+import com.m3u.material.ktx.leanback
 import com.m3u.material.model.LocalHazeState
 import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.Destination
 import com.m3u.ui.FontFamilies
-import com.m3u.ui.LocalRootDestination
 import com.m3u.ui.helper.Fob
 import com.m3u.ui.helper.LocalHelper
 import com.m3u.ui.helper.Metadata
@@ -67,27 +66,24 @@ import androidx.tv.material3.Text as TvText
 @OptIn(InternalComposeApi::class)
 internal fun Scaffold(
     rootDestination: Destination.Root?,
-    navigateToRoot: (Destination.Root) -> Unit,
+    navigateToRootDestination: (Destination.Root) -> Unit,
     modifier: Modifier = Modifier,
     onBackPressed: (() -> Unit)? = null,
     alwaysShowLabel: Boolean = false,
     content: @Composable BoxScope.(PaddingValues) -> Unit
 ) {
     val useRailNav = LocalHelper.current.useRailNav
-    val tv = isTelevision()
+    val leanback = leanback()
 
     val hazeState = remember { HazeState() }
 
-    CompositionLocalProvider(
-        LocalHazeState provides hazeState,
-        LocalRootDestination provides rootDestination
-    ) {
+    CompositionLocalProvider(LocalHazeState provides hazeState) {
         Background {
             when {
-                tv -> {
-                    TelevisionScaffoldImpl(
+                leanback -> {
+                    LeanbackScaffoldImpl(
                         rootDestination = rootDestination,
-                        navigateToRoot = navigateToRoot,
+                        navigateToRoot = navigateToRootDestination,
                         onBackPressed = onBackPressed,
                         content = content,
                         modifier = modifier
@@ -98,7 +94,7 @@ internal fun Scaffold(
                     SmartphoneScaffoldImpl(
                         rootDestination = rootDestination,
                         alwaysShowLabel = alwaysShowLabel,
-                        navigateToRoot = navigateToRoot,
+                        navigateToRoot = navigateToRootDestination,
                         onBackPressed = onBackPressed,
                         content = content,
                         modifier = modifier
@@ -109,7 +105,7 @@ internal fun Scaffold(
                     TabletScaffoldImpl(
                         rootDestination = rootDestination,
                         alwaysShowLabel = alwaysShowLabel,
-                        navigateToRoot = navigateToRoot,
+                        navigateToRoot = navigateToRootDestination,
                         onBackPressed = onBackPressed,
                         content = content,
                         modifier = modifier
@@ -136,7 +132,7 @@ internal fun MainContent(
     onBackPressed: (() -> Unit)?,
     content: @Composable BoxScope.(PaddingValues) -> Unit
 ) {
-    val tv = isTelevision()
+    val leanback = leanback()
     val spacing = LocalSpacing.current
     val hazeState = LocalHazeState.current
 
@@ -146,7 +142,7 @@ internal fun MainContent(
 
     Scaffold(
         topBar = {
-            if (!tv) {
+            if (!leanback) {
                 TopAppBar(
                     colors = TopAppBarDefaults.topAppBarColors(Color.Transparent),
                     windowInsets = windowInsets,
@@ -245,11 +241,11 @@ internal fun NavigationItemLayout(
 ) {
     val hapticFeedback = LocalHapticFeedback.current
 
-    val tv = isTelevision()
+    val leanback = leanback()
     val usefob = fob?.rootDestination == currentRootDestination
     val selected = usefob || currentRootDestination == rootDestination
     val icon = @Composable {
-        if (!tv) {
+        if (!leanback) {
             Icon(
                 imageVector = when {
                     fob != null && usefob -> fob.icon
@@ -271,7 +267,7 @@ internal fun NavigationItemLayout(
     }
     val label: @Composable () -> Unit = remember(usefob, fob) {
         @Composable {
-            if (!tv) {
+            if (!leanback) {
                 Text(
                     text = stringResource(
                         if (usefob && fob != null) fob.iconTextId
@@ -300,7 +296,7 @@ internal fun NavigationItemLayout(
 }
 
 internal enum class ScaffoldContent { Navigation, MainContent }
-internal enum class ScaffoldRole { SmartPhone, Tablet, Television }
+internal enum class ScaffoldRole { SmartPhone, Tablet, Leanback }
 
 @Composable
 internal fun ScaffoldLayout(

@@ -33,12 +33,10 @@ import com.m3u.data.service.MediaCommand
 import com.m3u.feature.favorite.components.FavouriteGallery
 import com.m3u.i18n.R
 import com.m3u.material.ktx.interceptVolumeEvent
-import com.m3u.material.ktx.isTelevision
+import com.m3u.material.ktx.leanback
 import com.m3u.material.ktx.thenIf
 import com.m3u.material.model.LocalHazeState
-import com.m3u.ui.Destination
 import com.m3u.ui.EpisodesBottomSheet
-import com.m3u.ui.LocalRootDestination
 import com.m3u.ui.MediaSheet
 import com.m3u.ui.MediaSheetValue
 import com.m3u.ui.Sort
@@ -58,14 +56,13 @@ fun FavouriteRoute(
     modifier: Modifier = Modifier,
     viewModel: FavouriteViewModel = hiltViewModel()
 ) {
-    val tv = isTelevision()
+    val leanback = leanback()
 
     val title = stringResource(R.string.ui_title_favourite)
 
     val helper = LocalHelper.current
     val preferences = hiltPreferences()
     val context = LocalContext.current
-    val root = LocalRootDestination.current
 
     val coroutineScope = rememberCoroutineScope()
 
@@ -82,25 +79,21 @@ fun FavouriteRoute(
         mutableStateOf(MediaSheetValue.FavouriteScreen())
     }
 
-    val isPageInfoVisible = root == Destination.Root.Favourite
-
     val series: Channel? by viewModel.series.collectAsStateWithLifecycle()
 
-    if (isPageInfoVisible) {
-        LifecycleResumeEffect(title) {
-            Metadata.title = AnnotatedString(title.title())
-            Metadata.color = Color.Unspecified
-            Metadata.contentColor = Color.Unspecified
-            Metadata.actions = listOf(
-                Action(
-                    icon = Icons.AutoMirrored.Rounded.Sort,
-                    contentDescription = "sort",
-                    onClick = { isSortSheetVisible = true }
-                )
+    LifecycleResumeEffect(title) {
+        Metadata.title = AnnotatedString(title.title())
+        Metadata.color = Color.Unspecified
+        Metadata.contentColor = Color.Unspecified
+        Metadata.actions = listOf(
+            Action(
+                icon = Icons.AutoMirrored.Rounded.Sort,
+                contentDescription = "sort",
+                onClick = { isSortSheetVisible = true }
             )
-            onPauseOrDispose {
-                Metadata.actions = emptyList()
-            }
+        )
+        onPauseOrDispose {
+            Metadata.actions = emptyList()
         }
     }
 
@@ -132,7 +125,7 @@ fun FavouriteRoute(
         },
         modifier = Modifier
             .fillMaxSize()
-            .thenIf(!tv && preferences.godMode) {
+            .thenIf(!leanback && preferences.godMode) {
                 Modifier.interceptVolumeEvent { event ->
                     preferences.rowCount = when (event) {
                         KeyEvent.KEYCODE_VOLUME_UP ->
@@ -166,7 +159,7 @@ fun FavouriteRoute(
         onRefresh = { series?.let { viewModel.seriesReplay.value += 1 } },
         onDismissRequest = { viewModel.series.value = null }
     )
-    if (!tv) {
+    if (!leanback) {
         SortBottomSheet(
             visible = isSortSheetVisible,
             sort = sort,

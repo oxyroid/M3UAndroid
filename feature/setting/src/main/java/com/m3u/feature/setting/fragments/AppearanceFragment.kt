@@ -38,7 +38,7 @@ import com.m3u.material.components.Preference
 import com.m3u.material.components.TextPreference
 import com.m3u.material.components.ThemeAddSelection
 import com.m3u.material.components.ThemeSelection
-import com.m3u.material.ktx.isTelevision
+import com.m3u.material.ktx.leanback
 import com.m3u.material.ktx.minus
 import com.m3u.material.ktx.only
 import com.m3u.material.ktx.plus
@@ -59,7 +59,7 @@ internal fun AppearanceFragment(
 
     val isDarkMode = preferences.darkMode
     val useDynamicColors = preferences.useDynamicColors
-    val tv = isTelevision()
+    val leanback = leanback()
 
     Column(
         modifier = modifier
@@ -172,7 +172,7 @@ internal fun AppearanceFragment(
                     enabled = useDynamicColorsAvailable
                 )
             }
-            if (!tv) {
+            if (!leanback) {
                 item {
                     SwitchSharedPreference(
                         title = string.feat_setting_colorful_background,
@@ -192,7 +192,7 @@ internal fun AppearanceFragment(
                 )
             }
             item {
-                if (!tv) {
+                if (!leanback) {
                     SwitchSharedPreference(
                         title = string.feat_setting_god_mode,
                         content = string.feat_setting_god_mode_description,

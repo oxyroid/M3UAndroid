@@ -4,8 +4,8 @@ import com.m3u.core.architecture.Publisher
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.execute
 import com.m3u.data.database.model.DataSource
-import com.m3u.data.television.http.endpoint.DefRep
-import com.m3u.data.television.model.Television
+import com.m3u.data.leanback.http.endpoint.DefRep
+import com.m3u.data.leanback.model.Leanback
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.channels.trySendBlocking
@@ -26,9 +26,9 @@ import retrofit2.http.Query
 import javax.inject.Inject
 import javax.inject.Singleton
 
-interface LocalService {
+interface LeanbackApi {
     @GET("/say_hello")
-    suspend fun sayHello(): Television?
+    suspend fun sayHello(): Leanback?
 
     @POST("/playlists/subscribe")
     suspend fun subscribe(
@@ -46,16 +46,13 @@ interface LocalService {
 }
 
 @Singleton
-class LocalPreparedService @Inject constructor(
+class LeanbackApiDelegate @Inject constructor(
     private val builder: Retrofit.Builder,
     @OkhttpClient(true) private val okHttpClient: OkHttpClient,
     @Logger.MessageImpl private val logger: Logger,
     private val publisher: Publisher,
-) : LocalService {
-    fun prepare(
-        host: String,
-        port: Int
-    ): Flow<Television> = callbackFlow {
+): LeanbackApi {
+    fun prepare(host: String, port: Int): Flow<Leanback> = callbackFlow {
         val json = Json {
             ignoreUnknownKeys = true
         }
@@ -82,7 +79,7 @@ class LocalPreparedService @Inject constructor(
         val listener = object : WebSocketListener() {
             override fun onMessage(webSocket: WebSocket, text: String) {
                 try {
-                    val info = json.decodeFromString<Television?>(text) ?: return
+                    val info = json.decodeFromString<Leanback?>(text) ?: return
                     trySendBlocking(info)
                 } catch (e: IllegalStateException) {
                     logger.log(e.message.orEmpty())
@@ -107,7 +104,7 @@ class LocalPreparedService @Inject constructor(
         api = null
     }
 
-    override suspend fun sayHello(): Television? = logger.execute {
+    override suspend fun sayHello(): Leanback? = logger.execute {
         requireApi().sayHello()
     }
 
@@ -127,16 +124,13 @@ class LocalPreparedService @Inject constructor(
         requireApi().remoteDirection(remoteDirectionValue)
     }
 
-    private var api: LocalService? = null
-    private fun requireApi(): LocalService =
-        checkNotNull(api) { "You haven't connected television" }
+    private var api: LeanbackApi? = null
+    private fun requireApi(): LeanbackApi =
+        checkNotNull(api) { "You haven't connected leanback" }
 
-    private fun checkCompatibleInfoOrThrow(info: Television): Television {
+    private fun checkCompatibleInfoOrThrow(info: Leanback): Leanback {
         check(info.version == publisher.versionCode) {
-            """
-                The software version is incompatible
-                Please make sure the version is consistent
-            """.trimIndent()
+            "The software version is incompatible, Please make sure the version is consistent"
         }
         return info
     }

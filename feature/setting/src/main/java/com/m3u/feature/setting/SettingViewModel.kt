@@ -22,7 +22,7 @@ import com.m3u.core.architecture.preferences.Preferences
 import com.m3u.core.unit.DataUnit
 import com.m3u.core.unit.KB
 import com.m3u.core.util.basic.startWithHttpScheme
-import com.m3u.data.api.LocalPreparedService
+import com.m3u.data.api.LeanbackApiDelegate
 import com.m3u.data.database.dao.ColorSchemeDao
 import com.m3u.data.database.example.ColorSchemeExample
 import com.m3u.data.database.model.ColorScheme
@@ -58,7 +58,7 @@ class SettingViewModel @Inject constructor(
     private val workManager: WorkManager,
     private val preferences: Preferences,
     private val messager: Messager,
-    private val localService: LocalPreparedService,
+    private val leanbackApi: LeanbackApiDelegate,
     private val playerManager: PlayerManager,
     publisher: Publisher,
     // FIXME: do not use dao in viewmodel
@@ -167,7 +167,7 @@ class SettingViewModel @Inject constructor(
         when {
             forTvState.value -> {
                 viewModelScope.launch {
-                    localService.subscribe(
+                    leanbackApi.subscribe(
                         title,
                         urlOrUri,
                         basicUrl,

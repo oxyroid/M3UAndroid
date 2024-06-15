@@ -55,7 +55,7 @@ import com.m3u.data.database.model.ProgrammeRange.Companion.HOUR_LENGTH
 import com.m3u.material.components.Icon
 import com.m3u.material.ktx.Edge
 import com.m3u.material.ktx.blurEdges
-import com.m3u.material.ktx.isTelevision
+import com.m3u.material.ktx.leanback
 import com.m3u.material.ktx.thenIf
 import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.FontFamilies
@@ -96,7 +96,7 @@ internal fun ProgramGuide(
     scrollOffset: Int = -120
 ) {
     val spacing = LocalSpacing.current
-    val tv = isTelevision()
+    val leanback = leanback()
 
     val currentMilliseconds by produceCurrentMillisecondState()
     val coroutineScope = rememberCoroutineScope()
@@ -148,7 +148,7 @@ internal fun ProgramGuide(
                     MaterialTheme.colorScheme.surface,
                     listOf(Edge.Top, Edge.Bottom)
                 )
-                .thenIf(!tv) { zoomGestureModifier }
+                .thenIf(!leanback) { zoomGestureModifier }
                 .then(modifier)
         ) {
             // programmes
@@ -214,7 +214,7 @@ internal fun ProgramGuide(
             }
         }
 
-        if (!tv) {
+        if (!leanback) {
             Controls(
                 animateToCurrentTimeline = {
                     coroutineScope.launch { animateToCurrentTimeline() }
@@ -290,7 +290,7 @@ private fun ProgrammeCell(
 ) {
     val spacing = LocalSpacing.current
     val preferences = hiltPreferences()
-    val tv = isTelevision()
+    val leanback = leanback()
     val clockMode = preferences.twelveHourClock
     val content = @Composable {
         FlowRow(
@@ -347,7 +347,7 @@ private fun ProgrammeCell(
             )
         }
     }
-    if (!tv) {
+    if (!leanback) {
         Surface(
             color = MaterialTheme.colorScheme.tertiaryContainer,
             border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),

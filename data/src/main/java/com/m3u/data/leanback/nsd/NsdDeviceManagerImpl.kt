@@ -1,17 +1,17 @@
-package com.m3u.data.television.nsd.internal
+package com.m3u.data.leanback.nsd
 
 import android.net.nsd.NsdManager
 import android.net.nsd.NsdServiceInfo
-import com.m3u.core.architecture.logger.Profiles
 import com.m3u.core.architecture.dispatcher.Dispatcher
 import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
 import com.m3u.core.architecture.logger.Logger
+import com.m3u.core.architecture.logger.Profiles
 import com.m3u.core.architecture.logger.install
-import com.m3u.data.television.Utils
-import com.m3u.data.television.nsd.NsdDeviceManager
-import com.m3u.data.television.nsd.NsdDeviceManager.Companion.META_DATA_PIN
-import com.m3u.data.television.nsd.NsdDeviceManager.Companion.SERVICE_TYPE
+import com.m3u.data.leanback.Utils
+import com.m3u.data.leanback.nsd.NsdDeviceManager.Companion.META_DATA_PIN
+import com.m3u.data.leanback.nsd.NsdDeviceManager.Companion.SERVICE_TYPE
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.channels.trySendBlocking
 import kotlinx.coroutines.flow.Flow
@@ -50,32 +50,31 @@ class NsdDeviceManagerImpl @Inject constructor(
 
             override fun onServiceFound(serviceInfo: NsdServiceInfo) {
                 if (serviceInfo.serviceType == SERVICE_TYPE) {
-                    object : NsdManager.ResolveListener {
-                        override fun onResolveFailed(
-                            serviceInfo: NsdServiceInfo,
-                            errorCode: Int
-                        ) {
-                            logger.log("resolve service, error code: $errorCode.")
-                        }
-
-                        override fun onServiceResolved(serviceInfo: NsdServiceInfo) {
-                            result += serviceInfo
-                            logger.log("service resolved: $serviceInfo")
+                    val listener = NsdResolveListener(
+                        onResolved = {
+                            if (it != null) {
+                                result += it
+                                logger.log("service resolve succeed: $serviceInfo")
+                                trySendBlocking(result)
+                            }
+                        },
+                        onResolveFailed = {
+                            logger.log("service resolve failed")
+                            cancel()
+                        },
+                        onResolvedStopped = {
+                            result -= it
+                            logger.log("service resolve stopped")
+                            trySendBlocking(result)
+                        },
+                        onStopResolutionFailed = {
+                            result -= it
+                            logger.log("service stop resolve failed")
                             trySendBlocking(result)
                         }
-
-                        override fun onResolutionStopped(serviceInfo: NsdServiceInfo) {
-                            result -= serviceInfo
-                            logger.log("resolution stopped: $serviceInfo")
-                            trySendBlocking(result)
-                        }
-                    }.also {
-                        @Suppress("DEPRECATION")
-                        nsdManager.resolveService(
-                            serviceInfo,
-                            it
-                        )
-                    }
+                    )
+                    @Suppress("DEPRECATION")
+                    nsdManager.resolveService(serviceInfo, listener)
                 }
             }
 
@@ -125,13 +124,14 @@ class NsdDeviceManagerImpl @Inject constructor(
             override fun onRegistrationFailed(serviceInfo: NsdServiceInfo, errorCode: Int) {
                 trySendBlocking(null)
                 logger.log("registration failed, error code: $errorCode")
+                cancel()
             }
 
             override fun onUnregistrationFailed(serviceInfo: NsdServiceInfo, errorCode: Int) {
                 trySendBlocking(null)
                 logger.log("un-registration failed, error code: $errorCode")
+                cancel()
             }
-
         }
         nsdManager.registerService(serviceInfo, NsdManager.PROTOCOL_DNS_SD, listener)
         awaitClose {
@@ -140,5 +140,4 @@ class NsdDeviceManagerImpl @Inject constructor(
         }
     }
         .flowOn(ioDispatcher)
-
 }

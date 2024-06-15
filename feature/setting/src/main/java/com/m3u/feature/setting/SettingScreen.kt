@@ -42,12 +42,11 @@ import com.m3u.feature.setting.fragments.SubscriptionsFragment
 import com.m3u.feature.setting.fragments.preferences.PreferencesFragment
 import com.m3u.i18n.R.string
 import com.m3u.material.ktx.includeChildGlowPadding
-import com.m3u.material.ktx.isTelevision
+import com.m3u.material.ktx.leanback
 import com.m3u.material.model.LocalHazeState
 import com.m3u.ui.Destination
 import com.m3u.ui.EventHandler
 import com.m3u.ui.Events
-import com.m3u.ui.LocalRootDestination
 import com.m3u.ui.SettingDestination
 import com.m3u.ui.helper.Fob
 import com.m3u.ui.helper.Metadata
@@ -60,7 +59,7 @@ fun SettingRoute(
     modifier: Modifier = Modifier,
     viewModel: SettingViewModel = hiltViewModel()
 ) {
-    val tv = isTelevision()
+    val leanback = leanback()
     val controller = LocalSoftwareKeyboardController.current
 
     val colorSchemes by viewModel.colorSchemes.collectAsStateWithLifecycle()
@@ -130,7 +129,7 @@ fun SettingRoute(
         modifier = modifier.fillMaxSize(),
         contentPadding = contentPadding
     )
-    if (!tv) {
+    if (!leanback) {
         CanvasBottomSheet(
             sheetState = sheetState,
             colorScheme = colorScheme,
@@ -178,7 +177,6 @@ private fun SettingScreen(
     contentPadding: PaddingValues = PaddingValues()
 ) {
     val preferences = hiltPreferences()
-    val root = LocalRootDestination.current
 
     val defaultTitle = stringResource(string.ui_title_setting)
     val playlistTitle = stringResource(string.feat_setting_playlist_management)
@@ -187,8 +185,6 @@ private fun SettingScreen(
 
     val colorArgb = preferences.argb
 
-    val isPageInfoVisible = root == Destination.Root.Setting
-
     val navigator = rememberListDetailPaneScaffoldNavigator<SettingDestination>()
     val destination = navigator.currentDestination?.content ?: SettingDestination.Default
 
@@ -196,31 +192,29 @@ private fun SettingScreen(
         navigator.navigateTo(ListDetailPaneScaffoldRole.Detail, it)
     }
 
-    if (isPageInfoVisible) {
-        LifecycleResumeEffect(destination, defaultTitle, playlistTitle, appearanceTitle) {
-            Metadata.title = when (destination) {
-                SettingDestination.Default -> defaultTitle
-                SettingDestination.Playlists -> playlistTitle
-                SettingDestination.Appearance -> appearanceTitle
-                SettingDestination.Optional -> optionalTitle
+    LifecycleResumeEffect(destination, defaultTitle, playlistTitle, appearanceTitle) {
+        Metadata.title = when (destination) {
+            SettingDestination.Default -> defaultTitle
+            SettingDestination.Playlists -> playlistTitle
+            SettingDestination.Appearance -> appearanceTitle
+            SettingDestination.Optional -> optionalTitle
+        }
+            .title()
+            .let(::AnnotatedString)
+        Metadata.color = Color.Unspecified
+        Metadata.contentColor = Color.Unspecified
+        if (destination != SettingDestination.Default) {
+            Metadata.fob = Fob(
+                rootDestination = Destination.Root.Setting,
+                icon = Icons.Rounded.ChangeCircle,
+                iconTextId = string.feat_setting_back_home
+            ) {
+                navigator.navigateBack()
             }
-                .title()
-                .let(::AnnotatedString)
-            Metadata.color = Color.Unspecified
-            Metadata.contentColor = Color.Unspecified
-            if (destination != SettingDestination.Default) {
-                Metadata.fob = Fob(
-                    rootDestination = Destination.Root.Setting,
-                    icon = Icons.Rounded.ChangeCircle,
-                    iconTextId = string.feat_setting_back_home
-                ) {
-                    navigator.navigateBack()
-                }
-            }
-            Metadata.actions = emptyList()
-            onPauseOrDispose {
-                Metadata.fob = null
-            }
+        }
+        Metadata.actions = emptyList()
+        onPauseOrDispose {
+            Metadata.fob = null
         }
     }
 

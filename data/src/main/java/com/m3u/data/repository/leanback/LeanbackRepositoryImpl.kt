@@ -1,4 +1,4 @@
-package com.m3u.data.repository.television
+package com.m3u.data.repository.leanback
 
 import android.net.nsd.NsdServiceInfo
 import androidx.compose.runtime.snapshotFlow
@@ -12,11 +12,11 @@ import com.m3u.core.architecture.preferences.Preferences
 import com.m3u.core.util.coroutine.timeout
 import com.m3u.core.wrapper.Resource
 import com.m3u.core.wrapper.asResource
-import com.m3u.data.api.LocalPreparedService
-import com.m3u.data.television.Utils
-import com.m3u.data.television.http.HttpServer
-import com.m3u.data.television.model.Television
-import com.m3u.data.television.nsd.NsdDeviceManager
+import com.m3u.data.api.LeanbackApiDelegate
+import com.m3u.data.leanback.Utils
+import com.m3u.data.leanback.http.HttpServer
+import com.m3u.data.leanback.model.Leanback
+import com.m3u.data.leanback.nsd.NsdDeviceManager
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -28,7 +28,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.mapNotNull
@@ -40,43 +39,41 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 import kotlin.time.Duration
 
-class TelevisionRepositoryImpl @Inject constructor(
+class LeanbackRepositoryImpl @Inject constructor(
     private val nsdDeviceManager: NsdDeviceManager,
-    private val server: HttpServer,
-    private val localService: LocalPreparedService,
+    private val httpServer: HttpServer,
+    private val leanbackApi: LeanbackApiDelegate,
     logger: Logger,
     preferences: Preferences,
     publisher: Publisher,
     @Dispatcher(IO) ioDispatcher: CoroutineDispatcher
-) : TelevisionRepository() {
-    private val logger = logger.install(Profiles.REPOS_TELEVISION)
-    private val isTelevision = publisher.isTelevision
+) : LeanbackRepository() {
+    private val logger = logger.install(Profiles.REPOS_LEANBACK)
+    private val leanback = publisher.leanback
     private val coroutineScope = CoroutineScope(ioDispatcher)
 
     init {
-        combine(
-            snapshotFlow { preferences.remoteControl },
-            snapshotFlow { preferences.alwaysTv }
-        ) { remoteControl, alwaysTv ->
-            when {
-                !remoteControl -> closeBroadcastOnTelevision()
-                alwaysTv || isTelevision -> broadcastOnTelevision()
-                else -> closeBroadcastOnTelevision()
+        snapshotFlow { preferences.remoteControl }
+            .onEach { remoteControl ->
+                when {
+                    !remoteControl -> closeBroadcastOnLeanback()
+                    leanback -> broadcastOnLeanback()
+                    else -> closeBroadcastOnLeanback()
+                }
             }
-        }
             .launchIn(coroutineScope)
     }
 
-    private val _broadcastCodeOnTelevision = MutableStateFlow<Int?>(null)
-    override val broadcastCodeOnTelevision = _broadcastCodeOnTelevision.asStateFlow()
+    private val _broadcastCodeOnLeanback = MutableStateFlow<Int?>(null)
+    override val broadcastCodeOnLeanback = _broadcastCodeOnLeanback.asStateFlow()
 
-    private var broadcastOnTelevisionJob: Job? = null
+    private var broadcastOnLeanbackJob: Job? = null
 
-    override fun broadcastOnTelevision() {
+    override fun broadcastOnLeanback() {
         val serverPort = Utils.findPort()
-        closeBroadcastOnTelevision()
-        server.start(serverPort)
-        broadcastOnTelevisionJob = coroutineScope.launch {
+        closeBroadcastOnLeanback()
+        httpServer.start(serverPort)
+        broadcastOnLeanbackJob = coroutineScope.launch {
             while (isActive) {
                 val nsdPort = Utils.findPort()
                 val pin = Utils.createPin()
@@ -97,39 +94,39 @@ class TelevisionRepositoryImpl @Inject constructor(
                         logger.log("start-server: opening...")
                     }
                     .onCompletion {
-                        _broadcastCodeOnTelevision.value = null
+                        _broadcastCodeOnLeanback.value = null
                         logger.log("start-server: nsd completed")
                     }
                     .onEach { registered ->
                         logger.log("start-server: registered: $registered")
-                        _broadcastCodeOnTelevision.value = if (registered != null) pin else null
+                        _broadcastCodeOnLeanback.value = if (registered != null) pin else null
                     }
                     .collect()
             }
         }
     }
 
-    override fun closeBroadcastOnTelevision() {
-        server.stop()
-        broadcastOnTelevisionJob?.cancel()
-        broadcastOnTelevisionJob = null
+    override fun closeBroadcastOnLeanback() {
+        httpServer.stop()
+        broadcastOnLeanbackJob?.cancel()
+        broadcastOnLeanbackJob = null
     }
 
-    private val _connected = MutableStateFlow<Television?>(null)
-    override val connected: StateFlow<Television?> = _connected.asStateFlow()
+    private val _connected = MutableStateFlow<Leanback?>(null)
+    override val connected: StateFlow<Leanback?> = _connected.asStateFlow()
 
-    private var connectToTelevisionJob: Job? = null
+    private var connectToLeanbackJob: Job? = null
 
-    override fun connectToTelevision(
+    override fun connectToLeanback(
         broadcastCode: Int,
         timeout: Duration
-    ): Flow<ConnectionToTelevisionValue> = channelFlow {
+    ): Flow<ConnectionToLeanbackValue> = channelFlow {
         val completed = nsdDeviceManager
             .search()
-            .onStart { trySendBlocking(ConnectionToTelevisionValue.Searching) }
+            .onStart { trySendBlocking(ConnectionToLeanbackValue.Searching) }
             .timeout(timeout) {
                 logger.log("pair: timeout")
-                trySendBlocking(ConnectionToTelevisionValue.Timeout)
+                trySendBlocking(ConnectionToLeanbackValue.Timeout)
             }
             .mapNotNull { all ->
                 logger.log("pair: all devices: $all")
@@ -144,14 +141,14 @@ class TelevisionRepositoryImpl @Inject constructor(
                     .getAttribute(NsdDeviceManager.META_DATA_HOST)
                     ?: return@mapNotNull null
 
-                ConnectionToTelevisionValue.Completed(host, port)
+                ConnectionToLeanbackValue.Completed(host, port)
             }
             .firstOrNull()
 
         if (completed != null) {
-            trySendBlocking(ConnectionToTelevisionValue.Connecting)
-            connectToTelevisionJob?.cancel()
-            connectToTelevisionJob = localService
+            trySendBlocking(ConnectionToLeanbackValue.Connecting)
+            connectToLeanbackJob?.cancel()
+            connectToLeanbackJob = leanbackApi
                 .prepare(completed.host, completed.port)
                 .asResource()
                 .onEach { resource ->
@@ -169,26 +166,22 @@ class TelevisionRepositoryImpl @Inject constructor(
                         is Resource.Failure -> {
                             logger.log("pair: catch an error, ${resource.message}")
                             _connected.value = null
-                            trySendBlocking(ConnectionToTelevisionValue.Idle(resource.message))
+                            trySendBlocking(ConnectionToLeanbackValue.Idle(resource.message))
                         }
                     }
                 }
                 .launchIn(coroutineScope)
         }
         awaitClose {
-            trySendBlocking(ConnectionToTelevisionValue.Idle())
+            trySendBlocking(ConnectionToLeanbackValue.Idle())
         }
     }
 
-    override suspend fun disconnectToTelevision() {
-        connectToTelevisionJob?.cancel()
-        connectToTelevisionJob = null
+    override suspend fun disconnectToLeanback() {
+        connectToLeanbackJob?.cancel()
+        connectToLeanbackJob = null
         _connected.value = null
     }
 
-    private val _allUpdateStates = MutableStateFlow(emptyMap<UpdateKey, UpdateState>())
-    override val allUpdateStates = _allUpdateStates.asStateFlow()
-
-    private fun NsdServiceInfo.getAttribute(key: String): String? =
-        attributes[key]?.decodeToString()
+    private fun NsdServiceInfo.getAttribute(key: String): String? = attributes[key]?.decodeToString()
 }

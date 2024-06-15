@@ -1,4 +1,4 @@
-package com.m3u.data.television.http.endpoint
+package com.m3u.data.leanback.http.endpoint
 
 import io.ktor.server.routing.Route
 

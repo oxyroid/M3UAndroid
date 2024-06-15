@@ -19,7 +19,6 @@ import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -27,18 +26,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navOptions
 import com.m3u.androidApp.ui.sheet.RemoteControlSheet
 import com.m3u.androidApp.ui.sheet.RemoteControlSheetValue
 import com.m3u.core.architecture.preferences.hiltPreferences
-import com.m3u.data.television.model.RemoteDirection
+import com.m3u.data.leanback.model.RemoteDirection
 import com.m3u.material.components.Icon
-import com.m3u.material.ktx.isTelevision
+import com.m3u.material.ktx.leanback
 import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.Destination
 import com.m3u.ui.FontFamilies
-import com.m3u.ui.LocalNavController
 import com.m3u.ui.SnackHost
 
 @Composable
@@ -56,7 +56,7 @@ fun App(
     val shouldDispatchBackStack by remember {
         derivedStateOf {
             with(entry) {
-                this != null && destination.route == ROOT_ROUTE
+                this != null && destination.route in Destination.Root.entries.map { it.name }
             }
         }
     }
@@ -65,55 +65,42 @@ fun App(
         onBackPressedDispatcher.onBackPressed()
     }
 
-    val navigateToRootDestination = { rootDestination: Destination.Root ->
-        viewModel.rootDestination = rootDestination
-        if (!shouldDispatchBackStack) {
-            navController.restoreBackStack()
-        }
-    }
-
-    // for televisions
-    val broadcastCodeOnTelevision by viewModel.broadcastCodeOnTelevision.collectAsStateWithLifecycle()
+    // for leanbacks
+    val broadcastCodeOnLeanback by viewModel.broadcastCodeOnLeanback.collectAsStateWithLifecycle()
 
     // for smartphones
     val remoteControlSheetValue by viewModel.remoteControlSheetValue.collectAsStateWithLifecycle()
 
-    CompositionLocalProvider(
-        LocalNavController provides navController
-    ) {
-        AppImpl(
-            rootDestination = viewModel.rootDestination,
-            onBackPressed = onBackPressed.takeUnless { shouldDispatchBackStack },
-            navigateToRoot = navigateToRootDestination,
-            openRemoteControlSheet = { viewModel.isConnectSheetVisible = true },
-            onCode = { viewModel.code = it },
-            checkTelevisionCodeOnSmartphone = viewModel::checkTelevisionCodeOnSmartphone,
-            forgetTelevisionCodeOnSmartphone = viewModel::forgetTelevisionCodeOnSmartphone,
-            broadcastCodeOnTelevision = broadcastCodeOnTelevision,
-            isRemoteControlSheetVisible = viewModel.isConnectSheetVisible,
-            remoteControlSheetValue = remoteControlSheetValue,
-            onRemoteDirection = viewModel::onRemoteDirection,
-            onDismissRequest = {
-                viewModel.code = ""
-                viewModel.isConnectSheetVisible = false
-            },
-            modifier = modifier
-        )
-    }
+    AppImpl(
+        navController = navController,
+        onBackPressed = onBackPressed.takeUnless { shouldDispatchBackStack },
+        checkLeanbackCodeOnSmartphone = viewModel::checkLeanbackCodeOnSmartphone,
+        forgetLeanbackCodeOnSmartphone = viewModel::forgetLeanbackCodeOnSmartphone,
+        broadcastCodeOnLeanback = broadcastCodeOnLeanback,
+        isRemoteControlSheetVisible = viewModel.isConnectSheetVisible,
+        remoteControlSheetValue = remoteControlSheetValue,
+        onRemoteDirection = viewModel::onRemoteDirection,
+        openRemoteControlSheet = { viewModel.isConnectSheetVisible = true },
+        onCode = { viewModel.code = it },
+        onDismissRequest = {
+            viewModel.code = ""
+            viewModel.isConnectSheetVisible = false
+        },
+        modifier = modifier
+    )
 }
 
 @Composable
 private fun AppImpl(
-    rootDestination: Destination.Root,
+    navController: NavHostController,
     isRemoteControlSheetVisible: Boolean,
     remoteControlSheetValue: RemoteControlSheetValue,
-    broadcastCodeOnTelevision: String?,
+    broadcastCodeOnLeanback: String?,
     onBackPressed: (() -> Unit)?,
-    navigateToRoot: (Destination.Root) -> Unit,
     openRemoteControlSheet: () -> Unit,
     onCode: (String) -> Unit,
-    checkTelevisionCodeOnSmartphone: () -> Unit,
-    forgetTelevisionCodeOnSmartphone: () -> Unit,
+    checkLeanbackCodeOnSmartphone: () -> Unit,
+    forgetLeanbackCodeOnSmartphone: () -> Unit,
     onRemoteDirection: (RemoteDirection) -> Unit,
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier
@@ -121,18 +108,31 @@ private fun AppImpl(
     val spacing = LocalSpacing.current
     val preferences = hiltPreferences()
 
-    val tv = isTelevision()
+    val leanback = leanback()
+
+    val entry by navController.currentBackStackEntryAsState()
+
+    val rootDestination by remember {
+        derivedStateOf {
+            Destination.Root.of(entry?.destination?.route)
+        }
+    }
 
     Scaffold(
         rootDestination = rootDestination,
         onBackPressed = onBackPressed,
-        navigateToRoot = navigateToRoot,
-        modifier = Modifier
-            .fillMaxSize()
-            .then(modifier),
+        navigateToRootDestination = {
+            navController.navigate(it.name, navOptions {
+                popUpTo(it.name) {
+                    inclusive = true
+                }
+            })
+        },
+        modifier = modifier.fillMaxSize()
     ) { contentPadding ->
         AppNavHost(
-            navigateToRoot = navigateToRoot,
+            navController = navController,
+            navigateToRootDestination = { navController.navigate(it.name) },
             contentPadding = contentPadding,
             modifier = Modifier.fillMaxSize()
         )
@@ -147,7 +147,7 @@ private fun AppImpl(
         ) {
             SnackHost(Modifier.weight(1f))
             AnimatedVisibility(
-                visible = !tv && preferences.remoteControl,
+                visible = !leanback && preferences.remoteControl,
                 enter = scaleIn(initialScale = 0.65f) + fadeIn(),
                 exit = scaleOut(targetScale = 0.65f) + fadeOut(),
             ) {
@@ -172,15 +172,15 @@ private fun AppImpl(
             value = remoteControlSheetValue,
             visible = isRemoteControlSheetVisible,
             onCode = onCode,
-            checkTelevisionCodeOnSmartphone = checkTelevisionCodeOnSmartphone,
-            forgetTelevisionCodeOnSmartphone = forgetTelevisionCodeOnSmartphone,
+            checkLeanbackCodeOnSmartphone = checkLeanbackCodeOnSmartphone,
+            forgetLeanbackCodeOnSmartphone = forgetLeanbackCodeOnSmartphone,
             onRemoteDirection = onRemoteDirection,
             onDismissRequest = onDismissRequest
         )
 
         Crossfade(
-            targetState = broadcastCodeOnTelevision,
-            label = "broadcast-code-on-television",
+            targetState = broadcastCodeOnLeanback,
+            label = "broadcast-code-on-leanback",
             modifier = Modifier
                 .padding(spacing.medium)
                 .align(Alignment.BottomEnd)

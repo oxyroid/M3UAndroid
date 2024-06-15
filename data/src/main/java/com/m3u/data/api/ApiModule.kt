@@ -110,7 +110,7 @@ internal object ApiModule {
     fun provideGithubApi(
         builder: Retrofit.Builder
     ): GithubApi = builder
-        .baseUrl(Contracts.GITHUB_BASE_URL)
+        .baseUrl(BaseUrls.GITHUB_BASE_URL)
         .build()
         .create()
 }

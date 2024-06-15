@@ -8,9 +8,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.InternalComposeApi
 import androidx.compose.ui.Modifier
-import com.m3u.data.repository.television.UpdateState
-import com.m3u.data.television.model.RemoteDirection
-import com.m3u.data.television.model.Television
+import com.m3u.data.leanback.model.Leanback
+import com.m3u.data.leanback.model.RemoteDirection
 
 @Immutable
 sealed class RemoteControlSheetValue {
@@ -25,13 +24,7 @@ sealed class RemoteControlSheetValue {
 
     @Immutable
     data class DPad(
-        val television: Television,
-    ) : RemoteControlSheetValue()
-
-    @Immutable
-    data class Update(
-        val television: Television,
-        val state: UpdateState,
+        val leanback: Leanback,
     ) : RemoteControlSheetValue()
 }
 
@@ -42,8 +35,8 @@ internal fun RemoteControlSheet(
     value: RemoteControlSheetValue,
     visible: Boolean,
     onCode: (String) -> Unit,
-    checkTelevisionCodeOnSmartphone: () -> Unit,
-    forgetTelevisionCodeOnSmartphone: () -> Unit,
+    checkLeanbackCodeOnSmartphone: () -> Unit,
+    forgetLeanbackCodeOnSmartphone: () -> Unit,
     onRemoteDirection: (RemoteDirection) -> Unit,
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier
@@ -59,13 +52,13 @@ internal fun RemoteControlSheet(
     if (visible) {
         ModalBottomSheet(
             sheetState = sheetState,
-//            windowInsets = WindowInsets(0),
             onDismissRequest = {
                 if (!searchingOrConnecting) onDismissRequest()
             },
             properties = ModalBottomSheetProperties(
                 shouldDismissOnBackPress = false
-            )
+            ),
+            modifier = modifier
         ) {
             Column {
                 when (value) {
@@ -73,21 +66,17 @@ internal fun RemoteControlSheet(
                         PrepareContent(
                             code = value.code,
                             searchingOrConnecting = value.searchingOrConnecting,
-                            checkTelevisionCodeOnSmartphone = checkTelevisionCodeOnSmartphone,
+                            checkLeanbackCodeOnSmartphone = checkLeanbackCodeOnSmartphone,
                             onCode = onCode
                         )
                     }
 
                     is RemoteControlSheetValue.DPad -> {
                         DPadContent(
-                            television = value.television,
+                            leanback = value.leanback,
                             onRemoteDirection = onRemoteDirection,
-                            forgetTelevisionCodeOnSmartphone = forgetTelevisionCodeOnSmartphone,
+                            forgetLeanbackCodeOnSmartphone = forgetLeanbackCodeOnSmartphone,
                         )
-                    }
-
-                    is RemoteControlSheetValue.Update -> {
-
                     }
 
                     else -> {}

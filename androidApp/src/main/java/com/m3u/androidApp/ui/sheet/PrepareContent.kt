@@ -37,7 +37,7 @@ import com.m3u.i18n.R
 internal fun PrepareContent(
     code: String,
     searchingOrConnecting: Boolean,
-    checkTelevisionCodeOnSmartphone: () -> Unit,
+    checkLeanbackCodeOnSmartphone: () -> Unit,
     onCode: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -88,7 +88,7 @@ internal fun PrepareContent(
 
             TextButton(
                 enabled = !searchingOrConnecting && code.length == 6,
-                onClick = checkTelevisionCodeOnSmartphone,
+                onClick = checkLeanbackCodeOnSmartphone,
                 modifier = Modifier.padding(top = 4.dp)
             ) {
                 Text(

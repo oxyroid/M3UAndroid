@@ -12,7 +12,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.ClickableSurfaceDefaults
 import com.m3u.material.components.Icon
-import com.m3u.material.ktx.isTelevision
+import com.m3u.material.ktx.leanback
 import androidx.tv.material3.Icon as TvIcon
 import androidx.tv.material3.LocalContentColor as TvLocalContentColor
 import androidx.tv.material3.Surface as TvSurface
@@ -25,8 +25,8 @@ fun MaskCircleButton(
     modifier: Modifier = Modifier,
     tint: Color = Color.Unspecified
 ) {
-    val tv = isTelevision()
-    if (!tv) {
+    val leanback = leanback()
+    if (!leanback) {
         Surface(
             shape = CircleShape,
             onClick = {
