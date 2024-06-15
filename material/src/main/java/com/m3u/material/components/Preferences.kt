@@ -5,6 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
@@ -74,6 +75,7 @@ fun Preference(
         val alpha = if (enabled) 1f else 0.38f
         if (!leanback()) {
             OutlinedCard(
+                colors = CardDefaults.outlinedCardColors(Color.Transparent),
                 shape = AbsoluteSmoothCornerShape(spacing.medium, 65)
             ) {
                 ListItem(
