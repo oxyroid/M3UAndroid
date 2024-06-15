@@ -2,7 +2,6 @@
     android:initialLayout="@layout/glance_default_loading_layout"
     android:targetCellWidth="2"
     android:targetCellHeight="1"
-    android:updatePeriodMillis="86400000"
     android:resizeMode="horizontal|vertical"
     android:widgetCategory="home_screen"
     android:widgetFeatures="reconfigurable|configuration_optional">
