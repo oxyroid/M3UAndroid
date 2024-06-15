@@ -1,6 +1,12 @@
 package com.m3u.androidApp.ui
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
@@ -9,12 +15,15 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.draw.blur
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asComposePath
+import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -52,24 +61,17 @@ class StarColors(
 
 private fun createStarSpecs(colors: StarColors) = listOf(
     StarSpec(
-        numVertices = 8,
-        size = 1.5f,
-        offset = Offset(-0.2f, 0.2f),
-        color = colors.firstColor,
-        blurRadius = 8.dp,
-    ),
-    StarSpec(
         numVertices = 10,
         size = 1.2f,
-        offset = Offset(0.2f, 0.2f),
+        offset = Offset(-0.3f, -0.18f),
         color = colors.secondColor,
         blurRadius = 24.dp,
     ),
     StarSpec(
-        numVertices = 6,
-        size = 0.7f,
-        offset = Offset(-0.5f, 0.5f),
-        color = colors.thirdColor,
+        numVertices = 12,
+        size = 0.5f,
+        offset = Offset(0.45f, -0.45f),
+        color = colors.firstColor,
         blurRadius = 32.dp,
     ),
     StarSpec(
@@ -78,14 +80,7 @@ private fun createStarSpecs(colors: StarColors) = listOf(
         offset = Offset(0.3f, 0.2f),
         color = colors.thirdColor,
         blurRadius = 40.dp,
-    ),
-    StarSpec(
-        numVertices = 12,
-        size = 0.5f,
-        offset = Offset(0f, 0.5f),
-        color = colors.firstColor,
-        blurRadius = 48.dp,
-    ),
+    )
 )
 
 @Composable
@@ -102,29 +97,42 @@ fun StarBackground(
         exit = fadeOut() + scaleOut(targetScale = 2.3f),
         modifier = modifier
     ) {
+        val infiniteTransition = rememberInfiniteTransition()
+        val degree by infiniteTransition.animateFloat(
+            initialValue = 0f,
+            targetValue = 1f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(8000, easing = LinearEasing),
+                repeatMode = RepeatMode.Restart
+            ),
+            label = "rotate-degree"
+        )
         Box(
             Modifier
                 .fillMaxSize()
-                .drawWithCache {
-                    onDrawBehind {
-                        val width = size.width
-                        for (spec in specs) {
-                            val star = RoundedPolygon.star(
-                                numVerticesPerRadius = spec.numVertices,
-                                radius = width * spec.size / 2,
-                                innerRadius = width * spec.size * 0.7f / 2,
-                                rounding = CornerRounding(width * 0.05f),
-                                centerX = width / 2,
-                                centerY = width / 2,
-                            )
-                            val path = star
-                                .toPath()
-                                .asComposePath()
+                .blur(24.dp)
+                .drawBehind {
+                    val width = size.width
+                    val height = size.height
+                    val minDimension = size.minDimension
+                    for (spec in specs) {
+                        val star = RoundedPolygon.star(
+                            numVerticesPerRadius = spec.numVertices,
+                            radius = minDimension * spec.size / 2,
+                            innerRadius = minDimension * spec.size * 0.7f / 2,
+                            rounding = CornerRounding(minDimension * 0.05f),
+                            centerX = width / 2,
+                            centerY = height / 2
+                        )
+                        val path = star
+                            .toPath()
+                            .asComposePath()
 
-                            translate(
-                                width * spec.offset.x,
-                                width * spec.offset.y,
-                            ) {
+                        translate(
+                            width * spec.offset.x,
+                            height * spec.offset.y
+                        ) {
+                            rotate(180f * degree * (spec.numVertices - 6).coerceAtLeast(1)) {
                                 drawPath(path, color = spec.color)
                             }
                         }
