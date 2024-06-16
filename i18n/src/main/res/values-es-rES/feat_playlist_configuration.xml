@@ -6,4 +6,6 @@
     <string name="feat_playlist_configuration_sync_programmes">sinc. programación</string>
     <string name="feat_playlist_configuration_programmes_expired_time">Expira: %s</string>
     <string name="feat_playlist_configuration_programmes_expired">la programación está desactualizada</string>
+    <string name="feat_playlist_configuration_auto_refresh_programmes">Autorefrescar programación</string>
+    <string name="feat_playlist_configuration_auto_refresh_programmes_description">Cuando se inicializa la app</string>
 </resources>
