@@ -23,9 +23,9 @@ import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.Playlist
 import com.m3u.material.components.HorizontalPagerIndicator
 import com.m3u.material.ktx.leanback
+import com.m3u.material.ktx.pageOffset
 import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.Events
-import kotlin.math.absoluteValue
 import androidx.tv.material3.Carousel as TvCarousel
 
 @Composable
@@ -73,8 +73,7 @@ internal fun RecommendGallery(
                 modifier = Modifier.animateContentSize()
             ) { page ->
                 val spec = specs[page]
-                val pageOffset =
-                    ((state.currentPage - page) + state.currentPageOffsetFraction).absoluteValue
+                val pageOffset = state.pageOffset(page)
                 RecommendItem(
                     spec = spec,
                     pageOffset = pageOffset,
