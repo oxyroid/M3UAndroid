@@ -5,13 +5,15 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
-import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridItemSpan
 import androidx.compose.foundation.lazy.staggeredgrid.items
+import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import androidx.compose.foundation.shape.AbsoluteRoundedCornerShape
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.ListItem
@@ -26,10 +28,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
 import com.m3u.core.util.basic.title
 import com.m3u.core.wrapper.Resource
 import com.m3u.data.database.model.Channel
 import com.m3u.i18n.R.string
+import com.m3u.material.components.VerticalDraggableScrollbar
 import com.m3u.material.ktx.leanback
 import com.m3u.material.ktx.plus
 import com.m3u.material.model.LocalSpacing
@@ -64,34 +68,47 @@ internal fun FavouriteGallery(
             }
 
             is Resource.Success -> {
-                @Suppress("NAME_SHADOWING")
-                val channels = channels.data
-                LazyVerticalStaggeredGrid(
-                    columns = StaggeredGridCells.Fixed(rowCount),
-                    verticalItemSpacing = spacing.medium,
-                    horizontalArrangement = Arrangement.spacedBy(spacing.large),
-                    contentPadding = PaddingValues(spacing.medium) + contentPadding,
-                    modifier = modifier.fillMaxSize(),
+                Row(
+                    modifier = modifier
+                        .fillMaxSize()
+                        .padding(start = spacing.medium),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
-                    item(span = StaggeredGridItemSpan.FullLine) {
-                        RandomTips(
-                            onClick = onClickRandomTips
-                        )
+                    @Suppress("NAME_SHADOWING")
+                    val channels = channels.data
+                    val lazyStaggeredGridState = rememberLazyStaggeredGridState()
+
+                    LazyVerticalStaggeredGrid(
+                        state = lazyStaggeredGridState,
+                        columns = StaggeredGridCells.Fixed(rowCount),
+                        verticalItemSpacing = spacing.medium,
+                        horizontalArrangement = Arrangement.spacedBy(spacing.large),
+                        contentPadding = PaddingValues(vertical = spacing.medium) + contentPadding,
+                        modifier = Modifier
+                            .fillMaxHeight()
+                            .weight(1f),
+                    ) {
+//                    item(span = StaggeredGridItemSpan.FullLine) {
+//                        RandomTips(
+//                            onClick = onClickRandomTips
+//                        )
+//                    }
+                        items(
+                            items = channels,
+                            key = { it.id },
+                            contentType = { it.cover.isNullOrEmpty() }
+                        ) { channel ->
+                            FavoriteItem(
+                                channel = channel,
+                                zapping = zapping == channel,
+                                onClick = { onClick(channel) },
+                                onLongClick = { onLongClick(channel) },
+                                recently = recently,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
                     }
-                    items(
-                        items = channels,
-                        key = { it.id },
-                        contentType = { it.cover.isNullOrEmpty() }
-                    ) { channel ->
-                        FavoriteItem(
-                            channel = channel,
-                            zapping = zapping == channel,
-                            onClick = { onClick(channel) },
-                            onLongClick = { onLongClick(channel) },
-                            recently = recently,
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    }
+                    VerticalDraggableScrollbar(lazyStaggeredGridState = lazyStaggeredGridState)
                 }
             }
 

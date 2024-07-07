@@ -101,8 +101,7 @@ internal fun SmartphoneChannelGallery(
             }
         }
         VerticalDraggableScrollbar(
-            lazyStaggeredGridState = state,
-            modifier = Modifier.padding(5.dp)
+            lazyStaggeredGridState = state
         )
     }
 }

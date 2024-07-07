@@ -10,6 +10,7 @@ import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredWidth
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyListState
@@ -30,9 +31,9 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.m3u.material.model.LocalSpacing
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.launchIn
@@ -40,11 +41,18 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
 
+data class DraggableScrollbarWidth(
+    val inactive: Dp,
+    val active: Dp
+)
+
 @Composable
 fun VerticalDraggableScrollbar(
     lazyListState: LazyListState,
     modifier: Modifier = Modifier,
-    color: Color = Color.White
+    color: Color = Color.White,
+    width: DraggableScrollbarWidth = DraggableScrollbarWidth(8.dp, 12.dp),
+    coefficient: Float = 0.85f
 ) {
     val visibleCountPercent by remember {
         derivedStateOf {
@@ -54,9 +62,15 @@ fun VerticalDraggableScrollbar(
             else visibleItemsCount.toFloat() / totalItemsCount
         }
     }
+    val isVisible by remember {
+        derivedStateOf {
+            visibleCountPercent > 0f && visibleCountPercent <= coefficient
+        }
+    }
     val coroutineScope = rememberCoroutineScope()
     val draggableState = rememberDraggableState { delta ->
         coroutineScope.launch {
+            if (!isVisible) return@launch
             lazyListState.scrollBy(delta / visibleCountPercent)
         }
     }
@@ -85,9 +99,7 @@ fun VerticalDraggableScrollbar(
             isScrolling = false
         }
     }
-    val onDragStarted: suspend CoroutineScope.(startedPosition: Offset) -> Unit =
-        { isDragging = true }
-    val onDragStopped: suspend CoroutineScope.(velocity: Float) -> Unit = { isDragging = false }
+
     val percent by remember(lazyListState) {
         derivedStateOf {
             val totalItemsCount = lazyListState.layoutInfo.totalItemsCount
@@ -115,26 +127,32 @@ fun VerticalDraggableScrollbar(
         animationSpec = tween(200, delayMillis = 200)
     )
     val currentWidth by animateDpAsState(
-        targetValue = if (isDragging) 16.dp else 12.dp,
+        targetValue = if (isDragging) width.active else width.inactive,
         label = "current-width"
     )
-    Canvas(
-        modifier = modifier
-            .fillMaxHeight()
-            .requiredWidth(currentWidth)
-            .draggable(
-                state = draggableState,
-                orientation = Orientation.Vertical,
-                onDragStarted = onDragStarted,
-                onDragStopped = onDragStopped
+
+    if (isVisible) {
+        Canvas(
+            modifier = modifier
+                .fillMaxHeight()
+                .padding(5.dp)
+                .requiredWidth(currentWidth)
+                .draggable(
+                    state = draggableState,
+                    orientation = Orientation.Vertical,
+                    onDragStarted = { isDragging = true },
+                    onDragStopped = { isDragging = false }
+                )
+        ) {
+            drawVerticalDraggableScrollbar(
+                color = color,
+                currentAlpha = currentAlpha,
+                currentPosition = currentPosition,
+                currentVisibleCountPercent = currentVisibleCountPercent
             )
-    ) {
-        drawVerticalDraggableScrollbar(
-            color = color,
-            currentAlpha = currentAlpha,
-            currentPosition = currentPosition,
-            currentVisibleCountPercent = currentVisibleCountPercent
-        )
+        }
+    } else {
+        Spacer(modifier = Modifier.width(LocalSpacing.current.medium))
     }
 }
 
@@ -142,7 +160,9 @@ fun VerticalDraggableScrollbar(
 fun VerticalDraggableScrollbar(
     lazyGridState: LazyGridState,
     modifier: Modifier = Modifier,
-    color: Color = Color.White
+    color: Color = Color.White,
+    width: DraggableScrollbarWidth = DraggableScrollbarWidth(8.dp, 12.dp),
+    coefficient: Float = 0.85f
 ) {
     val visibleCountPercent by remember {
         derivedStateOf {
@@ -152,9 +172,15 @@ fun VerticalDraggableScrollbar(
             else visibleItemsCount.toFloat() / totalItemsCount
         }
     }
+    val isVisible by remember {
+        derivedStateOf {
+            visibleCountPercent > 0f && visibleCountPercent <= coefficient
+        }
+    }
     val coroutineScope = rememberCoroutineScope()
     val draggableState = rememberDraggableState { delta ->
         coroutineScope.launch {
+            if (!isVisible) return@launch
             lazyGridState.scrollBy(delta / visibleCountPercent)
         }
     }
@@ -183,9 +209,6 @@ fun VerticalDraggableScrollbar(
             isScrolling = false
         }
     }
-    val onDragStarted: suspend CoroutineScope.(startedPosition: Offset) -> Unit =
-        { isDragging = true }
-    val onDragStopped: suspend CoroutineScope.(velocity: Float) -> Unit = { isDragging = false }
     val percent by remember(lazyGridState) {
         derivedStateOf {
             val totalItemsCount = lazyGridState.layoutInfo.totalItemsCount
@@ -213,26 +236,32 @@ fun VerticalDraggableScrollbar(
         animationSpec = tween(200, delayMillis = 200)
     )
     val currentWidth by animateDpAsState(
-        targetValue = if (isDragging) 16.dp else 12.dp,
+        targetValue = if (isDragging) width.active else width.inactive,
         label = "current-width"
     )
-    Canvas(
-        modifier = modifier
-            .fillMaxHeight()
-            .requiredWidth(currentWidth)
-            .draggable(
-                state = draggableState,
-                orientation = Orientation.Vertical,
-                onDragStarted = onDragStarted,
-                onDragStopped = onDragStopped
+
+    if (isVisible) {
+        Canvas(
+            modifier = modifier
+                .fillMaxHeight()
+                .padding(5.dp)
+                .requiredWidth(currentWidth)
+                .draggable(
+                    state = draggableState,
+                    orientation = Orientation.Vertical,
+                    onDragStarted = { isDragging = true },
+                    onDragStopped = { isDragging = false }
+                )
+        ) {
+            drawVerticalDraggableScrollbar(
+                color = color,
+                currentAlpha = currentAlpha,
+                currentPosition = currentPosition,
+                currentVisibleCountPercent = currentVisibleCountPercent
             )
-    ) {
-        drawVerticalDraggableScrollbar(
-            color = color,
-            currentAlpha = currentAlpha,
-            currentPosition = currentPosition,
-            currentVisibleCountPercent = currentVisibleCountPercent
-        )
+        }
+    } else {
+        Spacer(modifier = Modifier.width(LocalSpacing.current.medium))
     }
 }
 
@@ -241,7 +270,8 @@ fun VerticalDraggableScrollbar(
     lazyStaggeredGridState: LazyStaggeredGridState,
     modifier: Modifier = Modifier,
     color: Color = Color.White,
-    alwaysShow: Boolean = false
+    width: DraggableScrollbarWidth = DraggableScrollbarWidth(8.dp, 12.dp),
+    coefficient: Float = 0.85f
 ) {
     val visibleCountPercent by remember {
         derivedStateOf {
@@ -251,15 +281,15 @@ fun VerticalDraggableScrollbar(
             else visibleItemsCount.toFloat() / totalItemsCount
         }
     }
-    val shouldShow by remember(alwaysShow) {
+    val isVisible by remember {
         derivedStateOf {
-            alwaysShow || (visibleCountPercent > 0f && visibleCountPercent <= 0.85f)
+            visibleCountPercent > 0f && visibleCountPercent <= coefficient
         }
     }
     val coroutineScope = rememberCoroutineScope()
     val draggableState = rememberDraggableState { delta ->
         coroutineScope.launch {
-            if (!shouldShow) return@launch
+            if (!isVisible) return@launch
             lazyStaggeredGridState.scrollBy(delta / visibleCountPercent)
         }
     }
@@ -288,9 +318,6 @@ fun VerticalDraggableScrollbar(
             isScrolling = false
         }
     }
-    val onDragStarted: suspend CoroutineScope.(startedPosition: Offset) -> Unit =
-        { isDragging = true }
-    val onDragStopped: suspend CoroutineScope.(velocity: Float) -> Unit = { isDragging = false }
     val percent by remember(lazyStaggeredGridState) {
         derivedStateOf {
             val totalItemsCount = lazyStaggeredGridState.layoutInfo.totalItemsCount
@@ -318,19 +345,20 @@ fun VerticalDraggableScrollbar(
         animationSpec = tween(200, delayMillis = 200)
     )
     val currentWidth by animateDpAsState(
-        targetValue = if (isDragging) 16.dp else 12.dp,
+        targetValue = if (isDragging) width.active else width.inactive,
         label = "current-width"
     )
-    if (shouldShow) {
+    if (isVisible) {
         Canvas(
             modifier = modifier
                 .fillMaxHeight()
+                .padding(5.dp)
                 .requiredWidth(currentWidth)
                 .draggable(
                     state = draggableState,
                     orientation = Orientation.Vertical,
-                    onDragStarted = onDragStarted,
-                    onDragStopped = onDragStopped
+                    onDragStarted = { isDragging = true },
+                    onDragStopped = { isDragging = false }
                 )
         ) {
             drawVerticalDraggableScrollbar(
@@ -343,7 +371,6 @@ fun VerticalDraggableScrollbar(
     } else {
         Spacer(modifier = Modifier.width(LocalSpacing.current.medium))
     }
-
 }
 
 private fun DrawScope.drawVerticalDraggableScrollbar(
