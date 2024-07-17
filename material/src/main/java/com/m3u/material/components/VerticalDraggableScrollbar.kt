@@ -4,6 +4,7 @@ import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.gestures.DraggableState
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
@@ -17,6 +18,7 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.staggeredgrid.LazyStaggeredGridState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -40,11 +42,6 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
-
-data class DraggableScrollbarWidth(
-    val inactive: Dp,
-    val active: Dp
-)
 
 @Composable
 fun VerticalDraggableScrollbar(
@@ -133,16 +130,12 @@ fun VerticalDraggableScrollbar(
 
     if (isVisible) {
         Canvas(
-            modifier = modifier
-                .fillMaxHeight()
-                .padding(5.dp)
-                .requiredWidth(currentWidth)
-                .draggable(
-                    state = draggableState,
-                    orientation = Orientation.Vertical,
-                    onDragStarted = { isDragging = true },
-                    onDragStopped = { isDragging = false }
-                )
+            modifier = modifier.verticalDraggableScrollbar(
+                currentWidth = currentWidth,
+                draggableState = draggableState,
+                onDragStarted = { isDragging = true },
+                onDragStopped = { isDragging = false }
+            )
         ) {
             drawVerticalDraggableScrollbar(
                 color = color,
@@ -242,16 +235,12 @@ fun VerticalDraggableScrollbar(
 
     if (isVisible) {
         Canvas(
-            modifier = modifier
-                .fillMaxHeight()
-                .padding(5.dp)
-                .requiredWidth(currentWidth)
-                .draggable(
-                    state = draggableState,
-                    orientation = Orientation.Vertical,
-                    onDragStarted = { isDragging = true },
-                    onDragStopped = { isDragging = false }
-                )
+            modifier = modifier.verticalDraggableScrollbar(
+                currentWidth = currentWidth,
+                draggableState = draggableState,
+                onDragStarted = { isDragging = true },
+                onDragStopped = { isDragging = false }
+            )
         ) {
             drawVerticalDraggableScrollbar(
                 color = color,
@@ -350,16 +339,12 @@ fun VerticalDraggableScrollbar(
     )
     if (isVisible) {
         Canvas(
-            modifier = modifier
-                .fillMaxHeight()
-                .padding(5.dp)
-                .requiredWidth(currentWidth)
-                .draggable(
-                    state = draggableState,
-                    orientation = Orientation.Vertical,
-                    onDragStarted = { isDragging = true },
-                    onDragStopped = { isDragging = false }
-                )
+            modifier = modifier.verticalDraggableScrollbar(
+                currentWidth = currentWidth,
+                draggableState = draggableState,
+                onDragStarted = { isDragging = true },
+                onDragStopped = { isDragging = false }
+            )
         ) {
             drawVerticalDraggableScrollbar(
                 color = color,
@@ -372,6 +357,30 @@ fun VerticalDraggableScrollbar(
         Spacer(modifier = Modifier.width(LocalSpacing.current.medium))
     }
 }
+
+@Immutable
+data class DraggableScrollbarWidth(
+    val inactive: Dp,
+    val active: Dp
+)
+
+private fun Modifier.verticalDraggableScrollbar(
+    currentWidth: Dp,
+    draggableState: DraggableState,
+    onDragStarted: () -> Unit,
+    onDragStopped: () -> Unit,
+): Modifier = then(
+    Modifier
+        .fillMaxHeight()
+        .padding(5.dp)
+        .requiredWidth(currentWidth)
+        .draggable(
+            state = draggableState,
+            orientation = Orientation.Vertical,
+            onDragStarted = { onDragStarted() },
+            onDragStopped = { onDragStopped() }
+        )
+)
 
 private fun DrawScope.drawVerticalDraggableScrollbar(
     color: Color,
