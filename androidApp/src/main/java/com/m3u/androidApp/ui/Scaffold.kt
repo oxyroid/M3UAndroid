@@ -35,6 +35,7 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.offset
 import androidx.compose.ui.util.fastForEach
 import androidx.compose.ui.util.fastMap
 import androidx.compose.ui.util.fastMaxOfOrNull
@@ -319,11 +320,11 @@ internal fun ScaffoldLayout(
             .fastMap {
                 when (role) {
                     ScaffoldRole.SmartPhone -> it.measure(looseConstraints)
-                    else -> it.measure(
-                        constraints.copy(
-                            maxWidth = layoutWidth - navigationWidth
+                    else -> {
+                        it.measure(
+                            looseConstraints.offset(horizontal = -navigationWidth)
                         )
-                    )
+                    }
                 }
             }
         layout(layoutWidth, layoutHeight) {
