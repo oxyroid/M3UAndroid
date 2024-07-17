@@ -73,21 +73,17 @@ fun VerticalDraggableScrollbar(
     }
     var isDragging: Boolean by remember { mutableStateOf(false) }
     var isScrolling: Boolean by remember { mutableStateOf(false) }
-    val fadedIsDragging: Boolean by produceState(isDragging) {
-        snapshotFlow { isDragging }
-            .onEach {
-                if (!it) delay(800.milliseconds)
-                value = it
-            }
-            .launchIn(this)
+    val debouncedIsDragging: Boolean by produceState(isDragging) {
+        snapshotFlow { isDragging }.collectLatest {
+            if (!it) delay(800.milliseconds)
+            value = it
+        }
     }
-    val fadedIsScrolling: Boolean by produceState(isScrolling) {
-        snapshotFlow { isScrolling }
-            .onEach {
-                if (!it) delay(400.milliseconds)
-                value = it
-            }
-            .launchIn(this)
+    val debouncedIsScrolling: Boolean by produceState(isScrolling) {
+        snapshotFlow { isScrolling }.collectLatest {
+            if (!it) delay(400.milliseconds)
+            value = it
+        }
     }
     LaunchedEffect(Unit) {
         snapshotFlow { lazyListState.firstVisibleItemScrollOffset }.collectLatest {
@@ -111,7 +107,7 @@ fun VerticalDraggableScrollbar(
         }
     }
     val currentAlpha by animateFloatAsState(
-        targetValue = if (fadedIsDragging || fadedIsScrolling) 1f else 0.65f,
+        targetValue = if (debouncedIsDragging || debouncedIsScrolling) 1f else 0.65f,
         label = "current-alpha"
     )
     val currentPosition by animateFloatAsState(
