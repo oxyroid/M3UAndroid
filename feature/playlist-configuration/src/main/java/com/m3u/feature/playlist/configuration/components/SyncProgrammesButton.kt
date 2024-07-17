@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -21,6 +22,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.m3u.core.util.basic.title
 import com.m3u.i18n.R.string
+import com.m3u.material.components.CircularProgressIndicator
 import com.m3u.material.components.SelectionsDefaults
 import com.m3u.material.model.LocalSpacing
 import com.m3u.material.shape.AbsoluteSmoothCornerShape
@@ -31,13 +33,16 @@ internal fun SyncProgrammesButton(
     subscribingOrRefreshing: Boolean,
     expired: LocalDateTime?,
     onSyncProgrammes: () -> Unit,
+    onCancelSyncProgrammes: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
+    val colorScheme = MaterialTheme.colorScheme
     ListItem(
         headlineContent = {
             Text(
-                text = stringResource(string.feat_playlist_configuration_sync_programmes).title(),
+                text = if (!subscribingOrRefreshing) stringResource(string.feat_playlist_configuration_sync_programmes).title()
+                else stringResource(string.feat_playlist_configuration_cancel_sync_programmes).title(),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -64,22 +69,30 @@ internal fun SyncProgrammesButton(
                 }
             }
         },
+        trailingContent = {
+            if (subscribingOrRefreshing) {
+                CircularProgressIndicator()
+            }
+        },
         colors = ListItemDefaults.colors(
-            headlineColor = LocalContentColor.current.copy(
-                if (subscribingOrRefreshing) 0.38f else 1f
-            ),
-            supportingColor = LocalContentColor.current.copy(0.38f)
+            headlineColor = if (!subscribingOrRefreshing) LocalContentColor.current
+            else colorScheme.onTertiaryContainer,
+            supportingColor = if (!subscribingOrRefreshing) LocalContentColor.current.copy(0.38f)
+            else colorScheme.onTertiaryContainer.copy(0.38f),
+            containerColor = if (!subscribingOrRefreshing) colorScheme.surface
+            else colorScheme.tertiaryContainer
         ),
         modifier = Modifier
             .border(
                 1.dp,
-                LocalContentColor.current.copy(0.38f),
+                if (subscribingOrRefreshing) colorScheme.tertiaryContainer
+                else LocalContentColor.current.copy(0.38f),
                 SelectionsDefaults.Shape
             )
             .clip(AbsoluteSmoothCornerShape(spacing.medium, 65))
             .clickable(
-                onClick = onSyncProgrammes,
-                enabled = !subscribingOrRefreshing
+                onClick = if (subscribingOrRefreshing) onCancelSyncProgrammes
+                else onSyncProgrammes,
             )
             .then(modifier)
     )

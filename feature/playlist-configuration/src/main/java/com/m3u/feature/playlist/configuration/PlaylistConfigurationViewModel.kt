@@ -99,7 +99,7 @@ class PlaylistConfigurationViewModel @Inject constructor(
             started = SharingStarted.Lazily,
             initialValue = emptyMap()
         )
-    internal val subscribingOrRefreshing: StateFlow<Boolean> = workManager
+    internal val subscribingOrRefreshingWorkInfo: StateFlow<WorkInfo?> = workManager
         .getWorkInfosFlow(
             WorkQuery.fromStates(
                 WorkInfo.State.RUNNING,
@@ -107,13 +107,13 @@ class PlaylistConfigurationViewModel @Inject constructor(
             )
         )
         .combine(playlistUrl) { infos, playlistUrl ->
-            infos.any { info ->
+            infos.find { info ->
                 var isCorrectedWorker = false
                 var isCurrentPlaylist = false
                 info.tags.forEach { tag ->
                     if (SubscriptionWorker.TAG == tag) isCorrectedWorker = true
                     if (playlistUrl == tag) isCurrentPlaylist = true
-                    if (isCorrectedWorker && isCurrentPlaylist) return@any true
+                    if (isCorrectedWorker && isCurrentPlaylist) return@find true
                 }
                 false
             }
@@ -121,8 +121,8 @@ class PlaylistConfigurationViewModel @Inject constructor(
         .flowOn(ioDispatcher)
         .stateIn(
             scope = viewModelScope,
-            initialValue = false,
-            started = SharingStarted.WhileSubscribed(5000)
+            initialValue = null,
+            started = SharingStarted.WhileSubscribed(5_000L)
         )
 
     internal val expired: StateFlow<LocalDateTime?> = playlistUrl
@@ -172,5 +172,10 @@ class PlaylistConfigurationViewModel @Inject constructor(
     internal fun onSyncProgrammes() {
         val playlistUrl = playlistUrl.value
         SubscriptionWorker.epg(workManager, playlistUrl, true)
+    }
+
+    internal fun onCancelSyncProgrammes() {
+        val workInfo = subscribingOrRefreshingWorkInfo.value
+        workInfo?.id?.let { workManager.cancelWorkById(it) }
     }
 }

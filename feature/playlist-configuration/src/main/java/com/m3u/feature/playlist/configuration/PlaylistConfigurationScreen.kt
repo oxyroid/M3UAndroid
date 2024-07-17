@@ -80,7 +80,7 @@ internal fun PlaylistConfigurationRoute(
 
     val playlist by viewModel.playlist.collectAsStateWithLifecycle()
     val manifest by viewModel.manifest.collectAsStateWithLifecycle()
-    val subscribingOrRefreshing by viewModel.subscribingOrRefreshing.collectAsStateWithLifecycle()
+    val subscribingOrRefreshingWorkInfo by viewModel.subscribingOrRefreshingWorkInfo.collectAsStateWithLifecycle()
     val expired by viewModel.expired.collectAsStateWithLifecycle()
     val xtreamUserInfo by viewModel.xtreamUserInfo.collectAsStateWithLifecycle()
 
@@ -96,7 +96,7 @@ internal fun PlaylistConfigurationRoute(
         PlaylistConfigurationScreen(
             playlist = it,
             manifest = manifest,
-            subscribingOrRefreshing = subscribingOrRefreshing,
+            subscribingOrRefreshing = subscribingOrRefreshingWorkInfo != null,
             expired = expired,
             xtreamUserInfo = xtreamUserInfo,
             onUpdatePlaylistTitle = viewModel::onUpdatePlaylistTitle,
@@ -124,6 +124,7 @@ internal fun PlaylistConfigurationRoute(
                     }
                 )
             },
+            onCancelSyncProgrammes = viewModel::onCancelSyncProgrammes,
             modifier = modifier,
             contentPadding = contentPadding
         )
@@ -142,6 +143,7 @@ private fun PlaylistConfigurationScreen(
     onUpdateEpgPlaylist: (PlaylistRepository.UpdateEpgPlaylistUseCase) -> Unit,
     onUpdatePlaylistAutoRefreshProgrammes: () -> Unit,
     onSyncProgrammes: () -> Unit,
+    onCancelSyncProgrammes: () -> Unit,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues()
 ) {
@@ -190,7 +192,8 @@ private fun PlaylistConfigurationScreen(
                             SyncProgrammesButton(
                                 subscribingOrRefreshing = subscribingOrRefreshing,
                                 expired = expired,
-                                onSyncProgrammes = onSyncProgrammes
+                                onSyncProgrammes = onSyncProgrammes,
+                                onCancelSyncProgrammes = onCancelSyncProgrammes
                             )
                             AutoSyncProgrammesButton(
                                 checked = playlist.autoRefreshProgrammes,
