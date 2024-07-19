@@ -6,8 +6,10 @@ import android.os.Build
 import android.provider.Settings
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.expandIn
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Arrangement
@@ -36,6 +38,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.unit.IntSize
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -185,7 +188,17 @@ private fun PlaylistConfigurationScreen(
                 }
 
                 item {
-                    AnimatedVisibility(playlist.epgUrlsOrXtreamXmlUrl().isNotEmpty()) {
+                    AnimatedVisibility(
+                        visible = playlist.epgUrlsOrXtreamXmlUrl().isNotEmpty(),
+                        enter = fadeIn() + expandIn(
+                            expandFrom = Alignment.BottomCenter,
+                            initialSize = { IntSize(it.width, 0) }
+                        ),
+                        exit = fadeOut() + shrinkOut(
+                            shrinkTowards = Alignment.BottomCenter,
+                            targetSize = { IntSize(it.width, 0) }
+                        )
+                    ) {
                         Column(
                             verticalArrangement = Arrangement.spacedBy(spacing.small)
                         ) {
