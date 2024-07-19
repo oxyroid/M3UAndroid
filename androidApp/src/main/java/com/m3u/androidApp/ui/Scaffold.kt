@@ -25,6 +25,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.InternalComposeApi
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -45,6 +46,7 @@ import com.m3u.androidApp.ui.internal.TabletScaffoldImpl
 import com.m3u.material.components.Background
 import com.m3u.material.components.Icon
 import com.m3u.material.components.IconButton
+import com.m3u.material.effects.currentBackStackEntry
 import com.m3u.material.ktx.leanback
 import com.m3u.material.model.LocalHazeState
 import com.m3u.material.model.LocalSpacing
@@ -138,6 +140,8 @@ internal fun MainContent(
     val subtitle = Metadata.subtitle
     val actions = Metadata.actions
 
+    val backStackEntry by currentBackStackEntry()
+
     Scaffold(
         topBar = {
             if (!leanback) {
@@ -192,7 +196,8 @@ internal fun MainContent(
                         ) { onBackPressed ->
                             if (onBackPressed != null) {
                                 IconButton(
-                                    icon = Icons.AutoMirrored.Rounded.ArrowBack,
+                                    icon = backStackEntry?.navigationIcon
+                                        ?: Icons.AutoMirrored.Rounded.ArrowBack,
                                     contentDescription = null,
                                     onClick = onBackPressed,
                                     modifier = Modifier.wrapContentSize()

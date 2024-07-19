@@ -1,6 +1,5 @@
 package com.m3u.feature.playlist.components
 
-import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
@@ -22,6 +21,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Menu
 import androidx.compose.material.icons.rounded.PushPin
 import androidx.compose.material.icons.rounded.VisibilityOff
@@ -51,6 +51,8 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.m3u.material.components.IconButton
+import com.m3u.material.effects.BackStackEntry
+import com.m3u.material.effects.BackStackHandler
 import com.m3u.material.ktx.Edge
 import com.m3u.material.ktx.blurEdge
 import com.m3u.material.ktx.thenIf
@@ -182,9 +184,11 @@ internal fun PlaylistTabRow(
             }
             HorizontalDivider()
         }
-        BackHandler(focusCategory != null) {
-            focusCategory = null
-        }
+        BackStackHandler(
+            enabled = focusCategory != null,
+            entry = BackStackEntry(Icons.Rounded.Close),
+            onBack = { focusCategory = null }
+        )
     }
 }
 
