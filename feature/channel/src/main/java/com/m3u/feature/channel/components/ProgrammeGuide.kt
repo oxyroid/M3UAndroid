@@ -8,12 +8,11 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredHeight
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.AbsoluteRoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.KeyboardDoubleArrowUp
@@ -47,7 +46,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.paging.compose.LazyPagingItems
-import coil.compose.AsyncImage
 import com.m3u.core.architecture.preferences.hiltPreferences
 import com.m3u.data.database.model.Programme
 import com.m3u.data.database.model.ProgrammeRange
@@ -286,20 +284,19 @@ private fun TimelineCell(
 @Composable
 private fun ProgrammeCell(
     programme: Programme,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onRing: () -> Unit = {}
 ) {
     val spacing = LocalSpacing.current
     val preferences = hiltPreferences()
     val leanback = leanback()
     val clockMode = preferences.twelveHourClock
     val content = @Composable {
-        FlowRow(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(4.dp),
-            horizontalArrangement = Arrangement.spacedBy(spacing.small),
             verticalArrangement = Arrangement.spacedBy(spacing.small),
-            maxItemsInEachRow = 2
         ) {
             val start = Instant.fromEpochMilliseconds(programme.start)
                 .toLocalDateTime(TimeZone.currentSystemDefault())
@@ -315,30 +312,13 @@ private fun ProgrammeCell(
                 color = LocalContentColor.current.copy(0.65f),
                 fontFamily = FontFamilies.LexendExa
             )
-            ConstraintLayout {
-                val (icon, title) = createRefs()
-                AsyncImage(
-                    model = programme.icon,
-                    contentDescription = null,
-                    modifier = Modifier
-                        .size(48.dp)
-                        .constrainAs(icon) {
-                            this.end.linkTo(title.start, 4.dp)
-                            this.top.linkTo(title.top)
-                            this.bottom.linkTo(title.bottom)
-                        }
-                )
-                Text(
-                    text = programme.title,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontFamily = FontFamilies.LexendExa,
-                    modifier = Modifier.constrainAs(title) {
-                        this.end.linkTo(parent.end)
-                    }
-                )
-            }
+            Text(
+                text = programme.title,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                style = MaterialTheme.typography.titleMedium,
+                fontFamily = FontFamilies.LexendExa
+            )
             Text(
                 text = programme.description,
                 overflow = TextOverflow.Ellipsis,
