@@ -14,7 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalUriHandler
@@ -33,7 +33,7 @@ internal fun RecommendGallery(
     specs: List<Recommend.Spec>,
     onPlayChannel: (Channel) -> Unit,
     navigateToPlaylist: (Playlist) -> Unit,
-    onSpecChanged: (Recommend.Spec) -> Unit,
+    onSpecChanged: (Recommend.Spec?) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
@@ -64,8 +64,11 @@ internal fun RecommendGallery(
             modifier = modifier,
             verticalArrangement = Arrangement.spacedBy(spacing.medium)
         ) {
-            LaunchedEffect(state.currentPage) {
+            DisposableEffect(state.currentPage) {
                 onSpecChanged(specs[state.currentPage])
+                onDispose {
+                    onSpecChanged(null)
+                }
             }
             HorizontalPager(
                 state = state,
