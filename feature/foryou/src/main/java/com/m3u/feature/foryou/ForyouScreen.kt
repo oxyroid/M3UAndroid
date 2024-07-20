@@ -123,7 +123,6 @@ fun ForyouRoute(
                 }
             }
         },
-        navigateToSettingPlaylistManagement = navigateToSettingPlaylistManagement,
         navigateToPlaylistConfiguration = navigateToPlaylistConfiguration,
         onUnsubscribePlaylist = viewModel::onUnsubscribePlaylist,
         modifier = Modifier
@@ -171,7 +170,6 @@ private fun ForyouScreen(
     contentPadding: PaddingValues,
     navigateToPlaylist: (Playlist) -> Unit,
     onPlayChannel: (Channel) -> Unit,
-    navigateToSettingPlaylistManagement: () -> Unit,
     navigateToPlaylistConfiguration: (Playlist) -> Unit,
     onUnsubscribePlaylist: (playlistUrl: String) -> Unit,
     modifier: Modifier = Modifier
