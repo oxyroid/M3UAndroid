@@ -26,4 +26,6 @@ interface ProgrammeRepository {
         vararg playlistUrls: String,
         ignoreCache: Boolean
     ): Flow<Int>
+
+    suspend fun getById(id: Int): Programme?
 }

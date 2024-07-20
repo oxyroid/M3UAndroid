@@ -29,6 +29,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.AbsoluteRoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.NotificationsActive
 import androidx.compose.material3.Card
@@ -84,6 +85,7 @@ import com.m3u.ui.helper.LocalHelper
 import com.m3u.ui.util.TimeUtils.formatEOrSh
 import com.m3u.ui.util.TimeUtils.toEOrSh
 import kotlinx.coroutines.launch
+import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -103,7 +105,10 @@ internal fun PlayerPanel(
     channels: LazyPagingItems<Channel>,
     programmes: LazyPagingItems<Programme>,
     programmeRange: ProgrammeRange,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    programmeIdsInReminder: List<Int>,
+    onRemindProgramme: (Programme) -> Unit,
+    onCancelRemindProgramme: (Programme) -> Unit,
 ) {
     val configuration = LocalConfiguration.current
     val spacing = LocalSpacing.current
@@ -197,7 +202,11 @@ internal fun PlayerPanel(
                                     modifier = Modifier.weight(1f)
                                 ) {
                                     Text(
-                                        text = "${start.formatEOrSh(false)} - ${end.formatEOrSh(false)}",
+                                        text = "${start.formatEOrSh(false)} - ${
+                                            end.formatEOrSh(
+                                                false
+                                            )
+                                        }",
                                         maxLines = 1,
                                         overflow = TextOverflow.Ellipsis,
                                         style = MaterialTheme.typography.bodyMedium,
@@ -212,12 +221,21 @@ internal fun PlayerPanel(
                                         fontFamily = FontFamilies.LexendExa
                                     )
                                 }
-                                IconButton(
-                                    icon = Icons.Rounded.NotificationsActive,
-                                    contentDescription = null,
-                                    onClick = { /*TODO*/ },
-                                    modifier = Modifier.align(Alignment.CenterVertically)
-                                )
+                                val isReminderShowing = Clock.System.now()
+                                    .toEpochMilliseconds() < currentProgramme.start
+                                if (isReminderShowing) {
+                                    val inReminder = currentProgramme.id in programmeIdsInReminder
+                                    IconButton(
+                                        icon = if (inReminder) Icons.Outlined.Notifications
+                                        else Icons.Rounded.NotificationsActive,
+                                        contentDescription = null,
+                                        onClick = {
+                                            if (inReminder) onCancelRemindProgramme(currentProgramme)
+                                            else onRemindProgramme(currentProgramme)
+                                        },
+                                        modifier = Modifier.align(Alignment.CenterVertically)
+                                    )
+                                }
                             }
 
                             Column(

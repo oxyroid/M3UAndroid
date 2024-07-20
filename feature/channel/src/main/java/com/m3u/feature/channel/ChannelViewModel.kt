@@ -1,5 +1,6 @@
 package com.m3u.feature.channel
 
+import android.annotation.SuppressLint
 import android.media.AudioManager
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -12,27 +13,29 @@ import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
-import com.m3u.core.architecture.dispatcher.Dispatcher
-import com.m3u.core.architecture.dispatcher.M3uDispatchers.Main
+import androidx.work.WorkInfo
+import androidx.work.WorkManager
+import androidx.work.WorkQuery
+import androidx.work.await
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.Profiles
 import com.m3u.core.architecture.logger.install
+import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.Programme
 import com.m3u.data.database.model.ProgrammeRange
-import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.epgUrlsOrXtreamXmlUrl
 import com.m3u.data.database.model.isSeries
 import com.m3u.data.database.model.isVod
+import com.m3u.data.repository.channel.ChannelRepository
 import com.m3u.data.repository.playlist.PlaylistRepository
 import com.m3u.data.repository.programme.ProgrammeRepository
-import com.m3u.data.repository.channel.ChannelRepository
 import com.m3u.data.service.PlayerManager
 import com.m3u.data.service.currentTracks
 import com.m3u.data.service.tracks
+import com.m3u.data.worker.ProgrammeReminder
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -63,8 +66,8 @@ class ChannelViewModel @Inject constructor(
     private val playerManager: PlayerManager,
     private val audioManager: AudioManager,
     private val programmeRepository: ProgrammeRepository,
+    private val workManager: WorkManager,
     delegate: Logger,
-    @Dispatcher(Main) private val mainDispatcher: CoroutineDispatcher
 ) : ViewModel(), ControlPoint.DiscoveryListener {
     private val logger = delegate.install(Profiles.VIEWMODEL_CHANNEL)
 
@@ -235,6 +238,44 @@ class ChannelViewModel @Inject constructor(
 
     fun pauseOrContinue(isContinued: Boolean) {
         playerManager.pauseOrContinue(isContinued)
+    }
+
+    internal val programmeIdsInReminder: StateFlow<List<Int>> = workManager.getWorkInfosFlow(
+        WorkQuery.fromStates(
+            WorkInfo.State.ENQUEUED
+        )
+    )
+        .map { infos: List<WorkInfo> ->
+            infos
+                .filter { ProgrammeReminder.TAG in it.tags }
+                .mapNotNull { info -> ProgrammeReminder.readProgrammeId(info.tags) }
+        }
+        .stateIn(
+            scope = viewModelScope,
+            initialValue = emptyList(),
+            started = SharingStarted.Lazily
+        )
+
+    fun onRemindProgramme(programme: Programme) {
+        ProgrammeReminder(
+            workManager = workManager,
+            programmeId = programme.id,
+            programmeStart = programme.start
+        )
+    }
+
+    @SuppressLint("RestrictedApi")
+    fun onCancelRemindProgramme(programme: Programme) {
+        viewModelScope.launch {
+            val infos = workManager
+                .getWorkInfos(WorkQuery.fromStates(WorkInfo.State.ENQUEUED))
+                .await()
+                .filter { ProgrammeReminder.TAG in it.tags }
+                .filter { info -> ProgrammeReminder.readProgrammeId(info.tags) != null }
+            infos.forEach {
+                workManager.cancelWorkById(it.id)
+            }
+        }
     }
 
     // the channels which is in the same category with the current channel

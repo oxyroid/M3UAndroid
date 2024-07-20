@@ -14,6 +14,9 @@ interface ProgrammeDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertOrReplace(programme: Programme)
 
+    @Query("SELECT * FROM programmes WHERE id = :id")
+    suspend fun getById(id: Int): Programme
+
     @Query("""SELECT MAX("end") from programmes WHERE epg_url = :epgUrl""")
     suspend fun getMaxEndByEpgUrl(epgUrl: String): Long?
 

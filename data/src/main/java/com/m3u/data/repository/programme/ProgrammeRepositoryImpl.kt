@@ -5,6 +5,7 @@ import com.m3u.core.architecture.dispatcher.Dispatcher
 import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.Profiles
+import com.m3u.core.architecture.logger.execute
 import com.m3u.core.architecture.logger.install
 import com.m3u.core.architecture.logger.post
 import com.m3u.core.util.basic.letIf
@@ -89,6 +90,10 @@ internal class ProgrammeRepositoryImpl @Inject constructor(
             programmeDao.insertOrReplace(programme)
             send(++count)
         }
+    }
+
+    override suspend fun getById(id: Int): Programme? = logger.execute {
+        programmeDao.getById(id)
     }
 
     private fun checkOrRefreshProgrammesOrThrowImpl(
