@@ -55,8 +55,7 @@ internal object ApiModule {
     @Singleton
     @OkhttpClient(false)
     fun provideOkhttpClient(
-        logger: Logger,
-        @Logger.MessageImpl messager: Logger
+        logger: Logger
     ): OkHttpClient {
         return OkHttpClient.Builder()
             .authenticator(Authenticator.JAVA_NET_AUTHENTICATOR)

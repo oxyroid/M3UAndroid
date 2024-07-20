@@ -7,6 +7,7 @@ import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.Profiles
 import com.m3u.core.architecture.logger.install
 import com.m3u.core.architecture.logger.post
+import com.m3u.core.util.basic.letIf
 import com.m3u.data.api.OkhttpClient
 import com.m3u.data.database.dao.PlaylistDao
 import com.m3u.data.database.dao.ProgrammeDao
@@ -29,7 +30,6 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.supervisorScope
 import kotlinx.datetime.Clock
-import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.util.zip.GZIPInputStream
@@ -126,26 +126,23 @@ internal class ProgrammeRepositoryImpl @Inject constructor(
     }
 
     private fun downloadProgrammes(epgUrl: String): Flow<EpgProgramme> = channelFlow {
-        val isGzip = epgUrl
-            .toHttpUrlOrNull()
-            ?.pathSegments
-            ?.lastOrNull()
+        val request = Request.Builder()
+            .url(epgUrl)
+            .build()
+
+        val response = okHttpClient.newCall(request).execute()
+        val url = response.request.url
+
+        val isGzip = url
+            .pathSegments
+            .lastOrNull()
             ?.endsWith(".gz", true)
             ?: false
 
-        okHttpClient.newCall(
-            Request.Builder()
-                .url(epgUrl)
-                .build()
-        )
-            .execute()
+        response
             .body
             ?.byteStream()
-            ?.let {
-                if (isGzip) {
-                    GZIPInputStream(it).buffered()
-                } else it
-            }
+            ?.letIf(isGzip) { GZIPInputStream(it).buffered() }
             ?.use { input ->
                 epgParser
                     .readProgrammes(input)
