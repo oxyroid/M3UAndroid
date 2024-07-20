@@ -39,7 +39,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -135,7 +134,6 @@ internal fun PlayerPanel(
                 animProgramme = it
             }
         )
-        val currentProgramme = animProgramme
         LaunchedEffect(isPanelExpanded) {
             if (!isPanelExpanded) {
                 programme = null
@@ -152,6 +150,7 @@ internal fun PlayerPanel(
                 onClick = { programme = null }
             )
         ) {
+            val currentProgramme = animProgramme
             if (currentProgramme != null) {
                 Surface(
                     color = MaterialTheme.colorScheme.surfaceContainer,
@@ -242,10 +241,6 @@ internal fun PlayerPanel(
                         }
                     }
                 }
-            }
-
-            DisposableEffect(Unit) {
-                onDispose { animProgramme = null }
             }
         }
         BackStackHandler(

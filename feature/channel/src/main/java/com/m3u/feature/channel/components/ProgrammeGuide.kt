@@ -302,6 +302,7 @@ private fun ProgrammeCell(
     modifier: Modifier = Modifier,
     onPressed: () -> Unit
 ) {
+    val currentOnPressed by rememberUpdatedState(onPressed)
     val spacing = LocalSpacing.current
     val preferences = hiltPreferences()
     val leanback = leanback()
@@ -367,7 +368,7 @@ private fun ProgrammeCell(
                             }
                         } catch (_: PointerEventTimeoutCancellationException) {
                             down.consume()
-                            onPressed()
+                            currentOnPressed()
                             hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
                             isPressed = true
                             do {
