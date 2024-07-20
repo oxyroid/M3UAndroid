@@ -286,6 +286,7 @@ class SubscriptionWorker @AssistedInject constructor(
                 )
                 .addTag(url)
                 .addTag(TAG)
+                .addTag(DataSource.M3U.value)
                 .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
                 .setConstraints(
                     Constraints.Builder()
@@ -312,6 +313,7 @@ class SubscriptionWorker @AssistedInject constructor(
                 )
                 .addTag(playlistUrl)
                 .addTag(TAG)
+                .addTag(DataSource.EPG.value)
                 .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
                 .setConstraints(
                     Constraints.Builder()
@@ -345,6 +347,7 @@ class SubscriptionWorker @AssistedInject constructor(
                 )
                 .addTag(url)
                 .addTag(basicUrl)
+                .addTag(DataSource.Xtream.value)
                 .apply {
                     val xtreamInput = XtreamInput.decodeFromPlaylistUrlOrNull(url) ?: XtreamInput(
                         basicUrl = basicUrl,

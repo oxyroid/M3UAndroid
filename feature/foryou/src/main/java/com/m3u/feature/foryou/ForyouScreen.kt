@@ -74,7 +74,7 @@ fun ForyouRoute(
     val leanback = leanback()
     val title = stringResource(string.ui_title_foryou)
 
-    val playlistCountsResource by viewModel.playlistCountsResource.collectAsStateWithLifecycle()
+    val playlistCounts by viewModel.playlistCounts.collectAsStateWithLifecycle()
     val specs by viewModel.specs.collectAsStateWithLifecycle()
     val episodes by viewModel.episodes.collectAsStateWithLifecycle()
 
@@ -101,7 +101,7 @@ fun ForyouRoute(
     }
 
     ForyouScreen(
-        playlistCountsResource = playlistCountsResource,
+        playlistCounts = playlistCounts,
         subscribingPlaylistUrls = subscribingPlaylistUrls,
         refreshingEpgUrls = refreshingEpgUrls,
         specs = specs,
@@ -163,7 +163,7 @@ fun ForyouRoute(
 @Composable
 private fun ForyouScreen(
     rowCount: Int,
-    playlistCountsResource: Resource<List<PlaylistWithCount>>,
+    playlistCounts: Resource<List<PlaylistWithCount>>,
     subscribingPlaylistUrls: List<String>,
     refreshingEpgUrls: List<String>,
     specs: List<Recommend.Spec>,
@@ -204,7 +204,7 @@ private fun ForyouScreen(
 
     Box(modifier) {
         HeadlineBackground()
-        when (playlistCountsResource) {
+        when (playlistCounts) {
             Resource.Loading -> {
                 LinearProgressIndicator(
                     modifier = Modifier
@@ -225,7 +225,7 @@ private fun ForyouScreen(
                 }
                 PlaylistGallery(
                     rowCount = actualRowCount,
-                    playlistCounts = playlistCountsResource.data,
+                    playlistCounts = playlistCounts.data,
                     subscribingPlaylistUrls = subscribingPlaylistUrls,
                     refreshingEpgUrls = refreshingEpgUrls,
                     onClick = navigateToPlaylist,
@@ -249,7 +249,7 @@ private fun ForyouScreen(
 
             is Resource.Failure -> {
                 Text(
-                    text = playlistCountsResource.message.orEmpty(),
+                    text = playlistCounts.message.orEmpty(),
                     color = MaterialTheme.colorScheme.error,
                     modifier = Modifier.align(Alignment.Center)
                 )

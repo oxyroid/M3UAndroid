@@ -1,6 +1,5 @@
 package com.m3u.feature.foryou.components.recommend
 
-import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut

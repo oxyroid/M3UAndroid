@@ -59,7 +59,7 @@ class ForyouViewModel @Inject constructor(
 ) : ViewModel() {
     private val logger = delegate.install(Profiles.VIEWMODEL_FORYOU)
 
-    internal val playlistCountsResource: StateFlow<Resource<List<PlaylistWithCount>>> =
+    internal val playlistCounts: StateFlow<Resource<List<PlaylistWithCount>>> =
         playlistRepository
             .observeAllCounts()
             .asResource()
@@ -79,8 +79,7 @@ class ForyouViewModel @Inject constructor(
             .combine(playlistRepository.observePlaylistUrls()) { infos, playlistUrls ->
                 infos
                     .filter { info -> SubscriptionWorker.TAG in info.tags }
-                    .mapNotNull { info -> info.tags.firstOrNull { it in playlistUrls } }
-
+                    .mapNotNull { info -> info.tags.find { it in playlistUrls } }
             }
             .stateIn(
                 scope = viewModelScope,

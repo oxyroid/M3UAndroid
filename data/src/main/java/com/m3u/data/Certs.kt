@@ -4,7 +4,7 @@ import android.annotation.SuppressLint
 import java.security.cert.X509Certificate
 import javax.net.ssl.X509TrustManager
 
-object Certs {
+internal object Certs {
     val TrustAll by lazy {
         @SuppressLint("CustomX509TrustManager")
         object : X509TrustManager {

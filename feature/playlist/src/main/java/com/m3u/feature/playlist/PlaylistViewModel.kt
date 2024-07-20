@@ -134,14 +134,9 @@ class PlaylistViewModel @Inject constructor(
         )
         .combine(playlistUrl) { infos, playlistUrl ->
             infos.any { info ->
-                var isCorrectedWorker = false
-                var isCurrentPlaylist = false
-                info.tags.forEach { tag ->
-                    if (SubscriptionWorker.TAG == tag) isCorrectedWorker = true
-                    if (playlistUrl == tag) isCurrentPlaylist = true
-                    if (isCorrectedWorker && isCurrentPlaylist) return@any true
-                }
-                false
+                info.tags.containsAll(
+                    listOf(SubscriptionWorker.TAG, playlistUrl)
+                )
             }
         }
         .flowOn(ioDispatcher)
