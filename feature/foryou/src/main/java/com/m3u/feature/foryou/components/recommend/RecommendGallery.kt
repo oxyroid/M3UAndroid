@@ -10,6 +10,7 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -18,6 +19,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.unit.dp
 import com.m3u.core.wrapper.eventOf
 import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.Playlist
@@ -73,7 +75,7 @@ internal fun RecommendGallery(
             HorizontalPager(
                 state = state,
                 contentPadding = PaddingValues(horizontal = spacing.medium),
-                modifier = Modifier.animateContentSize()
+                modifier = Modifier.height(128.dp)
             ) { page ->
                 val spec = specs[page]
                 val pageOffset = state.pageOffset(page)

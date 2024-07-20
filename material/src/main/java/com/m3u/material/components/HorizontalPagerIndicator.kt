@@ -123,7 +123,7 @@ private fun HorizontalPagerIndicator(
     }
 }
 
-internal interface PagerStateBridge {
+private interface PagerStateBridge {
     val currentPage: Int
     val currentPageOffset: Float
 }

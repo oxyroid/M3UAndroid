@@ -1,11 +1,14 @@
 package com.m3u.feature.foryou.components.recommend
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -81,6 +84,7 @@ private fun RecommendItemLayout(
     if (!leanback) {
         Card(
             shape = AbsoluteSmoothCornerShape(spacing.medium, 65),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.onSurfaceVariant),
             onClick = onClick,
             modifier = Modifier
                 .graphicsLayer {
@@ -92,12 +96,8 @@ private fun RecommendItemLayout(
                         scaleX = scale
                         scaleY = scale
                     }
-                    alpha = lerp(
-                        start = 0.5f,
-                        stop = 1f,
-                        fraction = 1f - pageOffset.coerceIn(0f, 1f)
-                    )
                 }
+                .fillMaxHeight()
                 .then(modifier),
             content = { content() }
         )
@@ -125,7 +125,7 @@ fun UnseenContent(spec: Recommend.UnseenSpec) {
     }
     val noPictureMode = preferences.noPictureMode
 
-    Box(Modifier.fillMaxWidth()) {
+    Box(Modifier.fillMaxSize()) {
         val info = @Composable {
             Column(Modifier.padding(spacing.medium)) {
                 Text(
@@ -224,7 +224,7 @@ private fun NewReleaseContent(spec: Recommend.NewRelease) {
     val spacing = LocalSpacing.current
     Row(
         Modifier
-            .fillMaxWidth()
+            .fillMaxSize()
             .background(
                 Brush.createPremiumBrush(
                     MaterialTheme.colorScheme.primary,
