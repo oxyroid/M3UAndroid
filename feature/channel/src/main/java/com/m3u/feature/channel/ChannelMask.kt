@@ -3,6 +3,7 @@ package com.m3u.feature.channel
 import android.content.pm.ActivityInfo
 import android.view.KeyEvent
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.animateIntAsState
@@ -84,6 +85,7 @@ import com.m3u.material.components.mask.MaskButton
 import com.m3u.material.components.mask.MaskCircleButton
 import com.m3u.material.components.mask.MaskPanel
 import com.m3u.material.components.mask.MaskState
+import com.m3u.material.effects.currentBackStackEntry
 import com.m3u.material.ktx.leanback
 import com.m3u.material.ktx.thenIf
 import com.m3u.material.model.LocalSpacing
@@ -113,7 +115,6 @@ internal fun ChannelMask(
     isPanelExpanded: Boolean,
     hasTrack: Boolean,
     onFavourite: () -> Unit,
-    onBackPressed: () -> Unit,
     openDlnaDevices: () -> Unit,
     openChooseFormat: () -> Unit,
     openOrClosePanel: () -> Unit,
@@ -128,6 +129,10 @@ internal fun ChannelMask(
     val configuration = LocalConfiguration.current
     val leanback = leanback()
     val coroutineScope = rememberCoroutineScope()
+
+    val onBackPressedDispatcher = checkNotNull(
+        LocalOnBackPressedDispatcherOwner.current
+    ).onBackPressedDispatcher
 
     var gesture: MaskGesture? by remember { mutableStateOf(null) }
 
@@ -224,10 +229,11 @@ internal fun ChannelMask(
         PlayerMask(
             state = maskState,
             header = {
+                val backStackEntry by currentBackStackEntry()
                 MaskButton(
                     state = maskState,
-                    icon = Icons.AutoMirrored.Rounded.ArrowBack,
-                    onClick = onBackPressed,
+                    icon = backStackEntry?.navigationIcon ?: Icons.AutoMirrored.Rounded.ArrowBack,
+                    onClick = { onBackPressedDispatcher.onBackPressed() },
                     contentDescription = stringResource(string.feat_channel_tooltip_on_back_pressed)
                 )
                 Spacer(modifier = Modifier.weight(1f))

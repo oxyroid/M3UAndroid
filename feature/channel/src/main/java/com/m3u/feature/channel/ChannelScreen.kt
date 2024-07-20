@@ -53,7 +53,6 @@ import kotlin.time.Duration.Companion.milliseconds
 @Composable
 fun ChannelRoute(
     modifier: Modifier = Modifier,
-    onBackPressed: () -> Unit,
     viewModel: ChannelViewModel = hiltViewModel(),
 ) {
     val openInExternalPlayerString = stringResource(string.feat_channel_open_in_external_app)
@@ -200,7 +199,6 @@ fun ChannelRoute(
                         }
                     },
                     onFavourite = viewModel::onFavourite,
-                    onBackPressed = onBackPressed,
                     maskState = maskState,
                     playerState = playerState,
                     playlist = playlist,
@@ -266,7 +264,6 @@ private fun ChannelPlayer(
     volume: Float,
     brightness: Float,
     onFavourite: () -> Unit,
-    onBackPressed: () -> Unit,
     openDlnaDevices: () -> Unit,
     openChooseFormat: () -> Unit,
     openOrClosePanel: () -> Unit,
@@ -319,7 +316,6 @@ private fun ChannelPlayer(
                 hasTrack = hasTrack,
                 isPanelExpanded = isPanelExpanded,
                 onFavourite = onFavourite,
-                onBackPressed = onBackPressed,
                 openDlnaDevices = openDlnaDevices,
                 openChooseFormat = openChooseFormat,
                 openOrClosePanel = openOrClosePanel,

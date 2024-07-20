@@ -50,7 +50,6 @@ class PlayerActivity : ComponentActivity() {
                 alwaysUseDarkTheme = true
             ) {
                 ChannelRoute(
-                    onBackPressed = { finish() },
                     viewModel = viewModel
                 )
             }

@@ -134,7 +134,9 @@ internal class ProgrammeRepositoryImpl @Inject constructor(
         val url = response.request.url
         val contentType = response.header("Content-Type").orEmpty()
 
-        val isGzip = "gzip" in contentType || url.pathSegments.lastOrNull()?.endsWith(".gz") == true
+        val isGzip = "gzip" in contentType ||
+                // soft rule, cover the situation which with wrong MIME_TYPE(text, octect etc.)
+                url.pathSegments.lastOrNull()?.endsWith(".gz") == true
 
         response
             .body

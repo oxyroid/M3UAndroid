@@ -1,10 +1,15 @@
 package com.m3u.feature.channel.components
 
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -39,10 +44,16 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.takeOrElse
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.pointer.PointerEventTimeoutCancellationException
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.util.fastAny
+import androidx.compose.ui.util.fastForEach
 import androidx.compose.ui.zIndex
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.paging.compose.LazyPagingItems
@@ -73,9 +84,9 @@ import kotlinx.datetime.toLocalDateTime
 import kotlin.math.absoluteValue
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
+import androidx.tv.material3.ClickableSurfaceDefaults as TvClickableSurfaceDefaults
 import androidx.tv.material3.MaterialTheme as TvMaterialTheme
 import androidx.tv.material3.Surface as TvSurface
-import androidx.tv.material3.SurfaceDefaults as TvSurfaceDefaults
 
 private enum class Zoom(val time: Float) {
     DEFAULT(1f), ZOOM_1_5(1.5f), ZOOM_2(2f), ZOOM_5(5f)
@@ -91,7 +102,8 @@ internal fun ProgramGuide(
     height: Float = 256f,
     padding: Float = 16f,
     currentTimelineHeight: Float = 48f,
-    scrollOffset: Int = -120
+    scrollOffset: Int = -120,
+    onProgrammePressed: (Programme) -> Unit
 ) {
     val spacing = LocalSpacing.current
     val leanback = leanback()
@@ -172,7 +184,10 @@ internal fun ProgramGuide(
             ) { index ->
                 val programme = programmes[index]
                 if (programme != null) {
-                    ProgrammeCell(programme)
+                    ProgrammeCell(
+                        programme = programme,
+                        onPressed = { onProgrammePressed(programme) }
+                    )
                 } else {
                     // Placeholder
                 }
@@ -285,7 +300,7 @@ private fun TimelineCell(
 private fun ProgrammeCell(
     programme: Programme,
     modifier: Modifier = Modifier,
-    onRing: () -> Unit = {}
+    onPressed: () -> Unit
 ) {
     val spacing = LocalSpacing.current
     val preferences = hiltPreferences()
@@ -328,17 +343,55 @@ private fun ProgrammeCell(
         }
     }
     if (!leanback) {
+        val hapticFeedback = LocalHapticFeedback.current
+        var isPressed by remember { mutableStateOf(false) }
+        val scale by animateFloatAsState(
+            targetValue = if (isPressed) 0.95f else 1f,
+            label = "programme-cell-scale",
+            animationSpec = spring(
+                dampingRatio = Spring.DampingRatioHighBouncy,
+                stiffness = Spring.StiffnessMediumLow
+            )
+        )
         Surface(
             color = MaterialTheme.colorScheme.tertiaryContainer,
             border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
             shape = AbsoluteRoundedCornerShape(4.dp),
-            modifier = modifier,
+            modifier = Modifier
+                .pointerInput(Unit) {
+                    awaitEachGesture {
+                        val down = awaitFirstDown()
+                        try {
+                            withTimeout(viewConfiguration.longPressTimeoutMillis) {
+                                waitForUpOrCancellation()
+                            }
+                        } catch (_: PointerEventTimeoutCancellationException) {
+                            down.consume()
+                            onPressed()
+                            hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                            isPressed = true
+                            do {
+                                val event = awaitPointerEvent()
+                                event.changes.fastForEach { it.consume() }
+                            } while (event.changes.fastAny { it.pressed })
+                            isPressed = false
+                        } finally {
+                            isPressed = false
+                        }
+                    }
+                }
+                .graphicsLayer {
+                    scaleX = scale
+                    scaleY = scale
+                }
+                .then(modifier),
             content = content
         )
     } else {
         TvSurface(
-            colors = TvSurfaceDefaults.colors(TvMaterialTheme.colorScheme.tertiaryContainer),
-            shape = AbsoluteRoundedCornerShape(4.dp),
+            onClick = onPressed,
+            colors = TvClickableSurfaceDefaults.colors(TvMaterialTheme.colorScheme.tertiaryContainer),
+            shape = TvClickableSurfaceDefaults.shape(AbsoluteRoundedCornerShape(4.dp)),
             modifier = modifier,
             content = { content() }
         )
