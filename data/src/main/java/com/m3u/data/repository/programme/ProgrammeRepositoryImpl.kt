@@ -132,12 +132,9 @@ internal class ProgrammeRepositoryImpl @Inject constructor(
 
         val response = okHttpClient.newCall(request).execute()
         val url = response.request.url
+        val contentType = response.header("Content-Type").orEmpty()
 
-        val isGzip = url
-            .pathSegments
-            .lastOrNull()
-            ?.endsWith(".gz", true)
-            ?: false
+        val isGzip = "gzip" in contentType || url.pathSegments.lastOrNull()?.endsWith(".gz") == true
 
         response
             .body
