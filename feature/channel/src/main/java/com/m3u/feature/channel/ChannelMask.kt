@@ -3,7 +3,6 @@ package com.m3u.feature.channel
 import android.content.pm.ActivityInfo
 import android.view.KeyEvent
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.animateIntAsState
@@ -15,8 +14,14 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBarsIgnoringVisibility
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
@@ -73,6 +78,7 @@ import com.m3u.feature.channel.MaskCenterState.Play
 import com.m3u.feature.channel.MaskCenterState.Replay
 import com.m3u.feature.channel.components.MaskTextButton
 import com.m3u.feature.channel.components.PlayerMask
+import com.m3u.feature.channel.components.VerticalGestureArea
 import com.m3u.i18n.R.string
 import com.m3u.material.components.mask.MaskButton
 import com.m3u.material.components.mask.MaskCircleButton
@@ -101,7 +107,6 @@ internal fun ChannelMask(
     playerState: PlayerState,
     volume: Float,
     brightness: Float,
-    gesture: MaskGesture?,
     maskState: MaskState,
     favourite: Boolean,
     isSeriesPlaylist: Boolean,
@@ -114,6 +119,7 @@ internal fun ChannelMask(
     openOrClosePanel: () -> Unit,
     onEnterPipMode: () -> Unit,
     onVolume: (Float) -> Unit,
+    onBrightness: (Float) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val preferences = hiltPreferences()
@@ -123,11 +129,13 @@ internal fun ChannelMask(
     val leanback = leanback()
     val coroutineScope = rememberCoroutineScope()
 
+    var gesture: MaskGesture? by remember { mutableStateOf(null) }
+
     // because they will be updated frequently,
     // they must be wrapped with rememberUpdatedState when using them.
     val currentVolume by rememberUpdatedState(volume)
     val currentBrightness by rememberUpdatedState(brightness)
-    val currentGesture by rememberUpdatedState(gesture)
+
     val muted = currentVolume == 0f
 
     val defaultBrightnessOrVolumeContentDescription = when {
@@ -137,7 +145,7 @@ internal fun ChannelMask(
 
     val brightnessOrVolumeText by remember {
         derivedStateOf {
-            when (currentGesture) {
+            when (gesture) {
                 MaskGesture.VOLUME -> "${(currentVolume.coerceIn(0f..1f) * 100).roundToInt()}%"
                 MaskGesture.BRIGHTNESS -> "${(currentBrightness.coerceIn(0f..1f) * 100).roundToInt()}%"
                 else -> null
@@ -226,7 +234,7 @@ internal fun ChannelMask(
 
                 MaskTextButton(
                     state = maskState,
-                    icon = when (currentGesture) {
+                    icon = when (gesture) {
                         MaskGesture.BRIGHTNESS -> when {
                             brightness < 0.5f -> Icons.Rounded.DarkMode
                             else -> Icons.Rounded.LightMode
@@ -239,7 +247,7 @@ internal fun ChannelMask(
                         }
                     },
                     text = brightnessOrVolumeText,
-                    tint = when (currentGesture) {
+                    tint = when (gesture) {
                         null -> if (muted) MaterialTheme.colorScheme.error else Color.Unspecified
                         MaskGesture.VOLUME -> if (muted) MaterialTheme.colorScheme.error else Color.Unspecified
                         MaskGesture.BRIGHTNESS -> Color.Unspecified
@@ -302,20 +310,61 @@ internal fun ChannelMask(
                 }
             },
             body = {
-                val maskCenterState = MaskCenterState.of(
-                    playerState.playState,
-                    playerState.isPlaying,
-                    preferences.alwaysShowReplay,
-                    isPanelExpanded,
-                    playerState.playerError
-                )
-                MaskCenterButton(
-                    maskCenterState = maskCenterState,
-                    maskState = maskState,
-                    onPlay = { playerState.player?.play() },
-                    onPause = { playerState.player?.pause() },
-                    onRetry = { coroutineScope.launch { helper.replay() } }
-                )
+                Box {
+                    Row(
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .windowInsetsPadding(WindowInsets.systemBarsIgnoringVisibility)
+                    ) {
+                        VerticalGestureArea(
+                            percent = currentBrightness,
+                            onDragStart = {
+                                maskState.lock(MaskGesture.BRIGHTNESS)
+                                gesture = MaskGesture.BRIGHTNESS
+                            },
+                            onDragEnd = {
+                                maskState.unlock(MaskGesture.BRIGHTNESS, 400.milliseconds)
+                                gesture = null
+                            },
+                            onDrag = onBrightness,
+                            modifier = Modifier
+                                .fillMaxHeight()
+                                .fillMaxWidth(0.18f)
+                        )
+                        VerticalGestureArea(
+                            percent = currentVolume,
+                            onDragStart = {
+                                maskState.lock(MaskGesture.VOLUME)
+                                gesture = MaskGesture.VOLUME
+                            },
+                            onDragEnd = {
+                                maskState.unlock(MaskGesture.VOLUME, 400.milliseconds)
+                                gesture = null
+                            },
+                            onDrag = onVolume,
+                            modifier = Modifier
+                                .fillMaxHeight()
+                                .fillMaxWidth(0.18f)
+                        )
+                    }
+                    val maskCenterState = MaskCenterState.of(
+                        playerState.playState,
+                        playerState.isPlaying,
+                        preferences.alwaysShowReplay,
+                        isPanelExpanded,
+                        playerState.playerError
+                    )
+                    MaskCenterButton(
+                        maskCenterState = maskCenterState,
+                        maskState = maskState,
+                        onPlay = { playerState.player?.play() },
+                        onPause = { playerState.player?.pause() },
+                        onRetry = { coroutineScope.launch { helper.replay() } },
+                        modifier = Modifier.align(Alignment.Center)
+                    )
+                }
             },
             footer = {
                 if (preferences.fullInfoPlayer && cover.isNotEmpty()) {
