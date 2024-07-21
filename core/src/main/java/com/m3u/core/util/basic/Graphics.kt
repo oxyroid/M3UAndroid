@@ -5,4 +5,8 @@ import android.util.Rational
 
 val Rect.isNotEmpty: Boolean get() = !isEmpty
 
-val Rect.rational: Rational get() = Rational(width(), height())
+val Rect.rational: Rational
+    get() = Rational(width(), height()).coerceIn(
+        Rational(100, 239),
+        Rational(239, 100)
+    )
