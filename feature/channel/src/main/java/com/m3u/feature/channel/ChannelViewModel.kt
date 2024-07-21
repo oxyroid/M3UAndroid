@@ -240,7 +240,7 @@ class ChannelViewModel @Inject constructor(
         playerManager.pauseOrContinue(isContinued)
     }
 
-    internal val programmeIdsInReminder: StateFlow<List<Int>> = workManager.getWorkInfosFlow(
+    internal val programmeReminderIds: StateFlow<List<Int>> = workManager.getWorkInfosFlow(
         WorkQuery.fromStates(
             WorkInfo.State.ENQUEUED
         )

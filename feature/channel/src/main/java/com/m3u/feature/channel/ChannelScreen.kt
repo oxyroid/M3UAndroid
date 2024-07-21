@@ -82,7 +82,7 @@ fun ChannelRoute(
     val programmes = viewModel.programmes.collectAsLazyPagingItems()
     val programmeRange by viewModel.programmeRange.collectAsStateWithLifecycle()
 
-    val programmeIdsInReminder by viewModel.programmeIdsInReminder.collectAsStateWithLifecycle()
+    val programmeReminderIds by viewModel.programmeReminderIds.collectAsStateWithLifecycle()
 
     var brightness by remember { mutableFloatStateOf(helper.brightness) }
     var isPipMode by remember { mutableStateOf(false) }
@@ -180,7 +180,7 @@ fun ChannelRoute(
                     channels = channels,
                     programmes = programmes,
                     programmeRange = programmeRange,
-                    programmeIdsInReminder = programmeIdsInReminder,
+                    programmeReminderIds = programmeReminderIds,
                     onRemindProgramme = viewModel::onRemindProgramme,
                     onCancelRemindProgramme = viewModel::onCancelRemindProgramme
                 )

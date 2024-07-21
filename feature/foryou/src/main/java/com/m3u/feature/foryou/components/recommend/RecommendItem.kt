@@ -259,7 +259,8 @@ private fun NewReleaseContent(spec: Recommend.NewRelease) {
                     maxLines = 5,
                     overflow = TextOverflow.Ellipsis,
                     style = MaterialTheme.typography.bodySmall,
-                    fontFamily = FontFamilies.LexendExa
+                    fontFamily = FontFamilies.LexendExa,
+                    modifier = Modifier.weight(1f)
                 )
                 Row(
                     verticalAlignment = Alignment.CenterVertically,

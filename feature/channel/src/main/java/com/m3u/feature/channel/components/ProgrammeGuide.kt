@@ -1,5 +1,6 @@
 package com.m3u.feature.channel.components
 
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
@@ -97,6 +98,7 @@ internal fun ProgramGuide(
     isPanelExpanded: Boolean,
     programmes: LazyPagingItems<Programme>,
     range: ProgrammeRange,
+    programmeReminderIds: List<Int>,
     modifier: Modifier = Modifier,
     minaBoxState: MinaBoxState = rememberMinaBoxState(),
     height: Float = 256f,
@@ -186,6 +188,7 @@ internal fun ProgramGuide(
                 if (programme != null) {
                     ProgrammeCell(
                         programme = programme,
+                        inReminder = programme.id in programmeReminderIds,
                         onPressed = { onProgrammePressed(programme) }
                     )
                 } else {
@@ -299,6 +302,7 @@ private fun TimelineCell(
 @Composable
 private fun ProgrammeCell(
     programme: Programme,
+    inReminder: Boolean,
     modifier: Modifier = Modifier,
     onPressed: () -> Unit
 ) {
@@ -354,8 +358,19 @@ private fun ProgrammeCell(
                 stiffness = Spring.StiffnessMediumLow
             )
         )
+        val currentColor by animateColorAsState(
+            targetValue = if(inReminder) MaterialTheme.colorScheme.tertiary
+            else MaterialTheme.colorScheme.tertiaryContainer,
+            label = "programme-cell-color"
+        )
+        val currentContentColor by animateColorAsState(
+            targetValue = if(inReminder) MaterialTheme.colorScheme.onTertiary
+            else MaterialTheme.colorScheme.onTertiaryContainer,
+            label = "programme-cell-color"
+        )
         Surface(
-            color = MaterialTheme.colorScheme.tertiaryContainer,
+            color = currentColor,
+            contentColor = currentContentColor,
             border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
             shape = AbsoluteRoundedCornerShape(4.dp),
             modifier = Modifier

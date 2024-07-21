@@ -106,7 +106,7 @@ internal fun PlayerPanel(
     programmes: LazyPagingItems<Programme>,
     programmeRange: ProgrammeRange,
     modifier: Modifier = Modifier,
-    programmeIdsInReminder: List<Int>,
+    programmeReminderIds: List<Int>,
     onRemindProgramme: (Programme) -> Unit,
     onCancelRemindProgramme: (Programme) -> Unit,
 ) {
@@ -134,6 +134,7 @@ internal fun PlayerPanel(
             channels = channels,
             programmes = programmes,
             programmeRange = programmeRange,
+            programmeReminderIds = programmeReminderIds,
             onProgrammePressed = {
                 programme = it
                 animProgramme = it
@@ -203,9 +204,7 @@ internal fun PlayerPanel(
                                 ) {
                                     Text(
                                         text = "${start.formatEOrSh(false)} - ${
-                                            end.formatEOrSh(
-                                                false
-                                            )
+                                            end.formatEOrSh(false)
                                         }",
                                         maxLines = 1,
                                         overflow = TextOverflow.Ellipsis,
@@ -224,9 +223,9 @@ internal fun PlayerPanel(
                                 val isReminderShowing = Clock.System.now()
                                     .toEpochMilliseconds() < currentProgramme.start
                                 if (isReminderShowing) {
-                                    val inReminder = currentProgramme.id in programmeIdsInReminder
+                                    val inReminder = currentProgramme.id in programmeReminderIds
                                     IconButton(
-                                        icon = if (inReminder) Icons.Outlined.Notifications
+                                        icon = if (!inReminder) Icons.Outlined.Notifications
                                         else Icons.Rounded.NotificationsActive,
                                         contentDescription = null,
                                         onClick = {
@@ -281,6 +280,7 @@ fun PlayerPanelImpl(
     channels: LazyPagingItems<Channel>,
     programmes: LazyPagingItems<Programme>,
     programmeRange: ProgrammeRange,
+    programmeReminderIds: List<Int>,
     modifier: Modifier = Modifier,
     onProgrammePressed: (Programme) -> Unit
 ) {
@@ -335,6 +335,7 @@ fun PlayerPanelImpl(
                 isPanelExpanded = isPanelExpanded,
                 programmes = programmes,
                 range = programmeRange,
+                programmeReminderIds = programmeReminderIds,
                 onProgrammePressed = onProgrammePressed,
                 modifier = Modifier
                     .fillMaxWidth()
