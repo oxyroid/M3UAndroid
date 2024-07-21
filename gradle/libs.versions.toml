@@ -21,7 +21,7 @@ glance = "1.1.0"
 google-accompanist = "0.35.1-alpha"
 google-dagger = "2.51.1"
 
-haze = "0.7.1"
+haze = "0.7.3"
 io-coil = "2.6.0"
 kotlinx-serialization-json = "1.6.3"
 kotlinx-serialization-converter-retrofit = "1.0.0"
@@ -34,7 +34,7 @@ nextLib = "0.7.1"
 slf4j-api = "2.0.13"
 
 squareup-retrofit2 = "2.11.0"
-squareup-leakcanary = "2.13"
+squareup-leakcanary = "2.14"
 
 kotlin = "2.0.0"
 android-gradle-plugin = "8.2.2"
