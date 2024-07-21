@@ -1,5 +1,6 @@
 package com.m3u.feature.channel
 
+import android.Manifest
 import android.content.Intent
 import android.graphics.Rect
 import android.net.Uri
@@ -24,6 +25,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.compose.collectAsLazyPagingItems
+import com.google.accompanist.permissions.rememberPermissionState
 import com.m3u.core.architecture.preferences.hiltPreferences
 import com.m3u.core.util.basic.isNotEmpty
 import com.m3u.core.util.basic.title
@@ -41,6 +43,7 @@ import com.m3u.material.components.mask.MaskInterceptor
 import com.m3u.material.components.mask.MaskState
 import com.m3u.material.components.mask.rememberMaskState
 import com.m3u.material.components.rememberPullPanelLayoutState
+import com.m3u.material.ktx.checkPermissionOrRationale
 import com.m3u.ui.Player
 import com.m3u.ui.helper.LocalHelper
 import com.m3u.ui.helper.OnPipModeChanged
@@ -61,6 +64,9 @@ fun ChannelRoute(
     val preferences = hiltPreferences()
     val context = LocalContext.current
     val configuration = LocalConfiguration.current
+
+    val requestIgnoreBatteryOptimizations =
+        rememberPermissionState(Manifest.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
 
     val playerState: PlayerState by viewModel.playerState.collectAsStateWithLifecycle()
     val channel by viewModel.channel.collectAsStateWithLifecycle()
@@ -181,7 +187,11 @@ fun ChannelRoute(
                     programmes = programmes,
                     programmeRange = programmeRange,
                     programmeReminderIds = programmeReminderIds,
-                    onRemindProgramme = viewModel::onRemindProgramme,
+                    onRemindProgramme = {
+                        requestIgnoreBatteryOptimizations.checkPermissionOrRationale {
+                            viewModel.onRemindProgramme(it)
+                        }
+                    },
                     onCancelRemindProgramme = viewModel::onCancelRemindProgramme
                 )
             },

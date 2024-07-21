@@ -271,7 +271,7 @@ class ChannelViewModel @Inject constructor(
                 .getWorkInfos(WorkQuery.fromStates(WorkInfo.State.ENQUEUED))
                 .await()
                 .filter { ProgrammeReminder.TAG in it.tags }
-                .filter { info -> ProgrammeReminder.readProgrammeId(info.tags) != null }
+                .filter { info -> ProgrammeReminder.readProgrammeId(info.tags) == programme.id }
             infos.forEach {
                 workManager.cancelWorkById(it.id)
             }
