@@ -32,3 +32,5 @@ include(
 include(":benchmark")
 include(":i18n")
 include(":codec:lite", ":codec:rich")
+include(":processor")
+include(":annotation")

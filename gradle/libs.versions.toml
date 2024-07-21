@@ -17,12 +17,15 @@ androidx-tvprovider = "1.0.0"
 androidx-startup = "1.1.1"
 androidx-paging = "3.3.0"
 
+autoServiceAnnotations = "1.0"
+autoServiceKsp = "1.0.0"
 glance = "1.1.0"
 google-accompanist = "0.35.1-alpha"
 google-dagger = "2.51.1"
 
 haze = "0.7.3"
 io-coil = "2.6.0"
+kotlinpoet = "1.18.1"
 kotlinx-serialization-json = "1.6.3"
 kotlinx-serialization-converter-retrofit = "1.0.0"
 kotlinx-datetime = "0.6.0"
@@ -50,6 +53,8 @@ androidx-graphics-shapes = "1.0.0-beta01"
 minabox = "1.7.1"
 ktor-server = "3.0.0-beta-1"
 mm2d-mmupnp = "3.1.6"
+symbolProcessingApi = "2.0.0-1.0.22"
+junit = "4.13.2"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "androidx-core" }
@@ -115,6 +120,8 @@ androidx-room-compiler = { group = "androidx.room", name = "room-compiler", vers
 
 androidx-tvprovider = { group = "androidx.tvprovider", name = "tvprovider", version.ref = "androidx-tvprovider" }
 
+auto-service-annotations = { module = "com.google.auto.service:auto-service-annotations", version.ref = "autoServiceAnnotations" }
+auto-service-ksp = { module = "dev.zacsweers.autoservice:auto-service-ksp", version.ref = "autoServiceKsp" }
 google-accompanist-permissions = { group = "com.google.accompanist", name = "accompanist-permissions", version.ref = "google-accompanist" }
 
 google-dagger-hilt = { group = "com.google.dagger", name = "hilt-android", version.ref = "google-dagger" }
@@ -122,6 +129,8 @@ google-dagger-hilt-compiler = { group = "com.google.dagger", name = "hilt-compil
 
 google-material = { group = "com.google.android.material", name = "material", version.ref = "com-google-android-material" }
 
+kotlinpoet = { module = "com.squareup:kotlinpoet", version.ref = "kotlinpoet" }
+kotlinpoet-ksp = { module = "com.squareup:kotlinpoet-ksp", version.ref = "kotlinpoet" }
 squareup-retrofit2 = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "squareup-retrofit2" }
 squareup-leakcanary = { group = "com.squareup.leakcanary", name = "leakcanary-android", version.ref = "squareup-leakcanary" }
 
@@ -157,6 +166,8 @@ slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j-api" }
 minabox = { group = "io.github.oleksandrbalan", name = "minabox", version.ref = "minabox" }
 net-mm2d-mmupnp-mmupnp = { group = "net.mm2d.mmupnp", name = "mmupnp", version.ref = "mm2d-mmupnp" }
 androidx-graphics-shapes-android = { group = "androidx.graphics", name = "graphics-shapes-android", version.ref = "androidx-graphics-shapes" }
+symbol-processing-api = { module = "com.google.devtools.ksp:symbol-processing-api", version.ref = "symbolProcessingApi" }
+junit = { group = "junit", name = "junit", version.ref = "junit" }
 
 [plugins]
 com-android-application = { id = "com.android.application", version.ref = "android-gradle-plugin" }

@@ -26,7 +26,8 @@ android {
 
 dependencies {
     implementation(project(":core"))
-    implementation(libs.androidx.media3.exoplayer.workmanager)
+    implementation(project(":annotation"))
+    ksp(project(":processor"))
 
     val richCodec = gradle
         .startParameter
@@ -61,6 +62,7 @@ dependencies {
     implementation(libs.androidx.media3.exoplayer.hls)
     implementation(libs.androidx.media3.exoplayer.rtsp)
     implementation(libs.androidx.media3.exoplayer.smoothstreaming)
+    implementation(libs.androidx.media3.exoplayer.workmanager)
     implementation(libs.androidx.media3.session)
     implementation(libs.androidx.media3.container)
     implementation(libs.androidx.media3.datasource.rtmp)

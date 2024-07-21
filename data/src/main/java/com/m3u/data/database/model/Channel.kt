@@ -4,7 +4,8 @@ import androidx.compose.runtime.Immutable
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import com.m3u.core.util.Likable
+import com.m3u.annotation.ExcludeProperty
+import com.m3u.annotation.LikableDataClass
 import com.m3u.data.parser.xtream.XtreamChannelInfo
 import io.ktor.http.URLBuilder
 import io.ktor.http.Url
@@ -17,6 +18,7 @@ import kotlinx.serialization.Serializable
 )
 @Immutable
 @Serializable
+@LikableDataClass
 data class Channel(
     @ColumnInfo(name = "url")
     // playable url
@@ -37,26 +39,26 @@ data class Channel(
     val licenseKey: String? = null,
     @PrimaryKey(autoGenerate = true)
     @ColumnInfo(name = "id")
+    @ExcludeProperty
     val id: Int = 0,
     // extra fields
     @ColumnInfo(name = "favourite", index = true)
+    @ExcludeProperty
     val favourite: Boolean = false,
     @ColumnInfo(name = "hidden", defaultValue = "0")
+    @ExcludeProperty
     val hidden: Boolean = false,
     @ColumnInfo(name = "seen", defaultValue = "0")
+    @ExcludeProperty
     val seen: Long = 0L,
     @ColumnInfo(name = "channel_id", defaultValue = "NULL")
+    @ExcludeProperty
     // if it is from m3u, it may be tvg-id
     // if it is xtream live, it may be epgChannelId
     // if it is xtream vod, it may be streamId
     // if it is xtream series, it may be seriesId
     val originalId: String? = null
-) : Likable<Channel> {
-    override infix fun like(another: Channel): Boolean =
-        this.url == another.url && this.playlistUrl == another.playlistUrl && this.cover == another.cover
-                && this.category == another.category && this.title == another.title && this.licenseType == another.licenseType
-                && this.licenseKey == another.licenseKey
-
+) {
     companion object {
         const val LICENSE_TYPE_WIDEVINE = "com.widevine.alpha"
         const val LICENSE_TYPE_CLEAR_KEY = "clearkey"

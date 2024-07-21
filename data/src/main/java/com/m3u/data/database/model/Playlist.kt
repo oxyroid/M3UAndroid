@@ -7,7 +7,8 @@ import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import androidx.room.Relation
-import com.m3u.core.util.Likable
+import com.m3u.annotation.ExcludeProperty
+import com.m3u.annotation.LikableDataClass
 import com.m3u.core.util.basic.startsWithAny
 import com.m3u.data.parser.xtream.XtreamInput
 import com.m3u.data.parser.xtream.XtreamParser
@@ -23,6 +24,7 @@ import kotlinx.serialization.encoding.Encoder
 @Entity(tableName = "playlists")
 @Immutable
 @Serializable
+@LikableDataClass
 data class Playlist(
     @ColumnInfo(name = "title")
     val title: String,
@@ -38,24 +40,25 @@ data class Playlist(
     val url: String,
     // extra fields
     @ColumnInfo(name = "pinned_groups", defaultValue = "[]")
+    @ExcludeProperty
     val pinnedCategories: List<String> = emptyList(),
     @ColumnInfo(name = "hidden_groups", defaultValue = "[]")
+    @ExcludeProperty
     val hiddenCategories: List<String> = emptyList(),
     @ColumnInfo(name = "source", defaultValue = "0")
     @Serializable(with = DataSourceSerializer::class)
     val source: DataSource = DataSource.M3U,
     @ColumnInfo(name = "user_agent", defaultValue = "NULL")
+    @ExcludeProperty
     val userAgent: String? = null,
     // epg playlist urls
     @ColumnInfo(name = "epg_urls", defaultValue = "[]")
+    @ExcludeProperty
     val epgUrls: List<String> = emptyList(),
     @ColumnInfo(name = "auto_refresh_programmes", defaultValue = "0")
+    @ExcludeProperty
     val autoRefreshProgrammes: Boolean = false
-) : Likable<Playlist> {
-    override fun like(another: Playlist): Boolean {
-        return title == another.title && url == another.url && source == another.source
-    }
-
+) {
     companion object {
         const val URL_IMPORTED = "imported"
 
@@ -99,6 +102,7 @@ fun Playlist.epgUrlsOrXtreamXmlUrl(): List<String> = when (source) {
                 )
                 listOf(epgUrl)
             }
+
             else -> emptyList()
         }
     }
