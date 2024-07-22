@@ -4,8 +4,8 @@ import androidx.compose.runtime.Immutable
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import com.m3u.annotation.ExcludeProperty
-import com.m3u.annotation.LikableDataClass
+import com.m3u.annotation.Exclude
+import com.m3u.annotation.Likable
 import com.m3u.data.parser.xtream.XtreamChannelInfo
 import io.ktor.http.URLBuilder
 import io.ktor.http.Url
@@ -18,7 +18,7 @@ import kotlinx.serialization.Serializable
 )
 @Immutable
 @Serializable
-@LikableDataClass
+@Likable
 data class Channel(
     @ColumnInfo(name = "url")
     // playable url
@@ -39,20 +39,20 @@ data class Channel(
     val licenseKey: String? = null,
     @PrimaryKey(autoGenerate = true)
     @ColumnInfo(name = "id")
-    @ExcludeProperty
+    @Exclude
     val id: Int = 0,
     // extra fields
     @ColumnInfo(name = "favourite", index = true)
-    @ExcludeProperty
+    @Exclude
     val favourite: Boolean = false,
     @ColumnInfo(name = "hidden", defaultValue = "0")
-    @ExcludeProperty
+    @Exclude
     val hidden: Boolean = false,
     @ColumnInfo(name = "seen", defaultValue = "0")
-    @ExcludeProperty
+    @Exclude
     val seen: Long = 0L,
     @ColumnInfo(name = "channel_id", defaultValue = "NULL")
-    @ExcludeProperty
+    @Exclude
     // if it is from m3u, it may be tvg-id
     // if it is xtream live, it may be epgChannelId
     // if it is xtream vod, it may be streamId
