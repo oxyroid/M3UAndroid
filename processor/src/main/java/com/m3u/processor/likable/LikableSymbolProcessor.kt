@@ -34,9 +34,11 @@ class LikableSymbolProcessor(
         val symbols = resolver.getSymbolsWithAnnotation(likableAnnotationName)
 
         val unableToProcess = symbols.filterNot { it.validate() }
-        symbols.forEach { symbol ->
-            symbol.accept(Visitor(), Unit)
-        }
+        symbols
+            .filter { it is KSClassDeclaration }
+            .forEach { symbol ->
+                symbol.accept(Visitor(), Unit)
+            }
         return unableToProcess.toList()
     }
 
@@ -116,9 +118,9 @@ class LikableSymbolProcessor(
                         .returns(Boolean::class)
                         .addCode(
                             CodeBlock.builder()
-                                .add("return collection.all {\n")
-                                .withIndent { add("it unlike this\n") }
-                                .add("}")
+                                .beginControlFlow("return collection.all")
+                                .withIndent { add("it unlike this") }
+                                .endControlFlow()
                                 .build()
                         )
                         .build()
