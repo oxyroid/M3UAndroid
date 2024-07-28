@@ -20,6 +20,10 @@ import androidx.media3.datasource.okhttp.OkHttpDataSource
 import androidx.media3.datasource.rtmp.RtmpDataSource
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.RenderersFactory
+import androidx.media3.exoplayer.drm.DefaultDrmSessionManager
+import androidx.media3.exoplayer.drm.FrameworkMediaDrm
+import androidx.media3.exoplayer.drm.HttpMediaDrmCallback
+import androidx.media3.exoplayer.drm.LocalMediaDrmCallback
 import androidx.media3.exoplayer.hls.HlsMediaSource
 import androidx.media3.exoplayer.offline.Download
 import androidx.media3.exoplayer.offline.DownloadManager
@@ -161,6 +165,8 @@ class PlayerManagerImpl @Inject constructor(
         }
         if (channel != null) {
             val channelUrl = channel.url
+            val licenseType = channel.licenseType.orEmpty()
+            val licenseKey = channel.licenseKey.orEmpty()
             channelRepository.reportPlayed(channel.id)
             val playlist = playlistRepository.get(channel.playlistUrl)
 
@@ -171,6 +177,8 @@ class PlayerManagerImpl @Inject constructor(
                 mimeType = null,
                 url = channelUrl,
                 userAgent = playlist?.userAgent,
+                licenseType = licenseType,
+                licenseKey = licenseKey
             )
 
             observePreferencesChangingJob?.cancel()
@@ -200,7 +208,9 @@ class PlayerManagerImpl @Inject constructor(
     private fun tryPlay(
         mimeType: String?,
         url: String = channel.value?.url.orEmpty(),
-        userAgent: String? = playlist.value?.userAgent
+        userAgent: String? = playlist.value?.userAgent,
+        licenseType: String = channel.value?.licenseType.orEmpty(),
+        licenseKey: String = channel.value?.licenseKey.orEmpty(),
     ) {
         val rtmp: Boolean = Url(url).protocol.name == "rtmp"
         val tunneling: Boolean = preferences.tunneling
@@ -229,6 +239,30 @@ class PlayerManagerImpl @Inject constructor(
             else -> DefaultMediaSourceFactory(dataSourceFactory)
         }
         logger.post { "media-source-factory: ${mediaSourceFactory::class.qualifiedName}" }
+        if (licenseType.isNotEmpty()) {
+            val drmCallback = when {
+                (licenseType == Channel.LICENSE_TYPE_CLEAR_KEY) &&
+                        !licenseKey.startsWith("http") -> LocalMediaDrmCallback(licenseKey.toByteArray())
+
+                else -> HttpMediaDrmCallback(
+                    licenseKey,
+                    dataSourceFactory
+                )
+            }
+            val uuid = when (licenseType) {
+                Channel.LICENSE_TYPE_CLEAR_KEY -> C.CLEARKEY_UUID
+                Channel.LICENSE_TYPE_WIDEVINE -> C.WIDEVINE_UUID
+                Channel.LICENSE_TYPE_PLAY_READY -> C.PLAYREADY_UUID
+                else -> C.UUID_NIL
+            }
+            if (uuid != C.UUID_NIL && FrameworkMediaDrm.isCryptoSchemeSupported(uuid)) {
+                val drmSessionManager = DefaultDrmSessionManager.Builder()
+                    .setUuidAndExoMediaDrmProvider(uuid, FrameworkMediaDrm.DEFAULT_PROVIDER)
+                    .setMultiSession(licenseType != Channel.LICENSE_TYPE_CLEAR_KEY)
+                    .build(drmCallback)
+                mediaSourceFactory.setDrmSessionManagerProvider { drmSessionManager }
+            }
+        }
         val player = player.updateAndGet { prev ->
             prev ?: createPlayer(mediaSourceFactory, tunneling)
         }!!

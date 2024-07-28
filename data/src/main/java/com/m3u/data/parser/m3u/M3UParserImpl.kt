@@ -25,7 +25,7 @@ internal class M3UParserImpl @Inject constructor(
         private const val KODI_MARK = "#KODIPROP:"
 
         private val infoRegex = """(-?\d+)(.*),(.+)""".toRegex()
-        private val kodiPropRegex = """(.+)=(.+)""".toRegex()
+        private val kodiPropRegex = """([^=]+)=(.+)""".toRegex()
         private val metadataRegex = """([\w-_.]+)=\s*(?:"([^"]*)"|(\S+))""".toRegex()
 
         private const val M3U_TVG_LOGO_MARK = "tvg-logo"
@@ -82,8 +82,8 @@ internal class M3UParserImpl @Inject constructor(
             }
             val kodiMetadata = buildMap {
                 for (match in kodiMatches) {
-                    val key = match.groups[1]!!.value
-                    val value = match.groups[2]?.value?.ifBlank { null } ?: continue
+                    val key = match.groups[1]!!.value.also { println(it) }
+                    val value = match.groups[2]?.value?.ifBlank { null }.also { println(it) } ?: continue
                     put(key.trim(), value.trim())
                 }
             }
