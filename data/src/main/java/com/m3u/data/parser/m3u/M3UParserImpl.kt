@@ -82,8 +82,8 @@ internal class M3UParserImpl @Inject constructor(
             }
             val kodiMetadata = buildMap {
                 for (match in kodiMatches) {
-                    val key = match.groups[1]!!.value.also { println(it) }
-                    val value = match.groups[2]?.value?.ifBlank { null }.also { println(it) } ?: continue
+                    val key = match.groups[1]!!.value
+                    val value = match.groups[2]?.value?.ifBlank { null } ?: continue
                     put(key.trim(), value.trim())
                 }
             }
