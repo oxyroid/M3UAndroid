@@ -62,6 +62,7 @@ data class Channel(
     companion object {
         const val LICENSE_TYPE_WIDEVINE = "com.widevine.alpha"
         const val LICENSE_TYPE_CLEAR_KEY = "clearkey"
+        const val LICENSE_TYPE_CLEAR_KEY_2 = "org.w3.clearkey"
         const val LICENSE_TYPE_PLAY_READY = "com.microsoft.playready"
     }
 }

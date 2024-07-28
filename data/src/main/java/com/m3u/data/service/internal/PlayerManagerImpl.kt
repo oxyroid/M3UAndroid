@@ -241,7 +241,7 @@ class PlayerManagerImpl @Inject constructor(
         logger.post { "media-source-factory: ${mediaSourceFactory::class.qualifiedName}" }
         if (licenseType.isNotEmpty()) {
             val drmCallback = when {
-                (licenseType == Channel.LICENSE_TYPE_CLEAR_KEY) &&
+                (licenseType in arrayOf(Channel.LICENSE_TYPE_CLEAR_KEY, Channel.LICENSE_TYPE_CLEAR_KEY_2)) &&
                         !licenseKey.startsWith("http") -> LocalMediaDrmCallback(licenseKey.toByteArray())
 
                 else -> HttpMediaDrmCallback(
@@ -250,7 +250,7 @@ class PlayerManagerImpl @Inject constructor(
                 )
             }
             val uuid = when (licenseType) {
-                Channel.LICENSE_TYPE_CLEAR_KEY -> C.CLEARKEY_UUID
+                Channel.LICENSE_TYPE_CLEAR_KEY, Channel.LICENSE_TYPE_CLEAR_KEY_2 -> C.CLEARKEY_UUID
                 Channel.LICENSE_TYPE_WIDEVINE -> C.WIDEVINE_UUID
                 Channel.LICENSE_TYPE_PLAY_READY -> C.PLAYREADY_UUID
                 else -> C.UUID_NIL
@@ -258,7 +258,7 @@ class PlayerManagerImpl @Inject constructor(
             if (uuid != C.UUID_NIL && FrameworkMediaDrm.isCryptoSchemeSupported(uuid)) {
                 val drmSessionManager = DefaultDrmSessionManager.Builder()
                     .setUuidAndExoMediaDrmProvider(uuid, FrameworkMediaDrm.DEFAULT_PROVIDER)
-                    .setMultiSession(licenseType != Channel.LICENSE_TYPE_CLEAR_KEY)
+                    .setMultiSession(licenseType !in arrayOf(Channel.LICENSE_TYPE_CLEAR_KEY, Channel.LICENSE_TYPE_CLEAR_KEY_2))
                     .build(drmCallback)
                 mediaSourceFactory.setDrmSessionManagerProvider { drmSessionManager }
             }
