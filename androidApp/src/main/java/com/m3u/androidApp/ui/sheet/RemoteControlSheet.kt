@@ -8,8 +8,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.InternalComposeApi
 import androidx.compose.ui.Modifier
-import com.m3u.data.leanback.model.Leanback
-import com.m3u.data.leanback.model.RemoteDirection
+import com.m3u.data.tv.model.TvInfo
+import com.m3u.data.tv.model.RemoteDirection
 
 @Immutable
 sealed class RemoteControlSheetValue {
@@ -24,7 +24,7 @@ sealed class RemoteControlSheetValue {
 
     @Immutable
     data class DPad(
-        val leanback: Leanback,
+        val tvInfo: TvInfo,
     ) : RemoteControlSheetValue()
 }
 
@@ -35,8 +35,8 @@ internal fun RemoteControlSheet(
     value: RemoteControlSheetValue,
     visible: Boolean,
     onCode: (String) -> Unit,
-    checkLeanbackCodeOnSmartphone: () -> Unit,
-    forgetLeanbackCodeOnSmartphone: () -> Unit,
+    checkTvCodeOnSmartphone: () -> Unit,
+    forgetTvCodeOnSmartphone: () -> Unit,
     onRemoteDirection: (RemoteDirection) -> Unit,
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier
@@ -66,16 +66,16 @@ internal fun RemoteControlSheet(
                         PrepareContent(
                             code = value.code,
                             searchingOrConnecting = value.searchingOrConnecting,
-                            checkLeanbackCodeOnSmartphone = checkLeanbackCodeOnSmartphone,
+                            checkTvCodeOnSmartphone = checkTvCodeOnSmartphone,
                             onCode = onCode
                         )
                     }
 
                     is RemoteControlSheetValue.DPad -> {
                         DPadContent(
-                            leanback = value.leanback,
+                            tvInfo = value.tvInfo,
                             onRemoteDirection = onRemoteDirection,
-                            forgetLeanbackCodeOnSmartphone = forgetLeanbackCodeOnSmartphone,
+                            forgetTvCodeOnSmartphone = forgetTvCodeOnSmartphone,
                         )
                     }
 

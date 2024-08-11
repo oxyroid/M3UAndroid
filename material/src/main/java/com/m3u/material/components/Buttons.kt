@@ -31,7 +31,7 @@ import androidx.compose.ui.graphics.isUnspecified
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
-import com.m3u.material.ktx.leanback
+import com.m3u.material.ktx.tv
 import com.m3u.material.model.LocalSpacing
 import androidx.tv.material3.Button as TvButton
 import androidx.tv.material3.OutlinedButton as TvOutlinedButton
@@ -49,8 +49,8 @@ fun Button(
     onClick: () -> Unit
 ) {
     val spacing = LocalSpacing.current
-    val leanback = leanback()
-    if (!leanback) {
+    val tv = tv()
+    if (!tv) {
         Button(
             shape = RoundedCornerShape(8.dp),
             onClick = onClick,
@@ -101,8 +101,8 @@ fun TextButton(
 ) {
     val spacing = LocalSpacing.current
 
-    val leanback = leanback()
-    if (!leanback) {
+    val tv = tv()
+    if (!tv) {
         TextButton(
             shape = RoundedCornerShape(8.dp),
             onClick = onClick,
@@ -147,8 +147,8 @@ fun TonalButton(
 ) {
     val spacing = LocalSpacing.current
 
-    val leanback = leanback()
-    if (!leanback) {
+    val tv = tv()
+    if (!tv) {
         FilledTonalButton(
             shape = RoundedCornerShape(8.dp),
             onClick = onClick,
@@ -184,8 +184,8 @@ fun IconButton(
     enabled: Boolean = true,
     tint: Color = Color.Unspecified
 ) {
-    val leanback = leanback()
-    if (!leanback) {
+    val tv = tv()
+    if (!tv) {
         IconButton(
             onClick = onClick,
             enabled = enabled,

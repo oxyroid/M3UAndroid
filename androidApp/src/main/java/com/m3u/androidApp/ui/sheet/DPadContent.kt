@@ -16,17 +16,17 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.m3u.data.service.collectMessageAsState
-import com.m3u.data.leanback.model.RemoteDirection
-import com.m3u.data.leanback.model.Leanback
+import com.m3u.data.tv.model.RemoteDirection
+import com.m3u.data.tv.model.TvInfo
 import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.FontFamilies
 
 @Composable
 @InternalComposeApi
 internal fun DPadContent(
-    leanback: Leanback,
+    tvInfo: TvInfo,
     onRemoteDirection: (RemoteDirection) -> Unit,
-    forgetLeanbackCodeOnSmartphone: () -> Unit,
+    forgetTvCodeOnSmartphone: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
@@ -37,7 +37,7 @@ internal fun DPadContent(
         verticalArrangement = Arrangement.spacedBy(spacing.medium)
     ) {
         Text(
-            text = leanback.model,
+            text = tvInfo.model,
             textAlign = TextAlign.Center,
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
@@ -59,7 +59,7 @@ internal fun DPadContent(
         )
 
         TextButton(
-            onClick = forgetLeanbackCodeOnSmartphone,
+            onClick = forgetTvCodeOnSmartphone,
             modifier = Modifier.padding(top = 4.dp)
         ) {
             Text("DISCONNECT")

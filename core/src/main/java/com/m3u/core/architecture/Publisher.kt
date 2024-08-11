@@ -12,7 +12,7 @@ interface Publisher {
     val lite: Boolean
     val model: String
     val abi: Abi
-    val leanback: Boolean
+    val tv: Boolean
 }
 
 @JvmInline

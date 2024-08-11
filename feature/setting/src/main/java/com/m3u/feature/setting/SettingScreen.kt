@@ -42,7 +42,7 @@ import com.m3u.feature.setting.fragments.SubscriptionsFragment
 import com.m3u.feature.setting.fragments.preferences.PreferencesFragment
 import com.m3u.i18n.R.string
 import com.m3u.material.ktx.includeChildGlowPadding
-import com.m3u.material.ktx.leanback
+import com.m3u.material.ktx.tv
 import com.m3u.material.model.LocalHazeState
 import com.m3u.ui.Destination
 import com.m3u.ui.EventHandler
@@ -59,7 +59,7 @@ fun SettingRoute(
     modifier: Modifier = Modifier,
     viewModel: SettingViewModel = hiltViewModel()
 ) {
-    val leanback = leanback()
+    val tv = tv()
     val controller = LocalSoftwareKeyboardController.current
 
     val colorSchemes by viewModel.colorSchemes.collectAsStateWithLifecycle()
@@ -129,7 +129,7 @@ fun SettingRoute(
         modifier = modifier.fillMaxSize(),
         contentPadding = contentPadding
     )
-    if (!leanback) {
+    if (!tv) {
         CanvasBottomSheet(
             sheetState = sheetState,
             colorScheme = colorScheme,

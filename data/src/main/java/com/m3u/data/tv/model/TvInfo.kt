@@ -1,4 +1,4 @@
-package com.m3u.data.leanback.model
+package com.m3u.data.tv.model
 
 import androidx.annotation.Keep
 import androidx.compose.runtime.Immutable
@@ -8,7 +8,7 @@ import kotlinx.serialization.Serializable
 @Keep
 @Serializable
 @Immutable
-data class Leanback(
+data class TvInfo(
     val model: String,
     val version: Int,
     val snapshot: Boolean,

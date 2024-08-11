@@ -65,7 +65,7 @@ import com.m3u.data.database.model.ProgrammeRange.Companion.HOUR_LENGTH
 import com.m3u.material.components.Icon
 import com.m3u.material.ktx.Edge
 import com.m3u.material.ktx.blurEdges
-import com.m3u.material.ktx.leanback
+import com.m3u.material.ktx.tv
 import com.m3u.material.ktx.thenIf
 import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.FontFamilies
@@ -108,7 +108,7 @@ internal fun ProgramGuide(
     onProgrammePressed: (Programme) -> Unit
 ) {
     val spacing = LocalSpacing.current
-    val leanback = leanback()
+    val tv = tv()
 
     val currentMilliseconds by produceCurrentMillisecondState()
     val coroutineScope = rememberCoroutineScope()
@@ -160,7 +160,7 @@ internal fun ProgramGuide(
                     MaterialTheme.colorScheme.surface,
                     listOf(Edge.Top, Edge.Bottom)
                 )
-                .thenIf(!leanback) { zoomGestureModifier }
+                .thenIf(!tv) { zoomGestureModifier }
                 .then(modifier)
         ) {
             // programmes
@@ -230,7 +230,7 @@ internal fun ProgramGuide(
             }
         }
 
-        if (!leanback) {
+        if (!tv) {
             Controls(
                 animateToCurrentTimeline = {
                     coroutineScope.launch { animateToCurrentTimeline() }
@@ -309,7 +309,7 @@ private fun ProgrammeCell(
     val currentOnPressed by rememberUpdatedState(onPressed)
     val spacing = LocalSpacing.current
     val preferences = hiltPreferences()
-    val leanback = leanback()
+    val tv = tv()
     val clockMode = preferences.twelveHourClock
     val content = @Composable {
         Column(
@@ -347,7 +347,7 @@ private fun ProgrammeCell(
             )
         }
     }
-    if (!leanback) {
+    if (!tv) {
         val hapticFeedback = LocalHapticFeedback.current
         var isPressed by remember { mutableStateOf(false) }
         val scale by animateFloatAsState(

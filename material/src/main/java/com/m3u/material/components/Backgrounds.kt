@@ -14,7 +14,7 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.unit.dp
-import com.m3u.material.ktx.leanback
+import com.m3u.material.ktx.tv
 import androidx.tv.material3.LocalContentColor as TvLocalContentColor
 import androidx.tv.material3.MaterialTheme as TvMtaterialTheme
 
@@ -27,11 +27,11 @@ inline fun Background(
     crossinline content: @Composable () -> Unit
 ) {
     val actualColor = color.takeOrElse {
-        if (!leanback()) MaterialTheme.colorScheme.background
+        if (!tv()) MaterialTheme.colorScheme.background
         else TvMtaterialTheme.colorScheme.background
     }
     val actualContentColor = contentColor.takeOrElse {
-        if (!leanback()) MaterialTheme.colorScheme.onBackground
+        if (!tv()) MaterialTheme.colorScheme.onBackground
         else TvMtaterialTheme.colorScheme.onBackground
     }
     Box(

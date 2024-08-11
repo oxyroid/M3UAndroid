@@ -1,4 +1,4 @@
-package com.m3u.data.leanback.nsd
+package com.m3u.data.tv.nsd
 
 import android.net.nsd.NsdManager
 import android.net.nsd.NsdServiceInfo
@@ -7,9 +7,9 @@ import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.Profiles
 import com.m3u.core.architecture.logger.install
-import com.m3u.data.leanback.Utils
-import com.m3u.data.leanback.nsd.NsdDeviceManager.Companion.META_DATA_PIN
-import com.m3u.data.leanback.nsd.NsdDeviceManager.Companion.SERVICE_TYPE
+import com.m3u.data.tv.Utils
+import com.m3u.data.tv.nsd.NsdDeviceManager.Companion.META_DATA_PIN
+import com.m3u.data.tv.nsd.NsdDeviceManager.Companion.SERVICE_TYPE
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.awaitClose

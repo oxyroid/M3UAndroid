@@ -12,10 +12,10 @@ import com.m3u.core.architecture.Publisher
 import com.m3u.core.architecture.dispatcher.Dispatcher
 import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
 import com.m3u.core.architecture.preferences.Preferences
-import com.m3u.data.api.LeanbackApiDelegate
-import com.m3u.data.leanback.model.RemoteDirection
-import com.m3u.data.repository.leanback.ConnectionToLeanbackValue
-import com.m3u.data.repository.leanback.LeanbackRepository
+import com.m3u.data.api.TvApiDelegate
+import com.m3u.data.tv.model.RemoteDirection
+import com.m3u.data.repository.tv.ConnectionToTvValue
+import com.m3u.data.repository.tv.TvRepository
 import com.m3u.data.repository.playlist.PlaylistRepository
 import com.m3u.data.repository.programme.ProgrammeRepository
 import com.m3u.data.service.Messager
@@ -42,8 +42,8 @@ class AppViewModel @Inject constructor(
     messager: Messager,
     private val playlistRepository: PlaylistRepository,
     private val programmeRepository: ProgrammeRepository,
-    private val leanbackRepository: LeanbackRepository,
-    private val leanbackApi: LeanbackApiDelegate,
+    private val tvRepository: TvRepository,
+    private val tvApi: TvApiDelegate,
     private val workManager: WorkManager,
     private val preferences: Preferences,
     private val publisher: Publisher,
@@ -53,8 +53,8 @@ class AppViewModel @Inject constructor(
         refreshProgrammes()
     }
 
-    val broadcastCodeOnLeanback: StateFlow<String?> = leanbackRepository
-        .broadcastCodeOnLeanback
+    val broadcastCodeOnTv: StateFlow<String?> = tvRepository
+        .broadcastCodeOnTv
         .map { code -> code?.let { convertToPaddedString(it) } }
         .stateIn(
             scope = viewModelScope,
@@ -62,52 +62,52 @@ class AppViewModel @Inject constructor(
             initialValue = null
         )
 
-    private val leanbackCodeOnSmartphone = MutableSharedFlow<String>()
+    private val tvCodeOnSmartphone = MutableSharedFlow<String>()
 
-    private val connectionToLeanbackValue: StateFlow<ConnectionToLeanbackValue> =
-        leanbackCodeOnSmartphone.flatMapLatest { code ->
-            if (code.isNotEmpty()) leanbackRepository.connectToLeanback(code.toInt())
+    private val connectionToTvValue: StateFlow<ConnectionToTvValue> =
+        tvCodeOnSmartphone.flatMapLatest { code ->
+            if (code.isNotEmpty()) tvRepository.connectToTv(code.toInt())
             else {
-                leanbackRepository.disconnectToLeanback()
-                flowOf(ConnectionToLeanbackValue.Idle())
+                tvRepository.disconnectToTv()
+                flowOf(ConnectionToTvValue.Idle())
             }
         }
             .flowOn(ioDispatcher)
             .stateIn(
                 scope = viewModelScope,
-                initialValue = ConnectionToLeanbackValue.Idle(),
+                initialValue = ConnectionToTvValue.Idle(),
                 started = SharingStarted.WhileSubscribed(5_000)
             )
 
     internal val remoteControlSheetValue: StateFlow<RemoteControlSheetValue> = combine(
-        leanbackRepository.connected,
+        tvRepository.connected,
         snapshotFlow { code },
-        connectionToLeanbackValue
-    ) { leanback, code, connection ->
+        connectionToTvValue
+    ) { tvInfo, code, connection ->
         when {
-            leanback == null -> {
+            tvInfo == null -> {
                 RemoteControlSheetValue.Prepare(
                     code = code,
                     searchingOrConnecting = with(connection) {
-                        this is ConnectionToLeanbackValue.Searching ||
-                                this is ConnectionToLeanbackValue.Connecting
+                        this is ConnectionToTvValue.Searching ||
+                                this is ConnectionToTvValue.Connecting
                     }
                 )
             }
 
-            leanback.version != publisher.versionCode -> {
+            tvInfo.version != publisher.versionCode -> {
                 this.code = ""
-//                val query = UpdateKey(leanback.version, leanback.abi)
+//                val query = UpdateKey(tvInfo.version, tvInfo.abi)
 //                val state = states[query] ?: UpdateState.Idle
 //                RemoteControlSheetValue.Update(
-//                    leanback = leanback,
+//                    tvInfo = tvInfo,
 //                    state = state
 //                )
                 RemoteControlSheetValue.Prepare(
                     code = code,
                     searchingOrConnecting = with(connection) {
-                        this is ConnectionToLeanbackValue.Searching ||
-                                this is ConnectionToLeanbackValue.Connecting
+                        this is ConnectionToTvValue.Searching ||
+                                this is ConnectionToTvValue.Connecting
                     }
                 )
             }
@@ -115,7 +115,7 @@ class AppViewModel @Inject constructor(
             else -> {
                 this.code = ""
                 RemoteControlSheetValue.DPad(
-                    leanback = leanback,
+                    tvInfo = tvInfo,
                 )
             }
         }
@@ -126,31 +126,31 @@ class AppViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5_000L)
         )
 
-    private var checkLeanbackCodeOnSmartphoneJob: Job? = null
+    private var checkTvCodeOnSmartphoneJob: Job? = null
 
-    internal fun checkLeanbackCodeOnSmartphone() {
+    internal fun checkTvCodeOnSmartphone() {
         viewModelScope.launch {
-            leanbackCodeOnSmartphone.emit(code)
+            tvCodeOnSmartphone.emit(code)
         }
-        checkLeanbackCodeOnSmartphoneJob?.cancel()
-        checkLeanbackCodeOnSmartphoneJob = snapshotFlow { preferences.remoteControl }
+        checkTvCodeOnSmartphoneJob?.cancel()
+        checkTvCodeOnSmartphoneJob = snapshotFlow { preferences.remoteControl }
             .onEach { remoteControl ->
                 if (!remoteControl) {
-                    forgetLeanbackCodeOnSmartphone()
+                    forgetTvCodeOnSmartphone()
                 }
             }
             .launchIn(viewModelScope)
     }
 
-    internal fun forgetLeanbackCodeOnSmartphone() {
+    internal fun forgetTvCodeOnSmartphone() {
         viewModelScope.launch {
-            leanbackCodeOnSmartphone.emit("")
+            tvCodeOnSmartphone.emit("")
         }
     }
 
     internal fun onRemoteDirection(remoteDirection: RemoteDirection) {
         viewModelScope.launch {
-            leanbackApi.remoteDirection(remoteDirection.value)
+            tvApi.remoteDirection(remoteDirection.value)
         }
     }
 

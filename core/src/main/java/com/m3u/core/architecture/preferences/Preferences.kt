@@ -112,6 +112,8 @@ class Preferences @Inject constructor(
     sharedPreferences.booleanAsState(DEFAULT_RANDOMLY_IN_FAVOURITE, RANDOMLY_IN_FAVOURITE)
     var colorfulBackground by
     sharedPreferences.booleanAsState(DEFAULT_COLORFUL_BACKGROUND, COLORFUL_BACKGROUND)
+    var compactDimension by
+    sharedPreferences.booleanAsState(DEFAULT_COMPACT_DIMENSION, COMPACT_DIMENSION)
 
 
     companion object {
@@ -156,6 +158,7 @@ class Preferences @Inject constructor(
 
         const val DEFAULT_12_H_CLOCK_MODE = false
         const val DEFAULT_COLORFUL_BACKGROUND = false
+        const val DEFAULT_COMPACT_DIMENSION = false
 
         const val PLAYLIST_STRATEGY = "playlist-strategy"
         const val ROW_COUNT = "rowCount"
@@ -190,5 +193,6 @@ class Preferences @Inject constructor(
         const val RANDOMLY_IN_FAVOURITE = "randomly-in-favourite"
 
         const val COLORFUL_BACKGROUND = "colorful-background"
+        const val COMPACT_DIMENSION = "compact-dimension"
     }
 }

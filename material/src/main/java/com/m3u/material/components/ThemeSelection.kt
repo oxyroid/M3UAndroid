@@ -48,7 +48,7 @@ import com.m3u.material.LocalM3UHapticFeedback
 import com.m3u.material.ktx.InteractionType
 import com.m3u.material.ktx.createScheme
 import com.m3u.material.ktx.interactionBorder
-import com.m3u.material.ktx.leanback
+import com.m3u.material.ktx.tv
 import com.m3u.material.model.LocalSpacing
 import com.m3u.material.model.SugarColors
 import androidx.tv.material3.Card as TvCard
@@ -68,7 +68,7 @@ fun ThemeSelection(
     modifier: Modifier = Modifier,
 ) {
     val spacing = LocalSpacing.current
-    val leanback = leanback()
+    val tv = tv()
 
     val colorScheme = remember(argb, isDark) {
         createScheme(argb, isDark)
@@ -144,7 +144,7 @@ fun ThemeSelection(
     Box(
         contentAlignment = Alignment.Center
     ) {
-        if (!leanback) {
+        if (!tv) {
             val zoom by animateFloatAsState(
                 targetValue = if (selected) 0.95f else 0.85f,
                 label = "zoom"

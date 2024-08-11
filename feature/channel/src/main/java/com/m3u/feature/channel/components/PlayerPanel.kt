@@ -76,7 +76,7 @@ import com.m3u.material.effects.BackStackEntry
 import com.m3u.material.effects.BackStackHandler
 import com.m3u.material.ktx.Edge
 import com.m3u.material.ktx.blurEdges
-import com.m3u.material.ktx.leanback
+import com.m3u.material.ktx.tv
 import com.m3u.material.ktx.thenIf
 import com.m3u.material.model.LocalSpacing
 import com.m3u.material.shape.AbsoluteSmoothCornerShape
@@ -355,7 +355,7 @@ private fun ChannelGallery(
 ) {
     val spacing = LocalSpacing.current
     val lazyListState = rememberLazyListState()
-    val leanback = leanback()
+    val tv = tv()
 
     ScrollToCurrentEffect(
         value = value,
@@ -402,7 +402,7 @@ private fun ChannelGallery(
             contentPadding = PaddingValues(spacing.medium),
             modifier = modifier
                 .fillMaxWidth()
-                .thenIf(leanback) {
+                .thenIf(tv) {
                     Modifier.onKeyEvent {
                         when (it.nativeKeyEvent.keyCode) {
                             KeyEvent.KEYCODE_DPAD_LEFT, KeyEvent.KEYCODE_DPAD_RIGHT -> {
@@ -441,9 +441,9 @@ private fun ChannelGalleryItem(
     val spacing = LocalSpacing.current
     val helper = LocalHelper.current
     val coroutineScope = rememberCoroutineScope()
-    val leanback = leanback()
+    val tv = tv()
 
-    if (!leanback) {
+    if (!tv) {
         Card(
             colors = CardDefaults.cardColors(
                 containerColor = if (!isPlaying)

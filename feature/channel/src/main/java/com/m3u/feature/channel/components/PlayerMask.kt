@@ -15,7 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import com.m3u.material.components.mask.Mask
 import com.m3u.material.components.mask.MaskState
-import com.m3u.material.ktx.leanback
+import com.m3u.material.ktx.tv
 import com.m3u.material.model.LocalSpacing
 
 @Composable
@@ -28,7 +28,7 @@ internal fun PlayerMask(
     slider: (@Composable () -> Unit)? = null
 ) {
     val spacing = LocalSpacing.current
-    val leanback = leanback()
+    val tv = tv()
     Mask(
         state = state,
         color = Color.Black.copy(alpha = 0.54f),
@@ -36,8 +36,8 @@ internal fun PlayerMask(
         modifier = modifier
             .then(
                 Modifier.padding(
-                    top = if (leanback) spacing.medium else spacing.small,
-                    bottom = if (!leanback) spacing.medium else spacing.small
+                    top = if (tv) spacing.medium else spacing.small,
+                    bottom = if (!tv) spacing.medium else spacing.small
                 )
             )
             .padding(WindowInsets.statusBars.asPaddingValues())
@@ -48,7 +48,7 @@ internal fun PlayerMask(
                     .fillMaxWidth()
                     .padding(horizontal = spacing.medium),
                 horizontalArrangement = Arrangement.spacedBy(
-                    if (!leanback) spacing.none else spacing.medium,
+                    if (!tv) spacing.none else spacing.medium,
                     Alignment.End
                 ),
                 verticalAlignment = Alignment.Top,
@@ -67,8 +67,7 @@ internal fun PlayerMask(
                 modifier = Modifier.padding(horizontal = spacing.medium)
             ) {
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(spacing.medium),
                     verticalAlignment = Alignment.Bottom,
                     content = footer

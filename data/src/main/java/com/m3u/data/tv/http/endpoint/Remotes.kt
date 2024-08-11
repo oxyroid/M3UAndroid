@@ -1,9 +1,9 @@
-package com.m3u.data.leanback.http.endpoint
+package com.m3u.data.tv.http.endpoint
 
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.sandBox
 import com.m3u.data.service.DPadReactionService
-import com.m3u.data.leanback.model.RemoteDirection
+import com.m3u.data.tv.model.RemoteDirection
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.post

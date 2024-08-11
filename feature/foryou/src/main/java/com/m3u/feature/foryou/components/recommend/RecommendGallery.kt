@@ -23,7 +23,7 @@ import com.m3u.core.wrapper.eventOf
 import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.Playlist
 import com.m3u.material.components.HorizontalPagerIndicator
-import com.m3u.material.ktx.leanback
+import com.m3u.material.ktx.tv
 import com.m3u.material.ktx.pageOffset
 import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.Events
@@ -40,7 +40,7 @@ internal fun RecommendGallery(
     val spacing = LocalSpacing.current
     val uriHandler = LocalUriHandler.current
 
-    val leanback = leanback()
+    val tv = tv()
 
     val onClick = { spec: Recommend.Spec ->
         when (spec) {
@@ -59,7 +59,7 @@ internal fun RecommendGallery(
         }
     }
 
-    if (!leanback) {
+    if (!tv) {
         val state = rememberPagerState { specs.size }
         Column(
             modifier = modifier,

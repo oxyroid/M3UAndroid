@@ -43,7 +43,7 @@ import com.m3u.core.architecture.preferences.hiltPreferences
 import com.m3u.core.util.basic.title
 import com.m3u.i18n.R.string
 import com.m3u.material.brush.RecommendCardContainerBrush
-import com.m3u.material.ktx.leanback
+import com.m3u.material.ktx.tv
 import com.m3u.material.model.LocalSpacing
 import com.m3u.material.shape.AbsoluteSmoothCornerShape
 import com.m3u.ui.FontFamilies
@@ -80,8 +80,8 @@ private fun RecommendItemLayout(
     content: @Composable () -> Unit
 ) {
     val spacing = LocalSpacing.current
-    val leanback = leanback()
-    if (!leanback) {
+    val tv = tv()
+    if (!tv) {
         Card(
             shape = AbsoluteSmoothCornerShape(spacing.medium, 65),
             border = BorderStroke(1.dp, MaterialTheme.colorScheme.onSurfaceVariant),

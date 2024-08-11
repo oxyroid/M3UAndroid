@@ -34,7 +34,7 @@ import com.m3u.core.wrapper.Resource
 import com.m3u.data.database.model.Channel
 import com.m3u.i18n.R.string
 import com.m3u.material.components.VerticalDraggableScrollbar
-import com.m3u.material.ktx.leanback
+import com.m3u.material.ktx.tv
 import com.m3u.material.ktx.plus
 import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.createPremiumBrush
@@ -123,9 +123,9 @@ private fun RandomTips(
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
-    val leanback = leanback()
+    val tv = tv()
     val title = stringResource(string.feat_favorite_play_randomly)
-    if (!leanback) {
+    if (!tv) {
         ListItem(
             headlineContent = {
                 Text(

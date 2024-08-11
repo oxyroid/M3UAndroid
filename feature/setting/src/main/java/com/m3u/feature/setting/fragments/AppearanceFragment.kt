@@ -17,6 +17,7 @@ import androidx.compose.material.icons.rounded.ColorLens
 import androidx.compose.material.icons.rounded.DarkMode
 import androidx.compose.material.icons.rounded.DeviceHub
 import androidx.compose.material.icons.rounded.FitScreen
+import androidx.compose.material.icons.rounded.FormatSize
 import androidx.compose.material.icons.rounded.HideImage
 import androidx.compose.material.icons.rounded.Restore
 import androidx.compose.material.icons.rounded.Stars
@@ -38,7 +39,7 @@ import com.m3u.material.components.Preference
 import com.m3u.material.components.TextPreference
 import com.m3u.material.components.ThemeAddSelection
 import com.m3u.material.components.ThemeSelection
-import com.m3u.material.ktx.leanback
+import com.m3u.material.ktx.tv
 import com.m3u.material.ktx.minus
 import com.m3u.material.ktx.only
 import com.m3u.material.ktx.plus
@@ -59,7 +60,7 @@ internal fun AppearanceFragment(
 
     val isDarkMode = preferences.darkMode
     val useDynamicColors = preferences.useDynamicColors
-    val leanback = leanback()
+    val tv = tv()
 
     Column(
         modifier = modifier
@@ -145,6 +146,14 @@ internal fun AppearanceFragment(
             }
             item {
                 SwitchSharedPreference(
+                    title = string.feat_setting_compact_dimension,
+                    icon = Icons.Rounded.FormatSize,
+                    checked = preferences.compactDimension,
+                    onChanged = { preferences.compactDimension = !preferences.compactDimension }
+                )
+            }
+            item {
+                SwitchSharedPreference(
                     title = string.feat_setting_no_picture_mode,
                     content = string.feat_setting_no_picture_mode_description,
                     icon = Icons.Rounded.HideImage,
@@ -172,7 +181,7 @@ internal fun AppearanceFragment(
                     enabled = useDynamicColorsAvailable
                 )
             }
-            if (!leanback) {
+            if (!tv) {
                 item {
                     SwitchSharedPreference(
                         title = string.feat_setting_colorful_background,
@@ -192,7 +201,7 @@ internal fun AppearanceFragment(
                 )
             }
             item {
-                if (!leanback) {
+                if (!tv) {
                     SwitchSharedPreference(
                         title = string.feat_setting_god_mode,
                         content = string.feat_setting_god_mode_description,

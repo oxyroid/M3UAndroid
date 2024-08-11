@@ -6,7 +6,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.graphics.vector.ImageVector
-import com.m3u.material.ktx.leanback
+import com.m3u.material.ktx.tv
 
 @Composable
 fun Icon(
@@ -15,8 +15,8 @@ fun Icon(
     modifier: Modifier = Modifier,
     tint: Color = Color.Unspecified
 ) {
-    val leanback = leanback()
-    if (!leanback) {
+    val tv = tv()
+    if (!tv) {
         androidx.compose.material3.Icon(
             imageVector = imageVector,
             contentDescription = contentDescription,

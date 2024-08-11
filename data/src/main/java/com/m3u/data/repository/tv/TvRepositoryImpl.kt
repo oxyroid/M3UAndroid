@@ -1,4 +1,4 @@
-package com.m3u.data.repository.leanback
+package com.m3u.data.repository.tv
 
 import android.net.nsd.NsdServiceInfo
 import androidx.compose.runtime.snapshotFlow
@@ -12,11 +12,11 @@ import com.m3u.core.architecture.preferences.Preferences
 import com.m3u.core.util.coroutine.timeout
 import com.m3u.core.wrapper.Resource
 import com.m3u.core.wrapper.asResource
-import com.m3u.data.api.LeanbackApiDelegate
-import com.m3u.data.leanback.Utils
-import com.m3u.data.leanback.http.HttpServer
-import com.m3u.data.leanback.model.Leanback
-import com.m3u.data.leanback.nsd.NsdDeviceManager
+import com.m3u.data.api.TvApiDelegate
+import com.m3u.data.tv.Utils
+import com.m3u.data.tv.http.HttpServer
+import com.m3u.data.tv.model.TvInfo
+import com.m3u.data.tv.nsd.NsdDeviceManager
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -39,41 +39,41 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 import kotlin.time.Duration
 
-class LeanbackRepositoryImpl @Inject constructor(
+class TvRepositoryImpl @Inject constructor(
     private val nsdDeviceManager: NsdDeviceManager,
     private val httpServer: HttpServer,
-    private val leanbackApi: LeanbackApiDelegate,
+    private val tvApi: TvApiDelegate,
     logger: Logger,
     preferences: Preferences,
     publisher: Publisher,
     @Dispatcher(IO) ioDispatcher: CoroutineDispatcher
-) : LeanbackRepository() {
+) : TvRepository() {
     private val logger = logger.install(Profiles.REPOS_LEANBACK)
-    private val leanback = publisher.leanback
+    private val tv = publisher.tv
     private val coroutineScope = CoroutineScope(ioDispatcher)
 
     init {
         snapshotFlow { preferences.remoteControl }
             .onEach { remoteControl ->
                 when {
-                    !remoteControl -> closeBroadcastOnLeanback()
-                    leanback -> broadcastOnLeanback()
-                    else -> closeBroadcastOnLeanback()
+                    !remoteControl -> closeBroadcastOnTv()
+                    tv -> broadcastOnTv()
+                    else -> closeBroadcastOnTv()
                 }
             }
             .launchIn(coroutineScope)
     }
 
-    private val _broadcastCodeOnLeanback = MutableStateFlow<Int?>(null)
-    override val broadcastCodeOnLeanback = _broadcastCodeOnLeanback.asStateFlow()
+    private val _broadcastCodeOnTv = MutableStateFlow<Int?>(null)
+    override val broadcastCodeOnTv = _broadcastCodeOnTv.asStateFlow()
 
-    private var broadcastOnLeanbackJob: Job? = null
+    private var broadcastOnTvJob: Job? = null
 
-    override fun broadcastOnLeanback() {
+    override fun broadcastOnTv() {
         val serverPort = Utils.findPort()
-        closeBroadcastOnLeanback()
+        closeBroadcastOnTv()
         httpServer.start(serverPort)
-        broadcastOnLeanbackJob = coroutineScope.launch {
+        broadcastOnTvJob = coroutineScope.launch {
             while (isActive) {
                 val nsdPort = Utils.findPort()
                 val pin = Utils.createPin()
@@ -94,39 +94,39 @@ class LeanbackRepositoryImpl @Inject constructor(
                         logger.log("start-server: opening...")
                     }
                     .onCompletion {
-                        _broadcastCodeOnLeanback.value = null
+                        _broadcastCodeOnTv.value = null
                         logger.log("start-server: nsd completed")
                     }
                     .onEach { registered ->
                         logger.log("start-server: registered: $registered")
-                        _broadcastCodeOnLeanback.value = if (registered != null) pin else null
+                        _broadcastCodeOnTv.value = if (registered != null) pin else null
                     }
                     .collect()
             }
         }
     }
 
-    override fun closeBroadcastOnLeanback() {
+    override fun closeBroadcastOnTv() {
         httpServer.stop()
-        broadcastOnLeanbackJob?.cancel()
-        broadcastOnLeanbackJob = null
+        broadcastOnTvJob?.cancel()
+        broadcastOnTvJob = null
     }
 
-    private val _connected = MutableStateFlow<Leanback?>(null)
-    override val connected: StateFlow<Leanback?> = _connected.asStateFlow()
+    private val _connected = MutableStateFlow<TvInfo?>(null)
+    override val connected: StateFlow<TvInfo?> = _connected.asStateFlow()
 
-    private var connectToLeanbackJob: Job? = null
+    private var connectToTvJob: Job? = null
 
-    override fun connectToLeanback(
+    override fun connectToTv(
         broadcastCode: Int,
         timeout: Duration
-    ): Flow<ConnectionToLeanbackValue> = channelFlow {
+    ): Flow<ConnectionToTvValue> = channelFlow {
         val completed = nsdDeviceManager
             .search()
-            .onStart { trySendBlocking(ConnectionToLeanbackValue.Searching) }
+            .onStart { trySendBlocking(ConnectionToTvValue.Searching) }
             .timeout(timeout) {
                 logger.log("pair: timeout")
-                trySendBlocking(ConnectionToLeanbackValue.Timeout)
+                trySendBlocking(ConnectionToTvValue.Timeout)
             }
             .mapNotNull { all ->
                 logger.log("pair: all devices: $all")
@@ -141,14 +141,14 @@ class LeanbackRepositoryImpl @Inject constructor(
                     .getAttribute(NsdDeviceManager.META_DATA_HOST)
                     ?: return@mapNotNull null
 
-                ConnectionToLeanbackValue.Completed(host, port)
+                ConnectionToTvValue.Completed(host, port)
             }
             .firstOrNull()
 
         if (completed != null) {
-            trySendBlocking(ConnectionToLeanbackValue.Connecting)
-            connectToLeanbackJob?.cancel()
-            connectToLeanbackJob = leanbackApi
+            trySendBlocking(ConnectionToTvValue.Connecting)
+            connectToTvJob?.cancel()
+            connectToTvJob = tvApi
                 .prepare(completed.host, completed.port)
                 .asResource()
                 .onEach { resource ->
@@ -166,20 +166,20 @@ class LeanbackRepositoryImpl @Inject constructor(
                         is Resource.Failure -> {
                             logger.log("pair: catch an error, ${resource.message}")
                             _connected.value = null
-                            trySendBlocking(ConnectionToLeanbackValue.Idle(resource.message))
+                            trySendBlocking(ConnectionToTvValue.Idle(resource.message))
                         }
                     }
                 }
                 .launchIn(coroutineScope)
         }
         awaitClose {
-            trySendBlocking(ConnectionToLeanbackValue.Idle())
+            trySendBlocking(ConnectionToTvValue.Idle())
         }
     }
 
-    override suspend fun disconnectToLeanback() {
-        connectToLeanbackJob?.cancel()
-        connectToLeanbackJob = null
+    override suspend fun disconnectToTv() {
+        connectToTvJob?.cancel()
+        connectToTvJob = null
         _connected.value = null
     }
 

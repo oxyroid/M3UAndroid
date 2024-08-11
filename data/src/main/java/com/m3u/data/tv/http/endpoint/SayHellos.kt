@@ -1,11 +1,11 @@
-package com.m3u.data.leanback.http.endpoint
+package com.m3u.data.tv.http.endpoint
 
 import com.m3u.core.architecture.Publisher
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.sandBox
 import com.m3u.core.wrapper.Message
 import com.m3u.data.repository.media.MediaRepository
-import com.m3u.data.leanback.model.Leanback
+import com.m3u.data.tv.model.TvInfo
 import io.ktor.server.request.receiveChannel
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
@@ -27,7 +27,7 @@ data class SayHellos @Inject constructor(
     private val mediaRepository: MediaRepository
 ) : Endpoint {
     private val info = with(publisher) {
-        Leanback(
+        TvInfo(
             model = model,
             version = versionCode,
             snapshot = snapshot,

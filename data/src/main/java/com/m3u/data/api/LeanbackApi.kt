@@ -4,8 +4,8 @@ import com.m3u.core.architecture.Publisher
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.execute
 import com.m3u.data.database.model.DataSource
-import com.m3u.data.leanback.http.endpoint.DefRep
-import com.m3u.data.leanback.model.Leanback
+import com.m3u.data.tv.http.endpoint.DefRep
+import com.m3u.data.tv.model.TvInfo
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.channels.trySendBlocking
@@ -26,9 +26,9 @@ import retrofit2.http.Query
 import javax.inject.Inject
 import javax.inject.Singleton
 
-interface LeanbackApi {
+interface TvApi {
     @GET("/say_hello")
-    suspend fun sayHello(): Leanback?
+    suspend fun sayHello(): TvInfo?
 
     @POST("/playlists/subscribe")
     suspend fun subscribe(
@@ -46,13 +46,13 @@ interface LeanbackApi {
 }
 
 @Singleton
-class LeanbackApiDelegate @Inject constructor(
+class TvApiDelegate @Inject constructor(
     private val builder: Retrofit.Builder,
     @OkhttpClient(true) private val okHttpClient: OkHttpClient,
     @Logger.MessageImpl private val logger: Logger,
     private val publisher: Publisher,
-): LeanbackApi {
-    fun prepare(host: String, port: Int): Flow<Leanback> = callbackFlow {
+): TvApi {
+    fun prepare(host: String, port: Int): Flow<TvInfo> = callbackFlow {
         val json = Json {
             ignoreUnknownKeys = true
         }
@@ -79,7 +79,7 @@ class LeanbackApiDelegate @Inject constructor(
         val listener = object : WebSocketListener() {
             override fun onMessage(webSocket: WebSocket, text: String) {
                 try {
-                    val info = json.decodeFromString<Leanback?>(text) ?: return
+                    val info = json.decodeFromString<TvInfo?>(text) ?: return
                     trySendBlocking(info)
                 } catch (e: IllegalStateException) {
                     logger.log(e.message.orEmpty())
@@ -104,7 +104,7 @@ class LeanbackApiDelegate @Inject constructor(
         api = null
     }
 
-    override suspend fun sayHello(): Leanback? = logger.execute {
+    override suspend fun sayHello(): TvInfo? = logger.execute {
         requireApi().sayHello()
     }
 
@@ -124,11 +124,11 @@ class LeanbackApiDelegate @Inject constructor(
         requireApi().remoteDirection(remoteDirectionValue)
     }
 
-    private var api: LeanbackApi? = null
-    private fun requireApi(): LeanbackApi =
-        checkNotNull(api) { "You haven't connected leanback" }
+    private var api: TvApi? = null
+    private fun requireApi(): TvApi =
+        checkNotNull(api) { "You haven't connected tv" }
 
-    private fun checkCompatibleInfoOrThrow(info: Leanback): Leanback {
+    private fun checkCompatibleInfoOrThrow(info: TvInfo): TvInfo {
         check(info.version == publisher.versionCode) {
             "The software version is incompatible, Please make sure the version is consistent"
         }

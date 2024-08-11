@@ -33,9 +33,9 @@ import androidx.navigation.navOptions
 import com.m3u.androidApp.ui.sheet.RemoteControlSheet
 import com.m3u.androidApp.ui.sheet.RemoteControlSheetValue
 import com.m3u.core.architecture.preferences.hiltPreferences
-import com.m3u.data.leanback.model.RemoteDirection
+import com.m3u.data.tv.model.RemoteDirection
 import com.m3u.material.components.Icon
-import com.m3u.material.ktx.leanback
+import com.m3u.material.ktx.tv
 import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.Destination
 import com.m3u.ui.FontFamilies
@@ -65,8 +65,8 @@ fun App(
         onBackPressedDispatcher.onBackPressed()
     }
 
-    // for leanbacks
-    val broadcastCodeOnLeanback by viewModel.broadcastCodeOnLeanback.collectAsStateWithLifecycle()
+    // for tvs
+    val broadcastCodeOnTv by viewModel.broadcastCodeOnTv.collectAsStateWithLifecycle()
 
     // for smartphones
     val remoteControlSheetValue by viewModel.remoteControlSheetValue.collectAsStateWithLifecycle()
@@ -74,9 +74,9 @@ fun App(
     AppImpl(
         navController = navController,
         onBackPressed = onBackPressed.takeUnless { shouldDispatchBackStack },
-        checkLeanbackCodeOnSmartphone = viewModel::checkLeanbackCodeOnSmartphone,
-        forgetLeanbackCodeOnSmartphone = viewModel::forgetLeanbackCodeOnSmartphone,
-        broadcastCodeOnLeanback = broadcastCodeOnLeanback,
+        checkTvCodeOnSmartphone = viewModel::checkTvCodeOnSmartphone,
+        forgetTvCodeOnSmartphone = viewModel::forgetTvCodeOnSmartphone,
+        broadcastCodeOnTv = broadcastCodeOnTv,
         isRemoteControlSheetVisible = viewModel.isConnectSheetVisible,
         remoteControlSheetValue = remoteControlSheetValue,
         onRemoteDirection = viewModel::onRemoteDirection,
@@ -95,12 +95,12 @@ private fun AppImpl(
     navController: NavHostController,
     isRemoteControlSheetVisible: Boolean,
     remoteControlSheetValue: RemoteControlSheetValue,
-    broadcastCodeOnLeanback: String?,
+    broadcastCodeOnTv: String?,
     onBackPressed: (() -> Unit)?,
     openRemoteControlSheet: () -> Unit,
     onCode: (String) -> Unit,
-    checkLeanbackCodeOnSmartphone: () -> Unit,
-    forgetLeanbackCodeOnSmartphone: () -> Unit,
+    checkTvCodeOnSmartphone: () -> Unit,
+    forgetTvCodeOnSmartphone: () -> Unit,
     onRemoteDirection: (RemoteDirection) -> Unit,
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier
@@ -108,7 +108,7 @@ private fun AppImpl(
     val spacing = LocalSpacing.current
     val preferences = hiltPreferences()
 
-    val leanback = leanback()
+    val tv = tv()
 
     val entry by navController.currentBackStackEntryAsState()
 
@@ -147,7 +147,7 @@ private fun AppImpl(
         ) {
             SnackHost(Modifier.weight(1f))
             AnimatedVisibility(
-                visible = !leanback && preferences.remoteControl,
+                visible = !tv && preferences.remoteControl,
                 enter = scaleIn(initialScale = 0.65f) + fadeIn(),
                 exit = scaleOut(targetScale = 0.65f) + fadeOut(),
             ) {
@@ -172,15 +172,15 @@ private fun AppImpl(
             value = remoteControlSheetValue,
             visible = isRemoteControlSheetVisible,
             onCode = onCode,
-            checkLeanbackCodeOnSmartphone = checkLeanbackCodeOnSmartphone,
-            forgetLeanbackCodeOnSmartphone = forgetLeanbackCodeOnSmartphone,
+            checkTvCodeOnSmartphone = checkTvCodeOnSmartphone,
+            forgetTvCodeOnSmartphone = forgetTvCodeOnSmartphone,
             onRemoteDirection = onRemoteDirection,
             onDismissRequest = onDismissRequest
         )
 
         Crossfade(
-            targetState = broadcastCodeOnLeanback,
-            label = "broadcast-code-on-leanback",
+            targetState = broadcastCodeOnTv,
+            label = "broadcast-code-on-tv",
             modifier = Modifier
                 .padding(spacing.medium)
                 .align(Alignment.BottomEnd)

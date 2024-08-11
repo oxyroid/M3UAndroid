@@ -38,7 +38,7 @@ import com.m3u.feature.playlist.components.TvChannelGallery
 import com.m3u.i18n.R
 import com.m3u.material.components.Background
 import com.m3u.material.components.Icon
-import com.m3u.material.components.leanback.dialogFocusable
+import com.m3u.material.components.tv.dialogFocusable
 import com.m3u.material.ktx.Edge
 import com.m3u.material.ktx.blurEdge
 import com.m3u.material.model.LocalHazeState

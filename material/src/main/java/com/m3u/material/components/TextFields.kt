@@ -61,7 +61,7 @@ import androidx.tv.material3.LocalContentColor
 import androidx.tv.material3.Surface
 import com.m3u.material.ktx.InteractionType
 import com.m3u.material.ktx.interactionBorder
-import com.m3u.material.ktx.leanback
+import com.m3u.material.ktx.tv
 import androidx.tv.material3.MaterialTheme as TvMaterialTheme
 import androidx.tv.material3.Text as TvText
 
@@ -185,7 +185,7 @@ fun PlaceholderField(
     icon: ImageVector? = null,
     onValueChange: (String) -> Unit = {},
 ) {
-    if (!leanback()) {
+    if (!tv()) {
         val focusManager = LocalFocusManager.current
         val interactionSource = remember { MutableInteractionSource() }
         val focus by interactionSource.collectIsFocusedAsState()

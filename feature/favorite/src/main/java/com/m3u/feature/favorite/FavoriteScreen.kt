@@ -33,7 +33,7 @@ import com.m3u.data.service.MediaCommand
 import com.m3u.feature.favorite.components.FavouriteGallery
 import com.m3u.i18n.R
 import com.m3u.material.ktx.interceptVolumeEvent
-import com.m3u.material.ktx.leanback
+import com.m3u.material.ktx.tv
 import com.m3u.material.ktx.thenIf
 import com.m3u.material.model.LocalHazeState
 import com.m3u.ui.EpisodesBottomSheet
@@ -56,7 +56,7 @@ fun FavouriteRoute(
     modifier: Modifier = Modifier,
     viewModel: FavouriteViewModel = hiltViewModel()
 ) {
-    val leanback = leanback()
+    val tv = tv()
 
     val title = stringResource(R.string.ui_title_favourite)
 
@@ -125,7 +125,7 @@ fun FavouriteRoute(
         },
         modifier = Modifier
             .fillMaxSize()
-            .thenIf(!leanback && preferences.godMode) {
+            .thenIf(!tv && preferences.godMode) {
                 Modifier.interceptVolumeEvent { event ->
                     preferences.rowCount = when (event) {
                         KeyEvent.KEYCODE_VOLUME_UP ->
@@ -159,7 +159,7 @@ fun FavouriteRoute(
         onRefresh = { series?.let { viewModel.seriesReplay.value += 1 } },
         onDismissRequest = { viewModel.series.value = null }
     )
-    if (!leanback) {
+    if (!tv) {
         SortBottomSheet(
             visible = isSortSheetVisible,
             sort = sort,

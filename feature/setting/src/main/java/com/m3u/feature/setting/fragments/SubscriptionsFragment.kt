@@ -50,7 +50,7 @@ import com.m3u.material.components.Icon
 import com.m3u.material.components.PlaceholderField
 import com.m3u.material.components.TonalButton
 import com.m3u.material.ktx.checkPermissionOrRationale
-import com.m3u.material.ktx.leanback
+import com.m3u.material.ktx.tv
 import com.m3u.material.ktx.textHorizontalLabel
 import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.helper.LocalHelper
@@ -172,7 +172,7 @@ private fun MainContentImpl(
     val clipboardManager = LocalClipboardManager.current
     val helper = LocalHelper.current
 
-    val leanback = leanback()
+    val tv = tv()
     val remoteControl = preferences.remoteControl
 
     LazyColumn(
@@ -233,7 +233,7 @@ private fun MainContentImpl(
                     enabled = !forTvState.value
                 )
             }
-            if (!leanback && remoteControl) {
+            if (!tv && remoteControl) {
                 RemoteControlSubscribeSwitch(
                     checked = forTvState.value,
                     onChanged = { forTvState.value = !forTvState.value },

@@ -1,4 +1,4 @@
-package com.m3u.data.leanback
+package com.m3u.data.tv
 
 import java.net.InetAddress
 import java.net.NetworkInterface

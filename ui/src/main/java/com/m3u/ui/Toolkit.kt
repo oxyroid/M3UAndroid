@@ -11,15 +11,18 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalView
 import com.m3u.core.architecture.preferences.hiltPreferences
-import com.m3u.data.leanback.model.RemoteDirection
-import com.m3u.data.leanback.model.keyCode
+import com.m3u.data.tv.model.RemoteDirection
+import com.m3u.data.tv.model.keyCode
 import com.m3u.material.LocalM3UHapticFeedback
 import com.m3u.material.createM3UHapticFeedback
+import com.m3u.material.model.LocalSpacing
+import com.m3u.material.model.Spacing
 import com.m3u.material.model.Theme
 import com.m3u.ui.helper.Helper
 import com.m3u.ui.helper.LocalHelper
 import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.milliseconds
+import androidx.compose.material3.Typography as Material3Typography
 
 @Composable
 fun Toolkit(
@@ -33,7 +36,7 @@ fun Toolkit(
     val onBackPressedDispatcher =
         checkNotNull(LocalOnBackPressedDispatcherOwner.current).onBackPressedDispatcher
     val prevTypography = MaterialTheme.typography
-    val smartphoneTypography: androidx.compose.material3.Typography = remember(prevTypography) {
+    val smartphoneTypography: Material3Typography = remember(prevTypography) {
         prevTypography.withFontFamily(FontFamilies.GoogleSans)
     }
     val useDarkTheme = when {
@@ -63,9 +66,13 @@ fun Toolkit(
         }
     }
 
+    val spacing = if (preferences.compactDimension) Spacing.COMPACT
+    else Spacing.REGULAR
+
     CompositionLocalProvider(
         LocalHelper provides helper,
-        LocalM3UHapticFeedback provides createM3UHapticFeedback()
+        LocalM3UHapticFeedback provides createM3UHapticFeedback(),
+        LocalSpacing provides spacing
     ) {
         Theme(
             argb = preferences.argb,

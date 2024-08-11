@@ -38,7 +38,7 @@ import com.m3u.feature.setting.components.SwitchSharedPreference
 import com.m3u.i18n.R.string
 import com.m3u.material.components.TextPreference
 import com.m3u.material.ktx.includeChildGlowPadding
-import com.m3u.material.ktx.leanback
+import com.m3u.material.ktx.tv
 import com.m3u.material.ktx.plus
 import com.m3u.material.model.LocalSpacing
 import kotlin.time.DurationUnit
@@ -51,7 +51,7 @@ internal fun OptionalFragment(
 ) {
     val spacing = LocalSpacing.current
     val preferences = hiltPreferences()
-    val leanback = leanback()
+    val tv = tv()
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(spacing.small),
         contentPadding = contentPadding + PaddingValues(horizontal = spacing.medium),
@@ -86,7 +86,7 @@ internal fun OptionalFragment(
             )
         }
 
-        if (!leanback) {
+        if (!tv) {
             item {
                 SwitchSharedPreference(
                     title = string.feat_setting_zapping_mode,
@@ -140,7 +140,7 @@ internal fun OptionalFragment(
                 onChanged = { preferences.cache = !preferences.cache }
             )
         }
-        if (!leanback) {
+        if (!tv) {
             item {
                 SwitchSharedPreference(
                     title = string.feat_setting_screen_rotating,
@@ -261,9 +261,9 @@ internal fun OptionalFragment(
         }
         item {
             SwitchSharedPreference(
-                title = if (!leanback) string.feat_setting_remote_control
+                title = if (!tv) string.feat_setting_remote_control
                 else string.feat_setting_remote_control_tv_side,
-                content = if (!leanback) string.feat_setting_remote_control_description
+                content = if (!tv) string.feat_setting_remote_control_description
                 else string.feat_setting_remote_control_tv_side_description,
                 icon = Icons.Rounded.SettingsRemote,
                 checked = preferences.remoteControl,

@@ -1,4 +1,4 @@
-package com.m3u.data.leanback.model
+package com.m3u.data.tv.model
 
 import android.view.KeyEvent
 import androidx.compose.runtime.Immutable

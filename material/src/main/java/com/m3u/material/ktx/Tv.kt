@@ -15,7 +15,7 @@ import com.m3u.material.model.asTvTypography
 import androidx.tv.material3.MaterialTheme as TvMaterialTheme
 
 @Composable
-fun leanback(): Boolean = LocalConfiguration.current.run {
+fun tv(): Boolean = LocalConfiguration.current.run {
     val type = uiMode and Configuration.UI_MODE_TYPE_MASK
     type == Configuration.UI_MODE_TYPE_TELEVISION
 }
@@ -31,11 +31,11 @@ internal fun PlatformTheme(
     fallback: Boolean = true,
     block: @Composable () -> Unit
 ) {
-    val leanback = leanback()
+    val tv = tv()
     val car = false
     val content = @Composable {
         when {
-            leanback -> {
+            tv -> {
                 TvMaterialTheme(
                     colorScheme = remember(colorScheme) { colorScheme.asTvScheme() },
                     typography = remember(typography) { typography.asTvTypography() }
@@ -48,7 +48,7 @@ internal fun PlatformTheme(
             else -> block()
         }
     }
-    val commonPlatform = !leanback && !car
+    val commonPlatform = !tv && !car
     if (commonPlatform || fallback) {
         MaterialTheme(
             colorScheme = colorScheme,
@@ -62,6 +62,6 @@ internal fun PlatformTheme(
 }
 
 @Composable
-fun Modifier.includeChildGlowPadding(): Modifier = thenIf(leanback()) {
+fun Modifier.includeChildGlowPadding(): Modifier = thenIf(tv()) {
     Modifier.padding(LocalSpacing.current.medium)
 }

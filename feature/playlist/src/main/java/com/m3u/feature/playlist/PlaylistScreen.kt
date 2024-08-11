@@ -64,7 +64,7 @@ import com.m3u.i18n.R.string
 import com.m3u.material.ktx.checkPermissionOrRationale
 import com.m3u.material.ktx.createScheme
 import com.m3u.material.ktx.interceptVolumeEvent
-import com.m3u.material.ktx.leanback
+import com.m3u.material.ktx.tv
 import com.m3u.material.ktx.thenIf
 import com.m3u.material.model.LocalSpacing
 import com.m3u.material.model.asTvScheme
@@ -96,7 +96,7 @@ internal fun PlaylistRoute(
     val colorScheme = TvMaterialTheme.colorScheme
     val lifecycleOwner = LocalLifecycleOwner.current
 
-    val leanback = leanback()
+    val tv = tv()
 
     val zapping by viewModel.zapping.collectAsStateWithLifecycle()
     val playlistUrl by viewModel.playlistUrl.collectAsStateWithLifecycle()
@@ -247,7 +247,7 @@ internal fun PlaylistRoute(
         getProgrammeCurrently = { channelId -> viewModel.getProgrammeCurrently(channelId) },
         modifier = Modifier
             .fillMaxSize()
-            .thenIf(!leanback && preferences.godMode) {
+            .thenIf(!tv && preferences.godMode) {
                 Modifier.interceptVolumeEvent { event ->
                     preferences.rowCount = when (event) {
                         KeyEvent.KEYCODE_VOLUME_UP ->
@@ -343,8 +343,8 @@ private fun PlaylistScreen(
         onDispose { Metadata.fob = null }
     }
 
-    val leanback = leanback()
-    if (!leanback) {
+    val tv = tv()
+    if (!tv) {
         SmartphonePlaylistScreenImpl(
             categoryWithChannels = categoryWithChannels,
             pinnedCategories = pinnedCategories,
@@ -414,7 +414,7 @@ private fun UnsupportedUIModeContent(
             UI_MODE_TYPE_NORMAL -> "Normal"
             UI_MODE_TYPE_DESK -> "Desktop"
             UI_MODE_TYPE_CAR -> "Car"
-            UI_MODE_TYPE_TELEVISION -> "Leanback"
+            UI_MODE_TYPE_TELEVISION -> "Tv"
             UI_MODE_TYPE_APPLIANCE -> "Appliance"
             UI_MODE_TYPE_WATCH -> "Watch"
             UI_MODE_TYPE_VR_HEADSET -> "VR-Headset"

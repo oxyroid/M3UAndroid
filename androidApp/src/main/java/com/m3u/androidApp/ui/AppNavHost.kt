@@ -20,7 +20,7 @@ import com.m3u.feature.playlist.navigation.navigateToPlaylist
 import com.m3u.feature.playlist.navigation.playlistScreen
 import com.m3u.feature.playlist.navigation.playlistTvScreen
 import com.m3u.feature.channel.PlayerActivity
-import com.m3u.material.ktx.leanback
+import com.m3u.material.ktx.tv
 import com.m3u.ui.Destination
 import com.m3u.ui.Events
 import com.m3u.ui.SettingDestination
@@ -36,7 +36,7 @@ fun AppNavHost(
     val context = LocalContext.current
     val preferences = hiltPreferences()
 
-    val leanback = leanback()
+    val tv = tv()
 
     NavHost(
         navController = navController,
@@ -48,7 +48,7 @@ fun AppNavHost(
         rootGraph(
             contentPadding = contentPadding,
             navigateToPlaylist = { playlist ->
-                navController.navigateToPlaylist(playlist.url, leanback)
+                navController.navigateToPlaylist(playlist.url, tv)
             },
             navigateToChannel = {
                 if (preferences.zappingMode && PlayerActivity.isInPipMode) return@rootGraph

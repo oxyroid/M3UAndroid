@@ -1,4 +1,4 @@
-package com.m3u.material.components.leanback
+package com.m3u.material.components.tv
 
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.MutableTransitionState

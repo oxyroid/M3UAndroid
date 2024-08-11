@@ -45,7 +45,7 @@ import com.m3u.feature.foryou.components.recommend.Recommend
 import com.m3u.feature.foryou.components.recommend.RecommendGallery
 import com.m3u.i18n.R.string
 import com.m3u.material.ktx.interceptVolumeEvent
-import com.m3u.material.ktx.leanback
+import com.m3u.material.ktx.tv
 import com.m3u.material.ktx.thenIf
 import com.m3u.ui.EpisodesBottomSheet
 import com.m3u.ui.MediaSheet
@@ -71,7 +71,7 @@ fun ForyouRoute(
     val preferences = hiltPreferences()
     val coroutineScope = rememberCoroutineScope()
 
-    val leanback = leanback()
+    val tv = tv()
     val title = stringResource(string.ui_title_foryou)
 
     val playlistCounts by viewModel.playlistCounts.collectAsStateWithLifecycle()
@@ -127,7 +127,7 @@ fun ForyouRoute(
         onUnsubscribePlaylist = viewModel::onUnsubscribePlaylist,
         modifier = Modifier
             .fillMaxSize()
-            .thenIf(!leanback && preferences.godMode) {
+            .thenIf(!tv && preferences.godMode) {
                 Modifier.interceptVolumeEvent { event ->
                     preferences.rowCount = when (event) {
                         KeyEvent.KEYCODE_VOLUME_UP -> (preferences.rowCount - 1).coerceAtLeast(1)

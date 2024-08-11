@@ -1,4 +1,4 @@
-package com.m3u.data.leanback.http.endpoint
+package com.m3u.data.tv.http.endpoint
 
 import androidx.annotation.Keep
 import kotlinx.serialization.Serializable

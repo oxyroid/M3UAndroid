@@ -40,14 +40,14 @@ import androidx.compose.ui.unit.offset
 import androidx.compose.ui.util.fastForEach
 import androidx.compose.ui.util.fastMap
 import androidx.compose.ui.util.fastMaxOfOrNull
-import com.m3u.androidApp.ui.internal.LeanbackScaffoldImpl
+import com.m3u.androidApp.ui.internal.TvScaffoldImpl
 import com.m3u.androidApp.ui.internal.SmartphoneScaffoldImpl
 import com.m3u.androidApp.ui.internal.TabletScaffoldImpl
 import com.m3u.material.components.Background
 import com.m3u.material.components.Icon
 import com.m3u.material.components.IconButton
 import com.m3u.material.effects.currentBackStackEntry
-import com.m3u.material.ktx.leanback
+import com.m3u.material.ktx.tv
 import com.m3u.material.model.LocalHazeState
 import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.Destination
@@ -73,15 +73,15 @@ internal fun Scaffold(
     content: @Composable BoxScope.(PaddingValues) -> Unit
 ) {
     val useRailNav = LocalHelper.current.useRailNav
-    val leanback = leanback()
+    val tv = tv()
 
     val hazeState = remember { HazeState() }
 
     CompositionLocalProvider(LocalHazeState provides hazeState) {
         Background {
             when {
-                leanback -> {
-                    LeanbackScaffoldImpl(
+                tv -> {
+                    TvScaffoldImpl(
                         rootDestination = rootDestination,
                         navigateToRoot = navigateToRootDestination,
                         onBackPressed = onBackPressed,
@@ -132,7 +132,7 @@ internal fun MainContent(
     onBackPressed: (() -> Unit)?,
     content: @Composable BoxScope.(PaddingValues) -> Unit
 ) {
-    val leanback = leanback()
+    val tv = tv()
     val spacing = LocalSpacing.current
     val hazeState = LocalHazeState.current
 
@@ -144,7 +144,7 @@ internal fun MainContent(
 
     Scaffold(
         topBar = {
-            if (!leanback) {
+            if (!tv) {
                 TopAppBar(
                     colors = TopAppBarDefaults.topAppBarColors(Color.Transparent),
                     windowInsets = windowInsets,
@@ -238,11 +238,11 @@ internal fun NavigationItemLayout(
 ) {
     val hapticFeedback = LocalHapticFeedback.current
 
-    val leanback = leanback()
+    val tv = tv()
     val usefob = fob?.rootDestination == currentRootDestination
     val selected = usefob || currentRootDestination == rootDestination
     val icon = @Composable {
-        if (!leanback) {
+        if (!tv) {
             Icon(
                 imageVector = when {
                     fob != null && usefob -> fob.icon
@@ -264,7 +264,7 @@ internal fun NavigationItemLayout(
     }
     val label: @Composable () -> Unit = remember(usefob, fob) {
         @Composable {
-            if (!leanback) {
+            if (!tv) {
                 Text(
                     text = stringResource(
                         if (usefob && fob != null) fob.iconTextId
@@ -293,7 +293,7 @@ internal fun NavigationItemLayout(
 }
 
 internal enum class ScaffoldContent { Navigation, MainContent }
-internal enum class ScaffoldRole { SmartPhone, Tablet, Leanback }
+internal enum class ScaffoldRole { SmartPhone, Tablet, Tv }
 
 @Composable
 internal fun ScaffoldLayout(

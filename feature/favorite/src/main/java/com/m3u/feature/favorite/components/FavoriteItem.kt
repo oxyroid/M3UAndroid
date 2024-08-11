@@ -18,7 +18,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import com.m3u.data.database.model.Channel
 import com.m3u.i18n.R.string
-import com.m3u.material.ktx.leanback
+import com.m3u.material.ktx.tv
 import com.m3u.material.model.LocalSpacing
 import com.m3u.material.shape.AbsoluteSmoothCornerShape
 import kotlinx.datetime.Clock
@@ -40,8 +40,8 @@ internal fun FavoriteItem(
     onLongClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val leanback = leanback()
-    if (!leanback) {
+    val tv = tv()
+    if (!tv) {
         SmartphoneFavoriteItemImpl(
             channel = channel,
             recently = recently,
