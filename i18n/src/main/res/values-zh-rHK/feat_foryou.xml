@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="feat_foryou_hidden_channels_playlist">封鎖的頻道</string>
+    <string name="feat_foryou_unsubscribe_playlist">取消訂閱</string>
+    <string name="feat_foryou_copy_playlist_url">複製連結</string>
+    <string name="feat_foryou_rename_playlist">重新命名</string>
+    <string name="feat_foryou_imported_playlist_title">匯入頻道</string>
+    <string name="feat_foryou_prompt_add_playlist">新增一個播放清單</string>
+    <string name="feat_foryou_recommend_unseen_label">很久不見</string>
+    <string name="feat_foryou_recommend_unseen_more_than_days">超過 %d 天</string>
+    <string name="feat_foryou_recommend_unseen_days">%d 天</string>
+    <string name="feat_foryou_recommend_unseen_hours">%d 小時</string>
+	<string name="feat_foryou_new_release">新版本</string>
+    <string name="feat_foryou_connect_title">輸入電視上的代碼</string>
+    <string name="feat_foryou_connect_subtitle">請確保連接到同一個 Wi-Fi 無線網絡</string>
+</resources>

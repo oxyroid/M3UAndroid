@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="data_error_file_not_found">檔案不存在</string>
+    <string name="data_error_empty_title">訂閱名稱為空</string>
+	<string name="data_channel_name_stream_download_service">串流下載服務</string>
+    <string name="data_channel_description_stream_download_service">串流下載說明</string>
+
+    <string name="data_worker_subscription_action_cancel">取消</string>
+    <string name="data_worker_subscription_action_retry">重試</string>
+    <string name="data_worker_subscription_content_completed">完成（+%d）</string>
+    <string name="data_worker_subscription_content_channel_progress">已下載 %d 個頻道</string>
+    <string name="data_worker_subscription_content_programme_progress">已下載 %d 個節目</string>
+</resources>
