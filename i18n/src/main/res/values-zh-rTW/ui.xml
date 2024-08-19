@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="ui_title_foryou">M3U</string>
-	<string name="ui_title_favourite">收藏</string>
+    <string name="ui_title_favourite">收藏</string>
     <string name="ui_title_setting">設定</string>
 
     <string name="ui_destination_foryou">主頁</string>
