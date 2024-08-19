@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="feat_foryou_hidden_channels_playlist">封鎖的頻道</string>
+    <string name="feat_foryou_hidden_channels_playlist">隱藏的頻道</string>
     <string name="feat_foryou_unsubscribe_playlist">取消訂閱</string>
     <string name="feat_foryou_copy_playlist_url">複製連結</string>
     <string name="feat_foryou_rename_playlist">重新命名</string>
