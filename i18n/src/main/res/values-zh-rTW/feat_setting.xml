@@ -86,8 +86,8 @@
 
     <string name="feat_setting_subscribe_for_tv">為電視訂閱</string>
 
-    <string name="feat_setting_backing_up">進行備份所有訂閱和頻道中</string>
-    <string name="feat_setting_restoring">進行恢復所有訂閱和頻道中</string>
+    <string name="feat_setting_backing_up">正在備份所有訂閱和頻道</string>
+    <string name="feat_setting_restoring">正在恢復所有訂閱和頻道</string>
 
     <string name="feat_setting_follow_system_theme">跟隨系統主題</string>
 
