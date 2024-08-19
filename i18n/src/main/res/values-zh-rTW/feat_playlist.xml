@@ -12,5 +12,5 @@
     <string name="feat_playlist_error_channel_cover_not_found">封面不存在</string>
     <string name="feat_playlist_error_channel_not_found">頻道不存在</string>
     <string name="feat_playlist_success_save_cover">儲存到了（%s）</string>
-    <string name="feat_playlist_scroll_up">回到項部</string>
+    <string name="feat_playlist_scroll_up">回到頂部</string>
 </resources>
