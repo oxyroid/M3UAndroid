@@ -121,7 +121,6 @@
     <string name="feat_setting_source_code">原始碼</string>
 
     <string name="feat_setting_compact_dimension">壓縮尺寸</string>
-
     <!-- EPG -->
     <string name="feat_setting_placeholder_epg_title">EPG 名稱</string>
     <string name="feat_setting_error_empty_epg_title">EPG 名稱空白</string>
