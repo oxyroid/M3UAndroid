@@ -1,9 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="feat_playlist_configuration_title">标题</string>
-    <string name="feat_playlist_configuration_user_agent">用户代理（UA）</string>
-    <string name="feat_playlist_configuration_enabled_epgs">启用的 EPG</string>
+    <string name="feat_playlist_configuration_user_agent">用户代理（UA)</string>
+    <string name="feat_playlist_configuration_enabled_epgs">己启用电子节目指南 EPG</string>
     <string name="feat_playlist_configuration_sync_programmes">同步节目</string>
+    <string name="feat_playlist_configuration_cancel_sync_programmes">取消同步节目</string>
     <string name="feat_playlist_configuration_programmes_expired_time">过期时间: %s</string>
     <string name="feat_playlist_configuration_programmes_expired">缓存的节目已经过时</string>
+    <string name="feat_playlist_configuration_auto_refresh_programmes">自动更新节目</string>
+    <string name="feat_playlist_configuration_auto_refresh_programmes_description">当应用启动时</string>
 </resources>
