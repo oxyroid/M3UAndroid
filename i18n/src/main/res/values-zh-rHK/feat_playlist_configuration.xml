@@ -2,7 +2,7 @@
 <resources>
     <string name="feat_playlist_configuration_title">標題</string>
     <string name="feat_playlist_configuration_user_agent">使用者代理（UA)</string>
-    <string name="feat_playlist_configuration_enabled_epgs">己啟用電子節目指南 EPG</string>
+    <string name="feat_playlist_configuration_enabled_epgs">已啟用電子節目指南 EPG</string>
     <string name="feat_playlist_configuration_sync_programmes">同步節目</string>
     <string name="feat_playlist_configuration_cancel_sync_programmes">取消同步節目</string>
     <string name="feat_playlist_configuration_programmes_expired_time">到期時間: %s</string>
