@@ -48,7 +48,7 @@
     <string name="feat_setting_use_dynamic_colors_unavailable">适用于 Android 12 或以上版本</string>
     <string name="feat_setting_colorful_background">炫彩背景</string>
     <string name="feat_setting_restore_schemes">恢复主题</string>
-    <string name="feat_setting_not_implementation">当前版本不支援此功能</string>
+    <string name="feat_setting_not_implementation">此功能当前版本不可用</string>
     <string name="feat_setting_zapping_mode">换台模式</string>
     <string name="feat_setting_zapping_mode_description">播放频道前快速预览</string>
     <string name="feat_setting_gesture_brightness">亮度手势</string>
