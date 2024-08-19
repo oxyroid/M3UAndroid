@@ -76,7 +76,7 @@
     <string name="feat_setting_canvas_apply">套用</string>
     <string name="feat_setting_canvas_reset">重設</string>
 
-    <string name="feat_setting_epg_clock_mode">12小时制節目指南</string>
+    <string name="feat_setting_epg_clock_mode">12小時制節目指南</string>
 
     <string name="feat_setting_remote_control">遙控器</string>
     <string name="feat_setting_remote_control_description">開啟遠端控制電視的功能</string>
