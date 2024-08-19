@@ -12,5 +12,5 @@
     <string name="feat_foryou_recommend_unseen_hours">%d 小時</string>
     <string name="feat_foryou_new_release">新版本</string>
     <string name="feat_foryou_connect_title">輸入電視上的代碼</string>
-    <string name="feat_foryou_connect_subtitle">請確保連接到同一個 Wi-Fi 無線網絡</string>
+    <string name="feat_foryou_connect_subtitle">請確保連接到同一個 Wi-Fi 無線網路</string>
 </resources>
