@@ -19,7 +19,7 @@
     <string name="feat_channel_tooltip_choose_format">选择格式</string>
 
     <string name="feat_channel_dialog_dlna_devices">DLNA 设备</string>
-    <string name="feat_channel_dialog_choose_tracks">选择声轨</string>
+    <string name="feat_channel_dialog_choose_tracks">选择轨道</string>
 
     <string name="feat_channel_open_in_external_app">在外部应用中打开</string>
 </resources>
