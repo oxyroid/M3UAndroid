@@ -1,25 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="feat_setting_app_version">应用版本</string>
-    <string name="feat_setting_label_subscribe">订阅</string>
+    <string name="feat_setting_app_version">程式版本</string>
+    <string name="feat_setting_label_subscribe">訂閱</string>
 
-    <string name="feat_setting_success_subscribe">订阅成功</string>
-    <string name="feat_setting_failed_malformed_url">URL错误（%s）</string>
-    <string name="feat_setting_error_empty_title">订阅名称为空</string>
-    <string name="feat_setting_placeholder_title">订阅名称</string>
-    <string name="feat_setting_placeholder_url">订阅链接</string>
-    <string name="feat_setting_label_subscribing">订阅中…</string>
+    <string name="feat_setting_success_subscribe">訂閱成功</string>
+    <string name="feat_setting_failed_malformed_url">URL錯誤（%s）</string>
+    <string name="feat_setting_error_empty_title">訂閱名稱為空</string>
+    <string name="feat_setting_placeholder_title">訂閱名稱</string>
+    <string name="feat_setting_placeholder_url">訂閱連結</string>
+    <string name="feat_setting_label_subscribing">訂閱中…</string>
 
     <string name="feat_setting_sync_mode_all">所有</string>
     <string name="feat_setting_sync_mode_keep">保留</string>
     <string name="feat_setting_sync_mode">同步策略</string>
 
-    <string name="feat_setting_playlist_management">订阅管理</string>
-    <string name="feat_setting_connect_timeout">最大超时时间</string>
+    <string name="feat_setting_playlist_management">訂閱管理</string>
+    <string name="feat_setting_connect_timeout">連線逾時</string>
     <string name="feat_setting_god_mode">上帝模式</string>
-    <string name="feat_setting_god_mode_description">通过物理按键调节界面</string>
-    <string name="feat_setting_experimental_mode">试验特性</string>
-    <string name="feat_setting_experimental_mode_description">不稳定的功能可能引发致命错误</string>
+    <string name="feat_setting_god_mode_description">透過實體音量鍵調整界面</string>
+    <string name="feat_setting_experimental_mode">實驗模式</string>
+    <string name="feat_setting_experimental_mode_description">不穩定的功能可引致嚴重錯誤</string>
     <string name="feat_setting_label_epg_playlists">EPG 列表</string>
     <string name="feat_setting_label_hidden_channels">屏蔽的频道</string>
     <string name="feat_setting_label_hidden_playlist_groups">屏蔽的播放列表分类</string>
