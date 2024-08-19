@@ -53,7 +53,7 @@
     <string name="feat_setting_zapping_mode_description">播放频道前快速预览</string>
     <string name="feat_setting_gesture_brightness">亮度手势</string>
     <string name="feat_setting_gesture_volume">音量手势</string>
-    <string name="feat_setting_screencast">投屏 Cast</string>
+    <string name="feat_setting_screencast">投屏</string>
     <string name="feat_setting_screen_rotating">屏幕旋转</string>
     <string name="feat_setting_screen_rotating_description">只有当系统屏幕旋转解锁时可用</string>
     <string name="feat_setting_optional_features">可选功能</string>
