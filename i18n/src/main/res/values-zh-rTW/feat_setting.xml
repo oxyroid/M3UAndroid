@@ -1,129 +1,132 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="feat_setting_app_version">应用版本</string>
-    <string name="feat_setting_label_subscribe">订阅</string>
-
-    <string name="feat_setting_success_subscribe">订阅成功</string>
-    <string name="feat_setting_failed_malformed_url">URL错误（%s）</string>
-    <string name="feat_setting_error_empty_title">订阅名称为空</string>
-    <string name="feat_setting_placeholder_title">订阅名称</string>
-    <string name="feat_setting_placeholder_url">订阅链接</string>
-    <string name="feat_setting_label_subscribing">订阅中…</string>
-
+    <string name="feat_setting_app_version">程式版本</string>
+    <string name="feat_setting_label_subscribe">訂閱</string>
+    <string name="feat_setting_success_subscribe">訂閱成功</string>
+    <string name="feat_setting_failed_malformed_url">URL錯誤（%s）</string>
+    <string name="feat_setting_error_empty_title">訂閱名稱為空</string>
+    <string name="feat_setting_placeholder_title">訂閱名稱</string>
+    <string name="feat_setting_placeholder_url">訂閱連結</string>
+    <string name="feat_setting_label_subscribing">訂閱中…</string>
     <string name="feat_setting_sync_mode_all">所有</string>
     <string name="feat_setting_sync_mode_keep">保留</string>
     <string name="feat_setting_sync_mode">同步策略</string>
-
-    <string name="feat_setting_playlist_management">订阅管理</string>
-    <string name="feat_setting_connect_timeout">最大超时时间</string>
+    <string name="feat_setting_playlist_management">訂閱管理</string>
+    <string name="feat_setting_connect_timeout">連線逾時</string>
     <string name="feat_setting_god_mode">上帝模式</string>
-    <string name="feat_setting_god_mode_description">通过物理按键调节界面</string>
-    <string name="feat_setting_experimental_mode">试验特性</string>
-    <string name="feat_setting_experimental_mode_description">不稳定的功能可能引发致命错误</string>
+    <string name="feat_setting_god_mode_description">透過實體音量鍵調整界面</string>
+    <string name="feat_setting_experimental_mode">實驗模式</string>
+    <string name="feat_setting_experimental_mode_description">不穩定的功能可引致嚴重錯誤</string>
     <string name="feat_setting_label_epg_playlists">EPG 列表</string>
-    <string name="feat_setting_label_hidden_channels">屏蔽的频道</string>
-    <string name="feat_setting_label_hidden_playlist_groups">屏蔽的播放列表分类</string>
-    <string name="feat_setting_label_add_playlist">新增订阅</string>
-    <string name="feat_setting_label_parse_from_clipboard">解析剪贴板</string>
-    <string name="feat_setting_label_select_from_local_storage">选择文件</string>
-    <string name="feat_setting_label_parse_from_disk">解析本地文件</string>
-    <string name="feat_setting_clip_mode">视频裁剪模式</string>
-    <string name="feat_setting_clip_mode_adaptive">自适应</string>
+    <string name="feat_setting_label_hidden_channels">封鎖的頻道</string>
+    <string name="feat_setting_label_hidden_playlist_groups">已封鎖的訂閱類別</string>
+    <string name="feat_setting_label_add_playlist">新增訂閱</string>
+    <string name="feat_setting_label_parse_from_clipboard">解析剪貼簿</string>
+    <string name="feat_setting_label_select_from_local_storage">選擇檔案</string>
+    <string name="feat_setting_label_parse_from_disk">解析本地檔案</string>
+    <string name="feat_setting_clip_mode">影片裁剪模式</string>
+    <string name="feat_setting_clip_mode_adaptive">自適應</string>
     <string name="feat_setting_clip_mode_clip">裁剪</string>
-    <string name="feat_setting_clip_mode_stretched">拉伸</string>
-    <string name="feat_setting_auto_refresh_channels">自动刷新频道</string>
-    <string name="feat_setting_auto_refresh_channels_description">进入播放列表自动刷新</string>
+    <string name="feat_setting_clip_mode_stretched">伸展</string>
+    <string name="feat_setting_auto_refresh_channels">自動更新頻道</string>
+    <string name="feat_setting_auto_refresh_channels_description">進入頻道時自動更新</string>
 
-    <string name="feat_setting_full_info_player">详细信息的播放器</string>
-    <string name="feat_setting_full_info_player_description">播放器中展示更多的信息</string>
-
-    <string name="feat_setting_slider">拖动条</string>
-
-    <string name="feat_setting_no_picture_mode">无图模式</string>
-    <string name="feat_setting_no_picture_mode_description">可能会对性能有所提升</string>
-    <string name="feat_setting_system_setting">系统设置</string>
-    <string name="feat_setting_script_management_import_js">导入Javascript</string>
-    <string name="feat_setting_enqueue_subscribe">订阅任务已添加至队列</string>
-    <string name="feat_setting_dropbox">dropbox</string>
-    <string name="feat_setting_project_about">关于项目</string>
-    <string name="feat_setting_local_storage">本地导入</string>
-    <string name="feat_setting_error_unselected_file">还未选择文件</string>
-    <string name="feat_setting_error_blank_url">目标地址为空</string>
-    <string name="feat_setting_use_dynamic_colors">动态配色</string>
-    <string name="feat_setting_use_dynamic_colors_unavailable">仅在 Android 12 及更高版本可用</string>
-    <string name="feat_setting_colorful_background">炫彩背景</string>
-    <string name="feat_setting_restore_schemes">恢复主题</string>
-    <string name="feat_setting_not_implementation">此功能当前版本不可用</string>
-    <string name="feat_setting_zapping_mode">换台模式</string>
-    <string name="feat_setting_zapping_mode_description">开启小窗预览而不是直接播放</string>
-    <string name="feat_setting_gesture_brightness">亮度手势</string>
-    <string name="feat_setting_gesture_volume">音量手势</string>
-    <string name="feat_setting_screencast">投屏</string>
-    <string name="feat_setting_screen_rotating">屏幕旋转</string>
-    <string name="feat_setting_screen_rotating_description">只有当系统屏幕旋转解锁时可用</string>
-    <string name="feat_setting_optional_features">可选功能</string>
-    <string name="feat_setting_unseen_limit">推荐许久未见的流媒体</string>
-    <string name="feat_setting_reconnect_mode">自动重连</string>
+    <string name="feat_setting_full_info_player">全資訊播放器</string>
+    <string name="feat_setting_full_info_player_description">在播放器中顯示更多信息</string>
+    <string name="feat_setting_slider">拖動條</string>
+    <string name="feat_setting_no_picture_mode">無圖模式</string>
+    <string name="feat_setting_no_picture_mode_description">可能會提升效能</string>
+    <string name="feat_setting_system_setting">系統設定</string>
+    <string name="feat_setting_script_management_import_js">匯入 Javascript</string>
+    <string name="feat_setting_enqueue_subscribe">訂閱任務已新增至佇列</string>
+    <string name="feat_setting_dropbox">Dropbox</string>
+    <string name="feat_setting_project_about">關於項目</string>
+    <string name="feat_setting_local_storage">本地檔案</string>
+    <string name="feat_setting_error_unselected_file">未有選擇檔案</string>
+    <string name="feat_setting_error_blank_url">空白網址</string>
+    <string name="feat_setting_use_dynamic_colors">動態色彩</string>
+    <string name="feat_setting_use_dynamic_colors_unavailable">適用於 Android 12 或以上版本</string>
+    <string name="feat_setting_colorful_background">彩色背景</string>
+    <string name="feat_setting_restore_schemes">復原主題</string>
+    <string name="feat_setting_not_implementation">目前版本不支援此功能</string>
+    <string name="feat_setting_zapping_mode">切換模式</string>
+    <string name="feat_setting_zapping_mode_description">播放頻道前快速預覽</string>
+    <string name="feat_setting_gesture_brightness">亮度手勢</string>
+    <string name="feat_setting_gesture_volume">音量手勢</string>
+    <string name="feat_setting_screencast">投放 Cast</string>
+    <string name="feat_setting_screen_rotating">螢幕旋轉</string>
+    <string name="feat_setting_screen_rotating_description">只有當系統旋轉解鎖時可用</string>
+    <string name="feat_setting_optional_features">可選功能</string>
+    <string name="feat_setting_unseen_limit">推薦久未播放的收藏頻道</string>
+    <string name="feat_setting_reconnect_mode">自動重新連接</string>
     <string name="feat_setting_reconnect_mode_no">永不</string>
-    <string name="feat_setting_reconnect_mode_retry">仅在失败时</string>
-    <string name="feat_setting_reconnect_mode_reconnect">永远</string>
+    <string name="feat_setting_reconnect_mode_retry">僅當失敗時</string>
+    <string name="feat_setting_reconnect_mode_reconnect">永遠</string>
 
-    <string name="feat_setting_appearance">外观</string>
-    <string name="feat_setting_appearance_hint_edit_color">长按编辑颜色</string>
+    <string name="feat_setting_appearance">外觀</string>
+    <string name="feat_setting_appearance_hint_edit_color">長按編輯顏色</string>
 
     <string name="feat_setting_tunneling">隧道模式</string>
-    <string name="feat_setting_tunneling_description">改善 4K/HDR 内容的播放</string>
-    <string name="feat_setting_label_backup">备份</string>
-    <string name="feat_setting_label_restore">恢复</string>
+    <string name="feat_setting_tunneling_description">改善 4K/HDR 內容播放</string>
+    <string name="feat_setting_label_backup">備份</string>
+    <string name="feat_setting_label_restore">恢復</string>
 
-    <string name="feat_setting_canvas_dark">夜间</string>
-    <string name="feat_setting_canvas_light">日间</string>
-    <string name="feat_setting_canvas_apply">应用</string>
-    <string name="feat_setting_canvas_reset">重制</string>
+    <string name="feat_setting_canvas_dark">黑夜</string>
+    <string name="feat_setting_canvas_light">日間</string>
+    <string name="feat_setting_canvas_apply">套用</string>
+    <string name="feat_setting_canvas_reset">重設</string>
 
-    <string name="feat_setting_epg_clock_mode">12小时制节目单</string>
+    <string name="feat_setting_epg_clock_mode">12小时制節目指南</string>
 
-    <string name="feat_setting_remote_control">遥控器</string>
-    <string name="feat_setting_remote_control_description">开启遥控电视的能力</string>
+    <string name="feat_setting_remote_control">遙控器</string>
+    <string name="feat_setting_remote_control_description">開啟遠端控制電視的功能</string>
 
-    <string name="feat_setting_remote_control_tv_side">遥控器</string>
-    <string name="feat_setting_remote_control_tv_side_description">允许智能手机控制你的电视</string>
+    <string name="feat_setting_remote_control_tv_side">遙控器</string>
+    <string name="feat_setting_remote_control_tv_side_description">允許智能手機控制您的電視</string>
 
-    <string name="feat_setting_subscribe_for_tv">为电视订阅</string>
+    <string name="feat_setting_subscribe_for_tv">為電視訂閱</string>
 
-    <string name="feat_setting_backing_up">备份所有播放列表和频道中</string>
-    <string name="feat_setting_restoring">恢复所有播放列表和频道中</string>
+    <string name="feat_setting_backing_up">備份所有訂閱和頻道</string>
+    <string name="feat_setting_restoring">恢復所有訂閱和頻道</string>
 
-    <string name="feat_setting_follow_system_theme">跟随系统主题</string>
+    <string name="feat_setting_follow_system_theme">跟隨系統主題</string>
 
-    <string name="feat_setting_placeholder_basic_url">订阅地址</string>
-    <string name="feat_setting_placeholder_username">用户名</string>
-    <string name="feat_setting_placeholder_password">密码</string>
+    <string name="feat_setting_data_source_m3u" translatable="false">M3U</string>
+    <string name="feat_setting_data_source_epg" translatable="false">EPG</string>
+    <string name="feat_setting_data_source_xtream" translatable="false">Xtream</string>
+    <string name="feat_setting_data_source_emby" translatable="false">Emby</string>
+    <string name="feat_setting_data_source_dropbox" translatable="false">Dropbox</string>
 
-    <string name="feat_setting_warning_xtream_takes_much_more_time">这可能会花费更久的时间</string>
+    <string name="feat_setting_placeholder_basic_url">訂閱網址</string>
+    <string name="feat_setting_placeholder_username">用户名稱</string>
+    <string name="feat_setting_placeholder_password">密碼</string>
 
-    <string name="feat_setting_back_home">回到主页</string>
+    <string name="feat_setting_warning_xtream_takes_much_more_time">可能需要花費更多時間</string>
 
-    <string name="feat_setting_always_replay">总是显示重播按钮</string>
-    <string name="feat_setting_player_panel">播放器控制台</string>
-    <string name="feat_setting_player_panel_description">竖屏状态下上滑播放器</string>
+    <string name="feat_setting_back_home">回到主頁</string>
 
-    <string name="feat_setting_cache">边播边存</string>
-    <string name="feat_setting_cache_description">此选项可能导致无法正常播放</string>
-    <string name="feat_setting_clear_cache">清空缓存</string>
+    <string name="feat_setting_always_replay">總是顯示重播按鈕</string>
+    
+    <string name="feat_setting_player_panel">播放器面板</string>
+    <string name="feat_setting_player_panel_description">在縱向模式時向上滑動以將其展開</string>
 
-    <string name="feat_setting_paging">分页加载频道</string>
+    <string name="feat_setting_cache">播放時快取</string>
+    <string name="feat_setting_cache_description">此選項可能會導致無法正常播放</string>
+    <string name="feat_setting_clear_cache">清空快取</string>
+
+    <string name="feat_setting_paging">分頁加載頻道</string>
     <string name="feat_setting_paging_description">
-        加载大量频道很有用，但是与此同时分组会被禁用
+        加載大量頻道很有用，但同时分組功能會被禁用
     </string>
-    <string name="feat_setting_source_code">源代码</string>
+    <string name="feat_setting_source_code">原始碼</string>
 
+    <string name="feat_setting_compact_dimension">壓縮尺寸</string>
     <!-- EPG -->
-    <string name="feat_setting_placeholder_epg_title">EPG名称</string>
-    <string name="feat_setting_error_empty_epg_title">EPG名称为空</string>
-    <string name="feat_setting_placeholder_epg">EPG链接</string>
-    <string name="feat_setting_epg_added">您可以随后将播放列表与 EPG 相关联</string>
-    <string name="feat_setting_error_empty_epg">EPG链接为空</string>
+    <string name="feat_setting_placeholder_epg_title">EPG 名稱</string>
+    <string name="feat_setting_error_empty_epg_title">EPG 名稱空白</string>
+    <string name="feat_setting_error_empty_epg">EPG 連結空白</string>
+    <string name="feat_setting_placeholder_epg">EPG 連結</string>
+    <string name="feat_setting_epg_added">您可以隨後將訂閱與 EPG 關聯起來</string>
 
-    <string name="feat_setting_randomly_in_favourite">随机播放只播放已收藏的频道</string>
+    <string name="feat_setting_randomly_in_favourite">僅從收藏頻道中隨機播放</string>
 </resources>
