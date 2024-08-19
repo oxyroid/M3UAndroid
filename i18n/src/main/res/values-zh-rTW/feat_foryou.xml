@@ -5,7 +5,7 @@
     <string name="feat_foryou_copy_playlist_url">複製連結</string>
     <string name="feat_foryou_rename_playlist">重新命名</string>
     <string name="feat_foryou_imported_playlist_title">匯入頻道</string>
-    <string name="feat_foryou_prompt_add_playlist">新增播放清單</string>
+    <string name="feat_foryou_prompt_add_playlist">新增訂閱</string>
     <string name="feat_foryou_recommend_unseen_label">很久不見的收藏</string>
     <string name="feat_foryou_recommend_unseen_more_than_days">超過 %d 天</string>
     <string name="feat_foryou_recommend_unseen_days">%d 天</string>
