@@ -100,30 +100,30 @@
     <string name="feat_setting_placeholder_username">用户名稱</string>
     <string name="feat_setting_placeholder_password">密碼</string>
 
-    <string name="feat_setting_warning_xtream_takes_much_more_time">这可能会花费更久的时间</string>
+    <string name="feat_setting_warning_xtream_takes_much_more_time">可能需要花費更多時間</string>
 
-    <string name="feat_setting_back_home">回到主页</string>
+    <string name="feat_setting_back_home">回到主頁</string>
 
-    <string name="feat_setting_always_replay">总是显示重播按钮</string>
-    <string name="feat_setting_player_panel">播放器控制台</string>
-    <string name="feat_setting_player_panel_description">竖屏状态下上滑播放器</string>
+    <string name="feat_setting_always_replay">總是顯示重播按鈕</string>
+    <string name="feat_setting_player_panel">播放器面板</string>
+    <string name="feat_setting_player_panel_description">在縱向模式時向上滑動以將其展開</string>
 
-    <string name="feat_setting_cache">边播边存</string>
-    <string name="feat_setting_cache_description">此选项可能导致无法正常播放</string>
-    <string name="feat_setting_clear_cache">清空缓存</string>
+    <string name="feat_setting_cache">播放時快取</string>
+    <string name="feat_setting_cache_description">此選項可能會導致無法正常播放</string>
+    <string name="feat_setting_clear_cache">清空快取</string>
 
-    <string name="feat_setting_paging">分页加载频道</string>
+    <string name="feat_setting_paging">分頁加載頻道</string>
     <string name="feat_setting_paging_description">
-        加载大量频道很有用，但是与此同时分组会被禁用
+        加載大量頻道很有用，但同时分組功能會被禁用
     </string>
-    <string name="feat_setting_source_code">源代码</string>
+    <string name="feat_setting_source_code">原始碼</string>
 
     <!-- EPG -->
-    <string name="feat_setting_placeholder_epg_title">EPG名称</string>
-    <string name="feat_setting_error_empty_epg_title">EPG名称为空</string>
-    <string name="feat_setting_placeholder_epg">EPG链接</string>
-    <string name="feat_setting_epg_added">您可以随后将播放列表与 EPG 相关联</string>
-    <string name="feat_setting_error_empty_epg">EPG链接为空</string>
+    <string name="feat_setting_placeholder_epg_title">EPG 名稱</string>
+    <string name="feat_setting_error_empty_epg_title">EPG 名稱空白</string>
+    <string name="feat_setting_placeholder_epg">EPG 連結</string>
+    <string name="feat_setting_epg_added">您可以隨後將訂閱與 EPG 關聯起來</string>
+    <string name="feat_setting_error_empty_epg">EPG 連結空白</string>
 
-    <string name="feat_setting_randomly_in_favourite">随机播放只播放已收藏的频道</string>
+    <string name="feat_setting_randomly_in_favourite">僅從收藏頻道中隨機播放</string>
 </resources>
