@@ -82,7 +82,7 @@
     <string name="feat_setting_remote_control_description">開啟遠端控制電視的功能</string>
 
     <string name="feat_setting_remote_control_tv_side">遙控器</string>
-    <string name="feat_setting_remote_control_tv_side_description">允許智能手機控制您的電視</string>
+    <string name="feat_setting_remote_control_tv_side_description">允許智慧型手機控制您的電視</string>
 
     <string name="feat_setting_subscribe_for_tv">為電視訂閱</string>
 
