@@ -2,18 +2,15 @@
 <resources>
     <string name="feat_setting_app_version">程式版本</string>
     <string name="feat_setting_label_subscribe">訂閱</string>
-
     <string name="feat_setting_success_subscribe">訂閱成功</string>
     <string name="feat_setting_failed_malformed_url">URL錯誤（%s）</string>
     <string name="feat_setting_error_empty_title">訂閱名稱為空</string>
     <string name="feat_setting_placeholder_title">訂閱名稱</string>
     <string name="feat_setting_placeholder_url">訂閱連結</string>
     <string name="feat_setting_label_subscribing">訂閱中…</string>
-
     <string name="feat_setting_sync_mode_all">所有</string>
     <string name="feat_setting_sync_mode_keep">保留</string>
     <string name="feat_setting_sync_mode">同步策略</string>
-
     <string name="feat_setting_playlist_management">訂閱管理</string>
     <string name="feat_setting_connect_timeout">連線逾時</string>
     <string name="feat_setting_god_mode">上帝模式</string>
@@ -36,15 +33,13 @@
 
     <string name="feat_setting_full_info_player">全資訊播放器</string>
     <string name="feat_setting_full_info_player_description">在播放器中顯示更多信息</string>
-
     <string name="feat_setting_slider">拖動條</string>
-
     <string name="feat_setting_no_picture_mode">無圖模式</string>
     <string name="feat_setting_no_picture_mode_description">可能會提升效能</string>
     <string name="feat_setting_system_setting">系統設定</string>
     <string name="feat_setting_script_management_import_js">匯入 Javascript</string>
     <string name="feat_setting_enqueue_subscribe">訂閱任務已新增至佇列</string>
-    <string name="feat_setting_dropbox">dropbox</string>
+    <string name="feat_setting_dropbox">Dropbox</string>
     <string name="feat_setting_project_about">關於項目</string>
     <string name="feat_setting_local_storage">本地檔案</string>
     <string name="feat_setting_error_unselected_file">未有選擇檔案</string>
@@ -96,6 +91,12 @@
 
     <string name="feat_setting_follow_system_theme">跟隨系統主題</string>
 
+    <string name="feat_setting_data_source_m3u" translatable="false">M3U</string>
+    <string name="feat_setting_data_source_epg" translatable="false">EPG</string>
+    <string name="feat_setting_data_source_xtream" translatable="false">Xtream</string>
+    <string name="feat_setting_data_source_emby" translatable="false">Emby</string>
+    <string name="feat_setting_data_source_dropbox" translatable="false">Dropbox</string>
+
     <string name="feat_setting_placeholder_basic_url">訂閱網址</string>
     <string name="feat_setting_placeholder_username">用户名稱</string>
     <string name="feat_setting_placeholder_password">密碼</string>
@@ -105,6 +106,7 @@
     <string name="feat_setting_back_home">回到主頁</string>
 
     <string name="feat_setting_always_replay">總是顯示重播按鈕</string>
+    
     <string name="feat_setting_player_panel">播放器面板</string>
     <string name="feat_setting_player_panel_description">在縱向模式時向上滑動以將其展開</string>
 
