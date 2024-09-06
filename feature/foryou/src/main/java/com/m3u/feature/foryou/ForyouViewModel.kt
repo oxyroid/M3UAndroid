@@ -23,7 +23,6 @@ import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.PlaylistWithCount
 import com.m3u.data.parser.xtream.XtreamChannelInfo
 import com.m3u.data.repository.channel.ChannelRepository
-import com.m3u.data.repository.other.OtherRepository
 import com.m3u.data.repository.playlist.PlaylistRepository
 import com.m3u.data.repository.programme.ProgrammeRepository
 import com.m3u.data.worker.SubscriptionWorker
@@ -51,7 +50,7 @@ class ForyouViewModel @Inject constructor(
     private val playlistRepository: PlaylistRepository,
     channelRepository: ChannelRepository,
     programmeRepository: ProgrammeRepository,
-    otherRepository: OtherRepository,
+//    otherRepository: OtherRepository,
     preferences: Preferences,
     @Dispatcher(IO) ioDispatcher: CoroutineDispatcher,
     workManager: WorkManager,
@@ -98,8 +97,8 @@ class ForyouViewModel @Inject constructor(
             initialValue = Duration.INFINITE
         )
 
-    private val newRelease: StateFlow<Release?> = flow {
-        emit(otherRepository.release())
+    private val newRelease: StateFlow<Release?> = flow<Release?> {
+//        emit(otherRepository.release())
     }
         .stateIn(
             scope = viewModelScope,
