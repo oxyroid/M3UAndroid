@@ -33,7 +33,6 @@ class EpgParserImpl @Inject constructor(
                         val programme = readProgramme()
                         send(programme)
                     }
-
                     else -> skip()
                 }
             }

@@ -147,10 +147,10 @@ internal class PlaylistRepositoryImpl @Inject constructor(
                 m3uParser
                     .parse(input.buffered())
                     .filterNot {
-                        val originalId = it.id
+                        val relationId = it.id
                         when {
-                            originalId.isBlank() -> it.url in favOrHiddenUrls
-                            else -> originalId in favOrHiddenOriginalIds
+                            relationId.isBlank() -> it.url in favOrHiddenUrls
+                            else -> relationId in favOrHiddenOriginalIds
                         }
                     }
                     .collect { send(it) }

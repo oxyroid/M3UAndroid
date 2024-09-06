@@ -296,7 +296,7 @@ class ChannelViewModel @Inject constructor(
 
     internal val programmes: Flow<PagingData<Programme>> = channel.flatMapLatest { channel ->
         channel ?: return@flatMapLatest flowOf(PagingData.empty())
-        val originalId = channel.originalId ?: return@flatMapLatest flowOf(PagingData.empty())
+        val originalId = channel.relationId ?: return@flatMapLatest flowOf(PagingData.empty())
         val playlist = channel.playlistUrl.let { playlistRepository.get(it) }
         playlist ?: return@flatMapLatest flowOf(PagingData.empty())
         val epgUrls = playlist.epgUrlsOrXtreamXmlUrl()
@@ -320,7 +320,7 @@ class ChannelViewModel @Inject constructor(
 
     internal val programmeRange: StateFlow<ProgrammeRange> = channel.flatMapLatest { channel ->
         channel ?: return@flatMapLatest flowOf(defaultProgrammeRange)
-        val originalId = channel.originalId ?: return@flatMapLatest flowOf(defaultProgrammeRange)
+        val originalId = channel.relationId ?: return@flatMapLatest flowOf(defaultProgrammeRange)
         programmeRepository
             .observeProgrammeRange(channel.playlistUrl, originalId)
             .map {

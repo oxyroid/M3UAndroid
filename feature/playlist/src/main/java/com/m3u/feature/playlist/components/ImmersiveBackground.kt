@@ -102,9 +102,9 @@ internal fun ImmersiveBackground(
 
                     val programme: Programme? by produceState<Programme?>(
                         initialValue = null,
-                        key1 = channel.originalId
+                        key1 = channel.relationId
                     ) {
-                        value = currentGetProgrammeCurrently(channel.originalId.orEmpty())
+                        value = currentGetProgrammeCurrently(channel.relationId.orEmpty())
                     }
 
                     programme?.let {

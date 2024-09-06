@@ -75,8 +75,8 @@ internal fun SmartphoneChannelGallery(
                 val channel = channels?.get(index)
                 if (channel != null) {
                     var programme: Programme? by remember { mutableStateOf(null) }
-                    LaunchedEffect(channel.originalId) {
-                        programme = getProgrammeCurrently(channel.originalId.orEmpty())
+                    LaunchedEffect(channel.relationId) {
+                        programme = getProgrammeCurrently(channel.relationId.orEmpty())
                     }
                     SmartphoneChannelItem(
                         channel = channel,

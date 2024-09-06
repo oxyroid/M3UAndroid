@@ -53,11 +53,17 @@ data class Channel(
     val seen: Long = 0L,
     @ColumnInfo(name = "channel_id", defaultValue = "NULL")
     @Exclude
-    // if it is from m3u, it may be tvg-id
-    // if it is xtream live, it may be epgChannelId
-    // if it is xtream vod, it may be streamId
-    // if it is xtream series, it may be seriesId
-    val originalId: String? = null
+    /**
+     * if it is from m3u, corresponds to 'channel-id' field in the EPG xml file.
+     * kodi adaptive: it may be 'tvg-id', if missing from the M3U file,
+     * the addon will use the 'tvg-name' tag to map the channel to the EPG.
+     * https://kodi.wiki/view/Add-on:PVR_IPTV_Simple_Client#Usage
+     *
+     * if it is xtream live, it may be epgChannelId.
+     * if it is xtream vod, it may be streamId.
+     * if it is xtream series, it may be seriesId.
+     */
+    val relationId: String? = null
 ) {
     companion object {
         const val LICENSE_TYPE_WIDEVINE = "com.widevine.alpha"
