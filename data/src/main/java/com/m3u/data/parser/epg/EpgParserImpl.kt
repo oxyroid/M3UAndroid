@@ -42,49 +42,6 @@ class EpgParserImpl @Inject constructor(
         .flowOn(ioDispatcher)
 
     private val ns: String? = null
-    private fun XmlPullParser.readEpg(): EpgData {
-        while (name != "tv") next()
-        val channels = mutableListOf<EpgChannel>()
-        val programmes = mutableListOf<EpgProgramme>()
-        while (next() != XmlPullParser.END_TAG) {
-            if (eventType != XmlPullParser.START_TAG) continue
-            when (name) {
-                "channel" -> channels += readChannel()
-                "programme" -> programmes += readProgramme()
-                else -> skip()
-            }
-        }
-        logger.log("complete: channel+${channels.size}, programme+${programmes.size}")
-        return EpgData(
-            channels = channels,
-            programmes = programmes
-        )
-    }
-
-    private fun XmlPullParser.readChannel(): EpgChannel {
-        require(XmlPullParser.START_TAG, ns, "channel")
-        val id = getAttributeValue(null, "id")
-        var displayName: String? = null
-        var icon: String? = null
-        var url: String? = null
-        while (next() != XmlPullParser.END_TAG) {
-            if (eventType != XmlPullParser.START_TAG) continue
-            when (name) {
-                "display-name" -> displayName = readDisplayName()
-                "icon" -> icon = readIcon()
-                "url" -> url = readUrl()
-                else -> skip()
-            }
-        }
-        require(XmlPullParser.END_TAG, ns, "channel")
-        return EpgChannel(
-            id = id,
-            displayName = displayName,
-            icon = icon,
-            url = url
-        )
-    }
-
     private fun XmlPullParser.readProgramme(): EpgProgramme {
         require(XmlPullParser.START_TAG, ns, "programme")
         val start = getAttributeValue(null, "start")
@@ -94,9 +51,6 @@ class EpgParserImpl @Inject constructor(
         var desc: String? = null
         val categories = mutableListOf<String>()
         var icon: String? = null
-        var isNew = false // Initialize isNew flag
-        var isLive = false
-        var previouslyShownStart: String? = null // Initialize previouslyShown variable
         while (next() != XmlPullParser.END_TAG) {
             if (eventType != XmlPullParser.START_TAG) continue
             when (name) {
@@ -104,9 +58,6 @@ class EpgParserImpl @Inject constructor(
                 "desc" -> desc = readDesc()
                 "category" -> categories += readCategory()
                 "icon" -> icon = readIcon()
-                "new" -> isNew = readNew() // Update isNewTag flag
-                "live" -> isLive = readLive() // Update isNewTag flag
-                "previously-shown" -> previouslyShownStart = readPreviouslyShown()
                 else -> skip()
             }
         }
@@ -118,10 +69,7 @@ class EpgParserImpl @Inject constructor(
             title = title,
             desc = desc,
             icon = icon,
-            categories = categories,
-            isNew = isNew,
-            isLive = isLive,
-            previouslyShownStart = previouslyShownStart
+            categories = categories
         )
     }
 
@@ -136,26 +84,12 @@ class EpgParserImpl @Inject constructor(
         }
     }
 
-    private fun XmlPullParser.readDisplayName(): String? = optional {
-        require(XmlPullParser.START_TAG, ns, "display-name")
-        val displayName = readText()
-        require(XmlPullParser.END_TAG, ns, "display-name")
-        return displayName
-    }
-
     private fun XmlPullParser.readIcon(): String? = optional {
         require(XmlPullParser.START_TAG, ns, "icon")
         val icon = getAttributeValue(null, "src")
         nextTag()
         require(XmlPullParser.END_TAG, ns, "icon")
         return icon
-    }
-
-    private fun XmlPullParser.readUrl(): String? = optional {
-        require(XmlPullParser.START_TAG, ns, "url")
-        val url = readText()
-        require(XmlPullParser.END_TAG, ns, "url")
-        return url
     }
 
     private fun XmlPullParser.readTitle(): String? = optional {
@@ -177,24 +111,6 @@ class EpgParserImpl @Inject constructor(
         val category = readText()
         require(XmlPullParser.END_TAG, ns, "category")
         return category
-    }
-
-    private fun XmlPullParser.readNew(): Boolean {
-        require(XmlPullParser.END_TAG, ns, "new")
-        return true
-    }
-
-    private fun XmlPullParser.readLive(): Boolean {
-        require(XmlPullParser.END_TAG, ns, "live")
-        return true
-    }
-
-    private fun XmlPullParser.readPreviouslyShown(): String? {
-        require(XmlPullParser.START_TAG, ns, "previously-shown")
-        val start = getAttributeValue(null, "start")
-        nextTag()
-        require(XmlPullParser.END_TAG, ns, "previously-shown")
-        return start
     }
 
     private fun XmlPullParser.readText(): String {

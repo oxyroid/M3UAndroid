@@ -53,4 +53,11 @@ internal object DatabaseMigrations {
         columnName = "epg_url"
     )
     class AutoMigrate14To16 : AutoMigrationSpec
+
+    @DeleteColumn.Entries(
+        DeleteColumn(tableName = "programmes", columnName = "new"),
+        DeleteColumn(tableName = "programmes", columnName = "live"),
+        DeleteColumn(tableName = "programmes", columnName = "previous_start")
+    )
+    class AutoMigrate18To19: AutoMigrationSpec
 }
