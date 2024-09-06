@@ -1,10 +1,7 @@
 package com.m3u.data.parser.epg
 
 import com.m3u.data.database.model.Programme
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toInstant
-import kotlinx.datetime.toKotlinLocalDateTime
-import java.time.LocalDateTime
+import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatterBuilder
 
 data class EpgProgramme(
@@ -19,11 +16,10 @@ data class EpgProgramme(
     val categories: List<String>
 ) {
     companion object {
-        fun readEpochMilliseconds(time: String): Long = LocalDateTime
+        fun readEpochMilliseconds(time: String): Long = ZonedDateTime
             .parse(time, EPG_DATE_TIME_FORMATTER)
-            .toKotlinLocalDateTime()
-            .toInstant(TimeZone.UTC)
-            .toEpochMilliseconds()
+            .toInstant()
+            .toEpochMilli()
 
         private val EPG_DATE_TIME_FORMATTER = DateTimeFormatterBuilder()
             .appendPattern("yyyyMMddHHmmss")
@@ -31,7 +27,6 @@ data class EpgProgramme(
             .appendPattern(" Z")
             .optionalEnd()
             .toFormatter()
-//            .withZone(ZoneId.of("GMT"))
     }
 }
 
