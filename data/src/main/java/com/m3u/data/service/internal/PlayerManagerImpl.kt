@@ -169,6 +169,8 @@ class PlayerManagerImpl @Inject constructor(
             val licenseKey = channel.licenseKey.orEmpty()
             channelRepository.reportPlayed(channel.id)
             val playlist = playlistRepository.get(channel.playlistUrl)
+            val kodiUrlOptions = channelUrl.readKodiUrlOptions()
+            val userAgent = kodiUrlOptions[KodiAdaptions.HTTP_OPTION_UA] ?: playlist?.userAgent
 
             val iterator = MimetypeIterator.Unspecified(channelUrl)
             this.iterator = iterator
@@ -176,7 +178,7 @@ class PlayerManagerImpl @Inject constructor(
             tryPlay(
                 mimeType = null,
                 url = channelUrl,
-                userAgent = playlist?.userAgent,
+                userAgent = userAgent,
                 licenseType = licenseType,
                 licenseKey = licenseKey
             )
@@ -241,8 +243,10 @@ class PlayerManagerImpl @Inject constructor(
         logger.post { "media-source-factory: ${mediaSourceFactory::class.qualifiedName}" }
         if (licenseType.isNotEmpty()) {
             val drmCallback = when {
-                (licenseType in arrayOf(Channel.LICENSE_TYPE_CLEAR_KEY, Channel.LICENSE_TYPE_CLEAR_KEY_2)) &&
-                        !licenseKey.startsWith("http") -> LocalMediaDrmCallback(licenseKey.toByteArray())
+                (licenseType in arrayOf(
+                    Channel.LICENSE_TYPE_CLEAR_KEY,
+                    Channel.LICENSE_TYPE_CLEAR_KEY_2
+                )) && !licenseKey.startsWith("http") -> LocalMediaDrmCallback(licenseKey.toByteArray())
 
                 else -> HttpMediaDrmCallback(
                     licenseKey,
@@ -258,7 +262,12 @@ class PlayerManagerImpl @Inject constructor(
             if (uuid != C.UUID_NIL && FrameworkMediaDrm.isCryptoSchemeSupported(uuid)) {
                 val drmSessionManager = DefaultDrmSessionManager.Builder()
                     .setUuidAndExoMediaDrmProvider(uuid, FrameworkMediaDrm.DEFAULT_PROVIDER)
-                    .setMultiSession(licenseType !in arrayOf(Channel.LICENSE_TYPE_CLEAR_KEY, Channel.LICENSE_TYPE_CLEAR_KEY_2))
+                    .setMultiSession(
+                        licenseType !in arrayOf(
+                            Channel.LICENSE_TYPE_CLEAR_KEY,
+                            Channel.LICENSE_TYPE_CLEAR_KEY_2
+                        )
+                    )
                     .build(drmCallback)
                 mediaSourceFactory.setDrmSessionManagerProvider { drmSessionManager }
             }
@@ -484,10 +493,21 @@ class PlayerManagerImpl @Inject constructor(
         }
     }
 
-
     private var iterator: MimetypeIterator = MimetypeIterator.Unsupported
 
     private val logger = delegate.install(Profiles.SERVICE_PLAYER)
+
+    private fun String.readKodiUrlOptions(): Map<String, String> {
+        val options = this.drop(this.indexOf("|") + 1).split("&")
+        return options
+            .filter { it.isNotBlank() }
+            .associate {
+                val pair = it.split("=")
+                val key = pair.getOrNull(0).orEmpty()
+                val value = pair.getOrNull(1).orEmpty()
+                key to value
+            }
+    }
 }
 
 private fun VideoSize.toRect(): Rect {
