@@ -23,7 +23,7 @@ import com.m3u.data.database.model.Programme
         Episode::class,
         ColorScheme::class
     ],
-    version = 19,
+    version = 20,
     exportSchema = true,
     autoMigrations = [
         AutoMigration(
@@ -55,7 +55,12 @@ import com.m3u.data.database.model.Programme
             from = 18,
             to = 19,
             spec = DatabaseMigrations.AutoMigrate18To19::class
-        )
+        ),
+        AutoMigration(
+            from = 19,
+            to = 20,
+            spec = DatabaseMigrations.AutoMigrate19To20::class
+        ),
     ]
 )
 @TypeConverters(Converters::class)

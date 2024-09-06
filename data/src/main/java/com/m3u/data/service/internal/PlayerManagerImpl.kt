@@ -169,6 +169,7 @@ class PlayerManagerImpl @Inject constructor(
             val licenseKey = channel.licenseKey.orEmpty()
             channelRepository.reportPlayed(channel.id)
             val playlist = playlistRepository.get(channel.playlistUrl)
+            val userAgent = getUserAgent(channelUrl, playlist)
 
             val iterator = MimetypeIterator.Unspecified(channelUrl)
             this.iterator = iterator
@@ -176,7 +177,7 @@ class PlayerManagerImpl @Inject constructor(
             tryPlay(
                 mimeType = null,
                 url = channelUrl,
-                userAgent = playlist?.userAgent,
+                userAgent = userAgent,
                 licenseType = licenseType,
                 licenseKey = licenseKey
             )
@@ -208,7 +209,7 @@ class PlayerManagerImpl @Inject constructor(
     private fun tryPlay(
         mimeType: String?,
         url: String = channel.value?.url.orEmpty(),
-        userAgent: String? = playlist.value?.userAgent,
+        userAgent: String? = getUserAgent(channel.value?.url.orEmpty(), playlist.value),
         licenseType: String = channel.value?.licenseType.orEmpty(),
         licenseKey: String = channel.value?.licenseKey.orEmpty(),
     ) {
@@ -241,8 +242,10 @@ class PlayerManagerImpl @Inject constructor(
         logger.post { "media-source-factory: ${mediaSourceFactory::class.qualifiedName}" }
         if (licenseType.isNotEmpty()) {
             val drmCallback = when {
-                (licenseType in arrayOf(Channel.LICENSE_TYPE_CLEAR_KEY, Channel.LICENSE_TYPE_CLEAR_KEY_2)) &&
-                        !licenseKey.startsWith("http") -> LocalMediaDrmCallback(licenseKey.toByteArray())
+                (licenseType in arrayOf(
+                    Channel.LICENSE_TYPE_CLEAR_KEY,
+                    Channel.LICENSE_TYPE_CLEAR_KEY_2
+                )) && !licenseKey.startsWith("http") -> LocalMediaDrmCallback(licenseKey.toByteArray())
 
                 else -> HttpMediaDrmCallback(
                     licenseKey,
@@ -258,7 +261,12 @@ class PlayerManagerImpl @Inject constructor(
             if (uuid != C.UUID_NIL && FrameworkMediaDrm.isCryptoSchemeSupported(uuid)) {
                 val drmSessionManager = DefaultDrmSessionManager.Builder()
                     .setUuidAndExoMediaDrmProvider(uuid, FrameworkMediaDrm.DEFAULT_PROVIDER)
-                    .setMultiSession(licenseType !in arrayOf(Channel.LICENSE_TYPE_CLEAR_KEY, Channel.LICENSE_TYPE_CLEAR_KEY_2))
+                    .setMultiSession(
+                        licenseType !in arrayOf(
+                            Channel.LICENSE_TYPE_CLEAR_KEY,
+                            Channel.LICENSE_TYPE_CLEAR_KEY_2
+                        )
+                    )
                     .build(drmCallback)
                 mediaSourceFactory.setDrmSessionManagerProvider { drmSessionManager }
             }
@@ -484,10 +492,39 @@ class PlayerManagerImpl @Inject constructor(
         }
     }
 
-
     private var iterator: MimetypeIterator = MimetypeIterator.Unsupported
 
     private val logger = delegate.install(Profiles.SERVICE_PLAYER)
+
+    /**
+     * Get the kodi url options like this:
+     * http://host[:port]/directory/file?a=b&c=d|option1=value1&option2=value2
+     * Will get:
+     * {option1=value1, option2=value2}
+     *
+     * https://kodi.wiki/view/HTTP
+     */
+    private fun String.readKodiUrlOptions(): Map<String, String> {
+        val options = this.drop(this.indexOf("|") + 1).split("&")
+        return options
+            .filter { it.isNotBlank() }
+            .associate {
+                val pair = it.split("=")
+                val key = pair.getOrNull(0).orEmpty()
+                val value = pair.getOrNull(1).orEmpty()
+                key to value
+            }
+    }
+
+    /**
+     * Read user-agent appended to the channelUrl.
+     * If there is no result from url, it will use playlist user-agent instead.
+     */
+    private fun getUserAgent(channelUrl: String, playlist: Playlist?): String? {
+        val kodiUrlOptions = channelUrl.readKodiUrlOptions()
+        val userAgent = kodiUrlOptions[KodiAdaptions.HTTP_OPTION_UA] ?: playlist?.userAgent
+        return userAgent
+    }
 }
 
 private fun VideoSize.toRect(): Rect {

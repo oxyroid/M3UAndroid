@@ -306,9 +306,9 @@ class PlaylistViewModel @Inject constructor(
         val epgUrls = playlist.epgUrlsOrXtreamXmlUrl()
         if (epgUrls.isEmpty()) return null
         val time = Clock.System.now().toEpochMilliseconds()
-        return programmeDao.getCurrentByEpgUrlsAndOriginalId(
+        return programmeDao.getCurrentByEpgUrlsAndRelationId(
             epgUrls = epgUrls,
-            originalId = channelId,
+            relationId = channelId,
             time = time
         )
     }

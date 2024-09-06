@@ -47,7 +47,7 @@ internal fun ImmersiveBackground(
     onRefresh: () -> Unit,
     openSearchDrawer: () -> Unit,
     openSortDrawer: () -> Unit,
-    getProgrammeCurrently: suspend (originalId: String) -> Programme?,
+    getProgrammeCurrently: suspend (relationId: String) -> Programme?,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -102,9 +102,9 @@ internal fun ImmersiveBackground(
 
                     val programme: Programme? by produceState<Programme?>(
                         initialValue = null,
-                        key1 = channel.originalId
+                        key1 = channel.relationId
                     ) {
-                        value = currentGetProgrammeCurrently(channel.originalId.orEmpty())
+                        value = currentGetProgrammeCurrently(channel.relationId.orEmpty())
                     }
 
                     programme?.let {

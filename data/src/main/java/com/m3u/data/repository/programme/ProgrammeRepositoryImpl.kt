@@ -47,18 +47,18 @@ internal class ProgrammeRepositoryImpl @Inject constructor(
     private val logger = delegate.install(Profiles.REPOS_PROGRAMME)
     override val refreshingEpgUrls = MutableStateFlow<List<String>>(emptyList())
 
-    override fun pagingByEpgUrlsAndOriginalId(
+    override fun pagingByEpgUrlsAndRelationId(
         epgUrls: List<String>,
-        originalId: String
-    ): PagingSource<Int, Programme> = programmeDao.pagingByEpgUrlsAndOriginalId(epgUrls, originalId)
+        relationId: String
+    ): PagingSource<Int, Programme> = programmeDao.pagingByEpgUrlsAndRelationId(epgUrls, relationId)
 
     override fun observeProgrammeRange(
         playlistUrl: String,
-        originalId: String
+        relationId: String
     ): Flow<ProgrammeRange> = playlistDao.observeByUrl(playlistUrl).flatMapLatest { playlist ->
         playlist ?: return@flatMapLatest flowOf()
         programmeDao
-            .observeProgrammeRange(playlist.epgUrlsOrXtreamXmlUrl(), originalId)
+            .observeProgrammeRange(playlist.epgUrlsOrXtreamXmlUrl(), relationId)
             .filterNot { (start, end) -> start == 0L || end == 0L }
     }
 

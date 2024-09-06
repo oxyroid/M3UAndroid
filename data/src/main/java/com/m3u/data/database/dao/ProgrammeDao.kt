@@ -25,13 +25,13 @@ interface ProgrammeDao {
         SELECT * FROM programmes 
         WHERE epg_url in (:epgUrls) 
         AND 
-        channel_id = :originalId
+        relation_id = :relationId
         ORDER BY start
         """
     )
-    fun pagingByEpgUrlsAndOriginalId(
+    fun pagingByEpgUrlsAndRelationId(
         epgUrls: List<String>,
-        originalId: String
+        relationId: String
     ): PagingSource<Int, Programme>
 
     @Query("DELETE FROM programmes WHERE epg_url = :epgUrl")
@@ -47,14 +47,14 @@ interface ProgrammeDao {
         """
         SELECT * FROM programmes 
         WHERE epg_url in (:epgUrls) 
-        AND channel_id = :originalId
+        AND relation_id = :relationId
         AND start <= :time
         AND `end` >= :time
         """
     )
-    suspend fun getCurrentByEpgUrlsAndOriginalId(
+    suspend fun getCurrentByEpgUrlsAndRelationId(
         epgUrls: List<String>,
-        originalId: String,
+        relationId: String,
         time: Long
     ): Programme?
 
@@ -63,12 +63,12 @@ interface ProgrammeDao {
         SELECT MIN(start) AS start_edge, MAX(`end`) AS end_edge
         FROM programmes
         WHERE epg_url in (:epgUrls)
-        AND channel_id = :originalId
+        AND relation_id = :relationId
         """
     )
     fun observeProgrammeRange(
         epgUrls: List<String>,
-        originalId: String
+        relationId: String
     ): Flow<ProgrammeRange>
 
     @Query(

@@ -21,7 +21,7 @@ internal interface ChannelDao {
         """
             SELECT DISTINCT `group`
             FROM streams
-            WHERE playlistUrl = :playlistUrl
+            WHERE playlist_url = :playlistUrl
             AND title LIKE '%'||:query||'%'
         """
     )
@@ -34,7 +34,7 @@ internal interface ChannelDao {
         """
             SELECT DISTINCT `group`
             FROM streams
-            WHERE playlistUrl = :playlistUrl
+            WHERE playlist_url = :playlistUrl
             AND title LIKE '%'||:query||'%'
         """
     )
@@ -49,17 +49,17 @@ internal interface ChannelDao {
     @Query("DELETE FROM streams WHERE url = :url")
     suspend fun deleteByUrl(url: String)
 
-    @Query("DELETE FROM streams WHERE playlistUrl = :playlistUrl")
+    @Query("DELETE FROM streams WHERE playlist_url = :playlistUrl")
     suspend fun deleteByPlaylistUrl(playlistUrl: String)
 
-    @Query("DELETE FROM streams WHERE playlistUrl = :playlistUrl AND (favourite = 0 AND hidden = 0)")
+    @Query("DELETE FROM streams WHERE playlist_url = :playlistUrl AND (favourite = 0 AND hidden = 0)")
     suspend fun deleteByPlaylistUrlIgnoreFavOrHidden(playlistUrl: String)
 
-    @Query("SELECT channel_id FROM streams WHERE channel_id IS NOT NULL AND playlistUrl IN (:playlistUrls) AND (favourite = 1 OR hidden = 1)")
-    suspend fun getFavOrHiddenOriginalIdsByPlaylistUrl(vararg playlistUrls: String): List<String>
+    @Query("SELECT relation_id FROM streams WHERE relation_id IS NOT NULL AND playlist_url IN (:playlistUrls) AND (favourite = 1 OR hidden = 1)")
+    suspend fun getFavOrHiddenRelationIdsByPlaylistUrl(vararg playlistUrls: String): List<String>
 
-    @Query("SELECT url FROM streams WHERE channel_id IS NULL AND playlistUrl IN (:playlistUrls) AND (favourite = 1 OR hidden = 1)")
-    suspend fun getFavOrHiddenUrlsByPlaylistUrlNotContainsOriginalId(vararg playlistUrls: String): List<String>
+    @Query("SELECT url FROM streams WHERE relation_id IS NULL AND playlist_url IN (:playlistUrls) AND (favourite = 1 OR hidden = 1)")
+    suspend fun getFavOrHiddenUrlsByPlaylistUrlNotContainsRelationId(vararg playlistUrls: String): List<String>
 
     @Query("SELECT * FROM streams WHERE seen != 0 ORDER BY seen DESC LIMIT 1")
     suspend fun getPlayedRecently(): Channel?
@@ -74,7 +74,7 @@ internal interface ChannelDao {
         """
         SELECT * FROM streams
         WHERE hidden = 0
-        AND playlistUrl NOT IN (:seriesPlaylistUrls)
+        AND playlist_url NOT IN (:seriesPlaylistUrls)
         ORDER BY RANDOM()
         LIMIT 1
     """
@@ -85,29 +85,29 @@ internal interface ChannelDao {
         """
         SELECT * FROM streams
         WHERE favourite = 1
-        AND playlistUrl NOT IN (:seriesPlaylistUrls)
+        AND playlist_url NOT IN (:seriesPlaylistUrls)
         ORDER BY RANDOM()
         LIMIT 1
     """
     )
     suspend fun randomIgnoreSeriesInFavourite(vararg seriesPlaylistUrls: String): Channel?
 
-    @Query("SELECT * FROM streams WHERE url = :url AND playlistUrl = :playlistUrl")
+    @Query("SELECT * FROM streams WHERE url = :url AND playlist_url = :playlistUrl")
     suspend fun getByPlaylistUrlAndUrl(playlistUrl: String, url: String): Channel?
 
-    @Query("SELECT * FROM streams WHERE title = :title AND playlistUrl = :playlistUrl")
+    @Query("SELECT * FROM streams WHERE title = :title AND playlist_url = :playlistUrl")
     suspend fun getByPlaylistUrlAndTitle(playlistUrl: String, title: String): Channel?
 
-    @Query("SELECT * FROM streams WHERE playlistUrl = :playlistUrl")
+    @Query("SELECT * FROM streams WHERE playlist_url = :playlistUrl")
     suspend fun getByPlaylistUrl(playlistUrl: String): List<Channel>
 
-    @Query("SELECT * FROM streams WHERE playlistUrl = :playlistUrl AND channel_id = :originalId")
-    suspend fun getByPlaylistUrlAndOriginalId(playlistUrl: String, originalId: String): Channel?
+    @Query("SELECT * FROM streams WHERE playlist_url = :playlistUrl AND relation_id = :relationId")
+    suspend fun getByPlaylistUrlAndRelationId(playlistUrl: String, relationId: String): Channel?
 
     @Query("SELECT * FROM streams WHERE id = :id")
     fun observeById(id: Int): Flow<Channel?>
 
-    @Query("SELECT * FROM streams WHERE playlistUrl = :playlistUrl")
+    @Query("SELECT * FROM streams WHERE playlist_url = :playlistUrl")
     fun observeAllByPlaylistUrl(playlistUrl: String): Flow<List<Channel>>
 
     @Query("SELECT * FROM streams WHERE hidden = 0")
@@ -122,7 +122,7 @@ internal interface ChannelDao {
     @Query(
         """
             SELECT * FROM streams 
-            WHERE playlistUrl = :url
+            WHERE playlist_url = :url
             AND title LIKE '%'||:query||'%'
             AND `group` = :category
         """
@@ -136,7 +136,7 @@ internal interface ChannelDao {
     @Query(
         """
             SELECT * FROM streams 
-            WHERE playlistUrl = :url
+            WHERE playlist_url = :url
             AND title LIKE '%'||:query||'%'
             AND `group` = :category
             ORDER BY title ASC
@@ -151,7 +151,7 @@ internal interface ChannelDao {
     @Query(
         """
             SELECT * FROM streams 
-            WHERE playlistUrl = :url
+            WHERE playlist_url = :url
             AND title LIKE '%'||:query||'%'
             AND `group` = :category
             ORDER BY title DESC
@@ -166,7 +166,7 @@ internal interface ChannelDao {
     @Query(
         """
             SELECT * FROM streams 
-            WHERE playlistUrl = :url
+            WHERE playlist_url = :url
             AND title LIKE '%'||:query||'%'
             AND `group` = :category
             ORDER BY seen DESC
@@ -178,10 +178,10 @@ internal interface ChannelDao {
         query: String
     ): PagingSource<Int, Channel>
 
-    @Query("SELECT COUNT(playlistUrl) FROM streams WHERE playlistUrl = :playlistUrl")
+    @Query("SELECT COUNT(playlist_url) FROM streams WHERE playlist_url = :playlistUrl")
     fun observeCountByPlaylistUrl(playlistUrl: String): Flow<Int>
 
-    @Query("SELECT COUNT(playlistUrl) FROM streams WHERE playlistUrl = :playlistUrl")
+    @Query("SELECT COUNT(playlist_url) FROM streams WHERE playlist_url = :playlistUrl")
     suspend fun getCountByPlaylistUrl(playlistUrl: String): Int
 
     @Query("SELECT * FROM streams WHERE favourite = 1 AND seen + :limit < :current ORDER BY seen")
