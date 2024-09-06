@@ -39,6 +39,7 @@ jobs:
           path: "androidApp/build/outputs/apk/snapshotChannelRichCodec/release/*.apk"
 
       - name: Upload To Telegram
+        if: github.event_name != 'pull_request'
         uses: xireiki/channel-post@v1.0.7
         with:
           bot_token: ${{ secrets.BOT_TOKEN }}
