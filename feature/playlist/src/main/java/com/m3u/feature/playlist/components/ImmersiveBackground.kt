@@ -47,7 +47,7 @@ internal fun ImmersiveBackground(
     onRefresh: () -> Unit,
     openSearchDrawer: () -> Unit,
     openSortDrawer: () -> Unit,
-    getProgrammeCurrently: suspend (originalId: String) -> Programme?,
+    getProgrammeCurrently: suspend (relationId: String) -> Programme?,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current

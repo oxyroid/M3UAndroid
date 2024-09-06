@@ -15,7 +15,7 @@ import kotlin.time.toDuration
 // epg programme
 data class Programme(
     // m3u tvg-id
-    @ColumnInfo(name = "channel_id")
+    @ColumnInfo(name = "relation_id")
     val channelId: String,
     // playlistUrl in Playlist which source is epg
     // for more details, see [DataSource.EPG].

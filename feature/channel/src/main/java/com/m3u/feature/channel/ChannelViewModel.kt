@@ -296,14 +296,14 @@ class ChannelViewModel @Inject constructor(
 
     internal val programmes: Flow<PagingData<Programme>> = channel.flatMapLatest { channel ->
         channel ?: return@flatMapLatest flowOf(PagingData.empty())
-        val originalId = channel.relationId ?: return@flatMapLatest flowOf(PagingData.empty())
+        val relationId = channel.relationId ?: return@flatMapLatest flowOf(PagingData.empty())
         val playlist = channel.playlistUrl.let { playlistRepository.get(it) }
         playlist ?: return@flatMapLatest flowOf(PagingData.empty())
         val epgUrls = playlist.epgUrlsOrXtreamXmlUrl()
         Pager(PagingConfig(15)) {
-            programmeRepository.pagingByEpgUrlsAndOriginalId(
+            programmeRepository.pagingByEpgUrlsAndRelationId(
                 epgUrls = epgUrls,
-                originalId = originalId
+                relationId = relationId
             )
         }
             .flow
@@ -320,9 +320,9 @@ class ChannelViewModel @Inject constructor(
 
     internal val programmeRange: StateFlow<ProgrammeRange> = channel.flatMapLatest { channel ->
         channel ?: return@flatMapLatest flowOf(defaultProgrammeRange)
-        val originalId = channel.relationId ?: return@flatMapLatest flowOf(defaultProgrammeRange)
+        val relationId = channel.relationId ?: return@flatMapLatest flowOf(defaultProgrammeRange)
         programmeRepository
-            .observeProgrammeRange(channel.playlistUrl, originalId)
+            .observeProgrammeRange(channel.playlistUrl, relationId)
             .map {
                 it
                     .spread(ProgrammeRange.Spread.Increase(5.minutes, 1.hours + 5.minutes))

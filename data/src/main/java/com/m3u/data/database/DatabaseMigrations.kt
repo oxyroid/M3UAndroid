@@ -60,4 +60,24 @@ internal object DatabaseMigrations {
         DeleteColumn(tableName = "programmes", columnName = "previous_start")
     )
     class AutoMigrate18To19: AutoMigrationSpec
+
+    @RenameColumn.Entries(
+        RenameColumn(
+            tableName = "streams",
+            fromColumnName = "channel_id",
+            toColumnName = "relation_id"
+        ),
+        RenameColumn(
+            tableName = "programmes",
+            fromColumnName = "channel_id",
+            toColumnName = "relation_id"
+        ),
+        RenameColumn(
+            tableName = "streams",
+            fromColumnName = "playlistUrl",
+            toColumnName = "playlist_url"
+        )
+    )
+    class AutoMigrate19To20: AutoMigrationSpec
+
 }

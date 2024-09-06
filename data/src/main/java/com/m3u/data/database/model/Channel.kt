@@ -31,7 +31,7 @@ data class Channel(
     val title: String,
     @ColumnInfo(name = "cover")
     val cover: String? = null,
-    @ColumnInfo(name = "playlistUrl", index = true)
+    @ColumnInfo(name = "playlist_url", index = true)
     val playlistUrl: String,
     @ColumnInfo(name = "license_type", defaultValue = "NULL")
     val licenseType: String? = null,
@@ -51,7 +51,7 @@ data class Channel(
     @ColumnInfo(name = "seen", defaultValue = "0")
     @Exclude
     val seen: Long = 0L,
-    @ColumnInfo(name = "channel_id", defaultValue = "NULL")
+    @ColumnInfo(name = "relation_id", defaultValue = "NULL")
     @Exclude
     /**
      * if it is from m3u, corresponds to 'channel-id' field in the EPG xml file.

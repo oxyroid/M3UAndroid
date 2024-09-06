@@ -102,16 +102,16 @@ internal class PlaylistRepositoryImpl @Inject constructor(
                 actualUrl: $actualUrl
             """.trimIndent()
         }
-        val favOrHiddenOriginalIds = when (preferences.playlistStrategy) {
+        val favOrHiddenRelationIds = when (preferences.playlistStrategy) {
             PlaylistStrategy.ALL -> emptyList()
             else -> {
-                channelDao.getFavOrHiddenOriginalIdsByPlaylistUrl(url)
+                channelDao.getFavOrHiddenRelationIdsByPlaylistUrl(url)
             }
         }
         val favOrHiddenUrls = when (preferences.playlistStrategy) {
             PlaylistStrategy.ALL -> emptyList()
             else -> {
-                channelDao.getFavOrHiddenUrlsByPlaylistUrlNotContainsOriginalId(url)
+                channelDao.getFavOrHiddenUrlsByPlaylistUrlNotContainsRelationId(url)
             }
         }
 
@@ -150,7 +150,7 @@ internal class PlaylistRepositoryImpl @Inject constructor(
                         val relationId = it.id
                         when {
                             relationId.isBlank() -> it.url in favOrHiddenUrls
-                            else -> relationId in favOrHiddenOriginalIds
+                            else -> relationId in favOrHiddenRelationIds
                         }
                     }
                     .collect { send(it) }
@@ -234,7 +234,7 @@ internal class PlaylistRepositoryImpl @Inject constructor(
                 )
         }
 
-        val favOrHiddenOriginalIds = channelDao.getFavOrHiddenOriginalIdsByPlaylistUrl(
+        val favOrHiddenRelationIds = channelDao.getFavOrHiddenRelationIdsByPlaylistUrl(
             livePlaylist.url,
             vodPlaylist.url,
             seriesPlaylist.url
@@ -295,8 +295,8 @@ internal class PlaylistRepositoryImpl @Inject constructor(
                 when (current) {
                     is XtreamLive -> {
                         val favOrHidden = with(current.streamId) {
-                            val originalId = this.toString()
-                            this != null && originalId in favOrHiddenOriginalIds
+                            val relationId = this.toString()
+                            this != null && relationId in favOrHiddenRelationIds
                         }
                         if (favOrHidden) return@mapNotNull null
                         current.toChannel(
@@ -311,8 +311,8 @@ internal class PlaylistRepositoryImpl @Inject constructor(
 
                     is XtreamVod -> {
                         val favOrHidden = with(current.streamId) {
-                            val originalId = this.toString()
-                            this != null && originalId in favOrHiddenOriginalIds
+                            val relationId = this.toString()
+                            this != null && relationId in favOrHiddenRelationIds
                         }
                         if (favOrHidden) return@mapNotNull null
                         current.toChannel(
@@ -329,8 +329,8 @@ internal class PlaylistRepositoryImpl @Inject constructor(
                     // for its episodes.
                     is XtreamSerial -> {
                         val favOrHidden = with(current.seriesId) {
-                            val originalId = this.toString()
-                            this != null && originalId in favOrHiddenOriginalIds
+                            val relationId = this.toString()
+                            this != null && relationId in favOrHiddenRelationIds
                         }
                         if (favOrHidden) return@mapNotNull null
                         current.asChannel(

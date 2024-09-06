@@ -160,7 +160,7 @@ data class PlaylistWithChannels(
     val playlist: Playlist,
     @Relation(
         parentColumn = "url",
-        entityColumn = "playlistUrl"
+        entityColumn = "playlist_url"
     )
     val channels: List<Channel>
 )
