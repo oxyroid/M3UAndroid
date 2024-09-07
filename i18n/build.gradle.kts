@@ -6,7 +6,7 @@ plugins {
 android {
     namespace = "com.m3u.i18n"
     kotlinOptions {
-        jvmTarget = "17"
+        jvmTarget = "1.8"
     }
 }
 

@@ -48,7 +48,7 @@ subprojects {
         configure<LibraryExtension> {
             compileSdk = 34
             defaultConfig {
-                minSdk = 26
+                minSdk = 21
                 testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
                 consumerProguardFiles("consumer-rules.pro")
             }
@@ -62,8 +62,8 @@ subprojects {
                 }
             }
             compileOptions {
-                sourceCompatibility = JavaVersion.VERSION_17
-                targetCompatibility = JavaVersion.VERSION_17
+                sourceCompatibility = JavaVersion.VERSION_1_8
+                targetCompatibility = JavaVersion.VERSION_1_8
             }
         }
     }

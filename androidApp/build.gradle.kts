@@ -15,7 +15,7 @@ android {
     compileSdk = 34
     defaultConfig {
         applicationId = "com.m3u.androidApp"
-        minSdk = 26
+        minSdk = 21
         targetSdk = 33
         versionCode = 143
         versionName = "1.14.0-rc03"
@@ -91,11 +91,12 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        isCoreLibraryDesugaringEnabled = true
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
     }
     kotlinOptions {
-        jvmTarget = "17"
+        jvmTarget = "1.8"
     }
     buildFeatures {
         compose = true
@@ -129,6 +130,8 @@ dependencies {
     implementation(project(":feature:channel"))
     implementation(project(":feature:playlist-configuration"))
     implementation(project(":feature:crash"))
+
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.2")
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)

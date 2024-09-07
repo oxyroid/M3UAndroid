@@ -6,6 +6,7 @@ import android.app.NotificationManager
 import android.content.Context
 import android.media.AudioAttributes
 import android.media.RingtoneManager
+import android.os.Build
 import androidx.core.graphics.drawable.toBitmapOrNull
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
@@ -42,7 +43,12 @@ class ProgrammeReminder @AssistedInject constructor(
         }
         val programme = programmeRepository.getById(programmeId) ?: return Result.failure()
         val drawable = mediaRepository.loadDrawable(programme.icon.orEmpty())
-        val builder = Notification.Builder(context, CHANNEL_ID)
+        val builder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            Notification.Builder(context, CHANNEL_ID)
+        } else {
+            @Suppress("DEPRECATION")
+            Notification.Builder(context)
+        }
             .setContentTitle(programme.title)
             .setContentText(programme.description)
             .setSmallIcon(R.drawable.baseline_notifications_none_24)
@@ -57,6 +63,7 @@ class ProgrammeReminder @AssistedInject constructor(
     }
 
     private fun createChannel() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
         val channel = NotificationChannel(
             CHANNEL_ID,
             NOTIFICATION_NAME,

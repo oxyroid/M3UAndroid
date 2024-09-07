@@ -111,21 +111,25 @@ internal fun PlaylistConfigurationRoute(
                     viewModel.onSyncProgrammes()
                     return@PlaylistConfigurationScreen
                 }
-                permissionState.checkPermissionOrRationale(
-                    showRationale = {
-                        val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
-                            .apply {
-                                putExtra(
-                                    Settings.EXTRA_APP_PACKAGE,
-                                    helper.activityContext.packageName
-                                )
-                            }
-                        helper.activityContext.startActivity(intent)
-                    },
-                    block = {
-                        viewModel.onSyncProgrammes()
-                    }
-                )
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    permissionState.checkPermissionOrRationale(
+                        showRationale = {
+                            val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                                .apply {
+                                    putExtra(
+                                        Settings.EXTRA_APP_PACKAGE,
+                                        helper.activityContext.packageName
+                                    )
+                                }
+                            helper.activityContext.startActivity(intent)
+                        },
+                        block = {
+                            viewModel.onSyncProgrammes()
+                        }
+                    )
+                } else {
+                    viewModel.onSyncProgrammes()
+                }
             },
             onCancelSyncProgrammes = viewModel::onCancelSyncProgrammes,
             modifier = modifier,

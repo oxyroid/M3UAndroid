@@ -6,7 +6,7 @@ plugins {
 android {
     namespace = "com.m3u.codec.rich"
     kotlinOptions {
-        jvmTarget = "17"
+        jvmTarget = "1.8"
     }
 }
 

@@ -1,5 +1,6 @@
 package com.m3u.feature.setting.fragments
 
+import android.os.Build
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -150,13 +151,15 @@ internal fun OptionalFragment(
                     onChanged = { preferences.screenRotating = !preferences.screenRotating }
                 )
             }
-            item {
-                SwitchSharedPreference(
-                    title = string.feat_setting_screencast,
-                    icon = Icons.Rounded.Cast,
-                    checked = preferences.screencast,
-                    onChanged = { preferences.screencast = !preferences.screencast }
-                )
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                item {
+                    SwitchSharedPreference(
+                        title = string.feat_setting_screencast,
+                        icon = Icons.Rounded.Cast,
+                        checked = preferences.screencast,
+                        onChanged = { preferences.screencast = !preferences.screencast }
+                    )
+                }
             }
         }
         item {

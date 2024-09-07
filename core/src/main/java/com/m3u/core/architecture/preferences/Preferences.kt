@@ -2,6 +2,7 @@ package com.m3u.core.architecture.preferences
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.os.Build
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
@@ -140,7 +141,7 @@ class Preferences @Inject constructor(
         const val DEFAULT_ZAPPING_MODE = false
         const val DEFAULT_BRIGHTNESS_GESTURE = true
         const val DEFAULT_VOLUME_GESTURE = true
-        const val DEFAULT_SCREENCAST = true
+        val DEFAULT_SCREENCAST = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
         const val DEFAULT_SCREEN_ROTATING = false
 
         @UnseensMilliseconds

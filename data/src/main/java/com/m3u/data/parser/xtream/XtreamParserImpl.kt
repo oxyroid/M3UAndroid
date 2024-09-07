@@ -16,7 +16,6 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
-import java.time.Duration
 import javax.inject.Inject
 
 internal class XtreamParserImpl @Inject constructor(
@@ -33,12 +32,6 @@ internal class XtreamParserImpl @Inject constructor(
             explicitNulls = false
             isLenient = true
         }
-    private val okHttpClient = okHttpClient
-        .newBuilder()
-        .callTimeout(Duration.ofMillis(Int.MAX_VALUE.toLong()))
-        .connectTimeout(Duration.ofMillis(Int.MAX_VALUE.toLong()))
-        .readTimeout(Duration.ofMillis(Int.MAX_VALUE.toLong()))
-        .build()
 
     private val utils by lazy {
         ParserUtils(
@@ -142,7 +135,10 @@ internal class XtreamParserImpl @Inject constructor(
         )
     }
 
-    override suspend fun getSeriesInfoOrThrow(input: XtreamInput, seriesId: Int): XtreamChannelInfo {
+    override suspend fun getSeriesInfoOrThrow(
+        input: XtreamInput,
+        seriesId: Int
+    ): XtreamChannelInfo {
         val (basicUrl, username, password, type) = input
         check(type == DataSource.Xtream.TYPE_SERIES) { "xtream input type must be `series`" }
         return utils.newCallOrThrow(

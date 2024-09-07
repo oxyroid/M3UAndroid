@@ -3,6 +3,7 @@ package com.m3u.androidApp.glance
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.unit.dp
@@ -35,6 +36,7 @@ import dagger.hilt.android.EntryPointAccessors
 class FavouriteWidget : GlanceAppWidget() {
     override val sizeMode: SizeMode = SizeMode.Exact
     override suspend fun provideGlance(context: Context, id: GlanceId) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
         val accessor: GlanceAccessor by lazy {
             EntryPointAccessors.fromApplication(context.applicationContext)
         }

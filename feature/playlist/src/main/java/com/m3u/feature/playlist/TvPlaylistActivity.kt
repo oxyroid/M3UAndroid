@@ -4,6 +4,7 @@ import android.app.ActivityOptions
 import android.content.ComponentName
 import android.content.Intent
 import android.content.res.Configuration
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -57,6 +58,7 @@ class TvPlaylistActivity : AppCompatActivity() {
     }
 
     private fun navigateToChannel() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) return
         val options = ActivityOptions.makeCustomAnimation(
             this,
             0,

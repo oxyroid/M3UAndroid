@@ -4,6 +4,7 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.provider.Settings
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.Arrangement
@@ -249,21 +250,25 @@ private fun MainContentImpl(
             Button(
                 text = stringResource(string.feat_setting_label_subscribe),
                 onClick = {
-                    postNotificationPermission.checkPermissionOrRationale(
-                        showRationale = {
-                            val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
-                                .apply {
-                                    putExtra(
-                                        Settings.EXTRA_APP_PACKAGE,
-                                        helper.activityContext.packageName
-                                    )
-                                }
-                            helper.activityContext.startActivity(intent)
-                        },
-                        block = {
-                            onSubscribe()
-                        }
-                    )
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        postNotificationPermission.checkPermissionOrRationale(
+                            showRationale = {
+                                val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                                    .apply {
+                                        putExtra(
+                                            Settings.EXTRA_APP_PACKAGE,
+                                            helper.activityContext.packageName
+                                        )
+                                    }
+                                helper.activityContext.startActivity(intent)
+                            },
+                            block = {
+                                onSubscribe()
+                            }
+                        )
+                    } else {
+                        onSubscribe()
+                    }
                 },
                 modifier = Modifier.fillMaxWidth()
             )

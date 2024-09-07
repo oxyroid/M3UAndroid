@@ -675,7 +675,6 @@ object MotionTokens {
     val ExitEasing = CubicBezierEasing(0.4f, 1f, 0.12f, 1f)
 }
 
-@OptIn(ExperimentalTvMaterial3Api::class)
 private fun TvColorScheme.applyTonalElevation(backgroundColor: Color, elevation: Dp): Color {
     return if (backgroundColor == surface) {
         surfaceColorAtElevation(elevation)

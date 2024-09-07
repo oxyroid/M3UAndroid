@@ -64,8 +64,8 @@ import com.m3u.i18n.R.string
 import com.m3u.material.ktx.checkPermissionOrRationale
 import com.m3u.material.ktx.createScheme
 import com.m3u.material.ktx.interceptVolumeEvent
-import com.m3u.material.ktx.tv
 import com.m3u.material.ktx.thenIf
+import com.m3u.material.ktx.tv
 import com.m3u.material.model.LocalSpacing
 import com.m3u.material.model.asTvScheme
 import com.m3u.ui.Destination
@@ -120,7 +120,8 @@ internal fun PlaylistRoute(
     val query by viewModel.query.collectAsStateWithLifecycle()
     val scrollUp by viewModel.scrollUp.collectAsStateWithLifecycle()
 
-    val writeExternalPermission = rememberPermissionState(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+    val writeExternalPermission =
+        rememberPermissionState(Manifest.permission.WRITE_EXTERNAL_STORAGE)
 
     val postNotificationPermission = if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) null
     else rememberPermissionState(Manifest.permission.POST_NOTIFICATIONS)
@@ -216,21 +217,25 @@ internal fun PlaylistRoute(
                 viewModel.refresh()
                 return@PlaylistScreen
             }
-            postNotificationPermission.checkPermissionOrRationale(
-                showRationale = {
-                    val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
-                        .apply {
-                            putExtra(
-                                Settings.EXTRA_APP_PACKAGE,
-                                helper.activityContext.packageName
-                            )
-                        }
-                    helper.activityContext.startActivity(intent)
-                },
-                block = {
-                    viewModel.refresh()
-                }
-            )
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                postNotificationPermission.checkPermissionOrRationale(
+                    showRationale = {
+                        val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                            .apply {
+                                putExtra(
+                                    Settings.EXTRA_APP_PACKAGE,
+                                    helper.activityContext.packageName
+                                )
+                            }
+                        helper.activityContext.startActivity(intent)
+                    },
+                    block = {
+                        viewModel.refresh()
+                    }
+                )
+            } else {
+                viewModel.refresh()
+            }
         },
         contentPadding = contentPadding,
         favourite = viewModel::favourite,

@@ -11,7 +11,7 @@ plugins {
 android {
     namespace = "com.m3u.feature.playlist"
     kotlinOptions {
-        jvmTarget = "17"
+        jvmTarget = "1.8"
     }
     buildFeatures {
         compose = true

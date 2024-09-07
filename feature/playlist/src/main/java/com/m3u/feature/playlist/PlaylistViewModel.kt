@@ -5,6 +5,7 @@ import android.app.Activity
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.snapshotFlow
 import androidx.core.content.pm.ShortcutInfoCompat
@@ -200,6 +201,7 @@ class PlaylistViewModel @Inject constructor(
     }
 
     internal fun createShortcut(context: Context, id: Int) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) return
         val shortcutId = "channel_$id"
         viewModelScope.launch {
             val channel = channelRepository.get(id) ?: return@launch

@@ -4,11 +4,13 @@ import android.app.PictureInPictureParams
 import android.content.Context
 import android.graphics.Color
 import android.graphics.Rect
+import android.os.Build
 import android.provider.Settings
 import android.view.ViewConfiguration
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.enableEdgeToEdge
+import androidx.annotation.RequiresApi
 import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
@@ -101,6 +103,7 @@ class Helper(private val activity: ComponentActivity) {
     val windowSizeClass: WindowSizeClass
         @Composable get() = calculateWindowSizeClass(activity)
 
+    @RequiresApi(Build.VERSION_CODES.O)
     fun enterPipMode(size: Rect) {
         val params = PictureInPictureParams.Builder()
             .setAspectRatio(size.rational)

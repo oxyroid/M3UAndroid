@@ -36,7 +36,7 @@ class FileProviderImpl @Inject constructor(
         infoMap["name"] = packageInfo.versionName
         infoMap["code"] = packageInfo.code
 
-        readConfiguration().forEach(infoMap::put)
+        readConfiguration().forEach { infoMap[it.key] = it.value }
 
         val info = infoMap.joinToString()
         val trace = getStackTraceMessage(value)

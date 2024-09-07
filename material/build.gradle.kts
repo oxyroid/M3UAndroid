@@ -7,7 +7,7 @@ plugins {
 android {
     namespace = "com.m3u.material"
     kotlinOptions {
-        jvmTarget = "17"
+        jvmTarget = "1.8"
     }
     buildFeatures {
         compose = true

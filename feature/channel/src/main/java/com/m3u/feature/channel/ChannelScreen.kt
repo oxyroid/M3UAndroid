@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.Intent
 import android.graphics.Rect
 import android.net.Uri
+import android.os.Build
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
@@ -66,7 +67,11 @@ fun ChannelRoute(
     val configuration = LocalConfiguration.current
 
     val requestIgnoreBatteryOptimizations =
-        rememberPermissionState(Manifest.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            rememberPermissionState(Manifest.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
+        } else {
+            null
+        }
 
     val playerState: PlayerState by viewModel.playerState.collectAsStateWithLifecycle()
     val channel by viewModel.channel.collectAsStateWithLifecycle()
@@ -121,13 +126,15 @@ fun ChannelRoute(
         }
     }
 
-    LaunchedEffect(preferences.zappingMode, playerState.videoSize) {
-        val videoSize = playerState.videoSize
-        if (isAutoZappingMode && preferences.zappingMode && !isPipMode) {
-            maskState.sleep()
-            val rect = if (videoSize.isNotEmpty) videoSize
-            else Rect(0, 0, 1920, 1080)
-            helper.enterPipMode(rect)
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        LaunchedEffect(preferences.zappingMode, playerState.videoSize) {
+            val videoSize = playerState.videoSize
+            if (isAutoZappingMode && preferences.zappingMode && !isPipMode) {
+                maskState.sleep()
+                val rect = if (videoSize.isNotEmpty) videoSize
+                else Rect(0, 0, 1920, 1080)
+                helper.enterPipMode(rect)
+            }
         }
     }
 
@@ -188,7 +195,11 @@ fun ChannelRoute(
                     programmeRange = programmeRange,
                     programmeReminderIds = programmeReminderIds,
                     onRemindProgramme = {
-                        requestIgnoreBatteryOptimizations.checkPermissionOrRationale {
+                        if (requestIgnoreBatteryOptimizations != null) {
+                            requestIgnoreBatteryOptimizations.checkPermissionOrRationale {
+                                viewModel.onRemindProgramme(it)
+                            }
+                        } else {
                             viewModel.onRemindProgramme(it)
                         }
                     },
@@ -225,9 +236,11 @@ fun ChannelRoute(
                     brightness = brightness,
                     onBrightness = { brightness = it },
                     onEnterPipMode = {
-                        helper.enterPipMode(playerState.videoSize)
-                        maskState.unlockAll()
-                        pullPanelLayoutState.collapse()
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                            helper.enterPipMode(playerState.videoSize)
+                            maskState.unlockAll()
+                            pullPanelLayoutState.collapse()
+                        }
                     },
                     modifier = modifier
                 )

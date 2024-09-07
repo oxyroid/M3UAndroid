@@ -1,8 +1,9 @@
 package com.m3u.data.parser.epg
 
 import com.m3u.data.database.model.Programme
-import java.time.ZonedDateTime
-import java.time.format.DateTimeFormatterBuilder
+import kotlinx.datetime.format.DateTimeComponents
+import kotlinx.datetime.format.FormatStringsInDatetimeFormats
+import kotlinx.datetime.format.byUnicodePattern
 
 data class EpgProgramme(
     val channel: String,
@@ -16,17 +17,15 @@ data class EpgProgramme(
     val categories: List<String>
 ) {
     companion object {
-        fun readEpochMilliseconds(time: String): Long = ZonedDateTime
-            .parse(time, EPG_DATE_TIME_FORMATTER)
-            .toInstant()
-            .toEpochMilli()
+        fun readEpochMilliseconds(time: String): Long = EPG_DATE_TIME_FORMATTER
+            .parse(time)
+            .toInstantUsingOffset()
+            .toEpochMilliseconds()
 
-        private val EPG_DATE_TIME_FORMATTER = DateTimeFormatterBuilder()
-            .appendPattern("yyyyMMddHHmmss")
-            .optionalStart()
-            .appendPattern(" Z")
-            .optionalEnd()
-            .toFormatter()
+        @OptIn(FormatStringsInDatetimeFormats::class)
+        private val EPG_DATE_TIME_FORMATTER = DateTimeComponents.Format {
+            byUnicodePattern("yyyyMMddHHmmss[ Z]")
+        }
     }
 }
 

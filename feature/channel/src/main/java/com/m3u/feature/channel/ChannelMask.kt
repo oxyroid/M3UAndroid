@@ -306,7 +306,7 @@ internal fun ChannelMask(
                         contentDescription = stringResource(string.feat_channel_tooltip_cast)
                     )
                 }
-                if (!tv && playerState.videoSize.isNotEmpty) {
+                if (!tv && playerState.videoSize.isNotEmpty ) {
                     MaskButton(
                         state = maskState,
                         icon = Icons.Rounded.PictureInPicture,

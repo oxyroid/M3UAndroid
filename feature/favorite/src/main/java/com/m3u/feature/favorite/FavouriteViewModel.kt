@@ -3,6 +3,7 @@ package com.m3u.feature.favorite
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import androidx.compose.runtime.snapshotFlow
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
@@ -127,6 +128,7 @@ class FavouriteViewModel @Inject constructor(
     }
 
     fun createShortcut(context: Context, id: Int) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) return
         val shortcutId = "channel_$id"
         viewModelScope.launch {
             val channel = channelRepository.get(id) ?: return@launch
