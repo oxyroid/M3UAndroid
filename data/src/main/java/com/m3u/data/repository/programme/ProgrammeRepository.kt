@@ -28,4 +28,5 @@ interface ProgrammeRepository {
     ): Flow<Int>
 
     suspend fun getById(id: Int): Programme?
+    suspend fun getProgrammeCurrently(channelId: Int): Programme?
 }

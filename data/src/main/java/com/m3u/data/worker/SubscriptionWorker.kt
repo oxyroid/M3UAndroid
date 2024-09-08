@@ -189,7 +189,7 @@ class SubscriptionWorker @AssistedInject constructor(
 
     private fun createChannel() {
         val channel = NotificationChannel(
-            CHANNEL_ID, NOTIFICATION_NAME, NotificationManager.IMPORTANCE_DEFAULT
+            CHANNEL_ID, NOTIFICATION_NAME, NotificationManager.IMPORTANCE_LOW
         )
         channel.description = "display subscribe task progress"
         notificationManager.createNotificationChannel(channel)
