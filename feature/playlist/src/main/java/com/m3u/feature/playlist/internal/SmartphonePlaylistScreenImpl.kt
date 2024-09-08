@@ -101,7 +101,7 @@ internal fun SmartphonePlaylistScreenImpl(
     onCreateShortcut: (channelId: Int) -> Unit,
     isAtTopState: MutableState<Boolean>,
     isVodOrSeriesPlaylist: Boolean,
-    getProgrammeCurrently: suspend (channelId: String) -> Programme?,
+    getProgrammeCurrently: suspend (channelId: Int) -> Programme?,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues()
 ) {

@@ -68,7 +68,7 @@ internal fun TvPlaylistScreenImpl(
     createTvRecommend: (channelId: Int) -> Unit,
     onPlayChannel: (Channel) -> Unit,
     onRefresh: () -> Unit,
-    getProgrammeCurrently: suspend (channelId: String) -> Programme?,
+    getProgrammeCurrently: suspend (channelId: Int) -> Programme?,
     isVodOrSeriesPlaylist: Boolean,
     modifier: Modifier = Modifier
 ) {

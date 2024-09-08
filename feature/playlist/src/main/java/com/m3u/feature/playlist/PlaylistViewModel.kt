@@ -37,17 +37,16 @@ import com.m3u.core.wrapper.Resource
 import com.m3u.core.wrapper.handledEvent
 import com.m3u.core.wrapper.mapResource
 import com.m3u.core.wrapper.resource
-import com.m3u.data.database.dao.ProgrammeDao
 import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.Programme
-import com.m3u.data.database.model.epgUrlsOrXtreamXmlUrl
 import com.m3u.data.database.model.isSeries
 import com.m3u.data.database.model.type
 import com.m3u.data.parser.xtream.XtreamChannelInfo
 import com.m3u.data.repository.media.MediaRepository
 import com.m3u.data.repository.playlist.PlaylistRepository
 import com.m3u.data.repository.channel.ChannelRepository
+import com.m3u.data.repository.programme.ProgrammeRepository
 import com.m3u.data.service.MediaCommand
 import com.m3u.data.service.Messager
 import com.m3u.data.service.PlayerManager
@@ -76,7 +75,6 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
-import kotlinx.datetime.Clock
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.seconds
 import androidx.tvprovider.media.tv.Channel as TvProviderChannel
@@ -89,7 +87,7 @@ class PlaylistViewModel @Inject constructor(
     private val channelRepository: ChannelRepository,
     private val playlistRepository: PlaylistRepository,
     private val mediaRepository: MediaRepository,
-    private val programmeDao: ProgrammeDao,
+    private val programmeRepository: ProgrammeRepository,
     private val messager: Messager,
     playerManager: PlayerManager,
     preferences: Preferences,
@@ -301,16 +299,8 @@ class PlaylistViewModel @Inject constructor(
         }
     }
 
-    internal suspend fun getProgrammeCurrently(channelId: String): Programme? {
-        val playlist = playlist.value ?: return null
-        val epgUrls = playlist.epgUrlsOrXtreamXmlUrl()
-        if (epgUrls.isEmpty()) return null
-        val time = Clock.System.now().toEpochMilliseconds()
-        return programmeDao.getCurrentByEpgUrlsAndRelationId(
-            epgUrls = epgUrls,
-            relationId = channelId,
-            time = time
-        )
+    internal suspend fun getProgrammeCurrently(channelId: Int): Programme? {
+        return programmeRepository.getProgrammeCurrently(channelId)
     }
 
     private val sortIndex: MutableStateFlow<Int> = MutableStateFlow(0)
