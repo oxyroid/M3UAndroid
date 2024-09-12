@@ -24,6 +24,7 @@ import androidx.media3.exoplayer.drm.DefaultDrmSessionManager
 import androidx.media3.exoplayer.drm.FrameworkMediaDrm
 import androidx.media3.exoplayer.drm.HttpMediaDrmCallback
 import androidx.media3.exoplayer.drm.LocalMediaDrmCallback
+import androidx.media3.exoplayer.hls.HlsExtractorFactory
 import androidx.media3.exoplayer.hls.HlsMediaSource
 import androidx.media3.exoplayer.offline.Download
 import androidx.media3.exoplayer.offline.DownloadManager
@@ -33,6 +34,10 @@ import androidx.media3.exoplayer.source.MediaSource
 import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
 import androidx.media3.exoplayer.trackselection.TrackSelector
+import androidx.media3.extractor.DefaultExtractorsFactory
+import androidx.media3.extractor.ts.DefaultTsPayloadReaderFactory.FLAG_ALLOW_NON_IDR_KEYFRAMES
+import androidx.media3.extractor.ts.DefaultTsPayloadReaderFactory.FLAG_DETECT_ACCESS_UNITS
+import androidx.media3.extractor.ts.DefaultTsPayloadReaderFactory.FLAG_ENABLE_HDMV_DTS_AUDIO_STREAMS
 import androidx.media3.session.MediaSession
 import com.m3u.codec.Codecs
 import com.m3u.core.architecture.dispatcher.Dispatcher
@@ -227,17 +232,21 @@ class PlayerManagerImpl @Inject constructor(
         } else {
             createHttpDataSourceFactory(userAgent)
         }
+        val extractorsFactory = DefaultExtractorsFactory().setTsExtractorFlags(
+            FLAG_ALLOW_NON_IDR_KEYFRAMES and FLAG_DETECT_ACCESS_UNITS
+        )
         val mediaSourceFactory = when (mimeType) {
             MimeTypes.APPLICATION_M3U8 -> HlsMediaSource.Factory(dataSourceFactory)
                 .setAllowChunklessPreparation(false)
+                .setExtractorFactory(HlsExtractorFactory.DEFAULT)
 
-            MimeTypes.APPLICATION_SS -> ProgressiveMediaSource.Factory(dataSourceFactory)
+            MimeTypes.APPLICATION_SS -> ProgressiveMediaSource.Factory(dataSourceFactory, extractorsFactory)
             MimeTypes.APPLICATION_RTSP -> RtspMediaSource.Factory()
                 .setDebugLoggingEnabled(true)
                 .setForceUseRtpTcp(true)
                 .setSocketFactory(SSLs.TLSTrustAll.socketFactory)
 
-            else -> DefaultMediaSourceFactory(dataSourceFactory)
+            else -> DefaultMediaSourceFactory(dataSourceFactory, extractorsFactory)
         }
         logger.post { "media-source-factory: ${mediaSourceFactory::class.qualifiedName}" }
         if (licenseType.isNotEmpty()) {
