@@ -10,6 +10,7 @@ import com.m3u.core.architecture.logger.install
 import com.m3u.core.architecture.logger.post
 import com.m3u.core.util.basic.letIf
 import com.m3u.data.api.OkhttpClient
+import com.m3u.data.database.dao.ChannelDao
 import com.m3u.data.database.dao.PlaylistDao
 import com.m3u.data.database.dao.ProgrammeDao
 import com.m3u.data.database.model.Programme
@@ -38,6 +39,7 @@ import javax.inject.Inject
 
 internal class ProgrammeRepositoryImpl @Inject constructor(
     private val playlistDao: PlaylistDao,
+    private val channelDao: ChannelDao,
     private val programmeDao: ProgrammeDao,
     private val epgParser: EpgParser,
     @OkhttpClient(true) private val okHttpClient: OkHttpClient,
@@ -94,6 +96,22 @@ internal class ProgrammeRepositoryImpl @Inject constructor(
 
     override suspend fun getById(id: Int): Programme? = logger.execute {
         programmeDao.getById(id)
+    }
+
+    override suspend fun getProgrammeCurrently(channelId: Int): Programme? {
+        val channel = channelDao.get(channelId)?: return null
+        val relationId = channel.relationId ?: return null
+        val playlist = playlistDao.get(channel.playlistUrl) ?: return null
+
+        val epgUrls = playlist.epgUrlsOrXtreamXmlUrl()
+        if (epgUrls.isEmpty()) return null
+
+        val time = Clock.System.now().toEpochMilliseconds()
+        return programmeDao.getCurrentByEpgUrlsAndRelationId(
+            epgUrls = epgUrls,
+            relationId = relationId,
+            time = time
+        )
     }
 
     private fun checkOrRefreshProgrammesOrThrowImpl(

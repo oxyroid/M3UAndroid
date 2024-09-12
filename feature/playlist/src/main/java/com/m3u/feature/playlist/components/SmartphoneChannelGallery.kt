@@ -12,11 +12,9 @@ import androidx.compose.foundation.lazy.staggeredgrid.LazyStaggeredGridState
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.produceState
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -40,7 +38,7 @@ internal fun SmartphoneChannelGallery(
     isVodOrSeriesPlaylist: Boolean,
     onClick: (Channel) -> Unit,
     onLongClick: (Channel) -> Unit,
-    getProgrammeCurrently: suspend (channelId: String) -> Programme?,
+    getProgrammeCurrently: suspend (channelId: Int) -> Programme?,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(0.dp),
 ) {
@@ -54,6 +52,8 @@ internal fun SmartphoneChannelGallery(
     }
 
     val channels = categoryWithChannels?.channels?.collectAsLazyPagingItems()
+
+    val currentGetProgrammeCurrently by rememberUpdatedState(getProgrammeCurrently)
 
     Row(
         modifier = modifier
@@ -74,9 +74,11 @@ internal fun SmartphoneChannelGallery(
             items(channels?.itemCount ?: 0) { index ->
                 val channel = channels?.get(index)
                 if (channel != null) {
-                    var programme: Programme? by remember { mutableStateOf(null) }
-                    LaunchedEffect(channel.relationId) {
-                        programme = getProgrammeCurrently(channel.relationId.orEmpty())
+                    val programme: Programme? by produceState<Programme?>(
+                        initialValue = null,
+                        key1 = channel.id
+                    ) {
+                        value = currentGetProgrammeCurrently(channel.id)
                     }
                     SmartphoneChannelItem(
                         channel = channel,

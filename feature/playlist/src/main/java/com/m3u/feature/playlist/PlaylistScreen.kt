@@ -315,7 +315,7 @@ private fun PlaylistScreen(
     contentPadding: PaddingValues,
     isVodPlaylist: Boolean,
     isSeriesPlaylist: Boolean,
-    getProgrammeCurrently: suspend (channelId: String) -> Programme?,
+    getProgrammeCurrently: suspend (channelId: Int) -> Programme?,
     modifier: Modifier = Modifier
 ) {
     val currentOnScrollUp by rememberUpdatedState(onScrollUp)
