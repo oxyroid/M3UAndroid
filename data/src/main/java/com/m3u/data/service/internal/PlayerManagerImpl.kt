@@ -37,7 +37,6 @@ import androidx.media3.exoplayer.trackselection.TrackSelector
 import androidx.media3.extractor.DefaultExtractorsFactory
 import androidx.media3.extractor.ts.DefaultTsPayloadReaderFactory.FLAG_ALLOW_NON_IDR_KEYFRAMES
 import androidx.media3.extractor.ts.DefaultTsPayloadReaderFactory.FLAG_DETECT_ACCESS_UNITS
-import androidx.media3.extractor.ts.DefaultTsPayloadReaderFactory.FLAG_ENABLE_HDMV_DTS_AUDIO_STREAMS
 import androidx.media3.session.MediaSession
 import com.m3u.codec.Codecs
 import com.m3u.core.architecture.dispatcher.Dispatcher
@@ -544,12 +543,6 @@ private sealed class MimetypeIterator {
     class Unspecified(val url: String) : MimetypeIterator()
     class Trying(val mimeType: String) : MimetypeIterator()
     object Unsupported : MimetypeIterator()
-
-    val mimeTypeOrNull: String?
-        get() = when (this) {
-            is Trying -> mimeType
-            else -> null
-        }
 
     companion object {
         val ORDER_DEFAULT = arrayOf(
