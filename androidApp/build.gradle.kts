@@ -66,6 +66,7 @@ android {
             )
         }
     }
+    aaptOptions.cruncherEnabled = false
     splits {
         abi {
             val benchmark = project

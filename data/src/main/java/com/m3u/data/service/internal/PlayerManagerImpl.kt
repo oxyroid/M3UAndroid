@@ -544,6 +544,12 @@ private sealed class MimetypeIterator {
     class Trying(val mimeType: String) : MimetypeIterator()
     object Unsupported : MimetypeIterator()
 
+    val mimeTypeOrNull: String?
+        get() = when (this) {
+            is Trying -> mimeType
+            else -> null
+        }
+
     companion object {
         val ORDER_DEFAULT = arrayOf(
             MimeTypes.APPLICATION_SS,

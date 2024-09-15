@@ -14,7 +14,7 @@ import org.xmlpull.v1.XmlPullParser
 import java.io.InputStream
 import javax.inject.Inject
 
-class EpgParserImpl @Inject constructor(
+internal class EpgParserImpl @Inject constructor(
     @Dispatcher(IO) private val ioDispatcher: CoroutineDispatcher,
     delegate: Logger
 ) : EpgParser {
