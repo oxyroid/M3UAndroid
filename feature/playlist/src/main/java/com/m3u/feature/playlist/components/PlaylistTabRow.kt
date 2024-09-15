@@ -61,6 +61,8 @@ import com.m3u.material.model.LocalSpacing
 import com.m3u.material.shape.AbsoluteSmoothCornerShape
 import dev.chrisbanes.haze.HazeDefaults
 import dev.chrisbanes.haze.haze
+import kotlinx.coroutines.delay
+import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
 internal fun PlaylistTabRow(
@@ -125,10 +127,11 @@ internal fun PlaylistTabRow(
                 }
             }
         }
-        LaunchedEffect(Unit) {
+        LaunchedEffect(selectedCategory) {
             val index = categories.indexOf(selectedCategory)
             if (index != -1) {
-                state.scrollToItem(index)
+                delay(800.milliseconds)
+                state.animateScrollToItem(index)
             }
         }
         val categoriesContent: LazyListScope.() -> Unit = {
