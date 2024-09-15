@@ -37,7 +37,6 @@ import androidx.media3.exoplayer.trackselection.TrackSelector
 import androidx.media3.extractor.DefaultExtractorsFactory
 import androidx.media3.extractor.ts.DefaultTsPayloadReaderFactory.FLAG_ALLOW_NON_IDR_KEYFRAMES
 import androidx.media3.extractor.ts.DefaultTsPayloadReaderFactory.FLAG_DETECT_ACCESS_UNITS
-import androidx.media3.extractor.ts.DefaultTsPayloadReaderFactory.FLAG_ENABLE_HDMV_DTS_AUDIO_STREAMS
 import androidx.media3.session.MediaSession
 import com.m3u.codec.Codecs
 import com.m3u.core.architecture.dispatcher.Dispatcher
@@ -513,14 +512,14 @@ class PlayerManagerImpl @Inject constructor(
      *
      * https://kodi.wiki/view/HTTP
      */
-    private fun String.readKodiUrlOptions(): Map<String, String> {
+    private fun String.readKodiUrlOptions(): Map<String, String?> {
         val options = this.drop(this.indexOf("|") + 1).split("&")
         return options
             .filter { it.isNotBlank() }
             .associate {
                 val pair = it.split("=")
                 val key = pair.getOrNull(0).orEmpty()
-                val value = pair.getOrNull(1).orEmpty()
+                val value = pair.getOrNull(1)
                 key to value
             }
     }
