@@ -1,31 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="feat_setting_app_version">app version</string>
-    <string name="feat_setting_label_subscribe">subscribe</string>
-    <string name="feat_setting_success_subscribe">subscribe successfully</string>
-    <string name="feat_setting_failed_malformed_url">malformed url (%s)</string>
-    <string name="feat_setting_error_empty_title">playlist name is empty</string>
-    <string name="feat_setting_placeholder_title">playlist name</string>
-    <string name="feat_setting_placeholder_url">playlist link</string>
-    <string name="feat_setting_label_subscribing">subscribing</string>
-    <string name="feat_setting_sync_mode_all">all</string>
+    <string name="feat_setting_app_version">илова версияси</string>
+    <string name="feat_setting_label_subscribe">қўшиб қўйиш</string>
+    <string name="feat_setting_success_subscribe">муваффақиятли қўшилди</string>
+    <string name="feat_setting_failed_malformed_url">яроқсиз линк (%s)</string>
+    <string name="feat_setting_error_empty_title">плейлистга ном бермадингиз</string>
+    <string name="feat_setting_placeholder_title">плейлист номи</string>
+    <string name="feat_setting_placeholder_url">плейлист линки</string>
+    <string name="feat_setting_label_subscribing">қўшилган</string>
+    <string name="feat_setting_sync_mode_all">барчаси</string>
     <string name="feat_setting_sync_mode_keep">keep</string>
     <string name="feat_setting_sync_mode">synchronization strategy</string>
-    <string name="feat_setting_playlist_management">playlist management</string>
+    <string name="feat_setting_playlist_management">плейлист</string>
     <string name="feat_setting_connect_timeout">connect timeout</string>
-    <string name="feat_setting_god_mode">god mode</string>
+    <string name="feat_setting_god_mode">мураккаб режим</string>
     <string name="feat_setting_god_mode_description">adjust layouts by physical volume buttons</string>
     <string name="feat_setting_experimental_mode">experimental mode</string>
     <string name="feat_setting_experimental_mode_description">unstable features can throw fatal errors</string>
     <string name="feat_setting_label_epg_playlists">EPG List</string>
     <string name="feat_setting_label_hidden_channels">hidden channels</string>
     <string name="feat_setting_label_hidden_playlist_groups">hidden playlist categories</string>
-    <string name="feat_setting_label_add_playlist">add playlist</string>
-    <string name="feat_setting_label_parse_from_clipboard">parse clipboard</string>
-    <string name="feat_setting_label_select_from_local_storage">select file</string>
-    <string name="feat_setting_label_parse_from_disk">parse file</string>
-    <string name="feat_setting_clip_mode">video clip mode</string>
-    <string name="feat_setting_clip_mode_adaptive">adaptive</string>
+    <string name="feat_setting_label_add_playlist">плейлист қўшиш</string>
+    <string name="feat_setting_label_parse_from_clipboard">clipboard\'дан олиш</string>
+    <string name="feat_setting_label_select_from_local_storage">файл танлаш</string>
+    <string name="feat_setting_label_parse_from_disk">файлдан олиш</string>
+    <string name="feat_setting_clip_mode">видеоклип режими</string>
+    <string name="feat_setting_clip_mode_adaptive">мослашувчан</string>
     <string name="feat_setting_clip_mode_clip">clip</string>
     <string name="feat_setting_clip_mode_stretched">stretched</string>
     <string name="feat_setting_auto_refresh_channels">auto refresh channels</string>
@@ -34,16 +34,16 @@
     <string name="feat_setting_full_info_player">full information player</string>
     <string name="feat_setting_full_info_player_description">display more information in the player</string>
     <string name="feat_setting_slider">slider</string>
-    <string name="feat_setting_no_picture_mode">no picture mode</string>
+    <string name="feat_setting_no_picture_mode">расмсиз режим</string>
     <string name="feat_setting_no_picture_mode_description">may improve performance</string>
-    <string name="feat_setting_system_setting">system setting</string>
+    <string name="feat_setting_system_setting">система созламалари</string>
     <string name="feat_setting_script_management_import_js">import Javascript</string>
     <string name="feat_setting_enqueue_subscribe">a subscription task has been added to the queue</string>
     <string name="feat_setting_dropbox">dropbox</string>
     <string name="feat_setting_project_about">about project</string>
-    <string name="feat_setting_local_storage">local storage</string>
-    <string name="feat_setting_error_unselected_file">no file selected yet</string>
-    <string name="feat_setting_error_blank_url">blank url</string>
+    <string name="feat_setting_local_storage">қурилма хотирасидан</string>
+    <string name="feat_setting_error_unselected_file">ҳеч қандай файл танланмади</string>
+    <string name="feat_setting_error_blank_url">бўш линк</string>
     <string name="feat_setting_use_dynamic_colors">dynamic colors</string>
     <string name="feat_setting_use_dynamic_colors_unavailable">it is available on Android 12 and above</string>
     <string name="feat_setting_colorful_background">colorful background</string>
@@ -56,14 +56,14 @@
     <string name="feat_setting_screencast">screencast</string>
     <string name="feat_setting_screen_rotating">screen rotating</string>
     <string name="feat_setting_screen_rotating_description">available when system rotating is unlocked</string>
-    <string name="feat_setting_optional_features">optional features</string>
+    <string name="feat_setting_optional_features">Кенгроқ созламалар</string>
     <string name="feat_setting_unseen_limit">recommend long-unseen favorite channels</string>
-    <string name="feat_setting_reconnect_mode">auto reconnect</string>
-    <string name="feat_setting_reconnect_mode_no">never</string>
-    <string name="feat_setting_reconnect_mode_retry">only when failed</string>
-    <string name="feat_setting_reconnect_mode_reconnect">always</string>
+    <string name="feat_setting_reconnect_mode">автоматик қайта уланиш</string>
+    <string name="feat_setting_reconnect_mode_no">ҳеч қачон</string>
+    <string name="feat_setting_reconnect_mode_retry">фақат ишламай қолганда</string>
+    <string name="feat_setting_reconnect_mode_reconnect">ҳар доим</string>
 
-    <string name="feat_setting_appearance">appearance</string>
+    <string name="feat_setting_appearance">тема/кўриниш</string>
     <string name="feat_setting_appearance_hint_edit_color">long press to edit color</string>
 
     <string name="feat_setting_tunneling">tunneling mode</string>
@@ -103,7 +103,7 @@
 
     <string name="feat_setting_warning_xtream_takes_much_more_time">it may take much more time</string>
 
-    <string name="feat_setting_back_home">back home</string>
+    <string name="feat_setting_back_home">бош ойна</string>
 
     <string name="feat_setting_always_replay">always show replay button</string>
 
@@ -112,14 +112,14 @@
 
     <string name="feat_setting_cache">cache while playing</string>
     <string name="feat_setting_cache_description">this option may prevent normal playback</string>
-    <string name="feat_setting_clear_cache">clear cache</string>
+    <string name="feat_setting_clear_cache">кешни тозалаш</string>
 
     <string name="feat_setting_paging">paging channels</string>
     <string name="feat_setting_paging_description">
         useful for large amounts of channels,
         but grouping will be disabled at the same time
     </string>
-    <string name="feat_setting_source_code">source code</string>
+    <string name="feat_setting_source_code">Илёс Эркинов</string>
 
     <string name="feat_setting_compact_dimension">compact dimension</string>
     <!-- EPG -->

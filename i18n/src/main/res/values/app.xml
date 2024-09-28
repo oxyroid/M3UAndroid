@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_label_crash">app crashes</string>
-    <string name="app_shortcut_channel_recently_short_label">Recently</string>
-    <string name="app_shortcut_channel_recently_long_label">Play recently channel</string>
-    <string name="app_shortcut_channel_recently_disabled">unavailable</string>
+    <string name="app_shortcut_channel_recently_short_label">Охирги</string>
+    <string name="app_shortcut_channel_recently_long_label">Охирги каналларни очиш</string>
+    <string name="app_shortcut_channel_recently_disabled">мавжуд эмас</string>
 </resources>

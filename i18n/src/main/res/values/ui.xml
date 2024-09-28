@@ -1,25 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="ui_title_foryou">M3U</string>
-    <string name="ui_title_favourite">Favourite</string>
-    <string name="ui_title_setting">Settings</string>
+    <string name="ui_title_foryou">IPX</string>
+    <string name="ui_title_favourite">Танланган</string>
+    <string name="ui_title_setting">Созламалар</string>
 
-    <string name="ui_destination_foryou">For You</string>
-    <string name="ui_destination_favourite">Favourite</string>
-    <string name="ui_destination_setting">Settings</string>
+    <string name="ui_destination_foryou">Асосий</string>
+    <string name="ui_destination_favourite">Танланган</string>
 
-    <string name="ui_error_unknown">unknown error</string>
+    <string name="ui_error_unknown">номалум хато</string>
     <string name="ui_cd_top_bar_on_back_pressed">back</string>
 
     <string name="ui_theme_card_left">ho</string>
     <string name="ui_theme_card_right">la</string>
 
-    <string name="ui_sort">Sort</string>
+    <string name="ui_sort">Тартиб</string>
     <string name="ui_sort_asc">A-Z</string>
     <string name="ui_sort_desc">Z-A</string>
-    <string name="ui_sort_recently">Recently</string>
-    <string name="ui_sort_never_played">never played</string>
-    <string name="ui_sort_unspecified">Unspecified</string>
+    <string name="ui_sort_recently">Охирги</string>
+    <string name="ui_sort_never_played">аввал очилмаган</string>
+    <string name="ui_sort_unspecified">Очиқланмаган</string>
 
-    <string name="ui_connect">Connect</string>
+    <string name="ui_connect">Уланиш</string>
 </resources>

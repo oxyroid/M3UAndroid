@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <string name="app_label_crash">fallos de la app</string>
-    <string name="app_shortcut_channel_recently_short_label">Reciente</string>
-    <string name="app_shortcut_channel_recently_long_label">Reproduce la transmisión reciente</string>
-    <string name="app_shortcut_channel_recently_disabled">no está disponible</string>
-</resources>

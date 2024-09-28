@@ -62,6 +62,9 @@ import dev.chrisbanes.haze.hazeChild
 import androidx.tv.material3.Icon as TvIcon
 import androidx.tv.material3.Text as TvText
 
+//import com.m3u.material.components.TonalButton
+
+
 @Composable
 @OptIn(InternalComposeApi::class)
 internal fun Scaffold(
@@ -144,7 +147,9 @@ internal fun MainContent(
 
     Scaffold(
         topBar = {
-            if (!tv) {
+
+            if(!tv){
+
                 TopAppBar(
                     colors = TopAppBarDefaults.topAppBarColors(Color.Transparent),
                     windowInsets = windowInsets,
@@ -154,6 +159,7 @@ internal fun MainContent(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier.defaultMinSize(minHeight = 56.dp)
                         ) {
+
                             Column(
                                 modifier = Modifier
                                     .padding(horizontal = spacing.medium)
@@ -175,6 +181,7 @@ internal fun MainContent(
                                 }
                             }
 
+
                             Row {
                                 actions.forEach { action ->
                                     IconButton(
@@ -190,6 +197,7 @@ internal fun MainContent(
                         }
                     },
                     navigationIcon = {
+
                         AnimatedContent(
                             targetState = onBackPressed,
                             label = "app-scaffold-icon"
@@ -204,12 +212,15 @@ internal fun MainContent(
                                 )
                             }
                         }
+
                     },
                     modifier = Modifier
                         .hazeChild(hazeState, style = HazeStyle(blurRadius = 6.dp))
                         .fillMaxWidth()
                 )
+
             }
+
         },
         contentWindowInsets = windowInsets,
         containerColor = Color.Transparent

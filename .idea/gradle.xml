@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="GradleMigrationSettings" migrationVersion="1" />
+  <component name="GradleSettings">
+    <option name="linkedExternalProjectsSettings">
+      <GradleProjectSettings>
+        <option name="externalProjectPath" value="$PROJECT_DIR$" />
+        <option name="gradleJvm" value="#GRADLE_LOCAL_JAVA_HOME" />
+        <option name="modules">
+          <set>
+            <option value="$PROJECT_DIR$" />
+            <option value="$PROJECT_DIR$/androidApp" />
+            <option value="$PROJECT_DIR$/annotation" />
+            <option value="$PROJECT_DIR$/benchmark" />
+            <option value="$PROJECT_DIR$/codec" />
+            <option value="$PROJECT_DIR$/codec/lite" />
+            <option value="$PROJECT_DIR$/codec/rich" />
+            <option value="$PROJECT_DIR$/core" />
+            <option value="$PROJECT_DIR$/data" />
+            <option value="$PROJECT_DIR$/feature" />
+            <option value="$PROJECT_DIR$/feature/channel" />
+            <option value="$PROJECT_DIR$/feature/crash" />
+            <option value="$PROJECT_DIR$/feature/favorite" />
+            <option value="$PROJECT_DIR$/feature/foryou" />
+            <option value="$PROJECT_DIR$/feature/playlist" />
+            <option value="$PROJECT_DIR$/feature/playlist-configuration" />
+            <option value="$PROJECT_DIR$/feature/setting" />
+            <option value="$PROJECT_DIR$/i18n" />
+            <option value="$PROJECT_DIR$/material" />
+            <option value="$PROJECT_DIR$/processor" />
+            <option value="$PROJECT_DIR$/ui" />
+          </set>
+        </option>
+        <option name="resolveExternalAnnotations" value="false" />
+      </GradleProjectSettings>
+    </option>
+  </component>
+</project>

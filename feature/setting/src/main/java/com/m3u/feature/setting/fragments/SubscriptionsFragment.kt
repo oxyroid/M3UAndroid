@@ -226,13 +226,13 @@ private fun MainContentImpl(
         }
 
         item {
-            if (selectedState.value == DataSource.M3U) {
-                LocalStorageSwitch(
-                    checked = localStorageState.value,
-                    onChanged = { localStorageState.value = it },
-                    enabled = !forTvState.value
-                )
-            }
+//            if (selectedState.value == DataSource.M3U) {
+//                LocalStorageSwitch(
+//                    checked = localStorageState.value,
+//                    onChanged = { localStorageState.value = it },
+//                    enabled = !forTvState.value
+//                )
+//            }
             if (!tv && remoteControl) {
                 RemoteControlSubscribeSwitch(
                     checked = forTvState.value,
@@ -247,7 +247,7 @@ private fun MainContentImpl(
                 Manifest.permission.POST_NOTIFICATIONS
             )
             Button(
-                text = stringResource(string.feat_setting_label_subscribe),
+                text = "Плейлистни қўшиш",
                 onClick = {
                     postNotificationPermission.checkPermissionOrRationale(
                         showRationale = {
@@ -267,36 +267,36 @@ private fun MainContentImpl(
                 },
                 modifier = Modifier.fillMaxWidth()
             )
-            when (selectedState.value) {
-                DataSource.M3U, DataSource.Xtream -> {
-                    TonalButton(
-                        text = stringResource(string.feat_setting_label_parse_from_clipboard),
-                        enabled = !localStorageState.value,
-                        onClick = {
-                            onClipboard(clipboardManager.getText()?.text.orEmpty())
-                        },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-
-                else -> {}
-            }
+//            when (selectedState.value) {
+//                DataSource.M3U, DataSource.Xtream -> {
+//                    TonalButton(
+//                        text = stringResource(string.feat_setting_label_parse_from_clipboard),
+//                        enabled = !localStorageState.value,
+//                        onClick = {
+//                            onClipboard(clipboardManager.getText()?.text.orEmpty())
+//                        },
+//                        modifier = Modifier.fillMaxWidth()
+//                    )
+//                }
+//
+//                else -> {}
+//            }
         }
 
-        item {
-            TonalButton(
-                text = stringResource(string.feat_setting_label_backup),
-                enabled = !forTvState.value && backingUpOrRestoring == BackingUpAndRestoringState.NONE,
-                onClick = backup,
-                modifier = Modifier.fillMaxWidth()
-            )
-            TonalButton(
-                text = stringResource(string.feat_setting_label_restore),
-                enabled = !forTvState.value && backingUpOrRestoring == BackingUpAndRestoringState.NONE,
-                onClick = restore,
-                modifier = Modifier.fillMaxWidth()
-            )
-        }
+//        item {
+//            TonalButton(
+//                text = stringResource(string.feat_setting_label_backup),
+//                enabled = !forTvState.value && backingUpOrRestoring == BackingUpAndRestoringState.NONE,
+//                onClick = backup,
+//                modifier = Modifier.fillMaxWidth()
+//            )
+//            TonalButton(
+//                text = stringResource(string.feat_setting_label_restore),
+//                enabled = !forTvState.value && backingUpOrRestoring == BackingUpAndRestoringState.NONE,
+//                onClick = restore,
+//                modifier = Modifier.fillMaxWidth()
+//            )
+//        }
 
         item {
             Spacer(Modifier.imePadding())

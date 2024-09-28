@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="feat_foryou_hidden_channels_playlist">hidden channels</string>
-    <string name="feat_foryou_unsubscribe_playlist">unsubscribe</string>
-    <string name="feat_foryou_copy_playlist_url">copy url</string>
-    <string name="feat_foryou_rename_playlist">rename</string>
-    <string name="feat_foryou_imported_playlist_title">imported</string>
-    <string name="feat_foryou_prompt_add_playlist">add a playlist</string>
+    <string name="feat_foryou_hidden_channels_playlist">яширин каналлар</string>
+    <string name="feat_foryou_unsubscribe_playlist">чиқариб ташлаш</string>
+    <string name="feat_foryou_copy_playlist_url">линкни нусхалаш</string>
+    <string name="feat_foryou_rename_playlist">номини ўзгартириш</string>
+    <string name="feat_foryou_imported_playlist_title">импорт қилинди</string>
+    <string name="feat_foryou_prompt_add_playlist">янги плейлист қўшиш</string>
     <string name="feat_foryou_recommend_unseen_label">favourite that you would see again</string>
-    <string name="feat_foryou_recommend_unseen_more_than_days">more than %d days</string>
-    <string name="feat_foryou_recommend_unseen_days">%d days</string>
-    <string name="feat_foryou_recommend_unseen_hours">%d hours</string>
+    <string name="feat_foryou_recommend_unseen_more_than_days">%d кундан кўпроқ</string>
+    <string name="feat_foryou_recommend_unseen_days">%d кун</string>
+    <string name="feat_foryou_recommend_unseen_hours">%d соат</string>
     <string name="feat_foryou_new_release">new release</string>
-    <string name="feat_foryou_connect_title">enter code from tv</string>
-    <string name="feat_foryou_connect_subtitle">Make sure to connect to the same Wi-Fi</string>
+    <string name="feat_foryou_connect_title">телевизордан кодни киритинг</string>
+    <string name="feat_foryou_connect_subtitle">Битта Wи-Фи га уланганингизни текширинг</string>
 </resources>

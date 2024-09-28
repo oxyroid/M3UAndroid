@@ -14,11 +14,11 @@ android {
     namespace = "com.m3u.androidApp"
     compileSdk = 34
     defaultConfig {
-        applicationId = "com.m3u.androidApp"
+        applicationId = "net.tijorat.ipxtv"
         minSdk = 26
-        targetSdk = 33
-        versionCode = 143
-        versionName = "1.14.0-rc03"
+        targetSdk = 34
+        versionCode = 4
+        versionName = "1.0.3"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         testInstrumentationRunnerArguments["androidx.benchmark.profiling.mode"] = "MethodTracing"
@@ -154,4 +154,9 @@ dependencies {
     implementation(libs.androidx.glance.material3)
 
     debugImplementation(libs.squareup.leakcanary)
+
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+
 }

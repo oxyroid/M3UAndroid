@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="feat_playlist_configuration_title">title</string>
+    <string name="feat_playlist_configuration_title">Сарлавҳа</string>
     <string name="feat_playlist_configuration_user_agent">user agent</string>
     <string name="feat_playlist_configuration_enabled_epgs">enabled EPGs</string>
     <string name="feat_playlist_configuration_sync_programmes">sync programmes</string>

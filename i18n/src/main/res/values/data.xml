@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="data_error_file_not_found">file not found</string>
-    <string name="data_error_empty_title">playlist name is empty</string>
-    <string name="data_channel_name_stream_download_service">Stream Download Service</string>
-    <string name="data_channel_description_stream_download_service">Stream Download Description</string>
+    <string name="data_error_file_not_found">файл топилмади</string>
+    <string name="data_error_empty_title">Плейлистга ном бермадингиз</string>
+    <string name="data_channel_name_stream_download_service">Стрим юклаб олиш сервиси</string>
+    <string name="data_channel_description_stream_download_service">Стрим юклаб олиш таснифи</string>
 
-    <string name="data_worker_subscription_action_cancel">Cancel</string>
-    <string name="data_worker_subscription_action_retry">Retry</string>
-    <string name="data_worker_subscription_content_completed">Completed (+%d)</string>
-    <string name="data_worker_subscription_content_channel_progress">%d channels have been downloaded</string>
-    <string name="data_worker_subscription_content_programme_progress">%d programmes have been downloaded</string>
+    <string name="data_worker_subscription_action_cancel">Бекор қилиш</string>
+    <string name="data_worker_subscription_action_retry">Қайта уриниш</string>
+    <string name="data_worker_subscription_content_completed">Тугалланган (+%d)</string>
+    <string name="data_worker_subscription_content_channel_progress">%d та канал юклаб олинди</string>
+    <string name="data_worker_subscription_content_programme_progress">%d та программа юклаб олинди</string>
 </resources>

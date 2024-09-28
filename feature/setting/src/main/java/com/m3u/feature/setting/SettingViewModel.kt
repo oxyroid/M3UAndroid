@@ -156,13 +156,16 @@ class SettingViewModel @Inject constructor(
         val epg = epgState.value
         val selected = selectedState.value
         val localStorage = localStorageState.value
-        val urlOrUri = uri
+        val rawUrlOrUri = uri
             .takeIf { uri != Uri.EMPTY }?.toString().orEmpty()
             .takeIf { localStorage }
             ?: url
 
+        val urlOrUri = if (rawUrlOrUri.startWithHttpScheme()) rawUrlOrUri
+        else "https://$rawUrlOrUri"
+
         val basicUrl = if (inputBasicUrl.startWithHttpScheme()) inputBasicUrl
-        else "http://$inputBasicUrl"
+        else "https://$inputBasicUrl"
 
         when {
             forTvState.value -> {
