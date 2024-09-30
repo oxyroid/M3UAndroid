@@ -11,7 +11,6 @@ import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.Profiles
 import com.m3u.core.architecture.logger.install
-import com.m3u.core.architecture.logger.post
 import com.m3u.core.wrapper.Resource
 import com.m3u.core.wrapper.asResource
 import com.m3u.data.database.model.DataSource
@@ -31,7 +30,6 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Instant
@@ -84,15 +82,11 @@ class PlaylistConfigurationViewModel @Inject constructor(
             )
 
     internal val manifest: StateFlow<EpgManifest> = combine(
-        playlistRepository.observeAllEpgs().onEach { logger.post { it.size } },
+        playlistRepository.observeAllEpgs(),
         playlist
     ) { epgs, playlist ->
         val epgUrls = playlist?.epgUrls ?: return@combine emptyMap()
-        buildMap {
-            epgs.forEach { epg ->
-                put(epg, epg.url in epgUrls)
-            }
-        }
+        epgs.associateWith { it.url in epgUrls }
     }
         .stateIn(
             scope = viewModelScope,
@@ -151,7 +145,7 @@ class PlaylistConfigurationViewModel @Inject constructor(
         }
     }
 
-    internal fun onUpdateEpgPlaylist(usecase: PlaylistRepository.UpdateEpgPlaylistUseCase) {
+    internal fun onUpdateEpgPlaylist(usecase: PlaylistRepository.EpgPlaylistUseCase) {
         viewModelScope.launch {
             playlistRepository.onUpdateEpgPlaylist(usecase)
         }

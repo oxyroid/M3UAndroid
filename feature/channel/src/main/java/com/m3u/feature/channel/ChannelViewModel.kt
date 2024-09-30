@@ -25,7 +25,6 @@ import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.Programme
 import com.m3u.data.database.model.ProgrammeRange
-import com.m3u.data.database.model.epgUrlsOrXtreamXmlUrl
 import com.m3u.data.database.model.isSeries
 import com.m3u.data.database.model.isVod
 import com.m3u.data.repository.channel.ChannelRepository
@@ -299,16 +298,12 @@ class ChannelViewModel @Inject constructor(
         val relationId = channel.relationId ?: return@flatMapLatest flowOf(PagingData.empty())
         val playlist = channel.playlistUrl.let { playlistRepository.get(it) }
         playlist ?: return@flatMapLatest flowOf(PagingData.empty())
-        val epgUrls = playlist.epgUrlsOrXtreamXmlUrl()
-        Pager(PagingConfig(15)) {
-            programmeRepository.pagingByEpgUrlsAndRelationId(
-                epgUrls = epgUrls,
-                relationId = relationId
-            )
-        }
-            .flow
+        programmeRepository.pagingProgrammes(
+            playlistUrl = playlist.url,
+            relationId = relationId
+        )
+            .cachedIn(viewModelScope)
     }
-        .cachedIn(viewModelScope)
 
     private val defaultProgrammeRange: ProgrammeRange
         get() = with(Clock.System.now()) {

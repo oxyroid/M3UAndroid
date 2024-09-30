@@ -23,14 +23,14 @@ interface ProgrammeDao {
     @Query(
         """
         SELECT * FROM programmes 
-        WHERE epg_url in (:epgUrls) 
+        WHERE epg_url = :epgUrl
         AND 
         relation_id = :relationId
         ORDER BY start
         """
     )
-    fun pagingByEpgUrlsAndRelationId(
-        epgUrls: List<String>,
+    fun pagingProgrammes(
+        epgUrl: String?,
         relationId: String
     ): PagingSource<Int, Programme>
 
@@ -39,6 +39,25 @@ interface ProgrammeDao {
 
     @Query("SELECT * FROM programmes ORDER BY start")
     fun observeAll(): Flow<List<Programme>>
+
+    @Query("SELECT id IS NOT NULL FROM programmes WHERE epg_url = :epgUrl LIMIT 1")
+    fun observeContainsEpgUrl(epgUrl: String): Flow<Boolean>
+
+    @Query("""
+        SELECT id IS NOT NULL 
+        FROM programmes 
+        WHERE epg_url = :epgUrl 
+        AND relation_id = :relationId
+        AND start >= :start
+        AND `end` <= :end
+        LIMIT 1
+    """)
+    suspend fun checkEpgUrlIsValid(
+        epgUrl: String,
+        relationId: String,
+        start: Long,
+        end: Long,
+    ): Boolean
 
     @Query("DELETE FROM programmes WHERE epg_url = :epgUrl")
     suspend fun deleteAllByEpgUrl(epgUrl: String)
@@ -62,12 +81,12 @@ interface ProgrammeDao {
         """
         SELECT MIN(start) AS start_edge, MAX(`end`) AS end_edge
         FROM programmes
-        WHERE epg_url in (:epgUrls)
+        WHERE epg_url = :epgUrl
         AND relation_id = :relationId
         """
     )
     fun observeProgrammeRange(
-        epgUrls: List<String>,
+        epgUrl: String,
         relationId: String
     ): Flow<ProgrammeRange>
 

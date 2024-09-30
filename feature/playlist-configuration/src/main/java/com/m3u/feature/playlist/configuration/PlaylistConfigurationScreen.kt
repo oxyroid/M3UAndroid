@@ -143,7 +143,7 @@ private fun PlaylistConfigurationScreen(
     xtreamUserInfo: Resource<XtreamInfo.UserInfo>,
     onUpdatePlaylistTitle: (String) -> Unit,
     onUpdatePlaylistUserAgent: (String?) -> Unit,
-    onUpdateEpgPlaylist: (PlaylistRepository.UpdateEpgPlaylistUseCase) -> Unit,
+    onUpdateEpgPlaylist: (PlaylistRepository.EpgPlaylistUseCase) -> Unit,
     onUpdatePlaylistAutoRefreshProgrammes: () -> Unit,
     onSyncProgrammes: () -> Unit,
     onCancelSyncProgrammes: () -> Unit,
