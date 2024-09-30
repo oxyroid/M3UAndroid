@@ -305,3 +305,10 @@
 
 # mmupnp
 -dontwarn org.slf4j.impl.StaticLoggerBinder
+
+
+
+-keep class com.m3u.androidApp.pocketbase.** { *; }
+-keep class retrofit2.** { *; }
+-keep class com.google.gson.** { *; }
+-keep class kotlinx.coroutines.** { *; }

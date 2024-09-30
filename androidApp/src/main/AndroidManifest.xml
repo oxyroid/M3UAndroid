@@ -27,7 +27,7 @@
         android:name=".M3UApplication"
         android:allowBackup="true"
         android:appCategory="video"
-        android:banner="@mipmap/ic_launcher"
+        android:banner="@drawable/tv_banner"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:enableOnBackInvokedCallback="true"
         android:fullBackupContent="@xml/backup_rules"
