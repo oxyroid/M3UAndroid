@@ -213,21 +213,15 @@ internal fun ProgramGuide(
                 )
             }
 
-            // background
-            items(
-                count = 1,
-                layoutInfo = {
-                    MinaBoxItem(
-                        x = 0f,
-                        y = 0f,
-                        width = constraints.maxWidth.toFloat(),
-                        height = with(range) {
-                            (currentHeight * (end - start) / HOUR_LENGTH - padding)
-                        }
-                    )
-                }
-            ) {
-            }
+            // current timeline background placeholder
+            items(1, layoutInfo = {
+                MinaBoxItem(
+                    x = 0f,
+                    y = currentTimelineOffset + padding * 2,
+                    width = constraints.maxWidth.toFloat(),
+                    height = constraints.maxHeight.toFloat()
+                )
+            }) {}
         }
 
         if (!tv) {
