@@ -595,17 +595,25 @@ internal class PlaylistRepositoryImpl @Inject constructor(
         playlistDao.removeEpgUrlForAllPlaylists(epgUrl)
     }
 
-    override suspend fun onUpdateEpgPlaylist(useCase: PlaylistRepository.UpdateEpgPlaylistUseCase) {
-        val playlist = checkNotNull(playlistDao.get(useCase.playlistUrl)) {
-            "Cannot find playlist before update associated epg"
-        }
-        val epg = checkNotNull(playlistDao.get(useCase.epgUrl)) {
-            "Cannot find associated epg"
-        }
+    override suspend fun onUpdateEpgPlaylist(useCase: PlaylistRepository.EpgPlaylistUseCase) {
+        when (useCase) {
+            is PlaylistRepository.EpgPlaylistUseCase.Check -> {
+                playlistDao.updateEpgUrls(useCase.playlistUrl) { epgUrls ->
+                    if (useCase.action) epgUrls + useCase.epgUrl
+                    else epgUrls - useCase.epgUrl
+                }
+            }
 
-        playlistDao.updateEpgUrls(playlist.url) { epgUrls ->
-            if (useCase.action) epgUrls + epg.url
-            else epgUrls - epg.url
+            is PlaylistRepository.EpgPlaylistUseCase.Upward -> {
+                val epgUrl = useCase.epgUrl
+                playlistDao.updateEpgUrls(useCase.playlistUrl) { epgUrls ->
+                    val index = epgUrls.indexOf(epgUrl)
+                    if (index <= 0) epgUrls
+                    else with(epgUrls) {
+                        take(index - 1) + epgUrl + this[index - 1] + drop(index + 1)
+                    }
+                }
+            }
         }
     }
 

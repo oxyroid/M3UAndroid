@@ -3,6 +3,7 @@ package com.m3u.feature.playlist.configuration.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListScope
@@ -14,6 +15,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
@@ -31,7 +33,7 @@ import com.m3u.material.shape.AbsoluteSmoothCornerShape
 internal fun LazyListScope.EpgManifestGallery(
     playlistUrl: String,
     manifest: EpgManifest,
-    onUpdateEpgPlaylist: (PlaylistRepository.UpdateEpgPlaylistUseCase) -> Unit
+    onUpdateEpgPlaylist: (PlaylistRepository.EpgPlaylistUseCase) -> Unit
 ) {
     stickyHeader {
         val spacing = LocalSpacing.current
@@ -47,13 +49,33 @@ internal fun LazyListScope.EpgManifestGallery(
                 )
         )
     }
-    items(manifest.entries.toList()) { (epg, associated) ->
-        EpgManifestGalleryItem(
-            playlistUrl = playlistUrl,
-            epg = epg,
-            associated = associated,
-            onUpdateEpgPlaylist = onUpdateEpgPlaylist,
-        )
+    items(manifest.entries.toList()) { (epg, isChecked) ->
+        Row(
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+//            val isVisible = remember(manifest, epg) {
+//                isChecked && manifest.entries.firstOrNull { it.value }?.key != epg
+//            }
+//            AnimatedVisibility(
+//                visible = isVisible
+//            ) {
+//                IconButton(
+//                    icon = Icons.Rounded.ArrowUpward,
+//                    contentDescription = null,
+//                    onClick = {
+//                        onUpdateEpgPlaylist(
+//                            PlaylistRepository.EpgPlaylistUseCase.Upward(playlistUrl, epg.url)
+//                        )
+//                    }
+//                )
+//            }
+            EpgManifestGalleryItem(
+                playlistUrl = playlistUrl,
+                epg = epg,
+                isChecked = isChecked,
+                onUpdateEpgPlaylist = onUpdateEpgPlaylist
+            )
+        }
     }
 }
 
@@ -61,8 +83,8 @@ internal fun LazyListScope.EpgManifestGallery(
 private fun EpgManifestGalleryItem(
     playlistUrl: String,
     epg: Playlist,
-    associated: Boolean,
-    onUpdateEpgPlaylist: (PlaylistRepository.UpdateEpgPlaylistUseCase) -> Unit,
+    isChecked: Boolean,
+    onUpdateEpgPlaylist: (PlaylistRepository.EpgPlaylistUseCase) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
@@ -76,12 +98,14 @@ private fun EpgManifestGalleryItem(
         },
         supportingContent = {
             Text(
-                text = epg.url
+                text = epg.url,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
         },
         trailingContent = {
             Switch(
-                checked = associated,
+                checked = isChecked,
                 onCheckedChange = null
             )
         },
@@ -99,10 +123,10 @@ private fun EpgManifestGalleryItem(
             .clip(AbsoluteSmoothCornerShape(spacing.medium, 65))
             .clickable {
                 onUpdateEpgPlaylist(
-                    PlaylistRepository.UpdateEpgPlaylistUseCase(
+                    PlaylistRepository.EpgPlaylistUseCase.Check(
                         playlistUrl = playlistUrl,
                         epgUrl = epg.url,
-                        action = !associated
+                        action = !isChecked
                     )
                 )
             }

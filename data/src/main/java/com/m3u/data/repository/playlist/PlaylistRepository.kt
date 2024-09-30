@@ -63,13 +63,19 @@ interface PlaylistRepository {
 
     suspend fun deleteEpgPlaylistAndProgrammes(epgUrl: String)
 
-    suspend fun onUpdateEpgPlaylist(useCase: UpdateEpgPlaylistUseCase)
+    suspend fun onUpdateEpgPlaylist(useCase: EpgPlaylistUseCase)
     suspend fun onUpdatePlaylistAutoRefreshProgrammes(playlistUrl: String)
 
     @Immutable
-    data class UpdateEpgPlaylistUseCase(
-        val playlistUrl: String,
-        val epgUrl: String,
-        val action: Boolean
-    )
+    sealed interface EpgPlaylistUseCase {
+        data class Check(
+            val playlistUrl: String,
+            val epgUrl: String,
+            val action: Boolean
+        ): EpgPlaylistUseCase
+        data class Upward(
+            val playlistUrl: String,
+            val epgUrl: String
+        ): EpgPlaylistUseCase
+    }
 }
