@@ -319,7 +319,7 @@ private fun ChannelPlayer(
         color = Color.Black,
         contentColor = Color.White,
     ) {
-        Box(modifier = modifier) {
+        Box(modifier) {
             val state = rememberPlayerState(
                 player = playerState.player,
                 clipMode = preferences.clipMode
@@ -339,9 +339,7 @@ private fun ChannelPlayer(
                     gesture = null
                     isBrightnessValueChange = false
                 },
-                onDrag = {
-                    onBrightness(it)
-                },
+                onDrag = onBrightness,
                 modifier = Modifier
                     .fillMaxHeight()
                     .fillMaxWidth(0.18f)
@@ -425,11 +423,3 @@ private fun ChannelPlayer(
         }
     }
 }
-
-
-
-
-
-
-
-

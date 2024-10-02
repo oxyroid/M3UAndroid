@@ -334,9 +334,7 @@ internal fun ChannelMask(
                             onDragEnd = {
                                 maskState.unlock(MaskGesture.BRIGHTNESS, 400.milliseconds)
                             },
-                            onDrag = {
-                                onBrightness(it)
-                            },
+                            onDrag = onBrightness,
                             modifier = Modifier
                                 .fillMaxHeight()
                                 .fillMaxWidth(0.18f)
@@ -353,6 +351,7 @@ internal fun ChannelMask(
                             onDrag = onVolume,
                             modifier = Modifier
                                 .fillMaxHeight()
+                                .fillMaxWidth(0.18f)
                         )
                     }
                     val maskCenterState = MaskCenterState.of(

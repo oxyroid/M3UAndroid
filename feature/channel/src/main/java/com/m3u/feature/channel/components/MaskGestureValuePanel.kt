@@ -26,35 +26,30 @@ import androidx.tv.material3.Surface
 import com.m3u.ui.MonoText
 
 @Composable
-fun MaskGestureValuePanel(
-    modifier: Modifier = Modifier, icon: ImageVector, value: String,
+internal fun MaskGestureValuePanel(
+    icon: ImageVector,
+    value: String,
+    modifier: Modifier = Modifier,
 ) {
     Row(
-        modifier = modifier.clip(shape = RoundedCornerShape(10.dp)).background(
-            color = MaterialTheme.colorScheme.onSurface
-        ).padding(vertical = 5.dp, horizontal = 10.dp),
+        modifier = modifier
+            .clip(shape = RoundedCornerShape(10.dp))
+            .background(
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            .padding(vertical = 5.dp, horizontal = 10.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Image(
             imageVector = icon,
-            contentDescription = "icon gesture",
+            contentDescription = "icon-gesture",
             modifier = Modifier.size(24.dp),
             colorFilter = ColorFilter.tint(Color.White)
         )
         Spacer(modifier = Modifier.width(4.dp))
         MonoText(
             text = value, color = Color.White, fontSize = 20.sp
-        )
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun PreviewMaskGestureValuePanel() {
-    Surface {
-        MaskGestureValuePanel(
-            icon = Icons.Rounded.Refresh, value = "20"
         )
     }
 }
