@@ -8,6 +8,7 @@ import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.foundation.basicMarquee
+import androidx.compose.foundation.border
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -16,9 +17,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsIgnoringVisibility
@@ -79,7 +78,6 @@ import com.m3u.feature.channel.MaskCenterState.Play
 import com.m3u.feature.channel.MaskCenterState.Replay
 import com.m3u.feature.channel.components.MaskTextButton
 import com.m3u.feature.channel.components.PlayerMask
-import com.m3u.feature.channel.components.VerticalGestureArea
 import com.m3u.i18n.R.string
 import com.m3u.material.components.mask.MaskButton
 import com.m3u.material.components.mask.MaskCircleButton
@@ -121,7 +119,6 @@ internal fun ChannelMask(
     openOrClosePanel: () -> Unit,
     onEnterPipMode: () -> Unit,
     onVolume: (Float) -> Unit,
-    onBrightness: (Float) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val preferences = hiltPreferences()
@@ -225,7 +222,7 @@ internal fun ChannelMask(
     ) {
         MaskPanel(
             state = maskState,
-            modifier = Modifier.align(Alignment.Center)
+            modifier = Modifier.align(Alignment.Center).border(width = 2.dp, Color.Green)
         )
 
         PlayerMask(
@@ -326,33 +323,6 @@ internal fun ChannelMask(
                             .fillMaxSize()
                             .windowInsetsPadding(WindowInsets.systemBarsIgnoringVisibility)
                     ) {
-                        VerticalGestureArea(
-                            percent = currentBrightness,
-                            onDragStart = {
-                                maskState.lock(MaskGesture.BRIGHTNESS)
-                            },
-                            onDragEnd = {
-                                maskState.unlock(MaskGesture.BRIGHTNESS, 400.milliseconds)
-                            },
-                            onDrag = onBrightness,
-                            modifier = Modifier
-                                .fillMaxHeight()
-                                .fillMaxWidth(0.18f)
-                        )
-                        VerticalGestureArea(
-                            percent = currentVolume,
-                            onDragStart = {
-                                maskState.lock(MaskGesture.VOLUME)
-
-                            },
-                            onDragEnd = {
-                                maskState.unlock(MaskGesture.VOLUME, 400.milliseconds)
-                            },
-                            onDrag = onVolume,
-                            modifier = Modifier
-                                .fillMaxHeight()
-                                .fillMaxWidth(0.18f)
-                        )
                     }
                     val maskCenterState = MaskCenterState.of(
                         playerState.playState,
@@ -559,7 +529,7 @@ internal fun ChannelMask(
                     }
                 }
             },
-            modifier = modifier
+            modifier = modifier.border(width = 2.dp, Color.Yellow)
         )
 
     }
@@ -572,7 +542,7 @@ private fun MaskCenterButton(
     modifier: Modifier = Modifier,
     onPlay: () -> Unit,
     onPause: () -> Unit,
-    onRetry: () -> Unit
+    onRetry: () -> Unit,
 ) {
     Box(modifier, contentAlignment = Alignment.Center) {
         when (maskCenterState) {
@@ -610,7 +580,7 @@ private enum class MaskCenterState {
             isPlaying: Boolean,
             alwaysShowReplay: Boolean,
             isPanelExpanded: Boolean,
-            playerError: Exception?
+            playerError: Exception?,
         ): MaskCenterState? = when {
             isPanelExpanded -> null
             playState == Player.STATE_BUFFERING -> Loading

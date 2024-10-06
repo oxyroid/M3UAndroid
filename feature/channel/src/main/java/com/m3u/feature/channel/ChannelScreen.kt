@@ -4,7 +4,7 @@ import android.Manifest
 import android.content.Intent
 import android.graphics.Rect
 import android.net.Uri
-import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -31,6 +31,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -54,6 +55,7 @@ import com.m3u.material.components.PullPanelLayoutValue
 import com.m3u.material.components.mask.MaskInterceptor
 import com.m3u.material.components.mask.MaskState
 import com.m3u.material.components.mask.rememberMaskState
+import com.m3u.material.components.mask.toggle
 import com.m3u.material.components.rememberPullPanelLayoutState
 import com.m3u.material.ktx.checkPermissionOrRationale
 import com.m3u.ui.Player
@@ -205,7 +207,8 @@ fun ChannelRoute(
                             viewModel.onRemindProgramme(it)
                         }
                     },
-                    onCancelRemindProgramme = viewModel::onCancelRemindProgramme
+                    onCancelRemindProgramme = viewModel::onCancelRemindProgramme,
+                    modifier = Modifier.border(width = 2.dp, Color.Green)
                 )
             },
             content = {
@@ -242,6 +245,7 @@ fun ChannelRoute(
                         maskState.unlockAll()
                         pullPanelLayoutState.collapse()
                     },
+                    modifier = Modifier.border(width = 2.dp, Color.Blue)
                 )
             }
         )
@@ -299,7 +303,6 @@ private fun ChannelPlayer(
     onEnterPipMode: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val context = LocalContext.current
     val title = channel?.title ?: "--"
     val cover = channel?.cover.orEmpty()
     val playlistTitle = playlist?.title ?: "--"
@@ -340,9 +343,11 @@ private fun ChannelPlayer(
                     isBrightnessValueChange = false
                 },
                 onDrag = onBrightness,
+                onClick = maskState::toggle,
                 modifier = Modifier
                     .fillMaxHeight()
                     .fillMaxWidth(0.18f)
+                    .border(width = 2.dp, Color.Red)
             )
 
             VerticalGestureArea(
@@ -356,10 +361,12 @@ private fun ChannelPlayer(
                     isVolumeValueChange = false
                 },
                 onDrag = onVolume,
+                onClick = maskState::toggle,
                 modifier = Modifier
                     .align(Alignment.TopEnd)
                     .fillMaxHeight()
                     .fillMaxWidth(0.18f)
+                    .border(width = 2.dp, Color.Cyan)
             )
 
             val shouldShowPlaceholder =
@@ -388,7 +395,6 @@ private fun ChannelPlayer(
                 openChooseFormat = openChooseFormat,
                 openOrClosePanel = openOrClosePanel,
                 onVolume = onVolume,
-                onBrightness = onBrightness,
                 onEnterPipMode = onEnterPipMode,
                 gesture = gesture
             )

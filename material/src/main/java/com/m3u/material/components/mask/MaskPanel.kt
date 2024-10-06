@@ -18,13 +18,13 @@ fun MaskPanel(
     modifier: Modifier = Modifier,
     verticalArrangement: Arrangement.Vertical = Arrangement.Center,
     horizontalAlignment: Alignment.Horizontal = Alignment.CenterHorizontally,
-    content: @Composable ColumnScope.() -> Unit = {}
+    content: @Composable ColumnScope.() -> Unit = {},
 ) {
     OuterColumn(
         verticalArrangement = verticalArrangement,
         horizontalAlignment = horizontalAlignment,
         modifier = Modifier
-            .fillMaxWidth(0.7f)
+            .fillMaxWidth(0.64f)
             .fillMaxHeight()
             .clickable(
                 onClick = state::toggle,
