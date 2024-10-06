@@ -4,7 +4,6 @@ import android.Manifest
 import android.content.Intent
 import android.graphics.Rect
 import android.net.Uri
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -31,7 +30,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -208,7 +206,6 @@ fun ChannelRoute(
                         }
                     },
                     onCancelRemindProgramme = viewModel::onCancelRemindProgramme,
-                    modifier = Modifier.border(width = 2.dp, Color.Green)
                 )
             },
             content = {
@@ -245,7 +242,6 @@ fun ChannelRoute(
                         maskState.unlockAll()
                         pullPanelLayoutState.collapse()
                     },
-                    modifier = Modifier.border(width = 2.dp, Color.Blue)
                 )
             }
         )
@@ -347,7 +343,6 @@ private fun ChannelPlayer(
                 modifier = Modifier
                     .fillMaxHeight()
                     .fillMaxWidth(0.18f)
-                    .border(width = 2.dp, Color.Red)
             )
 
             VerticalGestureArea(
@@ -366,7 +361,6 @@ private fun ChannelPlayer(
                     .align(Alignment.TopEnd)
                     .fillMaxHeight()
                     .fillMaxWidth(0.18f)
-                    .border(width = 2.dp, Color.Cyan)
             )
 
             val shouldShowPlaceholder =

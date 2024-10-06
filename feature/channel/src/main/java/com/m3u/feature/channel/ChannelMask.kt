@@ -8,7 +8,6 @@ import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.foundation.basicMarquee
-import androidx.compose.foundation.border
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -222,7 +221,7 @@ internal fun ChannelMask(
     ) {
         MaskPanel(
             state = maskState,
-            modifier = Modifier.align(Alignment.Center).border(width = 2.dp, Color.Green)
+            modifier = Modifier.align(Alignment.Center)
         )
 
         PlayerMask(
@@ -529,7 +528,6 @@ internal fun ChannelMask(
                     }
                 }
             },
-            modifier = modifier.border(width = 2.dp, Color.Yellow)
         )
 
     }
