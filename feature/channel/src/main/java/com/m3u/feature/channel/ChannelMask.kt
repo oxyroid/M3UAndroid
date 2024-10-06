@@ -16,9 +16,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsIgnoringVisibility
@@ -79,15 +77,14 @@ import com.m3u.feature.channel.MaskCenterState.Play
 import com.m3u.feature.channel.MaskCenterState.Replay
 import com.m3u.feature.channel.components.MaskTextButton
 import com.m3u.feature.channel.components.PlayerMask
-import com.m3u.feature.channel.components.VerticalGestureArea
 import com.m3u.i18n.R.string
 import com.m3u.material.components.mask.MaskButton
 import com.m3u.material.components.mask.MaskCircleButton
 import com.m3u.material.components.mask.MaskPanel
 import com.m3u.material.components.mask.MaskState
 import com.m3u.material.effects.currentBackStackEntry
-import com.m3u.material.ktx.tv
 import com.m3u.material.ktx.thenIf
+import com.m3u.material.ktx.tv
 import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.FontFamilies
 import com.m3u.ui.Image
@@ -105,6 +102,7 @@ import kotlin.time.toDuration
 internal fun ChannelMask(
     cover: String,
     title: String,
+    gesture: MaskGesture?,
     playlistTitle: String,
     playerState: PlayerState,
     volume: Float,
@@ -120,8 +118,7 @@ internal fun ChannelMask(
     openOrClosePanel: () -> Unit,
     onEnterPipMode: () -> Unit,
     onVolume: (Float) -> Unit,
-    onBrightness: (Float) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val preferences = hiltPreferences()
     val helper = LocalHelper.current
@@ -134,7 +131,6 @@ internal fun ChannelMask(
         LocalOnBackPressedDispatcherOwner.current
     ).onBackPressedDispatcher
 
-    var gesture: MaskGesture? by remember { mutableStateOf(null) }
 
     // because they will be updated frequently,
     // they must be wrapped with rememberUpdatedState when using them.
@@ -147,7 +143,6 @@ internal fun ChannelMask(
         muted -> stringResource(string.feat_channel_tooltip_unmute)
         else -> stringResource(string.feat_channel_tooltip_mute)
     }
-
     val brightnessOrVolumeText by remember {
         derivedStateOf {
             when (gesture) {
@@ -221,9 +216,12 @@ internal fun ChannelMask(
         }
     }
 
-    Box {
+    Box(
+        modifier = modifier.fillMaxSize()
+    ) {
         MaskPanel(
-            state = maskState
+            state = maskState,
+            modifier = Modifier.align(Alignment.Center)
         )
 
         PlayerMask(
@@ -324,36 +322,6 @@ internal fun ChannelMask(
                             .fillMaxSize()
                             .windowInsetsPadding(WindowInsets.systemBarsIgnoringVisibility)
                     ) {
-                        VerticalGestureArea(
-                            percent = currentBrightness,
-                            onDragStart = {
-                                maskState.lock(MaskGesture.BRIGHTNESS)
-                                gesture = MaskGesture.BRIGHTNESS
-                            },
-                            onDragEnd = {
-                                maskState.unlock(MaskGesture.BRIGHTNESS, 400.milliseconds)
-                                gesture = null
-                            },
-                            onDrag = onBrightness,
-                            modifier = Modifier
-                                .fillMaxHeight()
-                                .fillMaxWidth(0.18f)
-                        )
-                        VerticalGestureArea(
-                            percent = currentVolume,
-                            onDragStart = {
-                                maskState.lock(MaskGesture.VOLUME)
-                                gesture = MaskGesture.VOLUME
-                            },
-                            onDragEnd = {
-                                maskState.unlock(MaskGesture.VOLUME, 400.milliseconds)
-                                gesture = null
-                            },
-                            onDrag = onVolume,
-                            modifier = Modifier
-                                .fillMaxHeight()
-                                .fillMaxWidth(0.18f)
-                        )
                     }
                     val maskCenterState = MaskCenterState.of(
                         playerState.playState,
@@ -560,8 +528,8 @@ internal fun ChannelMask(
                     }
                 }
             },
-            modifier = modifier
         )
+
     }
 }
 
@@ -572,7 +540,7 @@ private fun MaskCenterButton(
     modifier: Modifier = Modifier,
     onPlay: () -> Unit,
     onPause: () -> Unit,
-    onRetry: () -> Unit
+    onRetry: () -> Unit,
 ) {
     Box(modifier, contentAlignment = Alignment.Center) {
         when (maskCenterState) {
@@ -610,7 +578,7 @@ private enum class MaskCenterState {
             isPlaying: Boolean,
             alwaysShowReplay: Boolean,
             isPanelExpanded: Boolean,
-            playerError: Exception?
+            playerError: Exception?,
         ): MaskCenterState? = when {
             isPanelExpanded -> null
             playState == Player.STATE_BUFFERING -> Loading
