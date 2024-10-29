@@ -44,6 +44,7 @@ import com.m3u.feature.foryou.components.PlaylistGallery
 import com.m3u.feature.foryou.components.recommend.Recommend
 import com.m3u.feature.foryou.components.recommend.RecommendGallery
 import com.m3u.i18n.R.string
+import com.m3u.material.ktx.composableOf
 import com.m3u.material.ktx.interceptVolumeEvent
 import com.m3u.material.ktx.tv
 import com.m3u.material.ktx.thenIf
@@ -230,7 +231,7 @@ private fun ForyouScreen(
                     refreshingEpgUrls = refreshingEpgUrls,
                     onClick = navigateToPlaylist,
                     onLongClick = { mediaSheetValue = MediaSheetValue.ForyouScreen(it) },
-                    header = header.takeIf { specs.isNotEmpty() },
+                    header = composableOf(specs.isNotEmpty(), header),
                     contentPadding = contentPadding,
                     modifier = Modifier.fillMaxSize()
                 )

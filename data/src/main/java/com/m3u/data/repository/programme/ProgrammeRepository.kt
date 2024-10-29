@@ -1,16 +1,16 @@
 package com.m3u.data.repository.programme
 
-import androidx.paging.PagingSource
+import androidx.paging.PagingData
 import com.m3u.data.database.model.Programme
 import com.m3u.data.database.model.ProgrammeRange
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 
 interface ProgrammeRepository {
-    fun pagingByEpgUrlsAndRelationId(
-        epgUrls: List<String>,
+    fun pagingProgrammes(
+        playlistUrl: String,
         relationId: String
-    ): PagingSource<Int, Programme>
+    ): Flow<PagingData<Programme>>
 
     fun observeProgrammeRange(
         playlistUrl: String,

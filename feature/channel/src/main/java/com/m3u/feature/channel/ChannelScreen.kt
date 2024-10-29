@@ -5,7 +5,15 @@ import android.content.Intent
 import android.graphics.Rect
 import android.net.Uri
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.VolumeDown
+import androidx.compose.material.icons.automirrored.rounded.VolumeOff
+import androidx.compose.material.icons.automirrored.rounded.VolumeUp
+import androidx.compose.material.icons.rounded.DarkMode
+import androidx.compose.material.icons.rounded.LightMode
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -13,6 +21,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -34,7 +43,9 @@ import com.m3u.data.database.model.Playlist
 import com.m3u.feature.channel.components.CoverPlaceholder
 import com.m3u.feature.channel.components.DlnaDevicesBottomSheet
 import com.m3u.feature.channel.components.FormatsBottomSheet
+import com.m3u.feature.channel.components.MaskGestureValuePanel
 import com.m3u.feature.channel.components.PlayerPanel
+import com.m3u.feature.channel.components.VerticalGestureArea
 import com.m3u.i18n.R.string
 import com.m3u.material.components.Background
 import com.m3u.material.components.PullPanelLayout
@@ -42,6 +53,7 @@ import com.m3u.material.components.PullPanelLayoutValue
 import com.m3u.material.components.mask.MaskInterceptor
 import com.m3u.material.components.mask.MaskState
 import com.m3u.material.components.mask.rememberMaskState
+import com.m3u.material.components.mask.toggle
 import com.m3u.material.components.rememberPullPanelLayoutState
 import com.m3u.material.ktx.checkPermissionOrRationale
 import com.m3u.ui.Player
@@ -159,7 +171,8 @@ fun ChannelRoute(
 
     Background(
         color = Color.Black,
-        contentColor = Color.White
+        contentColor = Color.White,
+        modifier = modifier
     ) {
         PullPanelLayout(
             state = pullPanelLayoutState,
@@ -192,7 +205,7 @@ fun ChannelRoute(
                             viewModel.onRemindProgramme(it)
                         }
                     },
-                    onCancelRemindProgramme = viewModel::onCancelRemindProgramme
+                    onCancelRemindProgramme = viewModel::onCancelRemindProgramme,
                 )
             },
             content = {
@@ -229,7 +242,6 @@ fun ChannelRoute(
                         maskState.unlockAll()
                         pullPanelLayoutState.collapse()
                     },
-                    modifier = modifier
                 )
             }
         )
@@ -291,8 +303,16 @@ private fun ChannelPlayer(
     val cover = channel?.cover.orEmpty()
     val playlistTitle = playlist?.title ?: "--"
     val favourite = channel?.favourite ?: false
-
+    var gesture: MaskGesture? by remember { mutableStateOf(null) }
+    val currentBrightness by rememberUpdatedState(brightness)
+    val currentVolume by rememberUpdatedState(volume)
     val preferences = hiltPreferences()
+    var isBrightnessValueChange by remember {
+        mutableStateOf(false)
+    }
+    var isVolumeValueChange by remember {
+        mutableStateOf(false)
+    }
 
     Background(
         color = Color.Black,
@@ -307,6 +327,40 @@ private fun ChannelPlayer(
             Player(
                 state = state,
                 modifier = Modifier.fillMaxSize()
+            )
+            VerticalGestureArea(
+                percent = currentBrightness,
+                onDragStart = {
+                    gesture = MaskGesture.BRIGHTNESS
+                    isBrightnessValueChange = true
+                },
+                onDragEnd = {
+                    gesture = null
+                    isBrightnessValueChange = false
+                },
+                onDrag = onBrightness,
+                onClick = maskState::toggle,
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .fillMaxWidth(0.18f)
+            )
+
+            VerticalGestureArea(
+                percent = currentVolume,
+                onDragStart = {
+                    gesture = MaskGesture.VOLUME
+                    isVolumeValueChange = true
+                },
+                onDragEnd = {
+                    gesture = null
+                    isVolumeValueChange = false
+                },
+                onDrag = onVolume,
+                onClick = maskState::toggle,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .fillMaxHeight()
+                    .fillMaxWidth(0.18f)
             )
 
             val shouldShowPlaceholder =
@@ -335,9 +389,31 @@ private fun ChannelPlayer(
                 openChooseFormat = openChooseFormat,
                 openOrClosePanel = openOrClosePanel,
                 onVolume = onVolume,
-                onBrightness = onBrightness,
                 onEnterPipMode = onEnterPipMode,
+                gesture = gesture
             )
+
+            if (gesture != null) {
+                MaskGestureValuePanel(
+                    value = when (gesture) {
+                        MaskGesture.BRIGHTNESS -> "${currentBrightness.times(100).toInt()}%"
+                        else -> "${currentVolume.times(100).toInt()}"
+                    },
+                    icon = when (gesture) {
+                        MaskGesture.BRIGHTNESS -> when {
+                            brightness < 0.5f -> Icons.Rounded.DarkMode
+                            else -> Icons.Rounded.LightMode
+                        }
+
+                        else -> when {
+                            volume == 0f -> Icons.AutoMirrored.Rounded.VolumeOff
+                            volume < 0.5f -> Icons.AutoMirrored.Rounded.VolumeDown
+                            else -> Icons.AutoMirrored.Rounded.VolumeUp
+                        }
+                    },
+                    modifier = Modifier.align(Alignment.Center)
+                )
+            }
 
             LaunchedEffect(playerState.playerError) {
                 if (playerState.playerError != null) {

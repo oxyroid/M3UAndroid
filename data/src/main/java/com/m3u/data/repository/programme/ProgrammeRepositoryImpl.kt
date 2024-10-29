@@ -1,6 +1,8 @@
 package com.m3u.data.repository.programme
 
-import androidx.paging.PagingSource
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
+import androidx.paging.PagingData
 import com.m3u.core.architecture.dispatcher.Dispatcher
 import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
 import com.m3u.core.architecture.logger.Logger
@@ -36,6 +38,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.util.zip.GZIPInputStream
 import javax.inject.Inject
+import kotlin.time.Duration.Companion.days
 
 internal class ProgrammeRepositoryImpl @Inject constructor(
     private val playlistDao: PlaylistDao,
@@ -49,20 +52,29 @@ internal class ProgrammeRepositoryImpl @Inject constructor(
     private val logger = delegate.install(Profiles.REPOS_PROGRAMME)
     override val refreshingEpgUrls = MutableStateFlow<List<String>>(emptyList())
 
-    override fun pagingByEpgUrlsAndRelationId(
-        epgUrls: List<String>,
+    override fun pagingProgrammes(
+        playlistUrl: String,
         relationId: String
-    ): PagingSource<Int, Programme> = programmeDao.pagingByEpgUrlsAndRelationId(epgUrls, relationId)
+    ): Flow<PagingData<Programme>> = playlistDao
+        .observeByUrl(playlistUrl)
+        .map { playlist -> playlist?.epgUrlsOrXtreamXmlUrl() ?: emptyList() }
+        .map { epgUrls -> findValidEpgUrl(epgUrls, relationId, defaultProgrammeRange) }
+        .flatMapLatest { epgUrl ->
+            Pager(PagingConfig(15)) { programmeDao.pagingProgrammes(epgUrl, relationId) }.flow
+        }
 
     override fun observeProgrammeRange(
         playlistUrl: String,
         relationId: String
-    ): Flow<ProgrammeRange> = playlistDao.observeByUrl(playlistUrl).flatMapLatest { playlist ->
-        playlist ?: return@flatMapLatest flowOf()
-        programmeDao
-            .observeProgrammeRange(playlist.epgUrlsOrXtreamXmlUrl(), relationId)
-            .filterNot { (start, end) -> start == 0L || end == 0L }
-    }
+    ): Flow<ProgrammeRange> = playlistDao.observeByUrl(playlistUrl)
+        .map { playlist -> playlist?.epgUrlsOrXtreamXmlUrl() ?: emptyList() }
+        .map { epgUrls -> findValidEpgUrl(epgUrls, relationId, defaultProgrammeRange) }
+        .flatMapLatest { epgUrl ->
+            epgUrl ?: return@flatMapLatest flowOf()
+            programmeDao
+                .observeProgrammeRange(epgUrl, relationId)
+                .filterNot { (start, end) -> start == 0L || end == 0L }
+        }
 
     override fun observeProgrammeRange(playlistUrl: String): Flow<ProgrammeRange> =
         playlistDao.observeByUrl(playlistUrl)
@@ -72,6 +84,14 @@ internal class ProgrammeRepositoryImpl @Inject constructor(
             .flatMapLatest { epgUrls ->
                 programmeDao.observeProgrammeRange(epgUrls)
             }
+
+    private val defaultProgrammeRange: ProgrammeRange
+        get() = with(Clock.System.now()) {
+            ProgrammeRange(
+                this.minus(1.days).toEpochMilliseconds(),
+                this.plus(1.days).toEpochMilliseconds()
+            )
+        }
 
     override fun checkOrRefreshProgrammesOrThrow(
         vararg playlistUrls: String,
@@ -99,7 +119,7 @@ internal class ProgrammeRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getProgrammeCurrently(channelId: Int): Programme? {
-        val channel = channelDao.get(channelId)?: return null
+        val channel = channelDao.get(channelId) ?: return null
         val relationId = channel.relationId ?: return null
         val playlist = playlistDao.get(channel.playlistUrl) ?: return null
 
@@ -172,4 +192,26 @@ internal class ProgrammeRepositoryImpl @Inject constructor(
             }
     }
         .flowOn(ioDispatcher)
+
+    /**
+     * Attempts to find the first valid EPG URL from a list of URLs.
+     *
+     * This function iterates over the provided list of EPG URLs and checks
+     * if each URL is valid by querying from the database. The validity check
+     * uses the `relationId` and the start and end times from the `ProgrammeRange`.
+     * The first valid EPG URL found is returned. If no valid URLs are found,
+     * the function returns null.
+     *
+     * @param epgUrls A list of EPG URLs to check.
+     * @param relationId A unique identifier representing the relation for the EPG.
+     * @param range A `ProgrammeRange` object containing the start and end times to validate against.
+     * @return The first valid EPG URL, or null if none are valid.
+     */
+    private suspend fun findValidEpgUrl(
+        epgUrls: List<String>,
+        relationId: String,
+        range: ProgrammeRange
+    ): String? = epgUrls.firstOrNull { epgUrl ->
+        programmeDao.checkEpgUrlIsValid(epgUrl, relationId, range.start, range.end)
+    }
 }
