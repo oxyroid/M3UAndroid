@@ -1,0 +1,81 @@
+package com.m3u.extension.runtime
+
+import android.content.Context
+import android.content.pm.ApplicationInfo
+import android.content.pm.PackageInfo
+import android.content.pm.PackageManager
+import android.os.Build
+import com.m3u.extension.api.runner.Runner
+import com.m3u.extension.runtime.internal.ChildFirstPathClassLoader
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
+
+object ExtensionLoader {
+    suspend fun loadExtensions(context: Context): List<Extension> = coroutineScope {
+        val installedPackages = context.packageManager.getInstalledPackages(PACKAGE_FLAGS)
+        installedPackages
+            .asSequence()
+            .filter { it.isExtension }
+            .distinctBy { it.packageName }
+            .map { async { loadExtension(context, it.applicationInfo) } }
+            .toList()
+            .awaitAll()
+            .filterNotNull()
+    }
+
+    suspend fun loadExtension(context: Context, info: ApplicationInfo): Extension? = coroutineScope {
+        val classLoader = try {
+            ChildFirstPathClassLoader(
+                dexPath = info.sourceDir,
+                librarySearchPath = null,
+                parent = context.classLoader
+            )
+        } catch (ignore: Exception) {
+            ignore.printStackTrace()
+            return@coroutineScope null
+        }
+        val runners = info.metaData
+            .getString(METADATA_EXTENSION_CLASS)
+            .orEmpty()
+            .split(';')
+            .asSequence()
+            .map { it.trim() }
+            .map { className ->
+                if (className.startsWith('.')) info.packageName + className
+                else className
+            }
+            .map { className ->
+                async {
+                    try {
+                        Class
+                            .forName(className, false, classLoader)
+                            .getDeclaredConstructor()
+                            .newInstance()
+                    } catch (ignore: Exception) {
+                        ignore.printStackTrace()
+                        null
+                    }
+                }
+            }
+            .toList()
+            .awaitAll()
+            .filterIsInstance<Runner>()
+
+        Extension(
+            packageName = info.packageName,
+            runners = runners
+        )
+    }
+
+    @Suppress("DEPRECATION")
+    private val PACKAGE_FLAGS = PackageManager.GET_CONFIGURATIONS or
+            PackageManager.GET_META_DATA or
+            PackageManager.GET_SIGNATURES or
+            (if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) PackageManager.GET_SIGNING_CERTIFICATES else 0)
+
+    private const val FEATURE_EXTENSION = "m3u-android.extension"
+    private const val METADATA_EXTENSION_CLASS = "m3u-android.extension.class"
+
+    private val PackageInfo.isExtension: Boolean get() = this.reqFeatures.orEmpty().any { it.name == FEATURE_EXTENSION }
+}

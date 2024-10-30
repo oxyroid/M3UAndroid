@@ -29,6 +29,7 @@ kotlinpoet = "1.18.1"
 kotlinx-serialization-json = "1.6.3"
 kotlinx-serialization-converter-retrofit = "1.0.0"
 kotlinx-datetime = "0.6.0"
+kotlinx-coroutine = "1.9.0"
 
 chucker = "4.0.0"
 logback = "3.0.0"
@@ -36,6 +37,7 @@ lottie-compose = "6.4.0"
 nextLib = "0.7.1"
 slf4j-api = "2.0.13"
 
+squareup-okhttp3 = "4.12.0"
 squareup-retrofit2 = "2.11.0"
 squareup-leakcanary = "2.14"
 
@@ -54,6 +56,7 @@ minabox = "1.7.1"
 ktor-server = "3.0.0-beta-1"
 mm2d-mmupnp = "3.1.6"
 symbolProcessingApi = "2.0.0-1.0.22"
+junit = "4.13.2"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "androidx-core" }
@@ -130,6 +133,7 @@ google-material = { group = "com.google.android.material", name = "material", ve
 
 kotlinpoet = { module = "com.squareup:kotlinpoet", version.ref = "kotlinpoet" }
 kotlinpoet-ksp = { module = "com.squareup:kotlinpoet-ksp", version.ref = "kotlinpoet" }
+squareup-okhttp3 = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "squareup-okhttp3" }
 squareup-retrofit2 = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "squareup-retrofit2" }
 squareup-leakcanary = { group = "com.squareup.leakcanary", name = "leakcanary-android", version.ref = "squareup-leakcanary" }
 
@@ -143,6 +147,8 @@ kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-
 kotlinx-serialization-coverter-retrofit = { group = "com.jakewharton.retrofit", name = "retrofit2-kotlinx-serialization-converter", version.ref = "kotlinx-serialization-converter-retrofit" }
 
 kotlinx-datetime = { group = "org.jetbrains.kotlinx", name = "kotlinx-datetime", version.ref = "kotlinx-datetime" }
+
+kotlinx-coroutine-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "kotlinx-coroutine"}
 
 haze = { module = "dev.chrisbanes.haze:haze", version.ref = "haze" }
 io-coil-kt = { group = "io.coil-kt", name = "coil", version.ref = "io-coil" }
@@ -166,6 +172,7 @@ minabox = { group = "io.github.oleksandrbalan", name = "minabox", version.ref = 
 net-mm2d-mmupnp-mmupnp = { group = "net.mm2d.mmupnp", name = "mmupnp", version.ref = "mm2d-mmupnp" }
 androidx-graphics-shapes-android = { group = "androidx.graphics", name = "graphics-shapes-android", version.ref = "androidx-graphics-shapes" }
 symbol-processing-api = { module = "com.google.devtools.ksp:symbol-processing-api", version.ref = "symbolProcessingApi" }
+junit = { group = "junit", name = "junit", version.ref = "junit" }
 
 [plugins]
 com-android-application = { id = "com.android.application", version.ref = "android-gradle-plugin" }

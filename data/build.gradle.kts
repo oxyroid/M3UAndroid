@@ -27,6 +27,7 @@ android {
 dependencies {
     implementation(project(":core"))
     implementation(project(":annotation"))
+    api(project(":extension-runtime"))
     ksp(project(":processor"))
 
     val richCodec = gradle
