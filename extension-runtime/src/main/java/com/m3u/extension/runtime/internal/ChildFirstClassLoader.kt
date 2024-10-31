@@ -12,7 +12,7 @@ import java.util.Enumeration
  * - the child class loader
  * - the parent class loader.
  */
-internal class ChildFirstPathClassLoader(
+class ChildFirstPathClassLoader(
     dexPath: String,
     librarySearchPath: String?,
     parent: ClassLoader,
@@ -26,8 +26,7 @@ internal class ChildFirstPathClassLoader(
         if (c == null && systemClassLoader != null) {
             try {
                 c = systemClassLoader.loadClass(name)
-            } catch (_: ClassNotFoundException) {
-            }
+            } catch (_: ClassNotFoundException) {}
         }
 
         if (c == null) {

@@ -5,16 +5,18 @@ import android.content.pm.ApplicationInfo
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.os.Build
+import android.util.Log
 import com.m3u.extension.api.runner.Runner
 import com.m3u.extension.runtime.internal.ChildFirstPathClassLoader
+import dalvik.system.DexClassLoader
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 
 object ExtensionLoader {
     suspend fun loadExtensions(context: Context): List<Extension> = coroutineScope {
-        val installedPackages = context.packageManager.getInstalledPackages(PACKAGE_FLAGS)
-        installedPackages
+        context.packageManager
+            .getInstalledPackages(PACKAGE_FLAGS)
             .asSequence()
             .filter { it.isExtension }
             .distinctBy { it.packageName }
@@ -24,46 +26,50 @@ object ExtensionLoader {
             .filterNotNull()
     }
 
-    suspend fun loadExtension(context: Context, info: ApplicationInfo): Extension? = coroutineScope {
+    private suspend fun loadExtension(context: Context, info: ApplicationInfo): Extension? {
+        val pkgName = info.packageName
+
         val classLoader = try {
-            ChildFirstPathClassLoader(
-                dexPath = info.sourceDir,
-                librarySearchPath = null,
-                parent = context.classLoader
+            val dexInternalStoragePath = context.getDir("dex", Context.MODE_PRIVATE)
+            DexClassLoader(
+                info.sourceDir,
+                context.codeCacheDir.absolutePath,
+                info.nativeLibraryDir,
+                context.classLoader
             )
-        } catch (ignore: Exception) {
-            ignore.printStackTrace()
-            return@coroutineScope null
+        } catch (e: Exception) {
+            return null
         }
-        val runners = info.metaData
-            .getString(METADATA_EXTENSION_CLASS)
+
+        val runners = info.metaData.getString(METADATA_EXTENSION_CLASS)
             .orEmpty()
-            .split(';')
-            .asSequence()
-            .map { it.trim() }
-            .map { className ->
-                if (className.startsWith('.')) info.packageName + className
-                else className
-            }
-            .map { className ->
-                async {
-                    try {
-                        Class
-                            .forName(className, false, classLoader)
-                            .getDeclaredConstructor()
-                            .newInstance()
-                    } catch (ignore: Exception) {
-                        ignore.printStackTrace()
-                        null
-                    }
+            .split(";")
+            .map {
+                val sourceClass = it.trim()
+                if (sourceClass.startsWith(".")) {
+                    info.packageName + sourceClass
+                } else {
+                    sourceClass
                 }
             }
-            .toList()
-            .awaitAll()
+            .map {
+                try {
+                    classLoader
+                        .loadClass(it)
+                        .getDeclaredConstructor()
+                        .newInstance()
+                } catch (e: Throwable) {
+                    Log.e("TAG", "loadExtension: ", e)
+                    return null
+                }
+            }
+            .onEach {
+                Log.e("TAG", "loadExtension: $it", )
+            }
             .filterIsInstance<Runner>()
 
-        Extension(
-            packageName = info.packageName,
+        return Extension(
+            packageName = pkgName,
             runners = runners
         )
     }
@@ -77,5 +83,6 @@ object ExtensionLoader {
     private const val FEATURE_EXTENSION = "m3u-android.extension"
     private const val METADATA_EXTENSION_CLASS = "m3u-android.extension.class"
 
-    private val PackageInfo.isExtension: Boolean get() = this.reqFeatures.orEmpty().any { it.name == FEATURE_EXTENSION }
+    private val PackageInfo.isExtension: Boolean
+        get() = this.reqFeatures.orEmpty().any { it.name == FEATURE_EXTENSION }
 }

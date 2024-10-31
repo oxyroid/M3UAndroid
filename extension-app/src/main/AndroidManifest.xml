@@ -4,12 +4,9 @@
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
-        android:label="@string/app_name"
-        android:roundIcon="@mipmap/ic_launcher_round"
-        android:supportsRtl="true"
-        android:theme="@style/Theme.M3U">
+        android:label="@string/app_name">
         <meta-data
             android:name="m3u-android.extension.class"
-            android:value=".XXEMediaRunner" />
+            android:value=".XXEMediaRunner;.XXCodeRunner" />
     </application>
 </manifest>
