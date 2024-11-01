@@ -1,12 +1,10 @@
 package com.m3u.data.repository.channel
 
-import android.content.Context
 import androidx.paging.PagingSource
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.Profiles
 import com.m3u.core.architecture.logger.execute
 import com.m3u.core.architecture.logger.install
-import com.m3u.core.architecture.logger.post
 import com.m3u.core.architecture.logger.sandBox
 import com.m3u.core.architecture.preferences.Preferences
 import com.m3u.data.database.dao.ChannelDao
@@ -14,16 +12,8 @@ import com.m3u.data.database.dao.PlaylistDao
 import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.isSeries
 import com.m3u.data.repository.channel.ChannelRepository.Sort
-import com.m3u.extension.api.runner.ClientRunner
-import com.m3u.extension.api.runner.CodeRunner
-import com.m3u.extension.api.runner.EMediaRunner
-import com.m3u.extension.runtime.ExtensionLoader
-import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import javax.inject.Inject
 import kotlin.time.Duration
@@ -32,33 +22,9 @@ internal class ChannelRepositoryImpl @Inject constructor(
     private val channelDao: ChannelDao,
     private val playlistDao: PlaylistDao,
     private val preferences: Preferences,
-    logger: Logger,
-    @ApplicationContext context: Context
+    logger: Logger
 ) : ChannelRepository {
     private val logger = logger.install(Profiles.REPOS_CHANNEL)
-    private val coroutineScope = CoroutineScope(Dispatchers.Main)
-
-    init {
-        coroutineScope.launch {
-            val extensions = ExtensionLoader.loadExtensions(context)
-            logger.install(Profiles.REPOS_CHANNEL).post { extensions.size }
-            extensions.forEach {
-                val runners = it.runners
-                logger.install(Profiles.REPOS_CHANNEL).post { "runners: $runners" }
-                runners.forEach { runner ->
-                    when (runner) {
-                        is ClientRunner -> {}
-                        is CodeRunner -> {
-                            runner.run()
-                        }
-
-                        is EMediaRunner -> {
-                        }
-                    }
-                }
-            }
-        }
-    }
 
     override fun observe(id: Int): Flow<Channel?> = channelDao
         .observeById(id)

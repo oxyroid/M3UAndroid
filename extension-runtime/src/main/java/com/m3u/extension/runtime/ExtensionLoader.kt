@@ -5,9 +5,8 @@ import android.content.pm.ApplicationInfo
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.os.Build
-import android.util.Log
+import com.m3u.extension.api.analyzer.Analyzer
 import com.m3u.extension.api.runner.Runner
-import com.m3u.extension.runtime.internal.ChildFirstPathClassLoader
 import dalvik.system.DexClassLoader
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -26,11 +25,13 @@ object ExtensionLoader {
             .filterNotNull()
     }
 
-    private suspend fun loadExtension(context: Context, info: ApplicationInfo): Extension? {
+    suspend fun loadExtension(
+        context: Context,
+        info: ApplicationInfo
+    ): Extension? = coroutineScope {
         val pkgName = info.packageName
 
         val classLoader = try {
-            val dexInternalStoragePath = context.getDir("dex", Context.MODE_PRIVATE)
             DexClassLoader(
                 info.sourceDir,
                 context.codeCacheDir.absolutePath,
@@ -38,11 +39,9 @@ object ExtensionLoader {
                 context.classLoader
             )
         } catch (e: Exception) {
-            return null
+            return@coroutineScope null
         }
-
-        val runners = info.metaData.getString(METADATA_EXTENSION_CLASS)
-            .orEmpty()
+        val instances = info.metaData.getString(METADATA_EXTENSION_CLASS).orEmpty()
             .split(";")
             .map {
                 val sourceClass = it.trim()
@@ -53,24 +52,26 @@ object ExtensionLoader {
                 }
             }
             .map {
-                try {
-                    classLoader
-                        .loadClass(it)
-                        .getDeclaredConstructor()
-                        .newInstance()
-                } catch (e: Throwable) {
-                    Log.e("TAG", "loadExtension: ", e)
-                    return null
+                async {
+                    try {
+                        classLoader
+                            .loadClass(it)
+                            .getDeclaredConstructor()
+                            .newInstance()
+                    } catch (e: Throwable) {
+                        null
+                    }
                 }
             }
-            .onEach {
-                Log.e("TAG", "loadExtension: $it", )
-            }
-            .filterIsInstance<Runner>()
+            .awaitAll()
 
-        return Extension(
+        val runners = instances.filterIsInstance<Runner>()
+        val analyzers = instances.filterIsInstance<Analyzer>().sortedByDescending { it.priority }
+
+        Extension(
             packageName = pkgName,
-            runners = runners
+            runners = runners,
+            analyzers = analyzers
         )
     }
 

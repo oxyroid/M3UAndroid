@@ -13,6 +13,7 @@ internal data class M3UData(
     val duration: Double = -1.0,
     val licenseType: String? = null,
     val licenseKey: String? = null,
+    val userAgent: String? = null
 )
 
 internal fun M3UData.toChannel(
