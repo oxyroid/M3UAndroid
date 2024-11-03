@@ -129,6 +129,7 @@ dependencies {
     implementation(project(":feature:playlist"))
     implementation(project(":feature:channel"))
     implementation(project(":feature:playlist-configuration"))
+    implementation(project(":feature:extension"))
     implementation(project(":feature:crash"))
 
     implementation(libs.androidx.core.ktx)

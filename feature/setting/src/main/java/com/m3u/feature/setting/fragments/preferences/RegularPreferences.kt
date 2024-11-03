@@ -3,6 +3,7 @@ package com.m3u.feature.setting.fragments.preferences
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.CheckBox
 import androidx.compose.material.icons.rounded.ColorLens
 import androidx.compose.material.icons.rounded.Extension
 import androidx.compose.material.icons.rounded.MusicNote
@@ -21,6 +22,7 @@ internal fun RegularPreferences(
     navigateToPlaylistManagement: () -> Unit,
     navigateToThemeSelector: () -> Unit,
     navigateToOptional: () -> Unit,
+    navigateToExtension: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
@@ -41,8 +43,13 @@ internal fun RegularPreferences(
             onClick = navigateToThemeSelector
         )
         Preference(
-            title = stringResource(string.feat_setting_optional_features).title(),
+            title = stringResource(string.feat_setting_extension).title(),
             icon = Icons.Rounded.Extension,
+            onClick = navigateToExtension
+        )
+        Preference(
+            title = stringResource(string.feat_setting_optional_features).title(),
+            icon = Icons.Rounded.CheckBox,
             enabled = fragment != SettingDestination.Optional,
             onClick = navigateToOptional
         )

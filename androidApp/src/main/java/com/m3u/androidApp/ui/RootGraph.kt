@@ -23,6 +23,7 @@ fun NavGraphBuilder.rootGraph(
     navigateToChannel: () -> Unit,
     navigateToSettingPlaylistManagement: () -> Unit,
     navigateToPlaylistConfiguration: (Playlist) -> Unit,
+    navigateToExtension: () -> Unit
 ) {
     composable(
         route = Destination.Root.Foryou.name,
@@ -67,6 +68,7 @@ fun NavGraphBuilder.rootGraph(
     ) {
         SettingRoute(
             contentPadding = contentPadding,
+            navigateToExtension = navigateToExtension,
             modifier = Modifier
                 .fillMaxSize()
                 .blurEdge(

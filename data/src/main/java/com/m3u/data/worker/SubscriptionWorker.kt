@@ -3,11 +3,11 @@ package com.m3u.data.worker
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
-import android.app.PendingIntent
 import android.content.Context
-import android.content.Intent
 import android.graphics.Color
 import android.graphics.drawable.Icon
+import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
 import androidx.hilt.work.HiltWorker
 import androidx.work.Constraints
 import androidx.work.CoroutineWorker
@@ -42,7 +42,7 @@ class SubscriptionWorker @AssistedInject constructor(
     @Assisted params: WorkerParameters,
     private val playlistRepository: PlaylistRepository,
     private val programmeRepository: ProgrammeRepository,
-    private val notificationManager: NotificationManager,
+    private val notificationManager: NotificationManagerCompat,
     private val workManager: WorkManager,
     delegate: Logger
 ) : CoroutineWorker(context, params) {
@@ -76,7 +76,6 @@ class SubscriptionWorker @AssistedInject constructor(
                 else -> {
                     createN10nBuilder()
                         .setContentText(cause.localizedMessage.orEmpty())
-                        .setActions(retryAction)
                         .setColor(Color.RED)
                         .buildThenNotify()
                 }
@@ -98,7 +97,6 @@ class SubscriptionWorker @AssistedInject constructor(
                         total = count
                         val notification = createN10nBuilder()
                             .setContentText(findChannelProgressContentText(count))
-                            .setActions(cancelAction)
                             .setOngoing(true)
                             .build()
                         notificationManager.notify(notificationId, notification)
@@ -122,7 +120,6 @@ class SubscriptionWorker @AssistedInject constructor(
                         .onEach { count ->
                             val notification = createN10nBuilder()
                                 .setContentText(findProgrammeProgressContentText(count))
-                                .setActions(cancelAction)
                                 .build()
                             notificationManager.notify(notificationId, notification)
                         }
@@ -131,7 +128,6 @@ class SubscriptionWorker @AssistedInject constructor(
                 } catch (e: Exception) {
                     createN10nBuilder()
                         .setContentText(e.localizedMessage.orEmpty())
-                        .setActions(retryAction)
                         .setColor(Color.RED)
                         .buildThenNotify()
                     e.printStackTrace()
@@ -161,7 +157,6 @@ class SubscriptionWorker @AssistedInject constructor(
                             total = count
                             val notification = createN10nBuilder()
                                 .setContentText(findChannelProgressContentText(count))
-                                .setActions(cancelAction)
                                 .build()
                             notificationManager.notify(notificationId, notification)
                         }
@@ -172,7 +167,6 @@ class SubscriptionWorker @AssistedInject constructor(
                     } catch (e: Exception) {
                         createN10nBuilder()
                             .setContentText(e.localizedMessage.orEmpty())
-                            .setActions(retryAction)
                             .setColor(Color.RED)
                             .buildThenNotify()
                         Result.failure()
@@ -195,7 +189,7 @@ class SubscriptionWorker @AssistedInject constructor(
         notificationManager.createNotificationChannel(channel)
     }
 
-    private fun Notification.Builder.buildThenNotify() {
+    private fun NotificationCompat.Builder.buildThenNotify() {
         if (isStopped) return
         notificationManager.notify(notificationId, build())
     }
@@ -204,8 +198,8 @@ class SubscriptionWorker @AssistedInject constructor(
         return ForegroundInfo(notificationId, createN10nBuilder().build())
     }
 
-    private fun createN10nBuilder(): Notification.Builder =
-        Notification.Builder(context, CHANNEL_ID)
+    private fun createN10nBuilder(): NotificationCompat.Builder =
+        NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.round_file_download_24)
             .setContentTitle(
                 when (dataSource) {
@@ -237,22 +231,6 @@ class SubscriptionWorker @AssistedInject constructor(
             ),
             findCancelActionTitle(),
             workManager.createCancelPendingIntent(id)
-        )
-            .build()
-    }
-    private val retryAction: Notification.Action by lazy {
-        Notification.Action.Builder(
-            Icon.createWithResource(
-                context,
-                R.drawable.round_refresh_24
-            ),
-            findRetryActionTitle(),
-            PendingIntent.getForegroundService(
-                context,
-                1234,
-                Intent(),
-                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-            )
         )
             .build()
     }

@@ -12,17 +12,42 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 
-object ExtensionLoader {
-    suspend fun loadExtensions(context: Context): List<Extension> = coroutineScope {
+internal object ExtensionLoader {
+    suspend fun loadExtensions(
+        context: Context
+    ): List<Extension> = coroutineScope {
+        loadExtensionPackages(context)
+            .map { async { loadExtension(context, it) } }
+            .toList()
+            .awaitAll()
+            .filterNotNull()
+    }
+
+    suspend fun loadExtensionPackages(
+        context: Context
+    ): Sequence<ApplicationInfo> = coroutineScope {
         context.packageManager
             .getInstalledPackages(PACKAGE_FLAGS)
             .asSequence()
             .filter { it.isExtension }
             .distinctBy { it.packageName }
-            .map { async { loadExtension(context, it.applicationInfo) } }
-            .toList()
-            .awaitAll()
-            .filterNotNull()
+            .map { it.applicationInfo }
+    }
+
+    suspend fun loadExtensionFromPkgName(
+        context: Context,
+        pkgName: String
+    ): Extension? = getExtensionInfoFromPkgName(context, pkgName)?.let {
+        loadExtension(context, it.applicationInfo)
+    }
+
+    private fun getExtensionInfoFromPkgName(context: Context, pkgName: String): PackageInfo? {
+        val packageInfo = try {
+            context.packageManager.getPackageInfo(pkgName, PACKAGE_FLAGS).takeIf { it.isExtension }
+        } catch (error: PackageManager.NameNotFoundException) {
+            null
+        }
+        return packageInfo
     }
 
     suspend fun loadExtension(
@@ -30,7 +55,6 @@ object ExtensionLoader {
         info: ApplicationInfo
     ): Extension? = coroutineScope {
         val pkgName = info.packageName
-
         val classLoader = try {
             DexClassLoader(
                 info.sourceDir,
@@ -64,12 +88,15 @@ object ExtensionLoader {
                 }
             }
             .awaitAll()
+            .filterNotNull()
 
         val runners = instances.filterIsInstance<Runner>()
         val analyzers = instances.filterIsInstance<Analyzer>().sortedByDescending { it.priority }
 
         Extension(
-            packageName = pkgName,
+            label = info.loadLabel(context.packageManager).toString(),
+            icon = info.loadIcon(context.packageManager),
+            packageName = info.packageName,
             runners = runners,
             analyzers = analyzers
         )

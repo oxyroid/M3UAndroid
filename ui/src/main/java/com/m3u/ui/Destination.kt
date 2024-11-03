@@ -51,6 +51,7 @@ sealed interface Destination {
         val url: String,
         val recommend: String? = null
     ) : Destination
+
 }
 
 @Immutable

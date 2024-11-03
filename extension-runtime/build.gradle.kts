@@ -1,6 +1,8 @@
 plugins {
     alias(libs.plugins.com.android.library)
     alias(libs.plugins.org.jetbrains.kotlin.android)
+    alias(libs.plugins.com.google.dagger.hilt.android)
+    alias(libs.plugins.com.google.devtools.ksp)
 }
 
 android {
@@ -41,4 +43,8 @@ dependencies {
     androidTestImplementation(libs.androidx.test.espresso.espresso.core)
 
     api(project(":extension-api"))
+
+    implementation(libs.google.dagger.hilt)
+    ksp(libs.google.dagger.hilt.compiler)
+    ksp(libs.androidx.hilt.compiler)
 }

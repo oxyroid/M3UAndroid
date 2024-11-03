@@ -56,6 +56,7 @@ import dev.chrisbanes.haze.haze
 @Composable
 fun SettingRoute(
     contentPadding: PaddingValues,
+    navigateToExtension: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: SettingViewModel = hiltViewModel()
 ) {
@@ -127,7 +128,8 @@ fun SettingRoute(
         },
         onDeleteEpgPlaylist = { viewModel.deleteEpgPlaylist(it) },
         modifier = modifier.fillMaxSize(),
-        contentPadding = contentPadding
+        contentPadding = contentPadding,
+        navigateToExtension = navigateToExtension
     )
     if (!tv) {
         CanvasBottomSheet(
@@ -173,6 +175,7 @@ private fun SettingScreen(
     onClearCache: () -> Unit,
     epgs: List<Playlist>,
     onDeleteEpgPlaylist: (String) -> Unit,
+    navigateToExtension: () -> Unit,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues()
 ) {
@@ -247,6 +250,7 @@ private fun SettingScreen(
                 },
                 cacheSpace = cacheSpace,
                 onClearCache = onClearCache,
+                navigateToExtension = navigateToExtension,
                 modifier = Modifier
                     .fillMaxSize()
                     .includeChildGlowPadding()

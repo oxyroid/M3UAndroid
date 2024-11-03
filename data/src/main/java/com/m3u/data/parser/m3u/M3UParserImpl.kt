@@ -1,6 +1,5 @@
 package com.m3u.data.parser.m3u
 
-import android.content.Context
 import com.m3u.core.architecture.dispatcher.Dispatcher
 import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
 import com.m3u.core.architecture.logger.Logger
@@ -10,13 +9,11 @@ import com.m3u.core.architecture.logger.post
 import com.m3u.extension.api.analyzer.HlsPropAnalyzer
 import com.m3u.extension.api.analyzer.HlsPropAnalyzer.Companion.MAX_COUNT_HLS_PROP_ANALYZER
 import com.m3u.extension.api.analyzer.HlsPropAnalyzer.Companion.TOTAL_MAX_COUNT_HLS_PROP_ANALYZER
-import com.m3u.extension.api.analyzer.HlsPropAnalyzer.HlsResult.Error
 import com.m3u.extension.api.analyzer.HlsPropAnalyzer.HlsResult.LicenseKey
 import com.m3u.extension.api.analyzer.HlsPropAnalyzer.HlsResult.LicenseType
 import com.m3u.extension.api.analyzer.HlsPropAnalyzer.HlsResult.NotHandled
 import com.m3u.extension.api.analyzer.HlsPropAnalyzer.HlsResult.UserAgent
-import com.m3u.extension.runtime.ExtensionLoader
-import dagger.hilt.android.qualifiers.ApplicationContext
+import com.m3u.extension.runtime.ExtensionManager
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
@@ -25,18 +22,18 @@ import java.io.InputStream
 import javax.inject.Inject
 
 internal class M3UParserImpl @Inject constructor(
+    private val extensionManager: ExtensionManager,
     @Dispatcher(IO) private val ioDispatcher: CoroutineDispatcher,
-    @ApplicationContext private val context: Context,
-    delegate: Logger
+    logger: Logger
 ) : M3UParser {
-    private val logger = delegate.install(Profiles.PARSER_M3U)
+    private val logger = logger.install(Profiles.PARSER_M3U)
 
     companion object {
         private const val M3U_HEADER_MARK = "#EXTM3U"
         private const val M3U_INFO_MARK = "#EXTINF:"
 
         private val infoRegex = """(-?\d+)(.*),(.+)""".toRegex()
-        private val propRegex = """#([^=]+)=(.+)""".toRegex()
+        private val propRegex = """#([^:]+):([^=]+)=(.*)""".toRegex()
         private val metadataRegex = """([\w-_.]+)=\s*(?:"([^"]*)"|(\S+))""".toRegex()
 
         private const val M3U_TVG_LOGO_MARK = "tvg-logo"
@@ -46,7 +43,7 @@ internal class M3UParserImpl @Inject constructor(
     }
 
     override fun parse(input: InputStream): Flow<M3UData> = flow {
-        val extensions = ExtensionLoader.loadExtensions(context)
+        val extensions by lazy { extensionManager.extensions.value }
         val propAnalyzers by lazy {
             extensions
                 .asSequence()
@@ -79,25 +76,21 @@ internal class M3UParserImpl @Inject constructor(
                     }
 
                     else -> {
-                        val matchEntire = propRegex.matchEntire(currentLine.trim())
-                        val protocol = matchEntire?.groups?.get(0)?.value.orEmpty().trim()
-                        val key = matchEntire?.groups?.get(1)?.value.orEmpty().trim()
-                        val value = matchEntire?.groups?.get(2)?.value.orEmpty().trim()
+                        val matchEntire = propRegex.matchEntire(currentLine.trim()) ?: continue
+                        val groups = matchEntire.groups
+                        val protocol = groups[1]?.value
+                        val key = groups[2]?.value
+                        val value = groups[3]?.value.orEmpty()
+                        if (protocol.isNullOrEmpty() || key.isNullOrEmpty()) continue
                         for (analyzer in propAnalyzers) {
                             val result = try {
                                 analyzer.onAnalyze(protocol, key, value)
                             } catch (e: Throwable) {
-                                Error(e)
+                                logger.post { e.stackTraceToString() }
+                                continue
                             }
-                            when (result) {
-                                NotHandled -> continue
-                                is Error -> {
-                                    logger.post { result.cause.stackTraceToString() }
-                                    continue
-                                }
-
-                                else -> hlsResults += result
-                            }
+                            if (result == NotHandled) continue
+                            hlsResults += result
                         }
                     }
                 }
@@ -107,14 +100,17 @@ internal class M3UParserImpl @Inject constructor(
             }
             if (infoMatch == null && !currentLine.startsWith("#")) continue
 
-            val title = infoMatch?.groups?.get(3)?.value.orEmpty().trim()
-            val duration = infoMatch?.groups?.get(1)?.value?.toDouble() ?: -1.0
+            val groups = infoMatch?.groups
+            val title = groups?.get(3)?.value.orEmpty().trim()
+            val duration = groups?.get(1)?.value?.toDouble() ?: -1.0
+
             val metadata = buildMap {
-                val text = infoMatch?.groups?.get(2)?.value.orEmpty().trim()
+                val text = groups?.get(2)?.value.orEmpty().trim()
                 val matches = metadataRegex.findAll(text)
                 for (match in matches) {
-                    val key = match.groups[1]!!.value
-                    val value = match.groups[2]?.value?.ifBlank { null } ?: continue
+                    val innerGroups = match.groups
+                    val key = innerGroups[1]?.value?.ifBlank { null } ?: continue
+                    val value = innerGroups[2]?.value?.ifBlank { null } ?: continue
                     put(key.trim(), value.trim())
                 }
             }

@@ -4,7 +4,10 @@ import com.m3u.extension.api.analyzer.HlsPropAnalyzer
 
 class KodiHlsPropAnalyzer : HlsPropAnalyzer {
     override val name: String = "KODI HLS Property Analyzer"
-    override val description: String = "Kodi license support"
+    override val description: String = """
+        This analyzer adds Kodi license support, included
+        license_type and license_key. 
+        """.trimIndent().replace("\n+".toRegex(), " ")
 
     override val priority: Int = 8
 

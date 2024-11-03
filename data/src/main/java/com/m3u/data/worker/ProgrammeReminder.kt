@@ -6,6 +6,7 @@ import android.app.NotificationManager
 import android.content.Context
 import android.media.AudioAttributes
 import android.media.RingtoneManager
+import androidx.core.app.NotificationManagerCompat
 import androidx.core.graphics.drawable.toBitmapOrNull
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
@@ -27,7 +28,7 @@ class ProgrammeReminder @AssistedInject constructor(
     @Assisted private val context: Context,
     @Assisted params: WorkerParameters,
     private val programmeRepository: ProgrammeRepository,
-    private val notificationManager: NotificationManager,
+    private val notificationManager: NotificationManagerCompat,
     private val mediaRepository: MediaRepository
 ) : CoroutineWorker(context, params) {
     private val programmeId = inputData.getInt(PROGRAMME_ID, -1)

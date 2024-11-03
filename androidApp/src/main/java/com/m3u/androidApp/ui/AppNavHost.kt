@@ -14,12 +14,14 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import com.m3u.core.architecture.preferences.hiltPreferences
 import com.m3u.core.wrapper.eventOf
+import com.m3u.feature.channel.PlayerActivity
+import com.m3u.feature.extension.extensionScreen
+import com.m3u.feature.extension.navigateToExtension
 import com.m3u.feature.playlist.configuration.navigateToPlaylistConfiguration
 import com.m3u.feature.playlist.configuration.playlistConfigurationScreen
 import com.m3u.feature.playlist.navigation.navigateToPlaylist
 import com.m3u.feature.playlist.navigation.playlistScreen
 import com.m3u.feature.playlist.navigation.playlistTvScreen
-import com.m3u.feature.channel.PlayerActivity
 import com.m3u.material.ktx.tv
 import com.m3u.ui.Destination
 import com.m3u.ui.Events
@@ -68,6 +70,9 @@ fun AppNavHost(
             },
             navigateToPlaylistConfiguration = {
                 navController.navigateToPlaylistConfiguration(it.url)
+            },
+            navigateToExtension = {
+                navController.navigateToExtension()
             }
         )
         playlistScreen(
@@ -89,5 +94,6 @@ fun AppNavHost(
         )
         playlistTvScreen()
         playlistConfigurationScreen(contentPadding)
+        extensionScreen(contentPadding)
     }
 }

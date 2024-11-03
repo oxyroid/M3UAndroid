@@ -1,10 +1,12 @@
 package com.m3u.data.worker
 
 import android.app.Notification
-import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
 import android.net.Uri
+import androidx.core.app.NotificationChannelCompat
+import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.ForegroundInfo
@@ -22,7 +24,7 @@ class RestoreWorker @AssistedInject constructor(
     @Assisted private val context: Context,
     @Assisted params: WorkerParameters,
     private val playlistRepository: PlaylistRepository,
-    private val notificationManager: NotificationManager,
+    private val notificationManager: NotificationManagerCompat,
     delegate: Logger
 ) : CoroutineWorker(context, params) {
     private val logger = delegate.install(Profiles.WORKER_RESTORE)
@@ -45,17 +47,19 @@ class RestoreWorker @AssistedInject constructor(
     }
 
     private fun createNotification(): Notification {
-        return Notification.Builder(context, CHANNEL_ID)
+        return NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.round_file_download_24)
             .setContentTitle("Backing up")
             .build()
     }
 
     private fun createChannel() {
-        val channel = NotificationChannel(
-            CHANNEL_ID, NOTIFICATION_NAME, NotificationManager.IMPORTANCE_LOW
+        val channel = NotificationChannelCompat.Builder(
+            CHANNEL_ID,
+            NotificationManagerCompat.IMPORTANCE_LOW
         )
-        channel.description = "display subscribe task progress"
+            .setDescription("display subscribe task progress")
+            .build()
         notificationManager.createNotificationChannel(channel)
     }
 

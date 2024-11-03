@@ -2,7 +2,7 @@ package com.m3u.extension.api.analyzer
 
 interface HlsPropAnalyzer : Analyzer {
     /**
-     * Analyzes a HLS metadata,
+     * Analyzes a HLS property,
      * and it must be synchronous and non-blocking.
      *
      * #KODIPROP:user-agent=xxx
@@ -13,7 +13,7 @@ interface HlsPropAnalyzer : Analyzer {
     fun onAnalyze(protocol: String, key: String, value: String): HlsResult = HlsResult.NotHandled
 
     /**
-     * Analyzes a HLS metadata,
+     * Analyzes a HLS property,
      * and it must be synchronous and non-blocking.
      *
      * #KODIPROP:{"user-agent"="xxx"}
@@ -24,7 +24,6 @@ interface HlsPropAnalyzer : Analyzer {
 
     sealed interface HlsResult {
         data object NotHandled : HlsResult
-        data class Error(val cause: Throwable) : HlsResult
         data class UserAgent(val value: String) : HlsResult
         data class LicenseType(val value: String) : HlsResult
         data class LicenseKey(val value: String) : HlsResult

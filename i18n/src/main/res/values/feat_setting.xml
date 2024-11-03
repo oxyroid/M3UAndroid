@@ -56,6 +56,7 @@
     <string name="feat_setting_screencast">screencast</string>
     <string name="feat_setting_screen_rotating">screen rotating</string>
     <string name="feat_setting_screen_rotating_description">available when system rotating is unlocked</string>
+    <string name="feat_setting_extension">extension</string>
     <string name="feat_setting_optional_features">optional features</string>
     <string name="feat_setting_unseen_limit">recommend long-unseen favorite channels</string>
     <string name="feat_setting_reconnect_mode">auto reconnect</string>

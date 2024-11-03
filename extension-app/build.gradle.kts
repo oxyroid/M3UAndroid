@@ -13,6 +13,18 @@ android {
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
+        manifestPlaceholders += mapOf(
+            "m3u-target" to 1,
+            "m3u-extensions" to arrayOf(
+                ".KodiHlsPropAnalyzer",
+                // add more extensions here..
+            )
+                .joinToString(
+                    separator = ";",
+                    prefix = "",
+                    postfix = ""
+                )
+        )
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -36,12 +48,5 @@ android {
 }
 
 dependencies {
-    implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.appcompat)
-    implementation(libs.google.material)
-    testImplementation(libs.junit)
-    androidTestImplementation(libs.androidx.test.ext.junit)
-    androidTestImplementation(libs.androidx.test.espresso.espresso.core)
-
     api(project(":extension-api"))
 }

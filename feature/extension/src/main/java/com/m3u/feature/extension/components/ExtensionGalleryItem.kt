@@ -1,0 +1,96 @@
+package com.m3u.feature.extension.components
+
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
+import com.m3u.extension.runtime.Extension
+import com.m3u.material.components.ToggleableSelection
+import com.m3u.material.model.LocalSpacing
+
+@Composable
+internal fun ExtensionGalleryItem(
+    extension: Extension,
+    modifier: Modifier = Modifier
+) {
+    val spacing = LocalSpacing.current
+    var expanded by remember { mutableStateOf(false) }
+    ToggleableSelection(
+        checked = expanded,
+        onChanged = { expanded = !expanded },
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
+        modifier = modifier
+    ) {
+        Column(Modifier.padding(vertical = spacing.medium)) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(spacing.medium, Alignment.Start),
+                modifier = Modifier.padding(top = spacing.small)
+            ) {
+                AsyncImage(
+                    model = extension.icon,
+                    contentDescription = null,
+                    modifier = Modifier.size(48.dp)
+                )
+                Column {
+                    Text(
+                        text = extension.label,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                    Text(
+                        text = extension.packageName,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        color = LocalContentColor.current.copy(0.65f)
+                    )
+                }
+            }
+            AnimatedVisibility(visible = expanded) {
+                Column(
+                    modifier = Modifier.padding(spacing.small)
+                ) {
+                    val runners = extension.runners
+                    val analyzers = extension.analyzers
+                    runners.forEach { runner ->
+                        Text(text = runner.name)
+                    }
+                    analyzers.forEachIndexed { i, analyzer ->
+                        Text(
+                            text = analyzer.name,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        Text(
+                            text = analyzer.description,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = LocalContentColor.current.copy(0.65f),
+                            maxLines = 5,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        if (i != analyzers.lastIndex) {
+                            Spacer(modifier = Modifier.height(spacing.extraSmall))
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

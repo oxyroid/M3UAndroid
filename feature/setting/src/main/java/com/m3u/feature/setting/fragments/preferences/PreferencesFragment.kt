@@ -20,6 +20,7 @@ internal fun PreferencesFragment(
     navigateToPlaylistManagement: () -> Unit,
     navigateToThemeSelector: () -> Unit,
     navigateToOptional: () -> Unit,
+    navigateToExtension: () -> Unit,
     cacheSpace: DataUnit,
     onClearCache: () -> Unit,
     modifier: Modifier = Modifier
@@ -36,7 +37,8 @@ internal fun PreferencesFragment(
                 fragment = fragment,
                 navigateToPlaylistManagement = navigateToPlaylistManagement,
                 navigateToThemeSelector = navigateToThemeSelector,
-                navigateToOptional = navigateToOptional
+                navigateToOptional = navigateToOptional,
+                navigateToExtension = navigateToExtension
             )
         }
         item {
