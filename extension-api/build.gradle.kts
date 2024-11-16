@@ -4,6 +4,10 @@ plugins {
 }
 
 dependencies {
-    api(libs.squareup.okhttp3)
-    api(libs.kotlinx.coroutine.core)
+    compileOnly(libs.squareup.okhttp3)
+    compileOnly(libs.kotlinx.coroutine.core)
+}
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
 }

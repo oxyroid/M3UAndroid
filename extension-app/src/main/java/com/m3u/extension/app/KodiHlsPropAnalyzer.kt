@@ -7,9 +7,7 @@ class KodiHlsPropAnalyzer : HlsPropAnalyzer {
     override val description: String = """
         This analyzer adds Kodi license support, included
         license_type and license_key. 
-        """.trimIndent().replace("\n+".toRegex(), " ")
-
-    override val priority: Int = 8
+        """.trimIndent()
 
     override fun onAnalyze(
         protocol: String,

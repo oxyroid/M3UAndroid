@@ -48,5 +48,7 @@ android {
 }
 
 dependencies {
-    api(project(":extension-api"))
+    implementation(project(":extension-api"))
+    compileOnly(libs.squareup.okhttp3)
+    compileOnly(libs.kotlinx.coroutine.core)
 }

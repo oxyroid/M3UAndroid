@@ -57,6 +57,8 @@ dependencies {
     ksp(libs.google.dagger.hilt.compiler)
 
     implementation(libs.squareup.retrofit2)
+    implementation(libs.squareup.okhttp3)
+    implementation(libs.kotlinx.coroutine.core)
 
     implementation(libs.androidx.media3.exoplayer)
     implementation(libs.androidx.media3.exoplayer.dash)

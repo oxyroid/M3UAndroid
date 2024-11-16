@@ -5,8 +5,7 @@ import android.content.pm.ApplicationInfo
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.os.Build
-import com.m3u.extension.api.analyzer.Analyzer
-import com.m3u.extension.api.runner.Runner
+import android.util.Log
 import dalvik.system.DexClassLoader
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -90,15 +89,11 @@ internal object ExtensionLoader {
             .awaitAll()
             .filterNotNull()
 
-        val runners = instances.filterIsInstance<Runner>()
-        val analyzers = instances.filterIsInstance<Analyzer>().sortedByDescending { it.priority }
-
         Extension(
             label = info.loadLabel(context.packageManager).toString(),
             icon = info.loadIcon(context.packageManager),
             packageName = info.packageName,
-            runners = runners,
-            analyzers = analyzers
+            hlsPropAnalyzer = instances.ensureOneInstanceAtMost()
         )
     }
 
@@ -113,4 +108,12 @@ internal object ExtensionLoader {
 
     private val PackageInfo.isExtension: Boolean
         get() = this.reqFeatures.orEmpty().any { it.name == FEATURE_EXTENSION }
+
+    private inline fun <reified T : Any> List<Any>.ensureOneInstanceAtMost(): T? {
+        val instances = filterIsInstance<T>()
+        if (instances.size > 1) {
+            Log.e("ExtensionLoader", "package contains more than one same extension instances")
+        }
+        return instances.firstOrNull()
+    }
 }
