@@ -53,7 +53,7 @@ import com.m3u.material.model.LocalHazeState
 import com.m3u.material.model.LocalSpacing
 import com.m3u.material.overscroll.OverScroll
 import com.m3u.material.overscroll.overScrollAlpha
-import com.m3u.material.overscroll.overScrollHeader
+import com.m3u.material.overscroll.overScrollParallaxVertical
 import com.m3u.ui.Destination
 import com.m3u.ui.FontFamilies
 import com.m3u.ui.helper.Fob
@@ -214,9 +214,7 @@ internal fun MainContent(
                         modifier = Modifier
                             .hazeChild(hazeState, style = HazeStyle(blurRadius = 6.dp))
                             .fillMaxWidth()
-                            .overScrollHeader(
-                                headerHeight = with(density) { 82.dp.toPx() }
-                            )
+                            .overScrollParallaxVertical(maxParallaxOffset = -40f)
                             .overScrollAlpha(
                                 finalAlpha = 0.35f
                             )
