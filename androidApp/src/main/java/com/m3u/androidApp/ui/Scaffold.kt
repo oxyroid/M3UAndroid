@@ -32,6 +32,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.SubcomposeLayout
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -40,9 +41,9 @@ import androidx.compose.ui.unit.offset
 import androidx.compose.ui.util.fastForEach
 import androidx.compose.ui.util.fastMap
 import androidx.compose.ui.util.fastMaxOfOrNull
-import com.m3u.androidApp.ui.internal.TvScaffoldImpl
 import com.m3u.androidApp.ui.internal.SmartphoneScaffoldImpl
 import com.m3u.androidApp.ui.internal.TabletScaffoldImpl
+import com.m3u.androidApp.ui.internal.TvScaffoldImpl
 import com.m3u.material.components.Background
 import com.m3u.material.components.Icon
 import com.m3u.material.components.IconButton
@@ -50,6 +51,10 @@ import com.m3u.material.effects.currentBackStackEntry
 import com.m3u.material.ktx.tv
 import com.m3u.material.model.LocalHazeState
 import com.m3u.material.model.LocalSpacing
+import com.m3u.material.overscroll.OverScroll
+import com.m3u.material.overscroll.OverScrollState
+import com.m3u.material.overscroll.overScrollAlpha
+import com.m3u.material.overscroll.overScrollHeader
 import com.m3u.ui.Destination
 import com.m3u.ui.FontFamilies
 import com.m3u.ui.helper.Fob
@@ -135,6 +140,7 @@ internal fun MainContent(
     val tv = tv()
     val spacing = LocalSpacing.current
     val hazeState = LocalHazeState.current
+    val density = LocalDensity.current
 
     val title = Metadata.title
     val subtitle = Metadata.subtitle
@@ -142,82 +148,92 @@ internal fun MainContent(
 
     val backStackEntry by currentBackStackEntry()
 
-    Scaffold(
-        topBar = {
-            if (!tv) {
-                TopAppBar(
-                    colors = TopAppBarDefaults.topAppBarColors(Color.Transparent),
-                    windowInsets = windowInsets,
-                    title = {
-                        Row(
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.defaultMinSize(minHeight = 56.dp)
-                        ) {
-                            Column(
-                                modifier = Modifier
-                                    .padding(horizontal = spacing.medium)
-                                    .weight(1f)
+    OverScroll {
+        Scaffold(
+            topBar = {
+                if (!tv) {
+                    TopAppBar(
+                        colors = TopAppBarDefaults.topAppBarColors(Color.Transparent),
+                        windowInsets = windowInsets,
+                        title = {
+                            Row(
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.defaultMinSize(minHeight = 56.dp)
                             ) {
-                                Text(
-                                    text = title,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                    fontFamily = FontFamilies.LexendExa
-                                )
-                                AnimatedVisibility(subtitle.text.isNotEmpty()) {
+                                Column(
+                                    modifier = Modifier
+                                        .padding(horizontal = spacing.medium)
+                                        .weight(1f)
+                                ) {
                                     Text(
-                                        text = subtitle,
-                                        style = MaterialTheme.typography.titleMedium,
+                                        text = title,
                                         maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
+                                        overflow = TextOverflow.Ellipsis,
+                                        fontFamily = FontFamilies.LexendExa
                                     )
+                                    AnimatedVisibility(subtitle.text.isNotEmpty()) {
+                                        Text(
+                                            text = subtitle,
+                                            style = MaterialTheme.typography.titleMedium,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+                                    }
                                 }
-                            }
 
-                            Row {
-                                actions.forEach { action ->
+                                Row {
+                                    actions.forEach { action ->
+                                        IconButton(
+                                            icon = action.icon,
+                                            contentDescription = action.contentDescription,
+                                            onClick = action.onClick,
+                                            enabled = action.enabled
+                                        )
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.width(spacing.medium))
+                            }
+                        },
+                        navigationIcon = {
+                            AnimatedContent(
+                                targetState = onBackPressed,
+                                label = "app-scaffold-icon"
+                            ) { onBackPressed ->
+                                if (onBackPressed != null) {
                                     IconButton(
-                                        icon = action.icon,
-                                        contentDescription = action.contentDescription,
-                                        onClick = action.onClick,
-                                        enabled = action.enabled
+                                        icon = backStackEntry?.navigationIcon
+                                            ?: Icons.AutoMirrored.Rounded.ArrowBack,
+                                        contentDescription = null,
+                                        onClick = onBackPressed,
+                                        modifier = Modifier.wrapContentSize()
                                     )
                                 }
                             }
-
-                            Spacer(modifier = Modifier.width(spacing.medium))
-                        }
-                    },
-                    navigationIcon = {
-                        AnimatedContent(
-                            targetState = onBackPressed,
-                            label = "app-scaffold-icon"
-                        ) { onBackPressed ->
-                            if (onBackPressed != null) {
-                                IconButton(
-                                    icon = backStackEntry?.navigationIcon
-                                        ?: Icons.AutoMirrored.Rounded.ArrowBack,
-                                    contentDescription = null,
-                                    onClick = onBackPressed,
-                                    modifier = Modifier.wrapContentSize()
-                                )
-                            }
-                        }
-                    },
-                    modifier = Modifier
-                        .hazeChild(hazeState, style = HazeStyle(blurRadius = 6.dp))
-                        .fillMaxWidth()
-                )
-            }
-        },
-        contentWindowInsets = windowInsets,
-        containerColor = Color.Transparent
-    ) { padding ->
-        Background {
-            Box {
-                StarBackground()
-                content(padding)
+                        },
+                        modifier = Modifier
+                            .hazeChild(hazeState, style = HazeStyle(blurRadius = 6.dp))
+                            .fillMaxWidth()
+                            .overScrollHeader(
+                                headerHeight = with(density) { 82.dp.toPx() }
+                            )
+                            .overScrollAlpha(
+                                finalAlpha = 0.35f
+                            )
+                    )
+                }
+            },
+            contentWindowInsets = windowInsets,
+            containerColor = Color.Transparent
+        ) { padding ->
+            Background {
+                Box {
+                    StarBackground(
+                        modifier = Modifier.overScrollAlpha()
+                    )
+                    content(padding)
+                }
             }
         }
     }
