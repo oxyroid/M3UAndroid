@@ -26,7 +26,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.InternalComposeApi
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -36,6 +38,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.offset
 import androidx.compose.ui.util.fastForEach
@@ -48,12 +51,14 @@ import com.m3u.material.components.Background
 import com.m3u.material.components.Icon
 import com.m3u.material.components.IconButton
 import com.m3u.material.effects.currentBackStackEntry
+import com.m3u.material.ktx.thenIf
 import com.m3u.material.ktx.tv
 import com.m3u.material.model.LocalHazeState
 import com.m3u.material.model.LocalSpacing
 import com.m3u.material.overscroll.OverScroll
 import com.m3u.material.overscroll.overScrollAlpha
 import com.m3u.material.overscroll.overScrollHeader
+import com.m3u.material.overscroll.overScrollParallaxVertical
 import com.m3u.ui.Destination
 import com.m3u.ui.FontFamilies
 import com.m3u.ui.helper.Fob
@@ -214,9 +219,7 @@ internal fun MainContent(
                         modifier = Modifier
                             .hazeChild(hazeState, style = HazeStyle(blurRadius = 6.dp))
                             .fillMaxWidth()
-                            .overScrollHeader(
-                                headerHeight = with(density) { 82.dp.toPx() }
-                            )
+                            .overScrollParallaxVertical(maxParallaxOffset = -40f)
                             .overScrollAlpha(
                                 finalAlpha = 0.35f
                             )
