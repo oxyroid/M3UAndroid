@@ -26,7 +26,6 @@ import coil.compose.AsyncImage
 import coil.request.CachePolicy
 import coil.request.ImageRequest
 import com.m3u.core.architecture.preferences.hiltPreferences
-import com.m3u.material.overscroll.overScrollScale
 import com.m3u.material.overscroll.overScrollScaleCenter
 import com.m3u.material.transformation.BlurTransformation
 import com.m3u.ui.helper.LocalHelper

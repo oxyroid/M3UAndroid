@@ -52,7 +52,6 @@ import com.m3u.material.ktx.tv
 import com.m3u.material.model.LocalHazeState
 import com.m3u.material.model.LocalSpacing
 import com.m3u.material.overscroll.OverScroll
-import com.m3u.material.overscroll.OverScrollState
 import com.m3u.material.overscroll.overScrollAlpha
 import com.m3u.material.overscroll.overScrollHeader
 import com.m3u.ui.Destination
