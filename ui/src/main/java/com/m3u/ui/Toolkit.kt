@@ -68,7 +68,6 @@ fun Toolkit(
 
     val spacing = if (preferences.compactDimension) Spacing.COMPACT
     else Spacing.REGULAR
-
     CompositionLocalProvider(
         LocalHelper provides helper,
         LocalM3UHapticFeedback provides createM3UHapticFeedback(),
