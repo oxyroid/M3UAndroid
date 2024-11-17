@@ -30,6 +30,7 @@ import com.m3u.data.database.model.isVod
 import com.m3u.data.repository.channel.ChannelRepository
 import com.m3u.data.repository.playlist.PlaylistRepository
 import com.m3u.data.repository.programme.ProgrammeRepository
+import com.m3u.data.service.MediaCommand
 import com.m3u.data.service.PlayerManager
 import com.m3u.data.service.currentTracks
 import com.m3u.data.service.tracks
@@ -42,6 +43,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
@@ -224,6 +226,41 @@ class ChannelViewModel @Inject constructor(
 //        controlPoint?.setVolume((target * 100).roundToInt(), null)
     }
 
+    internal fun getPreviousChannel() {
+        viewModelScope.launch {
+            val currentChannel = channel.value ?: return@launch
+            val channelsList = channels.firstOrNull()
+                ?.filter {
+                    it.category == channel.value?.category.orEmpty()
+                }
+            channelsList?.let {
+                val currentIndex = channelsList.indexOfFirst { it.id == currentChannel.id }
+                if (currentIndex > 0) {
+                    val previousChannel = channelsList[currentIndex - 1]
+                    playerManager.play(MediaCommand.Common(previousChannel.id))
+                }
+            }
+        }
+    }
+
+    internal fun getNextChannel() {
+        viewModelScope.launch {
+            val currentChannel = channel.value ?: return@launch
+            val channelList = channels.firstOrNull()
+                ?.filter {
+                    it.category == channel.value?.category.orEmpty()
+                }
+            channelList?.let {
+                val currentIndex = channelList.indexOfFirst { it.id == currentChannel.id }
+                if (currentIndex != -1 && currentIndex < channelList.size - 1) {
+                    val nextChannel = channelList[currentIndex + 1]
+                    playerManager.play(MediaCommand.Common(nextChannel.id))
+                }
+            }
+
+        }
+    }
+
     fun destroy() {
         runCatching {
             controlPoint?.removeDiscoveryListener(this)
@@ -279,7 +316,7 @@ class ChannelViewModel @Inject constructor(
 
     // the channels which is in the same category with the current channel
     // or the episodes which is in the same series.
-    internal val channels: Flow<PagingData<Channel>> = playlist.flatMapLatest { playlist ->
+    internal val pagingChannels: Flow<PagingData<Channel>> = playlist.flatMapLatest { playlist ->
         playlist ?: return@flatMapLatest flowOf(PagingData.empty())
         Pager(PagingConfig(10)) {
             channelRepository.pagingAllByPlaylistUrl(
@@ -292,6 +329,13 @@ class ChannelViewModel @Inject constructor(
             .flow
     }
         .cachedIn(viewModelScope)
+
+    private val channels: Flow<List<Channel>> = playlist.flatMapLatest { playlist ->
+        playlist ?: return@flatMapLatest flowOf(emptyList())
+        channelRepository.observeAllByPlaylistUrl(
+            playlist.url,
+        )
+    }
 
     internal val programmes: Flow<PagingData<Programme>> = channel.flatMapLatest { channel ->
         channel ?: return@flatMapLatest flowOf(PagingData.empty())

@@ -33,7 +33,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.google.accompanist.permissions.rememberPermissionState
 import com.m3u.core.architecture.preferences.hiltPreferences
@@ -97,7 +96,7 @@ fun ChannelRoute(
         initialValue = false
     )
 
-    val channels = viewModel.channels.collectAsLazyPagingItems()
+    val channels = viewModel.pagingChannels.collectAsLazyPagingItems()
     val programmes = viewModel.programmes.collectAsLazyPagingItems()
     val programmeRange by viewModel.programmeRange.collectAsStateWithLifecycle()
 
@@ -232,13 +231,18 @@ fun ChannelRoute(
                     playerState = playerState,
                     playlist = playlist,
                     channel = channel,
-                    channels = channels,
                     hasTrack = tracks.isNotEmpty(),
                     isPanelExpanded = isPanelExpanded,
                     volume = volume,
                     onVolume = viewModel::onVolume,
                     brightness = brightness,
                     onBrightness = { brightness = it },
+                    onPreviousChannelClick = {
+                        viewModel.getPreviousChannel()
+                    },
+                    onNextChannelClick = {
+                        viewModel.getNextChannel()
+                    },
                     onEnterPipMode = {
                         helper.enterPipMode(playerState.videoSize)
                         maskState.unlockAll()
@@ -287,7 +291,6 @@ private fun ChannelPlayer(
     playerState: PlayerState,
     playlist: Playlist?,
     channel: Channel?,
-    channels: LazyPagingItems<Channel>,
     isSeriesPlaylist: Boolean,
     hasTrack: Boolean,
     isPanelExpanded: Boolean,
@@ -299,12 +302,13 @@ private fun ChannelPlayer(
     openOrClosePanel: () -> Unit,
     onVolume: (Float) -> Unit,
     onBrightness: (Float) -> Unit,
+    onPreviousChannelClick: () -> Unit,
+    onNextChannelClick: () -> Unit,
     onEnterPipMode: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val title = channel?.title ?: "--"
     val cover = channel?.cover.orEmpty()
-    val channelId = channel?.id ?: 0
     val playlistTitle = playlist?.title ?: "--"
     val favourite = channel?.favourite ?: false
     var gesture: MaskGesture? by remember { mutableStateOf(null) }
@@ -377,8 +381,6 @@ private fun ChannelPlayer(
             )
 
             ChannelMask(
-                channel = channel,
-                channels = channels,
                 cover = cover,
                 title = title,
                 playlistTitle = playlistTitle,
@@ -396,6 +398,8 @@ private fun ChannelPlayer(
                 openOrClosePanel = openOrClosePanel,
                 onVolume = onVolume,
                 onEnterPipMode = onEnterPipMode,
+                onPreviousChannelClick = onPreviousChannelClick,
+                onNextChannelClick = onNextChannelClick,
                 gesture = gesture
             )
 

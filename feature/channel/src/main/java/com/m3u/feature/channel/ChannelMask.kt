@@ -72,11 +72,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.media3.common.Player
-import androidx.paging.compose.LazyPagingItems
 import com.m3u.core.architecture.preferences.hiltPreferences
 import com.m3u.core.util.basic.isNotEmpty
-import com.m3u.data.database.model.Channel
-import com.m3u.data.service.MediaCommand
 import com.m3u.feature.channel.MaskCenterState.Pause
 import com.m3u.feature.channel.MaskCenterState.Play
 import com.m3u.feature.channel.MaskCenterState.Replay
@@ -105,8 +102,6 @@ import kotlin.time.toDuration
 
 @Composable
 internal fun ChannelMask(
-    channel: Channel?,
-    channels: LazyPagingItems<Channel>,
     cover: String,
     title: String,
     gesture: MaskGesture?,
@@ -125,6 +120,8 @@ internal fun ChannelMask(
     openOrClosePanel: () -> Unit,
     onEnterPipMode: () -> Unit,
     onVolume: (Float) -> Unit,
+    onNextChannelClick: () -> Unit,
+    onPreviousChannelClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val preferences = hiltPreferences()
@@ -339,21 +336,7 @@ internal fun ChannelMask(
                         MaskNavigateButton(
                             maskNavigateState = MaskNavigateState.Previous,
                             maskState = maskState,
-                            onClick = {
-                                coroutineScope.launch {
-                                    channel?.let { channel ->
-                                        val currentIndex =
-                                            channels.itemSnapshotList.items.indexOfFirst { it.id == channel.id }
-                                        if (currentIndex > 0) {
-                                            val previousChannel =
-                                                channels.itemSnapshotList.items[currentIndex - 1]
-                                            helper.play(
-                                                MediaCommand.Common(previousChannel.id)
-                                            )
-                                        }
-                                    }
-                                }
-                            },
+                            onClick = onPreviousChannelClick,
                             modifier = Modifier
                         )
                         MaskCenterButton(
@@ -366,21 +349,7 @@ internal fun ChannelMask(
                         MaskNavigateButton(
                             maskNavigateState = MaskNavigateState.Next,
                             maskState = maskState,
-                            onClick = {
-                                coroutineScope.launch {
-                                    channel?.let {
-                                        val currentIndex =
-                                            channels.itemSnapshotList.items.indexOfFirst { it.id == channel.id }
-                                        if (currentIndex < channels.itemSnapshotList.items.size) {
-                                            val nextChannel =
-                                                channels.itemSnapshotList.items[currentIndex + 1]
-                                            helper.play(
-                                                MediaCommand.Common(nextChannel.id)
-                                            )
-                                        }
-                                    }
-                                }
-                            },
+                            onClick = onNextChannelClick,
                             modifier = Modifier
                         )
                     }
