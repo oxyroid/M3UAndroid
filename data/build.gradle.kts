@@ -55,6 +55,7 @@ dependencies {
 
     implementation(libs.google.dagger.hilt)
     ksp(libs.google.dagger.hilt.compiler)
+    ksp(libs.androidx.hilt.compiler)
 
     implementation(libs.squareup.retrofit2)
     implementation(libs.squareup.okhttp3)
@@ -74,7 +75,6 @@ dependencies {
 
     implementation(libs.androidx.work.runtime.ktx)
     implementation(libs.androidx.hilt.work)
-    ksp(libs.androidx.hilt.compiler)
 
     implementation(libs.ktor.server.netty)
     implementation(libs.ktor.server.websockets)

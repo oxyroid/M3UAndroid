@@ -7,10 +7,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ExtensionViewModel @Inject constructor(
-    private val extensionManager: ExtensionManager
+    extensionManager: ExtensionManager
 ): ViewModel() {
     internal val extensions = extensionManager.extensions
-    init {
-        extensionManager.refreshExtensionPackages()
-    }
 }

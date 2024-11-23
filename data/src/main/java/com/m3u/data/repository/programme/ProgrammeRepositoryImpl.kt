@@ -3,6 +3,7 @@ package com.m3u.data.repository.programme
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
+import com.m3u.core.OkhttpClient
 import com.m3u.core.architecture.dispatcher.Dispatcher
 import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
 import com.m3u.core.architecture.logger.Logger
@@ -11,7 +12,6 @@ import com.m3u.core.architecture.logger.execute
 import com.m3u.core.architecture.logger.install
 import com.m3u.core.architecture.logger.post
 import com.m3u.core.util.basic.letIf
-import com.m3u.data.api.OkhttpClient
 import com.m3u.data.database.dao.ChannelDao
 import com.m3u.data.database.dao.PlaylistDao
 import com.m3u.data.database.dao.ProgrammeDao

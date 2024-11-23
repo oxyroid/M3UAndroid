@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
@@ -13,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.ElevatedAssistChip
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -30,6 +32,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.m3u.extension.api.analyzer.HlsPropAnalyzer
+import com.m3u.extension.api.workflow.Workflow
 import com.m3u.extension.runtime.Extension
 import com.m3u.material.components.SelectionsDefaults
 import com.m3u.material.components.ToggleableSelection
@@ -78,6 +81,11 @@ internal fun ExtensionGalleryItem(
             }
             AnimatedVisibility(visible = expanded) {
                 Column(Modifier.padding(bottom = spacing.small)) {
+                    FlowRow {
+                        extension.workflows.forEach { workflow ->
+                            WorkflowContent(workflow)
+                        }
+                    }
                     extension.analyzers.forEach { analyzer ->
                         when (analyzer) {
                             is HlsPropAnalyzer -> {
@@ -134,6 +142,18 @@ private fun RowScope.ExtensionActionButton(action: ExtensionAction) {
             maxLines = 1
         )
     }
+}
+
+@Composable
+private fun WorkflowContent(
+    workflow: Workflow,
+    modifier: Modifier = Modifier
+) {
+    ElevatedAssistChip(
+        onClick = {},
+        label = { Text(text = workflow.name) },
+        modifier = modifier
+    )
 }
 
 @Composable

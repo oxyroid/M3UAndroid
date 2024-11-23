@@ -1,5 +1,6 @@
 package com.m3u.data.api
 
+import com.m3u.core.OkhttpClient
 import com.m3u.core.architecture.Publisher
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.execute
@@ -51,7 +52,7 @@ class TvApiDelegate @Inject constructor(
     @OkhttpClient(true) private val okHttpClient: OkHttpClient,
     @Logger.MessageImpl private val logger: Logger,
     private val publisher: Publisher,
-): TvApi {
+) : TvApi {
     fun prepare(host: String, port: Int): Flow<TvInfo> = callbackFlow {
         val json = Json {
             ignoreUnknownKeys = true

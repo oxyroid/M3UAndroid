@@ -63,6 +63,7 @@ fun SettingRoute(
     val tv = tv()
     val controller = LocalSoftwareKeyboardController.current
 
+    val dataSources by viewModel.dataSources.collectAsStateWithLifecycle()
     val colorSchemes by viewModel.colorSchemes.collectAsStateWithLifecycle()
     val epgs by viewModel.epgs.collectAsStateWithLifecycle()
     val hiddenChannels by viewModel.hiddenChannels.collectAsStateWithLifecycle()
@@ -94,6 +95,7 @@ fun SettingRoute(
     }
 
     SettingScreen(
+        dataSources = dataSources,
         versionName = viewModel.versionName,
         versionCode = viewModel.versionCode,
         titleState = viewModel.titleState,
@@ -147,6 +149,7 @@ fun SettingRoute(
 
 @Composable
 private fun SettingScreen(
+    dataSources: List<DataSource>,
     titleState: MutableState<String>,
     urlState: MutableState<String>,
     uriState: MutableState<Uri>,
@@ -260,6 +263,7 @@ private fun SettingScreen(
             when (destination) {
                 SettingDestination.Playlists -> {
                     SubscriptionsFragment(
+                        dataSources = dataSources,
                         titleState = titleState,
                         urlState = urlState,
                         uriState = uriState,

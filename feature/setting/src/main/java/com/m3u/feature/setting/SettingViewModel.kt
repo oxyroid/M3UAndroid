@@ -25,24 +25,27 @@ import com.m3u.core.util.basic.startWithHttpScheme
 import com.m3u.data.api.TvApiDelegate
 import com.m3u.data.database.dao.ColorSchemeDao
 import com.m3u.data.database.example.ColorSchemeExample
+import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.ColorScheme
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
-import com.m3u.data.database.model.Channel
 import com.m3u.data.parser.xtream.XtreamInput
-import com.m3u.data.repository.playlist.PlaylistRepository
 import com.m3u.data.repository.channel.ChannelRepository
+import com.m3u.data.repository.playlist.PlaylistRepository
 import com.m3u.data.service.Messager
 import com.m3u.data.service.PlayerManager
 import com.m3u.data.worker.BackupWorker
 import com.m3u.data.worker.RestoreWorker
 import com.m3u.data.worker.SubscriptionWorker
+import com.m3u.extension.runtime.ExtensionManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.WhileSubscribed
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
@@ -61,8 +64,9 @@ class SettingViewModel @Inject constructor(
     private val tvApi: TvApiDelegate,
     private val playerManager: PlayerManager,
     publisher: Publisher,
-    // FIXME: do not use dao in viewmodel
+    // fixme: do not use dao in viewmodel
     private val colorSchemeDao: ColorSchemeDao,
+    extensionManager: ExtensionManager,
     @Dispatcher(IO) private val ioDispatcher: CoroutineDispatcher,
     delegate: Logger
 ) : ViewModel() {
@@ -113,6 +117,24 @@ class SettingViewModel @Inject constructor(
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = emptyList()
+        )
+
+    internal val dataSources: StateFlow<List<DataSource>> = extensionManager.extensions
+        .map { extensions -> extensions.flatMap { it.workflows } }
+        .distinctUntilChanged()
+        .map { workflows ->
+            listOf(
+                DataSource.M3U,
+                DataSource.Xtream,
+                DataSource.EPG,
+                DataSource.Emby,
+                DataSource.Dropbox
+            ) + workflows.map { DataSource.Extension(it) }
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000L),
             initialValue = emptyList()
         )
 

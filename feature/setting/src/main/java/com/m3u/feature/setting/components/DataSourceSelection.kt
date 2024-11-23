@@ -4,9 +4,11 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.CheckCircle
+import androidx.compose.material.icons.rounded.Extension
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.KeyboardArrowUp
 import androidx.compose.material3.DropdownMenu
@@ -27,6 +29,7 @@ import com.m3u.data.database.model.DataSource
 import com.m3u.material.components.ClickableSelection
 import com.m3u.material.components.Icon
 import com.m3u.material.components.SelectionsDefaults
+import com.m3u.material.ktx.composableOf
 
 @Composable
 internal fun DataSourceSelection(
@@ -46,7 +49,12 @@ internal fun DataSourceSelection(
             onClick = { expanded = true },
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
-            Text(stringResource(selectedState.value.resId))
+            Text(
+                when (val state = selectedState.value) {
+                    is DataSource.Extension -> state.workflow.name
+                    else -> stringResource(state.resId)
+                }
+            )
             Icon(
                 imageVector = if (expanded) {
                     Icons.Rounded.KeyboardArrowUp
@@ -62,20 +70,35 @@ internal fun DataSourceSelection(
         ) {
             supported.forEach { current ->
                 DropdownMenuItem(
-                    text = { Text(stringResource(current.resId)) },
-                    trailingIcon = {
-                        if (selectedState == current) {
-                            Icon(
-                                imageVector = Icons.Rounded.CheckCircle,
-                                contentDescription = null
-                            )
+                    text = {
+                        when (current) {
+                            is DataSource.Extension -> {
+                                Text(current.workflow.name)
+                            }
+
+                            else -> {
+                                Text(stringResource(current.resId))
+                            }
                         }
+                    },
+                    leadingIcon = composableOf(current is DataSource.Extension) {
+                        Icon(
+                            imageVector = Icons.Rounded.Extension,
+                            contentDescription = null
+                        )
+                    },
+                    trailingIcon = composableOf(selectedState.value == current) {
+                        Icon(
+                            imageVector = Icons.Rounded.CheckCircle,
+                            contentDescription = null
+                        )
                     },
                     enabled = current.supported,
                     onClick = {
                         selectedState.value = current
                         expanded = false
-                    }
+                    },
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
         }

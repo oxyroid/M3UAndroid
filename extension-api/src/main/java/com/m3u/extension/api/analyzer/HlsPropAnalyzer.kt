@@ -1,5 +1,8 @@
 package com.m3u.extension.api.analyzer
 
+/**
+ * This analyzer is only used for official m3u parser for now.
+ */
 interface HlsPropAnalyzer : Analyzer {
     /**
      * Analyzes a HLS property,

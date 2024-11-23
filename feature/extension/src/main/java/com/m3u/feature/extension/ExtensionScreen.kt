@@ -14,9 +14,9 @@ import com.m3u.material.components.OuterColumn
 
 @Composable
 fun ExtensionRoute(
+    modifier: Modifier = Modifier,
     viewModel: ExtensionViewModel = hiltViewModel(),
-    contentPadding: PaddingValues = PaddingValues(),
-    modifier: Modifier = Modifier
+    contentPadding: PaddingValues = PaddingValues()
 ) {
     val extensions by viewModel.extensions.collectAsStateWithLifecycle()
     ExtensionScreen(

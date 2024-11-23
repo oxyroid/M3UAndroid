@@ -6,31 +6,45 @@ import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.os.Build
 import android.util.Log
+import com.m3u.extension.api.tool.Logger
+import com.m3u.extension.api.tool.Saver
+import com.m3u.extension.api.workflow.Workflow
 import dalvik.system.DexClassLoader
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.toList
+import kotlinx.serialization.json.Json
+import okhttp3.OkHttpClient
+import javax.inject.Inject
+import kotlin.reflect.KClass
+import kotlin.reflect.KVisibility
 
-internal object ExtensionLoader {
+class ExtensionLoader @Inject constructor(
+    private val json: Json,
+    private val logger: Logger,
+    private val saver: Saver
+) {
     suspend fun loadExtensions(
         context: Context
     ): List<Extension> = coroutineScope {
         loadExtensionPackages(context)
-            .map { async { loadExtension(context, it) } }
+            .map { loadExtension(context, it) }
             .toList()
-            .awaitAll()
             .filterNotNull()
     }
 
-    suspend fun loadExtensionPackages(
-        context: Context
-    ): Sequence<ApplicationInfo> = coroutineScope {
+    fun loadExtensionPackages(context: Context): Flow<ApplicationInfo> = flow {
         context.packageManager
             .getInstalledPackages(PACKAGE_FLAGS)
             .asSequence()
             .filter { it.isExtension }
             .distinctBy { it.packageName }
             .map { it.applicationInfo }
+            .forEach { emit(it) }
     }
 
     suspend fun loadExtensionFromPkgName(
@@ -69,7 +83,7 @@ internal object ExtensionLoader {
             .map {
                 val sourceClass = it.trim()
                 if (sourceClass.startsWith(".")) {
-                    info.packageName + sourceClass
+                    pkgName + sourceClass
                 } else {
                     sourceClass
                 }
@@ -79,9 +93,10 @@ internal object ExtensionLoader {
                     try {
                         classLoader
                             .loadClass(it)
-                            .getDeclaredConstructor()
-                            .newInstance()
+                            .kotlin
+                            .createInstance()
                     } catch (e: Throwable) {
+                        Log.e(TAG, "createInstance throw an error", e)
                         null
                     }
                 }
@@ -93,18 +108,54 @@ internal object ExtensionLoader {
             label = info.loadLabel(context.packageManager).toString(),
             icon = info.loadIcon(context.packageManager),
             packageName = info.packageName,
-            hlsPropAnalyzer = instances.ensureOneInstanceAtMost()
+            hlsPropAnalyzer = instances.ensureOneInstanceAtMost(),
+            workflows = instances.filterIsInstance<Workflow>()
         )
     }
 
-    @Suppress("DEPRECATION")
-    private val PACKAGE_FLAGS = PackageManager.GET_CONFIGURATIONS or
-            PackageManager.GET_META_DATA or
-            PackageManager.GET_SIGNATURES or
-            (if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) PackageManager.GET_SIGNING_CERTIFICATES else 0)
+    private fun <T : Any> KClass<T>.createInstance(): T? {
+        val kClass = this
+//        if (kClass.hasAnnotation<Sample>()) return null
+        val constructor = kClass.constructors
+            .asSequence()
+            .filter { it.visibility == KVisibility.PUBLIC }
+            .minByOrNull { it.parameters.size }
+            .also { Log.d(TAG, "constructor: $it") }
+            ?: return null
+        val classifiers = constructor.parameters.map { it.type.classifier }
+        Log.d(TAG, "classifiers: $classifiers")
+        if (classifiers.any { it !in Workflow.AllowedType.classifiers }) {
+            Log.w(TAG, "some classifiers are not be allowed.")
+            return null
+        }
+        val args = classifiers
+            .mapNotNull {
+                when (it) {
+                    Workflow.AllowedType.OKHTTP_CLIENT.classifier -> OkHttpClient()
+                    Workflow.AllowedType.JSON.classifier -> json
+                    Workflow.AllowedType.SAVER.classifier -> saver
+                    Workflow.AllowedType.LOGGER.classifier -> logger
+                    else -> {
+                        Log.e(TAG, "oops.. this log shouldn't be printed?!")
+                        null
+                    }
+                }
+            }
+        Log.d(TAG, "args: $args")
+        return constructor.call(*args.toTypedArray()).also { Log.d(TAG, "createInstance: $it") }
+    }
 
-    private const val FEATURE_EXTENSION = "m3u-android.extension"
-    private const val METADATA_EXTENSION_CLASS = "m3u-android.extension.class"
+    companion object {
+        @Suppress("DEPRECATION")
+        private val PACKAGE_FLAGS = PackageManager.GET_CONFIGURATIONS or
+                PackageManager.GET_META_DATA or
+                PackageManager.GET_SIGNATURES or
+                (if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) PackageManager.GET_SIGNING_CERTIFICATES else 0)
+
+        private const val FEATURE_EXTENSION = "m3u-android.extension"
+        private const val METADATA_EXTENSION_CLASS = "m3u-android.extension.class"
+        private const val TAG = "ExtensionLoader"
+    }
 
     private val PackageInfo.isExtension: Boolean
         get() = this.reqFeatures.orEmpty().any { it.name == FEATURE_EXTENSION }
@@ -112,7 +163,7 @@ internal object ExtensionLoader {
     private inline fun <reified T : Any> List<Any>.ensureOneInstanceAtMost(): T? {
         val instances = filterIsInstance<T>()
         if (instances.size > 1) {
-            Log.e("ExtensionLoader", "package contains more than one same extension instances")
+            Log.e(TAG, "package contains more than one same extension instances")
         }
         return instances.firstOrNull()
     }

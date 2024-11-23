@@ -11,6 +11,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 
 internal class ExtensionReceiver(
+    private val extensionLoader: ExtensionLoader,
     private val listener: Listener
 ) : BroadcastReceiver() {
     private val scope = CoroutineScope(SupervisorJob())
@@ -80,7 +81,7 @@ internal class ExtensionReceiver(
         intent: Intent?
     ): Extension? {
         val pkgName = getPackageNameFromIntent(intent) ?: return null
-        return ExtensionLoader.loadExtensionFromPkgName(context, pkgName)
+        return extensionLoader.loadExtensionFromPkgName(context, pkgName)
     }
 
     /**

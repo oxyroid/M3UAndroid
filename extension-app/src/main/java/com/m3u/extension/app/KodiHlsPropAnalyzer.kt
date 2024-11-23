@@ -1,7 +1,9 @@
 package com.m3u.extension.app
 
+import com.m3u.extension.api.Sample
 import com.m3u.extension.api.analyzer.HlsPropAnalyzer
 
+@Sample
 class KodiHlsPropAnalyzer : HlsPropAnalyzer {
     override val name: String = "KODI HLS Property Analyzer"
     override val description: String = """

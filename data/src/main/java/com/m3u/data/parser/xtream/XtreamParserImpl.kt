@@ -1,11 +1,11 @@
 package com.m3u.data.parser.xtream
 
+import com.m3u.core.OkhttpClient
 import com.m3u.core.architecture.dispatcher.Dispatcher
 import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.Profiles
 import com.m3u.core.architecture.logger.install
-import com.m3u.data.api.OkhttpClient
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.parser.ParserUtils
 import kotlinx.coroutines.CoroutineDispatcher
@@ -142,7 +142,10 @@ internal class XtreamParserImpl @Inject constructor(
         )
     }
 
-    override suspend fun getSeriesInfoOrThrow(input: XtreamInput, seriesId: Int): XtreamChannelInfo {
+    override suspend fun getSeriesInfoOrThrow(
+        input: XtreamInput,
+        seriesId: Int
+    ): XtreamChannelInfo {
         val (basicUrl, username, password, type) = input
         check(type == DataSource.Xtream.TYPE_SERIES) { "xtream input type must be `series`" }
         return utils.newCallOrThrow(

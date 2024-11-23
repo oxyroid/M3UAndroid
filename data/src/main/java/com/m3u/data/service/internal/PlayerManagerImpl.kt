@@ -39,6 +39,7 @@ import androidx.media3.extractor.ts.DefaultTsPayloadReaderFactory.FLAG_ALLOW_NON
 import androidx.media3.extractor.ts.DefaultTsPayloadReaderFactory.FLAG_DETECT_ACCESS_UNITS
 import androidx.media3.session.MediaSession
 import com.m3u.codec.Codecs
+import com.m3u.core.OkhttpClient
 import com.m3u.core.architecture.dispatcher.Dispatcher
 import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
 import com.m3u.core.architecture.dispatcher.M3uDispatchers.Main
@@ -49,7 +50,6 @@ import com.m3u.core.architecture.logger.post
 import com.m3u.core.architecture.preferences.Preferences
 import com.m3u.core.architecture.preferences.ReconnectMode
 import com.m3u.data.SSLs
-import com.m3u.data.api.OkhttpClient
 import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.copyXtreamEpisode

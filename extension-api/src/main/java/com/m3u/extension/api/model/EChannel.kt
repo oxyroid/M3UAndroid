@@ -1,7 +1,7 @@
 package com.m3u.extension.api.model
 
 data class EChannel(
-    val name: String,
+    val title: String,
     val url: String,
     val category: String,
     val cover: String,

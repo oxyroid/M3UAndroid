@@ -35,6 +35,7 @@ android {
 }
 
 dependencies {
+    implementation(kotlin("reflect"))
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.google.material)
@@ -43,6 +44,9 @@ dependencies {
     androidTestImplementation(libs.androidx.test.espresso.espresso.core)
 
     api(project(":extension-api"))
+    implementation(libs.squareup.okhttp3)
+    implementation(libs.kotlinx.coroutine.core)
+    implementation(libs.kotlinx.serialization.json)
 
     implementation(libs.google.dagger.hilt)
     ksp(libs.google.dagger.hilt.compiler)

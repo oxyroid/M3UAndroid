@@ -5,6 +5,7 @@ import android.content.Context
 import android.net.Uri
 import androidx.core.net.toUri
 import androidx.work.WorkManager
+import com.m3u.core.OkhttpClient
 import com.m3u.core.architecture.dispatcher.Dispatcher
 import com.m3u.core.architecture.dispatcher.M3uDispatchers
 import com.m3u.core.architecture.logger.Logger
@@ -18,7 +19,6 @@ import com.m3u.core.architecture.preferences.Preferences
 import com.m3u.core.util.basic.startsWithAny
 import com.m3u.core.util.readFileContent
 import com.m3u.core.util.readFileName
-import com.m3u.data.api.OkhttpClient
 import com.m3u.data.database.dao.ChannelDao
 import com.m3u.data.database.dao.PlaylistDao
 import com.m3u.data.database.dao.ProgrammeDao

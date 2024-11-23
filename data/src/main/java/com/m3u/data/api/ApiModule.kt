@@ -5,6 +5,7 @@ package com.m3u.data.api
 import android.content.Context
 import com.chuckerteam.chucker.api.ChuckerInterceptor
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
+import com.m3u.core.OkhttpClient
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.data.Certs
 import com.m3u.data.SSLs
@@ -22,12 +23,7 @@ import okhttp3.Response
 import okhttp3.ResponseBody.Companion.toResponseBody
 import retrofit2.Retrofit
 import retrofit2.create
-import javax.inject.Qualifier
 import javax.inject.Singleton
-
-@Qualifier
-@Retention(AnnotationRetention.RUNTIME)
-annotation class OkhttpClient(val chucker: Boolean)
 
 @Module
 @InstallIn(SingletonComponent::class)
