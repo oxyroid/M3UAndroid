@@ -299,7 +299,7 @@ class SettingViewModel @Inject constructor(
         val extDSource = selectedState.value
         if (extDSource !is DataSource.Ext) return
         val forms = extforms.value
-        val form = forms[extDSource] ?: return
+        val form = forms[extDSource]?.toMap() ?: return
         subscribeExtJob?.cancel()
         // todo: merge to workmanager
         subscribeExtJob = MainScope().launch {
@@ -331,7 +331,7 @@ class SettingViewModel @Inject constructor(
                 }
                 checkedInputs += input.label to content
             }
-            form.clear()
+            forms[extDSource]?.clear()
             workflow.resolver.onResolve(checkedInputs)
         }
     }
