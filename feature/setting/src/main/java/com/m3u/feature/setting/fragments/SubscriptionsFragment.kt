@@ -218,10 +218,14 @@ internal fun SubscriptionsFragment(
             verticalArrangement = Arrangement.spacedBy(spacing.small)
         ) {
             inputs.forEach { input ->
+                val content = forms[input.label]
                 when (val type = input.type) {
                     is Input.StringType -> {
+                        val text by remember(content) {
+                            derivedStateOf { (content as? String).orEmpty() }
+                        }
                         PlaceholderField(
-                            text = (forms[input.label] as? String).orEmpty(),
+                            text = text,
                             placeholder = input.label,
                             onValueChange = { forms[input.label] = it },
                             modifier = Modifier.fillMaxWidth()
@@ -229,9 +233,9 @@ internal fun SubscriptionsFragment(
                     }
 
                     is Input.BooleanType -> {
-                        val isChecked by remember {
+                        val isChecked by remember(content, type.defaultValue) {
                             derivedStateOf {
-                                (forms[input.label] as? Boolean) ?: type.defaultValue
+                                (content as? Boolean) ?: type.defaultValue
                             }
                         }
                         ToggleableSelection(
@@ -311,7 +315,7 @@ internal fun SubscriptionsFragment(
                         ) {
                             value = loadWorkflow(dataSource.pkgName, dataSource.classPath)
                         }
-                        val forms = extforms[dataSource]
+                        val forms = remember(dataSource) { extforms[dataSource] }
                         val currentWorkflow = workflow
                         if (currentWorkflow != null && forms != null) {
                             ExtensionInputContent(

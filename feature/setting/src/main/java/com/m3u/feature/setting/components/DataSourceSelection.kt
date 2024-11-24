@@ -23,6 +23,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.m3u.data.database.model.DataSource
@@ -84,10 +85,16 @@ internal fun DataSourceSelection(
                             contentDescription = null
                         )
                     },
-                    trailingIcon = composableOf(currentDSource.value == source) {
+                    trailingIcon = if (currentDSource.value == source) composableOf {
                         Icon(
                             imageVector = Icons.Rounded.CheckCircle,
                             contentDescription = null
+                        )
+                    } else composableOf {
+                        Icon(
+                            imageVector = Icons.Rounded.CheckCircle,
+                            contentDescription = null,
+                            modifier = Modifier.alpha(0f)
                         )
                     },
                     enabled = source.supported,

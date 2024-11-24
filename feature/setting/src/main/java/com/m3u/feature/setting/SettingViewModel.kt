@@ -1,6 +1,7 @@
 package com.m3u.feature.setting
 
 import android.net.Uri
+import android.util.Log
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
@@ -20,7 +21,6 @@ import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.Profiles
 import com.m3u.core.architecture.logger.install
-import com.m3u.core.architecture.logger.post
 import com.m3u.core.architecture.preferences.Preferences
 import com.m3u.core.unit.DataUnit
 import com.m3u.core.unit.KB
@@ -310,20 +310,27 @@ class SettingViewModel @Inject constructor(
             ) ?: return@launch
             val inputs = workflow.inputs.associateBy { it.label }
             val checkedInputs = mutableMapOf<String, Any>()
-            form.forEach { (key, value) ->
-                val input = inputs[key] ?: return@forEach
-                when (val type = input.type) {
+            inputs.forEach { (key, input) ->
+                val type = input.type
+                if (key !in form) {
+                    if (type is Input.BooleanType || (type is Input.StringType && !input.isOptIn)) {
+                        messager.emit("Param [${input.label}] is not optional!")
+                        return@launch
+                    }
+                }
+                val content = form[key]
+                when (type) {
                     Input.StringType -> {
-                        val text = value as? String
+                        val text = content as? String
                         if (text.isNullOrEmpty() && !input.isOptIn) {
-                            logger.post { "Param [${input.label}] is not optional!" }
+                            messager.emit("Param [${input.label}] is not optional!")
                             return@launch
                         }
                         checkedInputs += (input.label to text.orEmpty())
                     }
 
                     is Input.BooleanType -> {
-                        val condition = value as? Boolean ?: type.defaultValue
+                        val condition = content as? Boolean ?: type.defaultValue
                         checkedInputs += (input.label to condition)
                     }
                 }
