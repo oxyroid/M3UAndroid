@@ -60,7 +60,11 @@ class RestoreWorker @AssistedInject constructor(
         )
             .setDescription("display subscribe task progress")
             .build()
-        notificationManager.createNotificationChannel(channel)
+        try {
+            notificationManager.createNotificationChannel(channel)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 
     companion object {

@@ -17,8 +17,12 @@ object Converters {
     }
 
     @TypeConverter
-    fun fromDataSource(from: DataSource): String = from.value
+    fun fromDataSource(from: DataSource): String = when (from) {
+        is DataSource.Ext -> Json.encodeToString(from)
+        else -> from.value
+    }
 
     @TypeConverter
-    fun toDataSource(to: String): DataSource = DataSource.of(to)
+    fun toDataSource(to: String): DataSource =
+        DataSource.ofOrNull(to) ?: Json.decodeFromString<DataSource.Ext>(to)
 }

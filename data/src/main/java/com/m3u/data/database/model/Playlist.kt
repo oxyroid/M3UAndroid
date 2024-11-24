@@ -15,11 +15,14 @@ import com.m3u.data.parser.xtream.XtreamParser
 import com.m3u.i18n.R
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
+import kotlinx.serialization.encoding.decodeStructure
+import kotlinx.serialization.encoding.encodeStructure
 
 @Entity(tableName = "playlists")
 @Immutable
@@ -115,9 +118,14 @@ fun Playlist.copyXtreamSeries(series: Channel): Playlist = copy(
 )
 
 @Immutable
+@Serializable
 sealed class DataSource(
-    @StringRes val resId: Int,
-    val value: String,
+    @StringRes
+    @Transient
+    val resId: Int = 0,
+    @Transient
+    val value: String = "",
+    @Transient
     val supported: Boolean = false
 ) {
     object M3U : DataSource(R.string.feat_setting_data_source_m3u, "m3u", true)
@@ -139,11 +147,12 @@ sealed class DataSource(
 
     object Dropbox : DataSource(R.string.feat_setting_data_source_dropbox, "dropbox")
 
+    @Serializable
     data class Ext(
         val label: String,
         val pkgName: String,
         val classPath: String
-    ): DataSource(0, pkgName, true)
+    ) : DataSource(0, pkgName, true)
 
     override fun toString(): String = value
 
@@ -154,7 +163,6 @@ sealed class DataSource(
             "xtream" -> Xtream
             "emby" -> Emby
             "dropbox" -> Dropbox
-            // todo
             else -> throw UnsupportedOperationException()
         }
 
@@ -180,9 +188,14 @@ data class PlaylistWithCount(
     val count: Int
 )
 
-private object DataSourceSerializer : KSerializer<DataSource> {
-    override fun deserialize(decoder: Decoder): DataSource {
-        return DataSource.of(decoder.decodeString())
+internal object DataSourceSerializer : KSerializer<DataSource> {
+    override fun deserialize(decoder: Decoder): DataSource = DataSource
+        .ofOrNull(decoder.decodeString()) ?: decoder.decodeStructure(descriptor) {
+        DataSource.Ext(
+            label = decodeStringElement(descriptor, 0),
+            pkgName = decodeStringElement(descriptor, 1),
+            classPath = decodeStringElement(descriptor, 2)
+        )
     }
 
     override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor(
@@ -191,6 +204,14 @@ private object DataSourceSerializer : KSerializer<DataSource> {
     )
 
     override fun serialize(encoder: Encoder, value: DataSource) {
-        encoder.encodeString(value.value)
+        when (value) {
+            is DataSource.Ext -> encoder.encodeStructure(descriptor) {
+                encodeStringElement(descriptor, 0, value.label)
+                encodeStringElement(descriptor, 1, value.pkgName)
+                encodeStringElement(descriptor, 2, value.classPath)
+            }
+
+            else -> encoder.encodeString(value.value)
+        }
     }
 }

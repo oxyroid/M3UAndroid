@@ -55,6 +55,7 @@
     <string name="feat_setting_restore_schemes">恢复主题</string>
     <string name="feat_setting_not_implementation">此功能当前版本不可用</string>
     <string name="feat_setting_zapping_mode">换台模式</string>
+    <string name="feat_setting_extension">插件</string>
     <string name="feat_setting_zapping_mode_description">开启小窗预览而不是直接播放</string>
     <string name="feat_setting_gesture_brightness">亮度手势</string>
     <string name="feat_setting_gesture_volume">音量手势</string>

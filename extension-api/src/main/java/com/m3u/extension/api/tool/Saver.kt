@@ -14,6 +14,6 @@ interface Saver {
     /**
      * @return if false. Means failed, cancelled, or reject by user.
      */
-    suspend fun savePlaylist(playlist: EPlaylist): Boolean
+    suspend fun savePlaylist(pkgName: String, playlist: EPlaylist): Boolean
     suspend fun saveChannel(channel: EChannel): Boolean
 }

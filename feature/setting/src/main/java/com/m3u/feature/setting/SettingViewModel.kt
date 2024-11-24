@@ -20,6 +20,7 @@ import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.Profiles
 import com.m3u.core.architecture.logger.install
+import com.m3u.core.architecture.logger.post
 import com.m3u.core.architecture.preferences.Preferences
 import com.m3u.core.unit.DataUnit
 import com.m3u.core.unit.KB
@@ -39,10 +40,13 @@ import com.m3u.data.service.PlayerManager
 import com.m3u.data.worker.BackupWorker
 import com.m3u.data.worker.RestoreWorker
 import com.m3u.data.worker.SubscriptionWorker
+import com.m3u.extension.api.workflow.Input
 import com.m3u.extension.api.workflow.Workflow
 import com.m3u.extension.runtime.ExtensionManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
@@ -197,6 +201,10 @@ class SettingViewModel @Inject constructor(
     }
 
     internal fun subscribe() {
+        if (selectedState.value is DataSource.Ext) {
+            subscribeExt()
+            return
+        }
         val title = titleState.value
         val url = urlState.value
         val uri = uriState.value
@@ -285,6 +293,44 @@ class SettingViewModel @Inject constructor(
             }
         }
         resetAllInputs()
+    }
+
+    private var subscribeExtJob: Job? = null
+    private fun subscribeExt() {
+        val extDSource = selectedState.value
+        if (extDSource !is DataSource.Ext) return
+        val forms = extforms.value
+        val form = forms[extDSource] ?: return
+        subscribeExtJob?.cancel()
+        // todo: merge to workmanager
+        subscribeExtJob = MainScope().launch {
+            val workflow = extensionManager.loadWorkflow(
+                extDSource.pkgName,
+                extDSource.classPath
+            ) ?: return@launch
+            val inputs = workflow.inputs.associateBy { it.label }
+            val checkedInputs = mutableMapOf<String, Any>()
+            form.forEach { (key, value) ->
+                val input = inputs[key] ?: return@forEach
+                when (val type = input.type) {
+                    Input.StringType -> {
+                        val text = value as? String
+                        if (text.isNullOrEmpty() && !input.isOptIn) {
+                            logger.post { "Param [${input.label}] is not optional!" }
+                            return@launch
+                        }
+                        checkedInputs += (input.label to text.orEmpty())
+                    }
+
+                    is Input.BooleanType -> {
+                        val condition = value as? Boolean ?: type.defaultValue
+                        checkedInputs += (input.label to condition)
+                    }
+                }
+            }
+            form.clear()
+            workflow.resolver.onResolve(checkedInputs)
+        }
     }
 
     internal val backingUpOrRestoring: StateFlow<BackingUpAndRestoringState> = workManager

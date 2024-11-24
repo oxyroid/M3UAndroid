@@ -59,12 +59,22 @@ class ExtensionManager @Inject constructor(
         }
     }
 
-    suspend fun loadWorkflow(pkgName: String, classPath: String): Workflow? =
+    private val workflows = mutableMapOf<WorkflowKey, Workflow?>()
+
+    private data class WorkflowKey(
+        val pkgName: String,
+        val classPath: String
+    )
+
+    suspend fun loadWorkflow(pkgName: String, classPath: String): Workflow? = workflows.getOrPut(
+        WorkflowKey(pkgName, classPath)
+    ) {
         extensionLoader.loadWorkflow(
             context = context,
             pkgName = pkgName,
             classPath = classPath
         )
+    }
 
     // TODO
     override fun onExtensionInstalled(extension: Extension) {

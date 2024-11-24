@@ -1,5 +1,6 @@
 package com.m3u.data.runtime
 
+import android.util.Log
 import com.m3u.data.database.dao.ChannelDao
 import com.m3u.data.database.dao.PlaylistDao
 import com.m3u.data.database.model.Channel
@@ -14,23 +15,33 @@ internal class SaverImpl @Inject constructor(
     private val playlistDao: PlaylistDao,
     private val channelDao: ChannelDao,
 ) : Saver {
-    override suspend fun savePlaylist(playlist: EPlaylist): Boolean = safe {
-        playlistDao.insertOrReplace(playlist.toPlaylist())
+    override suspend fun savePlaylist(pkgName: String, playlist: EPlaylist): Boolean = safe {
+        playlist.toPlaylist(pkgName)?.let { playlistDao.insertOrReplace(it) }
     }
 
     override suspend fun saveChannel(channel: EChannel): Boolean = safe {
         channelDao.insertOrReplace(channel.toChannel())
     }
 
-    private inline fun safe(block: () -> Unit): Boolean = kotlin.runCatching { block() }.isSuccess
+    private inline fun safe(block: () -> Unit): Boolean = runCatching {
+        block()
+    }
+        .onFailure { Log.e("SaverImpl", "throw an error", it) }
+        .isSuccess
 }
 
-private fun EPlaylist.toPlaylist(): Playlist = Playlist(
-    title = title,
-    url = url,
-    source = DataSource.of(dataSource),
-    userAgent = userAgent
-)
+private fun EPlaylist.toPlaylist(pkgName: String): Playlist? {
+    return Playlist(
+        title = title,
+        url = url,
+        source = DataSource.Ext(
+            label = workflow.name,
+            pkgName = pkgName,
+            classPath = workflow::class.qualifiedName ?: return null
+        ),
+        userAgent = userAgent
+    )
+}
 
 private fun EChannel.toChannel(): Channel = Channel(
     url = url,
