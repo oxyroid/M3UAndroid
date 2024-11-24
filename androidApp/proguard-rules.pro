@@ -305,3 +305,6 @@
 
 # mmupnp
 -dontwarn org.slf4j.impl.StaticLoggerBinder
+
+# extension
+-keep class com.m3u.extension.api.** { *; }
