@@ -1,7 +1,6 @@
 package com.m3u.feature.setting
 
 import android.net.Uri
-import android.util.Log
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
@@ -312,28 +311,25 @@ class SettingViewModel @Inject constructor(
             val checkedInputs = mutableMapOf<String, Any>()
             inputs.forEach { (key, input) ->
                 val type = input.type
-                if (key !in form) {
-                    if (type is Input.BooleanType || (type is Input.StringType && !input.isOptIn)) {
-                        messager.emit("Param [${input.label}] is not optional!")
-                        return@launch
-                    }
+                if (key !in form && type is Input.StringType && !input.isOptIn) {
+                    messager.emit("Param [${input.label}] is not optional!")
+                    return@launch
                 }
-                val content = form[key]
-                when (type) {
-                    Input.StringType -> {
-                        val text = content as? String
-                        if (text.isNullOrEmpty() && !input.isOptIn) {
-                            messager.emit("Param [${input.label}] is not optional!")
-                            return@launch
+                val content = form[key].let {
+                    when (type) {
+                        Input.StringType -> {
+                            val text = it as? String
+                            if (text.isNullOrEmpty() && !input.isOptIn) {
+                                messager.emit("Param [${input.label}] is not optional!")
+                                return@launch
+                            }
+                            text.orEmpty()
                         }
-                        checkedInputs += (input.label to text.orEmpty())
-                    }
 
-                    is Input.BooleanType -> {
-                        val condition = content as? Boolean ?: type.defaultValue
-                        checkedInputs += (input.label to condition)
+                        is Input.BooleanType -> it as? Boolean ?: type.defaultValue
                     }
                 }
+                checkedInputs += input.label to content
             }
             form.clear()
             workflow.resolver.onResolve(checkedInputs)
