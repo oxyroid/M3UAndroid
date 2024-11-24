@@ -22,14 +22,14 @@ class OnlyfansWorkflow(
     override val name: String = "Onlyfans"
     override val description: String = "This might cost much more time."
     override val inputs: List<Input> = listOf(
-        Input(INPUT_LABEL_EMAIL, Input.StringValue),
-        Input(INPUT_LABEL_PASSWORD, Input.StringValue),
+        Input(INPUT_LABEL_EMAIL, Input.StringType),
+        Input(INPUT_LABEL_PASSWORD, Input.StringType),
         Input(
             INPUT_LABEL_USER_AGENT,
-            Input.StringValue,
+            Input.StringType,
             isOptIn = true
         ),
-        Input(INPUT_LABEL_R18_ALLOWED, Input.BooleanValue(false))
+        Input(INPUT_LABEL_R18_ALLOWED, Input.BooleanType(false))
     )
 
     //    @OptIn(ExperimentalSerializationApi::class)
@@ -50,7 +50,7 @@ class OnlyfansWorkflow(
     companion object {
         private const val INPUT_LABEL_EMAIL = "E-mail"
         private const val INPUT_LABEL_PASSWORD = "Password"
-        private const val INPUT_LABEL_USER_AGENT = "USER_AGENT"
+        private const val INPUT_LABEL_USER_AGENT = "User-agent"
         private const val INPUT_LABEL_R18_ALLOWED = "R18 Content allowed"
     }
 }

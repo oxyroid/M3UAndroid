@@ -2,8 +2,10 @@ package com.m3u.feature.setting
 
 import android.net.Uri
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.work.OneTimeWorkRequestBuilder
@@ -37,20 +39,20 @@ import com.m3u.data.service.PlayerManager
 import com.m3u.data.worker.BackupWorker
 import com.m3u.data.worker.RestoreWorker
 import com.m3u.data.worker.SubscriptionWorker
+import com.m3u.extension.api.workflow.Workflow
 import com.m3u.extension.runtime.ExtensionManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.WhileSubscribed
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.datetime.Clock
 import javax.inject.Inject
 
@@ -66,7 +68,7 @@ class SettingViewModel @Inject constructor(
     publisher: Publisher,
     // fixme: do not use dao in viewmodel
     private val colorSchemeDao: ColorSchemeDao,
-    extensionManager: ExtensionManager,
+    private val extensionManager: ExtensionManager,
     @Dispatcher(IO) private val ioDispatcher: CoroutineDispatcher,
     delegate: Logger
 ) : ViewModel() {
@@ -120,23 +122,49 @@ class SettingViewModel @Inject constructor(
             initialValue = emptyList()
         )
 
-    internal val dataSources: StateFlow<List<DataSource>> = extensionManager.extensions
-        .map { extensions -> extensions.flatMap { it.workflows } }
-        .distinctUntilChanged()
-        .map { workflows ->
-            listOf(
-                DataSource.M3U,
-                DataSource.Xtream,
-                DataSource.EPG,
-                DataSource.Emby,
-                DataSource.Dropbox
-            ) + workflows.map { DataSource.Extension(it) }
+    internal val defDSources = listOf(
+        DataSource.M3U,
+        DataSource.Xtream,
+        DataSource.EPG,
+        DataSource.Emby,
+        DataSource.Dropbox
+    )
+
+    internal val extDSources: StateFlow<List<DataSource.Ext>> = extensionManager.extensions
+        .map { extensions ->
+            extensions.flatMap {
+                it.workflows.mapNotNull { workflow ->
+                    DataSource.Ext(
+                        label = workflow.name,
+                        pkgName = it.packageName,
+                        classPath = workflow::class.qualifiedName ?: return@mapNotNull null
+                    )
+                }
+            }
         }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000L),
             initialValue = emptyList()
         )
+
+    internal val extforms = extDSources.map { exts ->
+        buildMap<DataSource.Ext, SnapshotStateMap<String, Any>> {
+            exts.forEach { this += it to mutableStateMapOf() }
+        }
+    }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Lazily,
+            initialValue = emptyMap()
+        )
+
+    internal suspend fun loadWorkflow(
+        pkgName: String,
+        classPath: String
+    ): Workflow? = withContext(ioDispatcher) {
+        extensionManager.loadWorkflow(pkgName, classPath)
+    }
 
     internal fun onClipboard(url: String) {
         val title = run {

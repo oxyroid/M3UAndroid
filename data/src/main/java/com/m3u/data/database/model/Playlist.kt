@@ -12,7 +12,6 @@ import com.m3u.annotation.Likable
 import com.m3u.core.util.basic.startsWithAny
 import com.m3u.data.parser.xtream.XtreamInput
 import com.m3u.data.parser.xtream.XtreamParser
-import com.m3u.extension.api.workflow.Workflow
 import com.m3u.i18n.R
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
@@ -140,10 +139,11 @@ sealed class DataSource(
 
     object Dropbox : DataSource(R.string.feat_setting_data_source_dropbox, "dropbox")
 
-    // todo: don't pass workflow here
-    data class Extension(
-        val workflow: Workflow
-    ): DataSource(0, workflow.name, true)
+    data class Ext(
+        val label: String,
+        val pkgName: String,
+        val classPath: String
+    ): DataSource(0, pkgName, true)
 
     override fun toString(): String = value
 

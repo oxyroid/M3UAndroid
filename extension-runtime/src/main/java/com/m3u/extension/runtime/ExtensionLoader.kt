@@ -54,6 +54,40 @@ class ExtensionLoader @Inject constructor(
         loadExtension(context, it.applicationInfo)
     }
 
+    suspend fun loadWorkflow(
+        context: Context,
+        pkgName: String,
+        classPath: String
+    ): Workflow? = coroutineScope {
+        val packageInfo = getExtensionInfoFromPkgName(context, pkgName)?: return@coroutineScope null
+        val info = packageInfo.applicationInfo
+        val classLoader = try {
+            DexClassLoader(
+                info.sourceDir,
+                context.codeCacheDir.absolutePath,
+                info.nativeLibraryDir,
+                context.classLoader
+            )
+        } catch (e: Exception) {
+            return@coroutineScope null
+        }
+        val sourceClass = classPath.trim()
+        val fullPath = if (sourceClass.startsWith(".")) {
+            pkgName + sourceClass
+        } else {
+            sourceClass
+        }
+        try {
+            classLoader
+                .loadClass(fullPath)
+                .kotlin
+                .createInstance()
+        } catch (e: Throwable) {
+            Log.e(TAG, "loadWorkflow throw an error", e)
+            null
+        } as? Workflow
+    }
+
     private fun getExtensionInfoFromPkgName(context: Context, pkgName: String): PackageInfo? {
         val packageInfo = try {
             context.packageManager.getPackageInfo(pkgName, PACKAGE_FLAGS).takeIf { it.isExtension }
@@ -115,17 +149,27 @@ class ExtensionLoader @Inject constructor(
 
     private fun <T : Any> KClass<T>.createInstance(): T? {
         val kClass = this
+        if (kClass.qualifiedName == null) {
+            Log.e(
+                TAG,
+                "cannot create instance because the class is local" +
+                        " or a class of an anonymous object."
+            )
+            return null
+        }
 //        if (kClass.hasAnnotation<Sample>()) return null
         val constructor = kClass.constructors
             .asSequence()
             .filter { it.visibility == KVisibility.PUBLIC }
             .minByOrNull { it.parameters.size }
-            .also { Log.d(TAG, "constructor: $it") }
+            .also { Log.d(TAG, "detected constructor: $it") }
             ?: return null
         val classifiers = constructor.parameters.map { it.type.classifier }
         Log.d(TAG, "classifiers: $classifiers")
+        // todo: not only workflow allowed types.
         if (classifiers.any { it !in Workflow.AllowedType.classifiers }) {
-            Log.w(TAG, "some classifiers are not be allowed.")
+            val notAllowed = classifiers - Workflow.AllowedType.classifiers.toSet()
+            Log.w(TAG, "$notAllowed classifiers are not be allowed.")
             return null
         }
         val args = classifiers
@@ -141,7 +185,7 @@ class ExtensionLoader @Inject constructor(
                     }
                 }
             }
-        Log.d(TAG, "args: $args")
+        Log.d(TAG, "prepared args: $args")
         return constructor.call(*args.toTypedArray()).also { Log.d(TAG, "createInstance: $it") }
     }
 

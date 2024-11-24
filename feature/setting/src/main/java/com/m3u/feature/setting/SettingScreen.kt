@@ -15,10 +15,12 @@ import androidx.compose.material3.adaptive.navigation.rememberListDetailPaneScaf
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -35,6 +37,7 @@ import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.ColorScheme
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
+import com.m3u.extension.api.workflow.Workflow
 import com.m3u.feature.setting.components.CanvasBottomSheet
 import com.m3u.feature.setting.fragments.AppearanceFragment
 import com.m3u.feature.setting.fragments.OptionalFragment
@@ -63,12 +66,15 @@ fun SettingRoute(
     val tv = tv()
     val controller = LocalSoftwareKeyboardController.current
 
-    val dataSources by viewModel.dataSources.collectAsStateWithLifecycle()
+    val defDSources = viewModel.defDSources
+    val extDSources by viewModel.extDSources.collectAsStateWithLifecycle()
+    val dataSources by remember(defDSources) { derivedStateOf { defDSources + extDSources } }
     val colorSchemes by viewModel.colorSchemes.collectAsStateWithLifecycle()
     val epgs by viewModel.epgs.collectAsStateWithLifecycle()
     val hiddenChannels by viewModel.hiddenChannels.collectAsStateWithLifecycle()
     val hiddenCategoriesWithPlaylists by viewModel.hiddenCategoriesWithPlaylists.collectAsStateWithLifecycle()
     val backingUpOrRestoring by viewModel.backingUpOrRestoring.collectAsStateWithLifecycle()
+    val extforms by viewModel.extforms.collectAsStateWithLifecycle()
 
     val cacheSpace by viewModel.cacheSpace.collectAsStateWithLifecycle()
 
@@ -130,6 +136,8 @@ fun SettingRoute(
         },
         onDeleteEpgPlaylist = { viewModel.deleteEpgPlaylist(it) },
         modifier = modifier.fillMaxSize(),
+        extforms = extforms,
+        loadWorkflow = viewModel::loadWorkflow,
         contentPadding = contentPadding,
         navigateToExtension = navigateToExtension
     )
@@ -178,6 +186,8 @@ private fun SettingScreen(
     onClearCache: () -> Unit,
     epgs: List<Playlist>,
     onDeleteEpgPlaylist: (String) -> Unit,
+    extforms: Map<DataSource.Ext, SnapshotStateMap<String, Any>>,
+    loadWorkflow: suspend (pkgName: String, classPath: String) -> Workflow?,
     navigateToExtension: () -> Unit,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues()
@@ -285,6 +295,8 @@ private fun SettingScreen(
                         restore = restore,
                         epgs = epgs,
                         onDeleteEpgPlaylist = onDeleteEpgPlaylist,
+                        extforms = extforms,
+                        loadWorkflow = loadWorkflow,
                         contentPadding = contentPadding,
                         modifier = Modifier.fillMaxSize()
                     )

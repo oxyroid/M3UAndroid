@@ -33,8 +33,8 @@ import com.m3u.material.ktx.composableOf
 
 @Composable
 internal fun DataSourceSelection(
-    selectedState: MutableState<DataSource>,
-    supported: List<DataSource>,
+    currentDSource: MutableState<DataSource>,
+    dSources: List<DataSource>,
     modifier: Modifier = Modifier
 ) {
     var expanded by remember { mutableStateOf(false) }
@@ -50,9 +50,9 @@ internal fun DataSourceSelection(
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
             Text(
-                when (val state = selectedState.value) {
-                    is DataSource.Extension -> state.workflow.name
-                    else -> stringResource(state.resId)
+                when (val source = currentDSource.value) {
+                    is DataSource.Ext -> source.label
+                    else -> stringResource(source.resId)
                 }
             )
             Icon(
@@ -68,34 +68,31 @@ internal fun DataSourceSelection(
             expanded = expanded,
             onDismissRequest = { expanded = false }
         ) {
-            supported.forEach { current ->
+            dSources.forEach { source ->
                 DropdownMenuItem(
                     text = {
-                        when (current) {
-                            is DataSource.Extension -> {
-                                Text(current.workflow.name)
+                        Text(
+                            when (source) {
+                                is DataSource.Ext -> source.label
+                                else -> stringResource(source.resId)
                             }
-
-                            else -> {
-                                Text(stringResource(current.resId))
-                            }
-                        }
+                        )
                     },
-                    leadingIcon = composableOf(current is DataSource.Extension) {
+                    leadingIcon = composableOf(source is DataSource.Ext) {
                         Icon(
                             imageVector = Icons.Rounded.Extension,
                             contentDescription = null
                         )
                     },
-                    trailingIcon = composableOf(selectedState.value == current) {
+                    trailingIcon = composableOf(currentDSource.value == source) {
                         Icon(
                             imageVector = Icons.Rounded.CheckCircle,
                             contentDescription = null
                         )
                     },
-                    enabled = current.supported,
+                    enabled = source.supported,
                     onClick = {
-                        selectedState.value = current
+                        currentDSource.value = source
                         expanded = false
                     },
                     modifier = Modifier.fillMaxWidth()

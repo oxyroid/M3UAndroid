@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -27,16 +28,23 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import com.google.accompanist.permissions.rememberPermissionState
 import com.m3u.core.architecture.preferences.hiltPreferences
 import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
 import com.m3u.extension.api.workflow.Input
+import com.m3u.extension.api.workflow.Workflow
 import com.m3u.feature.setting.BackingUpAndRestoringState
 import com.m3u.feature.setting.components.DataSourceSelection
 import com.m3u.feature.setting.components.EpgPlaylistItem
@@ -47,6 +55,7 @@ import com.m3u.feature.setting.components.LocalStorageSwitch
 import com.m3u.feature.setting.components.RemoteControlSubscribeSwitch
 import com.m3u.i18n.R.string
 import com.m3u.material.components.Button
+import com.m3u.material.components.CircularProgressIndicator
 import com.m3u.material.components.HorizontalPagerIndicator
 import com.m3u.material.components.Icon
 import com.m3u.material.components.PlaceholderField
@@ -72,6 +81,7 @@ internal fun SubscriptionsFragment(
     basicUrlState: MutableState<String>,
     usernameState: MutableState<String>,
     passwordState: MutableState<String>,
+    extforms: Map<DataSource.Ext, SnapshotStateMap<String, Any>>,
     epgState: MutableState<String>,
     localStorageState: MutableState<Boolean>,
     forTvState: MutableState<Boolean>,
@@ -86,6 +96,7 @@ internal fun SubscriptionsFragment(
     restore: () -> Unit,
     epgs: List<Playlist>,
     onDeleteEpgPlaylist: (String) -> Unit,
+    loadWorkflow: suspend (pkgName: String, classPath: String) -> Workflow?,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues()
 ) {
@@ -199,6 +210,7 @@ internal fun SubscriptionsFragment(
     @Composable
     fun ExtensionInputContent(
         inputs: List<Input>,
+        forms: SnapshotStateMap<String, Any>,
         modifier: Modifier = Modifier
     ) {
         Column(
@@ -206,20 +218,25 @@ internal fun SubscriptionsFragment(
             verticalArrangement = Arrangement.spacedBy(spacing.small)
         ) {
             inputs.forEach { input ->
-                when (val value = input.value) {
-                    is Input.StringValue -> {
+                when (val type = input.type) {
+                    is Input.StringType -> {
                         PlaceholderField(
-                            text = "",
+                            text = (forms[input.label] as? String).orEmpty(),
                             placeholder = input.label,
-                            onValueChange = { titleState.value = Uri.decode(it) },
+                            onValueChange = { forms[input.label] = it },
                             modifier = Modifier.fillMaxWidth()
                         )
                     }
-                    is Input.BooleanValue -> {
+
+                    is Input.BooleanType -> {
+                        val isChecked by remember {
+                            derivedStateOf {
+                                (forms[input.label] as? Boolean) ?: type.defaultValue
+                            }
+                        }
                         ToggleableSelection(
-                            // todo
-                            checked = value.defaultValue,
-                            onChanged = {},
+                            checked = isChecked,
+                            onChanged = { forms[input.label] = it },
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Text(
@@ -227,8 +244,7 @@ internal fun SubscriptionsFragment(
                                 modifier = Modifier.weight(1f)
                             )
                             Switch(
-                                // todo
-                                checked = value.defaultValue,
+                                checked = isChecked,
                                 onCheckedChange = null
                             )
                         }
@@ -254,13 +270,13 @@ internal fun SubscriptionsFragment(
         ) {
             item {
                 DataSourceSelection(
-                    selectedState = selectedState,
-                    supported = dataSources
+                    currentDSource = selectedState,
+                    dSources = dataSources
                 )
             }
 
             item {
-                when (val state = selectedState.value) {
+                when (val dataSource = selectedState.value) {
                     DataSource.M3U -> {
                         M3UInputContent(
                             titleState = titleState,
@@ -288,11 +304,30 @@ internal fun SubscriptionsFragment(
 
                     DataSource.Emby -> {}
                     DataSource.Dropbox -> {}
-                    // todo
-                    is DataSource.Extension -> {
-                        ExtensionInputContent(
-                            inputs = state.workflow.inputs
-                        )
+                    is DataSource.Ext -> {
+                        val workflow by produceState<Workflow?>(
+                            initialValue = null,
+                            key1 = dataSource
+                        ) {
+                            value = loadWorkflow(dataSource.pkgName, dataSource.classPath)
+                        }
+                        val forms = extforms[dataSource]
+                        val currentWorkflow = workflow
+                        if (currentWorkflow != null && forms != null) {
+                            ExtensionInputContent(
+                                inputs = currentWorkflow.inputs,
+                                forms = forms
+                            )
+                        } else {
+                            Box(
+                                contentAlignment = Alignment.Center,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(320.dp)
+                            ) {
+                                CircularProgressIndicator()
+                            }
+                        }
                     }
                 }
             }
@@ -305,7 +340,7 @@ internal fun SubscriptionsFragment(
                         enabled = !forTvState.value
                     )
                 }
-                if (selectedState.value !is DataSource.Extension && !tv && remoteControl) {
+                if (selectedState.value !is DataSource.Ext && !tv && remoteControl) {
                     RemoteControlSubscribeSwitch(
                         checked = forTvState.value,
                         onChanged = { forTvState.value = !forTvState.value },
@@ -443,21 +478,10 @@ internal fun SubscriptionsFragment(
             modifier = modifier
         ) { page ->
             when (SubscriptionsFragmentPage.entries[page]) {
-                SubscriptionsFragmentPage.MAIN -> {
-                    MainContentImpl()
-                }
-
-                SubscriptionsFragmentPage.EPG_PLAYLISTS -> {
-                    EpgsContentImpl()
-                }
-
-                SubscriptionsFragmentPage.HIDDEN_STREAMS -> {
-                    HiddenStreamContentImpl()
-                }
-
-                SubscriptionsFragmentPage.HIDDEN_PLAYLIST_CATEGORIES -> {
-                    HiddenPlaylistCategoriesContentImpl()
-                }
+                SubscriptionsFragmentPage.MAIN -> MainContentImpl()
+                SubscriptionsFragmentPage.EPG_PLAYLISTS -> EpgsContentImpl()
+                SubscriptionsFragmentPage.HIDDEN_STREAMS -> HiddenStreamContentImpl()
+                SubscriptionsFragmentPage.HIDDEN_PLAYLIST_CATEGORIES -> HiddenPlaylistCategoriesContentImpl()
             }
         }
         HorizontalPagerIndicator(

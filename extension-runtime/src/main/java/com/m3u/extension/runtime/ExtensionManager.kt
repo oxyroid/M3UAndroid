@@ -2,6 +2,7 @@ package com.m3u.extension.runtime
 
 import android.content.Context
 import android.content.pm.ApplicationInfo
+import com.m3u.extension.api.workflow.Workflow
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -37,7 +38,6 @@ class ExtensionManager @Inject constructor(
             started = SharingStarted.Lazily
         )
 
-
     init {
         receiver.register(context)
         refreshExtensionPackages()
@@ -58,6 +58,13 @@ class ExtensionManager @Inject constructor(
                 .launchIn(this)
         }
     }
+
+    suspend fun loadWorkflow(pkgName: String, classPath: String): Workflow? =
+        extensionLoader.loadWorkflow(
+            context = context,
+            pkgName = pkgName,
+            classPath = classPath
+        )
 
     // TODO
     override fun onExtensionInstalled(extension: Extension) {
