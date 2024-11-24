@@ -19,70 +19,36 @@ fun <T> Flow<T>.timeout(duration: Duration, block: FlowCollector<T>.() -> Unit) 
     }
 
 fun <R> flatmapCombined(
-    vararg flows: Flow<*>,
-    transform: (values: List<Any?>) -> Flow<R>,
-): Flow<R> =
-    combine(flows.asList()) { it.toList() }
-        .flatMapLatest { values -> transform(values) }
+    flows: Iterable<Flow<Any?>>,
+    transform: (keys: Array<Any?>) -> Flow<R>
+): Flow<R> = combine(flows) { it }.flatMapLatest { keys -> transform(keys) }
 
+@Suppress("UNCHECKED_CAST")
 fun <T1, T2, R> flatmapCombined(
     flow1: Flow<T1>,
     flow2: Flow<T2>,
-    transform: (t1: T1, t2: T2) -> Flow<R>,
-): Flow<R> =
-    combine(
-        flow1,
-        flow2
-    ) { t1, t2 -> t1 to t2 }
-        .flatMapLatest { (t1, t2) ->
-            transform(
-                t1,
-                t2
-            )
-        }
+    transform: (t1: T1, t2: T2) -> Flow<R>
+): Flow<R> = flatmapCombined(listOf(flow1, flow2)) { keys ->
+    transform(keys[0] as T1, keys[1] as T2)
+}
 
+@Suppress("UNCHECKED_CAST")
 fun <T1, T2, T3, R> flatmapCombined(
     flow1: Flow<T1>,
     flow2: Flow<T2>,
     flow3: Flow<T3>,
-    transform: (t1: T1, t2: T2, t3: T3) -> Flow<R>,
-): Flow<R> =
-    combine(
-        flow1,
-        flow2,
-        flow3
-    ) { t1, t2, t3 ->
-        Triple(
-            t1,
-            t2,
-            t3
-        )
-    }
-        .flatMapLatest { (t1, t2, t3) ->
-            transform(
-                t1,
-                t2,
-                t3
-            )
-        }
+    transform: (t1: T1, t2: T2, t3: T3) -> Flow<R>
+): Flow<R> = flatmapCombined(listOf(flow1, flow2, flow3)) { keys ->
+    transform(keys[0] as T1, keys[1] as T2, keys[2] as T3)
+}
 
+@Suppress("UNCHECKED_CAST")
 fun <T1, T2, T3, T4, R> flatmapCombined(
     flow1: Flow<T1>,
     flow2: Flow<T2>,
     flow3: Flow<T3>,
     flow4: Flow<T4>,
-    transform: (t1: T1, t2: T2, t3: T3, t4: T4) -> Flow<R>,
-): Flow<R> =
-    combine(
-        flow1,
-        flow2,
-        flow3,
-        flow4
-    ) { t1, t2, t3, t4 ->
-        transform(
-            t1,
-            t2,
-            t3,
-            t4
-        )
-    }.flatMapLatest { it }
+    transform: (t1: T1, t2: T2, t3: T3, t4: T4) -> Flow<R>
+): Flow<R> = flatmapCombined(listOf(flow1, flow2, flow3, flow4)) { keys ->
+    transform(keys[0] as T1, keys[1] as T2, keys[2] as T3, keys[3] as T4)
+}
