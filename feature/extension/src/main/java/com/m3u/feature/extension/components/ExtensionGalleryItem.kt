@@ -1,5 +1,8 @@
 package com.m3u.feature.extension.components
 
+import android.content.Intent
+import android.net.Uri
+import android.provider.Settings
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -99,11 +102,14 @@ internal fun ExtensionGalleryItem(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         val actions = listOf(
-                            ExtensionAction("已激活", false, {}),
-                            ExtensionAction("统计", true, {}),
-                            ExtensionAction("卸载", true) {
-                                val packageManager = context.packageManager
-                                val packageInstaller = packageManager.packageInstaller
+                            ExtensionAction("已激活", false) {},
+                            ExtensionAction("统计", false) {},
+                            ExtensionAction("关于", true) {
+                                val intent =
+                                    Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                                        data = Uri.fromParts("package", extension.packageName, null)
+                                    }
+                                context.startActivity(intent)
                             }
                         )
                         actions.forEach { label ->
