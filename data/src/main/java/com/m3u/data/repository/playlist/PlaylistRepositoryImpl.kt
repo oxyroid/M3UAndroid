@@ -16,7 +16,7 @@ import com.m3u.core.architecture.logger.sandBox
 import com.m3u.core.architecture.preferences.PlaylistStrategy
 import com.m3u.core.architecture.preferences.Preferences
 import com.m3u.core.util.basic.startsWithAny
-import com.m3u.core.util.readFileContent
+import com.m3u.core.util.copyToFile
 import com.m3u.core.util.readFileName
 import com.m3u.data.api.OkhttpClient
 import com.m3u.data.database.dao.ChannelDao
@@ -650,15 +650,19 @@ internal class PlaylistRepositoryImpl @Inject constructor(
         return withContext(ioDispatcher) {
             val contentResolver = context.contentResolver
             val filename = uri.readFileName(contentResolver) ?: filenameWithTimezone
-            val content = uri.readFileContent(contentResolver).orEmpty()
-            val file = File(context.filesDir, filename)
-            file.writeText(content)
+            val destinationFile = File(context.filesDir, filename)
 
-            val newUrl = Uri.decode(file.toUri().toString())
+            val success = uri.copyToFile(contentResolver, destinationFile)
+            if (!success) {
+                return@withContext this@actualUrl
+            }
+
+            val newUrl = Uri.decode(destinationFile.toUri().toString())
             playlistDao.updateUrl(this@actualUrl, newUrl)
             newUrl
         }
     }
+
 
     private fun openNetworkInput(url: String): InputStream? {
         val request = Request.Builder()
