@@ -74,6 +74,7 @@ import androidx.compose.ui.unit.dp
 import androidx.media3.common.Player
 import com.m3u.core.architecture.preferences.hiltPreferences
 import com.m3u.core.util.basic.isNotEmpty
+import com.m3u.data.database.model.AdjacentChannels
 import com.m3u.feature.channel.MaskCenterState.Pause
 import com.m3u.feature.channel.MaskCenterState.Play
 import com.m3u.feature.channel.MaskCenterState.Replay
@@ -102,6 +103,7 @@ import kotlin.time.toDuration
 
 @Composable
 internal fun ChannelMask(
+    adjacentChannels: AdjacentChannels?,
     cover: String,
     title: String,
     gesture: MaskGesture?,
@@ -336,8 +338,8 @@ internal fun ChannelMask(
                         MaskNavigateButton(
                             maskNavigateState = MaskNavigateState.Previous,
                             maskState = maskState,
+                            enabled = adjacentChannels?.prevId != null,
                             onClick = onPreviousChannelClick,
-                            modifier = Modifier
                         )
                         MaskCenterButton(
                             maskCenterState = maskCenterState,
@@ -349,8 +351,8 @@ internal fun ChannelMask(
                         MaskNavigateButton(
                             maskNavigateState = MaskNavigateState.Next,
                             maskState = maskState,
+                            enabled = adjacentChannels?.nextId != null,
                             onClick = onNextChannelClick,
-                            modifier = Modifier
                         )
                     }
 
@@ -591,8 +593,9 @@ private fun MaskCenterButton(
 private fun MaskNavigateButton(
     maskNavigateState: MaskNavigateState,
     maskState: MaskState,
+    onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    onClick: () -> Unit
+    enabled: Boolean = true,
 ) {
     Box(
         modifier,
@@ -602,6 +605,7 @@ private fun MaskNavigateButton(
             MaskNavigateState.Next, MaskNavigateState.Previous -> {
                 MaskCircleButton(
                     state = maskState,
+                    enabled = enabled,
                     icon = when (maskNavigateState) {
                         MaskNavigateState.Next -> Icons.AutoMirrored.Rounded.NavigateNext
                         MaskNavigateState.Previous -> Icons.AutoMirrored.Rounded.NavigateBefore

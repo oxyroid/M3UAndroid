@@ -38,6 +38,7 @@ import com.google.accompanist.permissions.rememberPermissionState
 import com.m3u.core.architecture.preferences.hiltPreferences
 import com.m3u.core.util.basic.isNotEmpty
 import com.m3u.core.util.basic.title
+import com.m3u.data.database.model.AdjacentChannels
 import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.Playlist
 import com.m3u.feature.channel.components.CoverPlaceholder
@@ -82,6 +83,7 @@ fun ChannelRoute(
 
     val playerState: PlayerState by viewModel.playerState.collectAsStateWithLifecycle()
     val channel by viewModel.channel.collectAsStateWithLifecycle()
+    val adjacentChannels by viewModel.adjacentChannels.collectAsStateWithLifecycle()
     val playlist by viewModel.playlist.collectAsStateWithLifecycle()
     val devices = viewModel.devices
     val isDevicesVisible by viewModel.isDevicesVisible.collectAsStateWithLifecycle()
@@ -230,6 +232,7 @@ fun ChannelRoute(
                     maskState = maskState,
                     playerState = playerState,
                     playlist = playlist,
+                    adjacentChannels = adjacentChannels,
                     channel = channel,
                     hasTrack = tracks.isNotEmpty(),
                     isPanelExpanded = isPanelExpanded,
@@ -237,12 +240,8 @@ fun ChannelRoute(
                     onVolume = viewModel::onVolume,
                     brightness = brightness,
                     onBrightness = { brightness = it },
-                    onPreviousChannelClick = {
-                        viewModel.getPreviousChannel()
-                    },
-                    onNextChannelClick = {
-                        viewModel.getNextChannel()
-                    },
+                    onPreviousChannelClick = viewModel::getPreviousChannel,
+                    onNextChannelClick = viewModel::getNextChannel,
                     onEnterPipMode = {
                         helper.enterPipMode(playerState.videoSize)
                         maskState.unlockAll()
@@ -291,6 +290,7 @@ private fun ChannelPlayer(
     playerState: PlayerState,
     playlist: Playlist?,
     channel: Channel?,
+    adjacentChannels: AdjacentChannels?,
     isSeriesPlaylist: Boolean,
     hasTrack: Boolean,
     isPanelExpanded: Boolean,
@@ -381,6 +381,7 @@ private fun ChannelPlayer(
             )
 
             ChannelMask(
+                adjacentChannels = adjacentChannels,
                 cover = cover,
                 title = title,
                 playlistTitle = playlistTitle,

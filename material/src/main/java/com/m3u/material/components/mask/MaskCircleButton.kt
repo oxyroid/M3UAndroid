@@ -23,12 +23,14 @@ fun MaskCircleButton(
     icon: ImageVector,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    tint: Color = Color.Unspecified
+    tint: Color = Color.Unspecified,
+    enabled: Boolean = true,
 ) {
     val tv = tv()
     if (!tv) {
         Surface(
             shape = CircleShape,
+            enabled = enabled,
             onClick = {
                 state.wake()
                 onClick()
@@ -46,6 +48,7 @@ fun MaskCircleButton(
     } else {
         TvSurface(
             shape = ClickableSurfaceDefaults.shape(CircleShape),
+            enabled = enabled,
             onClick = {
                 state.wake()
                 onClick()
