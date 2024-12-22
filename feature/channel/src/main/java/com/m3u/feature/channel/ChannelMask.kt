@@ -568,20 +568,20 @@ private fun MaskCenterButton(
         when (maskCenterState) {
             Replay, Play, Pause -> {
                 MaskCircleButton(state = maskState,
-                                 icon = when (maskCenterState) {
-                                     Replay -> Icons.Rounded.Refresh
-                                     Play -> Icons.Rounded.PlayArrow
-                                     Pause -> Icons.Rounded.Pause
-                                     else -> Icons.Rounded.NewReleases // never reached
-                                 },
-                                 onClick = when (maskCenterState) {
-                                     Replay -> onRetry
-                                     Play -> onPlay
-                                     Pause -> onPause
-                                     else -> {
-                                         {}
-                                     } // never reached
-                                 })
+                    icon = when (maskCenterState) {
+                        Replay -> Icons.Rounded.Refresh
+                        Play -> Icons.Rounded.PlayArrow
+                        Pause -> Icons.Rounded.Pause
+                        else -> Icons.Rounded.NewReleases // never reached
+                    },
+                    onClick = when (maskCenterState) {
+                        Replay -> onRetry
+                        Play -> onPlay
+                        Pause -> onPause
+                        else -> {
+                            {}
+                        } // never reached
+                    })
             }
 
             else -> {}
