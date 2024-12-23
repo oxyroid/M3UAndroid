@@ -24,6 +24,8 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.automirrored.rounded.NavigateBefore
+import androidx.compose.material.icons.automirrored.rounded.NavigateNext
 import androidx.compose.material.icons.automirrored.rounded.VolumeDown
 import androidx.compose.material.icons.automirrored.rounded.VolumeOff
 import androidx.compose.material.icons.automirrored.rounded.VolumeUp
@@ -72,6 +74,7 @@ import androidx.compose.ui.unit.dp
 import androidx.media3.common.Player
 import com.m3u.core.architecture.preferences.hiltPreferences
 import com.m3u.core.util.basic.isNotEmpty
+import com.m3u.data.database.model.AdjacentChannels
 import com.m3u.feature.channel.MaskCenterState.Pause
 import com.m3u.feature.channel.MaskCenterState.Play
 import com.m3u.feature.channel.MaskCenterState.Replay
@@ -100,6 +103,7 @@ import kotlin.time.toDuration
 
 @Composable
 internal fun ChannelMask(
+    adjacentChannels: AdjacentChannels?,
     cover: String,
     title: String,
     gesture: MaskGesture?,
@@ -118,6 +122,8 @@ internal fun ChannelMask(
     openOrClosePanel: () -> Unit,
     onEnterPipMode: () -> Unit,
     onVolume: (Float) -> Unit,
+    onNextChannelClick: () -> Unit,
+    onPreviousChannelClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val preferences = hiltPreferences()
@@ -315,14 +321,6 @@ internal fun ChannelMask(
             },
             body = {
                 Box {
-                    Row(
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .windowInsetsPadding(WindowInsets.systemBarsIgnoringVisibility)
-                    ) {
-                    }
                     val maskCenterState = MaskCenterState.of(
                         playerState.playState,
                         playerState.isPlaying,
@@ -330,14 +328,35 @@ internal fun ChannelMask(
                         isPanelExpanded,
                         playerState.playerError
                     )
-                    MaskCenterButton(
-                        maskCenterState = maskCenterState,
-                        maskState = maskState,
-                        onPlay = { playerState.player?.play() },
-                        onPause = { playerState.player?.pause() },
-                        onRetry = { coroutineScope.launch { helper.replay() } },
-                        modifier = Modifier.align(Alignment.Center)
-                    )
+                    Row(
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .windowInsetsPadding(WindowInsets.systemBarsIgnoringVisibility)
+                    ) {
+                        MaskNavigateButton(
+                            maskNavigateState = MaskNavigateState.Previous,
+                            maskState = maskState,
+                            enabled = adjacentChannels?.prevId != null,
+                            onClick = onPreviousChannelClick,
+                        )
+                        MaskCenterButton(
+                            maskCenterState = maskCenterState,
+                            maskState = maskState,
+                            onPlay = { playerState.player?.play() },
+                            onPause = { playerState.player?.pause() },
+                            onRetry = { coroutineScope.launch { helper.replay() } },
+                        )
+                        MaskNavigateButton(
+                            maskNavigateState = MaskNavigateState.Next,
+                            maskState = maskState,
+                            enabled = adjacentChannels?.nextId != null,
+                            onClick = onNextChannelClick,
+                        )
+                    }
+
+
                 }
             },
             footer = {
@@ -542,11 +561,13 @@ private fun MaskCenterButton(
     onPause: () -> Unit,
     onRetry: () -> Unit,
 ) {
-    Box(modifier, contentAlignment = Alignment.Center) {
+    Box(
+        modifier,
+        contentAlignment = Alignment.Center
+    ) {
         when (maskCenterState) {
             Replay, Play, Pause -> {
-                MaskCircleButton(
-                    state = maskState,
+                MaskCircleButton(state = maskState,
                     icon = when (maskCenterState) {
                         Replay -> Icons.Rounded.Refresh
                         Play -> Icons.Rounded.PlayArrow
@@ -560,11 +581,38 @@ private fun MaskCenterButton(
                         else -> {
                             {}
                         } // never reached
-                    }
-                )
+                    })
             }
 
             else -> {}
+        }
+    }
+}
+
+@Composable
+private fun MaskNavigateButton(
+    maskNavigateState: MaskNavigateState,
+    maskState: MaskState,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+) {
+    Box(
+        modifier,
+        contentAlignment = Alignment.Center
+    ) {
+        when (maskNavigateState) {
+            MaskNavigateState.Next, MaskNavigateState.Previous -> {
+                MaskCircleButton(
+                    state = maskState,
+                    enabled = enabled,
+                    icon = when (maskNavigateState) {
+                        MaskNavigateState.Next -> Icons.AutoMirrored.Rounded.NavigateNext
+                        MaskNavigateState.Previous -> Icons.AutoMirrored.Rounded.NavigateBefore
+                    },
+                    onClick = onClick
+                )
+            }
         }
     }
 }
@@ -590,4 +638,8 @@ private enum class MaskCenterState {
             else -> if (!isPlaying) Play else Pause
         }
     }
+}
+
+private enum class MaskNavigateState {
+    Next, Previous
 }
