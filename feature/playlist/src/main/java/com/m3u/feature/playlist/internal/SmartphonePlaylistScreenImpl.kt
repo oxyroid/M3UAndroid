@@ -109,7 +109,9 @@ internal fun SmartphonePlaylistScreenImpl(
     val configuration = LocalConfiguration.current
     val focusManager = LocalFocusManager.current
 
-    val scaffoldState = rememberBackdropScaffoldState(BackdropValue.Concealed)
+    val scaffoldState = rememberBackdropScaffoldState(
+        initialValue = BackdropValue.Concealed
+    )
     val connection = remember {
         object : NestedScrollConnection {
             override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
@@ -152,6 +154,7 @@ internal fun SmartphonePlaylistScreenImpl(
 
     BackdropScaffold(
         scaffoldState = scaffoldState,
+        gesturesEnabled = isAtTopState.value,
         appBar = {},
         frontLayerShape = RectangleShape,
         peekHeight = 0.dp,

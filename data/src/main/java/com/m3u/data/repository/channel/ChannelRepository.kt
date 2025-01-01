@@ -1,6 +1,7 @@
 package com.m3u.data.repository.channel
 
 import androidx.paging.PagingSource
+import com.m3u.data.database.model.AdjacentChannels
 import com.m3u.data.database.model.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlin.time.Duration
@@ -17,6 +18,11 @@ interface ChannelRepository {
     ): PagingSource<Int, Channel>
 
     suspend fun get(id: Int): Channel?
+    fun observeAdjacentChannels(
+        channelId: Int,
+        playlistUrl: String,
+        category: String,
+    ): Flow<AdjacentChannels>
 
     suspend fun getRandomIgnoreSeriesAndHidden(): Channel?
 

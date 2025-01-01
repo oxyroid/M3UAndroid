@@ -4,6 +4,8 @@ import android.content.ContentResolver
 import android.net.Uri
 import android.provider.OpenableColumns
 import androidx.core.net.toFile
+import java.io.File
+import java.io.IOException
 
 fun Uri.readFileName(resolver: ContentResolver): String? {
     return if (this == Uri.EMPTY) null
@@ -31,5 +33,19 @@ fun Uri.readFileContent(resolver: ContentResolver): String? {
             }
 
         else -> null
+    }
+}
+
+fun Uri.copyToFile(resolver: ContentResolver, destinationFile: File): Boolean {
+    return try {
+        resolver.openInputStream(this)?.use { inputStream ->
+            destinationFile.outputStream().use { outputStream ->
+                inputStream.copyTo(outputStream)
+            }
+        }
+        true
+    } catch (e: IOException) {
+        e.printStackTrace()
+        false
     }
 }
