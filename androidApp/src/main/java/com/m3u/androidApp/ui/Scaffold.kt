@@ -51,9 +51,6 @@ import com.m3u.material.effects.currentBackStackEntry
 import com.m3u.material.ktx.tv
 import com.m3u.material.model.LocalHazeState
 import com.m3u.material.model.LocalSpacing
-import com.m3u.material.overscroll.OverScroll
-import com.m3u.material.overscroll.overScrollAlpha
-import com.m3u.material.overscroll.overScrollParallaxVertical
 import com.m3u.ui.Destination
 import com.m3u.ui.FontFamilies
 import com.m3u.ui.helper.Fob
@@ -139,7 +136,6 @@ internal fun MainContent(
     val tv = tv()
     val spacing = LocalSpacing.current
     val hazeState = LocalHazeState.current
-    val density = LocalDensity.current
 
     val title = Metadata.title
     val subtitle = Metadata.subtitle
@@ -147,90 +143,82 @@ internal fun MainContent(
 
     val backStackEntry by currentBackStackEntry()
 
-    OverScroll {
-        Scaffold(
-            topBar = {
-                if (!tv) {
-                    TopAppBar(
-                        colors = TopAppBarDefaults.topAppBarColors(Color.Transparent),
-                        windowInsets = windowInsets,
-                        title = {
-                            Row(
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.defaultMinSize(minHeight = 56.dp)
+    Scaffold(
+        topBar = {
+            if (!tv) {
+                TopAppBar(
+                    colors = TopAppBarDefaults.topAppBarColors(Color.Transparent),
+                    windowInsets = windowInsets,
+                    title = {
+                        Row(
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.defaultMinSize(minHeight = 56.dp)
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .padding(horizontal = spacing.medium)
+                                    .weight(1f)
                             ) {
-                                Column(
-                                    modifier = Modifier
-                                        .padding(horizontal = spacing.medium)
-                                        .weight(1f)
-                                ) {
+                                Text(
+                                    text = title,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    fontFamily = FontFamilies.LexendExa
+                                )
+                                AnimatedVisibility(subtitle.text.isNotEmpty()) {
                                     Text(
-                                        text = title,
+                                        text = subtitle,
+                                        style = MaterialTheme.typography.titleMedium,
                                         maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis,
-                                        fontFamily = FontFamilies.LexendExa
+                                        overflow = TextOverflow.Ellipsis
                                     )
-                                    AnimatedVisibility(subtitle.text.isNotEmpty()) {
-                                        Text(
-                                            text = subtitle,
-                                            style = MaterialTheme.typography.titleMedium,
-                                            maxLines = 1,
-                                            overflow = TextOverflow.Ellipsis
-                                        )
-                                    }
                                 }
-
-                                Row {
-                                    actions.forEach { action ->
-                                        IconButton(
-                                            icon = action.icon,
-                                            contentDescription = action.contentDescription,
-                                            onClick = action.onClick,
-                                            enabled = action.enabled
-                                        )
-                                    }
-                                }
-
-                                Spacer(modifier = Modifier.width(spacing.medium))
                             }
-                        },
-                        navigationIcon = {
-                            AnimatedContent(
-                                targetState = onBackPressed,
-                                label = "app-scaffold-icon"
-                            ) { onBackPressed ->
-                                if (onBackPressed != null) {
+
+                            Row {
+                                actions.forEach { action ->
                                     IconButton(
-                                        icon = backStackEntry?.navigationIcon
-                                            ?: Icons.AutoMirrored.Rounded.ArrowBack,
-                                        contentDescription = null,
-                                        onClick = onBackPressed,
-                                        modifier = Modifier.wrapContentSize()
+                                        icon = action.icon,
+                                        contentDescription = action.contentDescription,
+                                        onClick = action.onClick,
+                                        enabled = action.enabled
                                     )
                                 }
                             }
-                        },
-                        modifier = Modifier
-                            .hazeChild(hazeState, style = HazeStyle(blurRadius = 6.dp))
-                            .fillMaxWidth()
-                            .overScrollParallaxVertical(maxParallaxOffset = -40f)
-                            .overScrollAlpha(
-                                finalAlpha = 0.35f
-                            )
-                    )
-                }
-            },
-            contentWindowInsets = windowInsets,
-            containerColor = Color.Transparent
-        ) { padding ->
-            Background {
-                Box {
-                    StarBackground(
-                        modifier = Modifier.overScrollAlpha()
-                    )
-                    content(padding)
-                }
+
+                            Spacer(modifier = Modifier.width(spacing.medium))
+                        }
+                    },
+                    navigationIcon = {
+                        AnimatedContent(
+                            targetState = onBackPressed,
+                            label = "app-scaffold-icon"
+                        ) { onBackPressed ->
+                            if (onBackPressed != null) {
+                                IconButton(
+                                    icon = backStackEntry?.navigationIcon
+                                        ?: Icons.AutoMirrored.Rounded.ArrowBack,
+                                    contentDescription = null,
+                                    onClick = onBackPressed,
+                                    modifier = Modifier.wrapContentSize()
+                                )
+                            }
+                        }
+                    },
+                    modifier = Modifier
+                        .hazeChild(hazeState, style = HazeStyle(blurRadius = 6.dp))
+                        .fillMaxWidth()
+                )
+            }
+        },
+        contentWindowInsets = windowInsets,
+        containerColor = Color.Transparent
+    ) { padding ->
+        Background {
+            Box {
+                StarBackground()
+                content(padding)
             }
         }
     }
