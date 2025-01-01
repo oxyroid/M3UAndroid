@@ -45,7 +45,6 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
@@ -86,9 +85,11 @@ class ChannelViewModel @Inject constructor(
     internal val playlist: StateFlow<Playlist?> = playerManager.playlist
 
     val adjacentChannels: StateFlow<AdjacentChannels?> = flatmapCombined(
-        playlist.filterNotNull(),
-        channel.filterNotNull()
+        playlist,
+        channel
     ) { playlist, channel ->
+        playlist ?: return@flatmapCombined flowOf(null)
+        channel ?: return@flatmapCombined flowOf(null)
         channelRepository.observeAdjacentChannels(
             channelId = channel.id,
             playlistUrl = playlist.url,

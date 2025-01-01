@@ -12,7 +12,6 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import com.m3u.core.architecture.preferences.hiltPreferences
 import com.m3u.feature.channel.ChannelMaskUtils.detectVerticalGesture
-import com.m3u.material.components.mask.toggle
 import com.m3u.material.ktx.tv
 import com.m3u.material.ktx.thenIf
 
@@ -23,7 +22,8 @@ internal fun VerticalGestureArea(
     onDragEnd: () -> Unit,
     onDrag: (percent: Float) -> Unit,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    time: Float = 0.65f
 ) {
     val preferences = hiltPreferences()
     val tv = tv()
@@ -34,7 +34,7 @@ internal fun VerticalGestureArea(
                 .fillMaxSize()
                 .thenIf(!tv && preferences.brightnessGesture) {
                     Modifier.detectVerticalGesture(
-                        time = 0.65f,
+                        time = time,
                         onDragStart = onDragStart,
                         onDragEnd = onDragEnd,
                         onVerticalDrag = { deltaPixel ->

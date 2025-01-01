@@ -121,7 +121,6 @@ fun ChannelRoute(
         with(helper) {
             isSystemBarUseDarkMode = true
             statusBarVisibility = false
-            navigationBarVisibility = false
             onPipModeChanged = OnPipModeChanged { info ->
                 isPipMode = info.isInPictureInPictureMode
                 if (!isPipMode) {
@@ -154,7 +153,7 @@ fun ChannelRoute(
         snapshotFlow { maskState.visible }
             .onEach { visible ->
                 helper.statusBarVisibility = visible
-                helper.navigationBarVisibility = false
+                helper.navigationBarVisibility = visible
             }
             .launchIn(this)
     }
@@ -186,7 +185,7 @@ fun ChannelRoute(
                     }
 
                     PullPanelLayoutValue.COLLAPSED -> {
-                        maskState.unlock(PullPanelLayoutValue.EXPANDED, 1800.milliseconds)
+                        maskState.unlock(PullPanelLayoutValue.EXPANDED, 2400.milliseconds)
                     }
                 }
             },
@@ -315,12 +314,6 @@ private fun ChannelPlayer(
     val currentBrightness by rememberUpdatedState(brightness)
     val currentVolume by rememberUpdatedState(volume)
     val preferences = hiltPreferences()
-    var isBrightnessValueChange by remember {
-        mutableStateOf(false)
-    }
-    var isVolumeValueChange by remember {
-        mutableStateOf(false)
-    }
 
     Background(
         color = Color.Black,
@@ -338,14 +331,12 @@ private fun ChannelPlayer(
             )
             VerticalGestureArea(
                 percent = currentBrightness,
+                time = 0.65f,
                 onDragStart = {
                     gesture = MaskGesture.BRIGHTNESS
-                    isBrightnessValueChange = true
+                    maskState.sleep()
                 },
-                onDragEnd = {
-                    gesture = null
-                    isBrightnessValueChange = false
-                },
+                onDragEnd = { gesture = null },
                 onDrag = onBrightness,
                 onClick = maskState::toggle,
                 modifier = Modifier
@@ -355,14 +346,12 @@ private fun ChannelPlayer(
 
             VerticalGestureArea(
                 percent = currentVolume,
+                time = 0.35f,
                 onDragStart = {
                     gesture = MaskGesture.VOLUME
-                    isVolumeValueChange = true
+                    maskState.sleep()
                 },
-                onDragEnd = {
-                    gesture = null
-                    isVolumeValueChange = false
-                },
+                onDragEnd = { gesture = null },
                 onDrag = onVolume,
                 onClick = maskState::toggle,
                 modifier = Modifier

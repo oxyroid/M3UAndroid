@@ -4,42 +4,49 @@ import android.content.pm.ActivityInfo
 import android.view.KeyEvent
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.animateIntAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsDraggedAsState
+import androidx.compose.foundation.interaction.collectIsHoveredAsState
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.systemBarsIgnoringVisibility
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material.icons.automirrored.rounded.NavigateBefore
-import androidx.compose.material.icons.automirrored.rounded.NavigateNext
 import androidx.compose.material.icons.automirrored.rounded.VolumeDown
 import androidx.compose.material.icons.automirrored.rounded.VolumeOff
 import androidx.compose.material.icons.automirrored.rounded.VolumeUp
 import androidx.compose.material.icons.rounded.Archive
+import androidx.compose.material.icons.rounded.Cancel
 import androidx.compose.material.icons.rounded.Cast
 import androidx.compose.material.icons.rounded.DarkMode
 import androidx.compose.material.icons.rounded.HighQuality
 import androidx.compose.material.icons.rounded.LightMode
-import androidx.compose.material.icons.rounded.NewReleases
 import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PictureInPicture
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.ScreenRotationAlt
+import androidx.compose.material.icons.rounded.SkipNext
+import androidx.compose.material.icons.rounded.SkipPrevious
 import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material.icons.rounded.Unarchive
 import androidx.compose.material3.LocalContentColor
@@ -60,9 +67,11 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
@@ -75,9 +84,9 @@ import androidx.media3.common.Player
 import com.m3u.core.architecture.preferences.hiltPreferences
 import com.m3u.core.util.basic.isNotEmpty
 import com.m3u.data.database.model.AdjacentChannels
-import com.m3u.feature.channel.MaskCenterState.Pause
-import com.m3u.feature.channel.MaskCenterState.Play
-import com.m3u.feature.channel.MaskCenterState.Replay
+import com.m3u.feature.channel.MaskCenterRole.Pause
+import com.m3u.feature.channel.MaskCenterRole.Play
+import com.m3u.feature.channel.MaskCenterRole.Replay
 import com.m3u.feature.channel.components.MaskTextButton
 import com.m3u.feature.channel.components.PlayerMask
 import com.m3u.i18n.R.string
@@ -320,43 +329,56 @@ internal fun ChannelMask(
                 }
             },
             body = {
-                Box {
-                    val maskCenterState = MaskCenterState.of(
-                        playerState.playState,
-                        playerState.isPlaying,
-                        preferences.alwaysShowReplay,
-                        isPanelExpanded,
-                        playerState.playerError
-                    )
-                    Row(
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .windowInsetsPadding(WindowInsets.systemBarsIgnoringVisibility)
+                val centerRole = MaskCenterRole.of(
+                    playerState.playState,
+                    playerState.isPlaying,
+                    preferences.alwaysShowReplay,
+                    playerState.playerError
+                )
+                Box(Modifier.size(48.dp)) {
+                    androidx.compose.animation.AnimatedVisibility(
+                        visible = !isPanelExpanded && adjacentChannels?.prevId != null,
+                        enter = fadeIn() + slideInHorizontally(initialOffsetX = { -it / 2 }),
+                        exit = fadeOut() + slideOutHorizontally(targetOffsetX = { -it / 2 }),
+                        modifier = Modifier.fillMaxSize()
                     ) {
                         MaskNavigateButton(
-                            maskNavigateState = MaskNavigateState.Previous,
-                            maskState = maskState,
-                            enabled = adjacentChannels?.prevId != null,
+                            state = maskState,
+                            navigateRole = MaskNavigateRole.Previous,
                             onClick = onPreviousChannelClick,
                         )
+                    }
+                }
+
+                Box(Modifier.size(64.dp)) {
+                    androidx.compose.animation.AnimatedVisibility(
+                        visible = !isPanelExpanded,
+                        enter = fadeIn(),
+                        exit = fadeOut(),
+                        modifier = Modifier.fillMaxSize()
+                    ) {
                         MaskCenterButton(
-                            maskCenterState = maskCenterState,
-                            maskState = maskState,
+                            state = maskState,
+                            centerRole = centerRole,
                             onPlay = { playerState.player?.play() },
                             onPause = { playerState.player?.pause() },
                             onRetry = { coroutineScope.launch { helper.replay() } },
                         )
+                    }
+                }
+                Box(Modifier.size(48.dp)) {
+                    androidx.compose.animation.AnimatedVisibility(
+                        visible = !isPanelExpanded && adjacentChannels?.nextId != null,
+                        enter = fadeIn() + slideInHorizontally(initialOffsetX = { it / 2 }),
+                        exit = fadeOut() + slideOutHorizontally(targetOffsetX = { it / 2 }),
+                        modifier = Modifier.size(48.dp)
+                    ) {
                         MaskNavigateButton(
-                            maskNavigateState = MaskNavigateState.Next,
-                            maskState = maskState,
-                            enabled = adjacentChannels?.nextId != null,
+                            state = maskState,
+                            navigateRole = MaskNavigateRole.Next,
                             onClick = onNextChannelClick,
                         )
                     }
-
-
                 }
             },
             footer = {
@@ -374,6 +396,7 @@ internal fun ChannelMask(
                     modifier = Modifier
                         .semantics(mergeDescendants = true) { }
                         .weight(1f)
+                        .animateContentSize(alignment = Alignment.BottomCenter)
                 ) {
                     if (!isPanelExpanded || !isPanelGestureSupported) {
                         Text(
@@ -543,103 +566,136 @@ internal fun ChannelMask(
                                     .thenIf(tv) { tvSliderModifier }
                             )
                         }
-
                     }
                 }
             },
+            modifier = Modifier.fillMaxSize()
         )
-
     }
 }
 
 @Composable
 private fun MaskCenterButton(
-    maskCenterState: MaskCenterState?,
-    maskState: MaskState,
+    state: MaskState,
+    centerRole: MaskCenterRole,
     modifier: Modifier = Modifier,
     onPlay: () -> Unit,
     onPause: () -> Unit,
     onRetry: () -> Unit,
 ) {
     Box(
-        modifier,
+        modifier = modifier,
         contentAlignment = Alignment.Center
     ) {
-        when (maskCenterState) {
-            Replay, Play, Pause -> {
-                MaskCircleButton(state = maskState,
-                    icon = when (maskCenterState) {
-                        Replay -> Icons.Rounded.Refresh
-                        Play -> Icons.Rounded.PlayArrow
-                        Pause -> Icons.Rounded.Pause
-                        else -> Icons.Rounded.NewReleases // never reached
-                    },
-                    onClick = when (maskCenterState) {
-                        Replay -> onRetry
-                        Play -> onPlay
-                        Pause -> onPause
-                        else -> {
-                            {}
-                        } // never reached
-                    })
-            }
-
-            else -> {}
+        val interactionSource = remember { MutableInteractionSource() }
+        val isPressed by interactionSource.collectIsPressedAsState()
+        val isHovered by interactionSource.collectIsHoveredAsState()
+        val isDragged by interactionSource.collectIsDraggedAsState()
+        val isScaled by remember {
+            derivedStateOf { isPressed || isHovered || isDragged }
         }
+        val scale by animateFloatAsState(
+            targetValue = if (isScaled) 0.65f else 1f,
+            label = "MaskCenterButton-scale",
+            animationSpec = spring(
+                dampingRatio = Spring.DampingRatioMediumBouncy,
+                stiffness = Spring.StiffnessMediumLow
+            )
+        )
+        val isVisible = centerRole != MaskCenterRole.Loading
+        MaskCircleButton(
+            state = state,
+            interactionSource = interactionSource,
+            modifier = Modifier
+                .thenIf(!isVisible) { Modifier.alpha(0f) }
+                .graphicsLayer {
+                    scaleX = scale
+                    scaleY = scale
+                },
+            icon = when (centerRole) {
+                Replay -> Icons.Rounded.Refresh
+                Play -> Icons.Rounded.PlayArrow
+                Pause -> Icons.Rounded.Pause
+                else -> Icons.Rounded.Cancel // never visible
+            },
+            onClick = when (centerRole) {
+                Replay -> onRetry
+                Play -> onPlay
+                Pause -> onPause
+                else -> {
+                    {}
+                }
+            }
+        )
     }
 }
 
 @Composable
 private fun MaskNavigateButton(
-    maskNavigateState: MaskNavigateState,
-    maskState: MaskState,
+    state: MaskState,
+    navigateRole: MaskNavigateRole,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
 ) {
     Box(
-        modifier,
+        modifier = modifier,
         contentAlignment = Alignment.Center
     ) {
-        when (maskNavigateState) {
-            MaskNavigateState.Next, MaskNavigateState.Previous -> {
-                MaskCircleButton(
-                    state = maskState,
-                    enabled = enabled,
-                    icon = when (maskNavigateState) {
-                        MaskNavigateState.Next -> Icons.AutoMirrored.Rounded.NavigateNext
-                        MaskNavigateState.Previous -> Icons.AutoMirrored.Rounded.NavigateBefore
-                    },
-                    onClick = onClick
-                )
+        val interactionSource = remember { MutableInteractionSource() }
+        val isPressed by interactionSource.collectIsPressedAsState()
+        val isHovered by interactionSource.collectIsHoveredAsState()
+        val isDragged by interactionSource.collectIsDraggedAsState()
+        val isScaled by remember {
+            derivedStateOf { isPressed || isHovered || isDragged }
+        }
+        val scale by animateFloatAsState(
+            targetValue = if (isScaled) 0.85f else 1f,
+            label = "MaskCenterButton-scale"
+        )
+        MaskCircleButton(
+            state = state,
+            isSmallDimension = true,
+            icon = when (navigateRole) {
+                MaskNavigateRole.Next -> Icons.Rounded.SkipNext
+                MaskNavigateRole.Previous -> Icons.Rounded.SkipPrevious
+            },
+            interactionSource = interactionSource,
+            onClick = onClick,
+            modifier = Modifier
+                .thenIf(!enabled) { Modifier.alpha(0f) }
+                .graphicsLayer {
+                    scaleX = scale
+                    scaleY = scale
+                }
+        )
+    }
+}
+
+private enum class MaskCenterRole {
+    Replay, Play, Pause, Loading;
+
+    companion object {
+        @Composable
+        fun of(
+            @Player.State playState: Int,
+            isPlaying: Boolean,
+            alwaysShowReplay: Boolean,
+            playerError: Exception?,
+        ): MaskCenterRole = remember(playState, alwaysShowReplay, playerError, isPlaying) {
+            when {
+                playState == Player.STATE_BUFFERING -> Loading
+                alwaysShowReplay || playState in arrayOf(
+                    Player.STATE_IDLE,
+                    Player.STATE_ENDED
+                ) || playerError != null -> Replay
+
+                else -> if (!isPlaying) Play else Pause
             }
         }
     }
 }
 
-private enum class MaskCenterState {
-    Replay, Play, Pause, Loading;
-
-    companion object {
-        fun of(
-            @Player.State playState: Int,
-            isPlaying: Boolean,
-            alwaysShowReplay: Boolean,
-            isPanelExpanded: Boolean,
-            playerError: Exception?,
-        ): MaskCenterState? = when {
-            isPanelExpanded -> null
-            playState == Player.STATE_BUFFERING -> Loading
-            alwaysShowReplay || playState in arrayOf(
-                Player.STATE_IDLE,
-                Player.STATE_ENDED
-            ) || playerError != null -> Replay
-
-            else -> if (!isPlaying) Play else Pause
-        }
-    }
-}
-
-private enum class MaskNavigateState {
+private enum class MaskNavigateRole {
     Next, Previous
 }

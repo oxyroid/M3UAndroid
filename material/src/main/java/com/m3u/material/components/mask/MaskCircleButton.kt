@@ -1,5 +1,6 @@
 package com.m3u.material.components.mask
 
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.LocalContentColor
@@ -25,8 +26,11 @@ fun MaskCircleButton(
     modifier: Modifier = Modifier,
     tint: Color = Color.Unspecified,
     enabled: Boolean = true,
+    isSmallDimension: Boolean = false,
+    interactionSource: MutableInteractionSource? = null
 ) {
     val tv = tv()
+    val dimension = if (isSmallDimension) 48.dp else 64.dp
     if (!tv) {
         Surface(
             shape = CircleShape,
@@ -35,14 +39,15 @@ fun MaskCircleButton(
                 state.wake()
                 onClick()
             },
+            interactionSource = interactionSource,
             modifier = modifier,
             color = Color.Unspecified,
-            contentColor = tint.takeOrElse { LocalContentColor.current.copy(0.56f) }
+            contentColor = tint.takeOrElse { LocalContentColor.current }
         ) {
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                modifier = Modifier.size(96.dp)
+                modifier = Modifier.size(dimension)
             )
         }
     } else {
@@ -53,16 +58,17 @@ fun MaskCircleButton(
                 state.wake()
                 onClick()
             },
+            interactionSource = interactionSource,
             modifier = modifier,
             colors = ClickableSurfaceDefaults.colors(
                 containerColor = Color.Unspecified,
-                contentColor = tint.takeOrElse { TvLocalContentColor.current.copy(0.56f) }
+                contentColor = tint.takeOrElse { TvLocalContentColor.current }
             )
         ) {
             TvIcon(
                 imageVector = icon,
                 contentDescription = null,
-                modifier = Modifier.size(96.dp)
+                modifier = Modifier.size(dimension)
             )
         }
     }
